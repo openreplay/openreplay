@@ -1,11 +1,11 @@
 <p align="center">
   <a href="https://openreplay.com">
-    <img src="static/logo.svg" width="200">
+    <img src="static/logo.svg" height="100">
   </a>
 </p>
 
 <h3 align="center">Session replay for developers</h3>
-<p align="center">The most advanced open-source session replay to improve web apps.</p>
+<p align="center">The most advanced open-source session replay to build better web apps.</p>
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">
