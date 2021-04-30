@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://openreplay.com">
-    <img src="static/logo.svg">
+    <img src="static/logo.svg" width="200">
   </a>
 </p>
 
@@ -8,16 +8,20 @@
 <p align="center">The most advanced open-source session replay to improve web apps.</p>
 
 <p align="center">
-  <a href="https://marketplace.digitalocean.com/apps/asayer">
-    <img src="https://assets.strapi.io/uploads/deploy_button_Digital_Ocean_fe2c286222.png" />
+  <a href="https://docs.openreplay.com/deployment/deploy-aws">
+    <img src="static/deploy-aws.png" />
   </a>
 
-  <a href="https://www.heroku.com/deploy/?template=https://github.com/asayer/asayer-heroku-template">
-    <img src="https://assets.strapi.io/uploads/Deploy_button_heroku_b1043fc67d.png" />
+  <a href="https://docs.openreplay.com/deployment/deploy-gcp">
+    <img src="static/deploy-gcp.png" />
   </a>
 
-  <a href="https://render.com/docs/deploy-asayer">
-    <img src="https://assets.strapi.io/uploads/deploy_render_e076b6f23a.png" height="44" />
+  <a href="https://docs.openreplay.com/deployment/deploy-azure">
+    <img src="static/deploy-azure.png" />
+  </a>
+
+  <a href="https://docs.openreplay.com/deployment/deploy-digitalocean">
+    <img src="static/deploy-do.png" />
   </a>
 </p>
 
