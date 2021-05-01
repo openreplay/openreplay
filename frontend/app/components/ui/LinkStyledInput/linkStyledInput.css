@@ -1,0 +1,34 @@
+.input {
+  border-radius: 3px;
+  padding: 3px 5px;
+  background-color: white;
+  margin-right: 5px;
+  min-width: 55%;
+  line-height: 15px;
+  height: 28px !important;
+
+  &[data-fluid] {
+    min-width: 90%;
+  }
+  &:focus {
+    border: solid 1px $gray-light !important;
+    color: #454545 !important;
+  }
+}
+
+.linkStyled {
+  &.disabled {
+    color: $gray-light;
+  }
+  cursor: pointer;
+  line-height: 15px;
+  padding: 3px 5px;
+  border: solid thin transparent;
+  height: 24px;
+  width: max-content;
+  color: $teal;
+  text-align: right;
+  &.console {
+    font-family: 'Menlo', 'Courier' !important;
+  }
+}

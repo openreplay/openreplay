@@ -1,0 +1,102 @@
+@import "icons.css";
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  padding: 0 15px 0px 15px;
+  height: calc(100vh - 60px);
+  background-color: $gray-lightest;
+}
+
+.runInfo {
+  background: white;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 3px;
+  box-shadow: 0px 1px 3px 0 $gray-light;
+
+  & .topBlock,
+  & .bottomBlock {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  & .topBlock {
+    padding: 0px 10px;
+    margin-bottom: 10px;
+    align-items: flex-start;
+    & > div {
+      flex-shrink: 0;
+      &:nth-child(2) {
+        flex-shrink: 1;
+        padding: 0 10px;
+      }
+    }
+  }
+
+  & .bottomBlock {
+    background-color: white;
+    border-radius: 15px;
+    height: 30px;
+    padding: 0 10px;
+    box-shadow: 0px 1px 3px 0 $gray-light;
+    & .testDetails, & .clientDetails {
+      display: flex;
+      align-items: center;
+    }
+  }
+
+  & .asssetsButtonContent {
+    display: flex;
+    align-items: center;
+  }
+
+
+  & .downloadIcon {
+    @mixin icon download, $teal, 10px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+
+}
+
+.scheduleIcon {
+  @mixin icon history, $teal;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+}
+
+.tabLabel {
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  text-align: center;
+  padding: 10px 0;
+  width: 108px;
+  display: inline-block;
+  transition: all 0.2s;
+  text-transform: uppercase;
+
+  &:hover{
+    border-color: $teal;
+    transition: all 0.2s;
+    color: $teal-dark;
+  }
+  
+  &[data-active=true] {
+    border-color: $teal;
+    color: $teal-dark;
+  }
+}
+
+.tab {
+  flex: 1;
+  overflow-y: auto;
+  background-color: white !important;
+  margin: 0 -15px;
+  padding: 0 15px;
+  padding-top: 10px;
+}
+

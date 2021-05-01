@@ -1,0 +1,8 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &[data-inline=true] {
+  	display: inline-flex;
+  }
+}

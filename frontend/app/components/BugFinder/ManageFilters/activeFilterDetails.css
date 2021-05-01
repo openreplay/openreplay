@@ -1,0 +1,85 @@
+.userEvents {
+    & .list {
+        margin-top: 10px;
+        margin-bottom: 10px;
+        border: solid thin $gray-light;
+        border-radius: 3px;
+        background-color: white;
+        & .filterType {            
+            border-bottom: solid thin $gray-light;
+            padding: 8px 10px;
+            align-items: center;
+
+            & .value {
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            &:last-child {
+                border-bottom: none;
+            }
+
+            & .indexCount {
+                width: 20px;
+                height: 20px;
+                background-color: white;
+                border-radius: 50%;
+                margin-right: 10px;
+                box-shadow: 0 1px 5px 0 $gray-light;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+            }
+        }
+    }
+}
+
+.filterDetails {
+    width: 400px;
+    padding: 20px;
+
+    & .title {
+        font-size: 20px;
+        margin-bottom: 25px;
+    }
+}
+
+.filterType {
+    display: flex;
+    align-items: start;
+    padding: 10px 0;
+    font-size: 12px;
+}
+
+.filterLabel {
+    font-weight: bold;
+    width: 100px;
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.eventsBadge {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.footer {
+    margin-top: 30px;
+}
+
+.badge {
+    padding: 5px 10px;
+    background-color: $gray-light;
+    margin-right: 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    /* margin-bottom: 10px; */
+}
+
+[data-hidden=true] {
+    display: none;
+}

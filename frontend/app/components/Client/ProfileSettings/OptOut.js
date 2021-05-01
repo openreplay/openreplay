@@ -1,0 +1,28 @@
+import React from 'react'
+import { connect } from 'react-redux';
+import { Checkbox } from 'UI'
+import { updateClient } from 'Duck/user'
+
+function OptOut(props) {
+  const { optOut } = props;
+  const onChange = () => {
+    props.updateClient({ optOut: !optOut, name: 'OpenReplay' })
+  }
+  return (
+    <div>
+      <Checkbox
+        name="isPublic"
+        className="font-medium"
+        type="checkbox"
+        checked={ optOut }
+        onClick={ onChange }
+        className="mr-8"
+        label="Enable/Disable"
+      />
+    </div>
+  )
+}
+
+export default connect(state => ({
+  optOut: state.getIn([ 'user', 'client', 'optOut' ]),
+}), { updateClient })(OptOut);

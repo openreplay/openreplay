@@ -1,0 +1,16 @@
+.name {
+	min-width: 55%;
+}
+
+.sessions {
+	width: 6%;
+}
+
+.users {
+	width: 5%;
+}
+
+.occurrence {
+	width: 15%;
+	min-width: 152px;
+}

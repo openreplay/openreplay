@@ -1,0 +1,17 @@
+.wrapper {
+  position: fixed;
+  background-color: white;
+  top: 50px;
+  left: 0;
+  right: 0;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: solid thin $gray-light-shade;
+}
+
+.primary {
+  background-color: $teal;
+  color: white;
+}

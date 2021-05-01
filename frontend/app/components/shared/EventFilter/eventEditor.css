@@ -1,0 +1,70 @@
+@import 'mixins.css';
+@import 'icons.css';
+
+.wrapper {
+  width: 100%;
+  display: flex;
+  padding: 8px 15px;
+  background-color: white;
+  border-bottom: solid thin $gray-lightest;  
+  transition: all 0.4s;
+
+  &:last-child {
+    border-bottom: solid thin transparent;
+  }
+  
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+
+    & .actions {
+      opacity: 1;
+      transition: all 0.2s;
+    }
+  }
+
+  & .leftSection,
+  & .actions {
+    display: flex;
+    align-items: center;
+  }
+
+  & .leftSection {
+    flex: 1;
+    & > div {
+      margin-right: 10px;
+      flex-shrink: 0;
+    }
+  }
+}
+
+.index {
+  background: $white;
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  margin-right: 10px;
+  color: $gray-medium;
+  font-weight: 300;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+}
+
+.button {
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.actions {
+  opacity: 0;
+  transition: all 0.4s;
+}

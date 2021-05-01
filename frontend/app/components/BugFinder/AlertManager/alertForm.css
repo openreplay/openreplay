@@ -1,0 +1,9 @@
+.formGroup {
+  margin-bottom: 15px;
+
+  & .label {
+    font-size: 14px;
+    margin: 0;
+    margin-bottom: 5px;
+  }
+}

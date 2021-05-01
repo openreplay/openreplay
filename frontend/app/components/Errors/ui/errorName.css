@@ -1,0 +1,5 @@
+.function {
+  max-width: 100% !important;
+  color: $gray-medium;
+  font-weight: 300;
+}

@@ -1,0 +1,21 @@
+
+
+.title {
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wrapper {
+  transition: all 0.4s;
+  padding: 8px 14px;
+  /* margin: 0 -14px; */
+  height: 70px;
+  background-color: white;
+  border-bottom: solid thin $gray-light;
+  &:hover {
+    background-color: $active-blue;
+    transition: all 0.2s;
+  }
+}

@@ -1,0 +1,20 @@
+.wrapper {
+  padding: 20px;
+}
+
+.button {
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.formGroup {
+  margin-bottom: 15px;
+
+  & .label {
+    font-size: 14px;
+    margin: 0;
+    margin-bottom: 5px;
+  }
+}

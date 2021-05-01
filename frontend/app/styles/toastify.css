@@ -1,0 +1,33 @@
+.Toastify__close-button {
+  text-indent: -1000em;
+  content: '';
+  width: 15px;
+  height: 15px;
+  display: block;
+  background-image: svg-load(icons/close.svg, fill=gray-medium) !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  background-position: center center !important;
+}
+.Toastify__toast {
+  background-color: white !important;
+  color: $gray-medium;
+  border-left: solid 5px transparent;
+
+  &.Toastify__toast--default {
+    border-color: $teal;
+  }
+  &.Toastify__toast--info {
+    border-color: $yellow;
+  }
+  &.Toastify__toast--success {
+    border-color: $teal;
+  }
+  &.Toastify__toast--warning {
+    background: $orange;
+  }
+  &.Toastify__toast--error {
+    background: $red;
+    border-color: $red;
+  }
+}

@@ -1,0 +1,9 @@
+
+
+.searchInput {
+    padding: 10px 6px !important;
+  
+    &:focus {
+      border-color: $teal !important;
+    }
+  }

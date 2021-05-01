@@ -1,0 +1,43 @@
+.menuItem {
+  border-radius: 3px;
+  border: solid thin transparent;
+  color: $gray-dark;
+  cursor: pointer;
+
+  &:hover {
+    color: $teal;
+    & svg {
+      fill: $teal;
+    }
+    & .actions {
+      opacity: 1;
+    }
+  }
+  &.active {
+    color: $teal;
+  }
+
+  & .disabled {
+    opacity: 0.5;
+  }
+
+  & .iconLabel {
+    min-width: 68%;
+    max-width: 68%;
+  }
+  & .title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 10px;
+    margin-top: 1px;
+  }
+
+  & .actions {
+    opacity: 0;
+  }
+}
+
+.teamIcon {
+  
+}

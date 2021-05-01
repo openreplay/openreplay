@@ -1,0 +1,24 @@
+.wrapper {  
+  display: flex;
+  justify-content: space-between;
+
+  & input {
+    max-width: 85px !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    color: $gray-medium !important;
+  }
+  
+  & > div {
+    &:first-child {
+      margin-right: 10px;
+    }
+  }
+}
+
+.label {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: $gray-medium !important;
+}
+

@@ -1,0 +1,26 @@
+
+
+.sessionList {
+  padding: 0 20px;
+  background-color: #f6f6f6;
+  min-height: calc(100vh - 59px);
+}
+
+.siteWrapper {
+  padding-top: 10px;
+  margin-bottom: 10px;
+}
+
+.siteHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  font-weight: 400;
+  font-size: 14px;
+  background-color: white;
+  border-top: solid thin $gray-lightest;
+  margin: -15px;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  padding: 10px;
+}

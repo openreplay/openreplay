@@ -1,0 +1,56 @@
+.stepWrapper {
+  overflow: hidden;
+  position: relative;
+
+  & .step {
+    padding: 10px 0;
+    & .iconWrapper {
+      background-color: white;
+      border: solid thin $gray-light;
+    }
+  }
+
+  &.completed {
+    & .step .iconWrapper {
+      background-color: $gray-medium;
+    }
+  }
+
+  &.active {
+    & .step .iconWrapper {
+      background-color: $teal;
+    }
+  }
+}
+
+.stepWrapper:first-child {
+  & .verticleLine:before {
+    display: none !important;
+  }
+}
+
+.stepWrapper:last-child {
+  & .verticleLine:after {
+    display: none !important;
+  }
+}
+
+.verticleLine {
+  &:before, &:after {
+    content: "";
+    width: 1px;
+    position: absolute;    
+    background-color: $gray-medium;
+    left: 10px;
+  }
+
+  &:before {
+    top: 0;
+    bottom: 75%;
+  }
+
+  &:after {
+    top: 75%;
+    bottom: 0;
+  }
+}

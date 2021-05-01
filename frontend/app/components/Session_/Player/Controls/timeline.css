@@ -1,0 +1,150 @@
+
+
+.progress {
+  height: 10px;
+  border-radius: 1px;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+
+.skipInterval {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+
+.event {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: solid 1px white;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: rgba(136, 136, 136, 0.8);
+  pointer-events: none;
+  /* top: 0; */
+  /* bottom: 0; */
+ /*  &:hover {
+    width: 10px;
+    height: 10px;
+    margin-left: -6px;
+    z-index: 1;
+  };*/
+}
+
+/* .event.click, .event.input {
+  background: $green;
+}
+.event.location {
+  background: $blue;
+} */
+
+.markup {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  border-radius: 2px;
+  margin-left: -15px;
+  &:hover {
+    z-index: 9999;
+  }
+}
+
+/* .markup.log {
+  background: $blue;
+}
+
+.markup.error {
+  background: $red;
+}
+
+.markup.warning {
+  background: $orange;
+} */
+
+.markup.info {
+  background: $blue2;
+}
+
+.popup {
+  max-width: 300px !important;
+  /* max-height: 300px !important; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  & span {
+    display: block;
+    max-height: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.timeline {
+  border-radius: 5px;
+  overflow: hidden;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: $gray-light;
+  display: flex;
+  align-items: center;
+}
+
+.clickRage {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  border-radius: 2px;
+  margin-left: -1px;
+  /* background: $red; */
+}
+
+.returningLocation {
+  position: absolute;
+  height: 20%;
+  border-radius: 50%;
+  /* background: $red; */
+  width: 12px;
+}
+
+.feedbackIcon {
+  position: absolute;
+  margin-top: -20px;
+  margin-left: -9px;
+  background-color: $gray-lightest;
+  padding: 2px;
+  border-radius: 3px;
+  box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.1);
+  
+  & .tooltipArrow {
+    width: 50px;
+    height: 25px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    overflow: hidden;
+    &::after {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: $gray-lightest;
+      transform: translateX(-50%) translateY(50%) rotate(45deg);
+      bottom: 100%;
+      left: 50%;
+      box-shadow: 0px 0px 0px 1px rgba(0,0,0,0.1);
+    }
+  }
+}

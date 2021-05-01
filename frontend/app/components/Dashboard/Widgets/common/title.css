@@ -1,0 +1,14 @@
+.title {  
+  display: flex;
+  align-items: center;
+
+  & h4 {
+    margin: 0;
+    padding-right: 10px;
+  }
+
+  & > span {
+    font-size: 14px;
+    color: $gray-medium;
+  }
+}
