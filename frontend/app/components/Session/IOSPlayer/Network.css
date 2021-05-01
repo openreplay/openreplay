@@ -1,0 +1,11 @@
+.popupNameTrigger {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 100%;
+  width: fit-content;
+}
+.popupNameContent {
+  max-width: 600px;
+  overflow-wrap: break-word;
+}

@@ -1,0 +1,141 @@
+@import "icons.css";
+
+.stepWrapper {
+  overflow: hidden;
+  font-size: 13px;
+  position: relative;
+  transition: all 0.4s;
+
+  & .step {   
+    min-height: 40px;
+    padding: 20px 0;
+
+    &.failed .iconWrapper {
+      background-color: #FFF2F2 !important;
+    }
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+
+  & .bottomBorder {      
+    height: 1px;
+    border-bottom: dashed thin $gray-light;
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+    right: 0;
+  }
+}
+
+.subSteps {
+  padding-left: 50px;
+  & .step {    
+    background-color: $gray-lightest;
+    padding: 5px 0;
+    padding-left: 5px;
+    border-bottom: solid thin $gray-light;
+
+    & .description {
+      width: 423px;
+    }    
+  }
+}
+
+.iconWrapper {
+  width: 40px;
+  height: 40px;
+  background: $gray-lightest;
+  border: 1px solid $gray-light;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.description {
+  width: 70%;
+  padding: 0 12px;
+  & .line {
+    white-space: nowrap;
+    align-items: center;
+    margin-right: 5px;
+    text-transform: capitalize;
+  }
+  & .info {
+    max-width: 80%;
+    display: block;
+    border-radius: 3px;
+    padding: 3px;
+    color: $gray-dark;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    background-color: #FFF2F2;
+    font-family: 'menlo', 'monaco', 'consolas', monospace;
+    margin: 5px 0;
+  }
+
+  & .input {
+    line-height: 17px;
+    background-color: #CC0000;
+    color: white;
+    padding: 2px 8px;
+    text-transform: uppercase;
+    border-radius: 3px;
+    width: fit-content;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.screenshotButton {
+  padding: 5px;
+  margin-top: 12px;
+  cursor: pointer;
+  @mixin icon camera, $gray-dark, 18px;
+  &:hover{
+    @mixin icon camera, $gray-medium, 18px;
+  }
+}
+.screenshot img {
+  width: 300px;
+  height: auto;
+}
+
+.stepWrapper:first-child {
+  & .verticleLine:before {
+    display: none !important;
+  }
+}
+
+.stepWrapper:last-child {
+  & .verticleLine:after {
+    display: none !important;
+  }
+}
+
+.verticleLine {
+  &:before, &:after {
+    content: "";
+    width: 1px;
+    position: absolute;    
+    background-color: $gray-light;
+    left: 20px;
+  }
+
+  &:before {
+    top: 0;
+    bottom: 50%;
+  }
+
+  &:after {
+    top: 50%;
+    bottom: 0;
+    
+  }
+  
+}

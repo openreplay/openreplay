@@ -1,0 +1,17 @@
+.filter {
+    padding: 15px;
+    cursor: pointer;
+    border-top: solid thin $gray-light;
+    border-bottom: solid thin transparent;
+    transition: all 0.3s;
+    
+    &:last-child {
+        border-bottom: solid thin $gray-light;
+    }
+    
+    &[data-active=true],
+    &:hover {
+        background-color: $active-blue;        
+        transition: all 0.2s;        
+    }
+}

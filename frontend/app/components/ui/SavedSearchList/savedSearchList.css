@@ -1,0 +1,20 @@
+.header {
+    margin-bottom: 15px;
+    & .label {
+      text-transform: uppercase;
+      color: gray;
+      letter-spacing: 0.2em;
+    }
+}
+
+.showMore {
+    &:hover {
+    color: $teal;
+    & svg {
+        fill: $teal;
+    }
+    & .actions {
+        opacity: 1;
+    }
+    }
+}

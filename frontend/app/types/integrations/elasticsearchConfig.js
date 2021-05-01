@@ -1,0 +1,33 @@
+import Record from 'Types/Record';
+import { validateIP } from 'App/validate'
+
+export const API_KEY_ID_LENGTH = 20;
+export const API_KEY_LENGTH = 22;
+
+export default Record({
+  projectId: undefined,
+  host: "",
+  apiKeyId: "",
+  apiKey: "",
+  indexes: "*log*",
+  port: 9200,
+  isValid: false,
+}, {
+  idKey: 'projectId',
+  fromJS: ({ projectId, ...config }) => ({
+    ...config,
+    projectId: projectId === undefined ? projectId : `${ projectId }`,
+  }),
+  methods: {
+    validateKeys() {
+      return this.apiKeyId.length === API_KEY_ID_LENGTH && this.apiKey.length === API_KEY_LENGTH && validateIP(this.host);
+    },
+    validate() {
+      return this.host !== '' && this.apiKeyId !== '' && this.apiKey !== '' && this.indexes !== '' && !!this.port && 
+      this.isValid && this.validateKeys();
+    },
+    exists() {
+      return this.projectId >= 0;
+    }
+  }
+});

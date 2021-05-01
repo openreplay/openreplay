@@ -1,0 +1,128 @@
+
+@import 'icons.css';
+@import 'mixins.css';
+
+@keyframes fade {
+  0%   { opacity: 1}
+  50% { opacity: 0}
+  100%   { opacity: 1}
+}
+
+.sessionItem {
+  user-select: none;
+  @mixin defaultHover;
+  border-radius: 3px;
+  padding: 10px 10px;
+  padding-right: 15px;
+  margin-bottom: 15px;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  border: solid thin #EEEEEE;
+
+  &:hover {
+    & .playLink {
+      transition: all 0.4s;
+      opacity: 1;
+    }
+
+    & .favoriteWrapper {
+      transition: all 0.4s;
+      opacity: 1;
+    }
+  }
+
+  & .iconStack {
+    min-width: 200px;
+    display: flex;
+    & .icons {
+      display: flex;
+      flex-flow: row;
+      margin-bottom: 5px;
+      align-items: center;
+    }
+  }
+
+  & .left {
+    & > div {
+      &[data-collapsed=true] {
+        height: 0;
+        overflow: hidden;
+      }
+      justify-content: center;
+      font-size: 12px;
+      color: $gray-medium;
+      font-weight: 300;
+    }
+
+    & .fid {
+      & span {
+        margin-bottom: 2px;
+      }
+      & .fidLabel {
+        width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    & .iconDetails {
+      flex: 2;
+      display: flex;
+      flex-flow: row;
+      justify-content: flex-start;
+      align-items: center;
+    }
+  }
+
+  & .count {
+    font-size: 18px;
+    font-weight: 400;
+  }
+}
+
+.favoriteWrapper {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  margin: 0 15px;
+
+  &[data-favourite=true] {
+    opacity: 1;
+    & svg {
+      fill: $teal;
+    }
+  }
+}
+
+.playLink {
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  /* opacity: 0; */
+  &[data-viewed=true] {
+    opacity: 1;
+  }
+  & > a {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.liveTag {
+  height: 26px;
+  width: 56px;
+  border-radius: 3px;
+  background-color: #42AE5E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+  & svg {
+    animation: fade 1s infinite;
+  }
+}

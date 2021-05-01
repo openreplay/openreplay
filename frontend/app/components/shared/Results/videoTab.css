@@ -1,0 +1,4 @@
+.video {
+  height: calc(100vh - 266px);
+  width: 100%;
+}

@@ -1,0 +1,9 @@
+*.log
+node_modules/
+public/
+.idea
+drafts
+yarn.lock
+app/components/ui/SVG.js
+*.DS_Store
+.env

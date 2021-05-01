@@ -1,0 +1,83 @@
+@import 'mixins.css';
+
+.wrapper  {
+  position: relative;
+  bottom: 0;
+  right: 0;
+}
+
+.menuItems {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  right: 6px;
+  bottom: 70px;
+  align-items: flex-end;
+
+  & .menuItemButton {
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+
+    border-radius: 25px;
+    transition: all 0.4s;
+
+    @mixin shadow;
+    margin-top: 10px;
+
+    & .buttonLabel {
+      opacity: 0;
+      color: $teal;
+      margin-right: 40px;
+      white-space: nowrap;
+      transition: all 0.1s;
+    }
+
+    &:hover {
+      width: 100%;
+      transition: all 0.2s;
+      padding-left: 20px;
+      & .buttonLabel {
+        opacity: 1;
+        transition: all 0.2s;
+      }
+    }
+
+    & .icon {
+      position: absolute;
+      right: 17px;
+    }
+  }
+}
+
+.addStepButton {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  color: $green;
+  right: 0;
+  bottom: 0;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: $teal-dark;
+    box-shadow: 0 2px 7px 0 rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+  }
+
+  & .plusIcon {
+    transition: all 0.3s;
+    filter: drop-shadow( 1px 1px 1px rgba(0, 0, 0, 0.2) );
+  }
+
+  &.openMenuBtn {
+    background-color: $gray-darkest;
+    & .plusIcon {
+      transform: rotate(45deg) !important;
+      transition: all 0.3s;
+    }
+  }
+}

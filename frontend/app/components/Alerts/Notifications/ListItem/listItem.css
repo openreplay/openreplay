@@ -1,0 +1,7 @@
+.wrapper {  
+  padding: 15px;
+}
+
+.viewed {
+  background-color: $gray-lightest;
+}

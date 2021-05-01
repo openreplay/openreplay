@@ -1,0 +1,23 @@
+.badge {
+  font-size: 11px;
+  border-radius: 3px;
+  background-color: white;
+  border: solid thin $gray-light;
+  padding: 2px 0;
+  text-align: center;
+  width: 66px;
+  margin-right: 10px;
+  user-select: none;
+
+  &.red {
+    background-color: rgba(204, 0, 0, 0.05);
+  }
+
+  &.yellow {
+    background-color: rgba(245, 166, 35, 0.05);
+  }
+}
+
+.icon {
+  vertical-align: text-top;
+}

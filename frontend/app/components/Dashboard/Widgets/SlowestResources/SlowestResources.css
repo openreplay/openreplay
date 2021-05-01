@@ -1,0 +1,7 @@
+.topActions {
+  position: absolute;
+  top: 0px;
+  right: 50px;
+  display: flex;
+  justify-content: flex-end;
+}

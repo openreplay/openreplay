@@ -1,0 +1,192 @@
+$padding: 23px;
+
+@keyframes fadeInRight {
+  0% {
+    transform:  translate(-100%,0px);
+  }
+  100% {
+    transform:  translate(0,0px);
+  }
+}
+
+@keyframes fadeInLeft {
+  0% {
+    transform:  translate(1000px,0px);
+  }
+  100% {
+    transform:  translate(0px,0px);
+  }
+}
+
+.main {
+  &.left {
+    & .contentWrapper {
+      left: -200%;
+    }
+  }
+
+  &.right {
+    & .contentWrapper {
+      right: -1000px;
+    }
+  }
+}
+
+.mainPanel {
+  box-shadow: 5px 0 5px rgba(0,0,0,.05);
+  z-index: 1;
+  height: 100vh;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background: #f3f3f3;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $gray-medium;
+    }
+  }
+}
+
+.contentWrapper {
+  background: $white;
+  position: fixed; 
+  top: 0;
+  bottom: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 102; /* stay top of the test builer stiky header */
+  transition: left .2s ease-in-out;
+
+  &[data-size=big] {
+    width: 1006px;
+  }
+
+  &[data-size=middle] {
+    width: 500px;
+  }
+
+  &[data-size=lg] {
+    width: 400px;
+  }
+
+  &[data-size=small] {
+    width: 350px;
+  }
+
+}
+
+.content {
+  z-index: 1;
+  height: 100%;
+  background: $white;
+}
+
+.detailContent {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: $white;
+  border-left: solid 2px $gray-lightest;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  
+  &[data-displayed=true] {
+    left: 100%;
+  }
+
+  &::-webkit-scrollbar {
+    width: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background: #f3f3f3;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $gray-medium;
+    }
+  }
+}
+
+
+.header {
+  font-size: 20px;
+  padding: 20px 14px;
+}
+
+.overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 100%;
+  z-index: 102; /* stay top of the test builer stiky header */
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.main[data-displayed=true] {
+  & > .overlay {
+    right: 0;
+    opacity: 1;
+    transition: opacity 0.6s;
+  }
+
+  &.left {
+    & > .contentWrapper {
+      left: 0;
+      animation: fadeInRight ease-in-out 0.3s;
+      animation-iteration-count: 1;
+      transform-origin: 50% 50%;
+      animation-fill-mode:forwards;
+    }
+
+    & > .closeWrapper {
+      top: 30px;
+      right: 30px;
+      transition: all 0.3s ease-in;
+    }
+  }
+
+  &.right {
+    & > .contentWrapper {
+      right: 0;
+      animation: fadeInLeft ease-in-out 0.3s;
+      animation-iteration-count: 1;
+      transform-origin: 50% 50%;
+      animation-fill-mode:forwards;
+    }
+
+    & > .closeWrapper {
+      top: 30px;
+      left: 30px;
+      transition: all 0.3s ease-in;
+    }
+  }
+
+  & .closeWrapper {
+    top: 30px;
+    right: 30px;
+    transition: all 0.3s ease-in;
+  }
+}

@@ -1,0 +1,11 @@
+.wrapper {
+  background-color: white;
+  color: $gray-dark;
+  border: solid thin $gray-light;
+}
+
+.alert {
+  background: #C3E9EA;
+  color: #32888C;
+  border: none;
+}

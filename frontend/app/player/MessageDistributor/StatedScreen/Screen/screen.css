@@ -1,0 +1,20 @@
+.screen {
+  overflow: hidden;
+  position: absolute;
+  transform-origin: left top;
+  top: 50%;
+  left: 50%;
+  box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.1);
+}
+.iframe {
+  position: absolute;
+  border: none;
+}
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}

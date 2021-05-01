@@ -1,0 +1,7 @@
+.recharts-legend-item {
+  padding: 0 10px;
+}
+
+.recharts-legend-item-text {
+  user-select: none;
+}

@@ -1,0 +1,31 @@
+.wrapper {
+  position: relative;
+}
+.codeCopy {
+  position: absolute;
+  z-index: 50;
+  top: 10px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  color: white !important;
+  padding: 6px 20px;
+  cursor: pointer;
+  border-radius: 3px;
+  color: $gray-medium;
+  min-width: 90px;
+  transition: all 0.3s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.4);
+    transition: all 0.2s;
+  }
+}
+
+.codeLoader {
+  width: 100%;
+  height: calc(100vh - 215px);
+
+  & :global(.CodeMirror) {
+    height: 100%;
+  }
+}
