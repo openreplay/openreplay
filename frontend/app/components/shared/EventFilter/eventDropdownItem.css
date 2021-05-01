@@ -1,0 +1,26 @@
+.eventDropdownItem {
+  padding: 8px 0;
+  padding-left: 18px;
+  border-bottom: solid thin $gray-light;
+  
+  &:last-child {
+    border-bottom: solid thin transparent;
+  }
+
+  & .values {
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.inputType,
+    &.clickType {
+      color: $gray-darkest !important;
+      font-size: 14px;
+    }
+
+    &.consoleType {
+      font-family: 'menlo', 'monaco', 'consolas', monospace;
+      font-size: 12px;
+    }
+  }
+}

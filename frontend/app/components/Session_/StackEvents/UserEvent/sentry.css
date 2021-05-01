@@ -1,0 +1,47 @@
+
+.wrapper {
+	padding: 20px 40px 30px;
+}
+.icon {
+	margin-left: -5px;
+}
+.stacktrace {
+	& h6 {
+		display: flex;
+		align-items: center;
+		font-size: 17px;
+		padding-top: 7px;
+		margin-bottom: 10px;
+	}
+	& p {
+		font-family: 'Menlo', 'monaco', 'consolas', monospace;
+	}
+}
+
+
+.accordionTitle {
+	font-weight: 100;
+	& > b {
+		font-weight: 700;
+	}
+}
+
+.lineList {
+	list-style-position: inside;
+  list-style-type: decimal-leading-zero;
+  background: $gray-lightest;
+}
+
+.codeLine {
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+  line-height: 24px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 24px;
+  padding: 0 25px;
+	&.highlighted {
+		background: $red;
+		color: $white;
+	}
+}

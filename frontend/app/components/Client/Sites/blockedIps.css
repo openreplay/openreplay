@@ -1,0 +1,37 @@
+.wrapper {
+  width: 300px;
+  padding: 20px;
+  & label {
+    color: $gray-medium;
+    font-size: 12px;
+  }
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.list {
+  margin-top: 20px;
+  display: none;  /*  TODO enable this once the API is Ready */
+  & .item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: solid thin $gray-light;
+    padding: 8px 5px;
+
+    &:hover {
+      background-color: $active-blue;
+      & .actions {
+        opacity: 1;
+      }
+    }
+
+    & .actions {
+      opacity: 0;
+    }
+  }
+}

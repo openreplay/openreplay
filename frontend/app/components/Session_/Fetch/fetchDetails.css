@@ -1,0 +1,18 @@
+
+
+.url {
+  padding: 10px;
+  border-radius: 3px;
+  background-color: $gray-lightest;
+  /* border: solid thin $gray-light; */
+  /* max-width: 90%; */
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.status {
+	padding: 3px 8px;
+	border-radius: 12px;
+	/*border: 1px solid $gray-light;*/
+}

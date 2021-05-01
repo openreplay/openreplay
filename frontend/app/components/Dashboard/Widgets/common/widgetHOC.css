@@ -1,0 +1,44 @@
+@import 'mixins.css';
+
+.circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.panel {  
+  border-radius: 5px;
+  border: solid thin #EEEEEE;
+  background: $white;
+  padding: 15px;
+
+  &:hover {
+    & .closeButton {
+      opacity: 1;
+      transition: all 0.2s;
+    }
+  }
+
+  &.fullwidth {
+    width: 100%;
+  }
+
+  &.minHeight {
+    height: 300px;
+  }
+
+  &.fitContent {
+    height: fit-content;
+  }
+
+  & .closeButton {
+    opacity: 0;
+  }
+
+  & .trendChart {
+    margin-left: -15px;
+    margin-right: -15px;
+    margin-bottom: -15px;
+  }
+}

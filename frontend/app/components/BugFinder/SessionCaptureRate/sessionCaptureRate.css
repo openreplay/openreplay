@@ -1,0 +1,13 @@
+.inputField {
+  max-width: 140px !important;
+  & label {
+    font-weight: 300 !important;
+  }
+  & input {
+    max-width: 70px !important;
+  }
+}
+
+.customSlider {
+  line-height: 20px !important;
+}

@@ -1,0 +1,43 @@
+.automateBtnWrapper {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.automateButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 300;
+  cursor: pointer;
+
+  &:hover {
+    color: white;
+  }
+
+  & a {
+    display: flex;
+    padding: 0 30px;
+    height: 40px;
+    flex-direction: column;
+    color: white;
+    line-height: 15px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    background-color: $teal;
+    width: 100%;
+
+    &:hover {
+      background-color: $teal-dark;
+    }
+
+    & .subText {
+      font-size: 10px;
+      font-weight: 300;
+      color: rgba(255,255,255,.5);
+    }
+  }
+}
+

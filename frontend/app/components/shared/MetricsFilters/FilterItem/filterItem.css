@@ -1,0 +1,29 @@
+.wrapper {
+  min-height: 38px;
+}
+
+.dropdown {
+  display: 'flex' !important;
+  align-items: 'center';  
+  padding: 5px 8px;
+  border-radius: 3px;
+  transition: all 0.3s;
+  font-weight: 500;
+
+  &:hover {
+    background-color: #DDDDDD;
+    transition: all 0.2s;
+  }
+}
+
+.circle {
+  width: 15px;
+  height: 15px;
+  background-color: $tealx;
+  border-radius: 50%;
+  margin-right: 10px;
+
+  &.compare {
+    background-color: $teal;
+  }
+}

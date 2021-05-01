@@ -1,0 +1,59 @@
+import Highlight from 'react-highlight'
+import ToggleContent from '../../../shared/ToggleContent'
+
+const MobxDoc = (props) => {
+  return (
+    <div className="p-4">
+      <div>This plugin allows you to capture MobX events and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.</div>
+      
+      <div className="font-bold my-2">Installation</div>
+      <Highlight className="js">
+        {`npm i @openreplay/tracker-mobx --save`}
+      </Highlight>
+      
+      <div className="font-bold my-2">Usage</div>
+      <p>Initialize the @openreplay/tracker package as usual and load the plugin into it. Then put the generated middleware into your Redux chain.</p>
+      <div className="py-3" />
+
+      <div className="font-bold my-2">Usage</div>
+      <ToggleContent
+        label="Is SSR?"
+        first={
+          <Highlight className="js">
+        {`import OpenReplay from '@openreplay/tracker';
+import trackerMobX from '@openreplay/tracker-mobx';
+//...
+const tracker = new OpenReplay({
+  projectKey: PROJECT_KEY
+});
+tracker.use(trackerMobX(<options>)); // check list of available options below
+tracker.start();`}
+      </Highlight>
+        }
+        second={
+          <Highlight className="js">
+        {`import OpenReplay from '@openreplay/tracker/cjs';
+import trackerMobX from '@openreplay/tracker-mobx/cjs';
+//...
+const tracker = new OpenReplay({
+  projectKey: PROJECT_KEY
+});
+tracker.use(trackerMobX(<options>)); // check list of available options below
+//...
+function SomeFunctionalComponent() {
+  useEffect(() => { // or componentDidMount in case of Class approach
+    tracker.start();
+  }, [])
+}`}
+      </Highlight>
+        }
+      />
+
+      <div className="mt-6">See <a href="https://docs.openreplay.com/api" className="color-teal underline" target="_blank">API</a> for more options.</div>
+    </div>
+  )
+};
+
+MobxDoc.displayName = "MobxDoc";
+
+export default MobxDoc;

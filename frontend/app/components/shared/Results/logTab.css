@@ -1,0 +1,21 @@
+
+.logTab {
+  position: relative; /* for the js offsetTop work  */
+}
+
+.request {
+ color: $orange;
+}
+
+.responce {
+  color: $blue;
+}
+
+.block {
+  padding: 10px;
+  text-align: justify;
+  &[data-selected=true] {
+    background: $gray-light
+  }
+
+}

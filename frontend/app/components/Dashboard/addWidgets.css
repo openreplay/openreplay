@@ -1,0 +1,48 @@
+.widgetCard {
+	min-height: 110px;
+	padding: 15px;
+	width: 100%;
+	border: 1px solid $gray-light;
+	border-bottom: none;
+	
+	&:last-child {
+		border-bottom: 1px solid $gray-light;
+	}
+	& h4 {
+		margin-bottom: 10px;
+	}
+	& p {
+		color: $gray-medium;
+		font-weight: 300;
+		font-size: 12px;
+	}
+}
+
+.thumb {
+	border: solid thin $gray-light;
+	margin-right: 10px;
+	width: 170px;
+}
+
+.menuWrapper {
+	max-height: 300px;
+	overflow-y: auto;
+	&::-webkit-scrollbar {
+		width: 2px;
+	}
+}
+
+.menuItem {
+	transition: all .2s;
+	border-bottom: solid thin $gray-light;
+	padding: 8px 10px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	&:last-child {
+		border-bottom: none;
+	}
+	&:hover {
+		transition: all .4s;
+		background-color: $gray-lightest;
+	}
+}

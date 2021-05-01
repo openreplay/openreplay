@@ -1,0 +1,9 @@
+.wrapper {
+  &:hover {
+    background-color: $active-blue;  
+  }
+
+  &.active {
+    background-color: $active-blue;
+  }
+}

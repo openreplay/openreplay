@@ -1,0 +1,24 @@
+.wrapper {
+    padding: 4px 5px;
+    cursor: pointer;
+    border: solid thin transparent;
+    border-radius: 3px;
+    margin-left: -5px;
+    
+    &.active,
+    &:hover {
+        background-color: $active-blue;
+        border-color: $active-blue-border;
+        & .actionWrapper {
+            opacity: 1;
+        }
+    }
+
+    & span {
+        color: $teal
+    }
+
+    & .actionWrapper {
+        opacity: 0;
+    }
+}

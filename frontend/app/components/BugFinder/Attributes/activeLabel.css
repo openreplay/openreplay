@@ -1,0 +1,9 @@
+.wrapper {
+  padding: 3px 8px;
+  background-color: $gray-lightest;
+  border-radius: 10px;
+  margin-right: 5px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+  font-size: 13px;
+  color: $gray-medium;
+}
