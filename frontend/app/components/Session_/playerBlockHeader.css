@@ -1,0 +1,14 @@
+.header {
+  height: 50px;
+  border-bottom: solid thin $gray-light;
+  padding: 10px 15px;
+  background-color: white;
+}
+
+.divider {
+  width: 1px;
+  height: 100%;
+  margin: 0 15px;
+  background-color: $gray-light;
+}
+

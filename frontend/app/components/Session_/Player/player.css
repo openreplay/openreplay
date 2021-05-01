@@ -1,0 +1,80 @@
+@import 'icons.css';
+
+.playerBody {
+  background: $white;
+  /* border-radius: 3px; */
+  /* padding: 10px 10px 5px 10px; */
+  /* box-shadow: 0px 2px 10px 0 $gray-light; */
+  height: 100%;
+  /* border: solid thin $gray-light; */
+  border-right: solid thin $gray-light;
+}
+
+.screenWrapper {
+  width: 100%;
+  position: relative;
+  height: 100%;
+  /* border: solid thin $gray-light; */
+  /* border-radius: 3px; */
+  overflow: hidden;
+  background: $gray-lightest;
+}
+
+.disconnected {
+  font-size: 40px;
+  font-weight: 200;
+  color: $gray-medium;
+}
+.overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+
+/*   &[data-protect] {
+  pointer-events: none;
+  background: $white;
+  opacity: 0.3;
+}
+ */
+  & .iconWrapper {
+    background-color: rgba(0, 0, 0, 0.1);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    opacity: 0;
+    transition: all .2s; /* Animation */
+  }
+
+  & .zoomIcon {
+    opacity: 1;
+    transform: scale(1.8);
+    transition: all .8s;
+  }
+
+  & .playIcon {
+    @mixin icon play, $gray-medium, 30px;
+  }
+
+  & .pauseIcon {
+    @mixin icon pause, $gray-medium, 30px;
+  }
+}
+
+.playerView {
+  position: relative;
+  flex: 1;
+}
+
+.inspectorMode {
+  z-index: 99991 !important;
+}

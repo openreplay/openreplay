@@ -1,0 +1,129 @@
+@import 'icons.css';
+
+.wrapper {
+  display: flex;
+  align-items: center;
+  padding: 8px 15px;
+  background-color: white;
+  border-bottom: solid thin $gray-lightest;
+  &:last-child {
+    border-bottom: solid thin transparent;
+  }
+  
+  &:hover {
+    background-color: $active-blue;
+    & .actions {
+      opacity: 1;
+      transition: all 0.2s;
+    }
+  }
+
+  & > div:not(:last-child) {
+    margin-right: 10px;
+  }
+
+  & .label {
+    font-weight: 600;
+    min-width: 80px;
+  }
+
+  & .filterDropdown {    
+    padding: 0 5px !important;
+    min-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    font-weight: 400;
+    min-width: 280px !important;
+    max-width: 75% !important;
+    flex-wrap: wrap;
+    padding: 1.9px !important;
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    padding-left: 5px !important;
+
+    & a {
+      background-color: $gray-lightest !important;
+      box-shadow: none !important;
+      border-radius: 10px !important;
+      white-space: nowrap !important;
+      margin: 0 !important;
+      margin-right: 5px !important;
+      margin-bottom: 2px !important;
+      font-size: 13px !important;
+      font-weight: 400;
+      display: flex !important;
+      align-items: center !important;
+      padding: 3px 5px !important;
+
+      & i::before  {
+        display: none;
+      }
+      & i::after  {
+        content: '' !important;
+        @mixin icon close, $gray-dark, 12px;
+      }
+    }
+
+    & input {
+      padding: 6px !important;
+      margin: 0 !important;
+      color: $gray-medium !important;
+    }
+
+    & .delete.icon {
+      padding: 0 !important;
+      display: none;
+    }
+  }
+}
+
+.operatorDropdown {
+  font-weight: 400;
+  height: 28px;
+  min-width: 60px;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px !important;
+  font-size: 13px;
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  border: solid thin rgba(34, 36, 38, 0.15) !important;
+  border-radius: 4px !important;
+  color: $gray-darkest !important;
+  font-size: 14px !important;
+  &.ui.basic.button {
+    box-shadow: 0 0 0 1px rgba(62, 170, 175,36,38,.35) inset, 0 0 0 0 rgba(62, 170, 175,.15) inset !important;
+  }
+}
+
+.button {
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.actions {
+  margin-left: auto;
+  opacity: 0;
+  transition: all 0.4s;
+}
+
+.inputValue {
+  height: 28px !important;
+  width: 180px;
+  color: $gray-medium !important;
+}
+
+.header {
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #596764;
+  white-space: nowrap;
+  text-transform: uppercase;
+  font-weight: normal;
+  letter-spacing: 0.1em;
+  text-align: left;
+}

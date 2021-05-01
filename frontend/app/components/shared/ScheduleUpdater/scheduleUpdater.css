@@ -1,0 +1,42 @@
+.modalHeader {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+
+.title,  .nameTitle, .scheduleTitle {
+  font-family: 'Arial-BoldMT', 'Arial Bold', 'Arial';
+  font-weight: 700;
+}
+.title {
+    font-size: 14px;
+}
+.nameTitle, .scheduleTitle {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.name {
+  display:block;
+  text-decoration: none;
+  border-color: transparent;
+  background: $gray-lightest;
+  padding: 9px;
+  border-radius: 3px;
+  width: 100%;
+
+  &:focus {
+    border-color: $teal !important;
+  }
+}
+
+.schedule {
+  padding-bottom: 30px;
+}
+
+.scheduleControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

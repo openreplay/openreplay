@@ -1,0 +1,28 @@
+
+.message {
+  overflow-x: auto;
+  margin-left: 10px;
+  font-size: 13px;
+  overflow-x: auto;
+  &::-webkit-scrollbar {
+    height: 2px;
+  }
+}
+
+.line {
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+  padding: 7px 0 7px 15px;
+  /* margin-top: -1px; ??? */
+  display: flex;
+  align-items: flex-start;
+  border-bottom: solid thin $gray-light-shade;
+}
+
+.activeRow {
+  background-color: $teal !important;
+  color: white !important;
+}
+
+.icon {
+  padding-top: 4px;
+}

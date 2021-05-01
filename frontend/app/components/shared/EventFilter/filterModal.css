@@ -1,0 +1,90 @@
+.modal {
+	position: absolute;
+	left: 0;	
+	background-color: white;
+	min-width: 705px;
+	max-width: calc(100vw - 500px);
+	border-radius: 3px;
+	border: solid thin $gray-light;
+	box-shadow: 0 2px 10px 0 $gray-light;
+	z-index: 99;
+	padding: 20px;
+}
+
+.hint {
+	color: $gray-light;
+	font-size: 12px;
+	padding-bottom: 5px;
+}
+
+h5.title { 
+	margin: 10px 0 3px;
+}
+
+.filterListDynamic {
+	max-height: 350px;
+	overflow-y: auto;
+
+	&::-webkit-scrollbar {
+    width: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &:hover {
+    &::-webkit-scrollbar-track {
+      background: #f3f3f3;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: $gray-medium;
+    }
+	}
+	
+
+	& .header {
+		margin-bottom: 10px;
+    font-size: 13px;
+    color: #596764;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-weight: 600;
+		letter-spacing: 0.1em;
+		text-align: left;
+	}
+
+	& .list {
+		margin-left: -8px;
+	}
+}
+
+.filterListStatic {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+	max-height: 30rem;	
+	min-height: 20px;
+	color: $gray-medium;	
+	
+	& .header {
+		margin-bottom: 10px;
+    font-size: 13px;
+    color: #596764;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-weight: 600;
+		letter-spacing: 0.1em;
+		text-align: left;
+	}
+
+	& .list {
+		margin-left: -8px;
+	}
+
+	& .filterGroup {
+		width: 205px;
+	}
+}

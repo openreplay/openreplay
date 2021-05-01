@@ -1,0 +1,120 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  border-left: solid thin $gray-light !important;
+  padding: 10px 10px;
+  min-width: 180px;
+  justify-content: flex-start;
+  position: relative;
+  user-select: none;
+  
+  &:hover {
+    background-color: $gray-lightest;
+    & .drodownIcon {
+      transform: rotate(180deg);
+      transition: all 0.2s;
+    }
+    & .menu {
+      display: block;
+    }
+  }
+
+  & .drodownIcon {
+    transition: all 0.4s;
+    margin: 0;
+    margin-left: auto;
+  }
+
+  & [data-can-disable=true] {
+    & > li {
+      &:first-child {        
+        pointer-events: none;
+      }
+      &:not(:first-child) {
+        opacity: 0.3;
+        pointer-events: none;
+      }
+    }
+  }
+  & .menu {
+    display: none;
+    position: absolute;
+    top: 50px;
+    left: -1px;
+    background-color: white;
+    min-width: 200px;
+    z-index: 2;
+    border: 1px solid $gray-light;
+  }
+
+  & ul {
+    margin: 0;
+    max-height: 300px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 2px;      
+    }
+
+    & li {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      list-style-type: none;      
+      border-bottom: 1px solid $gray-light;
+      border-top: none;
+      padding: 10px 15px;
+      transition: all 0.2s;
+      &:hover {
+        background-color: $gray-lightest;
+        transition: all 0.2s;
+      }
+      &:first-child {
+        border-top: 1px solid $gray-light;
+      }
+    }
+  }
+}
+
+.headerSelect {
+  border: none !important;
+  display: flex !important;
+  align-items: center;
+  border-radius: 0 !important;  
+}
+
+.currentSite {
+  max-width: 130px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.statusGreenIcon {
+  display: block;
+  margin: 2px 10px 0 5px;
+  background-image: svg-load(signal-green.svg, fill=#CCC);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+  width: 11px;
+  height: 22px;
+}
+
+.statusRedIcon {
+  display: block;
+  margin: 2px 10px 0 5px;
+  background-image: svg-load(signal-red.svg, fill=#CCC);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center center;
+  width: 11px;
+  height: 22px;
+}
+
+.btnNew {
+  &:hover {
+    background-color: $gray-lightest;
+    transition: all 0.2s;
+  }
+}

@@ -1,0 +1,20 @@
+.filterItem {
+	display: flex;
+	align-items: center;
+	padding: 8px;
+	cursor: pointer;
+	border-radius: 3px;
+	transition: all 0.4s;
+	margin-bottom: 5px;
+	max-width: 100%;	
+	& .label {		
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&:hover {
+		background-color: $gray-lightest;
+		transition: all 0.2s;
+	}
+}

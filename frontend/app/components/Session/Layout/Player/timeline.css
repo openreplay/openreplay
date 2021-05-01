@@ -1,0 +1,66 @@
+.progress {
+  height: 10px;
+  border-radius: 1px;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+
+.timeline {
+  border-radius: 5px;
+  overflow: hidden;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: $gray-light;
+}
+
+
+.event {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: solid 1px white;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: rgba(136, 136, 136, 0.8);
+  pointer-events: none;
+}
+
+.popup {
+  max-width: 300px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  & span {
+    display: block;
+    max-height: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.markup {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  border-radius: 2px;
+  margin-left: -1px;
+}
+
+.markup.log {
+  background: $blue;
+}
+
+.markup.error {
+  background: $red;
+}
+
+.markup.warning {
+  background: $orange;
+}
+
+.markup.info {
+  background: $blue2;
+}

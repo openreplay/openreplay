@@ -1,0 +1,18 @@
+.wrapper {
+  padding: 8px 15px;
+  border-bottom: solid thin $gray-light;
+
+  &[data-viewed=false] {
+    background-color: $active-blue;
+    cursor: pointer;
+  }
+  
+  & .time {
+    color: $gray-medium;
+    font-size: 10px;
+  }
+
+  & .title {
+    font-weight: 500;
+  }
+}

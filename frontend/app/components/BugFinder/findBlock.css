@@ -1,0 +1,26 @@
+
+@import 'mixins.css';
+
+.clearStepsButton {
+  margin-right: 10px;
+}
+
+.findBlock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;  
+  margin-right: auto;
+  &[data-hide=true] {
+    display: none;
+  }
+
+  & .findButton {
+    text-transform: uppercase;
+  }
+
+  & button {
+    height: 23px !important;
+    padding: 0px 15px !important;
+    font-size: 12px !important;
+  }
+}

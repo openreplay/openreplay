@@ -1,0 +1,22 @@
+.wrapper {
+    & .body {
+        display: flex;
+        border-bottom: solid thin $gray-light;
+        padding: 5px;
+    }
+}
+
+.preSelections {
+    width: 130px;
+    background-color: white;
+    border-right: solid thin $gray-light;
+    & > div {
+        padding: 8px 10px;
+        width: 100%;
+        cursor: pointer;
+        &:hover {
+            background-color: $active-blue;
+        }
+    }
+}
+

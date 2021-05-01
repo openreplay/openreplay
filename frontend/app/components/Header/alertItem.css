@@ -1,0 +1,31 @@
+.alertItem {
+  padding: 10px 20px;
+  border-bottom: solid thin $gray-light;
+  position: relative;
+
+  & .title {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+
+  & .period {
+    color: $gray-medium;
+    font-size: 12px;
+  }
+
+  & .actions {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    right: 20px;
+    top: 0;
+    bottom: 0;
+
+    & > span {
+      margin-left: 12px;
+      cursor: pointer;
+      fill: $gray-medium;
+    }
+  }
+}

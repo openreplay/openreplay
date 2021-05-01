@@ -1,0 +1,12 @@
+.wrapper {
+  border: dotted 2px transparent;
+  border-radius: 3px;
+  margin: -5px;
+  padding: 5px;
+  transition: all 0.3s;
+
+  &:hover {
+    transition: all 0.2s;
+    border: dotted 2px $gray-medium;
+  }
+}

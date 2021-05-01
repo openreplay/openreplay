@@ -1,0 +1,6 @@
+.react-json-view {
+	font-size: 13px !important;
+	& .node-ellipsis {
+		font-size: 11px !important;
+	}
+}

@@ -1,0 +1,9 @@
+.wrapper {
+    display: flex;
+    align-items: center;
+    font-size: 13px;    
+
+    & .divider {
+        margin: 0 2px;
+    }
+}

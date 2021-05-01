@@ -1,0 +1,10 @@
+.line {
+  padding: 7px 0 7px 15px;
+}
+
+.message {
+  font-size: 13px;
+  &::-webkit-scrollbar {
+    height: 2px;
+  }
+}

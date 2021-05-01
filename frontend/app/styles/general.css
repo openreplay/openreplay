@@ -1,0 +1,261 @@
+.ml-15 { margin-left: 15px; }
+
+.ph-10 { padding-left: 10px; padding-right: 10px; }
+.ph-20 { padding-left: 20px; padding-right: 20px; }
+
+
+.info.info.info.info.info { /* BAD HACK >:) */
+  background-color: #f2f8ff;
+}
+
+.warn.warn.warn.warn {
+  background-color: #fefaf4;
+}
+
+.error.error.error.error {
+  background-color:  #fcf2f2;
+}
+
+
+.thin-scrollbar {
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+
+.scroll-x {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+}
+.scroll-y {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  &::-webkit-scrollbar {
+    width: 4px;
+  } 
+}
+
+.grecaptcha-badge{
+  display:none !important;
+}
+
+.divider,
+.divider-light {
+  height: 1px;
+  background-color: $gray-light;
+  margin: 25px 0;
+
+  &.m5 {
+    margin: 5px 0;
+  }
+}
+
+.divider-light {
+  border-color: $gray-lightest;
+  height: 2px;
+}
+
+.font-size-10 { font-size: 10px; }
+.font-size-12 { font-size: 12px; }
+.font-size-16 { font-size: 16px; }
+.font-size-20 { font-size: 20px; }
+
+.font-weight-regular { font-weight: 400; }
+.font-weight-bold { font-weight: 600; }
+.font-weight-thin { font-weight: 100; }
+
+.text-center { text-align: center; }
+
+.default-hover  {
+  transition: all 0.4s;
+  &:hover {
+    /* background-color: $active-blue; */
+    color: $teal;
+    transition: all 0.2s;
+    & a {
+      color: $teal;
+    }
+    & svg {
+      fill: $teal;
+    }
+  }
+}
+
+.img-crcle {
+  border-radius: 50%;
+  box-shadow: 1px 1px 1px 1px rgba(0, 0, 0 0.3);
+}
+
+.active-bg {
+  background-color: $active-blue;
+}
+
+.border-b-light {
+  border-bottom: solid thin $gray-light;
+}
+
+.mb-15-imp {
+  margin-bottom: 15px !important;
+}
+
+.color-red {
+  color: $red;
+}
+
+.InputContainer .InputElement,
+.ElementsApp, .ElementsApp .InputElement {
+  font-size: 40px;
+  padding: 20px;
+  background-color: white !important;
+  border: solid thin white !important;
+}
+
+.ui.modal>.content {
+  background-color: white !important;
+}
+.ui.modal>.actions {
+  text-align: left !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.border-gray-light {
+  border: solid thin $gray-light
+}
+
+.btn-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.code-font {
+  font-family: 'Menlo', 'monaco', 'consolas', monospace;
+  font-size: 13px;
+}
+
+::placeholder {
+  color: $gray-medium !important;
+  font-size: 14px;
+}
+
+.ui[class*="top fixed"].menu {
+  background-color: white !important;
+  border-bottom: solid thin #ddd !important;
+}
+
+.border-radius-3 {
+  border-radius: 3px;
+}
+
+.muted {
+  color: $gray-medium;
+}
+
+.thin-gray-border {
+  border: 1px solid $gray-light;
+}
+.thin-blue-border {
+  border: 1px solid $active-blue-border;
+}
+
+.speedIndexPopup {
+  font-size: 10px !important;
+  & span {
+    font-size: 10px;
+    margin-left: 10px;
+  }
+}
+
+.fit-content {
+  width: fit-content;
+}
+
+.gray-hover:hover {
+  background-color: $gray-light;
+  transition: all 0.4s;
+}
+
+.quote:before {
+  position: absolute;
+  /* font-family: 'FontAwesome'; */
+  top: 10px;
+  left: 0;
+  
+  content: "\201C";
+  font-size: 140px;
+  color: rgba(0,0,0,0.1);
+}
+
+.quote:after {
+  position: absolute;
+  /* font-family: 'FontAwesome'; */
+  bottom: 10px;
+  right: 0;
+  
+  content: "\201E";
+  font-size: 140px;
+  color: rgba(0,0,0,0.1);
+}
+
+.cap-first:first-letter {
+  text-transform: capitalize
+}
+
+.bg-hover {
+  transition: all 0.3s;
+  &:hover {
+    transition: all 0.2s;
+    background-color: $active-blue;
+  }
+}
+
+.ui.progress:last-child {
+  margin: 0 !important;
+}
+
+.blink-border {
+  /* border: 1px #ff0000 solid; */
+  border-color: #CC0000;
+  
+  animation: blink 1s;
+  animation-iteration-count: 3;
+}
+
+.underline-dashed {
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 2px;
+}
+
+@keyframes blink { 50% { border-color:#fff ; }  }
+
+
+.highlight-gray {
+  background-color: $gray-medium;
+  color: white;
+  border-radius: 3px;
+  padding: 1px 2px;
+}
+
+.hljs {
+  padding: 10px !important;
+  border-radius: 6px !important;
+  background-color: $gray-lightest !important;
+  font-size: 12px !important;
+}
+
+p {
+  margin-bottom: 10px !important;
+}
+
+.link {
+  color: $blue !important;
+  &:hover {
+    text-decoration: underline !important;
+  }
+}
