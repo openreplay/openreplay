@@ -70,7 +70,7 @@ Please refer to the [official OpenReplay documentation](https://docs.openreplay.
 
 - [Slack](https://slack.openreplay.com) (Connect with our engineers and community)
 - [GitHub](https://github.com/openreplay/openreplay) (Bug and issue reports)
-- [Twitter](https://twitter.com/OpenReplayHQ) (Product updates, Great content)
+- [Twitter](https://twitter.com/asayerio) (Product updates, Great content)
 - [Website chat](https://openreplay.com) (Talk to us)
 
 ## Contributing
