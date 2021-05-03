@@ -97,6 +97,9 @@ export default class App {
     } catch (e) { /* TODO: send report */}
   }
   send(message: Message, urgent = false): void {
+    if (!this.isActive) {
+      return;
+    }
     this.messages.push(message);
     if (urgent) {
       this.commit();
@@ -224,7 +227,7 @@ export default class App {
         log("OpenReplay tracking started."); 
 
         if (typeof this.options.onStart === 'function') {
-          this.options.onStart({ sessionToken: token, userUUID, sessionID: token });
+          this.options.onStart({ sessionToken: token, userUUID, sessionID: token /* back compat (depricated) */ });
         }
       })
       .catch(e => {
@@ -257,6 +260,7 @@ export default class App {
         this.nodes.clear();
         this.ticker.stop();
         this.stopCallbacks.forEach((cb) => cb());
+        log("OpenReplay tracking stopped.")
       } finally {
         this.isActive = false;
       }
