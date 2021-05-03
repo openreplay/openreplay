@@ -32,6 +32,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
     DeviceMemory     uint64  `json:"deviceMemory"`
     JsHeapSizeLimit  uint64  `json:"jsHeapSizeLimit"`
 		ProjectKey       *string `json:"projectKey"`
+		Reset            boolean `json:"reset"`
 	}
 	type response struct {
 		Timestamp int64  `json:"timestamp"`
@@ -73,7 +74,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	userUUID := getUUID(req.UserUUID)
 	tokenData, err := tokenizer.Parse(req.Token)
-	if err != nil { // Starting the new one
+	if err != nil || req.Reset { // Starting the new one
 		ua := uaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
 			responseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
