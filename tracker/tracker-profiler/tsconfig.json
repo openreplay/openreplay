@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "alwaysStrict": true,
+    "target": "es6",
+    "module": "es6",
+    "moduleResolution": "node",
+    "declaration": true,
+    "outDir": "./lib"
+  }
+}

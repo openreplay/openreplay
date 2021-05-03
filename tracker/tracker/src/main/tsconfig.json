@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "compilerOptions": {
+  	"allowSyntheticDefaultImports": true,
+    "lib": ["es6", "dom"],
+  },
+  "references": [
+    { "path": "../messages" }
+  ]
+}
