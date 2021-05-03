@@ -27,6 +27,7 @@ export default class SignupForm extends React.Component {
     password: '',
     email: '',
     projectName: '',
+    organizationName: '',
   };
 
   componentDidMount() {
@@ -34,8 +35,8 @@ export default class SignupForm extends React.Component {
   }
 
   handleSubmit = (token) => {
-    const { tenantId, fullname, password, email, projectName, auth } = this.state;
-    this.props.signup({ tenantId, fullname, password, email, projectName, auth, 'g-recaptcha-response': token })
+    const { tenantId, fullname, password, email, projectName, organizationName, auth } = this.state;
+    this.props.signup({ tenantId, fullname, password, email, projectName, organizationName, auth, 'g-recaptcha-response': token })
   }
 
   write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
