@@ -1,0 +1,25 @@
+{
+  "name": "@openreplay/sourcemap-uploader",
+  "version": "3.0.1",
+  "description": "NPM module to upload your JS sourcemaps files to OpenReplay",
+  "bin": "cli.js",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint . --ext .js --fix"
+  },
+  "author": "Alex Tsokurov",
+  "contributors": [
+    "Aleksandr K <alex@openreplay.com>"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "prettier": "^1.19.1"
+  },
+  "dependencies": {
+    "argparse": "^1.0.10",
+    "glob-promise": "^3.4.0"
+  }
+}
