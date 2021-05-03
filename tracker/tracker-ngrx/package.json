@@ -1,0 +1,35 @@
+{
+  "name": "@openreplay/tracker-ngrx",
+  "description": "Tracker plugin for NgRx state recording",
+  "version": "3.0.0",
+  "keywords": [
+    "ngrx",
+    "logging",
+    "replay"
+  ],
+  "author": "Alex Tsokurov",
+  "contributors": [
+    "Aleksandr K <alex@openreplay.com>"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "scripts": {
+    "lint": "prettier --write 'src/**/*.ts' README.md && tsc --noEmit",
+    "build": "npm run build-es && npm run build-cjs",
+    "build-es": "rm -Rf lib && tsc",
+    "build-cjs": "rm -Rf cjs && tsc --project tsconfig-cjs.json && echo '{ \"type\": \"commonjs\" }' > cjs/package.json && replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs'",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "@openreplay/tracker": "^5.1.0",
+    "@ngrx/store": ">=4"
+  },
+  "devDependencies": {
+    "@openreplay/tracker": "^3.0.0",
+    "prettier": "^1.18.2",
+    "replace-in-files-cli": "^1.0.0",
+    "typescript": "^3.6.4"
+  }
+}

@@ -1,0 +1,97 @@
+Promise rejection: 
+
+bubbles: false
+cancelBubble: false
+cancelable: true
+composed: false
+currentTarget: Window {0: Window, window: Window, self: Window, document: document, name: "", location: Location, …}
+defaultPrevented: false
+eventPhase: 0
+isTrusted: true
+path: [Window]
+promise: Promise {<rejected>: Error: promis ME main at eval (webpack:///./app/init/asayer.js?:29:13) at new Promise (<ano…}
+reason: Error: promis ME main at eval (webpack:///./app/init/asayer.js?:29:13) at new Promise (<anonymous>) at Object.onStart (webpack:///./app/init/asayer.js?:28:5) at Worker.App.worker.onmessage (webpack:///./node_modules/@asayerio/tracker/lib/app/index.js?:85:38)
+	message: "promis ME main"
+	stack: "Error: promis ME main↵    at eval (webpack:///./app/init/asayer.js?:29:13)↵    at new Promise (<anonymous>)↵    at Object.onStart (webpack:///./app/init/asayer.js?:28:5)↵    at Worker.App.worker.onmessage (webpack:///./node_modules/@asayerio/tracker/lib/app/index.js?:85:38)"
+	__proto__:
+	constructor: ƒ Error()
+	message: ""
+	name: "Error"
+	toString: ƒ toString()
+__proto__: Object
+returnValue: true
+srcElement: Window {0: Window, window: Window, self: Window, document: document, name: "", location: Location, …}
+target: Window {0: Window, window: Window, self: Window, document: document, name: "", location: Location, …}
+timeStamp: 13570.730000006733
+type: "unhandledrejection"
+__proto__: PromiseRejectionEvent
+
+
+WebWorker error:
+
+bubbles: false
+cancelBubble: false
+cancelable: true
+colno: 9551
+composed: false
+currentTarget: Window {0: Window, window: Window, self: Window, document: document, name: "", location: Location, …}
+defaultPrevented: false
+error: null
+eventPhase: 0
+filename: "blob:http://localhost:3333/63c73c49-4192-478d-a74a-61e3149eea86"
+isTrusted: true
+lineno: 1
+message: "Uncaught RangeError: offset is out of bounds"
+path: [Window]
+returnValue: true
+srcElement: Window {0: Window, window: Window, self: Window, document: document, name: "", location: Location, …}
+target: Window {0: Window, window: Window, self: Window, document: document, name: "", location: Location, …}
+timeStamp: 6852.295000004233
+type: "error"
+
+
+JuUncaught Error:
+
+bubbles: false
+cancelBubble: false
+cancelable: true
+colno: 11
+composed: false
+currentTarget: Window {window: Window, self: Window, document: document, name: "", location: Location, …}
+defaultPrevented: false
+error: Error: ME main at Object.onStart (webpack:///./app/init/asayer.js?:28:11) at Worker.App.worker.onmessage (webpack:///./node_modules/@asayerio/tracker/lib/app/index.js?:85:38)
+	message: " ME main"
+	stack: "Error:  ME main↵    at Object.onStart (webpack:///./app/init/asayer.js?:28:11)↵    at Worker.App.worker.onmessage (webpack:///./node_modules/@asayerio/tracker/lib/app/index.js?:85:38)"
+	__proto__:
+	constructor: ƒ Error()
+	message: ""
+	name: "Error"
+	toString: ƒ toString()
+	__proto__: Object
+eventPhase: 0
+filename: "webpack:///./app/init/asayer.js?"
+isTrusted: true
+lineno: 28
+message: "Uncaught Error:  ME main"
+path: [Window]
+returnValue: true
+srcElement: Window {window: Window, self: Window, document: document, name: "", location: Location, …}
+target: Window {window: Window, self: Window, document: document, name: "", location: Location, …}
+timeStamp: 6622.699999992619
+type: "error"
+
+
+/* !
+colno
+lineno
+filename
+message
+*/
+
+
+Non-Error promise rejection:
+
+
+Stacktrace parse:
+
+[{"columnNumber":11,"lineNumber":25,"fileName":"webpack:///./app/init/asayer.js?","functionName":"Object.onStart","source":"    at Object.onStart (webpack:///./app/init/asayer.js?:25:11)"},{"columnNumber":38,"lineNumber":85,"fileName":"webpack:///./node_modules/@asayerio/tracker/lib/app/index.js?","functionName":"Worker.App.worker.onmessage","source":"    at Worker.App.worker.onmessage (webpack:///./node_modules/@asayerio/tracker/lib/app/index.js?:85:38)"}]

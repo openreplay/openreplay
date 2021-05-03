@@ -1,0 +1,45 @@
+{
+  "name": "@openreplay/tracker",
+  "description": "The OpenReplay tracker main package",
+  "version": "3.0.1",
+  "keywords": [
+    "logging",
+    "replay"
+  ],
+  "author": "Alex Tsokurov",
+  "contributors": [
+    "Aleksandr K <alex@openreplay.com>"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "scripts": {
+    "lint": "eslint src --ext .ts,.js --fix && tsc --noEmit",
+    "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
+    "tsc": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
+    "rollup": "rollup --config rollup.config.js",
+    "compile": "node --experimental-json-modules compile.js",
+    "build": "npm run clean && npm run tsc && npm run rollup && npm run compile",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@rollup/plugin-babel": "^5.0.3",
+    "@rollup/plugin-node-resolve": "^8.0.1",
+    "@typescript-eslint/eslint-plugin": "^2.34.0",
+    "@typescript-eslint/parser": "^2.34.0",
+    "eslint": "^6.8.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "gulp": "^4.0.2",
+    "gulp-typescript": "^6.0.0-alpha.1",
+    "merge2": "^1.4.1",
+    "prettier": "^2.0.0",
+    "replace-in-files": "^2.0.3",
+    "rollup": "^2.17.0",
+    "rollup-plugin-terser": "^6.1.0",
+    "typescript": "^3.9.5"
+  },
+  "dependencies": {
+    "error-stack-parser": "^2.0.6"
+  }
+}
