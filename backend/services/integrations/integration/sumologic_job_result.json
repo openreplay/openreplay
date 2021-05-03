@@ -1,0 +1,146 @@
+{
+    "fields": [
+        {
+            "name": "_blockid",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_collector",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_collectorid",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_format",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_messagecount",
+            "fieldType": "int",
+            "keyField": false
+        },
+        {
+            "name": "_messageid",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_messagetime",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_raw",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_receipttime",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_size",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_source",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_sourcecategory",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_sourcehost",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_sourceid",
+            "fieldType": "long",
+            "keyField": false
+        },
+        {
+            "name": "_sourcename",
+            "fieldType": "string",
+            "keyField": false
+        },
+        {
+            "name": "_view",
+            "fieldType": "string",
+            "keyField": false
+        }
+    ],
+    "messages": [
+        {
+            "map": {
+                "_blockid": "-9223372036854750790",
+                "_messagetime": "1582286762789",
+                "_raw": "ZeroDivisionError: [asayer_session_id=9999999999] division by zero",
+                "_collectorid": "108084884",
+                "_sourceid": "148051672",
+                "_collector": "new-relic-flask2",
+                "_messagecount": "11",
+                "_sourcehost": "new-relic-flask2",
+                "_messageid": "-9223372036854423342",
+                "_sourcename": "/home/tahay_asayer_io/tutorial/example.log",
+                "_size": "66",
+                "_view": "",
+                "_receipttime": "1582286762789",
+                "_sourcecategory": "linux/system",
+                "_format": "t:fail:o:-1:l:0:p:null",
+                "_source": "Linux System_2"
+            }
+        },
+        {
+            "map": {
+                "_blockid": "-9223372036854750791",
+                "_messagetime": "1582286727679",
+                "_raw": "ZeroDivisionError: [asayer_session_id=9999999999] division by zero",
+                "_collectorid": "108084884",
+                "_sourceid": "148051672",
+                "_collector": "new-relic-flask2",
+                "_messagecount": "8",
+                "_sourcehost": "new-relic-flask2",
+                "_messageid": "-9223372036854423345",
+                "_sourcename": "/home/tahay_asayer_io/tutorial/example.log",
+                "_size": "66",
+                "_view": "",
+                "_receipttime": "1582286727679",
+                "_sourcecategory": "linux/system",
+                "_format": "t:fail:o:-1:l:0:p:null",
+                "_source": "Linux System_2"
+            }
+        },
+        {
+            "map": {
+                "_blockid": "-9223372036854750791",
+                "_messagetime": "1582286723677",
+                "_raw": "ZeroDivisionError: [asayer_session_id=9999999999] division by zero",
+                "_collectorid": "108084884",
+                "_sourceid": "148051672",
+                "_collector": "new-relic-flask2",
+                "_messagecount": "5",
+                "_sourcehost": "new-relic-flask2",
+                "_messageid": "-9223372036854423348",
+                "_sourcename": "/home/tahay_asayer_io/tutorial/example.log",
+                "_size": "66",
+                "_view": "",
+                "_receipttime": "1582286723677",
+                "_sourcecategory": "linux/system",
+                "_format": "t:fail:o:-1:l:0:p:null",
+                "_source": "Linux System_2"
+            }
+        }
+    ]
+}

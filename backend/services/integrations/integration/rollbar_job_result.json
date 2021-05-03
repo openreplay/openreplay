@@ -1,0 +1,63 @@
+{
+    "err": 0,
+    "result": {
+        "status": "success",
+        "job_hash": "2d7141f57204ea9cfe59304beed947313b538608",
+        "result": {
+            "isSimpleSelect": true,
+            "errors": [
+            ],
+            "warnings": [
+            ],
+            "executionTime": 0.021143198013305664,
+            "effectiveTimestamp": 1582125712,
+            "rowcount": 1,
+            "rows": [
+                [
+                    866038147,
+                    "division by zero",
+                    "250250",
+                    40,
+                    2,
+                    "production",
+                    null,
+                    "division by zero",
+                    1582125312,
+                    115079899839
+                ]
+            ],
+            "selectionColumns": [
+                "item.id",
+                "item.title",
+                "body.message.asayerSessionId",
+                "item.level",
+                "item.counter",
+                "item.environment",
+                "body.crash_report.raw",
+                "body.message.body",
+                "timestamp"
+            ],
+            "projectIds": [
+                349886
+            ],
+            "columns": [
+                "item.id",
+                "item.title",
+                "body.message.asayerSessionId",
+                "item.level",
+                "item.counter",
+                "item.environment",
+                "body.crash_report.raw",
+                "body.message.body",
+                "timestamp",
+                "occurrence_id"
+            ]
+        },
+        "date_modified": 1582125712,
+        "query_string": "SELECT item.id, item.title,body.message.asayerSessionId,item.level,item.counter,item.environment,body.crash_report.raw,body.message.body,timestamp FROM item_occurrence WHERE body.message.asayerSessionId != null\tAND timestamp>= 1582124402\tAND item.level>30\tORDER BY timestamp\tLIMIT 1000",
+        "date_created": 1582125712,
+        "project_id": 349886,
+        "id": 82765415,
+        "project_group_id": 16555
+    }
+}

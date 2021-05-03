@@ -1,0 +1,4 @@
+{
+	"err": 1,
+	"message": "insufficient privileges: read scope is required but the access token only has post_server_item."
+}

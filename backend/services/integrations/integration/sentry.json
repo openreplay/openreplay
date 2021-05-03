@@ -1,0 +1,4438 @@
+[
+    {
+        "eventID": "f07cccf7831043d48e4501d93455d646",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.9.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1",
+                "key": "trace"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1-89e01ba57559b01c",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "89e01ba57559b01c",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:51:14Z",
+        "user": null,
+        "message": "",
+        "id": "f07cccf7831043d48e4501d93455d646",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "d2601fd4b82145f1a8d754a03005688f",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.238.85",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:51:14Z",
+        "user": null,
+        "message": "",
+        "id": "d2601fd4b82145f1a8d754a03005688f",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "a3ffd317170c4708a16fb4a999f39b90",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.152.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "8b2e42df2ada4b4b915deae3a8574a4e",
+                "key": "trace"
+            },
+            {
+                "value": "8b2e42df2ada4b4b915deae3a8574a4e-826320136c93cabc",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "826320136c93cabc",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:51:14Z",
+        "user": null,
+        "message": "",
+        "id": "a3ffd317170c4708a16fb4a999f39b90",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "997490f56fa941b7b9546ad4493ded8e",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.14.137",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "5c689b0458234e71b56ad1fe57cb00ed",
+                "key": "trace"
+            },
+            {
+                "value": "5c689b0458234e71b56ad1fe57cb00ed-aa3761a195b6383e",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "aa3761a195b6383e",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:51:14Z",
+        "user": null,
+        "message": "",
+        "id": "997490f56fa941b7b9546ad4493ded8e",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "7387392f77ee4922a57440210e22bca1",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.198.37",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "36f2c208d1724c31a0b40dc3128e21be",
+                "key": "trace"
+            },
+            {
+                "value": "36f2c208d1724c31a0b40dc3128e21be-9d1edbc0b4aec2d2",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "9d1edbc0b4aec2d2",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:38:15Z",
+        "user": null,
+        "message": "",
+        "id": "7387392f77ee4922a57440210e22bca1",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "008aa9bac3b447539ce6f813880a6204",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.9.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1",
+                "key": "trace"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1-8064b97f218669e3",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "8064b97f218669e3",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:38:15Z",
+        "user": null,
+        "message": "",
+        "id": "008aa9bac3b447539ce6f813880a6204",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "9080b39e779d4b4ebfdc723f1f46339d",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.179.21",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "2d3db3e3dd4e4c84992c7fc6299d2fb9",
+                "key": "trace"
+            },
+            {
+                "value": "2d3db3e3dd4e4c84992c7fc6299d2fb9-b4f306612f165f1d",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "b4f306612f165f1d",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:38:14Z",
+        "user": null,
+        "message": "",
+        "id": "9080b39e779d4b4ebfdc723f1f46339d",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "7f6b5351867743f9a388d5c20b9123cb",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.9.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1",
+                "key": "trace"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1-8064b97f218669e3",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "8064b97f218669e3",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:38:14Z",
+        "user": null,
+        "message": "",
+        "id": "7f6b5351867743f9a388d5c20b9123cb",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "1540e3198824499c81da4f234088b931",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.52.5",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "61a8ed635f414436bedbb4c7c01f048f",
+                "key": "trace"
+            },
+            {
+                "value": "61a8ed635f414436bedbb4c7c01f048f-ae9b1968b73aed0c",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "ae9b1968b73aed0c",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:38:14Z",
+        "user": null,
+        "message": "",
+        "id": "1540e3198824499c81da4f234088b931",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "97d968028d5e437e87b025dee96e6a0e",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.52.5",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "61a8ed635f414436bedbb4c7c01f048f",
+                "key": "trace"
+            },
+            {
+                "value": "61a8ed635f414436bedbb4c7c01f048f-ae9b1968b73aed0c",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "ae9b1968b73aed0c",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:38:06Z",
+        "user": null,
+        "message": "",
+        "id": "97d968028d5e437e87b025dee96e6a0e",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "8414ffb72d574b00a2e183a89b8bbab2",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.238.85",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:46Z",
+        "user": null,
+        "message": "",
+        "id": "8414ffb72d574b00a2e183a89b8bbab2",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "5803d9ec146f4be8a3f5a8d302e8ddf3",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.52.5",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "61a8ed635f414436bedbb4c7c01f048f",
+                "key": "trace"
+            },
+            {
+                "value": "61a8ed635f414436bedbb4c7c01f048f-95024f2f40862eeb",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "95024f2f40862eeb",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:46Z",
+        "user": null,
+        "message": "",
+        "id": "5803d9ec146f4be8a3f5a8d302e8ddf3",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "47b258ce392749d1970ba8806cfac3af",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.9.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1",
+                "key": "trace"
+            },
+            {
+                "value": "91742e607f184afe9e58c3dd43fddcf1-a9971d83e8d39ecc",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "a9971d83e8d39ecc",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:46Z",
+        "user": null,
+        "message": "",
+        "id": "47b258ce392749d1970ba8806cfac3af",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "344dc8e9da5b45e79bd366afc726e71b",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.179.21",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "2d3db3e3dd4e4c84992c7fc6299d2fb9",
+                "key": "trace"
+            },
+            {
+                "value": "2d3db3e3dd4e4c84992c7fc6299d2fb9-b4f306612f165f1d",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "b4f306612f165f1d",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:46Z",
+        "user": null,
+        "message": "",
+        "id": "344dc8e9da5b45e79bd366afc726e71b",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "b8ee9ea891204a02b605b049001315b6",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.9.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:38Z",
+        "user": null,
+        "message": "",
+        "id": "b8ee9ea891204a02b605b049001315b6",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "ad81ff00a30c4d38abb729358bd013ed",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.238.85",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:36Z",
+        "user": null,
+        "message": "",
+        "id": "ad81ff00a30c4d38abb729358bd013ed",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "9a0a2ba486c54b34a30146bc27b4a6d6",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.52.5",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:36Z",
+        "user": null,
+        "message": "",
+        "id": "9a0a2ba486c54b34a30146bc27b4a6d6",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "679ba71075324ab18cd3d42d742ae84d",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.152.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:36Z",
+        "user": null,
+        "message": "",
+        "id": "679ba71075324ab18cd3d42d742ae84d",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "b00313a201034a3db253755c92cd515e",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.198.37",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:10Z",
+        "user": null,
+        "message": "",
+        "id": "b00313a201034a3db253755c92cd515e",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "da3dfb8f7a1e4971ac43444315003f20",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.14.137",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:09Z",
+        "user": null,
+        "message": "",
+        "id": "da3dfb8f7a1e4971ac43444315003f20",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "f6e60cf553bb4d8a949cf11ec1878fd1",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.179.21",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:08Z",
+        "user": null,
+        "message": "",
+        "id": "f6e60cf553bb4d8a949cf11ec1878fd1",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "4a6a45f345df4a35b3b43a21187db677",
+        "tags": [
+            {
+                "value": "525314475541266774",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.238.85",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-10T05:36:07Z",
+        "user": null,
+        "message": "",
+        "id": "4a6a45f345df4a35b3b43a21187db677",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_494, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "871da51bfd7d4c8f85bba05f7830e34f",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.10",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.210.77",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-07T01:38:41Z",
+        "user": null,
+        "message": "Internal Error for <function login at 0x7f9e50dc1f28>",
+        "id": "871da51bfd7d4c8f85bba05f7830e34f",
+        "culprit": "app in login",
+        "title": "KeyError: 'email'",
+        "platform": "python",
+        "location": "app.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1430828026"
+    },
+    {
+        "eventID": "ad9310581f0e40508c3245f75c6613ad",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.151.229",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T15:59:49Z",
+        "user": null,
+        "message": "Internal Error for <function async_signup_client_step1 at 0x7fb343f1cf28>",
+        "id": "ad9310581f0e40508c3245f75c6613ad",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "RequestError: RequestError(400, 'invalid_index_name_exception', 'Invalid index name [resources_<built-in functi...",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1197931943"
+    },
+    {
+        "eventID": "54a3be2a2a3c47fbb0e47192a7676945",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.183.77",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T15:59:47Z",
+        "user": null,
+        "message": "Internal Error for <function signup_handler at 0x7ff872368ae8>",
+        "id": "54a3be2a2a3c47fbb0e47192a7676945",
+        "culprit": "psycopg2.extras in execute",
+        "title": "TypeError: 'int' object does not support indexing",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1321104332"
+    },
+    {
+        "eventID": "fd419f7de2334b8d80263ee246bc2757",
+        "tags": [
+            {
+                "value": "518443449861084160",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.13.157",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T11:22:53Z",
+        "user": null,
+        "message": "",
+        "id": "fd419f7de2334b8d80263ee246bc2757",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "IndexError: tuple index out of range",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1342967916"
+    },
+    {
+        "eventID": "259df7fe53094607ac763e43fcdb6490",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.62.229",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T10:02:09Z",
+        "user": null,
+        "message": "",
+        "id": "259df7fe53094607ac763e43fcdb6490",
+        "culprit": "chalicelib.sessions in search_by_metadata",
+        "title": "KeyError: 454",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1363409660"
+    },
+    {
+        "eventID": "f4b493e8075145ddbad1bf74d9e097cd",
+        "tags": [
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.214.93",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T09:25:32Z",
+        "user": null,
+        "message": "",
+        "id": "f4b493e8075145ddbad1bf74d9e097cd",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "4a71fbacc1114ce196df0fb4366429fd",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.214.77",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T09:22:35Z",
+        "user": null,
+        "message": "Internal Error for <function async_signup_client_step1 at 0x7f3b3fa690d0>",
+        "id": "4a71fbacc1114ce196df0fb4366429fd",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "RequestError: RequestError(400, 'invalid_index_name_exception', 'Invalid index name [resources_<built-in functi...",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1197931943"
+    },
+    {
+        "eventID": "54898e0197934faab9ab73dea8218244",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.214.93",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-05T09:22:33Z",
+        "user": null,
+        "message": "Internal Error for <function signup_handler at 0x7f8329e67bf8>",
+        "id": "54898e0197934faab9ab73dea8218244",
+        "culprit": "psycopg2.extras in execute",
+        "title": "TypeError: 'int' object does not support indexing",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1321104332"
+    },
+    {
+        "eventID": "b0f52d9012ef4f85a323c897380634e6",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.60.73",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:14:02Z",
+        "user": null,
+        "message": "",
+        "id": "b0f52d9012ef4f85a323c897380634e6",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "30820461bc274b8383722ed8c0a84e77",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.132.245",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:14:02Z",
+        "user": null,
+        "message": "",
+        "id": "30820461bc274b8383722ed8c0a84e77",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "fdcf7433ce704285a7e97340db850cc7",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.132.245",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:13:49Z",
+        "user": null,
+        "message": "",
+        "id": "fdcf7433ce704285a7e97340db850cc7",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "789d6509476745eb9207ba87eeea0a14",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.60.73",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:13:49Z",
+        "user": null,
+        "message": "",
+        "id": "789d6509476745eb9207ba87eeea0a14",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "a2e9e496e3334e37909628f03740a11d",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.178.125",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:13:47Z",
+        "user": null,
+        "message": "",
+        "id": "a2e9e496e3334e37909628f03740a11d",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "64011a721b774f50b0a757c89a85f54e",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.44.61",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:13:47Z",
+        "user": null,
+        "message": "",
+        "id": "64011a721b774f50b0a757c89a85f54e",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "ea8a88c67cd74825b756d926e0c68067",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.166.189",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:44Z",
+        "user": null,
+        "message": "",
+        "id": "ea8a88c67cd74825b756d926e0c68067",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "3f1449f697674487bd22e41edf7e42c9",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.236.101",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:44Z",
+        "user": null,
+        "message": "",
+        "id": "3f1449f697674487bd22e41edf7e42c9",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "ccb26875e0254082aa8eb0c91ffab3c4",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.109.181",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:42Z",
+        "user": null,
+        "message": "",
+        "id": "ccb26875e0254082aa8eb0c91ffab3c4",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "a2b33db153ab4a01a3938a218602ffce",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.109.181",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:29Z",
+        "user": null,
+        "message": "",
+        "id": "a2b33db153ab4a01a3938a218602ffce",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "6a9a938c7baa4f77be9c0d288949e483",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.236.101",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:29Z",
+        "user": null,
+        "message": "",
+        "id": "6a9a938c7baa4f77be9c0d288949e483",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "1412c00082004f61a88690a719f674d4",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.166.189",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:29Z",
+        "user": null,
+        "message": "",
+        "id": "1412c00082004f61a88690a719f674d4",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "0c36633cecfe45ff8e33f722110dd038",
+        "tags": [
+            {
+                "value": "517219005934528592",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.137.85",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T15:05:29Z",
+        "user": null,
+        "message": "",
+        "id": "0c36633cecfe45ff8e33f722110dd038",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_483, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "5c944c11c52b4393b32d11dc4192d12e",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.44.61",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T14:51:34Z",
+        "user": null,
+        "message": "Internal Error for <function async_signup_client_step1 at 0x7f5be5dc10d0>",
+        "id": "5c944c11c52b4393b32d11dc4192d12e",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "RequestError: RequestError(400, 'invalid_index_name_exception', 'Invalid index name [resources_<built-in functi...",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1197931943"
+    },
+    {
+        "eventID": "d4fcbeac21a94c4aa93cbb43e0ca9f69",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.85.181",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-02-04T14:51:33Z",
+        "user": null,
+        "message": "Internal Error for <function signup_handler at 0x7f7a0134ebf8>",
+        "id": "d4fcbeac21a94c4aa93cbb43e0ca9f69",
+        "culprit": "psycopg2.extras in execute",
+        "title": "TypeError: 'int' object does not support indexing",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1321104332"
+    },
+    {
+        "eventID": "b11f94ca49cc44a9945ac1323af3dac3",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.146.69",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-31T15:39:56Z",
+        "user": null,
+        "message": "",
+        "id": "b11f94ca49cc44a9945ac1323af3dac3",
+        "culprit": "psycopg2.extras in execute",
+        "title": "InvalidTextRepresentation: invalid input syntax for integer: \"search\"",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1487659217"
+    },
+    {
+        "eventID": "1cb8fc38dec044d280c8cc0476189b37",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.219.173",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-31T05:47:45Z",
+        "user": null,
+        "message": "",
+        "id": "1cb8fc38dec044d280c8cc0476189b37",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "8136adbc1f8d4b6abec9a0fcb9156fbc",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.219.173",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-31T05:47:25Z",
+        "user": null,
+        "message": "",
+        "id": "8136adbc1f8d4b6abec9a0fcb9156fbc",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "d82526781cb74d9fafe86b0caae5a50e",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.219.173",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-31T05:46:56Z",
+        "user": null,
+        "message": "",
+        "id": "d82526781cb74d9fafe86b0caae5a50e",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "92cd1ede67f545f989456032d8e9ef2e",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.181.61",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-31T03:16:59Z",
+        "user": null,
+        "message": "Internal Error for <function signup_handler at 0x7f429e616950>",
+        "id": "92cd1ede67f545f989456032d8e9ef2e",
+        "culprit": "psycopg2.extras in execute",
+        "title": "TypeError: 'int' object does not support indexing",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1321104332"
+    },
+    {
+        "eventID": "aebbbb2dd7ae47bbaba5007064cc1f64",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.35.105",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:41:23Z",
+        "user": null,
+        "message": "",
+        "id": "aebbbb2dd7ae47bbaba5007064cc1f64",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "039279990d1246b180b817239670cce1",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.238.149",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:34:55Z",
+        "user": null,
+        "message": "",
+        "id": "039279990d1246b180b817239670cce1",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "70a34d3638cb4ba98796e8f525d076af",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.112.77",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:34:04Z",
+        "user": null,
+        "message": "",
+        "id": "70a34d3638cb4ba98796e8f525d076af",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "9b09718595244c1f9bdb6c5fae7b2642",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.97.221",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:33:57Z",
+        "user": null,
+        "message": "",
+        "id": "9b09718595244c1f9bdb6c5fae7b2642",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "d49f291e62cd488f8126223cadaf4bf0",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.112.77",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:08:48Z",
+        "user": null,
+        "message": "",
+        "id": "d49f291e62cd488f8126223cadaf4bf0",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "fcd2150f33be4aaea317bee6ab4c5753",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.112.77",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:08:26Z",
+        "user": null,
+        "message": "",
+        "id": "fcd2150f33be4aaea317bee6ab4c5753",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "80276deb85df4d65b6467fed7e2cab9b",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.182.213",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:06:48Z",
+        "user": null,
+        "message": "",
+        "id": "80276deb85df4d65b6467fed7e2cab9b",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "93965953f2054e5cb8dd12343b8e1310",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.35.105",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:04:58Z",
+        "user": null,
+        "message": "",
+        "id": "93965953f2054e5cb8dd12343b8e1310",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "a19aa2b29da94e5c8e79bfd99e28979b",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.96.221",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T12:04:07Z",
+        "user": null,
+        "message": "",
+        "id": "a19aa2b29da94e5c8e79bfd99e28979b",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "c0e4017b1349495f9dde0545aa5f3b41",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.44.189",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T10:02:03Z",
+        "user": null,
+        "message": "",
+        "id": "c0e4017b1349495f9dde0545aa5f3b41",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "IndexError: tuple index out of range",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1342967916"
+    },
+    {
+        "eventID": "26589f5ffbbd4511b5cbc54e1977cb03",
+        "tags": [
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.44.189",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-30T09:57:11Z",
+        "user": null,
+        "message": "",
+        "id": "26589f5ffbbd4511b5cbc54e1977cb03",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "IndexError: tuple index out of range",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1342967916"
+    },
+    {
+        "eventID": "60bcb30ad66e431fad1dadc1049e9471",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.32.213",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "9bb4c80672d14d1698763cfde36c938a",
+                "key": "trace"
+            },
+            {
+                "value": "9bb4c80672d14d1698763cfde36c938a-9ffd91f46356078b",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "9ffd91f46356078b",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:48:00Z",
+        "user": null,
+        "message": "",
+        "id": "60bcb30ad66e431fad1dadc1049e9471",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "63c86a6f9a0d47418451b8bb2bfc85a9",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.32.213",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:44:34Z",
+        "user": null,
+        "message": "",
+        "id": "63c86a6f9a0d47418451b8bb2bfc85a9",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "b2cc1698df4d4391a65906957606b67b",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.180.109",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "34bc65135869438b85c1951ef428bc69",
+                "key": "trace"
+            },
+            {
+                "value": "34bc65135869438b85c1951ef428bc69-9db631c2787505cf",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "9db631c2787505cf",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:44:26Z",
+        "user": null,
+        "message": "",
+        "id": "b2cc1698df4d4391a65906957606b67b",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "d71f68e590204a27b8ee65b6fce02273",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.32.213",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:43:55Z",
+        "user": null,
+        "message": "",
+        "id": "d71f68e590204a27b8ee65b6fce02273",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "dd5f5c0d689943cf9e8ba84000559e17",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.180.109",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:43:48Z",
+        "user": null,
+        "message": "",
+        "id": "dd5f5c0d689943cf9e8ba84000559e17",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "fe0b3a8c3c8540fbb0f931596419b128",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.242.205",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "f8aa019bc95d42d6bc3124462d8b91f6",
+                "key": "trace"
+            },
+            {
+                "value": "f8aa019bc95d42d6bc3124462d8b91f6-b07924e62d9973a0",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "b07924e62d9973a0",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:43:39Z",
+        "user": null,
+        "message": "",
+        "id": "fe0b3a8c3c8540fbb0f931596419b128",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "720cfec0987c4d1aa5db1902201db587",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.70.253",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "09cd4e6592ac4025a6d22b9235cec8d6",
+                "key": "trace"
+            },
+            {
+                "value": "09cd4e6592ac4025a6d22b9235cec8d6-bd58b560cda37495",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "bd58b560cda37495",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:43:20Z",
+        "user": null,
+        "message": "",
+        "id": "720cfec0987c4d1aa5db1902201db587",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "19e8db755d1149f2bf393669912aaaf1",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.70.253",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:42:35Z",
+        "user": null,
+        "message": "",
+        "id": "19e8db755d1149f2bf393669912aaaf1",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "4a2d46c549a344e989197cf106fb914e",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.242.205",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:42:23Z",
+        "user": null,
+        "message": "",
+        "id": "4a2d46c549a344e989197cf106fb914e",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "1ee2a3e3f74d45f0a75288eb312e34c5",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.132.69",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:41:15Z",
+        "user": null,
+        "message": "",
+        "id": "1ee2a3e3f74d45f0a75288eb312e34c5",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column s.console_log_count does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1355521385"
+    },
+    {
+        "eventID": "e6b6417f26d24b2ea25c575bd09e0aa5",
+        "tags": [
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.180.109",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:23:49Z",
+        "user": null,
+        "message": "",
+        "id": "e6b6417f26d24b2ea25c575bd09e0aa5",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "e288fbe341f34f069136ef7b4feef46b",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.180.109",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:23:15Z",
+        "user": null,
+        "message": "Internal Error for <function async_signup_client_step1 at 0x7f607a111bf8>",
+        "id": "e288fbe341f34f069136ef7b4feef46b",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "RequestError: RequestError(400, 'invalid_index_name_exception', 'Invalid index name [resources_<built-in functi...",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1197931943"
+    },
+    {
+        "eventID": "8df03f0f93224369a4555a56e43a340a",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.23.109",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:23:14Z",
+        "user": null,
+        "message": "Internal Error for <function signup_handler at 0x7feaf49847b8>",
+        "id": "8df03f0f93224369a4555a56e43a340a",
+        "culprit": "psycopg2.extras in execute",
+        "title": "TypeError: 'int' object does not support indexing",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1321104332"
+    },
+    {
+        "eventID": "a4ca36db2ec540b0b11992f720e4338f",
+        "tags": [
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.23.109",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:23:12Z",
+        "user": null,
+        "message": "",
+        "id": "a4ca36db2ec540b0b11992f720e4338f",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "afc1816db4fb4127ae5e3102f408bd56",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.23.109",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:22:12Z",
+        "user": null,
+        "message": "Internal Error for <function async_signup_client_step1 at 0x7feaf48cbbf8>",
+        "id": "afc1816db4fb4127ae5e3102f408bd56",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "RequestError: RequestError(400, 'invalid_index_name_exception', 'Invalid index name [resources_<built-in functi...",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1197931943"
+    },
+    {
+        "eventID": "423d5cbb1e07428baa6575fd394b014e",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.70.253",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:22:11Z",
+        "user": null,
+        "message": "Internal Error for <function signup_handler at 0x7f625eb287b8>",
+        "id": "423d5cbb1e07428baa6575fd394b014e",
+        "culprit": "psycopg2.extras in execute",
+        "title": "TypeError: 'int' object does not support indexing",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1321104332"
+    },
+    {
+        "eventID": "e32635c1c97a4de78e3edc2f6b683a79",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.126.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:14:27Z",
+        "user": null,
+        "message": "",
+        "id": "e32635c1c97a4de78e3edc2f6b683a79",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "8df9ffd4acdd466785a4acb767441cea",
+        "tags": [
+            {
+                "value": "496927055579173623",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.126.29",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T15:10:41Z",
+        "user": null,
+        "message": "",
+        "id": "8df9ffd4acdd466785a4acb767441cea",
+        "culprit": "psycopg2.extras in execute",
+        "title": "UndefinedColumn: column \"filters\" of relation \"filters\" does not exist",
+        "platform": "python",
+        "location": "psycopg2/extras.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1306789194"
+    },
+    {
+        "eventID": "43843ccce0904d30a6de81d16aff2fd2",
+        "tags": [
+            {
+                "value": "496888723695543585",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.13.157",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "3d3e4136eb7f4db69f3f28d847745782",
+                "key": "trace"
+            },
+            {
+                "value": "3d3e4136eb7f4db69f3f28d847745782-a5596feb6edcf697",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "a5596feb6edcf697",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T14:35:56Z",
+        "user": null,
+        "message": "",
+        "id": "43843ccce0904d30a6de81d16aff2fd2",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "75506c1c20c64431a24cf3a0c918fce1",
+        "tags": [
+            {
+                "value": "496888723695543585",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.13.157",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "3d3e4136eb7f4db69f3f28d847745782",
+                "key": "trace"
+            },
+            {
+                "value": "3d3e4136eb7f4db69f3f28d847745782-a79977809b88b89c",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "a79977809b88b89c",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T14:35:54Z",
+        "user": null,
+        "message": "",
+        "id": "75506c1c20c64431a24cf3a0c918fce1",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "2c86ba13b3cd48188112994e12da7fe4",
+        "tags": [
+            {
+                "value": "496888723695543585",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.13.157",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            },
+            {
+                "value": "3d3e4136eb7f4db69f3f28d847745782",
+                "key": "trace"
+            },
+            {
+                "value": "3d3e4136eb7f4db69f3f28d847745782-873289cca1462152",
+                "key": "trace.ctx"
+            },
+            {
+                "value": "873289cca1462152",
+                "key": "trace.span"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T14:35:47Z",
+        "user": null,
+        "message": "",
+        "id": "2c86ba13b3cd48188112994e12da7fe4",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "aed00b6d56304b468b0851c6a2051f8a",
+        "tags": [
+            {
+                "value": "496888723695543585",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.13.157",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T14:35:28Z",
+        "user": null,
+        "message": "",
+        "id": "aed00b6d56304b468b0851c6a2051f8a",
+        "culprit": "chalicelib.sessions in search2_pg",
+        "title": "ProgrammingError: argument formats can't be mixed",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341564580"
+    },
+    {
+        "eventID": "a2faad5f419241a0951c63510c1bc532",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.67.141",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:43:13Z",
+        "user": null,
+        "message": "",
+        "id": "a2faad5f419241a0951c63510c1bc532",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "eaf2b36857264f64b7e20f06fb993a91",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.10.205",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:42:39Z",
+        "user": null,
+        "message": "",
+        "id": "eaf2b36857264f64b7e20f06fb993a91",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "648ad2698ef04ab08e9e25b7fc1b307e",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "no",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "threading",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.104.37",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:42:39Z",
+        "user": null,
+        "message": "",
+        "id": "648ad2698ef04ab08e9e25b7fc1b307e",
+        "culprit": "requests.adapters in send",
+        "title": "SSLError: HTTPSConnectionPool(host='notify.bugsnag.com', port=443): Max retries exceeded with url: / (Cause...",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1265908049"
+    },
+    {
+        "eventID": "3bc286b53a2f4a0d8394a0c723153936",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.10.205",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:41:56Z",
+        "user": null,
+        "message": "",
+        "id": "3bc286b53a2f4a0d8394a0c723153936",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_477, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116070824"
+    },
+    {
+        "eventID": "68af914e0b694dd1986e3f18692b1e70",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.104.37",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:41:53Z",
+        "user": null,
+        "message": "",
+        "id": "68af914e0b694dd1986e3f18692b1e70",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_477, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "65cce0e929bc4a7a92b6344ee2e8b14c",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.67.141",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:41:53Z",
+        "user": null,
+        "message": "",
+        "id": "65cce0e929bc4a7a92b6344ee2e8b14c",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_477, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "5f88471651a349c3b16e13443255618d",
+        "tags": [
+            {
+                "value": "496539098302424786",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.104.109",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-21T08:41:53Z",
+        "user": null,
+        "message": "",
+        "id": "5f88471651a349c3b16e13443255618d",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_477, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    },
+    {
+        "eventID": "705045e17e144d3b8f7059d121962a63",
+        "tags": [
+            {
+                "value": "495408099984196478",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.87.237",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-20T14:57:47Z",
+        "user": null,
+        "message": "Internal Error for <function app_route.<locals>._register_view.<locals>._view_func at 0x7f6814a242f0>",
+        "id": "705045e17e144d3b8f7059d121962a63",
+        "culprit": "chalicelib.sessions in search_by_metadata",
+        "title": "KeyError: 454",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1457168623"
+    },
+    {
+        "eventID": "0236bc697a634270ac5b1dcaab0b571f",
+        "tags": [
+            {
+                "value": "495408099984196478",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "rollbar",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.87.237",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-20T14:57:46Z",
+        "user": null,
+        "message": "Exception while posting item \"ReadTimeout(ReadTimeoutError(\\\"HTTPSConnectionPool(host='api.rollbar.com', port=443): Read timed out. (read timeout=3)\\\",),)\"",
+        "id": "0236bc697a634270ac5b1dcaab0b571f",
+        "culprit": "requests.adapters in send",
+        "title": "ReadTimeout: HTTPSConnectionPool(host='api.rollbar.com', port=443): Read timed out. (read timeout=3)",
+        "platform": "python",
+        "location": "requests/adapters.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1341662732"
+    },
+    {
+        "eventID": "7a8313d3920a4957b231a4005063adb4",
+        "tags": [
+            {
+                "value": "495408099984196478",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.87.237",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-20T14:57:33Z",
+        "user": null,
+        "message": "",
+        "id": "7a8313d3920a4957b231a4005063adb4",
+        "culprit": "chalicelib.sessions in search_by_metadata",
+        "title": "KeyError: 454",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1363409660"
+    },
+    {
+        "eventID": "4d9bd0d9c4e64141bf47a113e5a3ebcb",
+        "tags": [
+            {
+                "value": "495408099984196478",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.215.85",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-20T14:55:07Z",
+        "user": null,
+        "message": "",
+        "id": "4d9bd0d9c4e64141bf47a113e5a3ebcb",
+        "culprit": "chalicelib.sessions in search_by_metadata",
+        "title": "KeyError: 454",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1363409660"
+    },
+    {
+        "eventID": "d7da03a8b0c14a87a0a842a6d1c80802",
+        "tags": [
+            {
+                "value": "495408099984196478",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.137.37",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-20T14:00:45Z",
+        "user": null,
+        "message": "",
+        "id": "d7da03a8b0c14a87a0a842a6d1c80802",
+        "culprit": "chalicelib.sessions in search_by_metadata",
+        "title": "KeyError: 454",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1363409660"
+    },
+    {
+        "eventID": "37f3b106d22c4a379fc6a08d3895262e",
+        "tags": [
+            {
+                "value": "495408099984196478",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.42.81",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-20T13:57:27Z",
+        "user": null,
+        "message": "",
+        "id": "37f3b106d22c4a379fc6a08d3895262e",
+        "culprit": "chalicelib.sessions in search_by_metadata",
+        "title": "KeyError: 454",
+        "platform": "python",
+        "location": "/var/task/chalicelib/sessions.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1363409660"
+    },
+    {
+        "eventID": "7ceff8b3b2d14717a7a084d9bd8b6f0c",
+        "tags": [
+            {
+                "value": "yes",
+                "key": "handled"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "parrot",
+                "key": "logger"
+            },
+            {
+                "value": "logging",
+                "key": "mechanism"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.213.61",
+                "key": "server_name"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-16T17:00:09Z",
+        "user": null,
+        "message": "Internal Error for <function login at 0x7f831ea089d8>",
+        "id": "7ceff8b3b2d14717a7a084d9bd8b6f0c",
+        "culprit": "app in login",
+        "title": "KeyError: 'email'",
+        "platform": "python",
+        "location": "app.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1430828026"
+    },
+    {
+        "eventID": "f1d6e7bdc7fb45b9a0e7497e04a154b1",
+        "tags": [
+            {
+                "value": "489170522397413008",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.53.141",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-16T07:18:25Z",
+        "user": null,
+        "message": "",
+        "id": "f1d6e7bdc7fb45b9a0e7497e04a154b1",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_476, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063197"
+    },
+    {
+        "eventID": "321d91bac073407a8a8db6f1d6f4db9a",
+        "tags": [
+            {
+                "value": "489170522397413008",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.247.229",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-16T07:18:25Z",
+        "user": null,
+        "message": "",
+        "id": "321d91bac073407a8a8db6f1d6f4db9a",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_476, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116063196"
+    },
+    {
+        "eventID": "23d88885741a403689f92f26cb1e4808",
+        "tags": [
+            {
+                "value": "489170522397413008",
+                "key": "asayer_session_id"
+            },
+            {
+                "value": "error",
+                "key": "level"
+            },
+            {
+                "value": "CPython 3.6.9",
+                "key": "runtime"
+            },
+            {
+                "value": "CPython",
+                "key": "runtime.name"
+            },
+            {
+                "value": "169.254.75.53",
+                "key": "server_name"
+            },
+            {
+                "value": "prod",
+                "key": "stage"
+            }
+        ],
+        "projectID": "1485249",
+        "dateCreated": "2020-01-16T07:18:25Z",
+        "user": null,
+        "message": "",
+        "id": "23d88885741a403689f92f26cb1e4808",
+        "culprit": "elasticsearch.connection.base in _raise_error",
+        "title": "NotFoundError: NotFoundError(404, 'index_not_found_exception', 'no such index', resources_476, index_or_alias)",
+        "platform": "python",
+        "location": "elasticsearch/connection/base.py",
+        "crashFile": null,
+        "event.type": "error",
+        "groupID": "1116236058"
+    }
+]
