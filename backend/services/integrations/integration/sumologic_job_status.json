@@ -1,0 +1,16 @@
+{
+    "state": "DONE GATHERING RESULTS",
+    "histogramBuckets": [
+        {
+            "startTimestamp": 1582243200000,
+            "length": 55087270,
+            "count": 194
+        }
+    ],
+    "messageCount": 194,
+    "recordCount": 0,
+    "pendingWarnings": [
+    ],
+    "pendingErrors": [
+    ]
+}

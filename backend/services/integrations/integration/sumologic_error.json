@@ -1,0 +1,6 @@
+{
+"status": 400,
+"id": "EV5YQ-N96Y8-RNDUF",
+"code": "searchjob.offset.missing",
+"message": "Offset is missing."
+}
