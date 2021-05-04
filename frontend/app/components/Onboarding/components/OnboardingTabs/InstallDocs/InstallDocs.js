@@ -2,10 +2,9 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import stl from './installDocs.css'
 import cn from 'classnames'
-import CopyButton from '../CopyButton'
 import Highlight from 'react-highlight'
 import CircleNumber from '../../CircleNumber'
-import { Slider } from 'UI'
+import { Slider, CopyButton } from 'UI'
 
 const installationCommand = 'npm i @openreplay/tracker --save'
 const usageCode = `import Tracker from '@openreplay/tracker';

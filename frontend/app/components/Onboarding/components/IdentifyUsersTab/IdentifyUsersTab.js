@@ -1,8 +1,7 @@
 import React from 'react'
 import CircleNumber from '../CircleNumber'
 import MetadataList from '../MetadataList/MetadataList'
-import Snippet from '../Snippet/Snippet'
-import Highlight from 'react-highlight'
+import { HighlightCode } from 'UI'
 
 export default function IdentifyUsersTab() {
   return (
@@ -17,10 +16,7 @@ export default function IdentifyUsersTab() {
           <div className="mb-2">
             Call <span className="highlight-gray">userID</span> to identify your users when recording a session. The identity of the user can be changed, but OpenReplay will only keep the last communicated user ID.
           </div>
-          <Highlight className="js">
-            {`tracker.userID('john@doe.com');`}
-          </Highlight>
-          {/* <Snippet text="tracker.userID('john@doe.com');" /> */}
+          <HighlightCode className="js" text={`tracker.userID('john@doe.com');`} />
         </div>
 
         <div className="my-8" />
@@ -37,19 +33,15 @@ export default function IdentifyUsersTab() {
             </div>
           </div>
           
-          
           <div className="my-6" />
           <div className="flex items-start">
             <CircleNumber text="2" />
             <div className="pt-1">
               <span className="font-bold">Inject metadata when recording sessions</span>
               <div className="my-2">Use the <span className="highlight-gray">metadata</span> method in your code to inject custom user data in the form of a key/value pair (string).</div>
-              <Highlight className="js">
-                {`tracker.metadata('plan', 'premium');`}
-              </Highlight>
+              <HighlightCode className="js" text={`tracker.metadata('plan', 'premium');`} />
             </div>
           </div>
-          {/* <Snippet text="tracker.metadata('plan', 'premium');" /> */}
         </div>
       </div>
 
