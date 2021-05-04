@@ -289,7 +289,7 @@ export default class Integrations extends React.PureComponent {
 
 							<IntegrationItem
 								title="Fetch"
-								icon="integrations/ngrx"
+								icon="integrations/openreplay"
 								url={ null }
 								dockLink="https://docs.openreplay.com/integrations/sentry"
 								onClick={ () => this.showIntegrationConfig(FETCH) }
@@ -298,7 +298,7 @@ export default class Integrations extends React.PureComponent {
 
 							<IntegrationItem
 								title="MobX"
-								icon="integrations/ngrx"
+								icon="integrations/mobx"
 								url={ null }
 								dockLink="https://docs.openreplay.com/integrations/sentry"
 								onClick={ () => this.showIntegrationConfig(MOBX) }
@@ -307,7 +307,7 @@ export default class Integrations extends React.PureComponent {
 
 							<IntegrationItem
 								title="Profiler"
-								icon="integrations/ngrx"
+								icon="integrations/openreplay"
 								url={ null }
 								dockLink="https://docs.openreplay.com/integrations/sentry"
 								onClick={ () => this.showIntegrationConfig(PROFILER) }
