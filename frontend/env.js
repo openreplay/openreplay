@@ -8,7 +8,7 @@ const oss = {
 	CAPTCHA_ENABLED: process.env.CAPTCHA_ENABLED,
 	CAPTCHA_SITE_KEY: process.env.CAPTCHA_SITE_KEY,
 	ORIGIN: () => 'window.location.origin',
-	API_EDP: 'https://staging-parrot.asayer.io',
+	API_EDP: () => 'window.location.origin + "/api"',
 	ASSETS_HOST: () => 'window.location.origin + "/assets"',
 	VERSION: '1.0.1',
 	SOURCEMAP: true,

@@ -33,16 +33,6 @@ export default class ProfileSettings extends React.PureComponent {
 
         <div className="flex items-center">
           <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Opt out' }</h4>
-            {/* <div className={ styles.info }>{ 'Your API key gives you access to an extra set of services.' }</div> */}
-          </div>
-          <div><OptOut /></div>
-        </div>
-
-        <div className="divider" />
-
-        <div className="flex items-center">
-          <div className={ styles.left }>
             <h4 className="text-lg mb-4">{ 'Organization API Key' }</h4>
             <div className={ styles.info }>{ 'Your API key gives you access to an extra set of services.' }</div>
           </div>
@@ -53,8 +43,8 @@ export default class ProfileSettings extends React.PureComponent {
 
         <div className="flex items-center">
           <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Opt Out' }</h4>
-            {/* <div className={ styles.info }>{ 'Your API key gives you access to an extra set of services.' }</div> */}
+            <h4 className="text-lg mb-4">{ 'Data Collection' }</h4>
+            <div className={ styles.info }>{ 'Enables you to control how OpenReplay captures data on your organization’s usage to improve our product.' }</div>
           </div>
           <div><OptOut /></div>
         </div>
