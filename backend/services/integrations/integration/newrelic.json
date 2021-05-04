@@ -1,0 +1,153 @@
+{
+    "results": [
+        {
+            "events": [
+                {
+                    "aggregateFacet": "WebTransaction/Function/flaskr.auth:register::builtins:ZeroDivisionError",
+                    "appId": 28925082,
+                    "appName": "My Flask Python Application",
+                    "duration": 0.0017523765563964844,
+                    "entityGuid": "MjYyNzMzN3xBUE18QVBQTElDQVRJT058Mjg5MjUwODI",
+                    "error.class": "builtins:ZeroDivisionError",
+                    "error.message": "division by zero",
+                    "host": "new-relic-flask2",
+                    "port": 8080,
+                    "realAgentId": 28925084,
+                    "request.headers.accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                    "request.headers.host": "35.236.108.92:8080",
+                    "request.headers.referer": "http://35.236.108.92:8080/",
+                    "request.headers.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36",
+                    "request.method": "GET",
+                    "request.uri": "/auth/register",
+                    "thread.concurrency": 0.9917959662585014,
+                    "timestamp": 1582133149351,
+                    "transactionName": "WebTransaction/Function/flaskr.auth:register",
+                    "transactionUiName": "/flaskr.auth:register"
+                },
+                {
+                    "aggregateFacet": "WebTransaction/Function/flaskr.auth:register::builtins:ZeroDivisionError",
+                    "appId": 28925082,
+                    "appName": "My Flask Python Application",
+                    "duration": 0.0011684894561767578,
+                    "entityGuid": "MjYyNzMzN3xBUE18QVBQTElDQVRJT058Mjg5MjUwODI",
+                    "error.class": "builtins:ZeroDivisionError",
+                    "error.message": "division by zero",
+                    "host": "new-relic-flask2",
+                    "port": 8080,
+                    "realAgentId": 28925084,
+                    "request.headers.accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                    "request.headers.host": "35.236.108.92:8080",
+                    "request.headers.referer": "http://35.236.108.92:8080/",
+                    "request.headers.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36",
+                    "request.method": "GET",
+                    "request.uri": "/auth/register",
+                    "thread.concurrency": 0.9858882285247911,
+                    "timestamp": 1582133148418,
+                    "transactionName": "WebTransaction/Function/flaskr.auth:register",
+                    "transactionUiName": "/flaskr.auth:register"
+                },
+                {
+                    "aggregateFacet": "WebTransaction/Function/flaskr.auth:register::builtins:ZeroDivisionError",
+                    "appId": 28925082,
+                    "appName": "My Flask Python Application",
+                    "duration": 0.0011768341064453125,
+                    "entityGuid": "MjYyNzMzN3xBUE18QVBQTElDQVRJT058Mjg5MjUwODI",
+                    "error.class": "builtins:ZeroDivisionError",
+                    "error.message": "division by zero",
+                    "host": "new-relic-flask2",
+                    "port": 8080,
+                    "realAgentId": 28925084,
+                    "request.headers.accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                    "request.headers.host": "35.236.108.92:8080",
+                    "request.headers.referer": "http://35.236.108.92:8080/",
+                    "request.headers.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36",
+                    "request.method": "GET",
+                    "request.uri": "/auth/register",
+                    "thread.concurrency": 0.9890943792544556,
+                    "timestamp": 1582133147569,
+                    "transactionName": "WebTransaction/Function/flaskr.auth:register",
+                    "transactionUiName": "/flaskr.auth:register"
+                },
+                {
+                    "aggregateFacet": "WebTransaction/Function/flaskr.auth:register::builtins:ZeroDivisionError",
+                    "appId": 28925082,
+                    "appName": "My Flask Python Application",
+                    "duration": 0.0011293888092041016,
+                    "entityGuid": "MjYyNzMzN3xBUE18QVBQTElDQVRJT058Mjg5MjUwODI",
+                    "error.class": "builtins:ZeroDivisionError",
+                    "error.message": "division by zero",
+                    "host": "new-relic-flask2",
+                    "port": 8080,
+                    "realAgentId": 28925084,
+                    "request.headers.accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                    "request.headers.host": "35.236.108.92:8080",
+                    "request.headers.referer": "http://35.236.108.92:8080/",
+                    "request.headers.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36",
+                    "request.method": "GET",
+                    "request.uri": "/auth/register",
+                    "thread.concurrency": 0.986374214903945,
+                    "timestamp": 1582133146601,
+                    "transactionName": "WebTransaction/Function/flaskr.auth:register",
+                    "transactionUiName": "/flaskr.auth:register"
+                },
+                {
+                    "aggregateFacet": "WebTransaction/Function/flaskr.auth:register::builtins:ZeroDivisionError",
+                    "appId": 28925082,
+                    "appName": "My Flask Python Application",
+                    "duration": 0.0011687278747558594,
+                    "entityGuid": "MjYyNzMzN3xBUE18QVBQTElDQVRJT058Mjg5MjUwODI",
+                    "error.class": "builtins:ZeroDivisionError",
+                    "error.message": "division by zero",
+                    "host": "new-relic-flask2",
+                    "port": 8080,
+                    "realAgentId": 28925084,
+                    "request.headers.accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+                    "request.headers.host": "35.236.108.92:8080",
+                    "request.headers.referer": "http://35.236.108.92:8080/",
+                    "request.headers.userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.116 Safari/537.36",
+                    "request.method": "GET",
+                    "request.uri": "/auth/register",
+                    "thread.concurrency": 0.9839758465932258,
+                    "timestamp": 1582133139999,
+                    "transactionName": "WebTransaction/Function/flaskr.auth:register",
+                    "transactionUiName": "/flaskr.auth:register"
+                }
+            ]
+        }
+    ],
+    "performanceStats": {
+        "inspectedCount": 5,
+        "omittedCount": 0,
+        "matchCount": 5,
+        "wallClockTime": 18
+    },
+    "metadata": {
+        "eventTypes": [
+            "TransactionError"
+        ],
+        "eventType": "TransactionError",
+        "openEnded": false,
+        "beginTime": "2020-02-18T18:00:00Z",
+        "endTime": "2020-02-19T19:38:58Z",
+        "beginTimeMillis": 1582048800000,
+        "endTimeMillis": 1582141138000,
+        "rawSince": "'2020-02-18T18:00:00Z'",
+        "rawUntil": "'2020-02-19T19:38:58Z'",
+        "rawCompareWith": "",
+        "guid": "5890296a-5092-5fcc-f05d-b55dbeb8a500",
+        "routerGuid": "729a50a2-a73f-5d88-cd1f-ea0a9ace54a6",
+        "messages": [
+            "Your query's end time is in the future. Results may be incomplete."
+        ],
+        "contents": [
+            {
+                "function": "events",
+                "limit": 100,
+                "order": {
+                    "column": "timestamp",
+                    "descending": true
+                }
+            }
+        ]
+    }
+}

@@ -1,5 +1,6 @@
 import Highlight from 'react-highlight'
-import ToggleContent from '../../../shared/ToggleContent'
+import ToggleContent from 'Shared/ToggleContent'
+import DocLink from 'Shared/DocLink/DocLink';
 
 const NgRxDoc = (props) => {
   return (
@@ -65,7 +66,7 @@ const metaReducers = [tracker.use(trackerNgRx(<options>))]; // check list of ava
         }
       />
 
-      <div className="mt-6">See <a href="https://docs.openreplay.com/api" className="color-teal underline" target="_blank">API</a> for more options.</div>
+    <DocLink className="mt-4" label="Integrate NgRx" url="https://docs.openreplay.com/plugins/ngrx" />
     </div>
   )
 };

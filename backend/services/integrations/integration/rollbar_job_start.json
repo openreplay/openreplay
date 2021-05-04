@@ -1,0 +1,13 @@
+{
+    "err": 0,
+    "result": {
+        "status": "new",
+        "job_hash": "2d7141f57204ea9cfe59304beed947313b538608",
+        "date_modified": 1582125712,
+        "query_string": "SELECT item.id, item.title,body.message.asayerSessionId,item.level,item.counter,item.environment,body.crash_report.raw,body.message.body,timestamp FROM item_occurrence WHERE body.message.asayerSessionId != null\tAND timestamp>= 1582124402\tAND item.level>30\tORDER BY timestamp\tLIMIT 1000",
+        "date_created": 1582125712,
+        "project_id": 349886,
+        "id": 82765415,
+        "project_group_id": 16555
+    }
+}
