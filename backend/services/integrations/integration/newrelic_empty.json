@@ -1,0 +1,42 @@
+{
+    "results": [
+        {
+            "events": []
+        }
+    ],
+    "performanceStats": {
+        "inspectedCount": 0,
+        "omittedCount": 0,
+        "matchCount": 0,
+        "wallClockTime": 10
+    },
+    "metadata": {
+        "eventTypes": [
+            "TransactionError"
+        ],
+        "eventType": "TransactionError",
+        "openEnded": true,
+        "beginTime": "2014-08-04T00:00:00Z",
+        "endTime": "2020-02-14T18:04:23Z",
+        "beginTimeMillis": 1407110400000,
+        "endTimeMillis": 1581703463865,
+        "rawSince": "'2014-08-04 00:00:00'",
+        "rawUntil": "NOW",
+        "rawCompareWith": "",
+        "guid": "27d3fd61-735a-ab46-51b4-f96f07226d2b",
+        "routerGuid": "979f0b32-b13b-fad1-7577-60f2025da513",
+        "messages": [
+            "No events found -- do you have the correct event type and time range?"
+        ],
+        "contents": [
+            {
+                "function": "events",
+                "limit": 100,
+                "order": {
+                    "column": "timestamp",
+                    "descending": true
+                }
+            }
+        ]
+    }
+}

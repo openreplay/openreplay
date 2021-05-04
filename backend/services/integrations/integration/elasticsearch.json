@@ -1,0 +1,469 @@
+{
+  "took" : 2,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 1,
+    "successful" : 1,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 10,
+      "relation" : "eq"
+    },
+    "max_score" : null,
+    "hits" : [
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "TaSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://www.elastic-elastic-elastic.com/success/christopher-loria",
+          "request" : "/elasticsearch",
+          "agent" : "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1",
+          "extension" : "",
+          "memory" : null,
+          "ip" : "245.169.167.67",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]245.169.167.67 - - [2018-08-03T16:20:11.988Z] "GET /elasticsearch HTTP/1.1" 200 9950 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1"""",
+          "url" : "https://www.elastic.co/downloads/elasticsearch",
+          "tags" : [
+            "success",
+            "info",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "PK:RW",
+            "src" : "PK",
+            "coordinates" : {
+              "lon" : -76.069,
+              "lat" : 38.80416667
+            },
+            "dest" : "RW"
+          },
+          "utc_time" : "2020-02-21T16:20:11.988Z",
+          "bytes" : 9950,
+          "machine" : {
+            "os" : "osx",
+            "ram" : 18253611008
+          },
+          "response" : 200,
+          "clientip" : "245.169.167.67",
+          "host" : "www.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:20:11.988Z"
+        },
+        "sort" : [
+          1582302011988
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "fKSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://facebook.com/error/charles-fullerton",
+          "request" : "/elasticsearch",
+          "agent" : "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24",
+          "extension" : "",
+          "memory" : null,
+          "ip" : "26.150.255.63",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]26.150.255.63 - - [2018-08-03T16:20:52.802Z] "GET /elasticsearch HTTP/1.1" 200 7330 "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24"""",
+          "url" : "https://www.elastic.co/downloads/elasticsearch",
+          "tags" : [
+            "success",
+            "info",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "US:FR",
+            "src" : "US",
+            "coordinates" : {
+              "lon" : -82.70288889,
+              "lat" : 34.80997222
+            },
+            "dest" : "FR"
+          },
+          "utc_time" : "2020-02-21T16:20:52.802Z",
+          "bytes" : 7330,
+          "machine" : {
+            "os" : "ios",
+            "ram" : 17179869184
+          },
+          "response" : 200,
+          "clientip" : "26.150.255.63",
+          "host" : "www.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:20:52.802Z"
+        },
+        "sort" : [
+          1582302052802
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "QqSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://nytimes.com/warning/yelena-kondakova",
+          "request" : "/enterprise",
+          "agent" : "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1",
+          "extension" : "",
+          "memory" : null,
+          "ip" : "6.63.231.192",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]6.63.231.192 - - [2018-08-03T16:24:33.154Z] "GET /enterprise HTTP/1.1" 503 0 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1"""",
+          "url" : "https://www.elastic.co/downloads/enterprise",
+          "tags" : [
+            "success",
+            "login",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "BR:IN",
+            "src" : "BR",
+            "coordinates" : {
+              "lon" : -91.67833333,
+              "lat" : 40.12916667
+            },
+            "dest" : "IN"
+          },
+          "utc_time" : "2020-02-21T16:24:33.154Z",
+          "bytes" : 0,
+          "machine" : {
+            "os" : "osx",
+            "ram" : 21474836480
+          },
+          "response" : 503,
+          "clientip" : "6.63.231.192",
+          "host" : "www.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:24:33.154Z"
+        },
+        "sort" : [
+          1582302273154
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "t6SPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://nytimes.com/success/ronald-grabe",
+          "request" : "/",
+          "agent" : "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24",
+          "extension" : "",
+          "memory" : null,
+          "ip" : "111.58.155.54",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]111.58.155.54 - - [2018-08-03T16:26:12.645Z] "GET / HTTP/1.1" 200 3354 "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24"""",
+          "url" : "https://www.elastic.co/downloads",
+          "tags" : [
+            "success",
+            "info",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "CN:CN",
+            "src" : "CN",
+            "coordinates" : {
+              "lon" : -93.30739306,
+              "lat" : 31.99071694
+            },
+            "dest" : "CN"
+          },
+          "utc_time" : "2020-02-21T16:26:12.645Z",
+          "bytes" : 3354,
+          "machine" : {
+            "os" : "win 8",
+            "ram" : 9663676416
+          },
+          "response" : 200,
+          "clientip" : "111.58.155.54",
+          "host" : "www.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:26:12.645Z"
+        },
+        "sort" : [
+          1582302372645
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "lqSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://www.elastic-elastic-elastic.com/warning/gregory-h-johnson",
+          "request" : "/styles/ad-blocker.css",
+          "agent" : "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24",
+          "extension" : "css",
+          "memory" : null,
+          "ip" : "85.130.95.75",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]85.130.95.75 - - [2018-08-03T16:36:29.881Z] "GET /styles/ad-blocker.css HTTP/1.1" 200 7755 "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24"""",
+          "url" : "https://cdn.elastic-elastic-elastic.org/styles/ad-blocker.css",
+          "tags" : [
+            "warning",
+            "login",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "US:CD",
+            "src" : "US",
+            "coordinates" : {
+              "lon" : -80.09559417,
+              "lat" : 26.68316194
+            },
+            "dest" : "CD"
+          },
+          "utc_time" : "2020-02-21T16:36:29.881Z",
+          "bytes" : 7755,
+          "machine" : {
+            "os" : "win 8",
+            "ram" : 18253611008
+          },
+          "response" : 200,
+          "clientip" : "85.130.95.75",
+          "host" : "cdn.elastic-elastic-elastic.org",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:36:29.881Z"
+        },
+        "sort" : [
+          1582302989881
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "qqSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://nytimes.com/success/liu-wang",
+          "request" : "/elasticsearch",
+          "agent" : "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1",
+          "extension" : "",
+          "memory" : null,
+          "ip" : "107.238.94.231",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]107.238.94.231 - - [2018-08-03T16:52:30.202Z] "GET /elasticsearch HTTP/1.1" 503 0 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1"""",
+          "url" : "https://www.elastic.co/downloads/elasticsearch",
+          "tags" : [
+            "success",
+            "security",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "CN:BR",
+            "src" : "CN",
+            "coordinates" : {
+              "lon" : -85.24216667,
+              "lat" : 37.63355556
+            },
+            "dest" : "BR"
+          },
+          "utc_time" : "2020-02-21T16:52:30.202Z",
+          "bytes" : 0,
+          "machine" : {
+            "os" : "osx",
+            "ram" : 9663676416
+          },
+          "response" : 503,
+          "clientip" : "107.238.94.231",
+          "host" : "www.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:52:30.202Z"
+        },
+        "sort" : [
+          1582303950202
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "5KSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://facebook.com/success/edward-gibson",
+          "request" : "/beats/filebeat",
+          "agent" : "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24",
+          "extension" : "",
+          "memory" : null,
+          "ip" : "231.185.3.235",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]231.185.3.235 - - [2018-08-03T16:54:58.604Z] "GET /beats/filebeat HTTP/1.1" 200 7616 "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24"""",
+          "url" : "https://www.elastic.co/downloads/beats/filebeat",
+          "tags" : [
+            "success",
+            "security",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "BO:IN",
+            "src" : "BO",
+            "coordinates" : {
+              "lon" : -151.1913661,
+              "lat" : 61.965295
+            },
+            "dest" : "IN"
+          },
+          "utc_time" : "2020-02-21T16:54:58.604Z",
+          "bytes" : 7616,
+          "machine" : {
+            "os" : "osx",
+            "ram" : 13958643712
+          },
+          "response" : 200,
+          "clientip" : "231.185.3.235",
+          "host" : "www.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T16:54:58.604Z"
+        },
+        "sort" : [
+          1582304098604
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "6aSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://www.elastic-elastic-elastic.com/success/umberto-guidoni",
+          "request" : "/beats/filebeat/filebeat-6.3.2-linux-x86.tar.gz",
+          "agent" : "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24",
+          "extension" : "gz",
+          "memory" : null,
+          "ip" : "251.250.144.158",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]251.250.144.158 - - [2018-08-03T17:01:11.333Z] "GET /beats/filebeat/filebeat-6.3.2-linux-x86.tar.gz HTTP/1.1" 200 9860 "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24"""",
+          "url" : "https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-6.3.2-linux-x86.tar.gz",
+          "tags" : [
+            "success",
+            "info",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "IN:IT",
+            "src" : "IN",
+            "coordinates" : {
+              "lon" : -92.464455,
+              "lat" : 39.72870694
+            },
+            "dest" : "IT"
+          },
+          "utc_time" : "2020-02-21T17:01:11.333Z",
+          "bytes" : 9860,
+          "machine" : {
+            "os" : "ios",
+            "ram" : 6442450944
+          },
+          "response" : 200,
+          "clientip" : "251.250.144.158",
+          "host" : "artifacts.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T17:01:11.333Z"
+        },
+        "sort" : [
+          1582304471333
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "uaSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://www.elastic-elastic-elastic.com/success/daniel-barry",
+          "request" : "/kibana/kibana-6.3.2-linux-x86_64.tar.gz",
+          "agent" : "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1",
+          "extension" : "gz",
+          "memory" : null,
+          "ip" : "247.50.93.227",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]247.50.93.227 - - [2018-08-03T17:08:38.706Z] "GET /kibana/kibana-6.3.2-linux-x86_64.tar.gz HTTP/1.1" 200 3119 "-" "Mozilla/5.0 (X11; Linux x86_64; rv:6.0a1) Gecko/20110421 Firefox/6.0a1"""",
+          "url" : "https://artifacts.elastic.co/downloads/kibana/kibana-6.3.2-linux-x86_64.tar.gz",
+          "tags" : [
+            "success",
+            "info",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "IN:US",
+            "src" : "IN",
+            "coordinates" : {
+              "lon" : -90.32484722,
+              "lat" : 36.77394444
+            },
+            "dest" : "US"
+          },
+          "utc_time" : "2020-02-21T17:08:38.706Z",
+          "bytes" : 3119,
+          "machine" : {
+            "os" : "osx",
+            "ram" : 9663676416
+          },
+          "response" : 200,
+          "clientip" : "247.50.93.227",
+          "host" : "artifacts.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T17:08:38.706Z"
+        },
+        "sort" : [
+          1582304918706
+        ]
+      },
+      {
+        "_index" : "kibana_sample_data_logs",
+        "_type" : "_doc",
+        "_id" : "MKSPaHABZ3Nzf4SJcTnh",
+        "_score" : null,
+        "_source" : {
+          "referer" : "http://twitter.com/success/anthony-w-england",
+          "request" : "/elasticsearch/elasticsearch-6.3.2.zip",
+          "agent" : "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24",
+          "extension" : "zip",
+          "memory" : null,
+          "ip" : "179.153.116.46",
+          "index" : "kibana_sample_data_logs",
+          "message" : """[asayer_session_id=123456677890]179.153.116.46 - - [2018-08-03T17:11:18.968Z] "GET /elasticsearch/elasticsearch-6.3.2.zip HTTP/1.1" 200 4685 "-" "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.24 (KHTML, like Gecko) Chrome/11.0.696.50 Safari/534.24"""",
+          "url" : "https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.3.2.zip",
+          "tags" : [
+            "success",
+            "info",
+            "error"
+          ],
+          "geo" : {
+            "srcdest" : "IN:IT",
+            "src" : "IN",
+            "coordinates" : {
+              "lon" : -97.10931306,
+              "lat" : 40.86525806
+            },
+            "dest" : "IT"
+          },
+          "utc_time" : "2020-02-21T17:11:18.968Z",
+          "bytes" : 4685,
+          "machine" : {
+            "os" : "ios",
+            "ram" : 4294967296
+          },
+          "response" : 200,
+          "clientip" : "179.153.116.46",
+          "host" : "artifacts.elastic.co",
+          "phpmemory" : null,
+          "timestamp" : "2020-02-21T17:11:18.968Z"
+        },
+        "sort" : [
+          1582305078968
+        ]
+      }
+    ]
+  }
+}

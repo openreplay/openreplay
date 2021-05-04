@@ -1,5 +1,6 @@
 import Highlight from 'react-highlight'
-import ToggleContent from '../../../shared/ToggleContent'
+import ToggleContent from 'Shared/ToggleContent'
+import DocLink from 'Shared/DocLink/DocLink';
 
 const ProfilerDoc = (props) => {
   return (
@@ -59,7 +60,7 @@ const fn = profiler('call_name')(() => {
         }
       />
 
-      <div className="mt-6">See <a href="https://docs.openreplay.com/api" className="color-teal underline" target="_blank">API</a> for more options.</div>
+      <DocLink className="mt-4" label="Integrate Profiler" url="https://docs.openreplay.com/plugins/profiler" />
     </div>
   )
 };
