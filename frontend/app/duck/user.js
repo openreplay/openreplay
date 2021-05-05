@@ -91,6 +91,7 @@ export default withRequestState({
   putClientRequest: PUT_CLIENT,
   updateAccountRequest: UPDATE_ACCOUNT,
   updateAppearance: UPDATE_APPEARANCE,
+  fetchTenantsRequest: FETCH_TENANTS,
 }, reducer);
 
 export const login = params => dispatch => dispatch({

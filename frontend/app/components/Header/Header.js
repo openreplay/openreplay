@@ -99,7 +99,7 @@ const Header = (props) => {
         to={ withSiteId(DASHBOARD_PATH, siteId) }
         className={ styles.nav }
         activeClassName={ styles.active }
-      >                
+      >         
         <span>{ 'Metrics' }</span>
       </NavLink>
       <div className={ styles.right }>
