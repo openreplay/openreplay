@@ -9,7 +9,6 @@ import IntegrationsTab from './components/IntegrationsTab'
 import ManageUsersTab from './components/ManageUsersTab'
 import OnboardingNavButton from './components/OnboardingNavButton'
 import * as routes from '../../routes'
-import Crisp from 'Shared/Crisp'
 
 const withSiteId = routes.withSiteId;
 
