@@ -24,24 +24,15 @@ export default function SideMenu() {
       </div>
 
       <SideMenuitem
-        // active={activeTab.type === 'all'}
         title="Documentation"
         iconName="journal-code"
-        onClick={() => window.open('https://docs.openreplay.com/api', '_blank')}
+        onClick={() => window.open('https://docs.openreplay.com', '_blank')}
       />
 
       <SideMenuitem
-        // active={activeTab.type === 'all'}
         title="Report Issue"
         iconName="github"
-        onClick={() => window.open('https://github.com/openreplay/openreplay/issues/new', '_blank')}
-      />
-
-      <SideMenuitem
-        // active={activeTab.type === 'all'}
-        title="Chat with us"
-        iconName="chat-dots"
-        onClick={() => $crisp.push(['do', 'chat:open']) }
+        onClick={() => window.open('https://github.com/openreplay/openreplay/issues', '_blank')}
       />
     </div>
   )

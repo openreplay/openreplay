@@ -1,13 +1,11 @@
-import React, { useState } from 'react'
-import { Icon, Loader, Button, Link, Dropdown, CircularLoader } from 'UI'
-import { forgotPassword, login } from 'App/routes'
+import React from 'react'
+import { Icon, Button, Link, Dropdown, CircularLoader } from 'UI'
+import { login } from 'App/routes'
 import ReCAPTCHA from 'react-google-recaptcha'
 import stl from './signup.css'
-import cn from 'classnames'
-import { signup, fetchTenants } from 'Duck/user';
+import { signup } from 'Duck/user';
 import { connect } from 'react-redux'
 
-const FORGOT_PASSWORD = forgotPassword()
 const LOGIN_ROUTE = login()
 const recaptchaRef = React.createRef()
 
@@ -17,7 +15,7 @@ const recaptchaRef = React.createRef()
     errors: state.getIn([ 'user', 'signupRequest', 'errors' ]),
     loading: state.getIn([ 'user', 'signupRequest', 'loading' ]),
   }),
-  { signup, fetchTenants },
+  { signup },
 )
 export default class SignupForm extends React.Component {
 
@@ -29,10 +27,6 @@ export default class SignupForm extends React.Component {
     projectName: '',
     organizationName: '',
   };
-
-  componentDidMount() {
-    this.props.fetchTenants();
-  }
 
   handleSubmit = (token) => {
     const { tenantId, fullname, password, email, projectName, organizationName, auth } = this.state;
@@ -165,17 +159,8 @@ export default class SignupForm extends React.Component {
               'Signup' 
             }
           </Button>
-  
-          {/* <div className={ cn(stl.links, 'text-lg') }>
-            <Link to={ LOGIN_ROUTE }>{'Back to Login'}</Link>
-          </div> */}
         </div>
       </form>
     )
   }
 }
-
-// export default connect(state => ({
-//   errors: state.getIn([ 'user', 'signupRequest', 'errors' ]),
-//   loading: state.getIn([ 'user', 'signupRequest', 'loading' ]),
-// }), { signup })(SignupForm)

@@ -15,6 +15,7 @@ const recaptchaRef = React.createRef();
   state => ({
     errors: state.getIn([ 'user', 'loginRequest', 'errors' ]),
     loading: state.getIn([ 'user', 'loginRequest', 'loading' ]),
+    tenants: state.getIn(['user', 'tenants'])
   }),
   { login, },
 )
@@ -44,7 +45,7 @@ export default class Login extends React.Component {
   write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
 
   render() {
-    const { errors, loading } = this.props;
+    const { errors, loading, tenants } = this.props;
     return (
       <div className="flex" style={{ height: '100vh'}}>
         <div className={cn("w-6/12", stl.left)}>
@@ -62,7 +63,7 @@ export default class Login extends React.Component {
             <form onSubmit={ this.onSubmit }>
               <div className="mb-8">
                 <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
-                <div className="text-center text-xl">Don't have an a Account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div>
+                { tenants.length === 0 && <div className="text-center text-xl">Don't have an a Account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
               </div>
               <Loader loading={ loading }>
                 { window.ENV.CAPTCHA_ENABLED && (

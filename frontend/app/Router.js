@@ -22,6 +22,7 @@ import FunnelIssueDetails from 'Components/Funnels/FunnelIssueDetails';
 import APIClient from './api_client';
 import * as routes from './routes';
 import Signup from './components/Signup/Signup';
+import { fetchTenants } from 'Duck/user';
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
@@ -65,9 +66,10 @@ const ONBOARDING_PATH = routes.onboarding();
     account: state.getIn([ 'user', 'account' ]),
     organisation: state.getIn([ 'user', 'client', 'name' ]),
     tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+    tenants: state.getIn(['user', 'tenants']),
   };
 }, {
-  fetchUserInfo,
+  fetchUserInfo, fetchTenants
 })
 class Router extends React.Component {
   constructor(props) {
@@ -76,6 +78,7 @@ class Router extends React.Component {
       Promise.all([props.fetchUserInfo()])
       .then(() => this.onLoginLogout());
     }
+    props.fetchTenants();
   }
 
   componentDidUpdate(prevProps) {
@@ -89,7 +92,7 @@ class Router extends React.Component {
   }
 
   render() {    
-    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location } = this.props;
+    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, tenants } = this.props;
     const siteIdList = sites.map(({ id }) => id).toJS();
     const hideHeader = location.pathname && location.pathname.includes('/session/');
 
@@ -138,7 +141,7 @@ class Router extends React.Component {
       <Switch>
         <Route exact strict path={ FORGOT_PASSWORD } component={ ForgotPassword } />
         <Route exact strict path={ LOGIN_PATH } component={ changePassword ? UpdatePassword : Login } />
-        <Route exact strict path={ SIGNUP_PATH } component={ Signup } />
+        { tenants.length === 0 && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
         <Redirect to={ LOGIN_PATH } />
       </Switch>;
   }

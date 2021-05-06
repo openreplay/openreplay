@@ -112,6 +112,7 @@ export default class Timeline extends React.PureComponent {
                 style={ {
                   left: `${ interval.start * scale }%`,
                   width: `${ (interval.end - interval.start) * scale }%`,
+                  top: '-30px'
                 } }
               />))
             }
@@ -120,7 +121,7 @@ export default class Timeline extends React.PureComponent {
               <div
                 key={ e.key }
                 className={ stl.event }
-                style={ { left: `${ e.time * scale }%` } }
+                style={ { left: `${ e.time * scale }%`, top: '-30px' } }
               />
               ))
             }

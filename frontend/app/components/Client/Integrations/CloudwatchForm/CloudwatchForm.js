@@ -2,12 +2,13 @@ import { ACCESS_KEY_ID_LENGTH, SECRET_ACCESS_KEY_LENGTH } from 'Types/integratio
 import IntegrationForm from '../IntegrationForm'; 
 import LogGroupDropdown from './LogGroupDropdown';
 import RegionDropdown from './RegionDropdown';
+import DocLink from 'Shared/DocLink/DocLink';
 
 const CloudwatchForm = (props) => (
   <>
     <div className="p-5 border-b mb-4">
       <div>How to integrate CloudWatch with OpenReplay and see backend errors alongside session replays.</div>
-      <div className="mt-8">See <a href="https://docs.openreplay.com/javascript-sdk" className="color-teal underline" target="_blank">Documentation</a> for more details.</div>
+      <DocLink className="mt-4" label="Integrate CloudWatch" url="https://docs.openreplay.com/integrations/cloudwatch" />
     </div>
     <IntegrationForm 
       { ...props }

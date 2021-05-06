@@ -2,6 +2,7 @@ import { connect } from 'react-redux';
 import IntegrationForm from './IntegrationForm'; 
 import { withRequest } from 'HOCs';
 import { edit } from 'Duck/integrations/actions';
+import DocLink from 'Shared/DocLink/DocLink';
 
 @connect(state => ({
 	config: state.getIn([ 'elasticsearch', 'instance' ])
@@ -43,7 +44,7 @@ export default class ElasticsearchForm extends React.PureComponent {
       <>
         <div className="p-5 border-b mb-4">
           <div>How to integrate Elasticsearch with OpenReplay and see backend errors alongside session recordings.</div>
-          <div className="mt-8">See <a href="https://docs.openreplay.com/javascript-sdk" className="color-teal underline" target="_blank">Documentation</a> for more details.</div>
+          <DocLink className="mt-4" label="Integrate Elasticsearch" url="https://docs.openreplay.com/integrations/elastic" />
         </div>
         <IntegrationForm
           { ...props }

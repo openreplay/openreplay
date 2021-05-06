@@ -1,5 +1,6 @@
 import Highlight from 'react-highlight'
-import ToggleContent from '../../../shared/ToggleContent';
+import DocLink from 'Shared/DocLink/DocLink';
+import ToggleContent from 'Shared/ToggleContent';
 
 const GraphQLDoc = (props) => {
   return (
@@ -52,7 +53,7 @@ export const recordGraphQL = tracker.use(trackerGraphQL());`}
         }
       />
 
-      <div className="mt-6">See <a href="https://docs.openreplay.com/api" className="color-teal underline" target="_blank">API</a> for more options.</div>
+      <DocLink className="mt-4" label="Integrate GraphQL" url="https://docs.openreplay.com/plugins/graphql" />
     </div>
   )
 };
