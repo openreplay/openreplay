@@ -38,31 +38,6 @@ export default class Signup extends React.Component {
             </div>
           </div>
          </div>
-
-         <div className={cn(stl.bottom, 'absolute bottom-0 w-full py-16 px-20 color-white')}>
-            <div className="text-4xl mb-10">Want to self-host?</div>
-
-            <div className="flex items-start">
-              <div className="mr-4">
-                <Icon name="cloud-fog2-fill" size="26" color="white" />
-              </div>
-              <div className="text-left">
-                <div className="text-xl font-bold">Private Cloud</div>
-                <div className="text-lg">Managed deployments, maximum scalability</div>
-              </div>
-            </div>
-
-            <div className="border-b bg-white my-6 opacity-25" />
-            <div className="flex items-start">
-              <div className="mr-4">
-                <Icon name="integrations/github" size="26" color="white" />
-              </div>
-              <div className="text-left">
-                <div className="text-xl font-bold">Open source</div>
-                <div className="text-lg">Deploy on your own infrastructure. Free forever.</div>
-              </div>
-            </div>
-         </div>
        </div>
        <div className="w-6/12 flex items-center justify-center">
         <div className="">          

@@ -55,7 +55,6 @@ const ONBOARDING_PATH = routes.onboarding();
   const jwt = state.get('jwt');
   const changePassword = state.getIn([ 'user', 'account', 'changePassword' ]);
   const userInfoLoading = state.getIn([ 'user', 'fetchUserInfoRequest', 'loading' ]);
-  // const fetchingTenants = state.get('user', 'fetchTenantsRequest', 'loading');
   return {
     jwt,
     siteId,
