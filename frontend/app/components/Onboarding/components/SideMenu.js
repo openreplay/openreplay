@@ -34,12 +34,6 @@ export default function SideMenu() {
         iconName="github"
         onClick={() => window.open('https://github.com/openreplay/openreplay/issues', '_blank')}
       />
-
-      <SideMenuitem
-        title="Chat with us"
-        iconName="chat-dots"
-        onClick={() => $crisp.push(['do', 'chat:open']) }
-      />
     </div>
   )
 }
