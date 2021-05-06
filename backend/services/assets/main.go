@@ -26,6 +26,7 @@ func main() {
 		env.String("AWS_REGION"),
 		env.String("S3_BUCKET_ASSETS"),
 		env.String("ASSETS_ORIGIN"),
+		env.Int("ASSETS_SIZE_LIMIT"),
 	)
 
 	consumer := queue.NewMessageConsumer(
