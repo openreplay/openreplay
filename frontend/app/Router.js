@@ -55,14 +55,14 @@ const ONBOARDING_PATH = routes.onboarding();
   const jwt = state.get('jwt');
   const changePassword = state.getIn([ 'user', 'account', 'changePassword' ]);
   const userInfoLoading = state.getIn([ 'user', 'fetchUserInfoRequest', 'loading' ]);
-  const fetchingTenants = state.get('user', 'fetchTenantsRequest', 'loading');
+  // const fetchingTenants = state.get('user', 'fetchTenantsRequest', 'loading');
   return {
     jwt,
     siteId,
     changePassword,
     sites: state.getIn([ 'user', 'client', 'sites' ]),
     isLoggedIn: jwt !== null && !changePassword,
-    loading: siteId === null || userInfoLoading || fetchingTenants,
+    loading: siteId === null || userInfoLoading,
     email: state.getIn([ 'user', 'account', 'email' ]),
     account: state.getIn([ 'user', 'account' ]),
     organisation: state.getIn([ 'user', 'client', 'name' ]),

@@ -87,11 +87,10 @@ export default withRequestState({
   updatePasswordRequest: UPDATE_PASSWORD,
   requestResetPassowrd: REQUEST_RESET_PASSWORD,
   resetPassword: RESET_PASSWORD,
-  fetchUserInfoRequest: [ FETCH_ACCOUNT, FETCH_CLIENT ],
+  fetchUserInfoRequest: [ FETCH_ACCOUNT, FETCH_CLIENT, FETCH_TENANTS ],
   putClientRequest: PUT_CLIENT,
   updateAccountRequest: UPDATE_ACCOUNT,
   updateAppearance: UPDATE_APPEARANCE,
-  fetchTenantsRequest: FETCH_TENANTS,
 }, reducer);
 
 export const login = params => dispatch => dispatch({
