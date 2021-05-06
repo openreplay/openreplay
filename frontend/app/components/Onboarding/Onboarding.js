@@ -9,7 +9,6 @@ import IntegrationsTab from './components/IntegrationsTab'
 import ManageUsersTab from './components/ManageUsersTab'
 import OnboardingNavButton from './components/OnboardingNavButton'
 import * as routes from '../../routes'
-import Crisp from 'Shared/Crisp'
 
 const withSiteId = routes.withSiteId;
 
@@ -43,11 +42,7 @@ const Onboarding = (props) => {
         </div>
       </div>
       <div className="py-6 px-4 w-full flex items-center fixed bottom-0 bg-white border-t z-10">
-        <div className="crisp-chat" id="crisp-chat">
-          <Crisp />
-        </div>
         <div className="ml-auto">
-          {/* <Button primary size="small" plain>Done. See Recoded Sessions</Button> */}
           <span className="mx-2"/>
           <OnboardingNavButton />
         </div>

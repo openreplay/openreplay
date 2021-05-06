@@ -17,7 +17,7 @@ function OptOut(props) {
         checked={ optOut }
         onClick={ onChange }
         className="mr-8"
-        label="Enable/Disable"
+        label="Anonymize"
       />
     </div>
   )

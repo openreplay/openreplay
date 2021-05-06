@@ -2,7 +2,7 @@ import React from 'react'
 import { Controlled as CodeMirror } from 'react-codemirror2'
 import stl from './installDocs.css'
 import cn from 'classnames'
-import CopyButton from '../CopyButton';
+import { CopyButton } from 'UI';
 
 const installationCommand = 'npm i @openreplay/tracker --save'
 const usageCode = `import Tracker from '@openreplay/tracker';

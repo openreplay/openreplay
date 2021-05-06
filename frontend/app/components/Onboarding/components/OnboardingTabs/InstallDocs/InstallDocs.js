@@ -2,10 +2,9 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import stl from './installDocs.css'
 import cn from 'classnames'
-import CopyButton from '../CopyButton'
 import Highlight from 'react-highlight'
 import CircleNumber from '../../CircleNumber'
-import { Slider } from 'UI'
+import { Slider, CopyButton } from 'UI'
 
 const installationCommand = 'npm i @openreplay/tracker --save'
 const usageCode = `import Tracker from '@openreplay/tracker';
@@ -88,7 +87,7 @@ function InstallDocs({ site }) {
           </div>         
         </div>
       </div>
-      <div className="border-t pt-4 mt-8">See <a href="https://docs.openreplay.com/javascript-sdk" className="color-teal underline" target="_blank">Documentation</a> for the list of available options.</div>
+      <div className="border-t pt-4 mt-8">See <a href="https://docs.openreplay.com/installation/javascript-sdk" className="color-teal underline" target="_blank">Documentation</a> for the list of available options.</div>
     </div>
   )
 }

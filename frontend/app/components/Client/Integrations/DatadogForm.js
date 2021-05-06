@@ -1,10 +1,11 @@
 import IntegrationForm from './IntegrationForm'; 
+import DocLink from 'Shared/DocLink/DocLink';
 
 const DatadogForm = (props) => (
   <>
     <div className="p-5 border-b mb-4">
       <div>How to integrate Datadog with OpenReplay and see backend errors alongside session recordings.</div>
-      <div className="mt-8">See <a href="https://docs.openreplay.com/javascript-sdk" className="color-teal underline" target="_blank">Documentation</a> for more details.</div>
+      <DocLink className="mt-4" label="Integrate Datadog" url="https://docs.openreplay.com/integrations/datadog" />
     </div>
     <IntegrationForm 
       { ...props }
