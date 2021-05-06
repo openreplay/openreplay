@@ -53,7 +53,7 @@ function processOptions(obj: any): obj is Options {
       }
     } else {
       console.warn("OpenReplay: projectKey is expected to have a string type.")
-      obj.projectKey = obj.projectID.toString()
+      obj.projectKey = obj.projectKey.toString()
     }
   }
   if (typeof obj.sessionToken !== 'string' && obj.sessionToken != null) {
