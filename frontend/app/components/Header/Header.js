@@ -24,7 +24,6 @@ import { init as initSite, fetchList as fetchSiteList } from 'Duck/site';
 import ErrorGenPanel from 'App/dev/components';
 import ErrorsBadge from 'Shared/ErrorsBadge';
 import Alerts from '../Alerts/Alerts';
-import EmailVerificationMessage from '../shared/EmailVerificationMessage/EmailVerificationMessage';
 
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
@@ -103,7 +102,6 @@ const Header = (props) => {
         <span>{ 'Metrics' }</span>
       </NavLink>
       <div className={ styles.right }>
-        { !account.verifiedEmail && <EmailVerificationMessage email={account.email} /> }
         <Announcements />
         <div className={ styles.divider } />
 
