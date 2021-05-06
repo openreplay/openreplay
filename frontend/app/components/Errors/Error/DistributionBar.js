@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import { Popup } from 'UI';
+import { Popup, TextEllipsis } from 'UI';
 import { Styles } from '../../Dashboard/Widgets/common';
 import cls from './distributionBar.css';
 import { colorScale } from 'App/utils';
@@ -15,11 +15,15 @@ function DistributionBar({ className, title, partitions }) {
 	return (
 		<div className={ className } >
 			<div className="flex justify-between text-sm mb-1">
-				<span className="capitalize">{ title }</span>
-				<span>
-					<span className="font-thin capitalize">{ partitions[0].label }</span>
-					<span className="ml-2">{ `${ Math.round(partitions[0].prc) }% ` }</span>
-				</span>
+				<div className="capitalize">{ title }</div>
+				<div className="flex items-center">
+					<div className="font-thin capitalize" style={{ maxWidth: '80px', height: '19px'}}>
+						<TextEllipsis
+							text={ partitions[0].label }
+						/>
+					</div>
+					<div className="ml-2">{ `${ Math.round(partitions[0].prc) }% ` }</div>
+				</div>
 			</div>
 			<div className={ cn("border-radius-3 overflow-hidden flex", cls.bar) }>
 				{ partitions.map((p, index) => 
