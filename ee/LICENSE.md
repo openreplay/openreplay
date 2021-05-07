@@ -6,7 +6,7 @@ With regard to the OpenReplay Software:
 This software and associated documentation files (the "Software") may only be
 used in production, if you (and any entity that you represent) have agreed to,
 and are in compliance with, the OpenReplay Subscription Terms of Service, available
-at https://openreplay.com/terms.html (the “Enterprise Terms”), or other
+at https://openreplay.com/terms.html (the “Enterprise Edition”), or other
 agreement governing the use of the Software, as agreed by you and OpenReplay,
 and otherwise have a valid OpenReplay Enterprise license for the
 correct volume and number of seats. Subject to the foregoing sentence, you are free to
