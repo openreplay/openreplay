@@ -60,6 +60,9 @@ _overrides.chalice_app(app)
 
 @app.middleware('http')
 def asayer_middleware(event, get_response):
+    from chalicelib.ee import unlock
+    if not unlock.is_valid():
+        return Response(body={"errors": ["expired license"]}, status_code=403)
     if "{projectid}" in event.path.lower():
         from chalicelib.ee import projects
         if not projects.is_authorized(project_id=event.uri_params["projectId"],

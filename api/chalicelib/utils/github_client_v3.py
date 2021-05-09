@@ -42,7 +42,7 @@ class github_formatters:
             'createdAt': github_formatters.get_timestamp(issue["created_at"]),
             'closed': issue["closed_at"] is not None,
             'commentsCount': issue["comments"],
-            'issueType': [str(l["id"]) for l in labels if l["name"].lower() != "asayer"],
+            'issueType': [str(l["id"]) for l in labels if l["name"].lower() != "openreplay"],
             'labels': [l["name"] for l in labels]
         }
         return result

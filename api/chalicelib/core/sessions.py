@@ -1,11 +1,9 @@
 from chalicelib.utils import pg_client, helper
+from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, \
+    sessions_mobs
 from chalicelib.utils import dev
-from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, sessions_mobs
 
-if helper.is_free_open_source_edition():
-    from chalicelib.core import projects, errors
-else:
-    from chalicelib.ee import projects, errors
+from chalicelib.core import projects, errors
 
 from chalicelib.core import resources
 

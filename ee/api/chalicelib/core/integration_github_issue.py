@@ -41,7 +41,7 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
                 if a == str(u["id"]):
                     real_assignees.append(u["login"])
                     break
-        real_labels = ["Asayer"]
+        real_labels = ["OpenReplay"]
         for l in labels:
             found = False
             for ll in metas["issueTypes"]:
