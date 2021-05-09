@@ -43,20 +43,20 @@ def get_state(tenant_id):
                 meta = cur.fetchone()["sum"] > 0
 
     return [
-        {"task": "Install Asayer",
+        {"task": "Install OpenReplay",
          "done": recorded,
-         "URL": "https://docs.asayer.io/getting-started/quick-start"},
+         "URL": "https://docs.openreplay.com/getting-started/quick-start"},
         {"task": "Identify Users",
          "done": meta,
-         "URL": "https://docs.asayer.io/data-privacy-security/metadata"},
+         "URL": "https://docs.openreplay.com/data-privacy-security/metadata"},
         {"task": "Invite Team Members",
          "done": len(users.get_members(tenant_id=tenant_id)) > 1,
-         "URL": "https://app.asayer.io/client/manage-users"},
+         "URL": "https://app.openreplay.com/client/manage-users"},
         {"task": "Integrations",
          "done": len(log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
                  or len(log_tool_sentry.get_all(tenant_id=tenant_id)) > 0 \
                  or len(log_tool_stackdriver.get_all(tenant_id=tenant_id)) > 0,
-         "URL": "https://docs.asayer.io/integrations"}
+         "URL": "https://docs.openreplay.com/integrations"}
     ]
 
 
@@ -78,9 +78,9 @@ def get_state_installing(tenant_id):
             )
             recorded = cur.fetchone()["count"] > 0
 
-    return {"task": "Install Asayer",
+    return {"task": "Install OpenReplay",
             "done": recorded,
-            "URL": "https://docs.asayer.io/getting-started/quick-start"}
+            "URL": "https://docs.openreplay.com/getting-started/quick-start"}
 
 
 def get_state_identify_users(tenant_id):
@@ -104,13 +104,13 @@ def get_state_identify_users(tenant_id):
 
     return {"task": "Identify Users",
             "done": meta,
-            "URL": "https://docs.asayer.io/data-privacy-security/metadata"}
+            "URL": "https://docs.openreplay.com/data-privacy-security/metadata"}
 
 
 def get_state_manage_users(tenant_id):
     return {"task": "Invite Team Members",
             "done": len(users.get_members(tenant_id=tenant_id)) > 1,
-            "URL": "https://app.asayer.io/client/manage-users"}
+            "URL": "https://app.openreplay.com/client/manage-users"}
 
 
 def get_state_integrations(tenant_id):
@@ -118,4 +118,4 @@ def get_state_integrations(tenant_id):
             "done": len(log_tool_datadog.get_all(tenant_id=tenant_id)) > 0 \
                     or len(log_tool_sentry.get_all(tenant_id=tenant_id)) > 0 \
                     or len(log_tool_stackdriver.get_all(tenant_id=tenant_id)) > 0,
-            "URL": "https://docs.asayer.io/integrations"}
+            "URL": "https://docs.openreplay.com/integrations"}

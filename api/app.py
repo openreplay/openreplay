@@ -55,7 +55,7 @@ sys.stderr = F()
 
 _overrides.chalice_app(app)
 
-# v0505
+# v0905
 @app.middleware('http')
 def asayer_middleware(event, get_response):
     global ASAYER_SESSION_ID

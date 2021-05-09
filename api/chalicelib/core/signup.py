@@ -56,8 +56,13 @@ def create_step1(data):
     project_name = data.get("projectName")
     if project_name is None or len(project_name) < 1:
         project_name = "my first project"
-    if len(get_signed_ups()) > 0 and data.get("tenantId") is None:
+    signed_ups = get_signed_ups()
+    if len(signed_ups) > 0 and data.get("tenantId") is None:
         errors.append("Tenant already exists, please select it from dropdown")
+    elif len(signed_ups) == 0 and data.get("tenantId") is not None \
+            or len(signed_ups) > 0 and data.get("tenantId") not in [t['tenantId'] for t in signed_ups]:
+        errors.append("Tenant does not exist")
+
     if len(errors) > 0:
         print("==> error")
         print(errors)
