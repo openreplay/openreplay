@@ -7,7 +7,7 @@
 # Give absolute file path.
 # Use following command to get the full file path
 # `readlink -f <file>`
-kubeconfig_path: /home/rajeshr/.cred/asayer/kube-oss.yaml
+kubeconfig_path: ""
 
 ###################
 ## Optional Fields.
@@ -36,8 +36,8 @@ domain_name: ""
 # By Default, we'll create a self signed certificate for nginx, and populate the values here.
 # Once you've proper domain name, and ssl certificate
 # Change the following variables accordingly.
-nginx_ssl_cert_file_path: "/home/rajesh/Documents/projects/asayer/asayer-os/scripts/helm/nginx-ingress/site.crt"
-nginx_ssl_key_file_path: "/home/rajesh/Documents/projects/asayer/asayer-os/scripts/helm/nginx-ingress/site.key"
+nginx_ssl_cert_file_path: ""
+nginx_ssl_key_file_path: ""
 
 # Enable monitoring
 # If set, monitoring stack will be installed
@@ -50,5 +50,5 @@ enable_monitoring: "false"
 # If not defined, will generate at runtime.
 # Use following command to generate passwordwill give 
 # `openssl rand -base64 30`
-minio_access_key: "YkkPAPYjogRlicqvCuNSHkfsdGtCCq"
-minio_secret_key: "MSVmVGXfTpVNKUfVYdrKQemekoFeUg"
+minio_access_key: ""
+minio_secret_key: ""
