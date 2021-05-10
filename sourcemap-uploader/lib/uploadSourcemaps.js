@@ -2,6 +2,10 @@ const https = require('https');
 
 const getUploadURLs = (api_key, project_key, js_file_urls) =>
   new Promise((resolve, reject) => {
+    if (js_file_urls.length === 0) {
+      resolve([]);
+    }
+
     const pathPrefix = (global.SERVER.pathname + "/").replace(/\/+/g, '/');
     const req = https.request(
       {
@@ -28,9 +32,9 @@ const getUploadURLs = (api_key, project_key, js_file_urls) =>
     req.end();
   });
 
-const uploadSourcemap = (upload_url, sourcemap) =>
+const uploadSourcemap = (upload_url, body) =>
   new Promise((resolve, reject) => {
-    body = Buffer.from(JSON.stringify(sourcemap.body));
+    body = Buffer.from(JSON.stringify(body));
     const req = https.request(
       upload_url,
       {
@@ -45,7 +49,7 @@ const uploadSourcemap = (upload_url, sourcemap) =>
           reject("Unable to upload. Please, contact OpenReplay support.");
           return;
         }
-        resolve(sourcemap.sourcemap_file_path)
+        resolve();
         //res.on('end', resolve);
       },
     );
@@ -62,7 +66,8 @@ module.exports = (api_key, project_key, sourcemaps) =>
   ).then(upload_urls =>
     Promise.all(
       upload_urls.map((upload_url, i) =>
-        uploadSourcemap(upload_url, sourcemaps[i])
+        uploadSourcemap(upload_url, sourcemaps[i].body)
+        .then(() => sourcemaps[i].js_file_url)
       ),
     ),
   );
