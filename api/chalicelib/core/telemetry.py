@@ -30,7 +30,7 @@ def compute():
                 RETURNING *,(SELECT email FROM public.users WHERE role='owner' LIMIT 1);"""
         )
         data = cur.fetchone()
-        requests.post('https://parrot.asayer.io/os/telemetry', json=process_data(data))
+        requests.post('https://parrot.openreplay.com/os/telemetry', json=process_data(data))
 
 
 def new_client():
@@ -40,4 +40,4 @@ def new_client():
                 (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email 
                 FROM public.tenants;""")
         data = cur.fetchone()
-        requests.post('https://parrot.asayer.io/os/signup', json=process_data(data))
+        requests.post('https://parrot.openreplay.com/os/signup', json=process_data(data))

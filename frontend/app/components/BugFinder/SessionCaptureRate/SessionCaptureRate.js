@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Input, Slider, Button, Popup, CircularLoader } from 'UI';
 import { saveCaptureRate, editCaptureRate } from 'Duck/watchdogs';
 import { connect } from 'react-redux';
@@ -12,8 +12,10 @@ function isPercent(val) {
 
 const SessionCaptureRate = props => {
   const { captureRate, saveCaptureRate, editCaptureRate, loading, onClose } = props;
-  const sampleRate = captureRate.get('rate');
-  if (sampleRate == null) return null;
+  const _sampleRate = captureRate.get('rate');
+  if (_sampleRate == null) return null;
+
+  const [sampleRate, setSampleRate] = useState(_sampleRate)
 
   const captureAll = captureRate.get('captureAll');
 
@@ -46,7 +48,7 @@ const SessionCaptureRate = props => {
             name="sampleRate"
             disabled={ captureAll }
             value={ captureAll ? '100' : sampleRate }            
-            onChange={ ({ target: { value }}) => isPercent(value) && editCaptureRate(+value) }            
+            onChange={ ({ target: { value }}) => isPercent(value) && setSampleRate(+value) }            
             size="small"
             className={stl.inputField}
           />

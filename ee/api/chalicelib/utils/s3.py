@@ -1,9 +1,19 @@
 from botocore.exceptions import ClientError
+from chalicelib.utils.helper import environ
+from chalicelib.utils import helper
 
 import boto3
 
-client = boto3.client('s3')
-sts_client = boto3.client('sts')
+if helper.is_free_open_source_edition() or helper.is_enterprise_edition():
+    from botocore.client import Config
+
+    client = boto3.client('s3', endpoint_url=environ["S3_HOST"],
+                          aws_access_key_id=environ["S3_KEY"],
+                          aws_secret_access_key=environ["S3_SECRET"],
+                          config=Config(signature_version='s3v4'),
+                          region_name='us-east-1')
+else:
+    client = boto3.client('s3')
 
 
 def exists(bucket, key):

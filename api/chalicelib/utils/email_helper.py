@@ -7,7 +7,7 @@ def send_team_invitation(recipient, user_name, temp_password, client_id, sender_
                                      formatting_variables={"userName": __escape_text_html(user_name),
                                                            "password": temp_password, "clientId": client_id,
                                                            "sender": sender_name})
-    SUBJECT = "Welcome to Asayer"
+    SUBJECT = "Welcome to OpenReplay"
     send_html(BODY_HTML, SUBJECT, recipient)
 
 
@@ -115,5 +115,5 @@ def weekly_report2(recipients, data):
             </table>
           </td>"""
     BODY_HTML = __get_html_from_file("chalicelib/utils/html/Project-Weekly-Report.html", formatting_variables=data)
-    SUBJECT = "Asayer Project Weekly Report"
+    SUBJECT = "OpenReplay Project Weekly Report"
     send_html(BODY_HTML=BODY_HTML, SUBJECT=SUBJECT, recipient=recipients)

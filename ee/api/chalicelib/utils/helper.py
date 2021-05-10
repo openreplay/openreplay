@@ -40,17 +40,6 @@ def generate_salt():
     return "".join(random.choices(string.hexdigits, k=36))
 
 
-def remove_empty_none_values(dictionary):
-    aux = {}
-    for key in dictionary.keys():
-        if dictionary[key] is not None:
-            if isinstance(dictionary[key], dict):
-                aux[key] = remove_empty_none_values(dictionary[key])
-            elif not isinstance(dictionary[key], str) or len(dictionary[key]) > 0:
-                aux[key] = dictionary[key]
-    return aux
-
-
 def unique_ordered_list(array):
     uniq = []
     [uniq.append(x) for x in array if x not in uniq]
