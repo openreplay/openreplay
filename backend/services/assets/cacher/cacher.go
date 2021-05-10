@@ -17,7 +17,6 @@ import (
 	"openreplay/backend/pkg/storage"
 )
 
-const BODY_LIMIT = 6 * (1 << 20) // 6 Mb
 const MAX_CACHE_DEPTH = 5
 
 type cacher struct {
@@ -26,9 +25,10 @@ type cacher struct {
 	httpClient *http.Client 	// Docs: "Clients are safe for concurrent use by multiple goroutines."
 	rewriter *assets.Rewriter // Read only
 	Errors chan error
+	sizeLimit int
 }
 
-func NewCacher(region string, bucket string, origin string) *cacher {
+func NewCacher(region string, bucket string, origin string, sizeLimit int) *cacher {
 	rewriter := assets.NewRewriter(origin)
 	return &cacher{
 		timeoutMap: newTimeoutMap(),
@@ -39,8 +39,9 @@ func NewCacher(region string, bucket string, origin string) *cacher {
         TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
       },
 		},
-		rewriter: rewriter,
-		Errors: make(chan error),
+		rewriter:   rewriter,
+		Errors:     make(chan error),
+		sizeLimit:  sizeLimit,
 	}
 }
 
@@ -72,12 +73,12 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, conte
 		c.Errors <- errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), context)
 		return
 	}
-	data, err := ioutil.ReadAll(io.LimitReader(res.Body, BODY_LIMIT+1))
+	data, err := ioutil.ReadAll(io.LimitReader(res.Body, int64(c.sizeLimit+1)))
 	if err != nil {
 		c.Errors <- errors.Wrap(err, context)
 		return
 	}
-	if len(data) > BODY_LIMIT {
+	if len(data) > c.sizeLimit {
 		c.Errors <- errors.Wrap(errors.New("Maximum size exceeded"), context)
 		return
 	}
