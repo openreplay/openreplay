@@ -1,0 +1,21 @@
+apiVersion: v1
+appVersion: 2.3.0
+description: nfs-server-provisioner is an out-of-tree dynamic provisioner for Kubernetes.
+  You can use it to quickly & easily deploy shared storage that works almost anywhere.
+home: https://github.com/kubernetes/charts/tree/master/stable/nfs-server-provisioner
+keywords:
+- nfs
+- storage
+maintainers:
+- email: kiall@macinnes.ie
+  name: kiall
+- email: kvapss@gmail.com
+  name: kvaps
+- email: joaocc-dev@live.com
+  name: joaocc
+- email: naseem@transit.app
+  name: naseemkullah
+name: nfs-server-provisioner
+sources:
+- https://github.com/kubernetes-incubator/external-storage/tree/master/nfs
+version: 1.1.1

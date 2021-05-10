@@ -1,0 +1,37 @@
+---
+# Checking user defined variables
+- import_tasks: pre-check.yaml
+
+- name: Creating kubernetes namespaces
+  shell: |
+    kubectl create ns {{ item }} --dry-run=client -o yaml | kubectl apply -f -
+  with_items:
+    - "app"
+    - "db"
+    - "nginx-ingress"
+
+- name: Creating docker secrets
+  shell: |
+    kubectl delete -n app secret aws-registry || true
+    kubectl create secret -n app docker-registry aws-registry \
+                  --docker-server="{{ ecr_docker_registry_server }}" \
+                  --docker-username="{{ ecr_docker_username }}" \
+                  --docker-password="{{ ecr_docker_password }}" \
+                  --docker-email=no@email.local
+  when: ecr_docker_username|length != 0 and ecr_docker_password|length != 0
+
+# Creating helm override files.
+- name: Creating override files
+  template:
+    dest: "/tmp/{{ item|basename }}"
+    src: "{{ item }}"
+  with_fileglob:
+    - templates/*.yaml
+  tags:
+    - app
+
+# Installing and initializing dbs
+- import_tasks: install-dbs.yaml
+
+# Installing and initializing apps
+- import_tasks: install-apps.yaml

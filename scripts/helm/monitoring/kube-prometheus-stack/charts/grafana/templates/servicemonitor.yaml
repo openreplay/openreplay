@@ -1,0 +1,36 @@
+{{- if .Values.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "grafana.fullname" . }}
+  {{- if .Values.serviceMonitor.namespace }}
+  namespace: {{ .Values.serviceMonitor.namespace }}
+  {{- end }}
+  labels:
+    {{- include "grafana.labels" . | nindent 4 }}
+    {{- if .Values.serviceMonitor.labels }}
+    {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+  - interval: {{ .Values.serviceMonitor.interval }}
+    {{- if .Values.serviceMonitor.scrapeTimeout }}
+    scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+    {{- end }}
+    honorLabels: true
+    port: {{ .Values.service.portName }}
+    path: {{ .Values.serviceMonitor.path }}
+    {{- if .Values.serviceMonitor.relabelings }}
+    relabelings:
+    {{- toYaml .Values.serviceMonitor.relabelings | nindent 4 }}
+    {{- end }}
+  jobLabel: "{{ .Release.Name }}"
+  selector:
+    matchLabels:
+      app: {{ template "grafana.name" . }}
+      release: "{{ .Release.Name }}"
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+{{- end }}

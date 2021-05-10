@@ -1,0 +1,43 @@
+{{- if .Values.podSecurityPolicy.create }}
+apiVersion: {{ template "podSecurityPolicy.apiVersion" . }}
+kind: PodSecurityPolicy
+metadata:
+  name: {{ template "redis.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: {{ template "redis.name" . }}
+    chart: {{ template "redis.chart" . }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  allowPrivilegeEscalation: false
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: {{ .Values.securityContext.fsGroup }}
+        max: {{ .Values.securityContext.fsGroup }}
+  hostIPC: false
+  hostNetwork: false
+  hostPID: false
+  privileged: false
+  readOnlyRootFilesystem: false
+  requiredDropCapabilities:
+    - ALL
+  runAsUser:
+    rule: 'MustRunAs'
+    ranges:
+      - min: {{ .Values.containerSecurityContext.runAsUser }}
+        max: {{ .Values.containerSecurityContext.runAsUser }}
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: {{ .Values.containerSecurityContext.runAsUser }}
+        max: {{ .Values.containerSecurityContext.runAsUser }}
+  volumes:
+    - 'configMap'
+    - 'secret'
+    - 'emptyDir'
+    - 'persistentVolumeClaim'
+{{- end }}

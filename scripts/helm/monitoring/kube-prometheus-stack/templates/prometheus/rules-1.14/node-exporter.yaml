@@ -1,0 +1,278 @@
+{{- /*
+Generated from 'node-exporter' group from https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/master/manifests/prometheus-rules.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.node }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "node-exporter" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: node-exporter
+    rules:
+    - alert: NodeFilesystemSpaceFillingUp
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available space left and is filling up.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemspacefillingup
+        summary: Filesystem is predicted to run out of space within the next 24 hours.
+      expr: |-
+        (
+          node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 40
+        and
+          predict_linear(node_filesystem_avail_bytes{job="node-exporter",fstype!=""}[6h], 24*60*60) < 0
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemSpaceFillingUp
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available space left and is filling up fast.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemspacefillingup
+        summary: Filesystem is predicted to run out of space within the next 4 hours.
+      expr: |-
+        (
+          node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 15
+        and
+          predict_linear(node_filesystem_avail_bytes{job="node-exporter",fstype!=""}[6h], 4*60*60) < 0
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: critical
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemAlmostOutOfSpace
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available space left.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemalmostoutofspace
+        summary: Filesystem has less than 5% space left.
+      expr: |-
+        (
+          node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 5
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemAlmostOutOfSpace
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available space left.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemalmostoutofspace
+        summary: Filesystem has less than 3% space left.
+      expr: |-
+        (
+          node_filesystem_avail_bytes{job="node-exporter",fstype!=""} / node_filesystem_size_bytes{job="node-exporter",fstype!=""} * 100 < 3
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: critical
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemFilesFillingUp
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available inodes left and is filling up.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemfilesfillingup
+        summary: Filesystem is predicted to run out of inodes within the next 24 hours.
+      expr: |-
+        (
+          node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 40
+        and
+          predict_linear(node_filesystem_files_free{job="node-exporter",fstype!=""}[6h], 24*60*60) < 0
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemFilesFillingUp
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available inodes left and is filling up fast.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemfilesfillingup
+        summary: Filesystem is predicted to run out of inodes within the next 4 hours.
+      expr: |-
+        (
+          node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 20
+        and
+          predict_linear(node_filesystem_files_free{job="node-exporter",fstype!=""}[6h], 4*60*60) < 0
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: critical
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemAlmostOutOfFiles
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available inodes left.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemalmostoutoffiles
+        summary: Filesystem has less than 5% inodes left.
+      expr: |-
+        (
+          node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 5
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeFilesystemAlmostOutOfFiles
+      annotations:
+        description: Filesystem on {{`{{`}} $labels.device {{`}}`}} at {{`{{`}} $labels.instance {{`}}`}} has only {{`{{`}} printf "%.2f" $value {{`}}`}}% available inodes left.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodefilesystemalmostoutoffiles
+        summary: Filesystem has less than 3% inodes left.
+      expr: |-
+        (
+          node_filesystem_files_free{job="node-exporter",fstype!=""} / node_filesystem_files{job="node-exporter",fstype!=""} * 100 < 3
+        and
+          node_filesystem_readonly{job="node-exporter",fstype!=""} == 0
+        )
+      for: 1h
+      labels:
+        severity: critical
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeNetworkReceiveErrs
+      annotations:
+        description: '{{`{{`}} $labels.instance {{`}}`}} interface {{`{{`}} $labels.device {{`}}`}} has encountered {{`{{`}} printf "%.0f" $value {{`}}`}} receive errors in the last two minutes.'
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodenetworkreceiveerrs
+        summary: Network interface is reporting many receive errors.
+      expr: rate(node_network_receive_errs_total[2m]) / rate(node_network_receive_packets_total[2m]) > 0.01
+      for: 1h
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeNetworkTransmitErrs
+      annotations:
+        description: '{{`{{`}} $labels.instance {{`}}`}} interface {{`{{`}} $labels.device {{`}}`}} has encountered {{`{{`}} printf "%.0f" $value {{`}}`}} transmit errors in the last two minutes.'
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodenetworktransmiterrs
+        summary: Network interface is reporting many transmit errors.
+      expr: rate(node_network_transmit_errs_total[2m]) / rate(node_network_transmit_packets_total[2m]) > 0.01
+      for: 1h
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeHighNumberConntrackEntriesUsed
+      annotations:
+        description: '{{`{{`}} $value | humanizePercentage {{`}}`}} of conntrack entries are used.'
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodehighnumberconntrackentriesused
+        summary: Number of conntrack are getting close to the limit.
+      expr: (node_nf_conntrack_entries / node_nf_conntrack_entries_limit) > 0.75
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeTextFileCollectorScrapeError
+      annotations:
+        description: Node Exporter text file collector failed to scrape.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodetextfilecollectorscrapeerror
+        summary: Node Exporter text file collector failed to scrape.
+      expr: node_textfile_scrape_error{job="node-exporter"} == 1
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeClockSkewDetected
+      annotations:
+        message: Clock on {{`{{`}} $labels.instance {{`}}`}} is out of sync by more than 300s. Ensure NTP is configured correctly on this host.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodeclockskewdetected
+        summary: Clock skew detected.
+      expr: |-
+        (
+          node_timex_offset_seconds > 0.05
+        and
+          deriv(node_timex_offset_seconds[5m]) >= 0
+        )
+        or
+        (
+          node_timex_offset_seconds < -0.05
+        and
+          deriv(node_timex_offset_seconds[5m]) <= 0
+        )
+      for: 10m
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeClockNotSynchronising
+      annotations:
+        message: Clock on {{`{{`}} $labels.instance {{`}}`}} is not synchronising. Ensure NTP is configured on this host.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-nodeclocknotsynchronising
+        summary: Clock not synchronising.
+      expr: |-
+        min_over_time(node_timex_sync_status[5m]) == 0
+        and
+        node_timex_maxerror_seconds >= 16
+      for: 10m
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeRAIDDegraded
+      annotations:
+        description: RAID array '{{`{{`}} $labels.device {{`}}`}}' on {{`{{`}} $labels.instance {{`}}`}} is in degraded state due to one or more disks failures. Number of spare drives is insufficient to fix issue automatically.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-noderaiddegraded
+        summary: RAID Array is degraded
+      expr: node_md_disks_required - ignoring (state) (node_md_disks{state="active"}) > 0
+      for: 15m
+      labels:
+        severity: critical
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+    - alert: NodeRAIDDiskFailure
+      annotations:
+        description: At least one device in RAID array on {{`{{`}} $labels.instance {{`}}`}} failed. Array '{{`{{`}} $labels.device {{`}}`}}' needs attention and possibly a disk swap.
+        runbook_url: {{ .Values.defaultRules.runbookUrl }}alert-name-noderaiddiskfailure
+        summary: Failed device in RAID array
+      expr: node_md_disks{state="fail"} > 0
+      labels:
+        severity: warning
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}
+{{- end }}
+{{- end }}

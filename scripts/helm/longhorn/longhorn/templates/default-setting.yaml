@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: longhorn-default-setting
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+data:
+  default-setting.yaml: |-
+    backup-target: {{ .Values.defaultSettings.backupTarget }}
+    backup-target-credential-secret: {{ .Values.defaultSettings.backupTargetCredentialSecret }}
+    create-default-disk-labeled-nodes: {{ .Values.defaultSettings.createDefaultDiskLabeledNodes }}
+    default-data-path: {{ .Values.defaultSettings.defaultDataPath }}
+    replica-soft-anti-affinity: {{ .Values.defaultSettings.replicaSoftAntiAffinity }}
+    storage-over-provisioning-percentage: {{ .Values.defaultSettings.storageOverProvisioningPercentage }}
+    storage-minimal-available-percentage: {{ .Values.defaultSettings.storageMinimalAvailablePercentage }}
+    upgrade-checker: {{ .Values.defaultSettings.upgradeChecker }}
+    default-replica-count: {{ .Values.defaultSettings.defaultReplicaCount }}
+    guaranteed-engine-cpu: {{ .Values.defaultSettings.guaranteedEngineCPU }}
+    default-longhorn-static-storage-class: {{ .Values.defaultSettings.defaultLonghornStaticStorageClass }}
+    backupstore-poll-interval: {{ .Values.defaultSettings.backupstorePollInterval }}
+    taint-toleration: {{ .Values.defaultSettings.taintToleration }}
+    priority-class: {{ .Values.defaultSettings.priorityClass }}
+    registry-secret: {{ .Values.defaultSettings.registrySecret }}
+    auto-salvage: {{ .Values.defaultSettings.autoSalvage }}
+    disable-scheduling-on-cordoned-node: {{ .Values.defaultSettings.disableSchedulingOnCordonedNode }}
+    replica-zone-soft-anti-affinity: {{ .Values.defaultSettings.replicaZoneSoftAntiAffinity }}
+    volume-attachment-recovery-policy: {{ .Values.defaultSettings.volumeAttachmentRecoveryPolicy }}
+    mkfs-ext4-parameters: {{ .Values.defaultSettings.mkfsExt4Parameters  }}

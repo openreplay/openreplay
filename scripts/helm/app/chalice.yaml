@@ -1,0 +1,28 @@
+namespace: app
+image:
+  repository: rg.fr-par.scw.cloud/foss
+  name: chalice
+  pullPolicy: IfNotPresent
+  tag: latest
+
+imagePullSecrets:
+  - name: aws-registry
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+env:
+  AWS_DEFAULT_REGION: us-east-1
+  pg_host: postgresql.db.svc.cluster.local
+  pg_port: 5432
+  pg_dbname: postgres
+  pg_user: postgres
+  pg_password: asayerPostgres
