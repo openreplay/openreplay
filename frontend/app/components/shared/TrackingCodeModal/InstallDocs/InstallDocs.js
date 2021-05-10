@@ -12,7 +12,7 @@ const tracker = new Tracker({
 tracker.start();`
 
 function InstallDocs({ site }) {
-  const _usageCode = usageCode.replace('PROJECT_ID', site.projectKeKey)
+  const _usageCode = usageCode.replace('PROJECT_ID', site.projectKey)
   return (
     <div>
       <div className="mb-3">
