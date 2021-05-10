@@ -36,6 +36,8 @@ jobs:
         bash build.sh
         cp -arl public frontend
         minio_pod=$(kubectl get po -n db -l app.kubernetes.io/name=minio -n db --output custom-columns=name:.metadata.name | tail -n+2)
+        echo $minio_pod
+        echo copying frontend to container.
         kubectl -n db cp frontend $minio_pod:/data/
         rm -rf frontend
 
