@@ -12,7 +12,7 @@ import (
 )
 
 var ch *clickhouse.Connector
-var finalizeTicker *time.Ticker
+var finalizeTicker <-chan time.Time
 
 func initStats() {
 	ch = clickhouse.NewConnector(env.String("CLICKHOUSE_STRING"))
@@ -20,7 +20,7 @@ func initStats() {
 		log.Fatalf("Clickhouse prepare error: %v\n", err)
 	}
 
-  finalizeTicker = time.NewTicker(20 * time.Minute)
+  finalizeTicker = time.Tick(20 * time.Minute)
 
 }
 

@@ -55,7 +55,8 @@ jobs:
         cd backend
         for image in $(cat images_to_build.txt);
         do
-          bash ./build.sh skip $image
+          echo "Bulding $image"
+          bash -x ./build.sh skip $image
           docker push $DOCKER_REPO/$image:$IMAGE_TAG
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
@@ -72,11 +73,11 @@ jobs:
           bash kube-install.sh --app $image
         done
 
-    - name: Debug Job
-      if: ${{ failure() }}
-      uses: mxschmitt/action-tmate@v3
-      env:
-        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
-        IMAGE_TAG: ${{ github.sha }}
-        ENVIRONMENT: staging
-
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging
+    #
