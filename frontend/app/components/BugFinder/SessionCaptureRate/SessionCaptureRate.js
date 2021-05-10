@@ -14,7 +14,6 @@ const SessionCaptureRate = props => {
   const { captureRate, saveCaptureRate, editCaptureRate, loading, onClose } = props;
   const _sampleRate = captureRate.get('rate');
   if (_sampleRate == null) return null;
-  console.log(_sampleRate)
 
   const [sampleRate, setSampleRate] = useState(_sampleRate)
 
