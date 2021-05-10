@@ -13,13 +13,17 @@ def __get_license():
 
 
 def check():
-    r = requests.post('https://parrot.openreplay.com/os/license', json={"mid": __get_mid(), "license": __get_license()})
-    if r.status_code != 200 or not r.json().get("valid"):
+    r = requests.post('https://parrot.asayer.io/os/license', json={"mid": __get_mid(), "license": __get_license()})
+    if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
         environ["expiration"] = "-1"
     else:
-        environ["expiration"] = r.json().get("expiration")
-    environ["lastCheck"] = TimeUTC.now()
+        environ["expiration"] = str(r.json()["data"].get("expiration"))
+    environ["lastCheck"] = str(TimeUTC.now())
+
+
+def get_expiration_date():
+    return int(environ["expiration"])
 
 
 def is_valid():
-    return int(environ["lastCheck"]) + int(environ["expiration"]) - TimeUTC.now() > 0
+    return get_expiration_date() - TimeUTC.now() > 0

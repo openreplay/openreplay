@@ -367,6 +367,14 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
             "jwt": authenticate(email, new_password)["jwt"]}
 
 
+def count_members():
+    with pg_client.PostgresClient() as cur:
+        cur.execute("""SELECT COUNT(user_id) 
+                        FROM public.users WHERE deleted_at IS NULL;""")
+        r = cur.fetchone()
+    return r["count"]
+
+
 def email_exists(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(

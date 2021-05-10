@@ -13,7 +13,7 @@ base_time = datetime.now(pytz.utc)
 
 cors_config = CORSConfig(
     allow_origin='*',
-    allow_headers=['vnd.openreplay.com.sid'],
+    allow_headers=['vnd.openreplay.com.sid', 'vnd.asayer.io.sid'],
     # max_age=600,
     # expose_headers=['X-Special-Header'],
     allow_credentials=True

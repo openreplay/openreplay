@@ -72,7 +72,8 @@ def asayer_middleware(event, get_response):
             pg_client.close()
             return Response(body={"errors": ["unauthorized project"]}, status_code=401)
     global ASAYER_SESSION_ID
-    ASAYER_SESSION_ID = app.current_request.headers.get('vnd.asayer.io.sid')
+    ASAYER_SESSION_ID = app.current_request.headers.get('vnd.openreplay.com.sid',
+                                                        app.current_request.headers.get('vnd.asayer.io.sid'))
     if "authorizer" in event.context and event.context["authorizer"] is None:
         print("Deleted user!!")
         pg_client.close()
