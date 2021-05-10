@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ClickHouse/clickhouse-go"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/db/postgres"
 )
@@ -16,26 +15,18 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	POSTGRES_STRING := env.String("POSTGRES_STRING")
-	CLICKHOUSE_STRING := env.String("CLICKHOUSE_STRING")
 	NOTIFICATIONS_STRING := env.String("ALERT_NOTIFICATION_STRING")
-	log.Printf("Notifications: %s \nCH: %s\n", NOTIFICATIONS_STRING, CLICKHOUSE_STRING)
+	log.Printf("Notifications: %s \nPG: %s\n", NOTIFICATIONS_STRING, POSTGRES_STRING)
 	pg := postgres.NewConn(POSTGRES_STRING)
 	defer pg.Close()
 
-	ch, err := sql.Open("clickhouse", CLICKHOUSE_STRING)
+	pgs, err := sql.Open("postgres", POSTGRES_STRING)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := ch.Ping(); err != nil {
-		if exception, ok := err.(*clickhouse.Exception); ok {
-			log.Printf("[%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
-		} else {
-			log.Println(err)
-		}
-		return
-	}
 
-	manager := NewManager(NOTIFICATIONS_STRING, ch, pg)
+
+	manager := NewManager(NOTIFICATIONS_STRING, pgs, pg)
 	if err := pg.IterateAlerts(func(a *postgres.Alert, err error) {
 		if err != nil {
 			log.Printf("Postgres error: %v\n", err)

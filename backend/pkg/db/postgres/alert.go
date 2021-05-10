@@ -106,27 +106,25 @@ type columnDefinition struct {
 }
 
 var LeftToDb = map[string]columnDefinition{
-	"performance.dom_content_loaded.average":     {table: "pages", formula: "COALESCE(AVG(NULLIF(dom_content_loaded_event_start ,0)),0)"},
-	"performance.first_meaningful_paint.average": {table: "pages", formula: "COALESCE(AVG(NULLIF(first_contentful_paint,0)),0)"},
-	"performance.page_load_time.average":         {table: "pages", formula: "AVG(NULLIF(load_event_end ,0))"},
-	"performance.dom_build_time.average":         {table: "pages", formula: "AVG(NULLIF(dom_building_time,0))"},
-	"performance.speed_index.average":            {table: "pages", formula: "AVG(NULLIF(speed_index,0))"},
-	//"avgSpeedIndexByLocation":         {table: "pages", formula: "AVG(NULLIF(speed_index,0))", group: "user_country"},
-	"performance.page_response_time.average": {table: "pages", formula: "AVG(NULLIF(response_time,0))"},
-	"performance.ttfb.average":               {table: "pages", formula: "AVG(NULLIF(first_paint,0))"},
-	//"avgDomContentLoaded":             {table: "pages", formula: "AVG(NULLIF(dom_content_loaded_event_time,0))"},
-	"performance.time_to_render.averag":         {table: "pages", formula: "AVG(NULLIF(visually_complete,0))"},
-	"performance.image_load_time.average":       {table: "resources", formula: "AVG(NULLIF(duration,0))", condition: "type=='img'"},
-	"performance.request_load_time.average":     {table: "resources", formula: "AVG(NULLIF(duration,0))", condition: "type=='fetch'"},
-	"resources.load_time.average":               {table: "resources", formula: "AVG(NULLIF(duration,0))"},
-	"resources.missing.count":                   {table: "resources", formula: "COUNT(DISTINCT url_hostpath)", condition: "success==0"},
-	"errors.4xx_5xx.count":                      {table: "resources", formula: "COUNT(session_id)", condition: "intDiv(status, 100)!=2"},
-	"errors.4xx.count":                          {table: "resources", formula: "COUNT(session_id)", condition: "intDiv(status, 100)==4"},
-	"errors.5xx.count":                          {table: "resources", formula: "COUNT(session_id)", condition: "intDiv(status, 100)==5"},
-	"errors.javascript.impacted_sessions.count": {table: "resources", formula: "COUNT(DISTINCT session_id)", condition: "success=0 AND type='script'"},
-	"performance.crashes.count":                 {table: "sessions", formula: "COUNT(DISTINCT session_id)", condition: "errors_count > 0"},
-	"errors.javascript.count":                   {table: "errors", formula: "COUNT(DISTINCT session_id)", condition: "source=='js_exception'"},
-	"errors.backend.count":                      {table: "errors", formula: "COUNT(DISTINCT session_id)", condition: "source!='js_exception'"},
+	"performance.dom_content_loaded.average":     {table: "events.pages", formula: "COALESCE(AVG(NULLIF(dom_content_loaded_time ,0)),0)"},
+	"performance.first_meaningful_paint.average": {table: "events.pages", formula: "COALESCE(AVG(NULLIF(first_contentful_paint_time,0)),0)"},
+	"performance.page_load_time.average":         {table: "events.pages", formula: "AVG(NULLIF(load_time ,0))"},
+	"performance.dom_build_time.average":         {table: "events.pages", formula: "AVG(NULLIF(dom_building_time,0))"},
+	"performance.speed_index.average":            {table: "events.pages", formula: "AVG(NULLIF(speed_index,0))"},
+	"performance.page_response_time.average":     {table: "events.pages", formula: "AVG(NULLIF(response_time,0))"},
+	"performance.ttfb.average":                   {table: "events.pages", formula: "AVG(NULLIF(first_paint_time,0))"},
+	"performance.time_to_render.averag":          {table: "events.pages", formula: "AVG(NULLIF(visually_complete,0))"},
+	"performance.image_load_time.average":        {table: "events.resources", formula: "AVG(NULLIF(duration,0))", condition: "type=='img'"},
+	"performance.request_load_time.average":      {table: "events.resources", formula: "AVG(NULLIF(duration,0))", condition: "type=='fetch'"},
+	"resources.load_time.average":                {table: "events.resources", formula: "AVG(NULLIF(duration,0))"},
+	"resources.missing.count":                    {table: "events.resources", formula: "COUNT(DISTINCT url_hostpath)", condition: "success==0"},
+	"errors.4xx_5xx.count":                       {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100!=2"},
+	"errors.4xx.count":                           {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100==4"},
+	"errors.5xx.count":                           {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100==5"},
+	"errors.javascript.impacted_sessions.count":  {table: "events.resources", formula: "COUNT(DISTINCT session_id)", condition: "success= FALSE AND type='script'"},
+	"performance.crashes.count":                  {table: "public.sessions", formula: "COUNT(DISTINCT session_id)", condition: "errors_count > 0"},
+	"errors.javascript.count":                    {table: "events.errors INNER JOIN public.errors AS m_errors USING (error_id)", formula: "COUNT(DISTINCT session_id)", condition: "source=='js_exception'"},
+	"errors.backend.count":                       {table: "events.errors INNER JOIN public.errors AS m_errors USING (error_id)", formula: "COUNT(DISTINCT session_id)", condition: "source!='js_exception'"},
 }
 
 //This is the frequency of execution for each threshold
@@ -151,20 +149,6 @@ func (a *Alert) CanCheck() bool {
 		log.Printf("repetitionBase: %d NOT FOUND", repetitionBase)
 		return false
 	}
-	//for i := int64(0); i <= 10; i++ {
-	//	now += 60 * 1000
-	//	log.Printf("%s: ((now-*a.CreatedAt)%%TimeInterval[repetitionBase]*60*1000) < 60*1000: %t", a.Name, ((now-*a.CreatedAt)%(TimeInterval[repetitionBase]*60*1000)) < 60*1000)
-	//	log.Printf("now: %d", now)
-	//	log.Printf("*a.CreatedAt: %d", *a.CreatedAt)
-	//	log.Printf("now-*a.CreatedAt: %d", now-*a.CreatedAt)
-	//	log.Printf("(now-*a.CreatedAt)%%TimeInterval[repetitionBase]*60*1000: %d", (now-*a.CreatedAt)%TimeInterval[repetitionBase]*60*1000)
-	//}
-	//return false
-	//log.Printf("%s: a.Options.RenotifyInterval<=0: %t", a.Name, a.Options.RenotifyInterval <= 0)
-	//log.Printf("%s: a.Options.LastNotification <= 0: %t", a.Name, a.Options.LastNotification <= 0)
-	//log.Printf("%s: (now-a.Options.LastNotification) > a.Options.RenotifyInterval*60*1000: %t", a.Name, (now-a.Options.LastNotification) > a.Options.RenotifyInterval*60*1000)
-	//log.Printf("%s: ((now-*a.CreatedAt)%%TimeInterval[repetitionBase]*60*1000) < 60*1000: %t", a.Name, ((now-*a.CreatedAt)%TimeInterval[repetitionBase]*60*1000) < 60*1000)
-	//log.Printf("%s: TimeInterval[repetitionBase]: %d", a.Name, TimeInterval[repetitionBase])
 	return a.DeletedAt == nil && a.Active &&
 		(a.Options.RenotifyInterval <= 0 ||
 			a.Options.LastNotification <= 0 ||
