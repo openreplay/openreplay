@@ -18,6 +18,7 @@ export default function EventSearch(props) {
               value={value}
               onChange={onChange}
               style={{ height: '32px' }}
+              autocomplete="off"
             />
             <div
               onClick={() => { setShowSearch(!showSearch); clearSearch() }}
