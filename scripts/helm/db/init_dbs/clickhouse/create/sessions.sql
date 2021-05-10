@@ -16,7 +16,7 @@ CREATE TABLE sessions (
   pages_count UInt16,
   events_count UInt16,
   errors_count UInt16
-) ENGINE = MergeTree
+) ENGINE = ReplacingMergeTree( duration )
 PARTITION BY toDate(datetime)
-ORDER BY (project_id, datetime)
+ORDER BY (project_id, datetime, session_id)
 TTL datetime + INTERVAL 1 MONTH;
