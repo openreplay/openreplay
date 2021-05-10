@@ -75,7 +75,7 @@ export default class IntegrationForm extends React.PureComponent {
         <Form>
           {!ignoreProject &&
             <Form.Field>
-              <label>{ 'Site' }</label>
+              <label>{ 'OpenReplay Project' }</label>
               <SiteDropdown
                 value={ currentSiteId }
                 onChange={ this.onChangeSelect }
