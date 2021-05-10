@@ -23,6 +23,7 @@ type Connector struct {
 	errors      *bulk
 	performance *bulk
 	longtasks 	*bulk
+	db *sql.DB
 }
 
 func NewConnector(url string) *Connector {
@@ -31,6 +32,7 @@ func NewConnector(url string) *Connector {
 		log.Fatalln(err)
 	}
 	return &Connector{
+		db: db,
 		sessionsIOS: newBulk(db, `
 	    INSERT INTO sessions_ios (session_id, project_id, tracker_version, rev_id, user_uuid, user_os, user_os_version, user_device, user_device_type, user_country, datetime, duration, views_count, events_count, crashes_count, metadata_1, metadata_2, metadata_3, metadata_4, metadata_5, metadata_6, metadata_7, metadata_8, metadata_9, metadata_10)
 	    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -203,4 +205,10 @@ func (conn *Connector) Commit() error {
 		return err
 	}
 	return nil
+}
+
+
+func (conn *Connector) FinaliseSessionsTable() error {
+	_, err := conn.db.Exec("OPTIMIZE TABLE sessions FINAL")
+	return err
 }

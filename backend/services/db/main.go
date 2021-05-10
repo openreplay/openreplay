@@ -72,6 +72,7 @@ func main() {
 			})
 		},
 	)
+	consumer.DisableAutoCommit()
 
 	sigchan := make(chan os.Signal, 1)
   signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
@@ -85,7 +86,13 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			commitStats() // TODO: sync with wueue commit
+			if err := commitStats(); err != nil {
+				log.Printf("Error on stats commit: %v", err)
+			} 
+			// TODO?: separate stats & regular messages
+			if err := consumer.Commit(); err != nil {
+				log.Printf("Error on consumer commit: %v", err)
+			} 
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
