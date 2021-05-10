@@ -36,6 +36,10 @@ func Uint64(key string) uint64 {
 	return n
 }
 
+func Int(key string) int {
+	return int(Uint64(key))
+}
+
 func Bool(key string) bool {
 	v := String(key)
 	if v != "true" && v != "false" {
