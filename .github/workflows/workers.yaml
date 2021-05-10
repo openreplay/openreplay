@@ -55,7 +55,8 @@ jobs:
         cd backend
         for image in $(cat images_to_build.txt);
         do
-          bash ./build.sh skip $image
+          echo "Bulding $image"
+          bash -x ./build.sh skip $image
           docker push $DOCKER_REPO/$image:$IMAGE_TAG
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
