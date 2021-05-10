@@ -38,7 +38,7 @@ ENV TZ=UTC \
     GROUP_CACHE=cache \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
-    AWS_REGION_ASSETS=eu-central-1 \
+    AWS_REGION_ASSETS=eu-central-1
 
 
 ARG SERVICE_NAME
