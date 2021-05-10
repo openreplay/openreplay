@@ -15,11 +15,11 @@ import (
 	"openreplay/backend/services/assets/cacher"
 )
 
-// empty commit to trigger build.
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	GROUP_CACHE := env.String("GROUP_CACHE")
+	GROUP_CACHE :=  env.String("GROUP_CACHE") 
 	TOPIC_TRIGGER := env.String("TOPIC_TRIGGER")
 
 	cacher := cacher.NewCacher(
@@ -30,10 +30,10 @@ func main() {
 	)
 
 	consumer := queue.NewMessageConsumer(
-		GROUP_CACHE,
-		[]string{TOPIC_TRIGGER},
+		GROUP_CACHE, 
+		[]string{ TOPIC_TRIGGER }, 
 		func(sessionID uint64, message messages.Message, e *types.Meta) {
-			switch msg := message.(type) {
+			switch msg := message.(type) {			
 			case *messages.AssetCache:
 				cacher.CacheURL(sessionID, msg.URL)
 			case *messages.ErrorEvent:
@@ -48,14 +48,15 @@ func main() {
 				for _, source := range sourceList {
 					cacher.CacheJSFile(source)
 				}
-			}
+			}		
 		},
 	)
+
 
 	tick := time.Tick(20 * time.Minute)
 
 	sigchan := make(chan os.Signal, 1)
-	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+  signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	for {
 		select {

@@ -21,7 +21,7 @@ check_prereq() {
 function build_api(){
     # Copy enterprize code
     [[ $1 == "ee" ]] && {
-        cp ../ee/backend/* ./
+        cp -r ../ee/backend/* ./
         ee="true"
     }
     [[ $2 != "" ]] && {

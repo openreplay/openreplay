@@ -45,7 +45,7 @@ jobs:
         }
     - name: Deploy to kubernetes
       run: |
-        cd ../scripts/helm/
+        cd scripts/helm/
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/chalice.yaml
         bash kube-install.sh --app chalice

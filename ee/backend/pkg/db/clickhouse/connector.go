@@ -4,6 +4,8 @@ import (
 	"log"
 	"database/sql"
 	_ "github.com/ClickHouse/clickhouse-go"
+
+	"openreplay/backend/pkg/license"
 )
 
 type Connector struct {
@@ -27,6 +29,8 @@ type Connector struct {
 }
 
 func NewConnector(url string) *Connector {
+	license.CheckLicense()
+
 	db, err := sql.Open("clickhouse", url)
 	if err != nil {
 		log.Fatalln(err)
