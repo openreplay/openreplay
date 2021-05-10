@@ -5,6 +5,7 @@ import { hasSiteId, siteChangeAvaliable } from 'App/routes';
 import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
 import { Icon, SlideModal } from 'UI';
 import { pushNewSite } from 'Duck/user'
+import { init } from 'Duck/site';
 import styles from './siteDropdown.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
@@ -15,7 +16,8 @@ import NewSiteForm from '../Client/Sites/NewSiteForm';
   siteId: state.getIn([ 'user', 'siteId' ]),
 }), {
   setSiteId,
-  pushNewSite
+  pushNewSite,
+  init
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
@@ -27,6 +29,11 @@ export default class SiteDropdown extends React.PureComponent {
       this.props.setSiteId(newSite.id)
     }
   };
+
+  newSite = () => {
+    this.props.init({})
+    this.setState({showProductModal: true})
+  }
 
   render() {
     const { sites, siteId, location: { pathname } } = this.props;
@@ -62,7 +69,7 @@ export default class SiteDropdown extends React.PureComponent {
           </ul>
           <div
             className={cn(styles.btnNew, 'flex items-center justify-center py-3 cursor-pointer')}
-            onClick={() => this.setState({showProductModal: true})}
+            onClick={this.newSite}
           >
             <Icon 
               name="plus"
@@ -78,7 +85,7 @@ export default class SiteDropdown extends React.PureComponent {
           title="New Project"
           size="small"
           isDisplayed={ showProductModal }
-          content={ <NewSiteForm onClose={ this.closeModal } /> }
+          content={ showProductModal && <NewSiteForm onClose={ this.closeModal } /> }
           onClose={ this.closeModal }          
         />
       </div>

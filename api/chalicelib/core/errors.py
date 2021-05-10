@@ -503,8 +503,8 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
                                                                GROUP BY timestamp
                                                                ORDER BY timestamp) AS chart_details) AS chart_details ON (TRUE);"""
 
-        print("--------------------")
-        print(cur.mogrify(main_pg_query, params))
+        # print("--------------------")
+        # print(cur.mogrify(main_pg_query, params))
         cur.execute(cur.mogrify(main_pg_query, params))
         total = cur.rowcount
         if flows:

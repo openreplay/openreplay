@@ -21,7 +21,7 @@ def timed(f):
                                     'handle_request', '_generic_handle', 'handle', '_bootstrap_inner', 'run',
                                     '_bootstrap', '_main_rest_api_handler', '_user_handler',
                                     '_get_view_function_response', 'wrapped_event', 'handle_one_request',
-                                    '_global_error_handler', 'asayer_middleware']]
+                                    '_global_error_handler', 'openreplay_middleware']]
             print("DEBUG: %s > %s took %d s to finish" % (" > ".join(call_stack), f.__name__, elapsed))
         return result
 

@@ -47,7 +47,7 @@ def __find_events(client, log_group, streams, last_token, start_time, end_time):
         "startTime": start_time,
         "endTime": end_time,
         "limit": 10000,
-        "filterPattern": "asayer_session_id"
+        "filterPattern": "openreplay_session_id"
     }
     if last_token is not None:
         f_args["nextToken"] = last_token

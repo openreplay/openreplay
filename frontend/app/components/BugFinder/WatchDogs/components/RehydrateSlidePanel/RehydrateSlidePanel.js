@@ -26,6 +26,7 @@ const RehydrateSlidePanel = props => {
       onClose={ onClose }
       size="small"
       content={
+        isModalDisplayed && (
         <div className="px-4">
           <hr className="mb-3" />
           <div>
@@ -33,6 +34,7 @@ const RehydrateSlidePanel = props => {
             <SessionCaptureRate onClose={ onClose } />
           </div>          
         </div>
+        )
       }      
     />
   );
