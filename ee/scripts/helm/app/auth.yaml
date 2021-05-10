@@ -1,0 +1,28 @@
+namespace: app
+image:
+  repository: 998611063711.dkr.ecr.eu-central-1.amazonaws.com/auth
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets:
+  - name: aws-registry
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  limits:
+    cpu: 256m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+env:
+  JWT_SECRET: 
+  ORIGIN: https://app.asayer.io
+  ALERT_NOTIFICATION_STRING: https://parrot.asayer.io/alerts/notifications
+  CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
+  POSTGRES_STRING: postgres://postgres:asayerPostgres@postgresql.db.svc.cluster.local:5432

@@ -1,0 +1,22 @@
+{{- if .Values.rbac.create -}}
+apiVersion: {{ include "common.capabilities.rbac.apiVersion" . }}
+kind: Role
+metadata:
+  name: {{ template "redis.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: {{ template "redis.name" . }}
+    chart: {{ template "redis.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+rules:
+{{- if .Values.podSecurityPolicy.create }}
+  - apiGroups: ['{{ template "podSecurityPolicy.apiGroup" . }}']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames: [{{ template "redis.fullname" . }}]
+{{- end -}}
+{{- if .Values.rbac.role.rules }}
+{{- toYaml .Values.rbac.role.rules | nindent 2 }}
+{{- end -}}
+{{- end -}}

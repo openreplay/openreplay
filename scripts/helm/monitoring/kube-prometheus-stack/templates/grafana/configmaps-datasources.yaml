@@ -1,0 +1,42 @@
+{{- if and .Values.grafana.enabled .Values.grafana.sidecar.datasources.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kube-prometheus-stack.fullname" . }}-grafana-datasource
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+{{- if .Values.grafana.sidecar.datasources.annotations }}
+  annotations:
+{{ toYaml .Values.grafana.sidecar.datasources.annotations | indent 4 }}
+{{- end }}
+  labels:
+    {{ $.Values.grafana.sidecar.datasources.label }}: "1"
+    app: {{ template "kube-prometheus-stack.name" $ }}-grafana
+{{ include "kube-prometheus-stack.labels" $ | indent 4 }}
+data:
+  datasource.yaml: |-
+    apiVersion: 1
+    datasources:
+{{- if .Values.grafana.sidecar.datasources.defaultDatasourceEnabled }}
+    - name: Prometheus
+      type: prometheus
+      url: http://{{ template "kube-prometheus-stack.fullname" . }}-prometheus:{{ .Values.prometheus.service.port }}/{{ trimPrefix "/" .Values.prometheus.prometheusSpec.routePrefix }}
+      access: proxy
+      isDefault: true
+      jsonData:
+        timeInterval: {{ .Values.prometheus.prometheusSpec.scrapeInterval | default "30s" }}
+{{- if .Values.grafana.sidecar.datasources.createPrometheusReplicasDatasources }}
+{{- range until (int .Values.prometheus.prometheusSpec.replicas) }}
+    - name: Prometheus-{{ . }}
+      type: prometheus
+      url: http://prometheus-{{ template "kube-prometheus-stack.fullname" $ }}-prometheus-{{ . }}.prometheus-operated:9090/{{ trimPrefix "/" $.Values.prometheus.prometheusSpec.routePrefix }}
+      access: proxy
+      isDefault: false
+      jsonData:
+        timeInterval: {{ .Values.prometheus.prometheusSpec.scrapeInterval | default "30s" }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if .Values.grafana.additionalDataSources }}
+{{ tpl (toYaml .Values.grafana.additionalDataSources | indent 4) . }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,52 @@
+{{- if .Values.externalAccess.enabled }}
+{{- $fullName := include "kafka.fullname" . }}
+{{- $replicaCount := .Values.replicaCount | int }}
+{{- $root := . }}
+
+{{- range $i, $e := until $replicaCount }}
+{{- $targetPod := printf "%s-%d" (printf "%s" $fullName) $i }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kafka.fullname" $ }}-{{ $i }}-external
+  labels: {{- include "kafka.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: kafka
+    pod: {{ $targetPod }}
+    {{- if $root.Values.commonLabels }}
+    {{- include "kafka.tplValue" ( dict "value" $root.Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if or $root.Values.externalAccess.service.annotations $root.Values.commonAnnotations }}
+  annotations:
+    {{- if $root.Values.externalAccess.service.annotations }}
+    {{ include "kafka.tplValue" ( dict "value" $root.Values.externalAccess.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if $root.Values.commonAnnotations }}
+    {{- include "kafka.tplValue" ( dict "value" $root.Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ $root.Values.externalAccess.service.type }}
+  {{- if eq $root.Values.externalAccess.service.type "LoadBalancer" }}
+  {{- if not (empty $root.Values.externalAccess.service.loadBalancerIPs) }}
+  loadBalancerIP: {{ index $root.Values.externalAccess.service.loadBalancerIPs $i }}
+  {{- end }}
+  {{- if $root.Values.externalAccess.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml $root.Values.externalAccess.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  ports:
+    - name: tcp-kafka
+      port: {{ $root.Values.externalAccess.service.port }}
+      {{- if not (empty $root.Values.externalAccess.service.nodePorts) }}
+      nodePort: {{ index $root.Values.externalAccess.service.nodePorts $i }}
+      {{- else }}
+      nodePort: null
+      {{- end }}
+      targetPort: kafka-external
+  selector: {{- include "kafka.matchLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: kafka
+    statefulset.kubernetes.io/pod-name: {{ $targetPod }}
+---
+{{- end }}
+{{- end }}

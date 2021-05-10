@@ -1,0 +1,53 @@
+name: S3 Deploy
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - frontend/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Cache node modules
+      uses: actions/cache@v1
+      with:
+        path: node_modules
+        key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.OS }}-build-
+          ${{ runner.OS }}-
+
+    - name: Install
+      run: npm install
+
+    - name: Build
+      run: npm run build:staging
+      env:
+        ENVIRONMENT: staging
+
+    - name: Deploy
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: eu-central-1
+        AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+      run: |
+        aws configure set default.s3.signature_version s3v4
+        aws --endpoint-url https://${{secrets.DOMAIN_NAME}}/frontend/ s3 cp \
+          --recursive \
+          --region "$AWS_REGION" \
+          public s3://$AWS_S3_BUCKET_NAME
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     AWS_REGION: eu-central-1
+    #     AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}

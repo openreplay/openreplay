@@ -1,0 +1,151 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: Engine
+  annotations:
+    helm.sh/resource-policy: keep
+  name: engines.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: Engine
+    listKind: EngineList
+    plural: engines
+    shortNames:
+    - lhe
+    singular: engine
+  scope: Namespaced
+  version: v1beta1
+  subresources:
+    status: {}
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: Replica
+  annotations:
+    helm.sh/resource-policy: keep
+  name: replicas.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: Replica
+    listKind: ReplicaList
+    plural: replicas
+    shortNames:
+    - lhr
+    singular: replica
+  scope: Namespaced
+  version: v1beta1
+  subresources:
+    status: {}
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: Setting
+  annotations:
+    helm.sh/resource-policy: keep
+  name: settings.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: Setting
+    listKind: SettingList
+    plural: settings
+    shortNames:
+    - lhs
+    singular: setting
+  scope: Namespaced
+  version: v1beta1
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: Volume
+  annotations:
+    helm.sh/resource-policy: keep
+  name: volumes.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: Volume
+    listKind: VolumeList
+    plural: volumes
+    shortNames:
+    - lhv
+    singular: volume
+  scope: Namespaced
+  version: v1beta1
+  subresources:
+    status: {}
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: EngineImage
+  annotations:
+    helm.sh/resource-policy: keep
+  name: engineimages.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: EngineImage
+    listKind: EngineImageList
+    plural: engineimages
+    shortNames:
+    - lhei
+    singular: engineimage
+  scope: Namespaced
+  version: v1beta1
+  subresources:
+    status: {}
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: Node
+  annotations:
+    helm.sh/resource-policy: keep
+  name: nodes.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: Node
+    listKind: NodeList
+    plural: nodes
+    shortNames:
+    - lhn
+    singular: node
+  scope: Namespaced
+  version: v1beta1
+  subresources:
+    status: {}
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+    longhorn-manager: InstanceManager
+  annotations:
+    helm.sh/resource-policy: keep
+  name: instancemanagers.longhorn.io
+spec:
+  group: longhorn.io
+  names:
+    kind: InstanceManager
+    listKind: InstanceManagerList
+    plural: instancemanagers
+    shortNames:
+    - lhim
+    singular: instancemanager
+  scope: Namespaced
+  version: v1beta1
+  subresources:
+    status: {}

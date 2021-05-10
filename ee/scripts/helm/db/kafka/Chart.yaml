@@ -1,0 +1,22 @@
+annotations:
+  category: Infrastructure
+apiVersion: v1
+appVersion: 2.6.0
+description: Apache Kafka is a distributed streaming platform.
+engine: gotpl
+home: https://github.com/bitnami/charts/tree/master/bitnami/kafka
+icon: https://bitnami.com/assets/stacks/kafka/img/kafka-stack-110x117.png
+keywords:
+- kafka
+- zookeeper
+- streaming
+- producer
+- consumer
+maintainers:
+- email: containers@bitnami.com
+  name: Bitnami
+name: kafka
+sources:
+- https://github.com/bitnami/bitnami-docker-kafka
+- https://kafka.apache.org/
+version: 11.8.6

@@ -1,0 +1,9 @@
+{% if docker_registry_url is defined and docker_registry_url %}
+image:
+  repository: {{ docker_registry_url }}
+  tag: {{ image_tag }}
+{% endif %}
+
+{% if not (ecr_docker_username is defined and ecr_docker_username and ecr_docker_password is defined and ecr_docker_password) %}
+imagePullSecrets: []
+{% endif %}
