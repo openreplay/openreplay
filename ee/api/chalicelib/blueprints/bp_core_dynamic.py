@@ -70,12 +70,12 @@ def get_account(context):
             **r,
             "limits": {
                 "teamMember": -1,
-                # change this in open-source
-                "projects": -1,  # change this in open-source
-                "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])},
+                "projects": -1,
+                "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
+            },
+            **license.get_status(context["tenantId"])
         }
     }
-
 
 @app.route('/projects', methods=['GET'])
 def get_projects(context):
