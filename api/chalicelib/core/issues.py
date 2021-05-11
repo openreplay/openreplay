@@ -58,7 +58,7 @@ def get_by_session_id(session_id, issue_type=None):
         return helper.list_to_camel_case(cur.fetchall())
 
 
-def get_types(project_id):
+def get_types_by_project(project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT type,
@@ -70,3 +70,56 @@ def get_types(project_id):
                                   WHERE project_id = %(project_id)s) AS types
                             ORDER BY "order";""", {"project_id": project_id}))
         return helper.list_to_camel_case(cur.fetchall())
+
+
+def get_all_types():
+    return [
+        {
+            "type": "js_exception",
+            "visible": True,
+            "order": 0,
+            "name": "Errors"
+        },
+        {
+            "type": "bad_request",
+            "visible": True,
+            "order": 1,
+            "name": "Bad Requests"
+        },
+        {
+            "type": "missing_resource",
+            "visible": True,
+            "order": 2,
+            "name": "Missing Images"
+        },
+        {
+            "type": "click_rage",
+            "visible": True,
+            "order": 3,
+            "name": "Click Rage"
+        },
+        {
+            "type": "dead_click",
+            "visible": True,
+            "order": 4,
+            "name": "Dead Clicks"
+        },
+        {
+            "type": "memory",
+            "visible": True,
+            "order": 5,
+            "name": "High Memory"
+        },
+        {
+            "type": "cpu",
+            "visible": True,
+            "order": 6,
+            "name": "High CPU"
+        },
+        {
+            "type": "crash",
+            "visible": True,
+            "order": 7,
+            "name": "Crashes"
+        }
+    ]

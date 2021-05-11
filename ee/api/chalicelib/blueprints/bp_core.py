@@ -870,7 +870,13 @@ def get_weekly_report_config(context):
 
 @app.route('/{projectId}/issue_types', methods=['GET'])
 def issue_types(projectId, context):
-    return {"data": issues.get_types(project_id=projectId)}
+    # return {"data": issues.get_types_by_project(project_id=projectId)}
+    return {"data": issues.get_all_types()}
+
+
+@app.route('/issue_types', methods=['GET'])
+def all_issue_types(context):
+    return {"data": issues.get_all_types()}
 
 
 @app.route('/flows', methods=['GET', 'PUT', 'POST', 'DELETE'])

@@ -134,17 +134,13 @@ def __sbool_to_bool(value):
     return value.lower() in ["true", "yes", "1"]
 
 
-def allow_cron():
-    return "allowCron" not in environ or __sbool_to_bool(environ["allowCron"])
-
-
 def allow_captcha():
     return environ.get("captcha_server") is not None and environ.get("captcha_key") is not None \
            and len(environ["captcha_server"]) > 0 and len(environ["captcha_key"]) > 0
 
 
 def allow_sentry():
-    return "sentry" not in environ or __sbool_to_bool(environ["sentry"])
+    return environ.get("sentryURL") is not None and len(environ["sentryURL"]) > 0
 
 
 def async_post(endpoint, data):
