@@ -83,7 +83,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 		return err
 	}
 	if err = tx.exec(`
-		UPDATE sessions SET pages_count = pages_count + 1 
+		UPDATE sessions SET (pages_count, events_count) = (pages_count + 1, events_count + 1)
 		WHERE session_id = $1`,
 		sessionID,
 	); err != nil {
