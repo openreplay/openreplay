@@ -17,7 +17,7 @@
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-azure">
-    <img src="static/deploy-azure2.png" height="44" />
+    <img src="static/deploy-azure.png" height="44" />
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-digitalocean">
