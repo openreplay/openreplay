@@ -10,6 +10,8 @@ sleep 5
 
 echo please enter your dns name : 
 read dns_name
+echo please enter your email id:
+read emai_id
 ssh_ansible_user=$(whoami)
 certbot_home=/etc/letsencrypt/archive/$dns_name
 
@@ -18,14 +20,10 @@ certbot_home=/etc/letsencrypt/archive/$dns_name
 if [ $(which certbot) ]; then
     echo "certbot is already installed"
 else
-    sudo apt-get update
-    sudo apt-get install -y software-properties-common
-    sudo add-apt-repository ppa:certbot/certbot
-    sudo apt-get update
     sudo apt-get install -y certbot
 fi
 
-sudo certbot certonly --standalone -d $dns_name
+sudo certbot certonly --non-interactive --agree-tos -m $emai_id -d $dns_name --standalone
 
 sudo cp $certbot_home/privkey1.pem /home/$ssh_ansible_user/site.key
 sudo cp $certbot_home/fullchain1.pem /home/$ssh_ansible_user/site.crt
