@@ -80,7 +80,12 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 	// Search acceleration
 	if err := conn.exec(`
 		UPDATE sessions
-		SET issue_types=(SELECT COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}')::issue_type[]
+		SET issue_types=(SELECT 
+			CASE WHEN errors_count > 0 THEN
+			  (COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}') || 'js_exception'::issue_type)::issue_type[]
+			ELSE
+				(COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}'))::issue_type[]
+			END
     FROM events_common.issues
       INNER JOIN issues AS ps USING (issue_id)
                 WHERE session_id = $1)
