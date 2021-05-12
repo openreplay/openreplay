@@ -1,5 +1,8 @@
 require('dotenv').config()
 
+// TODO: derive version from the tracker package on build
+//const trackerInfo = require('../tracker/tracker/package.json');
+
 const oss = {
 	name: 'oss',
 	PRODUCTION: true,
@@ -16,7 +19,8 @@ const oss = {
 	MINIO_PORT: process.env.MINIO_PORT,
 	MINIO_USE_SSL: process.env.MINIO_USE_SSL,
 	MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
-	MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY
+	MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
+	TRACKER_VERSION: '3.0.2', // trackerInfo.version,
 }
 module.exports = {
     oss,
