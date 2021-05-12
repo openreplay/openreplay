@@ -53,8 +53,7 @@ export default class ProfileSettings extends React.PureComponent {
 
         <div className="flex items-center">
           <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Licenses' }</h4>
-            {/* <div className={ styles.info }>{ 'Your API key gives you access to an extra set of services.' }</div> */}
+            <h4 className="text-lg mb-4">{ 'License' }</h4>
           </div>
           <div><Licenses /></div>
         </div>
