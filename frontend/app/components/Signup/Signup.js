@@ -28,7 +28,7 @@ export default class Signup extends React.Component {
             <div className="flex items-center text-3xl font-bold mb-6">
               OpenReplay Cloud <div className="ml-2"><Icon name="signup" size="28" color="white" /></div>
             </div>
-            <div>OpenReplay Cloud is the hosted version of our open source package.</div>
+            <div>OpenReplay Cloud is the hosted version of our open-source project.</div>
             <div>We’ll manage hosting, scaling and upgrades.</div>
             
             <div className="mt-8">
