@@ -2,13 +2,13 @@
 
 # Script to build api module
 # flags to accept:
-# ee: build for enterprize edition.
+# ee: build for enterprise edition.
 # Default will be OSS build.
 
 # Example
-# DOCKER_REPO=asayer.io bash buid.sh
+# Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
-git_sha1=$(git rev-parse HEAD)
+git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 ee="false"
 check_prereq() {
     which docker || {
@@ -19,9 +19,9 @@ check_prereq() {
 }
 
 function build_api(){
-    # Copy enterprize code
+    # Copy enterprise code
     [[ $1 == "ee" ]] && {
-        cp ../ee/backend/* ./
+        cp -r ../ee/backend/* ./
         ee="true"
     }
     [[ $2 != "" ]] && {

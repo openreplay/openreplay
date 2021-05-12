@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 
 	. "openreplay/backend/pkg/messages"
@@ -11,12 +12,15 @@ import (
 )
 
 var ch *clickhouse.Connector
+var finalizeTicker <-chan time.Time
 
 func initStats() {
 	ch = clickhouse.NewConnector(env.String("CLICKHOUSE_STRING"))
 	if err := ch.Prepare(); err != nil {
 		log.Fatalf("Clickhouse prepare error: %v\n", err)
 	}
+
+  finalizeTicker = time.Tick(20 * time.Minute)
 
 }
 
@@ -62,5 +66,13 @@ func insertStats(session *Session, msg Message) error {
 }
 
 func commitStats() error {
-	return nil
+	select {
+		case <-finalizeTicker:
+		if err := ch.FinaliseSessionsTable(); err != nil {
+			log.Printf("Stats: FinaliseSessionsTable returned an error. %v", err)
+		}
+	default:
+	}
+	return ch.Commit();
 }
+

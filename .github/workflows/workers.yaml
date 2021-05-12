@@ -1,0 +1,83 @@
+# Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+
+on:
+  push:
+    branches:
+    - dev
+    paths:
+      - backend/**
+
+name: Build and deploy workers
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        # We need to diff with old commit 
+        # to see which workers got changed.
+        fetch-depth: 2
+        # ref: staging
+
+    - name: Docker login
+      run: |
+        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
+
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+    - name: Build, tag, and Deploy to k8s
+      id: build-image
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging
+      run: |
+        #
+        # TODO: Check the container tags are same, then skip the build and deployment.
+        #
+        # Build a docker container and push it to Docker Registry so that it can be deployed to Kubernetes cluster.
+        #
+        # Getting the images to build
+        #
+        git diff --name-only HEAD HEAD~1 | grep backend/services | grep -vE ^ee/ | cut -d '/' -f3 | uniq > backend/images_to_build.txt
+        [[ $(cat backend/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
+        #
+        # Pushing image to registry
+        #
+        cd backend
+        for image in $(cat images_to_build.txt);
+        do
+          echo "Bulding $image"
+          bash -x ./build.sh skip $image
+          docker push $DOCKER_REPO/$image:$IMAGE_TAG
+          echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
+        done
+
+        #
+        # Deploying image to environment.
+        #
+        cd ../scripts/helm/
+        for image in $(cat ../../backend/images_to_build.txt);
+        do
+          sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
+          sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/${image}.yaml
+          # Deploy command
+          bash kube-install.sh --app $image
+        done
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging
+    #

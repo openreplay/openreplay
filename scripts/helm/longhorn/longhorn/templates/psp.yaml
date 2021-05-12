@@ -1,0 +1,66 @@
+{{- if .Values.enablePSP }}
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: longhorn-psp
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+spec:
+  privileged: true
+  allowPrivilegeEscalation: true
+  requiredDropCapabilities:
+  - NET_RAW
+  allowedCapabilities:
+  - SYS_ADMIN
+  hostNetwork: false
+  hostIPC: false
+  hostPID: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  fsGroup:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - secret
+  - projected
+  - hostPath
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: longhorn-psp-role
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+  resourceNames:
+  - longhorn-psp
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: longhorn-psp-binding
+  labels: {{- include "longhorn.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: longhorn-psp-role
+subjects:
+- kind: ServiceAccount
+  name: longhorn-service-account
+  namespace: {{ .Release.Namespace }}
+- kind: ServiceAccount
+  name: default
+  namespace: {{ .Release.Namespace }}
+{{- end }}
