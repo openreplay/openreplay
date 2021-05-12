@@ -6,15 +6,15 @@
   },
   "stages": {
     "default-foss": {
-      "api_gateway_stage": "default-fos",
+      "api_gateway_stage": "default-foss",
       "manage_iam_role": false,
       "iam_role_arn": "",
       "autogen_policy": true,
       "environment_variables": {
         "isFOS": "true",
         "isEE": "false",
-        "stage": "default-fos",
-        "jwt_issuer": "openreplay-default-fos",
+        "stage": "default-foss",
+        "jwt_issuer": "openreplay-default-foss",
         "sentryURL": "",
         "pg_host": "postgresql.db.svc.cluster.local",
         "pg_port": "5432",
