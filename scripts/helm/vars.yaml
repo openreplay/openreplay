@@ -17,7 +17,7 @@ kubeconfig_path: ""
 ecr_docker_username: ""
 ecr_docker_password: ""
 ecr_docker_registry_server: "rg.fr-par.scw.cloud/foss"
-
+image_tag: v1.0.0
 
 # This is an optional field. If you want to use proper ssl, then it's mandatory
 # Using which domain name, you'll be accessing openreplay
