@@ -433,7 +433,7 @@ CREATE TABLE sessions
     project_id              integer      NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
     tracker_version         text         NOT NULL,
     start_ts                bigint       NOT NULL,
-    duration                integer      NOT NULL,
+    duration                integer               DEFAULT NULL,
     rev_id                  text                  DEFAULT NULL,
     platform                platform     NOT NULL DEFAULT 'web',
     is_snippet              boolean      NOT NULL DEFAULT FALSE,
