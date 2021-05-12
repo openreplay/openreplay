@@ -25,6 +25,13 @@ beforeAll(async () => {
   await page.setJavaScriptEnabled(true);
   await page.setDefaultNavigationTimeout(10000);
   await page.setRequestInterception(true);
+
+  await page.evaluate(async () => {
+    const response = await fetch(appUrlBase + '/API_TESTING/update');
+    const text = await response.text();
+    return text;
+  });
+
   page.on('request', (req) => {
     if (['image', 'font'].indexOf(req.resourceType()) !== -1) {
       req.abort();
