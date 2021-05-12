@@ -1,0 +1,64 @@
+# This action will push the chalice changes to aws
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - api/**
+
+name: Build and Deploy Chalice
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        # We need to diff with old commit 
+        # to see which workers got changed.
+        fetch-depth: 2
+
+    - name: Docker login
+      run: |
+        docker login ${{ secrets.OSS_REGISTRY_URL }} -u ${{ secrets.OSS_DOCKER_USERNAME }} -p "${{ secrets.OSS_REGISTRY_TOKEN }}" 
+
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+    - name: Building and Pusing api image
+      id: build-image
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging
+      run: |
+        cd api
+        bash build.sh
+        [[ -z "${DOCKER_REPO}" ]] || {
+          docker push ${DOCKER_REPO}/chalice:"${IMAGE_TAG}"
+        }
+    - name: Deploy to kubernetes
+      run: |
+        cd scripts/helm/
+        sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
+        sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/chalice.yaml
+        bash kube-install.sh --app chalice
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging
+    #

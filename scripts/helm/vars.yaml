@@ -1,0 +1,54 @@
+###################
+## Mandatory Fields.
+###################
+
+# Give the path of the kubeconfig_path: /home/rajeshr/.kube/config
+# we can access the kubernetes cluster.
+# Give absolute file path.
+# Use following command to get the full file path
+# `readlink -f <file>`
+kubeconfig_path: ""
+
+###################
+## Optional Fields.
+###################
+
+# If you've private registry, please update the details here.
+ecr_docker_username: ""
+ecr_docker_password: ""
+ecr_docker_registry_server: "rg.fr-par.scw.cloud/foss"
+image_tag: v1.0.0
+
+# This is an optional field. If you want to use proper ssl, then it's mandatory
+# Using which domain name, you'll be accessing openreplay
+# for exmample: domain_name: "openreplay.mycorp.org"
+domain_name: ""
+
+# Nginx ssl certificates.
+# in cert format
+# Give absolute file path.
+# Use following command to get the full file path
+# `readlink -f <file>`
+# For example:
+# nginx_ssl_cert_file_path: "/home/openreplay/nginx-cert.crt"
+# nginx_ssl_key_file_path: "/home/openreplay/nginx-key.pem"
+#
+# By Default, we'll create a self signed certificate for nginx, and populate the values here.
+# Once you've proper domain name, and ssl certificate
+# Change the following variables accordingly.
+nginx_ssl_cert_file_path: ""
+nginx_ssl_key_file_path: ""
+
+# Enable monitoring
+# If set, monitoring stack will be installed
+# including, prometheus, grafana and other core components,
+# to scrape the metrics. But this will cost, additional resources(cpu and memory).
+# Monitoring won't be installed on base installation.
+enable_monitoring: "false"
+
+# Random password for minio,
+# If not defined, will generate at runtime.
+# Use following command to generate passwordwill give 
+# `openssl rand -base64 30`
+minio_access_key: ""
+minio_secret_key: ""

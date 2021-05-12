@@ -3,6 +3,7 @@ import requests
 
 from chalicelib.core.telemetry import process_data
 
+
 def compute():
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -39,7 +40,7 @@ def compute():
                 RETURNING *,(SELECT email FROM users_ee WHERE role = 'owner' AND users_ee.tenant_id = tenants.tenant_id LIMIT 1);"""
         )
         data = cur.fetchall()
-        requests.post('https://parrot.openreplay.com/os/telemetry',
+        requests.post('https://parrot.asayer.io/os/telemetry',
                       json={"stats": [process_data(d, edition='ee') for d in data]})
 
 
@@ -51,4 +52,4 @@ def new_client(tenant_id):
                             FROM public.tenants 
                             WHERE tenant_id=%(tenant_id)s;""", {"tenant_id": tenant_id}))
         data = cur.fetchone()
-        requests.post('https://parrot.openreplay.com/os/signup', json=process_data(data, edition='ee'))
+        requests.post('https://parrot.asayer.io/os/signup', json=process_data(data, edition='ee'))

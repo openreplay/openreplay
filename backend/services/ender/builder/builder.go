@@ -4,8 +4,6 @@ import (
 	"net/url"
 	"strings"
 
-	"log"
-
 	"openreplay/backend/pkg/intervals"
 	. "openreplay/backend/pkg/messages"
 )

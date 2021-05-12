@@ -98,7 +98,7 @@ PageLoop:
 			var sessionID uint64
 			var token string
 			for _, tag := range e.Tags {
-				if tag.Key == "OpenreplaySession" {
+				if tag.Key == "openReplaySessionToken" {
 					token = tag.Value
 					break
 				}

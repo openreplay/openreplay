@@ -1,0 +1,67 @@
+namespace: app
+image:
+  repository: rg.fr-par.scw.cloud/foss
+  name: chalice
+  pullPolicy: IfNotPresent
+  tag: latest
+
+imagePullSecrets:
+  - name: aws-registry
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+env:
+  AWS_DEFAULT_REGION: us-east-1
+  pg_host: postgresql.db.svc.cluster.local
+  pg_port: 5432
+  pg_dbname: postgres
+  pg_user: postgres
+  pg_password: asayerPostgres
+  ch_host: ''
+  ch_port: ''
+  alert_ntf: http://127.0.0.1:8000/async/alerts/notifications/%s
+  email_signup: http://127.0.0.1:8000/async/email_signup/%s
+  email_funnel: http://127.0.0.1:8000/async/funnel/%s
+  email_plans: http://127.0.0.1:8000/async/plans/%s
+  email_basic: http://127.0.0.1:8000/async/basic/%s
+  assign_link: http://127.0.0.1:8000/async/email_assignment
+  captcha_server: ''
+  captcha_key: ''
+  sessions_bucket: asayer-mobs-staging
+  sessions_region: eu-central-1
+  put_S3_TTL: '20'
+  sourcemaps_bucket: ''
+  sourcemaps_bucket_key: ''
+  sourcemaps_bucket_secret: ''
+  sourcemaps_bucket_region: ''
+  js_cache_bucket: ''
+  async_Token: ''
+  EMAIL_HOST: ''
+  EMAIL_PORT: '587'
+  EMAIL_USER: ''
+  EMAIL_PASSWORD: ''
+  EMAIL_USE_TLS: 'true'
+  EMAIL_USE_SSL: 'false'
+  EMAIL_SSL_KEY: ''
+  EMAIL_SSL_CERT: ''
+  EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
+  SITE_URL: ''
+  announcement_url: ''
+  jwt_secret: ''
+  jwt_algorithm: ''
+  jwt_exp_delta_seconds: ''
+  S3_HOST: 's3://minio.db.svc.cluster.local:9000'
+  S3_KEY: ''
+  S3_SECRET: ''
+  # Enable logging for python app
+  # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
+  PYTHONUNBUFFERED: '0'

@@ -48,6 +48,8 @@ dir.addArgument(['-u', '--js-dir-url'], {
   required: true,
 });
 
+// TODO: exclude in dir
+
 const { command, api_key, project_key, server, ...args } = parser.parseArgs();
 
 try {
@@ -60,9 +62,11 @@ try {
   ? uploadFile(api_key, project_key, args.sourcemap_file_path, args.js_file_url)
   : uploadDir(api_key, project_key, args.sourcemap_dir_path, args.js_dir_url)
 )
-.then((uploadedFiles) => 
-  console.log(`Sourcemap${uploadedFiles.length > 1 ? "s" : ""} successfully uploaded! (${uploadedFiles.length} files)\n` 
-    + uploadedFiles.join("\t\n")
+.then((sourceFiles) => 
+  sourceFiles.length > 0 
+  ? console.log(`Successfully uploaded ${sourceFiles.length} sourcemap file${sourceFiles.length > 1 ? "s" : ""} for: \n` 
+    + sourceFiles.join("\t\n")
   )
+  : console.log(`No sourcemaps found in ${ args.js_dir_url }`)
 )
 .catch(e => console.error(`Sourcemap Uploader: ${e}`));

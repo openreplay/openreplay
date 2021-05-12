@@ -1,0 +1,96 @@
+# vim: set ft=yaml.ansible :
+---
+- name: Checking user variables
+  block:
+    - name: Checking mandatory variables
+      fail:
+        msg: "Didn't find openreplay docker credentials."
+      when: kubeconfig_path|length == 0 or ecr_docker_registry_server|length == 0
+    - name: Generaing minio access key
+      block:
+        - name: Generaing minio access key
+          set_fact:
+            minio_access_key_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
+        - name: Updating vars.yaml
+          lineinfile:
+            regexp: '^minio_access_key'
+            line: 'minio_access_key: "{{ minio_access_key_generated }}"'
+            path: vars.yaml
+        - name: Generaing minio access key
+          set_fact:
+            minio_access_key: "{{ minio_access_key_generated }}"
+      when: minio_access_key|length == 0
+    - name: Generaing minio secret key
+      block:
+        - name: Generaing minio access key
+          set_fact:
+            minio_secret_key_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
+        - name: Updating vars.yaml
+          lineinfile:
+            regexp: '^minio_secret_key'
+            line: 'minio_secret_key: "{{minio_secret_key_generated}}"'
+            path: vars.yaml
+        - name: Generaing minio secret key
+          set_fact:
+            minio_access_key: "{{ minio_secret_key_generated }}"
+      when: minio_secret_key|length == 0
+  rescue:
+    - name: Caught error
+      debug:
+        msg:
+          - Below variabls are mandatory. Please make sure it's updated in vars.yaml
+          - kubeconfig_path
+          - ecr_docker_username
+          - ecr_docker_password
+          - ecr_docker_registry_server
+      failed_when: true
+  tags: pre-check
+- name: Creating Nginx SSL certificate
+  block:
+    - name: Creating ssl
+      command: >
+        openssl req -x509 -nodes -subj '/CN=openreplay.local.host' -days 365
+        -newkey rsa:4096 -sha256 -keyout {{ role_path }}/openreplay.local.pem -out {{ role_path }}/openreplay.local.crt
+    - name: Updating vars.yaml
+      lineinfile:
+        regexp: '^{{ item.name }}'
+        line: '{{ item.name }}: "{{role_path}}/{{ item.path }}"'
+        path: vars.yaml
+      with_items:
+        - { name: nginx_ssl_cert_file_path, path: "openreplay.local.crt" }
+        - { name: nginx_ssl_key_file_path, path: "openreplay.local.pem" }
+  when: nginx_ssl_cert_file_path|length == 0 or nginx_ssl_key_file_path|length == 0
+  tags: pre-check
+- name: updating ansible in_memory_variable
+  set_fact:
+    # in default varible, have to pass true to make sure the value is not ""
+    # ref: https://docs.ansible.com/ansible/latest/user_guide/playbooks_filters.html#defaulting-undefined-variables
+    nginx_ssl_key_file_path_generated: "{{ nginx_ssl_key_file_path | default(role_path+'/openreplay.local.pem', true) }}"
+    nginx_ssl_cert_file_path_generated: "{{ nginx_ssl_cert_file_path | default(role_path+'/openreplay.local.crt', true) }}"
+  tags:
+    - pre-check
+    - nginx
+    - all
+- name: Creating kubernetes ssl secrets
+  shell:
+    cmd: |
+      cat <<EOF | kubectl apply -f -
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "nginx-ingress"
+      ---
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: ssl
+        namespace: "nginx-ingress"
+      data:
+        ca.crt: ""
+        site.crt: "{{ lookup('file', nginx_ssl_cert_file_path_generated) | b64encode }}"
+        site.key: "{{ lookup('file', nginx_ssl_key_file_path_generated) | b64encode }}"
+      EOF
+  tags:
+    - pre-check
+    - nginx
+    - all

@@ -77,7 +77,7 @@ def create_step1(data):
                     UPDATE public.tenants
                         SET name = %(companyName)s,
                             version_number = %(versionNumber)s,
-                            licence =  %(licence)s
+                            license =  %(licence)s
                     WHERE tenant_id=%(tenant_id)s
                     RETURNING tenant_id, api_key
                 ),

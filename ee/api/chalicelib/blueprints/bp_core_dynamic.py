@@ -15,6 +15,7 @@ from chalicelib.ee import errors
 from chalicelib.ee import notifications
 from chalicelib.ee import boarding
 from chalicelib.ee import webhook
+from chalicelib.ee import license
 from chalicelib.core.collaboration_slack import Slack
 
 app = Blueprint(__name__)
@@ -69,12 +70,12 @@ def get_account(context):
             **r,
             "limits": {
                 "teamMember": -1,
-                # change this in open-source
-                "projects": -1,  # change this in open-source
-                "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])},
+                "projects": -1,
+                "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
+            },
+            **license.get_status(context["tenantId"])
         }
     }
-
 
 @app.route('/projects', methods=['GET'])
 def get_projects(context):
@@ -389,3 +390,9 @@ def search_sessions_by_metadata(context):
         "data": sessions.search_by_metadata(tenant_id=context["tenantId"], user_id=context["userId"], m_value=value,
                                             m_key=key,
                                             project_id=project_id)}
+
+@app.route('/plans', methods=['GET'])
+def get_current_plan(context):
+    return {
+        "data": license.get_status(context["tenantId"])
+    }
