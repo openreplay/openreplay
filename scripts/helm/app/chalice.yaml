@@ -59,6 +59,6 @@ env:
   jwt_secret: ''
   jwt_algorithm: ''
   jwt_exp_delta_seconds: ''
-  S3_HOST: 'minio.db.svc.cluster.local:9000'
+  S3_HOST: 's3://minio.db.svc.cluster.local:9000'
   S3_KEY: ''
   S3_SECRET: ''
