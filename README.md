@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <a href="https://openreplay.com">
+  <a href="https://github.com/openreplay/openreplay">
     <img src="static/replayer.png">
   </a>
 </p>
