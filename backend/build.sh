@@ -8,7 +8,7 @@
 # Example
 # DOCKER_REPO=asayer.io bash buid.sh
 
-git_sha1=$(git rev-parse HEAD)
+git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 ee="false"
 check_prereq() {
     which docker || {
