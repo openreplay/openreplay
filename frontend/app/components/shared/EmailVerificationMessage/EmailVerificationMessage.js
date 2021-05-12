@@ -21,7 +21,7 @@ function EmailVerificationMessage(props) {
           className="mt-3 px-3 rounded-2xl font-medium"
           style={{ paddingTop: '3px', height: '28px', backgroundColor: 'rgba(255, 239, 239, 1)', border: 'solid thin rgba(221, 181, 181, 1)' }}
         >
-          <span>Verify your registered email.</span> <a href="#" className="link" onClick={send}>Resend</a>
+          <span>Please, verify your email.</span> <a href="#" className="link" onClick={send}>Resend</a>
         </div>
       }
       content={

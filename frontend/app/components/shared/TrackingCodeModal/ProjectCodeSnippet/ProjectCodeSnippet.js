@@ -22,15 +22,17 @@ const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
   document.getElementsByTagName('head')[0].appendChild(s);
   r.start=function(v){r.push([0])};
   r.stop=function(v){r.push([1])};
-  r.setUserID=r.userID=function(id){r.push([2,id])};
-  r.setUserAnonymousID=r.userAnonymousID=function(id){r.push([3,id])};
-  r.setMetadata=r.metadata=function(k,v){r.push([4,k,v])};
+  r.setUserID=function(id){r.push([2,id])};
+  r.setUserAnonymousID=function(id){r.push([3,id])};
+  r.setMetadata=function(k,v){r.push([4,k,v])};
   r.event=function(k,p,i){r.push([5,k,p,i])};
   r.issue=function(k,p){r.push([6,k,p])};
-  r.isActive=r.active=function(){return false};
-  r.getSessionToken=r.sessionID=function(){};
-})(0,PROJECT_HASH,"//${window.location.hostname}/static/openreplay.js",1,XXX);
+  r.isActive=function(){return false};
+  r.getSessionToken=function(){};
+  r.i="https://${window.location.hostname}/ingest";
+})(0, "PROJECT_KEY", "//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,XXX);
 <script>`;
+
 
 const ProjectCodeSnippet = props  => {
   const { site, gdpr, saving } = props;
@@ -68,7 +70,7 @@ const ProjectCodeSnippet = props  => {
   const getCodeSnippet = site => {
     let snippet = codeSnippet;
     if (site && site.id) {
-      snippet = snippet.replace('PROJECT_HASH', site.projectKey);
+      snippet = snippet.replace('PROJECT_KEY', site.projectKey);
     }
     return snippet
       .replace('XXX', getOptionValues())
@@ -126,7 +128,7 @@ const ProjectCodeSnippet = props  => {
           <span className={ styles.highLight }> { '</head>' } </span>
           <span>{ ' tag of your page.' }</span>
         </div>
-        <div className={ styles.siteId }>{ 'Project ID: ' } <span>{ site.projectKey }</span></div>
+        <div className={ styles.siteId }>{ 'Project Key: ' } <span>{ site.projectKey }</span></div>
       </div>
       <div className={ styles.snippetsWrapper }>
         <button className={ styles.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>

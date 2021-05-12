@@ -14,9 +14,9 @@ export default function IdentifyUsersTab() {
         <div>
           <div className="font-bold mb-4 text-lg">By User ID</div>
           <div className="mb-2">
-            Call <span className="highlight-gray">userID</span> to identify your users when recording a session. The identity of the user can be changed, but OpenReplay will only keep the last communicated user ID.
+            Call <span className="highlight-gray">setUserID</span> to identify your users when recording a session. The identity of the user can be changed, but OpenReplay will only keep the last communicated user ID.
           </div>
-          <HighlightCode className="js" text={`tracker.userID('john@doe.com');`} />
+          <HighlightCode className="js" text={`tracker.setUserID('john@doe.com');`} />
         </div>
 
         <div className="my-8" />
@@ -38,8 +38,8 @@ export default function IdentifyUsersTab() {
             <CircleNumber text="2" />
             <div className="pt-1">
               <span className="font-bold">Inject metadata when recording sessions</span>
-              <div className="my-2">Use the <span className="highlight-gray">metadata</span> method in your code to inject custom user data in the form of a key/value pair (string).</div>
-              <HighlightCode className="js" text={`tracker.metadata('plan', 'premium');`} />
+              <div className="my-2">Use the <span className="highlight-gray">setMetadata</span> method in your code to inject custom user data in the form of a key/value pair (string).</div>
+              <HighlightCode className="js" text={`tracker.setMetadata('plan', 'premium');`} />
             </div>
           </div>
         </div>
