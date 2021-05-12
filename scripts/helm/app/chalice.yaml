@@ -62,3 +62,6 @@ env:
   S3_HOST: 's3://minio.db.svc.cluster.local:9000'
   S3_KEY: ''
   S3_SECRET: ''
+  # Enable logging for python app
+  # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
+  PYTHONUNBUFFERED: '0'
