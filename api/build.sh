@@ -5,7 +5,7 @@
 # envarg: build for enterprize edition.
 # Default will be OSS build.
 
-# Usage: bash build.sh <ee>
+# Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 envarg="default-foss"
