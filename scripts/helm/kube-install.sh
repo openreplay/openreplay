@@ -122,6 +122,9 @@ type() {
 function app(){
     case $1 in
         nginx)
+            [[ NGINX_REDIRECT_HTTPS -eq 0 ]] && {
+                sed -i "/return 301/d" nginx-ingress/nginx-ingress/templates/configmap.yaml
+            }
             ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags nginx -v
             exit 0
             ;;
