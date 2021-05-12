@@ -7,3 +7,6 @@ image:
 {% if not (ecr_docker_username is defined and ecr_docker_username and ecr_docker_password is defined and ecr_docker_password) %}
 imagePullSecrets: []
 {% endif %}
+env:
+  S3_KEY: "{{ minio_access_key }}"
+  S3_SECRET: "{{ minio_secret_key }}"
