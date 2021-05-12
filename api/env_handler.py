@@ -1,5 +1,6 @@
 from os import environ
 import json
+import os
 
 with open('.chalice/config.json') as json_file:
     data = json.load(json_file)
@@ -11,7 +12,9 @@ with open('.chalice/config.json') as json_file:
             with open(target) as stage_vars:
                 data = json.load(stage_vars)
         except IOError:
-            pass
+            if not os.path.exists('chalicelib/.configs'):
+                os.makedirs('chalicelib/.configs')
         with open(target, 'w') as outfile:
-            json.dump({**data, **environ}, outfile, indent=2, sort_keys=True)
+            json.dump({**stages[s].get("environment_variables", {}), **data, **environ},
+                      outfile, indent=2, sort_keys=True)
             print(f"injected env-vars to {target}")
