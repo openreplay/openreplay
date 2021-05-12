@@ -4,15 +4,31 @@ import stl from './installDocs.css'
 import cn from 'classnames'
 import { CopyButton } from 'UI';
 
-const installationCommand = 'npm i @openreplay/tracker --save'
+const installationCommand = 'npm i @openreplay/tracker'
 const usageCode = `import Tracker from '@openreplay/tracker';
+
 const tracker = new Tracker({
-  projectID: PROJECT_ID
+  projectKey: "PROJECT_KEY",
+  ingestPoint: "https://${window.location.hostname}/ingest",
 });
 tracker.start();`
+const usageCodeSST = `import Tracker from '@openreplay/tracker/cjs';
+
+const tracker = new Tracker({
+  projectKey: "PROJECT_KEY",
+  ingestPoint: "https://${window.location.hostname}/ingest",
+});
+
+function MyApp() {
+  useEffect(() => { // use componentDidMount in case of React Class Component
+    tracker.start();
+  }, []);
+  
+  //...
+}`
 
 function InstallDocs({ site }) {
-  const _usageCode = usageCode.replace('PROJECT_ID', site.projectKey)
+  const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey)
   return (
     <div>
       <div className="mb-3">

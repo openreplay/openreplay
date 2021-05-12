@@ -51,7 +51,7 @@ export default class SignupForm extends React.Component {
       <form onSubmit={ this.onSubmit }>
         <div className="mb-8">
           <h2 className="text-center text-3xl mb-6">Get Started</h2>
-          <div className="text-center text-xl">Already having an account? <span className="link"><Link to={ LOGIN_ROUTE }>Sign In</Link></span></div>
+          <div className="text-center text-xl">Already having an account? <span className="link"><Link to={ LOGIN_ROUTE }>Sign in</Link></span></div>
         </div>
         <>
           { window.ENV.CAPTCHA_ENABLED && (
@@ -69,7 +69,7 @@ export default class SignupForm extends React.Component {
                 <div className={ stl.inputWithIcon }>              
                   <Dropdown
                     className="w-full"
-                    placeholder="Select tenant"
+                    placeholder="Select account"
                     selection
                     options={ tenants }
                     name="tenantId"
@@ -95,7 +95,7 @@ export default class SignupForm extends React.Component {
               </div>
             </div>
             <div className="mb-6">
-              <label className="mb-2">Create Password</label>
+              <label className="mb-2">Password</label>
               <div className={ stl.inputWithIcon }>            
                 <input
                   type="password"
@@ -109,7 +109,7 @@ export default class SignupForm extends React.Component {
               </div>
             </div>
             <div className="mb-6">
-              <label>Your Name</label>
+              <label>Name</label>
               <div className={ stl.inputWithIcon }>              
                 <input                
                   type="text"
@@ -123,7 +123,7 @@ export default class SignupForm extends React.Component {
             </div>
   
             <div className="mb-6">
-              <label>Organization Name</label>
+              <label>Organization</label>
               <div className={ stl.inputWithIcon }>              
                 <input                
                   type="text"
@@ -156,7 +156,7 @@ export default class SignupForm extends React.Component {
           <Button type="submit" primary >
             { loading ? 
               <CircularLoader loading={true} /> :
-              'Signup' 
+              'Create account' 
             }
           </Button>
         </div>

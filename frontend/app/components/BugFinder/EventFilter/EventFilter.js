@@ -135,7 +135,7 @@ export default class EventFilter extends React.PureComponent {
           </div>
         }
         <Input
-          inputProps={ { "data-openreplay-label": "Search" } }
+          inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
           className={stl.searchField}
           ref={ this.inputRef }
           onChange={ this.onSearchChange }
@@ -148,6 +148,7 @@ export default class EventFilter extends React.PureComponent {
           onFocus={ this.onFocus }
           onBlur={ this.onBlur }
           id="search"
+          autocomplete="off"
         />
 
         <FilterModal
