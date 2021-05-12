@@ -7,7 +7,7 @@
 
 # Usage: bash build.sh <ee>
 
-git_sha1=$(git rev-parse HEAD)
+git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 envarg="default-foss"
 check_prereq() {
     which docker || {
