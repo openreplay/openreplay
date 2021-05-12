@@ -6,7 +6,7 @@
 # Default will be OSS build.
 
 # Example
-# DOCKER_REPO=asayer.io bash buid.sh
+# Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
 
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 ee="false"
