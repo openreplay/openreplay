@@ -2,7 +2,7 @@
 
 # Script to build api module
 # flags to accept:
-# ee: build for enterprize edition.
+# ee: build for enterprise edition.
 # Default will be OSS build.
 
 # Example
@@ -19,7 +19,7 @@ check_prereq() {
 }
 
 function build_api(){
-    # Copy enterprize code
+    # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -r ../ee/backend/* ./
         ee="true"
