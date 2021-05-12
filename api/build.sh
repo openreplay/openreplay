@@ -2,7 +2,7 @@
 
 # Script to build api module
 # flags to accept:
-# envarg: build for enterprize edition.
+# envarg: build for enterprise edition.
 # Default will be OSS build.
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh <ee>
@@ -18,7 +18,7 @@ check_prereq() {
 }
 
 function build_api(){
-    # Copy enterprize code
+    # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/api/* ./
         cp -rf ../ee/api/.chalice/* ./.chalice/
