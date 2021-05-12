@@ -16,6 +16,7 @@ const PGParallelLimit = 2
 var pgCount int64
 
 type manager struct {
+	postgresString     string
 	notificationsUrl   string
 	alertsCache        map[uint32]*postgres.Alert
 	cacheMutex         sync.Mutex
@@ -28,8 +29,9 @@ type manager struct {
 	notificationsMutex sync.Mutex
 }
 
-func NewManager(notificationsUrl string, pg *sql.DB, pg *postgres.Conn) *manager {
+func NewManager(notificationsUrl string, postgresString string, pgs *sql.DB, pg *postgres.Conn) *manager {
 	return &manager{
+		postgresString:     postgresString,
 		notificationsUrl:   notificationsUrl,
 		alertsCache:        make(map[uint32]*postgres.Alert),
 		cacheMutex:         sync.Mutex{},
@@ -157,10 +159,10 @@ func (m *manager) ProcessNotifications(allNotifications map[uint32]*postgres.Ten
 	if err := m.pg.SaveLastNotification(allIds); err != nil {
 		log.Printf("Error saving LastNotification time: %v", err)
 		if err.Error() == "conn closed" {
-			m.pg, err = postgres.NewPostgres(POSTGRES_STRING)
-			if err != nil {
-				panic(fmt.Sprintf("Postgres renew notifications connection error: %v\n", err))
-			}
+			m.pg = postgres.NewConn(m.postgresString)
+			//if err != nil {
+			//	panic(fmt.Sprintf("Postgres renew notifications connection error: %v\n", err))
+			//}
 			if err := m.pg.SaveLastNotification(allIds); err != nil {
 				panic(fmt.Sprintf("Error saving LastNotification time, suicide: %v", err))
 			}

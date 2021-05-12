@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/env"
 )
 
 func main() {
@@ -25,8 +25,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-
-	manager := NewManager(NOTIFICATIONS_STRING, pgs, pg)
+	manager := NewManager(NOTIFICATIONS_STRING, POSTGRES_STRING, pgs, pg)
 	if err := pg.IterateAlerts(func(a *postgres.Alert, err error) {
 		if err != nil {
 			log.Printf("Postgres error: %v\n", err)
