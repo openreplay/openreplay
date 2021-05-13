@@ -36,14 +36,14 @@ env:
   assign_link: http://127.0.0.1:8000/async/email_assignment
   captcha_server: ''
   captcha_key: ''
-  sessions_bucket: asayer-mobs-staging
+  sessions_bucket: asayer-mobs
   sessions_region: eu-central-1
   put_S3_TTL: '20'
-  sourcemaps_bucket: ''
-  sourcemaps_bucket_key: ''
-  sourcemaps_bucket_secret: ''
-  sourcemaps_bucket_region: ''
-  js_cache_bucket: ''
+  sourcemaps_bucket: asayer-sourcemaps
+  sourcemaps_bucket_key: minios3AccessKeyS3cr3t
+  sourcemaps_bucket_secret: m1n10s3CretK3yPassw0rd
+  sourcemaps_bucket_region: eu-central-1
+  js_cache_bucket: asayer-sessions-assets
   async_Token: ''
   EMAIL_HOST: ''
   EMAIL_PORT: '587'
@@ -57,11 +57,11 @@ env:
   SITE_URL: ''
   announcement_url: ''
   jwt_secret: ''
-  jwt_algorithm: ''
-  jwt_exp_delta_seconds: ''
+  jwt_algorithm: 'HS512'
+  jwt_exp_delta_seconds: '2592000'
   S3_HOST: 's3://minio.db.svc.cluster.local:9000'
-  S3_KEY: ''
-  S3_SECRET: ''
+  S3_KEY: minios3AccessKeyS3cr3t
+  S3_SECRET: m1n10s3CretK3yPassw0rd
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
   PYTHONUNBUFFERED: '0'
