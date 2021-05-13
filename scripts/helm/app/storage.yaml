@@ -31,6 +31,7 @@ pvc:
   storageSize: 5Gi
 
 env:
+  AWS_ENDPOINT: http://minio.db.svc.cluster.local:9000
   AWS_ACCESS_KEY_ID: "minios3AccessKeyS3cr3t"
   AWS_SECRET_ACCESS_KEY: "m1n10s3CretK3yPassw0rd"
   AWS_REGION_WEB: eu-central-1
