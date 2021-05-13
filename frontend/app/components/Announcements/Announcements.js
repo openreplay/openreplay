@@ -73,8 +73,8 @@ class Announcements extends React.Component {
           content={ 
             <div className="mx-4">
               <NoContent
-                title="No Alerts found!"
-                subtext="There are no alerts created."
+                title="No Announcements found!"
+                subtext="There are no announcements to show."
                 icon="exclamation-circle"
                 show={ !loading && announcements.size === 0 }
                 size="small"
