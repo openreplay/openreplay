@@ -24,6 +24,7 @@ resources:
 env:
   ASSETS_ORIGIN: /asayer-sessions-assets # TODO: full path (with the minio prefix)
   S3_BUCKET_ASSETS: asayer-sessions-assets
+  AWS_ENDPOINT: http://minio.db.svc.cluster.local:9000
   AWS_ACCESS_KEY_ID: "minios3AccessKeyS3cr3t"
   AWS_SECRET_ACCESS_KEY: "m1n10s3CretK3yPassw0rd"
   AWS_REGION: us-east-1
