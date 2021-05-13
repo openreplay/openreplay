@@ -28,11 +28,10 @@ const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
   r.setMetadata=function(k,v){r.push([4,k,v])};
   r.event=function(k,p,i){r.push([5,k,p,i])};
   r.issue=function(k,p){r.push([6,k,p])};
-  r.isActive=function(){return false};
-  r.getSessionToken=function(){};
-  r.i="https://${window.location.hostname}/ingest";
-})(0, "PROJECT_KEY", "//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,XXX);
-<script>`;
+  r.isActive=r.active=function(){return false};
+  r.getSessionToken=r.sessionID=function(){};
+})(0,PROJECT_HASH,"//${window.location.hostname}/static/openreplay.js",1,XXX);
+</script>`;
 
 
 const ProjectCodeSnippet = props  => {
