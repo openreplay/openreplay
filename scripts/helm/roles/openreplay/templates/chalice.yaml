@@ -10,3 +10,5 @@ imagePullSecrets: []
 env:
   S3_KEY: "{{ minio_access_key }}"
   S3_SECRET: "{{ minio_secret_key }}"
+  sourcemaps_bucket_key: "{{ minio_access_key }}"
+  sourcemaps_bucket_secret: "{{ minio_secret_key }}"
