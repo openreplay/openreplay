@@ -27,11 +27,17 @@ function build_api(){
     [[ $2 != "" ]] && {
         image="$2"
         docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
+        [[ $PUSH_IMAGE -eq 1 ]] && {
+            docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
+        }
         return
     }
     for image in $(ls services);
     do
         docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
+        [[ $PUSH_IMAGE -eq 1 ]] && {
+            docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
+        }
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${git_sha1}"
     done
 }
