@@ -59,7 +59,9 @@ env:
   jwt_secret: ''
   jwt_algorithm: 'HS512'
   jwt_exp_delta_seconds: '2592000'
-  S3_HOST: 's3://minio.db.svc.cluster.local:9000'
+  # Override with your https://domain_name
+  # eg: https://openreplay.mycompany.com
+  S3_HOST: ''
   S3_KEY: minios3AccessKeyS3cr3t
   S3_SECRET: m1n10s3CretK3yPassw0rd
   # Enable logging for python app
