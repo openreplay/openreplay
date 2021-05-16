@@ -39,10 +39,7 @@ jobs:
         ENVIRONMENT: staging
       run: |
         cd api
-        bash build.sh
-        [[ -z "${DOCKER_REPO}" ]] || {
-          docker push ${DOCKER_REPO}/chalice:"${IMAGE_TAG}"
-        }
+        PUSH_IMAGE=1 bash build.sh
     - name: Deploy to kubernetes
       run: |
         cd scripts/helm/
