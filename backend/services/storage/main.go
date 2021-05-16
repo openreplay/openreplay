@@ -23,7 +23,7 @@ func main() {
 
 
 	storageWeb := storage.NewS3(env.String("AWS_REGION_WEB"), env.String("S3_BUCKET_WEB"))
-	storageIos := storage.NewS3(env.String("AWS_REGION_IOS"), env.String("S3_BUCKET_IOS"))
+	//storageIos := storage.NewS3(env.String("AWS_REGION_IOS"), env.String("S3_BUCKET_IOS"))
 	FS_DIR := env.String("FS_DIR") + "/"
 
 	var uploadKey func(string, int, *storage.S3)
@@ -54,8 +54,8 @@ func main() {
 	  	switch msg.(type) {
 				case *messages.SessionEnd:
 					uploadKey(strconv.FormatUint(sessionID, 10), 5, storageWeb)
-				case *messages.IOSSessionEnd:
-					uploadKey(strconv.FormatUint(sessionID, 10), 5, storageIos)
+				//case *messages.IOSSessionEnd:
+				//	uploadKey(strconv.FormatUint(sessionID, 10), 5, storageIos)
 	  	}
 	  },
 	)

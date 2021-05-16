@@ -164,6 +164,16 @@ export default class MessageDistributor extends StatedScreen {
       let mCount = 0;
       const msgs = [];
 
+      while (mGen.hasNext()) {
+        mCount++;
+        const next = mGen.next();
+        if (next != null) {
+          this.#lastMessageTime = next[0].time;
+          this.#distributeMessage(next[0], next[1]);
+          msgs.push(next[0]);
+        }
+      }
+
       // Hack for upet (TODO: fix ordering in one mutation (removes first))
       const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
       //const createNodeTypes = ["create_text_node", "create_element_node"];

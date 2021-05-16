@@ -82,7 +82,6 @@ def __get_meta_constraint(project_id, data):
     constraints = []
     meta_keys = metadata.get(project_id=project_id)
     meta_keys = {m["key"]: m["index"] for m in meta_keys}
-    print(meta_keys)
 
     for i, f in enumerate(data.get("filters", [])):
         if f["key"] in meta_keys.keys():
@@ -93,20 +92,27 @@ def __get_meta_constraint(project_id, data):
                 constraints.append(f"{key} = %({f['key']}_{i})s")
         else:
             filter_type = f["key"].upper()
-            if filter_type == sessions_metas.meta_type.USERBROWSER:
+            filter_type = [filter_type, "USER" + filter_type, filter_type[4:]]
+            if any(item in [sessions_metas.meta_type.USERBROWSER] \
+                   for item in filter_type):
                 constraints.append(f"sessions.user_browser = %({f['key']}_{i})s")
-            elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
+            elif any(item in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS] \
+                     for item in filter_type):
                 constraints.append(f"sessions.user_os = %({f['key']}_{i})s")
-            elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
+            elif any(item in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS] \
+                     for item in filter_type):
                 constraints.append(f"sessions.user_device = %({f['key']}_{i})s")
-            elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
+            elif any(item in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS] \
+                     for item in filter_type):
                 constraints.append(f"sessions.user_country  = %({f['key']}_{i})s")
-            elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            elif any(item in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS] \
+                     for item in filter_type):
                 constraints.append(f"sessions.user_id = %({f['key']}_{i})s")
-            elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
-                                 sessions_metas.meta_type.USERANONYMOUSID_IOS]:
+            elif any(item in [sessions_metas.meta_type.USERANONYMOUSID, sessions_metas.meta_type.USERANONYMOUSID_IOS] \
+                     for item in filter_type):
                 constraints.append(f"sessions.user_anonymous_id = %({f['key']}_{i})s")
-            elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
+            elif any(item in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS] \
+                     for item in filter_type):
                 constraints.append(f"sessions.rev_id = %({f['key']}_{i})s")
     return constraints
 
@@ -140,6 +146,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                 ORDER BY generated_timestamp;"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         results = {
@@ -634,8 +641,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                           WHERE {" AND ".join(pg_sub_query)} 
                           LIMIT 10;"""
             print(cur.mogrify(pg_query, {"project_id": project_id,
-                                               "value": helper.string_to_sql_like(text),
-                                               "platform_0": platform}))
+                                         "value": helper.string_to_sql_like(text),
+                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
