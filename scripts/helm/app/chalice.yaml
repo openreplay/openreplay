@@ -36,14 +36,14 @@ env:
   assign_link: http://127.0.0.1:8000/async/email_assignment
   captcha_server: ''
   captcha_key: ''
-  sessions_bucket: asayer-mobs
+  sessions_bucket: mobs
   sessions_region: us-east-1
   put_S3_TTL: '20'
-  sourcemaps_bucket: asayer-sourcemaps
+  sourcemaps_bucket: sourcemaps
   sourcemaps_bucket_key: minios3AccessKeyS3cr3t
-    sourcemaps_bucket_secret: m1n10s3CretK3yPassw0rd
+  sourcemaps_bucket_secret: m1n10s3CretK3yPassw0rd
   sourcemaps_bucket_region: us-east-1
-  js_cache_bucket: asayer-sessions-assets
+  js_cache_bucket: sessions-assets
   async_Token: ''
   EMAIL_HOST: ''
   EMAIL_PORT: '587'
@@ -61,7 +61,7 @@ env:
   jwt_exp_delta_seconds: '2592000'
   # Override with your https://domain_name
   # eg: https://openreplay.mycompany.com
-  S3_HOST: ''
+  S3_HOST: 'http://minio.db.svc.cluster.local:9000'
   S3_KEY: minios3AccessKeyS3cr3t
   S3_SECRET: m1n10s3CretK3yPassw0rd
   # Enable logging for python app
