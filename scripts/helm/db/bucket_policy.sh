@@ -1,5 +1,5 @@
 #!/bin/bash
-buckets=("asayer-mobs" "asayer-sessions-assets" "static")
+buckets=("mobs" "sessions-assets" "static" "sourcemaps")
 
 mc alias set minio http://localhost:9000 $1 $2
 
@@ -23,5 +23,5 @@ done
 # Creating frontend bucket
 mc mb minio/frontend
 mc policy set download minio/frontend
-mc policy set download minio/asayer-sessions-assets
+mc policy set download minio/sessions-assets
 mc policy set download minio/static
