@@ -7,6 +7,7 @@ import styles from './manageUsers.css';
 import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
+import BannerMessage from 'Shared/BannerMessage';
 
 const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
 const LIMIT_WARNING = 'You have reached users limit.';
@@ -158,28 +159,37 @@ class ManageUsers extends React.PureComponent {
             onClose={ this.closeModal }
           />
           <div className={ styles.wrapper }>
-            <div className={ styles.tabHeader }>
-              { !hideHeader && <h3 className={ cn(styles.tabTitle, "text-2xl") }>{ (isAdmin ? 'Manage ' : '') + 'Users' }</h3> }
-              { hideHeader && <h3 className={ cn(styles.tabTitle, "text-xl") }>{ `Team Size ${members.size}` }</h3>}
-              <Popup
-                trigger={
-                  <div>
-                    <IconButton
-                        id="add-button"
-                        disabled={ !canAddUsers }
-                        circle
-                        icon="plus"
-                        outline
-                        onClick={ () => this.init() }
-                    />
-                  </div>
+            <div className={ cn(styles.tabHeader, 'flex items-center') }>
+              <div className="flex items-center mr-auto">
+                { !hideHeader && <h3 className={ cn(styles.tabTitle, "text-2xl") }>{ (isAdmin ? 'Manage ' : '') + 'Users' }</h3> }
+                { hideHeader && <h3 className={ cn(styles.tabTitle, "text-xl") }>{ `Team Size ${members.size}` }</h3>}
+                <Popup
+                  trigger={
+                    <div>
+                      <IconButton
+                          id="add-button"
+                          disabled={ !canAddUsers }
+                          circle
+                          icon="plus"
+                          outline
+                          onClick={ () => this.init() }
+                      />
+                    </div>
+                  }
+                  // disabled={ canAddUsers }
+                  content={ `${ !canAddUsers ? (!isAdmin ? PERMISSION_WARNING : LIMIT_WARNING) : 'Add team member' }` }
+                  size="tiny"
+                  inverted
+                  position="top left"
+                />
+              </div>
+              <div>
+                { !account.smtp && 
+                <BannerMessage>
+                  Inviting new users require email messaging. Please <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>.
+                </BannerMessage>
                 }
-                // disabled={ canAddUsers }
-                content={ `${ !canAddUsers ? (!isAdmin ? PERMISSION_WARNING : LIMIT_WARNING) : 'Add team member' }` }
-                size="tiny"
-                inverted
-                position="top left"
-              />
+              </div>
             </div>
 
             <NoContent

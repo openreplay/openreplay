@@ -8,7 +8,8 @@ export default Member.extend({
   limits: Limit(),
   banner: undefined,
   email: '',
-  verifiedEmail: undefined
+  verifiedEmail: undefined,
+  smtp: false,
 }, {
   fromJS: account => ({
     ...account,

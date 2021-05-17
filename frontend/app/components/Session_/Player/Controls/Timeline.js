@@ -232,7 +232,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('exception')}
                     content={ 
                       <div className={ stl.popup } >
-                        <b>{ "Exception:" }</b>
+                        <b>{ "Exception" }</b>
                         <br/>
                         <span>{ e.message }</span>
                       </div>  
@@ -278,7 +278,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('log')}
                     content={ 
                       <div className={ stl.popup } >
-                        <b>{ "Console:" }</b>
+                        <b>{ "Console" }</b>
                         <br/>
                         <span>{ l.value }</span>
                       </div> 
@@ -380,7 +380,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('fetch')}
                     content={ 
                       <div className={ stl.popup }>
-                        <b>{ "Failed Fetch:" }</b>
+                        <b>{ "Failed Fetch" }</b>
                         <br/>
                         { e.name }
                       </div> 
@@ -421,7 +421,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('stack')}
                     content={ 
                       <div className={ stl.popup }>
-                        <b> { "Stack Event:" }</b>
+                        <b> { "Stack Event" }</b>
                         <br/>
                         { e.name }
                       </div> 
