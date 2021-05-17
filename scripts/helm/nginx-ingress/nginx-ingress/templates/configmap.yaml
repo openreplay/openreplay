@@ -110,8 +110,8 @@ data:
       listen 80 default_server;
       listen [::]:80 default_server;
       # server_name _;
-      return 301 https://$host$request_uri;
-      # include /etc/nginx/conf.d/location.list;
+      # return 301 https://$host$request_uri;
+      include /etc/nginx/conf.d/location.list;
     }
     server {
       listen                443 ssl;
