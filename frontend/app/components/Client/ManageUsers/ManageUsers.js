@@ -38,7 +38,7 @@ class ManageUsers extends React.PureComponent {
   }
   
   adminLabel = (user) => {
-    if (user.superAdmin) return 'Super Admin';
+    if (user.superAdmin) return 'Owner';
     return user.admin ? 'Admin' : '';
   };
 
