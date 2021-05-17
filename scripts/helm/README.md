@@ -5,7 +5,7 @@ Installation components are separated by namepaces.
 **Namespace:**
   
 - **app:** Core openreplay application related components.
-  - alert
+  - alerts
   - auth
   - cache
   - chalice
