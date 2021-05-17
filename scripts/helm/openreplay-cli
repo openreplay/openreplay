@@ -48,7 +48,7 @@ clear
   echo -e "${reset}${blue}services: ${services[*]}${reset}"
   exit 0
 }
-services=( alert auth cache chalice clickhouse ender events failover filesink filestorage http integrations ios-proxy metadata negative pg-stateless pg preprocessing redis ws )
+services=( alerts auth cache chalice clickhouse ender events failover filesink filestorage http integrations ios-proxy metadata negative pg-stateless pg preprocessing redis ws )
 
 check() {
     if ! command -v kubectl &> /dev/null

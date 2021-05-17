@@ -5,9 +5,9 @@
   **Below is a sample template.**
   
   ```yaml
-  namespace: app        # In which namespace alert runs.
+  namespace: app        # In which namespace alerts runs.
   image:
-    repository: 998611063711.dkr.ecr.eu-central-1.amazonaws.com/alert # Which image to use
+    repository: 998611063711.dkr.ecr.eu-central-1.amazonaws.com/alerts # Which image to use
     pullPolicy: IfNotPresent
     tag: "latest"       # Overrides the image tag whose default is the chart appVersion.
 
