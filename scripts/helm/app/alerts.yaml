@@ -1,7 +1,7 @@
 namespace: app
 image:
   repository: rg.fr-par.scw.cloud/foss
-  name: alert
+  name: alerts
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
