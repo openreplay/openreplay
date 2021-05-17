@@ -18,7 +18,7 @@ const getPointerIcon = (type) => {
     case 'log':
       return 'funnel/exclamation-circle';
     case 'stack':
-      return 'funnel/file-exclamation';
+      return 'funnel/patch-exclamation-fill';
     case 'resource':
       return 'funnel/file-medical-alt';
 
