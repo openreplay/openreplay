@@ -10,7 +10,7 @@ def get_by_tenant_id(tenant_id):
                 f"""SELECT 
                        tenant_id,
                        name,
-                       api_key
+                       api_key,
                        created_at,
                         edition,
                         version_number,
