@@ -122,8 +122,11 @@ type() {
 function app(){
     case $1 in
         nginx)
-            [[ NGINX_REDIRECT_HTTPS -eq 0 ]] && {
-                sed -i "/return 301/d" nginx-ingress/nginx-ingress/templates/configmap.yaml
+            git checkout -- nginx-ingress/nginx-ingress/templates/configmap.yaml
+            [[ NGINX_REDIRECT_HTTPS -eq 1 ]] && {
+                sed -i "s/# return 301/return 301/g" nginx-ingress/nginx-ingress/templates/configmap.yaml
+                # Toggles first occurrence of location list include.
+                sed -i "0,/include \/etc\/nginx\/conf.d\/location.list/s//# include \/etc\/nginx\/conf.d\/location.list/" nginx-ingress\/nginx-ingress\/templates\/configmap.yaml
             }
             ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags nginx -v
             exit 0
@@ -170,3 +173,7 @@ done
 {
     ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --skip-tags pre-check -v
 } || exit $?
+
+
+
+
