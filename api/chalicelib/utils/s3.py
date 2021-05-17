@@ -49,6 +49,9 @@ def get_presigned_url_for_upload(bucket, expires_in, key):
 
 
 def get_file(source_bucket, source_key):
+    print("******************************")
+    print(f"looking for: {source_key} in {source_bucket}")
+    print("******************************")
     try:
         result = client.get_object(
             Bucket=source_bucket,

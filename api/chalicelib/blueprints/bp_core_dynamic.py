@@ -73,7 +73,8 @@ def get_account(context):
                 "projects": -1,
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },
-            **license.get_status(context["tenantId"])
+            **license.get_status(context["tenantId"]),
+            "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
         }
     }
 
@@ -160,7 +161,7 @@ def add_slack_client(context):
         return {"data": {"status": "success"}}
     else:
         return {
-            "errors": ["failed URL verification, if you received a message on slack, please notify our dev-team"]
+             "errors": ["We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
         }
 
 @app.route('/{projectId}/errors/search', methods=['POST'])
