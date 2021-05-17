@@ -9,5 +9,6 @@ This is the frontend of the openreplay web app to internet.
 /api       -> chalice
 /http      -> http
 /          -> frontend (in minio)
-/assets    -> asayer-sessions-assets bucket in minio
-/s3        -> minio api endpoint
+/assets    -> sessions-assets bucket in minio
+/minio     -> minio api endpoint
+/ingest    -> events ingestor
