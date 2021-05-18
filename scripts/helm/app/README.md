@@ -1,13 +1,13 @@
-## Core Openreplay application configuration folder
+## Core OpenReplay application configuration folder
 
-  This folder contains configuration for core openreplay apps. All applications share common helm chart named *openreplay* which can be overridden by `<applicaion>.yaml` file.
+  This folder contains configuration for core openreplay apps. All applications share common helm chart named *openreplay* which can be overridden by `<application>.yaml` file.
   
   **Below is a sample template.**
   
   ```yaml
   namespace: app        # In which namespace alerts runs.
   image:
-    repository: 998611063711.dkr.ecr.eu-central-1.amazonaws.com/alerts # Which image to use
+    repository: rg.fr-par.scw.cloud/foss # Which image to use
     pullPolicy: IfNotPresent
     tag: "latest"       # Overrides the image tag whose default is the chart appVersion.
 
