@@ -1,9 +1,8 @@
 # openreplay-ui
-Openreplay prototype UI
+OpenReplay prototype UI
 
 On new icon addition: 
 `npm run generate:icons`
-
 
 ## Documentation
 
@@ -11,7 +10,6 @@ On new icon addition:
 * [Immutable](https://facebook.github.io/immutable-js/)
 * [Ducks](https://github.com/erikras/ducks-modular-redux)
 * [CSS Modules](https://github.com/css-modules/css-modules)
-
 
 Labels in comments:
 TEMP = temporary code
