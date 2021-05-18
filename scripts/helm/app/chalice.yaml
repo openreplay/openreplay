@@ -2,7 +2,7 @@ namespace: app
 image:
   repository: rg.fr-par.scw.cloud/foss
   name: chalice
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   tag: latest
 
 imagePullSecrets:
