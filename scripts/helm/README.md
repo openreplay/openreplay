@@ -1,10 +1,10 @@
-## Helm charts for installing openreplay components. 
+## Helm charts for installing OpenReplay components 
 
 Installation components are separated by namepaces.
 
 **Namespace:**
   
-- **app:** Core openreplay application related components.
+- **app:** Core OpenReplay application related components.
   - alerts
   - assets
   - chalice
@@ -23,14 +23,14 @@ Installation components are separated by namepaces.
   - minio
   - nfs-server
 
-- **longhorn:** On-Prem storage solution for kubernetes PVs.
+- **longhorn:** Storage solution for kubernetes PVs.
 
 - **nginx-ingress:** Nginx ingress for internet traffic to enter the kubernetes cluster.
 
 **Scripts:**
 - **install.sh**
 
-  Installs openreplay in a single node machine, for trial runs / demo.
+  Installs OpenReplay in a single node machine, for trial runs / demo.
 
   This script is a wrapper around the `install.sh` with [k3s](https://k3s.io/) as kubernetes distro.
   
@@ -38,7 +38,7 @@ Installation components are separated by namepaces.
 
 - **kube-install.sh:**
   
-  Installs openreplay on any given kubernetes cluster. Has 3 configuration types
+  Installs OpenReplay on any given kubernetes cluster. Has 3 configuration types:
   - small (2cores 8G RAM)
   - medium (4cores 16G RAM)
   - recommened (8cores 32G RAM)
