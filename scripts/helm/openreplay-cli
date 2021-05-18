@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## This script is a helper for openreplay management
+## This script is a helper for managing your OpenReplay instance
 
 set -eE -o pipefail  # same as: `set -o errexit -o errtrace`
 # Trapping the error
