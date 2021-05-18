@@ -146,7 +146,6 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                 ORDER BY generated_timestamp;"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         results = {
@@ -640,9 +639,6 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                           FROM events.pages INNER JOIN public.sessions USING (session_id)
                           WHERE {" AND ".join(pg_sub_query)} 
                           LIMIT 10;"""
-            print(cur.mogrify(pg_query, {"project_id": project_id,
-                                         "value": helper.string_to_sql_like(text),
-                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
