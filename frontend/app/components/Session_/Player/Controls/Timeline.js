@@ -24,6 +24,8 @@ const getPointerIcon = (type) => {
 
     case 'dead_click':
       return 'funnel/dizzy';
+    case 'click_rage':
+      return 'funnel/dizzy';
     case 'excessive_scrolling':
       return 'funnel/mouse';
     case 'bad_request':
@@ -61,6 +63,7 @@ const getPointerIcon = (type) => {
   fetchList: state.fetchList,
 }))
 @connect(state => ({
+  issues: state.getIn([ 'sessions', 'current', 'issues' ]),
   showDevTools: state.getIn([ 'user', 'account', 'appearance', 'sessionsDevtools' ]),
   clickRageTime: state.getIn([ 'sessions', 'current', 'clickRage' ]) &&
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
@@ -95,6 +98,7 @@ export default class Timeline extends React.PureComponent {
       clickRageTime,
       stackList,
       fetchList,
+      issues
     } = this.props;
 
     const scale = 100 / endTime;
@@ -122,6 +126,28 @@ export default class Timeline extends React.PureComponent {
                 className={ stl.event }
                 style={ { left: `${ e.time * scale }%` } }
               />
+              ))
+            }
+            {
+              issues.map(iss => (
+                <div 
+                  style={ { 
+                    left: `${ iss.time * scale }%`,
+                    top: '-30px'
+                    //width: `${ 2000 * scale }%`
+                  } } 
+                  className={ stl.clickRage }
+                  onClick={ this.createEventClickHandler(iss.time) }
+                >
+                  <TimelinePointer
+                    icon={iss.icon}
+                    content={
+                      <div className={ stl.popup }>
+                        <b>{ iss.name }</b>
+                      </div> 
+                    } 
+                  />
+                </div>
               ))
             }
             { events.filter(e => e.type === TYPES.CLICKRAGE).map(e => (
