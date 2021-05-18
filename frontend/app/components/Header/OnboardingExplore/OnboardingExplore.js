@@ -121,7 +121,7 @@ class OnboardingExplore extends React.PureComponent {
           <div className={ stl.modal } >
             <div className={ stl.tooltipArrow } />
               <div className={ stl.header }>
-                Follow the steps below to complete this project setup and make the best out of OpenReplay.
+              Make the best out of OpenReplay by completing your project setup:
               </div>
 
               <div className={ stl.content }>                
