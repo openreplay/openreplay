@@ -42,13 +42,13 @@ nginx_ssl_key_file_path: ""
 # Enable monitoring
 # If set, monitoring stack will be installed
 # including, prometheus, grafana and other core components,
-# to scrape the metrics. But this will cost, additional resources(cpu and memory).
+# to scrape the metrics. But this will cost, additional resources (cpu and memory).
 # Monitoring won't be installed on base installation.
 enable_monitoring: "false"
 
 # Random password for minio,
 # If not defined, will generate at runtime.
-# Use following command to generate passwordwill give 
+# Use following command to generate password 
 # `openssl rand -base64 30`
 minio_access_key: ""
 minio_secret_key: ""
