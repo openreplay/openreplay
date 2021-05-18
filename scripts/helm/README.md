@@ -6,33 +6,21 @@ Installation components are separated by namepaces.
   
 - **app:** Core openreplay application related components.
   - alerts
-  - auth
-  - cache
+  - assets
   - chalice
-  - clickhouse
   - ender
-  - events
-  - failover
-  - filesink
-  - filestorage
+  - sink
+  - storage
   - http
   - integrations
-  - ios-proxy
-  - metadata
-  - negative
-  - pg-stateless
-  - pg
-  - preprocessing
-  - redis
-  - ws
+  - db
 
 - **db:** Contains following databases and backend components.
-  - kafka
+  - kafka (ee)
   - redis
   - postgresql
-  - clickhouse
+  - clickhouse (ee)
   - minio
-  - sqs
   - nfs-server
 
 - **longhorn:** On-Prem storage solution for kubernetes PVs.
@@ -51,7 +39,7 @@ Installation components are separated by namepaces.
 - **kube-install.sh:**
   
   Installs openreplay on any given kubernetes cluster. Has 3 configuration types
-  - small (4cores 8G RAM)
+  - small (2cores 8G RAM)
   - medium (4cores 16G RAM)
   - recommened (8cores 32G RAM)
   
