@@ -72,14 +72,14 @@ stop() {
 
 start() {
     if [[ $1 == "all" ]]; then
-        cd ./helm/app
+        cd ./app
         for apps in $(ls *.yaml);do
             app=$(echo $apps | cut -d '.' -f1)
             helm upgrade --install -n app $app openreplay -f $app.yaml
         done
         cd $CWD
     fi
-    helm upgrade --install -n app $1 ./helm/app/openreplay -f ./helm/app/openreplay/$1.yaml
+    helm upgrade --install -n app $1 ./app/openreplay -f ./app/openreplay/$1.yaml
 }
 
  
@@ -95,7 +95,7 @@ install() {
 }
 
 upgrade() {
-    sed -i "s/tag:.*/  tag: 'latest'/g" helm/app/$1.yaml
+    sed -i "s/tag:.*/  tag: 'latest'/g" ./app/$1.yaml
 }
 
 logs() {
