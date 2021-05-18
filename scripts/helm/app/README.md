@@ -8,6 +8,7 @@
   namespace: app        # In which namespace alerts runs.
   image:
     repository: rg.fr-par.scw.cloud/foss # Which image to use
+    name: alerts
     pullPolicy: IfNotPresent
     tag: "latest"       # Overrides the image tag whose default is the chart appVersion.
 
