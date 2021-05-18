@@ -1,1 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><defs><style>.fa-secondary{opacity:.4}</style></defs><path d="M112 160h48V64h-48zm80 0h48V64h-48zm80-96v96h48V64z" class="fa-secondary"/><path d="M320 0H128L0 128v320a64.06 64.06 0 0 0 64 64h256a64.06 64.06 0 0 0 64-64V64a64.06 64.06 0 0 0-64-64zM160 160h-48V64h48zm80 0h-48V64h48zm80 0h-48V64h48z" class="fa-primary"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="bi bi-sd-card" viewBox="0 0 16 16">
+  <path d="M6.25 3.5a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2zm2 0a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2zm2 0a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2zm2 0a.75.75 0 0 0-1.5 0v2a.75.75 0 0 0 1.5 0v-2z"/>
+  <path fill-rule="evenodd" d="M5.914 0H12.5A1.5 1.5 0 0 1 14 1.5v13a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 14.5V3.914c0-.398.158-.78.44-1.06L4.853.439A1.5 1.5 0 0 1 5.914 0zM13 1.5a.5.5 0 0 0-.5-.5H5.914a.5.5 0 0 0-.353.146L3.146 3.561A.5.5 0 0 0 3 3.914V14.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5v-13z"/>
+</svg>

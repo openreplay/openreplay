@@ -6,6 +6,7 @@ import stl from './sessionMenu.css';
 import {  fetchList, fetchWatchdogStatus } from 'Duck/watchdogs';
 import { setActiveFlow, clearEvents } from 'Duck/filters';
 import { setActiveTab } from 'Duck/sessions';
+import { issues_types } from 'Types/session/issue'
 
 function SessionsMenu(props) {
   const { 
@@ -62,7 +63,7 @@ function SessionsMenu(props) {
         />
       </div>
       
-      { watchdogs.filter(item => item.visible).map(item => (        
+      { issues_types.filter(item => item.visible).map(item => (        
         <SideMenuitem
           key={item.key}
           disabled={!keyMap[item.type] && !wdTypeCount[item.type]}
@@ -88,7 +89,7 @@ function SessionsMenu(props) {
 }
 
 export default connect(state => ({
-  watchdogs: state.getIn(['watchdogs', 'list']).sortBy(i => i.order),
+  // watchdogs: state.getIn(['watchdogs', 'list']).sortBy(i => i.order),
   activeTab: state.getIn([ 'sessions', 'activeTab' ]),
   keyMap: state.getIn([ 'sessions', 'keyMap' ]),
   wdTypeCount: state.getIn([ 'sessions', 'wdTypeCount' ]),
