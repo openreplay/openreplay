@@ -4,7 +4,6 @@ This is the frontend of the OpenReplay web app to internet.
 
 ## Path information
 
-/ws        -> websocket
 /streaming -> ios-proxy
 /api       -> chalice
 /http      -> http
