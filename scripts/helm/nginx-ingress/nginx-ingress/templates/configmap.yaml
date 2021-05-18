@@ -20,6 +20,8 @@ data:
       proxy_set_header Connection "";
       chunked_transfer_encoding off;
 
+      client_max_body_size 50M;
+
       proxy_pass http://minio.db.svc.cluster.local:9000;
     }
 
