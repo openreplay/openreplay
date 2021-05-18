@@ -123,7 +123,7 @@ function app(){
     case $1 in
         nginx)
             # Resetting the redirection rule
-            sed -i "s/.* return 301 .*/# return 301 https:\/\/$host$request_uri/g" nginx-ingress/nginx-ingress/templates/configmap.yaml
+            sed -i 's/.* return 301 .*/     # return 301 https:\/\/$host$request_uri;/g' nginx-ingress/nginx-ingress/templates/configmap.yaml
             [[ NGINX_REDIRECT_HTTPS -eq 1 ]] && {
                 sed -i "s/# return 301/return 301/g" nginx-ingress/nginx-ingress/templates/configmap.yaml
             }
