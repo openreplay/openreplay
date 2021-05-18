@@ -79,7 +79,7 @@ start() {
         done
         cd $CWD
     fi
-    helm upgrade --install -n app $1 ./app/openreplay -f ./app/openreplay/$1.yaml
+    helm upgrade --install -n app $1 ./app/openreplay -f ./app/$1.yaml
 }
 
  
