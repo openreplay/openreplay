@@ -1,6 +1,6 @@
 ## Description
 
-This is the frontend of the openreplay web app to internet.
+This is the frontend of the OpenReplay web app to internet.
 
 ## Path information
 
