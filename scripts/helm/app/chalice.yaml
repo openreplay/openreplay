@@ -56,7 +56,7 @@ env:
   EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
   SITE_URL: ''
   announcement_url: ''
-  jwt_secret: SET A RANDOM STRING HERE
+  jwt_secret: "SetARandomStringHere"
   jwt_algorithm: HS512
   jwt_exp_delta_seconds: '2592000'
   # Override with your https://domain_name

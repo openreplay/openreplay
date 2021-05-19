@@ -34,6 +34,20 @@
           set_fact:
             minio_access_key: "{{ minio_secret_key_generated }}"
       when: minio_secret_key|length == 0
+    - name: Generating jwt secret key
+      block:
+        - name: Generating jwt access key
+          set_fact:
+            jwt_secret_key_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
+        - name: Updating vars.yaml
+          lineinfile:
+            regexp: '^jwt_secret_key'
+            line: 'jwt_secret_key: "{{jwt_secret_key_generated}}"'
+            path: vars.yaml
+        - name: Generating jwt secret key
+          set_fact:
+            jwt_access_key: "{{ jwt_secret_key_generated }}"
+      when: jwt_secret_key|length == 0
   rescue:
     - name: Caught error
       debug:

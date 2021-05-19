@@ -7,7 +7,7 @@
 # Give absolute file path.
 # Use following command to get the full file path
 # `readlink -f <file>`
-kubeconfig_path: ""
+kubeconfig_path: /home/rajeshr/.kube/config
 
 ###################
 ## Optional Fields.
@@ -21,8 +21,8 @@ image_tag: v1.0.0
 
 # This is an optional field. If you want to use proper ssl, then it's mandatory
 # Using which domain name, you'll be accessing OpenReplay
-# for exmample: domain_name: "openreplay.mycorp.org"
-domain_name: ""
+# for example: domain_name: "test.com" 
+domain_name: "" 
 
 # Nginx ssl certificates.
 # in cert format
@@ -38,6 +38,11 @@ domain_name: ""
 # Change the following variables accordingly.
 nginx_ssl_cert_file_path: ""
 nginx_ssl_key_file_path: ""
+
+# This key is used to create password for chalice api requests.
+# Create a strong password.
+# By default, a default key will be generated and will update the value here.
+jwt_secret_key: ""
 
 # Enable monitoring
 # If set, monitoring stack will be installed
