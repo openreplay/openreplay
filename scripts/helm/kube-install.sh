@@ -84,11 +84,6 @@ This script will install and configure OpenReplay apps and databases on the kube
 which is accesd with the ${HOME}/.kube/config or $KUBECONFIG env variable.
 '''
 cat << EOF
-▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-█░▄▄▀█░▄▄█░▄▄▀█░██░█░▄▄█░▄▄▀██
-█░▀▀░█▄▄▀█░▀▀░█░▀▀░█░▄▄█░▀▀▄██
-█▄██▄█▄▄▄█▄██▄█▀▀▀▄█▄▄▄█▄█▄▄██
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
 EOF
   echo -e "${green}Usage: openreplay-cli [ -h | --help ]
                   [ -v | --verbose ]
