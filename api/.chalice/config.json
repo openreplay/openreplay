@@ -31,6 +31,7 @@
         "sessions_bucket": "mobs",
         "sessions_region": "us-east-1",
         "put_S3_TTL": "20",
+        "sourcemaps_reader": "http://127.0.0.1:3000/staging",
         "sourcemaps_bucket": "sourcemaps",
         "sourcemaps_bucket_key": "",
         "sourcemaps_bucket_secret": "",

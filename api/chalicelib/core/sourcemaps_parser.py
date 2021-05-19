@@ -15,7 +15,7 @@ def get_original_trace(key, positions):
             "aws_region": environ["sourcemaps_bucket_region"]
         }
     }
-    r = requests.post(environ["sourcemaps"], json=payload)
+    r = requests.post(environ["sourcemaps_reader"], json=payload)
     if r.status_code != 200:
         return {}
 
