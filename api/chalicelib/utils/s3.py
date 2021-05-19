@@ -5,7 +5,8 @@ import boto3
 
 from botocore.client import Config
 
-client = boto3.client('s3', endpoint_url=environ["S3_HOST"],
+# client = boto3.client('s3', endpoint_url=environ["S3_HOST"],
+client = boto3.client('s3', endpoint_url="http://minio.db.svc.cluster.local:9000",
                       aws_access_key_id=environ["S3_KEY"],
                       aws_secret_access_key=environ["S3_SECRET"],
                       config=Config(signature_version='s3v4'),
