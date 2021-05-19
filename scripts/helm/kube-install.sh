@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xo errtrace
+set -o errtrace
 
 # color schemes
 # Ansi color code variables
