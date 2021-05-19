@@ -131,7 +131,7 @@ class OnboardingExplore extends React.PureComponent {
                       key={ task.task }
                       label={ task.task }
                       completed={ task.done }
-                      onClick={task.URL && (() => this.onClick(task)) }
+                      onClick={() => this.onClick(task) }
                     />
                   ))}
                 </div>
