@@ -47,6 +47,7 @@ const setClient = (state, data) => {
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
+    case UPDATE_PASSWORD.SUCCESS:
     case SIGNUP.SUCCESS:
     case LOGIN.SUCCESS:
       return setClient(
@@ -57,7 +58,6 @@ const reducer = (state = initialState, action = {}) => {
       break;
     case UPDATE_APPEARANCE.REQUEST: //TODO: failure handling
       return state.mergeIn([ 'account', 'appearance' ], action.appearance)
-    case UPDATE_PASSWORD.SUCCESS:
     case UPDATE_ACCOUNT.SUCCESS:
     case FETCH_ACCOUNT.SUCCESS:
       return state.set('account', Account(action.data)).set('passwordErrors', List());
