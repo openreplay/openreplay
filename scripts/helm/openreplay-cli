@@ -119,7 +119,7 @@ status() {
 
 [[ $# -eq 0 ]] && usage && exit 1
 
-PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:i: --long verbose,help,status,start:,stop:,restart:,install: -- "$@")
+PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:i: --long verbose,help,status,start:,stop:,logs:,restart:,install: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   usage
