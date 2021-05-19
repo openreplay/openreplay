@@ -77,13 +77,19 @@ fi
 # make all stderr red
 color()(set -o pipefail;"$@" 2>&1>&3|sed $'s,.*,\e[31m&\e[m,'>&2)3>&1
 
-usage()
-{
+usage() {
 echo -e ${bold}${yellow} '''
 This script will install and configure OpenReplay apps and databases on the kubernetes cluster,
 which is accesd with the ${HOME}/.kube/config or $KUBECONFIG env variable.
 '''
-cat << EOF
+cat <<"EOF"
+  ___                   ____            _
+ / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
+| | | | '_ \ / _ \ '_ \| |_) / _ \ '_ \| |/ _` | | | |
+| |_| | |_) |  __/ | | |  _ <  __/ |_) | | (_| | |_| |
+ \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
+      |_|                        |_|            |___/
+
 EOF
   echo -e "${green}Usage: openreplay-cli [ -h | --help ]
                   [ -v | --verbose ]
