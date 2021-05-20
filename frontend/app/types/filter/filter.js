@@ -75,7 +75,7 @@ export const defaultFilters = [
       { label: 'Click', key: KEYS.CLICK, type: KEYS.CLICK, filterKey: KEYS.CLICK, icon: 'filters/click', isFilter: false },
       { label: 'Input', key: KEYS.INPUT, type: KEYS.INPUT, filterKey: KEYS.INPUT, icon: 'event/input', isFilter: false },
       { label: 'Page', key: KEYS.LOCATION, type: KEYS.LOCATION, filterKey: KEYS.LOCATION, icon: 'event/link', isFilter: false },
-      { label: 'View', key: KEYS.VIEW, type: KEYS.VIEW, filterKey: KEYS.VIEW, icon: 'event/view', isFilter: false }
+      // { label: 'View', key: KEYS.VIEW, type: KEYS.VIEW, filterKey: KEYS.VIEW, icon: 'event/view', isFilter: false }
 		]
 	},
   {

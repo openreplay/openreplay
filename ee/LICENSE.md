@@ -9,7 +9,7 @@ and are in compliance with, the OpenReplay Subscription Terms of Service, availa
 at https://openreplay.com/terms.html (the “Enterprise Edition”), or other
 agreement governing the use of the Software, as agreed by you and OpenReplay,
 and otherwise have a valid OpenReplay Enterprise license for the
-correct volume and number of seats. Subject to the foregoing sentence, you are free to
+correct usage. Subject to the foregoing sentence, you are free to
 modify this Software and publish patches to the Software. You agree that OpenReplay
 and/or its licensors (as applicable) retain all right, title and interest in and
 to all such modifications and/or patches, and all such modifications and/or

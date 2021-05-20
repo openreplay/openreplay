@@ -7,10 +7,9 @@ import * as routes from '../../../routes';
 const withSiteId = routes.withSiteId;
 
 const NoSessionsMessage= (props) => {
-  const { site, sites, match: { params: { siteId } } } = props;
+  const { sites, match: { params: { siteId } } } = props;
   const activeSite = sites.find(s => s.id == siteId);
   const showNoSessions = !!activeSite && !activeSite.recorded;
-  console.log('site', activeSite);
   return (
     <>
       {showNoSessions && (
