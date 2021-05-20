@@ -12,7 +12,7 @@ const server = http.createServer((req, res) => {
         req.on('end', function () {
             data = JSON.parse(data);
             console.log("Starting parser for: " + data.key);
-            process.env = {...process.env, ...data.bucket_config};
+            // process.env = {...process.env, ...data.bucket_config};
             handler.sourcemapReader(data)
                 .then((results) => {
                     res.statusCode = 200;
