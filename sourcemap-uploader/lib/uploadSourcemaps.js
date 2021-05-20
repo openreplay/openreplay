@@ -7,14 +7,21 @@ const getUploadURLs = (api_key, project_key, js_file_urls) =>
     }
 
     const pathPrefix = (global.SERVER.pathname + "/").replace(/\/+/g, '/');
+    const options = {
+      method: 'PUT',
+      hostname: global.SERVER.host,
+      path: pathPrefix + `${project_key}/sourcemaps/`,
+      headers: { Authorization: api_key, 'Content-Type': 'application/json' },
+    }
+    if (global.LOG) {
+      console.log("Request: ", options, "\nFiles: ", js_file_urls);
+    }
     const req = https.request(
-      {
-        method: 'PUT',
-        hostname: global.SERVER.host,
-        path: pathPrefix + `${project_key}/sourcemaps/`,
-        headers: { Authorization: api_key, 'Content-Type': 'application/json' },
-      },
+      options,
       res => {
+        if (global.LOG) {
+          console.log("Response Code: ", res.statusCode, "\nMessage: ", res.statusMessage);
+        }
         if (res.statusCode === 403) {
           reject("Authorisation rejected. Please, check your API_KEY and/or PROJECT_KEY.")
           return
@@ -24,7 +31,12 @@ const getUploadURLs = (api_key, project_key, js_file_urls) =>
         }
         let data = '';
         res.on('data', s => (data += s));
-        res.on('end', () => resolve(JSON.parse(data).data));
+        res.on('end', () => {
+          if (global.LOG) {
+            console.log("Server Response: ", data)
+          }
+          resolve(JSON.parse(data).data)
+        });
       },
     );
     req.on('error', reject);
@@ -46,8 +58,12 @@ const uploadSourcemap = (upload_url, body) =>
       },
       res => {
         if (res.statusCode !== 200) {
+          if (global.LOG) {
+            console.log("Response Code: ", res.statusCode, "\nMessage: ", res.statusMessage);
+          }
+
           reject("Unable to upload. Please, contact OpenReplay support.");
-          return;
+          return;  // TODO: report per-file errors.
         }
         resolve();
         //res.on('end', resolve);
