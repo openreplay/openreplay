@@ -6,10 +6,10 @@ from chalicelib.core import webhook
 
 class Slack:
     @classmethod
-    def add_integration(cls, tenant_id, **args):
+    def add_channel(cls, tenant_id, **args):
         url = args["url"]
         name = args["name"]
-        if cls.__say_hello(url):
+        if cls.say_hello(url):
             webhook.add(tenant_id=tenant_id,
                         endpoint=url,
                         webhook_type="slack",
@@ -18,7 +18,7 @@ class Slack:
         return False
 
     @classmethod
-    def __say_hello(cls, url):
+    def say_hello(cls, url):
         r = requests.post(
             url=url,
             json={
