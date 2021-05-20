@@ -5,7 +5,7 @@
     - name: Checking mandatory variables
       fail:
         msg: "Didn't find OpenReplay docker credentials."
-      when: kubeconfig_path|length == 0 or ecr_docker_registry_server|length == 0
+      when: kubeconfig_path|length == 0 or docker_registry_url|length == 0
     - name: Generaing minio access key
       block:
         - name: Generating minio access key
@@ -54,9 +54,9 @@
         msg:
           - Below variables are mandatory. Please make sure it is updated in vars.yaml
           - kubeconfig_path
-          - ecr_docker_username
-          - ecr_docker_password
-          - ecr_docker_registry_server
+          - docker_registry_username
+          - docker_registry_password
+          - docker_registry_url
       failed_when: true
   tags: pre-check
 - name: Creating Nginx SSL certificate
