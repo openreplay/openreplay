@@ -4,6 +4,7 @@ import withRequest from 'HOCs/withRequest';
 import { Popup, Dropdown, Icon, IconButton } from 'UI';
 import { pause } from 'Player';
 import styles from './sharePopup.css';
+import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
@@ -62,12 +63,7 @@ export default class SharePopup extends React.PureComponent {
             </div>
             { options.length === 0 ?
               <div className={ styles.body }>
-                <a 
-                  href={ `https://slack.com/oauth/authorize?client_id=252578014882.345694377157&scope=incoming-webhook&state=${ tenantId }` }
-                  target="_blank"
-                >
-                  <IconButton className="my-auto mt-2 mb-2" icon="integrations/slack" label="Integrate Slack" />
-                </a>
+                <IntegrateSlackButton />
               </div>
             :
               <div>
