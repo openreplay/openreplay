@@ -16,6 +16,7 @@ func insertMessage(sessionID uint64, msg Message) error {
 
 	// Web
 	case *SessionStart:
+		log.Printf("Session Start: %v", sessionID)
 		return pg.InsertWebSessionStart(sessionID, m)
 	case *SessionEnd:
 		return pg.InsertWebSessionEnd(sessionID, m)
