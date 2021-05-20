@@ -14,11 +14,11 @@
   shell: |
     kubectl delete -n app secret aws-registry || true
     kubectl create secret -n app docker-registry aws-registry \
-                  --docker-server="{{ ecr_docker_registry_server }}" \
-                  --docker-username="{{ ecr_docker_username }}" \
-                  --docker-password="{{ ecr_docker_password }}" \
+                  --docker-server="{{ docker_registry_url }}" \
+                  --docker-username="{{ docker_registry_username }}" \
+                  --docker-password="{{ docker_registry_password }}" \
                   --docker-email=no@email.local
-  when: ecr_docker_username|length != 0 and ecr_docker_password|length != 0
+  when: docker_registry_username|length != 0 and docker_registry_password|length != 0
 
 # Creating helm override files.
 - name: Creating override files

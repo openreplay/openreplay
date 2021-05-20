@@ -14,10 +14,10 @@ kubeconfig_path: /home/rajeshr/.kube/config
 ###################
 
 # If you've private registry, please update the details here.
-ecr_docker_username: ""
-ecr_docker_password: ""
-ecr_docker_registry_server: "rg.fr-par.scw.cloud/foss"
-image_tag: v1.0.0
+docker_registry_username: ""
+docker_registry_password: ""
+docker_registry_url: "rg.fr-par.scw.cloud/foss"
+image_tag: "latest"
 
 # This is an optional field. If you want to use proper ssl, then it's mandatory
 # Using which domain name, you'll be accessing OpenReplay
