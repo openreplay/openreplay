@@ -23,13 +23,13 @@ import traceback
 old_tb = traceback.print_exception
 old_f = sys.stdout
 old_e = sys.stderr
-ASAYER_SESSION_ID = None
+OR_SESSION_TOKEN = None
 
 
 class F:
     def write(self, x):
-        if ASAYER_SESSION_ID is not None and x != '\n' and not helper.is_local():
-            old_f.write(f"[asayer_session_id={ASAYER_SESSION_ID}] {x}")
+        if OR_SESSION_TOKEN is not None and x != '\n' and not helper.is_local():
+            old_f.write(f"[or_session_token={OR_SESSION_TOKEN}] {x}")
         else:
             old_f.write(x)
 
@@ -38,8 +38,8 @@ class F:
 
 
 def tb_print_exception(etype, value, tb, limit=None, file=None, chain=True):
-    if ASAYER_SESSION_ID is not None and not helper.is_local():
-        value = type(value)(f"[asayer_session_id={ASAYER_SESSION_ID}] " + str(value))
+    if OR_SESSION_TOKEN is not None and not helper.is_local():
+        value = type(value)(f"[or_session_token={OR_SESSION_TOKEN}] " + str(value))
 
     old_tb(etype, value, tb, limit, file, chain)
 
@@ -54,11 +54,11 @@ sys.stderr = F()
 
 _overrides.chalice_app(app)
 
-# v0905
+
 @app.middleware('http')
-def asayer_middleware(event, get_response):
-    global ASAYER_SESSION_ID
-    ASAYER_SESSION_ID = app.current_request.headers.get('vnd.openreplay.com.sid',
+def or_middleware(event, get_response):
+    global OR_SESSION_TOKEN
+    OR_SESSION_TOKEN = app.current_request.headers.get('vnd.openreplay.com.sid',
                                                         app.current_request.headers.get('vnd.asayer.io.sid'))
     if "authorizer" in event.context and event.context["authorizer"] is None:
         print("Deleted user!!")
@@ -70,19 +70,19 @@ def asayer_middleware(event, get_response):
             import time
             now = int(time.time() * 1000)
         response = get_response(event)
-        if response.status_code == 500 and helper.allow_sentry() and ASAYER_SESSION_ID is not None and not helper.is_local():
+        if response.status_code == 500 and helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
             with configure_scope() as scope:
                 scope.set_tag('stage', environ["stage"])
-                scope.set_tag('asayer_session_id', ASAYER_SESSION_ID)
+                scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
                 scope.set_extra("context", event.context)
             sentry_sdk.capture_exception(Exception(response.body))
         if helper.TRACK_TIME:
             print(f"Execution time: {int(time.time() * 1000) - now} ms")
     except Exception as e:
-        if helper.allow_sentry() and ASAYER_SESSION_ID is not None and not helper.is_local():
+        if helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
             with configure_scope() as scope:
                 scope.set_tag('stage', environ["stage"])
-                scope.set_tag('openReplaySessionToken', ASAYER_SESSION_ID)
+                scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
                 scope.set_extra("context", event.context)
             sentry_sdk.capture_exception(e)
         response = Response(body={"Code": "InternalServerError",
