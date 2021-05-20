@@ -1,6 +1,7 @@
 import Member from 'Types/member';
 import Appearance from './appearance';
 import Limit from './limit';
+import { DateTime } from 'luxon';
 
 export default Member.extend({
   changePassword: undefined,
@@ -10,9 +11,13 @@ export default Member.extend({
   email: '',
   verifiedEmail: undefined,
   smtp: false,
+  license: '',
+  expirationDate: undefined,
 }, {
-  fromJS: account => ({
+  fromJS: ({ current = {}, ...account})=> ({
     ...account,
+    license: current.license,
+    expirationDate: current.expirationDate && DateTime.fromMillis(current.expirationDate * 1000 || 0),
     appearance: Appearance(account.appearance),
   })
 });

@@ -26,7 +26,7 @@
 </p>
 
 <p align="center">
-  <a href="https://openreplay.com">
+  <a href="https://github.com/openreplay/openreplay">
     <img src="static/replayer.png">
   </a>
 </p>
@@ -83,7 +83,7 @@ Also, feel free to join our [Slack](https://slack.openreplay.com) to ask questio
 
 ## Roadmap
 
-Check out our roadmap and keep an eye on what's coming next. You're free to submit new ideas and vote on features.
+Check out our [roadmap](https://www.notion.so/openreplay/Roadmap-889d2c3d968b4786ab9b281ab2394a94) and keep an eye on what's coming next. You're free to [submit](https://github.com/openreplay/openreplay/issues/new) new ideas and vote on features.
 
 ## License
 

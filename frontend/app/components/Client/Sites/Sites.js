@@ -162,7 +162,7 @@ class Sites extends React.PureComponent {
           <TextLink
             icon="book"
             className="ml-auto"
-            href="https://docs.openreplay.com/getting-started/quick-start"
+            href="https://docs.openreplay.com/installation"
             label="Documentation"
           />
           </div>
