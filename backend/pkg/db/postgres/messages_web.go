@@ -92,8 +92,8 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 	if err = tx.commit(); err != nil {
 		return err
 	}
-	conn.insertAutocompleteValue(sessionID, url.DiscardURLQuery(path), "LOCATION")
-	conn.insertAutocompleteValue(sessionID, url.DiscardURLQuery(e.Referrer), "REFERRER")
+	conn.insertAutocompleteValue(sessionID, "LOCATION", url.DiscardURLQuery(path))
+	conn.insertAutocompleteValue(sessionID, "REFERRER", url.DiscardURLQuery(e.Referrer))
 	return nil
 }
 
@@ -123,7 +123,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 	if err = tx.commit(); err != nil {
 		return err
 	}
-	conn.insertAutocompleteValue(sessionID, e.Label, "CLICK")
+	conn.insertAutocompleteValue(sessionID, "CLICK", e.Label)
 	return nil
 }
 
@@ -158,7 +158,7 @@ func (conn *Conn) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
 	if err = tx.commit(); err != nil {
 		return err
 	}
-	conn.insertAutocompleteValue(sessionID, e.Label, "INPUT")
+	conn.insertAutocompleteValue(sessionID, "INPUT", e.Label)
 	return nil
 }
 
