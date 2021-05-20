@@ -70,19 +70,24 @@ def asayer_middleware(event, get_response):
             import time
             now = int(time.time() * 1000)
         response = get_response(event)
+        if response.status_code == 500 and helper.allow_sentry() and ASAYER_SESSION_ID is not None and not helper.is_local():
+            with configure_scope() as scope:
+                scope.set_tag('stage', environ["stage"])
+                scope.set_tag('asayer_session_id', ASAYER_SESSION_ID)
+                scope.set_extra("context", event.context)
+            sentry_sdk.capture_exception(Exception(response.body))
         if helper.TRACK_TIME:
             print(f"Execution time: {int(time.time() * 1000) - now} ms")
     except Exception as e:
-        print("middleware exception handling")
-        print(e)
-        pg_client.close()
         if helper.allow_sentry() and ASAYER_SESSION_ID is not None and not helper.is_local():
             with configure_scope() as scope:
                 scope.set_tag('stage', environ["stage"])
                 scope.set_tag('openReplaySessionToken', ASAYER_SESSION_ID)
                 scope.set_extra("context", event.context)
             sentry_sdk.capture_exception(e)
-        raise e
+        response = Response(body={"Code": "InternalServerError",
+                                  "Message": "An internal server error occurred [level=Fatal]."},
+                            status_code=500)
     pg_client.close()
     return response
 
