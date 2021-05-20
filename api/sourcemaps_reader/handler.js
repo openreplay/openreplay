@@ -9,8 +9,9 @@ module.exports.sourcemapReader = async event => {
     sourceMap.SourceMapConsumer.initialize({
         "lib/mappings.wasm": `https://unpkg.com/source-map@${getVersion(sourceMapVersion)}/lib/mappings.wasm`
     });
+    let s3;
     if (process.env.S3_HOST) {
-        const s3 = new AWS.S3({
+        s3 = new AWS.S3({
             endpoint: process.env.S3_HOST,
             accessKeyId: process.env.S3_KEY,
             secretAccessKey: process.env.S3_SECRET,
@@ -18,7 +19,7 @@ module.exports.sourcemapReader = async event => {
             signatureVersion: 'v4'
         });
     } else {
-        const s3 = new AWS.S3({
+        s3 = new AWS.S3({
             'AccessKeyID': process.env.aws_access_key_id,
             'SecretAccessKey': process.env.aws_secret_access_key,
             'Region': process.env.aws_region
