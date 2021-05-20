@@ -158,12 +158,12 @@ def add_slack_client(context):
     data = app.current_request.json_body
     if "url" not in data or "name" not in data:
         return {"errors": ["please provide a url and a name"]}
-    if Slack.add_channel(tenant_id=context["tenantId"], url=data["url"], name=data["name"]):
-        return {"data": {"status": "success"}}
-    else:
+    n = Slack.add_channel(tenant_id=context["tenantId"], url=data["url"], name=data["name"])
+    if n is None:
         return {
             "errors": ["We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
         }
+    return {"data": n}
 
 
 @app.route('/integrations/slack/{integrationId}', methods=['POST', 'PUT'])

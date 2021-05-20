@@ -10,12 +10,11 @@ class Slack:
         url = args["url"]
         name = args["name"]
         if cls.say_hello(url):
-            webhook.add(tenant_id=tenant_id,
-                        endpoint=url,
-                        webhook_type="slack",
-                        name=name)
-            return True
-        return False
+            return webhook.add(tenant_id=tenant_id,
+                               endpoint=url,
+                               webhook_type="slack",
+                               name=name)
+        return None
 
     @classmethod
     def say_hello(cls, url):

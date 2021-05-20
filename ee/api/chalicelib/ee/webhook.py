@@ -8,7 +8,7 @@ def get_by_id(webhook_id):
         cur.execute(
             cur.mogrify("""\
                     SELECT
-                           w.*
+                          webhook_id AS integration_id, webhook_id AS id, w.*
                     FROM public.webhooks AS w 
                     where w.webhook_id =%(webhook_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id})
@@ -24,7 +24,7 @@ def get(tenant_id, webhook_id):
         cur.execute(
             cur.mogrify("""\
                     SELECT
-                           w.*
+                          webhook_id AS integration_id, webhook_id AS id, w.*
                     FROM public.webhooks AS w 
                     where w.webhook_id =%(webhook_id)s AND w.tenant_id =%(tenant_id)s AND deleted_at ISNULL;""",
                         {"webhook_id": webhook_id, "tenant_id": tenant_id})
@@ -59,7 +59,7 @@ def get_by_tenant(tenant_id, replace_none=False):
         cur.execute(
             cur.mogrify("""\
                     SELECT
-                           w.*
+                           webhook_id AS integration_id, webhook_id AS id,w.*
                     FROM public.webhooks AS w 
                     where 
                         w.tenant_id =%(tenant_id)s  
@@ -88,7 +88,7 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
                     UPDATE public.webhooks
                     SET {','.join(sub_query)}
                     WHERE tenant_id =%(tenant_id)s AND webhook_id =%(id)s AND deleted_at ISNULL
-                    RETURNING *;""",
+                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
                         {"tenant_id": tenant_id, "id": webhook_id, **changes})
         )
         w = helper.dict_to_camel_case(cur.fetchone())
@@ -105,7 +105,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
         query = cur.mogrify("""\
                     INSERT INTO public.webhooks(tenant_id, endpoint,auth_header,type,name)
                     VALUES (%(tenant_id)s, %(endpoint)s, %(auth_header)s, %(type)s,%(name)s)
-                    RETURNING *;""",
+                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
                             {"tenant_id": tenant_id, "endpoint": endpoint, "auth_header": auth_header,
                              "type": webhook_type, "name": name})
         cur.execute(
