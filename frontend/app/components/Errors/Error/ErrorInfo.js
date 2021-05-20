@@ -18,7 +18,7 @@ import SideSection from './SideSection';
 export default class ErrorInfo extends React.PureComponent {
 	ensureInstance() {
 		const { errorId, loading, errorOnFetch } = this.props;
-		if (!loading && !errorOnFetch && 
+		if (!loading && 
 				this.props.errorIdInStore !== errorId && 
 				errorId != null) {
 			this.props.fetch(errorId);
