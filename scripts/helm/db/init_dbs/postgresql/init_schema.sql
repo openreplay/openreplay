@@ -427,7 +427,6 @@ CREATE INDEX user_viewed_errors_error_id_idx ON public.user_viewed_errors (error
 
 
 -- --- sessions.sql ---
-
 CREATE TYPE device_type AS ENUM ('desktop', 'tablet', 'mobile', 'other');
 CREATE TYPE country AS ENUM ('UN', 'RW', 'SO', 'YE', 'IQ', 'SA', 'IR', 'CY', 'TZ', 'SY', 'AM', 'KE', 'CD', 'DJ', 'UG', 'CF', 'SC', 'JO', 'LB', 'KW', 'OM', 'QA', 'BH', 'AE', 'IL', 'TR', 'ET', 'ER', 'EG', 'SD', 'GR', 'BI', 'EE', 'LV', 'AZ', 'LT', 'SJ', 'GE', 'MD', 'BY', 'FI', 'AX', 'UA', 'MK', 'HU', 'BG', 'AL', 'PL', 'RO', 'XK', 'ZW', 'ZM', 'KM', 'MW', 'LS', 'BW', 'MU', 'SZ', 'RE', 'ZA', 'YT', 'MZ', 'MG', 'AF', 'PK', 'BD', 'TM', 'TJ', 'LK', 'BT', 'IN', 'MV', 'IO', 'NP', 'MM', 'UZ', 'KZ', 'KG', 'TF', 'HM', 'CC', 'PW', 'VN', 'TH', 'ID', 'LA', 'TW', 'PH', 'MY', 'CN', 'HK', 'BN', 'MO', 'KH', 'KR', 'JP', 'KP', 'SG', 'CK', 'TL', 'RU', 'MN', 'AU', 'CX', 'MH', 'FM', 'PG', 'SB', 'TV', 'NR', 'VU', 'NC', 'NF', 'NZ', 'FJ', 'LY', 'CM', 'SN', 'CG', 'PT', 'LR', 'CI', 'GH', 'GQ', 'NG', 'BF', 'TG', 'GW', 'MR', 'BJ', 'GA', 'SL', 'ST', 'GI', 'GM', 'GN', 'TD', 'NE', 'ML', 'EH', 'TN', 'ES', 'MA', 'MT', 'DZ', 'FO', 'DK', 'IS', 'GB', 'CH', 'SE', 'NL', 'AT', 'BE', 'DE', 'LU', 'IE', 'MC', 'FR', 'AD', 'LI', 'JE', 'IM', 'GG', 'SK', 'CZ', 'NO', 'VA', 'SM', 'IT', 'SI', 'ME', 'HR', 'BA', 'AO', 'NA', 'SH', 'BV', 'BB', 'CV', 'GY', 'GF', 'SR', 'PM', 'GL', 'PY', 'UY', 'BR', 'FK', 'GS', 'JM', 'DO', 'CU', 'MQ', 'BS', 'BM', 'AI', 'TT', 'KN', 'DM', 'AG', 'LC', 'TC', 'AW', 'VG', 'VC', 'MS', 'MF', 'BL', 'GP', 'GD', 'KY', 'BZ', 'SV', 'GT', 'HN', 'NI', 'CR', 'VE', 'EC', 'CO', 'PA', 'HT', 'AR', 'CL', 'BO', 'PE', 'MX', 'PF', 'PN', 'KI', 'TK', 'TO', 'WF', 'WS', 'NU', 'MP', 'GU', 'PR', 'VI', 'UM', 'AS', 'CA', 'US', 'PS', 'RS', 'AQ', 'SX', 'CW', 'BQ', 'SS');
 CREATE TYPE platform AS ENUM ('web','ios','android');
@@ -438,7 +437,7 @@ CREATE TABLE sessions
     project_id              integer      NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
     tracker_version         text         NOT NULL,
     start_ts                bigint       NOT NULL,
-    duration                integer      NOT NULL,
+    duration                integer      NULL,
     rev_id                  text                  DEFAULT NULL,
     platform                platform     NOT NULL DEFAULT 'web',
     is_snippet              boolean      NOT NULL DEFAULT FALSE,
@@ -471,6 +470,8 @@ CREATE TABLE sessions
     metadata_8              text                  DEFAULT NULL,
     metadata_9              text                  DEFAULT NULL,
     metadata_10             text                  DEFAULT NULL
+--   ,
+--   rehydration_id integer REFERENCES rehydrations(rehydration_id) ON DELETE SET NULL
 );
 CREATE INDEX ON sessions (project_id, start_ts);
 CREATE INDEX ON sessions (project_id, user_id);
@@ -488,6 +489,7 @@ CREATE INDEX ON sessions (project_id, metadata_7);
 CREATE INDEX ON sessions (project_id, metadata_8);
 CREATE INDEX ON sessions (project_id, metadata_9);
 CREATE INDEX ON sessions (project_id, metadata_10);
+-- CREATE INDEX ON sessions (rehydration_id);
 CREATE INDEX ON sessions (project_id, watchdogs_score DESC);
 CREATE INDEX platform_idx ON public.sessions (platform);
 
@@ -538,6 +540,7 @@ CREATE TABLE user_favorite_sessions
     session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, session_id)
 );
+
 
 -- --- assignments.sql ---
 
@@ -606,7 +609,6 @@ CREATE INDEX requests_url_gin_idx2 ON events_common.requests USING GIN (RIGHT(ur
                                                                         gin_trgm_ops);
 
 -- --- events.sql ---
-
 CREATE SCHEMA events;
 
 CREATE TABLE events.pages
@@ -629,6 +631,7 @@ CREATE TABLE events.pages
     time_to_interactive         integer DEFAULT NULL,
     response_time               bigint  DEFAULT NULL,
     response_end                bigint  DEFAULT NULL,
+    ttfb                        integer DEFAULT NULL,
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.pages (session_id);
@@ -648,6 +651,11 @@ CREATE INDEX pages_base_referrer_gin_idx2 ON events.pages USING GIN (RIGHT(base_
                                                                      gin_trgm_ops);
 CREATE INDEX ON events.pages (response_time);
 CREATE INDEX ON events.pages (response_end);
+CREATE INDEX pages_path_gin_idx ON events.pages USING GIN (path gin_trgm_ops);
+CREATE INDEX pages_path_idx ON events.pages (path);
+CREATE INDEX pages_visually_complete_idx ON events.pages (visually_complete) WHERE visually_complete > 0;
+CREATE INDEX pages_dom_building_time_idx ON events.pages (dom_building_time) WHERE dom_building_time > 0;
+CREATE INDEX pages_load_time_idx ON events.pages (load_time) WHERE load_time > 0;
 
 
 CREATE TABLE events.clicks
@@ -714,6 +722,61 @@ CREATE INDEX ON events.state_actions (name);
 CREATE INDEX state_actions_name_gin_idx ON events.state_actions USING GIN (name gin_trgm_ops);
 CREATE INDEX ON events.state_actions (timestamp);
 
+CREATE TYPE events.resource_type AS ENUM ('other', 'script', 'stylesheet', 'fetch', 'img', 'media');
+CREATE TYPE events.resource_method AS ENUM ('GET' , 'HEAD' , 'POST' , 'PUT' , 'DELETE' , 'CONNECT' , 'OPTIONS' , 'TRACE' , 'PATCH' );
+CREATE TABLE events.resources
+(
+    session_id        bigint                 NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    message_id        bigint                 NOT NULL,
+    timestamp         bigint                 NOT NULL,
+    duration          bigint                 NULL,
+    type              events.resource_type   NOT NULL,
+    url               text                   NOT NULL,
+    url_host          text                   NOT NULL,
+    url_hostpath      text                   NOT NULL,
+    success           boolean                NOT NULL,
+    status            smallint               NULL,
+    method            events.resource_method NULL,
+    ttfb              bigint                 NULL,
+    header_size       bigint                 NULL,
+    encoded_body_size integer                NULL,
+    decoded_body_size integer                NULL,
+    PRIMARY KEY (session_id, message_id)
+);
+CREATE INDEX ON events.resources (session_id);
+CREATE INDEX ON events.resources (timestamp);
+CREATE INDEX ON events.resources (success);
+CREATE INDEX ON events.resources (status);
+CREATE INDEX ON events.resources (type);
+CREATE INDEX ON events.resources (duration) WHERE duration > 0;
+CREATE INDEX ON events.resources (url_host);
+
+CREATE INDEX resources_url_gin_idx ON events.resources USING GIN (url gin_trgm_ops);
+CREATE INDEX resources_url_idx ON events.resources (url);
+CREATE INDEX resources_url_hostpath_gin_idx ON events.resources USING GIN (url_hostpath gin_trgm_ops);
+CREATE INDEX resources_url_hostpath_idx ON events.resources (url_hostpath);
+
+
+
+CREATE TABLE events.performance
+(
+    session_id             bigint   NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    timestamp              bigint   NOT NULL,
+    message_id             bigint   NOT NULL,
+    min_fps                smallint NOT NULL,
+    avg_fps                smallint NOT NULL,
+    max_fps                smallint NOT NULL,
+    min_cpu                smallint NOT NULL,
+    avg_cpu                smallint NOT NULL,
+    max_cpu                smallint NOT NULL,
+    min_total_js_heap_size bigint   NOT NULL,
+    avg_total_js_heap_size bigint   NOT NULL,
+    max_total_js_heap_size bigint   NOT NULL,
+    min_used_js_heap_size  bigint   NOT NULL,
+    avg_used_js_heap_size  bigint   NOT NULL,
+    max_used_js_heap_size  bigint   NOT NULL,
+    PRIMARY KEY (session_id, message_id)
+);
 
 
 CREATE OR REPLACE FUNCTION events.funnel(steps integer[], m integer) RETURNS boolean AS
@@ -738,6 +801,7 @@ BEGIN
     RETURN c = m;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
 
 -- --- autocomplete.sql ---
 
