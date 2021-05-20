@@ -39,7 +39,6 @@ class F:
 
 def tb_print_exception(etype, value, tb, limit=None, file=None, chain=True):
     if ASAYER_SESSION_ID is not None and not helper.is_local():
-        # bugsnag.notify(Exception(str(value)), meta_data={"special_info": {"asayerSessionId": ASAYER_SESSION_ID}})
         value = type(value)(f"[asayer_session_id={ASAYER_SESSION_ID}] " + str(value))
 
     old_tb(etype, value, tb, limit, file, chain)

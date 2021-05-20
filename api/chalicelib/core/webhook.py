@@ -40,7 +40,7 @@ def get_by_type(tenant_id, webhook_type):
         cur.execute(
             cur.mogrify("""\
                     SELECT
-                           w.webhook_id AS id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
+                           w.webhook_id AS integration_id, w.webhook_id AS id,w.webhook_id,w.endpoint,w.auth_header,w.type,w.index,w.name,w.created_at
                     FROM public.webhooks AS w 
                     WHERE w.type =%(type)s AND deleted_at ISNULL;""",
                         {"type": webhook_type})
