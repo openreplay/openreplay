@@ -37,7 +37,7 @@ class IssueForm extends React.PureComponent {
 
     addActivity(sessionId, instance).then(() => {
       const { errors } = this.props;
-      if (errors.length === 0) {
+      if (!errors || errors.length === 0) {
         this.props.init({projectId: instance.projectId});
         this.props.fetchAssignments(sessionId);
         this.props.closeHandler();
