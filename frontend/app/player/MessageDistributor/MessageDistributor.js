@@ -10,7 +10,7 @@ import ReduxAction from 'Types/session/reduxAction';
 
 import { update } from '../store';
 import { 
-  init as initLists,
+  init as initListsDepr,
   append as listAppend,
   setStartTime as setListsStartTime 
  } from '../lists';
@@ -105,7 +105,7 @@ export default class MessageDistributor extends StatedScreen {
 
     /* == REFACTOR_ME == */
     const eventList = sess.events.toJSON();
-    initLists({
+    initListsDepr({
       event: eventList, 
       stack: sess.stackEvents.toJSON(),
       resource: sess.resources.toJSON(),
@@ -236,8 +236,8 @@ export default class MessageDistributor extends StatedScreen {
     if (!!llEvent) {
       if (llEvent.domContentLoadedTime != null) {
         stateToUpdate.domContentLoadedTime = {
-          time: llEvent.domContentLoadedTime + this.#navigationStartOffset,
-          value: llEvent.domContentLoadedTime,
+          time: llEvent.domContentLoadedTime + this.#navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & setLocation: add navigationStart to db)
+          value: llEvent.domContentLoadedTime, 
         }
       }
       if (llEvent.loadTime != null) {
