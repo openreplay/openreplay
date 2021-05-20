@@ -24,15 +24,11 @@ function SlackChannelList(props) {
             className="border-t px-5 py-2 flex items-center justify-between cursor-pointer"
             onClick={() => onEdit(c)}
           >
-            <div className="flex-grow-0" style={{ maxWidth: '80%'}}>
+            <div className="flex-grow-0" style={{ maxWidth: '90%'}}>
               <div>{c.name}</div>
-              <TextEllipsis
-                text={
-                  <div className="test-xs color-gray-medium text-">
-                    {c.endpoint}
-                  </div>
-                }
-              />
+              <div className="truncate test-xs color-gray-medium">
+                {c.endpoint}
+              </div>
             </div>
             {/* <div className="flex-shrink-0">
               <Button plain onClick={() => remove(c.webhookId) }>
