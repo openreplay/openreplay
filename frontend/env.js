@@ -8,7 +8,7 @@ const oss = {
 	PRODUCTION: true,
 	SENTRY_ENABLED: false,
 	SENTRY_URL: "",
-	CAPTCHA_ENABLED: process.env.CAPTCHA_ENABLED,
+	CAPTCHA_ENABLED: process.env.CAPTCHA_ENABLED === 'true',
 	CAPTCHA_SITE_KEY: process.env.CAPTCHA_SITE_KEY,
 	ORIGIN: () => 'window.location.origin',
 	API_EDP: () => 'window.location.origin + "/api"',
