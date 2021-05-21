@@ -670,14 +670,6 @@ def delete_alert(projectId, alertId, context):
     return alerts.delete(projectId, alertId)
 
 
-@app.route('/alerts/notifications', methods=['POST', 'PUT'], authorizer=None)
-def send_alerts_notifications():
-    data = app.current_request.json_body
-    if data.get("token", "") != "nF46JdQqAM5v9KI9lPMpcu8o9xiJGvNNWOGL7TJP":
-        return {"errors": ["missing token"]}
-    return {"data": alerts.process_notifications(data.get("notifications", []))}
-
-
 @app.route('/{projectId}/funnels', methods=['POST', 'PUT'])
 def add_funnel(projectId, context):
     data = app.current_request.json_body
