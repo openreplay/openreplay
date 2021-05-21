@@ -2,12 +2,12 @@
 ## Mandatory Fields.
 ###################
 
-# Give the path of the kubeconfig_path: /home/rajeshr/.kube/config
+# Give the path of the kubeconfig_path: /home/user/.kube/config
 # we can access the kubernetes cluster.
 # Give absolute file path.
 # Use following command to get the full file path
 # `readlink -f <file>`
-kubeconfig_path: /home/rajeshr/.kube/config
+kubeconfig_path: ""
 
 ###################
 ## Optional Fields.
