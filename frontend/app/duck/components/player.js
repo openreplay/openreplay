@@ -48,8 +48,7 @@ const reducer = (state = initialState, action = {}) => {
 
 export default reducer;
 
-export function toggleFullscreen(flag) {
-  console.log("a",flag)
+export function toggleFullscreen(flag) {  
   return {
     type: TOGGLE_FULLSCREEN,
     flag,
