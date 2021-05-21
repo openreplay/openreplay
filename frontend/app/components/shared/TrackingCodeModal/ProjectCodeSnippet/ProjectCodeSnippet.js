@@ -144,7 +144,7 @@ const ProjectCodeSnippet = props  => {
           }}
         />
       </div>
-      <div className="mt-6">See <a href="https://docs.openreplay.com/api" className="color-teal underline" target="_blank">API</a> for more options.</div>
+      <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a> or <a className="link" href="https://docs.openreplay.com/integrations/segment" target="_blank">Segment</a>. </div>
     </div>
   )
 }
