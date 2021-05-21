@@ -10,7 +10,8 @@ export const issues_types = List([
   { 'type': 'dead_click', 'visible': true, 'order': 4, 'name': 'Dead Clicks', 'icon': 'funnel/emoji-angry' },
   { 'type': 'memory', 'visible': true, 'order': 5, 'name': 'High Memory', 'icon': 'funnel/sd-card' },
   { 'type': 'cpu', 'visible': true, 'order': 6, 'name': 'High CPU', 'icon': 'funnel/cpu' },
-  { 'type': 'crash', 'visible': true, 'order': 7, 'name': 'Crashes', 'icon': 'funnel/file-earmark-break' }
+  { 'type': 'crash', 'visible': true, 'order': 7, 'name': 'Crashes', 'icon': 'funnel/file-earmark-break' },
+  { 'type': 'custom', 'visible': false, 'order': 8, 'name': 'Custom', 'icon': 'funnel/exclamation-circle' }
 ]).map(Watchdog)
 
 export const issues_types_map = {}
