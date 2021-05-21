@@ -34,10 +34,10 @@ env:
   AWS_ENDPOINT: http://minio.db.svc.cluster.local:9000
   AWS_ACCESS_KEY_ID: "minios3AccessKeyS3cr3t"
   AWS_SECRET_ACCESS_KEY: "m1n10s3CretK3yPassw0rd"
-  AWS_REGION_WEB: eu-central-1
-  AWS_REGION_IOS: eu-central-1
-  S3_BUCKET_WEB: asayer-mobs
-  S3_BUCKET_IOS: asayer-mobs
+  AWS_REGION_WEB: us-east-1
+  AWS_REGION_IOS: us-east-1
+  S3_BUCKET_WEB: mobs
+  S3_BUCKET_IOS: mobs
   #
   REDIS_STRING: redis-master.db.svc.cluster.local:6379
   KAFKA_SERVERS: kafka.db.svc.cluster.local:9092

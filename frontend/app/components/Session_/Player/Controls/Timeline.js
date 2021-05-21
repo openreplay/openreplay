@@ -18,11 +18,13 @@ const getPointerIcon = (type) => {
     case 'log':
       return 'funnel/exclamation-circle';
     case 'stack':
-      return 'funnel/file-exclamation';
+      return 'funnel/patch-exclamation-fill';
     case 'resource':
       return 'funnel/file-medical-alt';
 
     case 'dead_click':
+      return 'funnel/dizzy';
+    case 'click_rage':
       return 'funnel/dizzy';
     case 'excessive_scrolling':
       return 'funnel/mouse';
@@ -61,6 +63,7 @@ const getPointerIcon = (type) => {
   fetchList: state.fetchList,
 }))
 @connect(state => ({
+  issues: state.getIn([ 'sessions', 'current', 'issues' ]),
   showDevTools: state.getIn([ 'user', 'account', 'appearance', 'sessionsDevtools' ]),
   clickRageTime: state.getIn([ 'sessions', 'current', 'clickRage' ]) &&
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
@@ -95,6 +98,7 @@ export default class Timeline extends React.PureComponent {
       clickRageTime,
       stackList,
       fetchList,
+      issues
     } = this.props;
 
     const scale = 100 / endTime;
@@ -122,6 +126,28 @@ export default class Timeline extends React.PureComponent {
                 className={ stl.event }
                 style={ { left: `${ e.time * scale }%` } }
               />
+              ))
+            }
+            {
+              issues.map(iss => (
+                <div 
+                  style={ { 
+                    left: `${ iss.time * scale }%`,
+                    top: '-30px'
+                    //width: `${ 2000 * scale }%`
+                  } } 
+                  className={ stl.clickRage }
+                  onClick={ this.createEventClickHandler(iss.time) }
+                >
+                  <TimelinePointer
+                    icon={iss.icon}
+                    content={
+                      <div className={ stl.popup }>
+                        <b>{ iss.name }</b>
+                      </div> 
+                    } 
+                  />
+                </div>
               ))
             }
             { events.filter(e => e.type === TYPES.CLICKRAGE).map(e => (
@@ -232,7 +258,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('exception')}
                     content={ 
                       <div className={ stl.popup } >
-                        <b>{ "Exception:" }</b>
+                        <b>{ "Exception" }</b>
                         <br/>
                         <span>{ e.message }</span>
                       </div>  
@@ -278,7 +304,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('log')}
                     content={ 
                       <div className={ stl.popup } >
-                        <b>{ "Console:" }</b>
+                        <b>{ "Console" }</b>
                         <br/>
                         <span>{ l.value }</span>
                       </div> 
@@ -380,7 +406,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('fetch')}
                     content={ 
                       <div className={ stl.popup }>
-                        <b>{ "Failed Fetch:" }</b>
+                        <b>{ "Failed Fetch" }</b>
                         <br/>
                         { e.name }
                       </div> 
@@ -421,7 +447,7 @@ export default class Timeline extends React.PureComponent {
                     icon={getPointerIcon('stack')}
                     content={ 
                       <div className={ stl.popup }>
-                        <b> { "Stack Event:" }</b>
+                        <b> { "Stack Event" }</b>
                         <br/>
                         { e.name }
                       </div> 

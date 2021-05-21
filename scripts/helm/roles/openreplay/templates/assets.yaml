@@ -7,6 +7,6 @@ env:
   AWS_ACCESS_KEY_ID: "{{ minio_access_key }}"
   AWS_SECRET_ACCESS_KEY: "{{ minio_secret_key }}"
 
-{% if not (ecr_docker_username is defined and ecr_docker_username and ecr_docker_password is defined and ecr_docker_password) %}
+{% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []
 {% endif %}

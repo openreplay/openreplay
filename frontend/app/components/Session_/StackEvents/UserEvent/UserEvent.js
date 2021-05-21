@@ -46,7 +46,7 @@ export default class UserEvent extends React.PureComponent {
 			case STACKDRIVER:
 				return <JsonViewer title={ name } data={ payload } icon="integrations/stackdriver" />;
 			default:
-				return <JsonViewer title={ name } data={ payload } icon={ `integrations/${ source }-text` } />;
+				return <JsonViewer title={ name } data={ payload } icon={ `integrations/${ source }` } />;
 		}
 	}
 

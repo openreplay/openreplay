@@ -4,6 +4,7 @@ import withRequest from 'HOCs/withRequest';
 import { Popup, Dropdown, Icon, IconButton } from 'UI';
 import { pause } from 'Player';
 import styles from './sharePopup.css';
+import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
@@ -18,7 +19,7 @@ export default class SharePopup extends React.PureComponent {
   state = {
     comment: '',
     isOpen: false,
-    channelId: this.props.channels.getIn([ 0, 'id' ]),
+    channelId: this.props.channels.getIn([ 0, 'webhookId' ]),
   }
 
   editMessage = e => this.setState({ comment: e.target.value })
@@ -45,10 +46,10 @@ export default class SharePopup extends React.PureComponent {
   changeChannel = (e, { value }) => this.setState({ channelId: value })
 
   render() {
-    const { trigger, loading, channels, tenantId } = this.props;
+    const { trigger, loading, channels } = this.props;
     const { comment, isOpen, channelId } = this.state;
 
-    const options = channels.map(({ id, name }) => ({ value: id, text: name })).toJS();
+    const options = channels.map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
     return (
       <Popup
         open={ isOpen }
@@ -62,12 +63,7 @@ export default class SharePopup extends React.PureComponent {
             </div>
             { options.length === 0 ?
               <div className={ styles.body }>
-                <a 
-                  href={ `https://slack.com/oauth/authorize?client_id=252578014882.345694377157&scope=incoming-webhook&state=${ tenantId }` }
-                  target="_blank"
-                >
-                  <IconButton className="my-auto mt-2 mb-2" icon="integrations/slack" label="Integrate Slack" />
-                </a>
+                <IntegrateSlackButton />
               </div>
             :
               <div>
