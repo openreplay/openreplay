@@ -114,16 +114,16 @@ var LeftToDb = map[string]columnDefinition{
 	"performance.page_response_time.average":     {table: "events.pages", formula: "AVG(NULLIF(response_time,0))"},
 	"performance.ttfb.average":                   {table: "events.pages", formula: "AVG(NULLIF(first_paint_time,0))"},
 	"performance.time_to_render.averag":          {table: "events.pages", formula: "AVG(NULLIF(visually_complete,0))"},
-	"performance.image_load_time.average":        {table: "events.resources", formula: "AVG(NULLIF(duration,0))", condition: "type=='img'"},
-	"performance.request_load_time.average":      {table: "events.resources", formula: "AVG(NULLIF(duration,0))", condition: "type=='fetch'"},
+	"performance.image_load_time.average":        {table: "events.resources", formula: "AVG(NULLIF(duration,0))", condition: "type='img'"},
+	"performance.request_load_time.average":      {table: "events.resources", formula: "AVG(NULLIF(duration,0))", condition: "type='fetch'"},
 	"resources.load_time.average":                {table: "events.resources", formula: "AVG(NULLIF(duration,0))"},
-	"resources.missing.count":                    {table: "events.resources", formula: "COUNT(DISTINCT url_hostpath)", condition: "success==0"},
+	"resources.missing.count":                    {table: "events.resources", formula: "COUNT(DISTINCT url_hostpath)", condition: "success=0"},
 	"errors.4xx_5xx.count":                       {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100!=2"},
-	"errors.4xx.count":                           {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100==4"},
-	"errors.5xx.count":                           {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100==5"},
+	"errors.4xx.count":                           {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100=4"},
+	"errors.5xx.count":                           {table: "events.resources", formula: "COUNT(session_id)", condition: "status/100=5"},
 	"errors.javascript.impacted_sessions.count":  {table: "events.resources", formula: "COUNT(DISTINCT session_id)", condition: "success= FALSE AND type='script'"},
 	"performance.crashes.count":                  {table: "public.sessions", formula: "COUNT(DISTINCT session_id)", condition: "errors_count > 0"},
-	"errors.javascript.count":                    {table: "events.errors INNER JOIN public.errors AS m_errors USING (error_id)", formula: "COUNT(DISTINCT session_id)", condition: "source=='js_exception'"},
+	"errors.javascript.count":                    {table: "events.errors INNER JOIN public.errors AS m_errors USING (error_id)", formula: "COUNT(DISTINCT session_id)", condition: "source='js_exception'"},
 	"errors.backend.count":                       {table: "events.errors INNER JOIN public.errors AS m_errors USING (error_id)", formula: "COUNT(DISTINCT session_id)", condition: "source!='js_exception'"},
 }
 
@@ -161,7 +161,7 @@ func (a *Alert) Build() (sq.SelectBuilder, error) {
 	subQ := sq.
 		Select(colDef.formula + " AS value").
 		From(colDef.table).
-		Where(sq.And{sq.Eq{"project_id": a.ProjectID},
+		Where(sq.And{sq.Expr("project_id = $1 ", a.ProjectID),
 			sq.Expr(colDef.condition)})
 	q := sq.Select(fmt.Sprint("value, coalesce(value,0)", a.Query.Operator, a.Query.Right, " AS valid"))
 	if len(colDef.group) > 0 {
@@ -171,44 +171,44 @@ func (a *Alert) Build() (sq.SelectBuilder, error) {
 	}
 
 	if a.DetectionMethod == "threshold" {
-		q = q.FromSelect(subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)), "stat")
+		q = q.FromSelect(subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod*60)), "stat")
 	} else if a.DetectionMethod == "change" {
 		if a.Options.Change == "change" {
 			if len(colDef.group) == 0 {
-				sub1, args1, _ := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
+				sub1, args1, _ := subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<$3 ", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=$4 ", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1, _, _ = sq.Expr("SELECT ((" + sub1 + ")-(" + sub2 + ")) AS value").ToSql()
 				q = q.JoinClause("FROM ("+sub1+") AS stat", append(args1, args2...)...)
 			} else {
-				subq1 := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60))
+				subq1 := subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod*60))
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<$3 ", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=$4 ", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1 := sq.Select("group_value", "(stat1.value-stat2.value) AS value").FromSelect(subq1, "stat1").JoinClause("INNER JOIN ("+sub2+") AS stat2 USING(group_value)", args2...)
 				q = q.FromSelect(sub1, "stat")
 			}
 		} else if a.Options.Change == "percent" {
 			if len(colDef.group) == 0 {
-				sub1, args1, _ := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
+				sub1, args1, _ := subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<$3 ", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=$4 ", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1, _, _ = sq.Expr("SELECT ((" + sub1 + ")/(" + sub2 + ")-1)*100 AS value").ToSql()
 				q = q.JoinClause("FROM ("+sub1+") AS stat", append(args1, args2...)...)
 			} else {
-				subq1 := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60))
+				subq1 := subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod*60))
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<$3 ", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=$4 ", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1 := sq.Select("group_value", "(stat1.value/stat2.value-1)*100 AS value").FromSelect(subq1, "stat1").JoinClause("INNER JOIN ("+sub2+") AS stat2 USING(group_value)", args2...)
 				q = q.FromSelect(sub1, "stat")
