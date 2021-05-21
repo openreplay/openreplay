@@ -83,3 +83,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | serverless | MIT | JavaScript |
 | schedule | MIT | Python |
 | croniter | MIT | Python |
+| lib/pq | MIT | Go |
