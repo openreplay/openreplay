@@ -108,6 +108,7 @@ const FunnelHeader = (props) => {
             startDate={funnelFilters.startDate}
             endDate={funnelFilters.endDate}
             onDateChange={onDateChange}
+            customRangeRight
           />          
         </div>
       </div>
