@@ -171,44 +171,44 @@ func (a *Alert) Build() (sq.SelectBuilder, error) {
 	}
 
 	if a.DetectionMethod == "threshold" {
-		q = q.FromSelect(subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)), "stat")
+		q = q.FromSelect(subQ.Where(sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)), "stat")
 	} else if a.DetectionMethod == "change" {
 		if a.Options.Change == "change" {
 			if len(colDef.group) == 0 {
-				sub1, args1, _ := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
+				sub1, args1, _ := subQ.Where(sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=?", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1, _, _ = sq.Expr("SELECT ((" + sub1 + ")-(" + sub2 + ")) AS value").ToSql()
 				q = q.JoinClause("FROM ("+sub1+") AS stat", append(args1, args2...)...)
 			} else {
-				subq1 := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60))
+				subq1 := subQ.Where(sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60))
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=?", time.Now().Unix()-2*a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1 := sq.Select("group_value", "(stat1.value-stat2.value) AS value").FromSelect(subq1, "stat1").JoinClause("INNER JOIN ("+sub2+") AS stat2 USING(group_value)", args2...)
 				q = q.FromSelect(sub1, "stat")
 			}
 		} else if a.Options.Change == "percent" {
 			if len(colDef.group) == 0 {
-				sub1, args1, _ := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
+				sub1, args1, _ := subQ.Where(sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60)).ToSql()
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1, _, _ = sq.Expr("SELECT ((" + sub1 + ")/(" + sub2 + ")-1)*100 AS value").ToSql()
 				q = q.JoinClause("FROM ("+sub1+") AS stat", append(args1, args2...)...)
 			} else {
-				subq1 := subQ.Where(sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60))
+				subq1 := subQ.Where(sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.CurrentPeriod*60))
 				sub2, args2, _ := subQ.Where(
 					sq.And{
-						sq.Expr("timesamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
-						sq.Expr("timesamp>=?", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp<?", time.Now().Unix()-a.Options.CurrentPeriod*60),
+						sq.Expr("timestamp>=?", time.Now().Unix()-a.Options.PreviousPeriod*60-a.Options.CurrentPeriod*60),
 					}).ToSql()
 				sub1 := sq.Select("group_value", "(stat1.value/stat2.value-1)*100 AS value").FromSelect(subq1, "stat1").JoinClause("INNER JOIN ("+sub2+") AS stat2 USING(group_value)", args2...)
 				q = q.FromSelect(sub1, "stat")
