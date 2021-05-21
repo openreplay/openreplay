@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## This script is a helper for openreplay management
+## This script is a helper for managing your OpenReplay instance
 
 set -eE -o pipefail  # same as: `set -o errexit -o errtrace`
 # Trapping the error
@@ -37,6 +37,16 @@ CWD=$pwd
 usage()
 {
 clear
+cat <<"EOF"
+  ___                   ____            _
+ / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
+| | | | '_ \ / _ \ '_ \| |_) / _ \ '_ \| |/ _` | | | |
+| |_| | |_) |  __/ | | |  _ <  __/ |_) | | (_| | |_| |
+ \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
+      |_|                        |_|            |___/
+
+EOF
+
   echo -e "${green}Usage: openreplay-cli [ -h | --help ]
                   [ -d | --status ]
                   [ -v | --verbose ]
@@ -48,7 +58,7 @@ clear
   echo -e "${reset}${blue}services: ${services[*]}${reset}"
   exit 0
 }
-services=( alert auth cache chalice clickhouse ender events failover filesink filestorage http integrations ios-proxy metadata negative pg-stateless pg preprocessing redis ws )
+services=( alerts assets chalice clickhouse ender sink storage http integrations ios-proxy db pg redis )
 
 check() {
     if ! command -v kubectl &> /dev/null
@@ -72,14 +82,14 @@ stop() {
 
 start() {
     if [[ $1 == "all" ]]; then
-        cd ./helm/app
+        cd ./app
         for apps in $(ls *.yaml);do
             app=$(echo $apps | cut -d '.' -f1)
             helm upgrade --install -n app $app openreplay -f $app.yaml
         done
         cd $CWD
     fi
-    helm upgrade --install -n app $1 ./helm/app/openreplay -f ./helm/app/openreplay/$1.yaml
+    helm upgrade --install -n app $1 ./app/openreplay -f ./app/$1.yaml
 }
 
  
@@ -95,7 +105,7 @@ install() {
 }
 
 upgrade() {
-    sed -i "s/tag:.*/  tag: 'latest'/g" helm/app/$1.yaml
+    sed -i "s/tag:.*/  tag: 'latest'/g" ./app/$1.yaml
 }
 
 logs() {
@@ -109,7 +119,7 @@ status() {
 
 [[ $# -eq 0 ]] && usage && exit 1
 
-PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:i: --long verbose,help,status,start:,stop:,restart:,install: -- "$@")
+PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:i: --long verbose,help,status,start:,stop:,logs:,restart:,install: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   usage

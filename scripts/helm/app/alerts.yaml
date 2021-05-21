@@ -1,7 +1,7 @@
 namespace: app
 image:
   repository: rg.fr-par.scw.cloud/foss
-  name: alert
+  name: alerts
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -22,6 +22,6 @@ resources:
     memory: 128Mi
 
 env:
-  ALERT_NOTIFICATION_STRING: https://parrot.asayer.io/alerts/notifications
+  ALERT_NOTIFICATION_STRING: http://chalice-openreplay.app.svc.cluster.local:8000/alerts/notifications
   CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
   POSTGRES_STRING: postgres://postgres:asayerPostgres@postgresql.db.svc.cluster.local:5432

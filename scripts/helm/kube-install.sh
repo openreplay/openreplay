@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -xo errtrace
+set -o errtrace
 
 # color schemes
 # Ansi color code variables
@@ -22,7 +22,7 @@ echo -e ${reset}
 
 ## installing kubectl
 which kubectl &> /dev/null || {
-    echo "kubectl not installed. installing..."
+    echo "kubectl not installed. Installing it..."
     sudo curl -SsL https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl ; sudo chmod +x /usr/local/bin/kubectl
 }
 
@@ -34,7 +34,7 @@ which stern &> /dev/null || {
 
 ## installing k9s
 which k9s &> /dev/null || {
-    echo "k9s not installed. installing..."
+    echo "k9s not installed. Installing it..."
     sudo curl -SsL https://github.com/derailed/k9s/releases/download/v0.24.2/k9s_Linux_x86_64.tar.gz -o /tmp/k9s.tar.gz
     cd /tmp
     tar -xf k9s.tar.gz
@@ -44,13 +44,13 @@ which k9s &> /dev/null || {
 }
 
 which ansible &> /dev/null || {
-    echo "ansible not installed. Installing..."
+    echo "ansible not installed. Installing it..."
     which pip || (sudo apt update && sudo apt install python3-pip -y)
     sudo pip3 install ansible==2.10.0
 }
 
 which docker &> /dev/null || {
-    echo "docker is not installed. Installing..."
+    echo "docker is not installed. Installing it..."
     user=`whoami`
     sudo apt install docker.io -y
     sudo usermod -aG docker $user
@@ -59,7 +59,7 @@ which docker &> /dev/null || {
 ## installing helm
 which helm &> /dev/null
 if [[ $? -ne 0 ]]; then
-    echo "helm not installed. installing..."
+    echo "helm not installed. Installing it..."
     curl -ssl https://get.helm.sh/helm-v3.4.2-linux-amd64.tar.gz -o /tmp/helm.tar.gz
     tar -xf /tmp/helm.tar.gz
     chmod +x linux-amd64/helm
@@ -77,30 +77,31 @@ fi
 # make all stderr red
 color()(set -o pipefail;"$@" 2>&1>&3|sed $'s,.*,\e[31m&\e[m,'>&2)3>&1
 
-usage()
-{
+usage() {
 echo -e ${bold}${yellow} '''
-This script will install and configure openreplay apps and databases on the kubernetes cluster,
+This script will install and configure OpenReplay apps and databases on the kubernetes cluster,
 which is accesd with the ${HOME}/.kube/config or $KUBECONFIG env variable.
 '''
-cat << EOF
-▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-█░▄▄▀█░▄▄█░▄▄▀█░██░█░▄▄█░▄▄▀██
-█░▀▀░█▄▄▀█░▀▀░█░▀▀░█░▄▄█░▀▀▄██
-█▄██▄█▄▄▄█▄██▄█▀▀▀▄█▄▄▄█▄█▄▄██
-▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+cat <<"EOF"
+  ___                   ____            _
+ / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
+| | | | '_ \ / _ \ '_ \| |_) / _ \ '_ \| |/ _` | | | |
+| |_| | |_) |  __/ | | |  _ <  __/ |_) | | (_| | |_| |
+ \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
+      |_|                        |_|            |___/
+
 EOF
   echo -e "${green}Usage: openreplay-cli [ -h | --help ]
                   [ -v | --verbose ]
                   [ -a | --app APP_NAME ] to install/reinstall specific application
                   [ -t | --type small|medium|ideal ]"
   echo -e "${reset}${blue}type defines the resource limits applied for the installation:
-  small: 4core 8G machine
+  small: 2core 8G machine
   medium: 4core 16G machine
   ideal: 8core 32G machine
 
 apps can specifically be installed/reinstalled: 
-  alerts assets auth chalice ender http integrations ios-proxy metadata negative pg-stateless pg preprocessing redis sink storage frontend
+  alerts assets chalice ender http integrations ios-proxy pg redis sink storage frontend
   ${reset}"
   echo type value: $installation_type
   exit 0
@@ -122,8 +123,10 @@ type() {
 function app(){
     case $1 in
         nginx)
-            [[ NGINX_REDIRECT_HTTPS -eq 0 ]] && {
-                sed -i "/return 301/d" nginx-ingress/nginx-ingress/templates/configmap.yaml
+            # Resetting the redirection rule
+            sed -i 's/.* return 301 .*/     # return 301 https:\/\/$host$request_uri;/g' nginx-ingress/nginx-ingress/templates/configmap.yaml
+            [[ NGINX_REDIRECT_HTTPS -eq 1 ]] && {
+                sed -i "s/# return 301/return 301/g" nginx-ingress/nginx-ingress/templates/configmap.yaml
             }
             ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags nginx -v
             exit 0
@@ -170,3 +173,7 @@ done
 {
     ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --skip-tags pre-check -v
 } || exit $?
+
+
+
+

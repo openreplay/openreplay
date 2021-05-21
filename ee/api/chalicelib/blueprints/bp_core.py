@@ -670,14 +670,6 @@ def delete_alert(projectId, alertId, context):
     return alerts.delete(projectId, alertId)
 
 
-@app.route('/alerts/notifications', methods=['POST', 'PUT'], authorizer=None)
-def send_alerts_notifications():
-    data = app.current_request.json_body
-    if data.get("token", "") != "nF46JdQqAM5v9KI9lPMpcu8o9xiJGvNNWOGL7TJP":
-        return {"errors": ["missing token"]}
-    return {"data": alerts.process_notifications(data.get("notifications", []))}
-
-
 @app.route('/{projectId}/funnels', methods=['POST', 'PUT'])
 def add_funnel(projectId, context):
     data = app.current_request.json_body
@@ -881,5 +873,5 @@ def all_issue_types(context):
 
 @app.route('/flows', methods=['GET', 'PUT', 'POST', 'DELETE'])
 @app.route('/{projectId}/flows', methods=['GET', 'PUT', 'POST', 'DELETE'])
-def removed_endpoints(context):
+def removed_endpoints(projectId=None, context=None):
     return Response(body={"errors": ["Endpoint no longer available"]}, status_code=410)

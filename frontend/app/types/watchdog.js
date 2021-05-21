@@ -22,7 +22,6 @@ const WATCHDOG_TYPES = [
 ]
 
 export const names = {
-  // 'all' : { label: 'All', icon: 'all' },
   'js_exception' : { label: 'JS Exceptions', icon: 'funnel/exclamation-circle' },
   'bad_request': { label: 'Bad Request', icon: 'funnel/patch-exclamation-fill' },
   'missing_resource': { label: 'Missing Resources', icon: 'funnel/image-fill' },
@@ -33,13 +32,6 @@ export const names = {
   'cpu': { label: 'CPU', icon: 'funnel/hdd-fill' },
   'dead_click': { label: 'Dead Click', icon: 'funnel/emoji-dizzy-fill' },
   'custom': { label: 'Custom', icon: 'funnel/exclamation-circle-fill' },
-
-  // 'errors' : { label: 'Errors', icon: 'console/error' },  
-  // 'missing_image': { label: 'Missing Images', icon: 'image' },
-  // 'slow_session': { label: 'Slow Sessions', icon: 'turtle' },
-  // 'high_engagement': { label: 'High Engagements', icon: 'high-engagement' },  
-  // 'performance_issues': { label: 'Mem/CPU Issues', icon: 'tachometer-slowest' },
-  // 'default': { label: 'Default', icon: 'window-alt' },
 }
 
 const CONJUGATED_ISSUE_TYPES = {
@@ -93,8 +85,6 @@ export default Record({
     }
   },
   fromJS: (item) => ({ 
-    ...item,
-    name: item.name,
-    icon: names[item.type] ? names[item.type].icon : 'turtle'
+    ...item
   }),
 });

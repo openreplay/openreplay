@@ -1,13 +1,14 @@
-## Core Openreplay application configuration folder
+## Core OpenReplay application configuration folder
 
-  This folder contains configuration for core openreplay apps. All applications share common helm chart named *openreplay* which can be overridden by `<applicaion>.yaml` file.
+  This folder contains configuration for core OpenReplay apps. All applications share common helm chart named *openreplay* which can be overridden by `<application>.yaml` file.
   
   **Below is a sample template.**
   
   ```yaml
-  namespace: app        # In which namespace alert runs.
+  namespace: app        # In which namespace alerts runs.
   image:
-    repository: 998611063711.dkr.ecr.eu-central-1.amazonaws.com/alert # Which image to use
+    repository: rg.fr-par.scw.cloud/foss # Which image to use
+    name: alerts
     pullPolicy: IfNotPresent
     tag: "latest"       # Overrides the image tag whose default is the chart appVersion.
 
@@ -30,7 +31,7 @@
 
   # env vars for the application
   env:
-    ALERT_NOTIFICATION_STRING: https://parrot.openreplay.io/alerts/notifications
+    ALERT_NOTIFICATION_STRING: http://chalice-openreplay.app.svc.cluster.local:8000/alerts/notifications
     CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
     POSTGRES_STRING: postgres://postgresql.db.svc.cluster.local:5432
   ```

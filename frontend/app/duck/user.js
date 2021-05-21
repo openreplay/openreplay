@@ -19,6 +19,7 @@ const PUT_CLIENT = new RequestTypes('user/PUT_CLIENT');
 
 const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_SITE_ID = 'user/SET_SITE_ID';
+const SET_ONBOARDING = 'user/SET_ONBOARDING';
 
 const SITE_ID_STORAGE_KEY = "__$user-siteId$__";
 const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
@@ -29,7 +30,8 @@ const initialState = Map({
   siteId: null,
   passwordRequestError: false,
   passwordErrors: List(),
-  tenants: []
+  tenants: [],
+  onboarding: false
 });
 
 const setClient = (state, data) => {
@@ -47,17 +49,21 @@ const setClient = (state, data) => {
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
-    case SIGNUP.SUCCESS:
+    case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
       return setClient(
         state.set('account', Account(action.data.user)),
         action.data.client,
       );
+    case SIGNUP.SUCCESS:
+      return setClient(
+        state.set('account', Account(action.data.user)),
+        action.data.client,
+      ).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_APPEARANCE.REQUEST: //TODO: failure handling
       return state.mergeIn([ 'account', 'appearance' ], action.appearance)
-    case UPDATE_PASSWORD.SUCCESS:
     case UPDATE_ACCOUNT.SUCCESS:
     case FETCH_ACCOUNT.SUCCESS:
       return state.set('account', Account(action.data)).set('passwordErrors', List());
@@ -77,6 +83,8 @@ const reducer = (state = initialState, action = {}) => {
     case PUSH_NEW_SITE:
       return state.updateIn([ 'client', 'sites' ], list => 
         list.push(action.newSite));
+    case SET_ONBOARDING:
+      return state.set('onboarding', action.state)
   }
   return state;
 };
@@ -187,3 +195,11 @@ export function pushNewSite(newSite) {
     newSite,
   };
 }
+
+export function setOnboarding(state = false) {
+  return {
+    type: SET_ONBOARDING,
+    state
+  };
+}
+
