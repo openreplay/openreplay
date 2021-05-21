@@ -10,6 +10,7 @@ import (
 
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/env"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -24,6 +25,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer pgs.Close()
 
 	manager := NewManager(NOTIFICATIONS_STRING, POSTGRES_STRING, pgs, pg)
 	if err := pg.IterateAlerts(func(a *postgres.Alert, err error) {
