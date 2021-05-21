@@ -1703,6 +1703,7 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
                      platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.type = 'fetch'")
+    pg_sub_query.append("resources.method IS NOT NULL")
     pg_sub_query.append("resources.status/100 != 2")
 
     with pg_client.PostgresClient() as cur:
@@ -1728,6 +1729,7 @@ def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
                          platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.type = 'fetch'")
+    pg_sub_query.append("resources.method IS NOT NULL")
     pg_sub_query.append("resources.status/100 = 4")
 
     with pg_client.PostgresClient() as cur:
@@ -1751,6 +1753,7 @@ def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
                          platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("resources.type = 'fetch'")
+    pg_sub_query.append("resources.method IS NOT NULL")
     pg_sub_query.append("resources.status/100 = 5")
 
     with pg_client.PostgresClient() as cur:
