@@ -168,13 +168,13 @@ export default class NetworkContent extends React.PureComponent {
     const referenceLines = [];
     if (domContentLoadedTime != null) {
       referenceLines.push({
-        time: domContentLoadedTime.time,
+        time: domContentLoadedTime,
         color: DOM_LOADED_TIME_COLOR,
       })
     }
     if (loadTime != null) {
       referenceLines.push({
-        time: loadTime.time,
+        time: loadTime,
         color: LOAD_TIME_COLOR,
       })
     }
@@ -239,13 +239,13 @@ export default class NetworkContent extends React.PureComponent {
               />
               <InfoLine.Point 
                 label="DOMContentLoaded"
-                value={ domContentLoadedTime && formatMs(domContentLoadedTime.value)}
+                value={ formatMs(domContentLoadedTime)}
                 display={ domContentLoadedTime != null }
                 dotColor={ DOM_LOADED_TIME_COLOR }
               />
               <InfoLine.Point 
                 label="Load"
-                value={ loadTime && formatMs(loadTime.value)}
+                value={ formatMs(loadTime)}
                 display={ loadTime != null }
                 dotColor={ LOAD_TIME_COLOR }
               />

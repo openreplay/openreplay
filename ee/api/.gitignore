@@ -170,8 +170,8 @@ logs*.txt
 *.csv
 
 *.p
+*.js
 SUBNETS.json
 
 chalicelib/.config
 chalicelib/saas
-README/*

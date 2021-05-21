@@ -23,7 +23,7 @@ const NoSessionsMessage= (props) => {
                 <Icon name="info-circle" size="14" color="gray-darkest" />
               </div>
               <div className="ml-2color-gray-darkest mr-auto">
-                It takes a few minutes for first recordings to appear. All set but they are still not showing up? Check our <a href="https://docs.openreplay.com/troubleshooting" className="link">troubleshooting</a> section.
+                It takes a few minutes for first recordings to appear. All set but they are still not showing up? Check our <a href="https://docs.openreplay.com/troubleshooting">troubleshooting</a> section.
               </div>
               <Button outline size="smallest" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>Go to project setup</Button>
             </div>

@@ -121,7 +121,7 @@ class OnboardingExplore extends React.PureComponent {
           <div className={ stl.modal } >
             <div className={ stl.tooltipArrow } />
               <div className={ stl.header }>
-              Make the best out of OpenReplay by completing your project setup:
+                Follow the steps below to complete this project setup and make the best out of OpenReplay.
               </div>
 
               <div className={ stl.content }>                
@@ -131,7 +131,7 @@ class OnboardingExplore extends React.PureComponent {
                       key={ task.task }
                       label={ task.task }
                       completed={ task.done }
-                      onClick={() => this.onClick(task) }
+                      onClick={task.URL && (() => this.onClick(task)) }
                     />
                   ))}
                 </div>

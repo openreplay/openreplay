@@ -119,6 +119,7 @@ def get_by_session(tenant_id, user_id, project_id, session_id):
             continue
 
         r = integration.issue_handler.get_by_ids(saved_issues=issues[tool])
+        print(r)
         for i in r["issues"]:
             i["provider"] = tool
         results += r["issues"]

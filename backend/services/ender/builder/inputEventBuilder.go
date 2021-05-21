@@ -69,10 +69,10 @@ func (b *inputEventBuilder) Build() *InputEvent {
 		return nil
 	}
 	inputEvent := b.inputEvent
-	label, exists := b.inputLabels[b.inputID]
-	if !exists {
-		return nil
-	}
+	label := b.inputLabels[b.inputID]
+	// if !ok {
+	// 	return nil
+	// }
 	inputEvent.Label = label
 
 	b.inputEvent = nil

@@ -16,8 +16,7 @@ const IssueHeader = ({issue, typeIcon, assignee}) => {
       {/* <GotoSessionLink /> */}
       {/* <ActiveIssueClose /> */}
       <div className="flex leading-none mb-2 items-center">
-        { typeIcon }
-        {/* <img className="mr-2" src={typeIcon} alt="" width={16} height={16} /> */}
+        <img className="mr-2" src={typeIcon} alt="" width={16} height={16} />
         <span className="mr-2 font-medium">{ issue.id }</span>
         {/* <div className="text-gray-700 text-sm">{ '@ 00:13 Secs'}</div> */}
         { assignee && 

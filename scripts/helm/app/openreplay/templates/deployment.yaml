@@ -14,9 +14,8 @@ spec:
       {{- include "openreplay.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      annotations:
-        openreplayRolloutID: {{ randAlphaNum 5 | quote }} # Restart nginx after every deployment
       {{- with .Values.podAnnotations }}
+      annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:

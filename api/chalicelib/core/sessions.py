@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper
 from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, \
-    sessions_mobs, issues
+    sessions_mobs
 from chalicelib.utils import dev
 
 from chalicelib.core import projects, errors
@@ -25,7 +25,7 @@ SESSION_PROJECTION_COLS = """s.project_id,
                            s.user_anonymous_id,
                            s.platform,
                            s.issue_score,
-                           to_jsonb(s.issue_types) AS issue_types,
+                           s.issue_types::text[] AS issue_types,
                             favorite_sessions.session_id NOTNULL            AS favorite,
                             COALESCE((SELECT TRUE
                              FROM public.user_viewed_sessions AS fs
@@ -84,6 +84,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
+                    data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                     data["socket"] = socket_ios.start_replay(project_id=project_id, session_id=session_id,
                                                              device=data["userDevice"],
                                                              os_version=data["userOsVersion"],
@@ -100,10 +101,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
+                    data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                     data['resources'] = resources.get_by_session_id(session_id=session_id)
-
-                data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['issues'] = issues.get_by_session_id(session_id=session_id)
 
             return data
     return None

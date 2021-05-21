@@ -6,8 +6,6 @@ metadata:
     {{- include "nginx.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
-  # Make sure to get client ip
-  externalTrafficPolicy: Local
   ports:
     {{- range .Values.service.ports }}
     - port: {{ .port }}
