@@ -4,6 +4,7 @@ from chalicelib.core import users, telemetry
 from chalicelib.utils import captcha
 import json
 from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.helper import environ
 
 
 def get_signed_ups():
@@ -74,7 +75,7 @@ def create_step1(data):
         "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
         "organizationName": company_name,
-        "versionNumber": "0.0.0"
+        "versionNumber": environ["version_number"]
     }
     if data.get("tenantId") is not None:
         update_user = """
