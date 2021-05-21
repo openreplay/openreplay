@@ -141,7 +141,7 @@ CREATE TABLE oauth_authentication
     provider         oauth_provider NOT NULL,
     provider_user_id text           NOT NULL,
     token            text           NOT NULL,
-    UNIQUE (provider, provider_user_id)
+    UNIQUE (user_id, provider)
 );
 
 
