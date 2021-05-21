@@ -7,7 +7,7 @@ import StackEvent from './stackEvent';
 import Resource from './resource';
 import CustomField from './customField';
 import SessionError from './error';
-import Issue from './issue';
+
 
 const SOURCE_JS = 'js_exception';
 
@@ -66,7 +66,6 @@ export default Record({
   errorsCount: 0,
   watchdogs: [],
   issueTypes: [],
-  issues: [],
   userDeviceHeapSize: 0,
   userDeviceMemorySize: 0,
   errors: List(),
@@ -81,7 +80,6 @@ export default Record({
     projectId,
     errors,
     stackEvents = [],
-    issues = [],
     ...session 
   }) => {
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
@@ -111,10 +109,6 @@ export default Record({
       .map(se => StackEvent({ ...se, time: se.timestamp - startedAt }));
     const exceptions = List(errors)
       .map(SessionError)
-
-    const issuesList = List(issues)
-      .map(e => Issue({ ...e, time: e.timestamp - startedAt }))
-
     return {
       ...session,
       isIOS: session.platform === "ios",
@@ -134,7 +128,6 @@ export default Record({
       userNumericHash: hashString(session.userId || session.userAnonymousId || session.userUuid || ""),
       userDisplayName: session.userId || session.userAnonymousId || 'Anonymous User',
       firstResourceTime,
-      issues: issuesList,
     };
   },
   idKey: "sessionId",

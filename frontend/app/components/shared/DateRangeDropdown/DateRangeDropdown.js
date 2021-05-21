@@ -66,7 +66,7 @@ export default class DateRangeDropdown extends React.PureComponent {
   }
 
   render() {
-    const { customRangeRight, button = false, className, direction = 'right', customHidden=false, show30Minutes=false } = this.props;
+    const { button = false, className, direction = 'right', customHidden=false, show30Minutes=false } = this.props;
     const { showDateRangePopup, value, range } = this.state;
 
     let options = getDateRangeOptions(range);
@@ -108,7 +108,7 @@ export default class DateRangeDropdown extends React.PureComponent {
         </Dropdown>
         {
           showDateRangePopup &&
-          <div className={ cn(styles.dateRangePopup, { [styles.customRangeRight] : customRangeRight}) }>
+          <div className={ styles.dateRangePopup }>
             <DateRangePopup
               onApply={ this.onApplyDateRange }
               onCancel={ this.onCancelDateRange }

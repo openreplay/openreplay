@@ -9,7 +9,7 @@
     executable: /bin/bash
   when: app_name|length > 0
   tags: app
-- name: Installing OpenReplay core applications
+- name: Installing openreplay core applications
   shell: |
     override=''
     [[ -f /tmp/'{{ item|basename }}' ]] && override='-f /tmp/{{ item|basename }}' || true

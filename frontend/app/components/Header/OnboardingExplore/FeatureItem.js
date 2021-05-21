@@ -6,7 +6,7 @@ import stl from './featureItem.css';
 const FeatureItem = ({ label, completed = false, subText, onClick }) => {
   return (
     <div
-      className={ cn(stl.wrapper, stl.activeLink, { [stl.completed]: completed }) }
+      className={ cn(stl.wrapper, { [stl.activeLink]: onClick, [stl.completed]: !completed }) }
       onClick={onClick && onClick}
     >
       <div className={ cn("h-6 w-6 flex-shrink-0 rounded-full flex items-center justify-center", { 'bg-gray-lightest border' : !completed, 'bg-teal' : completed })}>

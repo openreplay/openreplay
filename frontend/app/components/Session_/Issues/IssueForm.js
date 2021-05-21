@@ -7,8 +7,7 @@ import { addActivity, init, edit, fetchAssignments, fetchMeta } from 'Duck/assig
 const SelectedValue = ({ icon, text }) => {
   return(
     <div className="flex items-center">
-      {/* <img className="mr-2" src={ icon } width="13" height="13" /> */}
-      { icon }
+      <img className="mr-2" src={ icon } width="13" height="13" />
       <span>{ text }</span>
     </div>
   )
@@ -38,7 +37,7 @@ class IssueForm extends React.PureComponent {
 
     addActivity(sessionId, instance).then(() => {
       const { errors } = this.props;
-      if (!errors || errors.length === 0) {
+      if (errors.length === 0) {
         this.props.init({projectId: instance.projectId});
         this.props.fetchAssignments(sessionId);
         this.props.closeHandler();
@@ -53,9 +52,8 @@ class IssueForm extends React.PureComponent {
     const { creating, projects, users, issueTypes, instance, closeHandler, metaLoading } = this.props;
     const projectOptions = projects.map(({name, id}) => ({text: name, value: id })).toArray();
     const userOptions = users.map(({name, id}) => ({text: name, value: id })).toArray();
-    
-    const issueTypeOptions = issueTypes.map(({name, id, iconUrl, color }) => {
-      return {text: name, value: id, iconUrl, color }
+    const issueTypeOptions = issueTypes.map(({name, id, iconUrl }) => {
+      return {text: name, value: id, iconUrl, icon: <img className="pt-2" src={ iconUrl } /> }
     }).toArray();
 
     const selectedIssueType = issueTypes.filter(issue => issue.id == instance.issueType).first();
@@ -82,7 +80,6 @@ class IssueForm extends React.PureComponent {
           <Dropdown
             selection
             name="issueType"
-            labeled
             options={ issueTypeOptions }
             value={ instance.issueType }
             fluid

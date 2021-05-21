@@ -1,13 +1,13 @@
 ## Description
 
-This is the frontend of the OpenReplay web app (internet).
+This is the frontend of the openreplay web app to internet.
 
-## Endpoints
+## Path information
 
-- /streaming -> ios-proxy
-- /api       -> chalice
-- /http      -> http
-- /          -> frontend (in minio)
-- /assets    -> sessions-assets bucket in minio
-- /minio     -> minio api endpoint
-- /ingest    -> events ingestor
+/ws        -> websocket
+/streaming -> ios-proxy
+/api       -> chalice
+/http      -> http
+/          -> frontend (in minio)
+/assets    -> asayer-sessions-assets bucket in minio
+/s3        -> minio api endpoint

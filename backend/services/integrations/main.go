@@ -19,7 +19,7 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	TOPIC_RAW := env.String("TOPIC_RAW")
+	TOPIC_TRIGGER := env.String("TOPIC_TRIGGER")
 	POSTGRES_STRING := env.String("POSTGRES_STRING")
 
 	pg := postgres.NewConn(POSTGRES_STRING)
@@ -43,7 +43,6 @@ func main() {
 	})
 
 	producer:= queue.NewProducer()
-	defer producer.Close(15000)
 
 	listener, err := postgres.NewIntegrationsListener(POSTGRES_STRING)
 	if err != nil {
@@ -73,14 +72,13 @@ func main() {
 			sessionID := event.SessionID
 			if sessionID == 0 {
 				sessData, err := tokenizer.Parse(event.Token)
-				if err != nil && err != token.EXPIRED {
+				if err != nil {
 					log.Printf("Error on token parsing: %v; Token: %v", err, event.Token)
 					continue
 				}
 				sessionID = sessData.ID
 			}
-			// TODO: send to ready-events topic. Otherwise it have to go through the events worker. 
-			producer.Produce(TOPIC_RAW, sessionID, messages.Encode(event.RawErrorEvent))
+			producer.Produce(TOPIC_TRIGGER, sessionID, messages.Encode(event.RawErrorEvent))
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:
@@ -88,10 +86,10 @@ func main() {
 			if err := pg.UpdateIntegrationRequestData(&i); err != nil {
 				log.Printf("Postgres Update request_data error: %v\n", err)
 			}
-		case err := <-listener.Errors:
-		  log.Printf("Postgres listen error: %v\n", err)
+		//case err := <-listener.Errors:
+		//log.Printf("Postgres listen error: %v\n", err)
 		case iPointer := <-listener.Integrations:
-			log.Printf("Integration update: %v\n", *iPointer)
+			// log.Printf("Integration update: %v\n", *iPointer)
 			err := manager.Update(iPointer)
 			if err != nil {
 				log.Printf("Integration parse error: %v | Integration: %v\n", err, *iPointer)

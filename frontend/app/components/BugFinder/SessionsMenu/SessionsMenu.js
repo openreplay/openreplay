@@ -3,15 +3,14 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
 import stl from './sessionMenu.css';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
+import {  fetchList, fetchWatchdogStatus } from 'Duck/watchdogs';
 import { setActiveFlow, clearEvents } from 'Duck/filters';
 import { setActiveTab } from 'Duck/sessions';
-import { issues_types } from 'Types/session/issue'
 
 function SessionsMenu(props) {
   const { 
     activeFlow, activeTab, watchdogs = [], keyMap, wdTypeCount,
-    fetchWatchdogStatus, toggleRehydratePanel } = props;
+    fetchList, fetchWatchdogStatus, toggleRehydratePanel } = props;
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
@@ -22,6 +21,7 @@ function SessionsMenu(props) {
   }
   
   useEffect(() => {
+    fetchList()
     fetchWatchdogStatus()
   }, [])
   
@@ -62,7 +62,7 @@ function SessionsMenu(props) {
         />
       </div>
       
-      { issues_types.filter(item => item.visible).map(item => (        
+      { watchdogs.filter(item => item.visible).map(item => (        
         <SideMenuitem
           key={item.key}
           disabled={!keyMap[item.type] && !wdTypeCount[item.type]}
@@ -88,11 +88,12 @@ function SessionsMenu(props) {
 }
 
 export default connect(state => ({
+  watchdogs: state.getIn(['watchdogs', 'list']).sortBy(i => i.order),
   activeTab: state.getIn([ 'sessions', 'activeTab' ]),
   keyMap: state.getIn([ 'sessions', 'keyMap' ]),
   wdTypeCount: state.getIn([ 'sessions', 'wdTypeCount' ]),
   activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
   captureRate: state.getIn(['watchdogs', 'captureRate']),
 }), { 
-  fetchWatchdogStatus, setActiveFlow, clearEvents, setActiveTab
+  fetchList, fetchWatchdogStatus, setActiveFlow, clearEvents, setActiveTab
 })(SessionsMenu);
