@@ -51,9 +51,9 @@ spec:
             - name: AWS_DEFAULT_REGION
               value: eu-central-1
             - name: AWS_SECRET_ACCESS_KEY
-              value: 6FrL2pMub/XuYla2O1V+HJHkCrWbDUIAzOMAVEzm
+              value: QWERTYQWERTYQWERTY
             - name: AWS_ACCESS_KEY_ID
-              value: AKIA6RAO3SOP4CV7SOV4
+              value: QWERTYQWERTYQWERTY
             command:
             - /bin/bash
             - -c
