@@ -410,3 +410,9 @@ def get_current_plan(context):
     return {
         "data": license.get_status(context["tenantId"])
     }
+
+
+@app.route('/alerts/notifications', methods=['POST', 'PUT'], authorizer=None)
+def send_alerts_notifications():
+    data = app.current_request.json_body
+    return {"data": alerts.process_notifications(data.get("notifications", []))}
