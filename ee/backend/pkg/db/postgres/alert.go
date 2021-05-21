@@ -51,8 +51,8 @@ func (pg *Conn) IterateAlerts(iter func(alert *Alert, err error)) error {
 			CAST(EXTRACT(epoch FROM alerts.deleted_at) * 1000 AS BIGINT) AS deleted_at,
 			CAST(EXTRACT(epoch FROM alerts.created_at) * 1000 AS BIGINT) AS created_at,
 			alerts.options,
-			0 AS tenant_id
-		FROM public.alerts
+			projects.tenant_id
+		FROM public.alerts INNER JOIN public.projects USING(project_id)
 		WHERE alerts.active AND alerts.deleted_at ISNULL;
 	`)
 	if err != nil {
