@@ -173,3 +173,4 @@ logs*.txt
 SUBNETS.json
 
 ./chalicelib/.configs
+README/*
