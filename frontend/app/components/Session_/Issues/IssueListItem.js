@@ -11,8 +11,7 @@ const IssueListItem = ({ issue, onClick, icon, user, active }) => {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          { icon }
-          {/* <img src={ icon } width="16" height="16" className="mr-3" /> */}
+          <img src={ icon } width="16" height="16" className="mr-3" />
           <span>{ issue.id }</span>
         </div>
         <div className="flex items-center">

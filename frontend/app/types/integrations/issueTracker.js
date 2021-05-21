@@ -7,6 +7,7 @@ export const ACCESS_KEY_ID_LENGTH = 20;
 export default Record({
   username: undefined,
   token: undefined,
+  provider: undefined,
   url: undefined,
   provider: 'jira'
 }, {

@@ -73,11 +73,9 @@ def get_account(context):
                 "projects": -1,
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },
-            **license.get_status(context["tenantId"]),
-            "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
+            **license.get_status(context["tenantId"])
         }
     }
-
 
 @app.route('/projects', methods=['GET'])
 def get_projects(context):
@@ -159,27 +157,12 @@ def add_slack_client(context):
     data = app.current_request.json_body
     if "url" not in data or "name" not in data:
         return {"errors": ["please provide a url and a name"]}
-    n = Slack.add_channel(tenant_id=context["tenantId"], url=data["url"], name=data["name"])
-    if n is None:
+    if Slack.add_integration(tenant_id=context["tenantId"], url=data["url"], name=data["name"]):
+        return {"data": {"status": "success"}}
+    else:
         return {
-            "errors": ["We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
+            "errors": ["failed URL verification, if you received a message on slack, please notify our dev-team"]
         }
-    return {"data": n}
-
-
-@app.route('/integrations/slack/{integrationId}', methods=['POST', 'PUT'])
-def edit_slack_integration(integrationId, context):
-    data = app.current_request.json_body
-    if data.get("url") and len(data["url"]) > 0:
-        old = webhook.get(tenant_id=context["tenantId"], webhook_id=integrationId)
-        if old["endpoint"] != data["url"]:
-            if not Slack.say_hello(data["url"]):
-                return {
-                    "errors": [
-                        "We couldn't send you a test message on your Slack channel. Please verify your webhook url."]
-                }
-    return {"data": webhook.update(tenant_id=context["tenantId"], webhook_id=integrationId,
-                                   changes={"name": data.get("name", ""), "endpoint": data["url"]})}
 
 
 @app.route('/{projectId}/errors/search', methods=['POST'])
@@ -407,7 +390,6 @@ def search_sessions_by_metadata(context):
         "data": sessions.search_by_metadata(tenant_id=context["tenantId"], user_id=context["userId"], m_value=value,
                                             m_key=key,
                                             project_id=project_id)}
-
 
 @app.route('/plans', methods=['GET'])
 def get_current_plan(context):

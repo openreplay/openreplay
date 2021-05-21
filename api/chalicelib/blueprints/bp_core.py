@@ -881,5 +881,5 @@ def all_issue_types(context):
 
 @app.route('/flows', methods=['GET', 'PUT', 'POST', 'DELETE'])
 @app.route('/{projectId}/flows', methods=['GET', 'PUT', 'POST', 'DELETE'])
-def removed_endpoints(projectId=None, context=None):
+def removed_endpoints(context):
     return Response(body={"errors": ["Endpoint no longer available"]}, status_code=410)

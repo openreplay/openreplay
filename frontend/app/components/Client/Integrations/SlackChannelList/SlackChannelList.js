@@ -1,8 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { NoContent } from 'UI';
+import { TextEllipsis, NoContent } from 'UI';
 import { remove, edit } from 'Duck/integrations/slack'
-import DocLink from 'Shared/DocLink/DocLink';
 
 function SlackChannelList(props) {
   const { list } = props;
@@ -15,12 +14,7 @@ function SlackChannelList(props) {
   return (
     <div className="mt-6">
       <NoContent
-        title={
-          <div>
-            <div className="text-base text-left p-5">Integrate Slack with OpenReplay and share insights with the rest of the team, directly from the recording page.</div>
-            <DocLink className="mt-4" label="Integrate Slack" url="https://docs.openreplay.com/integrations/slack" />
-          </div>
-        }
+        title="No data available."
         size="small"
         show={ list.size === 0 }
       >
@@ -30,12 +24,21 @@ function SlackChannelList(props) {
             className="border-t px-5 py-2 flex items-center justify-between cursor-pointer"
             onClick={() => onEdit(c)}
           >
-            <div className="flex-grow-0" style={{ maxWidth: '90%'}}>
+            <div className="flex-grow-0" style={{ maxWidth: '80%'}}>
               <div>{c.name}</div>
-              <div className="truncate test-xs color-gray-medium">
-                {c.endpoint}
-              </div>
+              <TextEllipsis
+                text={
+                  <div className="test-xs color-gray-medium text-">
+                    {c.endpoint}
+                  </div>
+                }
+              />
             </div>
+            {/* <div className="flex-shrink-0">
+              <Button plain onClick={() => remove(c.webhookId) }>
+                <Icon name="trash"/>
+              </Button>
+            </div> */}
           </div>
         ))}
       </NoContent>

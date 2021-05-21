@@ -111,7 +111,7 @@ PageLoop:
 				c.errChan <- err
 				continue
 			}
-			if token == "" && sessionID == 0 { // We can't felter them on request
+			if sessionID == 0 { // We can't felter them on request
 				continue
 			}
 

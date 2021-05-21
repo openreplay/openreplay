@@ -4,7 +4,6 @@ import Config from 'Types/integrations/slackConfig';
 import { createItemInListUpdater } from '../funcTools/tools';
 
 const SAVE = new RequestTypes('slack/SAVE');
-const UPDATE = new RequestTypes('slack/UPDATE');
 const REMOVE = new RequestTypes('slack/REMOVE');
 const FETCH_LIST = new RequestTypes('slack/FETCH_LIST');
 const EDIT = 'slack/EDIT';
@@ -21,7 +20,6 @@ const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
     case FETCH_LIST.SUCCESS:
       return state.set('list', List(action.data).map(Config));
-    case UPDATE.SUCCESS:
     case SAVE.SUCCESS:
       const config = Config(action.data);
       return state
@@ -56,13 +54,6 @@ export function save(instance) {
   return {
     types: SAVE.toArray(),
     call: client => client.post(`/integrations/slack`, instance.toData()),
-  };
-}
-
-export function update(instance) {
-  return {
-    types: UPDATE.toArray(),
-    call: client => client.put(`/integrations/slack/${instance.webhookId}`, instance.toData()),
   };
 }
 

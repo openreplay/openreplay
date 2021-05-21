@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { IconButton, Icon } from 'UI';
 import { connect } from 'react-redux';
 
-const docLink = 'https://docs.openreplay.com/installation/upload-sourcemaps';
+const docLink = 'https://docs.openreplay.com/plugins/sourcemaps';
 
 function ErrorDetails({ className, name = "Error", message, errorStack, sourcemapUploaded }) {
   const [showRaw, setShowRaw] = useState(false)

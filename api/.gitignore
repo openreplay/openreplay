@@ -170,7 +170,7 @@ logs*.txt
 *.csv
 
 *.p
+*.js
 SUBNETS.json
 
 ./chalicelib/.configs
-README/*

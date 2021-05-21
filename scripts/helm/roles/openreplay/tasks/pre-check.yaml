@@ -4,11 +4,11 @@
   block:
     - name: Checking mandatory variables
       fail:
-        msg: "Didn't find OpenReplay docker credentials."
-      when: kubeconfig_path|length == 0 or docker_registry_url|length == 0
+        msg: "Didn't find openreplay docker credentials."
+      when: kubeconfig_path|length == 0 or ecr_docker_registry_server|length == 0
     - name: Generaing minio access key
       block:
-        - name: Generating minio access key
+        - name: Generaing minio access key
           set_fact:
             minio_access_key_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
         - name: Updating vars.yaml
@@ -16,13 +16,13 @@
             regexp: '^minio_access_key'
             line: 'minio_access_key: "{{ minio_access_key_generated }}"'
             path: vars.yaml
-        - name: Generating minio access key
+        - name: Generaing minio access key
           set_fact:
             minio_access_key: "{{ minio_access_key_generated }}"
       when: minio_access_key|length == 0
-    - name: Generating minio secret key
+    - name: Generaing minio secret key
       block:
-        - name: Generating minio access key
+        - name: Generaing minio access key
           set_fact:
             minio_secret_key_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
         - name: Updating vars.yaml
@@ -30,33 +30,19 @@
             regexp: '^minio_secret_key'
             line: 'minio_secret_key: "{{minio_secret_key_generated}}"'
             path: vars.yaml
-        - name: Generating minio secret key
+        - name: Generaing minio secret key
           set_fact:
             minio_access_key: "{{ minio_secret_key_generated }}"
       when: minio_secret_key|length == 0
-    - name: Generating jwt secret key
-      block:
-        - name: Generating jwt access key
-          set_fact:
-            jwt_secret_key_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
-        - name: Updating vars.yaml
-          lineinfile:
-            regexp: '^jwt_secret_key'
-            line: 'jwt_secret_key: "{{jwt_secret_key_generated}}"'
-            path: vars.yaml
-        - name: Generating jwt secret key
-          set_fact:
-            jwt_access_key: "{{ jwt_secret_key_generated }}"
-      when: jwt_secret_key|length == 0
   rescue:
     - name: Caught error
       debug:
         msg:
-          - Below variables are mandatory. Please make sure it is updated in vars.yaml
+          - Below variabls are mandatory. Please make sure it's updated in vars.yaml
           - kubeconfig_path
-          - docker_registry_username
-          - docker_registry_password
-          - docker_registry_url
+          - ecr_docker_username
+          - ecr_docker_password
+          - ecr_docker_registry_server
       failed_when: true
   tags: pre-check
 - name: Creating Nginx SSL certificate

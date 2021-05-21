@@ -1,4 +1,4 @@
-import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from '../messages';
+import { classes, BatchMeta, Timestamp, SetPageVisibility } from '../messages';
 import Message from '../messages/message';
 import Writer from '../messages/writer';
 
@@ -12,11 +12,8 @@ let ingestPoint: string = "";
 let token: string = "";
 let pageNo: number = 0;
 let timestamp: number = 0;
-let timeAdjustment: number = 0;
 let nextIndex: number = 0;
-// TODO: clear logic: isEmpty here means presense of BatchMeta but absence of other  messages
-// BatchWriter should be abstracted
-let isEmpty: boolean = true; 
+let isEmpty: boolean = true;
 
 function writeBatchMeta(): boolean { // TODO: move to encoder
   return new BatchMeta(pageNo, nextIndex, timestamp).encode(writer)
@@ -70,7 +67,7 @@ function sendBatch(batch: Uint8Array):void {
 }
 
 function send(): void {
-  if (isEmpty || token === "" || ingestPoint === "") {
+  if (isEmpty || ingestPoint === "") {
     return;
   }
   const batch = writer.flush();
@@ -85,45 +82,29 @@ function send(): void {
 }
 
 function reset() {
-  ingestPoint = ""
-  token = ""
   clearInterval(sendIntervalID);
   writer.reset();
 }
 
 let restartTimeoutID: ReturnType<typeof setTimeout>;
 
-function hasTimestamp(msg: any): msg is { timestamp: number } {
-  return typeof msg === 'object' && typeof msg.timestamp === 'number';
-}
-
 self.onmessage = ({ data }: MessageEvent) => {
   if (data === null) {
     send();
     return;
   }
-  if (data === "stop") {
-    send();
-    reset();
-    return;
-  }
   if (!Array.isArray(data)) {
-    ingestPoint = data.ingestPoint || ingestPoint;
-    token = data.token || token;
-    pageNo = data.pageNo || pageNo;
-    timestamp = data.startTimestamp || timestamp;
-    timeAdjustment = data.timeAdjustment || timeAdjustment;
-    if (writer.isEmpty()) {
-      writeBatchMeta();
-    }
-    if (sendIntervalID == null) {
-      sendIntervalID = setInterval(send, SEND_INTERVAL);
-    }
+    reset();
+    ingestPoint = data.ingestPoint;
+    token = data.token;
+    pageNo = data.pageNo;
+    timestamp = data.startTimestamp;
+    writeBatchMeta();
+    sendIntervalID = setInterval(send, SEND_INTERVAL);
     return;
   }
   data.forEach((data: any) => {
     const message: Message = new (<any>classes.get(data._id))();
-    Object.assign(message, data);
 
     if (message instanceof Timestamp) {
       timestamp = (<any>message).timestamp;
@@ -135,6 +116,7 @@ self.onmessage = ({ data }: MessageEvent) => {
       }
     }
 
+    Object.assign(message, data);
     writer.checkpoint();
     nextIndex++;
     if (message.encode(writer)) {

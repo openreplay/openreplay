@@ -158,30 +158,30 @@ export default class Network extends React.PureComponent {
     let filtered = resources.filter(({ type, name }) =>
       filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
 
-//     const referenceLines = [];
-//     if (domContentLoadedTime != null) {
-//       referenceLines.push({
-//         time: domContentLoadedTime,
-//         color: DOM_LOADED_TIME_COLOR,
-//       })
-//     }
-//     if (loadTime != null) {
-//       referenceLines.push({
-//         time: loadTime,
-//         color: LOAD_TIME_COLOR,
-//       })
-//     }
-// 
-//     let tabs = TABS;
-//     if (!fetchPresented) {
-//       tabs = TABS.map(tab => tab.key === XHR 
-//         ? {
-//             text: renderXHRText(),
-//             key: XHR,
-//           } 
-//         : tab
-//       );
-//     }
+    const referenceLines = [];
+    if (domContentLoadedTime != null) {
+      referenceLines.push({
+        time: domContentLoadedTime,
+        color: DOM_LOADED_TIME_COLOR,
+      })
+    }
+    if (loadTime != null) {
+      referenceLines.push({
+        time: loadTime,
+        color: LOAD_TIME_COLOR,
+      })
+    }
+
+    let tabs = TABS;
+    if (!fetchPresented) {
+      tabs = TABS.map(tab => tab.key === XHR 
+        ? {
+            text: renderXHRText(),
+            key: XHR,
+          } 
+        : tab
+      );
+    }
 
     const resourcesSize = filtered.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0);
     const transferredSize = filtered

@@ -14,9 +14,9 @@ class IssueDetails extends React.PureComponent {
   write = (e, { name, value }) => this.setState({ [ name ]: value });
 
   render() {
-    const { sessionId, issue, loading, users, issueTypeIcons, issuesIntegration } = this.props;
+    const { sessionId, issue, loading, users, issueTypeIcons, provider } = this.props;
     const activities = issue.activities;
-    const provider = issuesIntegration.provider;
+    
     const assignee = users.filter(({id}) => issue.assignee === id).first();
 
     return (
@@ -53,5 +53,5 @@ export default connect(state => ({
   users: state.getIn(['assignments', 'users']),
   loading: state.getIn(['assignments', 'fetchAssignment', 'loading']),
   issueTypeIcons: state.getIn(['assignments', 'issueTypeIcons']),
-  issuesIntegration: state.getIn([ 'issues', 'list']).first() || {},
+  provider: state.getIn([ 'issues', 'list']).provider,
 }))(IssueDetails);

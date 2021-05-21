@@ -13,9 +13,8 @@ spec:
       {{- include "nginx.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      annotations:
-        nginxRolloutID: {{ randAlphaNum 5 | quote }} # Restart nginx after every deployment
       {{- with .Values.podAnnotations }}
+      annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:

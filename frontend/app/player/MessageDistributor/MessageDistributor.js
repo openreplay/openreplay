@@ -10,7 +10,7 @@ import ReduxAction from 'Types/session/reduxAction';
 
 import { update } from '../store';
 import { 
-  init as initListsDepr,
+  init as initLists,
   append as listAppend,
   setStartTime as setListsStartTime 
  } from '../lists';
@@ -41,14 +41,6 @@ export const INITIAL_STATE = {
   ...LISTS_INITIAL_STATE,
   performanceChartData: [],
   skipIntervals: [],
-}
-
-function initLists() {
-  const lists = {};
-  for (var i = 0; i < LIST_NAMES.length; i++) {
-    lists[ LIST_NAMES[i] ] = new ListWalker();
-  }
-  return lists;
 }
 
 
@@ -86,7 +78,16 @@ export default class MessageDistributor extends StatedScreen {
   #scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   #decoder = new Decoder();
-  #lists = initLists();
+  #lists = {
+    redux: new ListWalker(),
+    mobx: new ListWalker(),
+    vuex: new ListWalker(),
+    ngrx: new ListWalker(),
+    graphql: new ListWalker(),
+    exceptions: new ListWalker(),
+    profiles: new ListWalker(),
+    longtasks: new ListWalker(),
+  }
 
   #activirtManager: ActivityManager;
 
@@ -105,7 +106,7 @@ export default class MessageDistributor extends StatedScreen {
 
     /* == REFACTOR_ME == */
     const eventList = sess.events.toJSON();
-    initListsDepr({
+    initLists({
       event: eventList, 
       stack: sess.stackEvents.toJSON(),
       resource: sess.resources.toJSON(),
@@ -235,16 +236,10 @@ export default class MessageDistributor extends StatedScreen {
     const llEvent = this.#locationEventManager.moveToLast(t, index);
     if (!!llEvent) {
       if (llEvent.domContentLoadedTime != null) {
-        stateToUpdate.domContentLoadedTime = {
-          time: llEvent.domContentLoadedTime + this.#navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & setLocation: add navigationStart to db)
-          value: llEvent.domContentLoadedTime, 
-        }
+        stateToUpdate.domContentLoadedTime = llEvent.domContentLoadedTime + this.#navigationStartOffset;
       }
       if (llEvent.loadTime != null) {
-        stateToUpdate.loadTime = {
-          time: llEvent.loadTime + this.#navigationStartOffset,
-          value: llEvent.loadTime,
-        }
+        stateToUpdate.loadTime = llEvent.domContentLoadedTime + this.#navigationStartOffset
       }
       if (llEvent.domBuildingTime != null) {
         stateToUpdate.domBuildingTime = llEvent.domBuildingTime;

@@ -68,8 +68,7 @@ class JiraManager:
             # print(issue.raw)
             issue_dict_list.append(self.__parser_issue_info(issue, include_comments=False))
 
-        # return {"total": issues.total, "issues": issue_dict_list}
-        return issue_dict_list
+        return {"total": issues.total, "issues": issue_dict_list}
 
     def get_issue(self, issue_id: str):
         try:

@@ -6,7 +6,7 @@ import { updateClient } from 'Duck/user'
 function OptOut(props) {
   const { optOut } = props;
   const onChange = () => {
-    props.updateClient({ optOut: !optOut })
+    props.updateClient({ optOut: !optOut, name: 'OpenReplay' })
   }
   return (
     <div>

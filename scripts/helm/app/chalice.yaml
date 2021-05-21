@@ -40,6 +40,9 @@ env:
   sessions_region: us-east-1
   put_S3_TTL: '20'
   sourcemaps_bucket: sourcemaps
+  sourcemaps_bucket_key: minios3AccessKeyS3cr3t
+  sourcemaps_bucket_secret: m1n10s3CretK3yPassw0rd
+  sourcemaps_bucket_region: us-east-1
   js_cache_bucket: sessions-assets
   async_Token: ''
   EMAIL_HOST: ''
@@ -53,7 +56,7 @@ env:
   EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
   SITE_URL: ''
   announcement_url: ''
-  jwt_secret: "SetARandomStringHere"
+  jwt_secret: SET A RANDOM STRING HERE
   jwt_algorithm: HS512
   jwt_exp_delta_seconds: '2592000'
   # Override with your https://domain_name

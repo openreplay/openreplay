@@ -34,9 +34,9 @@ const FunnelDetails = (props) => {
 
   useEffect(() => {    
     if (funnels.size === 0) {
-      props.fetchList();      
+      props.fetchList();
+      props.fetchIssueTypes()
     }
-    props.fetchIssueTypes()
 
     props.fetch(funnelId).then(() => {      
       setMounted(true);      

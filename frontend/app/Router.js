@@ -21,7 +21,6 @@ import FunnelIssueDetails from 'Components/Funnels/FunnelIssueDetails';
 
 import APIClient from './api_client';
 import * as routes from './routes';
-import { OB_DEFAULT_TAB } from 'App/routes';
 import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
 
@@ -49,7 +48,6 @@ const SIGNUP_PATH = routes.signup();
 const FORGOT_PASSWORD = routes.forgotPassword();
 const CLIENT_PATH = routes.client();
 const ONBOARDING_PATH = routes.onboarding();
-const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
 
 @withRouter
 @connect((state) => {
@@ -69,7 +67,6 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     organisation: state.getIn([ 'user', 'client', 'name' ]),
     tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
     tenants: state.getIn(['user', 'tenants']),
-    onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
   fetchUserInfo, fetchTenants
@@ -95,7 +92,7 @@ class Router extends React.Component {
   }
 
   render() {    
-    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, tenants, onboarding } = this.props;
+    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, tenants } = this.props;
     const siteIdList = sites.map(({ id }) => id).toJS();
     const hideHeader = location.pathname && location.pathname.includes('/session/');
 
@@ -124,9 +121,6 @@ class Router extends React.Component {
             }
           }
           />
-          { onboarding && 
-            <Redirect to={ withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
-          }
           { siteIdList.length === 0 && 
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }

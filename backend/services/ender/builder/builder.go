@@ -82,9 +82,6 @@ func (b *builder) iterateReadyMessage(iter func(msg Message)) {
 }
 
 func (b *builder) buildSessionEnd() {
-	if b.timestamp == 0 {
-		return
-	}
 	sessionEnd := &SessionEnd{
 		Timestamp: b.timestamp, // + delay?
 	}
@@ -109,25 +106,16 @@ func (b *builder) buildInputEvent() {
 
 func (b *builder) handleMessage(message Message, messageID uint64) {
 	timestamp := uint64(message.Meta().Timestamp)
-	if b.timestamp <= timestamp { // unnecessary. TODO: test and remove
+	if b.timestamp <= timestamp {
 		b.timestamp = timestamp
 	}
-	// Before  the first timestamp.
+	// Start from the first timestamp.
 	switch msg := message.(type) {
 	case *SessionStart,
 			*Metadata,
 			*UserID,
 	  	*UserAnonymousID:
 		b.appendReadyMessage(msg)
-	case *RawErrorEvent:
-		b.appendReadyMessage(&ErrorEvent{
-			MessageID: messageID,
-			Timestamp: msg.Timestamp,
-			Source:    msg.Source,
-			Name:      msg.Name,
-			Message:   msg.Message,
-			Payload:   msg.Payload,
-		})
 	}
 	if b.timestamp == 0 {
 		return
@@ -189,6 +177,15 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 				Timestamp:      b.timestamp,
 			})
 		}
+	case *RawErrorEvent:
+		b.appendReadyMessage(&ErrorEvent{
+			MessageID: messageID,
+			Timestamp: msg.Timestamp,
+			Source:    msg.Source,
+			Name:      msg.Name,
+			Message:   msg.Message,
+			Payload:   msg.Payload,
+		})
 	case *JSException:
 		b.appendReadyMessage(&ErrorEvent{
 			MessageID: messageID,

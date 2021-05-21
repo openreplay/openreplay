@@ -9,31 +9,22 @@ PG_CONFIG = {"host": environ["pg_host"],
              "port": int(environ["pg_port"])}
 
 from psycopg2 import pool
-from threading import Semaphore
-
-
-class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
-    def __init__(self, minconn, maxconn, *args, **kwargs):
-        self._semaphore = Semaphore(maxconn)
-        super().__init__(minconn, maxconn, *args, **kwargs)
-
-    def getconn(self, *args, **kwargs):
-        self._semaphore.acquire()
-        return super().getconn(*args, **kwargs)
-
-    def putconn(self, *args, **kwargs):
-        super().putconn(*args, **kwargs)
-        self._semaphore.release()
-
 
 try:
-    postgreSQL_pool = ORThreadedConnectionPool(20, 100, **PG_CONFIG)
+    postgreSQL_pool = psycopg2.pool.ThreadedConnectionPool(6, 20, **PG_CONFIG)
     if (postgreSQL_pool):
         print("Connection pool created successfully")
 except (Exception, psycopg2.DatabaseError) as error:
     print("Error while connecting to PostgreSQL", error)
     raise error
 
+
+# finally:
+#     # closing database connection.
+#     # use closeall method to close all the active connection if you want to turn of the application
+#     if (postgreSQL_pool):
+#         postgreSQL_pool.closeall
+#     print("PostgreSQL connection pool is closed")
 
 class PostgresClient:
     connection = None
