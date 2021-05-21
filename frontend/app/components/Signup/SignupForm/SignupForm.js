@@ -137,7 +137,7 @@ export default class SignupForm extends React.Component {
             </div>
 
             <div className="mb-6">
-              <div className="text-sm">By creating an account, you agree to our <a href="https://openreplay.com/terms.html" className="link">Terms of Service</a> and <a href="https://openreplay.com/privacy.html" className="link">Privacy Policy</a></div>
+              <div className="text-sm">By creating an account, you agree to our <a href="https://openreplay.com/terms.html" className="link">Terms of Service</a> and <a href="https://openreplay.com/privacy.html" className="link">Privacy Policy</a>.</div>
             </div>
 
           </div>

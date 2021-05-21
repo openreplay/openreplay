@@ -34,7 +34,7 @@ class JIRACloudIntegrationIssue(BaseIntegrationIssue):
             if len(projects_map[integration_project_id]) > 0:
                 jql += f" AND ID IN ({','.join(projects_map[integration_project_id])})"
             issues = self._client.get_issues(jql, offset=0)
-            results += [issues]
+            results += issues
         return {"issues": results}
 
     def get(self, integration_project_id, assignment_id):

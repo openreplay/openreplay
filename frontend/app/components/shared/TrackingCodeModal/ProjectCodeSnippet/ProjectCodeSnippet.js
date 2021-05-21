@@ -27,9 +27,10 @@ const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
   r.setMetadata=function(k,v){r.push([4,k,v])};
   r.event=function(k,p,i){r.push([5,k,p,i])};
   r.issue=function(k,p){r.push([6,k,p])};
-  r.isActive=r.active=function(){return false};
-  r.getSessionToken=r.sessionID=function(){};
-})(0,PROJECT_HASH,"//${window.location.hostname}/static/openreplay.js",1,XXX);
+  r.isActive=function(){return false};
+  r.getSessionToken=function(){};
+  r.i="https://${window.location.hostname}/ingest";
+})(0, "PROJECT_KEY", "//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,XXX);
 </script>`;
 
 
@@ -143,7 +144,7 @@ const ProjectCodeSnippet = props  => {
           }}
         />
       </div>
-      <div className="mt-6">See <a href="https://docs.openreplay.com/api" className="color-teal underline" target="_blank">API</a> for more options.</div>
+      <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a> or <a className="link" href="https://docs.openreplay.com/integrations/segment" target="_blank">Segment</a>. </div>
     </div>
   )
 }

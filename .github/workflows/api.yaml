@@ -39,13 +39,11 @@ jobs:
         ENVIRONMENT: staging
       run: |
         cd api
-        bash build.sh
-        [[ -z "${DOCKER_REPO}" ]] || {
-          docker push ${DOCKER_REPO}/chalice:"${IMAGE_TAG}"
-        }
+        PUSH_IMAGE=1 bash build.sh
     - name: Deploy to kubernetes
       run: |
         cd scripts/helm/
+        sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/chalice.yaml
         bash kube-install.sh --app chalice

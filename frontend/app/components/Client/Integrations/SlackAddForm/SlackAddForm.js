@@ -1,20 +1,22 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { edit, save, init } from 'Duck/integrations/slack'
+import { edit, save, init, update } from 'Duck/integrations/slack'
 import { Form, Input, Button, Message } from 'UI'
 import { confirm } from 'UI/Confirmation';
 import { remove } from 'Duck/integrations/slack'
 
 class SlackAddForm extends React.PureComponent {
-
   componentWillUnmount() {
     this.props.init({});
   }
   
   save = () => {
-    this.props.save(this.props.instance).then(function() {
-      
-    })
+    const instance = this.props.instance;
+    if(instance.exists()) {
+      this.props.update(this.props.instance)
+    } else {
+      this.props.save(this.props.instance)
+    } 
   }
 
   remove = async (id) => {
@@ -102,4 +104,4 @@ export default connect(state => ({
   instance: state.getIn(['slack', 'instance']),
   saving: state.getIn(['slack', 'saveRequest', 'loading']),
   errors: state.getIn([ 'slack', 'saveRequest', 'errors' ]),
-}), { edit, save, init, remove })(SlackAddForm)
+}), { edit, save, init, remove, update })(SlackAddForm)

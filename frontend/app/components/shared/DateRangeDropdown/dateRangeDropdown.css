@@ -63,3 +63,7 @@
   margin-top: 1px;
   margin-left: 3px;
 }
+
+.customRangeRight {  
+  right: 0 !important;
+}

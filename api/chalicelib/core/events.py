@@ -365,7 +365,7 @@ def __get_merged_queries(queries, value, project_id):
 def __get_autocomplete_table(value, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify("""SELECT DISTINCT ON(value,type) project_id, value, type
-                                    FROM (SELECT *
+                                    FROM (SELECT project_id, type, value
                                         FROM (SELECT *,
                                                 ROW_NUMBER() OVER (PARTITION BY type ORDER BY value) AS Row_ID
                                             FROM public.autocomplete

@@ -4,6 +4,6 @@ image:
   tag: {{ image_tag }}
 {% endif %}
 
-{% if not (ecr_docker_username is defined and ecr_docker_username and ecr_docker_password is defined and ecr_docker_password) %}
+{% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []
 {% endif %}

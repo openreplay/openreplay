@@ -10,6 +10,7 @@ export default Member.extend({
   banner: undefined,
   email: '',
   verifiedEmail: undefined,
+  smtp: false,
   license: '',
   expirationDate: undefined,
 }, {

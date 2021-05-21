@@ -5,6 +5,7 @@ import withRequestState, { RequestTypes } from './requestStateCreator';
 import { createListUpdater, createItemInListUpdater } from './funcTools/tools';
 import { editType, initType } from './funcTools/crud/types';
 import { createInit, createEdit } from './funcTools/crud';
+import IssuesType from 'Types/issue/issuesType'
 
 const idKey = 'id';
 const name = 'assignment';
@@ -46,12 +47,12 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_ASSIGNMENT.SUCCESS:
       return state.set('activeIssue', Assignment({ ...action.data, users}));
     case FETCH_META.SUCCESS:
-      issueTypes = action.data.issueTypes;
-      var issueTypeIcons = {}
-      for (var i =0; i < issueTypes.length; i++) {
-        issueTypeIcons[issueTypes[i].id] = issueTypes[i].iconUrl
-      }
-      return state.set('issueTypes', List(issueTypes))
+      issueTypes = List(action.data.issueTypes).map(IssuesType);
+      var issueTypeIcons = {}      
+      issueTypes.forEach(iss => {
+        issueTypeIcons[iss.id] = iss.iconUrl
+      })
+      return state.set('issueTypes', issueTypes)
         .set('users', List(action.data.users))
         .set('issueTypeIcons', issueTypeIcons)
     case ADD_ACTIVITY.SUCCESS:
