@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button } from 'UI'
+import { Button, Icon } from 'UI'
 
 export default function DocLink({ className = '', url, label }) {
   const openLink = () => {
@@ -9,7 +9,10 @@ export default function DocLink({ className = '', url, label }) {
   return (
     <div className={className}>
       <Button outline onClick={openLink}>
-        { label }
+        <div className="flex items-center">
+          <span className="mr-2">{ label }</span>
+          <Icon name="external-link-alt" color="teal" />
+        </div>
       </Button>
     </div>
   )

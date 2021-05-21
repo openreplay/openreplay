@@ -85,6 +85,8 @@ export default class API {
         ? null
         : new App(options.projectKey, options.sessionToken, options);
     if (this.app !== null) {
+      Viewport(this.app);
+      CSSRules(this.app);
       Connection(this.app);
       Console(this.app, options);
       Exception(this.app, options);
@@ -94,9 +96,7 @@ export default class API {
       Timing(this.app, options);
       Performance(this.app);
       Scroll(this.app);
-      Viewport(this.app);
       Longtasks(this.app);
-      CSSRules(this.app);
       (window as any).__OPENREPLAY__ = (window as any).__OPENREPLAY__ || this;
     } else {
       console.log("OpenReplay: broeser doesn't support API required for tracking.")

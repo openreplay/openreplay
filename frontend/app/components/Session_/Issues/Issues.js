@@ -21,7 +21,7 @@ import stl from './issues.css';
   fetchIssueLoading: state.getIn(['assignments', 'fetchAssignment', 'loading']),
   fetchIssuesLoading: state.getIn(['assignments', 'fetchAssignments', 'loading']),
   projectsLoading: state.getIn(['assignments', 'fetchProjects', 'loading']),
-  provider: state.getIn([ 'issues', 'list']).provider,
+  issuesIntegration: state.getIn([ 'issues', 'list']).first() || {},
 }), { fetchAssigment, fetchAssignments, fetchMeta, fetchProjects })
 @withToggle('isModalDisplayed', 'toggleModal')
 class Issues extends React.Component {
@@ -64,9 +64,10 @@ class Issues extends React.Component {
   render() {
     const { 
       sessionId, activeIssue, isModalDisplayed, projectsLoading,
-      fetchIssueLoading, issues, metaLoading, fetchIssuesLoading, provider
+      fetchIssueLoading, issues, metaLoading, fetchIssuesLoading, issuesIntegration
     } = this.props;
     const { showModal } = this.state;
+    const provider = issuesIntegration.provider
 
     return (
       <div className="relative">

@@ -80,7 +80,7 @@ function PreferencesMenu({ activeTab, appearance, history }) {
         <SideMenuitem
           active={ activeTab === CLIENT_TABS.NOTIFICATIONS }
           title="Notifications"
-          iconName="users"
+          iconName="bell"
           onClick={() => setTab(CLIENT_TABS.NOTIFICATIONS) }
         />
       </div>      

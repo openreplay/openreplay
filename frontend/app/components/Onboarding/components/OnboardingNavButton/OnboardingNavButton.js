@@ -5,6 +5,7 @@ import { Button } from 'UI'
 import { OB_TABS, onboarding as onboardingRoute } from 'App/routes'
 import * as routes from '../../../../routes'
 import { sessions } from 'App/routes';
+import { setOnboarding } from 'Duck/user';
 
 const withSiteId = routes.withSiteId;
 const MENU_ITEMS = [OB_TABS.INSTALLING, OB_TABS.IDENTIFY_USERS, OB_TABS.MANAGE_USERS, OB_TABS.INTEGRATIONS]
@@ -25,8 +26,13 @@ const OnboardingNavButton = (props) => {
       const tab = MENU_ITEMS[activeIndex+1]
       history.push(withSiteId(onboardingRoute(tab), siteId));
     } else {
-      history.push(sessions());
+      onDone()
     }
+  }
+
+  const onDone = () => {
+    props.setOnboarding(false);
+    history.push(sessions());
   }
   
   return (
@@ -35,7 +41,7 @@ const OnboardingNavButton = (props) => {
         primary
         size="small"
         plain
-        onClick={() => history.push(sessions())}
+        onClick={onDone}
       >
         {activeIndex === 0 ? 'Done. See Recorded Sessions' : 'Skip Optional Steps and See Recorded Sessions'}
       </Button>
@@ -53,4 +59,4 @@ const OnboardingNavButton = (props) => {
   )
 }
 
-export default withRouter(OnboardingNavButton)
+export default withRouter(connect(null, { setOnboarding })(OnboardingNavButton))

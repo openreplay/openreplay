@@ -174,7 +174,24 @@ export default class App {
   _start(reset: boolean): void {   // TODO: return a promise instead of onStart handling
     if (!this.isActive) {
       this.isActive = true;
+      if (!this.worker) {
+        throw new Error("Stranger things: no worker found"); 
+      }
+
+      let pageNo: number = 0;
+      const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
+      if (pageNoStr != null) {
+        pageNo = parseInt(pageNoStr);
+        pageNo++;
+      }
+      sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
       const startTimestamp = timestamp();
+
+      this.worker.postMessage({ ingestPoint: this.options.ingestPoint, pageNo, startTimestamp }); // brings delay of 10th ms?  
+      this.observer.observe();
+      this.startCallbacks.forEach((cb) => cb());
+      this.ticker.start();
+
       window.fetch(this.options.ingestPoint + '/v1/web/start', { 
         method: 'POST',
         headers: {
@@ -196,7 +213,7 @@ export default class App {
       .then(r => {
         if (r.status === 200) {
           return r.json()
-        } else { // TODO: handle canceling
+        } else { // TODO: handle canceling && 403
           throw new Error("Server error");
         }
       })
@@ -206,26 +223,14 @@ export default class App {
             typeof userUUID !== 'string') {
           throw new Error("Incorrect server responce");
         }
-        if (!this.worker) {
-          throw new Error("Stranger things: worker is not started"); 
-        }
         sessionStorage.setItem(this.options.session_token_key, token);
         localStorage.setItem(this.options.local_uuid_key, userUUID);
-
-        let pageNo: number = 0;
-        const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
-        if (pageNoStr != null) {
-          pageNo = parseInt(pageNoStr);
-          pageNo++;
+        if (!this.worker) {
+          throw new Error("Stranger things: no worker found after start request"); 
         }
-        sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
+        this.worker.postMessage({ token });
 
-        this.worker.postMessage({ ingestPoint: this.options.ingestPoint, token, pageNo, startTimestamp });
-        this.observer.observe();
-        this.startCallbacks.forEach((cb) => cb());
-        this.ticker.start();
-        log("OpenReplay tracking started."); 
-
+        log("OpenReplay tracking started.");
         if (typeof this.options.onStart === 'function') {
           this.options.onStart({ sessionToken: token, userUUID, sessionID: token /* back compat (depricated) */ });
         }
@@ -254,7 +259,7 @@ export default class App {
     if (this.isActive) {
       try {
         if (this.worker) {
-          this.worker.postMessage(null);
+          this.worker.postMessage("stop");
         }
         this.observer.disconnect();
         this.nodes.clear();

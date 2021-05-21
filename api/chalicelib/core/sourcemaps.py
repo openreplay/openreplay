@@ -80,7 +80,12 @@ def get_traces_group(project_id, payload):
     payloads = {}
     all_exists = True
     for i, u in enumerate(frames):
+        print("===============================")
+        print(u["absPath"])
+        print("converted to:")
         key = __get_key(project_id, u["absPath"])  # use filename instead?
+        print(key)
+        print("===============================")
         if key not in payloads:
             file_exists = s3.exists(environ['sourcemaps_bucket'], key)
             all_exists = all_exists and file_exists
