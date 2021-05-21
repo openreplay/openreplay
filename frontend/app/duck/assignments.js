@@ -42,16 +42,13 @@ const reducer = (state = initialState, action = {}) => {
       return state.mergeIn([ 'instance' ], action.instance);
     case FETCH_PROJECTS.SUCCESS:
       return state.set('projects', List(action.data)).set('projectsFetched', true);
-    case FETCH_ASSIGNMENTS.SUCCESS:      
-      return state.set('list', List(action.data.issues).map(Assignment));
+    case FETCH_ASSIGNMENTS.SUCCESS:
+      return state.set('list', List(action.data).map(Assignment));
     case FETCH_ASSIGNMENT.SUCCESS:
       return state.set('activeIssue', Assignment({ ...action.data, users}));
     case FETCH_META.SUCCESS:
       issueTypes = List(action.data.issueTypes).map(IssuesType);
-      var issueTypeIcons = {}
-      // for (var i =0; i < issueTypes.length; i++) {
-      //   issueTypeIcons[issueTypes[i].id] = issueTypes[i].iconUrl
-      // }
+      var issueTypeIcons = {}      
       issueTypes.forEach(iss => {
         issueTypeIcons[iss.id] = iss.iconUrl
       })
