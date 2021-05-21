@@ -21,7 +21,7 @@ func main() {
 	pg := postgres.NewConn(POSTGRES_STRING)
 	defer pg.Close()
 
-	pgs, err := sql.Open("postgres", POSTGRES_STRING)
+	pgs, err := sql.Open("postgres", POSTGRES_STRING+ "?sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}
