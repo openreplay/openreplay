@@ -6,8 +6,8 @@ set -o errtrace
 domain_name=`grep domain_name vars.yaml | grep -v "example" | cut -d " " -f2 | cut -d '"' -f2`
 # Ref: https://stackoverflow.com/questions/15268987/bash-based-regex-domain-name-validation
 [[ $(echo $domain_name | grep -P '(?=^.{5,254}$)(^(?:(?!\d+\.)[a-zA-Z0-9_\-]{1,63}\.?)+(?:[a-zA-Z]{2,})$)') ]] || {
-    echo "OpenReplay Needs a valid domain name for captured sessions to replay. For example, openreplay.mycompany.com"
-    echo "Please enter your domain name"
+    echo "OpenReplay requires a valid domain name to properly work (i.e. openreplay.mycompany.com)"
+    echo "Please enter your domain name:"
     read domain_name
     [[ -z domain_name ]] && {
         echo "OpenReplay won't work without domain name. Exiting..."
