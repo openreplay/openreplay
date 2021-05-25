@@ -20,7 +20,7 @@ cd helm && bash kube-install.sh
 
 - **openreplay-cli:**
 
-  This script will help to manage OpenReplay applications. Basic operations covered are
+  This script will help to manage OpenReplay applications. Basic operations covered are:
   - status: status of the applications
   - logs: logs of a specific application
   - stop: stop one or all services
