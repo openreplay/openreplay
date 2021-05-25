@@ -57,3 +57,7 @@ enable_monitoring: "false"
 # `openssl rand -base64 30`
 minio_access_key: ""
 minio_secret_key: ""
+
+# If you're using enterprise edition.
+# Insert the enterprise_edition_License key which you got.
+enterprise_edition_license: ""

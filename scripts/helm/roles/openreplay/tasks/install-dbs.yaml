@@ -24,7 +24,7 @@
       delay: 60
       register: result
       until: result.rc == 0
-      when: enterprise_edition
+      when: enterprise_edition_license|length > 0
     - name: Restoring postgres data
       shell: |
         file="{{ item|basename }}"
@@ -53,7 +53,7 @@
       delay: 60
       register: result
       until: result.rc == 0
-      when: enterprise_edition
+      when: enterprise_edition_license|length > 0
     - name: Initializing Minio
       shell: |
         minio_pod=$(kubectl get po -n db -l app.kubernetes.io/name=minio -n db --output custom-columns=name:.metadata.name | tail -n+2)

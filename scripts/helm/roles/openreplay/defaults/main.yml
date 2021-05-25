@@ -6,4 +6,3 @@ db_list:
   - "nfs-server-provisioner"
   - "postgresql"
   - "redis"
-enterprise_edition: false
