@@ -16,13 +16,12 @@ We hope your cluster has provision to create a [service type](https://kubernetes
 cd helm && bash kube-install.sh
 ```
 
-### Management of OpenReplay apps
+### OpenReplay CLI
 
-- **openreplay-cli:**
+The CLI is helpful for managing basic aspects of your OpenReplay instance, things such as restarting or reinstalling a service, accessing a component's logs or simply checking the status of your backend services. Below the list of covered operations:
 
-  This script will help to manage OpenReplay applications. Basic operations covered are:
-  - status: status of the applications
-  - logs: logs of a specific application
+  - status: status of the running services
+  - logs: logs of a specific service
   - stop: stop one or all services
   - start: start one or all services
   - restart: restart one or all services
