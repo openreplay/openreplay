@@ -9,19 +9,19 @@
 
 <p align="center">
   <a href="https://docs.openreplay.com/deployment/deploy-aws">
-    <img src="static/deploy-aws.png" height="44"/>
+    <img src="static/deploy-aws.png" height="35"/>
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-gcp">
-    <img src="static/deploy-gcp.png" height="44" />
+    <img src="static/deploy-gcp.png" height="35" />
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-azure">
-    <img src="static/deploy-azure.png" height="44" />
+    <img src="static/deploy-azure.png" height="35" />
   </a>
 
   <a href="https://docs.openreplay.com/deployment/deploy-digitalocean">
-    <img src="static/deploy-do.png" height="44" />
+    <img src="static/deploy-do.png" height="35" />
   </a>
 </p>
 
