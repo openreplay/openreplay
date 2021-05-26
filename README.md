@@ -1,6 +1,7 @@
 <p align="center">
   <a href="https://openreplay.com">
     <img src="static/logo.svg" height="70">
+    <img src="static/logo-dark.svg" height="70">
   </a>
 </p>
 
