@@ -55,10 +55,11 @@ OpenReplay is a session replay stack that let's you see what users do on your we
 
 OpenReplay can be deployed anywhere. Follow our step-by-step guides for deploying it on major public clouds:
 
-- AWS
-- Google Cloud
-- Microsoft Azure
-- Kubernetes
+- [AWS](https://docs.openreplay.com/deployment/deploy-aws)
+- [Google Cloud](https://docs.openreplay.com/deployment/deploy-gcp)
+- [Azure](https://docs.openreplay.com/deployment/deploy-azure)
+- [Digital Ocean](https://docs.openreplay.com/deployment/deploy-digitalocean)
+- [Kubernetes](https://docs.openreplay.com/deployment/deploy-kubernetes)
 
 ## OpenReplay Cloud
 
