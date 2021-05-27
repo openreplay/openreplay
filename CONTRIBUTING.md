@@ -14,7 +14,7 @@ We appreciate all contributions, especially those coming from first time contrib
 
 We want to keep our docs comprehensive, concise and updated. We are grateful for any kind of contribution in this area:
 - Report missing sections
-- Fix errors in existing docs
+- Fix errors in the existing docs
 - Add content to the docs
 
 ### Community Content
