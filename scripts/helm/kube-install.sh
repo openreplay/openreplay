@@ -145,6 +145,8 @@ function app(){
 
 function enterprise(){
     sed -i "s#enterprise_edition_license.*#enterprise_edition_license: \"${1}\"#g" vars.yaml
+    # Updating image version to be ee
+    sed -i "s/\(image_tag.*[0-9]\)\"$/\1-ee\"/" vars.yaml
     echo "Importing enterprise code..."
     cp -rf ../../ee/scripts/* ../
 }
