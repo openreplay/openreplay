@@ -42,3 +42,4 @@ env:
   REDIS_STRING: redis-master.db.svc.cluster.local:6379
   KAFKA_SERVERS: kafka.db.svc.cluster.local:9092
   KAFKA_USE_SSL: false
+  LICENSE_KEY: ""
