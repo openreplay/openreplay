@@ -1,7 +1,6 @@
 # vim: set ft=yaml.ansible :
 ---
 - hosts: localhost
-  gather_facts: no
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
   roles:
