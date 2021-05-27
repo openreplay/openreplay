@@ -157,7 +157,11 @@ func (a *Alert) CanCheck() bool {
 }
 
 func (a *Alert) Build() (sq.SelectBuilder, error) {
-	colDef := LeftToDb[a.Query.Left]
+	colDef, ok := LeftToDb[a.Query.Left]
+	if !ok {
+		return sq.Select(), errors.New(fmt.Sprintf("!! unsupported metric '%s'  from alert: %d:%s\n", a.Query.Left, a.AlertID, a.Name))
+	}
+
 	subQ := sq.
 		Select(colDef.formula + " AS value").
 		From(colDef.table).
