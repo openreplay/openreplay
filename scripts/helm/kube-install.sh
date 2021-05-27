@@ -93,6 +93,7 @@ cat <<"EOF"
 EOF
   echo -e "${green}Usage: openreplay-cli [ -h | --help ]
                   [ -v | --verbose ]
+                  [ -e | --enterprise <enerprise_key> ]
                   [ -a | --app APP_NAME ] to install/reinstall specific application
                   [ -t | --type small|medium|ideal ]"
   echo -e "${reset}${blue}type defines the resource limits applied for the installation:
@@ -141,8 +142,14 @@ function app(){
             ;;
     esac
 }
+
+function enterprise(){
+    sed -i "s#enterprise_edition_license.*#enterprise_edition_license: ${1}#g" vars.yaml
+    echo "Importing enterprise code..."
+    cp -rf ../../ee/scripts/* ../
+}
 # Parsing command line args.
-PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vht:a: --long verbose,help,type:,app: -- "$@")
+PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vht:a:e: --long verbose,help,type:,app:,enterprise: -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   usage
@@ -152,10 +159,11 @@ eval set -- "$PARSED_ARGUMENTS"
 while :
 do
   case "$1" in
-    -v | --verbose) VERBOSE=1    ; shift   ;;
-    -h | --help)    usage        ; shift   ;;
-    -t | --type)    type $2    ; shift 2   ;;
-    -a | --app)    app $2    ; shift 2   ;;
+    -v | --verbose)    VERBOSE=1  ;  shift ;;
+    -h | --help)       usage      ;  shift ;;
+    -t | --type)       type       $2 ;     shift 2 ;;
+    -a | --app)        app        $2 ;     shift 2 ;;
+    -e | --enterprise) enterprise $2 ;     shift 2 ;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break ;;
     # If invalid options were passed, then getopt should have reported an error,
