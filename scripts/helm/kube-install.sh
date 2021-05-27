@@ -144,7 +144,7 @@ function app(){
 }
 
 function enterprise(){
-    sed -i "s#enterprise_edition_license.*#enterprise_edition_license: ${1}#g" vars.yaml
+    sed -i "s#enterprise_edition_license.*#enterprise_edition_license: \"${1}\"#g" vars.yaml
     echo "Importing enterprise code..."
     cp -rf ../../ee/scripts/* ../
 }
