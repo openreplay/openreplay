@@ -617,3 +617,43 @@ def get_favorite_sessions(project_id, user_id, include_viewed=False):
 
         sessions = cur.fetchall()
     return helper.list_to_camel_case(sessions)
+
+
+def get_user_sessions(project_id, user_id, start_date, end_date):
+    with pg_client.PostgresClient() as cur:
+        constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
+        if start_date is not None:
+            constraints.append("s.start_ts >= %(startDate)s")
+        if end_date is not None:
+            constraints.append("s.start_ts <= %(endDate)s")
+
+        query_part = f"""\
+            FROM public.sessions AS s
+            WHERE {" AND ".join(constraints)}"""
+
+        cur.execute(cur.mogrify(f"""\
+                    SELECT s.project_id,
+                           s.session_id::text AS session_id,
+                           s.user_uuid,
+                           s.user_id,
+                           s.user_agent,
+                           s.user_os,
+                           s.user_browser,
+                           s.user_device,
+                           s.user_country,
+                           s.start_ts,
+                           s.duration,
+                           s.events_count,
+                           s.pages_count,
+                           s.errors_count
+                    {query_part}
+                    ORDER BY s.session_id         
+                    LIMIT 50;""", {
+                                     "projectId": project_id,
+                                     "userId": user_id,
+                                     "startDate": start_date,
+                                     "endDate": end_date
+                                 }))
+
+        sessions = cur.fetchall()
+    return helper.list_to_camel_case(sessions)
