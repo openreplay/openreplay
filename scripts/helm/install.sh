@@ -17,12 +17,20 @@ domain_name=`grep domain_name vars.yaml | grep -v "example" | cut -d " " -f2 | c
     }
 }
 
+which docker &> /dev/null || {
+    echo "docker is not installed. Installing it..."
+    user=`whoami`
+    sudo apt install docker.io -y
+    sudo usermod -aG docker $user
+}
+
+
 # https://parrot.asayer.io/os/license
 # payload: {"mid": "UUID of the machine", "license": ""}
 # response {"data":{"valid": TRUE|FALSE, "expiration": expiration date in ms}}
 
 # Installing k3s
-curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.19.5+k3s2' INSTALL_K3S_EXEC="--no-deploy=traefik" sh -
+curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.19.5+k3s2' INSTALL_K3S_EXEC="--no-deploy=traefik --docker" sh -
 mkdir ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 sudo chown $(whoami) ~/.kube/config

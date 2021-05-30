@@ -49,13 +49,6 @@ which ansible &> /dev/null || {
     sudo pip3 install ansible==2.10.0
 }
 
-which docker &> /dev/null || {
-    echo "docker is not installed. Installing it..."
-    user=`whoami`
-    sudo apt install docker.io -y
-    sudo usermod -aG docker $user
-}
-
 ## installing helm
 which helm &> /dev/null
 if [[ $? -ne 0 ]]; then
