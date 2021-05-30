@@ -17,19 +17,6 @@ domain_name=`grep domain_name vars.yaml | grep -v "example" | cut -d " " -f2 | c
     }
 }
 
-[[ $1 == "ee" ]] && {
-    [[ $2 == "" ]] || {
-        sed -i "s#enterprise_edition_license.*#enterprise_edition_license: ${2}#g" vars.yaml
-    } && {
-        echo """Enerprise edition license key is missing. 
-        Usage: ./install.sh ee XXXXXXXXXXXXX
-        """
-        exit 1
-    }
-    # Resetting command line arguments.
-    shift 2
-}
-
 # https://parrot.asayer.io/os/license
 # payload: {"mid": "UUID of the machine", "license": ""}
 # response {"data":{"valid": TRUE|FALSE, "expiration": expiration date in ms}}
