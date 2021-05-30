@@ -1,0 +1,85 @@
+# Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
+
+on:
+  push:
+    branches:
+    - dev
+    paths:
+      - ee/backend/**
+
+name: Build and deploy workers
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        # We need to diff with old commit 
+        # to see which workers got changed.
+        fetch-depth: 2
+        # ref: staging
+
+    - name: Docker login
+      run: |
+        docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+    - name: Build, tag, and Deploy to k8s
+      id: build-image
+      env:
+        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging
+      run: |
+        #
+        # TODO: Check the container tags are same, then skip the build and deployment.
+        #
+        # Build a docker container and push it to Docker Registry so that it can be deployed to Kubernetes cluster.
+        #
+        # Getting the images to build
+        #
+        git diff --name-only HEAD HEAD~1 | grep backend/services | grep -vE ^ee/ | cut -d '/' -f3 | uniq > backend/images_to_build.txt
+        [[ $(cat backend/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
+        #
+        # Pushing image to registry
+        #
+        cd backend
+        for image in $(cat images_to_build.txt);
+        do
+          echo "Bulding $image"
+          PUSH_IMAGE=1 bash -x ./build.sh skip $image
+          echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
+        done
+
+        #
+        # Deploying image to environment.
+        #
+        cd ../scripts/helm/
+        sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\" #g" vars.yaml
+        sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.EE_MINIO_SECRET_KEY }}\" #g" vars.yaml
+        sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
+        sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
+        for image in $(cat ../../backend/images_to_build.txt);
+        do
+          sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/${image}.yaml
+          # Deploy command
+          bash kube-install.sh --app $image
+        done
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+    #     IMAGE_TAG: ${{ github.sha }}
+    #     ENVIRONMENT: staging
+    #
