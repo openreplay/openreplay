@@ -10,7 +10,7 @@ const initCheck = method => (...args) => {
     console.error("Player method called before Player have been initialized.");
     return;
   }
-  method(...args);
+  return method(...args);
 }
 
 
@@ -64,7 +64,8 @@ export const speedDown = initCheck((...args) => instance.speedDown(...args));
 export const attach = initCheck((...args) => instance.attach(...args));
 export const mark = initCheck((...args) => instance.marker.markBySelector(...args));
 export const scale = initCheck(() => instance.scale());
-export const markBelowMouse = initCheck(() => instance.marker.mark(instance.cursor.getTarget()));
+export const markBelowMouse = initCheck(() => instance.marker.mark(instance.cetCursorTarget()));
+export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
 
 export const Controls = {
   jump,

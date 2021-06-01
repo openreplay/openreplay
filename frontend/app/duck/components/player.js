@@ -11,6 +11,7 @@ export const GRAPHQL = 7;
 export const FETCH = 8;
 export const EXCEPTIONS = 9;
 export const LONGTASKS = 10;
+export const INSPECTOR = 11;
 
 const TOGGLE_FULLSCREEN = 'player/TOGGLE_FS';
 const TOGGLE_BOTTOM_BLOCK = 'player/SET_BOTTOM_BLOCK';

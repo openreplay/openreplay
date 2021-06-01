@@ -31,6 +31,7 @@ export const INITIAL_STATE = {
   playing: false,
   completed: false,
   endTime: 0,
+  inspectorMode: false,
   live: false,
   livePlay: false,
 }
@@ -155,7 +156,22 @@ export default class Player extends MessageDistributor {
     const skip = !getState().skip;
     localStorage.setItem(SKIP_STORAGE_KEY, skip);
     update({ skip });
+  }
 
+  toggleInspectorMode(flag, clickCallback) {
+    if (typeof flag !== 'boolean') {
+      const { inspectorMode } = getState();
+      flag = !inspectorMode;
+    }
+    
+    if (flag) {
+      this.pause();
+      update({ inspectorMode: true });
+      return this.enableInspector(clickCallback);
+    } else {
+      this.disableInspector();
+      update({ inspectorMode: false });
+    }
   }
 
   _updateSpeed(speed) {

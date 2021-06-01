@@ -13,6 +13,7 @@ import {
   FETCH,
   EXCEPTIONS,
   LONGTASKS,
+  INSPECTOR,
 } from 'Duck/components/player';
 import Player from './Player';
 import Network from './Network';
@@ -26,6 +27,7 @@ import GraphQL from './GraphQL';
 import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
+import Inspector from './Inspector';
 import styles from './playerBlock.css';
 
 
@@ -82,6 +84,9 @@ export default class PlayerBlock extends React.PureComponent {
             }
             { bottomBlock === LONGTASKS &&
               <LongTasks />
+            }
+            { bottomBlock === INSPECTOR &&
+              <Inspector />
             }
           </div>
         }

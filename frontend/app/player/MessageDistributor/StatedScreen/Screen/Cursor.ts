@@ -1,19 +1,21 @@
+import type { Point } from './types';
 import styles from './cursor.css';
 
+
 export default class Cursor {
-  constructor(overlay, screen) {
-    this.screen = screen;
+  private readonly _cursor: HTMLDivElement;
+  private position: Point = { x: 0, y: 0 }
+  constructor(overlay: HTMLDivElement) {
     this._cursor = document.createElement('div');
     this._cursor.className = styles.cursor;
-
-    this._click = document.createElement('div');
-    this._click.className = styles.click;
-
-    overlay.appendChild(this._click);
     overlay.appendChild(this._cursor);
+
+    //this._click = document.createElement('div');
+    //this._click.className = styles.click;
+    //overlay.appendChild(this._click);
   }
 
-  toggle(flag) {
+  toggle(flag: boolean) {
     if (flag) {
       this._cursor.style.display = 'block';
     } else {
@@ -21,9 +23,9 @@ export default class Cursor {
     }
   }
 
-  move({ x, y }) {
-    this._x = x;
-    this._y = y;
+  move({ x, y }: Point) {
+    this.position.x = x;
+    this.position.y = y;
     this._cursor.style.left = x + 'px';
     this._cursor.style.top = y + 'px';
   }
@@ -37,16 +39,8 @@ export default class Cursor {
   //   }, 2000);
   // }
 
-  _getInternalCoordinates() {
-    return { x: this._x, y: this._y };
-  }
-
-  getTarget() {
-    return this.screen.getElementFromInternalPoint(this._getInternalCoordinates());
-  }
-
-  getTargets() {
-    return this.screen.getElementsFromInternalPoint(this._getInternalCoordinates());
+  getPosition(): Point {
+    return { x: this.position.x, y: this.position.y };
   }
 
 } 
