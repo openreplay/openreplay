@@ -7,3 +7,4 @@ yarn.lock
 app/components/ui/SVG.js
 *.DS_Store
 .env
+*css.d.ts
