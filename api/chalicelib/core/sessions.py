@@ -657,3 +657,42 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
 
         sessions = cur.fetchall()
     return helper.list_to_camel_case(sessions)
+
+
+def get_session_user(project_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """\
+            SELECT
+                user_id,
+                count(*) as session_count,	
+                max(start_ts) as last_seen,
+                min(start_ts) as first_seen
+            FROM
+                "public".sessions
+            WHERE
+                project_id = %(project_id)s
+                AND user_id = %(user_id)s
+                AND duration is not null
+            GROUP BY user_id;
+            """,
+            {"project_id": project_id, "user_id": user_id}
+        )
+        cur.execute(query=query)
+        data = cur.fetchone()
+    return helper.dict_to_camel_case(data)
+
+
+def delete_sessions_by_user_ids(project_id, user_ids):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """\
+            DELETE FROM public.sessions
+            WHERE
+                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
+            {"project_id": project_id, "user_id": tuple(user_ids)}
+        )
+        cur.execute(query=query)
+
+    return True
+
