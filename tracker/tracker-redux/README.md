@@ -30,7 +30,7 @@ const store = createStore(
 );
 ```
 
-You can customize the middleware behaviour with options to sanitize your data.
+You can customize the middleware behavior with options to sanitize your data.
 
 ```js
 trackerRedux({

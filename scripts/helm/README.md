@@ -41,6 +41,6 @@ Installation components are separated by namepaces.
   Installs OpenReplay on any given kubernetes cluster. Has 3 configuration types:
   - small (2cores 8G RAM)
   - medium (4cores 16G RAM)
-  - recommened (8cores 32G RAM)
+  - recommended (8cores 32G RAM)
   
   For all options, `bash kube-install.sh -h`

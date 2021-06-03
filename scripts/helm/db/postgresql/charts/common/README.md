@@ -78,7 +78,7 @@ The following table lists the helpers available in the library which are scoped 
 
 ### Names
 
-| Helper identifier              | Description                                                     | Expected Inpput             |
+| Helper identifier              | Description                                                     | Expected Input             |
 |--------------------------------|-----------------------------------------------------------------|-----------------------------|
 | `common.names.name`            | Expand the name of the chart or use `.Values.nameOverride`      | `.` Chart context           |
 | `common.names.fullname`        | Create a default fully qualified app name.                      | `.` Chart context           |
@@ -224,7 +224,7 @@ keyMapping:
 
 #### Example of use
 
-When we store sensitive data for a deployment in a secret, some times we want to give to users the possiblity of using theirs existing secrets.
+When we store sensitive data for a deployment in a secret, some times we want to give to users the possibility of using theirs existing secrets.
 
 ```yaml
 # templates/secret.yaml
