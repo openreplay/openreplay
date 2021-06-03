@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core import sessions
+from chalicelib.core import sessions, sessions_mobs
 
 
 class Actions:
@@ -139,7 +139,12 @@ def execute_jobs():
         print(f"job can be executed {job['id']}")
         try:
             if job["action"] == Actions.DELETE_USER_DATA:
-                sessions.delete_sessions_by_user_ids(job["projectId"], job["referenceId"])
+                session_ids = sessions.get_session_ids_by_user_ids(
+                    project_id=job["projectId"], user_ids=job["referenceId"]
+                )
+
+                sessions.delete_sessions_by_session_ids(session_ids)
+                sessions_mobs.prefix_mobs(session_ids, "DEL_")
             else:
                 raise Exception(f"The action {job['action']} not supported.")
 
