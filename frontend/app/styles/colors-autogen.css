@@ -1,8 +1,7 @@
 /* Auto-generated, DO NOT EDIT */
 
-
 /* fill */
-.fill-white { fill: $white }
+.fill-main { fill: $main }
 .fill-gray-light-shade { fill: $gray-light-shade }
 .fill-gray-lightest { fill: $gray-lightest }
 .fill-gray-light { fill: $gray-light }
@@ -11,6 +10,7 @@
 .fill-gray-darkest { fill: $gray-darkest }
 .fill-teal { fill: $teal }
 .fill-teal-dark { fill: $teal-dark }
+.fill-teal-light { fill: $teal-light }
 .fill-tealx { fill: $tealx }
 .fill-tealx-light { fill: $tealx-light }
 .fill-tealx-light-border { fill: $tealx-light-border }
@@ -28,9 +28,11 @@
 .fill-active-blue { fill: $active-blue }
 .fill-active-blue-border { fill: $active-blue-border }
 .fill-pink { fill: $pink }
+.fill-white { fill: $white }
+.fill-borderColor { fill: $borderColor }
 
 /* color */
-.color-white { color: $white }
+.color-main { color: $main }
 .color-gray-light-shade { color: $gray-light-shade }
 .color-gray-lightest { color: $gray-lightest }
 .color-gray-light { color: $gray-light }
@@ -39,6 +41,7 @@
 .color-gray-darkest { color: $gray-darkest }
 .color-teal { color: $teal }
 .color-teal-dark { color: $teal-dark }
+.color-teal-light { color: $teal-light }
 .color-tealx { color: $tealx }
 .color-tealx-light { color: $tealx-light }
 .color-tealx-light-border { color: $tealx-light-border }
@@ -56,9 +59,11 @@
 .color-active-blue { color: $active-blue }
 .color-active-blue-border { color: $active-blue-border }
 .color-pink { color: $pink }
+.color-white { color: $white }
+.color-borderColor { color: $borderColor }
 
 /* color */
-.hover-white:hover { color: $white }
+.hover-main:hover { color: $main }
 .hover-gray-light-shade:hover { color: $gray-light-shade }
 .hover-gray-lightest:hover { color: $gray-lightest }
 .hover-gray-light:hover { color: $gray-light }
@@ -67,6 +72,7 @@
 .hover-gray-darkest:hover { color: $gray-darkest }
 .hover-teal:hover { color: $teal }
 .hover-teal-dark:hover { color: $teal-dark }
+.hover-teal-light:hover { color: $teal-light }
 .hover-tealx:hover { color: $tealx }
 .hover-tealx-light:hover { color: $tealx-light }
 .hover-tealx-light-border:hover { color: $tealx-light-border }
@@ -84,31 +90,5 @@
 .hover-active-blue:hover { color: $active-blue }
 .hover-active-blue-border:hover { color: $active-blue-border }
 .hover-pink:hover { color: $pink }
-
-/* bg */
-.bg-white { background-color: $white }
-.bg-gray-light-shade { background-color: $gray-light-shade }
-.bg-gray-lightest { background-color: $gray-lightest }
-.bg-gray-light { background-color: $gray-light }
-.bg-gray-medium { background-color: $gray-medium }
-.bg-gray-dark { background-color: $gray-dark }
-.bg-gray-darkest { background-color: $gray-darkest }
-.bg-teal { background-color: $teal }
-.bg-teal-dark { background-color: $teal-dark }
-.bg-tealx { background-color: $tealx }
-.bg-tealx-light { background-color: $tealx-light }
-.bg-tealx-light-border { background-color: $tealx-light-border }
-.bg-orange { background-color: $orange }
-.bg-yellow { background-color: $yellow }
-.bg-yellow2 { background-color: $yellow2 }
-.bg-orange-dark { background-color: $orange-dark }
-.bg-green { background-color: $green }
-.bg-green2 { background-color: $green2 }
-.bg-green-dark { background-color: $green-dark }
-.bg-red { background-color: $red }
-.bg-red2 { background-color: $red2 }
-.bg-blue { background-color: $blue }
-.bg-blue2 { background-color: $blue2 }
-.bg-active-blue { background-color: $active-blue }
-.bg-active-blue-border { background-color: $active-blue-border }
-.bg-pink { background-color: $pink }
+.hover-white:hover { color: $white }
+.hover-borderColor:hover { color: $borderColor }
