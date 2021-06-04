@@ -68,6 +68,7 @@ function getStorageName(type) {
   playing: state.playing,
   completed: state.completed,
   skip: state.skip,
+  skipToIssue: state.skipToIssue,
   speed: state.speed,
   disabled: state.cssLoading || state.messagesLoading,
   fullscreenDisabled: state.messagesLoading,
@@ -123,6 +124,7 @@ export default class Controls extends React.Component {
       nextProps.playing !== this.props.playing ||
       nextProps.completed !== this.props.completed || 
       nextProps.skip !== this.props.skip || 
+      nextProps.skipToIssue !== this.props.skipToIssue || 
       nextProps.speed !== this.props.speed ||
       nextProps.disabled !== this.props.disabled ||
       nextProps.fullscreenDisabled !== this.props.fullscreenDisabled ||
@@ -248,6 +250,7 @@ export default class Controls extends React.Component {
       exceptionsCount,
       showExceptions,
       fullscreen,
+      skipToIssue
     } = this.props;
 
     return (
@@ -263,6 +266,13 @@ export default class Controls extends React.Component {
                   disabled={ disabled }
                   label="Back"
                   icon="replay-10"
+                />
+                <ControlButton
+                  disabled={ disabled }
+                  onClick={ this.props.toggleSkipToIssue }
+                  active={ skipToIssue }
+                  label="Skip to Issue"
+                  icon={skipToIssue ? 'skip-forward-fill' : 'skip-forward'}
                 />
               </div>
               :
