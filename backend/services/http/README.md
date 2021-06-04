@@ -19,7 +19,7 @@
 }
 ```
 
-### Responce 
+### Response 
 
 ```
 200 application/json
@@ -38,7 +38,7 @@
 ```
 <binary encoded messages>
 ```
-### Responce
+### Response
 200 OK
 
 OR
@@ -53,7 +53,7 @@ OR
 ```
 <binary encoded messages>
 ```
-### Responce
+### Response
 200 OK
 
 
@@ -68,5 +68,5 @@ OR
 Binary files with the hash-filename in the `filename` header each.
 
 
-### Responce
+### Response
 200 OK

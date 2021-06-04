@@ -25,7 +25,7 @@ const store = new Vuex.Store({
 });
 ```
 
-You can customize the plugin behaviour with options to sanitize your data. They are similar to the ones from the standard `createLogger` plugin.
+You can customize the plugin behavior with options to sanitize your data. They are similar to the ones from the standard `createLogger` plugin.
 
 ```js
 trackerVuex({

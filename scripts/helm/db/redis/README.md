@@ -419,7 +419,7 @@ TLS support can be enabled in the chart by specifying the `tls.` parameters whil
 
 For example:
 
-First, create the secret with the cetificates files:
+First, create the secret with the certificates files:
 
 ```console
 kubectl create secret generic certificates-tls-secret --from-file=./cert.pem --from-file=./cert.key --from-file=./ca.pem
