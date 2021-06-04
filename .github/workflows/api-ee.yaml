@@ -39,7 +39,7 @@ jobs:
         ENVIRONMENT: staging
       run: |
         cd api
-        PUSH_IMAGE=1 bash build.sh
+        PUSH_IMAGE=1 bash build.sh ee
     - name: Deploy to kubernetes
       run: |
         cd scripts/helm/
