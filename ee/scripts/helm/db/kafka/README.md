@@ -638,7 +638,7 @@ As the image run as non-root by default, it is necessary to adjust the ownership
 By default, the chart is configured to use Kubernetes Security Context to automatically change the ownership of the volume. However, this feature does not work in all Kubernetes distributions.
 As an alternative, this chart supports using an initContainer to change the ownership of the volume before mounting it in the final destination.
 
-You can enable this initContainer by setting `volumePermissions.enabled` too `true`.
+You can enable this initContainer by setting `volumePermissions.enabled` to `true`.
 
 ## Upgrading
 
