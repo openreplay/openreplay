@@ -62,9 +62,8 @@ export const toggleSpeed = initCheck((...args) => instance.toggleSpeed(...args))
 export const speedUp = initCheck((...args) => instance.speedUp(...args));
 export const speedDown = initCheck((...args) => instance.speedDown(...args));
 export const attach = initCheck((...args) => instance.attach(...args));
-export const mark = initCheck((...args) => instance.marker.markBySelector(...args));
+export const markElement = initCheck((...args) => instance.marker && instance.marker.mark(...args));
 export const scale = initCheck(() => instance.scale());
-export const markBelowMouse = initCheck(() => instance.marker.mark(instance.cetCursorTarget()));
 export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
 
 export const Controls = {
@@ -75,6 +74,4 @@ export const Controls = {
   toggleSpeed,
   speedUp,
   speedDown,
-  mark,
-  markBelowMouse,
 }

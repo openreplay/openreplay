@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import cn from 'classnames';
 import useInputState from 'App/hooks/useInputState';
 
 interface Props {
@@ -34,7 +35,7 @@ export default function InlineInput({ value, commit, className }: Props) {
 			onKeyPress={ onKeyPress }
 			onBlur={ onBlur }
 			ref={ inputRef }
-			className={ className }
+			className={ cn("font-mono", className) }
 		/>
 	);
 }

@@ -26,6 +26,10 @@ export default class Marker {
     this._marker = marker;
   }
 
+  get target() {
+    return this._target;
+  }
+
   mark(element) {
     if (this._target === element) {
       return;

@@ -1,7 +1,6 @@
 //import { select } from 'optimal-select'; 
 
 export default  class Inspector {
-  //target: Element | null = null
   //private callbacks;
   captureCallbacks = [];
   bubblingCallbacks = [];
@@ -11,24 +10,26 @@ export default  class Inspector {
   }
 
   _onMouseMove = (e) => {
-    const { overlay } = this.screen;
-    if (!overlay.contains(e.target)) {
-      this.target = null;
-      return this.marker.unmark();
-    }
+    // const { overlay } = this.screen;
+    // if (!overlay.contains(e.target)) {
+    //   return;
+    // }
 
     e.stopPropagation();
 
     const target = this.screen.getElementFromPoint(e);
-    if (target === this.target) {
+    if (target === this.marker.target) {
       return;
     }
-    this.target = target;
     this.marker.mark(target);
   }
 
+  _onOverlayLeave = () => {
+    return this.marker.unmark();
+  }
+
   _onMarkClick = () => {
-    let target = this.target;
+    let target = this.marker.target;
     if (!target) {
       return
     }
@@ -58,10 +59,12 @@ export default  class Inspector {
   toggle(flag, clickCallback) {
     this.clickCallback = clickCallback;
     if (flag) {
-      document.addEventListener('mousemove', this._onMouseMove);
+      this.screen.overlay.addEventListener('mousemove', this._onMouseMove);
+      this.screen.overlay.addEventListener('mouseleave', this._onOverlayLeave);
       this.screen.overlay.addEventListener('click', this._onMarkClick);
     } else {
-      document.removeEventListener('mousemove', this._onMouseMove);
+      this.screen.overlay.removeEventListener('mousemove', this._onMouseMove);
+      this.screen.overlay.removeEventListener('mouseleave', this._onOverlayLeave);
       this.screen.overlay.removeEventListener('click', this._onMarkClick);
     }
   }

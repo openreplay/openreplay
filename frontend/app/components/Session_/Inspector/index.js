@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { toggleInspectorMode } from 'Player';
+import React, { useEffect, useState, useRef } from 'react';
+import { toggleInspectorMode, markElement } from 'Player';
 import ElementView from './ElementView';
 import BottomBlock from '../BottomBlock';
 
@@ -13,18 +13,43 @@ import BottomBlock from '../BottomBlock';
 export default function Inspector () {
   const [doc, setDoc] = useState(null);
   const [openChain, setOpenChain] = useState([]);
+  const [selectedElement, _setSelectedElement] = useState(null);
+  const selectedElementRef = useRef(selectedElement);
+  const setSelectedElement = elem => {
+    selectedElementRef.current = elem;
+    _setSelectedElement(elem);
+  }
+
 	useEffect(() => {
     const doc = toggleInspectorMode(true, ({ target }) => {
-      const openChain = [ target ];
-      while (target.parentElement !== null) {
-        target = target.parentElement;
-        openChain.unshift(target);
-      }
+      const openChain = [];
+      let currentTarget = target;
+      do {
+        openChain.unshift(currentTarget);
+        currentTarget = currentTarget.parentElement;
+      } while (currentTarget !== null);
       setOpenChain(openChain);
+      setSelectedElement(target);
     });
     setDoc(doc);
     setOpenChain([ doc.documentElement ]);
-    return () => toggleInspectorMode(false);
+
+    const onKeyPress = e => {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const elem = selectedElementRef.current;
+        console.log(elem)
+        if (elem !== null && elem.parentElement !== null) {
+          console.log('a?')
+          elem.parentElement.removeChild(elem);
+          setSelectedElement(null);
+        }
+      }
+    }
+    window.addEventListener("keydown", onKeyPress);
+    return () => {
+      toggleInspectorMode(false);
+      window.removeEventListener("keydown", onKeyPress);
+    }
   }, []);
 
 	if  (!doc) return null;
@@ -33,7 +58,17 @@ export default function Inspector () {
       {/* <BottomBlock.Header> */}
       {/* </BottomBlock.Header> */}
       <BottomBlock.Content>
-      	<ElementView element={ doc.documentElement } level={0} context={doc.defaultView} openChain={ openChain } />
+        <div onMouseLeave={ () => markElement(null) } className="scroll-x" >
+        	<ElementView 
+            element={ doc.documentElement }
+            level={0}
+            context={doc.defaultView}
+            openChain={ openChain }
+            selectedElement={ selectedElement }
+            setSelectedElement={ setSelectedElement }
+            onHover={ markElement }
+          />
+        </div>
       </BottomBlock.Content>
     </BottomBlock>
 	);
