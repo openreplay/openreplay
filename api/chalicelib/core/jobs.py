@@ -144,7 +144,7 @@ def execute_jobs():
                 )
 
                 sessions.delete_sessions_by_session_ids(session_ids)
-                sessions_mobs.prefix_mobs(session_ids, "DEL_")
+                sessions_mobs.delete_mobs(session_ids)
             else:
                 raise Exception(f"The action {job['action']} not supported.")
 

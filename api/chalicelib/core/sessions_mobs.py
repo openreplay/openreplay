@@ -1,5 +1,6 @@
 from chalicelib.utils.helper import environ
 from chalicelib.utils.s3 import client
+from chalicelib.utils import s3
 
 
 def get_web(sessionId):
@@ -24,9 +25,6 @@ def get_ios(sessionId):
     )
 
 
-def prefix_mobs(session_ids, prefix_with):
+def delete_mobs(session_ids):
     for session_id in session_ids:
-        client.rename(
-            environ["sessions_bucket"], session_id,
-            environ["sessions_bucket"], prefix_with + session_id
-        )
+        s3.schedule_for_deletion(environ["sessions_bucket"], session_id)
