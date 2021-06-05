@@ -59,6 +59,7 @@ OpenReplay can be deployed anywhere. Follow our step-by-step guides for deployin
 - [Google Cloud](https://docs.openreplay.com/deployment/deploy-gcp)
 - [Azure](https://docs.openreplay.com/deployment/deploy-azure)
 - [Digital Ocean](https://docs.openreplay.com/deployment/deploy-digitalocean)
+- [Scaleway](https://docs.openreplay.com/deployment/deploy-scaleway)
 - [Kubernetes](https://docs.openreplay.com/deployment/deploy-kubernetes)
 
 ## OpenReplay Cloud
