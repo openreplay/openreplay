@@ -1,0 +1,10 @@
+FROM python:3.8-slim
+
+WORKDIR /usr/src/app
+
+COPY . .
+
+RUN pip install -r ./deploy/requirements_bigquery.txt
+
+CMD ["python", "consumer.py"]
+

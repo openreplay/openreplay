@@ -1,5 +1,4 @@
 # coding: utf-8
-import yaml
 from sqlalchemy import BigInteger, Boolean, Column, Integer, ARRAY, VARCHAR, text, VARCHAR
 from sqlalchemy.ext.declarative import declarative_base
 from pathlib import Path
@@ -12,31 +11,18 @@ metadata = Base.metadata
 
 base_path = Path(__file__).parent.parent
 
-# Load configuration file
-conf = yaml.load(
-    open(f'{base_path}/utils/config.yml'), Loader=yaml.FullLoader)
-try:
-    db_conf = conf[DATABASE]
-except KeyError:
-    raise KeyError("Please provide a configuration in a YAML file with a key like\n"
-                   "'snowflake', 'pg', 'bigquery', 'clickhouse' or 'redshift'.")
-
 # Get a table name from a configuration file
 try:
-    events_table_name = db_conf['events_table_name']
+    events_table_name = os.environ['events_table_name']
 except KeyError as e:
     events_table_name = None
     print(repr(e))
 try:
-    events_detailed_table_name = db_conf['events_detailed_table_name']
+    events_detailed_table_name = os.environ['events_detailed_table_name']
 except KeyError as e:
     print(repr(e))
     events_detailed_table_name = None
-try:
-    sessions_table_name = db_conf['sessions_table']
-except KeyError as e:
-    print(repr(e))
-    raise KeyError("Please provide a table name under a key 'table' in a YAML configuration file")
+sessions_table_name = os.environ['sessions_table']
 
 
 class Session(Base):
@@ -387,3 +373,4 @@ class DetailedEvent(Base):
     pageclose = Column(Boolean)
     received_at = Column(BigInteger)
     batch_order_number = Column(BigInteger)
+

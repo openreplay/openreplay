@@ -127,3 +127,4 @@ class DBConnection:
 
         my_session.close()
         connection.close()
+
