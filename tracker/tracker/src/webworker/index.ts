@@ -2,6 +2,8 @@ import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from
 import Message from '../messages/message';
 import Writer from '../messages/writer';
 
+import type { MessageData } from './types';
+
 // TODO: what if on message overflows? (maybe one option)
 const MAX_BATCH_SIZE = 4 * 1e5; // Max 400kB  
 const SEND_INTERVAL = 20 * 1000;
@@ -27,7 +29,8 @@ let sendIntervalID: ReturnType<typeof setInterval>;
 const sendQueue: Array<Uint8Array> = [];
 let busy = false;
 let attemptsCount = 0;
-const ATTEMPT_TIMEOUT = 5000;
+let ATTEMPT_TIMEOUT = 8000;
+let MAX_ATTEMPTS_COUNT = 10;
 function sendBatch(batch: Uint8Array):void {
   const req = new XMLHttpRequest();
   req.open("POST", ingestPoint + "/v1/web/i");  // TODO opaque request?
@@ -57,8 +60,8 @@ function sendBatch(batch: Uint8Array):void {
       }
     }
   };
-  req.onerror = function() {
-    if (attemptsCount >= 3) {
+  req.onerror = function(e) {
+    if (attemptsCount >= MAX_ATTEMPTS_COUNT) {
       reset();
       self.postMessage(null);
       return
@@ -113,6 +116,8 @@ self.onmessage = ({ data }: MessageEvent) => {
     pageNo = data.pageNo || pageNo;
     timestamp = data.startTimestamp || timestamp;
     timeAdjustment = data.timeAdjustment || timeAdjustment;
+    MAX_ATTEMPTS_COUNT = data.connAttemptCount || MAX_ATTEMPTS_COUNT;
+    ATTEMPT_TIMEOUT = data.connAttemptGap || ATTEMPT_TIMEOUT;
     if (writer.isEmpty()) {
       writeBatchMeta();
     }

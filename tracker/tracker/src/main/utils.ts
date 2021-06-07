@@ -11,8 +11,19 @@ export function normSpaces(str: string): string {
   return str.trim().replace(/\s+/g, ' ');
 }
 
+// isAbsoluteUrl regexp:  /^([a-z][a-z\d\+\-\.]*:)?\/\//i.test(url)
 export function isURL(s: string): boolean {
   return s.substr(0, 8) === 'https://' || s.substr(0, 7) === 'http://';
+}
+
+export function getBaseURI(): string {
+	if (document.baseURI) {
+		return document.baseURI;
+	}
+	// IE only
+	return document.head
+		?.getElementsByTagName("base")[0]
+		?.getAttribute("href") || location.origin + location.pathname;
 }
 
 export const IN_BROWSER = !(typeof window === "undefined");
@@ -54,3 +65,4 @@ export function hasOpenreplayAttribute(e: Element, name: string): boolean {
 	}
 	return false;
 }
+

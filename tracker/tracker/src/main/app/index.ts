@@ -7,7 +7,10 @@ import Ticker from './ticker';
 
 import { deviceMemory, jsHeapSizeLimit } from '../modules/performance';
 
-import { Options as ObserverOptions } from './observer';
+import type { Options as ObserverOptions } from './observer';
+
+import type { Options as WebworkerOptions, MessageData } from '../../webworker/types';
+
 export type Options = {
   revID: string;
   node_id: string;
@@ -17,7 +20,7 @@ export type Options = {
   ingestPoint: string;
   __is_snippet: boolean;
   onStart?: (info: { sessionID: string, sessionToken: string, userUUID: string }) => void;
-} & ObserverOptions;
+} & ObserverOptions & WebworkerOptions;
 
 type Callback = () => void;
 
@@ -33,7 +36,6 @@ export default class App {
   private readonly options: Options;
   private readonly projectKey: string;
   private readonly revID: string;
-  private socketFailedAttempts = 0;
   private isActive = false;
   private version = 'TRACKER_VERSION';
   private readonly worker?: Worker;
@@ -187,7 +189,14 @@ export default class App {
       sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
       const startTimestamp = timestamp();
 
-      this.worker.postMessage({ ingestPoint: this.options.ingestPoint, pageNo, startTimestamp }); // brings delay of 10th ms?  
+      const messageData: MessageData = { 
+        ingestPoint: this.options.ingestPoint, 
+        pageNo, 
+        startTimestamp,
+        connAttemptCount: this.options.connAttemptCount,
+        connAttemptGap: this.options.connAttemptGap,
+      }
+      this.worker.postMessage(messageData); // brings delay of 10th ms?  
       this.observer.observe();
       this.startCallbacks.forEach((cb) => cb());
       this.ticker.start();
