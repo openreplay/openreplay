@@ -8,6 +8,7 @@ import withOverlay from 'Components/hocs/withOverlay';
 import { attach as attachPlayer, Controls as PlayerControls, connectPlayer } from 'Player';
 import Controls from './Controls';
 import stl from './player.css';
+import AutoplayTimer from '../AutoplayTimer';
 
 
 const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screenWrapper } />));
@@ -16,6 +17,8 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   playing: state.playing,
   loading: state.messagesLoading,
   disconnected: state.disconnected,
+  completed: state.completed,
+  autoplay: state.autoplay
 }))
 @connect(state => ({
   //session: state.getIn([ 'sessions', 'current' ]),
@@ -23,6 +26,7 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   targetDefinerDisplayed: state.getIn([ 'components', 'targetDefiner', 'isDisplayed' ]),
   inspectorMode: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+  nextId: state.getIn([ 'sessions', 'nextId' ]),
 }), {
   hideTargetDefiner,
   toggleInspectorMode: () => toggleInspectorMode(false),
@@ -100,6 +104,9 @@ export default class Player extends React.PureComponent {
       disconnected,
       fullscreen,
       fullscreenOff,
+      completed,
+      autoplay,
+      nextId,
     } = this.props;
 
     return (
@@ -140,6 +147,7 @@ export default class Player extends React.PureComponent {
               </div>
             </React.Fragment>
           }
+          { completed && autoplay && nextId && <AutoplayTimer /> }
           <ScreenWrapper 
             ref={ this.screenWrapper } 
             overlayed={ targetDefinerDisplayed }

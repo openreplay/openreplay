@@ -13,6 +13,7 @@ import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 
 import cls from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
+import Autoplay from './Autoplay';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -111,6 +112,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
 
           <div className='ml-auto flex items-center'>
+            <Autoplay />
+            <div className={ cls.divider } />
             <IconButton
               className="mr-2"
               tooltip="Bookmark"
