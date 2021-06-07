@@ -1,4 +1,4 @@
-import { List, Map, set } from 'immutable';
+import { List, Map } from 'immutable';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
 import Watchdog, { getSessionWatchdogTypes } from 'Types/watchdog';
