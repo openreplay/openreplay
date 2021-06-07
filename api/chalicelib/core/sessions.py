@@ -1,11 +1,6 @@
-from chalicelib.utils import pg_client, helper
+from chalicelib.utils import pg_client, helper, dev
 from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, \
-    sessions_mobs, issues
-from chalicelib.utils import dev
-
-from chalicelib.core import projects, errors
-
-from chalicelib.core import resources
+    sessions_mobs, issues, projects, errors, resources
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -649,11 +644,76 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
                     {query_part}
                     ORDER BY s.session_id         
                     LIMIT 50;""", {
-                                     "projectId": project_id,
-                                     "userId": user_id,
-                                     "startDate": start_date,
-                                     "endDate": end_date
-                                 }))
+            "projectId": project_id,
+            "userId": user_id,
+            "startDate": start_date,
+            "endDate": end_date
+        }))
 
         sessions = cur.fetchall()
     return helper.list_to_camel_case(sessions)
+
+
+def get_session_user(project_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """\
+            SELECT
+                user_id,
+                count(*) as session_count,	
+                max(start_ts) as last_seen,
+                min(start_ts) as first_seen
+            FROM
+                "public".sessions
+            WHERE
+                project_id = %(project_id)s
+                AND user_id = %(user_id)s
+                AND duration is not null
+            GROUP BY user_id;
+            """,
+            {"project_id": project_id, "user_id": user_id}
+        )
+        cur.execute(query=query)
+        data = cur.fetchone()
+    return helper.dict_to_camel_case(data)
+
+
+def get_session_ids_by_user_ids(project_id, user_ids):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """\
+            SELECT session_id FROM public.sessions
+            WHERE
+                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
+            {"project_id": project_id, "user_id": tuple(user_ids)}
+        )
+        ids = cur.execute(query=query)
+    return ids
+
+
+def delete_sessions_by_session_ids(session_ids):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """\
+            DELETE FROM public.sessions
+            WHERE
+                session_id IN %(session_ids)s;""",
+            {"session_ids": tuple(session_ids)}
+        )
+        cur.execute(query=query)
+
+    return True
+
+
+def delete_sessions_by_user_ids(project_id, user_ids):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            """\
+            DELETE FROM public.sessions
+            WHERE
+                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
+            {"project_id": project_id, "user_id": tuple(user_ids)}
+        )
+        cur.execute(query=query)
+
+    return True

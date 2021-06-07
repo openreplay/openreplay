@@ -12,7 +12,7 @@ echo $DOCKER_REPO
 } || {
     docker login $DOCKER_REPO
     cd ../../api
-    PUSH_IMAGE=1 bash build.sh
+    PUSH_IMAGE=1 bash build.sh $@
     cd ../backend
-    PUSH_IMAGE=1 bash build.sh
+    PUSH_IMAGE=1 bash build.sh $@
 }

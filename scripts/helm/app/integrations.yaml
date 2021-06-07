@@ -28,3 +28,4 @@ env:
   KAFKA_SERVERS: kafka.db.svc.cluster.local:9092
   KAFKA_USE_SSL: false
   TOKEN_SECRET: secret_token_string # TODO: generate on buld
+  LICENSE_KEY: ""

@@ -3,7 +3,7 @@ export default [
   { value: 'performance.first_meaningful_paint.average', text: 'performance.first_meaningful_paint.average', unit: 'ms' },
   { value: 'performance.page_load_time.average', text: 'performance.page_load_time.average', unit: 'ms' },
   { value: 'performance.dom_build_time.average', text: 'performance.dom_build_time.average', unit: 'ms' },
-  { value: 'performance.speed_index', text: 'performance.speed_index.average', unit: 'ms' },
+  { value: 'performance.speed_index.average', text: 'performance.speed_index.average', unit: 'ms' },
   { value: 'performance.page_response_time.average', text: 'performance.page_response_time.average', unit: 'ms' },
   { value: 'performance.ttfb.average', text: 'performance.ttfb.average', unit: 'ms' },
   { value: 'performance.time_to_render.average', text: 'performance.time_to_render.average', unit: 'ms' },
