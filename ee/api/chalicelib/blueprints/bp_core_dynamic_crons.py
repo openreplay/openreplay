@@ -7,6 +7,7 @@ _overrides.chalice_app(app)
 from chalicelib.ee import telemetry
 from chalicelib.ee import unlock
 
+
 # Run every day.
 @app.schedule(Cron('0', '0', '?', '*', '*', '*'))
 def telemetry_cron(event):
@@ -15,4 +16,6 @@ def telemetry_cron(event):
 
 @app.schedule(Cron('0/60', '*', '*', '*', '?', '*'))
 def unlock_cron(event):
+    print("validating license")
     unlock.check()
+    print(f"valid: {unlock.is_valid()}")

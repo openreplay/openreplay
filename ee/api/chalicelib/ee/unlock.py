@@ -9,12 +9,14 @@ def __get_mid():
 
 
 def __get_license():
-    return
+    return environ["license"]
 
 
 def check():
     r = requests.post('https://parrot.asayer.io/os/license', json={"mid": __get_mid(), "license": __get_license()})
     if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
+        print("license validation failed")
+        print(r.text)
         environ["expiration"] = "-1"
     else:
         environ["expiration"] = str(r.json()["data"].get("expiration"))
@@ -26,4 +28,6 @@ def get_expiration_date():
 
 
 def is_valid():
+    if environ.get("lastCheck") is None:
+        check()
     return get_expiration_date() - TimeUTC.now() > 0
