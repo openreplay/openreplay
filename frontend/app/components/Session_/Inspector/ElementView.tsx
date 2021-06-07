@@ -10,7 +10,7 @@ import InlineInput from './InlineInput';
 
 
 
-//TODO: add attribute, add text (when there was no text before)
+//TODO: add attribute, add child, add text (when there was no text before), Ctrl+Z 
 
  interface Window {
   Element: typeof Element;
