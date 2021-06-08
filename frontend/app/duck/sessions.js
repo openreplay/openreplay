@@ -185,7 +185,13 @@ const reducer = (state = initialState, action = {}) => {
           : event)));
     }
     case SET_ACTIVE_TAB:
-      return state.set('activeTab', action.tab);
+      const allList = action.tab.type === 'all' ? 
+        state.get('list') :
+        state.get('list').filter(s => s.issueTypes.includes(action.tab.type))
+      
+      return state
+        .set('activeTab', action.tab)
+        .set('sessionIds', allList.map(({ sessionId }) => sessionId ).toJS())
     case SET_TIMEZONE:
       return state.set('timezone', action.timezone)
     default:
