@@ -20,7 +20,7 @@
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules compile.js",
     "build": "npm run clean && npm run tsc && npm run rollup && npm run compile",
-    "prepare": "node checkver.js && npm run build"
+    "prepare": "node checkver.cjs && npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
