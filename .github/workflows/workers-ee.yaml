@@ -7,7 +7,7 @@ on:
     paths:
       - ee/backend/**
 
-name: Build and deploy workers
+name: Build and deploy workers EE
 
 jobs:
   deploy:

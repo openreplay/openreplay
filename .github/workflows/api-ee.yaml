@@ -6,7 +6,7 @@ on:
     paths:
       - ee/api/**
 
-name: Build and Deploy Chalice
+name: Build and Deploy Chalice EE
 
 jobs:
   deploy:
