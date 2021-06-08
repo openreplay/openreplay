@@ -11,6 +11,9 @@ def get_by_session_id(session_id):
                 FROM resources
                 WHERE session_id = toUInt64(%(session_id)s);"""
         params = {"session_id": session_id}
+        print("resources.get_by_session_id-----------------")
+        print(ch_query % params)
+        print("-----------------")
         rows = ch.execute(query=ch_query, params=params)
         results = []
         for r in rows:
