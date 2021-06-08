@@ -48,7 +48,7 @@ jobs:
         sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" vars.yaml
-        bash openreplay-cli --install chalice
+        bash kube-install.sh --app chalice
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         IMAGE_TAG: ee-${{ github.sha }}
