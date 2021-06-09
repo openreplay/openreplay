@@ -128,7 +128,9 @@ export default function ElementView({
 					"hover:bg-gray-light": open && !isSelected,
 				})}
 			>
-				<span role="button" onClick={toggleOpen}><Icon inline name={open ? "arrow-down" : "arrow-square-left" }/></span>
+				<span role="button mr-1" onClick={toggleOpen}>
+					<Icon inline name={open ? "caret-down-fill" : "caret-right-fill" }/>
+				</span>
 				<span onClick={ selectElement }>
 					{'<'}
 					<TagEditor 

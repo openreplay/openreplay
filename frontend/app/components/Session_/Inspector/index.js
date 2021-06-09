@@ -58,7 +58,7 @@ export default function Inspector () {
       {/* <BottomBlock.Header> */}
       {/* </BottomBlock.Header> */}
       <BottomBlock.Content>
-        <div onMouseLeave={ () => markElement(null) } className="scroll-x" >
+        <div onMouseLeave={ () => markElement(null) }>
         	<ElementView 
             element={ doc.documentElement }
             level={0}
