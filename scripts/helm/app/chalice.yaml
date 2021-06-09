@@ -26,8 +26,8 @@ env:
   pg_dbname: postgres
   pg_user: postgres
   pg_password: asayerPostgres
-  ch_host: ''
-  ch_port: ''
+  ch_host: clickhouse.db.svc.cluster.local
+  ch_port: 9000
   alert_ntf: http://127.0.0.1:8000/async/alerts/notifications/%s
   email_signup: http://127.0.0.1:8000/async/email_signup/%s
   email_funnel: http://127.0.0.1:8000/async/funnel/%s
