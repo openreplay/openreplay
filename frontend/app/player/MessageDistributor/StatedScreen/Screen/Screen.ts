@@ -59,6 +59,8 @@ export default class Screen extends BaseScreen {
       doc.open();
       doc.write(docElement.outerHTML); // Context will be iframe, so instanceof Element won't work
       doc.close();
+
+      // TODO! : copy stylesheets, check with styles
     }
     this.display(false);
     this.inspector.toggle(true, clickCallback);

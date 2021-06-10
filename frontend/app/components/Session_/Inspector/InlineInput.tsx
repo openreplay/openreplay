@@ -8,6 +8,13 @@ interface Props {
 	className?: string;
 }
 
+// TODO: maybe a better way exists?
+const stopPropagation: React.KeyboardEventHandler = (e) => {
+	if (e.key === 'Backspace' || e.key === 'Delete') {
+	  e.stopPropagation();
+	}
+}
+
 export default function InlineInput({ value, commit, className }: Props) {
 	const [ valueState, onChange ] = useInputState(value);
 	//useEffect(() => setValueState(value), [ value ]);
@@ -33,6 +40,7 @@ export default function InlineInput({ value, commit, className }: Props) {
 			size={ valueState.length }
 			onChange={ onChange }
 			onKeyPress={ onKeyPress }
+			onKeyDown={ stopPropagation }
 			onBlur={ onBlur }
 			ref={ inputRef }
 			className={ cn("font-mono", className) }
