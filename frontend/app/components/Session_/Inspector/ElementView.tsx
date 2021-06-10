@@ -3,6 +3,7 @@ import cn from 'classnames';
 import useToggle from 'App/hooks/useToggle';
 import useForceUpdate from 'App/hooks/useForceUpdate';
 import { Icon } from 'UI';
+import stl from './inspector.css';
 
 import AttrView from './AttrView';
 import TextView from './TextView';
@@ -27,6 +28,7 @@ interface Props {
   selectedElement?: Element; // for deletion and other things
   setSelectedElement?: (Element) => void;
   onHover?: (Element) => void;
+	className: String
 }
 
 interface TagEditorProps {
@@ -67,7 +69,8 @@ function TagEditor({ element, forceUpdateParent, context }: TagEditorProps) {
 	const tag = element.tagName.toLowerCase();
 	return editing && !RESTRICTED_TAGS.includes(tag) 
 		? <InlineInput value={ tag } commit={ commitTag } />
-		: <span 
+		: <span
+				className={stl.tag}
 				onDoubleClick={ 
 					RESTRICTED_TAGS.includes(tag) 
 						? undefined 
@@ -88,6 +91,7 @@ export default function ElementView({
 	selectedElement,
 	setSelectedElement,
 	onHover,
+	className='',
 }: Props) {
 	const [ open, toggleOpen, _, setOpen ] = useToggle(false);
 
@@ -115,16 +119,17 @@ export default function ElementView({
 		: undefined;
 	return (
 		<div 
-			className={ cn("font-mono", { // todo: only in root
-				"bg-blue": !open && isSelected,
+			className={ cn("font-mono", className, { // todo: only in root
+				[stl.bgHighlight]: !open && isSelected,
 				"hover:bg-gray-light": !open && !isSelected,
 			})}
+			style={{ fontSize: '12px' }}
 			onMouseOver={ onMouseOver }
 		>
 			<span 
 				className={cn({ 
 					"block": open,
-					"bg-blue": open && isSelected,
+					[stl.bgHighlight]: open && isSelected,
 					"hover:bg-gray-light": open && !isSelected,
 				})}
 			>
@@ -132,7 +137,7 @@ export default function ElementView({
 					<Icon inline name={open ? "caret-down-fill" : "caret-right-fill" }/>
 				</span>
 				<span onClick={ selectElement }>
-					{'<'}
+					<span className={stl.tag}>{'<'}</span>
 					<TagEditor 
 						element={ element }
 						context={ context }
@@ -144,12 +149,12 @@ export default function ElementView({
 							forceUpdateElement={ forceUpdate }
 						/>
 					)}
-					{'>'}
+					<span className={stl.tag}>{'>'}</span>
 				</span>
 			</span>
 			{ open 
 				? 
-				<div className="pl-4">
+				<>
 					{Array.from(element.childNodes).map(child => {
 						if (child instanceof context.Element) {
 							return (
@@ -162,6 +167,7 @@ export default function ElementView({
 									selectedElement={ selectedElement }
 									setSelectedElement={ setSelectedElement }
 									onHover={ onHover }
+									className="pl-4"
 								/>
 							);
 						} else if (child instanceof context.Text) {
@@ -172,10 +178,10 @@ export default function ElementView({
 						}
 						return null;
 					})}
-				</div>
+				</>
 				: '...'
 			}
-			{'<'}{ tag }{'/>'}
+			<span className={stl.tag}>{'</'}{ tag }{'>'}</span>
 		</div>
 	);
 

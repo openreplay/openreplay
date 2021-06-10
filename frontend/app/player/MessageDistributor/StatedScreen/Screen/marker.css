@@ -1,35 +1,35 @@
 .marker {
   display: none;
   position: absolute;
-  background: rgba(40, 40, 100, .5);
+  background: rgba(40, 40, 100, .3);
 }
 .marker div {
   position: absolute;
   background-image: linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d),
                     linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d);
-  background-size: 20px 20px;
+  background-size: 5px 5px;
 }
 .markerL {
   left: -1px;
   top: -100vh;
   bottom: -100vh;
-  width: 2px;
+  width: 1px;
 }
 .markerT {
   top: -1px;
   left: -100vw;
   right: -100vw;
-  height: 2px;
+  height: 1px;
 }
 .markerR {
   right: 1px;
   top: -100vh;
   bottom: -100vh;
-  width: 2px;
+  width: 1px;
 }
 .markerB {
   bottom: 1px;
   left: -100vw;
   right: -100vw;
-  height: 2px;
+  height: 1px;
 }

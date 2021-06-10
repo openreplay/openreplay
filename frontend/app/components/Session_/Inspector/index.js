@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { toggleInspectorMode, markElement } from 'Player';
 import ElementView from './ElementView';
 import BottomBlock from '../BottomBlock';
+import stl from './inspector.css'
 
 // TODO: refactor: use Layout from the Sessions and put everything there under the WebPlayer folder
 
@@ -54,11 +55,9 @@ export default function Inspector () {
 
 	if  (!doc) return null;
 	return (
-		<BottomBlock>
-      {/* <BottomBlock.Header> */}
-      {/* </BottomBlock.Header> */}
+		<BottomBlock>      
       <BottomBlock.Content>
-        <div onMouseLeave={ () => markElement(null) }>
+        <div onMouseLeave={ () => markElement(null) } className={stl.wrapper}>
         	<ElementView 
             element={ doc.documentElement }
             level={0}

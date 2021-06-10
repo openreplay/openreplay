@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import InlineInput from './InlineInput';
-
+import stl from './inspector.css'
 
 interface Props {
   attr: Attr;
@@ -44,9 +44,9 @@ export default function AttrView({ attr, forceUpdateElement }: Props) {
 				className="ml-2"
 			/>
 		: <span className="ml-2" onDoubleClick={ () => setEditing(true) }>
-				<span>{attr.name}</span>
+				<span className={stl.attributeName}>{attr.name}</span>
 				{'='}
-				{'"'}<span>{attr.value}</span>{'"'}
+				{'"'}<span className={stl.attributeValue}>{attr.value}</span>{'"'}
 			</span>
 	;
 }
