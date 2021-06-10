@@ -6,6 +6,7 @@ interface Props {
 	value: string;
 	commit: (string) => void;
 	className?: string;
+	style?: Object
 }
 
 // TODO: maybe a better way exists?
@@ -15,7 +16,7 @@ const stopPropagation: React.KeyboardEventHandler = (e) => {
 	}
 }
 
-export default function InlineInput({ value, commit, className }: Props) {
+export default function InlineInput({ value, commit, className, style }: Props) {
 	const [ valueState, onChange ] = useInputState(value);
 	//useEffect(() => setValueState(value), [ value ]);
 
@@ -44,6 +45,7 @@ export default function InlineInput({ value, commit, className }: Props) {
 			onBlur={ onBlur }
 			ref={ inputRef }
 			className={ cn("font-mono", className) }
+			style={style}
 		/>
 	);
 }

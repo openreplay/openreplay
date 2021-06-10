@@ -69,7 +69,7 @@ function TagEditor({ element, forceUpdateParent, context }: TagEditorProps) {
 	const tag = element.tagName.toLowerCase();
 	return editing && !RESTRICTED_TAGS.includes(tag) 
 		? <InlineInput value={ tag } commit={ commitTag } />
-		: <span
+		: <span			
 				className={stl.tag}
 				onDoubleClick={ 
 					RESTRICTED_TAGS.includes(tag) 

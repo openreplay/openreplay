@@ -63,6 +63,7 @@ export default function AttrView({ attr, forceUpdateElement }: Props) {
 				value={ `${ attr.name }="${ attr.value }"` } 
 				commit={ commit }
 				className="ml-2"
+				style={{ maxWidth: '500px' }} 
 			/>
 		: <span className="ml-2" onDoubleClick={ () => setEditing(true) }>
 				<span className={stl.attributeName}>{attr.name}</span>
