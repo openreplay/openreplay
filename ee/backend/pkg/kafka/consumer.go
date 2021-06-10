@@ -68,7 +68,7 @@ func (consumer *Consumer) DisableAutoCommit() {
 
 
 func (consumer *Consumer) Commit() error {
-	_, _ := consumer.c.Commit() // TODO: return error if it is not "No offset stored"
+	consumer.c.Commit() // TODO: return error if it is not "No offset stored"
 	return nil
 }
 
