@@ -1,7 +1,20 @@
 from chalicelib.utils import pg_client
 import requests
 
-from chalicelib.core.telemetry import process_data
+
+def process_data(data, edition='fos'):
+    return {
+        'edition': edition,
+        'tracking': data["opt_out"],
+        'version': data["version_number"],
+        'user_id': data["user_id"],
+        'owner_email': None if data["opt_out"] else data["email"],
+        'organization_name': None if data["opt_out"] else data["name"],
+        'users_count': data["t_users"],
+        'projects_count': data["t_projects"],
+        'sessions_count': data["t_sessions"],
+        'integrations_count': data["t_integrations"]
+    }
 
 
 def compute():
