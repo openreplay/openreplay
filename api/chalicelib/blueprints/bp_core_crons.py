@@ -1,10 +1,15 @@
 from chalice import Blueprint
 from chalice import Cron
 from chalicelib import _overrides
-from chalicelib.core import reset_password, weekly_report
+from chalicelib.core import reset_password, weekly_report, jobs
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
+
+
+@app.schedule(Cron('0', '*', '?', '*', '*', '*'))
+def run_scheduled_jobs(event):
+    jobs.execute_jobs()
 
 
 @app.schedule(Cron('0/60', '*', '*', '*', '?', '*'))

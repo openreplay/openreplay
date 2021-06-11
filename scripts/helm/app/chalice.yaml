@@ -26,8 +26,8 @@ env:
   pg_dbname: postgres
   pg_user: postgres
   pg_password: asayerPostgres
-  ch_host: ''
-  ch_port: ''
+  ch_host: clickhouse.db.svc.cluster.local
+  ch_port: 9000
   alert_ntf: http://127.0.0.1:8000/async/alerts/notifications/%s
   email_signup: http://127.0.0.1:8000/async/email_signup/%s
   email_funnel: http://127.0.0.1:8000/async/funnel/%s
@@ -64,3 +64,4 @@ env:
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
   PYTHONUNBUFFERED: '0'
+  version_number: '1.0.0'

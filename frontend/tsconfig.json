@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "es2015",
+    "moduleResolution": "node", //?
+    //"allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    //"sourceMap": false,
+    "lib": [ "es2020", "dom" ],
+    "jsx": "react",
+    "strict": true,
+    "noImplicitAny": false, // TODO: set true for the strict check
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": { // TODO: one-source truth
+      "App": ["./app"],
+      "UI": ["./app/components/ui"]
+    }
+  },
+  "exclude": [
+    "node_modules",
+    ".storybook",
+    "scripts"
+  ]
+}

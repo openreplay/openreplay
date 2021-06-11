@@ -297,7 +297,7 @@ export default class MessageDistributor extends StatedScreen {
       //   this.cursor.click();
       // }
       // After all changes - redraw the marker
-      this.marker.redraw();
+      //this.marker.redraw();
     })    
   }
 

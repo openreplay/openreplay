@@ -25,3 +25,4 @@ env:
   ALERT_NOTIFICATION_STRING: http://chalice-openreplay.app.svc.cluster.local:8000/alerts/notifications
   CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
   POSTGRES_STRING: postgres://postgres:asayerPostgres@postgresql.db.svc.cluster.local:5432
+  LICENSE_KEY: ""

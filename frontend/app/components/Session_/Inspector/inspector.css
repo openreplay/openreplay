@@ -1,0 +1,25 @@
+.wrapper {
+  height: 290px;
+  overflow-y: auto;
+  padding: 5px;
+}
+
+.bgHighlight {
+  background-color: rgba(0, 0, 205, 0.2);
+}
+
+.tag {
+  color: #044289;
+}
+
+.attributeName {
+  color: #2188ff;
+}
+
+.attributeValue {
+  color: #d73a49;
+}
+
+.attributeInput {
+  max-width: 75% !important;
+}

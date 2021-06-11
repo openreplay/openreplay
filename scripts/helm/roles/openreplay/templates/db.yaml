@@ -3,7 +3,8 @@ image:
   repository: {{ docker_registry_url }}
   tag: {{ image_tag }}
 {% endif %}
-
+env:
+  LICENSE_KEY: "{{ enterprise_edition_license }}"
 {% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []
 {% endif %}

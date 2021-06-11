@@ -24,6 +24,28 @@ const cssEntrypoints = [
   'rc-time-picker/assets/index.css',
 ];
 
+const babelLoader = {
+  loader: 'babel-loader',
+  options: {
+    presets: [ 
+      [ '@babel/preset-env', {  // probably, use dynamic imports for polifills in future
+        "targets": "> 4%, not dead", 
+        useBuiltIns: 'entry',
+        corejs: 3
+      }], 
+      '@babel/preset-react',
+      "@babel/preset-flow", //TODO: remove, use ts 
+    ],
+    plugins: [ 
+      "@babel/plugin-syntax-bigint",
+      [ '@babel/plugin-proposal-decorators', { legacy: true } ],
+      [ '@babel/plugin-proposal-class-properties', { loose: true }],
+      [ '@babel/plugin-proposal-private-methods', { loose: true }],
+      // 'recharts'
+    ]
+  }
+};
+
 const cssFiles = fs.readdirSync(GLOBAL_STYLES_DIR, { withFileTypes: true });
 cssFiles.forEach(file => {
   if (/.css$/.test(file.name)) {
@@ -90,7 +112,7 @@ module.exports = (envName = 'local') => {
         // global and module css separation. TODO more beautyfull
         {
           test: /\.css$/,
-          exclude: [ /node_modules/, /app\/styles/ ],
+          include: [ path.join(__dirname, "app/components"), path.join(__dirname, "app/player") ],
           use: [
             cssFileLoader,
             {
@@ -124,35 +146,22 @@ module.exports = (envName = 'local') => {
           test: /\.svg$/,
           use: ['@svgr/webpack'],
         },
-
         {
   	      test: /\.js$/,
-  	      exclude: /node_modules/,
-  	      use: {
-  	        loader: 'babel-loader',
-  	        options: {
-  	          presets: [ 
-                [ '@babel/preset-env', {  // probably, use dynamic imports for polifills in future
-                  "targets": "> 4%, not dead", 
-                  useBuiltIns: 'entry',
-                  corejs: 3
-                }], 
-                '@babel/preset-react',
-                "@babel/preset-flow",
-              ],
-  	          plugins: [ 
-                "@babel/plugin-syntax-bigint",
-  	          	[ '@babel/plugin-proposal-decorators', { legacy: true } ],
-  	          	[ '@babel/plugin-proposal-class-properties', { loose: true }],
-                [ '@babel/plugin-proposal-private-methods', { loose: true }],
-  	          	// 'recharts'
-  	          ]
-  	        }
-  	      },
-  	    }
+  	      include: path.join(__dirname, "app"),
+  	      use: babelLoader,
+  	    },
+        {
+          test: /\.tsx?$/,
+          include: path.join(__dirname, "app"),
+          use: [ 'ts-loader' ]
+        },
       ]
     },
-    resolve: { alias },
+    resolve: { 
+      alias,
+      extensions: ['.js', '.json', '.ts', '.tsx' ],
+    },
     mode: env.PRODUCTION ? 'production' : 'development',
     optimization: {
       splitChunks: {

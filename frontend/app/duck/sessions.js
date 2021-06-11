@@ -18,11 +18,13 @@ const SORT = 'sessions/SORT';
 const REDEFINE_TARGET = 'sessions/REDEFINE_TARGET';
 const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
 const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
+const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
 
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
 const initialState = Map({
   list: List(),
+  sessionIds: [],
   current: Session(),
   total: 0,
   keyMap: Map(),
@@ -93,9 +95,19 @@ const reducer = (state = initialState, action = {}) => {
 
       return state
         .set('list', list)
+        .set('sessionIds', list.map(({ sessionId }) => sessionId ).toJS())
         .set('total', total)
         .set('keyMap', keyMap)
         .set('wdTypeCount', wdTypeCount);
+    
+    case SET_AUTOPLAY_VALUES: {
+      const sessionIds = state.get('sessionIds')
+      const currentSessionId = state.get('current').sessionId
+      const currentIndex = sessionIds.indexOf(currentSessionId)
+      return state
+        .set('previousId', sessionIds[currentIndex - 1])
+        .set('nextId', sessionIds[currentIndex + 1]);
+    }
     case SET_EVENT_QUERY: {      
       const events = state.get('current').events;      
       const query = action.filter.query;
@@ -173,7 +185,13 @@ const reducer = (state = initialState, action = {}) => {
           : event)));
     }
     case SET_ACTIVE_TAB:
-      return state.set('activeTab', action.tab);
+      const allList = action.tab.type === 'all' ? 
+        state.get('list') :
+        state.get('list').filter(s => s.issueTypes.includes(action.tab.type))
+      
+      return state
+        .set('activeTab', action.tab)
+        .set('sessionIds', allList.map(({ sessionId }) => sessionId ).toJS())
     case SET_TIMEZONE:
       return state.set('timezone', action.timezone)
     default:
@@ -247,6 +265,13 @@ export function redefineTarget(target) {
   return {
     type: REDEFINE_TARGET,
     target,
+  };
+}
+
+export const setAutoplayValues = (sessionId) => {
+  return {
+    type: SET_AUTOPLAY_VALUES,
+    sessionId,
   };
 }
 

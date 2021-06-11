@@ -30,8 +30,6 @@ class EventGroupWrapper extends React.PureComponent {
 
   onCheckboxClick = e => this.props.onCheckboxClick(e, this.props.event);
 
-  onEditClick = e => this.props.onEditClick(e, this.props.event);
-
   render() {
     const {
       event,
@@ -84,7 +82,6 @@ class EventGroupWrapper extends React.PureComponent {
               onCheckboxClick={ this.onCheckboxClick }
               selected={ isSelected }
               isCurrent={ isCurrent }
-              onEditClick={ this.onEditClick }
               showSelection={ showSelection }
               overlayed={ isEditing }              
               presentInSearch={presentInSearch}

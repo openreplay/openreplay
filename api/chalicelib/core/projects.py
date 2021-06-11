@@ -179,7 +179,8 @@ def get_internal_project_id(project_key):
                     where project_key =%(project_key)s AND deleted_at ISNULL;""",
                         {"project_key": project_key})
         )
-        return cur.fetchone()["project_id"]
+        row = cur.fetchone()
+        return row["project_id"] if row else None
 
 
 def get_project_key(project_id):
