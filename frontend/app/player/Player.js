@@ -21,9 +21,11 @@ const HIGHEST_SPEED = 3;
 
 const SPEED_STORAGE_KEY = "__$player-speed$__";
 const SKIP_STORAGE_KEY = "__$player-skip$__";
+const SKIP_TO_ISSUE_STORAGE_KEY = "__$player-skip-to-issue$__";
 const storedSpeed = +localStorage.getItem(SPEED_STORAGE_KEY);
 const initialSpeed = [1,2,3].includes(storedSpeed) ? storedSpeed : 1;
 const initialSkip = !!localStorage.getItem(SKIP_STORAGE_KEY);
+const initialSkipToIssue = !!localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY);
 
 export const INITIAL_STATE = {
   ...SUPER_INITIAL_STATE,
@@ -37,6 +39,7 @@ export const INITIAL_STATE = {
 
 export const INITIAL_NON_RESETABLE_STATE = {
   skip: initialSkip,
+  skipToIssue: initialSkipToIssue,
   speed: initialSpeed,
 }
 
@@ -155,7 +158,12 @@ export default class Player extends MessageDistributor {
     const skip = !getState().skip;
     localStorage.setItem(SKIP_STORAGE_KEY, skip);
     update({ skip });
+  }
 
+  toggleSkipToIssue() {
+    const skipToIssue = !getState().skipToIssue;
+    localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, skipToIssue);
+    update({ skipToIssue });
   }
 
   _updateSpeed(speed) {
