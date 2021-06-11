@@ -111,11 +111,10 @@ module.exports = (envName = 'local') => {
 
         // global and module css separation. TODO more beautyfull
         {
-          test: /\.css$/,  //i is for typings-for-css-modules-loader
+          test: /\.css$/,
           include: [ path.join(__dirname, "app/components"), path.join(__dirname, "app/player") ],
           use: [
             cssFileLoader,
-            "@teamsupercell/typings-for-css-modules-loader",
             {
             	loader: 'css-loader',
   					  options: {
