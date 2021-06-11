@@ -17,6 +17,7 @@ domain_name=`grep domain_name vars.yaml | grep -v "example" | cut -d " " -f2 | c
     }
 }
 
+sudo apt update
 which docker &> /dev/null || {
     echo "docker is not installed. Installing it..."
     user=`whoami`
@@ -38,7 +39,6 @@ export KUBECONFIG=~/.kube/config
 sed -i "s#kubeconfig.*#kubeconfig_path: ${HOME}/.kube/config#g" vars.yaml
 
 # Installing nfs common for NFS
-sudo apt update
 sudo apt install -y nfs-common
 
 bash -x kube-install.sh $@
