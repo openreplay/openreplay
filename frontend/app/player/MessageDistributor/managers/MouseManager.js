@@ -19,7 +19,7 @@ export default class MouseManager extends ListWalker<MouseMoveTimed> {
 	}
 
 	_updateHover(): void {
-    const curHoverElements = this.#screen.cursor.getTargets();
+    const curHoverElements = this.#screen.getCursorTargets();
     const diffAdd = curHoverElements.filter(elem => !this.#hoverElements.includes(elem));
     const diffRemove = this.#hoverElements.filter(elem => !curHoverElements.includes(elem));
     this.#hoverElements = curHoverElements;

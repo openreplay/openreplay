@@ -33,8 +33,6 @@ export default class StatedScreen extends Screen {
   }
 
   setSize({ height, width }) {
-    this.iframe.style.width = width + 'px';
-    this.iframe.style.height = height + 'px';
     update({ width, height });
     this.scale();
   }
