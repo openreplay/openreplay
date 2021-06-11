@@ -91,17 +91,6 @@ export default class EventsBlock extends React.PureComponent {
     }        
   }
 
-  // TODO: move to Event componenet
-  onEditClick = (e, event) => {
-    e.stopPropagation();
-    this.props.player.pause();
-    this.props.player.jump(event.time);
-    this.props.player.markBelowMouse();
-    this.props.showTargetDefiner(event.target);
-    this.setState({ editingEvent: event })
-    // this.props.setSelected([ event ]);
-  }
-
   onCheckboxClick(e, event) {
     e.stopPropagation();
     const {
@@ -171,7 +160,6 @@ export default class EventsBlock extends React.PureComponent {
               mesureHeight={measure}
               onEventClick={ this.onEventClick }
               onCheckboxClick={ this.onCheckboxClick }
-              onEditClick={this.onEditClick}
               event={ event }
               isLastEvent={ isLastEvent }
               isLastInGroup={ isLastInGroup }

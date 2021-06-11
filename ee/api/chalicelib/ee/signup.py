@@ -77,8 +77,7 @@ def create_step1(data):
                 WITH t AS (
                     UPDATE public.tenants
                         SET name = %(companyName)s,
-                            version_number = %(versionNumber)s,
-                            license =  %(licence)s
+                            version_number = %(versionNumber)s
                     WHERE tenant_id=%(tenant_id)s
                     RETURNING tenant_id, api_key
                 ),
@@ -115,9 +114,9 @@ def create_step1(data):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(query, params))
-        cur = cur.fetchone()
-        project_id = cur["project_id"]
-        api_key = cur["api_key"]
+        data = cur.fetchone()
+        project_id = data["project_id"]
+        api_key = data["api_key"]
     telemetry.new_client(tenant_id=data["tenant_id"])
     created_at = TimeUTC.now()
     r = users.authenticate(email, password)

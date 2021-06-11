@@ -54,9 +54,7 @@
         msg:
           - Below variables are mandatory. Please make sure it is updated in vars.yaml
           - kubeconfig_path
-          - docker_registry_username
-          - docker_registry_password
-          - docker_registry_url
+          - domain_name
       failed_when: true
   tags: pre-check
 - name: Creating Nginx SSL certificate
@@ -108,3 +106,23 @@
     - pre-check
     - nginx
     - all
+- name: Checking Enterprise Licence
+  uri:
+    url: https://parrot.asayer.io/os/license 
+    body:
+      mid: "UUID of the machine"
+      license: "{{ enterprise_edition_license }}"
+    body_format: json
+    creates: "{{ ansible_env.HOME }}/.config/openreplay.license"
+    follow_redirects: yes
+    force: false
+    http_agent: ansible-httpget
+    method: POST
+    return_content: true
+    status_code: [200]
+    timeout: 30
+    unsafe_writes: false
+    validate_certs: true
+  when: enterprise_edition_license|length > 0
+  register: enterprise_edition_license_check
+  failed_when: enterprise_edition_license_check.json.data.valid != true

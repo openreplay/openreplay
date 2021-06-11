@@ -127,7 +127,7 @@ def get_details(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        SELECT error_id,
+        SELECT details.error_id AS error_id,
                name,
                message,
                users,
@@ -495,7 +495,7 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
             rows = []
         else:
             main_ch_query = f"""\
-                    SELECT error_id, name, message, users, sessions, last_occurrence, first_occurrence, chart
+                    SELECT details.error_id AS error_id, name, message, users, sessions, last_occurrence, first_occurrence, chart
                     FROM (SELECT error_id,
                                  name,
                                  message,

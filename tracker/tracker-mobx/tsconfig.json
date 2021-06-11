@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "skipLibCheck": true,
     "noImplicitThis": true,
     "strictNullChecks": true,
     "alwaysStrict": true,

@@ -22,6 +22,7 @@ import {
   FETCH,
   EXCEPTIONS,
   LONGTASKS,
+  INSPECTOR,
 } from 'Duck/components/player';
 import { ReduxTime } from './Time';
 import Timeline from './Timeline';
@@ -68,8 +69,9 @@ function getStorageName(type) {
   playing: state.playing,
   completed: state.completed,
   skip: state.skip,
+  skipToIssue: state.skipToIssue,
   speed: state.speed,
-  disabled: state.cssLoading || state.messagesLoading,
+  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
   logRedCount: state.logRedCountNow,
@@ -123,10 +125,11 @@ export default class Controls extends React.Component {
       nextProps.playing !== this.props.playing ||
       nextProps.completed !== this.props.completed || 
       nextProps.skip !== this.props.skip || 
+      nextProps.skipToIssue !== this.props.skipToIssue || 
       nextProps.speed !== this.props.speed ||
       nextProps.disabled !== this.props.disabled ||
       nextProps.fullscreenDisabled !== this.props.fullscreenDisabled ||
-      //nextProps.inspectorMode !== this.props.inspectorMode ||
+      // nextProps.inspectorMode !== this.props.inspectorMode ||
       nextProps.logCount !== this.props.logCount ||
       nextProps.logRedCount !== this.props.logRedCount ||
       nextProps.resourceRedCount !== this.props.resourceRedCount ||
@@ -154,7 +157,7 @@ export default class Controls extends React.Component {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
       return;
     }
-    //if (this.props.inspectorMode) return;
+    if (this.props.inspectorMode) return;
     if (e.key === ' ') {
       document.activeElement.blur();
       this.props.togglePlay();
@@ -175,11 +178,6 @@ export default class Controls extends React.Component {
       this.props.speedUp();
     }
   }
-
-  // toggleInspectorMode = () => {
-  //   this.props.pause();
-  //   this.props.toggleInspectorMode();
-  // }
 
   forthTenSeconds = () => {
     const { time, endTime, jump } = this.props;
@@ -247,8 +245,11 @@ export default class Controls extends React.Component {
       showLongtasks,
       exceptionsCount,
       showExceptions,
-      fullscreen,
+      fullscreen,      
+      skipToIssue
     } = this.props;
+
+    const inspectorMode = bottomBlock === INSPECTOR;
 
     return (
       <div className={ styles.controls }>
@@ -263,6 +264,13 @@ export default class Controls extends React.Component {
                   disabled={ disabled }
                   label="Back"
                   icon="replay-10"
+                />
+                <ControlButton
+                  disabled={ disabled }
+                  onClick={ this.props.toggleSkipToIssue }
+                  active={ skipToIssue }
+                  label="Skip to Issue"
+                  icon={skipToIssue ? 'skip-forward-fill' : 'skip-forward'}
                 />
               </div>
               :
@@ -409,13 +417,14 @@ export default class Controls extends React.Component {
                   />
                 </React.Fragment>
               }
-              {/*            
+                         
               <ControlButton
                 disabled={ disabled && !inspectorMode }
-                onClick={ this.toggleInspectorMode }
+                active={ bottomBlock === INSPECTOR }
+                onClick={ () => toggleBottomBlock(INSPECTOR) }
                 icon={ inspectorMode ? 'close' : 'inspect' }
                 label="Inspect"
-              /> */}
+              />
             </div>
           </div>
         }

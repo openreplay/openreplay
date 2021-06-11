@@ -26,7 +26,14 @@ export default class Marker {
     this._marker = marker;
   }
 
+  get target() {
+    return this._target;
+  }
+
   mark(element) {
+    if (this._target === element) {
+      return;
+    }
     this._target = element;
     this._selector = null;
     this.redraw();
@@ -36,7 +43,7 @@ export default class Marker {
     this.mark(null);
   }
 
-  _autodefineTarget() {
+  _autodefineTarget() { // TODO: put to Screen
     if (this._selector) {
       try {
         const fitTargets = this.screen.document.querySelectorAll(this._selector);
@@ -44,7 +51,7 @@ export default class Marker {
           this._target = null;
         } else {
           this._target = fitTargets[ 0 ];
-          const cursorTarget = this.screen.cursor.getTarget();
+          const cursorTarget = this.screen.getCursorTarget();
           fitTargets.forEach((target) => {
             if (target.contains(cursorTarget)) {
               this._target = target;

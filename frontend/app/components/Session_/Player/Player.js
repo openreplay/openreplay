@@ -8,6 +8,7 @@ import withOverlay from 'Components/hocs/withOverlay';
 import { attach as attachPlayer, Controls as PlayerControls, connectPlayer } from 'Player';
 import Controls from './Controls';
 import stl from './player.css';
+import AutoplayTimer from '../AutoplayTimer';
 
 
 const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screenWrapper } />));
@@ -16,19 +17,20 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   playing: state.playing,
   loading: state.messagesLoading,
   disconnected: state.disconnected,
+  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
+  inspectorMode: state.inspectorMode,
+  completed: state.completed,
+  autoplay: state.autoplay
 }))
 @connect(state => ({
   //session: state.getIn([ 'sessions', 'current' ]),
-  targetSelector: state.getIn([ 'components', 'targetDefiner', 'target', 'path' ]),
-  targetDefinerDisplayed: state.getIn([ 'components', 'targetDefiner', 'isDisplayed' ]),
-  inspectorMode: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+  nextId: state.getIn([ 'sessions', 'nextId' ]),
 }), {
   hideTargetDefiner,
   toggleInspectorMode: () => toggleInspectorMode(false),
   fullscreenOff,
 })
-@withOverlay('targetDefinerDisplayed', 'hideTargetDefiner')
 export default class Player extends React.PureComponent {
   state = {
     showPlayOverlayIcon: false,
@@ -93,13 +95,16 @@ export default class Player extends React.PureComponent {
     const {
       className,
       playing,
+      disabled,
       inspectorMode,
-      targetDefinerDisplayed,
       bottomBlockIsActive,
       loading,
       disconnected,
       fullscreen,
       fullscreenOff,
+      completed,
+      autoplay,
+      nextId,
     } = this.props;
 
     return (
@@ -119,30 +124,25 @@ export default class Player extends React.PureComponent {
           //   label="Esc"
           // />
         }
-        <div className={ cn(stl.playerView, targetDefinerDisplayed ? stl.inspectorMode : '') }>
-          { !inspectorMode && // TODO: beauty
-            <React.Fragment>
-              <div className={ stl.overlay }>
-                <Loader loading={ loading } />
-                { disconnected && <div className={ stl.disconnected }>{ "Disconnected" }</div> }
-              </div>
+        <div className={ stl.playerView }>
+          { !inspectorMode && 
+            <div 
+              className={ stl.overlay }
+              onClick={ disabled ? null : this.togglePlay }
+            >
+              <Loader loading={ loading } />
               <div 
-                className={ stl.overlay }
-                onClick={ this.togglePlay }
+                className={ cn(stl.iconWrapper, { 
+                  [ stl.zoomIcon ]: showPlayOverlayIcon 
+                }) } 
               >
-                <div 
-                  className={ cn(stl.iconWrapper, { 
-                    [ stl.zoomIcon ]: showPlayOverlayIcon 
-                  }) } 
-                >
-                  <div className={ playing ? stl.playIcon : stl.pauseIcon } />
-                </div>
+                <div className={ playing ? stl.playIcon : stl.pauseIcon } />
               </div>
-            </React.Fragment>
+            </div>
           }
+          { completed && autoplay && nextId && <AutoplayTimer /> }
           <ScreenWrapper 
             ref={ this.screenWrapper } 
-            overlayed={ targetDefinerDisplayed }
           />
         </div>
         <Controls

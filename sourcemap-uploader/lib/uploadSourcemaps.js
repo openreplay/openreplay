@@ -13,13 +13,13 @@ const getUploadURLs = (api_key, project_key, js_file_urls) =>
       path: pathPrefix + `${project_key}/sourcemaps/`,
       headers: { Authorization: api_key, 'Content-Type': 'application/json' },
     }
-    if (global.LOG) {
+    if (global._VERBOSE) {
       console.log("Request: ", options, "\nFiles: ", js_file_urls);
     }
     const req = https.request(
       options,
       res => {
-        if (global.LOG) {
+        if (global._VERBOSE) {
           console.log("Response Code: ", res.statusCode, "\nMessage: ", res.statusMessage);
         }
         if (res.statusCode === 403) {
@@ -32,7 +32,7 @@ const getUploadURLs = (api_key, project_key, js_file_urls) =>
         let data = '';
         res.on('data', s => (data += s));
         res.on('end', () => {
-          if (global.LOG) {
+          if (global._VERBOSE) {
             console.log("Server Response: ", data)
           }
           resolve(JSON.parse(data).data)
@@ -58,7 +58,7 @@ const uploadSourcemap = (upload_url, body) =>
       },
       res => {
         if (res.statusCode !== 200) {
-          if (global.LOG) {
+          if (global._VERBOSE) {
             console.log("Response Code: ", res.statusCode, "\nMessage: ", res.statusMessage);
           }
 

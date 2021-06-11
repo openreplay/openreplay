@@ -110,7 +110,6 @@ export default class Event extends React.PureComponent {
       selected, 
       isCurrent, 
       onClick, 
-      onEditClick, 
       showSelection, 
       onCheckboxClick, 
       showLoadInfo,

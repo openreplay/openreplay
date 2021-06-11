@@ -17,7 +17,7 @@ export default Member.extend({
   fromJS: ({ current = {}, ...account})=> ({
     ...account,
     license: current.license,
-    expirationDate: current.expirationDate && DateTime.fromMillis(current.expirationDate * 1000 || 0),
+    expirationDate: current.expirationDate > 0 && DateTime.fromMillis(current.expirationDate || 0),
     appearance: Appearance(account.appearance),
   })
 });

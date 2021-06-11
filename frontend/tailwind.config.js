@@ -11,7 +11,7 @@ module.exports = {
 		'alignSelf',
 		//'appearance',
 		// 'backgroundAttachment',
-		// 'backgroundColor',  // TODO: replace genscript
+		'backgroundColor',
 		// 'backgroundOpacity',
 		// 'backgroundPosition',
 		// 'backgroundRepeat',
