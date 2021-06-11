@@ -17,6 +17,7 @@ uline="\e[4m"
 reset="\e[0m"
 
 working_dir=$(pwd)
+script_name=`basename "$0"`
 
 echo -e ${reset}
 
@@ -86,6 +87,7 @@ cat <<"EOF"
 EOF
   echo -e "${green}Usage: openreplay-cli [ -h | --help ]
                   [ -v | --verbose ]
+                  [ -m | --monitoring <Only for enterprise edition> ]
                   [ -e | --enterprise <enerprise_key> ]
                   [ -a | --app APP_NAME ] to install/reinstall specific application
                   [ -t | --type small|medium|ideal ]"
@@ -105,9 +107,9 @@ apps can specifically be installed/reinstalled:
 installation_type=1
 type() {
     case "$1" in
-        small) installation_type=1 ;;
+        small)  installation_type=1   ;;
         medium) installation_type=1.5 ;;
-        ideal) installation_type=2 ;;
+        ideal)  installation_type=2   ;;
         *) 
             echo -e ${red}${bold}'ERROR!!!\nwrong value for `type`'${reset}
             usage ;;
@@ -136,15 +138,25 @@ function app(){
     esac
 }
 
+enterprise=0
 function enterprise(){
+    enterprise=1
     sed -i "s#enterprise_edition_license.*#enterprise_edition_license: \"${1}\"#g" vars.yaml
     # Updating image version to be ee
     sed -i "s/\(image_tag.*[0-9]\)\"$/\1-ee\"/" vars.yaml
     echo "Importing enterprise code..."
     cp -rf ../../ee/scripts/* ../
 }
+monitoring(){
+    if [[ enterprise -eq 0 ]]; then
+        echo -e "${red}Monitoring is supported only for enterprise edition.\n bash ./${script_name} -e <key> --monitoring ${reset}"
+        exit 1
+    fi
+    sed -i "s#enable_monitoring.*#enable_monitoring: \"true\"#g" vars.yaml
+}
+
 # Parsing command line args.
-PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vht:a:e: --long verbose,help,type:,app:,enterprise: -- "$@")
+PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vht:a:e:m --long verbose,help,type:,app:,enterprise:,monitoring -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   usage
@@ -154,11 +166,12 @@ eval set -- "$PARSED_ARGUMENTS"
 while :
 do
   case "$1" in
-    -v | --verbose)    VERBOSE=1  ;  shift ;;
-    -h | --help)       usage      ;  shift ;;
-    -t | --type)       type       $2 ;     shift 2 ;;
-    -a | --app)        app        $2 ;     shift 2 ;;
-    -e | --enterprise) enterprise $2 ;     shift 2 ;;
+    -v | --verbose)    VERBOSE=1     ;  shift   ;;
+    -h | --help)       usage         ;  shift   ;;
+    -t | --type)       type       $2 ;  shift 2 ;;
+    -a | --app)        app        $2 ;  shift 2 ;;
+    -e | --enterprise) enterprise $2 ;  shift 2 ;;
+    -m | --monitoring) monitoring    ;  shift   ;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break ;;
     # If invalid options were passed, then getopt should have reported an error,

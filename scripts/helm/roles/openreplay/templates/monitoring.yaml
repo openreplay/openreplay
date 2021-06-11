@@ -1,0 +1,3 @@
+fullnameOverride: "openreplay"
+grafana:
+  adminPassword: "{{ grafana_password }}"

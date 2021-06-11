@@ -46,13 +46,6 @@ nginx_ssl_key_file_path: ""
 # By default, a default key will be generated and will update the value here.
 jwt_secret_key: ""
 
-# Enable monitoring
-# If set, monitoring stack will be installed
-# including, prometheus, grafana and other core components,
-# to scrape the metrics. But this will cost, additional resources (cpu and memory).
-# Monitoring won't be installed on base installation.
-enable_monitoring: "false"
-
 # Random password for minio,
 # If not defined, will generate at runtime.
 # Use following command to generate password
@@ -63,3 +56,18 @@ minio_secret_key: ""
 # If you're using enterprise edition.
 # Insert the enterprise_edition_License key which you got.
 enterprise_edition_license: ""
+
+# Enable monitoring
+# If set, monitoring stack will be installed
+# including, prometheus, grafana and other core components,
+# to scrape the metrics. But this will cost, additional resources (cpu and memory).
+# Monitoring won't be installed on base installation.
+enable_monitoring: "false"
+# Password for grafana.
+# If password is not given, it'll be generated, and updated here.
+#
+# Use following command to generate password 
+# `openssl rand -base64 30`
+#
+# Username: admin
+grafana_password: ""

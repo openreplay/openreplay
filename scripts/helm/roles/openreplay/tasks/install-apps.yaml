@@ -24,3 +24,8 @@
   shell: |
     helm upgrade --install -n nginx-ingress nginx-ingress "./nginx-ingress/nginx-ingress" --create-namespace
   tags: nginx
+- name: Installing Monitoring
+  shell: |
+    helm upgrade --install -n monitoring monitoring "./monitoring/kube-prometheus-stack" -f "{{ role_path }}/templates/monitoring.yaml" --create-namespace
+  tags: monitoring
+  when: enable_monitoring == "true"
