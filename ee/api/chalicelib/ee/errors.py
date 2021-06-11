@@ -127,7 +127,7 @@ def get_details(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        SELECT error_id,
+        SELECT details.error_id AS error_id,
                name,
                message,
                users,

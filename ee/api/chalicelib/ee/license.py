@@ -7,12 +7,13 @@ def get_status(tenant_id):
         cur.execute(
             cur.mogrify("SELECT * FROM public.tenants WHERE tenant_id=%(tenant_id)s;", {"tenant_id": tenant_id}))
         r = cur.fetchone()
+    license = unlock.get_license()
     return {
         "hasActivePlan": unlock.is_valid(),
         "current": {
             "edition": r.get("edition", "").upper(),
             "versionNumber": r.get("version_number", ""),
-            "license": r.get("license", "")[0:2] + "*" * (len(r.get("license", "")) - 4) + r.get("license", "")[-2:],
+            "license": license[0:2] + "*" * (len(license) - 4) + license[-2:],
             "expirationDate": unlock.get_expiration_date()
         },
         "count": {

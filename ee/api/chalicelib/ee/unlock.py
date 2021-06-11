@@ -8,14 +8,14 @@ def __get_mid():
     return str(uuid.UUID(int=uuid.getnode()))
 
 
-def __get_license():
+def get_license():
     return environ.get("LICENSE_KEY", "")
 
 
 def check():
-    license=__get_license()
+    license=get_license()
     print(f"validating: {license}")
-    r = requests.post('https://parrot.asayer.io/os/license', json={"mid": __get_mid(), "license": __get_license()})
+    r = requests.post('https://parrot.asayer.io/os/license', json={"mid": __get_mid(), "license": get_license()})
     if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
         print("license validation failed")
         print(r.text)
