@@ -2,7 +2,6 @@
   "version": "2.0",
   "app_name": "parrot",
   "environment_variables": {
-    "version": "0.0.0"
   },
   "stages": {
     "default-foss": {
