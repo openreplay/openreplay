@@ -18,8 +18,8 @@ resources:
     cpu: 256m
     memory: 512Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1m
+    memory: 1Mi
 
 env:
   ALERT_NOTIFICATION_STRING: http://chalice-openreplay.app.svc.cluster.local:8000/alerts/notifications

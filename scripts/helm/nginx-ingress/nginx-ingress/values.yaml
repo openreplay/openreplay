@@ -10,6 +10,9 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+# DNS address of the kubernetes resolver
+kubeDnsIP: ""
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""

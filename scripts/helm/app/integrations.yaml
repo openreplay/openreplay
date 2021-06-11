@@ -18,8 +18,8 @@ resources:
     cpu: 512m
     memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1m
+    memory: 1Mi
 
 env:
   POSTGRES_STRING: postgres://postgres:asayerPostgres@postgresql.db.svc.cluster.local:5432

@@ -17,8 +17,8 @@ resources:
     cpu: 1000m
     memory: 1Gi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1m
+    memory: 1Mi
 env:
   AWS_DEFAULT_REGION: us-east-1
   pg_host: postgresql.db.svc.cluster.local
