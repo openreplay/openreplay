@@ -73,6 +73,12 @@ func commitStats() error {
 		}
 	default:
 	}
-	return ch.Commit();
+	if err := ch.Commit(); err != nil {
+		return err
+	}
+	if err := ch.Prepare(); err != nil {
+		return err
+	}
+	return nil
 }
 

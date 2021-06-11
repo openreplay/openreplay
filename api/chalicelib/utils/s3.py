@@ -1,6 +1,6 @@
 from botocore.exceptions import ClientError
 from chalicelib.utils.helper import environ
-
+from datetime import datetime, timedelta
 import boto3
 import botocore
 from botocore.client import Config
@@ -70,3 +70,25 @@ def get_file(source_bucket, source_key):
         else:
             raise ex
     return result["Body"].read().decode()
+
+
+def rename(source_bucket, source_key, target_bucket, target_key):
+    s3 = boto3.resource('s3', endpoint_url=environ["S3_HOST"],
+                        aws_access_key_id=environ["S3_KEY"],
+                        aws_secret_access_key=environ["S3_SECRET"],
+                        config=Config(signature_version='s3v4'),
+                        region_name='us-east-1')
+    s3.Object(target_bucket, target_key).copy_from(CopySource=f'{source_bucket}/{source_key}')
+    s3.Object(source_bucket, source_key).delete()
+
+
+def schedule_for_deletion(bucket, key):
+    s3 = boto3.resource('s3', endpoint_url=environ["S3_HOST"],
+                        aws_access_key_id=environ["S3_KEY"],
+                        aws_secret_access_key=environ["S3_SECRET"],
+                        config=Config(signature_version='s3v4'),
+                        region_name='us-east-1')
+    s3_object = s3.Object(bucket, key)
+    s3_object.copy_from(CopySource={'Bucket': bucket, 'Key': key},
+                        Expires=datetime.now() + timedelta(days=7),
+                        MetadataDirective='REPLACE')

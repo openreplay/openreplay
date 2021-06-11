@@ -17,7 +17,7 @@ from google.oauth2.service_account import Credentials
 # Put it in utils under a name bigquery_service_account
 
 base_path = Path(__file__).parent.parent.parent
-creds_file = base_path / 'utils' / 'bigquery_service_account.json'
+creds_file = base_path / 'bigquery_utils' / 'bigquery_service_account.json'
 credentials = Credentials.from_service_account_file(
     creds_file)
 

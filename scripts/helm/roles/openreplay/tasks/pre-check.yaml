@@ -54,9 +54,7 @@
         msg:
           - Below variables are mandatory. Please make sure it is updated in vars.yaml
           - kubeconfig_path
-          - docker_registry_username
-          - docker_registry_password
-          - docker_registry_url
+          - domain_name
       failed_when: true
   tags: pre-check
 - name: Creating Nginx SSL certificate

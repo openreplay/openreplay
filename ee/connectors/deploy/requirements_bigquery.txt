@@ -1,0 +1,7 @@
+kafka-python==2.0.2
+psycopg2-binary==2.8.6
+SQLAlchemy==1.3.23
+google-cloud-bigquery
+pandas==1.2.3
+PyYAML==5.4.1
+pandas-gbq==0.14.1

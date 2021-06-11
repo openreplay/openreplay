@@ -1,4 +1,4 @@
-import { stars, hasOpenreplayAttribute } from '../utils';
+import { stars, hasOpenreplayAttribute, getBaseURI } from '../utils';
 import {
   CreateDocument,
   CreateElementNode,
@@ -130,8 +130,7 @@ export default class Observer {
         if (value.length > 1e5) {
           value = '';
         }
-        const baseURL = location.origin + location.pathname;
-        this.app.send(new SetNodeAttributeURLBased(id, name, value, baseURL));
+        this.app.send(new SetNodeAttributeURLBased(id, name, value, getBaseURI()));
       } else {
         this.app.send(new SetNodeAttribute(id, name, value));
       }
@@ -161,8 +160,7 @@ export default class Observer {
       return;
     }
     if (name === 'style' || name === 'href' && node instanceof HTMLLinkElement) {
-      const baseURL = location.origin + location.pathname;
-      this.app.send(new SetNodeAttributeURLBased(id, name, value, baseURL));
+      this.app.send(new SetNodeAttributeURLBased(id, name, value, getBaseURI()));
       return;
     }
     if (name === 'href' || value.length > 1e5) {
@@ -173,8 +171,7 @@ export default class Observer {
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (parentElement instanceof HTMLStyleElement || parentElement instanceof SVGStyleElement) {
-      const baseURL = location.origin + location.pathname;
-      this.app.send(new SetCSSDataURLBased(id, data, baseURL));
+      this.app.send(new SetCSSDataURLBased(id, data, getBaseURI()));
       return;
     }
     if (this.textMasked.has(id)) {

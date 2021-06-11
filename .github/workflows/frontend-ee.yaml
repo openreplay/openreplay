@@ -1,4 +1,4 @@
-name: S3 Deploy
+name: S3 Deploy EE
 on:
   push:
     branches:
