@@ -20,9 +20,14 @@
     - "app/*.yaml"
   when: app_name|length == 0
   tags: apps
+
+- name: getting kube dns ip
+  shell: kubectl get service --namespace kube-system kube-dns -o jsonpath="{.spec.clusterIP}"
+  register: kube_dns_ip
+  tags: nginx
 - name: Installing Proxy
   shell: |
-    helm upgrade --install -n nginx-ingress nginx-ingress "./nginx-ingress/nginx-ingress" --create-namespace
+    helm upgrade --install -n nginx-ingress nginx-ingress "./nginx-ingress/nginx-ingress" --create-namespace --set kubeDnsIP="{{ kube_dns_ip.stdout }}"
   tags: nginx
 - name: Installing Monitoring
   shell: |

@@ -116,6 +116,7 @@ data:
     ;
 
   sites.conf: |-
+    resolver {{ .Values.kubeDnsIP }};
     # Need real ip address for flags in replay.
     # Some LBs will forward real ips as x-forwarded-for
     # So making that as priority
