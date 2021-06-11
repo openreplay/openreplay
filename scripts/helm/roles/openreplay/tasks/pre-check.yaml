@@ -126,3 +126,19 @@
   when: enterprise_edition_license|length > 0
   register: enterprise_edition_license_check
   failed_when: enterprise_edition_license_check.json.data.valid != true
+- name: Generaing grafana password
+  block:
+    - name: Generating grafana password
+      set_fact:
+        grafana_password_generated: "{{ lookup('password', '/dev/null length=30 chars=ascii_letters') }}"
+    - name: Updating vars.yaml
+      lineinfile:
+        regexp: '^grafana_password'
+        line: 'grafana_password: "{{ grafana_password_generated }}"'
+        path: vars.yaml
+    - name: Generating grafana access key
+      set_fact:
+        grafana_password: "{{ grafana_password_generated }}"
+  when: grafana_password|length == 0
+  tags: 
+    - pre-check
