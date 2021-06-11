@@ -64,8 +64,13 @@ def or_middleware(event, get_response):
         return Response(body={"errors": ["expired license"]}, status_code=403)
     if "{projectid}" in event.path.lower():
         from chalicelib.ee import projects
-        if not projects.is_authorized(project_id=event.uri_params["projectId"],
-                                      tenant_id=event.context["authorizer"]["tenantId"]):
+        if event.context["authorizer"].get("authorizer_identity") == "api_key" \
+                and not projects.is_authorized(
+            project_id=projects.get_internal_project_id(event.uri_params["projectId"]),
+            tenant_id=event.context["authorizer"]["tenantId"]) \
+                or event.context["authorizer"].get("authorizer_identity", "jwt") == "jwt" \
+                and not projects.is_authorized(project_id=event.uri_params["projectId"],
+                                               tenant_id=event.context["authorizer"]["tenantId"]):
             print("unauthorized project")
             pg_client.close()
             return Response(body={"errors": ["unauthorized project"]}, status_code=401)

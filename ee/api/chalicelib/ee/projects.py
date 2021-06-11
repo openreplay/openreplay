@@ -167,3 +167,63 @@ def edit_gdpr(project_id, gdpr):
                         {"project_id": project_id, "gdpr": json.dumps(gdpr)})
         )
         return cur.fetchone()["gdpr"]
+
+
+def get_internal_project_id(project_key):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+                    SELECT project_id
+                    FROM public.projects 
+                    where project_key =%(project_key)s AND deleted_at ISNULL;""",
+                        {"project_key": project_key})
+        )
+        row = cur.fetchone()
+        return row["project_id"] if row else None
+
+
+def get_project_key(project_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+                    SELECT project_key
+                    FROM public.projects 
+                    where project_id =%(project_id)s AND deleted_at ISNULL;""",
+                        {"project_id": project_id})
+        )
+        return cur.fetchone()["project_key"]
+
+
+def get_capture_status(project_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+                    SELECT 
+                        sample_rate AS rate, sample_rate=100 AS capture_all
+                    FROM public.projects 
+                    where project_id =%(project_id)s AND deleted_at ISNULL;""",
+                        {"project_id": project_id})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
+
+
+def update_capture_status(project_id, changes):
+    if "rate" not in changes and "captureAll" not in changes:
+        return {"errors": ["please provide 'rate' and/or 'captureAll' attributes to update."]}
+    if int(changes["rate"]) < 0 or int(changes["rate"]) > 100:
+        return {"errors": ["'rate' must be between 0..100."]}
+    sample_rate = 0
+    if "rate" in changes:
+        sample_rate = int(changes["rate"])
+    if changes.get("captureAll"):
+        sample_rate = 100
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+                    UPDATE public.projects
+                    SET sample_rate= %(sample_rate)s
+                    WHERE project_id =%(project_id)s AND deleted_at ISNULL;""",
+                        {"project_id": project_id, "sample_rate": sample_rate})
+        )
+
+    return changes
