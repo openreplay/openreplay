@@ -140,3 +140,5 @@
       set_fact:
         grafana_password: "{{ grafana_password_generated }}"
   when: grafana_password|length == 0
+  tags: 
+    - pre-check
