@@ -21,7 +21,7 @@ parser.addArgument(['-p', '-i', '--project-key'], { // -i is depricated
 parser.addArgument(['-s', '--server'], {
   help: 'OpenReplay API server URL for upload',
 });
-parser.addArgument(['-l', '--log'], {
+parser.addArgument(['-v', '--verbose'], {
   help: 'Log requests information',
   action: 'storeTrue',
 });
@@ -53,9 +53,9 @@ dir.addArgument(['-u', '--js-dir-url'], {
 
 // TODO: exclude in dir
 
-const { command, api_key, project_key, server, log, ...args } = parser.parseArgs();
+const { command, api_key, project_key, server, verbose, ...args } = parser.parseArgs();
 
-global.LOG = !!log;
+global._VERBOSE = !!verbose;
 
 try {
   global.SERVER = new URL(server || "https://api.openreplay.com");

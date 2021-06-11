@@ -5,7 +5,7 @@ A NPM module to upload your JS sourcemaps files to [OpenReplay](https://openrepl
 ## Installation
 
 ```
-npm i @openreplay/sourcemap-uploader -D
+npm i -D @openreplay/sourcemap-uploader 
 ```
 
 ## CLI
@@ -23,6 +23,8 @@ Thus, if you have your `app-42.js` along with  the `app-42.js.map` in the `./bui
 ```
 sourcemap-uploader -k API_KEY -p PROJECT_KEY dir -m ./build -u https://myapp.com/static
 ```
+
+Use `-v` (`--verbose`) key to see the logs.
 
 
 ## NPM
