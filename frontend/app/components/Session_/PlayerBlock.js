@@ -46,7 +46,6 @@ export default class PlayerBlock extends React.PureComponent {
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
-        {/* { !fullscreen && <PlayerBlockHeader /> } */}
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
