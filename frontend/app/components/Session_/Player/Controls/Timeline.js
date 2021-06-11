@@ -53,6 +53,7 @@ const getPointerIcon = (type) => {
   skipIntervals: state.skipIntervals,
   events: state.eventList,
   skip: state.skip,
+  skipToIssue: state.skipToIssue,
   disabled: state.cssLoading || state.messagesLoading,
   endTime: state.endTime,
   live: state.live,
@@ -81,6 +82,14 @@ export default class Timeline extends React.PureComponent {
   createEventClickHandler = time => (e) => {
     e.stopPropagation();
     this.props.jump(time)
+  }
+
+  componentDidMount() {
+    const { issues, events, fetchList, skipToIssue } = this.props;
+    const firstIssue = issues.get(0);
+    if (firstIssue && skipToIssue) {
+      this.props.jump(firstIssue.time);
+    }
   }
 
   render() {
