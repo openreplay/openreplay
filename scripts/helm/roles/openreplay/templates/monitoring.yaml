@@ -1,0 +1,6 @@
+fullnameOverride: "openreplay"
+grafana:
+  adminPassword: "{{ grafana_password }}"
+  env:
+    GF_SERVER_ROOT_URL: http://grafana.local.com/grafana
+

@@ -18,8 +18,8 @@ resources:
     cpu: 256m
     memory: 512Mi
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 1m
+    memory: 1Mi
 
 env:
   ASSETS_ORIGIN: /sessions-assets # TODO: full path (with the minio prefix)
