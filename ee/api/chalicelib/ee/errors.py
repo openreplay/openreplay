@@ -495,7 +495,7 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
             rows = []
         else:
             main_ch_query = f"""\
-                    SELECT error_id, name, message, users, sessions, last_occurrence, first_occurrence, chart
+                    SELECT details.error_id AS error_id, name, message, users, sessions, last_occurrence, first_occurrence, chart
                     FROM (SELECT error_id,
                                  name,
                                  message,
@@ -519,8 +519,8 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
                                 ORDER BY timestamp)
                                 GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
-            print("--------------------")
-            print(main_ch_query % params)
+            # print("--------------------")
+            # print(main_ch_query % params)
             rows = ch.execute(query=main_ch_query, params=params)
             if len(statuses) == 0:
                 with pg_client.PostgresClient() as cur:
