@@ -26,6 +26,6 @@
   tags: nginx
 - name: Installing Monitoring
   shell: |
-    helm upgrade --install -n monitoring monitoring "./monitoring/kube-prometheus-stack" -f "{{ role_path }}/templates/monitoring.yaml" --create-namespace
+    helm upgrade --install -n monitoring monitoring "./monitoring/kube-prometheus-stack" -f "/tmp/monitoring.yaml" --create-namespace
   tags: monitoring
   when: enable_monitoring == "true"
