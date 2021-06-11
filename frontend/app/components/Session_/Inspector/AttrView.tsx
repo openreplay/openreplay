@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import InlineInput from './InlineInput';
-import stl from './inspector.css'
+import stl from './inspector.css';
+import cn from 'classnames';
 
 interface Props {
   attr: Attr;
@@ -62,8 +63,7 @@ export default function AttrView({ attr, forceUpdateElement }: Props) {
 		? <InlineInput 
 				value={ `${ attr.name }="${ attr.value }"` } 
 				commit={ commit }
-				className="ml-2"
-				style={{ maxWidth: '500px' }} 
+				className={ cn("ml-2", stl.attributeInput) }
 			/>
 		: <span className="ml-2" onDoubleClick={ () => setEditing(true) }>
 				<span className={stl.attributeName}>{attr.name}</span>

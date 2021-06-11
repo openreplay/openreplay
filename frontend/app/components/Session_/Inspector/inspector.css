@@ -19,3 +19,7 @@
 .attributeValue {
   color: #d73a49;
 }
+
+.attributeInput {
+  max-width: 75% !important;
+}
