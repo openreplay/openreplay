@@ -64,6 +64,12 @@ def or_middleware(event, get_response):
         return Response(body={"errors": ["expired license"]}, status_code=403)
     if "{projectid}" in event.path.lower():
         from chalicelib.ee import projects
+        print("==================================")
+        print(event.context["authorizer"].get("authorizer_identity"))
+        print(event.uri_params["projectId"])
+        print(projects.get_internal_project_id(event.uri_params["projectId"]))
+        print(event.context["authorizer"]["tenantId"])
+        print("==================================")
         if event.context["authorizer"].get("authorizer_identity") == "api_key" \
                 and not projects.is_authorized(
             project_id=projects.get_internal_project_id(event.uri_params["projectId"]),
