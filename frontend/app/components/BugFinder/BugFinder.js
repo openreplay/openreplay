@@ -25,6 +25,7 @@ import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from '../shared/NoSessionsMessage';
+import Assist from 'Components/Assist'
 
 const AUTOREFRESH_INTERVAL = 10 * 60 * 1000;
 
@@ -143,6 +144,7 @@ export default class BugFinder extends React.PureComponent {
 
     return (
       <div className="page-margin container-90 flex relative">
+        <Assist />
         <div className="flex-1 flex">
           <div className="side-menu">
             <SessionsMenu
