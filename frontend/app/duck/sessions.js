@@ -12,6 +12,7 @@ const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
+const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
 const TOGGLE_FAVORITE = new RequestTypes('sessions/TOGGLE_FAVORITE');
 const FETCH_ERROR_STACK = new RequestTypes('sessions/FETCH_ERROR_STACK');
 const SORT = 'sessions/SORT';
@@ -248,6 +249,13 @@ export function toggleFavorite(session) {
 export function fetchFavoriteList() {
   return {
     types: FETCH_FAVORITE_LIST.toArray(),
+    call: client => client.get('/sessions2/favorite'),
+  };
+}
+
+export function fetchLiveList() {
+  return {
+    types: FETCH_LIVE_LIST.toArray(),
     call: client => client.get('/sessions2/favorite'),
   };
 }
