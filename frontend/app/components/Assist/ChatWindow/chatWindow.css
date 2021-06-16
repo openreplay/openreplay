@@ -1,6 +1,6 @@
 .wrapepr {
   background-color: white;
-  border: solid thin $gray-medium
+  border: solid thin #CCC;
   border-radius: 3px;
   position: fixed;  
   height: 400px;

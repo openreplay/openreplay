@@ -1,5 +1,5 @@
 import React from 'react'
-import ChatWindow from './components/ChatWindow/ChatWindow'
+import ChatWindow from './ChatWindow/ChatWindow'
 import ScreenSharing from './ScreenSharing/ScreenSharing'
 
 function Assist() {

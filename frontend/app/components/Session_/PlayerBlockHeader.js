@@ -14,6 +14,7 @@ import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import cls from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
+import AssistActions from '../Assist/components/AssistActions';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -89,7 +90,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       live,
       disabled,
       jiraConfig,
-      fullscreen
+      fullscreen,
     } = this.props;
 
     return (
@@ -112,31 +113,36 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
 
           <div className='ml-auto flex items-center'>
-            <Autoplay />
-            <div className={ cls.divider } />
-            <IconButton
-              className="mr-2"
-              tooltip="Bookmark"
-              onClick={ this.toggleFavorite }
-              loading={ loading }
-              icon={ favorite ? 'star-solid' : 'star' }
-              // label={ favorite ? 'Favourited' : 'Favourite' }
-              plain
-            />
-            <SharePopup
-              entity="sessions"
-              id={ sessionId }
-              trigger={
+            { !live && <AssistActions isLive /> }
+            { live && (
+              <>
+                <Autoplay />            
+                <div className={ cls.divider } />
                 <IconButton
                   className="mr-2"
-                  tooltip="Share Session"
-                  disabled={ disabled }
-                  icon={ 'share-alt' }
-                  //label="Share"
+                  tooltip="Bookmark"
+                  onClick={ this.toggleFavorite }
+                  loading={ loading }
+                  icon={ favorite ? 'star-solid' : 'star' }
+                  // label={ favorite ? 'Favourited' : 'Favourite' }
                   plain
                 />
-              }
-            />
+                <SharePopup
+                  entity="sessions"
+                  id={ sessionId }
+                  trigger={
+                    <IconButton
+                      className="mr-2"
+                      tooltip="Share Session"
+                      disabled={ disabled }
+                      icon={ 'share-alt' }
+                      //label="Share"
+                      plain
+                    />
+                  }
+                />
+              </>
+            )}
             { !live && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>

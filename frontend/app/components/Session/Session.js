@@ -6,6 +6,7 @@ import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { Link, NoContent, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
 
+import LivePlayer from './LivePlayer';
 import WebPlayer from './WebPlayer';
 import IOSPlayer from './IOSPlayer';
 
@@ -48,7 +49,7 @@ function Session({
     	<Loader className="flex-1" loading={ loading || sessionId !== session.sessionId }> 
     		{ session.isIOS 
     			? <IOSPlayer session={session} />
-    			: <WebPlayer />
+    			: <LivePlayer />
       	}
     	</Loader>
     </NoContent>

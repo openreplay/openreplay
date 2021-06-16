@@ -81,6 +81,16 @@ function SessionsMenu(props) {
           onClick={() => onMenuItemClick({ name: 'Bookmarks', type: 'bookmark' })}
         />
       </div>
+      
+      <div className="my-3">
+        <SideMenuitem
+          title="Assist"
+          iconName="person"
+          active={activeTab.type === 'live'}
+          onClick={() => onMenuItemClick({ name: 'Assist', type: 'live' })}
+        />
+      </div>
+      
       <div className={cn(stl.divider, 'mb-4')} />
       <SavedSearchList />
     </div>

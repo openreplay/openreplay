@@ -123,7 +123,7 @@ export default class SessionList extends React.PureComponent {
     const { activeTab, allList, total }  = this.props;
     var filteredList;
 
-    if (activeTab.type !== ALL && activeTab.type !== 'bookmark') { // Watchdog sessions
+    if (activeTab.type !== ALL && activeTab.type !== 'bookmark' && activeTab.type !== 'live') { // Watchdog sessions
       filteredList = allList.filter(session => activeTab.fits(session))
     } else {
       filteredList = allList
