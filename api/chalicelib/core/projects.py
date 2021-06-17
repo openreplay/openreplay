@@ -194,6 +194,16 @@ def get_project_key(project_id):
         )
         return cur.fetchone()["project_key"]
 
+def get_project_by_key(project_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+                    SELECT project_key
+                    FROM public.projects 
+                    where project_id =%(project_id)s AND deleted_at ISNULL;""",
+                        {"project_id": project_id})
+        )
+        return cur.fetchone()["project_key"]
 
 def get_capture_status(project_id):
     with pg_client.PostgresClient() as cur:
