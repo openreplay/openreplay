@@ -1,5 +1,5 @@
 from chalicelib.utils import pg_client
-from chalicelib.ee import unlock
+from chalicelib.core import unlock
 
 
 def get_status(tenant_id):

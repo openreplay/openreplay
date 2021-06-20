@@ -2,9 +2,9 @@ from chalicelib.utils import pg_client, helper
 from chalicelib.utils import dev
 from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, sessions_mobs, issues
 
-from chalicelib.ee import projects, errors
+from chalicelib.core import projects, errors
 
-from chalicelib.ee import resources
+from chalicelib.core import resources
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,

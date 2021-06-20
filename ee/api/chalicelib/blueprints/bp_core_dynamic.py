@@ -7,15 +7,15 @@ from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.helper import environ
 
-from chalicelib.ee import tenants
-from chalicelib.ee import signup
-from chalicelib.ee import users
-from chalicelib.ee import projects
-from chalicelib.ee import errors
-from chalicelib.ee import notifications
-from chalicelib.ee import boarding
-from chalicelib.ee import webhook
-from chalicelib.ee import license
+from chalicelib.core import tenants
+from chalicelib.core import signup
+from chalicelib.core import users
+from chalicelib.core import projects
+from chalicelib.core import errors
+from chalicelib.core import notifications
+from chalicelib.core import boarding
+from chalicelib.core import webhook
+from chalicelib.core import license
 from chalicelib.core.collaboration_slack import Slack
 
 app = Blueprint(__name__)

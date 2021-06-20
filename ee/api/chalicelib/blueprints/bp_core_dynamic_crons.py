@@ -4,8 +4,8 @@ from chalicelib.utils import helper
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
-from chalicelib.ee import telemetry
-from chalicelib.ee import unlock
+from chalicelib.core import telemetry
+from chalicelib.core import unlock
 
 
 # Run every day.

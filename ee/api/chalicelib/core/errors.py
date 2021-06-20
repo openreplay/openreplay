@@ -1,9 +1,9 @@
 import json
 
 from chalicelib.utils import pg_client, helper
-from chalicelib.ee.utils import ch_client
+from chalicelib.utils import ch_client
 from chalicelib.core import sourcemaps, sessions
-from chalicelib.ee import dashboard
+from chalicelib.core import dashboard
 from chalicelib.utils.TimeUTC import TimeUTC
 
 

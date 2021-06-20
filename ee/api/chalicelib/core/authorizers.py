@@ -3,8 +3,8 @@ import jwt
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
-from chalicelib.ee import tenants
-from chalicelib.ee import users
+from chalicelib.core import tenants
+from chalicelib.core import users
 
 
 def jwt_authorizer(token):
@@ -38,12 +38,13 @@ def jwt_context(context):
     }
 
 
-def generate_jwt(id, tenant_id, iat, aud):
+def generate_jwt(id, tenant_id, iat, aud, exp=None):
     token = jwt.encode(
         payload={
             "userId": id,
             "tenantId": tenant_id,
-            "exp": iat // 1000 + int(environ["jwt_exp_delta_seconds"]) + TimeUTC.get_utc_offset() // 1000,
+            "exp": iat // 1000 + int(environ["jwt_exp_delta_seconds"]) + TimeUTC.get_utc_offset() // 1000 \
+                if exp is None else exp,
             "iss": environ["jwt_issuer"],
             "iat": iat // 1000,
             "aud": aud

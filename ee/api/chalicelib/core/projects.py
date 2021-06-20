@@ -1,6 +1,6 @@
 import json
 
-from chalicelib.ee import users
+from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 

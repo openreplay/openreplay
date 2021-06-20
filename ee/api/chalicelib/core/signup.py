@@ -1,6 +1,6 @@
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from chalicelib.ee import users, telemetry
+from chalicelib.core import users, telemetry
 from chalicelib.utils import captcha
 import json
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -57,7 +57,8 @@ def create_step1(data):
     signed_ups = get_signed_ups()
 
     if len(signed_ups) == 0 and data.get("tenantId") is not None \
-            or len(signed_ups) > 0 and data.get("tenantId") not in [t['tenantId'] for t in signed_ups]:
+            or len(signed_ups) > 0 and data.get("tenantId") is not None\
+            and data.get("tenantId") not in [t['tenantId'] for t in signed_ups]:
         errors.append("Tenant does not exist")
     if len(errors) > 0:
         print("==> error")
