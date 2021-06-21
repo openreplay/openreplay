@@ -10,4 +10,4 @@ jira==2.0.0
 schedule==1.1.0
 croniter==1.0.12
 clickhouse-driver==0.1.5
-python3-saml
+python3-saml==1.10.1

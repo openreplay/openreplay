@@ -1,6 +1,26 @@
 from chalicelib.utils import pg_client
 from chalicelib.utils import helper
-from chalicelib.ee import users
+from chalicelib.core import users
+
+
+def get_by_tenant_key(tenant_key):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                       t.tenant_id,
+                       t.name,
+                       t.api_key,
+                       t.created_at,
+                        t.edition,
+                        t.version_number,
+                        t.opt_out
+                    FROM public.tenants AS t
+                    WHERE t.user_id = %(user_id)s AND t.deleted_at ISNULL
+                    LIMIT 1;""",
+                {"user_id": tenant_key})
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
 
 
 def get_by_tenant_id(tenant_id):

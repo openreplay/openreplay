@@ -54,7 +54,13 @@
         "S3_HOST": "",
         "S3_KEY": "",
         "S3_SECRET": "",
-        "version_number": "1.0.0"
+        "version_number": "1.0.0",
+        "LICENSE_KEY": "",
+        "SAML2_MD_URL": "",
+        "idp_entityId": "",
+        "idp_sso_url": "",
+        "idp_x509cert": "",
+        "idp_sls_url": ""
       },
       "lambda_timeout": 150,
       "lambda_memory_size": 400,

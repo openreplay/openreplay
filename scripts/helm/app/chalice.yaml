@@ -64,4 +64,9 @@ env:
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
   PYTHONUNBUFFERED: '0'
-  version_number: '1.0.0'
+  version_number: '1.1.0'
+  SAML2_MD_URL: ''
+  idp_entityId: ''
+  idp_sso_url: ''
+  idp_x509cert: ''
+  idp_sls_url: ''
