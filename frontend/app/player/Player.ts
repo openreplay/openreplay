@@ -7,12 +7,16 @@ const performance = window.performance || { now: Date.now.bind(Date) };
 const requestAnimationFrame =
   window.requestAnimationFrame ||
   window.webkitRequestAnimationFrame ||
+  // @ts-ignore
   window.mozRequestAnimationFrame ||
+  // @ts-ignore
   window.oRequestAnimationFrame ||
+  // @ts-ignore
   window.msRequestAnimationFrame ||
   (callback => window.setTimeout(() => { callback(performance.now()); }, 1000 / fps));
 const cancelAnimationFrame =
   window.cancelAnimationFrame ||
+  // @ts-ignore
   window.mozCancelAnimationFrame ||
   window.clearTimeout;
 
@@ -23,7 +27,7 @@ const SPEED_STORAGE_KEY = "__$player-speed$__";
 const SKIP_STORAGE_KEY = "__$player-skip$__";
 const SKIP_TO_ISSUE_STORAGE_KEY = "__$player-skip-to-issue$__";
 const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
-const storedSpeed = +localStorage.getItem(SPEED_STORAGE_KEY);
+const storedSpeed: number = parseInt(localStorage.getItem(SPEED_STORAGE_KEY) || "") ;
 const initialSpeed = [1,2,3].includes(storedSpeed) ? storedSpeed : 1;
 const initialSkip = !!localStorage.getItem(SKIP_STORAGE_KEY);
 const initialSkipToIssue = !!localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY);
@@ -48,18 +52,18 @@ export const INITIAL_NON_RESETABLE_STATE = {
 }
 
 export default class Player extends MessageDistributor {
-  _animationFrameRequestId = null;
+  private _animationFrameRequestId: number = 0;
 
-  _setTime(time, index) {
+  private _setTime(time: number, index?: number) {
     update({
       time,
       completed: false,
     });
-    this.move(time, index);
+    super.move(time, index);
     listsGoTo(time, index);
   }
 
-  _startAnimation() {
+  private _startAnimation() {
     let prevTime = getState().time;
     let animationPrevTime = performance.now();
     
@@ -86,10 +90,10 @@ export default class Player extends MessageDistributor {
       const skipInterval = skip && skipIntervals.find(si => si.contains(time));  // TODO: good skip by messages
       if (skipInterval) time = skipInterval.end;
 
-      const fmt = this.getFirstMessageTime();
+      const fmt = super.getFirstMessageTime();
       if (time < fmt) time = fmt; // ?
 
-      const lmt = this.getLastMessageTime();
+      const lmt = super.getLastMessageTime();
       if (livePlay && time < lmt) time = lmt;
       if (endTime < lmt) {
         update({
@@ -161,7 +165,7 @@ export default class Player extends MessageDistributor {
 
   toggleSkip() {
     const skip = !getState().skip;
-    localStorage.setItem(SKIP_STORAGE_KEY, skip);
+    localStorage.setItem(SKIP_STORAGE_KEY, `${skip}`);
     update({ skip });
   }
 
@@ -174,27 +178,27 @@ export default class Player extends MessageDistributor {
     if (flag) {
       this.pause();
       update({ inspectorMode: true });
-      return this.enableInspector(clickCallback);
+      return super.enableInspector(clickCallback);
     } else {
-      this.disableInspector();
+      super.disableInspector();
       update({ inspectorMode: false });
     }
   }
   
   toggleSkipToIssue() {
     const skipToIssue = !getState().skipToIssue;
-    localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, skipToIssue);
+    localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
     update({ skipToIssue });
   }
   
   toggleAutoplay() {
     const autoplay = !getState().autoplay;
-    localStorage.setItem(AUTOPLAY_STORAGE_KEY, autoplay);
+    localStorage.setItem(AUTOPLAY_STORAGE_KEY, `${autoplay}`);
     update({ autoplay });
   }
 
-  _updateSpeed(speed) {
-    localStorage.setItem(SPEED_STORAGE_KEY, speed);
+  _updateSpeed(speed: number) {
+    localStorage.setItem(SPEED_STORAGE_KEY, `${speed}`);
     update({ speed });
   }
 

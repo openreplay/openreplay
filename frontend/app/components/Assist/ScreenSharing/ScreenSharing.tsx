@@ -2,12 +2,11 @@ import React from 'react'
 import { Button } from 'UI'
 
 function ScreenSharing() {
-  const videoRef: React.RefObject<HTMLVideoElement> = React.createRef()
+  const videoRef = React.createRef<HTMLVideoElement>()
 
   function handleSuccess(stream) {
     // startButton.disabled = true;    
-    // @ts-ignore
-    videoRef.current.srcObject = stream;
+    //videoRef.current?.srcObject = stream;
     // @ts-ignore
     window.stream = stream; // make variable available to browser console    
 

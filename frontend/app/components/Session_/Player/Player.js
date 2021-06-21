@@ -124,7 +124,7 @@ export default class Player extends React.PureComponent {
           //   label="Esc"
           // />
         }
-        <div className={ stl.playerView }>
+        <div className="relative flex-1">
           { !inspectorMode && 
             <div 
               className={ stl.overlay }
