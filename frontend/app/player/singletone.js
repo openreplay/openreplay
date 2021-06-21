@@ -67,6 +67,7 @@ export const attach = initCheck((...args) => instance.attach(...args));
 export const markElement = initCheck((...args) => instance.marker && instance.marker.mark(...args));
 export const scale = initCheck(() => instance.scale());
 export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
+export const callPeer = initCheck((...args) => instance.callPeer(...args))
 
 export const Controls = {
   jump,
