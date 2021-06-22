@@ -58,11 +58,13 @@ app.use('/', peerServer);
 
 
 app.get('/peers', function (req, res) {
+    console.log("looking for all available sessions");
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": connectedPeers}));
 });
 app.get('/peers/:projectKey', function (req, res) {
+    console.log(`looking for available sessions for ${req.params.projectKey}`);
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": connectedPeers[req.params.projectKey] || []}));
