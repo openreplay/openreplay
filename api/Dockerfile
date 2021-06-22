@@ -11,6 +11,8 @@ RUN apt update && apt install -y curl && \
     apt remove --purge -y curl && \
     rm -rf /var/lib/apt/lists/* && \
     cd sourcemaps_reader && \
+    npm install && \
+    cd assist_server && \
     npm install
 
 # Add Tini
