@@ -10,7 +10,9 @@ imagePullSecrets:
 
 service:
   type: ClusterIP
-  port: 8000
+  ports:
+    - port: 8000
+    - port: 9000
 
 resources:
   limits:
