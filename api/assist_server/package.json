@@ -1,0 +1,24 @@
+{
+  "name": "assist_server",
+  "version": "1.0.0",
+  "description": "assist server to get live sessions",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openreplay/openreplay.git"
+  },
+  "author": "KRAIEM Taha Yassine <tahayk2@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/openreplay/openreplay/issues"
+  },
+  "homepage": "https://github.com/openreplay/openreplay#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "peer": "^0.6.1"
+  }
+}
