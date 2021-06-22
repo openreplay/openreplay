@@ -8,6 +8,7 @@ import {
 } from 'Player/store';
 
 import { Popup, Icon } from 'UI';
+import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
   fullscreenOff,
@@ -421,7 +422,7 @@ export default class Controls extends React.Component {
               <ControlButton
                 disabled={ disabled && !inspectorMode }
                 active={ bottomBlock === INSPECTOR }
-                onClick={ () => toggleBottomBlock(INSPECTOR) }
+                onClick={ toggleInspectorMode }
                 icon={ inspectorMode ? 'close' : 'inspect' }
                 label="Inspect"
               />

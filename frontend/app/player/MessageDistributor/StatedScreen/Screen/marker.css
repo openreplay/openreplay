@@ -3,7 +3,7 @@
   position: absolute;
   background: rgba(40, 40, 100, .3);
 }
-.marker div {
+.marker div:not(.tooltip, .tooltip > div) {
   position: absolute;
   background-image: linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d),
                     linear-gradient(45deg, #00d 25%, #fff 25%, #fff 75%, #00d 75%, #00d);
@@ -32,4 +32,31 @@
   left: -100vw;
   right: -100vw;
   height: 1px;
+}
+
+.tooltip {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  padding: 10px;
+  /* border: solid thin #CCC; */
+  box-shadow: 2px 2px 1px rgba(40, 40, 100, .3);
+  z-index: 999;
+  border-radius: 3px;
+  background-color: #000;
+  color: white !important;
+  min-width: 300px;
+
+  & div:first-child {
+    max-width: 400px;
+    height: 20px;
+    white-space: nowrap;  
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  & div:last-child {    
+    font-size: 12px;
+    margin-top: 5px;
+    color: yellow;
+  }
 }
