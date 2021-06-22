@@ -1,14 +1,11 @@
 import json
-import time
 
 from chalicelib.core import authorizers
-
+from chalicelib.core import tenants
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import environ
-
-from chalicelib.core import tenants
 
 
 def create_new_member(tenant_id, email, password, admin, name, owner=False):
@@ -274,7 +271,8 @@ def get_by_email_only(email):
                         basic_authentication.generated_password,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        origin
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                     WHERE
                      users.email = %(email)s                     

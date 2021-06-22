@@ -68,9 +68,9 @@ def process_sso_assertion():
 
     email = auth.get_nameid()
     existing = users.get_by_email_only(auth.get_nameid())
+
     internal_id = next(iter(user_data.get("internalId", [])), None)
-    if len(existing) == 0:
-        print("== new user ==")
+    if len(existing) == 0 or existing[0].get("origin") != 'saml':
         tenant_key = user_data.get("tenantKey", [])
         if len(tenant_key) == 0:
             print("tenantKey not present in assertion")
@@ -85,10 +85,18 @@ def process_sso_assertion():
                     status_code=307,
                     body={"errors": ["Unknown tenantKey"]},
                     headers={'Location': auth.redirect_to(request.form['RelayState']), 'Content-Type': 'text/plain'})
+        if len(existing) == 0:
+            print("== new user ==")
+            users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=True, origin='saml',
+                                  name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
+                                  internal_id=internal_id)
+        else:
+            existing = existing[0]
+            if existing.get("origin") != 'saml':
+                print("== migrating user to SAML ==")
+                users.update(tenant_id=t['tenantId'], user_id=existing["id"],
+                             changes={"origin": 'saml', "internal_id": internal_id})
 
-        users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=True, origin='saml',
-                              name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                              internal_id=internal_id)
     return users.authenticate_sso(email=email, internal_id=internal_id, exp=auth.get_session_expiration())
 
 
