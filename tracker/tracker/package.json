@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "keywords": [
     "logging",
     "replay"
@@ -18,9 +18,9 @@
     "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
     "tsc": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
     "rollup": "rollup --config rollup.config.js",
-    "compile": "node --experimental-modules --experimental-json-modules compile.js",
+    "compile": "node --experimental-modules --experimental-json-modules scripts/compile.js",
     "build": "npm run clean && npm run tsc && npm run rollup && npm run compile",
-    "prepare": "node checkver.cjs && npm run build"
+    "prepare": "node scripts/checkver.cjs && npm run build"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
@@ -38,7 +38,7 @@
     "rollup": "^2.17.0",
     "rollup-plugin-terser": "^6.1.0",
     "semver": "^6.3.0",
-    "typescript": "^3.9.5"
+    "typescript": "^4.3.4"
   },
   "dependencies": {
     "error-stack-parser": "^2.0.6"
