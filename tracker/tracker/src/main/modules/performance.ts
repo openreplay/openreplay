@@ -2,13 +2,19 @@ import App from '../app';
 import { IN_BROWSER } from '../utils';
 import { PerformanceTrack } from '../../messages';
 
-const perf: {
-  memory: {
-    jsHeapSizeLimit?: number;
-    totalJSHeapSize?: number;
-    usedJSHeapSize?: number;
-  };
-} = IN_BROWSER && 'memory' in performance ? performance : { memory: {} };
+
+type Perf = {
+  memory: { 
+    totalJSHeapSize?: number,
+    usedJSHeapSize?: number,
+    jsHeapSizeLimit?: number,
+  }
+}
+
+const perf: Perf = IN_BROWSER && 'memory' in performance // works in Chrome only
+  ? performance as any
+  : { memory: {} }
+
 
 export const deviceMemory = IN_BROWSER ? ((navigator as any).deviceMemory || 0) * 1024 : 0;
 export const jsHeapSizeLimit = perf.memory.jsHeapSizeLimit || 0;

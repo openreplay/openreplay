@@ -51,13 +51,27 @@ func ExtractURLsFromCSS(css string) []string {
 	return urls
 }
 
-func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) string {
+func rewriteLinks(css string, rewrite func(rawurl string) string) string {
 	for _, idx := range cssUrlsIndex(css) {
 		f := idx[0]
 		t := idx[1]
 		rawurl, q := unquote(css[f:t])
 		// why exactly quote back?
-		css = css[:f] + q + r.RewriteURL(sessionID, baseurl, rawurl) + q + css[t:]
+		css = css[:f] + q + rewrite(rawurl) + q + css[t:]
 	}
+	return css
+}
+
+func ResolveCSS(baseURL string, css string) string {
+	css = rewriteLinks(css, func(rawurl string) string {
+		return ResolveURL(baseURL, rawurl)
+	})
+	return strings.Replace(css, ":hover", ".-asayer-hover", -1)
+}
+
+func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) string {
+	css = rewriteLinks(css, func(rawurl string) string {
+		return r.RewriteURL(sessionID, baseurl, rawurl)
+	})
 	return strings.Replace(css, ":hover", ".-asayer-hover", -1)
 }
