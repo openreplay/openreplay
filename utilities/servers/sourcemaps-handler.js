@@ -1,7 +1,7 @@
 'use strict';
 const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
-const sourceMapVersion = require('./package.json').dependencies["source-map"];
+const sourceMapVersion = require('../package.json').dependencies["source-map"];
 const URL = require('url');
 const getVersion = version => version.replace(/[\^\$\=\~]/, "");
 
@@ -89,23 +89,3 @@ module.exports.sourcemapReader = async event => {
         });
     });
 };
-
-
-// let v = {
-//     'key': '1725/99f96f044fa7e941dbb15d7d68b20549',
-//     'positions': [{'line': 1, 'column': 943}],
-//     'padding': 5,
-//     'bucket': 'asayer-sourcemaps'
-// };
-// let v = {
-//     'key': '1/65d8d3866bb8c92f3db612cb330f270c',
-//     'positions': [{'line': 1, 'column': 0}],
-//     'padding': 5,
-//     'bucket': 'asayer-sourcemaps-staging'
-// };
-// module.exports.sourcemapReader(v).then((r) => {
-//     // console.log(r);
-//     const fs = require('fs');
-//     let data = JSON.stringify(r);
-//     fs.writeFileSync('results.json', data);
-// });

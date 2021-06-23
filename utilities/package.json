@@ -1,8 +1,8 @@
 {
-  "name": "assist_server",
+  "name": "utilities_server",
   "version": "1.0.0",
-  "description": "assist server to get live sessions",
-  "main": "server.js",
+  "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
+  "main": "peerjs-server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
@@ -18,7 +18,9 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
+    "aws-sdk": "^2.654.0",
     "express": "^4.17.1",
-    "peer": "^0.6.1"
+    "peer": "^0.6.1",
+    "source-map": "^0.7.3"
   }
 }

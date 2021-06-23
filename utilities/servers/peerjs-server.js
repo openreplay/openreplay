@@ -1,22 +1,7 @@
-const connectedPeers = {};
-const express = require('express');
-const {ExpressPeerServer} = require('peer');
-const app = express();
+var express = require('express');
+var peerRouter = express.Router();
 
-app.enable('trust proxy');
-const HOST = '0.0.0.0';
-const PORT = 9000;
-const server = app.listen(PORT, HOST, () => {
-    console.log(`App listening on http://${HOST}:${PORT}`);
-    console.log('Press Ctrl+C to quit.');
-});
 
-const peerServer = ExpressPeerServer(server, {
-    debug: true,
-    path: '/',
-    proxied: true,
-    allow_discovery: true
-});
 const extractPeerId = (peerId) => {
     let splited = peerId.split("-");
     if (splited.length !== 2) {
@@ -25,7 +10,9 @@ const extractPeerId = (peerId) => {
     }
     return {projectKey: splited[0], sessionId: splited[1]};
 };
-peerServer.on('connection', (client) => {
+const connectedPeers = {};
+
+const peerConnection = (client) => {
     console.log(`initiating ${client.id}`);
     const {projectKey, sessionId} = extractPeerId(client.id);
     if (projectKey === undefined || sessionId === undefined) {
@@ -40,8 +27,8 @@ peerServer.on('connection', (client) => {
     }
 
 
-});
-peerServer.on('disconnect', (client) => {
+};
+const peerDisconnect = (client) => {
     console.log(`disconnect ${client.id}`);
     const {projectKey, sessionId} = extractPeerId(client.id);
     if (projectKey === undefined || sessionId === undefined) {
@@ -53,17 +40,16 @@ peerServer.on('disconnect', (client) => {
     } else {
         connectedPeers[projectKey].splice(i, 1);
     }
-});
-app.use('/', peerServer);
+}
 
 
-app.get('/peers', function (req, res) {
+peerRouter.get('/peers', function (req, res) {
     console.log("looking for all available sessions");
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": connectedPeers}));
 });
-app.get('/peers/:projectKey', function (req, res) {
+peerRouter.get('/peers/:projectKey', function (req, res) {
     console.log(`looking for available sessions for ${req.params.projectKey}`);
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -71,4 +57,8 @@ app.get('/peers/:projectKey', function (req, res) {
 });
 
 
-module.exports = app;
+module.exports = {
+    peerRouter,
+    peerConnection,
+    peerDisconnect
+};
