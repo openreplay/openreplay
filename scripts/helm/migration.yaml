@@ -3,8 +3,7 @@
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
   tasks:
-    - name: listing out migrtaions
-      debug:
+    - debug:
         var: migration_versions
     - block:
       - name: generating migration db paths
