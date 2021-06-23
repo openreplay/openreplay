@@ -20,7 +20,7 @@ function build_api(){
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/utilities/* ./
     }
-    docker build -f ./Dockerfile -t ${DOCKER_REPO:-'local'}/chalice:${git_sha1} .
+    docker build -f ./Dockerfile -t ${DOCKER_REPO:-'local'}/utilities:${git_sha1} .
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/utilities:${git_sha1}
     }
