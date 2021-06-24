@@ -86,17 +86,17 @@ export default class Marker {
 
   getTagString(tag) {
     const attrs = tag.attributes    
-    let str = `<span style="color:red">${tag.tagName.toLowerCase()}</span>`
+    let str = `<span style="color:#9BBBDC">${tag.tagName.toLowerCase()}</span>`
 
     for (let i = 0; i < attrs.length; i++) {
       let k = attrs[i]
       const attribute = k.name
       if (attribute === 'class') {
-        str += `<span style="color:#394EFF">${'.' + k.value.split(' ').join('.')}</span>`
+        str += `<span style="color:#F29766">${'.' + k.value.split(' ').join('.')}</span>`
       }
 
       if (attribute === 'id') {
-        str += `<span style="color:#394EFF">${'#' + k.value.split(' ').join('#')}</span>`
+        str += `<span style="color:#F29766">${'#' + k.value.split(' ').join('#')}</span>`
       }
     }
 

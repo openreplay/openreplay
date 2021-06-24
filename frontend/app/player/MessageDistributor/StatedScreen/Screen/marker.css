@@ -43,8 +43,7 @@
   box-shadow: 2px 2px 1px rgba(40, 40, 100, .3);
   z-index: 999;
   border-radius: 3px;
-  background-color: white;
-  border: solid thin #CCC;
+  background-color: #202124;
   min-width: 400px;
   font-size: 20px !important;
 
