@@ -13,7 +13,7 @@ export default class Marker {
     this._tooltip.appendChild(document.createElement('div'))
     
     const htmlStr = document.createElement('div')
-    htmlStr.innerText = "Right click and inspect for more details."
+    htmlStr.innerHTML = "<b>Right-click \> Inspect</b> for more details."
     this._tooltip.appendChild(htmlStr)
 
 
@@ -84,6 +84,25 @@ export default class Marker {
     this.redraw();
   }
 
+  getTagString(tag) {
+    const attrs = tag.attributes    
+    let str = `<span style="color:red">${tag.tagName.toLowerCase()}</span>`
+
+    for (let i = 0; i < attrs.length; i++) {
+      let k = attrs[i]
+      const attribute = k.name
+      if (attribute === 'class') {
+        str += `<span style="color:#394EFF">${'.' + k.value.split(' ').join('.')}</span>`
+      }
+
+      if (attribute === 'id') {
+        str += `<span style="color:#394EFF">${'#' + k.value.split(' ').join('#')}</span>`
+      }
+    }
+
+    return str;
+  }
+
   redraw() {
     if (this._selector) {
       this._autodefineTarget();
@@ -99,7 +118,7 @@ export default class Marker {
     this._marker.style.width = rect.width + 'px';
     this._marker.style.height = rect.height + 'px';
     
-    this._tooltip.firstChild.innerText = '' + this._target.outerHTML;
+    this._tooltip.firstChild.innerHTML = this.getTagString(this._target);
   }
 
 } 
