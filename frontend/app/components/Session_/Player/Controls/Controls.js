@@ -73,6 +73,7 @@ function getStorageName(type) {
   skipToIssue: state.skipToIssue,
   speed: state.speed,
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
+  inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
   logRedCount: state.logRedCountNow,
@@ -247,10 +248,11 @@ export default class Controls extends React.Component {
       exceptionsCount,
       showExceptions,
       fullscreen,      
-      skipToIssue
+      skipToIssue,
+      inspectorMode
     } = this.props;
 
-    const inspectorMode = bottomBlock === INSPECTOR;
+    // const inspectorMode = bottomBlock === INSPECTOR;
 
     return (
       <div className={ styles.controls }>
@@ -420,7 +422,7 @@ export default class Controls extends React.Component {
               }
                          
               <ControlButton
-                disabled={ disabled && !inspectorMode }
+                // disabled={ disabled && !inspectorMode }
                 active={ bottomBlock === INSPECTOR }
                 onClick={ toggleInspectorMode }
                 icon={ inspectorMode ? 'close' : 'inspect' }
