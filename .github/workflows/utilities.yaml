@@ -1,4 +1,4 @@
-# This action will push the chalice changes to aws
+# This action will push the utilities changes to aws
 on:
   push:
     branches:
@@ -47,7 +47,7 @@ jobs:
         sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\" #g" vars.yaml
         sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
-        sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/chalice.yaml
+        sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
         bash kube-install.sh --app utilities
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
