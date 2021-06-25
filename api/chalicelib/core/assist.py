@@ -1,6 +1,7 @@
 from chalicelib.utils import pg_client, helper
 from chalicelib.core import projects
 import requests
+from chalicelib.utils.helper import environ
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -20,7 +21,7 @@ SESSION_PROJECTION_COLS = """s.project_id,
 
 def get_live_sessions(project_id):
     project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(f"http://127.0.0.1:9000/peers/{project_key}")
+    connected_peers = requests.get(environ["peers"] + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
