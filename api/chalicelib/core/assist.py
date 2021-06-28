@@ -21,15 +21,11 @@ SESSION_PROJECTION_COLS = """s.project_id,
 
 def get_live_sessions(project_id):
     project_key = projects.get_project_key(project_id)
-    print("requesting the list of connected peers")
-    print(environ["peers"] + f"/{project_key}")
     connected_peers = requests.get(environ["peers"] + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
         return []
-    print("response")
-    print(connected_peers.json())
     connected_peers = connected_peers.json().get("data", [])
 
     if len(connected_peers) == 0:
@@ -40,10 +36,8 @@ def get_live_sessions(project_id):
                     SELECT {SESSION_PROJECTION_COLS}
                     FROM public.sessions AS s
                     WHERE s.project_id = %(project_id)s 
-                        AND session_id IN %(connected_peers)s
-                        AND duration IS NULL;""",
+                        AND session_id IN %(connected_peers)s;""",
                             {"project_id": project_id, "connected_peers": connected_peers})
-        print(query)
         cur.execute(query)
         results = cur.fetchall()
     return helper.list_to_camel_case(results)
