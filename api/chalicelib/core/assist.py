@@ -33,11 +33,11 @@ def get_live_sessions(project_id):
     connected_peers = tuple(connected_peers)
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
-                    SELECT {SESSION_PROJECTION_COLS}
+                    SELECT {SESSION_PROJECTION_COLS}, %(project_key)s||'-'|| session_id AS peer_id
                     FROM public.sessions AS s
                     WHERE s.project_id = %(project_id)s 
                         AND session_id IN %(connected_peers)s;""",
-                            {"project_id": project_id, "connected_peers": connected_peers})
+                            {"project_id": project_id, "connected_peers": connected_peers, "project_key":project_key})
         cur.execute(query)
         results = cur.fetchall()
     return helper.list_to_camel_case(results)
