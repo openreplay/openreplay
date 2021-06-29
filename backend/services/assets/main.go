@@ -64,6 +64,8 @@ func main() {
 			log.Printf("Caught signal %v: terminating\n", sig)
 			consumer.Close()
 			os.Exit(0)
+		case err := <-cacher.Errors:
+			log.Printf("Error while caching: %v", err)
 		case <-tick:
 			cacher.UpdateTimeouts()
 		default:

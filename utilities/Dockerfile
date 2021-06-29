@@ -1,9 +1,8 @@
-FROM python:3.6-slim
-LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
+FROM node:12.22-stretch
 WORKDIR /work
 COPY . .
-RUN pip install -r requirements.txt -t ./vendor --upgrade
-RUN pip install chalice==1.22.2
+RUN npm install
+
 
 # Add Tini
 # Startup daemon
@@ -13,4 +12,4 @@ ENV ENTERPRISE_BUILD ${envarg}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
-CMD ./entrypoint.sh
+CMD npm start

@@ -174,32 +174,28 @@ func pushMessagesSeparatelyHandler(w http.ResponseWriter, r *http.Request) {
 		switch m := msg.(type) {
 		case *SetNodeAttributeURLBased:
 			if m.Name == "src" || m.Name == "href" {
-				sendAssetForCache(sessionData.ID, m.BaseURL, m.Value)
 				msg = &SetNodeAttribute{
 					ID:    m.ID,
 					Name:  m.Name,
-					Value: rewriter.RewriteURL(sessionData.ID, m.BaseURL, m.Value),
+					Value: handleURL(sessionData.ID, m.BaseURL, m.Value),
 				}
 			} else if m.Name == "style" {
-				sendAssetsForCacheFromCSS(sessionData.ID, m.BaseURL, m.Value)
 				msg = &SetNodeAttribute{
 					ID:    m.ID,
 					Name:  m.Name,
-					Value: rewriter.RewriteCSS(sessionData.ID, m.BaseURL, m.Value),
+					Value: handleCSS(sessionData.ID, m.BaseURL, m.Value),
 				}
 			}
 		case *SetCSSDataURLBased:
-			sendAssetsForCacheFromCSS(sessionData.ID, m.BaseURL, m.Data)
 			msg = &SetCSSData{
 				ID:   m.ID,
-				Data: rewriter.RewriteCSS(sessionData.ID, m.BaseURL, m.Data),
+				Data: handleCSS(sessionData.ID, m.BaseURL, m.Data),
 			}
 		case *CSSInsertRuleURLBased:
-			sendAssetsForCacheFromCSS(sessionData.ID, m.BaseURL, m.Rule)
 			msg = &CSSInsertRule{
 				ID:    m.ID,
 				Index: m.Index,
-				Rule:  rewriter.RewriteCSS(sessionData.ID, m.BaseURL, m.Rule),
+				Rule:  handleCSS(sessionData.ID, m.BaseURL, m.Rule),
 			}
 		}
 
