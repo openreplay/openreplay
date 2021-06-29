@@ -1,15 +1,23 @@
-import React from 'react'
-// import { fetchLiveList } from 'Duck/sessions'
+import React, { useEffect } from 'react';
+import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
 import { NoContent } from 'UI';
 import { List } from 'immutable';
+import SessionItem from 'Shared/SessionItem';
 
 interface Props {
   loading: Boolean,
-  list?: List<any>
+  list?: List<any>,
+  fetchLiveList: () => void
 }
 
-function LiveSessionList({ loading, list }: Props ) {
+function LiveSessionList(props: Props) {
+  const { loading, list } = props;
+
+  useEffect(() => {
+    props.fetchLiveList();
+  }, [])
+
   return (
     <div>
       <NoContent
@@ -18,12 +26,19 @@ function LiveSessionList({ loading, list }: Props ) {
         icon="exclamation-circle"
         show={ !loading && list && list.size === 0}
       >
-
+        {list?.map(session => (
+          <SessionItem
+            key={ session.sessionId }
+            session={ session }
+            // hasUserFilter={hasUserFilter}
+            // onUserClick={this.onUserClick}
+          />
+        ))}
       </NoContent>
     </div>
   )
 }
 
 export default connect(state => ({
-
-}), { })(LiveSessionList)
+  list: state.getIn(['sessions', 'liveSessions'])
+}), { fetchLiveList })(LiveSessionList)

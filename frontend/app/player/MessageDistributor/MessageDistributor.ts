@@ -147,7 +147,7 @@ export default class MessageDistributor extends StatedScreen {
       this.peer = peer;
       peer.on("open", me => {
         console.log("peer opened", me);
-        const id = `Amva-sf98-234fd-OR-test-${this.session.sessionId}`;
+        const id = `3sWXSsqHgSKnEO5YkNJK-${this.session.sessionId}`;
         console.log("trying to connect to", id)
         const conn = peer.connect(id);
         conn.on('open', () => {
@@ -179,7 +179,7 @@ export default class MessageDistributor extends StatedScreen {
 
   callPeer(localStream: MediaStream, cb: (s: MediaStream)=>void): boolean {
     if (!this.peer) { return false; }
-    const conn = this.peer.connections[`Amva-sf98-234fd-OR-test-${this.session.sessionId}`]?.[0];
+    const conn = this.peer.connections[`3sWXSsqHgSKnEO5YkNJK-${this.session.sessionId}`]?.[0];
     if (!conn || !conn.open) { return false; } // Conn not established
     const call =  this.peer.call(conn.peer, localStream);
     console.log('calling...')

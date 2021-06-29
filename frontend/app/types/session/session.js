@@ -26,7 +26,7 @@ function hashString(s: string): number {
 export default Record({
   sessionId: '',
   siteId: '',
-  live: false,
+  live: true,
   startedAt: 0,
   duration: 0,
   events: List(),
