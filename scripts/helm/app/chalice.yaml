@@ -61,6 +61,8 @@ env:
   S3_HOST: 'http://minio.db.svc.cluster.local:9000'
   S3_KEY: minios3AccessKeyS3cr3t
   S3_SECRET: m1n10s3CretK3yPassw0rd
+  sourcemaps_reader: 'http://utilities-openreplay.app.svc.cluster.local:9000/sourcemaps'
+  peers: 'http://utilities-openreplay.app.svc.cluster.local:9000/peers'
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
   PYTHONUNBUFFERED: '0'

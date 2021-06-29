@@ -1,6 +1,8 @@
+// TODO: "common" folder instead of "messages". (better file structure)
 export interface Options {
   connAttemptCount?: number;
   connAttemptGap?: number;
+  beaconSize?: number;
 }
 
 type Settings = {
@@ -11,4 +13,4 @@ type Settings = {
   timeAdjustment?: number;
 } & Partial<Options>;
 
-export type MessageData = null | "stop" | Settings | Array<{ _id: number }>;
+export type WorkerMessageData = null | "stop" | Settings | Array<{ _id: number }>;
