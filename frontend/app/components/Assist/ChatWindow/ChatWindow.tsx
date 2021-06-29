@@ -1,41 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { IconButton } from 'UI';
+//import { IconButton } from 'UI';
 import VideoContainer from '../components/VideoContainer';
 import stl from './chatWindow.css';
 import { callPeer } from 'App/player';
 
-interface Props {
-  call: (oStream: MediaStream, cb: (iStream: MediaStream)=>void)=>void
-}
+// export interface Props {
+//   call: (oStream: MediaStream, cb: (iStream: MediaStream)=>void)=>void
+// }
 
-function ChatWindow({ call }: Props) {
+function ChatWindow() {
   const [ inputStream, setInputStream ] = useState<MediaStream | null>(null);
   const [ outputStream, setOutputStream ] = useState<MediaStream | null>(null);
 
   useEffect(() => {
-    startOutputStream()
-    callPeer()
-  }, [])
-
-  const startOutputStream = () => {
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
     .then(oStream => {
       setOutputStream(oStream);
-      call(oStream, setInputStream); // Returns false when unable to connect.
+      callPeer(oStream, setInputStream, () => {
+        console.log('endd')
+        outputStream?.getTracks().forEach(t => t.stop());
+        //inputStream?.
+      }); // Returns false when unable to connect.
                   // TODO: handle calling state
     })
     .catch(console.log) // TODO: handle error in ui
-  }
+  }, [])
 
-  // const onCallClick = () => {
-  //   navigator.mediaDevices.getUserMedia({video:true, audio:true})
-  //   .then(oStream => {
-  //     setOutputStream(oStream);
-  //     call(oStream, setInputStream); // Returns false when unable to connect.
-  //                 // TODO: handle calling state
-  //   })
-  //   .catch(console.log) // TODO: handle error in ui
-  // }
   return (
     <div className="fixed border radius bg-white z-50 shadow-xl mt-16">
       <div className="p-2">

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Button, Icon } from 'UI'
 
 interface Props {
-  stream: MediaProvider | null
+  stream: MediaStream | null
   muted?: boolean
 }
 
 function VideoContainer({ stream, muted = false }: Props) {
-  const [muteAudio, setMuteAudio] = useState(false)
-  const [muteVideo, setMuteVideo] = useState(false)
+  const [audioEnabled, setAudioEnabled] = useState(true)
+  const [videoEnabled, setVideoEnabled] = useState(true)
   const ref = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -18,13 +18,17 @@ function VideoContainer({ stream, muted = false }: Props) {
   }, [ ref.current, stream ])
 
   const toggleAudio = () => {
-    // stream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
-    setMuteAudio(!muteAudio)
+    if (!stream) { return; }
+    const aEn = !audioEnabled
+    stream.getAudioTracks().forEach(track => track.enabled = aEn);
+    setAudioEnabled(aEn);
   }
   
   const toggleVideo = () => {
-    // stream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
-    setMuteVideo(!muteVideo)
+    if (!stream) { return; }
+    const vEn = !videoEnabled;
+    stream.getVideoTracks().forEach(track => track.enabled = vEn);
+    setVideoEnabled(vEn)
   }
 
   return (
@@ -33,11 +37,11 @@ function VideoContainer({ stream, muted = false }: Props) {
         <video autoPlay ref={ ref } muted={ muted } />
         <div className="flex items-center absolute w-full justify-center bottom-0 bg-gray-lightest">
           <Button plain size="small" onClick={toggleAudio}>
-            <Icon name={muteAudio ? 'mic-mute' : 'mic'} size="16" />
+            <Icon name={audioEnabled ? 'mic' : 'mic-mute'} size="16" />
           </Button>
 
           <Button plain size="small" onClick={toggleVideo}>
-            <Icon name={ muteVideo ? 'camera-video-off' : 'camera-video' } size="16" />
+            <Icon name={ videoEnabled ? 'camera-video' : 'camera-video-off' } size="16" />
           </Button>
         </div>
       </div>

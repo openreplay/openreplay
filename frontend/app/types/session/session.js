@@ -26,6 +26,8 @@ function hashString(s: string): number {
 export default Record({
   sessionId: '',
   siteId: '',
+  projectKey: '',
+  peerId: '',
   live: true,
   startedAt: 0,
   duration: 0,
