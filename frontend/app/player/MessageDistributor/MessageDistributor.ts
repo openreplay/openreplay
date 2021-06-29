@@ -139,17 +139,30 @@ export default class MessageDistributor extends StatedScreen {
     }
   }
 
+  private getPeerID(): string {
+    return `${this.session.projectKey}-${this.session.sessionId}`
+  }
+
   private peer: Peer | null = null;
   private connectToPeer() {
     this.setMessagesLoading(true);
     import('peerjs').then(({ default: Peer }) => {
-      const peer = new Peer();
+      // @ts-ignore
+      console.log(new URL(window.ENV.API_EDP).host)
+      const peer = new Peer({
+        // @ts-ignore
+        host: new URL(window.ENV.API_EDP).host,
+        path: '/assist',
+        port: 80,
+      });
       this.peer = peer;
       peer.on("open", me => {
         console.log("peer opened", me);
-        const id = `3sWXSsqHgSKnEO5YkNJK-${this.session.sessionId}`;
+        const id = this.getPeerID();
         console.log("trying to connect to", id)
         const conn = peer.connect(id);
+                console.log("Peer ", peer)
+
         conn.on('open', () => {
           this.setMessagesLoading(false);
           let i = 0;
@@ -177,22 +190,33 @@ export default class MessageDistributor extends StatedScreen {
     });
   }
 
-  callPeer(localStream: MediaStream, cb: (s: MediaStream)=>void): boolean {
-    if (!this.peer) { return false; }
-    const conn = this.peer.connections[`3sWXSsqHgSKnEO5YkNJK-${this.session.sessionId}`]?.[0];
-    if (!conn || !conn.open) { return false; } // Conn not established
+  callPeer(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onRefuse?: ()=> void): ()=>void {
+    if (!this.peer) { return Function; }
+    const conn = this.peer.connections[this.getPeerID()]?.[0];
+    if (!conn || !conn.open) { return Function; } // Conn not established
     const call =  this.peer.call(conn.peer, localStream);
     console.log('calling...')
     // on refuse?
-    call.on('stream', function(stream) {
-      cb(stream);
-    });
+    call.on('stream', onStream);
+    call.on("close", onClose);
+    call.on("error", onClose)
+    
+    return () => call.close();
+  }
+
+  requestMouse(): ()=>void {
+    if (!this.peer) { return Function; }
+    const conn = this.peer.connections[this.getPeerID()]?.[0];
+    if (!conn || !conn.open) { return Function; }
+    const onMouseMove = (e) => {
+      // @ts-ignore
+      const data = this._getInternalCoordinates(e)
+      conn.send({ x: Math.round(data.x), y: Math.round(data.y) }); // debounce?
+    }
     //@ts-ignore
-    this.document?.
-        addEventListener("mousemove", ({ x, y }) => {
-      conn.send([ x, y ]); // debounce?
-    });
-    return true;
+    this.overlay.addEventListener("mousemove", onMouseMove);
+    //@ts-ignore
+    return () =>  this.overlay.removeEventListener("mousemove", onMouseMove);
   }
 
 
@@ -419,7 +443,6 @@ export default class MessageDistributor extends StatedScreen {
         }
       break;
       case "set_viewport_size":
-        console.log("setvvs", msg)
         this.resizeManager.add(msg);
       break;
       case "mouse_move":

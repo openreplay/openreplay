@@ -18,7 +18,7 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   loading: state.messagesLoading,
   disconnected: state.disconnected,
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
-  inspectorMode: state.inspectorMode,
+  removeOverlay: state.inspectorMode || state.live,
   completed: state.completed,
   autoplay: state.autoplay
 }))
@@ -96,7 +96,7 @@ export default class Player extends React.PureComponent {
       className,
       playing,
       disabled,
-      inspectorMode,
+      removeOverlay,
       bottomBlockIsActive,
       loading,
       disconnected,
@@ -125,7 +125,7 @@ export default class Player extends React.PureComponent {
           // />
         }
         <div className="relative flex-1">
-          { !inspectorMode && 
+          { !removeOverlay && 
             <div 
               className={ stl.overlay }
               onClick={ disabled ? null : this.togglePlay }
