@@ -54,7 +54,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
             f"""\
             SELECT
                 s.*,
-                s.session_id::text AS session_id,,
+                s.session_id::text AS session_id,
                 (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata._get_column_names()]) + ") AS project_metadata") if group_metadata else ''}

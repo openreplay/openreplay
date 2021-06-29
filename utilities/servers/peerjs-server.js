@@ -5,7 +5,7 @@ var peerRouter = express.Router();
 const extractPeerId = (peerId) => {
     let splited = peerId.split("-");
     if (splited.length !== 2) {
-        console.error(`cannot split peerId: ${client.id}`);
+        console.error(`cannot split peerId: ${peerId}`);
         return {};
     }
     return {projectKey: splited[0], sessionId: splited[1]};
