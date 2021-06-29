@@ -30,7 +30,7 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt }) {
+function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt }) {
   useEffect(() => {
     initPlayer(session, jwt);
     return () => cleanPlayer()
@@ -43,11 +43,11 @@ function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscr
   }, [])
   return (
     <PlayerProvider>
-      <InitLoader className="flex-1">
-        <Assist />
+      <InitLoader className="flex-1 p-3">
+        { showAssist && <Assist session={session} /> }
         <PlayerBlockHeader fullscreen={fullscreen}/>
         <div className={ styles.session } data-fullscreen={fullscreen}>
-          <PlayerBlock />          
+          <PlayerBlock />
         </div>
       </InitLoader>
     </PlayerProvider>
@@ -57,6 +57,7 @@ function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscr
 
 export default connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
+  showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
   jwt: state.get('jwt'),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
 }), {
