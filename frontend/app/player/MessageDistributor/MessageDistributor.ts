@@ -28,6 +28,7 @@ import AssistManager from './managers/AssistManager';
 import MessageReader from './MessageReader';
 
 import { INITIAL_STATE as PARENT_INITIAL_STATE } from './StatedScreen';
+import { INITIAL_STATE as ASSIST_INITIAL_STATE } from './managers/AssistManager';
 
 import type { TimedMessage } from './Timed';
 
@@ -40,6 +41,7 @@ LIST_NAMES.forEach(name => {
 export const INITIAL_STATE = {
   ...PARENT_INITIAL_STATE,
   ...LISTS_INITIAL_STATE,
+  ...ASSIST_INITIAL_STATE,
   performanceChartData: [],
   skipIntervals: [],
 } as const;

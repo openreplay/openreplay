@@ -5,6 +5,12 @@ import type { TimedMessage } from '../Timed';
 import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
 
+import { update, getState } from '../../store';
+
+
+export const INITIAL_STATE = {
+  calling: false;
+}
 
 
 export default class AssistManager {
@@ -117,14 +123,13 @@ export default class AssistManager {
     conn.send({ x: Math.round(data.x), y: Math.round(data.y) }); // debounce?
   }
 
-  private calling: boolean = false;
   call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onError?: ()=> void): null | Function {
-    if (!this.peer || this.calling) { return null; }
+    if (!this.peer || getState().calling) { return null; }
     const call =  this.peer.call(this.peerID, localStream);
 
     console.log('calling...')
 
-    this.calling = true;
+    update({ calling: true});
     call.on('stream', stream => {
       onStream(stream);
       // @ts-ignore ??
@@ -134,7 +139,7 @@ export default class AssistManager {
     this.onCallEnd = () => {
       // @ts-ignore ??
       this.md.overlay.removeEventListener("mousemove",  this.onMouseMoveShare);
-      this.calling = false;
+      update({ calling: false});
       onClose();
     }
     call.on("close", this.onCallEnd);
