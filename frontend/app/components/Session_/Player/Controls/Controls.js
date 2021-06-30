@@ -6,6 +6,7 @@ import {
   selectStorageType,
   selectStorageListNow,
 } from 'Player/store';
+import LiveTag from 'Shared/LiveTag';
 
 import { Popup, Icon } from 'UI';
 import {
@@ -275,10 +276,11 @@ export default class Controls extends React.Component {
               </div>
               :
               <div className={ styles.buttonsLeft }>
-                <button onClick={ this.goLive } className={ styles.liveTag } data-is-live={ livePlay }>
+                <LiveTag onClick={ this.goLive } isLive={livePlay} />
+                {/* <button onClick={ this.goLive } className={ styles.liveTag } data-is-live={ livePlay }>
                   <Icon name="circle" size="8" marginRight="5" color="white" />
                   <div>{'Live'}</div>
-                </button>
+                </button> */}
                 {'Elapsed'}
                 <ReduxTime name="time" />
               </div>

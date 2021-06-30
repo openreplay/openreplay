@@ -14,6 +14,7 @@ import { toggleFavorite } from 'Duck/sessions';
 import { session as sessionRoute } from 'App/routes';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
+import LiveTag from 'Shared/LiveTag';
 
 const Label = ({ label = '', color = 'color-gray-medium'}) => (
   <div className={ cn('font-light text-sm', color)}>{label}</div>
@@ -51,7 +52,8 @@ export default class SessionItem extends React.PureComponent {
         favorite,
         userDeviceType,
         userUuid,
-        userNumericHash,        
+        userNumericHash,
+        live
       },
       timezone,
       onUserClick,
@@ -89,18 +91,24 @@ export default class SessionItem extends React.PureComponent {
             <Label label="Duration" />
           </div>
 
-          <div className="flex flex-col items-center px-4">
-            <div className={ stl.count }>{ eventsCount }</div>
-            <Label label={ eventsCount === 0 || eventsCount > 1 ? 'Events' : 'Event' } />
-          </div>
+          {!live && (
+            <div className="flex flex-col items-center px-4">
+              <div className={ stl.count }>{ eventsCount }</div>
+              <Label label={ eventsCount === 0 || eventsCount > 1 ? 'Events' : 'Event' } />
+            </div>
+          )}
 
         </div>
 
         <div className="flex items-center">
-          <div className="flex flex-col items-center px-4">
-            <div className={ cn(stl.count, { "color-gray-medium": errorsCount === 0 }) } >{ errorsCount }</div>
-            <Label label="Errors" color={errorsCount > 0 ? '' : 'color-gray-medium'} />
-          </div>
+          {!live && (
+            <div className="flex flex-col items-center px-4">
+              <div className={ cn(stl.count, { "color-gray-medium": errorsCount === 0 }) } >{ errorsCount }</div>
+              <Label label="Errors" color={errorsCount > 0 ? '' : 'color-gray-medium'} />
+            </div>
+          )}
+
+          { live && <LiveTag isLive={true} /> }
 
           <div className={ cn(stl.iconDetails, 'px-4') }>
             <div

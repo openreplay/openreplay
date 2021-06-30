@@ -1,0 +1,33 @@
+@keyframes fade {
+  0%   { opacity: 1}
+  50% { opacity: 0}
+  100%   { opacity: 1}
+}
+
+.liveTag {
+  cursor: pointer;
+  user-select: none;
+  height: 26px;
+  width: 56px;
+  border-radius: 3px;
+  background-color: $gray-light;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $gray-dark;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1px;
+  margin-right: 10px;
+  & svg {
+    fill: $gray-dark;
+  }
+  &[data-is-live=true] {
+    background-color: #42AE5E;
+    color: white;
+    & svg {
+      fill: white;
+      animation: fade 1s infinite;
+    }
+  }
+}

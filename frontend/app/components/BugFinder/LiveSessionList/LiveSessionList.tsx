@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
-import { NoContent } from 'UI';
+import { NoContent, Loader } from 'UI';
 import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 
@@ -26,19 +26,22 @@ function LiveSessionList(props: Props) {
         icon="exclamation-circle"
         show={ !loading && list && list.size === 0}
       >
-        {list?.map(session => (
-          <SessionItem
-            key={ session.sessionId }
-            session={ session }
-            // hasUserFilter={hasUserFilter}
-            // onUserClick={this.onUserClick}
-          />
-        ))}
+        <Loader loading={ loading }>
+          {list?.map(session => (
+            <SessionItem
+              key={ session.sessionId }
+              session={ session }
+              live
+              // hasUserFilter={hasUserFilter}
+            />
+          ))}
+        </Loader>
       </NoContent>
     </div>
   )
 }
 
 export default connect(state => ({
-  list: state.getIn(['sessions', 'liveSessions'])
+  list: state.getIn(['sessions', 'liveSessions']),
+  loading: state.getIn([ 'sessions', 'loading' ]),
 }), { fetchLiveList })(LiveSessionList)
