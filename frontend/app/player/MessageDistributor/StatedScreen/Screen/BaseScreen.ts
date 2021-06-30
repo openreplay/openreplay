@@ -1,6 +1,3 @@
-import Marker from './Marker';
-import Cursor from './Cursor';
-import Inspector from './Inspector';
 import styles from './screen.css';
 import { getState } from '../../../store';
 
@@ -15,7 +12,7 @@ export const INITIAL_STATE: {
 }
 
 
-export default class BaseScreen {
+export default abstract class BaseScreen {
   private   readonly iframe: HTMLIFrameElement;
   public readonly overlay: HTMLDivElement;
   private   readonly _screen: HTMLDivElement;

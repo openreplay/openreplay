@@ -23,13 +23,12 @@ import MouseManager from './managers/MouseManager';
 import PerformanceTrackManager from './managers/PerformanceTrackManager';
 import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
+import AssistManager from './managers/AssistManager';
 
 import MessageReader from './MessageReader';
-import { ID_TP_MAP } from './messages';
 
 import { INITIAL_STATE as PARENT_INITIAL_STATE } from './StatedScreen';
 
-import type Peer from 'peerjs';
 import type { TimedMessage } from './Timed';
 
 const LIST_NAMES = [ "redux", "mobx", "vuex", "ngrx", "graphql", "exceptions", "profiles", "longtasks" ] as const;
@@ -89,6 +88,7 @@ export default class MessageDistributor extends StatedScreen {
   private readonly resizeManager: ListWalker<SetViewportSize & Timed> = new ListWalker([]);
   private readonly pagesManager: PagesManager;
   private readonly mouseManager: MouseManager;
+  private readonly assistManager: AssistManager;
 
   private readonly scrollManager: ListWalker<SetViewportScroll & Timed> = new ListWalker();
 
@@ -105,6 +105,7 @@ export default class MessageDistributor extends StatedScreen {
     super();
     this.pagesManager = new PagesManager(this, this.session.isMobile)
     this.mouseManager = new MouseManager(this);
+    this.assistManager = new AssistManager(session, this);
 
     this.sessionStart = this.session.startedAt;
 
@@ -112,7 +113,7 @@ export default class MessageDistributor extends StatedScreen {
       // const sockUrl = `wss://live.openreplay.com/1/${ this.session.siteId }/${ this.session.sessionId }/${ jwt }`;
       // this.subscribeOnMessages(sockUrl);
       initListsDepr({})
-      this.connectToPeer();
+      this.assistManager.connect();
     } else {
       this.activirtManager = new ActivityManager(this.session.duration.milliseconds);
       /* == REFACTOR_ME == */
@@ -135,88 +136,8 @@ export default class MessageDistributor extends StatedScreen {
         this.lists.exceptions.add(e);
       });
       /* === */
-      this._loadMessages();
+      this.loadMessages();
     }
-  }
-
-  private getPeerID(): string {
-    return `${this.session.projectKey}-${this.session.sessionId}`
-  }
-
-  private peer: Peer | null = null;
-  private connectToPeer() {
-    this.setMessagesLoading(true);
-    import('peerjs').then(({ default: Peer }) => {
-      // @ts-ignore
-      console.log(new URL(window.ENV.API_EDP).host)
-      const peer = new Peer({
-        // @ts-ignore
-        host: new URL(window.ENV.API_EDP).host,
-        path: '/assist',
-        port: 80,
-      });
-      this.peer = peer;
-      peer.on("open", me => {
-        console.log("peer opened", me);
-        const id = this.getPeerID();
-        console.log("trying to connect to", id)
-        const conn = peer.connect(id);
-                console.log("Peer ", peer)
-
-        conn.on('open', () => {
-          this.setMessagesLoading(false);
-          let i = 0;
-          console.log("peer connected")
-          conn.on('data', (data) => {
-            if (!Array.isArray(data)) { return; }
-            let time = 0;
-            let ts0 = 0;
-            (data as Array<Message & { _id: number}>).forEach(msg => {
-              msg.tp = ID_TP_MAP[msg._id];  // _id goes from tracker
-              if (msg.tp === "timestamp") {
-                ts0 = ts0 || msg.timestamp
-                time = msg.timestamp - ts0;
-                return;
-              }
-              const tMsg: TimedMessage = Object.assign(msg, {
-                time,
-                _index: i,
-              });
-              this.distributeMessage(tMsg, i++);
-            });
-          });
-        });
-      });
-    });
-  }
-
-  callPeer(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onRefuse?: ()=> void): ()=>void {
-    if (!this.peer) { return Function; }
-    const conn = this.peer.connections[this.getPeerID()]?.[0];
-    if (!conn || !conn.open) { return Function; } // Conn not established
-    const call =  this.peer.call(conn.peer, localStream);
-    console.log('calling...')
-    // on refuse?
-    call.on('stream', onStream);
-    call.on("close", onClose);
-    call.on("error", onClose)
-    
-    return () => call.close();
-  }
-
-  requestMouse(): ()=>void {
-    if (!this.peer) { return Function; }
-    const conn = this.peer.connections[this.getPeerID()]?.[0];
-    if (!conn || !conn.open) { return Function; }
-    const onMouseMove = (e) => {
-      // @ts-ignore
-      const data = this._getInternalCoordinates(e)
-      conn.send({ x: Math.round(data.x), y: Math.round(data.y) }); // debounce?
-    }
-    //@ts-ignore
-    this.overlay.addEventListener("mousemove", onMouseMove);
-    //@ts-ignore
-    return () =>  this.overlay.removeEventListener("mousemove", onMouseMove);
   }
 
 
@@ -240,7 +161,7 @@ export default class MessageDistributor extends StatedScreen {
   //   this._socket = socket;
   // }
 
-  _loadMessages(): void {
+  private loadMessages(): void {
     const fileUrl: string = this.session.mobsUrl;
     this.setMessagesLoading(true);
     window.fetch(fileUrl)
@@ -545,5 +466,6 @@ export default class MessageDistributor extends StatedScreen {
     super.clean();
     //if (this._socket) this._socket.close();
     update(INITIAL_STATE);
+    this.assistManager.clear();
   }
 }

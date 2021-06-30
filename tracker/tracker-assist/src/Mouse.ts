@@ -25,6 +25,8 @@ export default class Mouse {
   }
 
   remove() {
-    document.body.removeChild(this.mouse);
+    if (this.mouse.parentElement) {
+      document.body.removeChild(this.mouse);
+    }
   }
 }
