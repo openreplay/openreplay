@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import cn from 'classnames'
 import { callPeer } from 'App/player';
 import { toggleChatWindow } from 'Duck/sessions';
-// import stl from './AassistActions.css'
+import stl from './AassistActions.css'
 
 interface Props {
   isLive: false;
@@ -20,6 +20,7 @@ function AssistActions({ toggleChatWindow }: Props) {
       >
         <Icon name="telephone" size="20" />
       </div>
+      <div className="mx-1" />
       <div className="flex items-center p-2 cursor-pointer">
         <Icon name="controller" size="20" />
         <span className="ml-2">Request Control</span>
