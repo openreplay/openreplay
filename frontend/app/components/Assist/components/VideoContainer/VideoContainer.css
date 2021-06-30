@@ -1,0 +1,25 @@
+.controls {
+  margin-bottom: 8px;
+  margin-right: 15px;
+}
+
+.btnWrapper {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  border-radius: 50%;
+  margin-left: 8px;  
+  /* &:hover {
+    background-color: $teal;
+  } */
+
+  &.disabled {
+    background-color: red;
+    & svg {
+      fill: white;
+    }
+  }
+}

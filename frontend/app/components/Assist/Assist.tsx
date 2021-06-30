@@ -1,12 +1,11 @@
 import React from 'react';
-import ChatWindow from './ChatWindow/ChatWindow';
+import ChatWindow from './ChatWindow';
 
 
 export default function Assist() {
-
   return (
     <div className="absolute">
-      <ChatWindow  />
+      <ChatWindow />
     </div>
   )
 }
