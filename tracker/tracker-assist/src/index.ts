@@ -1,19 +1,25 @@
-import Peer from 'peerjs';
+import Peer, { MediaConnection } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 import { App, Messages } from '@openreplay/tracker';
 import type Message from '@openreplay/tracker';
 
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
+import confirm from './confirm';
+
 
 export interface Options {
-
+  confirmText: string,
+  confirmStyle: Object, // Styles object
 }
 
 
 export default function(opts: Partial<Options> = {})  {
   const options: Options = Object.assign(
-    { },
+    { 
+      confirmText: "You have a call. Do you want to answer?",
+      confirmStyle: {},
+    },
     opts,
   );
   return function(app: App | null) {
@@ -22,6 +28,8 @@ export default function(opts: Partial<Options> = {})  {
       return;
     }
 
+
+    let callingPeerDataConn
     app.attachStartCallback(function() {
       // @ts-ignore
       const peerID = `${app.getProjectKey()}-${app.getSessionID()}`
@@ -31,8 +39,6 @@ export default function(opts: Partial<Options> = {})  {
         path: '/assist',
         port: 80,//443,
       });
-      // peer.on('open', function(id) {
-      // });
       console.log(peerID)
       peer.on('connection', function(conn) { 
         console.log('connection')
@@ -45,49 +51,64 @@ export default function(opts: Partial<Options> = {})  {
             conn.send(messages);
           });
           app.start();
-          //conn.send({});
-          // conn.on('data', function(data) {
-          //   console.log('Received', data);
-          // });
         });
       });
+      let calling = false;
       peer.on('call', function(call) {
-        // ask client here.
-
-        const answer = confirm("You have a call. Answer?")
-        if (!answer) return;
-
-        const mouse = new Mouse();
-        let callUI;
-
-        navigator.mediaDevices.getUserMedia({video:true, audio:true})
-        .then(oStream => {
-          const onClose = () => {
-            console.log("close call...")
-            call.close(); //?
-            mouse?.remove();
-            callUI?.remove();
-            oStream.getTracks().forEach(t => t.stop());
+        const dataConn: DataConnection = peer
+                .connections[call.peer].find(c => c.type === 'data');
+        if (calling) {
+          call.close();
+          dataConn.send("call_end");
+          return;
+        }
+        confirm(options.confirmText, options.confirmStyle).then(conf => {
+          if (!conf || !dataConn.open) {
+            call.close();
+            dataConn.open && dataConn.send("call_end");
+            return;
           }
-          call.on('close', onClose);// Doesnt' work on firefox 
-   
-          call.answer(oStream);
-          callUI = new CallWindow(onClose);
-          callUI.setOutputStream(oStream);
-          call.on('stream', function(iStream) {
-            callUI.setInputStream(iStream);
 
-            Object.values(peer.connections).forEach((c: Array<DataConnection>) =>
-              c[0].on('data', data => {
-                mouse.move(data);
-              })
-            )
+          calling = true;
+          const mouse = new Mouse();
+          let callUI;
+
+          navigator.mediaDevices.getUserMedia({video:true, audio:true})
+          .then(oStream => {
+            const onClose = () => {
+              console.log("close call...")
+              if (call.open) { call.close(); }
+              mouse?.remove();
+              callUI?.remove();
+              oStream.getTracks().forEach(t => t.stop());
+
+              calling = false;
+              if (dataConn.open) {
+                dataConn.send("call_end");
+              }
+            }
+            dataConn?.on("close", onClose);
+
+            call.answer(oStream);
+            call.on('close', onClose); // Works from time to time (peerjs bug)
+            call.on('error', onClose); // notify about error?
+
+            callUI = new CallWindow(onClose);
+            callUI.setOutputStream(oStream);
+            call.on('stream', function(iStream) {
+              callUI.setInputStream(iStream);
+              dataConn?.on('data', (data: any) => {
+                if (data === "call_end") {
+                  onClose();
+                  return;
+                }
+                if (call.open && data && typeof data.x === 'number' && typeof data.y === 'number') {
+                  mouse.move(data);
+                }
+              });
+            });
           });
-
-
-
         });
-
       });
     });
   }
