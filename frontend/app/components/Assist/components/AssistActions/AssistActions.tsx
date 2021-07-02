@@ -70,7 +70,7 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
         position="top right"
       />
       <div className="fixed ml-3 left-0 top-0 z-50">
-        { showChat && <ChatWindow inputStream={inputStream} outputStream={outputStream} /> }
+        { showChat && <ChatWindow incomeStream={incomeStream} localStream={localStream} /> }
       </div>
     </div>
   )

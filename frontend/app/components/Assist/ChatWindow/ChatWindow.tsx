@@ -6,12 +6,12 @@ import { callPeer } from 'App/player'
 import cn from 'classnames'
 
 export interface Props {
-  inputStream: MediaStream | null,
-  outputStream: MediaStream | null
+  incomeStream: MediaStream | null,
+  localStream: MediaStream | null
   // call: (oStream: MediaStream, cb: (iStream: MediaStream)=>void)=>void
 }
 
-const ChatWindow: FC<Props> = function ChatWindow({ inputStream, outputStream }) {
+const ChatWindow: FC<Props> = function ChatWindow({ incomeStream, localStream }) {
   const [minimize, setMinimize] = useState(false)
 
   return (
