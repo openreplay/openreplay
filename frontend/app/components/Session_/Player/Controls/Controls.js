@@ -253,7 +253,7 @@ export default class Controls extends React.Component {
     const inspectorMode = bottomBlock === INSPECTOR;
 
     return (
-      <div className={ styles.controls }>
+      <div className={ cn(styles.controls, {'px-5' : live}) }>
         <Timeline jump={ this.props.jump } />
         { !fullscreen &&
           <div className={ styles.buttons } data-is-live={ live }>
@@ -276,13 +276,7 @@ export default class Controls extends React.Component {
               </div>
               :
               <div className={ styles.buttonsLeft }>
-                <LiveTag onClick={ this.goLive } isLive={livePlay} />
-                {/* <button onClick={ this.goLive } className={ styles.liveTag } data-is-live={ livePlay }>
-                  <Icon name="circle" size="8" marginRight="5" color="white" />
-                  <div>{'Live'}</div>
-                </button> */}
-                {'Elapsed'}
-                <ReduxTime name="time" />
+                <LiveTag isLive={livePlay} />
               </div>
             }
             <div className={ styles.butonsRight }>

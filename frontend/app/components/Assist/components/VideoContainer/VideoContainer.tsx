@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Button, Icon, IconButton } from 'UI'
+import { Button, Icon } from 'UI'
 import cn from 'classnames'
 import stl from './VideoContainer.css'
 
@@ -16,13 +16,6 @@ function VideoContainer({ stream, muted = false }: Props) {
   useEffect(() => {
     if (ref.current) {
       ref.current.srcObject = stream;
-      
-      stream?.getAudioTracks().forEach(track => {
-        console.log(track)
-        track.addEventListener('unmute', function(e) {
-          console.log(e)
-        })
-      });
     }
   }, [ ref.current, stream ])
 
@@ -39,8 +32,6 @@ function VideoContainer({ stream, muted = false }: Props) {
     stream.getVideoTracks().forEach(track => track.enabled = vEn);
     setVideoEnabled(vEn)
   }
-
-  // console.log(stream && stream.getAudioTracks())
 
   return (
     <div className="relative bg-gray-light-shade" style={{ height: '152px' }}>
