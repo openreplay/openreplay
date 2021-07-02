@@ -13,23 +13,6 @@ export interface Props {
 
 const ChatWindow: FC<Props> = function ChatWindow({ inputStream, outputStream }) {
   const [minimize, setMinimize] = useState(false)
-  // const [ inputStream, setInputStream ] = useState<MediaStream | null>(null);
-  // const [ outputStream, setOutputStream ] = useState<MediaStream | null>(null);
-
-  // useEffect(() => {
-  //   navigator.mediaDevices.getUserMedia({video:true, audio:true})
-  //   .then(oStream => {
-  //     setOutputStream(oStream);
-  //     const call = callPeer(oStream, setInputStream, () => {
-  //       console.log('endd')
-  //       outputStream?.getTracks().forEach(t => t.stop());
-  //       //inputStream?.
-  //     }); // Returns false when unable to connect.
-  //                 // TODO: handle calling state
-  //     console.log(call)
-  //   })
-  //   .catch(console.log) // TODO: handle error in ui
-  // }, [])
 
   return (
     <div    
@@ -55,9 +38,9 @@ const ChatWindow: FC<Props> = function ChatWindow({ inputStream, outputStream })
         />
       </div>
       <div className={cn({'hidden' : minimize}, 'mt-2')}>
-        <VideoContainer stream={ inputStream } />
+        <VideoContainer stream={ incomeStream } />
         <div className="py-1" />
-        <VideoContainer stream={ outputStream } muted/>
+        <VideoContainer stream={ localStream } muted/>
       </div>
     </div>    
   )

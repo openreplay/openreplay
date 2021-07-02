@@ -9,13 +9,9 @@ type MouseMoveTimed = MouseMove & Timed;
 const HOVER_CLASS = "-openreplay-hover";
 
 export default class MouseManager extends ListWalker<MouseMoveTimed> {
-  private screen: StatedScreen;
 	private hoverElements: Array<Element> = [];
 
-	constructor(screen: StatedScreen): void {
-		super();
-		this.screen = screen;
-	}
+	constructor(private screen: StatedScreen) {super();}
 
 	private updateHover(): void {
     // @ts-ignore TODO
