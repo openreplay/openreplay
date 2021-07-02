@@ -41,7 +41,7 @@ function LiveSessionList(props: Props) {
         show={ !loading && list && list.size === 0}
       >
         <Loader loading={ loading }>
-          {list?.filter(i => i.userId === userId).map(session => (
+          {list && (userId ? list.filter(i => i.userId === userId) : list).map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }

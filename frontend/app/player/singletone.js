@@ -79,4 +79,5 @@ export const Controls = {
   toggleSpeed,
   speedUp,
   speedDown,
+  callPeer
 }

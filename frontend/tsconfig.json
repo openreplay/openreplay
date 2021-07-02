@@ -22,6 +22,8 @@
       "Duck/*": ["./app/duck/*"],
       "Shared": ["./app/components/shared"],
       "Shared/*": ["./app/components/shared/*"],
+      "Player": ["./app/player"],
+      "Player/*": ["./app/player/*"],
     }
   },
   "exclude": [

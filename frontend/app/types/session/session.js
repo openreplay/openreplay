@@ -28,7 +28,7 @@ export default Record({
   siteId: '',
   projectKey: '',
   peerId: '',
-  live: true,
+  live: false,
   startedAt: 0,
   duration: 0,
   events: List(),
