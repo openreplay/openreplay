@@ -18,7 +18,7 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   loading: state.messagesLoading,
   disconnected: state.disconnected,
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
-  removeOverlay: state.inspectorMode || state.live,
+  removeOverlay: !state.messagesLoading && state.inspectorMode || state.live,
   completed: state.completed,
   autoplay: state.autoplay
 }))

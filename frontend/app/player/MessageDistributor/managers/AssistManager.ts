@@ -8,8 +8,74 @@ import { ID_TP_MAP } from '../messages';
 import { update, getState } from '../../store';
 
 
+export enum CallingState {
+  Requesting,
+  True,
+  False,
+};
+
+
 export const INITIAL_STATE = {
-  calling: false;
+  calling: CallingState.False,
+}
+
+
+function resolveURL(baseURL: string, relURL: string): string {
+  if (relURL.startsWith('#') || relURL === "") {
+    return relURL;
+  }
+  return new URL(relURL, baseURL).toString();
+}
+
+
+var match = /bar/.exec("foobar");
+const re1 = /url\(("[^"]*"|'[^']*'|[^)]*)\)/g
+const re2 = /@import "(.*?)"/g
+function cssUrlsIndex(css: string): Array<[number, number]> {
+  const idxs: Array<[number, number]> = [];
+  const i1 = css.matchAll(re1);
+  // @ts-ignore
+  for (let m of i1) {
+    // @ts-ignore
+    const s: number = m.index + m[0].indexOf(m[1]);
+    const e: number = s + m[1].length;
+    idxs.push([s, e]);
+  }
+  const i2 = css.matchAll(re2);
+  // @ts-ignore
+  for (let m of i2) {
+    // @ts-ignore
+    const s = m.index + m[0].indexOf(m[1]);
+    const e = s + m[1].length;
+    idxs.push([s, e])
+  }
+  return idxs;
+}
+function unquote(str: string): [string, string] {
+  str = str.trim();
+  if (str.length <= 2) {
+    return [str, ""]
+  }
+  if (str[0] == '"' && str[str.length-1] == '"') {
+    return [ str.substring(1, str.length-1), "\""];
+  }
+  if (str[0] == '\'' && str[str.length-1] == '\'') {
+    return [ str.substring(1, str.length-1), "'" ];
+  }
+  return [str, ""]
+}
+function rewriteCSSLinks(css: string, rewriter: (rawurl: string) => string): string {
+  for (let idx of cssUrlsIndex(css)) {
+    const f = idx[0]
+    const t = idx[1]
+    const [ rawurl, q ] = unquote(css.substring(f, t));
+    css = css.substring(0,f) + q + rewriter(rawurl) + q + css.substring(t);
+  }
+  return css
+}
+
+function resolveCSS(baseURL: string, css: string): string {
+  return rewriteCSSLinks(css, rawurl => resolveURL(baseURL, rawurl));
 }
 
 
@@ -33,7 +99,7 @@ export default class AssistManager {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
         path: '/assist',
-        port: 80,
+        port:  443 //location.protocol === 'https:' ? 443 : 80,
       });
       this.peer = peer;
       this.peer.on('error', e => {
@@ -54,7 +120,7 @@ export default class AssistManager {
     if (!this.peer) { return; }
     const id = this.peerID;
     console.log("trying to connect to", id)
-    const conn = this.peer.connect(id);
+    const conn = this.peer.connect(id, { serialization: 'json'});
 
     conn.on('open', () => {
       this.md.setMessagesLoading(false);
@@ -67,6 +133,30 @@ export default class AssistManager {
         let time = 0;
         let ts0 = 0;
         (data as Array<Message & { _id: number}>).forEach(msg => {
+
+          // TODO: more appropriate way to do it.
+          if (msg._id === 60) {
+            // @ts-ignore
+            if (msg.name === 'src' || msg.name === 'href') {
+                          // @ts-ignore
+              msg.value = resolveURL(msg.baseURL, msg.value);
+                          // @ts-ignore
+            } else if (msg.name === 'style') {
+                         // @ts-ignore
+              msg.value = resolveCSS(msg.baseURL, msg.value);
+            }     
+            msg._id = 12;       
+          } else if (msg._id === 61) { // "SetCSSDataURLBased"
+                          // @ts-ignore
+            msg.data = resolveCSS(msg.baseURL, msg.data);
+            msg._id = 15;
+          } else if (msg._id === 67) { // "insert_rule"
+             // @ts-ignore
+            msg.rule = resolveCSS(msg.baseURL, msg.rule);
+            msg._id = 37;
+          }
+
+
           msg.tp = ID_TP_MAP[msg._id];  // _id goes from tracker
           if (msg.tp === "timestamp") {
             ts0 = ts0 || msg.timestamp
@@ -115,31 +205,40 @@ export default class AssistManager {
     }
   }
 
-  private onMouseMoveShare = (e: MouseEvent ): void => {
+  //private blocked: boolean = false;
+  private onMouseMove = (e: MouseEvent ): void => {
+    //if (this.blocked) { return; }
+    //this.blocked = true;
+    //setTimeout(() => this.blocked = false, 200);
     const conn = this.dataConnection;
     if (!conn || !conn.open) { return; }
     // @ts-ignore ???
-    const data = this.md._getInternalCoordinates(e);
-    conn.send({ x: Math.round(data.x), y: Math.round(data.y) }); // debounce?
+    const data = this.md.getInternalCoordinates(e);
+    conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
   }
 
-  call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onError?: ()=> void): null | Function {
+  call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onReject: () => void, onError?: ()=> void): null | Function {
     if (!this.peer || getState().calling) { return null; }
+    update({ calling: CallingState.Requesting });
+        console.log('calling...')
     const call =  this.peer.call(this.peerID, localStream);
-
-    console.log('calling...')
-
-    update({ calling: true});
+    
+    let requesting = true;
     call.on('stream', stream => {
+      update({ calling: CallingState.True });
       onStream(stream);
       // @ts-ignore ??
-      this.md.overlay.addEventListener("mousemove", this.onMouseMoveShare)
+      this.md.overlay.addEventListener("click", this.onMouseMove)
     });
 
     this.onCallEnd = () => {
+      if (requesting) {
+        requesting = false;
+        onReject();
+      }
       // @ts-ignore ??
-      this.md.overlay.removeEventListener("mousemove",  this.onMouseMoveShare);
-      update({ calling: false});
+      this.md.overlay.removeEventListener("click",  this.onMouseMove);
+      update({ calling: CallingState.True });
       onClose();
     }
     call.on("close", this.onCallEnd);
@@ -155,5 +254,6 @@ export default class AssistManager {
   clear() {
     this.peer?.destroy();
   }
-
 }
+
+
