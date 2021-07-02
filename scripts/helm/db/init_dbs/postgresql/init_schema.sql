@@ -513,6 +513,7 @@ CREATE INDEX ON sessions (project_id, user_country);
 CREATE INDEX ON sessions (project_id, user_browser);
 CREATE INDEX sessions_start_ts_idx ON public.sessions (start_ts) WHERE duration > 0;
 CREATE INDEX sessions_project_id_idx ON public.sessions (project_id) WHERE duration > 0;
+CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions(session_id,project_id,start_ts) WHERE duration>0;
 
 ALTER TABLE public.sessions
     ADD CONSTRAINT web_browser_constraint CHECK ( (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
@@ -661,6 +662,11 @@ CREATE INDEX pages_dom_content_loaded_time_idx ON events.pages (dom_content_load
 CREATE INDEX pages_first_paint_time_idx ON events.pages (first_paint_time) WHERE first_paint_time > 0;
 CREATE INDEX pages_ttfb_idx ON events.pages (ttfb) WHERE ttfb > 0;
 CREATE INDEX pages_time_to_interactive_idx ON events.pages (time_to_interactive) WHERE time_to_interactive > 0;
+CREATE INDEX pages_session_id_timestamp_loadgt0NN_idx ON events.pages (session_id,timestamp) WHERE load_time > 0 AND load_time IS NOT NULL;
+CREATE INDEX pages_session_id_timestamp_visualgt0nn_idx ON events.pages (session_id, timestamp) WHERE visually_complete > 0 AND visually_complete IS NOT NULL;
+CREATE INDEX pages_timestamp_metgt0_idx ON events.pages (timestamp) WHERE response_time > 0 OR first_paint_time > 0 OR
+                                                                          dom_content_loaded_time > 0 OR ttfb > 0 OR
+                                                                          time_to_interactive > 0;
 
 
 CREATE TABLE events.clicks
@@ -760,6 +766,8 @@ CREATE INDEX resources_url_gin_idx ON events.resources USING GIN (url gin_trgm_o
 CREATE INDEX resources_url_idx ON events.resources (url);
 CREATE INDEX resources_url_hostpath_gin_idx ON events.resources USING GIN (url_hostpath gin_trgm_ops);
 CREATE INDEX resources_url_hostpath_idx ON events.resources (url_hostpath);
+DROP INDEX events.resources_type_idx;
+CREATE INDEX resources_timestamp_type_durationgt0NN_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL;
 
 
 
