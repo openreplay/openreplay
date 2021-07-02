@@ -5,6 +5,7 @@
     "moduleResolution": "node", //?
     //"allowJs": true,
     "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
     //"sourceMap": false,
     "lib": [ "es2020", "dom" ],
     "jsx": "react",
