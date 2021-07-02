@@ -46,7 +46,7 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
       }).catch(onError);
   }
 
-  const inCall = calling == CallingState.Requesting || CallingState.True
+  const inCall = calling == 0 || calling == 1
 
   return (
     <div className="flex items-center">
@@ -54,13 +54,13 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
         trigger={
           <div
             className={cn('cursor-pointer p-2 mr-2')}
-            onClick={call}
+            onClick={inCall ? endCall : call}
             role="button"
           >
             <Icon
               name="telephone-fill"
               size="20"
-              color={ calling == CallingState.Requesting ? "red" : "teal" }
+              color={ calling !== 2 ? "red" : "teal" }
             />
           </div>
         }
@@ -70,7 +70,7 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
         position="top right"
       />
       <div className="fixed ml-3 left-0 top-0 z-50">
-        { showChat && <ChatWindow incomeStream={incomeStream} localStream={localStream} /> }
+        { inCall && <ChatWindow incomeStream={incomeStream} localStream={localStream} /> }
       </div>
     </div>
   )
