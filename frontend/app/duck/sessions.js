@@ -55,7 +55,7 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('errorStack', List(action.data.trace).map(ErrorStack)).set('sourcemapUploaded', action.data.sourcemapUploaded)
     case FETCH_LIVE_LIST.SUCCESS:
       // const { sessions, total } = action.data;
-      const liveList = List(action.data).map(Session);
+      const liveList = List(action.data).map(s => new Session({...s, live: true}));
       return state
         .set('liveSessions', liveList)
     case FETCH_LIST.SUCCESS:

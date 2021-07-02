@@ -246,7 +246,7 @@ export default class Controls extends React.Component {
       showLongtasks,
       exceptionsCount,
       showExceptions,
-      fullscreen,      
+      fullscreen,
       skipToIssue
     } = this.props;
 
@@ -277,6 +277,8 @@ export default class Controls extends React.Component {
               :
               <div className={ styles.buttonsLeft }>
                 <LiveTag isLive={livePlay} />
+                {'Elapsed'}
+                <ReduxTime name="time" />
               </div>
             }
             <div className={ styles.butonsRight }>
