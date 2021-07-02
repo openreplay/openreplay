@@ -9,7 +9,7 @@ import { deviceMemory, jsHeapSizeLimit } from '../modules/performance';
 
 import type { Options as ObserverOptions } from './observer';
 
-import type { Options as WebworkerOptions, MessageData } from '../../webworker/types';
+import type { Options as WebworkerOptions, WorkerMessageData } from '../../messages/webworker';
 
 export type Options = {
   revID: string;
@@ -23,19 +23,22 @@ export type Options = {
 } & ObserverOptions & WebworkerOptions;
 
 type Callback = () => void;
+type CommitCallback = (messages: Array<Message>) => void;
 
 export const DEFAULT_INGEST_POINT = 'https://ingest.openreplay.com';
 
 export default class App {
   readonly nodes: Nodes;
   readonly ticker: Ticker;
+  readonly projectKey: string;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
-  private readonly startCallbacks: Array<Callback>;
-  private readonly stopCallbacks: Array<Callback>;
+  private readonly startCallbacks: Array<Callback> = [];
+  private readonly stopCallbacks: Array<Callback> = [];
+  private readonly commitCallbacks: Array<CommitCallback> = [];
   private readonly options: Options;
-  private readonly projectKey: string;
   private readonly revID: string;
+  private  _sessionID: string | null = null;
   private isActive = false;
   private version = 'TRACKER_VERSION';
   private readonly worker?: Worker;
@@ -67,8 +70,6 @@ export default class App {
     this.observer = new Observer(this, this.options);
     this.ticker = new Ticker(this);
     this.ticker.attach(() => this.commit());
-    this.startCallbacks = [];
-    this.stopCallbacks = [];
     try {
       this.worker = new Worker(
         URL.createObjectURL(
@@ -94,8 +95,10 @@ export default class App {
           this.worker.postMessage(null);
         }
       }
+      // TODO: keep better tactics, discard others (look https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon)
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
+      this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { /* TODO: send report */}
   }
   send(message: Message, urgent = false): void {
@@ -111,9 +114,15 @@ export default class App {
     if (this.worker && this.messages.length) {
       this.messages.unshift(new Timestamp(timestamp()));
       this.worker.postMessage(this.messages);
+      this.commitCallbacks.forEach(cb => cb(this.messages));
       this.messages.length = 0;
     }
   }
+
+  addCommitCallback(cb: CommitCallback): void {
+    this.commitCallbacks.push(cb)
+  }
+
 
   safe<T extends (...args: any[]) => void>(fn: T): T {
     const app = this;
@@ -161,9 +170,11 @@ export default class App {
       return token;
     }
   }
-  // @Depricated; for the old fetch-plugin versions
-  sessionID(): string | undefined {
-    return this.getSessionToken();
+  getSessionID(): string | undefined {
+    return this._sessionID || undefined;
+  }
+  getHost(): string {
+    return new URL(this.options.ingestPoint).host;
   }
 
   isServiceURL(url: string): boolean {
@@ -189,7 +200,7 @@ export default class App {
       sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
       const startTimestamp = timestamp();
 
-      const messageData: MessageData = { 
+      const messageData: WorkerMessageData = { 
         ingestPoint: this.options.ingestPoint, 
         pageNo, 
         startTimestamp,
@@ -197,10 +208,6 @@ export default class App {
         connAttemptGap: this.options.connAttemptGap,
       }
       this.worker.postMessage(messageData); // brings delay of 10th ms?  
-      this.observer.observe();
-      this.startCallbacks.forEach((cb) => cb());
-      this.ticker.start();
-
       window.fetch(this.options.ingestPoint + '/v1/web/start', { 
         method: 'POST',
         headers: {
@@ -227,21 +234,27 @@ export default class App {
         }
       })
       .then(r => {
-        const { token, userUUID } = r;
+        const { token, userUUID, sessionID } = r;
         if (typeof token !== 'string' || 
             typeof userUUID !== 'string') {
           throw new Error("Incorrect server responce");
         }
         sessionStorage.setItem(this.options.session_token_key, token);
         localStorage.setItem(this.options.local_uuid_key, userUUID);
+        if (typeof sessionID === 'string') {
+          this._sessionID = sessionID;
+        }
         if (!this.worker) {
           throw new Error("Stranger things: no worker found after start request"); 
         }
         this.worker.postMessage({ token });
+        this.observer.observe();
+        this.startCallbacks.forEach((cb) => cb());
+        this.ticker.start();
 
         log("OpenReplay tracking started.");
         if (typeof this.options.onStart === 'function') {
-          this.options.onStart({ sessionToken: token, userUUID, sessionID: token /* back compat (depricated) */ });
+          this.options.onStart({ sessionToken: token, userUUID, sessionID });
         }
       })
       .catch(e => {
