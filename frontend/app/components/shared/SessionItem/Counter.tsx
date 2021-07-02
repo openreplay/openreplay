@@ -9,7 +9,7 @@ interface Props {
 function Counter({ startTime }: Props) {
   return (
     <div className="mx-2">
-      {startTime && Duration.fromMillis(startTime).toFormat('m:ss')}
+      {startTime && Duration.fromMillis(startTime).toFormat('h:m:ss')}
     </div>
   )
 }

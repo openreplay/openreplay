@@ -16,6 +16,13 @@ function VideoContainer({ stream, muted = false }: Props) {
   useEffect(() => {
     if (ref.current) {
       ref.current.srcObject = stream;
+      
+      stream?.getAudioTracks().forEach(track => {
+        console.log(track)
+        track.addEventListener('unmute', function(e) {
+          console.log(e)
+        })
+      });
     }
   }, [ ref.current, stream ])
 
@@ -33,8 +40,10 @@ function VideoContainer({ stream, muted = false }: Props) {
     setVideoEnabled(vEn)
   }
 
+  // console.log(stream && stream.getAudioTracks())
+
   return (
-    <div className="relative bg-gray-light-shade" style={{ height: '152px', width: '200px' }}>      
+    <div className="relative bg-gray-light-shade" style={{ height: '152px' }}>
       <div className="absolute inset-0 flex justify-center border border-gray-300 bg-white radius bg-opacity-25">
         <video autoPlay ref={ ref } muted={ muted } />
         <div className={cn(stl.controls, "flex items-center absolute w-full justify-end bottom-0")}>

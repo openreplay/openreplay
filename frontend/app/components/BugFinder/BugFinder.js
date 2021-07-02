@@ -141,8 +141,6 @@ export default class BugFinder extends React.PureComponent {
     const { activeFlow, activeTab } = this.props;    
     const { showRehydratePanel } = this.state;
 
-    console.log('activeTab', activeTab)
-
     return (
       <div className="page-margin container-90 flex relative">
         <div className="flex-1 flex">
