@@ -3,10 +3,13 @@ import { getState } from '../../../store';
 
 import type { Point } from './types';
 
-export const INITIAL_STATE: {
+
+export interface State {
   width: number;
   height: number;
-} = {
+}
+
+export const INITIAL_STATE: State = {
   width: 0,
   height: 0,
 }

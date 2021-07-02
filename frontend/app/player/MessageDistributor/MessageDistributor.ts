@@ -27,10 +27,12 @@ import AssistManager from './managers/AssistManager';
 
 import MessageReader from './MessageReader';
 
-import { INITIAL_STATE as PARENT_INITIAL_STATE } from './StatedScreen';
-import { INITIAL_STATE as ASSIST_INITIAL_STATE } from './managers/AssistManager';
+import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen';
+import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
 
 import type { TimedMessage } from './Timed';
+import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
+import type { SkipInterval } from './managers/ActivityManager';
 
 const LIST_NAMES = [ "redux", "mobx", "vuex", "ngrx", "graphql", "exceptions", "profiles", "longtasks" ] as const;
 const LISTS_INITIAL_STATE = {};
@@ -38,13 +40,26 @@ LIST_NAMES.forEach(name => {
   LISTS_INITIAL_STATE[`${name}ListNow`] = [];
   LISTS_INITIAL_STATE[`${name}List`] = [];
 })
-export const INITIAL_STATE = {
-  ...PARENT_INITIAL_STATE,
+
+export interface State extends SuperState, AssistState {
+  performanceChartData: PerformanceChartPoint[],
+  skipIntervals: SkipInterval[],
+  connType?: string,
+  connBandwidth?: number,
+  location?: string,
+  performanceChartTime?: number,
+
+  domContentLoadedTime?: any,
+  domBuildingTime?: any,
+  loadTime?: any,
+}
+export const INITIAL_STATE: State = {
+  ...SUPER_INITIAL_STATE,
   ...LISTS_INITIAL_STATE,
   ...ASSIST_INITIAL_STATE,
   performanceChartData: [],
   skipIntervals: [],
-} as const;
+};
 
 type ListsObject = {
   [key in typeof LIST_NAMES[number]]: ListWalker<any> //
@@ -206,7 +221,7 @@ export default class MessageDistributor extends StatedScreen {
         }
         return 0;
       })
-      //
+   
 
       logger.info("Messages count: ", msgs.length, msgs);
 
@@ -233,7 +248,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   move(t: number, index?: number):void {
-    const stateToUpdate: typeof INITIAL_STATE = {};
+    const stateToUpdate: Partial<State> = {};
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveToLast(t, index);
     if (!!lastLoadedLocationMsg) {

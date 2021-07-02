@@ -14,8 +14,11 @@ export enum CallingState {
   False,
 };
 
+export interface State {
+  calling: CallingState,
+}
 
-export const INITIAL_STATE = {
+export const INITIAL_STATE: State = {
   calling: CallingState.False,
 }
 
@@ -99,7 +102,7 @@ export default class AssistManager {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
         path: '/assist',
-        port:  443 //location.protocol === 'https:' ? 443 : 80,
+        port:  location.protocol === 'https:' ? 443 : 80,
       });
       this.peer = peer;
       this.peer.on('error', e => {
