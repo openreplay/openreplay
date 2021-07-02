@@ -6,11 +6,11 @@ import { toggleChatWindow } from 'Duck/sessions';
 import stl from './AassistActions.css'
 
 interface Props {
-  isLive: false;
+  userId: String,
   toggleChatWindow: (state) => void
 }
 
-function AssistActions({ toggleChatWindow }: Props) {
+function AssistActions({ toggleChatWindow, userId }: Props) {
   return (
     <div className="flex items-center">
       <Popup
@@ -23,10 +23,10 @@ function AssistActions({ toggleChatWindow }: Props) {
             <Icon name="telephone-fill" size="20" color="teal" />
           </div>
         }
-        content={ `Start Video Call` }
+        content={ `Call ${userId}` }
         size="tiny"
         inverted
-        position="top center"
+        position="top right"
       />
     </div>
   )

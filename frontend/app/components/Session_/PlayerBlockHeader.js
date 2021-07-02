@@ -113,7 +113,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
 
           <div className='ml-auto flex items-center'>
-            { live && <AssistActions isLive /> }
+            { live && <AssistActions isLive userId={userId} /> }
             { !live && (
               <>
                 <Autoplay />            
