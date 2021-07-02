@@ -1,7 +1,15 @@
-import Screen, { INITIAL_STATE as SUPER_INITIAL_STATE }  from './Screen';
+import Screen, { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState }  from './Screen';
 import { update, getState } from '../../store';
 
-export const INITIAL_STATE = {
+
+export interface State extends SuperState {
+  messagesLoading: boolean,
+  cssLoading: boolean,
+  disconnected: boolean,
+  userPageLoading: boolean, 
+}
+
+export const INITIAL_STATE: State = {
   ...SUPER_INITIAL_STATE,
   messagesLoading: false,
   cssLoading: false,
@@ -10,6 +18,7 @@ export const INITIAL_STATE = {
 }
 
 export default class StatedScreen extends Screen {
+  constructor() { super(); }
 
   setMessagesLoading(messagesLoading: boolean) {
     // @ts-ignore
