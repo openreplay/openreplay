@@ -49,7 +49,7 @@ function Session({
     	<Loader className="flex-1" loading={ loading || sessionId !== session.sessionId }> 
     		{ session.isIOS 
     			? <IOSPlayer session={session} />
-    			: <LivePlayer />
+    			: (session.live ? <LivePlayer /> : <WebPlayer />)
       	}
     	</Loader>
     </NoContent>

@@ -15,6 +15,8 @@ import { session as sessionRoute } from 'App/routes';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
 import LiveTag from 'Shared/LiveTag';
+import { session } from '../../../routes';
+import Counter from './Counter'
 
 const Label = ({ label = '', color = 'color-gray-medium'}) => (
   <div className={ cn('font-light text-sm', color)}>{label}</div>
@@ -53,7 +55,7 @@ export default class SessionItem extends React.PureComponent {
         userDeviceType,
         userUuid,
         userNumericHash,
-        live
+        live        
       },
       timezone,
       onUserClick,
@@ -108,6 +110,7 @@ export default class SessionItem extends React.PureComponent {
             </div>
           )}
 
+          { live && <Counter startTime={startedAt} /> }          
           { live && <LiveTag isLive={true} /> }
 
           <div className={ cn(stl.iconDetails, 'px-4') }>

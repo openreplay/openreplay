@@ -307,7 +307,7 @@ export default class Controls extends React.Component {
                 </React.Fragment>
               }
               <div className={ styles.divider } />
-              { !live && showDevTools &&
+              { showDevTools &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(NETWORK) }
@@ -329,7 +329,7 @@ export default class Controls extends React.Component {
                   icon="fetch"
                 />
               }
-              { showGraphql &&
+              { !live && showGraphql &&
                 <ControlButton
                   disabled={disabled}
                   onClick={ ()=> toggleBottomBlock(GRAPHQL) }
@@ -339,7 +339,7 @@ export default class Controls extends React.Component {
                   icon="vendors/graphql"
                 />
               }
-              { showStorage && showDevTools &&
+              { !live && showStorage && showDevTools &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STORAGE) }
@@ -360,7 +360,7 @@ export default class Controls extends React.Component {
                   hasErrors={ logRedCount > 0 }
                 />
               }
-              { showExceptions && showDevTools &&
+              { !live && showExceptions && showDevTools &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(EXCEPTIONS) }
@@ -371,7 +371,7 @@ export default class Controls extends React.Component {
                   hasErrors={ exceptionsCount > 0 }
                 />
               }
-              { !live && showDevTools && showStack &&
+              { showDevTools && showStack &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STACKEVENTS) }
@@ -382,7 +382,7 @@ export default class Controls extends React.Component {
                   hasErrors={ stackRedCount > 0 }
                 />
               }
-              { showProfiler && showDevTools &&
+              { !live && showProfiler && showDevTools &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(PROFILER) }
@@ -391,7 +391,7 @@ export default class Controls extends React.Component {
                   label="Profiler"
                   icon="code"
                 />
-              }
+              }              
               <ControlButton
                 disabled={ disabled }
                 onClick={ () => toggleBottomBlock(PERFORMANCE) }
@@ -399,7 +399,7 @@ export default class Controls extends React.Component {
                 label="Performance"
                 icon="tachometer-slow"
               />
-              { showLongtasks &&
+              { !live && showLongtasks &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(LONGTASKS) }
@@ -420,13 +420,15 @@ export default class Controls extends React.Component {
                 </React.Fragment>
               }
                          
-              <ControlButton
-                disabled={ disabled && !inspectorMode }
-                active={ bottomBlock === INSPECTOR }
-                onClick={ () => toggleBottomBlock(INSPECTOR) }
-                icon={ inspectorMode ? 'close' : 'inspect' }
-                label="Inspect"
-              />
+              {!live && (
+                <ControlButton
+                  disabled={ disabled && !inspectorMode }
+                  active={ bottomBlock === INSPECTOR }
+                  onClick={ () => toggleBottomBlock(INSPECTOR) }
+                  icon={ inspectorMode ? 'close' : 'inspect' }
+                  label="Inspect"
+                />
+              )}
             </div>
           </div>
         }
