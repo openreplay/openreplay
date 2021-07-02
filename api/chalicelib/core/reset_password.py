@@ -38,8 +38,7 @@ def step2(data):
         print("error: wrong email or reset code")
         return {"errors": ["wrong email or reset code"]}
     users.update(tenant_id=user["tenantId"], user_id=user["id"],
-                 changes={"token": None, "password": data["password"], "generatedPassword": False,
-                          "verifiedEmail": True})
+                 changes={"token": None, "password": data["password"], "generatedPassword": False})
     return {"data": {"state": "success"}}
 
 
