@@ -1,6 +1,6 @@
 import { goTo as listsGoTo } from './lists';
 import { update, getState } from './store';
-import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE }  from './MessageDistributor';
+import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState }  from './MessageDistributor';
 
 const fps = 60;
 const performance = window.performance || { now: Date.now.bind(Date) };
@@ -20,7 +20,7 @@ const cancelAnimationFrame =
   window.mozCancelAnimationFrame ||
   window.clearTimeout;
 
-const HIGHEST_SPEED = 3;
+const HIGHEST_SPEED = 16;
 
 
 const SPEED_STORAGE_KEY = "__$player-speed$__";
@@ -28,12 +28,12 @@ const SKIP_STORAGE_KEY = "__$player-skip$__";
 const SKIP_TO_ISSUE_STORAGE_KEY = "__$player-skip-to-issue$__";
 const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
 const storedSpeed: number = parseInt(localStorage.getItem(SPEED_STORAGE_KEY) || "") ;
-const initialSpeed = [1,2,3].includes(storedSpeed) ? storedSpeed : 1;
+const initialSpeed = [1,2,4,8,16].includes(storedSpeed) ? storedSpeed : 1;
 const initialSkip = !!localStorage.getItem(SKIP_STORAGE_KEY);
 const initialSkipToIssue = !!localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY);
 const initialAutoplay = !!localStorage.getItem(AUTOPLAY_STORAGE_KEY);
 
-export const INITIAL_STATE = {
+export const INITIAL_STATE: SuperState = {
   ...SUPER_INITIAL_STATE,
   time: 0,
   playing: false,
@@ -42,7 +42,8 @@ export const INITIAL_STATE = {
   inspectorMode: false,
   live: false,
   livePlay: false,
-}
+} as const;
+
 
 export const INITIAL_NON_RESETABLE_STATE = {
   skip: initialSkip,
@@ -204,17 +205,17 @@ export default class Player extends MessageDistributor {
 
   toggleSpeed() {
     const { speed } = getState();
-    this._updateSpeed(speed < HIGHEST_SPEED ? speed + 1 : 1);
+    this._updateSpeed(speed < HIGHEST_SPEED ? speed * 2 : 1);
   }
 
   speedUp() {
     const { speed } = getState();
-    this._updateSpeed(Math.min(HIGHEST_SPEED, speed + 1));
+    this._updateSpeed(Math.min(HIGHEST_SPEED, speed * 2));
   }
 
   speedDown() {
     const { speed } = getState();
-    this._updateSpeed(Math.max(1, speed - 1));
+    this._updateSpeed(Math.max(1, speed/2));
   }
 
   clean() {
