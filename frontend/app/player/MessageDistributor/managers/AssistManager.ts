@@ -176,6 +176,7 @@ export default class AssistManager {
     });
     conn.on('close', () => {
       this.md.setMessagesLoading(true);
+      this.endCall();
       console.log('closed peer conn. Reconnecting...')
       setTimeout(() => this.connectToPeer(), 300); // reconnect
     });
@@ -194,10 +195,10 @@ export default class AssistManager {
   private onCallEnd: null | (()=>void) = null;
   private endCall = () => {
     const conn = this.callConnection;
+    this.onCallEnd?.();
     if (!conn || !conn.open) { return; }
     conn.close(); //calls onCallEnd twice
     this.dataConnection?.send("call_end"); //
-    this.onCallEnd?.();
   }
 
   private handleCommand(command: string) {
@@ -221,12 +222,13 @@ export default class AssistManager {
   }
 
   call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onReject: () => void, onError?: ()=> void): null | Function {
-    if (!this.peer || getState().calling) { return null; }
+    console.log(!this.peer , getState().calling, CallingState.False)
+    if (!this.peer || getState().calling !== CallingState.False) { return null; }
+    
     update({ calling: CallingState.Requesting });
         console.log('calling...')
     const call =  this.peer.call(this.peerID, localStream);
     
-    let requesting = true;
     call.on('stream', stream => {
       update({ calling: CallingState.True });
       onStream(stream);
@@ -235,14 +237,15 @@ export default class AssistManager {
     });
 
     this.onCallEnd = () => {
-      if (requesting) {
-        requesting = false;
+      if (getState().calling === CallingState.Requesting) {
         onReject();
       }
+      onClose();
+      
       // @ts-ignore ??
       this.md.overlay.removeEventListener("click",  this.onMouseMove);
-      update({ calling: CallingState.True });
-      onClose();
+      update({ calling: CallingState.False });
+      this.onCallEnd = null;
     }
     call.on("close", this.onCallEnd);
     call.on("error", (e) => {

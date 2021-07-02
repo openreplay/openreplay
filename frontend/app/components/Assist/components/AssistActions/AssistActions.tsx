@@ -17,42 +17,33 @@ interface Props {
 
 function AssistActions({ toggleChatWindow, userId, calling }: Props) {
   const [showChat, setShowChat] = useState(false)
-  const [ callBtnAction, setCallBtnAction ] = useState(()=>{});
-  const [ inputStream, setInputStream ] = useState<MediaStream | null>(null);
-  const [ outputStream, setOutputStream ] = useState<MediaStream | null>(null);
+  const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
+  const [ localStream, setLocalStream ] = useState<MediaStream | null>(null);
+  const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
 
   function onClose(stream) {
-    stream.getTracks().forEach(t => t.stop());
+    console.log("Closed")
+    stream.getTracks().forEach(t=>t.stop());
   }
-
   function onReject() {
     console.log("Rejected");
   }
-
   function onError() {
     console.log("Something went wrong");
   }
 
-  const endCall = () => {
-
-  }
-
-  const startCall = () => {
+  function call() { 
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
       .then(lStream => {
-        setOutputStream(lStream);
-        setCallBtnAction(
-          callPeer(
-            lStream,
-            inputStream,
-            onClose.bind(null, lStream),
-            onReject,
-            onError
-          )
-        );
+        setLocalStream(lStream);
+        setEndCall(() => callPeer(
+          lStream,
+          setIncomeStream,
+          onClose.bind(null, lStream),
+          onReject,
+          onError
+        ));
       }).catch(onError);
-    
-    setShowChat(!showChat)
   }
 
   const inCall = calling == CallingState.Requesting || CallingState.True
@@ -63,7 +54,7 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
         trigger={
           <div
             className={cn('cursor-pointer p-2 mr-2')}
-            onClick={startCall}
+            onClick={call}
             role="button"
           >
             <Icon
