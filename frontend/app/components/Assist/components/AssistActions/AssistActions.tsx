@@ -27,15 +27,7 @@ function AssistActions({ toggleChatWindow }: Props) {
         size="tiny"
         inverted
         position="top center"
-      />      
-      <div className="mx-1" />
-      <div
-        role="button"
-        className="flex items-center p-2 cursor-pointer"
-      >
-        <Icon name="controller" size="20" />
-        <span className="ml-2">Request Control</span>
-      </div>
+      />
     </div>
   )
 }
