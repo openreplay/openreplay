@@ -9,7 +9,7 @@ export default  class Inspector {
     this.marker = marker;
   }
 
-  _onMouseMove = (e) => {
+  _onMouseMove = (e) => {    
     // const { overlay } = this.screen;
     // if (!overlay.contains(e.target)) {
     //   return;
@@ -21,7 +21,8 @@ export default  class Inspector {
     if (target === this.marker.target) {
       return;
     }
-    this.marker.mark(target);
+
+    this.marker.mark(target);    
   }
 
   _onOverlayLeave = () => {
