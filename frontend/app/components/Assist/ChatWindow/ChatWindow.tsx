@@ -15,12 +15,13 @@ const ChatWindow: FC<Props> = function ChatWindow() {
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
     .then(oStream => {
       setOutputStream(oStream);
-      callPeer(oStream, setInputStream, () => {
+      const call = callPeer(oStream, setInputStream, () => {
         console.log('endd')
         outputStream?.getTracks().forEach(t => t.stop());
         //inputStream?.
       }); // Returns false when unable to connect.
                   // TODO: handle calling state
+      console.log(call)
     })
     .catch(console.log) // TODO: handle error in ui
   }, [])
