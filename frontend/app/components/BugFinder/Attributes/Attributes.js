@@ -22,7 +22,6 @@ const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], va
   filters: state.getIn([ 'filters', 'appliedFilter', 'filters' ]),
   filterValues: state.get('filterValues'),
   filterOptions: state.getIn([ 'filters', 'filterOptions' ]),
-  activeTab: state.getIn([ 'sessions', 'activeTab', 'type' ]),
 }), {
   addAttribute,
 })
@@ -46,11 +45,10 @@ class Attributes extends React.PureComponent {
     return options && options.size ? toOptions(options.filter(i => !!i)) : []
   }
   render() {
-    const { filters, activeTab } = this.props;
-
+    const { filters } = this.props;
     return (
       <>
-        { filters.size > 0 && activeTab !== 'live' &&
+        { filters.size > 0 &&
           <div>
             <div className="py-1"><ListHeader title="Filters" /></div>
             {
