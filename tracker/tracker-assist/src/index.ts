@@ -2,6 +2,7 @@ import Peer, { MediaConnection } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 import { App, Messages } from '@openreplay/tracker';
 import type Message from '@openreplay/tracker';
+import type { Options as AppOptions } from '@openreplay/tracker';
 
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
@@ -22,7 +23,7 @@ export default function(opts: Partial<Options> = {})  {
     },
     opts,
   );
-  return function(app: App | null) {
+  return function(app: App | null, appOptions: AppOptions) {
     // @ts-ignore
     if (app === null || !navigator?.mediaDevices?.getUserMedia) { // 93.04% browsers
       return;
@@ -32,12 +33,12 @@ export default function(opts: Partial<Options> = {})  {
     let callingPeerDataConn
     app.attachStartCallback(function() {
       // @ts-ignore
-      const peerID = `${app.getProjectKey()}-${app.getSessionID()}`
+      const peerID = `${app.projectKey}-${app.getSessionID()}`
       const peer = new Peer(peerID, {
               // @ts-ignore
         host: app.getHost(),
         path: '/assist',
-        port: 80,//443,
+        port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
       });
       console.log(peerID)
       peer.on('connection', function(conn) { 
@@ -55,11 +56,11 @@ export default function(opts: Partial<Options> = {})  {
       });
       let calling = false;
       peer.on('call', function(call) {
-        const dataConn: DataConnection = peer
+        const dataConn: DataConnection | undefined = peer
                 .connections[call.peer].find(c => c.type === 'data');
-        if (calling) {
+        if (calling || !dataConn) {
           call.close();
-          dataConn.send("call_end");
+          dataConn?.send("call_end");
           return;
         }
         confirm(options.confirmText, options.confirmStyle).then(conf => {
@@ -87,7 +88,7 @@ export default function(opts: Partial<Options> = {})  {
                 dataConn.send("call_end");
               }
             }
-            dataConn?.on("close", onClose);
+            dataConn.on("close", onClose);
 
             call.answer(oStream);
             call.on('close', onClose); // Works from time to time (peerjs bug)
@@ -97,7 +98,7 @@ export default function(opts: Partial<Options> = {})  {
             callUI.setOutputStream(oStream);
             call.on('stream', function(iStream) {
               callUI.setInputStream(iStream);
-              dataConn?.on('data', (data: any) => {
+              dataConn.on('data', (data: any) => {
                 if (data === "call_end") {
                   onClose();
                   return;
