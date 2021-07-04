@@ -29,6 +29,7 @@
     - templates/*.yaml
   tags:
     - app
+    - template
 
 # Installing and initializing dbs
 - import_tasks: install-dbs.yaml
