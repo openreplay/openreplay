@@ -43,6 +43,10 @@ migration(){
         ansible-playbook -c local migration.yaml -e vars.yaml -e migration_versions=${joined_migration_versions} --tags $db
     }
 }
-echo -e "Migrating postgresql"
-migration postgresql
-echo -e "Migrating clickhouse"
+# As of now, we don't have any migrations to do, as there is no delta files,
+# We'll have to do full installation.
+#
+# echo -e "Migrating postgresql"
+# migration postgresql
+# Re installing everything.
+./install.sh
