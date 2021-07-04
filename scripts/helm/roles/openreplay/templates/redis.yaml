@@ -1,7 +1,11 @@
 fullnameOverride: redis
+usePassword: false
 cluster:
   enabled: false
 redis:
+{% if db_resource_override.redis %}
+  {{ db_resource_override.redis|to_nice_yaml(indent=2) }}
+{% else %}
   resources:
     limits:
       cpu: {{ ( 100 * scale|float ) | int }}m
@@ -9,4 +13,4 @@ redis:
     requests:
       cpu: 100m
       memory: 128Mi
-usePassword: false
+{% endif %}
