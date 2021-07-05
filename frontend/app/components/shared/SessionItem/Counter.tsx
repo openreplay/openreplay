@@ -1,23 +1,26 @@
 import React, { useState, useEffect } from 'react'
 import { Duration } from 'luxon';
-import { durationFormatted, formatTimeOrDate } from 'App/date';
 
 interface Props {
   startTime: any
 }
 
 function Counter({ startTime }: Props) {
-  const [count, setCount] = useState(0)
+  let intervalId;
+  const [duration, setDuration] = useState(new Date().getTime() - startTime)
 
   useEffect(() => {
-    setInterval(function() {
-      setCount(count + 1000)
-    }, 1000)
-  }, [])
+    if (!intervalId) {
+      intervalId = setInterval(() => {
+        setDuration(duration + 1000)
+      }, 1000)
+    }
+    return () => clearInterval(intervalId)
+  }, [duration])
 
   return (
     <div className="mx-2">
-      {startTime && Duration.fromMillis(startTime + count).toFormat('m:ss')}
+      {startTime && Duration.fromMillis(duration).toFormat('m:ss')}
     </div>
   )
 }

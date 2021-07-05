@@ -27,11 +27,13 @@ const SPEED_STORAGE_KEY = "__$player-speed$__";
 const SKIP_STORAGE_KEY = "__$player-skip$__";
 const SKIP_TO_ISSUE_STORAGE_KEY = "__$player-skip-to-issue$__";
 const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
+const SHOW_EVENTS_STORAGE_KEY = "__$player-show-events$__";
 const storedSpeed: number = parseInt(localStorage.getItem(SPEED_STORAGE_KEY) || "") ;
 const initialSpeed = [1,2,4,8,16].includes(storedSpeed) ? storedSpeed : 1;
 const initialSkip = !!localStorage.getItem(SKIP_STORAGE_KEY);
 const initialSkipToIssue = !!localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY);
 const initialAutoplay = !!localStorage.getItem(AUTOPLAY_STORAGE_KEY);
+const initialShowEvents = !!localStorage.getItem(SHOW_EVENTS_STORAGE_KEY);
 
 export const INITIAL_STATE: SuperState = {
   ...SUPER_INITIAL_STATE,
@@ -50,6 +52,7 @@ export const INITIAL_NON_RESETABLE_STATE = {
   skipToIssue: initialSkipToIssue,
   autoplay: initialAutoplay,
   speed: initialSpeed,
+  showEvents: initialShowEvents
 }
 
 export default class Player extends MessageDistributor {
@@ -196,6 +199,12 @@ export default class Player extends MessageDistributor {
     const autoplay = !getState().autoplay;
     localStorage.setItem(AUTOPLAY_STORAGE_KEY, `${autoplay}`);
     update({ autoplay });
+  }
+  
+  toggleEvents() {
+    const showEvents = !getState().showEvents;
+    localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
+    update({ showEvents });
   }
 
   _updateSpeed(speed: number) {

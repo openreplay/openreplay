@@ -89,7 +89,9 @@ export default class SessionItem extends React.PureComponent {
             </div>
           </div>
           <div className="flex flex-col items-center px-4" style={{ width: '150px'}}>
-            <div className="text-xl">{ formattedDuration }</div>
+            <div className="text-xl">
+              { live ? <Counter startTime={startedAt} /> : formattedDuration }            
+            </div>
             <Label label="Duration" />
           </div>
 
@@ -109,8 +111,7 @@ export default class SessionItem extends React.PureComponent {
               <Label label="Errors" color={errorsCount > 0 ? '' : 'color-gray-medium'} />
             </div>
           )}
-
-          { live && <Counter startTime={startedAt} /> }          
+          
           { live && <LiveTag isLive={true} /> }
 
           <div className={ cn(stl.iconDetails, 'px-4') }>
