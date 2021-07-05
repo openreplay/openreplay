@@ -12,6 +12,9 @@ func getSessionKey(sessionID uint64) string {
 }
 
 func ResolveURL(baseurl string, rawurl string) string {
+	if !isRelativeCachable(rawurl) {
+		return rawurl
+	}
 	base, _ := url.ParseRequestURI(baseurl) // fn Only for base urls
 	u, _ := url.Parse(rawurl) // TODO: handle errors ?
 	if base == nil || u == nil { 
