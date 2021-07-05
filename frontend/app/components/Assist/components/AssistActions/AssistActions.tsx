@@ -3,10 +3,10 @@ import { Popup, Icon } from 'UI'
 import { connect } from 'react-redux'
 import cn from 'classnames'
 import { toggleChatWindow } from 'Duck/sessions';
-import stl from './AassistActions.css'
+// import stl from './AassistActions.css'
 import { connectPlayer } from 'Player/store';
 import ChatWindow from '../../ChatWindow';
-import { callPeer } from 'App/player'
+import { callPeer } from 'Player'
 import { CallingState } from 'Player/MessageDistributor/managers/AssistManager';
 
 interface Props {
