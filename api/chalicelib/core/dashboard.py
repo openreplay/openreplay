@@ -30,16 +30,17 @@ def __get_constraints(project_id, time_constraint=True, chart=False, duration=Tr
                       project_identifier="project_id",
                       main_table="sessions", time_column="start_ts", data={}):
     pg_sub_query = []
+    main_table = main_table + "." if main_table is not None and len(main_table) > 0 else ""
     if project:
-        pg_sub_query.append(f"{main_table}.{project_identifier} =%({project_identifier})s")
+        pg_sub_query.append(f"{main_table}{project_identifier} =%({project_identifier})s")
     if duration:
-        pg_sub_query.append(f"{main_table}.duration>0")
+        pg_sub_query.append(f"{main_table}duration>0")
     if time_constraint:
-        pg_sub_query.append(f"{main_table}.{time_column} >= %(startTimestamp)s")
-        pg_sub_query.append(f"{main_table}.{time_column} < %(endTimestamp)s")
+        pg_sub_query.append(f"{main_table}{time_column} >= %(startTimestamp)s")
+        pg_sub_query.append(f"{main_table}{time_column} < %(endTimestamp)s")
     if chart:
-        pg_sub_query.append(f"{main_table}.{time_column} >= generated_timestamp")
-        pg_sub_query.append(f"{main_table}.{time_column} < generated_timestamp + %(step_size)s")
+        pg_sub_query.append(f"{main_table}{time_column} >= generated_timestamp")
+        pg_sub_query.append(f"{main_table}{time_column} < generated_timestamp + %(step_size)s")
     return pg_sub_query + __get_meta_constraint(project_id=project_id, data=data)
 
 
@@ -869,24 +870,33 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
                                endTimestamp=TimeUTC.now(),
                                density=19, type=None, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+                                           chart=True, data=args, main_table="resources", time_column="timestamp",
+                                           project=False, duration=False)
+    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("resources.duration>0")
+    pg_sub_query_subset.append("resources.duration IS NOT NULL")
+
     if type is not None:
-        pg_sub_query.append(f"resources.type = '{__get_resource_db_type_from_type(type)}'")
-        pg_sub_query_chart.append(f"resources.type = '{__get_resource_db_type_from_type(type)}'")
+        pg_sub_query_subset.append(f"resources.type = '{__get_resource_db_type_from_type(type)}'")
     if url is not None:
-        pg_sub_query.append(f"resources.url = %(value)s")
-        pg_sub_query_chart.append(f"resources.url = %(value)s")
+        pg_sub_query_subset.append(f"resources.url = %(value)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp AS timestamp,
-                              COALESCE(AVG(NULLIF(resources.duration,0)),0) AS avg
+        pg_query = f"""WITH resources AS (SELECT resources.duration, timestamp
+                                           FROM events.resources
+                                                    INNER JOIN public.sessions USING (session_id)
+                                           WHERE {" AND ".join(pg_sub_query_subset)}
+                        )
+                        SELECT generated_timestamp                  AS timestamp,
+                               COALESCE(AVG(resources.duration), 0) AS avg
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                             LEFT JOIN LATERAL ( SELECT resources.duration
-                                                 FROM events.resources INNER JOIN public.sessions USING (session_id)
-                                                 WHERE {" AND ".join(pg_sub_query_chart)}
-                             ) AS resources ON (TRUE)
+                                 LEFT JOIN LATERAL ( SELECT resources.duration
+                                                     FROM resources
+                                                     WHERE {" AND ".join(pg_sub_query_chart)}
+                            ) AS resources ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -895,14 +905,12 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
                   "value": url, "type": type, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-        if len(rows) > 0:
-            pg_query = f"""SELECT COALESCE(AVG(NULLIF(resources.duration,0)),0) AS avg 
-                      FROM events.resources INNER JOIN sessions USING(session_id)
-                      WHERE {" AND ".join(pg_sub_query)};"""
-            cur.execute(cur.mogrify(pg_query, params))
-            avg = cur.fetchone()["avg"]
-        else:
-            avg = 0
+        pg_query = f"""SELECT COALESCE(AVG(resources.duration),0) AS avg 
+                  FROM events.resources INNER JOIN sessions USING(session_id)
+                  WHERE {" AND ".join(pg_sub_query_subset)};"""
+        cur.execute(cur.mogrify(pg_query, params))
+        avg = cur.fetchone()["avg"]
+
     return {"avg": avg, "chart": rows}
 
 
@@ -910,21 +918,26 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
 def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), density=19, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+                                           chart=True, data=args, main_table="pages", time_column="timestamp",
+                                           project=False, duration=False)
+
     if url is not None:
-        pg_sub_query.append(f"pages.path = %(value)s")
-        pg_sub_query_chart.append(f"pages.path = %(value)s")
-    pg_sub_query.append("pages.dom_building_time>0")
-    pg_sub_query_chart.append("pages.dom_building_time>0")
+        pg_sub_query_subset.append(f"pages.path = %(value)s")
+
+    pg_sub_query_subset.append("pages.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("pages.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("pages.dom_building_time>0")
+    pg_sub_query_subset.append("pages.dom_building_time IS NOT NULL")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT COALESCE(avg, 0) AS avg, chart
-                        FROM (SELECT AVG(dom_building_time)
-                              FROM public.sessions
-                                       INNER JOIN events.pages USING (session_id)
-                              WHERE {" AND ".join(pg_sub_query)}) AS avg
+        pg_query = f"""WITH pages AS ( SELECT pages.dom_building_time, timestamp 
+                                    FROM public.sessions
+                                             INNER JOIN events.pages USING (session_id)
+                                    WHERE {" AND ".join(pg_sub_query_subset)})
+                        SELECT COALESCE(avg, 0) AS avg, chart
+                        FROM (SELECT AVG(dom_building_time) FROM pages) AS avg
                                  LEFT JOIN
                              (SELECT jsonb_agg(chart) AS chart
                               FROM (
@@ -932,8 +945,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
                                               COALESCE(AVG(dom_building_time), 0) AS avg
                                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                                 LEFT JOIN LATERAL ( SELECT pages.dom_building_time
-                                                                    FROM public.sessions
-                                                                             INNER JOIN events.pages USING (session_id)
+                                                                    FROM pages
                                                                     WHERE {" AND ".join(pg_sub_query_chart)}
                                            ) AS sessionsBD ON (TRUE)
                                        GROUP BY generated_timestamp
@@ -953,24 +965,36 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), type="all", density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+                                           chart=True, data=args, main_table="resources", time_column="timestamp",
+                                           project=False, duration=False)
 
+    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("resources.duration>0")
+    pg_sub_query_subset.append("resources.duration IS NOT NULL")
     if type is not None and type.upper() != "ALL":
         sq = f"resources.type = '{__get_resource_db_type_from_type(type.upper())}'"
     else:
         sq = "resources.type != 'fetch'"
     pg_sub_query.append(sq)
-    pg_sub_query_chart.append(sq)
-    pg_sub_query_chart.append("resources.duration IS NOT NULL")
-    pg_sub_query_chart.append("resources.duration>0")
+    pg_sub_query_subset.append(sq)
+    pg_sub_query_chart.append("resources.url_hostpath ILIKE '%%' || main_list.name")
+
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT *
+        pg_query = f"""WITH resources AS (
+                                            SELECT resources.duration, url_hostpath, timestamp
+                                            FROM events.resources
+                                                     INNER JOIN public.sessions USING (session_id)
+                                            WHERE {" AND ".join(pg_sub_query_subset)}
+                                        )
+                        SELECT *
                         FROM (SELECT regexp_replace(resources.url_hostpath, '^.*/', '') AS name,
-                                     AVG(NULLIF(resources.duration, 0))                 AS avg
+                                     AVG(resources.duration)                 AS avg
                               FROM events.resources
                                        INNER JOIN public.sessions USING (session_id)
-                              WHERE {" AND ".join(pg_sub_query)}
+                              WHERE {" AND ".join(pg_sub_query_subset)}
                               GROUP BY name
                               ORDER BY avg DESC
                               LIMIT 10) AS main_list
@@ -991,15 +1015,14 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                               LEFT JOIN LATERAL (
                                          SELECT resources.duration
-                                         FROM events.resources
-                                                  INNER JOIN public.sessions USING (session_id)
+                                         FROM resources
                                          WHERE {" AND ".join(pg_sub_query_chart)}
-                                           AND resources.url_hostpath ILIKE '%%' || main_list.name
                                          ) AS resources ON (TRUE)
                                      GROUP BY generated_timestamp
                                      ORDER BY generated_timestamp
                                  ) AS chart_details
                             ) AS chart_details ON (TRUE);"""
+
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                            "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp,
@@ -1295,7 +1318,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="pages", time_column="timestamp",
-                                           project=False,duration=False)
+                                           project=False, duration=False)
     pg_sub_query_subset.append("pages.visually_complete>0")
     if url is not None:
         pg_sub_query_subset.append("pages.path = %(value)s")
@@ -1552,16 +1575,24 @@ def __merge_rows_with_neutral(rows, neutral):
 def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True, chart=True,
-                                           data=args)
-    pg_sub_query_chart.append("resources.status/100 = %(status_code)s")
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           duration=False)
+    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("resources.status/100 = %(status_code)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp AS timestamp,
+        pg_query = f"""WITH resources AS(SELECT resources.url_host, timestamp 
+                                         FROM events.resources INNER JOIN public.sessions USING (session_id)
+                                         WHERE {" AND ".join(pg_sub_query_subset)}
+                                        )
+                        SELECT generated_timestamp AS timestamp,
                               COALESCE(JSONB_AGG(resources) FILTER ( WHERE resources IS NOT NULL ), '[]'::JSONB) AS keys
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                        LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.session_id) AS count
-                                             FROM events.resources INNER JOIN public.sessions USING (session_id)
+                        LEFT JOIN LATERAL ( SELECT resources.url_host, COUNT(resources.*) AS count
+                                             FROM resources
                                              WHERE {" AND ".join(pg_sub_query_chart)}
                                              GROUP BY url_host
                                              ORDER BY count DESC
@@ -1899,32 +1930,49 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
 def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                   endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           duration=False)
+    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
 
     params = {"step_size": step_size,
               "project_id": project_id,
               "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp, **__get_constraint_values(args)}
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp AS timestamp,
-                            COUNT(resources.session_id) AS total,
+        pg_query = f"""WITH resources AS(SELECT resources.type, resources.timestamp 
+                                        FROM events.resources INNER JOIN public.sessions USING (session_id)
+                                        WHERE {" AND ".join(pg_sub_query_subset)})
+                        SELECT generated_timestamp AS timestamp,
+                            COUNT(resources.*) AS total,
                             SUM(CASE WHEN resources.type='fetch' THEN 1 ELSE 0 END) AS xhr
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                             LEFT JOIN LATERAL (SELECT resources.session_id, resources.type 
-                                                FROM events.resources INNER JOIN public.sessions USING (session_id)
+                             LEFT JOIN LATERAL (SELECT resources.type 
+                                                FROM resources
                                                 WHERE {" AND ".join(pg_sub_query_chart)}) AS resources ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         cur.execute(cur.mogrify(pg_query, params))
         actions = cur.fetchall()
-        pg_sub_query_chart.append("pages.response_end IS NOT NULL")
-        pg_sub_query_chart.append("pages.response_end>0")
-        pg_query = f"""SELECT generated_timestamp AS timestamp, 
+        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+                                               data=args, main_table="pages", time_column="timestamp",
+                                               project=False,
+                                               duration=False)
+        pg_sub_query_subset.append("pages.timestamp>=%(startTimestamp)s")
+        pg_sub_query_subset.append("pages.timestamp<%(endTimestamp)s")
+        pg_sub_query_subset.append("pages.response_end IS NOT NULL")
+        pg_sub_query_subset.append("pages.response_end>0")
+        pg_query = f"""WITH pages AS(SELECT pages.response_end, timestamp 
+                                    FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                    WHERE {" AND ".join(pg_sub_query_subset)})
+                        SELECT generated_timestamp AS timestamp, 
                             COALESCE(AVG(pages.response_end),0) AS avg_response_end
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                              LEFT JOIN LATERAL (SELECT pages.response_end 
-                                                FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                                FROM pages
                                                 WHERE {" AND ".join(pg_sub_query_chart)}) AS pages ON(TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
@@ -2010,10 +2058,23 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
 def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+                                           data=args, main_table="", time_column="timestamp", project=False,
+                                           duration=False)
+    pg_sub_query_subset.append("timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("timestamp<%(endTimestamp)s")
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp                                                             AS timestamp,
+        pg_query = f"""WITH resources AS (SELECT resources.type, timestamp, session_id
+                                           FROM events.resources
+                                                    INNER JOIN public.sessions USING (session_id)
+                                           WHERE {" AND ".join(pg_sub_query_subset)}
+                        ),
+                             pages AS (SELECT visually_complete, timestamp
+                                       FROM events.pages
+                                                INNER JOIN public.sessions USING (session_id)
+                                       WHERE {" AND ".join(pg_sub_query_subset)} AND pages.visually_complete > 0) 
+                        SELECT generated_timestamp                                                             AS timestamp,
                                COALESCE(jsonb_agg(resources_avg_count_by_type)
                                         FILTER ( WHERE resources_avg_count_by_type IS NOT NULL ), '[]'::jsonb) AS types,
                                COALESCE(AVG(total_count), 0)                                                   AS avg_count_resources,
@@ -2022,17 +2083,15 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
                                  LEFT JOIN LATERAL (SELECT resources_count_by_session_by_type.type,
                                                            avg(resources_count_by_session_by_type.count) AS avg_count,
                                                            sum(resources_count_by_session_by_type.count) AS total_count
-                                                    FROM (SELECT resources.type, COUNT(resources.url) AS count
-                                                            FROM events.resources
-                                                                INNER JOIN public.sessions USING (session_id)
-                                                            WHERE {" AND ".join(pg_sub_query_chart)}
-                                                            GROUP BY resources.session_id, resources.type) AS resources_count_by_session_by_type
+                                                    FROM (SELECT resources.type, COUNT(*) AS count
+                                                          FROM resources
+                                                          WHERE {" AND ".join(pg_sub_query_chart)}
+                                                          GROUP BY resources.session_id, resources.type) AS resources_count_by_session_by_type
                                                     GROUP BY resources_count_by_session_by_type.type) AS resources_avg_count_by_type ON (TRUE)
                                  LEFT JOIN LATERAL (SELECT AVG(visually_complete) AS avg_time_to_render
-                                                    FROM events.pages
-                                                             INNER JOIN public.sessions USING (session_id)
+                                                    FROM pages
                                                     WHERE {" AND ".join(pg_sub_query_chart)}
-                                                      AND pages.visually_complete > 0) AS time_to_render ON (TRUE)
+                            ) AS time_to_render ON (TRUE)
                         GROUP BY generated_timestamp
                         ORDER BY generated_timestamp;"""
         cur.execute(cur.mogrify(pg_query, {"step_size": step_size,
@@ -2050,15 +2109,21 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
 def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, chart=True,
+                                           data=args, main_table="resources", time_column="timestamp", project=False,
+                                           duration=False)
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp AS timestamp,
+        pg_query = f"""WITH resources AS (SELECT  resources.type, timestamp 
+                                            FROM events.resources INNER JOIN public.sessions USING (session_id)
+                                            WHERE {" AND ".join(pg_sub_query_subset)} 
+                        )
+                        SELECT generated_timestamp AS timestamp,
                         COALESCE(JSONB_AGG(t) FILTER (WHERE t IS NOT NULL), '[]'::JSONB) AS types
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                            LEFT JOIN LATERAL (SELECT  resources.type, COUNT(resources.session_id) AS count
-                                                FROM events.resources INNER JOIN public.sessions USING (session_id)
+                            LEFT JOIN LATERAL (SELECT  resources.type, COUNT(*) AS count
+                                                FROM resources
                                                 WHERE {" AND ".join(pg_sub_query_chart)} 
                                                 GROUP BY resources.type
                                             ) AS t ON(TRUE)

@@ -12,4 +12,10 @@ CREATE INDEX pages_session_id_timestamp_visualgt0nn_idx ON events.pages (session
 CREATE INDEX pages_timestamp_metgt0_idx ON events.pages (timestamp) WHERE response_time > 0 OR first_paint_time > 0 OR
                                                                           dom_content_loaded_time > 0 OR ttfb > 0 OR
                                                                           time_to_interactive > 0;
+CREATE INDEX resources_session_id_timestamp_idx ON events.resources (session_id, timestamp);
+DROP INDEX events.resources_timestamp_idx;
+CREATE INDEX resources_session_id_timestamp_type_idx ON events.resources (session_id, timestamp,type);
+CREATE INDEX pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, speed_index) WHERE speed_index > 0 AND speed_index IS NOT NULL;
+CREATE INDEX pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
+CREATE INDEX resources_timestamp_type_durationgt0NN_noFetch_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL AND type != 'fetch';
 COMMIT;
