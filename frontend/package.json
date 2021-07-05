@@ -29,7 +29,6 @@
     "mobx-react-lite": "^3.1.6",
     "moment": "^2.27.0",
     "moment-range": "^4.0.2",
-    "optimal-select": "^4.0.1",
     "rc-time-picker": "^3.7.3",
     "react": "^16.13.1",
     "react-circular-progressbar": "^2.0.3",
