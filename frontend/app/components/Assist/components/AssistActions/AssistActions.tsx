@@ -21,8 +21,11 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
   const [ localStream, setLocalStream ] = useState<MediaStream | null>(null);
   const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
 
-  function onClose(stream) {
-    console.log("Closed")
+  useEffect(() => {
+    return endCall
+  }, [])
+
+  function onClose(stream) {    
     stream.getTracks().forEach(t=>t.stop());
   }
   function onReject() {
