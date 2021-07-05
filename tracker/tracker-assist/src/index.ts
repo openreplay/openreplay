@@ -2,7 +2,6 @@ import Peer, { MediaConnection } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 import { App, Messages } from '@openreplay/tracker';
 import type Message from '@openreplay/tracker';
-import type { Options as AppOptions } from '@openreplay/tracker';
 
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
@@ -23,7 +22,7 @@ export default function(opts: Partial<Options> = {})  {
     },
     opts,
   );
-  return function(app: App | null, appOptions: AppOptions) {
+  return function(app: App | null, appOptions: { __DISABLE_SECURE_MODE?: boolean } = {}) {
     // @ts-ignore
     if (app === null || !navigator?.mediaDevices?.getUserMedia) { // 93.04% browsers
       return;
@@ -45,6 +44,8 @@ export default function(opts: Partial<Options> = {})  {
         console.log('connection')
         conn.on('open', function() {
                   console.log('connection open')
+
+          // TODO: onClose
 
           app.stop();
           //@ts-ignore (should update tracker dependency)
