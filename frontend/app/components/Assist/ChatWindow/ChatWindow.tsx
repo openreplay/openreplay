@@ -1,8 +1,6 @@
-import React, { useState, useEffect, FC } from 'react'
+import React, { useState, FC } from 'react'
 import VideoContainer from '../components/VideoContainer'
 import { Icon, Popup } from 'UI'
-import stl from './chatWindow.css'
-import { callPeer } from 'App/player'
 import cn from 'classnames'
 
 export interface Props {
