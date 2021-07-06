@@ -408,6 +408,8 @@ CREATE INDEX errors_message_gin_idx ON public.errors USING GIN (message gin_trgm
 CREATE INDEX errors_name_gin_idx ON public.errors USING GIN (name gin_trgm_ops);
 CREATE INDEX errors_project_id_idx ON public.errors (project_id);
 CREATE INDEX errors_project_id_status_idx ON public.errors (project_id, status);
+CREATE INDEX errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
+CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
 
 CREATE TABLE user_favorite_errors
 (
@@ -708,8 +710,9 @@ CREATE TABLE events.errors
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.errors (session_id);
-CREATE INDEX ON events.errors (timestamp);
-
+CREATE INDEX errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
+CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
+CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
 
 CREATE TABLE events.graphql
 (
@@ -757,7 +760,6 @@ CREATE TABLE events.resources
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.resources (session_id);
-CREATE INDEX ON events.resources (success);
 CREATE INDEX ON events.resources (status);
 CREATE INDEX ON events.resources (type);
 CREATE INDEX ON events.resources (duration) WHERE duration > 0;
@@ -767,11 +769,14 @@ CREATE INDEX resources_url_gin_idx ON events.resources USING GIN (url gin_trgm_o
 CREATE INDEX resources_url_idx ON events.resources (url);
 CREATE INDEX resources_url_hostpath_gin_idx ON events.resources USING GIN (url_hostpath gin_trgm_ops);
 CREATE INDEX resources_url_hostpath_idx ON events.resources (url_hostpath);
-DROP INDEX events.resources_type_idx;
 CREATE INDEX resources_timestamp_type_durationgt0NN_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL;
 CREATE INDEX resources_session_id_timestamp_idx ON events.resources (session_id, timestamp);
 CREATE INDEX resources_session_id_timestamp_type_idx ON events.resources (session_id, timestamp,type);
 CREATE INDEX resources_timestamp_type_durationgt0NN_noFetch_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL AND type != 'fetch';
+CREATE INDEX resources_session_id_timestamp_url_host_fail_idx ON events.resources (session_id,timestamp, url_host) WHERE success=FALSE;
+CREATE INDEX resources_session_id_timestamp_url_host_firstparty_idx ON events.resources(session_id,timestamp,url_host) WHERE type IN ('fetch', 'script');
+CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id,timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
+CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id) ;
 
 CREATE TABLE events.performance
 (

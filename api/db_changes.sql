@@ -18,4 +18,15 @@ CREATE INDEX resources_session_id_timestamp_type_idx ON events.resources (sessio
 CREATE INDEX pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, speed_index) WHERE speed_index > 0 AND speed_index IS NOT NULL;
 CREATE INDEX pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
 CREATE INDEX resources_timestamp_type_durationgt0NN_noFetch_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL AND type != 'fetch';
+CREATE INDEX resources_session_id_timestamp_url_host_fail_idx ON events.resources (session_id,timestamp, url_host) WHERE success=FALSE;
+DROP INDEX events.resources_success_idx;
+CREATE INDEX resources_session_id_timestamp_url_host_firstparty_idx ON events.resources(session_id,timestamp,url_host) WHERE type IN ('fetch', 'script');
+DROP INDEX events.errors_timestamp_idx;
+CREATE INDEX errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
+CREATE INDEX errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
+CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
+CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
+CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
+CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id,timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
+CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id) ;
 COMMIT;
