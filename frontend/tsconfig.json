@@ -15,6 +15,7 @@
     "baseUrl": ".",
     "paths": { // TODO: one-source truth
       "App": ["./app"],
+      "App/*": ["./app/*"],
       "Types": ["./app/types" ],
       "Types/*": ["./app/types/*"], // Sublime hack
       "UI": ["./app/components/ui"],
