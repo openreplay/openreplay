@@ -14,13 +14,25 @@ export enum CallingState {
   False,
 };
 
+export enum ConnectionStatus {
+  Connecting,
+  Connected,
+  Inactive,
+  Disconnected,
+  Error,
+};
+
 export interface State {
   calling: CallingState,
+  peerConnectionStatus: ConnectionStatus,
 }
 
 export const INITIAL_STATE: State = {
   calling: CallingState.False,
+  peerConnectionStatus: ConnectionStatus.Connecting,
 }
+
+const MAX_RECONNECTION_COUNT = 6;
 
 
 function resolveURL(baseURL: string, relURL: string): string {
@@ -90,6 +102,7 @@ export default class AssistManager {
   }
 
   private peer: Peer | null = null;
+  connectionAttempts: number = 0;
   connect() {
     if (this.peer != null) {
       console.error("AssistManager: trying to connect more than once");
@@ -107,9 +120,16 @@ export default class AssistManager {
       this.peer = peer;
       this.peer.on('error', e => {
         if (e.type === 'peer-unavailable') {
-          this.connectToPeer(); // TODO:  MAX_ATTEMPT_TIME
+          if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
+            update({ peerConnectionStatus: ConnectionStatus.Connecting })
+            this.connectToPeer();
+          } else {
+            update({ peerConnectionStatus: ConnectionStatus.Disconnected })
+
+          }
         } else {
           console.error(`PeerJS error (on peer). Type ${e.type}`, e);
+          update({ peerConnectionStatus: ConnectionStatus.Error })
         }
       })
       peer.on("open", me => {
@@ -126,13 +146,20 @@ export default class AssistManager {
     const conn = this.peer.connect(id, { serialization: 'json'});
 
     conn.on('open', () => {
-      this.md.setMessagesLoading(false);
-      let i = 0;
+      update({ peerConnectionStatus: ConnectionStatus.Inactive });
       console.log("peer connected")
-
+      
+      let i = 0;
+      let firstMessage = true;
       conn.on('data', (data) => {
         if (typeof data === 'string') { return this.handleCommand(data); }
         if (!Array.isArray(data)) { return; }
+        if (firstMessage) {
+          firstMessage = false;
+          this.md.setMessagesLoading(false);
+          update({ peerConnectionStatus: ConnectionStatus.Connected })
+        }
+
         let time = 0;
         let ts0 = 0;
         (data as Array<Message & { _id: number}>).forEach(msg => {
@@ -174,38 +201,58 @@ export default class AssistManager {
         });
       });
     });
-    conn.on('close', () => {
-      this.md.setMessagesLoading(true);
-      this.endCall();
-      console.log('closed peer conn. Reconnecting...')
-      setTimeout(() => this.connectToPeer(), 300); // reconnect
-    });
+    conn.on('close', () => this.onDataClose());// Doesn't work ?
   }
 
 
-  private get dataConnection(): DataConnection | null {
-    return this.peer?.connections[this.peerID]?.[0] || null;
+
+  private onDataClose() {
+    this.md.setMessagesLoading(true);
+    this.assistentCallEnd();
+    console.log('closed peer conn. Reconnecting...')
+    setTimeout(() => this.connectToPeer(), 0); // reconnect
   }
 
-  private get callConnection(): MediaConnection | null {
-    return this.peer?.connections[this.peerID]?.[1] || null;
+
+  private get dataConnection(): DataConnection | undefined {
+    return this.peer?.connections[this.peerID]?.find(c => c.type === 'data' && c.open);
+  }
+
+  private get callConnection(): MediaConnection | undefined {
+    return this.peer?.connections[this.peerID]?.find(c => c.type === 'media' && c.open);
   } 
 
 
   private onCallEnd: null | (()=>void) = null;
-  private endCall = () => {
-    const conn = this.callConnection;
+  private assistentCallEnd = () => {
+    console.log('assistentCallEnd')
+    const conn = this.callConnection?.close();
+    const dataConn = this.dataConnection;
+    if (dataConn) {
+      console.log("call_end send")
+      dataConn.send("call_end");
+    }
     this.onCallEnd?.();
-    if (!conn || !conn.open) { return; }
-    conn.close(); //calls onCallEnd twice
-    this.dataConnection?.send("call_end"); //
   }
+
+  private onTrackerCallEnd = () => {
+    const conn = this.callConnection;
+    if (conn && conn.open) {
+      conn.close();
+    }
+    this.onCallEnd?.();
+  }
+
 
   private handleCommand(command: string) {
     switch (command) {
       case "call_end":
-      console.log("Call end recieved")
-        this.endCall();
+        this.onTrackerCallEnd();
+        return;
+      case "call_error":
+        this.onTrackerCallEnd();
+        update({ peerConnectionStatus: ConnectionStatus.Error });
+        return;
     }
   }
 
@@ -247,18 +294,23 @@ export default class AssistManager {
       update({ calling: CallingState.False });
       this.onCallEnd = null;
     }
-    call.on("close", this.onCallEnd);
+    //call.on("close", this.onCallEnd);
     call.on("error", (e) => {
       console.error("PeerJS error (on call):", e)
       this.onCallEnd?.();
       onError?.();
     });
+
+    window.addEventListener("beforeunload", this.assistentCallEnd)
     
-    return this.endCall;
+    return this.assistentCallEnd;
   }
 
   clear() {
+    this.assistentCallEnd();
+    console.log("destroying peer...")
     this.peer?.destroy();
+    this.peer = null;
   }
 }
 

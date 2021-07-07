@@ -5,7 +5,7 @@ import type Message from '@openreplay/tracker';
 
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
-import confirm from './confirm';
+import Confirm from './Confirm';
 
 
 export interface Options {
@@ -61,10 +61,20 @@ export default function(opts: Partial<Options> = {})  {
                 .connections[call.peer].find(c => c.type === 'data');
         if (calling || !dataConn) {
           call.close();
-          dataConn?.send("call_end");
+          dataConn?.send("call_error");
           return;
         }
-        confirm(options.confirmText, options.confirmStyle).then(conf => {
+        window.addEventListener("beforeunload", () => {
+          dataConn.open && dataConn.send("call_end");
+        });
+        dataConn.on('data', (data) => { // if call closed be a caller before confirm
+          if (data === "call_end") {
+              confirm.remove();
+          }                    
+        });
+        const confirm = new Confirm(options.confirmText, options.confirmStyle);
+        confirm.mount();
+        confirm.onAnswer(conf => {
           if (!conf || !dataConn.open) {
             call.close();
             dataConn.open && dataConn.send("call_end");
@@ -80,7 +90,7 @@ export default function(opts: Partial<Options> = {})  {
             const onClose = () => {
               console.log("close call...")
               if (call.open) { call.close(); }
-              mouse?.remove();
+              mouse.remove();
               callUI?.remove();
               oStream.getTracks().forEach(t => t.stop());
 
