@@ -222,11 +222,12 @@ def get_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimesta
 
 
 def __count_distinct_errors(cur, project_id, startTimestamp, endTimestamp, pg_sub_query, **args):
-    pg_query = f"""\
-                SELECT COALESCE(COUNT(DISTINCT errors.error_id),0) AS count
-                FROM events.errors 
-                        INNER JOIN public.errors AS m_errors USING(error_id) 
-                WHERE {" AND ".join(pg_sub_query)};"""
+    pg_query = f"""WITH errors AS (SELECT DISTINCT error_id
+                                FROM events.errors
+                                         INNER JOIN public.errors AS m_errors USING (error_id)
+                                WHERE {" AND ".join(pg_sub_query)})
+                    SELECT COALESCE(COUNT(*), 0) AS count
+                    FROM errors;"""
     cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "startTimestamp": startTimestamp,
                                        "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
     return cur.fetchone()["count"]
@@ -241,42 +242,44 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=False,
                                             chart=False, data=args, main_table="m_errors", duration=False)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
-                                           chart=True, data=args, main_table="errors", time_column="timestamp",
+                                           chart=True, data=args, main_table="errors_subsest", time_column="timestamp",
                                            duration=False)
     pg_sub_query_subset.append("errors.timestamp >= %(startTimestamp)s")
     pg_sub_query_subset.append("errors.timestamp < %(endTimestamp)s")
 
-    pg_sub_query_chart.append("errors.error_id = errors_details.error_id")
+    pg_sub_query_chart.append("errors_subsest.error_id = top_errors.error_id")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""WITH errors AS (SELECT session_id, error_id, timestamp
+        pg_query = f"""WITH errors_subsest AS (SELECT session_id, error_id, timestamp
                                         FROM events.errors
                                                  INNER JOIN public.errors AS m_errors USING (error_id)
                                         WHERE {" AND ".join(pg_sub_query_subset)}
                         )
                         SELECT *
-                        FROM (SELECT errors.error_id                   AS error_id,
-                                     m_errors.message                  AS error,
-                                     COUNT(errors.session_id)          AS count,
-                                     COUNT(DISTINCT errors.session_id) AS sessions_count
-                              FROM events.errors
-                                       INNER JOIN public.errors AS m_errors USING (error_id)
-                              WHERE {" AND ".join(pg_sub_query_subset)}
-                              GROUP BY errors.error_id, m_errors.message
+                        FROM (SELECT error_id, COUNT(sub_errors) AS count, count(DISTINCT session_id) AS sessions_count
+                              FROM (SELECT error_id, session_id
+                                    FROM events.errors
+                                             INNER JOIN public.errors AS m_errors USING (error_id)
+                                    WHERE {" AND ".join(pg_sub_query_subset)}) AS sub_errors
+                              GROUP BY error_id
                               ORDER BY sessions_count DESC, count DESC
-                              LIMIT 10) AS errors_details
+                              LIMIT 10) AS top_errors
+                                 INNER JOIN LATERAL (SELECT message AS error
+                                                     FROM public.errors
+                                                     WHERE project_id = %(project_id)s
+                                                       AND errors.error_id = top_errors.error_id) AS errors_details ON(TRUE)
                                  INNER JOIN LATERAL (SELECT MAX(timestamp) AS last_occurrence_at,
                                                             MIN(timestamp) AS first_occurrence_at
                                                      FROM events.errors
-                                                     WHERE error_id = errors_details.error_id
+                                                     WHERE error_id = top_errors.error_id
                                                      GROUP BY error_id) AS errors_time ON (TRUE)
                                  INNER JOIN LATERAL (SELECT jsonb_agg(chart) AS chart
                                                      FROM (SELECT generated_timestamp AS timestamp, COALESCE(COUNT(sessions), 0) AS count
                                                            FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                                                     LEFT JOIN LATERAL ( SELECT DISTINCT session_id
-                                                                                        FROM errors
+                                                                                        FROM errors_subsest
                                                                                         WHERE {" AND ".join(pg_sub_query_chart)}
-                                                                                ) AS sessions ON (TRUE)
+                                                               ) AS sessions ON (TRUE)
                                                            GROUP BY generated_timestamp
                                                            ORDER BY generated_timestamp) AS chart) AS chart ON (TRUE);"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
@@ -647,7 +650,7 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                   WHERE {" AND ".join(pg_sub_query)} 
                                   ORDER BY url, type ASC) AS ranked_values
                             WHERE ranked_values.r<=5;"""
-            # print(cur.mogrify(pg_query, {"project_id": project_id, "value": helper.string_to_sql_like(text)}))
+            print(cur.mogrify(pg_query, {"project_id": project_id, "value": helper.string_to_sql_like(text)}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "value": helper.string_to_sql_like(text)}))
             rows = cur.fetchall()
             rows = [{"value": i["value"], "type": __get_resource_type_from_db_type(i["key"])} for i in rows]
@@ -667,6 +670,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                              FROM events.pages INNER JOIN public.sessions USING(session_id)
                              WHERE {" AND ".join(pg_sub_query)} AND positionUTF8(url_path, %(value)s) != 0
                              LIMIT 10);"""
+            print(cur.mogrify(pg_query, {"project_id": project_id,
+                                               "value": helper.string_to_sql_like(text.lower()),
+                                               "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text.lower()),
                                                "platform_0": platform}))
@@ -683,6 +689,10 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                           FROM events.resources INNER JOIN public.sessions USING (session_id) 
                           WHERE {" AND ".join(pg_sub_query)} 
                           LIMIT 10;"""
+            print(cur.mogrify(pg_query, {"project_id": project_id,
+                                               "value": helper.string_to_sql_like(text),
+                                               "resource_type": resource_type,
+                                               "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "resource_type": resource_type,
@@ -697,6 +707,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                           FROM events.pages INNER JOIN public.sessions USING (session_id)
                           WHERE {" AND ".join(pg_sub_query)} 
                           LIMIT 10;"""
+            print(cur.mogrify(pg_query, {"project_id": project_id,
+                                               "value": helper.string_to_sql_like(text),
+                                               "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
@@ -708,6 +721,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                              FROM events.inputs INNER JOIN public.sessions USING (session_id)
                              WHERE {" AND ".join(pg_sub_query)}
                              LIMIT 10;"""
+            print(cur.mogrify(pg_query, {"project_id": project_id,
+                                               "value": helper.string_to_sql_like(text),
+                                               "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
@@ -719,6 +735,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                              FROM events.clicks INNER JOIN public.sessions USING (session_id)
                              WHERE {" AND ".join(pg_sub_query)}
                              LIMIT 10;"""
+            print(cur.mogrify(pg_query, {"project_id": project_id,
+                                               "value": helper.string_to_sql_like(text),
+                                               "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
@@ -737,6 +756,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                       FROM sessions
                                       WHERE {" AND ".join(pg_sub_query)} 
                                       LIMIT 10;"""
+                print(cur.mogrify(pg_query,
+                                        {"project_id": project_id, "value": helper.string_to_sql_like(text), "key": key,
+                                         "platform_0": platform}))
                 cur.execute(cur.mogrify(pg_query,
                                         {"project_id": project_id, "value": helper.string_to_sql_like(text), "key": key,
                                          "platform_0": platform}))
@@ -761,6 +783,10 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                             AND sessions.{SESSIONS_META_FIELDS[k]} ILIKE %(value)s 
                                       LIMIT 10)""")
                 pg_query = " UNION ALL ".join(pg_query)
+                print(cur.mogrify(pg_query,
+                                        {"project_id": project_id, "value": helper.string_to_sql_like(text),
+                                         "key": key,
+                                         "platform_0": platform}))
                 cur.execute(cur.mogrify(pg_query,
                                         {"project_id": project_id, "value": helper.string_to_sql_like(text),
                                          "key": key,
@@ -792,8 +818,6 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
                       GROUP BY url_hostpath
                       ORDER BY sessions DESC
                       LIMIT 10;"""
-        print(cur.mogrify(pg_query, {"project_id": project_id, "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
 
@@ -1919,33 +1943,55 @@ def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                         platform=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
+
+    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
+    pg_sub_query_subset.append("resources.type != 'fetch'")
+    pg_sub_query_subset.append("resources.status > 200")
+
+    pg_sub_query_subset_e = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
+                                            time_constraint=False)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+                                           chart=True, data=args, main_table="", time_column="timestamp",
+                                           project=False, duration=False)
+    pg_sub_query_subset_e.append("timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset_e.append("timestamp<%(endTimestamp)s")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT generated_timestamp AS timestamp,
-                               COALESCE(SUM(CASE WHEN type = 'fetch' AND status / 100 = 4 THEN 1 ELSE 0 END), 0) AS _4xx,
-                               COALESCE(SUM(CASE WHEN type = 'fetch' AND status / 100 = 5 THEN 1 ELSE 0 END), 0) AS _5xx,
-                               COALESCE(SUM(CASE WHEN type = 'js_exception' THEN 1 ELSE 0 END), 0)                         AS js,
-                               COALESCE(SUM(CASE WHEN type != 'fetch' AND type != 'js_exception' THEN 1 ELSE 0 END), 0)    AS integrations
-                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                             LEFT JOIN LATERAL ((SELECT status, 'fetch' AS type
-                                                 FROM events.resources
-                                                          INNER JOIN public.sessions USING (session_id)
-                                                 WHERE {" AND ".join(pg_sub_query_chart)}
-                                                   AND resources.timestamp >= %(startTimestamp)s - %(step_size)s
-                                                   AND resources.timestamp < %(endTimestamp)s + %(step_size)s
-                                                   AND resources.type = 'fetch'
-                                                   AND resources.status > 200)
-                                                UNION ALL
-                                                (SELECT 0 AS status, m_errors.source::text AS type
-                                                 FROM events.errors
-                                                          INNER JOIN public.errors AS m_errors USING (error_id)
-                                                          INNER JOIN public.sessions USING (session_id)
-                                                 WHERE {" AND ".join(pg_sub_query_chart)}
-                                                   AND errors.timestamp >= %(startTimestamp)s - %(step_size)s
-                                                   AND errors.timestamp < %(endTimestamp)s + %(step_size)s)
-                                                ) AS errors_partition ON (TRUE)
+        pg_query = f"""WITH resources AS (SELECT status, timestamp
+                                       FROM events.resources
+                                                INNER JOIN public.sessions USING (session_id)
+                                       WHERE {" AND ".join(pg_sub_query_subset)}
+                            ),
+                         errors_integ AS (SELECT timestamp
+                                          FROM events.errors
+                                                   INNER JOIN public.errors AS m_errors USING (error_id)
+                                          WHERE {" AND ".join(pg_sub_query_subset_e)}
+                                            AND source != 'js_exception'
+                         ),
+                         errors_js AS (SELECT timestamp
+                                       FROM events.errors
+                                                INNER JOIN public.errors AS m_errors USING (error_id)
+                                       WHERE {" AND ".join(pg_sub_query_subset_e)}
+                                         AND source = 'js_exception'
+                         )
+                    SELECT generated_timestamp                                            AS timestamp,
+                           COALESCE(SUM(CASE WHEN status / 100 = 4 THEN 1 ELSE 0 END), 0) AS _4xx,
+                           COALESCE(SUM(CASE WHEN status / 100 = 5 THEN 1 ELSE 0 END), 0) AS _5xx,
+                           COALESCE((SELECT COUNT(*)
+                                     FROM errors_js
+                                     WHERE {" AND ".join(pg_sub_query_chart)}
+                                    ), 0)                                                 AS js,
+                           COALESCE((SELECT COUNT(*)
+                                     FROM errors_integ
+                                     WHERE {" AND ".join(pg_sub_query_chart)}
+                                    ), 0)                                                 AS integrations
+                    FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                             LEFT JOIN LATERAL (SELECT status
+                                                FROM resources
+                                                WHERE {" AND ".join(pg_sub_query_chart)}
+                        ) AS errors_partition ON (TRUE)
                     GROUP BY timestamp
                     ORDER BY timestamp;"""
         params = {"step_size": step_size,
@@ -2029,51 +2075,60 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
     pg_sub_query_chart.append("errors.timestamp >= generated_timestamp")
     pg_sub_query_chart.append("errors.timestamp < generated_timestamp+ %(step_size)s")
 
+    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
+                                            time_constraint=False)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
+                                           chart=True, data=args, main_table="errors", time_column="timestamp",
+                                           project=False, duration=False)
+    pg_sub_query_subset.append("m_errors.source = 'js_exception'")
+    pg_sub_query_subset.append("errors.timestamp>=%(startTimestamp)s")
+    pg_sub_query_subset.append("errors.timestamp<%(endTimestamp)s")
+
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT *
-                        FROM (SELECT   COUNT(DISTINCT errors.session_id) AS sessions_count
-                                FROM events.errors 
-                                        INNER JOIN public.errors AS m_errors USING (error_id)
-                                        INNER JOIN public.sessions USING(session_id)
-                                WHERE {" AND ".join(pg_sub_query)}) AS counts
-                                LEFT JOIN
-                                (SELECT jsonb_agg(chart) AS chart
-                                FROM(SELECT generated_timestamp AS timestamp,
-                                               COALESCE(COUNT(session_id), 0) AS sessions_count
-                                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                             LEFT JOIN LATERAL ( SELECT DISTINCT errors.session_id
-                                                                 FROM events.errors 
-                                                                        INNER JOIN public.errors AS m_errors USING (error_id)
-                                                                        INNER JOIN public.sessions USING (session_id)
+        pg_query = f"""WITH errors AS (SELECT DISTINCT ON (session_id,timestamp) session_id, timestamp
+                                        FROM events.errors
+                                                 INNER JOIN public.errors AS m_errors USING (error_id)
+                                        WHERE {" AND ".join(pg_sub_query_subset)}
+                        )
+                        SELECT *
+                        FROM (SELECT COUNT(DISTINCT session_id) AS sessions_count
+                              FROM errors) AS counts
+                                 LEFT JOIN
+                             (SELECT jsonb_agg(chart) AS chart
+                              FROM (SELECT generated_timestamp            AS timestamp,
+                                           COALESCE(COUNT(session_id), 0) AS sessions_count
+                                    FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                                             LEFT JOIN LATERAL ( SELECT DISTINCT session_id
+                                                                 FROM errors
                                                                  WHERE {" AND ".join(pg_sub_query_chart)}
-                                             ) AS sessions ON (TRUE)
-                                        GROUP BY generated_timestamp
-                                        ORDER BY generated_timestamp) AS chart) AS chart ON(TRUE);"""
+                                        ) AS sessions ON (TRUE)
+                                    GROUP BY generated_timestamp
+                                    ORDER BY generated_timestamp) AS chart) AS chart ON (TRUE);"""
         cur.execute(cur.mogrify(pg_query, {"step_size": step_size,
                                            "project_id": project_id,
                                            "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp,
                                            **__get_constraint_values(args)}))
         row_sessions = cur.fetchone()
-        pg_query = f"""SELECT *
-                        FROM (SELECT   COUNT(DISTINCT errors.error_id) AS errors_count
-                                FROM events.errors 
-                                        INNER JOIN public.errors AS m_errors USING (error_id)
-                                        INNER JOIN public.sessions USING(session_id)
-                                WHERE {" AND ".join(pg_sub_query)}) AS counts
-                                LEFT JOIN
-                                (SELECT jsonb_agg(chart) AS chart
-                                FROM(SELECT generated_timestamp AS timestamp,
-                                               COALESCE(COUNT(error_id), 0) AS errors_count
-                                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                             LEFT JOIN LATERAL ( SELECT DISTINCT errors.error_id
-                                                                 FROM events.errors 
-                                                                        INNER JOIN public.errors AS m_errors USING (error_id)
-                                                                        INNER JOIN public.sessions USING (session_id)
-                                                                 WHERE {" AND ".join(pg_sub_query_chart)}
-                                             ) AS errors ON (TRUE)
-                                        GROUP BY generated_timestamp
-                                        ORDER BY generated_timestamp) AS chart) AS chart ON(TRUE);"""
+        pg_query = f"""WITH errors AS ( SELECT DISTINCT ON(errors.error_id,timestamp) errors.error_id,timestamp
+                                         FROM events.errors
+                                                  INNER JOIN public.errors AS m_errors USING (error_id)
+                                         WHERE {" AND ".join(pg_sub_query_subset)}
+                                    )
+                    SELECT *
+                    FROM (SELECT COUNT(DISTINCT errors.error_id) AS errors_count
+                          FROM errors) AS counts
+                             LEFT JOIN
+                         (SELECT jsonb_agg(chart) AS chart
+                          FROM (SELECT generated_timestamp          AS timestamp,
+                                       COALESCE(COUNT(error_id), 0) AS errors_count
+                                FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                                         LEFT JOIN LATERAL ( SELECT DISTINCT errors.error_id
+                                                             FROM errors
+                                                             WHERE {" AND ".join(pg_sub_query_chart)}
+                                    ) AS errors ON (TRUE)
+                                GROUP BY generated_timestamp
+                                ORDER BY generated_timestamp) AS chart) AS chart ON (TRUE);"""
         cur.execute(cur.mogrify(pg_query, {"step_size": step_size,
                                            "project_id": project_id,
                                            "startTimestamp": startTimestamp,

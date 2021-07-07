@@ -57,7 +57,7 @@ CREATE TABLE users
       "role": "dev",
       "dashboard": {
         "cpu": true,
-        "fps": false,        
+        "fps": false,
         "avgCpu": true,
         "avgFps": true,
         "errors": true,
@@ -410,6 +410,7 @@ CREATE INDEX errors_project_id_idx ON public.errors (project_id);
 CREATE INDEX errors_project_id_status_idx ON public.errors (project_id, status);
 CREATE INDEX errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
 CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
+CREATE INDEX errors_project_id_error_id_integration_idx ON public.errors (project_id, error_id) WHERE source != 'js_exception';
 
 CREATE TABLE user_favorite_errors
 (
@@ -515,7 +516,7 @@ CREATE INDEX ON sessions (project_id, user_country);
 CREATE INDEX ON sessions (project_id, user_browser);
 CREATE INDEX sessions_start_ts_idx ON public.sessions (start_ts) WHERE duration > 0;
 CREATE INDEX sessions_project_id_idx ON public.sessions (project_id) WHERE duration > 0;
-CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions(session_id,project_id,start_ts) WHERE duration>0;
+CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions (session_id, project_id, start_ts) WHERE duration > 0;
 
 ALTER TABLE public.sessions
     ADD CONSTRAINT web_browser_constraint CHECK ( (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
@@ -659,12 +660,12 @@ CREATE INDEX pages_path_idx ON events.pages (path);
 CREATE INDEX pages_visually_complete_idx ON events.pages (visually_complete) WHERE visually_complete > 0;
 CREATE INDEX pages_dom_building_time_idx ON events.pages (dom_building_time) WHERE dom_building_time > 0;
 CREATE INDEX pages_load_time_idx ON events.pages (load_time) WHERE load_time > 0;
-CREATE INDEX pages_first_contentful_paint_time_idx ON events.pages (first_contentful_paint_time) WHERE first_contentful_paint_time>0;
-CREATE INDEX pages_dom_content_loaded_time_idx ON events.pages (dom_content_loaded_time) WHERE dom_content_loaded_time>0;
+CREATE INDEX pages_first_contentful_paint_time_idx ON events.pages (first_contentful_paint_time) WHERE first_contentful_paint_time > 0;
+CREATE INDEX pages_dom_content_loaded_time_idx ON events.pages (dom_content_loaded_time) WHERE dom_content_loaded_time > 0;
 CREATE INDEX pages_first_paint_time_idx ON events.pages (first_paint_time) WHERE first_paint_time > 0;
 CREATE INDEX pages_ttfb_idx ON events.pages (ttfb) WHERE ttfb > 0;
 CREATE INDEX pages_time_to_interactive_idx ON events.pages (time_to_interactive) WHERE time_to_interactive > 0;
-CREATE INDEX pages_session_id_timestamp_loadgt0NN_idx ON events.pages (session_id,timestamp) WHERE load_time > 0 AND load_time IS NOT NULL;
+CREATE INDEX pages_session_id_timestamp_loadgt0NN_idx ON events.pages (session_id, timestamp) WHERE load_time > 0 AND load_time IS NOT NULL;
 CREATE INDEX pages_session_id_timestamp_visualgt0nn_idx ON events.pages (session_id, timestamp) WHERE visually_complete > 0 AND visually_complete IS NOT NULL;
 CREATE INDEX pages_timestamp_metgt0_idx ON events.pages (timestamp) WHERE response_time > 0 OR first_paint_time > 0 OR
                                                                           dom_content_loaded_time > 0 OR ttfb > 0 OR
@@ -713,6 +714,7 @@ CREATE INDEX ON events.errors (session_id);
 CREATE INDEX errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
 CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
 CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
+CREATE INDEX errors_error_id_timestamp_session_id_idx ON events.errors (error_id, timestamp, session_id);
 
 CREATE TABLE events.graphql
 (
@@ -771,12 +773,12 @@ CREATE INDEX resources_url_hostpath_gin_idx ON events.resources USING GIN (url_h
 CREATE INDEX resources_url_hostpath_idx ON events.resources (url_hostpath);
 CREATE INDEX resources_timestamp_type_durationgt0NN_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL;
 CREATE INDEX resources_session_id_timestamp_idx ON events.resources (session_id, timestamp);
-CREATE INDEX resources_session_id_timestamp_type_idx ON events.resources (session_id, timestamp,type);
+CREATE INDEX resources_session_id_timestamp_type_idx ON events.resources (session_id, timestamp, type);
 CREATE INDEX resources_timestamp_type_durationgt0NN_noFetch_idx ON events.resources (timestamp, type) WHERE duration > 0 AND duration IS NOT NULL AND type != 'fetch';
-CREATE INDEX resources_session_id_timestamp_url_host_fail_idx ON events.resources (session_id,timestamp, url_host) WHERE success=FALSE;
-CREATE INDEX resources_session_id_timestamp_url_host_firstparty_idx ON events.resources(session_id,timestamp,url_host) WHERE type IN ('fetch', 'script');
-CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id,timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
-CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id) ;
+CREATE INDEX resources_session_id_timestamp_url_host_fail_idx ON events.resources (session_id, timestamp, url_host) WHERE success = FALSE;
+CREATE INDEX resources_session_id_timestamp_url_host_firstparty_idx ON events.resources (session_id, timestamp, url_host) WHERE type IN ('fetch', 'script');
+CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id, timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
+CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id);
 
 CREATE TABLE events.performance
 (
