@@ -52,7 +52,7 @@
         "S3_HOST": "",
         "S3_KEY": "",
         "S3_SECRET": "",
-        "version_number": "1.0.0"
+        "version_number": "1.2.0"
       },
       "lambda_timeout": 150,
       "lambda_memory_size": 400,
