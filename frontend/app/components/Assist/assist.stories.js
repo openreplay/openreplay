@@ -3,6 +3,6 @@ import ChatWindow from './ChatWindow';
 
 storiesOf('Assist', module)
   .add('ChatWindow', () => (
-    <ChatWindow />
+    <ChatWindow userId="test@test.com" />
   ))
 

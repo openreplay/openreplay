@@ -56,15 +56,16 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
       <Popup
         trigger={
           <div
-            className={cn('cursor-pointer p-2 mr-2')}
+            className={cn('cursor-pointer p-2 mr-2 flex items-center')}
             onClick={inCall ? endCall : call}
             role="button"
           >
             <Icon
-              name="telephone-fill"
+              name="headset"
               size="20"
-              color={ calling !== 2 ? "red" : "teal" }
+              color={ inCall ? "red" : "gray-darkest" }
             />
+            <span className={cn("ml-2", { 'red' : inCall })}>{ inCall ? 'End Meeting' : 'Start Meeting' }</span>
           </div>
         }
         content={ `Call ${userId}` }
@@ -73,7 +74,7 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
         position="top right"
       />
       <div className="fixed ml-3 left-0 top-0 z-50">
-        { inCall && <ChatWindow incomeStream={incomeStream} localStream={localStream} /> }
+        { inCall && <ChatWindow endCall={endCall} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
       </div>
     </div>
   )

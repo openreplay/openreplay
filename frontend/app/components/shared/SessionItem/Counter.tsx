@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { Duration } from 'luxon';
 
 interface Props {
-  startTime: any
+  startTime: any,
+  className: string
 }
 
-function Counter({ startTime }: Props) {
+function Counter({ startTime, className }: Props) {
   let intervalId;
   const [duration, setDuration] = useState(new Date().getTime() - startTime)
 
@@ -19,7 +20,7 @@ function Counter({ startTime }: Props) {
   }, [duration])
 
   return (
-    <div className="mx-2">
+    <div className={className}>
       {startTime && Duration.fromMillis(duration).toFormat('m:ss')}
     </div>
   )
