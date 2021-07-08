@@ -48,7 +48,7 @@ export default class SessionList extends React.PureComponent {
   }
 
   getNoContentMessage = activeTab => {
-    let str = "No Sessions Found";
+    let str = "No recordings found";
     if (activeTab.type !== 'all') {
       str += ' with ' + activeTab.name;
       return str;

@@ -62,6 +62,7 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, conte
 
 	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("Cookie", "ABv=3;") // Hack for rueducommerce
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		c.Errors <- errors.Wrap(err, context)

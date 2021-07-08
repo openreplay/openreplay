@@ -1,8 +1,11 @@
+{% if db_resource_override.postgresql %}
+{{ db_resource_override.postgresql|to_nice_yaml(indent=2) }}
+{% else %}
 resources:
   limits:
-    cpu: {{ ( 250 * scale|float ) | int }}m
+    cpu: {{ ( 250 * scale|float ) | int }/db_resource_override/db_resource_override//db_resource_override/db_resource_override/gm
     memory: {{ ( 512 * scale|float ) | int }}Mi
   requests:
     cpu: 250m
     memory: 256Mi
-
+{% endif %}

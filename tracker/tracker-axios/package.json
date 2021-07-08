@@ -2,7 +2,7 @@
   "name": "@openreplay/tracker-axios",
   "description": "Tracker plugin for axios requests recording",
   "version": "3.0.1",
-  "axios": [
+  "keywords": [
     "axios",
     "logging",
     "replay"
