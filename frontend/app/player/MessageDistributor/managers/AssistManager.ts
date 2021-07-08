@@ -280,7 +280,7 @@ export default class AssistManager {
       update({ calling: CallingState.True });
       onStream(stream);
       // @ts-ignore ??
-      this.md.overlay.addEventListener("click", this.onMouseMove)
+      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
     });
 
     this.onCallEnd = () => {
@@ -290,7 +290,7 @@ export default class AssistManager {
       onClose();
       
       // @ts-ignore ??
-      this.md.overlay.removeEventListener("click",  this.onMouseMove);
+      this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
       update({ calling: CallingState.False });
       this.onCallEnd = null;
     }
