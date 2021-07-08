@@ -3,7 +3,7 @@
   border: solid thin #000;
   border-radius: 3px;
   position: fixed;  
-  width: 300px;
+  width: 300px;  
 }
 
 .headerTitle {
@@ -12,4 +12,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.videoWrapper {
+  height: 180px;
+  overflow: hidden;
+  background-color: #000;
 }

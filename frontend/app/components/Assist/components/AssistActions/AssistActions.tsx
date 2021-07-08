@@ -3,7 +3,6 @@ import { Popup, Icon } from 'UI'
 import { connect } from 'react-redux'
 import cn from 'classnames'
 import { toggleChatWindow } from 'Duck/sessions';
-// import stl from './AassistActions.css'
 import { connectPlayer } from 'Player/store';
 import ChatWindow from '../../ChatWindow';
 import { callPeer } from 'Player'
@@ -73,7 +72,7 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
         inverted
         position="top right"
       />
-      <div className="fixed ml-3 left-0 top-0 z-50">
+      <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
         { inCall && <ChatWindow endCall={endCall} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
       </div>
     </div>
