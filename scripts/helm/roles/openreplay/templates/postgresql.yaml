@@ -3,7 +3,7 @@
 {% else %}
 resources:
   limits:
-    cpu: {{ ( 1000 * scale|float ) | int }/db_resource_override/db_resource_override//db_resource_override/db_resource_override/gm
+    cpu: {{ ( 1000 * scale|float ) | int }}m
     memory: {{ ( 2048 * scale|float ) | int }}Mi
   requests:
     cpu: 250m
