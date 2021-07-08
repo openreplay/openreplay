@@ -128,7 +128,7 @@ function app(){
             exit 0
             ;;
         postgresql|redis|clickhouse)
-            ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type -e db_name=$1 --tags db -v
+            ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type -e db_name=$1 --tags template --tags db -v
             exit 0
             ;;
         frontend)
