@@ -131,7 +131,6 @@ function app(){
             ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type -e db_name=$1 --tags db -v
             exit 0
             ;;
-        *)
         frontend)
             ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags frontend -v
             exit 0
