@@ -2,9 +2,7 @@
 ---
 - name: Installing specific db
   shell: |
-    override=''
-    [[ -f /tmp/'{{ db_name }}.yaml' ]] && override='-f /tmp/{{ db_name }}.yaml' || true
-    helm upgrade --install -n db {{ db_name }} -f app/{{ db_name }}.yaml ${override} ./db/{{ db_name }} --create-namespace
+    helm upgrade --install -n db {{ db_name }} -f /tmp/{{ db_name }}.yaml ./db/{{ db_name }} --wait --create-namespace
   args:
     executable: /bin/bash
   when: db_name|length > 0
