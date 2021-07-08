@@ -5,6 +5,7 @@ import cn from 'classnames'
 import Counter from 'App/components/shared/SessionItem/Counter'
 import stl from './chatWindow.css'
 import ChatControls from '../ChatControls/ChatControls'
+import Draggable from 'react-draggable';
 
 export interface Props {
   incomeStream: MediaStream | null,
@@ -17,38 +18,24 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localS
   const [minimize, setMinimize] = useState(false)
 
   return (
-    <div    
-      className={cn(stl.wrapper, "fixed radius bg-white z-50 shadow-xl mt-16")}
-      style={{ width: '280px' }}
-    >
-      <div className="flex items-center p-2">
-        <div>
+    <Draggable handle=".handle" bounds="body">
+      <div
+        className={cn(stl.wrapper, "fixed radius bg-white shadow-xl mt-16")}
+        style={{ width: '280px' }}
+      >
+        <div className="handle flex items-center p-2 cursor-move select-none">
           <div className={stl.headerTitle}><b>Meeting</b> {userId}</div>
-          {/* <button onClick={() => setMinimize(!minimize)}>
-            <Icon name={ minimize ? "plus" : "minus" } size="14" />
-          </button> */}
+          <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />          
         </div>
-        <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />
-        {/* <Popup
-          trigger={
-            <button className="flex items-center ml-auto">
-              <Icon name="high-engagement" size="16" color="teal" />
-            </button>
-          }
-          content={ `Remote Control` }
-          size="tiny"
-          inverted
-          position="top center"
-        /> */}
-      </div>
-      <div className={cn({'hidden' : minimize}, 'relative')}>
-        <VideoContainer stream={ incomeStream } />
-        <div className="absolute bottom-0 right-0 z-50">
-          <VideoContainer stream={ localStream } muted height={50} />
+        <div className={cn(stl.videoWrapper, {'hidden' : minimize}, 'relative')}>
+          <VideoContainer stream={ incomeStream } />
+          <div className="absolute bottom-0 right-0 z-50">
+            <VideoContainer stream={ localStream } muted width={50} />
+          </div>
         </div>
+        <ChatControls stream={localStream} endCall={endCall} />
       </div>
-      <ChatControls stream={localStream} endCall={endCall} />
-    </div>
+    </Draggable>
   )
 }
 
