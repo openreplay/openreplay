@@ -152,6 +152,9 @@ export default class Player extends MessageDistributor {
   }
 
   jump(time = getState().time, index) {
+    const { live } = getState();
+    if (live) return;
+    
     if (getState().playing) {
       cancelAnimationFrame(this._animationFrameRequestId);
       // this._animationFrameRequestId = requestAnimationFrame(() => {
