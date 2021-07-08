@@ -253,8 +253,8 @@ export default class Controls extends React.Component {
     const inspectorMode = bottomBlock === INSPECTOR;
 
     return (
-      <div className={ cn(styles.controls, {'px-5' : live}) }>
-        <Timeline jump={ this.props.jump } />
+      <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
+        { !live && <Timeline jump={ this.props.jump } /> }
         { !fullscreen &&
           <div className={ styles.buttons } data-is-live={ live }>
             { !live ?
