@@ -1,6 +1,6 @@
-.controls {
-  margin-bottom: 8px;
-  margin-right: 15px;
+.controls {  
+  height: 28px;
+  background-color: red;
 }
 
 .btnWrapper {
