@@ -130,8 +130,9 @@ def get_network_widget(projectId, context):
 @app.route('/{projectId}/dashboard/{widget}/search', methods=['GET'])
 def get_dashboard_autocomplete(projectId, widget, context):
     params = app.current_request.query_params
-    if params is None:
+    if params is None or params.get('q') is None or len(params.get('q')) == 0:
         return {"data": []}
+    params['q'] = '^' + params['q']
 
     if widget in ['performance']:
         data = dashboard.search(params.get('q', ''), params.get('type', ''), project_id=projectId,
@@ -546,60 +547,4 @@ def get_dashboard_group(projectId, context):
         *helper.explode_widget(dashboard.get_memory_consumption(project_id=projectId, **{**data, **args})),
         *helper.explode_widget(dashboard.get_avg_cpu(project_id=projectId, **{**data, **args})),
         *helper.explode_widget(dashboard.get_avg_fps(project_id=projectId, **{**data, **args})),
-    ]}
-
-
-@app.route('/{projectId}/dashboard/errors_crashes', methods=['GET', 'POST'])
-def get_dashboard_group(projectId, context):
-    data = app.current_request.json_body
-    if data is None:
-        data = {}
-    params = app.current_request.query_params
-    args = dashboard.dashboard_args(params)
-
-    return {"data": [
-        {"key": "errors",
-         "data": dashboard.get_errors(project_id=projectId, **{**data, **args})},
-        {"key": "errors_trend",
-         "data": dashboard.get_errors_trend(project_id=projectId, **{**data, **args})},
-        {"key": "crashes",
-         "data": dashboard.get_crashes(project_id=projectId, **{**data, **args})},
-        {"key": "domains_errors",
-         "data": dashboard.get_domains_errors(project_id=projectId, **{**data, **args})},
-        {"key": "errors_per_domains",
-         "data": dashboard.get_errors_per_domains(project_id=projectId, **{**data, **args})},
-        {"key": "calls_errors",
-         "data": dashboard.get_calls_errors(project_id=projectId, **{**data, **args})},
-        {"key": "errors_per_type",
-         "data": dashboard.get_errors_per_type(project_id=projectId, **{**data, **args})},
-        {"key": "impacted_sessions_by_js_errors",
-         "data": dashboard.get_impacted_sessions_by_js_errors(project_id=projectId, **{**data, **args})}
-    ]}
-
-
-@app.route('/{projectId}/dashboard/resources', methods=['GET', 'POST'])
-def get_dashboard_group(projectId, context):
-    data = app.current_request.json_body
-    if data is None:
-        data = {}
-    params = app.current_request.query_params
-    args = dashboard.dashboard_args(params)
-
-    return {"data": [
-        {"key": "slowest_images",
-         "data": dashboard.get_slowest_images(project_id=projectId, **{**data, **args})},
-        {"key": "missing_resources",
-         "data": dashboard.get_missing_resources_trend(project_id=projectId, **{**data, **args})},
-        {"key": "slowest_resources",
-         "data": dashboard.get_slowest_resources(project_id=projectId, type='all', **{**data, **args})},
-        {"key": "resources_loading_time",
-         "data": dashboard.get_resources_loading_time(project_id=projectId, **{**data, **args})},
-        {"key": "resources_by_party",
-         "data": dashboard.get_resources_by_party(project_id=projectId, **{**data, **args})},
-        {"key": "resource_type_vs_response_end",
-         "data": dashboard.resource_type_vs_response_end(project_id=projectId, **{**data, **args})},
-        {"key": "resources_vs_visually_complete",
-         "data": dashboard.get_resources_vs_visually_complete(project_id=projectId, **{**data, **args})},
-        {"key": "resources_count_by_type",
-         "data": dashboard.get_resources_count_by_type(project_id=projectId, **{**data, **args})}
     ]}
