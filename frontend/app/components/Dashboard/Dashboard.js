@@ -109,7 +109,7 @@ function isInViewport(el) {
   platform: state.getIn([ 'dashboard', 'platform' ]),
   dashboardAppearance: state.getIn([ 'user', 'account', 'appearance', 'dashboard' ]),
 }), { setPeriod, setPlatform, fetchMetadataOptions })
-@withPageTitle('Metrics - OpenReplay')
+@withPageTitle('Metrics - Stack RePlay')
 @withRouter
 export default class Dashboard extends React.PureComponent {
   constructor(props) {

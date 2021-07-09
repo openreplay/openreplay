@@ -18,7 +18,7 @@ const checkDoesntMatch = (newPassword, newPasswordRepeat) =>
   }),
   { updatePassword },
 )
-@withPageTitle("Password Change - OpenReplay")
+@withPageTitle("Password Change - Stack RePlay")
 export default class UpdatePassword extends React.Component {
   state = {
     oldPassword: '',

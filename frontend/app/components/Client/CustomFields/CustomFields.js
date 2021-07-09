@@ -21,7 +21,7 @@ import { confirm } from 'UI/Confirmation';
   save,
   remove,
 })
-@withPageTitle('Metadata - OpenReplay Preferences')
+@withPageTitle('Metadata - Stack RePlay Preferences')
 class CustomFields extends React.Component {
   state = { showModal: false, currentSite: this.props.sites.get(0) };
 

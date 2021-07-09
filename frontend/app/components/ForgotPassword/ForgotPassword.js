@@ -24,7 +24,7 @@ const checkDontMatch = (newPassword, newPasswordRepeat) =>
   }),
   { requestResetPassword, resetPassword },
 )
-@withPageTitle("Password Reset - OpenReplay")
+@withPageTitle("Password Reset - Stack RePlay")
 export default class ForgotPassword extends React.PureComponent {
   state = {
     email: '',
@@ -86,7 +86,7 @@ export default class ForgotPassword extends React.PureComponent {
       <div className="flex" style={{ height: '100vh'}}>
         <div className={cn("w-6/12", stl.left)}>
           <div className="px-6 pt-10">
-            <img src="/logo-white.svg" />
+            <img src="https://www.stackanalytix.com/assets/images/logo2x-white.png" />
           </div>
           <div className="color-white text-lg flex items-center">
             <div className="flex items-center justify-center w-full" style={{ height: 'calc(100vh - 130px)'}}>

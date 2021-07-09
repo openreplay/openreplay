@@ -97,7 +97,7 @@ const integrations = [ 'sentry', 'datadog', 'stackdriver', 'rollbar', 'newrelic'
 	fetchListSlack,
 	removeIntegrationConfig
 })
-@withPageTitle('Integrations - OpenReplay Preferences')
+@withPageTitle('Integrations - Stack RePlay Preferences')
 export default class Integrations extends React.PureComponent {
 	state = { 
     modalContent: NONE,

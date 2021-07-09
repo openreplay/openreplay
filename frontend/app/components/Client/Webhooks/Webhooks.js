@@ -15,7 +15,7 @@ import styles from './webhooks.css';
   fetchList,
   remove,
 })
-@withPageTitle('Webhooks - OpenReplay Preferences')
+@withPageTitle('Webhooks - Stack RePlay Preferences')
 class Webhooks extends React.PureComponent {
   state = { showModal: false };
 

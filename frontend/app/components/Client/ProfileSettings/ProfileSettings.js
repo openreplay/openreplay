@@ -6,7 +6,7 @@ import Api from './Api';
 import OptOut from './OptOut';
 import Licenses from './Licenses';
 
-@withPageTitle('Account - OpenReplay Preferences')
+@withPageTitle('Account - Stack RePlay Preferences')
 export default class ProfileSettings extends React.PureComponent {  
   render() {    
     return (

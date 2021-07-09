@@ -19,7 +19,7 @@ const recaptchaRef = React.createRef();
   }),
   { login, },
 )
-@withPageTitle('Login - OpenReplay')
+@withPageTitle('Login - Stack RePlay')
 export default class Login extends React.Component {
   state = {
     email: '',
@@ -50,7 +50,7 @@ export default class Login extends React.Component {
       <div className="flex" style={{ height: '100vh'}}>
         <div className={cn("w-6/12", stl.left)}>
           <div className="px-6 pt-10">
-            <img src="/logo-white.svg" />
+            <img src="https://www.stackanalytix.com/assets/images/logo2x-white.png" />
           </div>
           <div className="color-white text-lg flex items-center">
             <div className="flex items-center justify-center w-full" style={{ height: 'calc(100vh - 130px)'}}>
@@ -62,7 +62,7 @@ export default class Login extends React.Component {
           <div className="">
             <form onSubmit={ this.onSubmit }>
               <div className="mb-8">
-                <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
+                <h2 className="text-center text-3xl mb-6">Login to Stack RePlay</h2>
                 { tenants.length === 0 && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
               </div>
               <Loader loading={ loading }>

@@ -61,7 +61,7 @@ const weakEqual = (val1, val2) => {
   resetFunnel,
   resetFunnelFilters
 })
-@withPageTitle("Sessions - OpenReplay")
+@withPageTitle("Sessions - Stack RePlay")
 export default class BugFinder extends React.PureComponent {
   state = {showRehydratePanel: false}
   constructor(props) {

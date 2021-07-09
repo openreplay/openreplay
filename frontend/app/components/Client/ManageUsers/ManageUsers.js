@@ -26,7 +26,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   deleteMember,
   fetchList
 })
-@withPageTitle('Manage Users - OpenReplay Preferences')
+@withPageTitle('Manage Users - Stack RePlay Preferences')
 class ManageUsers extends React.PureComponent {
   state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining }
 
