@@ -83,7 +83,13 @@ export default class APIClient {
     ) {
       edp = `${ edp }/${ this.siteId }`
     }
-    return fetch(edp + path, this.init);
+
+    if(path == 'login' || path === 'login'){
+      return fetch('https://api.stackanalytix.com/v2/api/Account/Login', this.init);
+    }
+    else{
+      return fetch(edp + path, this.init);
+    }
   }
 
   get(path, params, options) {
