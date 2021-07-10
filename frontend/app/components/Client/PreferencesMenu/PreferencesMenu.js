@@ -20,7 +20,7 @@ function PreferencesMenu({ activeTab, appearance, history }) {
         </div>
       </div>
       
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <SideMenuitem
           active={ activeTab === CLIENT_TABS.PROFILE }
           title="Account"
@@ -85,7 +85,7 @@ function PreferencesMenu({ activeTab, appearance, history }) {
           iconName="bell"
           onClick={() => setTab(CLIENT_TABS.NOTIFICATIONS) }
         />
-      </div>      
+      </div>       */}
     </div>
   )
 }
