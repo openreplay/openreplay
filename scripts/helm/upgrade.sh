@@ -46,11 +46,21 @@ migration(){
         ansible-playbook -c local migration.yaml -e @vars.yaml -e migration_versions=${joined_migration_versions} --tags $db -v
     }
 }
+installation_type=1
 echo -e "Migrating postgresql"
 migration postgresql
+
 # Re installing apps.
 apps=($(ls app/*.yaml|cut -d "." -f1|cut -d '/' -f2))
-apps+=(frontend nginx)
-for app in ${apps}; do
-    bash -x kube-install.sh --app $app
+ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags template -v
+for app in ${apps[@]}; do
+    ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type -e app_name=$app --tags app --skip-tags template -v
 done
+# Installing frontend
+ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags frontend -v
+# Installing nginx
+sed -i 's/.* return 301 .*/     # return 301 https:\/\/$host$request_uri;/g' nginx-ingress/nginx-ingress/templates/configmap.yaml
+[[ NGINX_REDIRECT_HTTPS -eq 1 ]] && {
+sed -i "s/# return 301/return 301/g" nginx-ingress/nginx-ingress/templates/configmap.yaml
+}
+ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags nginx -v
