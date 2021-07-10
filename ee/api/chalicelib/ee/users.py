@@ -477,7 +477,7 @@ def authenticate(email,org, password, for_change_password=False, for_plugin=Fals
                 {"user_id": r["id"]})
             cur.execute(query)
             return {
-                "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
+                "jwt": authorizers.generate_jwt(org, r['id'], r['tenantId'],
                                                 TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),
                                                 aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
                 "email": email,
