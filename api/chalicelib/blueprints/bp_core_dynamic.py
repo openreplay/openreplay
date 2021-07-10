@@ -34,7 +34,11 @@ def login():
     data = app.current_request.json_body
     if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
         return {"errors": ["Invalid captcha."]}
-    r = users.authenticate(data['email'], data['password'],
+
+    if data['org'] is None:
+        return {"errors": ["Invalid org."]}
+
+    r = users.authenticate(data['email'], data['org'], data['password'],
                            for_plugin=False
                            )
     if r is None:
@@ -56,6 +60,7 @@ def login():
     return {
         'jwt': r.pop('jwt'),
         'data': {
+            "org": data['org'],
             "user": r,
             "client": c,
         }

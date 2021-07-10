@@ -23,12 +23,13 @@ const recaptchaRef = React.createRef();
 export default class Login extends React.Component {
   state = {
     email: '',
+    org: '',
     password: '',
   };
 
   handleSubmit = (token) => {
-    const { email, password } = this.state;
-    this.props.login({ email: email.trim(), password, 'g-recaptcha-response': token }).then(() => {
+    const { email, org, password } = this.state;
+    this.props.login({ email: email.trim(),org: org.trim(), password, 'g-recaptcha-response': token }).then(() => {
       const { errors } = this.props;      
     })
   }
@@ -87,6 +88,21 @@ export default class Login extends React.Component {
                         name="email"
                         onChange={ this.write }
                         className={ stl.email }
+                        required="true"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-6">
+                    <label>ORG</label>
+                    <div className={ stl.inputWithIcon }>
+                      <input
+                        autoFocus={false}
+                        autoComplete="none"
+                        type="text"
+                        placeholder="ORG CODE"
+                        name="org"
+                        onChange={ this.write }
+                        className={ stl.org }
                         required="true"
                       />
                     </div>

@@ -427,7 +427,7 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
 
 
 @dev.timed
-def authenticate(email, password, for_change_password=False, for_plugin=False):
+def authenticate(email,org, password, for_change_password=False, for_plugin=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
