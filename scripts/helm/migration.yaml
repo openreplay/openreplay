@@ -1,5 +1,6 @@
 ---
 - hosts: localhost
+  gather_facts: false
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
   tasks:
