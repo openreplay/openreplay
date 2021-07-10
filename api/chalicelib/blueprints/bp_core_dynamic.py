@@ -35,7 +35,8 @@ def login():
     if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
         return {"errors": ["Invalid captcha."]}
 
-    if data['org'] is None:
+    org = data['org']
+    if org is None:
         return {"errors": ["Invalid org."]}
 
     r = users.authenticate(data['email'], data['org'], data['password'],
@@ -60,11 +61,11 @@ def login():
                                           stack_integrations=True)
 
     c["projects"] = projs
-    
+
     return {
         'jwt': r.pop('jwt'),
         'data': {
-            "org": data['org'],
+            "org": org,
             "user": r,
             "client": c,
         }
