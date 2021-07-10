@@ -72,3 +72,17 @@ enable_monitoring: "{{ enable_monitoring }}"
 #
 # Username: admin
 grafana_password: "{{ grafana_password }}"
+
+## Advanced
+# If you need to override the default cpu/memory allocation of databases.
+db_resource_override:
+  postgresql: {{ db_resource_override.postgresql|default({}) }}
+    # resources:
+    #   limits:
+    #     cpu: 1000m
+    #     memory: 1024Mi
+    #   requests:
+    #     cpu: 250m
+    #     memory: 256Mi
+  redis: {{ db_resource_override.redis|default({}) }}
+  clickhouse: {{ db_resource_override.clickhouse|default({}) }}
