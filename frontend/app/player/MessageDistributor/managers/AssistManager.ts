@@ -32,7 +32,7 @@ export const INITIAL_STATE: State = {
   peerConnectionStatus: ConnectionStatus.Connecting,
 }
 
-const MAX_RECONNECTION_COUNT = 6;
+const MAX_RECONNECTION_COUNT = 4;
 
 
 function resolveURL(baseURL: string, relURL: string): string {
@@ -143,7 +143,7 @@ export default class AssistManager {
     if (!this.peer) { return; }
     const id = this.peerID;
     console.log("trying to connect to", id)
-    const conn = this.peer.connect(id, { serialization: 'json'});
+    const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
 
     conn.on('open', () => {
       update({ peerConnectionStatus: ConnectionStatus.Inactive });
@@ -188,6 +188,7 @@ export default class AssistManager {
 
 
           msg.tp = ID_TP_MAP[msg._id];  // _id goes from tracker
+          
           if (msg.tp === "timestamp") {
             ts0 = ts0 || msg.timestamp
             time = msg.timestamp - ts0;
@@ -201,6 +202,15 @@ export default class AssistManager {
         });
       });
     });
+
+    const intervalID = setInterval(() => {
+      if (!conn.open) {
+        this.md.setMessagesLoading(true);
+        this.assistentCallEnd();
+        update({ peerConnectionStatus: ConnectionStatus.Disconnected })
+        clearInterval(intervalID);
+      }
+    }, 5000);
     conn.on('close', () => this.onDataClose());// Doesn't work ?
   }
 
@@ -210,7 +220,8 @@ export default class AssistManager {
     this.md.setMessagesLoading(true);
     this.assistentCallEnd();
     console.log('closed peer conn. Reconnecting...')
-    setTimeout(() => this.connectToPeer(), 0); // reconnect
+    update({ peerConnectionStatus: ConnectionStatus.Connecting })
+    setTimeout(() => this.connectToPeer(), 300); // reconnect
   }
 
 
@@ -269,7 +280,6 @@ export default class AssistManager {
   }
 
   call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onReject: () => void, onError?: ()=> void): null | Function {
-    console.log(!this.peer , getState().calling, CallingState.False)
     if (!this.peer || getState().calling !== CallingState.False) { return null; }
     
     update({ calling: CallingState.Requesting });
@@ -301,12 +311,20 @@ export default class AssistManager {
       onError?.();
     });
 
+    const intervalID = setInterval(() => {
+      if (!call.open) {
+        this.onCallEnd?.();
+        clearInterval(intervalID);
+      }
+    }, 5000);
+
     window.addEventListener("beforeunload", this.assistentCallEnd)
     
     return this.assistentCallEnd;
   }
 
   clear() {
+    console.log('clearing', this.peerID)
     this.assistentCallEnd();
     console.log("destroying peer...")
     this.peer?.destroy();
