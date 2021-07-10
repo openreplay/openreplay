@@ -359,12 +359,12 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
         return {"errors": ["access denied"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
-    auth = authenticate(email, old_password, for_change_password=True)
+    auth = authenticate(email,'', old_password, for_change_password=True)
     if auth is None:
         return {"errors": ["wrong password"]}
     changes = {"password": new_password, "generatedPassword": False}
     return {"data": update(tenant_id=tenant_id, user_id=user_id, changes=changes),
-            "jwt": authenticate(email, new_password)["jwt"]}
+            "jwt": authenticate(email,'', new_password)["jwt"]}
 
 
 def count_members():

@@ -55,8 +55,12 @@ def login():
 
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
+
+    projs = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
+
+    c["projects"] = projs
+    
     return {
         'jwt': r.pop('jwt'),
         'data': {
