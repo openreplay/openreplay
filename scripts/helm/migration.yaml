@@ -8,7 +8,7 @@
     - block:
       - name: generating migration db paths
         set_fact:
-          db_path: "{{dst_list | default([])}} + [ '{{ item[0] }}/*.sql' ]" 
+          db_path: "{{dst_list | default([])}} + [ '{{playbook_dir}}/db/init_dbs/postgresql/{{ item }}/*.sql' ]" 
         with_items: "{{ migration_versions.split(',') }}"
       - name: Migrate postgresql
         shell: |
@@ -18,8 +18,7 @@
           kubectl exec -n db postgresql-postgresql-0 -- /bin/bash -c "PGPASSWORD=asayerPostgres psql -U postgres -f /tmp/$file" &> "{{ playbook_dir }}"/postgresql_init.log
         args:
           chdir: db/init_dbs/postgresql
-        with_fileglob:
-          - "{{ db_path }}"
+        with_fileglob: "{{ db_path }}"
       tags:
         - postgresql
     - block:

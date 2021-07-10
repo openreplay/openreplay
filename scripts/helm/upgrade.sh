@@ -9,7 +9,7 @@ vars_file_path=$1/scripts/helm/vars.yaml
     echo -e "OpenReplay previous version path not given.\nUsage: bash $0 /path/to/previous_openreplay_code_path"
     exit 1
 }
-[[ -f $1 ]] || {
+[[ -d $1 ]] || {
     echo -e "$1 doesn't exist. Please check the path and run\n \`bash upgrade.sh </path/to/previous/vars.yaml> \`"
 }
 which ansible &> /dev/null || {
@@ -26,6 +26,9 @@ echo -e"Updating vars.yaml\n"
 }
 
 old_version=`grep openreplay_version ${vars_file_path} | cut -d "v" -f 3 | cut -d '"' -f 1`
+[[ -z $old_version ]] && {
+    old_version=`grep image_tag ${vars_file_path} | cut -d "v" -f 2 | cut -d '"' -f 1`
+}
 enterprise_edition=`grep enterprise_edition_license ${vars_file_path} | cut -d ":" -f 2 | xargs`
 migration(){
     # Ref: https://stackoverflow.com/questions/1527049/how-can-i-join-elements-of-an-array-in-bash
@@ -40,13 +43,14 @@ migration(){
         echo -e "Starting db migrations"
         echo -e "Migrating versions $migration_versions"
 
-        ansible-playbook -c local migration.yaml -e vars.yaml -e migration_versions=${joined_migration_versions} --tags $db
+        ansible-playbook -c local migration.yaml -e @vars.yaml -e migration_versions=${joined_migration_versions} --tags $db -v
     }
 }
-# As of now, we don't have any migrations to do, as there is no delta files,
-# We'll have to do full installation.
-#
-# echo -e "Migrating postgresql"
-# migration postgresql
-# Re installing everything.
-./install.sh
+echo -e "Migrating postgresql"
+migration postgresql
+# Re installing apps.
+apps=($(ls app/*.yaml|cut -d "." -f1|cut -d '/' -f2))
+apps+=(frontend nginx)
+for app in ${apps}; do
+    bash -x kube-install.sh --app $app
+done
