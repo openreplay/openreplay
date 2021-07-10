@@ -43,14 +43,33 @@ export default function(opts: Partial<Options> = {})  {
       peer.on('connection', function(conn) { 
         console.log('connection')
         conn.on('open', function() {
-                  console.log('connection open')
+          
+          console.log('connection open')
 
           // TODO: onClose
-
+          const buffer: Message[][] = [];
+          let buffering = false;
+          function sendNext() {
+            setTimeout(() => {
+              if (buffer.length) {
+                  conn.send(buffer.shift());
+                  sendNext();
+              } else {
+                  buffering = false;
+              }
+            }, 50); 
+          }
           app.stop();
           //@ts-ignore (should update tracker dependency)
           app.addCommitCallback((messages: Array<Message>): void => {
-            conn.send(messages);
+            let i = 0;
+            while (i < messages.length) {
+              buffer.push(messages.slice(i, i+=1000));
+            }
+            if (!buffering) { 
+              buffering = true;
+              sendNext(); 
+            }
           });
           app.start();
         });
@@ -103,6 +122,12 @@ export default function(opts: Partial<Options> = {})  {
 
             call.answer(oStream);
             call.on('close', onClose); // Works from time to time (peerjs bug)
+            const intervalID = setInterval(() => {
+              if (!call.open) {
+                onClose();
+                clearInterval(intervalID);
+              }
+            }, 5000);
             call.on('error', onClose); // notify about error?
 
             callUI = new CallWindow(onClose);
