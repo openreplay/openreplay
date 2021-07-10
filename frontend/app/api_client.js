@@ -84,6 +84,9 @@ export default class APIClient {
       edp = `${ edp }/${ this.siteId }`
     }
 
+    if(path.includes('/errors/stats')){
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/errors', this.init);
+    }
     if(path == '/login' || path === '/login'){
       return fetch('https://api.stackanalytix.com/v2/api/Account/Login', this.init);
     }
