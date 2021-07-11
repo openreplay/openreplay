@@ -123,7 +123,7 @@ export default class APIClient {
       return fetch('https://api.stackanalytix.com/v2/api/Replay/SessionSearch/' + this.siteId, this.init);
     }
 
-    if(path.includes('/search2/')){
+    if(path.includes('/sessions2/')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       let sessionId = path.split('/sessions2/')[1];
       return fetch('https://api.stackanalytix.com/v2/api/Replay/EventsSearch/' + this.siteId + '/' + sessionId, this.init);
