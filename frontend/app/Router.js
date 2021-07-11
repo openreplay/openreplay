@@ -55,8 +55,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
 @connect((state) => {
   const siteId = state.getIn([ 'user', 'siteId' ]);
   const jwt = state.get('jwt');
-  const Stkjwt = store.getState().get('Stkjwt');
-
+  const Stkjwt = state.get('Stkjwt');
   const changePassword = state.getIn([ 'user', 'account', 'changePassword' ]);
   const userInfoLoading = state.getIn([ 'user', 'fetchUserInfoRequest', 'loading' ]);
   return {
