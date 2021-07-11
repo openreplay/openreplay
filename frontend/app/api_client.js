@@ -52,9 +52,11 @@ export default class APIClient {
   constructor() {
     const jwtAll = store.getState().get('jwt');
 
-    const jwt = jwtAll.split('%_END')[0]
-    const stkJWT = jwtAll.split('%_END')[1]
-    const siteId = store.getState().getIn([ 'user', 'siteId' ]);
+    if(jwtAll != null){
+      const jwt = jwtAll.split('%_END')[0];
+      this.stkJWT = jwtAll.split('%_END')[1];
+
+      const siteId = store.getState().getIn([ 'user', 'siteId' ]);
     this.init = {
       headers: {
         Accept: 'application/json',
@@ -65,6 +67,23 @@ export default class APIClient {
       this.init.headers.Authorization = `Bearer ${ jwt }`;
     }
     this.siteId = siteId;
+
+    }else{
+      const jwt = jwtAll;
+      this.stkJWT = jwtAll;
+
+      const siteId = store.getState().getIn([ 'user', 'siteId' ]);
+    this.init = {
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    };
+    if (jwt !== null) {
+      this.init.headers.Authorization = `Bearer ${ jwt }`;
+    }
+    this.siteId = siteId;
+    }
   }
 
   fetch(path, params, options = { clean: true }) {
@@ -88,7 +107,7 @@ export default class APIClient {
     }
 
     if(path.includes('/errors/stats')){
-      this.init.headers.Authorization = `Bearer ${ stkJWT }`;
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       return fetch('https://api.stackanalytix.com/v2/api/Replay/errors', this.init);
     }
 
