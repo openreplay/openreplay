@@ -87,12 +87,7 @@ class CustomFields extends React.Component {
             />
           </div>
           <IconButton circle icon="plus" outline onClick={ () => this.init() } />
-          <TextLink
-            icon="book"
-            className="ml-auto color-gray-medium"
-            href="https://docs.openreplay.com/installation/metadata"
-            label="Documentation"
-          />
+          
         </div>
         
         <Loader loading={ loading }>

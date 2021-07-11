@@ -6,10 +6,7 @@ import DocLink from 'Shared/DocLink/DocLink';
 
 const CloudwatchForm = (props) => (
   <>
-    <div className="p-5 border-b mb-4">
-      <div>How to integrate CloudWatch with OpenReplay and see backend errors alongside session replays.</div>
-      <DocLink className="mt-4" label="Integrate CloudWatch" url="https://docs.openreplay.com/integrations/cloudwatch" />
-    </div>
+    
     <IntegrationForm 
       { ...props }
       name="cloudwatch"

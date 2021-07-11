@@ -129,27 +129,7 @@ const ProjectCodeSnippet = props  => {
         Below code snippet changes depending on the data recording options chosen.
       </div>
       
-      <div className={ cn(stl.instructions, 'mt-8') }>
-        <div className="font-semibold flex items-center">
-          <CircleNumber text="2" />
-          <span>Install SDK</span>
-        </div>
-        <div className={ stl.siteId }>{ 'Project Key: ' } <span>{ site.projectKey }</span></div>
-      </div>
-
-      <div className="ml-10 mb-2 text-sm">
-        Paste this snippet <span>{ 'before the ' }</span>
-        <span className={ stl.highLight }> { '</head>' } </span>
-        <span>{ ' tag of your page.' }</span>
-      </div>
-      <div className={ cn(stl.snippetsWrapper, 'ml-10') }>
-        <button className={ stl.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
-        <Highlight className="html">
-          {_snippet}
-        </Highlight>
-      </div>
-      {/* TODO Extract for SaaS */}
-      <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a>.</div>
+      
     </div>
   )
 }
