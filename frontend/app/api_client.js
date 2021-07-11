@@ -111,6 +111,24 @@ export default class APIClient {
       return fetch('https://api.stackanalytix.com/v2/api/Replay/errors', this.init);
     }
 
+    if(path.includes('sessions/search2')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      let projectId = path.split('/api/')[1].split('/')[0];
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + projectId + 'SessionSearch', this.init);
+    }
+
+    if(path.includes('/events/search')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      let projectId = path.split('/api/')[1].split('/')[0];
+      let query = path.split('?type')[1];
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + projectId + 'EventSearch' + '?type' + query , this.init);
+    }
+
+    if(path.includes('/projects')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/GetProjects', this.init);
+    }
+
     if(path == '/login' || path === '/login'){
       return fetch('https://api.stackanalytix.com/v2/api/Account/Login', this.init);
     }
