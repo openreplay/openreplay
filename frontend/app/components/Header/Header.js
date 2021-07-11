@@ -94,37 +94,8 @@ const Header = (props) => {
         <ErrorsBadge />
         { 'Errors' }
       </NavLink>
-      <NavLink
-        to={ withSiteId(DASHBOARD_PATH, siteId) }
-        className={ styles.nav }
-        activeClassName={ styles.active }
-      >         
-        <span>{ 'Metrics' }</span>
-      </NavLink>
-      <div className={ styles.right }>
-        <Announcements />
-        <div className={ styles.divider } />
-
-        { (boardingCompletion < 100 && !hideDiscover) && (
-          <React.Fragment>            
-            <OnboardingExplore onComplete={() => setHideDiscover(true)} />
-            <div className={ styles.divider } />
-          </React.Fragment>
-        )}
       
-        <Notifications />
-        <div className={ styles.divider } />
-        <Popup
-          trigger={
-            <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
-          }
-          content={ `Preferences` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
-        
-        <div className={ styles.divider } />
+      <div className={ styles.right }>
         <div className={ styles.userDetails }>
           <div className="flex items-center">
             <div className="mr-5">{ name }</div>
