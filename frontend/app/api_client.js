@@ -133,6 +133,11 @@ export default class APIClient {
       return fetch('https://api.stackanalytix.com/v2/api/Replay/metadata', this.init);
     }
 
+    if(path.includes('account')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/account', this.init);
+    }
+
     if(path.includes('sample_rate')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       return fetch('https://api.stackanalytix.com/v2/api/Replay/sample_rate', this.init);
