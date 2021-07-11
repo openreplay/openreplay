@@ -113,7 +113,7 @@ export default class APIClient {
 
     if(path.includes('sessions/search2')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
-      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + this.siteId + 'SessionSearch', this.init);
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + this.siteId + '/SessionSearch', this.init);
     }
 
     if(path.includes('notifications')){
@@ -144,7 +144,7 @@ export default class APIClient {
     if(path.includes('/events/search')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       let query = path.split('?type')[1];
-      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + this.siteId + 'EventSearch' + '?type' + query , this.init);
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + this.siteId + '/EventSearch' + '?type' + query , this.init);
     }
 
     if(path.includes('/projects')){
