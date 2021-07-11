@@ -67,18 +67,6 @@ export default class SiteDropdown extends React.PureComponent {
               ))
             }
           </ul>
-          <div
-            className={cn(styles.btnNew, 'flex items-center justify-center py-3 cursor-pointer')}
-            onClick={this.newSite}
-          >
-            <Icon 
-              name="plus"
-              size="12"
-              marginRight="5" 
-              color="teal"
-            /> 
-            <span className="color-teal">Add New Project</span>
-          </div>
         </div>
 
         <SlideModal
