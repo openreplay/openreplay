@@ -8,10 +8,7 @@ const DOCUMENTATION = 'NPM';
 // const SEGMENT = 'SEGMENT';
 // const GOOGLE_TAG = 'GOOGLE TAG';
 const TABS = [
-  { key: PROJECT, text: PROJECT },
-  { key: DOCUMENTATION, text: DOCUMENTATION },
-  // { key: SEGMENT, text: SEGMENT },
-  // { key: GOOGLE_TAG, text: GOOGLE_TAG }
+  { key: PROJECT, text: PROJECT }
 ];
 
 class TrackingCodeModal extends React.PureComponent {

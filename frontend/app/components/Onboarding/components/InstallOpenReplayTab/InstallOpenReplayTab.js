@@ -9,10 +9,8 @@ export default function InstallOpenReplayTab() {
         <span className="text-3xl">👋</span>
         <div className="ml-3 flex items-end">
           <span className="text-3xl font-bold">Hey there! Setup</span>
-          <ProjectFormButton />
         </div>
       </h1>
-      <div className="mb-6">OpenReplay can be installed via script or NPM package (recommended).</div>
       <OnboardingTabs />
     </div>
   )

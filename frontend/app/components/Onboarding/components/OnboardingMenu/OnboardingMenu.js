@@ -53,17 +53,14 @@ const OnboardingMenu = (props) => {
     <div>
       { activeIndex === 0 && (
         <SideMenuitem
-          title="Install OpenReplay"
+          title="Configure Stack Analytix Replay"
           iconName="tools"
           active
         />
       )}
       { activeIndex > 0 && (
         <>
-          <Item icon="check" text="Install OpenReplay" completed={activeIndex >= 0} active={activeIndex === 0} onClick={() => setTab(MENU_ITEMS[0])} />
-          <Item icon="check" text="Identify Users" completed={activeIndex >= 1} active={activeIndex === 1} onClick={() => setTab(MENU_ITEMS[1])} />
-          <Item icon="check" text="Invite Collaborators" completed={activeIndex >= 2} active={activeIndex === 2} onClick={() => setTab(MENU_ITEMS[2])} />
-          <Item icon="check" text="Integrations" completed={activeIndex >= 3} active={activeIndex === 3} onClick={() => setTab(MENU_ITEMS[3])} />
+          <Item icon="check" text="Configure Stack Analytix Replay" completed={activeIndex >= 0} active={activeIndex === 0} onClick={() => setTab(MENU_ITEMS[0])} />
         </>
       )}
     </div>
