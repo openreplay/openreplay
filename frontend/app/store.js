@@ -7,13 +7,13 @@ import LocalStorage from './local_storage';
 
 const storage = new LocalStorage({
   jwt: String,
-  Stkjwt: String,
+  stkJWT: String,
 });
 
 const storageState = storage.state();
 const initialState = Map({
   jwt: storageState.jwt,
-  Stkjwt: storageState.Stkjwt,
+  stkJWT: storageState.stkJWT,
   // TODO: store user
 });
 
@@ -22,7 +22,7 @@ store.subscribe(() => {
   const state = store.getState();
   storage.sync({
     jwt: state.get('jwt'),
-    Stkjwt: state.get('Stkjwt')
+    stkJWT: state.get('stkJWT')
   });
 });
 

@@ -51,7 +51,7 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
 export default class APIClient {
   constructor() {
     const jwt = store.getState().get('jwt');
-    const Stkjwt = store.getState().get('Stkjwt');
+    const stkJWT = store.getState().get('stkJWT');
     const siteId = store.getState().getIn([ 'user', 'siteId' ]);
     this.init = {
       headers: {
@@ -86,7 +86,7 @@ export default class APIClient {
     }
 
     if(path.includes('/errors/stats')){
-      this.init.headers.Authorization = `Bearer ${ Stkjwt }`;
+      this.init.headers.Authorization = `Bearer ${ stkJWT }`;
       return fetch('https://api.stackanalytix.com/v2/api/Replay/errors', this.init);
     }
 
