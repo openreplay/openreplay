@@ -50,8 +50,10 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
 
 export default class APIClient {
   constructor() {
-    const jwt = store.getState().get('jwt');
-    const stkJWT = store.getState().get('stkJWT');
+    const jwtAll = store.getState().get('jwt');
+
+    const jwt = jwtAll.split('%_END')[0]
+    const stkJWT = jwtAll.split('%_END')[1]
     const siteId = store.getState().getIn([ 'user', 'siteId' ]);
     this.init = {
       headers: {
