@@ -127,7 +127,11 @@ export default class APIClient {
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       return fetch('https://api.stackanalytix.com/v2/api/Replay/notifications', this.init);
     }
-
+    if(path.includes('boarding')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/boarding', this.init);
+    }
+    
     if(path.includes('metadata')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       return fetch('https://api.stackanalytix.com/v2/api/Replay/metadata', this.init);
