@@ -55,10 +55,13 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
 @connect((state) => {
   const siteId = state.getIn([ 'user', 'siteId' ]);
   const jwt = state.get('jwt');
+  const Stkjwt = store.getState().get('Stkjwt');
+
   const changePassword = state.getIn([ 'user', 'account', 'changePassword' ]);
   const userInfoLoading = state.getIn([ 'user', 'fetchUserInfoRequest', 'loading' ]);
   return {
     jwt,
+    Stkjwt,
     siteId,
     changePassword,
     sites: state.getIn([ 'user', 'client', 'sites' ]),
@@ -95,7 +98,7 @@ class Router extends React.Component {
   }
 
   render() {    
-    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, tenants, onboarding } = this.props;
+    const { isLoggedIn,Stkjwt, jwt, siteId, sites, loading, changePassword, location, tenants, onboarding } = this.props;
     const siteIdList = sites.map(({ id }) => id).toJS();
     const hideHeader = location.pathname && location.pathname.includes('/session/');
 
@@ -111,7 +114,7 @@ class Router extends React.Component {
             path="/integrations/"
             render={
             ({ location }) => {
-              const client = new APIClient(jwt);
+              const client = new APIClient(jwt,Stkjwt);
               switch (location.pathname) {
                 case '/integrations/slack':
                   client.post('integrations/slack/add', { 

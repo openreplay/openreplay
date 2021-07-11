@@ -7,11 +7,13 @@ import LocalStorage from './local_storage';
 
 const storage = new LocalStorage({
   jwt: String,
+  Stkjwt: String,
 });
 
 const storageState = storage.state();
 const initialState = Map({
   jwt: storageState.jwt,
+  Stkjwt: storageState.Stkjwt,
   // TODO: store user
 });
 
@@ -19,7 +21,8 @@ const store = createStore(indexReducer, initialState, applyMiddleware(thunk, api
 store.subscribe(() => {
   const state = store.getState();
   storage.sync({
-    jwt: state.get('jwt')
+    jwt: state.get('jwt'),
+    Stkjwt: state.get('Stkjwt')
   });
 });
 
