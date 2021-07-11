@@ -113,15 +113,38 @@ export default class APIClient {
 
     if(path.includes('sessions/search2')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
-      let projectId = path.split('/api/')[1].split('/')[0];
-      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + projectId + 'SessionSearch', this.init);
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + this.siteId + 'SessionSearch', this.init);
+    }
+
+    if(path.includes('notifications')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/notifications', this.init);
+    }
+
+    if(path.includes('sample_rate')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/sample_rate', this.init);
+    }
+
+    if(path.includes('funnels')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/funnels', this.init);
+    }
+
+    if(path.includes('integration')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/integration', this.init);
+    }
+
+    if(path.includes('announcements')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/announcements', this.init);
     }
 
     if(path.includes('/events/search')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
-      let projectId = path.split('/api/')[1].split('/')[0];
       let query = path.split('?type')[1];
-      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + projectId + 'EventSearch' + '?type' + query , this.init);
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/' + this.siteId + 'EventSearch' + '?type' + query , this.init);
     }
 
     if(path.includes('/projects')){
