@@ -5,7 +5,7 @@ from chalicelib.utils import pg_client
 from chalicelib.utils import args_transformer
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.ee.utils import ch_client
+from chalicelib.utils import ch_client
 from math import isnan
 from chalicelib.utils.metrics_helper import __get_step_size
 

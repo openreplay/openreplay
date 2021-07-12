@@ -3,7 +3,7 @@ from chalicelib.utils import email_helper, captcha, helper
 import secrets
 from chalicelib.utils import pg_client
 
-from chalicelib.ee import users
+from chalicelib.core import users
 
 
 def step1(data):
