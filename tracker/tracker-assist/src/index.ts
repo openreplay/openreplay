@@ -31,6 +31,8 @@ export default function(opts: Partial<Options> = {})  {
 
     let callingPeerDataConn
     app.attachStartCallback(function() {
+//            new CallWindow(()=>{console.log('endcall')});
+
       // @ts-ignore
       const peerID = `${app.projectKey}-${app.getSessionID()}`
       const peer = new Peer(peerID, {
@@ -83,11 +85,13 @@ export default function(opts: Partial<Options> = {})  {
           dataConn?.send("call_error");
           return;
         }
+        calling = true;
         window.addEventListener("beforeunload", () => {
           dataConn.open && dataConn.send("call_end");
         });
         dataConn.on('data', (data) => { // if call closed be a caller before confirm
           if (data === "call_end") {
+              calling = false;
               confirm.remove();
           }                    
         });
@@ -97,10 +101,10 @@ export default function(opts: Partial<Options> = {})  {
           if (!conf || !dataConn.open) {
             call.close();
             dataConn.open && dataConn.send("call_end");
+            calling = false;
             return;
           }
 
-          calling = true;
           const mouse = new Mouse();
           let callUI;
 
