@@ -8,6 +8,8 @@ import ChatWindow from '../../ChatWindow';
 import { callPeer } from 'Player'
 import { CallingState, ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
 import { toast } from 'react-toastify';
+import stl from './AassistActions.css'
+
 interface Props {
   userId: String,
   toggleChatWindow: (state) => void,
@@ -37,6 +39,8 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
     toast.error(`Something went wrong!`);
   }
 
+  console.log('peerConnectionStatus', peerConnectionStatus)
+
   function call() { 
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
       .then(lStream => {
@@ -58,7 +62,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       <Popup
         trigger={
           <div
-            className={cn('cursor-pointer p-2 mr-2 flex items-center')}
+            className={cn('cursor-pointer p-2 mr-2 flex items-center', {[stl.inCall] : inCall })}
             onClick={inCall ? endCall : call}
             role="button"
           >
@@ -67,7 +71,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               size="20"
               color={ inCall ? "red" : "gray-darkest" }
             />
-            <span className={cn("ml-2", { 'red' : inCall })}>{ inCall ? 'End Meeting' : 'Start Meeting' }</span>
+            <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Meeting' : 'Start Meeting' }</span>
           </div>
         }
         content={ `Call ${userId}` }

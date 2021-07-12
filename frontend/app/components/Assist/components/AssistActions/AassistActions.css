@@ -1,3 +1,6 @@
-.btn {
-  
+.inCall {
+  & svg {
+    fill: $red
+  }
+  color: $red;
 }
