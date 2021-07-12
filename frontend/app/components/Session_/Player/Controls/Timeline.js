@@ -64,8 +64,7 @@ const getPointerIcon = (type) => {
   fetchList: state.fetchList,
 }))
 @connect(state => ({
-  issues: state.getIn([ 'sessions', 'current', 'issues' ]),
-  showDevTools: state.getIn([ 'user', 'account', 'appearance', 'sessionsDevtools' ]),
+  issues: state.getIn([ 'sessions', 'current', 'issues' ]),  
   clickRageTime: state.getIn([ 'sessions', 'current', 'clickRage' ]) &&
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
   returningLocationTime: state.getIn([ 'sessions', 'current', 'returningLocation' ]) &&
@@ -102,8 +101,7 @@ export default class Timeline extends React.PureComponent {
       live,
       logList,
       exceptionsList,
-      resourceList,
-      showDevTools,
+      resourceList,      
       clickRageTime,
       stackList,
       fetchList,
@@ -255,7 +253,7 @@ export default class Timeline extends React.PureComponent {
                 }
               />
              */ }
-            { showDevTools && exceptionsList
+            { exceptionsList
               .map(e => (
                 <div
                   key={ e.key }
@@ -297,7 +295,7 @@ export default class Timeline extends React.PureComponent {
                 // />
               ))
             }
-            { showDevTools && logList
+            { logList
               .map(l => l.isRed() && (
                 <div
                   key={ l.key }
@@ -352,7 +350,7 @@ export default class Timeline extends React.PureComponent {
                 // />
               ))
             }
-            { showDevTools && resourceList
+            { resourceList
               .filter(r => r.isRed() || r.isYellow())
               .map(r => (
                 <div
@@ -402,7 +400,7 @@ export default class Timeline extends React.PureComponent {
                 // />
               ))
             }
-            { showDevTools && fetchList
+            { fetchList
               .filter(e => e.isRed())
               .map(e => (
                 <div
@@ -443,7 +441,7 @@ export default class Timeline extends React.PureComponent {
                 // />
               ))
             }
-            { showDevTools && stackList
+            { stackList
               .filter(e => e.isRed())
               .map(e => (
                 <div
