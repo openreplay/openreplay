@@ -3,7 +3,7 @@ from chalice import Blueprint, Response
 from chalicelib import _overrides
 from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integration_github, \
     integrations_manager
-from chalicelib.utils import captcha
+from chalicelib.utils import captcha, SAML2_helper
 from chalicelib.utils import helper
 from chalicelib.utils.helper import environ
 
@@ -41,6 +41,8 @@ def login():
         return {
             'errors': ['You’ve entered invalid Email or Password.']
         }
+    elif "errors" in r:
+        return r
 
     tenant_id = r.pop("tenantId")
     # change this in open-source
@@ -74,7 +76,8 @@ def get_account(context):
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },
             **license.get_status(context["tenantId"]),
-            "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
+            "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0,
+            "saml2": SAML2_helper.is_saml2_available()
         }
     }
 
@@ -350,6 +353,8 @@ def get_members(context):
 
 @app.route('/client/members', methods=['PUT', 'POST'])
 def add_member(context):
+    if SAML2_helper.is_saml2_available():
+        return {"errors": ["please use your SSO server to add teammates"]}
     data = app.current_request.json_body
     return users.create_member(tenant_id=context['tenantId'], user_id=context['userId'], data=data)
 

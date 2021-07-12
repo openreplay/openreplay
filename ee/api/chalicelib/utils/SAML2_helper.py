@@ -98,3 +98,7 @@ def prepare_request(request):
         'cookie': {"session": session},
         'request': request
     }
+
+
+def is_saml2_available():
+    return idp is not None

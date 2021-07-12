@@ -200,7 +200,8 @@ def get(user_id, tenant_id):
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         appearance,
-                        api_key
+                        api_key,
+                        origin
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
                     WHERE
                      users.user_id = %(userId)s
@@ -361,6 +362,8 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     item = get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
+    if item["origin"] is not None:
+        return {"errors": ["cannot change your password because you are logged-in form an SSO service"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
     auth = authenticate(email, old_password, for_change_password=True)
@@ -459,7 +462,8 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                     (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                    users.appearance
+                    users.appearance,
+                    users.origin
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
@@ -470,6 +474,8 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
         cur.execute(query)
         r = cur.fetchone()
     if r is not None:
+        if r["origin"] is not None:
+            return {"errors": ["must sign-in with SSO"]}
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
