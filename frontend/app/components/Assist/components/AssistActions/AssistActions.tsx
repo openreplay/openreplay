@@ -6,15 +6,16 @@ import { toggleChatWindow } from 'Duck/sessions';
 import { connectPlayer } from 'Player/store';
 import ChatWindow from '../../ChatWindow';
 import { callPeer } from 'Player'
-import { CallingState } from 'Player/MessageDistributor/managers/AssistManager';
-
+import { CallingState, ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import { toast } from 'react-toastify';
 interface Props {
   userId: String,
   toggleChatWindow: (state) => void,
-  calling: CallingState
+  calling: CallingState,
+  peerConnectionStatus: ConnectionStatus
 }
 
-function AssistActions({ toggleChatWindow, userId, calling }: Props) {
+function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus }: Props) {
   const [showChat, setShowChat] = useState(false)
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<MediaStream | null>(null);
@@ -27,11 +28,13 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
   function onClose(stream) {    
     stream.getTracks().forEach(t=>t.stop());
   }
+
   function onReject() {
-    console.log("Rejected");
+    toast.info(`Call was rejected.`);
   }
-  function onError() {
-    console.log("Something went wrong");
+  
+  function onError() {    
+    toast.error(`Something went wrong!`);
   }
 
   function call() { 
@@ -82,5 +85,6 @@ function AssistActions({ toggleChatWindow, userId, calling }: Props) {
 const con = connect(null, { toggleChatWindow })
 
 export default con(connectPlayer(state => ({
-  calling: state.calling
+  calling: state.calling,
+  peerConnectionStatus: state.peerConnectionStatus,
 }))(AssistActions))

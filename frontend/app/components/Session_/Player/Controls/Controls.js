@@ -95,8 +95,7 @@ function getStorageName(type) {
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
 }))
-@connect((state, props) => ({
-  showDevTools: state.getIn([ 'user', 'account', 'appearance', 'sessionsDevtools' ]),
+@connect((state, props) => ({  
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
   showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
@@ -117,7 +116,7 @@ export default class Controls extends React.Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    if (nextProps.showDevTools !== this.props.showDevTools ||
+    if (
       nextProps.fullscreen !== this.props.fullscreen ||
       nextProps.bottomBlock !== this.props.bottomBlock ||
       nextProps.endTime !== this.props.endTime ||
@@ -217,8 +216,7 @@ export default class Controls extends React.Component {
   }
 
   render() {
-    const {
-      showDevTools,
+    const {      
       bottomBlock,
       toggleBottomBlock,
       live,
@@ -303,7 +301,7 @@ export default class Controls extends React.Component {
                 </React.Fragment>
               }
               <div className={ styles.divider } />
-              { showDevTools &&
+              { !live &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(NETWORK) }
@@ -335,7 +333,7 @@ export default class Controls extends React.Component {
                   icon="vendors/graphql"
                 />
               }
-              { !live && showStorage && showDevTools &&
+              { !live && showStorage &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STORAGE) }
@@ -345,7 +343,7 @@ export default class Controls extends React.Component {
                   icon={ getStorageIconName(storageType) }
                 />
               }
-              { showDevTools &&
+              { 
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(CONSOLE) }
@@ -356,7 +354,7 @@ export default class Controls extends React.Component {
                   hasErrors={ logRedCount > 0 }
                 />
               }
-              { !live && showExceptions && showDevTools &&
+              { showExceptions &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(EXCEPTIONS) }
@@ -367,7 +365,7 @@ export default class Controls extends React.Component {
                   hasErrors={ exceptionsCount > 0 }
                 />
               }
-              { showDevTools && showStack &&
+              { showStack &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STACKEVENTS) }
@@ -378,7 +376,7 @@ export default class Controls extends React.Component {
                   hasErrors={ stackRedCount > 0 }
                 />
               }
-              { !live && showProfiler && showDevTools &&
+              { !live && showProfiler &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(PROFILER) }
@@ -388,13 +386,16 @@ export default class Controls extends React.Component {
                   icon="code"
                 />
               }              
-              <ControlButton
-                disabled={ disabled }
-                onClick={ () => toggleBottomBlock(PERFORMANCE) }
-                active={ bottomBlock === PERFORMANCE }
-                label="Performance"
-                icon="tachometer-slow"
-              />
+              {
+                !live && 
+                <ControlButton
+                  disabled={ disabled }
+                  onClick={ () => toggleBottomBlock(PERFORMANCE) }
+                  active={ bottomBlock === PERFORMANCE }
+                  label="Performance"
+                  icon="tachometer-slow"
+                />
+              }
               { !live && showLongtasks &&
                 <ControlButton
                   disabled={ disabled }
