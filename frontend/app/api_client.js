@@ -151,7 +151,11 @@ export default class APIClient {
 
     if(path.includes('sample_rate')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
-      return fetch('https://api.stackanalytix.com/v2/api/Replay/sample_rate', this.init);
+      if(this.init.method == 'POST'){
+        return fetch('https://api.stackanalytix.com/v2/api/Replay/sample_rate/' + this.siteId , this.init);
+      }else{
+        return fetch('https://api.stackanalytix.com/v2/api/Replay/change_sample_rate/' + this.siteId , this.init);
+      }
     }
 
     if(path.includes('signup')){
