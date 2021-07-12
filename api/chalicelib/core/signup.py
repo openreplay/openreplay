@@ -137,7 +137,7 @@ def create_step1(data):
         api_key = cur["api_key"]
     telemetry.new_client()
     created_at = TimeUTC.now()
-    r = users.authenticate(email,'', password)
+    r = users.authenticate(email, password)
     r["banner"] = False
     r["limits"] = {
         "teamMember": {"limit": 99, "remaining": 98, "count": 1},

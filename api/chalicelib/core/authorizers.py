@@ -38,11 +38,10 @@ def jwt_context(context):
     }
 
 
-def generate_jwt(org, id, tenant_id, iat, aud):
+def generate_jwt(id, tenant_id, iat, aud):
     token = jwt.encode(
         payload={
             "userId": id,
-            "stkorg": org,
             "tenantId": tenant_id,
             "exp": iat // 1000 + int(environ["jwt_exp_delta_seconds"]) + TimeUTC.get_utc_offset() // 1000,
             "iss": environ["jwt_issuer"],
