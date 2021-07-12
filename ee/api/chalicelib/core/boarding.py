@@ -1,8 +1,8 @@
 from chalicelib.utils import pg_client
 from chalicelib.core import log_tool_datadog, log_tool_stackdriver, log_tool_sentry
 
-from chalicelib.ee import users
-from chalicelib.ee import projects
+from chalicelib.core import users
+from chalicelib.core import projects
 
 
 def get_state(tenant_id):

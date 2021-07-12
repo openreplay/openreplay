@@ -2,7 +2,7 @@ from chalice import Blueprint
 from chalicelib.utils import helper
 from chalicelib import _overrides
 
-from chalicelib.ee import dashboard
+from chalicelib.core import dashboard
 
 from chalicelib.core import metadata
 

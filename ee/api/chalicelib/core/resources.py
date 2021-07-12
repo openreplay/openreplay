@@ -1,5 +1,5 @@
 from chalicelib.utils import helper
-from chalicelib.ee.utils import ch_client
+from chalicelib.utils import ch_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 

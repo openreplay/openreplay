@@ -1,14 +1,11 @@
 import json
-import time
 
 from chalicelib.core import authorizers
-
+from chalicelib.core import tenants
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import environ
-
-from chalicelib.ee import tenants
 
 
 def create_new_member(tenant_id, email, password, admin, name, owner=False):
@@ -203,7 +200,8 @@ def get(user_id, tenant_id):
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         appearance,
-                        api_key
+                        api_key,
+                        origin
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
                     WHERE
                      users.user_id = %(userId)s
@@ -274,7 +272,8 @@ def get_by_email_only(email):
                         basic_authentication.generated_password,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        origin
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                     WHERE
                      users.email = %(email)s                     
@@ -363,6 +362,8 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     item = get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
+    if item["origin"] is not None:
+        return {"errors": ["cannot change your password because you are logged-in form an SSO service"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
     auth = authenticate(email, old_password, for_change_password=True)
@@ -437,9 +438,19 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                     )
 
 
+def change_jwt_iat(user_id):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""UPDATE public.users
+                       SET jwt_iat = timezone('utc'::text, now())
+                       WHERE user_id = %(user_id)s 
+                       RETURNING jwt_iat;""",
+            {"user_id": user_id})
+        cur.execute(query)
+        return cur.fetchone().get("jwt_iat")
+
+
 def authenticate(email, password, for_change_password=False, for_plugin=False):
-    if helper.TRACK_TIME:
-        now = int(time.time() * 1000)
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
@@ -451,7 +462,8 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                     (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                    users.appearance
+                    users.appearance,
+                    users.origin
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
@@ -461,13 +473,45 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
 
         cur.execute(query)
         r = cur.fetchone()
-        if helper.TRACK_TIME:
-            now2 = int(time.time() * 1000)
-            print(f"=====> authentication query&fetch in: {now2 - now} ms")
-            now = now2
+    if r is not None:
+        if r["origin"] is not None:
+            return {"errors": ["must sign-in with SSO"]}
+        if for_change_password:
+            return True
+        r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
+        jwt_iat = change_jwt_iat(r['id'])
+        return {
+            "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
+                                            TimeUTC.datetime_to_timestamp(jwt_iat),
+                                            aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
+            "email": email,
+            **r
+        }
+    return None
+
+
+def authenticate_sso(email, internal_id, exp=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(
+            f"""SELECT 
+                    users.user_id AS id,
+                    users.tenant_id,
+                    users.role,
+                    users.name,
+                    False AS change_password,
+                    (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                    (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                    (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                    users.appearance,
+                    origin
+                FROM public.users AS users
+                WHERE users.email = %(email)s AND internal_id = %(internal_id)s;""",
+            {"email": email, "internal_id": internal_id})
+
+        cur.execute(query)
+        r = cur.fetchone()
+
         if r is not None:
-            if for_change_password:
-                return True
             r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
             query = cur.mogrify(
                 f"""UPDATE public.users
@@ -479,8 +523,37 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
             return {
                 "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
                                                 TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),
-                                                aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
+                                                aud=f"front:{helper.get_stage_name()}",
+                                                exp=exp),
                 "email": email,
                 **r
             }
     return None
+
+
+def create_sso_user(tenant_id, email, admin, name, origin, internal_id=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+                    WITH u AS (
+                        INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id)
+                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s)
+                            RETURNING *
+                    )
+                    SELECT u.user_id                                              AS id,
+                           u.email,
+                           u.role,
+                           u.name,
+                           TRUE                                                   AS change_password,
+                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                           u.appearance,
+                           origin
+                    FROM u;""",
+                            {"tenantId": tenant_id, "email": email, "internal_id": internal_id,
+                             "role": "admin" if admin else "member", "name": name, "origin": origin,
+                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
+        cur.execute(
+            query
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
