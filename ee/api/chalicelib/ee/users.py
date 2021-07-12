@@ -469,13 +469,13 @@ def authenticate(email,org, password, for_change_password=False, for_plugin=Fals
             if for_change_password:
                 return True
             r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
-            query = cur.mogrify(
-                f"""UPDATE public.users
-                   SET jwt_iat = timezone('utc'::text, now())
-                   WHERE user_id = %(user_id)s 
-                   RETURNING jwt_iat;""",
-                {"user_id": r["id"]})
-            cur.execute(query)
+            # query = cur.mogrify(
+            #     f"""UPDATE public.users
+            #        SET jwt_iat = timezone('utc'::text, now())
+            #        WHERE user_id = %(user_id)s 
+            #        RETURNING jwt_iat;""",
+            #     {"user_id": r["id"]})
+            # cur.execute(query)
             return {
                 "jwt": authorizers.generate_jwt(org, r['id'], r['tenantId'],
                                                 TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),

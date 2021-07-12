@@ -79,10 +79,10 @@ class SavedSearchList extends React.Component {
 
         return (
             <div className={ stl.wrapper }>
-                <FunnelSaveModal
+                {/* <FunnelSaveModal
                     show={showSaveModal}
                     closeHandler={() => this.setState({ showSaveModal: false })}
-                />
+                /> */}
                 <Loader loading={loading} size="small">
                     <div className={ cn(stl.header, 'mt-3') }>
                         <div className={ cn(stl.label, 'flex items-center relative') }>                            
