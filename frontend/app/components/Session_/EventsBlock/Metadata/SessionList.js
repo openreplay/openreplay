@@ -27,7 +27,7 @@ class SessionList extends React.PureComponent {
       <Loader loading={ loading }>
         <NoContent 
           show={ !loading && (similarSessionWithoutCurrent.length === 0 || similarSessionWithoutCurrent.size === 0 )}
-          title="No sessions found."
+          title="No recordings found."
         >
           <div className={ stl.sessionList }>
             { similarSessionWithoutCurrent.map(site => (

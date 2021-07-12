@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper, dev
 from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources
+    sessions_mobs, issues, projects, errors, resources, assist
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -100,6 +100,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id)
+                data['live'] = assist.is_live(project_id=project_id, session_id=session_id,
+                                              project_key=data["projectKey"])
 
             return data
     return None

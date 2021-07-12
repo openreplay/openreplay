@@ -30,11 +30,21 @@ export default class BaseScreen {
     this.overlay = overlay;
 
     const screen = document.createElement('div');
+
+    setTimeout(function() {    
+      iframe.contentDocument?.addEventListener('mousemove', function() {        
+        overlay.style.display = 'block';
+      })
+
+      overlay.addEventListener('contextmenu', function() {
+        overlay.style.display = 'none';
+      })
+    }, 10)
+
     screen.className = styles.screen;
     screen.appendChild(iframe);
     screen.appendChild(overlay);
     this._screen = screen;
-
   }
 
   attach(parentElement: HTMLElement) {

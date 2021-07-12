@@ -27,6 +27,8 @@ function build_api(){
     docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/chalice:${git_sha1} .
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
+        docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:latest
+        docker push ${DOCKER_REPO:-'local'}/chalice:latest
     }
 }
 

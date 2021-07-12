@@ -1,5 +1,12 @@
 # vim: set ft=yaml.ansible :
 ---
+- name: Installing specific db
+  shell: |
+    helm upgrade --install -n db {{ db_name }} -f /tmp/{{ db_name }}.yaml ./db/{{ db_name }} --wait --create-namespace
+  args:
+    executable: /bin/bash
+  when: db_name|length > 0
+  tags: db
 - name: installing dbs
   shell: |
     helm upgrade --install -n db "{{ item }}" "./db/{{ item }}" -f "/tmp/{{ item }}.yaml" --wait --create-namespace &>> "{{ playbook_dir }}"/db_helm.log

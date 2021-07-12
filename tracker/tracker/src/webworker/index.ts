@@ -2,13 +2,15 @@ import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from
 import Message from '../messages/message';
 import Writer from '../messages/writer';
 
-import type { MessageData } from './types';
+import type { WorkerMessageData } from '../messages/webworker';
 
-// TODO: what if on message overflows? (maybe one option)
-const MAX_BATCH_SIZE = 4 * 1e5; // Max 400kB  
+
 const SEND_INTERVAL = 20 * 1000;
+const BEACON_SIZE_LIMIT = 1e6 // Limit is set in the backend/services/http
+let beaconSize = 4 * 1e5; // Default 400kB
 
-const writer: Writer = new Writer(MAX_BATCH_SIZE);
+
+let writer: Writer = new Writer(beaconSize);
 
 let ingestPoint: string = "";
 let token: string = "";
@@ -31,9 +33,12 @@ let busy = false;
 let attemptsCount = 0;
 let ATTEMPT_TIMEOUT = 8000;
 let MAX_ATTEMPTS_COUNT = 10;
+
+// TODO?: exploit https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon
 function sendBatch(batch: Uint8Array):void {
   const req = new XMLHttpRequest();
-  req.open("POST", ingestPoint + "/v1/web/i");  // TODO opaque request?
+  // TODO:  async=false (3d param) instead of sendQueue array ?
+  req.open("POST", ingestPoint + "/v1/web/i", false);  // TODO opaque request?
   req.setRequestHeader("Authorization", "Bearer " + token);
   // req.setRequestHeader("Content-Type", "");
   req.onreadystatechange = function() {
@@ -41,7 +46,7 @@ function sendBatch(batch: Uint8Array):void {
       if (this.status == 0) {
         return; // happens simultaneously with onerror TODO: clear codeflow
       }
-      if (this.status >= 400) {
+      if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
         reset();
         sendQueue.length = 0;
         if (this.status === 403) { // Unauthorised (Token expired)
@@ -69,7 +74,7 @@ function sendBatch(batch: Uint8Array):void {
     attemptsCount++;
     setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT); 
   }
-  req.send(batch);
+  req.send(batch.buffer);
 }
 
 function send(): void {
@@ -100,7 +105,7 @@ function hasTimestamp(msg: any): msg is { timestamp: number } {
   return typeof msg === 'object' && typeof msg.timestamp === 'number';
 }
 
-self.onmessage = ({ data }: MessageEvent) => {
+self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
   if (data === null) {
     send();
     return;
@@ -118,6 +123,7 @@ self.onmessage = ({ data }: MessageEvent) => {
     timeAdjustment = data.timeAdjustment || timeAdjustment;
     MAX_ATTEMPTS_COUNT = data.connAttemptCount || MAX_ATTEMPTS_COUNT;
     ATTEMPT_TIMEOUT = data.connAttemptGap || ATTEMPT_TIMEOUT;
+    beaconSize = Math.min(BEACON_SIZE_LIMIT, data.beaconSize || beaconSize);
     if (writer.isEmpty()) {
       writeBatchMeta();
     }
@@ -126,7 +132,7 @@ self.onmessage = ({ data }: MessageEvent) => {
     }
     return;
   }
-  data.forEach((data: any) => {
+  data.forEach((data) => {
     const message: Message = new (<any>classes.get(data._id))();
     Object.assign(message, data);
 
@@ -140,20 +146,26 @@ self.onmessage = ({ data }: MessageEvent) => {
       }
     }
 
-    writer.checkpoint();
-    nextIndex++;
-    if (message.encode(writer)) {
-      isEmpty = false; 
-    } else {
+    writer.checkpoint(); // TODO: incapsulate in writer
+    if (!message.encode(writer)) {
       send();
-      if (message.encode(writer)) {
-        isEmpty = false;
-      } else {
-        // MAX_BATCH_SIZE overflow by one message
-        // TODO: correct handle
-        nextIndex--;
-        return;
-      }
+      // writer.reset(); // TODO: sematically clear code
+      if (!message.encode(writer)) { // Try to encode within empty state
+        // MBTODO: tempWriter for one message?
+        while (!message.encode(writer)) {
+          if (beaconSize === BEACON_SIZE_LIMIT) {
+            console.warn("OpenReplay: beacon size overflow.");
+            writer.reset();
+            writeBatchMeta();
+            return
+          }
+          beaconSize = Math.min(beaconSize*2, BEACON_SIZE_LIMIT);
+          writer = new Writer(beaconSize);
+          writeBatchMeta();
+        }
+      } 
     };
+    nextIndex++; // TODO: incapsulate in writer
+    isEmpty = false;
   });
 };
