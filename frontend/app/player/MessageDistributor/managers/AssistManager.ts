@@ -204,7 +204,7 @@ export default class AssistManager {
     });
 
     const intervalID = setInterval(() => {
-      if (!conn.open) {
+      if (!conn.open && getState().calling !== CallingState.Requesting) {
         this.md.setMessagesLoading(true);
         this.assistentCallEnd();
         update({ peerConnectionStatus: ConnectionStatus.Disconnected })
