@@ -20,8 +20,7 @@ function LiveSessionList(props: Props) {
     props.fetchLiveList();
   }, [])
 
-  useEffect(() => {
-    console.log(filters)
+  useEffect(() => {    
     if (filters) {
       const userIdFilter = filters.filter(i => i.key === 'USERID').first()
       if (userIdFilter)
