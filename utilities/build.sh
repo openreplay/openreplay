@@ -25,8 +25,6 @@ function build_api(){
         docker push ${DOCKER_REPO:-'local'}/utilities:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/utilities:${git_sha1} ${DOCKER_REPO:-'local'}/utilities:latest
         docker push ${DOCKER_REPO:-'local'}/utilities:latest
-        docker tag ${DOCKER_REPO:-'local'}/utilities:${git_sha1} ${DOCKER_REPO:-'local'}/utilities:v1.2.0
-        docker push ${DOCKER_REPO:-'local'}/utilities:v1.2.0
     }
 }
 
