@@ -23,11 +23,7 @@ export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
 
   closeModal = (e, newSite) => {
-    this.setState({ showProductModal: false })
-    if (newSite) {
-      this.props.pushNewSite(newSite)
-      this.props.setSiteId(newSite.id)
-    }
+    this.setState({ showProductModal: false })    
   };
 
   newSite = () => {

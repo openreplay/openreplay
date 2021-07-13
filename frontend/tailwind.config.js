@@ -1,6 +1,7 @@
 const colors = require('./app/theme/colors');
 
 module.exports = {
+  important: true,
   purge: [],
   corePlugins: [
 		'preflight',

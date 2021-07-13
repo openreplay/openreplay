@@ -1,23 +1,23 @@
-import Marker from './Marker';
-import Cursor from './Cursor';
-import Inspector from './Inspector';
 import styles from './screen.css';
 import { getState } from '../../../store';
 
 import type { Point } from './types';
 
-export const INITIAL_STATE: {
+
+export interface State {
   width: number;
   height: number;
-} = {
+}
+
+export const INITIAL_STATE: State = {
   width: 0,
   height: 0,
 }
 
 
-export default class BaseScreen {
+export default abstract class BaseScreen {
+  public    readonly overlay: HTMLDivElement;
   private   readonly iframe: HTMLIFrameElement;
-  public readonly overlay: HTMLDivElement;
   private   readonly _screen: HTMLDivElement;
   protected parentElement: HTMLElement | null = null;
   constructor() {
@@ -68,8 +68,18 @@ export default class BaseScreen {
     return this.iframe.contentDocument;
   }
 
-  _getInternalCoordinates({ x, y }: Point): Point {
-    const { x: overlayX, y: overlayY, width } = this.overlay.getBoundingClientRect();
+  private boundingRect: DOMRect | null  = null;
+  private getBoundingClientRect(): DOMRect {
+    //if (this.boundingRect === null) {
+      return this.boundingRect = this.overlay.getBoundingClientRect(); // expensive operation?
+    //}
+    //return this.boundingRect;
+  }
+
+  getInternalCoordinates({ x, y }: Point): Point {
+    const { x: overlayX, y: overlayY, width } = this.getBoundingClientRect();
+    //console.log("x y ", x,y,'ovx y', overlayX, overlayY, width)
+
     const screenWidth = this.overlay.offsetWidth;
 
     const scale = screenWidth / width;
@@ -98,11 +108,11 @@ export default class BaseScreen {
   }
 
   getElementFromPoint(point: Point): Element | null {
-    return this.getElementFromInternalPoint(this._getInternalCoordinates(point));
+    return this.getElementFromInternalPoint(this.getInternalCoordinates(point));
   }
 
   getElementsFromPoint(point: Point): Element[] {
-    return this.getElementsFromInternalPoint(this._getInternalCoordinates(point));
+    return this.getElementsFromInternalPoint(this.getInternalCoordinates(point));
   }
 
   display(flag: boolean = true) {
@@ -130,8 +140,13 @@ export default class BaseScreen {
     this._screen.style.height =  height + 'px';
     this.iframe.style.width = width + 'px';
     this.iframe.style.height = height + 'px';
+
+    this.boundingRect = this.overlay.getBoundingClientRect();
   }
-  scale = () => this._scale()
+
+  scale = () => { // TODO: solve classes inheritance issues in typescript
+    this._scale();
+  }
 
 
   clean() {
