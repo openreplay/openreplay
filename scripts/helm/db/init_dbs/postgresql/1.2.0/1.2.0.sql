@@ -31,8 +31,4 @@ CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON ev
 CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id);
 CREATE INDEX errors_project_id_error_id_integration_idx ON public.errors (project_id, error_id) WHERE source != 'js_exception';
 CREATE INDEX errors_error_id_timestamp_session_id_idx ON events.errors (error_id, timestamp, session_id);
-CREATE TYPE user_origin AS ENUM ('saml');
-ALTER TABLE public.users
-    ADD COLUMN origin      user_origin NULL DEFAULT NULL,
-    ADD COLUMN internal_id text        NULL DEFAULT NULL;
 COMMIT;
