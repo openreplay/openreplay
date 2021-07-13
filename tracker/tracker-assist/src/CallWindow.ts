@@ -12,7 +12,7 @@ export default class CallWindow {
     const iframe = this.iframe = document.createElement('iframe');
     Object.assign(iframe.style, {
       position: "absolute",
-      zIndex: "999999",
+      zIndex: 2147483647 - 1,
       //borderRadius: ".25em .25em .4em .4em",
       //border: "4px rgba(0, 0, 0, .7)",
       border: "none",
