@@ -17,18 +17,26 @@ interface Props {
   peerConnectionStatus: ConnectionStatus
 }
 
-function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus }: Props) {
-  const [showChat, setShowChat] = useState(false)
+function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus }: Props) {  
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<MediaStream | null>(null);
   const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
+  const [ disconnected, setDisconnected ] = useState(false);
 
   useEffect(() => {
     return endCall
   }, [])
 
+  useEffect(() => {
+    console.log('peerConnectionStatus', peerConnectionStatus)
+    if (peerConnectionStatus == 4) {
+      toast.info(`Live session is closed.`);
+      setDisconnected(true)
+    }    
+  }, [peerConnectionStatus])
+
   function onClose(stream) {    
-    stream.getTracks().forEach(t=>t.stop());
+    stream.getTracks().forEach(t=>t.stop());    
   }
 
   function onReject() {
@@ -38,8 +46,6 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
   function onError() {    
     toast.error(`Something went wrong!`);
   }
-
-  console.log('peerConnectionStatus', peerConnectionStatus)
 
   function call() { 
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
@@ -62,7 +68,13 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       <Popup
         trigger={
           <div
-            className={cn('cursor-pointer p-2 mr-2 flex items-center', {[stl.inCall] : inCall })}
+            className={
+              cn(
+                'cursor-pointer p-2 mr-2 flex items-center',
+                {[stl.inCall] : inCall },
+                {[stl.disabled]: disconnected}
+              )
+            }
             onClick={inCall ? endCall : call}
             role="button"
           >
