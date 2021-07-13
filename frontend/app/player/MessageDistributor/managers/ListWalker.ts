@@ -1,8 +1,6 @@
-//@flow
-
 import type { Timed } from '../Timed';
 
-export default class ListWalker<T: Timed> {
+export default class ListWalker<T extends Timed> {
 	// Optimisation: #prop compiles to method that costs mor than strict property call.
 	_p = 0;
 	_list: Array<T>;
@@ -15,7 +13,7 @@ export default class ListWalker<T: Timed> {
 	}
 
 	append(m: T): void {
-		if (this.length > 0 && m.time < this.last.time) {
+		if (this.length > 0 && this.last && m.time < this.last.time) {
 			console.error("Trying to append message with the less time then the list tail: ", m);
 		}
 		this._list.push(m);
@@ -26,6 +24,7 @@ export default class ListWalker<T: Timed> {
 	}
 
 	sort(comparator): void {
+		// @ts-ignore
 		this._list.sort((m1,m2) => comparator(m1,m2) || (m1._index - m2._index) ); // indexes for sort stability (TODO: fix types???)
 	}
 
@@ -100,10 +99,10 @@ export default class ListWalker<T: Timed> {
 		Assumed that the current message is already handled so 
 		if pointer doesn't cahnge <undefined> is returned.
 	*/
-	moveToLast(t: number, index: ?number): ?T {
-		let key = "time"; //TODO
+	moveToLast(t: number, index?: number): T | null {
+		let key: string = "time"; //TODO
 		let val = t;
-		if (index != null) {
+		if (index) {
 			key = "_index";
 			val = index;
 		}
@@ -117,7 +116,7 @@ export default class ListWalker<T: Timed> {
 			this._p--;
 			changed = true;
 		}
-		return changed ? this._list[ this._p - 1 ] : undefined;
+		return changed ? this._list[ this._p - 1 ] : null;
 	}
 
 	// moveToLastByIndex(i: number): ?T {
@@ -133,7 +132,7 @@ export default class ListWalker<T: Timed> {
 	// 	return changed ? this._list[ this._p - 1 ] : undefined;
 	// }
 
-	moveApply(t: number, fn: T => void): void {
+	moveApply(t: number, fn: (T) => void): void {
 		// Applying only in increment order for now
 		if (t < this.timeNow) {
 			this.reset();

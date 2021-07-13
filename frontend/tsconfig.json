@@ -1,10 +1,11 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "es2015",
+    "module": "es2020",
     "moduleResolution": "node", //?
     //"allowJs": true,
     "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
     //"sourceMap": false,
     "lib": [ "es2020", "dom" ],
     "jsx": "react",
@@ -14,7 +15,16 @@
     "baseUrl": ".",
     "paths": { // TODO: one-source truth
       "App": ["./app"],
-      "UI": ["./app/components/ui"]
+      "App/*": ["./app/*"],
+      "Types": ["./app/types" ],
+      "Types/*": ["./app/types/*"], // Sublime hack
+      "UI": ["./app/components/ui"],
+      "Duck": ["./app/duck"],
+      "Duck/*": ["./app/duck/*"],
+      "Shared": ["./app/components/shared"],
+      "Shared/*": ["./app/components/shared/*"],
+      "Player": ["./app/player"],
+      "Player/*": ["./app/player/*"],
     }
   },
   "exclude": [

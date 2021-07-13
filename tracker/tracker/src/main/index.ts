@@ -64,12 +64,12 @@ function processOptions(obj: any): obj is Options {
 
 export default class API {
   private readonly app: App | null = null;
-  constructor(options: Options) {
+  constructor(private readonly options: Options) {
     if (!IN_BROWSER || !processOptions(options)) {
       return;
     }
     if (!options.__DISABLE_SECURE_MODE && location.protocol !== 'https:') {
-      console.error("OpenReplay: Your website must be publicly accessible and running on SSL in order for OpenReplay to properly capture and replay the user session.")
+      console.error("OpenReplay: Your website must be publicly accessible and running on SSL in order for OpenReplay to properly capture and replay the user session. You can disable this check by setting `__DISABLE_SECURE_MODE` option to `true` if you are testing in localhost. Keep in mind, that asset files on a local machine are not available to the outside world. This might affect tracking if you use css files.")
       return;
     }
     const doNotTrack = options.respectDoNotTrack && (navigator.doNotTrack == '1' || window.doNotTrack == '1');
@@ -114,8 +114,8 @@ export default class API {
     }
   }
 
-  use<T>(fn: (app: App | null) => T): T {
-    return fn(this.app);
+  use<T>(fn: (app: App | null, options?: Options) => T): T {
+    return fn(this.app, this.options);
   }
 
   isActive(): boolean {
@@ -152,9 +152,15 @@ export default class API {
     }
     return this.app.getSessionToken();
   }
+  getSessionID(): string | null | undefined {
+    if (this.app === null) {
+      return null;
+    }
+    return this.app.getSessionID();
+  }
   sessionID(): string | null | undefined {
-    depricationWarn("'sessionID' method", "'getSessionToken' method", "/")
-    return this.getSessionToken();
+    depricationWarn("'sessionID' method", "'getSessionID' method", "/");
+    return this.getSessionID();
   }
 
   setUserID(id: string): void {

@@ -9,6 +9,7 @@ import { attach as attachPlayer, Controls as PlayerControls, connectPlayer } fro
 import Controls from './Controls';
 import stl from './player.css';
 import AutoplayTimer from '../AutoplayTimer';
+import EventsToggleButton from '../../Session/EventsToggleButton';
 
 
 const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screenWrapper } />));
@@ -18,9 +19,10 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   loading: state.messagesLoading,
   disconnected: state.disconnected,
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
-  inspectorMode: state.inspectorMode,
+  removeOverlay: !state.messagesLoading && state.inspectorMode || state.live,
   completed: state.completed,
-  autoplay: state.autoplay
+  autoplay: state.autoplay,
+  live: state.live
 }))
 @connect(state => ({
   //session: state.getIn([ 'sessions', 'current' ]),
@@ -96,7 +98,7 @@ export default class Player extends React.PureComponent {
       className,
       playing,
       disabled,
-      inspectorMode,
+      removeOverlay,
       bottomBlockIsActive,
       loading,
       disconnected,
@@ -105,6 +107,7 @@ export default class Player extends React.PureComponent {
       completed,
       autoplay,
       nextId,
+      live,
     } = this.props;
 
     return (
@@ -124,8 +127,9 @@ export default class Player extends React.PureComponent {
           //   label="Esc"
           // />
         }
-        <div className={ stl.playerView }>
-          { !inspectorMode && 
+        {!live && !fullscreen && <EventsToggleButton /> }
+        <div className="relative flex-1">
+          { !removeOverlay && 
             <div 
               className={ stl.overlay }
               onClick={ disabled ? null : this.togglePlay }

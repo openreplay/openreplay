@@ -9,6 +9,7 @@
 .iframe {
   position: absolute;
   border: none;
+  background: whilte;
 }
 .overlay {
   position: absolute;

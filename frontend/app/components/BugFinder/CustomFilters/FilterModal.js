@@ -21,6 +21,7 @@ const customFilterAutoCompleteKeys = ['METADATA', KEYS.CLICK, KEYS.USER_BROWSER,
   customFilters: state.getIn([ 'filters', 'customFilters' ]),
   variables: state.getIn([ 'customFields', 'list' ]),
   sources: state.getIn([ 'customFields', 'sources' ]),
+  activeTab: state.getIn([ 'sessions', 'activeTab', 'type' ]),
 }), {
   applyFilter,
   setActiveKey,
@@ -81,10 +82,11 @@ export default class FilterModal extends React.PureComponent {
   };
 
   renderList(type, list) {
+    const { activeTab } = this.props;
     const blocks = [];
     for (let j = 0; j < list.length; j++) {
       blocks.push(
-        <div key={`${ j }-block`} className="mr-5" >
+        <div key={`${ j }-block`} className={cn("mr-5", { [stl.disabled]: activeTab === 'live' && list[j].key !== 'USERID' })} >
           { list[ j ] && this.renderFilterItem(type, list[ j ]) }
         </div>
       );
@@ -136,6 +138,7 @@ export default class FilterModal extends React.PureComponent {
       loading = false,
       searchedEvents,
       searchQuery = '',
+      activeTab,
     } = this.props;
     const { query } = this.state;
     const reg = getRE(query, 'i');
@@ -158,6 +161,8 @@ export default class FilterModal extends React.PureComponent {
     const staticFilters = preloadedFilters
       .filter(({ value, actualValue }) => !this.props.loading && this.test(actualValue || value))
 
+    // console.log('filteredList', filteredList);
+
     return (!displayed ? null :
       <div  className={ stl.modal }>
         { loading && 
@@ -173,22 +178,26 @@ export default class FilterModal extends React.PureComponent {
             { searchQuery &&
               <React.Fragment>
                 {this.renderEventDropdownPart(TYPES.USERID, 'User Id')}
-                {this.renderEventDropdownPart(TYPES.METADATA, 'Metadata')}
-                {this.renderEventDropdownPart(TYPES.CONSOLE, 'Errors')}
-                {this.renderEventDropdownPart(TYPES.CUSTOM, 'Custom Events')}
-                {this.renderEventDropdownPart(KEYS.USER_COUNTRY, 'Country', _appliedFilterKeys)}
-                {this.renderEventDropdownPart(KEYS.USER_BROWSER, 'Browser', _appliedFilterKeys)}
-                {this.renderEventDropdownPart(KEYS.USER_DEVICE, 'Device', _appliedFilterKeys)}
-                {this.renderEventDropdownPart(TYPES.LOCATION, 'Page')}
-                {this.renderEventDropdownPart(TYPES.CLICK, 'Click')}
-                {this.renderEventDropdownPart(TYPES.FETCH, 'Fetch')}
-                {this.renderEventDropdownPart(TYPES.INPUT, 'Input')}
-
-                {this.renderEventDropdownPart(KEYS.USER_OS, 'Operating System', _appliedFilterKeys)}
-                {this.renderEventDropdownPart(KEYS.REFERRER, 'Referrer', _appliedFilterKeys)}
-                {this.renderEventDropdownPart(TYPES.GRAPHQL, 'GraphQL')}
-                {this.renderEventDropdownPart(TYPES.STATEACTION, 'Store Action')}
-                {this.renderEventDropdownPart(TYPES.REVID, 'Rev ID')}
+                {activeTab !== 'live' && (
+                  <>  
+                    {this.renderEventDropdownPart(TYPES.METADATA, 'Metadata')}
+                    {this.renderEventDropdownPart(TYPES.CONSOLE, 'Errors')}
+                    {this.renderEventDropdownPart(TYPES.CUSTOM, 'Custom Events')}
+                    {this.renderEventDropdownPart(KEYS.USER_COUNTRY, 'Country', _appliedFilterKeys)}
+                    {this.renderEventDropdownPart(KEYS.USER_BROWSER, 'Browser', _appliedFilterKeys)}
+                    {this.renderEventDropdownPart(KEYS.USER_DEVICE, 'Device', _appliedFilterKeys)}
+                    {this.renderEventDropdownPart(TYPES.LOCATION, 'Page')}
+                    {this.renderEventDropdownPart(TYPES.CLICK, 'Click')}
+                    {this.renderEventDropdownPart(TYPES.FETCH, 'Fetch')}
+                    {this.renderEventDropdownPart(TYPES.INPUT, 'Input')}
+    
+                    {this.renderEventDropdownPart(KEYS.USER_OS, 'Operating System', _appliedFilterKeys)}
+                    {this.renderEventDropdownPart(KEYS.REFERRER, 'Referrer', _appliedFilterKeys)}
+                    {this.renderEventDropdownPart(TYPES.GRAPHQL, 'GraphQL')}
+                    {this.renderEventDropdownPart(TYPES.STATEACTION, 'Store Action')}
+                    {this.renderEventDropdownPart(TYPES.REVID, 'Rev ID')}
+                  </>
+                )}
               </React.Fragment>
             }
           </div>
@@ -201,7 +210,7 @@ export default class FilterModal extends React.PureComponent {
                     <div className={ stl.list }>
                       { this.renderList(category.type, category.keys) }
                     </div>
-                  </div>    
+                  </div>
                 ))   
               }
             </div>
