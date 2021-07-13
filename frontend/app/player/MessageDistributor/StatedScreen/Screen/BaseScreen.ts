@@ -68,7 +68,7 @@ export default abstract class BaseScreen {
 
   getInternalCoordinates({ x, y }: Point): Point {
     const { x: overlayX, y: overlayY, width } = this.getBoundingClientRect();
-    console.log("x y ", x,y,'ovx y', overlayX, overlayY, width)
+    //console.log("x y ", x,y,'ovx y', overlayX, overlayY, width)
 
     const screenWidth = this.overlay.offsetWidth;
 
