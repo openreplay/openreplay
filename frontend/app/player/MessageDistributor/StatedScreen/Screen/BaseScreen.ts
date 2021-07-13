@@ -60,14 +60,16 @@ export default abstract class BaseScreen {
 
   private boundingRect: DOMRect | null  = null;
   private getBoundingClientRect(): DOMRect {
-    if (this.boundingRect === null) {
-      this.boundingRect = this.overlay.getBoundingClientRect(); // expensive operation?
-    }
-    return this.boundingRect;
+    //if (this.boundingRect === null) {
+      return this.boundingRect = this.overlay.getBoundingClientRect(); // expensive operation?
+    //}
+    //return this.boundingRect;
   }
 
   getInternalCoordinates({ x, y }: Point): Point {
     const { x: overlayX, y: overlayY, width } = this.getBoundingClientRect();
+    console.log("x y ", x,y,'ovx y', overlayX, overlayY, width)
+
     const screenWidth = this.overlay.offsetWidth;
 
     const scale = screenWidth / width;

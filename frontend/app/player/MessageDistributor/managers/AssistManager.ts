@@ -4,6 +4,7 @@ import type MessageDistributor from '../MessageDistributor';
 import type { TimedMessage } from '../Timed';
 import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
+import store from 'App/store';
 
 import { update, getState } from '../../store';
 
@@ -285,10 +286,13 @@ export default class AssistManager {
     update({ calling: CallingState.Requesting });
         console.log('calling...')
     const call =  this.peer.call(this.peerID, localStream);
-    
     call.on('stream', stream => {
       update({ calling: CallingState.True });
       onStream(stream);
+      this.dataConnection?.send({ 
+        name: store.getState().getIn([ 'user', 'account', 'name']),
+      });
+
       // @ts-ignore ??
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
     });
