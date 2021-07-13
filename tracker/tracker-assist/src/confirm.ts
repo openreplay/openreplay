@@ -59,6 +59,7 @@ export default class Confirm {
       height: "100%",
       width: "100%",
       pointerEvents: "none",
+      zIndex: 2147483647 - 1,
     })
 
     wrapper.appendChild(popup);
