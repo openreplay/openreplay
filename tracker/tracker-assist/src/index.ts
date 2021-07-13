@@ -135,9 +135,9 @@ export default function(opts: Partial<Options> = {})  {
             call.on('error', onClose); // notify about error?
 
             callUI = new CallWindow(onClose);
-            callUI.setOutputStream(oStream);
+            callUI.setLocalStream(oStream);
             call.on('stream', function(iStream) {
-              callUI.setInputStream(iStream);
+              callUI.setRemoteStream(iStream);
               dataConn.on('data', (data: any) => {
                 if (data === "call_end") {
                   onClose();
