@@ -27,7 +27,7 @@
 
 <p align="center">
   <a href="https://github.com/openreplay/openreplay">
-    <img src="static/replayer.png">
+    <img src="static/overview.png">
   </a>
 </p>
 
@@ -42,11 +42,10 @@ OpenReplay is a session replay stack that lets you see what users do on your web
 ## Features
 
 - **Session replay:** Lets you relive your users' experience, see where they struggle and how it affects their behavior. Each session replay is automatically analyzed based on heuristics, for easy triage.
+- **DevTools:** It's like debugging in your own browser. OpenReplay provides you with the full context (network activity, JS errors, store actions/state and 40+ metrics) so you can instantly reproduce bugs and understand performance issues.
+- **Assist:** Helps you support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.
 - **Omni-search:** Search and filter by almost any user action/criteria, session attribute or technical event, so you can answer any question. No instrumentation required.
 - **Funnels:** For surfacing the most impactful issues causing conversion and revenue loss.
-- **DevTools:** It's like debugging in your own browser. OpenReplay provides you with the full context so you can instantly reproduce bugs and understand performance issues.
-- **Error tracking:** JS errors are captured and sync'ed with session replays. Upload your source-maps and see the source code right in the stack trace.
-- **Performance metrics:** Ready-to-use dashboard with 40+ metrics to keep an eye on your web app's performance. Alerts keep you notified when critical slowdowns occur.
 - **Fine-grained privacy controls:** Choose what to capture, what to obscure or what to ignore so user data doesn't even reach your servers.
 - **Plugins oriented:** Get to the root cause even faster by tracking application state (Redux, VueX, MobX, NgRx) and logging GraphQL queries (Apollo, Relay) and Fetch requests.
 - **Integrations:** Sync your backend logs with your session replays and see what happened front-to-back. OpenReplay supports Sentry, Datadog, CloudWatch, Stackdriver, Elastic and more.
