@@ -95,3 +95,33 @@ def cancel_job(projectKey, jobId, context):
     return {
         'data': jobs.update(job_id=jobId, job=job)
     }
+
+@app.route('/v1/projects', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
+def get_projects(context):
+    records = projects.get_projects(tenant_id=context['tenantId'])
+    for record in records:
+        del record['projectId']
+
+    return {
+        'data': records
+    }
+
+
+@app.route('/v1/projects/{projectKey}', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
+def get_project(projectKey, context):
+    return {
+        'data': projects.get_project_by_key(tenant_id=context['tenantId'], project_key=projectKey)
+    }
+
+
+@app.route('/v1/projects', methods=['POST'], authorizer=bp_authorizers.api_key_authorizer)
+def create_project(context):
+    data = app.current_request.json_body
+    record = projects.create(
+      tenant_id=context['tenantId'],
+      user_id=None,
+      data=data,
+      skip_authorization=True
+    )
+    del record['data']['projectId']
+    return record

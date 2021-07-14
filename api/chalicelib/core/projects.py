@@ -95,11 +95,32 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         row = cur.fetchone()
         return helper.dict_to_camel_case(row)
 
+def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+                    SELECT                           
+                           s.project_key,
+                           s.name
+                            {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at" if include_last_session else ""}
+                            {',s.gdpr' if include_gdpr else ''}
+                    FROM public.projects AS s
+                    where s.project_key =%(project_key)s
+                        AND s.deleted_at IS NULL
+                    LIMIT 1;""",
+                            {"project_key": project_key})
 
-def create(tenant_id, user_id, data):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
-    if not admin["admin"] and not admin["superAdmin"]:
-        return {"errors": ["unauthorized"]}
+        cur.execute(
+            query=query
+        )
+        row = cur.fetchone()
+        return helper.dict_to_camel_case(row)
+
+
+def create(tenant_id, user_id, data, skip_authorization=False):
+    if not skip_authorization:
+        admin = users.get(user_id=user_id, tenant_id=tenant_id)
+        if not admin["admin"] and not admin["superAdmin"]:
+            return {"errors": ["unauthorized"]}
     return {"data": __create(tenant_id=tenant_id, name=data.get("name", "my first project"))}
 
 
