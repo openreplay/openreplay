@@ -120,6 +120,7 @@ export default class AssistManager {
 
   private peer: Peer | null = null;
   connectionAttempts: number = 0;
+  private peeropened: boolean = false;
   connect() {
     if (this.peer != null) {
       console.error("AssistManager: trying to connect more than once");
@@ -138,7 +139,8 @@ export default class AssistManager {
       peer.on('error', e => {
         if (e.type === 'peer-unavailable') {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
-            update({ peerConnectionStatus: ConnectionStatus.Connecting })
+            update({ peerConnectionStatus: ConnectionStatus.Connecting });
+            console.log("peerunavailable")
             this.connectToPeer();
           } else {
             update({ peerConnectionStatus: ConnectionStatus.Disconnected });
@@ -149,7 +151,10 @@ export default class AssistManager {
           update({ peerConnectionStatus: ConnectionStatus.Error })
         }
       })
-      peer.on("open", me => {
+      peer.on("open", () => {
+        if (this.peeropened) { return; }
+        this.peeropened = true;
+        console.log('peeropen')
         this.connectToPeer();        
       });
     });
@@ -164,16 +169,19 @@ export default class AssistManager {
     const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
 
     conn.on('open', () => {
+      window.addEventListener("beforeunload", ()=>conn.send("unload"));
       console.log("peer connected")
       
       let i = 0;
       let firstMessage = true;
+
+      update({ peerConnectionStatus: ConnectionStatus.Connected })
+
       conn.on('data', (data) => {
         if (!Array.isArray(data)) { return this.handleCommand(data); }
         if (firstMessage) {
           firstMessage = false;
           this.md.setMessagesLoading(false);
-          update({ peerConnectionStatus: ConnectionStatus.Connected })
         }
 
         let time = 0;
@@ -228,11 +236,11 @@ export default class AssistManager {
       this.connectToPeer();
     }
 
-    this.dataCheckIntervalID = setInterval(() => {
-      if (!this.dataConnection && getState().peerConnectionStatus === ConnectionStatus.Connected) {
-        onDataClose();
-      }
-    }, 3000);
+    // this.dataCheckIntervalID = setInterval(() => {
+    //   if (!this.dataConnection && getState().peerConnectionStatus === ConnectionStatus.Connected) {
+    //     onDataClose();
+    //   }
+    // }, 3000);
     conn.on('close', onDataClose);// Does it work ?
     conn.on("error", (e) => {
       console.log("PeerJS connection error", e);
@@ -355,10 +363,13 @@ export default class AssistManager {
     console.log('clearing', this.peerID)
     this.initiateCallEnd();
     this.dataCheckIntervalID && clearInterval(this.dataCheckIntervalID);
-    this.dataConnection?.close();
-    console.log("destroying peer...")
-    this.peer?.destroy();
-    this.peer = null;
+    if (this.peer) {
+      this.peer.connections[this.peerID]?.forEach(c => c.open && c.close());
+      console.log("destroying peer...")
+      this.peer.disconnect();
+      this.peer.destroy();
+      this.peer = null;
+    }
   }
 }
 

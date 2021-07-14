@@ -20,7 +20,7 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   loading: state.messagesLoading,
   disconnected: state.disconnected,
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
-  removeOverlay: !state.messagesLoading && state.inspectorMode,
+  removeOverlay: !state.messagesLoading && state.inspectorMode || state.live,
   completed: state.completed,
   autoplay: state.autoplay,
   live: state.live,
@@ -132,7 +132,7 @@ export default class Player extends React.PureComponent {
         }
         {!live && !fullscreen && <EventsToggleButton /> }
         <div className="relative flex-1">
-          { !removeOverlay && 
+          { (!removeOverlay || live && liveStatusText) && 
             <div 
               className={ stl.overlay }
               onClick={ disabled ? null : this.togglePlay }
@@ -141,13 +141,15 @@ export default class Player extends React.PureComponent {
                 ? <span className={stl.liveStatusText}>{liveStatusText}</span>
                 : <Loader loading={ loading } />
               }
-              <div 
-                className={ cn(stl.iconWrapper, { 
-                  [ stl.zoomIcon ]: showPlayOverlayIcon 
-                }) } 
-              >
-                <div className={ playing ? stl.playIcon : stl.pauseIcon } />
-              </div>
+              { !live && 
+                <div 
+                  className={ cn(stl.iconWrapper, { 
+                    [ stl.zoomIcon ]: showPlayOverlayIcon 
+                  }) } 
+                >
+                  <div className={ playing ? stl.playIcon : stl.pauseIcon } />
+                </div>
+              }
             </div>
           }
           { completed && autoplay && nextId && <AutoplayTimer /> }
