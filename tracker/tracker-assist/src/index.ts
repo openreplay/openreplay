@@ -116,7 +116,7 @@ export default function(opts: Partial<Options> = {})  {
           const mouse = new Mouse();
           let callUI;
 
-          navigator.mediaDevices.getUserMedia({video:true, audio:true})
+          navigator.mediaDevices.getUserMedia({video:false, audio:true})
           .then(lStream => {
             const onCallEnd = () => {
               console.log("on callend", call.open)
