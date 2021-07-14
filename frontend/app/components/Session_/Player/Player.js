@@ -10,6 +10,7 @@ import Controls from './Controls';
 import stl from './player.css';
 import AutoplayTimer from '../AutoplayTimer';
 import EventsToggleButton from '../../Session/EventsToggleButton';
+import { getStatusText } from 'Player/MessageDistributor/managers/AssistManager';
 
 
 const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screenWrapper } />));
@@ -19,10 +20,11 @@ const ScreenWrapper = withOverlay()(React.memo(() => <div className={ stl.screen
   loading: state.messagesLoading,
   disconnected: state.disconnected,
   disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
-  removeOverlay: !state.messagesLoading && state.inspectorMode || state.live,
+  removeOverlay: !state.messagesLoading && state.inspectorMode,
   completed: state.completed,
   autoplay: state.autoplay,
-  live: state.live
+  live: state.live,
+  liveStatusText: getStatusText(state.peerConnectionStatus),
 }))
 @connect(state => ({
   //session: state.getIn([ 'sessions', 'current' ]),
@@ -108,6 +110,7 @@ export default class Player extends React.PureComponent {
       autoplay,
       nextId,
       live,
+      liveStatusText,
     } = this.props;
 
     return (
@@ -134,7 +137,10 @@ export default class Player extends React.PureComponent {
               className={ stl.overlay }
               onClick={ disabled ? null : this.togglePlay }
             >
-              <Loader loading={ loading } />
+              { live && liveStatusText
+                ? <span className={stl.liveStatusText}>{liveStatusText}</span>
+                : <Loader loading={ loading } />
+              }
               <div 
                 className={ cn(stl.iconWrapper, { 
                   [ stl.zoomIcon ]: showPlayOverlayIcon 

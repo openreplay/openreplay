@@ -6,6 +6,7 @@ export default class CallWindow {
   private vLocal: HTMLVideoElement | null = null;
   private audioBtn: HTMLAnchorElement | null = null;
   private videoBtn: HTMLAnchorElement | null = null;
+  private userNameSpan: HTMLSpanElement | null = null;
 
   private tsInterval: ReturnType<typeof setInterval>;
   constructor(endCall: () => void) {
@@ -18,6 +19,7 @@ export default class CallWindow {
       border: "none",
       bottom: "10px",
       right: "10px",
+      display: "none",
     });
     //iframe.src = "//static.openreplay.com/tracker-assist/index.html";
     iframe.onload = () => {
@@ -31,6 +33,7 @@ export default class CallWindow {
       .then(r => r.text())
       .then((text) => {
         iframe.onload = () => {
+          iframe.style.display = "block";
           iframe.style.height = doc.body.scrollHeight + 'px';
           iframe.style.width = doc.body.scrollWidth + 'px';
         }
@@ -50,6 +53,9 @@ export default class CallWindow {
         this.audioBtn.onclick = () => this.toggleAudio();
         this.videoBtn = doc.getElementById("video-btn") as HTMLAnchorElement;
         this.videoBtn.onclick = () => this.toggleVideo();
+
+        this.userNameSpan = doc.getElementById("username") as HTMLSpanElement;
+        this._trySetAssistentName();
 
         const endCallBtn = doc.getElementById("end-call-btn") as HTMLAnchorElement;
         endCallBtn.onclick = endCall;
@@ -107,6 +113,19 @@ export default class CallWindow {
       track.enabled = false;
     });
     this._trySetStreams();
+  }
+
+
+  // TODO: determined workflow
+  _trySetAssistentName() {
+    if (this.userNameSpan && this.assistentName) {
+      this.userNameSpan.innerText = this.assistentName;
+    }
+  }
+  private assistentName: string = "";
+  setAssistentName(name: string) {
+    this.assistentName = name;
+    this._trySetAssistentName();
   }
 
   toggleAudio() {
