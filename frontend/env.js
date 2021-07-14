@@ -23,15 +23,6 @@ const oss = {
 	TRACKER_VERSION: '3.0.5', // trackerInfo.version,
 }
 
-const local = {
-	...oss,
-	API_EDP: 'https://sacha.openreplay.com/api',//'https://do.openreplay.com/api',
-	ASSETS_HOST: 'https://sacha.openreplay.com/assets',//'https://do.openreplay.com/assets',
-	SOURCEMAP: false,
-	PRODUCTION: false,
-}
-
 module.exports = {
-    oss,
-    local,
+    oss,    
 };

@@ -4,7 +4,8 @@ from sentry_sdk import configure_scope
 
 from chalicelib import _overrides
 from chalicelib.blueprints import bp_authorizers
-from chalicelib.blueprints import bp_core, bp_core_crons, bp_app_api
+from chalicelib.blueprints import bp_core, bp_core_crons
+from chalicelib.blueprints.app import v1_api
 from chalicelib.blueprints import bp_core_dynamic, bp_core_dynamic_crons
 from chalicelib.blueprints.subs import bp_dashboard
 from chalicelib.utils import helper
@@ -99,5 +100,4 @@ app.register_blueprint(bp_core_crons.app)
 app.register_blueprint(bp_core_dynamic.app)
 app.register_blueprint(bp_core_dynamic_crons.app)
 app.register_blueprint(bp_dashboard.app)
-app.register_blueprint(bp_app_api.app)
-
+app.register_blueprint(v1_api.app)
