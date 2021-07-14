@@ -234,6 +234,10 @@ export default class AssistManager {
       }
     }, 3000);
     conn.on('close', onDataClose);// Does it work ?
+    conn.on("error", (e) => {
+      console.log("PeerJS connection error", e);
+      update({ peerConnectionStatus: ConnectionStatus.Error });
+    })
   }
 
 
@@ -331,7 +335,7 @@ export default class AssistManager {
     call.on("close", this.onCallEnd);
     call.on("error", (e) => {
       console.error("PeerJS error (on call):", e)
-      this.onCallEnd?.();
+      this.initiateCallEnd?.();
       onError?.();
     });
 
