@@ -1,5 +1,12 @@
 # vim: set ft=yaml.ansible :
 ---
+- name: Installing specific db
+  shell: |
+    helm upgrade --install -n db {{ db_name }} -f /tmp/{{ db_name }}.yaml ./db/{{ db_name }} --wait --create-namespace
+  args:
+    executable: /bin/bash
+  when: db_name|length > 0
+  tags: db
 - name: installing dbs
   shell: |
     helm upgrade --install -n db "{{ item }}" "./db/{{ item }}" -f "/tmp/{{ item }}.yaml" --wait --create-namespace &>> "{{ playbook_dir }}"/db_helm.log
@@ -67,16 +74,16 @@
       register: result
       until: result.rc == 0
       when: enterprise_edition_license|length > 0
+- name: Downloading frontend archive
+  unarchive:
+    url: "https://github.com/openreplay/openreplay/releases/download/{{ openreplay_version }}/frontend.tar.gz"
+    dest: "frontend"
+  tags:
+    - frontend
 - name: initializing frontend
   shell: |
-    user=`whoami`
-    sudo chown $user /var/run/docker.sock
-    bash build.sh
-    cp -arl public frontend
+    # Download frontend archive
     minio_pod=$(kubectl get po -n db -l app.kubernetes.io/name=minio -n db --output custom-columns=name:.metadata.name | tail -n+2)
     kubectl -n db cp frontend $minio_pod:/data/
-    rm -rf frontend
-  args:
-    chdir: ../../frontend
   tags:
     - frontend

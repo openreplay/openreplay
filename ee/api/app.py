@@ -11,7 +11,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.helper import environ
 
-from chalicelib.blueprints import bp_ee, bp_ee_crons
+from chalicelib.blueprints import bp_ee, bp_ee_crons, bp_saml
 
 app = Chalice(app_name='parrot')
 app.debug = not helper.is_production() or helper.is_local()
@@ -59,17 +59,11 @@ _overrides.chalice_app(app)
 
 @app.middleware('http')
 def or_middleware(event, get_response):
-    from chalicelib.ee import unlock
+    from chalicelib.core import unlock
     if not unlock.is_valid():
         return Response(body={"errors": ["expired license"]}, status_code=403)
     if "{projectid}" in event.path.lower():
-        from chalicelib.ee import projects
-        print("==================================")
-        print(event.context["authorizer"].get("authorizer_identity"))
-        print(event.uri_params["projectId"])
-        print(projects.get_internal_project_id(event.uri_params["projectId"]))
-        print(event.context["authorizer"]["tenantId"])
-        print("==================================")
+        from chalicelib.core import projects
         if event.context["authorizer"].get("authorizer_identity") == "api_key" \
                 and not projects.is_authorized(
             project_id=projects.get_internal_project_id(event.uri_params["projectId"]),
@@ -126,3 +120,4 @@ app.register_blueprint(bp_dashboard.app)
 # Enterprise
 app.register_blueprint(bp_ee.app)
 app.register_blueprint(bp_ee_crons.app)
+app.register_blueprint(bp_saml.app)

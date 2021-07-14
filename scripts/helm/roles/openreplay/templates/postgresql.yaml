@@ -1,8 +1,13 @@
+image:
+  tag: 13.3.0-debian-10-r53
+{% if db_resource_override.postgresql %}
+{{ db_resource_override.postgresql|to_nice_yaml(indent=2) }}
+{% else %}
 resources:
   limits:
-    cpu: {{ ( 250 * scale|float ) | int }}m
-    memory: {{ ( 512 * scale|float ) | int }}Mi
+    cpu: {{ ( 1000 * scale|float ) | int }}m
+    memory: {{ ( 2048 * scale|float ) | int }}Mi
   requests:
     cpu: 250m
     memory: 256Mi
-
+{% endif %}

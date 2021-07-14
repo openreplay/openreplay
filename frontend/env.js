@@ -13,15 +13,16 @@ const oss = {
 	ORIGIN: () => 'window.location.origin',
 	API_EDP: () => 'window.location.origin + "/api"',
 	ASSETS_HOST: () => 'window.location.origin + "/assets"',
-	VERSION: '1.1.0',
+	VERSION: '1.2.0',
 	SOURCEMAP: true,
 	MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
 	MINIO_PORT: process.env.MINIO_PORT,
 	MINIO_USE_SSL: process.env.MINIO_USE_SSL,
 	MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
 	MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
-	TRACKER_VERSION: '3.0.3', // trackerInfo.version,
+	TRACKER_VERSION: '3.0.5', // trackerInfo.version,
 }
+
 module.exports = {
-    oss,
+    oss,    
 };

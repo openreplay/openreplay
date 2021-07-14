@@ -10,7 +10,7 @@ from chalicelib.utils.helper import environ
 
 
 def __get_subject(subject):
-    return subject if helper.is_production() else f"{helper.get_stage_name()}: {subject}"
+    return subject
 
 
 def __get_html_from_file(source, formatting_variables):

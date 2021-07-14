@@ -10,7 +10,8 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_elasticsearch, log_tool_datadog, \
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
-    log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github
+    log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
+    assist
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
 
@@ -875,3 +876,9 @@ def all_issue_types(context):
 @app.route('/{projectId}/flows', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def removed_endpoints(projectId=None, context=None):
     return Response(body={"errors": ["Endpoint no longer available"]}, status_code=410)
+
+
+@app.route('/{projectId}/assist/sessions', methods=['GET'])
+def sessions_live(projectId, context):
+    data = assist.get_live_sessions(projectId)
+    return {'data': data}

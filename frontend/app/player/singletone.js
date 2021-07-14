@@ -61,12 +61,14 @@ export const toggleSkip = initCheck((...args) => instance.toggleSkip(...args));
 export const toggleSkipToIssue = initCheck((...args) => instance.toggleSkipToIssue(...args));
 export const toggleAutoplay = initCheck((...args) => instance.toggleAutoplay(...args));
 export const toggleSpeed = initCheck((...args) => instance.toggleSpeed(...args));
+export const toggleEvents = initCheck((...args) => instance.toggleEvents(...args));
 export const speedUp = initCheck((...args) => instance.speedUp(...args));
 export const speedDown = initCheck((...args) => instance.speedDown(...args));
 export const attach = initCheck((...args) => instance.attach(...args));
 export const markElement = initCheck((...args) => instance.marker && instance.marker.mark(...args));
 export const scale = initCheck(() => instance.scale());
 export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
+export const callPeer = initCheck((...args) => instance.assistManager.call(...args))
 
 export const Controls = {
   jump,
@@ -75,7 +77,9 @@ export const Controls = {
   toggleSkip,
   toggleSkipToIssue,
   toggleAutoplay,
+  toggleEvents,
   toggleSpeed,
   speedUp,
   speedDown,
+  callPeer
 }

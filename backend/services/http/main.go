@@ -35,6 +35,7 @@ var topicRaw string
 var topicTrigger string
 var topicAnalytics string
 // var kafkaTopicEvents string
+var cacheAssets bool
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -52,6 +53,8 @@ func main() {
 	uaParser = uaparser.NewUAParser(env.String("UAPARSER_FILE"))
 	geoIP = geoip.NewGeoIP(env.String("MAXMINDDB_FILE"))
 	flaker = flakeid.NewFlaker(env.WorkerID())
+	cacheAssets = env.Bool("CACHE_ASSETS")
+
 	HTTP_PORT := env.String("HTTP_PORT")
 
 	server := &http.Server{

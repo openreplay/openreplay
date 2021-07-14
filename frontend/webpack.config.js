@@ -129,7 +129,7 @@ module.exports = (envName = 'local') => {
         },
         {
           test: /\.css$/,
-          include: [ /node_modules/, /app\/styles/ ],
+          include: [ path.join(__dirname, "node_modules"), path.join(__dirname, "app/styles") ],
           use: [
             cssFileLoader,
             {
@@ -148,7 +148,7 @@ module.exports = (envName = 'local') => {
         },
         {
   	      test: /\.js$/,
-  	      include: path.join(__dirname, "app"),
+  	      include: [ path.join(__dirname, "app"), path.join(__dirname, ".storybook") ],
   	      use: babelLoader,
   	    },
         {

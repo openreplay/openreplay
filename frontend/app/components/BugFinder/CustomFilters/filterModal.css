@@ -89,3 +89,8 @@ h5.title {
 		width: 205px;
 	}
 }
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}

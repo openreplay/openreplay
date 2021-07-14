@@ -96,8 +96,8 @@ EOF
   medium: 4core 16G machine
   ideal: 8core 32G machine
 
-apps can specifically be installed/reinstalled: 
-  alerts assets chalice ender http integrations ios-proxy pg redis sink storage frontend
+apps can specifically be installed/reinstalled:
+  alerts assets chalice ender http integrations ios-proxy pg redis sink storage frontend postgresql redis clickhouse
   ${reset}"
   echo type value: $installation_type
   exit 0
@@ -110,7 +110,7 @@ type() {
         small)  installation_type=1   ;;
         medium) installation_type=1.5 ;;
         ideal)  installation_type=2   ;;
-        *) 
+        *)
             echo -e ${red}${bold}'ERROR!!!\nwrong value for `type`'${reset}
             usage ;;
     esac
@@ -125,6 +125,10 @@ function app(){
                 sed -i "s/# return 301/return 301/g" nginx-ingress/nginx-ingress/templates/configmap.yaml
             }
             ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type --tags nginx -v
+            exit 0
+            ;;
+        postgresql|redis|clickhouse)
+            ansible-playbook -c local setup.yaml -e @vars.yaml -e scale=$installation_type -e db_name=$1 --tags template --tags db -v
             exit 0
             ;;
         frontend)

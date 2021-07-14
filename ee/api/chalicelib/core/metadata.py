@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper, dev
 
-from chalicelib.ee import projects
+from chalicelib.core import projects
 
 import re
 
