@@ -78,3 +78,8 @@
 .inspectorMode {
   z-index: 99991 !important;
 }
+
+.liveStatusText {
+  color: $gray-light;
+  font-size: 40px;
+}

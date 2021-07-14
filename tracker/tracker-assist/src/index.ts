@@ -14,6 +14,12 @@ export interface Options {
 }
 
 
+enum CallingState {
+  Requesting,
+  True,
+  False,
+};
+
 export default function(opts: Partial<Options> = {})  {
   const options: Options = Object.assign(
     { 
@@ -28,11 +34,7 @@ export default function(opts: Partial<Options> = {})  {
       return;
     }
 
-
-    let callingPeerDataConn
     app.attachStartCallback(function() {
-//            new CallWindow(()=>{console.log('endcall')});
-
       // @ts-ignore
       const peerID = `${app.projectKey}-${app.getSessionID()}`
       const peer = new Peer(peerID, {
@@ -43,6 +45,8 @@ export default function(opts: Partial<Options> = {})  {
       });
       console.log(peerID)
       peer.on('connection', function(conn) { 
+        window.addEventListener("beforeunload", () => conn.open && conn.send("unload"));
+
         console.log('connection')
         conn.on('open', function() {
           
@@ -52,14 +56,14 @@ export default function(opts: Partial<Options> = {})  {
           const buffer: Message[][] = [];
           let buffering = false;
           function sendNext() {
-            setTimeout(() => {
-              if (buffer.length) {
-                  conn.send(buffer.shift());
-                  sendNext();
-              } else {
-                  buffering = false;
-              }
-            }, 50); 
+            if (buffer.length) {
+              setTimeout(() => {
+                conn.send(buffer.shift());
+                sendNext();
+              }, 50);
+            } else {
+              buffering = false;
+            }
           }
           app.stop();
           //@ts-ignore (should update tracker dependency)
@@ -76,32 +80,36 @@ export default function(opts: Partial<Options> = {})  {
           app.start();
         });
       });
-      let calling = false;
+
+
+      let calling: CallingState  = CallingState.False;
       peer.on('call', function(call) {
         const dataConn: DataConnection | undefined = peer
                 .connections[call.peer].find(c => c.type === 'data');
-        if (calling || !dataConn) {
+        if (calling !== CallingState.False || !dataConn) {
           call.close();
-          dataConn?.send("call_error");
           return;
         }
-        calling = true;
-        window.addEventListener("beforeunload", () => {
+
+        calling = CallingState.Requesting;
+        const notifyCallEnd = () => {
           dataConn.open && dataConn.send("call_end");
-        });
-        dataConn.on('data', (data) => { // if call closed be a caller before confirm
+        }
+
+        const confirm = new Confirm(options.confirmText, options.confirmStyle);
+        dataConn.on('data', (data) => { // if call closed by a caller before confirm
           if (data === "call_end") {
-              calling = false;
-              confirm.remove();
+            console.log('receiving callend onconfirm')
+            calling = CallingState.False;
+            confirm.remove();
           }                    
         });
-        const confirm = new Confirm(options.confirmText, options.confirmStyle);
         confirm.mount();
-        confirm.onAnswer(conf => {
-          if (!conf || !dataConn.open) {
+        confirm.onAnswer(agreed => {
+          if (!agreed || !dataConn.open) {
             call.close();
-            dataConn.open && dataConn.send("call_end");
-            calling = false;
+            notifyCallEnd();
+            calling = CallingState.False;
             return;
           }
 
@@ -109,41 +117,53 @@ export default function(opts: Partial<Options> = {})  {
           let callUI;
 
           navigator.mediaDevices.getUserMedia({video:true, audio:true})
-          .then(oStream => {
-            const onClose = () => {
-              console.log("close call...")
-              if (call.open) { call.close(); }
+          .then(lStream => {
+            const onCallEnd = () => {
+              console.log("on callend", call.open)
               mouse.remove();
               callUI?.remove();
-              oStream.getTracks().forEach(t => t.stop());
-
-              calling = false;
-              if (dataConn.open) {
-                dataConn.send("call_end");
-              }
+              lStream.getTracks().forEach(t => t.stop());
+              calling = CallingState.False;
             }
-            dataConn.on("close", onClose);
+            const initiateCallEnd = () => {
+              console.log("callend initiated")
+              call.close()
+              notifyCallEnd();
+              onCallEnd();
+            }
 
-            call.answer(oStream);
-            call.on('close', onClose); // Works from time to time (peerjs bug)
+            call.answer(lStream);
+
+            dataConn.on("close", onCallEnd);
+
+            //call.on('close', onClose); // Works from time to time (peerjs bug)
             const intervalID = setInterval(() => {
-              if (!call.open) {
-                onClose();
+              if (!dataConn.open) {
+                initiateCallEnd();
                 clearInterval(intervalID);
               }
-            }, 5000);
-            call.on('error', onClose); // notify about error?
+              if (!call.open) {
+                onCallEnd();
+                clearInterval(intervalID);
+              }
+            }, 3000);
+            call.on('error', initiateCallEnd);
 
-            callUI = new CallWindow(onClose);
-            callUI.setLocalStream(oStream);
-            call.on('stream', function(iStream) {
-              callUI.setRemoteStream(iStream);
+            callUI = new CallWindow(initiateCallEnd);
+            callUI.setLocalStream(lStream);
+            call.on('stream', function(rStream) {
+              callUI.setRemoteStream(rStream);
               dataConn.on('data', (data: any) => {
                 if (data === "call_end") {
-                  onClose();
+                  console.log('receiving callend on call')
+                  onCallEnd();
                   return;
                 }
-                if (call.open && data && typeof data.x === 'number' && typeof data.y === 'number') {
+                if (data && typeof data.name === 'string') {
+                  console.log("name",data)
+                  callUI.setAssistentName(data.name);
+                }
+                if (data && typeof data.x === 'number' && typeof data.y === 'number') {
                   mouse.move(data);
                 }
               });
