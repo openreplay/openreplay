@@ -1,3 +1,5 @@
+image:
+  tag: 13.3.0-debian-10-r53
 {% if db_resource_override.postgresql %}
 {{ db_resource_override.postgresql|to_nice_yaml(indent=2) }}
 {% else %}
