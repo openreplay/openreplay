@@ -20,7 +20,8 @@ const siteIdRequiredPaths = [
   '/rehydrations',
   '/sourcemaps',
   '/errors',
-  '/funnels'
+  '/funnels',
+  '/assist'
 ];
 
 const noStoringFetchPathStarts = [

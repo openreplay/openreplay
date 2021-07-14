@@ -70,7 +70,7 @@ jobs:
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
         for image in $(cat ../../backend/images_to_build.txt);
         do
-          sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" app/${image}.yaml
+          sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
           # Deploy command
           bash kube-install.sh --app $image
         done

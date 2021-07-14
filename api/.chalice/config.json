@@ -30,9 +30,10 @@
         "sessions_bucket": "mobs",
         "sessions_region": "us-east-1",
         "put_S3_TTL": "20",
-        "sourcemaps_reader": "http://127.0.0.1:3000/",
+        "sourcemaps_reader": "http://utilities-openreplay.app.svc.cluster.local:9000/sourcemaps",
         "sourcemaps_bucket": "sourcemaps",
         "js_cache_bucket": "sessions-assets",
+        "peers": "http://utilities-openreplay.app.svc.cluster.local:9000/assist/peers",
         "async_Token": "",
         "EMAIL_HOST": "",
         "EMAIL_PORT": "587",
@@ -51,7 +52,7 @@
         "S3_HOST": "",
         "S3_KEY": "",
         "S3_SECRET": "",
-        "version_number": "1.0.0"
+        "version_number": "1.2.0"
       },
       "lambda_timeout": 150,
       "lambda_memory_size": 400,

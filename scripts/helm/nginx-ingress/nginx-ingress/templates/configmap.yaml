@@ -68,6 +68,14 @@ data:
       proxy_set_header Host $host;
       proxy_pass http://chalice-openreplay.app.svc.cluster.local:8000;
     }
+    location /assist/ {
+      rewrite ^/assist/(.*) /$1 break;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+      proxy_set_header Host $host;
+      proxy_pass http://utilities-openreplay.app.svc.cluster.local:9000;
+    }
     location /assets/ {
       rewrite ^/assets/(.*) /sessions-assets/$1 break;
       proxy_http_version 1.1;

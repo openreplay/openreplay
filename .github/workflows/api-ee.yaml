@@ -47,7 +47,7 @@ jobs:
         sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.EE_MINIO_SECRET_KEY }}\" #g" vars.yaml
         sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
         sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
-        sed -i "s/tag:.*/tag: \"$IMAGE_TAG\"/g" vars.yaml
+        sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
         bash kube-install.sh --app chalice
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}

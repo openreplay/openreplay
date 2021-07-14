@@ -12,6 +12,7 @@ const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
+const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
 const TOGGLE_FAVORITE = new RequestTypes('sessions/TOGGLE_FAVORITE');
 const FETCH_ERROR_STACK = new RequestTypes('sessions/FETCH_ERROR_STACK');
 const SORT = 'sessions/SORT';
@@ -19,6 +20,7 @@ const REDEFINE_TARGET = 'sessions/REDEFINE_TARGET';
 const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
 const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
 const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
+const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
@@ -35,7 +37,9 @@ const initialState = Map({
   errorStack: List(),
   eventsIndex: [],
   sourcemapUploaded: true,
-  filteredEvents: null
+  filteredEvents: null,
+  showChatWindow: false,
+  liveSessions: List()
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -49,6 +53,11 @@ const reducer = (state = initialState, action = {}) => {
         : state;
     case FETCH_ERROR_STACK.SUCCESS:
       return state.set('errorStack', List(action.data.trace).map(ErrorStack)).set('sourcemapUploaded', action.data.sourcemapUploaded)
+    case FETCH_LIVE_LIST.SUCCESS:
+      // const { sessions, total } = action.data;
+      const liveList = List(action.data).map(s => new Session({...s, live: true}));
+      return state
+        .set('liveSessions', liveList)
     case FETCH_LIST.SUCCESS:
       const { sessions, total } = action.data;
       const list = List(sessions).map(Session);
@@ -98,8 +107,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('sessionIds', list.map(({ sessionId }) => sessionId ).toJS())
         .set('total', total)
         .set('keyMap', keyMap)
-        .set('wdTypeCount', wdTypeCount);
-    
+        .set('wdTypeCount', wdTypeCount);    
     case SET_AUTOPLAY_VALUES: {
       const sessionIds = state.get('sessionIds')
       const currentSessionId = state.get('current').sessionId
@@ -194,6 +202,9 @@ const reducer = (state = initialState, action = {}) => {
         .set('sessionIds', allList.map(({ sessionId }) => sessionId ).toJS())
     case SET_TIMEZONE:
       return state.set('timezone', action.timezone)
+    case TOGGLE_CHAT_WINDOW:
+      console.log(action)
+      return state.set('showChatWindow', action.state)
     default:
       return state;
   }
@@ -249,6 +260,20 @@ export function fetchFavoriteList() {
   return {
     types: FETCH_FAVORITE_LIST.toArray(),
     call: client => client.get('/sessions2/favorite'),
+  };
+}
+
+export function fetchLiveList() {
+  return {
+    types: FETCH_LIVE_LIST.toArray(),
+    call: client => client.get('/assist/sessions'),
+  };
+}
+
+export function toggleChatWindow(state) {
+  return {
+    type: TOGGLE_CHAT_WINDOW,
+    state
   };
 }
 

@@ -30,7 +30,7 @@ function SideMenuitem({ iconBg = false, iconColor = "gray-dark", iconSize = 18, 
         </div>
       }
       disabled={ !disabled }
-      content={ 'No Sessions' }
+      content={ 'No recordings' }
       size="tiny"
       inverted
       position="left center"
