@@ -80,7 +80,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               size="20"
               color={ inCall ? "red" : "gray-darkest" }
             />
-            <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Meeting' : 'Start Meeting' }</span>
+            <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
           </div>
         }
         content={ `Call ${userId}` }
