@@ -137,7 +137,7 @@ export default class AssistManager {
       });
       this.peer = peer;
       peer.on('error', e => {
-        if (e.type === 'peer-unavailable') {
+        if (['peer-unavailable', 'network'].includes(e.type)) {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
             update({ peerConnectionStatus: ConnectionStatus.Connecting });
             console.log("peerunavailable")
@@ -167,9 +167,8 @@ export default class AssistManager {
     const id = this.peerID;
     console.log("trying to connect to", id)
     const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
-
     conn.on('open', () => {
-      window.addEventListener("beforeunload", ()=>conn.send("unload"));
+      window.addEventListener("beforeunload", ()=>conn.open &&conn.send("unload"));
       console.log("peer connected")
       
       let i = 0;
@@ -179,6 +178,7 @@ export default class AssistManager {
 
       conn.on('data', (data) => {
         if (!Array.isArray(data)) { return this.handleCommand(data); }
+        this.mesagesRecieved = true;
         if (firstMessage) {
           firstMessage = false;
           this.md.setMessagesLoading(false);
@@ -290,11 +290,23 @@ export default class AssistManager {
   }
 
 
+
+  private mesagesRecieved: boolean = false;
   private handleCommand(command: string) {
     switch (command) {
       case "unload":
         this.onTrackerCallEnd();
-        this.dataConnection?.close();
+        this.mesagesRecieved = false;
+        setTimeout(() => {
+          if (this.mesagesRecieved) {
+            return;
+          }
+          // @ts-ignore
+          this.md.display(false);
+          this.dataConnection?.close();
+          update({ peerConnectionStatus: ConnectionStatus.Disconnected });
+        }, 8000); // TODO: more convenient way
+        //this.dataConnection?.close();
         return;
       case "call_end":
         this.onTrackerCallEnd();
@@ -322,6 +334,8 @@ export default class AssistManager {
     
     const call =  this.peer.call(this.peerID, localStream);
     call.on('stream', stream => {
+      //call.peerConnection.ontrack = (t)=> console.log('ontrack', t)
+
       update({ calling: CallingState.True });
       onStream(stream);
       this.send({ 
