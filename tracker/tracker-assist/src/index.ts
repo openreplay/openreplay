@@ -116,7 +116,7 @@ export default function(opts: Partial<Options> = {})  {
           const mouse = new Mouse();
           let callUI;
 
-          navigator.mediaDevices.getUserMedia({video:false, audio:true})
+          navigator.mediaDevices.getUserMedia({video:true, audio:true})
           .then(lStream => {
             const onCallEnd = () => {
               console.log("on callend", call.open)
@@ -150,7 +150,18 @@ export default function(opts: Partial<Options> = {})  {
             call.on('error', initiateCallEnd);
 
             callUI = new CallWindow(initiateCallEnd);
-            callUI.setLocalStream(lStream);
+            callUI.setLocalStream(lStream, (stream) => {
+              //let videoTrack = stream.getVideoTracks()[0];
+              //lStream.addTrack(videoTrack);
+
+              //call.peerConnection.addTrack(videoTrack);
+
+              // call.peerConnection.getSenders()
+              // var sender = call.peerConnection.getSenders().find(function(s) {
+              //   return s.track .kind == videoTrack.kind;
+              // });
+              //sender.replaceTrack(videoTrack);
+            });
             call.on('stream', function(rStream) {
               callUI.setRemoteStream(rStream);
               dataConn.on('data', (data: any) => {
