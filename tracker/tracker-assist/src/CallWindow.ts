@@ -4,7 +4,6 @@ export default class CallWindow {
   private iframe: HTMLIFrameElement;
   private vRemote: HTMLVideoElement | null = null;
   private vLocal: HTMLVideoElement | null = null;
-  private aRemote: HTMLAudioElement | null = null;
   private audioBtn: HTMLAnchorElement | null = null;
   private videoBtn: HTMLAnchorElement | null = null;
   private userNameSpan: HTMLSpanElement | null = null;
@@ -52,8 +51,8 @@ export default class CallWindow {
         
         this.vLocal = doc.getElementById("video-local") as HTMLVideoElement;
         this.vRemote = doc.getElementById("video-remote") as HTMLVideoElement;
-        this.aRemote  = doc.getElementById("audio-remote") as HTMLAudioElement;
         this._trySetStreams();
+        //
         this.vLocal.parentElement && this.vLocal.parentElement.classList.add("d-none");
 
         this.audioBtn = doc.getElementById("audio-btn") as HTMLAnchorElement;
@@ -104,26 +103,26 @@ export default class CallWindow {
 
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
+  private setLocalVideoStream: (MediaStream) => void = () => {};
+  private videoRequested: boolean = true; // TODO: green camera light
   private _trySetStreams() {
     if (this.vRemote && this.remoteStream) {
       this.vRemote.srcObject = this.remoteStream;
     }
-    if (this.aRemote && this.localStream) {
-      this.aRemote.srcObject = this.localStream;
-    }
-    if (this.vLocal && this.videoStream) {
-      this.vLocal.srcObject = this.videoStream;
+    if (this.vLocal && this.localStream) {
+      this.vLocal.srcObject = this.localStream;
     }
   }
   setRemoteStream(rStream: MediaStream) {
     this.remoteStream = rStream;
     this._trySetStreams();
   }
-  setLocalStream(lStream: MediaStream) {    
-    this.localStream = lStream;
+  setLocalStream(lStream: MediaStream, setLocalVideoStream: (MediaStream) => void) {    
     lStream.getVideoTracks().forEach(track => {
       track.enabled = false;
     });
+    this.localStream = lStream;
+    this.setLocalVideoStream = setLocalVideoStream;
     this._trySetStreams();
   }
 
@@ -157,7 +156,6 @@ export default class CallWindow {
     }
   }
 
-  private videoStream: MediaStream | null = null;
   private _toggleVideoUI(enabled) {
     if (!this.videoBtn || !this.vLocal || !this.vLocal.parentElement) { return; } 
     if (enabled) {
@@ -172,16 +170,19 @@ export default class CallWindow {
   }
 
   toggleVideo() {
-    if (this.videoStream === null) {
+    if (!this.videoRequested) {
       navigator.mediaDevices.getUserMedia({video:true, audio:false}).then(vd => {
-        this.videoStream = vd;
-        this._trySetStreams();
+        this.videoRequested = true;
+        this.setLocalVideoStream(vd);
         this._toggleVideoUI(true);
+        this.localStream?.getVideoTracks().forEach(track => {
+          track.enabled = true;
+        })
       });
       return;
     }
     let enabled = true;
-    this.videoStream?.getVideoTracks().forEach(track => {
+    this.localStream?.getVideoTracks().forEach(track => {
       enabled = enabled && !track.enabled;
       track.enabled = enabled;
     });
@@ -190,7 +191,6 @@ export default class CallWindow {
   }
 
   remove() {
-    this.videoStream?.getTracks().forEach(t => t.stop());
     clearInterval(this.tsInterval);
     if (this.iframe.parentElement) {
       document.body.removeChild(this.iframe);   
