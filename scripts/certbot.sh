@@ -4,12 +4,12 @@ set -e
 
 # This script won't work for aws, as it's black listed
 
-echo -e "This script won't work for aws default domain names assosiated with public ips, as it's black listed in letsencrypt\nso if youre running on aws with default domain names, please press ctrl+c with in 5 seconds"
+echo -e "This script won't work for aws default domain names associated with public ips, as it's black listed in letsencrypt\nso if you're running on aws with default domain names, please press ctrl+c with in 5 seconds"
 
 sleep 5
 
 homedir=${HOME}
-echo please enter your dns name : 
+echo please enter your dns name :
 read dns_name
 echo please enter your email id:
 read emai_id
