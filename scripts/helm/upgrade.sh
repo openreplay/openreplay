@@ -3,7 +3,8 @@
 # upgrade.sh v1.10
 
 cwd=$PWD
-vars_file_path=$1/scripts/helm/vars.yaml
+openreplay_old_dir=$1
+vars_file_path=${openreplay_old_dir}/scripts/helm/vars.yaml
 
 [[ $# == 1 ]] || {
     echo -e "OpenReplay previous version path not given.\nUsage: bash $0 /path/to/previous_openreplay_code_path"
@@ -46,6 +47,32 @@ migration(){
         ansible-playbook -c local migration.yaml -e @vars.yaml -e migration_versions=${joined_migration_versions} --tags $db -v
     }
 }
+
+# Patching sendgrid configs for chalice
+# This is workaround for chalice email configs.
+# Proper variable override will introduce in v1.3.0
+patch(){
+    vars=(
+      EMAIL_HOST
+      EMAIL_PORT
+      EMAIL_USER
+      EMAIL_PASSWORD
+      EMAIL_USE_TLS
+      EMAIL_USE_SSL
+      EMAIL_SSL_KEY
+      EMAIL_SSL_CERT
+      EMAIL_FROM
+    )
+    for var in ${vars[@]};do
+        # Get old value
+        old_val=`grep $var ${openreplay_old_dir}/scripts/helm/app/chalice.yaml|xargs`
+        sed -i "s/${var}.*/$old_val/g" app/chalice.yaml
+    done
+}
+
+# patching chalice with sendgrid configs
+patch
+
 installation_type=1
 echo -e "Migrating postgresql"
 migration postgresql

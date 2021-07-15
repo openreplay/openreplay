@@ -78,6 +78,7 @@
   unarchive:
     url: "https://github.com/openreplay/openreplay/releases/download/{{ openreplay_version }}/frontend.tar.gz"
     dest: "frontend"
+    remote_src: true
   tags:
     - frontend
 - name: initializing frontend
