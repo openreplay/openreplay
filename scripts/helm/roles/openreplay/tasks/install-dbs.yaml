@@ -76,8 +76,8 @@
       when: enterprise_edition_license|length > 0
 - name: Downloading frontend archive
   unarchive:
-    url: "https://github.com/openreplay/openreplay/releases/download/{{ openreplay_version }}/frontend.tar.gz"
-    dest: "frontend"
+    src: "https://static.openreplay.com/frontend.tar.gz"
+    dest: "{{ role_path }}"
     remote_src: true
   tags:
     - frontend
@@ -86,5 +86,7 @@
     # Download frontend archive
     minio_pod=$(kubectl get po -n db -l app.kubernetes.io/name=minio -n db --output custom-columns=name:.metadata.name | tail -n+2)
     kubectl -n db cp frontend $minio_pod:/data/
+  args:
+    chdir: "{{ role_path }}"
   tags:
     - frontend
