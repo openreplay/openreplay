@@ -17,7 +17,7 @@ import Scroll from './modules/scroll';
 import Viewport from './modules/viewport';
 import Longtasks from './modules/longtasks';
 import CSSRules from './modules/cssrules';
-import { IN_BROWSER, depricationWarn } from './utils';
+import { IN_BROWSER, deprecationWarn } from './utils';
 
 import { Options as AppOptions } from './app';
 import { Options as ExceptionOptions } from './modules/exception';
@@ -27,7 +27,7 @@ import { Options as TimingOptions } from './modules/timing';
 export type Options = Partial<
   AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & TimingOptions
 > & {
-  projectID?: number; // For the back compatibility only (depricated)
+  projectID?: number; // For the back compatibility only (deprecated)
   projectKey: string;
   sessionToken?: string;
   respectDoNotTrack?: boolean;
@@ -46,10 +46,10 @@ function processOptions(obj: any): obj is Options {
     if (typeof obj.projectKey !== 'number') {
       if (typeof obj.projectID !== 'number') { // Back compatability
         console.error(`OpenReplay: projectKey is missing or wrong type (string is expected). Please, check https://docs.openreplay.com${ DOCS_SETUP } for more information.`)
-        return false 
+        return false
       } else {
         obj.projectKey = obj.projectID.toString();
-        depricationWarn("`projectID` option", "`projectKey` option", DOCS_SETUP)
+        deprecationWarn("`projectID` option", "`projectKey` option", DOCS_SETUP)
       }
     } else {
       console.warn("OpenReplay: projectKey is expected to have a string type.")
@@ -99,7 +99,7 @@ export default class API {
       Longtasks(this.app);
       (window as any).__OPENREPLAY__ = (window as any).__OPENREPLAY__ || this;
     } else {
-      console.log("OpenReplay: broeser doesn't support API required for tracking.")
+      console.log("OpenReplay: browser doesn't support API required for tracking.")
       const req = new XMLHttpRequest();
       const orig = options.ingestPoint || DEFAULT_INGEST_POINT;
       req.open("POST", orig + "/v1/web/not-started");
@@ -125,7 +125,7 @@ export default class API {
     return this.app.active();
   }
   active(): boolean {
-    depricationWarn("'active' method", "'isActive' method", "/")
+    deprecationWarn("'active' method", "'isActive' method", "/")
     return this.isActive();
   }
 
@@ -159,7 +159,7 @@ export default class API {
     return this.app.getSessionID();
   }
   sessionID(): string | null | undefined {
-    depricationWarn("'sessionID' method", "'getSessionID' method", "/");
+    deprecationWarn("'sessionID' method", "'getSessionID' method", "/");
     return this.getSessionID();
   }
 
@@ -169,7 +169,7 @@ export default class API {
     }
   }
   userID(id: string): void {
-    depricationWarn("'userID' method", "'setUserID' method", "/");
+    deprecationWarn("'userID' method", "'setUserID' method", "/");
     this.setUserID(id);
   }
 
@@ -179,7 +179,7 @@ export default class API {
     }
   }
   userAnonymousID(id: string): void {
-    depricationWarn("'userAnonymousID' method", "'setUserAnonymousID' method", "/")
+    deprecationWarn("'userAnonymousID' method", "'setUserAnonymousID' method", "/")
     this.setUserAnonymousID(id);
   }
 
@@ -193,7 +193,7 @@ export default class API {
     }
   }
   metadata(key: string, value: string): void {
-    depricationWarn("'metadata' method", "'setMetadata' method", "/")
+    deprecationWarn("'metadata' method", "'setMetadata' method", "/")
     this.setMetadata(key, value);
   }
 
@@ -231,7 +231,7 @@ export default class API {
 
   handleErrorEvent = (e: ErrorEvent | PromiseRejectionEvent) => {
     if (
-      (e instanceof ErrorEvent || 
+      (e instanceof ErrorEvent ||
         ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
       ) &&
       this.app !== null

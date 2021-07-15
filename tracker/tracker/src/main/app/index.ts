@@ -130,11 +130,11 @@ export default class App {
       try {
         fn.apply(this, args);
       } catch (e) {
-        app.send(new TechnicalInfo("error", JSON.stringify({ 
-          time: timestamp(), 
-          name: e.name, 
+        app.send(new TechnicalInfo("error", JSON.stringify({
+          time: timestamp(),
+          name: e.name,
           message: e.message,
-          stack: e.stack 
+          stack: e.stack
         })));
       }
     } as any // TODO: correct typing
@@ -163,7 +163,7 @@ export default class App {
       target.removeEventListener(type, listener, useCapture),
     );
   }
-  
+
   getSessionToken(): string | undefined {
     const token = sessionStorage.getItem(this.options.session_token_key);
     if (token !== null) {
@@ -188,7 +188,7 @@ export default class App {
     if (!this.isActive) {
       this.isActive = true;
       if (!this.worker) {
-        throw new Error("Stranger things: no worker found"); 
+        throw new Error("Stranger things: no worker found");
       }
 
       let pageNo: number = 0;
@@ -200,15 +200,15 @@ export default class App {
       sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
       const startTimestamp = timestamp();
 
-      const messageData: WorkerMessageData = { 
-        ingestPoint: this.options.ingestPoint, 
-        pageNo, 
+      const messageData: WorkerMessageData = {
+        ingestPoint: this.options.ingestPoint,
+        pageNo,
         startTimestamp,
         connAttemptCount: this.options.connAttemptCount,
         connAttemptGap: this.options.connAttemptGap,
       }
-      this.worker.postMessage(messageData); // brings delay of 10th ms?  
-      window.fetch(this.options.ingestPoint + '/v1/web/start', { 
+      this.worker.postMessage(messageData); // brings delay of 10th ms?
+      window.fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -235,9 +235,9 @@ export default class App {
       })
       .then(r => {
         const { token, userUUID, sessionID } = r;
-        if (typeof token !== 'string' || 
+        if (typeof token !== 'string' ||
             typeof userUUID !== 'string') {
-          throw new Error("Incorrect server responce");
+          throw new Error("Incorrect server response");
         }
         sessionStorage.setItem(this.options.session_token_key, token);
         localStorage.setItem(this.options.local_uuid_key, userUUID);
@@ -245,7 +245,7 @@ export default class App {
           this._sessionID = sessionID;
         }
         if (!this.worker) {
-          throw new Error("Stranger things: no worker found after start request"); 
+          throw new Error("Stranger things: no worker found after start request");
         }
         this.worker.postMessage({ token });
         this.observer.observe();
