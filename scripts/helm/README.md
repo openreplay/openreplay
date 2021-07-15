@@ -1,6 +1,6 @@
 ## Helm charts for installing OpenReplay components 
 
-Installation components are separated by namepaces.
+Installation components are separated by namespaces.
 
 **Namespace:**
   
