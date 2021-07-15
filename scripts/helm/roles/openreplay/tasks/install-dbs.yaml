@@ -76,7 +76,7 @@
       when: enterprise_edition_license|length > 0
 - name: Downloading frontend archive
   unarchive:
-    src: "https://static.openreplay.com/frontend.tar.gz"
+    src: "https://github.com/openreplay/openreplay/releases/download/{{ openreplay_version }}/frontend.tar.gz"
     dest: "{{ role_path }}"
     remote_src: true
   tags:
