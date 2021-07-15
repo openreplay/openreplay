@@ -250,7 +250,7 @@ def get_details(project_id, error_id, user_id, **data):
         # print("--------------------")
         row = ch.execute(query=main_ch_query, params=params)
     if len(row) == 0:
-        return {"errors": ["error doesn't exist"]}
+        return {"errors": ["error not found"]}
     row = row[0]
     row["tags"] = __process_tags(row)
     with pg_client.PostgresClient() as cur:
@@ -406,7 +406,7 @@ def get_details_chart(project_id, error_id, user_id, **data):
         # print(main_ch_query % params)
         row = ch.execute(query=main_ch_query, params=params)
     if len(row) == 0:
-        return {"errors": ["error doesn't exist"]}
+        return {"errors": ["error not found"]}
     row = row[0]
     row["tags"] = __process_tags(row)
     row["chart"] = __rearrange_chart_details(start_at=data["startDate"], end_at=data["endDate"], density=density,
