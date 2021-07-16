@@ -3,30 +3,29 @@ from chalicelib.core import events, sessions_metas, socket_ios, metadata, events
     sessions_mobs, issues, projects, errors, resources, assist
 
 SESSION_PROJECTION_COLS = """s.project_id,
-                           s.session_id::text AS session_id,
-                           s.user_uuid,
-                           s.user_id,
-                           s.user_agent,
-                           s.user_os,
-                           s.user_browser,
-                           s.user_device,
-                           s.user_device_type,
-                           s.user_country,
-                           s.start_ts,
-                           s.duration,
-                           s.events_count,
-                           s.pages_count,
-                           s.errors_count,
-                           s.user_anonymous_id,
-                           s.platform,
-                           s.issue_score,
-                           to_jsonb(s.issue_types) AS issue_types,
-                            favorite_sessions.session_id NOTNULL            AS favorite,
-                            COALESCE((SELECT TRUE
-                             FROM public.user_viewed_sessions AS fs
-                             WHERE s.session_id = fs.session_id
-                               AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
-                               """
+s.session_id::text AS session_id,
+s.user_uuid,
+s.user_id,
+s.user_agent,
+s.user_os,
+s.user_browser,
+s.user_device,
+s.user_device_type,
+s.user_country,
+s.start_ts,
+s.duration,
+s.events_count,
+s.pages_count,
+s.errors_count,
+s.user_anonymous_id,
+s.platform,
+s.issue_score,
+to_jsonb(s.issue_types) AS issue_types,
+favorite_sessions.session_id NOTNULL            AS favorite,
+COALESCE((SELECT TRUE
+ FROM public.user_viewed_sessions AS fs
+ WHERE s.session_id = fs.session_id
+   AND fs.user_id = %(userId)s LIMIT 1), FALSE) AS viewed """
 
 
 def __group_metadata(session, project_metadata):
@@ -120,7 +119,14 @@ new_line = "\n"
 
 def __get_sql_operator(op):
     op = op.lower()
-    return "=" if op == "is" or op == "on" else "!=" if op == "isnot" else "ILIKE" if op == "contains" else "NOT ILIKE" if op == "notcontains" else "="
+    return {
+        "is": "=",
+        "on": "=",
+        "isnot": "!=",
+        "noton": "!=",
+        "contains": "ILIKE",
+        "notcontains": "NOT ILIKE",
+    }.get(op, "=")
 
 
 def __is_negation_operator(op):
@@ -165,7 +171,6 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
             fav_only_join = "LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id"
             extra_constraints.append(cur.mogrify("fs.user_id = %(userId)s", {"userId": user_id}))
         events_query_part = ""
-        strict = True
 
         if len(data.get("events", [])) > 0:
             events_query_from = []
@@ -182,10 +187,16 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                 if __is_negation_operator(op) and event_index > 0:
                     is_not = True
                     op = __reverse_sql_operator(op)
-                event_from = "%s INNER JOIN public.sessions AS ms USING (session_id)"
-                event_where = ["ms.project_id = %(projectId)s", "main.timestamp >= %(startDate)s",
-                               "main.timestamp <= %(endDate)s", "ms.start_ts >= %(startDate)s",
-                               "ms.start_ts <= %(endDate)s"]
+                if event_index == 0:
+                    event_from = "%s INNER JOIN public.sessions AS ms USING (session_id)"
+                    event_where = ["ms.project_id = %(projectId)s", "main.timestamp >= %(startDate)s",
+                                   "main.timestamp <= %(endDate)s", "ms.start_ts >= %(startDate)s",
+                                   "ms.start_ts <= %(endDate)s", "ms.duration IS NOT NULL"]
+                else:
+                    event_from = "%s"
+                    event_where = ["main.timestamp >= %(startDate)s", "main.timestamp <= %(endDate)s",
+                                   f"event_{event_index - 1}.timestamp <= main.timestamp",
+                                   "main.session_id=event_0.session_id"]
                 event_args = {"value": helper.string_to_sql_like_with_op(event['value'], op)}
                 if event_type not in list(events.SUPPORTED_TYPES.keys()) \
                         or event.get("value") in [None, "", "*"] \
@@ -267,29 +278,26 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                 else:
                     continue
 
-                event_index += 1
                 if is_not:
                     event_from += f""" LEFT JOIN (SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) AS left_not USING (session_id)"""
                     event_where[-1] = "left_not.session_id ISNULL"
+
                 events_query_from.append(cur.mogrify(f"""\
                 (SELECT
                     main.session_id, {'seq_index' if seq_id else 'message_id %%%% 2147483647 AS seq_index'}, timestamp, {event_index} AS funnel_step
                   FROM {event_from}
                   WHERE {" AND ".join(event_where)}
-                )\
+                ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
-
-            if len(events_query_from) > 0:
-                events_query_part = f"""\
-                    SELECT
-                        session_id, MIN(timestamp) AS first_event_ts, MAX(timestamp) AS last_event_ts
-                    FROM
-                    ({(" UNION ALL ").join(events_query_from)}) AS f_query
-                    GROUP BY 1
-                    {"" if event_index < 2 else f"HAVING events.funnel(array_agg(funnel_step ORDER BY timestamp,seq_index ASC), {event_index})" if strict
-                else f"HAVING array_length(array_agg(DISTINCT funnel_step), 1) = {len(data['events'])}"}
-                {fav_only_join}
-                """
+                event_index += 1
+            if event_index > 0:
+                events_query_part = f"""SELECT
+                                            event_0.session_id, 
+                                            MIN(event_0.timestamp) AS first_event_ts, 
+                                            MAX(event_{event_index - 1}.timestamp) AS last_event_ts
+                                        FROM {(" INNER JOIN LATERAL ").join(events_query_from)}
+                                        GROUP BY 1
+                                        {fav_only_join}"""
         else:
             data["events"] = []
 
@@ -423,8 +431,7 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                       {" AND ".join(extra_constraints)}"""
 
         if errors_only:
-            main_query = cur.mogrify(f"""\
-                                SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
+            main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
                                         COALESCE((SELECT TRUE
                                          FROM public.user_favorite_sessions AS fs
                                          WHERE s.session_id = fs.session_id
@@ -437,21 +444,20 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                                      generic_args)
 
         elif count_only:
-            main_query = cur.mogrify(f"""\
-                                        SELECT COUNT(DISTINCT s.session_id) AS count_sessions, COUNT(DISTINCT s.user_uuid) AS count_users
+            main_query = cur.mogrify(
+                f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""",
-                                     generic_args)
+                generic_args)
         else:
-            main_query = cur.mogrify(f"""\
-                                        SELECT * FROM
+            main_query = cur.mogrify(f"""SELECT * FROM
                                         (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                         {query_part}
                                         ORDER BY s.session_id desc) AS filtred_sessions
                                         ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
                                      generic_args)
 
-        # print("--------------------")
-        # print(main_query)
+        print("--------------------")
+        print(main_query)
 
         cur.execute(main_query)
 
