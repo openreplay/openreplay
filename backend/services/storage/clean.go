@@ -19,7 +19,7 @@ func cleanDir(dirname string) {
   	return
   }
 
-	for f := range files {
+	for _, f := range files {
 		name := f.Name()
 		id, err := strconv.ParseUint(name, 10, 64)
 		if err != nil {
