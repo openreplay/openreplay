@@ -24,14 +24,15 @@ func main() {
 
 	storageWeb := storage.NewS3(env.String("AWS_REGION_WEB"), env.String("S3_BUCKET_WEB"))
 	//storageIos := storage.NewS3(env.String("AWS_REGION_IOS"), env.String("S3_BUCKET_IOS"))
-	FS_DIR := env.String("FS_DIR") + "/"
+	FS_DIR := env.String("FS_DIR")
+	FS_CLEAN_HRS := env.Int("FS_CLEAN_HRS")
 
 	var uploadKey func(string, int, *storage.S3)
 	uploadKey = func(key string, retryCount int, s *storage.S3) {
 		if retryCount <= 0 {
 			return;
 		}
-		file, err := os.Open(FS_DIR + key)
+		file, err := os.Open(FS_DIR + "/" + key)
 		defer file.Close()
 		if err != nil {
 			log.Printf("File error: %v; Will retry %v more time(s)\n", err, retryCount)
@@ -63,13 +64,19 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
   signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-  log.Println("Start consuming")
+
+  cleanTick := time.Tick(time.Duration(FS_CLEAN_HRS) * time.Hour)
+
+
+  log.Println("Storage: start consuming")
 	for {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			consumer.Close()
 			os.Exit(0)
+		case <-cleanTick:
+			cleanDir(FS_DIR)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
