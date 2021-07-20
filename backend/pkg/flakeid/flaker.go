@@ -42,6 +42,6 @@ func (flaker *Flaker) Compose(timestamp uint64) (uint64, error) {
 	return compose(timestamp, flaker.shardID, flaker.nextSeqID()), nil
 }
 
-func (flaker *Flaker) ExtractTimestamp(id uint64) uint64 {
+func ExtractTimestamp(id uint64) uint64 {
 	return extractTimestamp(id) + EPOCH
 }
