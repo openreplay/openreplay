@@ -63,7 +63,6 @@ export default class Login extends React.Component {
             <form onSubmit={ this.onSubmit }>
               <div className="mb-8">
                 <h2 className="text-center text-3xl mb-6">Login to Stack RePlay</h2>
-                { tenants.length === 0 && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
               </div>
               <Loader loading={ loading }>
                 { window.ENV.CAPTCHA_ENABLED && (
