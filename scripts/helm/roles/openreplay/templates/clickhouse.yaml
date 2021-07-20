@@ -1,7 +1,11 @@
+{% if db_resource_override.clickhouse %}{
+{{ db_resource_override.clickhouse|to_nice_yaml(indent=2) }}
+{% else %}
 resources:
   limits:
-    cpu: {{ ( 100 * scale|float ) | int }}m
-    memory: {{ ( 512 * scale|float ) | int }}Mi
+    cpu: {{ ( 2000 * scale|float ) | int }}m
+    memory: {{ ( 4096 * scale|float ) | int }}Mi
   requests:
     cpu: 100m
     memory: 128Mi
+{% endif %}

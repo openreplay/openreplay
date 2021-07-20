@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { Input, Button, Label } from 'UI';
 import { save, edit, update , fetchList } from 'Duck/site';
-import { pushNewSite } from 'Duck/user';
+import { pushNewSite, setSiteId } from 'Duck/user';
 import styles from './siteForm.css';
 
 @connect(state => ({
@@ -14,7 +14,8 @@ import styles from './siteForm.css';
 	edit,
 	update,
 	pushNewSite,
-	fetchList
+	fetchList,
+  setSiteId
 })
 export default class NewSiteForm extends React.PureComponent {
 	state = {
@@ -34,8 +35,12 @@ export default class NewSiteForm extends React.PureComponent {
 			})
 		} else {
 			this.props.save(this.props.site).then(() => {
-				const { sites } = this.props;
-				this.props.onClose(null, sites.last())
+				const { sites } = this.props;        
+        const site = sites.last();
+
+        this.props.pushNewSite(site)
+        this.props.setSiteId(site.id)
+				this.props.onClose(null, site)
 			});
 		}
 	}

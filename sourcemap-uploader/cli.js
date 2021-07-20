@@ -21,7 +21,8 @@ parser.addArgument(['-p', '-i', '--project-key'], { // -i is depricated
 parser.addArgument(['-s', '--server'], {
   help: 'OpenReplay API server URL for upload',
 });
-parser.addArgument(['-v', '--verbose'], {
+// Should be verbose, but conflicting on npm compilation into bin
+parser.addArgument(['-l', '--logs'], {
   help: 'Log requests information',
   action: 'storeTrue',
 });

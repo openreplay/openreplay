@@ -20,7 +20,7 @@ function FunnelSessionList(props) {
       <FunnelSessionsHeader sessionsCount={inDetails ? sessionsTotal : list.size} inDetails={inDetails} />
       <div className="mb-4" />
       <NoContent
-        title="No Sessions Found!"
+        title="No recordings found!"
         subtext="Please try changing your search parameters."
         icon="exclamation-circle"
         show={ list.size === 0}

@@ -5,7 +5,7 @@ import styles from './screen.css';
 import { getState } from '../../../store';
 import BaseScreen from './BaseScreen';
 
-export { INITIAL_STATE } from './BaseScreen';
+export { INITIAL_STATE, State } from './BaseScreen';
 
 export default class Screen extends BaseScreen {
   private cursor: Cursor;
@@ -39,8 +39,8 @@ export default class Screen extends BaseScreen {
       this.marker = new Marker(this.substitutor.overlay, this.substitutor);
       this.inspector = new Inspector(this.substitutor, this.marker);
       //this.inspector.addClickListener(clickCallback, true);
-      this.substitutor.attach(this.parentElement);
-    }  
+      this.substitutor.attach(this.parentElement);          
+    }
 
     this.substitutor.display(false);
    
@@ -67,7 +67,7 @@ export default class Screen extends BaseScreen {
     this.substitutor.display(true);
     return doc;
   }
-
+  
   disableInspector() {
     if (this.substitutor) {
       const doc = this.substitutor.document;

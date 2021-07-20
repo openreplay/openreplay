@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper, dev
 from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources
+    sessions_mobs, issues, projects, errors, resources, assist
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -54,7 +54,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
             f"""\
             SELECT
                 s.*,
-                s.session_id::text AS session_id
+                s.session_id::text AS session_id,
+                (SELECT project_key FROM public.projects WHERE project_id = %(project_id)s LIMIT 1) AS project_key
                 {"," if len(extra_query) > 0 else ""}{",".join(extra_query)}
                 {(",json_build_object(" + ",".join([f"'{m}',p.{m}" for m in metadata._get_column_names()]) + ") AS project_metadata") if group_metadata else ''}
             FROM public.sessions AS s {"INNER JOIN public.projects AS p USING (project_id)" if group_metadata else ""}
@@ -99,6 +100,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id)
+                data['live'] = assist.is_live(project_id=project_id, session_id=session_id,
+                                              project_key=data["projectKey"])
 
             return data
     return None
