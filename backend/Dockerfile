@@ -47,12 +47,11 @@ RUN wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yam
 
 COPY --from=build /root/bin /root/bin
 
-#ENTRYPOINT /root/bin/http
-
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]
 
+CMD ./entrypoint.sh
 
-CMD for name in alerts assets db ender http integrations sink storage;do nohup bin/$name &> /tmp/${name}.log ; done
+# CMD for name in alerts assets db ender http integrations sink storage;do nohup bin/$name &> /tmp/${name}.log ; done
