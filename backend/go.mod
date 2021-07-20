@@ -17,5 +17,6 @@ require (
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.5.2
 	github.com/ClickHouse/clickhouse-go v1.4.3
+	github.com/Masterminds/squirrel v1.5.0
 	github.com/aws/aws-sdk-go v1.35.23
 )
