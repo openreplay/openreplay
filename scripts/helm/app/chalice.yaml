@@ -20,7 +20,6 @@ resources:
     cpu: 1m
     memory: 1Mi
 env:
-  AWS_DEFAULT_REGION: us-east-1
   pg_host: postgresql.db.svc.cluster.local
   pg_port: 5432
   pg_dbname: postgres
@@ -28,19 +27,8 @@ env:
   pg_password: asayerPostgres
   ch_host: clickhouse.db.svc.cluster.local
   ch_port: 9000
-  alert_ntf: http://127.0.0.1:8000/async/alerts/notifications/%s
-  email_signup: http://127.0.0.1:8000/async/email_signup/%s
-  email_funnel: http://127.0.0.1:8000/async/funnel/%s
-  email_plans: http://127.0.0.1:8000/async/plans/%s
-  email_basic: http://127.0.0.1:8000/async/basic/%s
-  assign_link: http://127.0.0.1:8000/async/email_assignment
   captcha_server: ''
   captcha_key: ''
-  sessions_bucket: mobs
-  sessions_region: us-east-1
-  put_S3_TTL: '20'
-  sourcemaps_bucket: sourcemaps
-  js_cache_bucket: sessions-assets
   async_Token: ''
   EMAIL_HOST: ''
   EMAIL_PORT: '587'
