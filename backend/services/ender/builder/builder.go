@@ -187,6 +187,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 				Label:          msg.Label,
 				HesitationTime: msg.HesitationTime,
 				Timestamp:      b.timestamp,
+				Selector:       msg.Selector,
 			})
 		}
 	case *JSException:

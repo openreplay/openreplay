@@ -105,11 +105,16 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 	defer tx.rollback()
 	if err = tx.exec(`
 		INSERT INTO events.clicks
-			(session_id, message_id, timestamp, label)
+			(session_id, message_id, timestamp, label, selector, url)
+		(SELECT
+			$1, $2, $3, NULLIF($4, ''), $5, host || base_path
+			FROM events.pages
+			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
+		)
 		VALUES
-			($1, $2, $3, NULLIF($4, ''))
+			($1, $2, $3, NULLIF($4, ''), $5, SELECT)
 		`,
-		sessionID, e.MessageID, e.Timestamp, e.Label,
+		sessionID, e.MessageID, e.Timestamp, e.Label, e.Selector,
 	); err != nil {
 		return err
 	}

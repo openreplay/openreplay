@@ -61,13 +61,13 @@ const textEncoder: { encode(str: string): Uint8Array } =
 
 export default class Writer {
   private offset: number = 0;
-  private checkpontOffset: number = 0;
+  private checkpointOffset: number = 0;
   private readonly data: Uint8Array;
   constructor(private readonly size: number) {
     this.data = new Uint8Array(size);
   }
   checkpoint(): void {
-    this.checkpontOffset = this.offset;
+    this.checkpointOffset = this.offset;
   }
   isEmpty(): boolean {
     return this.offset === 0;
@@ -100,10 +100,10 @@ export default class Writer {
   }
   reset(): void {
     this.offset = 0;
-    this.checkpontOffset = 0;
+    this.checkpointOffset = 0;
   }
   flush(): Uint8Array {
-    const data = this.data.slice(0, this.checkpontOffset);
+    const data = this.data.slice(0, this.checkpointOffset);
     this.reset();
     return data;
   }
