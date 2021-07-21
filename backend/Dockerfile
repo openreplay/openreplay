@@ -12,6 +12,7 @@ RUN go mod download
 RUN for name in alerts assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
 
 FROM alpine
+#FROM pygmy/alpine-tini:latest
 RUN apk add --no-cache ca-certificates
 
 ENV TZ=UTC \
@@ -50,8 +51,8 @@ COPY --from=build /root/bin /root/bin
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
-ENTRYPOINT ["/tini", "--"]
 
-CMD ./entrypoint.sh
+ENTRYPOINT ["/tini", "--", "./entrypoint.sh"]
 
-# CMD for name in alerts assets db ender http integrations sink storage;do nohup bin/$name &> /tmp/${name}.log ; done
+#CMD ./entrypoint.sh
+
