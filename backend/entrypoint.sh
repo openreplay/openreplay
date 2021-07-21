@@ -1,3 +1,3 @@
-#!/bin/bash
+#!/bin/sh
 
-for name in alerts assets db ender http integrations sink storage;do nohup bin/$name &> /tmp/${name}.log ; done
+for name in alerts assets db ender http integrations sink storage;do nohup bin/$name | awk -v log_from="[$name]: " '{print log_from, $0}' ; done
