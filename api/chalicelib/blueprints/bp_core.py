@@ -11,7 +11,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist
+    assist, heatmaps
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
 
@@ -882,3 +882,9 @@ def removed_endpoints(projectId=None, context=None):
 def sessions_live(projectId, context):
     data = assist.get_live_sessions(projectId)
     return {'data': data}
+
+
+@app.route('/{projectId}/heatmaps/url', methods=['POST'])
+def get_heatmaps_by_url(projectId, context):
+    data = app.current_request.json_body
+    return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
