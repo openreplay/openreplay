@@ -534,6 +534,8 @@ CREATE INDEX sessions_user_anonymous_id_gin_idx ON public.sessions USING GIN (us
 CREATE INDEX sessions_user_country_gin_idx ON public.sessions (project_id, user_country);
 CREATE INDEX ON sessions (project_id, user_country);
 CREATE INDEX ON sessions (project_id, user_browser);
+CREATE INDEX sessions_session_id_project_id_start_ts_durationNN_idx ON sessions (session_id, project_id, start_ts) WHERE duration IS NOT NULL;
+
 
 ALTER TABLE public.sessions
     ADD CONSTRAINT web_browser_constraint CHECK ( (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
@@ -574,6 +576,7 @@ create table assigned_sessions
     created_at    timestamp default timezone('utc'::text, now()) NOT NULL,
     provider_data jsonb     default '{}'::jsonb                  NOT NULL
 );
+CREATE INDEX ON assigned_sessions(session_id);
 
 -- --- events_common.sql ---
 
@@ -677,6 +680,7 @@ CREATE INDEX pages_path_idx ON events.pages (path);
 CREATE INDEX pages_visually_complete_idx ON events.pages (visually_complete) WHERE visually_complete > 0;
 CREATE INDEX pages_dom_building_time_idx ON events.pages (dom_building_time) WHERE dom_building_time > 0;
 CREATE INDEX pages_load_time_idx ON events.pages (load_time) WHERE load_time > 0;
+CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path,session_id,timestamp);
 
 
 CREATE TABLE events.clicks
@@ -691,6 +695,7 @@ CREATE INDEX ON events.clicks (session_id);
 CREATE INDEX ON events.clicks (label);
 CREATE INDEX clicks_label_gin_idx ON events.clicks USING GIN (label gin_trgm_ops);
 CREATE INDEX ON events.clicks (timestamp);
+CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label,session_id,timestamp);
 
 CREATE TABLE events.inputs
 (
@@ -706,6 +711,7 @@ CREATE INDEX ON events.inputs (label, value);
 CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops);
 CREATE INDEX inputs_label_idx ON events.inputs (label);
 CREATE INDEX ON events.inputs (timestamp);
+CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label,session_id,timestamp);
 
 CREATE TABLE events.errors
 (

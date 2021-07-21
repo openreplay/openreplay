@@ -177,14 +177,12 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
             event_index = 0
 
             for event in data["events"]:
-                # TODO: remove this when message_id is removed
-                seq_id = False
                 event_type = event["type"].upper()
                 if event.get("operator") is None:
                     event["operator"] = "is"
                 op = __get_sql_operator(event["operator"])
                 is_not = False
-                if __is_negation_operator(op) and event_index > 0:
+                if __is_negation_operator(op):
                     is_not = True
                     op = __reverse_sql_operator(op)
                 if event_index == 0:
@@ -217,11 +215,9 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                     event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                     event_where.append(f"main.{events.event_type.LOCATION.column} {op} %(value)s")
                 elif event_type == events.event_type.CUSTOM.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
                     event_where.append(f"main.{events.event_type.CUSTOM.column} {op} %(value)s")
                 elif event_type == events.event_type.REQUEST.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
                     event_where.append(f"main.{events.event_type.REQUEST.column} {op} %(value)s")
                 elif event_type == events.event_type.GRAPHQL.ui_type:
@@ -245,12 +241,10 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
 
                 # ----- IOS
                 elif event_type == events.event_type.CLICK_IOS.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.CLICK_IOS.table} AS main "
                     event_where.append(f"main.{events.event_type.CLICK_IOS.column} {op} %(value)s")
 
                 elif event_type == events.event_type.INPUT_IOS.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.INPUT_IOS.table} AS main "
                     event_where.append(f"main.{events.event_type.INPUT_IOS.column} {op} %(value)s")
 
@@ -258,19 +252,15 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                         event_where.append("main.value ILIKE %(custom)s")
                         event_args["custom"] = helper.string_to_sql_like_with_op(event['custom'], "ILIKE")
                 elif event_type == events.event_type.VIEW_IOS.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "
                     event_where.append(f"main.{events.event_type.VIEW_IOS.column} {op} %(value)s")
                 elif event_type == events.event_type.CUSTOM_IOS.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.CUSTOM_IOS.table} AS main "
                     event_where.append(f"main.{events.event_type.CUSTOM_IOS.column} {op} %(value)s")
                 elif event_type == events.event_type.REQUEST_IOS.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.REQUEST_IOS.table} AS main "
                     event_where.append(f"main.{events.event_type.REQUEST_IOS.column} {op} %(value)s")
                 elif event_type == events.event_type.ERROR_IOS.ui_type:
-                    seq_id = True
                     event_from = event_from % f"{events.event_type.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                     if event.get("value") not in [None, "*", ""]:
                         event_where.append(f"(main1.reason {op} %(value)s OR main1.name {op} %(value)s)")
@@ -279,14 +269,38 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                     continue
 
                 if is_not:
-                    event_from += f""" LEFT JOIN (SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) AS left_not USING (session_id)"""
-                    event_where[-1] = "left_not.session_id ISNULL"
-
-                events_query_from.append(cur.mogrify(f"""\
+                    if event_index == 0:
+                        events_query_from.append(cur.mogrify(f"""\
+                                        (SELECT
+                                            session_id, 
+                                            0 AS timestamp, 
+                                            {event_index} AS funnel_step
+                                          FROM sessions
+                                          WHERE EXISTS(SELECT session_id 
+                                                        FROM {event_from} 
+                                                        WHERE {" AND ".join(event_where)} 
+                                                            AND sessions.session_id=ms.session_id) IS FALSE
+                                            AND project_id = %(projectId)s 
+                                            AND start_ts >= %(startDate)s
+                                            AND start_ts <= %(endDate)s
+                                            AND duration IS NOT NULL
+                                        ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
+                                        """, {**generic_args, **event_args}).decode('UTF-8'))
+                    else:
+                        events_query_from.append(cur.mogrify(f"""\
                 (SELECT
-                    main.session_id, {'seq_index' if seq_id else 'message_id %%%% 2147483647 AS seq_index'}, timestamp, {event_index} AS funnel_step
+                    event_0.session_id, 
+                    event_{event_index - 1}.timestamp AS timestamp, 
+                    {event_index} AS funnel_step
+                  WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) IS FALSE
+                ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
+                """, {**generic_args, **event_args}).decode('UTF-8'))
+                else:
+                    events_query_from.append(cur.mogrify(f"""\
+                (SELECT main.session_id, MIN(timestamp) AS timestamp,{event_index} AS funnel_step
                   FROM {event_from}
                   WHERE {" AND ".join(event_where)}
+                  GROUP BY 1
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
                 event_index += 1
@@ -456,8 +470,8 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                                         ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
                                      generic_args)
 
-        print("--------------------")
-        print(main_query)
+        # print("--------------------")
+        # print(main_query)
 
         cur.execute(main_query)
 
