@@ -1,15 +1,20 @@
-FROM golang:1.13-alpine3.10 AS build
+FROM golang:1.13-alpine3.10 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
 
 WORKDIR /root
 
-COPY . .
-
+COPY go.mod .
+COPY go.sum .
 RUN go mod download
 
 
+FROM prepare AS build
+COPY pkg pkg
+COPY services services
+
 RUN for name in alerts assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
+
 
 FROM alpine
 #FROM pygmy/alpine-tini:latest
@@ -46,13 +51,22 @@ RUN wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yam
   wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"
 
 
-COPY --from=build /root/bin /root/bin
+WORKDIR /work
+
+COPY --from=build /root/bin ./bin
+COPY entrypoint.sh .
+
+###
+
+#ENTRYPOINT ./entrypoint.sh
 
 ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
+RUN chmod +x ./tini
 
-ENTRYPOINT ["/tini", "--", "./entrypoint.sh"]
-
+#ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini /tini
+#ENTRYPOINT [ "ls", "-l", "."]
+ENTRYPOINT [ "./tini", "--", "sh", "./entrypoint.sh" ]
+#ENTRYPOINT ["/usr/bin/tini", "--"]
 #CMD ./entrypoint.sh
 
