@@ -107,6 +107,11 @@ export default class APIClient {
       edp = `${ edp }/${ this.siteId }`
     }
 
+    if(path.includes(this.siteId + '/errors/')){
+      this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
+      return fetch('https://api.stackanalytix.com/v2/api/Replay/getErrors/'+ path , this.init);
+    }
+
     if(path.includes('/errors/stats')){
       this.init.headers.Authorization = `Bearer ${ this.stkJWT }`;
       return fetch('https://api.stackanalytix.com/v2/api/Replay/errors', this.init);
