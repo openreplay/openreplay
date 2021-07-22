@@ -66,7 +66,7 @@ func main() {
 			w.Header().Set("Access-Control-Allow-Methods", "POST")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 			if r.Method == http.MethodOptions {
-				w.Header().Set("Cache-Control", "max-age=86400")
+				//w.Header().Set("Cache-Control", "max-age=86400")
 				w.WriteHeader(http.StatusOK)
 				return
 			}
