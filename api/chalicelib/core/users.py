@@ -9,20 +9,22 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import environ
 
 from chalicelib.core import tenants
+import secrets
 
 
-def create_new_member(email, password, admin, name, owner=False):
+def create_new_member(email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
-                    WITH u AS (
-                        INSERT INTO public.users (email, role, name, data)
-                            VALUES (%(email)s, %(role)s, %(name)s, %(data)s)
-                            RETURNING user_id,email,role,name,appearance
-                    ),
-                         au AS (INSERT
-                             INTO public.basic_authentication (user_id, password, generated_password)
-                                 VALUES ((SELECT user_id FROM u), crypt(%(password)s, gen_salt('bf', 12)), TRUE))
-                    SELECT u.user_id                                              AS id,
+                    WITH u AS (INSERT INTO public.users (email, role, name, data)
+                                VALUES (%(email)s, %(role)s, %(name)s, %(data)s)
+                                RETURNING user_id,email,role,name,appearance
+                            ),
+                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
+                             VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
+                             RETURNING invitation_token
+                            )
+                    SELECT u.user_id,
+                           u.user_id                                              AS id,
                            u.email,
                            u.role,
                            u.name,
@@ -30,11 +32,12 @@ def create_new_member(email, password, admin, name, owner=False):
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           u.appearance
-                    FROM u;""",
-                            {"email": email, "password": password,
+                            au.invitation_token
+                    FROM u,au;""",
+                            {"email": email, "password": invitation_token,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
-                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
+                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+                             "invitation_token": invitation_token})
         cur.execute(
             query
         )
@@ -166,23 +169,24 @@ def create_member(tenant_id, user_id, data):
         return {"errors": ["invalid user name"]}
     if name is None:
         name = data["email"]
-    temp_pass = helper.generate_salt()[:8]
+    invitation_token = secrets.token_urlsafe(40)
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
-        new_member = restore_member(email=data["email"], password=temp_pass,
+        new_member = restore_member(email=data["email"], password=invitation_token,
                                     admin=data.get("admin", False), name=name, user_id=user["userId"])
     else:
-        new_member = create_new_member(email=data["email"], password=temp_pass,
+        new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
 
     helper.async_post(environ['email_basic'] % 'member_invitation',
                       {
                           "email": data["email"],
                           "userName": data["email"],
-                          "tempPassword": temp_pass,
+                          "tempPassword": invitation_token,
                           "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
                           "senderName": admin["name"]
                       })
+    new_member["invitationLink"] = environ["SITE_URL"]+environ["invitation_link"] % new_member.pop("invitationToken")
     return {"data": new_member}
 
 

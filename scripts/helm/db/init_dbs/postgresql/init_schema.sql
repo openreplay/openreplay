@@ -122,12 +122,13 @@ CREATE TABLE users
 
 CREATE TABLE basic_authentication
 (
-    user_id            integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-    password           text                                 DEFAULT NULL,
-    generated_password boolean                     NOT NULL DEFAULT false,
-    token              text                        NULL     DEFAULT NULL,
-    token_requested_at timestamp without time zone NULL     DEFAULT NULL,
-    changed_at         timestamp,
+    user_id              integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    password             text                                 DEFAULT NULL,
+    generated_password   boolean                     NOT NULL DEFAULT false,
+    invitation_token     text                        NULL     DEFAULT NULL,
+    invited_at           timestamp without time zone NULL     DEFAULT NULL,
+    change_pwd_expire_at timestamp without time zone NULL     DEFAULT NULL,
+    changed_at           timestamp,
     UNIQUE (user_id)
 );
 
@@ -558,7 +559,7 @@ create table assigned_sessions
     created_at    timestamp default timezone('utc'::text, now()) NOT NULL,
     provider_data jsonb     default '{}'::jsonb                  NOT NULL
 );
-CREATE INDEX ON assigned_sessions(session_id);
+CREATE INDEX ON assigned_sessions (session_id);
 
 -- --- events_common.sql ---
 
@@ -674,27 +675,27 @@ CREATE INDEX pages_timestamp_metgt0_idx ON events.pages (timestamp) WHERE respon
                                                                           time_to_interactive > 0;
 CREATE INDEX pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, speed_index) WHERE speed_index > 0 AND speed_index IS NOT NULL;
 CREATE INDEX pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
-CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path,session_id,timestamp);
+CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
 
 
 CREATE TABLE events.clicks
 (
-    session_id bigint NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-    message_id bigint NOT NULL,
-    timestamp  bigint NOT NULL,
+    session_id bigint          NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    message_id bigint          NOT NULL,
+    timestamp  bigint          NOT NULL,
     label      text DEFAULT NULL,
     url        text DEFAULT '' NOT NULL;
-    selector   text DEFAULT '' NOT NULL;
-    PRIMARY KEY (session_id, message_id)
+selector   text DEFAULT '' NOT NULL;
+PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.clicks (session_id);
 CREATE INDEX ON events.clicks (label);
 CREATE INDEX clicks_label_gin_idx ON events.clicks USING GIN (label gin_trgm_ops);
 CREATE INDEX ON events.clicks (timestamp);
-CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label,session_id,timestamp);
+CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label, session_id, timestamp);
 CREATE INDEX clicks_url_idx ON events.clicks (url);
 CREATE INDEX clicks_url_gin_idx ON events.clicks USING GIN (url gin_trgm_ops);
-CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp,selector);
+CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp, selector);
 
 
 CREATE TABLE events.inputs
@@ -711,7 +712,7 @@ CREATE INDEX ON events.inputs (label, value);
 CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops);
 CREATE INDEX inputs_label_idx ON events.inputs (label);
 CREATE INDEX ON events.inputs (timestamp);
-CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label,session_id,timestamp);
+CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label, session_id, timestamp);
 
 CREATE TABLE events.errors
 (

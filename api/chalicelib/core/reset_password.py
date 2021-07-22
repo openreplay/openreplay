@@ -49,7 +49,7 @@ def cron():
                         SELECT user_id
                         FROM public.basic_authentication
                         WHERE token notnull
-                          AND (token_requested_at isnull or (EXTRACT(EPOCH FROM token_requested_at)*1000)::BIGINT < %(time)s);""",
+                          AND (invited_at isnull or (EXTRACT(EPOCH FROM invited_at)*1000)::BIGINT < %(time)s);""",
                         {"time": chalicelib.utils.TimeUTC.TimeUTC.now(delta_days=-1)})
         )
         results = cur.fetchall()
@@ -59,7 +59,7 @@ def cron():
         cur.execute(
             cur.mogrify("""\
                                 UPDATE public.basic_authentication
-                                SET token = NULL, token_requested_at = NULL
+                                SET token = NULL, invited_at = NULL
                                 WHERE user_id in %(ids)s;""",
                         {"ids": results})
         )
