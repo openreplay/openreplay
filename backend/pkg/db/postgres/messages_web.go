@@ -111,8 +111,6 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 			FROM events.pages
 			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
 		)
-		VALUES
-			($1, $2, $3, NULLIF($4, ''), $5, SELECT)
 		`,
 		sessionID, e.MessageID, e.Timestamp, e.Label, e.Selector,
 	); err != nil {
