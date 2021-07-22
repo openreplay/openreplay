@@ -56,17 +56,8 @@ WORKDIR /work
 COPY --from=build /root/bin ./bin
 COPY entrypoint.sh .
 
-###
-
-#ENTRYPOINT ./entrypoint.sh
-
-ENV TINI_VERSION v0.19.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
-RUN chmod +x ./tini
-
-#ADD https://github.com/krallin/tini/releases/download/v0.19.0/tini /tini
-#ENTRYPOINT [ "ls", "-l", "."]
-ENTRYPOINT [ "./tini", "--", "sh", "./entrypoint.sh" ]
-#ENTRYPOINT ["/usr/bin/tini", "--"]
-#CMD ./entrypoint.sh
+####
+RUN apk add --no-cache tini
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["./entrypoint.sh"]
 
