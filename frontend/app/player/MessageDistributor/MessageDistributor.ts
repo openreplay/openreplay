@@ -306,9 +306,7 @@ export default class MessageDistributor extends StatedScreen {
     this.pagesManager.moveReady(t).then(() => {
 
       const lastScroll = this.scrollManager.moveToLast(t, index);
-      // @ts-ignore ??can't see double inheritance
       if (!!lastScroll && this.window) {
-        // @ts-ignore
         this.window.scrollTo(lastScroll.x, lastScroll.y);
       }
       // Moving mouse and setting :hover classes on ready view
@@ -479,7 +477,6 @@ export default class MessageDistributor extends StatedScreen {
 
   // TODO: clean managers?
   clean() {
-    // @ts-ignore
     super.clean();
     //if (this._socket) this._socket.close();
     update(INITIAL_STATE);
