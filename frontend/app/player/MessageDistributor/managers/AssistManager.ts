@@ -17,6 +17,7 @@ export enum CallingState {
 
 export enum ConnectionStatus {
   Connecting,
+  WaitingMessages,
   Connected,
   Inactive,
   Disconnected,
@@ -36,6 +37,8 @@ export function getStatusText(status: ConnectionStatus): string {
       return "Disconnected";
     case ConnectionStatus.Error:
       return "Something went wrong. Try to reload the page.";
+    case ConnectionStatus.WaitingMessages:
+      return "Connected. Waiting for the data..."
   }
 }
  
@@ -114,6 +117,21 @@ function resolveCSS(baseURL: string, css: string): string {
 export default class AssistManager {
   constructor(private session, private md: MessageDistributor) {}
 
+
+  private setStatus(status: ConnectionStatus) {
+    if (status === ConnectionStatus.Connecting) {
+      this.md.setMessagesLoading(true);
+    } else {
+      this.md.setMessagesLoading(false);
+    }
+    if (status === ConnectionStatus.Connected) {
+      this.md.display(true);
+    } else {
+      this.md.display(false);
+    }
+    update({ peerConnectionStatus: status });
+  }
+
   private get peerID(): string {
     return `${this.session.projectKey}-${this.session.sessionId}`
   }
@@ -126,7 +144,7 @@ export default class AssistManager {
       console.error("AssistManager: trying to connect more than once");
       return;
     }
-    this.md.setMessagesLoading(true);
+    this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
       // @ts-ignore
       const peer = new Peer({
@@ -139,16 +157,16 @@ export default class AssistManager {
       peer.on('error', e => {
         if (['peer-unavailable', 'network'].includes(e.type)) {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
-            update({ peerConnectionStatus: ConnectionStatus.Connecting });
+            this.setStatus(ConnectionStatus.Connecting);
             console.log("peerunavailable")
             this.connectToPeer();
           } else {
-            update({ peerConnectionStatus: ConnectionStatus.Disconnected });
+            this.setStatus(ConnectionStatus.Disconnected);
             this.dataCheckIntervalID && clearInterval(this.dataCheckIntervalID);
           }
         } else {
           console.error(`PeerJS error (on peer). Type ${e.type}`, e);
-          update({ peerConnectionStatus: ConnectionStatus.Error })
+          this.setStatus(ConnectionStatus.Error)
         }
       })
       peer.on("open", () => {
@@ -163,7 +181,7 @@ export default class AssistManager {
   private dataCheckIntervalID: ReturnType<typeof setInterval> | undefined;
   private connectToPeer() {
     if (!this.peer) { return; }
-    update({ peerConnectionStatus: ConnectionStatus.Connecting })
+    this.setStatus(ConnectionStatus.Connecting);
     const id = this.peerID;
     console.log("trying to connect to", id)
     const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
@@ -174,14 +192,14 @@ export default class AssistManager {
       let i = 0;
       let firstMessage = true;
 
-      update({ peerConnectionStatus: ConnectionStatus.Connected })
+      this.setStatus(ConnectionStatus.WaitingMessages)
 
       conn.on('data', (data) => {
         if (!Array.isArray(data)) { return this.handleCommand(data); }
         this.mesagesRecieved = true;
         if (firstMessage) {
           firstMessage = false;
-          this.md.setMessagesLoading(false);
+          this.setStatus(ConnectionStatus.Connected)
         }
 
         let time = 0;
@@ -230,8 +248,7 @@ export default class AssistManager {
 
     const onDataClose = () => {
       this.initiateCallEnd();
-      this.md.setMessagesLoading(true);
-      update({ peerConnectionStatus: ConnectionStatus.Connecting });
+      this.setStatus(ConnectionStatus.Connecting);
       console.log('closed peer conn. Reconnecting...')
       this.connectToPeer();
     }
@@ -244,7 +261,7 @@ export default class AssistManager {
     conn.on('close', onDataClose);// Does it work ?
     conn.on("error", (e) => {
       console.log("PeerJS connection error", e);
-      update({ peerConnectionStatus: ConnectionStatus.Error });
+      this.setStatus(ConnectionStatus.Error);
     })
   }
 
@@ -304,7 +321,7 @@ export default class AssistManager {
           // @ts-ignore
           this.md.display(false);
           this.dataConnection?.close();
-          update({ peerConnectionStatus: ConnectionStatus.Disconnected });
+          this.setStatus(ConnectionStatus.Disconnected);
         }, 8000); // TODO: more convenient way
         //this.dataConnection?.close();
         return;
@@ -313,7 +330,7 @@ export default class AssistManager {
         return;
       case "call_error":
         this.onTrackerCallEnd();
-        update({ peerConnectionStatus: ConnectionStatus.Error });
+        this.setStatus(ConnectionStatus.Error);
         return;
     }
   }
