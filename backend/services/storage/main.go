@@ -68,7 +68,7 @@ func main() {
   cleanTick := time.Tick(time.Duration(FS_CLEAN_HRS) * time.Hour)
 
 
-  log.Println("Storage: start consuming")
+  log.Printf("Storage service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
