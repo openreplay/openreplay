@@ -133,6 +133,7 @@ CREATE TABLE basic_authentication
     generated_password   boolean                     NOT NULL DEFAULT false,
     invitation_token     text                        NULL     DEFAULT NULL,
     invited_at           timestamp without time zone NULL     DEFAULT NULL,
+    change_pwd_token     text                        NULL     DEFAULT NULL,
     change_pwd_expire_at timestamp without time zone NULL     DEFAULT NULL,
     changed_at           timestamp,
     UNIQUE (user_id)

@@ -85,7 +85,7 @@ def restore_member(user_id, email, password, admin, name, owner=False):
 
 
 def update(tenant_id, user_id, changes):
-    AUTH_KEYS = ["password", "generatedPassword", "token"]
+    AUTH_KEYS = ["password", "generatedPassword", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
     if len(changes.keys()) == 0:
         return None
 
@@ -96,13 +96,6 @@ def update(tenant_id, user_id, changes):
             if key == "password":
                 sub_query_bauth.append("password = crypt(%(password)s, gen_salt('bf', 12))")
                 sub_query_bauth.append("changed_at = timezone('utc'::text, now())")
-            elif key == "token":
-                if changes[key] is not None:
-                    sub_query_bauth.append("token = %(token)s")
-                    sub_query_bauth.append("token_requested_at = timezone('utc'::text, now())")
-                else:
-                    sub_query_bauth.append("token = NULL")
-                    sub_query_bauth.append("token_requested_at = NULL")
             else:
                 sub_query_bauth.append(f"{helper.key_to_snake_case(key)} = %({key})s")
         else:
@@ -169,7 +162,7 @@ def create_member(tenant_id, user_id, data):
         return {"errors": ["invalid user name"]}
     if name is None:
         name = data["email"]
-    invitation_token = secrets.token_urlsafe(40)
+    invitation_token = secrets.token_urlsafe(64)
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
         new_member = restore_member(email=data["email"], password=invitation_token,
@@ -186,8 +179,22 @@ def create_member(tenant_id, user_id, data):
                           "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
                           "senderName": admin["name"]
                       })
-    new_member["invitationLink"] = environ["SITE_URL"]+environ["invitation_link"] % new_member.pop("invitationToken")
+    new_member["invitationLink"] = environ["SITE_URL"] + environ["invitation_link"] % new_member.pop("invitationToken")
     return {"data": new_member}
+
+
+def allow_password_change(user_id, delta_min=10):
+    pass_token = secrets.token_urlsafe(8)
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""UPDATE public.basic_authentication 
+                                SET change_pwd_expire_at =  timezone('utc'::text, now()+INTERVAL '%(delta)s MINUTES'),
+                                    change_pwd_token = %(pass_token)s
+                                WHERE user_id = %(user_id)s""",
+                            {"user_id": user_id, "delta": delta_min, "pass_token": pass_token})
+        cur.execute(
+            query
+        )
+    return pass_token
 
 
 def get(user_id, tenant_id):
@@ -371,6 +378,15 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
             "jwt": authenticate(email, new_password)["jwt"]}
 
 
+def set_password_invitation(user_id, new_password):
+    changes = {"password": new_password, "generatedPassword": False,
+               "invitationToken": None, "invitedAt": None,
+               "changePwdExpireAt": None, "changePwdToken": None}
+    user = update(tenant_id=-1, user_id=user_id, changes=changes)
+    return {"data": user,
+            "jwt": authenticate(user["email"], new_password)["jwt"]}
+
+
 def count_members():
     with pg_client.PostgresClient() as cur:
         cur.execute("""SELECT COUNT(user_id) 
@@ -408,6 +424,23 @@ def get_deleted_user_by_email(email):
                      AND deleted_at NOTNULL
                     LIMIT 1;""",
                 {"email": email})
+        )
+        r = cur.fetchone()
+    return helper.dict_to_camel_case(r)
+
+
+def get_by_invitation_token(token, pass_token=None):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        *,
+                        DATE_PART('day',timezone('utc'::text, now())- invited_at)>=1 AS expired,
+                        change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change
+                    FROM public.users INNER JOIN public.basic_authentication USING(user_id)
+                    WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
+                    LIMIT 1;""",
+                {"token": token, "pass_token": token})
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
