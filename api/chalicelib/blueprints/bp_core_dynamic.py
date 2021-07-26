@@ -392,6 +392,11 @@ def edit_member(memberId, context):
                       user_id_to_update=memberId)
 
 
+@app.route('/client/members/{memberId}/reset', methods=['GET'])
+def reset_reinvite_member(memberId, context):
+    return users.reset_member(tenant_id=context['tenantId'], editor_id=context['userId'], user_id_to_update=memberId)
+
+
 @app.route('/client/members/{memberId}', methods=['DELETE'])
 def delete_member(memberId, context):
     return users.delete_member(tenant_id=context["tenantId"], user_id=context['userId'], id_to_delete=memberId)

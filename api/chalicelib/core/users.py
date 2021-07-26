@@ -12,6 +12,14 @@ from chalicelib.core import tenants
 import secrets
 
 
+def __generate_invitation_token():
+    return secrets.token_urlsafe(64)
+
+
+def __is_authorized_to_manage_users():
+    pass
+
+
 def create_new_member(email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
@@ -44,7 +52,7 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def restore_member(user_id, email, password, admin, name, owner=False):
+def restore_member(user_id, email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     UPDATE public.users
@@ -61,27 +69,55 @@ def restore_member(user_id, email, password, admin, name, owner=False):
                            TRUE                                                 AS change_password,
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           appearance;""",
+                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
                             {"user_id": user_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name})
         cur.execute(
             query
         )
-        result = helper.dict_to_camel_case(cur.fetchone())
+        result = cur.fetchone()
         query = cur.mogrify("""\
                     UPDATE public.basic_authentication
-                    SET password= crypt(%(password)s, gen_salt('bf', 12)), 
-                        generated_password= TRUE,
-                        token=NULL,
-                        token_requested_at=NULL
-                    WHERE user_id=%(user_id)s;""",
-                            {"user_id": user_id, "password": password})
+                    SET generated_password = TRUE,
+                        invitation_token = %(invitation_token)s,
+                        invited_at = timezone('utc'::text, now()),
+                        change_pwd_expire_at = NULL,
+                        change_pwd_token = NULL
+                    WHERE user_id=%(user_id)s
+                    RETURNING invitation_token;""",
+                            {"user_id": user_id, "invitation_token": invitation_token})
+        cur.execute(
+            query
+        )
+        result["invitation_token"] = cur.fetchone()["invitation_token"]
+
+        return helper.dict_to_camel_case(result)
+
+
+def reset_member(tenant_id, editor_id, user_id_to_update):
+    admin = get(tenant_id=tenant_id, user_id=editor_id)
+    if not admin["admin"] and not admin["superAdmin"]:
+        return {"errors": ["unauthorized"]}
+    user = get(tenant_id=tenant_id, user_id=user_id_to_update)
+    if not user:
+        return {"errors": ["user not found"]}
+    invitation_token = __generate_invitation_token()
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""\
+                    UPDATE public.basic_authentication
+                    SET invitation_token = %(invitation_token)s,
+                        invited_at = timezone('utc'::text, now()),
+                        change_pwd_expire_at = NULL,
+                        change_pwd_token = NULL
+                    WHERE user_id=%(user_id)s
+                    RETURNING invitation_token;""",
+                            {"user_id": user_id_to_update, "invitation_token": invitation_token})
         cur.execute(
             query
         )
 
-        return result
+        return {"data": {"invitationLink": environ["SITE_URL"] \
+                                           + environ["invitation_link"] % cur.fetchone().pop("invitation_token")}}
 
 
 def update(tenant_id, user_id, changes):
@@ -162,10 +198,10 @@ def create_member(tenant_id, user_id, data):
         return {"errors": ["invalid user name"]}
     if name is None:
         name = data["email"]
-    invitation_token = secrets.token_urlsafe(64)
+    invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
-        new_member = restore_member(email=data["email"], password=invitation_token,
+        new_member = restore_member(email=data["email"], invitation_token=invitation_token,
                                     admin=data.get("admin", False), name=name, user_id=user["userId"])
     else:
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
