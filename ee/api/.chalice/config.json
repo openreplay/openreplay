@@ -61,7 +61,9 @@
         "idp_entityId": "",
         "idp_sso_url": "",
         "idp_x509cert": "",
-        "idp_sls_url": ""
+        "idp_sls_url": "",
+        "invitation_link": "/api/users/invitation?token=%s",
+        "change_password_link": "/reset-password?invitation=%s&&pass=%s"
       },
       "lambda_timeout": 150,
       "lambda_memory_size": 400,

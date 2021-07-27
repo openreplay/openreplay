@@ -16,10 +16,6 @@ def __generate_invitation_token():
     return secrets.token_urlsafe(64)
 
 
-def __is_authorized_to_manage_users():
-    pass
-
-
 def create_new_member(email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
@@ -42,8 +38,7 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                             au.invitation_token
                     FROM u,au;""",
-                            {"email": email, "password": invitation_token,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name,
+                            {"email": email, "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
                              "invitation_token": invitation_token})
         cur.execute(
@@ -112,6 +107,7 @@ def generate_new_invitation(user_id):
         return __get_invitation_link(cur.fetchone().pop("invitation_token"))
 
 
+                             
 def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
@@ -368,7 +364,10 @@ def get_members(tenant_id):
                         basic_authentication.generated_password,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member 
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        basic_authentication.password IS NOT NULL AS joined
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL
                     ORDER BY name, id"""
@@ -475,7 +474,8 @@ def get_by_invitation_token(token, pass_token=None):
             cur.mogrify(
                 f"""SELECT 
                         *,
-                        DATE_PART('day',timezone('utc'::text, now())- invited_at)>=1 AS expired,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
                         change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change
                     FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                     WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
