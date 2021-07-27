@@ -361,7 +361,7 @@ def process_invitation_link():
     user = users.get_by_invitation_token(params["token"])
     if user is None:
         return {"errors": ["invitation not found"]}
-    if user["expired"]:
+    if user["expiredInvitation"]:
         return {"errors": ["expired invitation, please ask your admin to send a new one"]}
     pass_token = users.allow_password_change(user_id=user["userId"])
     return Response(

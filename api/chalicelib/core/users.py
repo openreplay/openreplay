@@ -368,7 +368,10 @@ def get_members(tenant_id):
                         basic_authentication.generated_password,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member 
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        basic_authentication.password IS NOT NULL AS joined
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL
                     ORDER BY name, id"""
@@ -475,7 +478,8 @@ def get_by_invitation_token(token, pass_token=None):
             cur.mogrify(
                 f"""SELECT 
                         *,
-                        DATE_PART('day',timezone('utc'::text, now())- invited_at)>=1 AS expired,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
                         change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change
                     FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                     WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
