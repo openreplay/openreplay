@@ -8,7 +8,6 @@ import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
 import BannerMessage from 'Shared/BannerMessage';
-import InviteSuccessMessage from './InviteSuccessMessage';
 
 const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
 const LIMIT_WARNING = 'You have reached users limit.';
