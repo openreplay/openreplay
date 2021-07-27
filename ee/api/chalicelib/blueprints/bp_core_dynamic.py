@@ -359,11 +359,48 @@ def add_member(context):
     return users.create_member(tenant_id=context['tenantId'], user_id=context['userId'], data=data)
 
 
+@app.route('/users/invitation', methods=['GET'], authorizer=None)
+def process_invitation_link():
+    params = app.current_request.query_params
+    if params is None or len(params.get("token", "")) < 64:
+        return {"errors": ["please provide a valid invitation"]}
+    user = users.get_by_invitation_token(params["token"])
+    if user is None:
+        return {"errors": ["invitation not found"]}
+    if user["expiredInvitation"]:
+        return {"errors": ["expired invitation, please ask your admin to send a new one"]}
+    pass_token = users.allow_password_change(user_id=user["userId"])
+    return Response(
+        status_code=307,
+        body='',
+        headers={'Location': environ["SITE_URL"] + environ["change_password_link"] % (params["token"], pass_token),
+                 'Content-Type': 'text/plain'})
+
+
+@app.route('/users/invitation/password', methods=['POST', 'PUT'], authorizer=None)
+def change_password_by_invitation():
+    data = app.current_request.json_body
+    if data is None or len(data.get("invitation", "")) < 64 or len(data.get("pass", "")) < 8:
+        return {"errors": ["please provide a valid invitation & pass"]}
+    user = users.get_by_invitation_token(token=data["token"], pass_token=data["pass"])
+    if user is None:
+        return {"errors": ["invitation not found"]}
+    if user["expiredChange"]:
+        return {"errors": ["expired change, please re-use the invitation link"]}
+
+    return users.set_password_invitation(new_password=data["password"], user_id=user["userId"])
+
+
 @app.route('/client/members/{memberId}', methods=['PUT', 'POST'])
 def edit_member(memberId, context):
     data = app.current_request.json_body
     return users.edit(tenant_id=context['tenantId'], editor_id=context['userId'], changes=data,
                       user_id_to_update=memberId)
+
+
+@app.route('/client/members/{memberId}/reset', methods=['GET'])
+def reset_reinvite_member(memberId, context):
+    return users.reset_member(tenant_id=context['tenantId'], editor_id=context['userId'], user_id_to_update=memberId)
 
 
 @app.route('/client/members/{memberId}', methods=['DELETE'])

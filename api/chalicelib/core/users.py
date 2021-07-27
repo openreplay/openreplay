@@ -16,10 +16,6 @@ def __generate_invitation_token():
     return secrets.token_urlsafe(64)
 
 
-def __is_authorized_to_manage_users():
-    pass
-
-
 def create_new_member(email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
@@ -42,8 +38,7 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                             au.invitation_token
                     FROM u,au;""",
-                            {"email": email, "password": invitation_token,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name,
+                            {"email": email, "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
                              "invitation_token": invitation_token})
         cur.execute(
