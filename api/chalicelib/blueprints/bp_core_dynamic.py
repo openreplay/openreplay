@@ -38,9 +38,9 @@ def login():
                            for_plugin=False
                            )
     if r is None:
-        return {
+        return Response(status_code=401, body={
             'errors': ['You’ve entered invalid Email or Password.']
-        }
+        })
 
     tenant_id = r.pop("tenantId")
 
@@ -100,8 +100,11 @@ def create_edit_project(projectId, context):
 
 @app.route('/projects/{projectId}', methods=['GET'])
 def get_project(projectId, context):
-    return {"data": projects.get_project(tenant_id=context["tenantId"], project_id=projectId, include_last_session=True,
-                                         include_gdpr=True)}
+    data = projects.get_project(tenant_id=context["tenantId"], project_id=projectId, include_last_session=True,
+                                include_gdpr=True)
+    if data is None:
+        return {"errors": ["project not found"]}
+    return {"data": data}
 
 
 @app.route('/projects/{projectId}', methods=['DELETE'])
