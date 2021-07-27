@@ -60,7 +60,7 @@ CREATE TABLE users
       "role": "dev",
       "dashboard": {
         "cpu": true,
-        "fps": false,        
+        "fps": false,
         "avgCpu": true,
         "avgFps": true,
         "errors": true,
@@ -121,19 +121,21 @@ CREATE TABLE users
     jwt_iat       timestamp without time zone NULL     DEFAULT NULL,
     data          jsonb                       NOT NULL DEFAULT '{}'::jsonb,
     weekly_report boolean                     NOT NULL DEFAULT TRUE,
-	origin 		  user_origin 				  NULL     DEFAULT NULL,
-	
+    origin        user_origin                 NULL     DEFAULT NULL,
+
 );
 
 
 CREATE TABLE basic_authentication
 (
-    user_id            integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-    password           text                                 DEFAULT NULL,
-    generated_password boolean                     NOT NULL DEFAULT false,
-    token              text                        NULL     DEFAULT NULL,
-    token_requested_at timestamp without time zone NULL     DEFAULT NULL,
-    changed_at         timestamp,
+    user_id              integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    password             text                                 DEFAULT NULL,
+    generated_password   boolean                     NOT NULL DEFAULT false,
+    invitation_token     text                        NULL     DEFAULT NULL,
+    invited_at           timestamp without time zone NULL     DEFAULT NULL,
+    change_pwd_token     text                        NULL     DEFAULT NULL,
+    change_pwd_expire_at timestamp without time zone NULL     DEFAULT NULL,
+    changed_at           timestamp,
     UNIQUE (user_id)
 );
 
@@ -576,7 +578,7 @@ create table assigned_sessions
     created_at    timestamp default timezone('utc'::text, now()) NOT NULL,
     provider_data jsonb     default '{}'::jsonb                  NOT NULL
 );
-CREATE INDEX ON assigned_sessions(session_id);
+CREATE INDEX ON assigned_sessions (session_id);
 
 -- --- events_common.sql ---
 
@@ -680,7 +682,7 @@ CREATE INDEX pages_path_idx ON events.pages (path);
 CREATE INDEX pages_visually_complete_idx ON events.pages (visually_complete) WHERE visually_complete > 0;
 CREATE INDEX pages_dom_building_time_idx ON events.pages (dom_building_time) WHERE dom_building_time > 0;
 CREATE INDEX pages_load_time_idx ON events.pages (load_time) WHERE load_time > 0;
-CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path,session_id,timestamp);
+CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
 
 
 CREATE TABLE events.clicks
@@ -695,10 +697,10 @@ CREATE INDEX ON events.clicks (session_id);
 CREATE INDEX ON events.clicks (label);
 CREATE INDEX clicks_label_gin_idx ON events.clicks USING GIN (label gin_trgm_ops);
 CREATE INDEX ON events.clicks (timestamp);
-CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label,session_id,timestamp);
+CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label, session_id, timestamp);
 CREATE INDEX clicks_url_idx ON events.clicks (url);
 CREATE INDEX clicks_url_gin_idx ON events.clicks USING GIN (url gin_trgm_ops);
-CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp,selector);
+CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp, selector);
 
 
 CREATE TABLE events.inputs
@@ -715,7 +717,7 @@ CREATE INDEX ON events.inputs (label, value);
 CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops);
 CREATE INDEX inputs_label_idx ON events.inputs (label);
 CREATE INDEX ON events.inputs (timestamp);
-CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label,session_id,timestamp);
+CREATE INDEX inputs_label_session_id_timestamp_idx ON events.inputs (label, session_id, timestamp);
 
 CREATE TABLE events.errors
 (
