@@ -94,6 +94,24 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
         return helper.dict_to_camel_case(result)
 
 
+def generate_new_invitation(user_id):
+    invitation_token = __generate_invitation_token()
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""\
+                        UPDATE public.basic_authentication
+                        SET invitation_token = %(invitation_token)s,
+                            invited_at = timezone('utc'::text, now()),
+                            change_pwd_expire_at = NULL,
+                            change_pwd_token = NULL
+                        WHERE user_id=%(user_id)s
+                        RETURNING invitation_token;""",
+                            {"user_id": user_id, "invitation_token": invitation_token})
+        cur.execute(
+            query
+        )
+        return __get_invitation_link(cur.fetchone().pop("invitation_token"))
+
+
 def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
@@ -101,23 +119,7 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
     user = get(tenant_id=tenant_id, user_id=user_id_to_update)
     if not user:
         return {"errors": ["user not found"]}
-    invitation_token = __generate_invitation_token()
-    with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("""\
-                    UPDATE public.basic_authentication
-                    SET invitation_token = %(invitation_token)s,
-                        invited_at = timezone('utc'::text, now()),
-                        change_pwd_expire_at = NULL,
-                        change_pwd_token = NULL
-                    WHERE user_id=%(user_id)s
-                    RETURNING invitation_token;""",
-                            {"user_id": user_id_to_update, "invitation_token": invitation_token})
-        cur.execute(
-            query
-        )
-
-        return {"data": {"invitationLink": environ["SITE_URL"] \
-                                           + environ["invitation_link"] % cur.fetchone().pop("invitation_token")}}
+    return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
 
 
 def update(tenant_id, user_id, changes):
@@ -206,17 +208,19 @@ def create_member(tenant_id, user_id, data):
     else:
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
-
+    new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     helper.async_post(environ['email_basic'] % 'member_invitation',
                       {
                           "email": data["email"],
-                          "userName": data["email"],
-                          "tempPassword": invitation_token,
+                          "invitationLink": new_member["invitationLink"],
                           "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
                           "senderName": admin["name"]
                       })
-    new_member["invitationLink"] = environ["SITE_URL"] + environ["invitation_link"] % new_member.pop("invitationToken")
     return {"data": new_member}
+
+
+def __get_invitation_link(invitation_token):
+    return environ["SITE_URL"] + environ["invitation_link"] % invitation_token
 
 
 def allow_password_change(user_id, delta_min=10):

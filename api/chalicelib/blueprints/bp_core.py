@@ -507,8 +507,8 @@ def reset_password_handler(step):
         if "email" not in data or len(data["email"]) < 5:
             return {"errors": ["please provide a valid email address"]}
         return reset_password.step1(data)
-    elif step == "2":
-        return reset_password.step2(data)
+    # elif step == "2":
+    #     return reset_password.step2(data)
 
 
 @app.route('/{projectId}/metadata', methods=['GET'])
@@ -585,9 +585,8 @@ def async_basic_emails(step):
     if data.pop("auth") != environ["async_Token"]:
         return {}
     if step.lower() == "member_invitation":
-        email_helper.send_team_invitation(recipient=data["email"], user_name=data["userName"],
-                                          temp_password=data["tempPassword"], client_id=data["clientId"],
-                                          sender_name=data["senderName"])
+        email_helper.send_team_invitation(recipient=data["email"], invitation_link=data["invitationLink"],
+                                          client_id=data["clientId"], sender_name=data["senderName"])
 
 
 @app.route('/{projectId}/sample_rate', methods=['GET'])
