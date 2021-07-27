@@ -28,6 +28,7 @@ import SlackAddForm from './SlackAddForm';
 import FetchDoc from './FetchDoc';
 import MobxDoc from './MobxDoc';
 import ProfilerDoc from './ProfilerDoc';
+import AssistDoc from './AssistDoc';
 
 const NONE = -1;
 const SENTRY = 0;
@@ -49,6 +50,7 @@ const SLACK = 15;
 const FETCH = 16;
 const MOBX = 17;
 const PROFILER = 18;
+const ASSIST = 19;
 
 const TITLE = {
 	[ SENTRY ]: 'Sentry',
@@ -70,6 +72,7 @@ const TITLE = {
 	[ FETCH ] : 'Fetch',
 	[ MOBX ] : 'MobX',
 	[ PROFILER ] : 'Profiler',
+	[ ASSIST ] : 'Assist',
 }
 
 const DOCS = [REDUX, VUE, GRAPHQL, NGRX, FETCH, MOBX, PROFILER]
@@ -182,6 +185,8 @@ export default class Integrations extends React.PureComponent {
 				return <MobxDoc onClose={ this.closeModal } />
 			case PROFILER:
 				return <ProfilerDoc onClose={ this.closeModal } />
+      case ASSIST:
+        return <AssistDoc onClose={ this.closeModal } />
       default:
         return null;
     }
@@ -253,7 +258,7 @@ export default class Integrations extends React.PureComponent {
 				{plugins && (
 					<div className="" >
 						<div className="mb-4">Use plugins to better debug your application's store, monitor queries and track performance issues.</div>
-						<div className="flex">
+						<div className="flex flex-wrap">
 							<IntegrationItem
 								title="Redux"
 								icon="integrations/redux"
@@ -311,6 +316,14 @@ export default class Integrations extends React.PureComponent {
 								url={ null }
 								dockLink="https://docs.openreplay.com/integrations/sentry"
 								onClick={ () => this.showIntegrationConfig(PROFILER) }
+								// integrated={ sentryIntegrated }
+							/>
+              <IntegrationItem
+								title="Assist"
+								icon="integrations/openreplay"
+								url={ null }
+								dockLink="https://docs.openreplay.com/installation/assist"
+								onClick={ () => this.showIntegrationConfig(ASSIST) }
 								// integrated={ sentryIntegrated }
 							/>
 						</div>

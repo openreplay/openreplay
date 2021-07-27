@@ -8,6 +8,7 @@ import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
 import BannerMessage from 'Shared/BannerMessage';
+import InviteSuccessMessage from './InviteSuccessMessage';
 
 const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
 const LIMIT_WARNING = 'You have reached users limit.';
@@ -111,26 +112,30 @@ class ManageUsers extends React.PureComponent {
             />
             <span>{ 'Admin' }</span>
           </label>
-          <div className={ styles.adminInfo }>{ 'Can manage Projects and Users.' }</div>
+          <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
         </div>
       </form>
 
-      <Button
-        onClick={ this.save }    
-        disabled={ !member.validate() }
-        loading={ this.props.saving }
-        primary
-        marginRight
-      >
-        { member.exists() ? 'Update' : 'Invite' }
-      </Button>
-      <Button
-        data-hidden={ !member.exists() }
-        onClick={ this.closeModal }
-        outline
-      >
-        { 'Cancel' }
-      </Button>
+      <InviteSuccessMessage />
+
+      <div>
+        <Button
+          onClick={ this.save }    
+          disabled={ !member.validate() }
+          loading={ this.props.saving }
+          primary
+          marginRight
+        >
+          { member.exists() ? 'Update' : 'Invite' }
+        </Button>
+        <Button
+          data-hidden={ !member.exists() }
+          onClick={ this.closeModal }
+          outline
+        >
+          { 'Cancel' }
+        </Button>
+      </div>
     </div>
   )
 
