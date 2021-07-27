@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { IconButton, SlideModal, Input, Button, Loader, NoContent, Popup } from 'UI';
+import { IconButton, SlideModal, Input, Button, Loader, NoContent, Popup, CopyButton } from 'UI';
 import { init, save, edit, remove as deleteMember, fetchList } from 'Duck/member';
 import styles from './manageUsers.css';
 import UserItem from './UserItem';
@@ -29,7 +29,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
 })
 @withPageTitle('Manage Users - OpenReplay Preferences')
 class ManageUsers extends React.PureComponent {
-  state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining }
+  state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining, invited: false }
 
   onChange = (e, { name, value }) => this.props.edit({ [ name ]: value });
   onChangeCheckbox = ({ target: { checked, name } }) => this.props.edit({ [ name ]: checked });
@@ -71,7 +71,8 @@ class ManageUsers extends React.PureComponent {
             toast.error(e);
           })
         }
-        this.closeModal()
+        this.setState({ invited: true })
+        // this.closeModal()
       });
   }
 
@@ -101,6 +102,10 @@ class ManageUsers extends React.PureComponent {
           />
         </div>
 
+        <div className={cn("mb-4 p-2", styles.smtpMessage)}>
+          SMTP is not configured, <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>
+        </div>
+
         <div className={ styles.formGroup }>
           <label className={ styles.checkbox }>
             <input
@@ -116,25 +121,32 @@ class ManageUsers extends React.PureComponent {
         </div>
       </form>
 
-      <InviteSuccessMessage />
-
-      <div>
-        <Button
-          onClick={ this.save }    
-          disabled={ !member.validate() }
-          loading={ this.props.saving }
-          primary
-          marginRight
-        >
-          { member.exists() ? 'Update' : 'Invite' }
-        </Button>
-        <Button
-          data-hidden={ !member.exists() }
-          onClick={ this.closeModal }
-          outline
-        >
-          { 'Cancel' }
-        </Button>
+      <div className="flex items-center">
+        <div className="flex items-center mr-auto">
+          <Button
+            onClick={ this.save }    
+            disabled={ !member.validate() }
+            loading={ this.props.saving }
+            primary
+            marginRight
+          >
+            { member.exists() ? 'Update' : 'Invite' }
+          </Button>
+          <Button
+            data-hidden={ !member.exists() }
+            onClick={ this.closeModal }
+            outline
+          >
+            { 'Cancel' }
+          </Button>
+        </div>
+        { true &&  
+          <CopyButton
+            content={"test"}
+            className="link"        
+            btnText="Copy invite link"
+          />
+        }
       </div>
     </div>
   )

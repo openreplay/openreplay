@@ -35,3 +35,8 @@
   font-size: 12px;
   color: $gray-medium;
 }
+
+.smtpMessage {
+  background-color: #faf6e0;
+  border-radius: 3px;
+}
