@@ -9,20 +9,26 @@ from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import environ
 
 from chalicelib.core import tenants
+import secrets
 
 
-def create_new_member(email, password, admin, name, owner=False):
+def __generate_invitation_token():
+    return secrets.token_urlsafe(64)
+
+
+def create_new_member(email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
-                    WITH u AS (
-                        INSERT INTO public.users (email, role, name, data)
-                            VALUES (%(email)s, %(role)s, %(name)s, %(data)s)
-                            RETURNING user_id,email,role,name,appearance
-                    ),
-                         au AS (INSERT
-                             INTO public.basic_authentication (user_id, password, generated_password)
-                                 VALUES ((SELECT user_id FROM u), crypt(%(password)s, gen_salt('bf', 12)), TRUE))
-                    SELECT u.user_id                                              AS id,
+                    WITH u AS (INSERT INTO public.users (email, role, name, data)
+                                VALUES (%(email)s, %(role)s, %(name)s, %(data)s)
+                                RETURNING user_id,email,role,name,appearance
+                            ),
+                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
+                             VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
+                             RETURNING invitation_token
+                            )
+                    SELECT u.user_id,
+                           u.user_id                                              AS id,
                            u.email,
                            u.role,
                            u.name,
@@ -30,18 +36,18 @@ def create_new_member(email, password, admin, name, owner=False):
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           u.appearance
-                    FROM u;""",
-                            {"email": email, "password": password,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name,
-                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
+                            au.invitation_token
+                    FROM u,au;""",
+                            {"email": email, "role": "owner" if owner else "admin" if admin else "member", "name": name,
+                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+                             "invitation_token": invitation_token})
         cur.execute(
             query
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def restore_member(user_id, email, password, admin, name, owner=False):
+def restore_member(user_id, email, invitation_token, admin, name, owner=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     UPDATE public.users
@@ -58,31 +64,62 @@ def restore_member(user_id, email, password, admin, name, owner=False):
                            TRUE                                                 AS change_password,
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           appearance;""",
+                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
                             {"user_id": user_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name})
         cur.execute(
             query
         )
-        result = helper.dict_to_camel_case(cur.fetchone())
+        result = cur.fetchone()
         query = cur.mogrify("""\
                     UPDATE public.basic_authentication
-                    SET password= crypt(%(password)s, gen_salt('bf', 12)), 
-                        generated_password= TRUE,
-                        token=NULL,
-                        token_requested_at=NULL
-                    WHERE user_id=%(user_id)s;""",
-                            {"user_id": user_id, "password": password})
+                    SET generated_password = TRUE,
+                        invitation_token = %(invitation_token)s,
+                        invited_at = timezone('utc'::text, now()),
+                        change_pwd_expire_at = NULL,
+                        change_pwd_token = NULL
+                    WHERE user_id=%(user_id)s
+                    RETURNING invitation_token;""",
+                            {"user_id": user_id, "invitation_token": invitation_token})
         cur.execute(
             query
         )
+        result["invitation_token"] = cur.fetchone()["invitation_token"]
 
-        return result
+        return helper.dict_to_camel_case(result)
+
+
+def generate_new_invitation(user_id):
+    invitation_token = __generate_invitation_token()
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""\
+                        UPDATE public.basic_authentication
+                        SET invitation_token = %(invitation_token)s,
+                            invited_at = timezone('utc'::text, now()),
+                            change_pwd_expire_at = NULL,
+                            change_pwd_token = NULL
+                        WHERE user_id=%(user_id)s
+                        RETURNING invitation_token;""",
+                            {"user_id": user_id, "invitation_token": invitation_token})
+        cur.execute(
+            query
+        )
+        return __get_invitation_link(cur.fetchone().pop("invitation_token"))
+
+
+                             
+def reset_member(tenant_id, editor_id, user_id_to_update):
+    admin = get(tenant_id=tenant_id, user_id=editor_id)
+    if not admin["admin"] and not admin["superAdmin"]:
+        return {"errors": ["unauthorized"]}
+    user = get(tenant_id=tenant_id, user_id=user_id_to_update)
+    if not user:
+        return {"errors": ["user not found"]}
+    return {"data": {"invitationLink": generate_new_invitation(user_id_to_update)}}
 
 
 def update(tenant_id, user_id, changes):
-    AUTH_KEYS = ["password", "generatedPassword", "token"]
+    AUTH_KEYS = ["password", "generatedPassword", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
     if len(changes.keys()) == 0:
         return None
 
@@ -93,13 +130,6 @@ def update(tenant_id, user_id, changes):
             if key == "password":
                 sub_query_bauth.append("password = crypt(%(password)s, gen_salt('bf', 12))")
                 sub_query_bauth.append("changed_at = timezone('utc'::text, now())")
-            elif key == "token":
-                if changes[key] is not None:
-                    sub_query_bauth.append("token = %(token)s")
-                    sub_query_bauth.append("token_requested_at = timezone('utc'::text, now())")
-                else:
-                    sub_query_bauth.append("token = NULL")
-                    sub_query_bauth.append("token_requested_at = NULL")
             else:
                 sub_query_bauth.append(f"{helper.key_to_snake_case(key)} = %({key})s")
         else:
@@ -166,24 +196,41 @@ def create_member(tenant_id, user_id, data):
         return {"errors": ["invalid user name"]}
     if name is None:
         name = data["email"]
-    temp_pass = helper.generate_salt()[:8]
+    invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
-        new_member = restore_member(email=data["email"], password=temp_pass,
+        new_member = restore_member(email=data["email"], invitation_token=invitation_token,
                                     admin=data.get("admin", False), name=name, user_id=user["userId"])
     else:
-        new_member = create_new_member(email=data["email"], password=temp_pass,
+        new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
-
+    new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     helper.async_post(environ['email_basic'] % 'member_invitation',
                       {
                           "email": data["email"],
-                          "userName": data["email"],
-                          "tempPassword": temp_pass,
+                          "invitationLink": new_member["invitationLink"],
                           "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
                           "senderName": admin["name"]
                       })
     return {"data": new_member}
+
+
+def __get_invitation_link(invitation_token):
+    return environ["SITE_URL"] + environ["invitation_link"] % invitation_token
+
+
+def allow_password_change(user_id, delta_min=10):
+    pass_token = secrets.token_urlsafe(8)
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""UPDATE public.basic_authentication 
+                                SET change_pwd_expire_at =  timezone('utc'::text, now()+INTERVAL '%(delta)s MINUTES'),
+                                    change_pwd_token = %(pass_token)s
+                                WHERE user_id = %(user_id)s""",
+                            {"user_id": user_id, "delta": delta_min, "pass_token": pass_token})
+        cur.execute(
+            query
+        )
+    return pass_token
 
 
 def get(user_id, tenant_id):
@@ -317,7 +364,10 @@ def get_members(tenant_id):
                         basic_authentication.generated_password,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member 
+                        (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        basic_authentication.password IS NOT NULL AS joined
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL
                     ORDER BY name, id"""
@@ -367,6 +417,15 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
             "jwt": authenticate(email, new_password)["jwt"]}
 
 
+def set_password_invitation(user_id, new_password):
+    changes = {"password": new_password, "generatedPassword": False,
+               "invitationToken": None, "invitedAt": None,
+               "changePwdExpireAt": None, "changePwdToken": None}
+    user = update(tenant_id=-1, user_id=user_id, changes=changes)
+    return {"data": user,
+            "jwt": authenticate(user["email"], new_password)["jwt"]}
+
+
 def count_members():
     with pg_client.PostgresClient() as cur:
         cur.execute("""SELECT COUNT(user_id) 
@@ -404,6 +463,24 @@ def get_deleted_user_by_email(email):
                      AND deleted_at NOTNULL
                     LIMIT 1;""",
                 {"email": email})
+        )
+        r = cur.fetchone()
+    return helper.dict_to_camel_case(r)
+
+
+def get_by_invitation_token(token, pass_token=None):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT 
+                        *,
+                        DATE_PART('day',timezone('utc'::text, now()) \
+                            - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
+                        change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change
+                    FROM public.users INNER JOIN public.basic_authentication USING(user_id)
+                    WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
+                    LIMIT 1;""",
+                {"token": token, "pass_token": token})
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)

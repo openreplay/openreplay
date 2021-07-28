@@ -317,24 +317,6 @@ export const MouseMove = bindNew(_MouseMove);
 classes.set(20, MouseMove);
 
 
-class _MouseClick implements Message {
-  readonly _id: number = 21;
-  constructor(
-    public id: number,
-    public hesitationTime: number,
-    public label: string
-  ) {}
-  encode(writer: Writer): boolean {
-    return writer.uint(21) &&
-      writer.uint(this.id) &&
-      writer.uint(this.hesitationTime) &&
-      writer.string(this.label); 
-  }
-}
-export const MouseClick = bindNew(_MouseClick);
-classes.set(21, MouseClick);
-
-
 class _ConsoleLog implements Message {
   readonly _id: number = 22;
   constructor(
@@ -881,5 +863,25 @@ class _CSSInsertRuleURLBased implements Message {
 }
 export const CSSInsertRuleURLBased = bindNew(_CSSInsertRuleURLBased);
 classes.set(67, CSSInsertRuleURLBased);
+
+
+class _MouseClick implements Message {
+  readonly _id: number = 69;
+  constructor(
+    public id: number,
+    public hesitationTime: number,
+    public label: string,
+    public selector: string
+  ) {}
+  encode(writer: Writer): boolean {
+    return writer.uint(69) &&
+      writer.uint(this.id) &&
+      writer.uint(this.hesitationTime) &&
+      writer.string(this.label) &&
+      writer.string(this.selector); 
+  }
+}
+export const MouseClick = bindNew(_MouseClick);
+classes.set(69, MouseClick);
 
 

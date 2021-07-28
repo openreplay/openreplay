@@ -61,62 +61,64 @@ func main() {
 		Addr: ":" + HTTP_PORT,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-						// TODO: agree with specification
-							w.Header().Set("Access-Control-Allow-Origin", "*") 
-							w.Header().Set("Access-Control-Allow-Methods", "POST")
-							w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
-						if r.Method == http.MethodOptions {
-							w.WriteHeader(http.StatusOK)
-							return
-						}
+			// TODO: agree with specification
+			w.Header().Set("Access-Control-Allow-Origin", "*") 
+			w.Header().Set("Access-Control-Allow-Methods", "POST")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Cache-Control", "max-age=86400")
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			switch r.URL.Path {
 			case "/":
 				w.WriteHeader(http.StatusOK)
 			case "/v1/web/not-started": 
 				switch r.Method {
-				case "POST":
+				case http.MethodPost:
 					notStartedHandler(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			case "/v1/web/start":
 				switch r.Method {
-				case "POST":
+				case http.MethodPost:
 					startSessionHandlerWeb(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			case "/v1/web/i":
 				switch r.Method {
-				case "POST":
+				case http.MethodPost:
 					pushMessagesSeparatelyHandler(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			// case "/v1/ios/start":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		startSessionHandlerIOS(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)
 			// 	}
 			// case "/v1/ios/append":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		pushMessagesHandler(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)
 			// 	}
 			// case "/v1/ios/late":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		pushLateMessagesHandler(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)
 			// 	}
 			// case "/v1/ios/images":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		iosImagesUploadHandler(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)

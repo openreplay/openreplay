@@ -32,8 +32,10 @@ def get_favorite_sessions2(projectId, context):
 def get_session2(projectId, sessionId, context):
     data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context["userId"],
                                   include_fav_viewed=True, group_metadata=True)
-    if data is not None:
-        sessions_favorite_viewed.view_session(project_id=projectId, user_id=context['userId'], session_id=sessionId)
+    if data is None:
+        return {"errors": ["session not found"]}
+
+    sessions_favorite_viewed.view_session(project_id=projectId, user_id=context['userId'], session_id=sessionId)
     return {
         'data': data
     }
@@ -507,8 +509,8 @@ def reset_password_handler(step):
         if "email" not in data or len(data["email"]) < 5:
             return {"errors": ["please provide a valid email address"]}
         return reset_password.step1(data)
-    elif step == "2":
-        return reset_password.step2(data)
+    # elif step == "2":
+    #     return reset_password.step2(data)
 
 
 @app.route('/{projectId}/metadata', methods=['GET'])
@@ -585,9 +587,8 @@ def async_basic_emails(step):
     if data.pop("auth") != environ["async_Token"]:
         return {}
     if step.lower() == "member_invitation":
-        email_helper.send_team_invitation(recipient=data["email"], user_name=data["userName"],
-                                          temp_password=data["tempPassword"], client_id=data["clientId"],
-                                          sender_name=data["senderName"])
+        email_helper.send_team_invitation(recipient=data["email"], invitation_link=data["invitationLink"],
+                                          client_id=data["clientId"], sender_name=data["senderName"])
 
 
 @app.route('/{projectId}/sample_rate', methods=['GET'])
@@ -724,10 +725,10 @@ def get_funnel_insights(projectId, funnelId, context):
     if params is None:
         params = {}
 
-    return {"data": funnels.get_top_insights(funnel_id=funnelId, project_id=projectId,
-                                             range_value=params.get("range_value", None),
-                                             start_date=params.get('startDate', None),
-                                             end_date=params.get('endDate', None))}
+    return funnels.get_top_insights(funnel_id=funnelId, project_id=projectId,
+                                    range_value=params.get("range_value", None),
+                                    start_date=params.get('startDate', None),
+                                    end_date=params.get('endDate', None))
 
 
 @app.route('/{projectId}/funnels/{funnelId}/insights', methods=['POST', 'PUT'])
@@ -739,8 +740,7 @@ def get_funnel_insights_on_the_fly(projectId, funnelId, context):
     if data is None:
         data = {}
 
-    return {
-        "data": funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data={**params, **data})}
+    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data={**params, **data})
 
 
 @app.route('/{projectId}/funnels/{funnelId}/issues', methods=['GET'])
@@ -821,8 +821,11 @@ def get_funnel_issue_sessions(projectId, funnelId, issueId, context):
 
 @app.route('/{projectId}/funnels/{funnelId}', methods=['GET'])
 def get_funnel(projectId, funnelId, context):
-    return {"data": funnels.get(funnel_id=funnelId,
-                                project_id=projectId)}
+    data = funnels.get(funnel_id=funnelId,
+                       project_id=projectId)
+    if data is None:
+        return {"errors": ["funnel not found"]}
+    return data
 
 
 @app.route('/{projectId}/funnels/{funnelId}', methods=['POST', 'PUT'])

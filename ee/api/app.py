@@ -87,7 +87,12 @@ def or_middleware(event, get_response):
             import time
             now = int(time.time() * 1000)
         response = get_response(event)
-        if response.status_code == 500 and helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
+        if response.status_code == 200 and response.body is not None and response.body.get("errors") is not None:
+            if "not found" in response.body["errors"][0]:
+                response = Response(status_code=404, body=response.body)
+            else:
+                response = Response(status_code=400, body=response.body)
+        if response.status_code // 100 == 5 and helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
             with configure_scope() as scope:
                 scope.set_tag('stage', environ["stage"])
                 scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)

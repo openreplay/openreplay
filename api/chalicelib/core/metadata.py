@@ -1,6 +1,5 @@
 from chalicelib.utils import pg_client, helper, dev
 
-
 from chalicelib.core import projects
 import re
 
@@ -24,9 +23,10 @@ def get(project_id):
         )
         metas = cur.fetchone()
         results = []
-        for i, k in enumerate(metas.keys()):
-            if metas[k] is not None:
-                results.append({"key": metas[k], "index": i + 1})
+        if metas is not None:
+            for i, k in enumerate(metas.keys()):
+                if metas[k] is not None:
+                    results.append({"key": metas[k], "index": i + 1})
         return results
 
 
@@ -56,7 +56,7 @@ def __edit(project_id, col_index, colname, new_name):
     old_metas = get(project_id)
     old_metas = {k["index"]: k for k in old_metas}
     if col_index not in list(old_metas.keys()):
-        return {"errors": ["custom field doesn't exist"]}
+        return {"errors": ["custom field not found"]}
 
     with pg_client.PostgresClient() as cur:
         if old_metas[col_index]["key"].lower() != new_name:
@@ -79,7 +79,7 @@ def delete(tenant_id, project_id, index: int):
     old_segments = get(project_id)
     old_segments = [k["index"] for k in old_segments]
     if index not in old_segments:
-        return {"errors": ["custom field doesn't exist"]}
+        return {"errors": ["custom field not found"]}
 
     with pg_client.PostgresClient() as cur:
         colname = index_to_colname(index)
