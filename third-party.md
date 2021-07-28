@@ -84,3 +84,5 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | schedule | MIT | Python |
 | croniter | MIT | Python |
 | lib/pq | MIT | Go |
+| peerjs | MIT | JavaScript |
+| antonmedv/finder | MIT | JavaScript |
