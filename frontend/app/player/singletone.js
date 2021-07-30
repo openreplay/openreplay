@@ -70,6 +70,7 @@ export const scale = initCheck(() => instance.scale());
 export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
 export const callPeer = initCheck((...args) => instance.assistManager.call(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
+export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
 
 export const Controls = {
   jump,

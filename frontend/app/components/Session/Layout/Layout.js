@@ -31,12 +31,7 @@ function Layout({ children, player, toolbar }) {
 			    </div>
 					{ !player.fullscreen.enabled && <ToolPanel player={ player } toolbar={ toolbar }/> }
 				</div>
-				{ !player.fullscreen.enabled &&  
-					<Events 
-						style={{ width: "270px" }}
-						player={ player }
-					/>
-				}
+			
 			</div>
 		</div>
 	);

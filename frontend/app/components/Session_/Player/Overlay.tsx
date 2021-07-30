@@ -19,6 +19,7 @@ interface Props {
   liveStatusText: string,
   autoplay: boolean,
   markedTargets: MarkedTarget[] | null,
+  activeTargetIndex: number,
 
   nextId: string,
   togglePlay: () => void,
@@ -34,15 +35,15 @@ function Overlay({
   liveStatusText,
   autoplay,
   markedTargets,
-
+  activeTargetIndex,
   nextId,
   togglePlay,
 }: Props) {
 
-  useEffect(() =>{
-    setTimeout(() => markTargets([{ selector: 'div', count:6}]), 5000)
-    setTimeout(() => markTargets(null), 8000)
-  },[])
+  // useEffect(() =>{
+  //   setTimeout(() => markTargets([{ selector: 'div', count:6}]), 5000)
+  //   setTimeout(() => markTargets(null), 8000)
+  // },[])
   
   const showAutoplayTimer = !live && completed && autoplay && nextId
   const showPlayIconLayer = !live && !markedTargets && !inspectorMode && !loading && !showAutoplayTimer;
@@ -58,7 +59,7 @@ function Overlay({
       { showPlayIconLayer && 
         <PlayIconLayer playing={playing} togglePlay={togglePlay} />
       }
-      { markedTargets && <ElementsMarker targets={ markedTargets } />
+      { markedTargets && <ElementsMarker targets={ markedTargets } activeIndex={activeTargetIndex}/>
       }
     </>
   );
@@ -73,5 +74,6 @@ export default connectPlayer(state => ({
   autoplay: state.autoplay,
   live: state.live,
   liveStatusText: getStatusText(state.peerConnectionStatus),
-  markedTargets: state.markedTargets
+  markedTargets: state.markedTargets,
+  activeTargetIndex: state.activeTargetIndex,
 }))(Overlay);

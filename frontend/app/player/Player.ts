@@ -196,6 +196,10 @@ export default class Player extends MessageDistributor {
     this.pause();
     this.setMarkedTargets(targets);
   }
+
+  activeTarget(index) {
+    this.setActiveTarget(index);
+  }
   
   toggleSkipToIssue() {
     const skipToIssue = !getState().skipToIssue;

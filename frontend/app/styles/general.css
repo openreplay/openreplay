@@ -259,3 +259,18 @@ p {
     text-decoration: underline !important;
   }
 }
+
+
+
+.tippy-tooltip.openreplay-theme {
+  background-color: $tealx;
+  color: white;
+}
+
+.tippy-tooltip.openreplay-theme[data-animatefill] {
+  background-color: transparent;
+}
+
+.tippy-tooltip.openreplay-theme .tippy-backdrop {
+  background-color: $tealx;
+}

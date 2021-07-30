@@ -23,16 +23,18 @@
   border-color: $teal !important;
 }
 .ui.search.customDropdown>input.search,
+.ui.search.customDropdown>input.search,
 .ui.search.customDropdown.active>input.search, 
 .ui.search.customDropdown.visible>input.search {
   padding: 6px !important;
 }
 
+.ui.customDropdown>.text,
 .ui.search.customDropdown>.text {
-  max-width: 90%;
-  overflow: hidden;
+  max-width: 90% !important;
+  overflow: hidden !important;
   white-space: nowrap;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis !important;
 }
 .ui.selection.customDropdown>.dropdown.icon {
   top: 5px !important;

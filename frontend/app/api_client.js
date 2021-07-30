@@ -21,7 +21,8 @@ const siteIdRequiredPaths = [
   '/sourcemaps',
   '/errors',
   '/funnels',
-  '/assist'
+  '/assist',
+  '/heatmaps'
 ];
 
 const noStoringFetchPathStarts = [
