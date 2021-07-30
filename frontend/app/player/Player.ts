@@ -192,7 +192,7 @@ export default class Player extends MessageDistributor {
     }
   }
 
-  markTargets(targets: { selector: string, count: number }[] | null) {
+  markTargets(targets: { selector: string, count: number }[] | null) {    
     this.pause();
     this.setMarkedTargets(targets);
   }

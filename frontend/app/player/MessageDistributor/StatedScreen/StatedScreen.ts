@@ -35,7 +35,7 @@ export const INITIAL_STATE: State = {
   cssLoading: false,
   disconnected: false,
   userPageLoading: false,
-  markedTargets: [],
+  markedTargets: null,
   activeTargetIndex: 0
 };
 
