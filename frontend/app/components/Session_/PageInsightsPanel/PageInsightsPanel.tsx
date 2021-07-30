@@ -6,6 +6,7 @@ import { fetchInsights } from 'Duck/sessions';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { markTargets, Controls as Player } from 'Player';
 
+const JUMP_OFFSET = 1000;
 interface Props {
   filters: any
   fetchInsights: (filters) => void
@@ -37,7 +38,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
 
   const onPageSelect = (e, { name, value }) => {
     const event = events.find(item => item.url === value)    
-    Player.jump(event.time + 500)
+    Player.jump(event.time + JUMP_OFFSET)
     setInsightsFilters({ ...insightsFilters, url: value })
     markTargets([])
   };
