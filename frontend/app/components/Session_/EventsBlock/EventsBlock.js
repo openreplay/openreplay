@@ -1,7 +1,6 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from "react-virtualized";
-import { Avatar, Input, Dropdown, Icon } from 'UI';
 import { TYPES } from 'Types/session/event';
 import { setSelected } from 'Duck/events';
 import { setEventFilter } from 'Duck/sessions';
@@ -18,8 +17,7 @@ import EventSearch from './EventSearch/EventSearch';
   eventsIndex: state.getIn([ 'sessions', 'eventsIndex' ]),
   selectedEvents: state.getIn([ 'events', 'selected' ]),
   targetDefinerDisplayed: state.getIn([ 'components', 'targetDefiner', 'isDisplayed' ]),
-  testsAvaliable: false,
-  //state.getIn([ 'user', 'account', 'appearance', 'tests' ]),
+  testsAvaliable: false,  
 }), {
   showTargetDefiner,
   setSelected,
@@ -74,9 +72,6 @@ export default class EventsBlock extends React.PureComponent {
       this.setState({ editingEvent: null });
     }
     if (prevProps.session !== this.props.session) { // Doesn't happen
-      // this.setState({
-      //   groups: groupEvents(this.props.session.events),
-      // });
       this.cache = new CellMeasurerCache({
         fixedWidth: true,
         defaultHeight: 300
@@ -148,8 +143,7 @@ export default class EventsBlock extends React.PureComponent {
       <CellMeasurer 
         key={key}
         cache={this.cache}
-        parent={parent}
-        //columnIndex={0}
+        parent={parent}        
         rowIndex={index}
       >
         {({measure, registerChild}) => (
@@ -176,14 +170,12 @@ export default class EventsBlock extends React.PureComponent {
 
   render() {
     const { query } = this.state;
-    const {
-      playing,
+    const {      
       testsAvaliable,
       session: {
         events,
         userNumericHash,
-        userDisplayName,
-        userUuid,
+        userDisplayName,        
         userId,
         userAnonymousId
       },
@@ -193,7 +185,7 @@ export default class EventsBlock extends React.PureComponent {
     const _events = filteredEvents || events;
 
     return (
-      <div className={ cn("flex flex-col", styles.eventsBlock) }>
+      <>
         <div className={ cn(styles.header, 'p-3') }>
           <UserCard
             className=""
@@ -203,8 +195,7 @@ export default class EventsBlock extends React.PureComponent {
             userAnonymousId={userAnonymousId}
           />
 
-          <div className={ cn(styles.hAndProgress, 'mt-3') }>
-            {/* <div className="text-lg">{ `User Events (${ events.size })` }</div> */}
+          <div className={ cn(styles.hAndProgress, 'mt-3') }>            
             <EventSearch
               onChange={this.write}
               clearSearch={this.clearSearch}
@@ -213,29 +204,7 @@ export default class EventsBlock extends React.PureComponent {
                 <div className="text-lg">{ `User Events (${ events.size })` }</div>
               }
             />
-          </div>
-          <div className="flex mt-3">            
-            {/* <Dropdown            
-              trigger={
-                <div className={cn("py-3 px-3 bg-white flex items-center text-sm mb-2 border rounded ml-2")} style={{ height: '32px' }}> 
-                  <Icon name="filter" size="12" color="teal" />                  
-                </div>
-              }          
-              options={ [
-                // { text: 'Visited', value: TYPES.LOCATION },
-                { text: 'Clicked', value: TYPES.CLICK },
-                { text: 'Input', value: TYPES.INPUT },
-              ] }
-              name="filter"
-              icon={null}
-              onChange={this.onSetEventFilter}
-              basic
-              direction="left"
-              scrolling        
-              selectOnBlur={true} 
-              closeOnChange={true}
-            /> */}
-          </div>
+          </div>          
         </div>
         <div 
           className={ cn("flex-1 px-3 pb-3", styles.eventsList) } 
@@ -263,7 +232,7 @@ export default class EventsBlock extends React.PureComponent {
           </AutoSizer>
         </div>
         { testsAvaliable && <AutomateButton /> }
-      </div>
+      </>
     );
   }
 }

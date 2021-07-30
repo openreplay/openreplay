@@ -16,6 +16,8 @@ export interface MarkedTarget {
   el: Element,
   selector: string,
   count: number,
+  index: number,
+  active?: boolean
 }
 
 export interface State extends SuperState {
@@ -23,7 +25,8 @@ export interface State extends SuperState {
   cssLoading: boolean,
   disconnected: boolean,
   userPageLoading: boolean, 
-  markedTargets: MarkedTarget[] | null
+  markedTargets: MarkedTarget[] | null,
+  activeTargetIndex: number
 }
 
 export const INITIAL_STATE: State = {
@@ -33,6 +36,7 @@ export const INITIAL_STATE: State = {
   disconnected: false,
   userPageLoading: false,
   markedTargets: [],
+  activeTargetIndex: 0
 };
 
 export default class StatedScreen extends Screen {
@@ -89,15 +93,20 @@ export default class StatedScreen extends Screen {
     }
   }
 
+  setActiveTarget(index) {    
+    update({ activeTargetIndex: index });
+  }
+
   setMarkedTargets(selections: { selector: string, count: number }[] | null) {
     if (selections) {
       const targets: MarkedTarget[] = [];
-      selections.forEach(s => {
+      selections.forEach((s, index) => {        
         const el = this.getElementBySelector(s.selector);
         if (!el) return;
         targets.push({
           ...s,
           el,
+          index,
           boundingRect:  this.calculateRelativeBoundingRect(el),
         })
       });

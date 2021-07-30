@@ -125,9 +125,9 @@ export default class AssistManager {
       this.md.setMessagesLoading(false);
     }
     if (status === ConnectionStatus.Connected) {
-      this.md.display(true);
+      // this.md.display(true);
     } else {
-      this.md.display(false);
+      // this.md.display(false);
     }
     update({ peerConnectionStatus: status });
   }

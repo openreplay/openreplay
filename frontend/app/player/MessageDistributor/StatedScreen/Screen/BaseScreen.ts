@@ -116,6 +116,7 @@ export default abstract class BaseScreen {
   }
 
   getElementBySelector(selector: string): Element | null {
+    if (!selector) return null;
     return this.document?.querySelector(selector) || null;
   }
 
