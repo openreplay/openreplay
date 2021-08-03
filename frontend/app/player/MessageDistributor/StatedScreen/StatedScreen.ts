@@ -17,7 +17,8 @@ export interface MarkedTarget {
   selector: string,
   count: number,
   index: number,
-  active?: boolean
+  active?: boolean,
+  percent: number
 }
 
 export interface State extends SuperState {
@@ -99,7 +100,10 @@ export default class StatedScreen extends Screen {
 
   setMarkedTargets(selections: { selector: string, count: number }[] | null) {
     if (selections) {
-      const targets: MarkedTarget[] = [];
+      const targets: MarkedTarget[] = [];      
+      const totalCount = selections.reduce((a, b) => {
+        return a + b.count
+      }, 0);      
       selections.forEach((s, index) => {        
         const el = this.getElementBySelector(s.selector);
         if (!el) return;
@@ -107,6 +111,7 @@ export default class StatedScreen extends Screen {
           ...s,
           el,
           index,
+          percent: Math.round((s.count * totalCount) / 100),
           boundingRect:  this.calculateRelativeBoundingRect(el),
         })
       });
