@@ -107,7 +107,6 @@ def generate_new_invitation(user_id):
         return __get_invitation_link(cur.fetchone().pop("invitation_token"))
 
 
-                             
 def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
@@ -367,14 +366,21 @@ def get_members(tenant_id):
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
-                        basic_authentication.password IS NOT NULL AS joined
+                        basic_authentication.password IS NOT NULL AS joined,
+                        invitation_token
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.deleted_at IS NULL
                     ORDER BY name, id"""
         )
         r = cur.fetchall()
         if len(r):
-            return helper.list_to_camel_case(r)
+            r = helper.list_to_camel_case(r)
+            for u in r:
+                if u["invitationToken"]:
+                    u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+                else:
+                    u["invitationLink"] = None
+            return r
 
     return []
 

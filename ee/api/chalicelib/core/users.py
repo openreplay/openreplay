@@ -373,7 +373,8 @@ def get_members(tenant_id):
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
-                        basic_authentication.password IS NOT NULL AS joined 
+                        basic_authentication.password IS NOT NULL AS joined,
+                        invitation_token
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.tenant_id = %(tenantId)s AND users.deleted_at IS NULL
                     ORDER BY name, id""",
@@ -381,7 +382,13 @@ def get_members(tenant_id):
         )
         r = cur.fetchall()
         if len(r):
-            return helper.list_to_camel_case(r)
+            r = helper.list_to_camel_case(r)
+            for u in r:
+                if u["invitationToken"]:
+                    u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
+                else:
+                    u["invitationLink"] = None
+            return r
 
     return []
 
