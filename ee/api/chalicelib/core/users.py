@@ -107,6 +107,7 @@ def generate_new_invitation(user_id):
         )
         return __get_invitation_link(cur.fetchone().pop("invitation_token"))
 
+      
 
 def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = get(tenant_id=tenant_id, user_id=editor_id)

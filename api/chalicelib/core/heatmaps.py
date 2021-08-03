@@ -7,13 +7,13 @@ from chalicelib.utils import dev
 def get_by_url(project_id, data):
     args = {"startDate": data.get('startDate', TimeUTC.now(delta_days=-30)),
             "endDate": data.get('endDate', TimeUTC.now()),
-            "projectId": project_id, "url": data["url"]}
+            "project_id": project_id, "url": data["url"]}
 
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""SELECT selector, count(1) AS count
                                 FROM events.clicks
                                          INNER JOIN sessions USING (session_id)
-                                WHERE project_id = 1
+                                WHERE project_id = %(project_id)s
                                   AND url = %(url)s
                                   AND timestamp >= %(startDate)s
                                   AND timestamp <= %(endDate)s
