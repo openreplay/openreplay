@@ -10,18 +10,16 @@ interface Props {
 }
 
 function SelectorsList({ targets, activeTargetIndex }: Props) {     
-  return (
-    <div>
-      <NoContent
-        title="No data available."
-        size="small"
-        show={ targets && targets.length === 0 }
-      >
-        { targets && targets.map((target, index) => (
-          <SelectorCard target={target} index={index} showContent={activeTargetIndex === index} />
-        ))}
-      </NoContent>
-    </div>
+  return (    
+    <NoContent
+      title="No data available."
+      size="small"
+      show={ targets && targets.length === 0 }
+    >
+      { targets && targets.map((target, index) => (
+        <SelectorCard target={target} index={index} showContent={activeTargetIndex === index} />
+      ))}
+    </NoContent>    
   )
 }
 

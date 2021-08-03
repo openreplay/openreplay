@@ -44,8 +44,8 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
   };
 
   return (
-    <div className="p-3 bg-gray-lightest">
-      <div className="mb-3 flex">
+    <div className="px-4 bg-gray-lightest">
+      <div className="my-3 flex">
         <DateRange
           // rangeValue={filters.rangeValue}
           startDate={filters.startDate}
@@ -55,7 +55,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
         />
       </div>
       <div className="mb-4 flex items-center">
-        <div className="mr-2 flex-shrink-0">In Page:</div>
+        <div className="mr-2 flex-shrink-0">In Page</div>
         <Dropdown
           labeled
           placeholder="change"
@@ -65,7 +65,8 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
           defaultValue={urlOptions[0].value}
           onChange={ onPageSelect }
           id="change-dropdown"
-          className="customDropdown"
+          className="customDropdown"          
+          style={{ minWidth: '80px', width: '100%' }}
         />
       </div>
       <Loader loading={ loading }>

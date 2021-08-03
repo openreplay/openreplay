@@ -1,7 +1,7 @@
 .marker {
   position: absolute;
   z-index: 100;
-  border: 2px dashed transparent;
+  border: 2px dotted transparent;
   cursor: pointer;
   user-select: none;
 
@@ -57,7 +57,7 @@
 }
 
 .active {
-  border: 2px dashed $tealx;
+  border: 2px dotted $tealx;
 
   & .index {
     opacity: 1
