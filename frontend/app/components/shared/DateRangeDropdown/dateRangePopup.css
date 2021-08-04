@@ -1,9 +1,11 @@
 .wrapper {
-    & .body {
-        display: flex;
-        border-bottom: solid thin $gray-light;
-        padding: 5px;
-    }
+  background-color: white;
+  outline: solid thin #CCC;
+  & .body {
+      display: flex;
+      border-bottom: solid thin $gray-light;
+      padding: 5px;
+  }
 }
 
 .preSelections {

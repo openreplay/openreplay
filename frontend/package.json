@@ -48,6 +48,7 @@
     "react-redux": "^5.1.2",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
+    "react-tippy": "^1.4.0",
     "react-toastify": "^5.5.0",
     "react-virtualized": "^9.22.2",
     "recharts": "^1.8.5",

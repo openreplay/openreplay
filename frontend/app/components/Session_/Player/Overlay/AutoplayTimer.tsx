@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import cn from 'classnames';
 import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom';
 import { Button, Link } from 'UI'
 import { session as sessionRoute, withSiteId } from 'App/routes'
-import stl from './AutoplayTimer.css'
-import { withRouter } from 'react-router-dom';
+import stl from './AutoplayTimer.css';
+import clsOv from './overlay.css';
 
 function AutoplayTimer({ nextId, siteId, history }) {
   let timer
@@ -33,7 +35,7 @@ function AutoplayTimer({ nextId, siteId, history }) {
     return ''
 
   return (
-    <div className={stl.overlay}>
+    <div className={ cn(clsOv.overlay, stl.overlayBg) } >
       <div className="border p-6 shadow-lg bg-white rounded">
         <div className="py-4">Next recording will be played in {counter}s</div>
         <div className="flex items-center">
