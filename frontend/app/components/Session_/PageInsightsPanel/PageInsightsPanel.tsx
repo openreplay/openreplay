@@ -33,7 +33,8 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
   }, [insights])
 
   useEffect(() => {
-    const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value
+    const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value;
+    Player.pause();
     fetchInsights({ ...insightsFilters, url })
   }, [insightsFilters])
 
