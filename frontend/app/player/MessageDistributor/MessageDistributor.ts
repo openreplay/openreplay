@@ -14,7 +14,7 @@ import {
   setStartTime as setListsStartTime 
  } from '../lists';
 
-import StatedScreen from './StatedScreen';
+import StatedScreen from './StatedScreen/StatedScreen';
 
 import ListWalker from './managers/ListWalker';
 import PagesManager from './managers/PagesManager';
@@ -27,7 +27,7 @@ import AssistManager from './managers/AssistManager';
 
 import MessageReader from './MessageReader';
 
-import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen';
+import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
 
 import type { TimedMessage } from './Timed';
