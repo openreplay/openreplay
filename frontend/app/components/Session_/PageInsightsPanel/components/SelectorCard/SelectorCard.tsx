@@ -20,7 +20,7 @@ export default function SelectorCard({ index = 1, target, showContent } : Props)
       { showContent && (
         <div className={stl.counts}>
           <div>{target.count} Clicks - {target.percent}%</div>
-          <div>TOTAL CLICKS</div>
+          <div className="color-gray-medium">TOTAL CLICKS</div>
         </div>
       ) }      
     </div>
