@@ -33,11 +33,11 @@ export const warn = console.warn
 
 const DOCS_HOST = 'https://docs.openreplay.com';
 const warnedFeatures: { [key: string]: boolean; } = {};
-export function depricationWarn(nameOfFeature: string, useInstead: string, docsPath: string = "/"): void {
+export function deprecationWarn(nameOfFeature: string, useInstead: string, docsPath: string = "/"): void {
 	if (warnedFeatures[ nameOfFeature ]) {
 		return;
 	}
-	warn(`OpenReplay: ${ nameOfFeature } is depricated. ${ useInstead ? `Please, use ${ useInstead } instead.` : "" } Visit ${DOCS_HOST}${docsPath} for more information.`)
+	warn(`OpenReplay: ${ nameOfFeature } is deprecated. ${ useInstead ? `Please, use ${ useInstead } instead.` : "" } Visit ${DOCS_HOST}${docsPath} for more information.`)
 	warnedFeatures[ nameOfFeature ] = true;
 }
 
@@ -48,7 +48,7 @@ export function getLabelAttribute(e: Element): string | null {
 	}
 	value = e.getAttribute("data-asayer-label");
 	if (value !== null) {
-		depricationWarn(`"data-asayer-label" attribute`, `"data-openreplay-label" attribute`, "/");
+		deprecationWarn(`"data-asayer-label" attribute`, `"data-openreplay-label" attribute`, "/");
 	}
 	return value;
 }
@@ -60,7 +60,7 @@ export function hasOpenreplayAttribute(e: Element, name: string): boolean {
 	}
 	const oldName = `data-asayer-${name}`;
 	if (e.hasAttribute(oldName)) {
-		depricationWarn(`"${oldName}" attribute`, `"${newName}" attribute`, "/installation/sanitize-data");
+		deprecationWarn(`"${oldName}" attribute`, `"${newName}" attribute`, "/installation/sanitize-data");
 		return true;
 	}
 	return false;

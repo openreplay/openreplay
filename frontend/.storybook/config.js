@@ -2,10 +2,13 @@ import { configure, addDecorator } from '@storybook/react';
 import { Provider } from 'react-redux';
 import store from '../app/store';
 import { MemoryRouter } from "react-router"
+import { PlayerProvider } from '../app/player/store'
 
 const withProvider = (story) => (
   <Provider store={store}>
-    { story() }
+    <PlayerProvider>
+      { story() }
+    </PlayerProvider>
   </Provider>
 )
 

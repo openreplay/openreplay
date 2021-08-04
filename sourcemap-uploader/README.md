@@ -1,35 +1,33 @@
-# sourcemaps-uploader
+# sourcemap-uploader
 
-A NPM module to upload your JS sourcemaps files to [OpenReplay](https://openreplay.com/).
+An NPM module to upload your JS sourcemap files to your OpenReplay instance.
 
 ## Installation
 
 ```
-npm i -D @openreplay/sourcemap-uploader 
+npm i -D @openreplay/sourcemap-uploader
 ```
 
 ## CLI
 
-Upload sourcemap for one file
+Upload sourcemap for one file:
 
 ```
-sourcemap-uploader -k API_KEY -p PROJECT_KEY file -m ./dist/index.js.map -u https://myapp.com/index.js
+sourcemap-uploader -s https://opnereplay.mycompany.com/api -k API_KEY -p PROJECT_KEY file -m ./dist/index.js.map -u https://myapp.com/index.js
 ```
 
-Upload all sourcemaps in the directory. The url must correspond to the root where you upload JS files from the directory.
-
-Thus, if you have your `app-42.js` along with  the `app-42.js.map` in the `./build` folder and then want to upload it to you server (you might want to avoid uploading soursemaps) so it can be reachable through the link `https://myapp.com/static/app-42.js`, the command would be the next:
+Upload all sourcemaps in a given directory. The URL must correspond to the root where you upload JS files from the directory. In other words, if you have your `app-42.js` along with  the `app-42.js.map` in the `./build` folder and then want to upload it to your OpenReplay instance so it can be reachable through the link `https://myapp.com/static/app-42.js`, then the command should be like:
 
 ```
-sourcemap-uploader -k API_KEY -p PROJECT_KEY dir -m ./build -u https://myapp.com/static
+sourcemap-uploader -s https://opnereplay.mycompany.com/api -k API_KEY -p PROJECT_KEY dir -m ./build -u https://myapp.com/static
 ```
 
-Use `-v` (`--verbose`) key to see the logs.
-
+- Use `-s` (`--server`) to specify the URL of your OpenReplay instance (make to append it with /api)
+- Use `-v` (`--verbose`) to see the logs.
 
 ## NPM
 
-There are two functions inside `index.js` of the package
+There are two functions inside `index.js` of the package:
 
 ```
 uploadFile(api_key, project_key, sourcemap_file_path, js_file_url)

@@ -8,26 +8,32 @@ import {
   init as initPlayer,
   clean as cleanPlayer,
 } from 'Player';
-import { Controls as PlayerControls } from 'Player';
+import cn from 'classnames'
+import RightBlock from './RightBlock'
 
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
-import EventsBlock from '../Session_/EventsBlock';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.css';
-
-
-
-const EventsBlockConnected = connectPlayer(state => ({
-  currentTimeEventIndex: state.eventListNow.length > 0 ? state.eventListNow.length - 1 : 0,
-  playing: state.playing,
-}))(EventsBlock)
 
 
 const InitLoader = connectPlayer(state => ({ 
   loading: !state.initialized
 }))(Loader);
 
+const PlayerContentConnected = connectPlayer(state => ({ 
+  showEvents: !state.showEvents
+}))(PlayerContent);
+
+
+function PlayerContent({ live, fullscreen, showEvents }) {
+  return (
+    <div className={ cn(styles.session, 'relative') } data-fullscreen={fullscreen}>
+      <PlayerBlock />      
+      { showEvents && !live && !fullscreen && <RightBlock /> }      
+    </div>
+  )
+}
 
 function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt }) {
   useEffect(() => {
@@ -44,10 +50,7 @@ function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscr
     <PlayerProvider>
       <InitLoader className="flex-1">
         <PlayerBlockHeader fullscreen={fullscreen}/>
-        <div className={ styles.session } data-fullscreen={fullscreen}>
-          <PlayerBlock />
-          { !live && !fullscreen && <EventsBlockConnected player={PlayerControls}/> }
-        </div>
+        <PlayerContentConnected fullscreen={fullscreen} live={live} />
       </InitLoader>
     </PlayerProvider>
   );
@@ -61,5 +64,5 @@ export default connect(state => ({
 }), {
   toggleFullscreen,
   closeBottomBlock,
-})(WebPlayer) 
+})(WebPlayer)
 

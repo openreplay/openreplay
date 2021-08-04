@@ -92,7 +92,7 @@ const ProjectCodeSnippet = props  => {
     <div>
       <div className="mb-4">
         <div className="font-semibold mb-2 flex items-center">
-          <CircleNumber text="1" /> Choose data recording options:
+          <CircleNumber text="1" /> Choose data recording options
         </div>
         <div className="flex items-center ml-10">
           <Select
@@ -149,7 +149,7 @@ const ProjectCodeSnippet = props  => {
         </Highlight>
       </div>
       {/* TODO Extract for SaaS */}
-      <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a> or <a className="link" href="https://docs.openreplay.com/integrations/segment" target="_blank">Segment</a>. </div>
+      <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a>.</div>
     </div>
   )
 }

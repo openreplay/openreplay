@@ -2,7 +2,7 @@ from chalice import Blueprint, AuthResponse
 from chalicelib.utils import helper
 from chalicelib.core import authorizers
 
-from chalicelib.ee import users
+from chalicelib.core import users
 
 app = Blueprint(__name__)
 

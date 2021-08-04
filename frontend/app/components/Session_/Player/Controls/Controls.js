@@ -6,6 +6,7 @@ import {
   selectStorageType,
   selectStorageListNow,
 } from 'Player/store';
+import LiveTag from 'Shared/LiveTag';
 
 import { Popup, Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
@@ -72,7 +73,7 @@ function getStorageName(type) {
   skip: state.skip,
   skipToIssue: state.skipToIssue,
   speed: state.speed,
-  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
+  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode || state.markedTargets,
   inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
@@ -96,8 +97,7 @@ function getStorageName(type) {
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
 }))
-@connect((state, props) => ({
-  showDevTools: state.getIn([ 'user', 'account', 'appearance', 'sessionsDevtools' ]),
+@connect((state, props) => ({  
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
   showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
@@ -118,7 +118,7 @@ export default class Controls extends React.Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    if (nextProps.showDevTools !== this.props.showDevTools ||
+    if (
       nextProps.fullscreen !== this.props.fullscreen ||
       nextProps.bottomBlock !== this.props.bottomBlock ||
       nextProps.endTime !== this.props.endTime ||
@@ -218,8 +218,7 @@ export default class Controls extends React.Component {
   }
 
   render() {
-    const {
-      showDevTools,
+    const {      
       bottomBlock,
       toggleBottomBlock,
       live,
@@ -255,8 +254,8 @@ export default class Controls extends React.Component {
     // const inspectorMode = bottomBlock === INSPECTOR;
 
     return (
-      <div className={ styles.controls }>
-        <Timeline jump={ this.props.jump } />
+      <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
+        { !live && <Timeline jump={ this.props.jump } /> }
         { !fullscreen &&
           <div className={ styles.buttons } data-is-live={ live }>
             { !live ?
@@ -278,10 +277,7 @@ export default class Controls extends React.Component {
               </div>
               :
               <div className={ styles.buttonsLeft }>
-                <button onClick={ this.goLive } className={ styles.liveTag } data-is-live={ livePlay }>
-                  <Icon name="circle" size="8" marginRight="5" color="white" />
-                  <div>{'Live'}</div>
-                </button>
+                <LiveTag isLive={livePlay} />
                 {'Elapsed'}
                 <ReduxTime name="time" />
               </div>
@@ -308,7 +304,7 @@ export default class Controls extends React.Component {
                 </React.Fragment>
               }
               <div className={ styles.divider } />
-              { !live && showDevTools &&
+              { !live &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(NETWORK) }
@@ -330,7 +326,7 @@ export default class Controls extends React.Component {
                   icon="fetch"
                 />
               }
-              { showGraphql &&
+              { !live && showGraphql &&
                 <ControlButton
                   disabled={disabled}
                   onClick={ ()=> toggleBottomBlock(GRAPHQL) }
@@ -340,7 +336,7 @@ export default class Controls extends React.Component {
                   icon="vendors/graphql"
                 />
               }
-              { showStorage && showDevTools &&
+              { !live && showStorage &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STORAGE) }
@@ -350,7 +346,7 @@ export default class Controls extends React.Component {
                   icon={ getStorageIconName(storageType) }
                 />
               }
-              { showDevTools &&
+              { 
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(CONSOLE) }
@@ -361,7 +357,7 @@ export default class Controls extends React.Component {
                   hasErrors={ logRedCount > 0 }
                 />
               }
-              { showExceptions && showDevTools &&
+              { showExceptions &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(EXCEPTIONS) }
@@ -372,7 +368,7 @@ export default class Controls extends React.Component {
                   hasErrors={ exceptionsCount > 0 }
                 />
               }
-              { !live && showDevTools && showStack &&
+              { !live && showStack &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STACKEVENTS) }
@@ -383,7 +379,7 @@ export default class Controls extends React.Component {
                   hasErrors={ stackRedCount > 0 }
                 />
               }
-              { showProfiler && showDevTools &&
+              { !live && showProfiler &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(PROFILER) }
@@ -392,15 +388,18 @@ export default class Controls extends React.Component {
                   label="Profiler"
                   icon="code"
                 />
+              }              
+              {
+                !live && 
+                <ControlButton
+                  disabled={ disabled }
+                  onClick={ () => toggleBottomBlock(PERFORMANCE) }
+                  active={ bottomBlock === PERFORMANCE }
+                  label="Performance"
+                  icon="tachometer-slow"
+                />
               }
-              <ControlButton
-                disabled={ disabled }
-                onClick={ () => toggleBottomBlock(PERFORMANCE) }
-                active={ bottomBlock === PERFORMANCE }
-                label="Performance"
-                icon="tachometer-slow"
-              />
-              { showLongtasks &&
+              { !live && showLongtasks &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(LONGTASKS) }
@@ -421,13 +420,16 @@ export default class Controls extends React.Component {
                 </React.Fragment>
               }
                          
-              <ControlButton
-                // disabled={ disabled && !inspectorMode }
-                active={ bottomBlock === INSPECTOR }
-                onClick={ toggleInspectorMode }
-                icon={ inspectorMode ? 'close' : 'inspect' }
-                label="Inspect"
-              />
+
+              {!live && (
+                <ControlButton
+                  disabled={ disabled && !inspectorMode }
+                  active={ bottomBlock === INSPECTOR }
+                  onClick={ () => toggleBottomBlock(INSPECTOR) }
+                  icon={ inspectorMode ? 'close' : 'inspect' }
+                  label="Inspect"
+                />
+              )}
             </div>
           </div>
         }

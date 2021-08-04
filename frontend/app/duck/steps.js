@@ -24,8 +24,7 @@ const initialState = Map({
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
-    case FETCH_LIST.SUCCESS: {
-      console.log(action);
+    case FETCH_LIST.SUCCESS: {      
       return state.set('list', List(action.data).map(i => {
         const type = i.type === 'navigate' ? i.type : 'location';
         return {...i, type: type.toUpperCase()}

@@ -5,6 +5,8 @@ import Watchdog, { getSessionWatchdogTypes } from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { getRE } from 'App/utils';
+import { LAST_7_DAYS } from 'Types/app/period';
+import { getDateRangeFromValue } from 'App/dateRange';
 
 
 const INIT = 'sessions/INIT';
@@ -12,15 +14,26 @@ const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
+const FETCH_LIVE_LIST = new RequestTypes('sessions/FETCH_LIVE_LIST');
 const TOGGLE_FAVORITE = new RequestTypes('sessions/TOGGLE_FAVORITE');
 const FETCH_ERROR_STACK = new RequestTypes('sessions/FETCH_ERROR_STACK');
+const FETCH_INSIGHTS = new RequestTypes('sessions/FETCH_INSIGHTS');
 const SORT = 'sessions/SORT';
 const REDEFINE_TARGET = 'sessions/REDEFINE_TARGET';
 const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
 const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
 const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
+const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
+
+const range = getDateRangeFromValue(LAST_7_DAYS);
+const defaultDateFilters = {  
+  url: '',
+  rangeValue: LAST_7_DAYS,
+  startDate: range.start.unix() * 1000,
+  endDate: range.end.unix() * 1000
+}
 
 const initialState = Map({
   list: List(),
@@ -35,7 +48,12 @@ const initialState = Map({
   errorStack: List(),
   eventsIndex: [],
   sourcemapUploaded: true,
-  filteredEvents: null
+  filteredEvents: null,
+  showChatWindow: false,
+  liveSessions: List(),
+  visitedEvents: List(),
+  insights: List(),
+  insightFilters: defaultDateFilters
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -49,6 +67,11 @@ const reducer = (state = initialState, action = {}) => {
         : state;
     case FETCH_ERROR_STACK.SUCCESS:
       return state.set('errorStack', List(action.data.trace).map(ErrorStack)).set('sourcemapUploaded', action.data.sourcemapUploaded)
+    case FETCH_LIVE_LIST.SUCCESS:
+      // const { sessions, total } = action.data;
+      const liveList = List(action.data).map(s => new Session({...s, live: true}));
+      return state
+        .set('liveSessions', liveList)
     case FETCH_LIST.SUCCESS:
       const { sessions, total } = action.data;
       const list = List(sessions).map(Session);
@@ -98,8 +121,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('sessionIds', list.map(({ sessionId }) => sessionId ).toJS())
         .set('total', total)
         .set('keyMap', keyMap)
-        .set('wdTypeCount', wdTypeCount);
-    
+        .set('wdTypeCount', wdTypeCount);    
     case SET_AUTOPLAY_VALUES: {
       const sessionIds = state.get('sessionIds')
       const currentSessionId = state.get('current').sessionId
@@ -128,21 +150,32 @@ const reducer = (state = initialState, action = {}) => {
       const session = Session(action.data);
     
       const matching = [];
+
+      const visitedEvents = []
+      const tmpMap = {}
+      session.events.forEach(event => {
+        if (event.type === 'LOCATION' && !tmpMap.hasOwnProperty(event.url)) {          
+          tmpMap[event.url] = event.url
+          visitedEvents.push(event)
+        } 
+      })
       
-      events.forEach(({ key, operator, value }) => {
+      events.forEach(({ key, operator, value }) => {        
         session.events.forEach((e, index) => {
-          if (key === e.type) {            
-            const val = (e.type === 'LOCATION' ? e.url : e.value);            
+          if (key === e.type) {
+            const val = (e.type === 'LOCATION' ? e.url : e.value);
             if (operator === 'is' && value === val) {
               matching.push(index);
             }
             if (operator === 'contains' && val.includes(value)) {
               matching.push(index);
-            }
-          }
+            }            
+          }         
         })
       })            
-      return state.set('current', current.merge(session)).set('eventsIndex', matching);
+      return state.set('current', current.merge(session))
+        .set('eventsIndex', matching)
+        .set('visitedEvents', visitedEvents);
     }
     case FETCH_FAVORITE_LIST.SUCCESS:
       return state
@@ -194,6 +227,11 @@ const reducer = (state = initialState, action = {}) => {
         .set('sessionIds', allList.map(({ sessionId }) => sessionId ).toJS())
     case SET_TIMEZONE:
       return state.set('timezone', action.timezone)
+    case TOGGLE_CHAT_WINDOW:      
+      return state.set('showChatWindow', action.state)
+    case FETCH_INSIGHTS.SUCCESS:       
+      return state.set('insights', List(action.data).sort((a, b) => b.count - a.count));
+    
     default:
       return state;
   }
@@ -204,6 +242,7 @@ export default withRequestState({
   fetchFavoriteListRequest: FETCH_FAVORITE_LIST,
   toggleFavoriteRequest: TOGGLE_FAVORITE,
   fetchErrorStackList: FETCH_ERROR_STACK,
+  fetchInsightsRequest: FETCH_INSIGHTS,
 }, reducer);
 
 function init(session) {
@@ -249,6 +288,27 @@ export function fetchFavoriteList() {
   return {
     types: FETCH_FAVORITE_LIST.toArray(),
     call: client => client.get('/sessions2/favorite'),
+  };
+}
+
+export function fetchInsights(params) {  
+  return {
+    types: FETCH_INSIGHTS.toArray(),
+    call: client => client.post('/heatmaps/url', params),
+  };
+}
+
+export function fetchLiveList() {
+  return {
+    types: FETCH_LIVE_LIST.toArray(),
+    call: client => client.get('/assist/sessions'),
+  };
+}
+
+export function toggleChatWindow(state) {
+  return {
+    type: TOGGLE_CHAT_WINDOW,
+    state
   };
 }
 

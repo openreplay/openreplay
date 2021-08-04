@@ -5,7 +5,7 @@ import styles from './screen.css';
 import { getState } from '../../../store';
 import BaseScreen from './BaseScreen';
 
-export { INITIAL_STATE } from './BaseScreen';
+export { INITIAL_STATE, State } from './BaseScreen';
 
 export default class Screen extends BaseScreen {
   private cursor: Cursor;

@@ -135,7 +135,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
       });
     }    
-    if (this.props.activeIndex && prevProps.activeIndex !== this.props.activeIndex) {
+    if (this.props.activeIndex && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current != null) {
       this.scroller.current.scrollToRow(this.props.activeIndex);
     }
   }

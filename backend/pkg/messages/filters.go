@@ -1,3 +1,4 @@
+// Auto-generated, do not edit
 package messages
 
 

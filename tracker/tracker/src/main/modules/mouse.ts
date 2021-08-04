@@ -1,8 +1,13 @@
+import { finder } from '@medv/finder';
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils';
 import App from '../app';
 import { MouseMove, MouseClick } from '../../messages';
 import { getInputLabel } from './input';
 
+const selectorMap: {[id:number]: string} = {};
+function getSelector(id: number, target: Element): string {
+  return selectorMap[id] = selectorMap[id] || finder(target);
+}
 
 function getTarget(target: EventTarget | null): Element | null {
   if (target instanceof Element) {
@@ -128,6 +133,7 @@ export default function (app: App): void {
             ? Math.round(performance.now() - mouseTargetTime)
             : 0,
           getTargetLabel(target),
+          getSelector(id, target),
         ),
         true,
       );

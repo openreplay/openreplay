@@ -1,0 +1,35 @@
+{
+  "name": "@openreplay/tracker-assist",
+  "description": "Tracker plugin for screen assistance through the WebRTC",
+  "version": "3.0.0",
+  "keywords": [
+    "WebRTC",
+    "assistance",
+    "logging",
+    "replay"
+  ],
+  "author": "Aleksandr K <alex@openreplay.com>",
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "scripts": {
+    "lint": "prettier --write 'src/**/*.ts' README.md && tsc --noEmit",
+    "build": "npm run build-es && npm run build-cjs",
+    "build-es": "rm -Rf lib && tsc",
+    "build-cjs": "rm -Rf cjs && tsc --project tsconfig-cjs.json && echo '{ \"type\": \"commonjs\" }' > cjs/package.json && replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs' && replace-in-files cjs/* --string='/lib/' --replacement='/'",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "npm-dragndrop": "^1.2.0",
+    "peerjs": "^1.3.2"
+  },
+  "peerDependencies": {
+    "@openreplay/tracker": "^3.1.0"
+  },
+  "devDependencies": {
+    "@openreplay/tracker": "^3.0.5",
+    "prettier": "^1.18.2",
+    "replace-in-files-cli": "^1.0.0",
+    "typescript": "^3.6.4"
+  }
+}

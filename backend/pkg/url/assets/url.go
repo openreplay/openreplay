@@ -12,6 +12,9 @@ func getSessionKey(sessionID uint64) string {
 }
 
 func ResolveURL(baseurl string, rawurl string) string {
+	if !isRelativeCachable(rawurl) {
+		return rawurl
+	}
 	base, _ := url.ParseRequestURI(baseurl) // fn Only for base urls
 	u, _ := url.Parse(rawurl) // TODO: handle errors ?
 	if base == nil || u == nil { 
@@ -50,7 +53,7 @@ func GetFullCachableURL(baseURL string, relativeURL string) (string, bool) {
 }
 
 
-const ASAYER_QUERY_START = "ASAYER_QUERY_ESCtRT"
+const OPENREPLAY_QUERY_START = "OPENREPLAY_QUERY"
 
 func getCachePath(rawurl string) string {
 	u, _ := url.Parse(rawurl)
@@ -59,7 +62,7 @@ func getCachePath(rawurl string) string {
 		if (s[len(s) - 1] != '/') {
 			s += "/"
 		}
-		s += ASAYER_QUERY_START + url.PathEscape(u.RawQuery)
+		s += OPENREPLAY_QUERY_START + url.PathEscape(u.RawQuery)
 	}
 	return s
 }

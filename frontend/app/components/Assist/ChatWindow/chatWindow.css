@@ -1,0 +1,21 @@
+.wrapper {
+  background-color: white;
+  border: solid thin #000;
+  border-radius: 3px;
+  position: fixed;  
+  width: 300px;  
+}
+
+.headerTitle {
+  font-size: 12px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.videoWrapper {
+  height: 180px;
+  overflow: hidden;
+  background-color: #000;
+}

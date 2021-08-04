@@ -58,7 +58,7 @@ EOF
   echo -e "${reset}${blue}services: ${services[*]}${reset}"
   exit 0
 }
-services=( alerts assets chalice clickhouse ender sink storage http integrations ios-proxy db pg redis )
+services=( alerts assets chalice clickhouse ender sink storage http integrations ios-proxy db pg redis postgresql )
 
 check() {
     if ! command -v kubectl &> /dev/null

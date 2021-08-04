@@ -239,7 +239,7 @@ def get_details(project_id, error_id, user_id, **data):
         cur.execute(cur.mogrify(main_pg_query, params))
         row = cur.fetchone()
         if row is None:
-            return {"errors": ["error doesn't exist"]}
+            return {"errors": ["error not found"]}
         row["tags"] = __process_tags(row)
 
         query = cur.mogrify(
@@ -387,7 +387,7 @@ def get_details_chart(project_id, error_id, user_id, **data):
         cur.execute(cur.mogrify(main_pg_query, params))
         row = cur.fetchone()
     if row is None:
-        return {"errors": ["error doesn't exist"]}
+        return {"errors": ["error not found"]}
     row["tags"] = __process_tags(row)
     return {"data": helper.dict_to_camel_case(row)}
 
