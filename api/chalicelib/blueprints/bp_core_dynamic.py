@@ -53,12 +53,12 @@ def login():
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
+    c["smtp"] = helper.has_smtp()
     return {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r,
-            "client": c,
-            "smtp": helper.has_smtp()
+            "client": c
         }
     }
 
