@@ -45,7 +45,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
 
   return (
     <div className="px-4 bg-gray-lightest">
-      <div className="my-3 flex">
+      <div className="my-3 flex -ml-2">
         <DateRange
           // rangeValue={filters.rangeValue}
           startDate={filters.startDate}
