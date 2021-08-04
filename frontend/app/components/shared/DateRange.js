@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import DateRangeDropdown from 'Shared/DateRangeDropdown';
 
 function DateRange (props) {
-  const { startDate, endDate, rangeValue, className, onDateChange, customRangeRight=false } = props;
+  const { startDate, endDate, rangeValue, className, onDateChange, customRangeRight=false, customHidden = false } = props;
   
   return (
     <DateRangeDropdown
@@ -13,6 +13,7 @@ function DateRange (props) {
       endDate={ endDate }
       className={ className }
       customRangeRight={customRangeRight}
+      customHidden={customHidden}
     />
   );  
 }
