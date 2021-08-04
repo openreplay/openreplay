@@ -4,6 +4,8 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, Button, Link, Icon, Message } from 'UI';
 import { requestResetPassword, resetPassword } from 'Duck/user';
 import { login as loginRoute } from 'App/routes';
+import { withRouter } from 'react-router-dom';
+import { validateEmail } from 'App/validate';
 import cn from 'classnames';
 import stl from './forgotPassword.css';
 
@@ -17,14 +19,16 @@ const checkDontMatch = (newPassword, newPasswordRepeat) =>
   newPasswordRepeat.length > 0 && newPasswordRepeat !== newPassword;
 
 @connect(
-  state => ({
+  (state, props) => ({
     errors: state.getIn([ 'user', 'requestResetPassowrd', 'errors' ]),
     resetErrors: state.getIn([ 'user', 'resetPassword', 'errors' ]),
     loading: state.getIn([ 'user', 'requestResetPassowrd', 'loading' ]),
+    params: new URLSearchParams(props.location.search)
   }),
   { requestResetPassword, resetPassword },
 )
 @withPageTitle("Password Reset - OpenReplay")
+@withRouter
 export default class ForgotPassword extends React.PureComponent {
   state = {
     email: '',
@@ -37,15 +41,20 @@ export default class ForgotPassword extends React.PureComponent {
 
   handleSubmit = (token) => {
     const { email, requested, code, password } = this.state;
+    const { params } = this.props;
 
-    if (!requested) {
+    const pass = params.get('pass')
+    const invitation = params.get('invitation')
+    const resetting = pass && invitation
+
+    if (!resetting) {
       this.props.requestResetPassword({ email: email.trim(), 'g-recaptcha-response': token }).then(() => {
         const { errors } = this.props;
         if (!errors) this.setState({ requested: true });
       });
     } else {
       if (this.isSubmitDisabled()) return;
-      this.props.resetPassword({ email: email.trim(), code, password }).then(() => {
+      this.props.resetPassword({ email: email.trim(), invitation, pass, password }).then(() => {
         const { resetErrors } = this.props;
         if (!resetErrors) this.setState({ updated: true });
       });
@@ -78,9 +87,14 @@ export default class ForgotPassword extends React.PureComponent {
   }
 
   render() {
-    const { errors, loading } = this.props;
-    const { requested, updated, password, passwordRepeat, code } = this.state;
-    const dontMatch = checkDontMatch(password, passwordRepeat);
+    const { errors, loading, params } = this.props;
+    const { requested, updated, password, passwordRepeat, email } = this.state;
+    const dontMatch = checkDontMatch(password, passwordRepeat);    
+  
+    const pass = params.get('pass')
+    const invitation = params.get('invitation')
+    const resetting = pass && invitation
+    const validEmail = validateEmail(email)
 
     return (
       <div className="flex" style={{ height: '100vh'}}>
@@ -113,7 +127,7 @@ export default class ForgotPassword extends React.PureComponent {
                   </div>
                 )}              
 
-                { !requested ?
+                { !resetting && !requested &&
                   <div className={ stl.inputWithIcon }>
                     <i className={ stl.inputIconUser } />
                     <input
@@ -125,47 +139,57 @@ export default class ForgotPassword extends React.PureComponent {
                       onChange={ this.write }
                       className={ stl.input }
                     />
-                  </div>
-                : 
-                  <React.Fragment>
-                    <div className={ stl.inputWithIcon } >
-                      <i className={ stl.inputIconPassword } />
-                      <input
-                        autocomplete="new-password"
-                        type="text"
-                        placeholder="Code"
-                        name="code"
-                        onChange={ this.write }
-                        className={ stl.input }
-                      />
-                    </div>
+                  </div>                
+                }
 
-                    <div className={ stl.inputWithIcon } >
-                      <i className={ stl.inputIconPassword } />
-                      <input
-                        autocomplete="new-password"
-                        type="password"
-                        placeholder="New Password"
-                        name="password"
-                        onChange={ this.write }
-                        className={ stl.input }
-                      />
-                    </div>
-                    <div className={ stl.passwordPolicy } data-hidden={ !this.shouldShouwPolicy() }>
-                      { PASSWORD_POLICY }
-                    </div>
-                    <div className={ stl.inputWithIcon } >
-                      <i className={ stl.inputIconPassword } />
-                      <input
-                        autocomplete="new-password"
-                        type="password"
-                        placeholder="Repeat New Password"
-                        name="passwordRepeat"
-                        onChange={ this.write }
-                        className={ stl.input }
-                      />
-                    </div>
-                  </React.Fragment>
+                {
+                  requested && (
+                    <div>Reset password link has been sent to your email.</div>
+                  )
+                }
+
+                {
+                  resetting && (
+                    <React.Fragment>
+                      {/* <div className={ stl.inputWithIcon } >
+                        <i className={ stl.inputIconPassword } />
+                        <input
+                          autocomplete="new-password"
+                          type="text"
+                          placeholder="Code"
+                          name="code"
+                          onChange={ this.write }
+                          className={ stl.input }
+                        />
+                      </div> */}
+
+                      <div className={ stl.inputWithIcon } >
+                        <i className={ stl.inputIconPassword } />
+                        <input
+                          autocomplete="new-password"
+                          type="password"
+                          placeholder="New Password"
+                          name="password"
+                          onChange={ this.write }
+                          className={ stl.input }
+                        />
+                      </div>
+                      <div className={ stl.passwordPolicy } data-hidden={ !this.shouldShouwPolicy() }>
+                        { PASSWORD_POLICY }
+                      </div>
+                      <div className={ stl.inputWithIcon } >
+                        <i className={ stl.inputIconPassword } />
+                        <input
+                          autocomplete="new-password"
+                          type="password"
+                          placeholder="Repeat New Password"
+                          name="passwordRepeat"
+                          onChange={ this.write }
+                          className={ stl.input }
+                        />
+                      </div>
+                    </React.Fragment>
+                  )
                 }
 
                 <Message error hidden={ !dontMatch }>
@@ -185,7 +209,13 @@ export default class ForgotPassword extends React.PureComponent {
               </div>
             </div>
             <div className={ stl.formFooter }>
-              <Button data-hidden={ updated } type="submit" primary >{ 'Reset' }</Button>
+              <Button
+                data-hidden={ updated || requested }
+                type="submit" primary
+                disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
+              >
+                { 'Reset' }
+              </Button>
 
               <div className={ stl.links }>
                 <Link to={ LOGIN }>

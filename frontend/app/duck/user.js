@@ -52,7 +52,7 @@ const reducer = (state = initialState, action = {}) => {
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
       return setClient(
-        state.set('account', Account(action.data.user)),
+        state.set('account', Account({...action.data.user, smtp: action.data.client.smtp })),
         action.data.client,
       );
     case SIGNUP.SUCCESS:
