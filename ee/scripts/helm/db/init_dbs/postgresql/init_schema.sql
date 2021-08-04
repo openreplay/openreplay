@@ -121,8 +121,7 @@ CREATE TABLE users
     jwt_iat       timestamp without time zone NULL     DEFAULT NULL,
     data          jsonb                       NOT NULL DEFAULT '{}'::jsonb,
     weekly_report boolean                     NOT NULL DEFAULT TRUE,
-    origin        user_origin                 NULL     DEFAULT NULL,
-
+    origin        user_origin                 NULL     DEFAULT NULL
 );
 
 
@@ -687,10 +686,12 @@ CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path
 
 CREATE TABLE events.clicks
 (
-    session_id bigint NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-    message_id bigint NOT NULL,
-    timestamp  bigint NOT NULL,
+    session_id bigint          NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+    message_id bigint          NOT NULL,
+    timestamp  bigint          NOT NULL,
     label      text DEFAULT NULL,
+    url        text DEFAULT '' NOT NULL,
+    selector   text DEFAULT '' NOT NULL,
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.clicks (session_id);
