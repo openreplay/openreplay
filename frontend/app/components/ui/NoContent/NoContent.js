@@ -9,8 +9,12 @@ export default ({
   show = true,
   children = null,
   empty = false,
+  image = null
 }) => (!show ? children :
 <div className={ `${ styles.wrapper } ${ size && styles[ size ] }` }>
+  {
+    image && image
+  }
   {
     icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
   }

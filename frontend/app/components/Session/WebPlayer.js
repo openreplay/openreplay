@@ -8,22 +8,13 @@ import {
   init as initPlayer,
   clean as cleanPlayer,
 } from 'Player';
-import { Controls as PlayerControls, toggleEvents } from 'Player';
 import cn from 'classnames'
+import RightBlock from './RightBlock'
 
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
-import EventsBlock from '../Session_/EventsBlock';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.css';
-import EventsToggleButton from './EventsToggleButton';
-
-
-
-const EventsBlockConnected = connectPlayer(state => ({
-  currentTimeEventIndex: state.eventListNow.length > 0 ? state.eventListNow.length - 1 : 0,
-  playing: state.playing,
-}))(EventsBlock)
 
 
 const InitLoader = connectPlayer(state => ({ 
@@ -32,14 +23,14 @@ const InitLoader = connectPlayer(state => ({
 
 const PlayerContentConnected = connectPlayer(state => ({ 
   showEvents: !state.showEvents
-}), { toggleEvents })(PlayerContent);
+}))(PlayerContent);
 
 
-function PlayerContent({ live, fullscreen, showEvents, toggleEvents }) {
+function PlayerContent({ live, fullscreen, showEvents }) {
   return (
     <div className={ cn(styles.session, 'relative') } data-fullscreen={fullscreen}>
       <PlayerBlock />      
-      { showEvents && !live && !fullscreen && <EventsBlockConnected player={PlayerControls}/> }
+      { showEvents && !live && !fullscreen && <RightBlock /> }      
     </div>
   )
 }

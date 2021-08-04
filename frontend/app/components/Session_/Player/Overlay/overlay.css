@@ -1,8 +1,3 @@
-.wrapper {
-  width: 30%;
-  height: 30%;
-}
-
 .overlay {
   position: absolute;
   top: 0;
@@ -13,5 +8,4 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.8);
 }

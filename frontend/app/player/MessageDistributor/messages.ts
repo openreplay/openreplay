@@ -24,7 +24,7 @@ export const ID_TP_MAP = {
   22: "console_log",
   37: "css_insert_rule",
   38: "css_delete_rule",
-  39: "fetch_depricated",
+  39: "fetch",
   40: "profiler",
   41: "o_table",
   44: "redux",
@@ -36,7 +36,6 @@ export const ID_TP_MAP = {
   54: "connection_information",
   55: "set_page_visibility",
   59: "long_task",
-  68: "fetch",
 } as const;
 
 
@@ -167,8 +166,8 @@ export interface CssDeleteRule {
   index: number,
 }
 
-export interface FetchDepricated {
-  tp: "fetch_depricated",
+export interface Fetch {
+  tp: "fetch",
   method: string,
   url: string,
   request: string,
@@ -256,20 +255,8 @@ export interface LongTask {
   containerName: string,
 }
 
-export interface Fetch {
-  tp: "fetch",
-  method: string,
-  url: string,
-  request: string,
-  response: string,
-  status: number,
-  timestamp: number,
-  duration: number,
-  headers: string,
-}
 
-
-export type Message = Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | FetchDepricated | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | Fetch;
+export type Message = Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask;
 
 export default function (r: PrimitiveReader): Message | null {
   switch (r.readUint()) {
@@ -520,19 +507,6 @@ export default function (r: PrimitiveReader): Message | null {
       containerSrc: r.readString(),
       containerId: r.readString(),
       containerName: r.readString(),      
-    };
-  
-  case 68:
-    return {
-      tp: ID_TP_MAP[68], 
-      method: r.readString(),
-      url: r.readString(),
-      request: r.readString(),
-      response: r.readString(),
-      status: r.readUint(),
-      timestamp: r.readUint(),
-      duration: r.readUint(),
-      headers: r.readString(),      
     };
   
   default:

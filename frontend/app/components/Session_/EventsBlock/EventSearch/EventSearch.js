@@ -6,7 +6,7 @@ export default function EventSearch(props) {
   const [showSearch, setShowSearch] = useState(false)
   return (
     <div className="flex items-center w-full">
-      <div className="flex-1 relative">
+      <div className="flex flex-1 relative items-center" style={{ height: '32px' }}>
         { showSearch ? 
           <div className="flex items-center">
             <Input
