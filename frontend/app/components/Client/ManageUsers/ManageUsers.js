@@ -76,7 +76,7 @@ class ManageUsers extends React.PureComponent {
       });
   }
   
-  formContent = member => (
+  formContent = (member, account) => (
     <div className={ styles.form }>
       <form onSubmit={ this.save } >
         <div className={ styles.formGroup }>
@@ -101,11 +101,11 @@ class ManageUsers extends React.PureComponent {
             className={ styles.input }
           />
         </div>
-
-        <div className={cn("mb-4 p-2", styles.smtpMessage)}>
-          SMTP is not configured, <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>
-        </div>
-
+        { !account.smtp &&
+          <div className={cn("mb-4 p-2", styles.smtpMessage)}>
+            SMTP is not configured, <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>
+          </div>
+        }
         <div className={ styles.formGroup }>
           <label className={ styles.checkbox }>
             <input
@@ -172,7 +172,7 @@ class ManageUsers extends React.PureComponent {
             title="Inivte People"
             size="small"
             isDisplayed={ showModal }
-            content={ this.formContent(member) }
+            content={ this.formContent(member, account) }
             onClose={ this.closeModal }
           />
           <div className={ styles.wrapper }>
