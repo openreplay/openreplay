@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import { IconButton, SlideModal, Input, Button, Loader, NoContent, Popup, CopyButton } from 'UI';
-import { init, save, edit, remove as deleteMember, fetchList } from 'Duck/member';
+import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import styles from './manageUsers.css';
 import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
@@ -24,7 +24,8 @@ const LIMIT_WARNING = 'You have reached users limit.';
   save,
   edit,
   deleteMember,
-  fetchList
+  fetchList,
+  generateInviteLink
 })
 @withPageTitle('Manage Users - OpenReplay Preferences')
 class ManageUsers extends React.PureComponent {
@@ -74,7 +75,7 @@ class ManageUsers extends React.PureComponent {
         // this.closeModal()
       });
   }
-
+  
   formContent = member => (
     <div className={ styles.form }>
       <form onSubmit={ this.save } >
@@ -139,10 +140,10 @@ class ManageUsers extends React.PureComponent {
             { 'Cancel' }
           </Button>
         </div>
-        { true &&  
+        { !member.joined && member.invitationLink &&
           <CopyButton
-            content={"test"}
-            className="link"        
+            content={member.invitationLink}
+            className="link"
             btnText="Copy invite link"
           />
         }
@@ -160,7 +161,7 @@ class ManageUsers extends React.PureComponent {
     const {
       members, member, loading, account, hideHeader = false,
     } = this.props;
-    const { showModal, remaining } = this.state;
+    const { showModal, remaining, invited } = this.state;
     const isAdmin = account.admin || account.superAdmin;
     const canAddUsers = isAdmin && remaining !== 0;
 
@@ -218,6 +219,7 @@ class ManageUsers extends React.PureComponent {
                 {
                   members.map(user => (
                     <UserItem
+                      generateInviteLink={this.props.generateInviteLink}
                       key={ user.id }
                       user={ user }
                       adminLabel={ this.adminLabel(user) }

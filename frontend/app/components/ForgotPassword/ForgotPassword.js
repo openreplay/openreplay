@@ -5,6 +5,7 @@ import { Loader, Button, Link, Icon, Message } from 'UI';
 import { requestResetPassword, resetPassword } from 'Duck/user';
 import { login as loginRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
+import { validateEmail } from 'App/validate';
 import cn from 'classnames';
 import stl from './forgotPassword.css';
 
@@ -87,12 +88,13 @@ export default class ForgotPassword extends React.PureComponent {
 
   render() {
     const { errors, loading, params } = this.props;
-    const { requested, updated, password, passwordRepeat, code } = this.state;
+    const { requested, updated, password, passwordRepeat, email } = this.state;
     const dontMatch = checkDontMatch(password, passwordRepeat);    
   
     const pass = params.get('pass')
     const invitation = params.get('invitation')
     const resetting = pass && invitation
+    const validEmail = validateEmail(email)
 
     return (
       <div className="flex" style={{ height: '100vh'}}>
@@ -207,7 +209,13 @@ export default class ForgotPassword extends React.PureComponent {
               </div>
             </div>
             <div className={ stl.formFooter }>
-              <Button data-hidden={ updated || requested } type="submit" primary >{ 'Reset' }</Button>
+              <Button
+                data-hidden={ updated || requested }
+                type="submit" primary
+                disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
+              >
+                { 'Reset' }
+              </Button>
 
               <div className={ stl.links }>
                 <Link to={ LOGIN }>

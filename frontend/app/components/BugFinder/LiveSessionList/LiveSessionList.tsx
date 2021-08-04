@@ -35,8 +35,8 @@ function LiveSessionList(props: Props) {
     <div>
       <NoContent
         title={"No live sessions!"}
-        subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        // subtext="Please try changing your search parameters."
+        image={<img src="/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }}/>}
         show={ !loading && list && list.size === 0}
       >
         <Loader loading={ loading }>

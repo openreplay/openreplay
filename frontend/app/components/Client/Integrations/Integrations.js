@@ -320,7 +320,7 @@ export default class Integrations extends React.PureComponent {
 							/>
               <IntegrationItem
 								title="Assist"
-								icon="integrations/openreplay"
+								icon="integrations/assist"
 								url={ null }
 								dockLink="https://docs.openreplay.com/installation/assist"
 								onClick={ () => this.showIntegrationConfig(ASSIST) }
