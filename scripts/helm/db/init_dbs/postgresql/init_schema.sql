@@ -685,9 +685,9 @@ CREATE TABLE events.clicks
     message_id bigint          NOT NULL,
     timestamp  bigint          NOT NULL,
     label      text DEFAULT NULL,
-    url        text DEFAULT '' NOT NULL;
-selector   text DEFAULT '' NOT NULL;
-PRIMARY KEY (session_id, message_id)
+    url        text DEFAULT '' NOT NULL,
+    selector   text DEFAULT '' NOT NULL,
+    PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.clicks (session_id);
 CREATE INDEX ON events.clicks (label);
