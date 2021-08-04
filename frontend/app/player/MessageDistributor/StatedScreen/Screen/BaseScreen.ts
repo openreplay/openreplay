@@ -18,7 +18,7 @@ export const INITIAL_STATE: State = {
 export default abstract class BaseScreen {
   public    readonly overlay: HTMLDivElement;
   private   readonly iframe: HTMLIFrameElement;
-  private   readonly _screen: HTMLDivElement;
+  protected   readonly screen: HTMLDivElement;
   protected parentElement: HTMLElement | null = null;
   constructor() {
     const iframe = document.createElement('iframe');
@@ -44,7 +44,7 @@ export default abstract class BaseScreen {
     screen.className = styles.screen;
     screen.appendChild(iframe);
     screen.appendChild(overlay);
-    this._screen = screen;
+    this.screen = screen;
   }
 
   attach(parentElement: HTMLElement) {
@@ -52,7 +52,7 @@ export default abstract class BaseScreen {
       throw new Error("BaseScreen: Trying to attach an attached screen.");
     }
 
-    parentElement.appendChild(this._screen);
+    parentElement.appendChild(this.screen);
 
     this.parentElement = parentElement;
     // parentElement.onresize = this.scale;
@@ -115,29 +115,38 @@ export default abstract class BaseScreen {
     return this.getElementsFromInternalPoint(this.getInternalCoordinates(point));
   }
 
+  getElementBySelector(selector: string): Element | null {
+    if (!selector) return null;
+    return this.document?.querySelector(selector) || null;
+  }
+
   display(flag: boolean = true) {
-    this._screen.style.display = flag ? '' : 'none';
+    this.screen.style.display = flag ? '' : 'none';
   }
 
   displayFrame(flag: boolean = true) {
     this.iframe.style.display = flag ? '' : 'none';
   }
 
+  private s: number = 1;
+  getScale() {
+    return this.s;
+  }
+
   _scale() {
     if (!this.parentElement) return;
-    let s = 1;
     const { height, width } = getState();
     const { offsetWidth, offsetHeight } = this.parentElement;
 
-    s = Math.min(offsetWidth / width, offsetHeight / height);
-    if (s > 1) {
-      s = 1;
+    this.s = Math.min(offsetWidth / width, offsetHeight / height);
+    if (this.s > 1) {
+      this.s = 1;
     } else {
-      s = Math.round(s * 1e3) / 1e3;
+      this.s = Math.round(this.s * 1e3) / 1e3;
     }
-    this._screen.style.transform =  `scale(${ s }) translate(-50%, -50%)`;
-    this._screen.style.width = width + 'px';
-    this._screen.style.height =  height + 'px';
+    this.screen.style.transform =  `scale(${ this.s }) translate(-50%, -50%)`;
+    this.screen.style.width = width + 'px';
+    this.screen.style.height =  height + 'px';
     this.iframe.style.width = width + 'px';
     this.iframe.style.height = height + 'px';
 

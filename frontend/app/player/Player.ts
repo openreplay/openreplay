@@ -1,6 +1,6 @@
 import { goTo as listsGoTo } from './lists';
 import { update, getState } from './store';
-import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState }  from './MessageDistributor';
+import MessageDistributor, { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState }  from './MessageDistributor/MessageDistributor';
 
 const fps = 60;
 const performance = window.performance || { now: Date.now.bind(Date) };
@@ -35,7 +35,7 @@ const initialSkipToIssue = !!localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY);
 const initialAutoplay = !!localStorage.getItem(AUTOPLAY_STORAGE_KEY);
 const initialShowEvents = !!localStorage.getItem(SHOW_EVENTS_STORAGE_KEY);
 
-export const INITIAL_STATE: SuperState = {
+export const INITIAL_STATE = {
   ...SUPER_INITIAL_STATE,
   time: 0,
   playing: false,
@@ -190,6 +190,15 @@ export default class Player extends MessageDistributor {
       super.disableInspector();
       update({ inspectorMode: false });
     }
+  }
+
+  markTargets(targets: { selector: string, count: number }[] | null) {    
+    this.pause();
+    this.setMarkedTargets(targets);
+  }
+
+  activeTarget(index) {
+    this.setActiveTarget(index);
   }
   
   toggleSkipToIssue() {

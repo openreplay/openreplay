@@ -73,7 +73,7 @@ function getStorageName(type) {
   skip: state.skip,
   skipToIssue: state.skipToIssue,
   speed: state.speed,
-  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
+  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode || state.markedTargets,
   inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
