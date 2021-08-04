@@ -18,6 +18,8 @@ func ReadBatch(b []byte, callback func(Message)) error {
 		} else if err != nil {
 			return errors.Wrapf(err, "Batch Message decoding error on message with index %v", index)
 		}
+		msg = transformDepricated(msg)
+
 		isBatchMeta := false
 		switch m := msg.(type){
 		case *BatchMeta:  // Is not required to be present in batch since IOS doesn't have it (though we might change it)

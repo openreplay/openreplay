@@ -7,7 +7,7 @@ import (
 )
 
 
-const CLICK_TIME_DIFF = 200
+const CLICK_TIME_DIFF = 300
 const MIN_CLICKS_IN_A_ROW = 3
 
 type clickRageDetector struct {
@@ -40,7 +40,7 @@ func (crd *clickRageDetector) Build() *IssueEvent {
 }
 
 func (crd *clickRageDetector) HandleMouseClick(msg *MouseClick,  messageID uint64, timestamp uint64) *IssueEvent {
-	if crd.lastTimestamp + CLICK_TIME_DIFF < timestamp && crd.lastLabel == msg.Label {
+	if crd.lastTimestamp + CLICK_TIME_DIFF > timestamp && crd.lastLabel == msg.Label {
 		crd.lastTimestamp = timestamp
 		crd.countsInARow += 1
 		return nil

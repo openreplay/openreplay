@@ -248,8 +248,8 @@ export default class App {
           throw new Error("Stranger things: no worker found after start request");
         }
         this.worker.postMessage({ token });
-        this.observer.observe();
         this.startCallbacks.forEach((cb) => cb());
+        this.observer.observe();
         this.ticker.start();
 
         log("OpenReplay tracking started.");

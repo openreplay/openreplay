@@ -350,13 +350,13 @@ p = WriteUint(msg.Y, buf, p)
   return buf[:p]
 }
 
-type MouseClick struct {
+type MouseClickDepricated struct {
   *meta
   ID uint64
 HesitationTime uint64
 Label string
 }
-func (msg *MouseClick) Encode() []byte{
+func (msg *MouseClickDepricated) Encode() []byte{
   buf := make([]byte, 31 + len(msg.Label))
   buf[0] = 21
   p := 1
@@ -582,15 +582,17 @@ type ClickEvent struct {
 Timestamp uint64
 HesitationTime uint64
 Label string
+Selector string
 }
 func (msg *ClickEvent) Encode() []byte{
-  buf := make([]byte, 41 + len(msg.Label))
+  buf := make([]byte, 51 + len(msg.Label)+ len(msg.Selector))
   buf[0] = 33
   p := 1
   p = WriteUint(msg.MessageID, buf, p)
 p = WriteUint(msg.Timestamp, buf, p)
 p = WriteUint(msg.HesitationTime, buf, p)
 p = WriteString(msg.Label, buf, p)
+p = WriteString(msg.Selector, buf, p)
   return buf[:p]
 }
 
@@ -1143,6 +1145,24 @@ func (msg *CSSInsertRuleURLBased) Encode() []byte{
 p = WriteString(msg.Rule, buf, p)
 p = WriteUint(msg.Index, buf, p)
 p = WriteString(msg.BaseURL, buf, p)
+  return buf[:p]
+}
+
+type MouseClick struct {
+  *meta
+  ID uint64
+HesitationTime uint64
+Label string
+Selector string
+}
+func (msg *MouseClick) Encode() []byte{
+  buf := make([]byte, 41 + len(msg.Label)+ len(msg.Selector))
+  buf[0] = 69
+  p := 1
+  p = WriteUint(msg.ID, buf, p)
+p = WriteUint(msg.HesitationTime, buf, p)
+p = WriteString(msg.Label, buf, p)
+p = WriteString(msg.Selector, buf, p)
   return buf[:p]
 }
 

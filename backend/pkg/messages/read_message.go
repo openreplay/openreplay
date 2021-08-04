@@ -159,7 +159,7 @@ if msg.Y, err = ReadUint(reader); err != nil { return nil, err }
       return msg, nil
   
     case 21:
-      msg := &MouseClick{ meta: &meta{ TypeID: 21} }
+      msg := &MouseClickDepricated{ meta: &meta{ TypeID: 21} }
       if msg.ID, err = ReadUint(reader); err != nil { return nil, err }
 if msg.HesitationTime, err = ReadUint(reader); err != nil { return nil, err }
 if msg.Label, err = ReadString(reader); err != nil { return nil, err }
@@ -265,6 +265,7 @@ if msg.Label, err = ReadString(reader); err != nil { return nil, err }
 if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
 if msg.HesitationTime, err = ReadUint(reader); err != nil { return nil, err }
 if msg.Label, err = ReadString(reader); err != nil { return nil, err }
+if msg.Selector, err = ReadString(reader); err != nil { return nil, err }
       return msg, nil
   
     case 34:
@@ -510,6 +511,14 @@ if msg.Payload, err = ReadString(reader); err != nil { return nil, err }
 if msg.Rule, err = ReadString(reader); err != nil { return nil, err }
 if msg.Index, err = ReadUint(reader); err != nil { return nil, err }
 if msg.BaseURL, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 69:
+      msg := &MouseClick{ meta: &meta{ TypeID: 69} }
+      if msg.ID, err = ReadUint(reader); err != nil { return nil, err }
+if msg.HesitationTime, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Label, err = ReadString(reader); err != nil { return nil, err }
+if msg.Selector, err = ReadString(reader); err != nil { return nil, err }
       return msg, nil
   
     case 90:

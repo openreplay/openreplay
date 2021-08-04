@@ -38,9 +38,9 @@ def login():
                            for_plugin=False
                            )
     if r is None:
-        return {
+        return Response(status_code=401, body={
             'errors': ['You’ve entered invalid Email or Password.']
-        }
+        })
 
     tenant_id = r.pop("tenantId")
 
@@ -53,11 +53,12 @@ def login():
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
+    c["smtp"] = helper.has_smtp()
     return {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r,
-            "client": c,
+            "client": c
         }
     }
 
@@ -74,7 +75,7 @@ def get_account(context):
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },
             **license.get_status(context["tenantId"]),
-            "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
+            "smtp": helper.has_smtp()
         }
     }
 
@@ -100,8 +101,11 @@ def create_edit_project(projectId, context):
 
 @app.route('/projects/{projectId}', methods=['GET'])
 def get_project(projectId, context):
-    return {"data": projects.get_project(tenant_id=context["tenantId"], project_id=projectId, include_last_session=True,
-                                         include_gdpr=True)}
+    data = projects.get_project(tenant_id=context["tenantId"], project_id=projectId, include_last_session=True,
+                                include_gdpr=True)
+    if data is None:
+        return {"errors": ["project not found"]}
+    return {"data": data}
 
 
 @app.route('/projects/{projectId}', methods=['DELETE'])
@@ -353,11 +357,48 @@ def add_member(context):
     return users.create_member(tenant_id=context['tenantId'], user_id=context['userId'], data=data)
 
 
+@app.route('/users/invitation', methods=['GET'], authorizer=None)
+def process_invitation_link():
+    params = app.current_request.query_params
+    if params is None or len(params.get("token", "")) < 64:
+        return {"errors": ["please provide a valid invitation"]}
+    user = users.get_by_invitation_token(params["token"])
+    if user is None:
+        return {"errors": ["invitation not found"]}
+    if user["expiredInvitation"]:
+        return {"errors": ["expired invitation, please ask your admin to send a new one"]}
+    pass_token = users.allow_password_change(user_id=user["userId"])
+    return Response(
+        status_code=307,
+        body='',
+        headers={'Location': environ["SITE_URL"] + environ["change_password_link"] % (params["token"], pass_token),
+                 'Content-Type': 'text/plain'})
+
+
+@app.route('/users/invitation/password', methods=['POST', 'PUT'], authorizer=None)
+def change_password_by_invitation():
+    data = app.current_request.json_body
+    if data is None or len(data.get("invitation", "")) < 64 or len(data.get("pass", "")) < 8:
+        return {"errors": ["please provide a valid invitation & pass"]}
+    user = users.get_by_invitation_token(token=data["token"], pass_token=data["pass"])
+    if user is None:
+        return {"errors": ["invitation not found"]}
+    if user["expiredChange"]:
+        return {"errors": ["expired change, please re-use the invitation link"]}
+
+    return users.set_password_invitation(new_password=data["password"], user_id=user["userId"])
+
+
 @app.route('/client/members/{memberId}', methods=['PUT', 'POST'])
 def edit_member(memberId, context):
     data = app.current_request.json_body
     return users.edit(tenant_id=context['tenantId'], editor_id=context['userId'], changes=data,
                       user_id_to_update=memberId)
+
+
+@app.route('/client/members/{memberId}/reset', methods=['GET'])
+def reset_reinvite_member(memberId, context):
+    return users.reset_member(tenant_id=context['tenantId'], editor_id=context['userId'], user_id_to_update=memberId)
 
 
 @app.route('/client/members/{memberId}', methods=['DELETE'])

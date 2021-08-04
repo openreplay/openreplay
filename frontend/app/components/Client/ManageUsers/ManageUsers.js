@@ -1,8 +1,8 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { IconButton, SlideModal, Input, Button, Loader, NoContent, Popup } from 'UI';
-import { init, save, edit, remove as deleteMember, fetchList } from 'Duck/member';
+import { IconButton, SlideModal, Input, Button, Loader, NoContent, Popup, CopyButton } from 'UI';
+import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import styles from './manageUsers.css';
 import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
@@ -24,11 +24,12 @@ const LIMIT_WARNING = 'You have reached users limit.';
   save,
   edit,
   deleteMember,
-  fetchList
+  fetchList,
+  generateInviteLink
 })
 @withPageTitle('Manage Users - OpenReplay Preferences')
 class ManageUsers extends React.PureComponent {
-  state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining }
+  state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining, invited: false }
 
   onChange = (e, { name, value }) => this.props.edit({ [ name ]: value });
   onChangeCheckbox = ({ target: { checked, name } }) => this.props.edit({ [ name ]: checked });
@@ -70,11 +71,12 @@ class ManageUsers extends React.PureComponent {
             toast.error(e);
           })
         }
-        this.closeModal()
+        this.setState({ invited: true })
+        // this.closeModal()
       });
   }
-
-  formContent = member => (
+  
+  formContent = (member, account) => (
     <div className={ styles.form }>
       <form onSubmit={ this.save } >
         <div className={ styles.formGroup }>
@@ -99,7 +101,11 @@ class ManageUsers extends React.PureComponent {
             className={ styles.input }
           />
         </div>
-
+        { !account.smtp &&
+          <div className={cn("mb-4 p-2", styles.smtpMessage)}>
+            SMTP is not configured, <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>
+          </div>
+        }
         <div className={ styles.formGroup }>
           <label className={ styles.checkbox }>
             <input
@@ -111,26 +117,37 @@ class ManageUsers extends React.PureComponent {
             />
             <span>{ 'Admin' }</span>
           </label>
-          <div className={ styles.adminInfo }>{ 'Can manage Projects and Users.' }</div>
+          <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
         </div>
       </form>
 
-      <Button
-        onClick={ this.save }    
-        disabled={ !member.validate() }
-        loading={ this.props.saving }
-        primary
-        marginRight
-      >
-        { member.exists() ? 'Update' : 'Invite' }
-      </Button>
-      <Button
-        data-hidden={ !member.exists() }
-        onClick={ this.closeModal }
-        outline
-      >
-        { 'Cancel' }
-      </Button>
+      <div className="flex items-center">
+        <div className="flex items-center mr-auto">
+          <Button
+            onClick={ this.save }    
+            disabled={ !member.validate() }
+            loading={ this.props.saving }
+            primary
+            marginRight
+          >
+            { member.exists() ? 'Update' : 'Invite' }
+          </Button>
+          <Button
+            data-hidden={ !member.exists() }
+            onClick={ this.closeModal }
+            outline
+          >
+            { 'Cancel' }
+          </Button>
+        </div>
+        { !member.joined && member.invitationLink &&
+          <CopyButton
+            content={member.invitationLink}
+            className="link"
+            btnText="Copy invite link"
+          />
+        }
+      </div>
     </div>
   )
 
@@ -144,7 +161,7 @@ class ManageUsers extends React.PureComponent {
     const {
       members, member, loading, account, hideHeader = false,
     } = this.props;
-    const { showModal, remaining } = this.state;
+    const { showModal, remaining, invited } = this.state;
     const isAdmin = account.admin || account.superAdmin;
     const canAddUsers = isAdmin && remaining !== 0;
 
@@ -155,7 +172,7 @@ class ManageUsers extends React.PureComponent {
             title="Inivte People"
             size="small"
             isDisplayed={ showModal }
-            content={ this.formContent(member) }
+            content={ this.formContent(member, account) }
             onClose={ this.closeModal }
           />
           <div className={ styles.wrapper }>
@@ -202,6 +219,7 @@ class ManageUsers extends React.PureComponent {
                 {
                   members.map(user => (
                     <UserItem
+                      generateInviteLink={this.props.generateInviteLink}
                       key={ user.id }
                       user={ user }
                       adminLabel={ this.adminLabel(user) }

@@ -2,7 +2,7 @@ import React from 'react'
 import { useState } from 'react';
 import copy from 'copy-to-clipboard';
 
-function CopyButton({ content, className }) {
+function CopyButton({ content, className, btnText = 'copy' }) {
   const [copied, setCopied] = useState(false)
 
   const copyHandler = () => {
@@ -17,7 +17,7 @@ function CopyButton({ content, className }) {
       className={ className }
       onClick={ copyHandler }
     >
-      { copied ? 'copied' : 'copy' }
+      { copied ? 'copied' : btnText }
     </button>
   )
 }

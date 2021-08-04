@@ -9,6 +9,9 @@ export default Record({
   createdAt: undefined,
   admin: false,
   superAdmin: false,
+  joined: false,
+  expiredInvitation: false,
+  invitationLink: ''
 }, {
   idKey: 'id',
   methods: {
