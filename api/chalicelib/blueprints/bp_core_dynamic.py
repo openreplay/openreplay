@@ -58,6 +58,7 @@ def login():
         'data': {
             "user": r,
             "client": c,
+            "smtp": helper.has_smtp()
         }
     }
 
@@ -74,7 +75,7 @@ def get_account(context):
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },
             **license.get_status(context["tenantId"]),
-            "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
+            "smtp": helper.has_smtp()
         }
     }
 
