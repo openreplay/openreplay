@@ -18,8 +18,8 @@ export default function Marker({ target, active }: Props) {
     height: `${ target.boundingRect.height }px`,
   }  
   return (
-      <div className={ cn(stl.marker, { [stl.active] : active }) }  style={ style } onClick={() => activeTarget(target.index)}>
-        <div className={stl.index}>{target.index + 1}</div>
+      <div className={ cn(stl.marker, { [stl.active] : active }) }  style={ style } onClick={() => activeTarget(target.index - 1)}>
+        <div className={stl.index}>{target.index}</div>
         <Tooltip      
           open={active}
           arrow
