@@ -13,16 +13,15 @@ FROM prepare AS build
 COPY pkg pkg
 COPY services services
 
-RUN for name in alerts assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
-
+ARG SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/services/$SERVICE_NAME
 
 FROM alpine
-#FROM pygmy/alpine-tini:latest
 RUN apk add --no-cache ca-certificates
 
 ENV TZ=UTC \
     FS_ULIMIT=1000 \
-    FS_DIR=/filestorage \
+    FS_DIR=/mnt/efs \
     MAXMINDDB_FILE=/root/geoip.mmdb \
     UAPARSER_FILE=/root/regexes.yaml \
     HTTP_PORT=80 \
@@ -43,23 +42,14 @@ ENV TZ=UTC \
     AWS_REGION_ASSETS=eu-central-1 \
     CACHE_ASSETS=false \
     ASSETS_SIZE_LIMIT=6291456 \
-    FS_CLEAN_HRS=12
+    FS_CLEAN_HRS=0
 
 
-RUN mkdir $FS_DIR
-#VOLUME [ $FS_DIR ] # Uncomment in case of using Bind mount.
+ARG SERVICE_NAME
+RUN if [ "$SERVICE_NAME" = "http" ]; then \
+  wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
+  wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"; fi
 
-RUN wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
-  wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"
 
-
-WORKDIR /work
-
-COPY --from=build /root/bin ./bin
-COPY entrypoint.sh .
-
-####
-RUN apk add --no-cache tini
-ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["./entrypoint.sh"]
-
+COPY --from=build /root/service /root/service
+ENTRYPOINT /root/service
