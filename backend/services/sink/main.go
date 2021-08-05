@@ -64,7 +64,7 @@ func main() {
 
   tick := time.Tick(30 * time.Second)
 
-  log.Println("Start consuming")
+  log.Printf("Sink service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
