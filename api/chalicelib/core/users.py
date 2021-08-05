@@ -408,6 +408,11 @@ def delete_member(user_id, tenant_id, id_to_delete):
                            SET deleted_at = timezone('utc'::text, now()) 
                            WHERE user_id=%(user_id)s;""",
                         {"user_id": id_to_delete}))
+        cur.execute(
+            cur.mogrify(f"""UPDATE public.basic_authentication
+                           SET password= NULL
+                           WHERE user_id=%(user_id)s;""",
+                        {"user_id": id_to_delete}))
     return {"data": get_members(tenant_id=tenant_id)}
 
 
