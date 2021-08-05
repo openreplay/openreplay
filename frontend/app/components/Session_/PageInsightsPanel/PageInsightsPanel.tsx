@@ -21,7 +21,8 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
   const [insightsFilters, setInsightsFilters] = useState(filters)
   
   const onDateChange = (e) => {
-    setInsightsFilters({ ...insightsFilters, startDate: e.startDate, endDate: e.endDate })
+    const { startDate, endDate, rangeValue } = e;
+    setInsightsFilters({ ...insightsFilters, startDate, endDate, rangeValue })
   }
 
   useEffect(() => {     
@@ -32,7 +33,8 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
   }, [insights])
 
   useEffect(() => {
-    const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value
+    const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value;
+    Player.pause();
     fetchInsights({ ...insightsFilters, url })
   }, [insightsFilters])
 
@@ -47,16 +49,17 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
     <div className="px-4 bg-gray-lightest">
       <div className="my-3 flex -ml-2">
         <DateRange
-          // rangeValue={filters.rangeValue}
-          startDate={filters.startDate}
-          endDate={filters.endDate}
+          rangeValue={insightsFilters.rangeValue}
+          startDate={insightsFilters.startDate}
+          endDate={insightsFilters.endDate}
           onDateChange={onDateChange}
-          customRangeRight
+          customHidden
         />
       </div>
       <div className="mb-4 flex items-center">
         <div className="mr-2 flex-shrink-0">In Page</div>
         <Dropdown
+          search
           labeled
           placeholder="change"
           selection
