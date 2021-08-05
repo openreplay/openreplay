@@ -79,6 +79,7 @@ func main() {
 
   tick := time.Tick(15 * time.Second)
 
+  log.Printf("Db service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
