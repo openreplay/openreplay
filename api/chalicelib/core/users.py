@@ -488,7 +488,7 @@ def get_by_invitation_token(token, pass_token=None):
                     FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                     WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
                     LIMIT 1;""",
-                {"token": token, "pass_token": token})
+                {"token": token, "pass_token": pass_token})
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
