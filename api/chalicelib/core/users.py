@@ -1,6 +1,6 @@
 import json
 
-from chalicelib.core import authorizers
+from chalicelib.core import authorizers, metadata, projects
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
@@ -430,8 +430,26 @@ def set_password_invitation(user_id, new_password):
                "invitationToken": None, "invitedAt": None,
                "changePwdExpireAt": None, "changePwdToken": None}
     user = update(tenant_id=-1, user_id=user_id, changes=changes)
-    return {"data": user,
-            "jwt": authenticate(user["email"], new_password)["jwt"]}
+    r = authenticate(user['email'], user['password'])
+    tenant_id = r.pop("tenantId")
+
+    r["limits"] = {
+        "teamMember": -1,
+        "projects": -1,
+        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
+
+    c = tenants.get_by_tenant_id(tenant_id)
+    c.pop("createdAt")
+    c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
+                                          stack_integrations=True)
+    c["smtp"] = helper.has_smtp()
+    return {
+        'jwt': r.pop('jwt'),
+        'data': {
+            "user": r,
+            "client": c
+        }
+    }
 
 
 def count_members():
