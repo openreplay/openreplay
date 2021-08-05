@@ -107,7 +107,6 @@ def generate_new_invitation(user_id):
         return __get_invitation_link(cur.fetchone().pop("invitation_token"))
 
 
-                             
 def reset_member(tenant_id, editor_id, user_id_to_update):
     admin = get(tenant_id=tenant_id, user_id=editor_id)
     if not admin["admin"] and not admin["superAdmin"]:
@@ -282,6 +281,8 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
         admin = get(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
+    if user["superAdmin"]:
+        changes.pop("admin")
 
     keys = list(changes.keys())
     for k in keys:
