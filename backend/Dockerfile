@@ -47,6 +47,8 @@ ENV TZ=UTC \
 
 
 RUN mkdir $FS_DIR
+#VOLUME [ $FS_DIR ] # Uncomment in case of using Bind mount.
+
 RUN wget https://raw.githubusercontent.com/ua-parser/uap-core/master/regexes.yaml -O "$UAPARSER_FILE" &&\
   wget https://static.openreplay.com/geoip/GeoLite2-Country.mmdb -O "$MAXMINDDB_FILE"
 
