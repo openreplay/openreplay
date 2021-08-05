@@ -445,7 +445,7 @@ def set_password_invitation(user_id, new_password):
                "invitationToken": None, "invitedAt": None,
                "changePwdExpireAt": None, "changePwdToken": None}
     user = update(tenant_id=-1, user_id=user_id, changes=changes)
-    r = authenticate(user['email'], user['password'])
+    r = authenticate(user['email'], new_password)
 
     tenant_id = r.pop("tenantId")
     r["limits"] = {
