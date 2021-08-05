@@ -53,7 +53,8 @@ const initialState = Map({
   liveSessions: List(),
   visitedEvents: List(),
   insights: List(),
-  insightFilters: defaultDateFilters
+  insightFilters: defaultDateFilters,
+  host: ''
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -146,7 +147,7 @@ const reducer = (state = initialState, action = {}) => {
       // TODO: more common.. or TEMP      
       const events = action.filter.events;
       // const filters = action.filter.filters;
-      const current = state.get('list').find(({ sessionId }) => sessionId === action.data.sessionId) || Session();      
+      const current = state.get('list').find(({ sessionId }) => sessionId === action.data.sessionId) || Session();
       const session = Session(action.data);
     
       const matching = [];
@@ -158,7 +159,7 @@ const reducer = (state = initialState, action = {}) => {
           tmpMap[event.url] = event.url
           visitedEvents.push(event)
         } 
-      })
+      })      
       
       events.forEach(({ key, operator, value }) => {        
         session.events.forEach((e, index) => {
@@ -172,10 +173,12 @@ const reducer = (state = initialState, action = {}) => {
             }            
           }         
         })
-      })            
+      })
+      console.log('visitedEvents', visitedEvents)
       return state.set('current', current.merge(session))
         .set('eventsIndex', matching)
-        .set('visitedEvents', visitedEvents);
+        .set('visitedEvents', visitedEvents)
+        .set('host', visitedEvents[0].host);
     }
     case FETCH_FAVORITE_LIST.SUCCESS:
       return state
@@ -227,7 +230,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('sessionIds', allList.map(({ sessionId }) => sessionId ).toJS())
     case SET_TIMEZONE:
       return state.set('timezone', action.timezone)
-    case TOGGLE_CHAT_WINDOW:      
+    case TOGGLE_CHAT_WINDOW:
       return state.set('showChatWindow', action.state)
     case FETCH_INSIGHTS.SUCCESS:       
       return state.set('insights', List(action.data).sort((a, b) => b.count - a.count));

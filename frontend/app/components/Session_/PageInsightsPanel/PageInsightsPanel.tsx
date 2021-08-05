@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Dropdown, Loader } from 'UI'
+import React, { useEffect, useState } from 'react';
+import { Dropdown, Loader } from 'UI';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
 import { fetchInsights } from 'Duck/sessions';
@@ -15,10 +15,14 @@ interface Props {
   events: Array<any>
   urlOptions: Array<any>
   loading: boolean
+  host: string
 }
 
-function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlOptions, loading = true }: Props) {
+function PageInsightsPanel({ 
+  filters, fetchInsights, events = [], insights, urlOptions, host, loading = true
+}: Props) {
   const [insightsFilters, setInsightsFilters] = useState(filters)
+  console.log('host', host)
   
   const onDateChange = (e) => {
     const { startDate, endDate, rangeValue } = e;
@@ -33,7 +37,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
   }, [insights])
 
   useEffect(() => {
-    const url = insightsFilters.url ? insightsFilters.url : urlOptions[0].value;
+    const url = insightsFilters.url ? insightsFilters.url : host + '/' + urlOptions[0].value;
     Player.pause();
     fetchInsights({ ...insightsFilters, url })
   }, [insightsFilters])
@@ -41,7 +45,7 @@ function PageInsightsPanel({ filters, fetchInsights, events = [], insights, urlO
   const onPageSelect = (e, { name, value }) => {
     const event = events.find(item => item.url === value)    
     Player.jump(event.time + JUMP_OFFSET)
-    setInsightsFilters({ ...insightsFilters, url: value })
+    setInsightsFilters({ ...insightsFilters, url: host + '/' + value })
     markTargets([])
   };
 
@@ -83,9 +87,10 @@ export default connect(state => {
   const events = state.getIn([ 'sessions', 'visitedEvents' ])
   return {
     filters: state.getIn(['sessions', 'insightFilters']),
+    host: state.getIn([ 'sessions', 'host' ]),
     insights: state.getIn([ 'sessions', 'insights' ]),
     events: events,
-    urlOptions: events.map(({ url }) => ({ text: url, value: url})),
+    urlOptions: events.map(({ url, host }) => ({ text: url, value: url, host })),
     loading: state.getIn([ 'sessions', 'fetchInsightsRequest', 'loading' ]),
   }
 }, { fetchInsights })(PageInsightsPanel);
