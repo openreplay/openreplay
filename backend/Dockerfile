@@ -1,12 +1,17 @@
-FROM golang:1.13-alpine AS build
+FROM golang:1.13-alpine3.10 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
 
 WORKDIR /root
 
-COPY . .
-
+COPY go.mod .
+COPY go.sum .
 RUN go mod download
+
+
+FROM prepare AS build
+COPY pkg pkg
+COPY services services
 
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/services/$SERVICE_NAME
@@ -36,7 +41,8 @@ ENV TZ=UTC \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
     CACHE_ASSETS=false \
-    ASSETS_SIZE_LIMIT=6291456
+    ASSETS_SIZE_LIMIT=6291456 \
+    FS_CLEAN_HRS=0
 
 
 ARG SERVICE_NAME

@@ -23,7 +23,7 @@ const Item = ({ icon, text, completed, active, onClick }) => (
     <div className={cn('flex', stl.step)}>
       <div className={
         cn(
-          "h-6 w-6 mr-3 bg-white rounded-full flex items-center justify-center",
+          "h-6 w-6 mr-3 rounded-full flex items-center justify-center",
           stl.iconWrapper,
           {'bg-gray-light' : !active || !completed }
           )}
@@ -31,7 +31,7 @@ const Item = ({ icon, text, completed, active, onClick }) => (
         { completed &&
           <Icon
             name={icon}
-            color={completed? 'white' : 'gray-medium' }
+            color={active? 'white' : 'gray-medium' }
             size="18"
           />
         }

@@ -103,7 +103,7 @@ class ManageUsers extends React.PureComponent {
         </div>
         { !account.smtp &&
           <div className={cn("mb-4 p-2", styles.smtpMessage)}>
-            SMTP is not configured, <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>
+            SMTP is not configured. Please follow <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">these steps</a> to set it up.
           </div>
         }
         <div className={ styles.formGroup }>
@@ -114,6 +114,7 @@ class ManageUsers extends React.PureComponent {
               value={ member.admin }
               checked={ !!member.admin }
               onChange={ this.onChangeCheckbox }
+              disabled={member.superAdmin}
             />
             <span>{ 'Admin' }</span>
           </label>
@@ -199,14 +200,7 @@ class ManageUsers extends React.PureComponent {
                   inverted
                   position="top left"
                 />
-              </div>
-              <div>
-                { !account.smtp && 
-                <BannerMessage>
-                  Inviting new users require email messaging. Please <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">setup SMTP</a>.
-                </BannerMessage>
-                }
-              </div>
+              </div>              
             </div>
 
             <NoContent
