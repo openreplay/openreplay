@@ -37,7 +37,7 @@ function PageInsightsPanel({
   }, [insights])
 
   useEffect(() => {
-    const url = insightsFilters.url ? insightsFilters.url : host + '/' + urlOptions[0].value;
+    const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
     Player.pause();
     fetchInsights({ ...insightsFilters, url })
   }, [insightsFilters])
@@ -45,7 +45,7 @@ function PageInsightsPanel({
   const onPageSelect = (e, { name, value }) => {
     const event = events.find(item => item.url === value)    
     Player.jump(event.time + JUMP_OFFSET)
-    setInsightsFilters({ ...insightsFilters, url: host + '/' + value })
+    setInsightsFilters({ ...insightsFilters, url: host + value })
     markTargets([])
   };
 
