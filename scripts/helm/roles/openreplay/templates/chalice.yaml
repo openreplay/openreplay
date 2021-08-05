@@ -13,6 +13,7 @@ env:
   sourcemaps_bucket_key: "{{ minio_access_key }}"
   sourcemaps_bucket_secret: "{{ minio_secret_key }}"
   S3_HOST: "https://{{ domain_name }}"
+  SITE_URL: "https://{{ domain_name }}"
   jwt_secret: "{{ jwt_secret_key }}"
 {% if env is defined and env.chalice is defined and env.chalice%}
   {{ env.chalice | to_nice_yaml | trim | indent(2) }}
