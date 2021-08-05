@@ -56,6 +56,7 @@ const View = Event.extend({
 const Location = Event.extend({
   type: LOCATION,
   url: '',
+  host: '',
   pageLoad: false,
   fcpTime: undefined,
   //fpTime: undefined,
