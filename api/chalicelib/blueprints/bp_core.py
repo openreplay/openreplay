@@ -502,15 +502,12 @@ def edit_gdpr(projectId, context):
     return {"data": projects.edit_gdpr(project_id=projectId, gdpr=data)}
 
 
-@app.route('/password/reset/{step}', methods=['PUT', 'POST'], authorizer=None)
-def reset_password_handler(step):
+@app.route('/password/reset-link', methods=['PUT', 'POST'], authorizer=None)
+def reset_password_handler():
     data = app.current_request.json_body
-    if step == "1":
-        if "email" not in data or len(data["email"]) < 5:
-            return {"errors": ["please provide a valid email address"]}
-        return reset_password.step1(data)
-    # elif step == "2":
-    #     return reset_password.step2(data)
+    if "email" not in data or len(data["email"]) < 5:
+        return {"errors": ["please provide a valid email address"]}
+    return reset_password.reset(data)
 
 
 @app.route('/{projectId}/metadata', methods=['GET'])

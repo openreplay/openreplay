@@ -113,12 +113,12 @@ export const signup = params => dispatch => dispatch({
 
 export const resetPassword = params => dispatch => dispatch({
   types: RESET_PASSWORD.toArray(),
-  call: client => client.post('/password/reset/2', params),
+  call: client => client.post('/password/reset', params)
 });
 
 export const requestResetPassword = params => dispatch => dispatch({
   types: REQUEST_RESET_PASSWORD.toArray(),
-  call: client => client.post('/password/reset/1', params),
+  call: client => client.post('/password/reset-link', params),
 });
 
 export const updatePassword = params => dispatch => dispatch({
