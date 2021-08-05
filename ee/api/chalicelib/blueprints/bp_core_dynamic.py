@@ -380,7 +380,7 @@ def process_invitation_link():
                  'Content-Type': 'text/plain'})
 
 
-@app.route('/users/invitation/password', methods=['POST', 'PUT'], authorizer=None)
+@app.route('/password/reset', methods=['POST', 'PUT'], authorizer=None)
 def change_password_by_invitation():
     data = app.current_request.json_body
     if data is None or len(data.get("invitation", "")) < 64 or len(data.get("pass", "")) < 8:
