@@ -3,13 +3,15 @@
   gather_facts: false
   environment:
     KUBECONFIG: "{{ kubeconfig_path }}"
+  vars:
+    db_path: []
   tasks:
     - debug:
         var: migration_versions
     - block:
       - name: generating migration db paths
         set_fact:
-          db_path: "{{dst_list | default([])}} + [ '{{playbook_dir}}/db/init_dbs/postgresql/{{ item }}/*.sql' ]" 
+          db_path: "{{ db_path }} + [ '{{playbook_dir}}/db/init_dbs/postgresql/{{ item }}/*.sql' ]" 
         with_items: "{{ migration_versions.split(',') }}"
       - name: Migrate postgresql
         shell: |
@@ -23,6 +25,9 @@
       tags:
         - postgresql
     - block:
+      - name: Resetting the db path
+        set_fact:
+          db_path: []
       - name: generating migration db paths
         set_fact:
           db_path: "{{dst_list | default([])}} + [ '{{ item[0] }}/*.sql' ]" 
