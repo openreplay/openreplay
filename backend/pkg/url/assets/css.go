@@ -71,7 +71,8 @@ func ResolveCSS(baseURL string, css string) string {
 
 func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) string {
 	css = rewriteLinks(css, func(rawurl string) string {
-		return r.RewriteURL(sessionID, baseurl, rawurl)
+		url , _ := r.RewriteURL(sessionID, baseurl, rawurl)
+		return url
 	})
 	return strings.Replace(css, ":hover", ".-asayer-hover", -1)
 }
