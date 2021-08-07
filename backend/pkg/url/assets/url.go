@@ -57,7 +57,7 @@ func GetFullCachableURL(baseURL string, relativeURL string) (string, bool) {
 const OPENREPLAY_QUERY_START = "OPENREPLAY_QUERY"
 
 func getCachePath(rawurl string) string {
-	return strings.ReplaceAll(url.QueryEscape(rawurl), "%", "!") // s3 keys are ok with "!"
+	return "/" + strings.ReplaceAll(url.QueryEscape(rawurl), "%", "!") // s3 keys are ok with "!"
 	// u, _ := url.Parse(rawurl)
 	// s := "/" + u.Scheme + "/" + u.Hostname() + u.Path
 	// if u.RawQuery != "" {
