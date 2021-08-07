@@ -24,8 +24,8 @@ domain_name: "{{ domain_name }}"
 docker_registry_username: "{{ docker_registry_username }}"
 docker_registry_password: "{{ docker_registry_password }}"
 docker_registry_url: "{{ docker_registry_url }}"
-image_tag: "v1.2.0"
-openreplay_version: "v1.2.0"
+image_tag: "v1.3.0"
+openreplay_version: "v1.3.0"
 
 # Nginx ssl certificates.
 # in cert format
