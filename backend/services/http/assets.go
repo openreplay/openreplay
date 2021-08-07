@@ -21,8 +21,11 @@ func sendAssetsForCacheFromCSS(sessionID uint64, baseURL string, css string) {
 
 func handleURL(sessionID uint64, baseURL string, url string) string {
 	if cacheAssets {
-		sendAssetForCache(sessionID, baseURL, url)
-		return rewriter.RewriteURL(sessionID, baseURL, url)
+		rewrittenURL, isCachable := rewriter.RewriteURL(sessionID, baseURL, url)
+		if isCachable {
+			sendAssetForCache(sessionID, baseURL, url)
+		}
+		return rewrittenURL
 	}
 	return assets.ResolveURL(baseURL, url)
 }

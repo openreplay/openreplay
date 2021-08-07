@@ -82,14 +82,14 @@ func GetCachePathForAssets(sessionID uint64, rawurl string) string {
 }
 
 
-func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string) string {
+func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string) (string, bool) {
 	// TODO: put it in one check within GetFullCachableURL
 	if !isRelativeCachable(relativeURL) {
-		return relativeURL
+		return relativeURL, false
 	}
 	fullURL := ResolveURL(baseURL, relativeURL)
 	if !isCachable(fullURL) {
-		return relativeURL
+		return relativeURL, false
 	}
 
   u := url.URL{
@@ -98,6 +98,6 @@ func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL stri
 	  Scheme: r.assetsURL.Scheme,
 	}
 
-	return u.String()
+	return u.String(), true
 }
 
