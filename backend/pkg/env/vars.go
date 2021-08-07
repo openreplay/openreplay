@@ -22,7 +22,7 @@ func Uint64(key string) uint64 {
 	v := String(key)
 	n, err := strconv.ParseUint(v, 10, 64)
 	if err != nil {
-		log.Fatalln(key + " has a wrong value. " + err)
+		log.Fatalln(key + " has a wrong value. ", err)
 	}
 	return n
 }
@@ -31,7 +31,7 @@ func Uint16(key string) uint16 {
 	v := String(key)
 	n, err := strconv.ParseUint(v, 10, 16)
 	if err != nil {
-		log.Fatalln(key + " has a wrong value. " + err)
+		log.Fatalln(key + " has a wrong value. ", err)
 	}
 	return uint16(n)
 }
