@@ -18,22 +18,22 @@ func StringOptional(key string) string {
 	return os.Getenv(key)
 }
 
-func Uint16(key string) uint16 {
-	v := String(key)
-	n, _ := strconv.ParseUint(v, 10, 16)
-	if n == 0 {
-		log.Fatalln(key + " has a wrong value")
-	}
-	return uint16(n)
-}
-
 func Uint64(key string) uint64 {
 	v := String(key)
-	n, _ := strconv.ParseUint(v, 10, 64)
-	if n == 0 {
-		log.Fatalln(key + " has a wrong value")
+	n, err := strconv.ParseUint(v, 10, 64)
+	if err != nil {
+		log.Fatalln(key + " has a wrong value. " + err)
 	}
 	return n
+}
+
+func Uint16(key string) uint16 {
+	v := String(key)
+	n, err := strconv.ParseUint(v, 10, 16)
+	if err != nil {
+		log.Fatalln(key + " has a wrong value. " + err)
+	}
+	return uint16(n)
 }
 
 func Int(key string) int {
