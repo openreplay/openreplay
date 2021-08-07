@@ -66,15 +66,15 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dice := byte(rand.Intn(100)) // [0, 100)
-	if dice >= p.SampleRate {
-		responseWithError(w, http.StatusForbidden, errors.New("cancel"))
-		return
-	}
-
 	userUUID := getUUID(req.UserUUID)
 	tokenData, err := tokenizer.Parse(req.Token)
 	if err != nil || req.Reset { // Starting the new one
+		dice := byte(rand.Intn(100)) // [0, 100)
+		if dice >= p.SampleRate {
+			responseWithError(w, http.StatusForbidden, errors.New("cancel"))
+			return
+		}
+
 		ua := uaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
 			responseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
