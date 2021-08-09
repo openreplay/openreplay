@@ -22,7 +22,7 @@ const checkDontMatch = (newPassword, newPasswordRepeat) =>
   (state, props) => ({
     errors: state.getIn([ 'user', 'requestResetPassowrd', 'errors' ]),
     resetErrors: state.getIn([ 'user', 'resetPassword', 'errors' ]),
-    loading: state.getIn([ 'user', 'requestResetPassowrd', 'loading' ]),
+    loading: state.getIn([ 'user', 'requestResetPassowrd', 'loading' ]) || state.getIn([ 'user', 'resetPassword', 'loading' ]),
     params: new URLSearchParams(props.location.search)
   }),
   { requestResetPassword, resetPassword },
@@ -111,7 +111,7 @@ export default class ForgotPassword extends React.PureComponent {
         <div className="w-6/12 flex items-center justify-center">
           <form onSubmit={ this.onSubmit }>
             <div className="mb-8">
-              <h2 className="text-center text-3xl mb-6">Reset Password</h2>
+              <h2 className="text-center text-3xl mb-6">{`${resetting ? 'Create' : 'Reset'} Password`}</h2>
             </div>
             <Loader loading={ loading }>
               <div data-hidden={ updated }>
@@ -168,7 +168,7 @@ export default class ForgotPassword extends React.PureComponent {
                         <input
                           autocomplete="new-password"
                           type="password"
-                          placeholder="New Password"
+                          placeholder="Password"
                           name="password"
                           onChange={ this.write }
                           className={ stl.input }
@@ -182,7 +182,7 @@ export default class ForgotPassword extends React.PureComponent {
                         <input
                           autocomplete="new-password"
                           type="password"
-                          placeholder="Repeat New Password"
+                          placeholder="Confirm Password"
                           name="passwordRepeat"
                           onChange={ this.write }
                           className={ stl.input }
@@ -212,9 +212,10 @@ export default class ForgotPassword extends React.PureComponent {
               <Button
                 data-hidden={ updated || requested }
                 type="submit" primary
+                loading={loading}
                 disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
               >
-                { 'Reset' }
+                { resetting ? 'Create' : 'Reset' }
               </Button>
 
               <div className={ stl.links }>
