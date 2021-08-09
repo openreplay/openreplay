@@ -12,8 +12,8 @@ interface Props {
 
 export default function SelectorCard({ index = 1, target, showContent } : Props) {
   return (
-    <div className={cn(stl.wrapper, { [stl.active]: showContent })}>
-      <div className={stl.top} onClick={() => activeTarget(index)}>
+    <div className={cn(stl.wrapper, { [stl.active]: showContent })} onClick={() => activeTarget(index)}>
+      <div className={stl.top}>
         <div className={stl.index}>{index + 1}</div>
         <div className="truncate">{target.selector}</div>
       </div>
