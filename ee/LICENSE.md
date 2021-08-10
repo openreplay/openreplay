@@ -14,8 +14,8 @@ modify this Software and publish patches to the Software. You agree that OpenRep
 and/or its licensors (as applicable) retain all right, title and interest in and
 to all such modifications and/or patches, and all such modifications and/or
 patches may only be used, copied, modified, displayed, distributed, or otherwise
-exploited with a valid OpenReplay Enterprise license for the  correct
-number of user seats. Notwithstanding the foregoing, you may copy and modify
+exploited with a valid OpenReplay Enterprise license for the correct
+number of user seats and profiles. Notwithstanding the foregoing, you may copy and modify
 the Software for development and testing purposes, without requiring a
 subscription. You agree that OpenReplay and/or its licensors (as applicable) retain
 all right, title and interest in and to all such modifications. You are not

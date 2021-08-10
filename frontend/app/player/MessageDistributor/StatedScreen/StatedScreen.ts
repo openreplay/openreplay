@@ -101,21 +101,23 @@ export default class StatedScreen extends Screen {
   setMarkedTargets(selections: { selector: string, count: number }[] | null) {
     if (selections) {
       const targets: MarkedTarget[] = [];      
-      const totalCount = selections.reduce((a, b) => {
-        return a + b.count
-      }, 0);      
-      selections.forEach((s, index) => {        
+      let index = 0;
+      selections.forEach((s) => {        
         const el = this.getElementBySelector(s.selector);
         if (!el) return;
         targets.push({
           ...s,
           el,
-          index,
-          percent: Math.round((s.count * totalCount) / 100),
+          index: index++,
+          percent: 0,
           boundingRect:  this.calculateRelativeBoundingRect(el),
         })
       });
-      update({ markedTargets: targets });
+
+      const totalCount = targets.reduce((a, b) => {
+        return a + b.count
+      }, 0);      
+      update({ markedTargets: targets.map(i => ({...i, percent: Math.round((i.count * 100) / totalCount) })) });
     } else {
       update({ markedTargets: null });
     }

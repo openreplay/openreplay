@@ -54,7 +54,7 @@ const getPointerIcon = (type) => {
   events: state.eventList,
   skip: state.skip,
   skipToIssue: state.skipToIssue,
-  disabled: state.cssLoading || state.messagesLoading,
+  disabled: state.cssLoading || state.messagesLoading || state.markedTargets,
   endTime: state.endTime,
   live: state.live,
   logList: state.logList,
