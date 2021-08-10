@@ -43,6 +43,9 @@ func (d *deadClickDetector) HandleMessage(msg Message, messageID uint64, timesta
 	case *CreateDocument:
 		d.inputIDSet = nil
 	case *MouseClick:
+		if m.Label == "" {
+			return nil
+		}
 		i = d.HandleReaction(timestamp)
 		if d.inputIDSet[m.ID] { // ignore if input
 			return i
