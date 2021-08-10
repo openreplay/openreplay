@@ -31,20 +31,22 @@ var uaParser *uaparser.UAParser
 var geoIP *geoip.GeoIP
 var tokenizer *token.Tokenizer
 var s3 *storage.S3
-var topicRaw string
-var topicTrigger string
-var topicAnalytics string
+
+var TOPIC_RAW string
+var TOPIC_TRIGGER string
+var TOPIC_ANALYTICS string
 // var kafkaTopicEvents string
-var cacheAssets bool
+var CACHE_ASSESTS bool
+var BEACON_SIZE_LIMIT int64
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	producer = queue.NewProducer()
 	defer producer.Close(15000)
-	topicRaw = env.String("TOPIC_RAW")
-	topicTrigger = env.String("TOPIC_TRIGGER")
-	topicAnalytics = env.String("TOPIC_ANALYTICS")
+	TOPIC_RAW = env.String("TOPIC_RAW")
+	TOPIC_TRIGGER = env.String("TOPIC_TRIGGER")
+	TOPIC_ANALYTICS = env.String("TOPIC_ANALYTICS")
 	rewriter = assets.NewRewriter(env.String("ASSETS_ORIGIN"))
 	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000 * 60 * 20)
 	defer pgconn.Close()
@@ -53,7 +55,8 @@ func main() {
 	uaParser = uaparser.NewUAParser(env.String("UAPARSER_FILE"))
 	geoIP = geoip.NewGeoIP(env.String("MAXMINDDB_FILE"))
 	flaker = flakeid.NewFlaker(env.WorkerID())
-	cacheAssets = env.Bool("CACHE_ASSETS")
+	CACHE_ASSESTS = env.Bool("CACHE_ASSETS")
+	BEACON_SIZE_LIMIT = int64(env.Uint64("BEACON_SIZE_LIMIT"))
 
 	HTTP_PORT := env.String("HTTP_PORT")
 
