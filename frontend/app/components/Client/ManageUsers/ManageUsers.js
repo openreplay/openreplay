@@ -103,7 +103,7 @@ class ManageUsers extends React.PureComponent {
         </div>
         { !account.smtp &&
           <div className={cn("mb-4 p-2", styles.smtpMessage)}>
-            SMTP is not configured. Please follow <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">these steps</a> to set it up.
+            SMTP is not configured. Please follow (see <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">here</a> how to set it up).  You can still add new users, but you’d have to manually copy then send them the invitation link.
           </div>
         }
         <div className={ styles.formGroup }>

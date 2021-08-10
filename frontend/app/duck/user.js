@@ -49,6 +49,7 @@ const setClient = (state, data) => {
 
 const reducer = (state = initialState, action = {}) => {
   switch (action.type) {
+    case RESET_PASSWORD.SUCCESS:
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
       return setClient(
