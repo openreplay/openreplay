@@ -70,4 +70,4 @@ def is_live(project_id, session_id, project_key=None):
         print(connected_peers.text)
         return False
     connected_peers = connected_peers.json().get("data", [])
-    return session_id in connected_peers
+    return str(session_id) in connected_peers
