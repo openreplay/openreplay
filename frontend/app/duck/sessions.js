@@ -255,13 +255,18 @@ function init(session) {
   }
 }
 
-export function fetchList(params = {}, clear = false) {
-  return {
+export const fetchList = (params = {}, clear = false) => (dispatch, getState) => {
+  const activeTab = getState().getIn([ 'sessions', 'activeTab' ]);  
+
+  return dispatch(activeTab && activeTab.type === 'live' ? {
+    types: FETCH_LIVE_LIST.toArray(),
+    call: client => client.post('/assist/sessions', params),
+  } : {
     types: FETCH_LIST.toArray(),
     call: client => client.post('/sessions/search2', params),
     clear,
     params: cleanParams(params),
-  };
+  })
 }
 
 export function fetchErrorStackList(sessionId, errorId) {
