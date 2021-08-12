@@ -173,12 +173,11 @@ const reducer = (state = initialState, action = {}) => {
             }            
           }         
         })
-      })
-      console.log('visitedEvents', visitedEvents)
+      })      
       return state.set('current', current.merge(session))
         .set('eventsIndex', matching)
         .set('visitedEvents', visitedEvents)
-        .set('host', visitedEvents[0].host);
+        .set('host', visitedEvents[0] && visitedEvents[0].host);
     }
     case FETCH_FAVORITE_LIST.SUCCESS:
       return state
