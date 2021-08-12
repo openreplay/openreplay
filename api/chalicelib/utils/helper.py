@@ -363,3 +363,7 @@ def get_internal_project_id(project_id64):
         return None
     project_id = int(project_id64)
     return project_id
+
+
+def has_smtp():
+    return environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0

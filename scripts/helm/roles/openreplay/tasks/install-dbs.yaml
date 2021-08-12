@@ -74,16 +74,19 @@
       register: result
       until: result.rc == 0
       when: enterprise_edition_license|length > 0
+- name: Downloading frontend archive
+  unarchive:
+    src: "https://github.com/openreplay/openreplay/releases/download/{{ openreplay_version }}/frontend.tar.gz"
+    dest: "{{ role_path }}"
+    remote_src: true
+  tags:
+    - frontend
 - name: initializing frontend
   shell: |
-    user=`whoami`
-    sudo chown $user /var/run/docker.sock
-    bash build.sh
-    cp -arl public frontend
+    # Download frontend archive
     minio_pod=$(kubectl get po -n db -l app.kubernetes.io/name=minio -n db --output custom-columns=name:.metadata.name | tail -n+2)
     kubectl -n db cp frontend $minio_pod:/data/
-    rm -rf frontend
   args:
-    chdir: ../../frontend
+    chdir: "{{ role_path }}"
   tags:
     - frontend

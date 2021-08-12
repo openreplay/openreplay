@@ -31,20 +31,22 @@ var uaParser *uaparser.UAParser
 var geoIP *geoip.GeoIP
 var tokenizer *token.Tokenizer
 var s3 *storage.S3
-var topicRaw string
-var topicTrigger string
-var topicAnalytics string
+
+var TOPIC_RAW string
+var TOPIC_TRIGGER string
+var TOPIC_ANALYTICS string
 // var kafkaTopicEvents string
-var cacheAssets bool
+var CACHE_ASSESTS bool
+var BEACON_SIZE_LIMIT int64
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	producer = queue.NewProducer()
 	defer producer.Close(15000)
-	topicRaw = env.String("TOPIC_RAW")
-	topicTrigger = env.String("TOPIC_TRIGGER")
-	topicAnalytics = env.String("TOPIC_ANALYTICS")
+	TOPIC_RAW = env.String("TOPIC_RAW")
+	TOPIC_TRIGGER = env.String("TOPIC_TRIGGER")
+	TOPIC_ANALYTICS = env.String("TOPIC_ANALYTICS")
 	rewriter = assets.NewRewriter(env.String("ASSETS_ORIGIN"))
 	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000 * 60 * 20)
 	defer pgconn.Close()
@@ -53,7 +55,8 @@ func main() {
 	uaParser = uaparser.NewUAParser(env.String("UAPARSER_FILE"))
 	geoIP = geoip.NewGeoIP(env.String("MAXMINDDB_FILE"))
 	flaker = flakeid.NewFlaker(env.WorkerID())
-	cacheAssets = env.Bool("CACHE_ASSETS")
+	CACHE_ASSESTS = env.Bool("CACHE_ASSETS")
+	BEACON_SIZE_LIMIT = int64(env.Uint64("BEACON_SIZE_LIMIT"))
 
 	HTTP_PORT := env.String("HTTP_PORT")
 
@@ -61,62 +64,64 @@ func main() {
 		Addr: ":" + HTTP_PORT,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-						// TODO: agree with specification
-							w.Header().Set("Access-Control-Allow-Origin", "*") 
-							w.Header().Set("Access-Control-Allow-Methods", "POST")
-							w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
-						if r.Method == http.MethodOptions {
-							w.WriteHeader(http.StatusOK)
-							return
-						}
+			// TODO: agree with specification
+			w.Header().Set("Access-Control-Allow-Origin", "*") 
+			w.Header().Set("Access-Control-Allow-Methods", "POST")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
+			if r.Method == http.MethodOptions {
+				w.Header().Set("Cache-Control", "max-age=86400")
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			switch r.URL.Path {
 			case "/":
 				w.WriteHeader(http.StatusOK)
 			case "/v1/web/not-started": 
 				switch r.Method {
-				case "POST":
+				case http.MethodPost:
 					notStartedHandler(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			case "/v1/web/start":
 				switch r.Method {
-				case "POST":
+				case http.MethodPost:
 					startSessionHandlerWeb(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			case "/v1/web/i":
 				switch r.Method {
-				case "POST":
+				case http.MethodPost:
 					pushMessagesSeparatelyHandler(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			// case "/v1/ios/start":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		startSessionHandlerIOS(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)
 			// 	}
 			// case "/v1/ios/append":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		pushMessagesHandler(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)
 			// 	}
 			// case "/v1/ios/late":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		pushLateMessagesHandler(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)
 			// 	}
 			// case "/v1/ios/images":
 			// 	switch r.Method {
-			// 	case "POST":
+			// 	case http.MethodPost:
 			// 		iosImagesUploadHandler(w, r)
 			// 	default:
 			// 		w.WriteHeader(http.StatusMethodNotAllowed)

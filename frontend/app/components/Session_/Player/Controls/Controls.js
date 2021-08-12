@@ -73,7 +73,7 @@ function getStorageName(type) {
   skip: state.skip,
   skipToIssue: state.skipToIssue,
   speed: state.speed,
-  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode,
+  disabled: state.cssLoading || state.messagesLoading || state.inspectorMode || state.markedTargets,
   inspectorMode: state.inspectorMode,
   fullscreenDisabled: state.messagesLoading,
   logCount: state.logListNow.length,
@@ -246,11 +246,12 @@ export default class Controls extends React.Component {
       showLongtasks,
       exceptionsCount,
       showExceptions,
-      fullscreen,
-      skipToIssue
+      fullscreen,      
+      skipToIssue,
+      inspectorMode
     } = this.props;
 
-    const inspectorMode = bottomBlock === INSPECTOR;
+    // const inspectorMode = bottomBlock === INSPECTOR;
 
     return (
       <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
@@ -367,7 +368,7 @@ export default class Controls extends React.Component {
                   hasErrors={ exceptionsCount > 0 }
                 />
               }
-              { showStack &&
+              { !live && showStack &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STACKEVENTS) }
@@ -419,6 +420,7 @@ export default class Controls extends React.Component {
                 </React.Fragment>
               }
                          
+
               {!live && (
                 <ControlButton
                   disabled={ disabled && !inspectorMode }

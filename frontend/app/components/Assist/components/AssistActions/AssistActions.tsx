@@ -21,17 +21,14 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<MediaStream | null>(null);
   const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
-  const [ disconnected, setDisconnected ] = useState(false);
 
   useEffect(() => {
     return endCall
   }, [])
 
   useEffect(() => {
-    console.log('peerConnectionStatus', peerConnectionStatus)
-    if (peerConnectionStatus == 4) {
-      toast.info(`Live session is closed.`);
-      setDisconnected(true)
+    if (peerConnectionStatus == ConnectionStatus.Disconnected) {
+      toast.info(`Live session was closed.`);
     }    
   }, [peerConnectionStatus])
 
@@ -61,7 +58,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       }).catch(onError);
   }
 
-  const inCall = calling == 0 || calling == 1
+  const inCall = calling !== CallingState.False;
 
   return (
     <div className="flex items-center">
@@ -72,10 +69,10 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               cn(
                 'cursor-pointer p-2 mr-2 flex items-center',
                 {[stl.inCall] : inCall },
-                {[stl.disabled]: disconnected}
+                {[stl.disabled]: peerConnectionStatus !== ConnectionStatus.Connected}
               )
             }
-            onClick={inCall ? endCall : call}
+            onClick={ inCall ? endCall : call}
             role="button"
           >
             <Icon
@@ -83,7 +80,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               size="20"
               color={ inCall ? "red" : "gray-darkest" }
             />
-            <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Meeting' : 'Start Meeting' }</span>
+            <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
           </div>
         }
         content={ `Call ${userId}` }

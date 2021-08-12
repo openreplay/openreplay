@@ -4,7 +4,8 @@ from sentry_sdk import configure_scope
 
 from chalicelib import _overrides
 from chalicelib.blueprints import bp_authorizers
-from chalicelib.blueprints import bp_core, bp_core_crons, bp_app_api
+from chalicelib.blueprints import bp_core, bp_core_crons
+from chalicelib.blueprints.app import v1_api
 from chalicelib.blueprints import bp_core_dynamic, bp_core_dynamic_crons
 from chalicelib.blueprints.subs import bp_dashboard
 from chalicelib.utils import helper
@@ -59,7 +60,7 @@ _overrides.chalice_app(app)
 def or_middleware(event, get_response):
     global OR_SESSION_TOKEN
     OR_SESSION_TOKEN = app.current_request.headers.get('vnd.openreplay.com.sid',
-                                                        app.current_request.headers.get('vnd.asayer.io.sid'))
+                                                       app.current_request.headers.get('vnd.asayer.io.sid'))
     if "authorizer" in event.context and event.context["authorizer"] is None:
         print("Deleted user!!")
         pg_client.close()
@@ -70,7 +71,13 @@ def or_middleware(event, get_response):
             import time
             now = int(time.time() * 1000)
         response = get_response(event)
-        if response.status_code == 500 and helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
+
+        if response.status_code == 200 and response.body is not None and response.body.get("errors") is not None:
+            if "not found" in response.body["errors"][0]:
+                response = Response(status_code=404, body=response.body)
+            else:
+                response = Response(status_code=400, body=response.body)
+        if response.status_code // 100 == 5 and helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
             with configure_scope() as scope:
                 scope.set_tag('stage', environ["stage"])
                 scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
@@ -99,5 +106,4 @@ app.register_blueprint(bp_core_crons.app)
 app.register_blueprint(bp_core_dynamic.app)
 app.register_blueprint(bp_core_dynamic_crons.app)
 app.register_blueprint(bp_dashboard.app)
-app.register_blueprint(bp_app_api.app)
-
+app.register_blueprint(v1_api.app)

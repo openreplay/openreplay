@@ -76,6 +76,7 @@ check() {
 stop() {
     if [[ $1 == "all" ]]; then
         kubectl scale deployment -n app --replicas=0 --all
+        return
     fi
     kubectl scale -n app deployment --replicas=0 $1-openreplay
 }
@@ -88,6 +89,7 @@ start() {
             helm upgrade --install -n app $app openreplay -f $app.yaml
         done
         cd $CWD
+        return
     fi
     helm upgrade --install -n app $1 ./app/openreplay -f ./app/$1.yaml
 }
@@ -95,7 +97,8 @@ start() {
  
 restart() {
     if [[ $1 == "all" ]]; then
-        kubectl rollout restart deployment -n app --all
+        kubectl rollout restart deployment -n app
+        return
     fi
     kubectl rollout restart -n app deployment $1-openreplay
 }

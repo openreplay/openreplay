@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import { setAutoplayValues } from 'Duck/sessions'
 import { session as sessionRoute } from 'App/routes';
-import { Link, Icon, Slider } from 'UI';
+import { Link, Icon, Slider, Tooltip } from 'UI';
 import { connectPlayer } from 'Player/store';
 import { Controls as PlayerControls } from 'Player';
 
@@ -18,12 +18,18 @@ function Autoplay(props) {
       <Link to={ sessionRoute(previousId) } disabled={!previousId}>
 		  	<Icon name="prev1" size="20" color="teal" />
 		  </Link>
-      <Slider
-        name="sessionsLive"
-        onChange={ props.toggleAutoplay }
-        checked={ autoplay }
-        style={{ margin: '0 10px' }}
+      <Tooltip        
+        trigger={
+          <Slider
+            name="sessionsLive"
+            onChange={ props.toggleAutoplay }
+            checked={ autoplay }
+            style={{ margin: '0 10px' }}
+          />
+        }
+        tooltip={'Autoplay'}
       />
+      
       <Link to={ sessionRoute(nextId) } siteId={ 1 } disabled={!nextId}>
 		  	<Icon name="next1" size="20" color="teal" />
 		  </Link>

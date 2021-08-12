@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 func getSessionKey(sessionID uint64) string {
@@ -56,15 +57,16 @@ func GetFullCachableURL(baseURL string, relativeURL string) (string, bool) {
 const OPENREPLAY_QUERY_START = "OPENREPLAY_QUERY"
 
 func getCachePath(rawurl string) string {
-	u, _ := url.Parse(rawurl)
-	s := "/" + u.Scheme + "/" + u.Hostname() + u.Path
-	if u.RawQuery != "" {
-		if (s[len(s) - 1] != '/') {
-			s += "/"
-		}
-		s += OPENREPLAY_QUERY_START + url.PathEscape(u.RawQuery)
-	}
-	return s
+	return "/" + strings.ReplaceAll(url.QueryEscape(rawurl), "%", "!") // s3 keys are ok with "!"
+	// u, _ := url.Parse(rawurl)
+	// s := "/" + u.Scheme + "/" + u.Hostname() + u.Path
+	// if u.RawQuery != "" {
+	// 	if (s[len(s) - 1] != '/') {
+	// 		s += "/"
+	// 	}
+	// 	s += OPENREPLAY_QUERY_START + url.PathEscape(u.RawQuery)
+	// }
+	// return s
 }
 
 func getCachePathWithKey(sessionID uint64, rawurl string) string {
@@ -80,14 +82,14 @@ func GetCachePathForAssets(sessionID uint64, rawurl string) string {
 }
 
 
-func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string) string {
+func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string) (string, bool) {
 	// TODO: put it in one check within GetFullCachableURL
 	if !isRelativeCachable(relativeURL) {
-		return relativeURL
+		return relativeURL, false
 	}
 	fullURL := ResolveURL(baseURL, relativeURL)
 	if !isCachable(fullURL) {
-		return relativeURL
+		return relativeURL, false
 	}
 
   u := url.URL{
@@ -96,6 +98,6 @@ func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL stri
 	  Scheme: r.assetsURL.Scheme,
 	}
 
-	return u.String()
+	return u.String(), true
 }
 

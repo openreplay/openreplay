@@ -18,9 +18,9 @@ let pageNo: number = 0;
 let timestamp: number = 0;
 let timeAdjustment: number = 0;
 let nextIndex: number = 0;
-// TODO: clear logic: isEmpty here means presense of BatchMeta but absence of other  messages
+// TODO: clear logic: isEmpty here means presence of BatchMeta but absence of other  messages
 // BatchWriter should be abstracted
-let isEmpty: boolean = true; 
+let isEmpty: boolean = true;
 
 function writeBatchMeta(): boolean { // TODO: move to encoder
   return new BatchMeta(pageNo, nextIndex, timestamp).encode(writer)
@@ -56,7 +56,7 @@ function sendBatch(batch: Uint8Array):void {
         self.postMessage(null);
         return
       }
-      //if (this.response == null) 
+      //if (this.response == null)
       const nextBatch = sendQueue.shift();
       if (nextBatch) {
         sendBatch(nextBatch);
@@ -72,7 +72,7 @@ function sendBatch(batch: Uint8Array):void {
       return
     }
     attemptsCount++;
-    setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT); 
+    setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT);
   }
   req.send(batch.buffer);
 }
@@ -146,10 +146,10 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
       }
     }
 
-    writer.checkpoint(); // TODO: incapsulate in writer
+    writer.checkpoint(); // TODO: encapsulate in writer
     if (!message.encode(writer)) {
       send();
-      // writer.reset(); // TODO: sematically clear code
+      // writer.reset(); // TODO: semantically clear code
       if (!message.encode(writer)) { // Try to encode within empty state
         // MBTODO: tempWriter for one message?
         while (!message.encode(writer)) {
@@ -163,9 +163,9 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
           writer = new Writer(beaconSize);
           writeBatchMeta();
         }
-      } 
+      }
     };
-    nextIndex++; // TODO: incapsulate in writer
+    nextIndex++; // TODO: encapsulate in writer
     isEmpty = false;
   });
 };

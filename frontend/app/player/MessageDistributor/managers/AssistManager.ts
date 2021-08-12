@@ -17,12 +17,31 @@ export enum CallingState {
 
 export enum ConnectionStatus {
   Connecting,
+  WaitingMessages,
   Connected,
   Inactive,
   Disconnected,
   Error,
 };
 
+
+export function getStatusText(status: ConnectionStatus): string {
+  switch(status) {
+    case ConnectionStatus.Connecting:
+      return "Connecting...";
+    case ConnectionStatus.Connected:
+      return "";
+    case ConnectionStatus.Inactive:
+      return "Client tab is inactive";
+    case ConnectionStatus.Disconnected:
+      return "Disconnected";
+    case ConnectionStatus.Error:
+      return "Something went wrong. Try to reload the page.";
+    case ConnectionStatus.WaitingMessages:
+      return "Connected. Waiting for the data..."
+  }
+}
+ 
 export interface State {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
@@ -98,18 +117,34 @@ function resolveCSS(baseURL: string, css: string): string {
 export default class AssistManager {
   constructor(private session, private md: MessageDistributor) {}
 
+
+  private setStatus(status: ConnectionStatus) {
+    if (status === ConnectionStatus.Connecting) {
+      this.md.setMessagesLoading(true);
+    } else {
+      this.md.setMessagesLoading(false);
+    }
+    if (status === ConnectionStatus.Connected) {
+      // this.md.display(true);
+    } else {
+      // this.md.display(false);
+    }
+    update({ peerConnectionStatus: status });
+  }
+
   private get peerID(): string {
     return `${this.session.projectKey}-${this.session.sessionId}`
   }
 
   private peer: Peer | null = null;
   connectionAttempts: number = 0;
+  private peeropened: boolean = false;
   connect() {
     if (this.peer != null) {
       console.error("AssistManager: trying to connect more than once");
       return;
     }
-    this.md.setMessagesLoading(true);
+    this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
       // @ts-ignore
       const peer = new Peer({
@@ -119,46 +154,52 @@ export default class AssistManager {
         port:  location.protocol === 'https:' ? 443 : 80,
       });
       this.peer = peer;
-      this.peer.on('error', e => {
-        if (e.type === 'peer-unavailable') {
+      peer.on('error', e => {
+        if (['peer-unavailable', 'network'].includes(e.type)) {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
-            update({ peerConnectionStatus: ConnectionStatus.Connecting })
+            this.setStatus(ConnectionStatus.Connecting);
+            console.log("peerunavailable")
             this.connectToPeer();
           } else {
-            update({ peerConnectionStatus: ConnectionStatus.Disconnected })
-
+            this.setStatus(ConnectionStatus.Disconnected);
+            this.dataCheckIntervalID && clearInterval(this.dataCheckIntervalID);
           }
         } else {
           console.error(`PeerJS error (on peer). Type ${e.type}`, e);
-          update({ peerConnectionStatus: ConnectionStatus.Error })
+          this.setStatus(ConnectionStatus.Error)
         }
       })
-      peer.on("open", me => {
-        console.log("peer opened", me);
+      peer.on("open", () => {
+        if (this.peeropened) { return; }
+        this.peeropened = true;
+        console.log('peeropen')
         this.connectToPeer();        
       });
     });
   }
 
+  private dataCheckIntervalID: ReturnType<typeof setInterval> | undefined;
   private connectToPeer() {
     if (!this.peer) { return; }
+    this.setStatus(ConnectionStatus.Connecting);
     const id = this.peerID;
     console.log("trying to connect to", id)
     const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
-
     conn.on('open', () => {
-      update({ peerConnectionStatus: ConnectionStatus.Inactive });
+      window.addEventListener("beforeunload", ()=>conn.open &&conn.send("unload"));
       console.log("peer connected")
       
       let i = 0;
       let firstMessage = true;
+
+      this.setStatus(ConnectionStatus.WaitingMessages)
+
       conn.on('data', (data) => {
-        if (typeof data === 'string') { return this.handleCommand(data); }
-        if (!Array.isArray(data)) { return; }
+        if (!Array.isArray(data)) { return this.handleCommand(data); }
+        this.mesagesRecieved = true;
         if (firstMessage) {
           firstMessage = false;
-          this.md.setMessagesLoading(false);
-          update({ peerConnectionStatus: ConnectionStatus.Connected })
+          this.setStatus(ConnectionStatus.Connected)
         }
 
         let time = 0;
@@ -204,25 +245,24 @@ export default class AssistManager {
       });
     });
 
-    const intervalID = setInterval(() => {
-      if (!conn.open) {
-        this.md.setMessagesLoading(true);
-        this.assistentCallEnd();
-        update({ peerConnectionStatus: ConnectionStatus.Disconnected })
-        clearInterval(intervalID);
-      }
-    }, 5000);
-    conn.on('close', () => this.onDataClose());// Doesn't work ?
-  }
 
+    const onDataClose = () => {
+      this.initiateCallEnd();
+      this.setStatus(ConnectionStatus.Connecting);
+      console.log('closed peer conn. Reconnecting...')
+      this.connectToPeer();
+    }
 
-
-  private onDataClose() {
-    this.md.setMessagesLoading(true);
-    this.assistentCallEnd();
-    console.log('closed peer conn. Reconnecting...')
-    update({ peerConnectionStatus: ConnectionStatus.Connecting })
-    setTimeout(() => this.connectToPeer(), 300); // reconnect
+    // this.dataCheckIntervalID = setInterval(() => {
+    //   if (!this.dataConnection && getState().peerConnectionStatus === ConnectionStatus.Connected) {
+    //     onDataClose();
+    //   }
+    // }, 3000);
+    conn.on('close', onDataClose);// Does it work ?
+    conn.on("error", (e) => {
+      console.log("PeerJS connection error", e);
+      this.setStatus(ConnectionStatus.Error);
+    })
   }
 
 
@@ -234,62 +274,88 @@ export default class AssistManager {
     return this.peer?.connections[this.peerID]?.find(c => c.type === 'media' && c.open);
   } 
 
+  private send(data: any) {
+    this.dataConnection?.send(data);
+  }
+
 
   private onCallEnd: null | (()=>void) = null;
-  private assistentCallEnd = () => {
-    console.log('assistentCallEnd')
-    const conn = this.callConnection?.close();
+  private onReject: null | (()=>void) = null;
+  private forceCallEnd() {
+    this.callConnection?.close();
+  }
+  private notifyCallEnd() {
     const dataConn = this.dataConnection;
     if (dataConn) {
-      console.log("call_end send")
+      console.log("notifyCallEnd send")
       dataConn.send("call_end");
     }
+  }
+  private initiateCallEnd = () => {
+    console.log('initiateCallEnd')
+    this.forceCallEnd();
+    this.notifyCallEnd();
     this.onCallEnd?.();
   }
 
   private onTrackerCallEnd = () => {
-    const conn = this.callConnection;
-    if (conn && conn.open) {
-      conn.close();
+    this.forceCallEnd();
+    if (getState().calling === CallingState.Requesting) {
+      this.onReject?.();
     }
     this.onCallEnd?.();
   }
 
 
+
+  private mesagesRecieved: boolean = false;
   private handleCommand(command: string) {
     switch (command) {
+      case "unload":
+        this.onTrackerCallEnd();
+        this.mesagesRecieved = false;
+        setTimeout(() => {
+          if (this.mesagesRecieved) {
+            return;
+          }
+          // @ts-ignore
+          this.md.display(false);
+          this.dataConnection?.close();
+          this.setStatus(ConnectionStatus.Disconnected);
+        }, 8000); // TODO: more convenient way
+        //this.dataConnection?.close();
+        return;
       case "call_end":
         this.onTrackerCallEnd();
         return;
       case "call_error":
         this.onTrackerCallEnd();
-        update({ peerConnectionStatus: ConnectionStatus.Error });
+        this.setStatus(ConnectionStatus.Error);
         return;
     }
   }
 
-  //private blocked: boolean = false;
   private onMouseMove = (e: MouseEvent ): void => {
-    //if (this.blocked) { return; }
-    //this.blocked = true;
-    //setTimeout(() => this.blocked = false, 200);
     const conn = this.dataConnection;
-    if (!conn || !conn.open) { return; }
+    if (!conn) { return; }
     // @ts-ignore ???
     const data = this.md.getInternalCoordinates(e);
     conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
   }
 
-  call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onClose: () => void, onReject: () => void, onError?: ()=> void): null | Function {
+  call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
     if (!this.peer || getState().calling !== CallingState.False) { return null; }
     
     update({ calling: CallingState.Requesting });
-        console.log('calling...')
+    console.log('calling...')
+    
     const call =  this.peer.call(this.peerID, localStream);
     call.on('stream', stream => {
+      //call.peerConnection.ontrack = (t)=> console.log('ontrack', t)
+
       update({ calling: CallingState.True });
       onStream(stream);
-      this.dataConnection?.send({ 
+      this.send({ 
         name: store.getState().getIn([ 'user', 'account', 'name']),
       });
 
@@ -298,41 +364,43 @@ export default class AssistManager {
     });
 
     this.onCallEnd = () => {
-      if (getState().calling === CallingState.Requesting) {
-        onReject();
-      }
-      onClose();
-      
+      onCallEnd();
       // @ts-ignore ??
       this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
       update({ calling: CallingState.False });
       this.onCallEnd = null;
     }
-    //call.on("close", this.onCallEnd);
+
+    call.on("close", this.onCallEnd);
     call.on("error", (e) => {
       console.error("PeerJS error (on call):", e)
-      this.onCallEnd?.();
+      this.initiateCallEnd?.();
       onError?.();
     });
 
-    const intervalID = setInterval(() => {
-      if (!call.open && getState().calling !== CallingState.Requesting) {
-        this.onCallEnd?.();
-        clearInterval(intervalID);
-      }
-    }, 5000);
+    // const intervalID = setInterval(() => {
+    //   if (!call.open && getState().calling === CallingState.True) {
+    //     this.onCallEnd?.();
+    //     clearInterval(intervalID);
+    //   }
+    // }, 5000);
 
-    window.addEventListener("beforeunload", this.assistentCallEnd)
+    window.addEventListener("beforeunload", this.initiateCallEnd)
     
-    return this.assistentCallEnd;
+    return this.initiateCallEnd;
   }
 
   clear() {
     console.log('clearing', this.peerID)
-    this.assistentCallEnd();
-    console.log("destroying peer...")
-    this.peer?.destroy();
-    this.peer = null;
+    this.initiateCallEnd();
+    this.dataCheckIntervalID && clearInterval(this.dataCheckIntervalID);
+    if (this.peer) {
+      this.peer.connections[this.peerID]?.forEach(c => c.open && c.close());
+      console.log("destroying peer...")
+      this.peer.disconnect();
+      this.peer.destroy();
+      this.peer = null;
+    }
   }
 }
 

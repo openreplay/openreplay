@@ -155,7 +155,7 @@ export default class SignupForm extends React.Component {
         <div className={ stl.formFooter }>
           <Button type="submit" primary >
             { loading ? 
-              <CircularLoader loading={true} /> :
+              <CircularLoader loading={true} className="flex" /> :
               'Create account' 
             }
           </Button>

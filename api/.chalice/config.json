@@ -52,6 +52,8 @@
         "S3_HOST": "",
         "S3_KEY": "",
         "S3_SECRET": "",
+        "invitation_link": "/api/users/invitation?token=%s",
+        "change_password_link": "/reset-password?invitation=%s&&pass=%s",
         "version_number": "1.2.0"
       },
       "lambda_timeout": 150,
