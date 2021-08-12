@@ -21,8 +21,7 @@ interface Props {
 function PageInsightsPanel({ 
   filters, fetchInsights, events = [], insights, urlOptions, host, loading = true
 }: Props) {
-  const [insightsFilters, setInsightsFilters] = useState(filters)
-  console.log('host', host)
+  const [insightsFilters, setInsightsFilters] = useState(filters)  
   
   const onDateChange = (e) => {
     const { startDate, endDate, rangeValue } = e;
