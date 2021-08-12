@@ -884,6 +884,15 @@ def sessions_live(projectId, context):
     return {'data': data}
 
 
+@app.route('/{projectId}/assist/sessions', methods=['POST'])
+def sessions_live_search(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    data = assist.get_live_sessions(projectId, filters=data.get("filters"))
+    return {'data': data}
+
+
 @app.route('/{projectId}/heatmaps/url', methods=['POST'])
 def get_heatmaps_by_url(projectId, context):
     data = app.current_request.json_body
