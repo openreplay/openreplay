@@ -19,7 +19,6 @@ import (
 )
 
 const JSON_SIZE_LIMIT int64 = 1e3  // 1Kb
-const BATCH_SIZE_LIMIT int64 = 1e6 // 1Mb
 
 func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	type request struct {
@@ -90,7 +89,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		tokenData = &token.TokenData{sessionID, expTime.UnixNano() / 1e6}
 
 		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
-		producer.Produce(topicRaw, tokenData.ID, Encode(&SessionStart{
+		producer.Produce(TOPIC_RAW, tokenData.ID, Encode(&SessionStart{
 			Timestamp:            req.Timestamp,
 			ProjectID:            uint64(p.ProjectID),
 			TrackerVersion:       req.TrackerVersion,
@@ -120,7 +119,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 }
 
 func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64) {
-	body := http.MaxBytesReader(w, r.Body, BATCH_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
 	//defer body.Close()
 	var reader io.ReadCloser
 	switch r.Header.Get("Content-Encoding") {
@@ -139,7 +138,7 @@ func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64) {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 		return
 	}
-	producer.Produce(topicRaw, sessionID, buf) // What if not able to send?
+	producer.Produce(TOPIC_RAW, sessionID, buf) // What if not able to send?
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -158,7 +157,7 @@ func pushMessagesSeparatelyHandler(w http.ResponseWriter, r *http.Request) {
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
-	body := http.MaxBytesReader(w, r.Body, BATCH_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
 	//defer body.Close()
 	buf, err := ioutil.ReadAll(body)
 	if err != nil {
@@ -234,8 +233,8 @@ func pushMessagesSeparatelyHandler(w http.ResponseWriter, r *http.Request) {
 		responseWithError(w, http.StatusForbidden, err)
 		return
 	}
-	producer.Produce(topicRaw, sessionData.ID, rewritenBuf)
-	//producer.Produce(topicAnalytics, sessionData.ID, WriteBatch(analyticsMessages))
+	producer.Produce(TOPIC_RAW, sessionData.ID, rewritenBuf)
+	//producer.Produce(TOPIC_ANALYTICS, sessionData.ID, WriteBatch(analyticsMessages))
 	//duration := time.Now().Sub(startTime)
 	//log.Printf("Sended batch within %v nsec; %v nsek/byte", duration.Nanoseconds(), duration.Nanoseconds()/int64(len(buf)))
 	w.WriteHeader(http.StatusOK)

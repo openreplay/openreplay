@@ -118,7 +118,7 @@ class Sites extends React.PureComponent {
     const { modalContent, showTrackingCode } = this.state;
     const isAdmin = user.admin || user.superAdmin;
     const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
-    const canDeleteSites = sites.size > 1;
+    const canDeleteSites = sites.size > 1 && isAdmin;
 
     return (
       <Loader loading={ loading }>
@@ -189,15 +189,15 @@ class Sites extends React.PureComponent {
                   </div>
                   <div className={ stl.actions }>
                     <button
-                      className="hidden cursor-pointer"
-                      disabled={ !isAdmin || !canDeleteSites }
+                      className={cn({'hidden' : !canDeleteSites})}                      
+                      disabled={ !canDeleteSites }
                       onClick={ () => canDeleteSites && this.remove(_site) }
                     >
                       <Icon name="trash" size="16" color="teal" />
                     </button>
                     <button
-                      className="hidden"
-                      disabled={ !isAdmin || !canDeleteSites }
+                      className={cn({'hidden' : !canDeleteSites})}
+                      disabled={ !canDeleteSites }
                       onClick={ () => canDeleteSites && this.edit(_site) }
                       data-clickable
                     >

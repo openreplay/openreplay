@@ -99,7 +99,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id)
-                data['live'] = assist.is_live(project_id=project_id, session_id=session_id,
+                data['live'] = assist.is_live(project_id=project_id,
+                                              session_id=session_id,
                                               project_key=data["projectKey"])
 
             return data

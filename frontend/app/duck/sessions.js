@@ -173,12 +173,11 @@ const reducer = (state = initialState, action = {}) => {
             }            
           }         
         })
-      })
-      console.log('visitedEvents', visitedEvents)
+      })      
       return state.set('current', current.merge(session))
         .set('eventsIndex', matching)
         .set('visitedEvents', visitedEvents)
-        .set('host', visitedEvents[0].host);
+        .set('host', visitedEvents[0] && visitedEvents[0].host);
     }
     case FETCH_FAVORITE_LIST.SUCCESS:
       return state
@@ -255,13 +254,18 @@ function init(session) {
   }
 }
 
-export function fetchList(params = {}, clear = false) {
-  return {
+export const fetchList = (params = {}, clear = false) => (dispatch, getState) => {
+  const activeTab = getState().getIn([ 'sessions', 'activeTab' ]);  
+
+  return dispatch(activeTab && activeTab.type === 'live' ? {
+    types: FETCH_LIVE_LIST.toArray(),
+    call: client => client.post('/assist/sessions', params),
+  } : {
     types: FETCH_LIST.toArray(),
     call: client => client.post('/sessions/search2', params),
     clear,
     params: cleanParams(params),
-  };
+  })
 }
 
 export function fetchErrorStackList(sessionId, errorId) {
