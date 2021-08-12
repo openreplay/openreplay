@@ -25,6 +25,7 @@ ENV TZ=UTC \
     MAXMINDDB_FILE=/root/geoip.mmdb \
     UAPARSER_FILE=/root/regexes.yaml \
     HTTP_PORT=80 \
+    BEACON_SIZE_LIMIT=1000000 \
     KAFKA_USE_SSL=true \
     REDIS_STREAMS_MAX_LEN=3000 \
     TOPIC_RAW=raw \
@@ -42,7 +43,7 @@ ENV TZ=UTC \
     AWS_REGION_ASSETS=eu-central-1 \
     CACHE_ASSETS=false \
     ASSETS_SIZE_LIMIT=6291456 \
-    FS_CLEAN_HRS=240
+    FS_CLEAN_HRS=72
 
 
 ARG SERVICE_NAME

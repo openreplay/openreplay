@@ -7,7 +7,7 @@
 .main {  
   max-height: 100%;
   display: flex;
-  min-height: calc(100vh - 51px);
+  min-height: calc(100vh - 81px);
 
   & .tabMenu {
     width: 240px;

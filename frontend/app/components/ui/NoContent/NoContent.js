@@ -11,10 +11,7 @@ export default ({
   empty = false,
   image = null
 }) => (!show ? children :
-<div className={ `${ styles.wrapper } ${ size && styles[ size ] }` }>
-  {
-    image && image
-  }
+<div className={ `${ styles.wrapper } ${ size && styles[ size ] }` }>  
   {
     icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
   }
@@ -22,6 +19,9 @@ export default ({
   {
     subtext &&
     <div className={ styles.subtext }>{ subtext }</div>
+  }
+  {
+    image && <div className="mt-4 flex justify-center">{ image } </div>
   }
 </div>
 );
