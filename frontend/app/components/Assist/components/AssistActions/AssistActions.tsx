@@ -57,9 +57,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
 
   function call() {
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
-      .then(onCallConnect).catch(error => {
-        onError(error)
-
+      .then(onCallConnect).catch(error => { // TODO retry only if specific error
         navigator.mediaDevices.getUserMedia({audio:true})
           .then(onCallConnect)
           .catch(onError)

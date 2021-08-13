@@ -319,7 +319,6 @@ export default class AssistManager {
             return;
           }
           // @ts-ignore
-          this.md.display(false);
           this.dataConnection?.close();
           this.setStatus(ConnectionStatus.Disconnected);
         }, 8000); // TODO: more convenient way
