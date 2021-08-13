@@ -17,7 +17,7 @@ class EventGroupWrapper extends React.PureComponent {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.showLoadInfo !== this.props.showLoadInfo) {
+    if (prevProps.showLoadInfo !== this.props.showLoadInfo || prevProps.query !== this.props.query) {
       this.props.mesureHeight();
     }
   }

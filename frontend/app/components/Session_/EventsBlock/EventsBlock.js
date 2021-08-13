@@ -39,14 +39,11 @@ export default class EventsBlock extends React.PureComponent {
   write = ({ target: { value, name } }) => { 
     const { filter } = this.state;
     this.setState({ query: value })
-    this.props.setEventFilter({ query: value, filter })
+    this.props.setEventFilter({ query: value, filter })    
     
     setTimeout(() => {      
-      this.scroller.current.scrollToRow(0);   
-      this.scroller.current.recomputeGridSize();
-      this.scroller.current.recomputeRowHeights();
-      this.scroller.current.forceUpdateGrid();
-    }, 200)
+      this.scroller.current.scrollToRow(0);    
+    }, 100)
   }
 
   clearSearch = () => {
@@ -131,7 +128,8 @@ export default class EventsBlock extends React.PureComponent {
       playing,
       eventsIndex,
       filteredEvents
-    } = this.props;     
+    } = this.props;
+    const { query } = this.state;
     const _events = filteredEvents || events;
     const isLastEvent = index === _events.size - 1;
     const isLastInGroup = isLastEvent || _events.get(index + 1).type === TYPES.LOCATION;
@@ -148,7 +146,8 @@ export default class EventsBlock extends React.PureComponent {
       >
         {({measure, registerChild}) => (
           <div style={style} ref={registerChild}>
-            <EventGroupWrapper              
+            <EventGroupWrapper
+              query={query}              
               presentInSearch={eventsIndex.includes(index)}
               isFirst={index==0}
               mesureHeight={measure}
