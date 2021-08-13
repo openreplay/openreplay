@@ -1,4 +1,4 @@
-import { finder } from '@medv/finder';
+import { finder } from '../vendors/finder/finder';
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils';
 import App from '../app';
 import { MouseMove, MouseClick } from '../../messages';
