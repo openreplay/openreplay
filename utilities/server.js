@@ -1,5 +1,5 @@
 var sourcemapsReaderServer = require('./servers/sourcemaps-server');
-var {peerRouter, peerConnection, peerDisconnect} = require('./servers/peerjs-server');
+var {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 var express = require('express');
 const {ExpressPeerServer} = require('peer');
 
@@ -28,6 +28,7 @@ const peerServer = ExpressPeerServer(server, {
 });
 peerServer.on('connection', peerConnection);
 peerServer.on('disconnect', peerDisconnect);
+peerServer.on('error', peerError);
 app.use('/', peerServer);
 app.enable('trust proxy');
 module.exports = server;
