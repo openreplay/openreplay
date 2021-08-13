@@ -36,7 +36,8 @@ def get_live_sessions(project_id):
                     SELECT {SESSION_PROJECTION_COLS}, %(project_key)s||'-'|| session_id AS peer_id
                     FROM public.sessions AS s
                     WHERE s.project_id = %(project_id)s 
-                        AND session_id IN %(connected_peers)s;""",
+                        AND session_id IN %(connected_peers)s
+                    ORDER BY start_ts DESC;""",
                             {"project_id": project_id, "connected_peers": connected_peers, "project_key": project_key})
         cur.execute(query)
         results = cur.fetchall()
