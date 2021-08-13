@@ -42,6 +42,11 @@ const peerDisconnect = (client) => {
     }
 }
 
+const peerError = (error) => {
+    console.error('error fired');
+    console.error(error);
+}
+
 
 peerRouter.get('/peers', function (req, res) {
     console.log("looking for all available sessions");
@@ -60,5 +65,6 @@ peerRouter.get('/peers/:projectKey', function (req, res) {
 module.exports = {
     peerRouter,
     peerConnection,
-    peerDisconnect
+    peerDisconnect,
+    peerError
 };
