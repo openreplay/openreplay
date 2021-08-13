@@ -1,9 +1,15 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Input, Icon } from 'UI'
 
 export default function EventSearch(props) {
   const { onChange, clearSearch, value, header } = props;
   const [showSearch, setShowSearch] = useState(false)
+
+  useEffect(() => {    
+    return () => {
+      clearSearch()
+    }
+  }, [])
   return (
     <div className="flex items-center w-full">
       <div className="flex flex-1 relative items-center" style={{ height: '32px' }}>
