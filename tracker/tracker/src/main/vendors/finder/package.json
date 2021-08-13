@@ -1,0 +1,78 @@
+{
+  "_from": "@medv/finder",
+  "_id": "@medv/finder@2.0.0",
+  "_inBundle": false,
+  "_integrity": "sha512-gV4jOsGpiWNDGd8Dw7tod1Fc9Gc7StaOT4oZ/6srHRWtsHU+HYWzmkYsa3Qy/z0e9tY1WpJ9wWdBFGskfbzoug==",
+  "_location": "/@medv/finder",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "@medv/finder",
+    "name": "@medv/finder",
+    "escapedName": "@medv%2ffinder",
+    "scope": "@medv",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@medv/finder/-/finder-2.0.0.tgz",
+  "_shasum": "699b7141393aa815f120b38f54f92ad212225902",
+  "_spec": "@medv/finder",
+  "_where": "/Users/shikhu/work/openreplay/tracker/tracker",
+  "author": {
+    "name": "Anton Medvedev",
+    "email": "anton@medv.io"
+  },
+  "ava": {
+    "require": [
+      "esm",
+      "./test/helpers/setup-browser-env.js"
+    ]
+  },
+  "bugs": {
+    "url": "https://github.com/antonmedv/finder/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "CSS Selector Generator",
+  "devDependencies": {
+    "ava": "^3.8.2",
+    "babel-minify": "*",
+    "browser-env": "^3.3.0",
+    "esm": "^3.2.25",
+    "gzip-size-cli": "*",
+    "release-it": "^13.6.1",
+    "typescript": "3.9.3"
+  },
+  "files": [
+    "*.ts",
+    "*.js"
+  ],
+  "homepage": "https://github.com/antonmedv/finder",
+  "keywords": [
+    "css",
+    "selector",
+    "generator"
+  ],
+  "license": "MIT",
+  "main": "finder.js",
+  "name": "@medv/finder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antonmedv/finder.git"
+  },
+  "scripts": {
+    "prepare": "tsc",
+    "release": "release-it --access public",
+    "size": "minify finder.js --sourceType module | gzip-size",
+    "start": "tsc -w",
+    "test": "tsc && ava"
+  },
+  "types": "finder.d.ts",
+  "version": "2.0.0"
+}

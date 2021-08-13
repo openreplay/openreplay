@@ -40,22 +40,28 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
     toast.info(`Call was rejected.`);
   }
   
-  function onError() {    
-    toast.error(`Something went wrong!`);
+  function onError(e) {
+    toast.error(e);
   }
 
-  function call() { 
+  function onCallConnect(lStream) {
+    setLocalStream(lStream);
+    setEndCall(() => callPeer(
+      lStream,
+      setIncomeStream,
+      onClose.bind(null, lStream),
+      onReject,
+      onError
+    ));
+  }
+
+  function call() {
     navigator.mediaDevices.getUserMedia({video:true, audio:true})
-      .then(lStream => {
-        setLocalStream(lStream);
-        setEndCall(() => callPeer(
-          lStream,
-          setIncomeStream,
-          onClose.bind(null, lStream),
-          onReject,
-          onError
-        ));
-      }).catch(onError);
+      .then(onCallConnect).catch(error => { // TODO retry only if specific error
+        navigator.mediaDevices.getUserMedia({audio:true})
+          .then(onCallConnect)
+          .catch(onError)
+      });
   }
 
   const inCall = calling !== CallingState.False;

@@ -155,7 +155,10 @@ export default class AssistManager {
       });
       this.peer = peer;
       peer.on('error', e => {
-        if (['peer-unavailable', 'network'].includes(e.type)) {
+        if (e.type !== 'peer-unavailable') {
+          console.warn("AssistManager PeerJS peer error: ", e.type, e)
+        }
+        if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
             this.setStatus(ConnectionStatus.Connecting);
             console.log("peerunavailable")
@@ -319,7 +322,6 @@ export default class AssistManager {
             return;
           }
           // @ts-ignore
-          this.md.display(false);
           this.dataConnection?.close();
           this.setStatus(ConnectionStatus.Disconnected);
         }, 8000); // TODO: more convenient way

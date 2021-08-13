@@ -337,6 +337,8 @@ export default class MessageDistributor extends StatedScreen {
   distributeMessage = (msg: TimedMessage, index: number): void => {
     if ([ 
       "mouse_move",
+      "mouse_click",
+      "create_element_node", // not a user activity, though visual change
       "set_input_value",
       "set_input_checked",
       "set_viewport_size", 
