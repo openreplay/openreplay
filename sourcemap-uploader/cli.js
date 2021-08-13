@@ -73,6 +73,6 @@ try {
   ? console.log(`Successfully uploaded ${sourceFiles.length} sourcemap file${sourceFiles.length > 1 ? "s" : ""} for: \n` 
     + sourceFiles.join("\t\n")
   )
-  : console.log(`No sourcemaps found in ${ args.js_dir_url }`)
+  : console.log(`No sourcemaps found in ${ args.sourcemap_dir_path }`)
 )
 .catch(e => console.error(`Sourcemap Uploader: ${e}`));
