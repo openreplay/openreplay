@@ -822,7 +822,7 @@ def get_funnel(projectId, funnelId, context):
                        project_id=projectId)
     if data is None:
         return {"errors": ["funnel not found"]}
-    return data
+    return {"data": data}
 
 
 @app.route('/{projectId}/funnels/{funnelId}', methods=['POST', 'PUT'])
