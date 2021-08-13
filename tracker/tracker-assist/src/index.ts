@@ -116,8 +116,7 @@ export default function(opts: Partial<Options> = {})  {
           const mouse = new Mouse();
           let callUI;
 
-          navigator.mediaDevices.getUserMedia({video:true, audio:true})
-          .then(lStream => {
+          const onCallConnect = lStream => {
             const onCallEnd = () => {
               console.log("on callend", call.open)
               mouse.remove();
@@ -179,6 +178,13 @@ export default function(opts: Partial<Options> = {})  {
                 }
               });
             });
+          }
+
+          navigator.mediaDevices.getUserMedia({video:true, audio:true})
+          .then(onCallConnect)
+          .catch(e => { // TODO retry only if specific error
+            navigator.mediaDevices.getUserMedia({audio:true}) // in case there is no camera on device
+            .then(onCallConnect);
           });
         });
       });
