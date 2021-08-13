@@ -51,6 +51,7 @@ def get_live_sessions(project_id, filters=None):
                     SELECT {SESSION_PROJECTION_COLS}, %(project_key)s||'-'|| session_id AS peer_id
                     FROM public.sessions AS s
                     WHERE {" AND ".join(extra_constraints)}
+                    ORDER BY start_ts DESC
                     LIMIT 500;""",
                             {"project_id": project_id,
                              "connected_peers": connected_peers,
