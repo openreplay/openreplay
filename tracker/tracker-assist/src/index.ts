@@ -43,14 +43,15 @@ export default function(opts: Partial<Options> = {})  {
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
       });
-      console.log(peerID)
+      console.log('OpenReplay tracker-assist peerID:', peerID)
       peer.on('connection', function(conn) { 
         window.addEventListener("beforeunload", () => conn.open && conn.send("unload"));
 
-        console.log('connection')
+        peer.on('error', e => console.log("OpenReplay tracker-assist peer error: ", e.type, e))
+        console.log('OpenReplay tracker-assist: Connecting...')
         conn.on('open', function() {
           
-          console.log('connection open')
+          console.log('OpenReplay tracker-assist: connection opened.')
 
           // TODO: onClose
           const buffer: Message[][] = [];
@@ -99,7 +100,7 @@ export default function(opts: Partial<Options> = {})  {
         const confirm = new Confirm(options.confirmText, options.confirmStyle);
         dataConn.on('data', (data) => { // if call closed by a caller before confirm
           if (data === "call_end") {
-            console.log('receiving callend onconfirm')
+            //console.log('OpenReplay tracker-assist: receiving callend onconfirm')
             calling = CallingState.False;
             confirm.remove();
           }                    
@@ -118,14 +119,14 @@ export default function(opts: Partial<Options> = {})  {
 
           const onCallConnect = lStream => {
             const onCallEnd = () => {
-              console.log("on callend", call.open)
+              //console.log("on callend", call.open)
               mouse.remove();
               callUI?.remove();
               lStream.getTracks().forEach(t => t.stop());
               calling = CallingState.False;
             }
             const initiateCallEnd = () => {
-              console.log("callend initiated")
+              //console.log("callend initiated")
               call.close()
               notifyCallEnd();
               onCallEnd();
@@ -165,12 +166,12 @@ export default function(opts: Partial<Options> = {})  {
               callUI.setRemoteStream(rStream);
               dataConn.on('data', (data: any) => {
                 if (data === "call_end") {
-                  console.log('receiving callend on call')
+                  //console.log('receiving callend on call')
                   onCallEnd();
                   return;
                 }
                 if (data && typeof data.name === 'string') {
-                  console.log("name",data)
+                  //console.log("name",data)
                   callUI.setAssistentName(data.name);
                 }
                 if (data && typeof data.x === 'number' && typeof data.y === 'number') {
@@ -182,9 +183,10 @@ export default function(opts: Partial<Options> = {})  {
 
           navigator.mediaDevices.getUserMedia({video:true, audio:true})
           .then(onCallConnect)
-          .catch(e => { // TODO retry only if specific error
+          .catch(_ => { // TODO retry only if specific error
             navigator.mediaDevices.getUserMedia({audio:true}) // in case there is no camera on device
-            .then(onCallConnect);
+            .then(onCallConnect)
+            .catch(e => console.log("OpenReplay tracker-assist: cant reach media devices. ", e));
           });
         });
       });
