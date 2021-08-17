@@ -164,20 +164,20 @@ export default function(opts: Partial<Options> = {})  {
             });
             call.on('stream', function(rStream) {
               callUI.setRemoteStream(rStream);
-              dataConn.on('data', (data: any) => {
-                if (data === "call_end") {
-                  //console.log('receiving callend on call')
-                  onCallEnd();
-                  return;
-                }
-                if (data && typeof data.name === 'string') {
-                  //console.log("name",data)
-                  callUI.setAssistentName(data.name);
-                }
-                if (data && typeof data.x === 'number' && typeof data.y === 'number') {
-                  mouse.move(data);
-                }
-              });
+            });
+            dataConn.on('data', (data: any) => {
+              if (data === "call_end") {
+                //console.log('receiving callend on call')
+                onCallEnd();
+                return;
+              }
+              if (data && typeof data.name === 'string') {
+                //console.log("name",data)
+                callUI.setAssistentName(data.name);
+              }
+              if (data && typeof data.x === 'number' && typeof data.y === 'number') {
+                mouse.move(data);
+              }
             });
           }
 
