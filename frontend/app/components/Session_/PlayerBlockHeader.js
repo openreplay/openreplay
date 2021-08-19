@@ -53,21 +53,16 @@ export default class PlayerBlockHeader extends React.PureComponent {
   );
 
   backHandler = () => {
-    const { funnelRef, history, siteId } = this.props;    
+    const { history, siteId } = this.props;
     if (history.action !== 'POP')
       history.goBack();
     else 
-      history.push(withSiteId(SESSIONS_ROUTE), siteId);    
-    // if (funnelRef) {
-    //   history.push(withSiteId(funnelIssueRoute(funnelRef.funnelId, funnelRef.issueId), funnelRef.siteId));
-    // } else {
-    //   history.push(withSiteId(SESSIONS_ROUTE), siteId);
-    // }
+      history.push(withSiteId(SESSIONS_ROUTE), siteId);
   }
 
   toggleFavorite = () => {
     const { session } = this.props;
-    this.props.toggleFavorite(session);
+    this.props.toggleFavorite(session.sessionId);
   }
 
   render() {
@@ -123,8 +118,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                   tooltip="Bookmark"
                   onClick={ this.toggleFavorite }
                   loading={ loading }
-                  icon={ favorite ? 'star-solid' : 'star' }
-                  // label={ favorite ? 'Favourited' : 'Favourite' }
+                  icon={ favorite ? 'star-solid' : 'star' }                  
                   plain
                 />
                 <SharePopup
@@ -135,8 +129,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                       className="mr-2"
                       tooltip="Share Session"
                       disabled={ disabled }
-                      icon={ 'share-alt' }
-                      //label="Share"
+                      icon={ 'share-alt' }                      
                       plain
                     />
                   }
