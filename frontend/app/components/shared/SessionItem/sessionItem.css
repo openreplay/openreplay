@@ -20,13 +20,20 @@
   align-items: center;
   border: solid thin #EEEEEE;
 
+  & .favorite {
+    opacity: 0;
+    &[data-favourite=true] {
+      opacity: 1;
+    }
+  }
+
   &:hover {
     & .playLink {
       transition: all 0.4s;
       opacity: 1;
     }
 
-    & .favoriteWrapper {
+    & .favorite {
       transition: all 0.4s;
       opacity: 1;
     }
@@ -78,21 +85,6 @@
   & .count {
     font-size: 18px;
     font-weight: 400;
-  }
-}
-
-.favoriteWrapper {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  margin: 0 15px;
-
-  &[data-favourite=true] {
-    opacity: 1;
-    & svg {
-      fill: $teal;
-    }
   }
 }
 
