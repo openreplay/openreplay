@@ -52,7 +52,7 @@ def login():
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True)
+                                          stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
     return {
         'jwt': r.pop('jwt'),
@@ -83,7 +83,7 @@ def get_account(context):
 @app.route('/projects', methods=['GET'])
 def get_projects(context):
     return {"data": projects.get_projects(tenant_id=context["tenantId"], recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True)}
+                                          stack_integrations=True, version=True)}
 
 
 @app.route('/projects', methods=['POST', 'PUT'])
@@ -127,7 +127,7 @@ def get_client(context):
     if r is not None:
         r.pop("createdAt")
         r["projects"] = projects.get_projects(tenant_id=context['tenantId'], recording_state=True, recorded=True,
-                                              stack_integrations=True)
+                                              stack_integrations=True, version=True)
     return {
         'data': r
     }
