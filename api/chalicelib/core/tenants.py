@@ -77,7 +77,7 @@ def update(tenant_id, user_id, data):
     return edit_client(tenant_id=tenant_id, changes=changes)
 
 
-def get_tenants():
+def tenants_exists():
     with pg_client.PostgresClient() as cur:
-        cur.execute(f"SELECT name FROM public.tenants")
-        return helper.list_to_camel_case(cur.fetchall())
+        cur.execute(f"SELECT EXISTS(SELECT 1 FROM public.tenants)")
+        return cur.fetchone()["exists"]

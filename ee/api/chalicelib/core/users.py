@@ -440,11 +440,11 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
             "jwt": authenticate(email, new_password)["jwt"]}
 
 
-def set_password_invitation(user_id, new_password):
+def set_password_invitation(tenant_id, user_id, new_password):
     changes = {"password": new_password, "generatedPassword": False,
                "invitationToken": None, "invitedAt": None,
                "changePwdExpireAt": None, "changePwdToken": None}
-    user = update(tenant_id=-1, user_id=user_id, changes=changes)
+    user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
 
     tenant_id = r.pop("tenantId")
