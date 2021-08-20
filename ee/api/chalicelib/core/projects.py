@@ -40,7 +40,7 @@ def __create(tenant_id, name):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
-def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False):
+def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, version=False):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
@@ -49,6 +49,7 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                             {',s.gdpr' if gdpr else ''} 
                             {',COALESCE((SELECT TRUE FROM public.sessions WHERE sessions.project_id = s.project_id LIMIT 1), FALSE) AS recorded' if recorded else ''}
                             {',stack_integrations.count>0 AS stack_integrations' if stack_integrations else ''}
+                            {',(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version' if version else ''}
                     FROM public.projects AS s
                             {'LEFT JOIN LATERAL (SELECT COUNT(*) AS count FROM public.integrations WHERE s.project_id = integrations.project_id LIMIT 1) AS stack_integrations ON TRUE' if stack_integrations else ''}
                     where s.tenant_id =%(tenant_id)s

@@ -22,13 +22,6 @@ app = Blueprint(__name__)
 _overrides.chalice_app(app)
 
 
-@app.route('/signedups', methods=['GET'], authorizer=None)
-def signed_ups():
-    return {
-        'data': tenants.get_tenants()
-    }
-
-
 @app.route('/login', methods=['POST'], authorizer=None)
 def login():
     data = app.current_request.json_body
@@ -54,7 +47,7 @@ def login():
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True)
+                                          stack_integrations=True, version=True)
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -85,7 +78,7 @@ def get_account(context):
 @app.route('/projects', methods=['GET'])
 def get_projects(context):
     return {"data": projects.get_projects(tenant_id=context["tenantId"], recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True)}
+                                          stack_integrations=True, version=True)}
 
 
 @app.route('/projects', methods=['POST', 'PUT'])
@@ -129,7 +122,7 @@ def get_client(context):
     if r is not None:
         r.pop("createdAt")
         r["projects"] = projects.get_projects(tenant_id=context['tenantId'], recording_state=True, recorded=True,
-                                              stack_integrations=True)
+                                              stack_integrations=True, version=True)
     return {
         'data': r
     }
@@ -148,10 +141,9 @@ def put_client(context):
     return tenants.update(tenant_id=context["tenantId"], user_id=context["userId"], data=data)
 
 
-# TODO: delete this for production; it is used for dev only
 @app.route('/signup', methods=['GET'], authorizer=None)
 def get_all_signup():
-    return {"data": signup.get_signed_ups()}
+    return {"data": tenants.tenants_exists()}
 
 
 @app.route('/signup', methods=['POST', 'PUT'], authorizer=None)
@@ -391,7 +383,8 @@ def change_password_by_invitation():
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data["password"], user_id=user["userId"])
+    return users.set_password_invitation(new_password=data["password"], user_id=user["userId"],
+                                         tenant_id=user["tenantId"])
 
 
 @app.route('/client/members/{memberId}', methods=['PUT', 'POST'])
