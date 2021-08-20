@@ -391,7 +391,8 @@ def change_password_by_invitation():
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data["password"], user_id=user["userId"])
+    return users.set_password_invitation(new_password=data["password"], user_id=user["userId"],
+                                         tenant_id=user["tenantId"])
 
 
 @app.route('/client/members/{memberId}', methods=['PUT', 'POST'])
