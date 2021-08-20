@@ -18,17 +18,14 @@ def create_step1(data):
     password = data.get("password")
 
     print("Verifying email validity")
-    email_exists = False
     if email is None or len(email) < 5 or not helper.is_valid_email(email):
         errors.append("Invalid email address.")
     else:
         print("Verifying email existance")
         if users.email_exists(email):
-            # errors.append("Email address already in use.")
-            email_exists = True
+            errors.append("Email address already in use.")
         if users.get_deleted_user_by_email(email) is not None:
-            # errors.append("Email address previously deleted.")
-            email_exists = True
+            errors.append("Email address previously deleted.")
 
     print("Verifying captcha")
     if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
