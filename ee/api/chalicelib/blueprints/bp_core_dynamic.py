@@ -22,13 +22,6 @@ app = Blueprint(__name__)
 _overrides.chalice_app(app)
 
 
-@app.route('/signedups', methods=['GET'], authorizer=None)
-def signed_ups():
-    return {
-        'data': tenants.get_tenants()
-    }
-
-
 @app.route('/login', methods=['POST'], authorizer=None)
 def login():
     data = app.current_request.json_body
@@ -148,10 +141,9 @@ def put_client(context):
     return tenants.update(tenant_id=context["tenantId"], user_id=context["userId"], data=data)
 
 
-# TODO: delete this for production; it is used for dev only
 @app.route('/signup', methods=['GET'], authorizer=None)
 def get_all_signup():
-    return {"data": signup.get_signed_ups()}
+    return {"data": tenants.tenants_exists()}
 
 
 @app.route('/signup', methods=['POST', 'PUT'], authorizer=None)
