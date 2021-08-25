@@ -31,6 +31,7 @@ const initialState = Map({
   passwordRequestError: false,
   passwordErrors: List(),
   tenants: [],
+  existingTenant: true,
   onboarding: false
 });
 
@@ -69,7 +70,8 @@ const reducer = (state = initialState, action = {}) => {
     case FETCH_ACCOUNT.SUCCESS:
       return state.set('account', Account(action.data)).set('passwordErrors', List());
     case FETCH_TENANTS.SUCCESS:
-      return state.set('tenants', action.data.map(i => ({ text: i.name, value: i.tenantId})));
+      return state.set('existingTenant', action.data);
+      // return state.set('tenants', action.data.map(i => ({ text: i.name, value: i.tenantId})));
     case UPDATE_PASSWORD.FAILURE:
       return state.set('passwordErrors', List(action.errors))
     case DELETE:
