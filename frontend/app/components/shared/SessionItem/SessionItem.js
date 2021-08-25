@@ -15,7 +15,7 @@ import { session as sessionRoute } from 'App/routes';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
 import LiveTag from 'Shared/LiveTag';
-import { session } from '../../../routes';
+import Bookmark from 'Shared/Bookmark';
 import Counter from './Counter'
 
 const Label = ({ label = '', color = 'color-gray-medium'}) => (
@@ -25,15 +25,6 @@ const Label = ({ label = '', color = 'color-gray-medium'}) => (
   timezone: state.getIn(['sessions', 'timezone'])
 }), { toggleFavorite })
 export default class SessionItem extends React.PureComponent {
-  state = { favouriting: false };
-
-  toggleFavorite = () => {
-    this.setState({ favouriting: true });
-    this.props.toggleFavorite(this.props.session).then(() => {
-      this.setState({ favouriting: false });
-    });
-  }
-
   // eslint-disable-next-line complexity
   render() {
     const {
@@ -114,14 +105,8 @@ export default class SessionItem extends React.PureComponent {
           
           { live && <LiveTag isLive={true} /> }
 
-          <div className={ cn(stl.iconDetails, 'px-4') }>
-            <div
-              className={ stl.favoriteWrapper }
-              onClick={ this.toggleFavorite }
-              data-favourite={ favorite }
-            >
-              <Icon name={ favorite ? 'star-solid' : 'star' } size="20" />
-            </div>
+          <div className={ cn(stl.iconDetails, stl.favorite, 'px-4') } data-favourite={favorite} >
+            <Bookmark sessionId={sessionId} favorite={favorite} />
           </div>
           
           <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
