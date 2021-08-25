@@ -69,6 +69,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     organisation: state.getIn([ 'user', 'client', 'name' ]),
     tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
     tenants: state.getIn(['user', 'tenants']),
+    existingTenant: state.getIn(['user', 'existingTenant']),
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
@@ -95,7 +96,7 @@ class Router extends React.Component {
   }
 
   render() {    
-    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, tenants, onboarding } = this.props;
+    const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding } = this.props;
     const siteIdList = sites.map(({ id }) => id).toJS();
     const hideHeader = location.pathname && location.pathname.includes('/session/');
 
@@ -147,7 +148,7 @@ class Router extends React.Component {
       <Switch>
         <Route exact strict path={ FORGOT_PASSWORD } component={ ForgotPassword } />
         <Route exact strict path={ LOGIN_PATH } component={ changePassword ? UpdatePassword : Login } />
-        { tenants.length === 0 && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
+        { !existingTenant && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
         <Redirect to={ LOGIN_PATH } />
       </Switch>;
   }
