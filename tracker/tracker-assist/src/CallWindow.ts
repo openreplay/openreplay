@@ -101,15 +101,22 @@ export default class CallWindow {
 
   }
 
+  private aRemote: HTMLAudioElement | null = null;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
   private setLocalVideoStream: (MediaStream) => void = () => {};
   private videoRequested: boolean = true; // TODO: green camera light
   private _trySetStreams() {
-    if (this.vRemote && this.remoteStream) {
+    if (this.vRemote && !this.vRemote.srcObject && this.remoteStream) {
       this.vRemote.srcObject = this.remoteStream;
+      // Hack for audio (doesen't work in iframe because of some magical reasons)
+      this.aRemote = document.createElement("audio");
+      this.aRemote.autoplay = true;
+      this.aRemote.style.display = "none"
+      this.aRemote.srcObject = this.remoteStream;
+      document.body.appendChild(this.aRemote)
     }
-    if (this.vLocal && this.localStream) {
+    if (this.vLocal && !this.vLocal.srcObject && this.localStream) {
       this.vLocal.srcObject = this.localStream;
     }
   }
@@ -194,6 +201,9 @@ export default class CallWindow {
     clearInterval(this.tsInterval);
     if (this.iframe.parentElement) {
       document.body.removeChild(this.iframe);   
+    }
+    if (this.aRemote && this.aRemote.parentElement) {
+      document.body.removeChild(this.aRemote);  
     }
   }
 

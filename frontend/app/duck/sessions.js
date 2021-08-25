@@ -120,9 +120,10 @@ const reducer = (state = initialState, action = {}) => {
       return state
         .set('list', list)
         .set('sessionIds', list.map(({ sessionId }) => sessionId ).toJS())
+        .set('favoriteList', list.filter(({ favorite }) => favorite))
         .set('total', total)
         .set('keyMap', keyMap)
-        .set('wdTypeCount', wdTypeCount);    
+        .set('wdTypeCount', wdTypeCount);
     case SET_AUTOPLAY_VALUES: {
       const sessionIds = state.get('sessionIds')
       const currentSessionId = state.get('current').sessionId
@@ -179,13 +180,15 @@ const reducer = (state = initialState, action = {}) => {
         .set('visitedEvents', visitedEvents)
         .set('host', visitedEvents[0] && visitedEvents[0].host);
     }
-    case FETCH_FAVORITE_LIST.SUCCESS:
+    case FETCH_FAVORITE_LIST.SUCCESS:    
       return state
         .set('favoriteList', List(action.data).map(Session));
     case TOGGLE_FAVORITE.SUCCESS: {
-      const id = action.session.sessionId;
+      const id = action.sessionId;
+      const session = state.get('list').find(({sessionId}) => sessionId === id)
       const wasInFavorite = state
         .get('favoriteList').findIndex(({ sessionId }) => sessionId === id) > -1;
+      
       return state
         .update('list', list => list
           .map(session => (session.sessionId === id
@@ -193,7 +196,7 @@ const reducer = (state = initialState, action = {}) => {
             : session)))
         .update('favoriteList', list => (wasInFavorite
           ? list.filter(({ sessionId }) => sessionId !== id)
-          : list.push(action.session.set('favorite', true))))
+          : list.push(session.set('favorite', true))))
         .update('current', session => (session.sessionId === id
           ? session.set('favorite', !wasInFavorite)
           : session));
@@ -283,11 +286,11 @@ export const fetch = (sessionId) => (dispatch, getState) => {
   });
 }
 
-export function toggleFavorite(session) {
+export function toggleFavorite(sessionId) {
   return {
     types: TOGGLE_FAVORITE.toArray(),
-    call: client => client.get(`/sessions2/${ session.sessionId }/favorite`),
-    session,
+    call: client => client.get(`/sessions2/${ sessionId }/favorite`),
+    sessionId,
   };
 }
 

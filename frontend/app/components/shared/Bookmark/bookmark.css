@@ -1,0 +1,14 @@
+.favoriteWrapper {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  /* opacity: 0; */
+  margin: 0 15px;
+
+  &[data-favourite=true] {
+    opacity: 1;
+    & svg {
+      fill: $teal;
+    }
+  }
+}
