@@ -225,18 +225,12 @@ export default class API {
     }
   }
 
-  handleError = (e: Error) => {
-    if (e instanceof Error && this.app !== null) {
+  handleError = (e: Error | ErrorEvent | PromiseRejectionEvent) => {
+    if (this.app === null) { return; }
+    if (e instanceof Error) {
       this.app.send(getExceptionMessage(e, []));
-    }
-  }
-
-  handleErrorEvent = (e: ErrorEvent | PromiseRejectionEvent) => {
-    if (
-      (e instanceof ErrorEvent ||
-        ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
-      ) &&
-      this.app !== null
+    } else if (e instanceof ErrorEvent ||
+      ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent)
     ) {
       const msg = getExceptionMessageFromEvent(e);
       if (msg != null) {
