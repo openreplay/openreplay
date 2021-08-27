@@ -20,12 +20,14 @@ import CSSRules from './modules/cssrules';
 import { IN_BROWSER, deprecationWarn } from './utils';
 
 import { Options as AppOptions } from './app';
-import { Options as ExceptionOptions } from './modules/exception';
 import { Options as ConsoleOptions } from './modules/console';
+import { Options as ExceptionOptions } from './modules/exception';
 import { Options as InputOptions } from './modules/input';
+import { Options as MouseOptions } from './modules/mouse';
+import { Options as PerformanceOptions } from './modules/performance';
 import { Options as TimingOptions } from './modules/timing';
 export type Options = Partial<
-  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & TimingOptions
+  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & MouseOptions & PerformanceOptions & TimingOptions
 > & {
   projectID?: number; // For the back compatibility only (deprecated)
   projectKey: string;
@@ -92,9 +94,9 @@ export default class API {
       Exception(this.app, options);
       Img(this.app);
       Input(this.app, options);
-      Mouse(this.app);
+      Mouse(this.app, options);
       Timing(this.app, options);
-      Performance(this.app);
+      Performance(this.app, options);
       Scroll(this.app);
       Longtasks(this.app);
       (window as any).__OPENREPLAY__ = (window as any).__OPENREPLAY__ || this;

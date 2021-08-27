@@ -19,13 +19,16 @@ export type Options = {
   local_uuid_key: string;
   ingestPoint: string;
   __is_snippet: boolean;
+  __debug_report_edp: string | null;
   onStart?: (info: { sessionID: string, sessionToken: string, userUUID: string }) => void;
 } & ObserverOptions & WebworkerOptions;
 
 type Callback = () => void;
 type CommitCallback = (messages: Array<Message>) => void;
 
-export const DEFAULT_INGEST_POINT = 'https://ingest.openreplay.com';
+
+// TODO: use backendHost only
+export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
 
 export default class App {
   readonly nodes: Nodes;
@@ -57,6 +60,7 @@ export default class App {
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
         __is_snippet: false,
+        __debug_report_edp: null,
         obscureTextEmails: true,
         obscureTextNumbers: false,
       },
@@ -99,8 +103,23 @@ export default class App {
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
-    } catch (e) { /* TODO: send report */}
+    } catch (e) { 
+      this.sendDebugReport("worker_start", e);
+    }
   }
+
+  private sendDebugReport(context: string, e: any) {
+    if(this.options.__debug_report_edp !== null) {
+      fetch(this.options.__debug_report_edp, {
+        method: 'POST',
+        body: JSON.stringify({
+          context,
+          error: `${e}`
+        })
+      });
+    }
+  }
+
   send(message: Message, urgent = false): void {
     if (!this.isActive) {
       return;
@@ -230,14 +249,17 @@ export default class App {
         if (r.status === 200) {
           return r.json()
         } else { // TODO: handle canceling && 403
-          throw new Error("Server error");
+          return r.text().then(text => {
+            throw new Error(`Server error: ${r.status}. ${text}`);
+          });
         }
       })
       .then(r => {
-        const { token, userUUID, sessionID } = r;
+        const { token, userUUID, sessionID, beaconSizeLimit } = r;
         if (typeof token !== 'string' ||
-            typeof userUUID !== 'string') {
-          throw new Error("Incorrect server response");
+            typeof userUUID !== 'string' ||
+            (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
+          throw new Error(`Incorrect server response: ${ JSON.stringify(r) }`);
         }
         sessionStorage.setItem(this.options.session_token_key, token);
         localStorage.setItem(this.options.local_uuid_key, userUUID);
@@ -247,7 +269,7 @@ export default class App {
         if (!this.worker) {
           throw new Error("Stranger things: no worker found after start request");
         }
-        this.worker.postMessage({ token });
+        this.worker.postMessage({ token, beaconSizeLimit });
         this.startCallbacks.forEach((cb) => cb());
         this.observer.observe();
         this.ticker.start();
@@ -259,7 +281,7 @@ export default class App {
       })
       .catch(e => {
         this.stop();
-        /* TODO: send report */
+        this.sendDebugReport("session_start", e);
       })
     }
   }

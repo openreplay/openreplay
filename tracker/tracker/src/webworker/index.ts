@@ -6,7 +6,7 @@ import type { WorkerMessageData } from '../messages/webworker';
 
 
 const SEND_INTERVAL = 20 * 1000;
-const BEACON_SIZE_LIMIT = 1e6 // Limit is set in the backend/services/http
+let BEACON_SIZE_LIMIT = 1e6 // Limit is set in the backend/services/http
 let beaconSize = 4 * 1e5; // Default 400kB
 
 
@@ -123,6 +123,7 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
     timeAdjustment = data.timeAdjustment || timeAdjustment;
     MAX_ATTEMPTS_COUNT = data.connAttemptCount || MAX_ATTEMPTS_COUNT;
     ATTEMPT_TIMEOUT = data.connAttemptGap || ATTEMPT_TIMEOUT;
+    BEACON_SIZE_LIMIT = data.beaconSizeLimit || BEACON_SIZE_LIMIT;
     beaconSize = Math.min(BEACON_SIZE_LIMIT, data.beaconSize || beaconSize);
     if (writer.isEmpty()) {
       writeBatchMeta();
