@@ -34,7 +34,10 @@ export default function(opts: Partial<Options> = {})  {
       return;
     }
 
+    let observerRestart = false;
+
     app.attachStartCallback(function() {
+      if (observerRestart) { return; }
       // @ts-ignore
       const peerID = `${app.projectKey}-${app.getSessionID()}`
       const peer = new Peer(peerID, {
@@ -66,6 +69,8 @@ export default function(opts: Partial<Options> = {})  {
               buffering = false;
             }
           }
+
+          observerRestart = true;
           app.stop();
           //@ts-ignore (should update tracker dependency)
           app.addCommitCallback((messages: Array<Message>): void => {
@@ -78,7 +83,7 @@ export default function(opts: Partial<Options> = {})  {
               sendNext(); 
             }
           });
-          app.start();
+          app.start().then(() => { observerRestart = false; });
         });
       });
 
