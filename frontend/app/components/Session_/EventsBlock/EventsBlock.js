@@ -176,6 +176,7 @@ export default class EventsBlock extends React.PureComponent {
         userNumericHash,
         userDisplayName,        
         userId,
+        revId,
         userAnonymousId
       },
       filteredEvents
@@ -191,6 +192,7 @@ export default class EventsBlock extends React.PureComponent {
             userNumericHash={userNumericHash}
             userDisplayName={userDisplayName}
             userId={userId}
+            revId={revId}
             userAnonymousId={userAnonymousId}
           />
 
