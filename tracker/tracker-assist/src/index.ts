@@ -5,7 +5,7 @@ import type Message from '@openreplay/tracker';
 
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
-import Confirm from './Confirm';
+import ConfirmWindow from './ConfirmWindow';
 
 
 export interface Options {
@@ -34,23 +34,28 @@ export default function(opts: Partial<Options> = {})  {
       return;
     }
 
-    let observerRestart = false;
+    let assistDemandedRestart = false;
+    let peer : Peer | null = null;
+
+    app.attachStopCallback(function() {
+      if (assistDemandedRestart) { return; }
+      peer && peer.destroy();
+    });
 
     app.attachStartCallback(function() {
-      if (observerRestart) { return; }
-      // @ts-ignore
+      if (assistDemandedRestart) { return; }
       const peerID = `${app.projectKey}-${app.getSessionID()}`
-      const peer = new Peer(peerID, {
+      peer = new Peer(peerID, {
               // @ts-ignore
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
       });
       console.log('OpenReplay tracker-assist peerID:', peerID)
+      peer.on('error', e => console.log("OpenReplay tracker-assist peer error: ", e.type, e))
       peer.on('connection', function(conn) { 
         window.addEventListener("beforeunload", () => conn.open && conn.send("unload"));
 
-        peer.on('error', e => console.log("OpenReplay tracker-assist peer error: ", e.type, e))
         console.log('OpenReplay tracker-assist: Connecting...')
         conn.on('open', function() {
           
@@ -70,10 +75,11 @@ export default function(opts: Partial<Options> = {})  {
             }
           }
 
-          observerRestart = true;
+          assistDemandedRestart = true;
           app.stop();
           //@ts-ignore (should update tracker dependency)
           app.addCommitCallback((messages: Array<Message>): void => {
+            if (!conn.open) { return; } // TODO: clear commit callbacks on connection close
             let i = 0;
             while (i < messages.length) {
               buffer.push(messages.slice(i, i+=1000));
@@ -83,30 +89,31 @@ export default function(opts: Partial<Options> = {})  {
               sendNext(); 
             }
           });
-          app.start().then(() => { observerRestart = false; });
+          app.start().then(() => { assistDemandedRestart = false; });
         });
       });
 
 
-      let calling: CallingState  = CallingState.False;
+      let callingState: CallingState = CallingState.False;
       peer.on('call', function(call) {
+        if (!peer) { return; }
         const dataConn: DataConnection | undefined = peer
                 .connections[call.peer].find(c => c.type === 'data');
-        if (calling !== CallingState.False || !dataConn) {
+        if (callingState !== CallingState.False || !dataConn) {
           call.close();
           return;
         }
 
-        calling = CallingState.Requesting;
         const notifyCallEnd = () => {
           dataConn.open && dataConn.send("call_end");
         }
 
-        const confirm = new Confirm(options.confirmText, options.confirmStyle);
+        callingState = CallingState.Requesting;
+        const confirm = new ConfirmWindow(options.confirmText, options.confirmStyle);
         dataConn.on('data', (data) => { // if call closed by a caller before confirm
           if (data === "call_end") {
             //console.log('OpenReplay tracker-assist: receiving callend onconfirm')
-            calling = CallingState.False;
+            callingState = CallingState.False;
             confirm.remove();
           }                    
         });
@@ -115,7 +122,7 @@ export default function(opts: Partial<Options> = {})  {
           if (!agreed || !dataConn.open) {
             call.close();
             notifyCallEnd();
-            calling = CallingState.False;
+            callingState = CallingState.False;
             return;
           }
 
@@ -128,7 +135,7 @@ export default function(opts: Partial<Options> = {})  {
               mouse.remove();
               callUI?.remove();
               lStream.getTracks().forEach(t => t.stop());
-              calling = CallingState.False;
+              callingState = CallingState.False;
             }
             const initiateCallEnd = () => {
               //console.log("callend initiated")
