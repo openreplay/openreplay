@@ -63,7 +63,7 @@ OpenReplay can be deployed anywhere. Follow our step-by-step guides for deployin
 
 ## OpenReplay Cloud
 
-For those who want to simply use OpenReplay as a service, [sign up](https://asayer.io/register.html) for a free account on our cloud offering.
+For those who want to simply use OpenReplay as a service, [sign up](https://app.openreplay.com/signup) for a free account on our cloud offering.
 
 ## Community Support
 
