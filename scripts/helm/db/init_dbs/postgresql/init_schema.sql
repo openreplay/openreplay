@@ -872,5 +872,6 @@ CREATE TABLE jobs
 );
 CREATE INDEX ON jobs (status);
 CREATE INDEX ON jobs (start_at);
+CREATE INDEX jobs_project_id_idx ON jobs(project_id);
 
 COMMIT;
