@@ -26,11 +26,24 @@ export default class SignupForm extends React.Component {
     email: '',
     projectName: '',
     organizationName: '',
+    reload: false,
   };
+
+  static getDerivedStateFromProps(props, state) {
+    if (props.errors && props.errors.size > 0 && state.reload) {
+      recaptchaRef.current.reset();
+      return {
+        reload: false
+      }
+    } 
+    return null;
+  }
+  
 
   handleSubmit = (token) => {
     const { tenantId, fullname, password, email, projectName, organizationName, auth } = this.state;
     this.props.signup({ tenantId, fullname, password, email, projectName, organizationName, auth, 'g-recaptcha-response': token })
+    this.setState({ reload: true })
   }
 
   write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
