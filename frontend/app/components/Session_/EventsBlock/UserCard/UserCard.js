@@ -31,7 +31,7 @@ function UserCard({ className, userNumericHash, userDisplayName, similarSessions
       </div>
       {revId && (
         <div className="border-t py-2 px-3">
-          RevId: {revId}
+          <span className="font-medium">Rev ID:</span> {revId}
         </div>
       )}
       <div className="border-t">
