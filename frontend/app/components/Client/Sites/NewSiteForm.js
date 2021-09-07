@@ -50,7 +50,6 @@ export default class NewSiteForm extends React.PureComponent {
 	}
 
 	edit = ({ target: { name, value } }) => {
-		if (value.includes(' ')) return;  // TODO: site validation
 		this.setState({ existsError: false });
  		this.props.edit({ [ name ]: value });
  	}
