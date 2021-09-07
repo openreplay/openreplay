@@ -22,7 +22,12 @@ function LiveSessionList(props: Props) {
   return (
     <div>
       <NoContent
-        title={"No live sessions!"}        
+        title={"No live sessions."}
+        subtext={
+          <span>
+            See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> if you haven't yet done so.
+          </span>
+        }
         image={<img src="/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }}/>}
         show={ !loading && list && list.size === 0}
       >

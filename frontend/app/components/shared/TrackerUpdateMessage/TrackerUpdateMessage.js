@@ -16,8 +16,8 @@ const TrackerUpdateMessage= (props) => {
       {(
         <div>
           <div
-            className="rounded text-sm flex items-center p-2 justify-between mb-4"
-            style={{ backgroundColor: 'rgba(255, 239, 239, 1)', border: 'solid thin rgba(221, 181, 181, 1)'}}
+            className="rounded text-sm flex items-center justify-between mb-4"
+            style={{ height: '42px', backgroundColor: 'rgba(255, 239, 239, 1)', border: 'solid thin rgba(221, 181, 181, 1)'}}
           >
             <div className="flex items-center w-full">
               <div className="flex-shrink-0 w-8 flex justify-center">
