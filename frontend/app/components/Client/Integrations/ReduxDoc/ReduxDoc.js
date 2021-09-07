@@ -3,6 +3,7 @@ import ToggleContent from '../../../shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
 
 const ReduxDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <div>This plugin allows you to capture Redux actions/state and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.</div>
@@ -17,7 +18,7 @@ const ReduxDoc = (props) => {
       <p>Initialize the tracker then put the generated middleware into your Redux chain.</p>
       <div className="py-3" />
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import { applyMiddleware, createStore } from 'redux';
@@ -25,7 +26,7 @@ import OpenReplay from '@openreplay/tracker';
 import trackerRedux from '@openreplay/tracker-redux';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 tracker.start();
 //...
@@ -42,7 +43,7 @@ import OpenReplay from '@openreplay/tracker/cjs';
 import trackerRedux from '@openreplay/tracker-redux/cjs';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 //...
 function SomeFunctionalComponent() {

@@ -75,7 +75,7 @@ const TITLE = {
 	[ ASSIST ] : 'Assist',
 }
 
-const DOCS = [REDUX, VUE, GRAPHQL, NGRX, FETCH, MOBX, PROFILER]
+const DOCS = [REDUX, VUE, GRAPHQL, NGRX, FETCH, MOBX, PROFILER, ASSIST]
 
 const integrations = [ 'sentry', 'datadog', 'stackdriver', 'rollbar', 'newrelic', 'bugsnag', 'cloudwatch', 'elasticsearch', 'sumologic', 'issues' ];
 
@@ -87,12 +87,14 @@ const integrations = [ 'sentry', 'datadog', 'stackdriver', 'rollbar', 'newrelic'
 			state.getIn([ name, 'list' ]).size > 0;
 		props.loading = props.loading || state.getIn([ name, 'fetchRequest', 'loading']);
 	})
+  const site = state.getIn([ 'site', 'instance' ]);
 	return {
 		...props,
 		issues: state.getIn([ 'issues', 'list']).first() || {},
 		slackChannelListExists: state.getIn([ 'slack', 'list' ]).size > 0,
 		tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
-		jwt: state.get('jwt')
+		jwt: state.get('jwt'),
+    projectKey: site ? site.projectKey : ''
 	};
 }, {
 	fetchList,
@@ -142,7 +144,9 @@ export default class Integrations extends React.PureComponent {
 		}
 	}
 
-	renderModalContent() { 
+	renderModalContent() {
+    const { projectKey } = this.props;
+
     switch (this.state.modalContent) {
       case SENTRY:
         return <SentryForm onClose={ this.closeModal } />;
@@ -172,21 +176,21 @@ export default class Integrations extends React.PureComponent {
 			case JIRA:
 				return <JiraForm onClose={ this.closeModal } />;
 			case REDUX:
-				return <ReduxDoc onClose={ this.closeModal } />
+				return <ReduxDoc onClose={ this.closeModal } projectKey={projectKey} />
 			case VUE:
-				return <VueDoc onClose={ this.closeModal } />
+				return <VueDoc onClose={ this.closeModal } projectKey={projectKey} />
 			case GRAPHQL:
-				return <GraphQLDoc onClose={ this.closeModal } />
+				return <GraphQLDoc onClose={ this.closeModal } projectKey={projectKey} />
 			case NGRX:
-				return <NgRxDoc onClose={ this.closeModal } />
+				return <NgRxDoc onClose={ this.closeModal } projectKey={projectKey} />
 			case FETCH:
-				return <FetchDoc onClose={ this.closeModal } />
+				return <FetchDoc onClose={ this.closeModal } projectKey={projectKey} />
 			case MOBX:
-				return <MobxDoc onClose={ this.closeModal } />
+				return <MobxDoc onClose={ this.closeModal } projectKey={projectKey} />
 			case PROFILER:
-				return <ProfilerDoc onClose={ this.closeModal } />
+				return <ProfilerDoc onClose={ this.closeModal } projectKey={projectKey} />
       case ASSIST:
-        return <AssistDoc onClose={ this.closeModal } />
+        return <AssistDoc onClose={ this.closeModal } projectKey={projectKey} />
       default:
         return null;
     }

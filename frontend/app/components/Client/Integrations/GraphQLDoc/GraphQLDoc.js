@@ -3,6 +3,7 @@ import DocLink from 'Shared/DocLink/DocLink';
 import ToggleContent from 'Shared/ToggleContent';
 
 const GraphQLDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <p>This plugin allows you to capture GraphQL requests and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.</p>
@@ -19,14 +20,14 @@ const GraphQLDoc = (props) => {
       <div className="py-3" />
 
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import OpenReplay from '@openreplay/tracker';
 import trackerGraphQL from '@openreplay/tracker-graphql';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY,
+  projectKey: '${projectKey}'
 });
 tracker.start();
 //...
@@ -39,7 +40,7 @@ export const recordGraphQL = tracker.use(trackerGraphQL());`}
 import trackerGraphQL from '@openreplay/tracker-graphql/cjs';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 //...
 function SomeFunctionalComponent() {
