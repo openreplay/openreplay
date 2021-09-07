@@ -3,6 +3,7 @@ import ToggleContent from 'Shared/ToggleContent'
 import DocLink from 'Shared/DocLink/DocLink';
 
 const ProfilerDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <div>The profiler plugin allows you to measure your JS functions' performance and capture both arguments and result for each function call.</div>
@@ -18,14 +19,14 @@ const ProfilerDoc = (props) => {
 
       <div className="font-bold my-2">Usage</div>
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import OpenReplay from '@openreplay/tracker';
 import trackerProfiler from '@openreplay/tracker-profiler';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 tracker.start();
 //...
@@ -42,7 +43,7 @@ const fn = profiler('call_name')(() => {
 import trackerProfiler from '@openreplay/tracker-profiler/cjs';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 //...
 function SomeFunctionalComponent() {

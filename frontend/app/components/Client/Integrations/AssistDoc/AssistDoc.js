@@ -3,6 +3,7 @@ import ToggleContent from 'Shared/ToggleContent'
 import DocLink from 'Shared/DocLink/DocLink';
 
 const AssistDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <div>OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.</div>
@@ -18,13 +19,13 @@ const AssistDoc = (props) => {
 
       <div className="font-bold my-2">Usage</div>
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import Tracker from '@openreplay/tracker';
 import trackerAssist from '@openreplay/tracker-assist';
 const tracker = new Tracker({
-  projectKey: PROJECT_KEY,
+  projectKey: '${projectKey}',
 });
 tracker.start();
 tracker.use(trackerAssist(options)); // check the list of available options below`}
@@ -35,7 +36,7 @@ tracker.use(trackerAssist(options)); // check the list of available options belo
         {`import OpenReplay from '@openreplay/tracker/cjs';
 import trackerFetch from '@openreplay/tracker-assist/cjs';
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 const trackerAssist = tracker.use(trackerAssist(options)); // check the list of available options below
 //...

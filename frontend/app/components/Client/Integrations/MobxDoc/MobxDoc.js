@@ -3,6 +3,7 @@ import ToggleContent from 'Shared/ToggleContent'
 import DocLink from 'Shared/DocLink/DocLink';
 
 const MobxDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <div>This plugin allows you to capture MobX events and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.</div>
@@ -18,14 +19,14 @@ const MobxDoc = (props) => {
 
       <div className="font-bold my-2">Usage</div>
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import OpenReplay from '@openreplay/tracker';
 import trackerMobX from '@openreplay/tracker-mobx';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 tracker.use(trackerMobX(<options>)); // check list of available options below
 tracker.start();`}
@@ -37,7 +38,7 @@ tracker.start();`}
 import trackerMobX from '@openreplay/tracker-mobx/cjs';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 tracker.use(trackerMobX(<options>)); // check list of available options below
 //...
