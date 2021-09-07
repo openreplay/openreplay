@@ -34,11 +34,12 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		Reset           bool    `json:"reset"`
 	}
 	type response struct {
-		Timestamp int64  `json:"timestamp"`
-		Delay     int64  `json:"delay"`
-		Token     string `json:"token"`
-		UserUUID  string `json:"userUUID"`
-		SessionID string `json:"sessionID"`
+		Timestamp int64  			`json:"timestamp"`
+		Delay     int64  			`json:"delay"`
+		Token     string 			`json:"token"`
+		UserUUID  string 			`json:"userUUID"`
+		SessionID string 			`json:"sessionID"`
+		BeaconSizeLimit int64 `json:"beaconSizeLimit"`
 	}
 
 	startTime := time.Now()
@@ -115,6 +116,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		Token:     tokenizer.Compose(*tokenData),
 		UserUUID:  userUUID,
 		SessionID: strconv.FormatUint(tokenData.ID, 10),
+		BeaconSizeLimit: BEACON_SIZE_LIMIT,
 	})
 }
 
