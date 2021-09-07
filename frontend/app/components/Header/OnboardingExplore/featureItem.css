@@ -34,6 +34,7 @@
 .activeLink {
   cursor: pointer;
   pointer-events: default;
+  text-decoration: underline;
   & label {
     color: #000000 !important;
     text-decoration: underline;
