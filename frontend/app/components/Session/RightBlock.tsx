@@ -37,7 +37,7 @@ export default function RightBlock() {
           onClick={ (tab) => setActiveTab(tab) }
           border={ true }
         />
-        <div className="absolute right-0 top-0 mt-4 pr-4">{ <NewBadge />}</div>
+        <div className="absolute" style={{ left: '160px', top: '13px' }}>{ <NewBadge />}</div>
       </div>
       {
         renderActiveTab(activeTab)       
