@@ -42,7 +42,9 @@ export default class EventsBlock extends React.PureComponent {
     this.props.setEventFilter({ query: value, filter })    
     
     setTimeout(() => {      
-      this.scroller.current.scrollToRow(0);    
+      if (!this.scroller.current) return;
+      
+      this.scroller.current.scrollToRow(0);
     }, 100)
   }
 
@@ -54,7 +56,9 @@ export default class EventsBlock extends React.PureComponent {
     this.scroller.current.forceUpdateGrid();
 
     setTimeout(() => {      
-      this.scroller.current.scrollToRow(0);      
+      if (!this.scroller.current) return;
+      
+      this.scroller.current.scrollToRow(0);
     }, 100)    
   }
 
