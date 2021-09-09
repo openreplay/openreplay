@@ -28,7 +28,7 @@ import NoSessionsMessage from '../shared/NoSessionsMessage';
 import TrackerUpdateMessage from '../shared/TrackerUpdateMessage';
 import LiveSessionList from './LiveSessionList'
 
-const AUTOREFRESH_INTERVAL = 10 * 60 * 1000;
+const AUTOREFRESH_INTERVAL = 1 * 60 * 1000;
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
