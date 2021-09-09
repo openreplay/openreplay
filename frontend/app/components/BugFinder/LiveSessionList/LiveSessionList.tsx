@@ -5,19 +5,34 @@ import { NoContent, Loader } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 
+const AUTOREFRESH_INTERVAL = 1 * 60 * 1000
+
 interface Props {
   loading: Boolean,
   list?: List<any>,  
   fetchList: (params) => void,
+  applyFilter: () => void,
   filters: List<any>
 }
 
 function LiveSessionList(props: Props) {
   const { loading, list, filters } = props;  
+  var timeoutId;
 
   useEffect(() => {     
     props.fetchList(filters.toJS());
+    timeout();
+    return () => {
+      clearTimeout(timeoutId)
+    }
   }, [])
+
+  const timeout = () => {
+    timeoutId = setTimeout(() => {
+      props.fetchList(filters.toJS());
+      timeout();
+    }, AUTOREFRESH_INTERVAL);
+  }
 
   return (
     <div>

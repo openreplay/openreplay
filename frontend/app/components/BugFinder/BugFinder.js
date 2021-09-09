@@ -28,8 +28,6 @@ import NoSessionsMessage from '../shared/NoSessionsMessage';
 import TrackerUpdateMessage from '../shared/TrackerUpdateMessage';
 import LiveSessionList from './LiveSessionList'
 
-const AUTOREFRESH_INTERVAL = 1 * 60 * 1000;
-
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
   if (!val1 !== !val2) return false;
@@ -38,7 +36,6 @@ const weakEqual = (val1, val2) => {
 
 @withLocationHandlers()
 @connect(state => ({
-  shouldAutorefresh: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size === 0,
   filter: state.getIn([ 'filters', 'appliedFilter' ]),
   showLive: state.getIn([ 'user', 'account', 'appearance', 'sessionsLive' ]),
   variables: state.getIn([ 'customFields', 'list' ]), 
@@ -94,12 +91,6 @@ export default class BugFinder extends React.PureComponent {
     this.props.resetFunnel();
     this.props.resetFunnelFilters();
 
-    this.autorefreshIntervalId = setInterval(() => {
-      if (this.props.shouldAutorefresh) {
-        props.applyFilter();        
-      }
-    }, AUTOREFRESH_INTERVAL);
-
     props.fetchFunnelsList(LAST_7_DAYS)
   }
 
@@ -128,10 +119,6 @@ export default class BugFinder extends React.PureComponent {
         })
       }
     }.bind(this));
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.autorefreshIntervalId);
   }
 
   setActiveTab = tab => {
