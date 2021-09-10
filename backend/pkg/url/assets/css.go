@@ -66,13 +66,12 @@ func ResolveCSS(baseURL string, css string) string {
 	css = rewriteLinks(css, func(rawurl string) string {
 		return ResolveURL(baseURL, rawurl)
 	})
-	return strings.Replace(css, ":hover", ".-asayer-hover", -1)
+	return strings.Replace(css, ":hover", ".-openreplay-hover", -1)
 }
 
 func (r *Rewriter) RewriteCSS(sessionID uint64, baseurl string, css string) string {
 	css = rewriteLinks(css, func(rawurl string) string {
-		url , _ := r.RewriteURL(sessionID, baseurl, rawurl)
-		return url
+		return r.RewriteURL(sessionID, baseurl, rawurl)
 	})
-	return strings.Replace(css, ":hover", ".-asayer-hover", -1)
+	return strings.Replace(css, ":hover", ".-openreplay-hover", -1)
 }
