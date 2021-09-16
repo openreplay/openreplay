@@ -7,7 +7,7 @@ import { connectPlayer } from 'Player';
 import NewBadge from 'Shared/NewBadge';
 
 const EVENTS = 'Events';
-const HEATMAPS = 'Heatmaps';
+const HEATMAPS = 'Click Map';
 
 const TABS = [ EVENTS, HEATMAPS ].map(tab => ({ text: tab, key: tab }));
 
