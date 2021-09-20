@@ -98,8 +98,61 @@ def get_journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimest
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, "event_start": event_start, "JOURNEY_DEPTH": JOURNEY_DEPTH,
                   **__get_constraint_values(args), **extra_values}
-        print(cur.mogrify(pg_query, params))
+        # print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
 
     return __transform_journey(rows)
+
+
+def __compute_retention_percentage(rows):
+    if rows is None or len(rows) == 0:
+        return rows
+    t = -1
+    for r in rows:
+        if r["week"] == 0:
+            t = r["usersCount"]
+        r["percentage"] = r["usersCount"] / t
+    return rows
+
+
+@dev.timed
+def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[],
+                  **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT EXTRACT(EPOCH FROM first_connexion_week::date)::bigint*1000 AS first_connexion_week,
+                               FLOOR(DATE_PART('day', connexion_week - first_connexion_week) / 7)::integer AS week,
+                               COUNT(DISTINCT connexions_list.user_id)                            AS users_count,
+                               ARRAY_AGG(DISTINCT connexions_list.user_id)                        AS connected_users
+                        FROM (SELECT DISTINCT user_id, MIN(DATE_TRUNC('week', to_timestamp(start_ts / 1000))) AS first_connexion_week
+                              FROM sessions
+                              WHERE {" AND ".join(pg_sub_query)}
+                                AND NOT EXISTS((SELECT 1
+                                                FROM sessions AS bsess
+                                                WHERE bsess.start_ts<EXTRACT('EPOCH' FROM DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000))) * 1000
+                                                  AND project_id = %(project_id)s
+                                                  AND bsess.user_id = sessions.user_id
+                                                LIMIT 1))
+                              GROUP BY user_id) AS users_list
+                                 LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
+                                                           user_id
+                                                    FROM sessions
+                                                    WHERE users_list.user_id = sessions.user_id
+                                                      AND first_connexion_week <=
+                                                          DATE_TRUNC('week', to_timestamp(sessions.start_ts / 1000)::timestamp)
+                                                      AND sessions.project_id = 1
+                                                      AND sessions.start_ts < (%(startTimestamp)s + 10 * 7 * 24 * 60 * 60 * 1000::bigint - 1)
+                                                    GROUP BY connexion_week, user_id) AS connexions_list ON (TRUE)
+                        GROUP BY first_connexion_week, week
+                        ORDER BY first_connexion_week, week;"""
+
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        # print(cur.mogrify(pg_query, params))
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+
+    return __compute_retention_percentage(helper.list_to_camel_case(rows))
