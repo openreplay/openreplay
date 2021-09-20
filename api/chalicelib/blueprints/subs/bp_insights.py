@@ -28,6 +28,17 @@ def get_insights_journey(projectId, context):
 
     return {"data": insights.get_journey(project_id=projectId, **{**data, **args})}
 
+
+@app.route('/{projectId}/insights/users_retention', methods=['GET', 'POST'])
+def get_users_retention(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.get_retention(project_id=projectId, **{**data, **args})}
+
 #
 #
 # @app.route('/{projectId}/dashboard/{widget}/search', methods=['GET'])
