@@ -116,9 +116,61 @@ def __compute_retention_percentage(rows):
     return rows
 
 
+def __complete_retention(rows, start_date, end_date=None):
+    if rows is None or len(rows) == 0:
+        return rows
+    max_week = 10
+    week = 0
+    delta_date = 0
+    while max_week > 0:
+        start_date += TimeUTC.MS_WEEK
+        if end_date is not None and start_date >= end_date:
+            break
+        delta = 0
+        if delta_date + week >= len(rows) \
+                or delta_date + week < len(rows) and rows[delta_date + week]["firstConnexionWeek"] > start_date:
+            for i in range(max_week):
+                if end_date is not None and start_date + i * TimeUTC.MS_WEEK >= end_date:
+                    break
+
+                neutral = {
+                    "firstConnexionWeek": start_date,
+                    "week": i,
+                    "usersCount": 0,
+                    "connectedUsers": [],
+                    "percentage": 0
+                }
+                rows.insert(delta_date + week + i, neutral)
+                delta = i
+        else:
+            for i in range(max_week):
+                if end_date is not None and start_date + i * TimeUTC.MS_WEEK >= end_date:
+                    break
+
+                neutral = {
+                    "firstConnexionWeek": start_date,
+                    "week": i,
+                    "usersCount": 0,
+                    "connectedUsers": [],
+                    "percentage": 0
+                }
+                if delta_date + week + i < len(rows) \
+                        and i != rows[delta_date + week + i]["week"]:
+                    rows.insert(delta_date + week + i, neutral)
+                elif delta_date + week + i >= len(rows):
+                    rows.append(neutral)
+                delta = i
+        week += delta
+        max_week -= 1
+        delta_date += 1
+    return rows
+
+
 @dev.timed
-def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[],
+def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                   **args):
+    startTimestamp = TimeUTC.trunc_week(startTimestamp)
+    endTimestamp = startTimestamp + 10 * 7 * 24 * 60 * 60 * 1000
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                      time_constraint=True)
 
@@ -130,6 +182,7 @@ def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTime
                         FROM (SELECT DISTINCT user_id, MIN(DATE_TRUNC('week', to_timestamp(start_ts / 1000))) AS first_connexion_week
                               FROM sessions
                               WHERE {" AND ".join(pg_sub_query)}
+                                AND user_id IS NOT NULL 
                                 AND NOT EXISTS((SELECT 1
                                                 FROM sessions AS bsess
                                                 WHERE bsess.start_ts<EXTRACT('EPOCH' FROM DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000))) * 1000
@@ -144,7 +197,7 @@ def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTime
                                                       AND first_connexion_week <=
                                                           DATE_TRUNC('week', to_timestamp(sessions.start_ts / 1000)::timestamp)
                                                       AND sessions.project_id = 1
-                                                      AND sessions.start_ts < (%(startTimestamp)s + 10 * 7 * 24 * 60 * 60 * 1000::bigint - 1)
+                                                      AND sessions.start_ts < (%(endTimestamp)s - 1)
                                                     GROUP BY connexion_week, user_id) AS connexions_list ON (TRUE)
                         GROUP BY first_connexion_week, week
                         ORDER BY first_connexion_week, week;"""
@@ -154,5 +207,5 @@ def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTime
         # print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-
-    return __compute_retention_percentage(helper.list_to_camel_case(rows))
+        rows = __compute_retention_percentage(helper.list_to_camel_case(rows))
+    return __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
