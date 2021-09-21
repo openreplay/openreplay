@@ -11,6 +11,12 @@ import type { Options as ObserverOptions } from './observer';
 
 import type { Options as WebworkerOptions, WorkerMessageData } from '../../messages/webworker';
 
+interface OnStartInfo {
+  sessionID: string, 
+  sessionToken: string, 
+  userUUID: string,
+}
+
 export type Options = {
   revID: string;
   node_id: string;
@@ -20,7 +26,7 @@ export type Options = {
   ingestPoint: string;
   __is_snippet: boolean;
   __debug_report_edp: string | null;
-  onStart?: (info: { sessionID: string, sessionToken: string, userUUID: string }) => void;
+  onStart?: (info: OnStartInfo) => void;
 } & ObserverOptions & WebworkerOptions;
 
 type Callback = () => void;
@@ -203,7 +209,7 @@ export default class App {
   active(): boolean {
     return this.isActive;
   }
-  _start(reset: boolean): void {   // TODO: return a promise instead of onStart handling
+  private _start(reset: boolean): Promise<OnStartInfo> {
     if (!this.isActive) {
       this.isActive = true;
       if (!this.worker) {
@@ -227,7 +233,7 @@ export default class App {
         connAttemptGap: this.options.connAttemptGap,
       }
       this.worker.postMessage(messageData); // brings delay of 10th ms?
-      window.fetch(this.options.ingestPoint + '/v1/web/start', {
+      return window.fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -275,28 +281,34 @@ export default class App {
         this.ticker.start();
 
         log("OpenReplay tracking started.");
+        const onStartInfo = { sessionToken: token, userUUID, sessionID };
         if (typeof this.options.onStart === 'function') {
-          this.options.onStart({ sessionToken: token, userUUID, sessionID });
+          this.options.onStart(onStartInfo);
         }
+        return onStartInfo;
       })
       .catch(e => {
         this.stop();
         this.sendDebugReport("session_start", e);
+        throw e;
       })
     }
+    return Promise.reject("Player is active");
   }
 
-  start(reset: boolean = false): void {
+  start(reset: boolean = false): Promise<OnStartInfo> {
     if (!document.hidden) {
-      this._start(reset);
+      return this._start(reset);
     } else {
-      const onVisibilityChange = () => {
-        if (!document.hidden) {
-          document.removeEventListener("visibilitychange", onVisibilityChange);
-          this._start(reset);
+      return new Promise((resolve) => {
+        const onVisibilityChange = () => {
+          if (!document.hidden) {
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            resolve(this._start(reset));
+          }
         }
-      }
-      document.addEventListener("visibilitychange", onVisibilityChange);
+        document.addEventListener("visibilitychange", onVisibilityChange);
+      });
     }
   }
   stop(): void {

@@ -24,7 +24,7 @@ const peerServer = ExpressPeerServer(server, {
     debug: true,
     path: '/',
     proxied: true,
-    allow_discovery: true
+    allow_discovery: false
 });
 peerServer.on('connection', peerConnection);
 peerServer.on('disconnect', peerDisconnect);
