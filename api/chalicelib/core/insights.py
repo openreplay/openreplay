@@ -170,7 +170,7 @@ def __complete_retention(rows, start_date, end_date=None):
 def get_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                   **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
-    endTimestamp = startTimestamp + 10 * 7 * 24 * 60 * 60 * 1000
+    endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                      time_constraint=True)
 
