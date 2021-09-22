@@ -294,3 +294,64 @@ def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
         rows = cur.fetchall()
         rows = __compute_retention_percentage(helper.list_to_camel_case(rows))
     return __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
+
+
+@dev.timed
+def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                                 filters=[],
+                                 **args):
+    startTimestamp = TimeUTC.trunc_week(startTimestamp)
+    endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+    event_table = JOURNEY_TYPES["CLICK"]["table"]
+    event_column = JOURNEY_TYPES["CLICK"]["column"]
+    for f in filters:
+        if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
+            event_table = JOURNEY_TYPES[f["value"]]["table"]
+            event_column = JOURNEY_TYPES[f["value"]]["column"]
+        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
+                        FROM sessions
+                        WHERE {" AND ".join(pg_sub_query)}
+                            AND user_id IS NOT NULL;"""
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        all_user_count = cur.fetchone()["count"]
+        if all_user_count == 0:
+            return []
+        pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
+        pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+        pg_sub_query.append(f"length({event_column})>2")
+        pg_query = f"""SELECT {event_column} AS value, COUNT(DISTINCT user_id) AS count
+                    FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
+                    WHERE {" AND ".join(pg_sub_query)}
+                        AND user_id IS NOT NULL
+                    GROUP BY value
+                    ORDER BY count DESC
+                    LIMIT 7;"""
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        popularity = cur.fetchall()
+        pg_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
+                        FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
+                        WHERE {" AND ".join(pg_sub_query)}
+                        GROUP BY value;"""
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        frequencies = cur.fetchall()
+        total_usage = sum([f["count"] for f in frequencies])
+        frequencies = {f["value"]: f["count"] for f in frequencies}
+        for p in popularity:
+            p["popularity"] = p.pop("count") / all_user_count
+            p["frequency"] = frequencies[p["value"]] / total_usage
+
+    return popularity

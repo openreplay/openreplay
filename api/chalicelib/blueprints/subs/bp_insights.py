@@ -50,6 +50,17 @@ def get_feature_retention(projectId, context):
 
     return {"data": insights.get_feature_retention(project_id=projectId, **{**data, **args})}
 
+
+@app.route('/{projectId}/insights/feature_popularity_frequency', methods=['GET', 'POST'])
+def get_feature_popularity_frequency(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_popularity_frequency(project_id=projectId, **{**data, **args})}
+
 #
 #
 # @app.route('/{projectId}/dashboard/{widget}/search', methods=['GET'])
