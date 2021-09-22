@@ -249,7 +249,6 @@ def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
                         LIMIT 1;"""
             params = {"project_id": project_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-            # print(cur.mogrify(pg_query, params))
             cur.execute(cur.mogrify(pg_query, params))
             row = cur.fetchone()
             if row is not None:
@@ -259,19 +258,20 @@ def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
                                FLOOR(DATE_PART('day', connexion_week - first_connexion_week) / 7)::integer AS week,
                                COUNT(DISTINCT connexions_list.user_id)                            AS users_count,
                                ARRAY_AGG(DISTINCT connexions_list.user_id)                        AS connected_users
-                        FROM (SELECT DISTINCT user_id, MIN(DATE_TRUNC('week', to_timestamp(start_ts / 1000))) AS first_connexion_week
-                              FROM sessions INNER JOIN {event_table} AS feature USING (session_id)
-                              WHERE {" AND ".join(pg_sub_query)}
-                                AND user_id IS NOT NULL 
-                                AND NOT EXISTS((SELECT 1
-                                                FROM sessions AS bsess INNER JOIN {event_table} AS bfeature USING (session_id)
-                                                WHERE bsess.start_ts<EXTRACT('EPOCH' FROM DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000))) * 1000
-                                                  AND project_id = %(project_id)s
-                                                  AND bsess.user_id = sessions.user_id
-                                                  AND bfeature.timestamp<EXTRACT('EPOCH' FROM DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000))) * 1000
-                                                  AND bfeature.{event_column}=%(value)s
-                                                LIMIT 1))
-                              GROUP BY user_id) AS users_list
+                        FROM (SELECT user_id, DATE_TRUNC('week', to_timestamp(first_connexion_week / 1000)) AS first_connexion_week
+                              FROM(SELECT DISTINCT user_id, MIN(start_ts) AS first_connexion_week
+                                      FROM sessions INNER JOIN {event_table} AS feature USING (session_id)
+                                      WHERE {" AND ".join(pg_sub_query)}
+                                        AND user_id IS NOT NULL 
+                                        AND NOT EXISTS((SELECT 1
+                                                        FROM sessions AS bsess INNER JOIN {event_table} AS bfeature USING (session_id)
+                                                        WHERE bsess.start_ts<%(startTimestamp)s
+                                                          AND project_id = %(project_id)s
+                                                          AND bsess.user_id = sessions.user_id
+                                                          AND bfeature.timestamp<%(startTimestamp)s
+                                                          AND bfeature.{event_column}=%(value)s
+                                                        LIMIT 1))
+                                      GROUP BY user_id) AS raw_users_list) AS users_list
                                  LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
                                                            user_id
                                                     FROM sessions INNER JOIN {event_table} AS feature USING(session_id)
