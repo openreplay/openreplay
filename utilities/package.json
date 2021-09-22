@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
-    "aws-sdk": "^2.654.0",
+    "aws-sdk": "^2.992.0",
     "express": "^4.17.1",
     "peer": "^0.6.1",
     "source-map": "^0.7.3"
