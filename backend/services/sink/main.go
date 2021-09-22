@@ -15,7 +15,7 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-
+ 
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -36,6 +36,9 @@ func main() {
 	  	// 	return
 	  	// }
 	  	typeID := message.Meta().TypeID
+	  	if typeID == 70 {
+	  		log.Println("iframe here")
+	  	}
 	  	if !messages.IsReplayerType(typeID) {
 	  		return
 	  	}
