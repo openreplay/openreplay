@@ -1,60 +1,53 @@
 import Highlight from 'react-highlight'
 import ToggleContent from 'Shared/ToggleContent'
 import DocLink from 'Shared/DocLink/DocLink';
+import AssistScript from './AssistScript'
+import AssistNpm from './AssistNpm'
+import { Tabs } from 'UI';
+import { useState } from 'react';
+
+const NPM = 'NPM'
+const SCRIPT = 'SCRIPT'
+const TABS = [
+  { key: SCRIPT, text: SCRIPT },
+  { key: NPM, text: NPM },
+]
 
 const AssistDoc = (props) => {
+  const { projectKey } = props;
+  const [activeTab, setActiveTab] = useState(SCRIPT)
+  
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case SCRIPT:
+        return <AssistScript projectKey={projectKey} />
+      case NPM:
+        return <AssistNpm  projectKey={projectKey} />
+    }
+    return null;
+  }
+
+
   return (
     <div className="p-4">
       <div>OpenReplay Assist allows you to support your users by seeing their live screen and instantly hopping on call (WebRTC) with them without requiring any 3rd-party screen sharing software.</div>
-      
+
       <div className="font-bold my-2">Installation</div>
       <Highlight className="js">
         {`npm i @openreplay/tracker-assist`}
       </Highlight>
-      
-      <div className="font-bold my-2">Usage</div>
-      <p>Initialize the tracker then load the @openreplay/tracker-assist plugin.</p>
-      <div className="py-3" />
+      <div className="mb-4" />
 
       <div className="font-bold my-2">Usage</div>
-      <ToggleContent
-        label="Is SSR?"
-        first={
-          <Highlight className="js">
-        {`import Tracker from '@openreplay/tracker';
-import trackerAssist from '@openreplay/tracker-assist';
-const tracker = new Tracker({
-  projectKey: PROJECT_KEY,
-});
-tracker.start();
-tracker.use(trackerAssist(options)); // check the list of available options below`}
-      </Highlight>
-        }
-        second={
-          <Highlight className="js">
-        {`import OpenReplay from '@openreplay/tracker/cjs';
-import trackerFetch from '@openreplay/tracker-assist/cjs';
-const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
-});
-const trackerAssist = tracker.use(trackerAssist(options)); // check the list of available options below
-//...
-function MyApp() {
-  useEffect(() => { // use componentDidMount in case of React Class Component
-    tracker.start();
-  }, [])
-//...
-}`}
-      </Highlight>
-        }
+      <Tabs
+        tabs={ TABS }
+        active={ activeTab } onClick={ (tab) => setActiveTab(tab) }
       />
 
-      <div className="font-bold my-2">Options</div>
-      <Highlight className="js">
-        {`trackerAssist({
-  confirmText: string;
-})`}
-      </Highlight>
+      <div className="py-5">
+        { renderActiveTab() }
+      </div>
 
       <DocLink className="mt-4" label="Install Assist" url="https://docs.openreplay.com/installation/assist" />
     </div>

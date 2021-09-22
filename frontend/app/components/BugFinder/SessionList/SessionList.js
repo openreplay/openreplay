@@ -4,12 +4,14 @@ import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { KEYS } from 'Types/filter/customFilter';
-import styles from './sessionList.css';
 
 const ALL = 'all';
 const PER_PAGE = 10;
+const AUTOREFRESH_INTERVAL = 3 * 60 * 1000;
+var timeoutId;
 
 @connect(state => ({
+  shouldAutorefresh: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size === 0,
   savedFilters: state.getIn([ 'filters', 'list' ]),
   loading: state.getIn([ 'sessions', 'loading' ]),
   activeTab: state.getIn([ 'sessions', 'activeTab' ]),
@@ -27,6 +29,7 @@ export default class SessionList extends React.PureComponent {
   }
   constructor(props) {
     super(props);
+    this.timeout();
   }
 
   componentDidUpdate(prevProps) {
@@ -47,6 +50,15 @@ export default class SessionList extends React.PureComponent {
     this.props.applyFilter()
   }
 
+  timeout = () => {
+    timeoutId = setTimeout(function () {
+      if (this.props.shouldAutorefresh) {
+        this.props.applyFilter();
+      }
+      this.timeout();
+    }.bind(this), AUTOREFRESH_INTERVAL);
+  }
+
   getNoContentMessage = activeTab => {
     let str = "No recordings found";
     if (activeTab.type !== 'all') {
@@ -55,6 +67,10 @@ export default class SessionList extends React.PureComponent {
     }
     
     return str + '!';
+  }
+
+  componentWillUnmount() {
+    clearTimeout(timeoutId)
   }
 
   renderActiveTabContent(list) {

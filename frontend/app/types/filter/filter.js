@@ -124,6 +124,7 @@ export const getEventIcon = (filter) => {
   type = type || key;
   if (type === KEYS.USER_COUNTRY) return 'map-marker-alt';
   if (type === KEYS.USER_BROWSER) return 'window';
+  if (type === KEYS.USERBROWSER) return 'window';
   if (type === KEYS.PLATFORM) return 'window';
 
   if (type === TYPES.CLICK) return 'filters/click';

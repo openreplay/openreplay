@@ -52,14 +52,6 @@ data:
       proxy_set_header Host $host;
       proxy_pass $target;
     }
-    location /streaming/ {
-      set $target http://ios-proxy-openreplay.app.svc.cluster.local;        rewrite ^/streaming/(.*) /$1 break;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "Upgrade";
-      proxy_set_header Host $host;
-      proxy_pass $target;
-    }
     location /api/ {
       rewrite ^/api/(.*) /$1 break;
       proxy_http_version 1.1;

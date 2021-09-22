@@ -19,7 +19,6 @@ import { funnel as funnelRoute, withSiteId } from 'App/routes';
 import Event, { TYPES } from 'Types/filter/event';
 import FunnelMenuItem from 'Components/Funnels/FunnelMenuItem';
 import FunnelSaveModal from 'Components/Funnels/FunnelSaveModal';
-import NewBadge from 'Shared/NewBadge';
 import { blink as setBlink } from 'Duck/funnels';
 
 const DEFAULT_VISIBLE = 3;
@@ -98,7 +97,6 @@ class SavedSearchList extends React.Component {
                                     onClick={ this.createHandler }
                                 />
                             )}
-                            <div className="ml-2">{ <NewBadge />}</div>
                         </div>
                     </div>
                     { funnels.size === 0 &&

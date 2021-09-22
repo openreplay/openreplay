@@ -2,6 +2,7 @@ import { connect } from 'react-redux';
 import { Input, Button, Label } from 'UI';
 import { save, edit, update , fetchList } from 'Duck/site';
 import { pushNewSite, setSiteId } from 'Duck/user';
+import { withRouter } from 'react-router-dom';
 import styles from './siteForm.css';
 
 @connect(state => ({
@@ -17,6 +18,7 @@ import styles from './siteForm.css';
 	fetchList,
   setSiteId
 })
+@withRouter
 export default class NewSiteForm extends React.PureComponent {
 	state = {
 		existsError: false,
@@ -24,7 +26,7 @@ export default class NewSiteForm extends React.PureComponent {
 
 	onSubmit = e => {
 		e.preventDefault();
-		const { site, siteList } = this.props;
+		const { site, siteList, location: { pathname } } = this.props;
 		if (!site.exists() && siteList.some(({ name }) => name === site.name)) {
 			return this.setState({ existsError: true });
 		}
@@ -39,20 +41,21 @@ export default class NewSiteForm extends React.PureComponent {
         const site = sites.last();
 
         this.props.pushNewSite(site)
-        this.props.setSiteId(site.id)
+        if (!pathname.includes('/client')) {
+          this.props.setSiteId(site.id)
+        }
 				this.props.onClose(null, site)
 			});
 		}
 	}
 
 	edit = ({ target: { name, value } }) => {
-		if (value.includes(' ')) return;  // TODO: site validation
 		this.setState({ existsError: false });
  		this.props.edit({ [ name ]: value });
  	}
 
 	render() {
-		const { site, loading, onClose } = this.props;
+		const { site, loading } = this.props;
 		return (
 			<form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
         <div className={ styles.content }>

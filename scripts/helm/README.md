@@ -30,11 +30,11 @@ Installation components are separated by namespaces.
 **Scripts:**
 - **install.sh**
 
-  Installs OpenReplay in a single node machine, for trial runs / demo.
+  Installs OpenReplay in a single node machine.
 
   This script is a wrapper around the `install.sh` with [k3s](https://k3s.io/) as kubernetes distro.
   
-  Note: As of now this script support only ubuntu, as we've to install some packages to enable `NFS`.
+  Note: As of now this script support only Ubuntu, as we've to install some packages to enable `NFS`.
 
 - **kube-install.sh:**
   
