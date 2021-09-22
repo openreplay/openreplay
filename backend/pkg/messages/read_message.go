@@ -532,6 +532,167 @@ if msg.Selector, err = ReadString(reader); err != nil { return nil, err }
 if msg.ID, err = ReadUint(reader); err != nil { return nil, err }
       return msg, nil
   
+    case 90:
+      msg := &IOSSessionStart{ meta: &meta{ TypeID: 90} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.ProjectID, err = ReadUint(reader); err != nil { return nil, err }
+if msg.TrackerVersion, err = ReadString(reader); err != nil { return nil, err }
+if msg.RevID, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserUUID, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserOS, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserOSVersion, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserDevice, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserDeviceType, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserCountry, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 91:
+      msg := &IOSSessionEnd{ meta: &meta{ TypeID: 91} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 92:
+      msg := &IOSMetadata{ meta: &meta{ TypeID: 92} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Key, err = ReadString(reader); err != nil { return nil, err }
+if msg.Value, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 93:
+      msg := &IOSCustomEvent{ meta: &meta{ TypeID: 93} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Name, err = ReadString(reader); err != nil { return nil, err }
+if msg.Payload, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 94:
+      msg := &IOSUserID{ meta: &meta{ TypeID: 94} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Value, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 95:
+      msg := &IOSUserAnonymousID{ meta: &meta{ TypeID: 95} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Value, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 96:
+      msg := &IOSScreenChanges{ meta: &meta{ TypeID: 96} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.SkipData, err = ReadData(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 97:
+      msg := &IOSCrash{ meta: &meta{ TypeID: 97} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Name, err = ReadString(reader); err != nil { return nil, err }
+if msg.Reason, err = ReadString(reader); err != nil { return nil, err }
+if msg.Stacktrace, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 98:
+      msg := &IOSScreenEnter{ meta: &meta{ TypeID: 98} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Title, err = ReadString(reader); err != nil { return nil, err }
+if msg.ViewName, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 99:
+      msg := &IOSScreenLeave{ meta: &meta{ TypeID: 99} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Title, err = ReadString(reader); err != nil { return nil, err }
+if msg.ViewName, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 100:
+      msg := &IOSClickEvent{ meta: &meta{ TypeID: 100} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Label, err = ReadString(reader); err != nil { return nil, err }
+if msg.X, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Y, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 101:
+      msg := &IOSInputEvent{ meta: &meta{ TypeID: 101} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Value, err = ReadString(reader); err != nil { return nil, err }
+if msg.ValueMasked, err = ReadBoolean(reader); err != nil { return nil, err }
+if msg.Label, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 102:
+      msg := &IOSPerformanceEvent{ meta: &meta{ TypeID: 102} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Name, err = ReadString(reader); err != nil { return nil, err }
+if msg.Value, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 103:
+      msg := &IOSLog{ meta: &meta{ TypeID: 103} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Severity, err = ReadString(reader); err != nil { return nil, err }
+if msg.Content, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 104:
+      msg := &IOSInternalError{ meta: &meta{ TypeID: 104} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Content, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 105:
+      msg := &IOSNetworkCall{ meta: &meta{ TypeID: 105} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Duration, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Headers, err = ReadString(reader); err != nil { return nil, err }
+if msg.Body, err = ReadString(reader); err != nil { return nil, err }
+if msg.URL, err = ReadString(reader); err != nil { return nil, err }
+if msg.Success, err = ReadBoolean(reader); err != nil { return nil, err }
+if msg.Method, err = ReadString(reader); err != nil { return nil, err }
+if msg.Status, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 110:
+      msg := &IOSPerformanceAggregated{ meta: &meta{ TypeID: 110} }
+      if msg.TimestampStart, err = ReadUint(reader); err != nil { return nil, err }
+if msg.TimestampEnd, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MinFPS, err = ReadUint(reader); err != nil { return nil, err }
+if msg.AvgFPS, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MaxFPS, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MinCPU, err = ReadUint(reader); err != nil { return nil, err }
+if msg.AvgCPU, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MaxCPU, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MinMemory, err = ReadUint(reader); err != nil { return nil, err }
+if msg.AvgMemory, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MaxMemory, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MinBattery, err = ReadUint(reader); err != nil { return nil, err }
+if msg.AvgBattery, err = ReadUint(reader); err != nil { return nil, err }
+if msg.MaxBattery, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 111:
+      msg := &IOSIssueEvent{ meta: &meta{ TypeID: 111} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Type, err = ReadString(reader); err != nil { return nil, err }
+if msg.ContextString, err = ReadString(reader); err != nil { return nil, err }
+if msg.Context, err = ReadString(reader); err != nil { return nil, err }
+if msg.Payload, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
   }
   return nil, fmt.Errorf("Unknown message code: %v", t)
 }
