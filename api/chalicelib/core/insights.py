@@ -105,7 +105,7 @@ def get_journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimest
     return __transform_journey(rows)
 
 
-def __compute_retention_percentage(rows):
+def __compute_weekly_percentage(rows):
     if rows is None or len(rows) == 0:
         return rows
     t = -1
@@ -117,8 +117,30 @@ def __compute_retention_percentage(rows):
 
 
 def __complete_retention(rows, start_date, end_date=None):
-    if rows is None or len(rows) == 0:
-        return rows
+    if rows is None:
+        return []
+    max_week = 10
+    for i in range(max_week):
+        if end_date is not None and start_date + i * TimeUTC.MS_WEEK >= end_date:
+            break
+        neutral = {
+            "firstConnexionWeek": start_date,
+            "week": i,
+            "usersCount": 0,
+            "connectedUsers": [],
+            "percentage": 0
+        }
+        if i < len(rows) \
+                and i != rows[i]["week"]:
+            rows.insert(i, neutral)
+        elif i >= len(rows):
+            rows.append(neutral)
+    return rows
+
+
+def __complete_acquisition(rows, start_date, end_date=None):
+    if rows is None:
+        return []
     max_week = 10
     week = 0
     delta_date = 0
@@ -174,6 +196,51 @@ def get_users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                      time_constraint=True)
     pg_sub_query.append("user_id IS NOT NULL")
+    pg_sub_query.append("DATE_TRUNC('week', to_timestamp(start_ts / 1000)) = to_timestamp(%(startTimestamp)s / 1000)")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT FLOOR(DATE_PART('day', connexion_week - DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000)::timestamp)) / 7)::integer AS week,
+                               COUNT(DISTINCT connexions_list.user_id)                                     AS users_count,
+                               ARRAY_AGG(DISTINCT connexions_list.user_id)                                 AS connected_users
+                        FROM (SELECT DISTINCT user_id
+                              FROM sessions
+                              WHERE {" AND ".join(pg_sub_query)} 
+                                AND NOT EXISTS((SELECT 1
+                                                FROM sessions AS bsess
+                                                WHERE bsess.start_ts < %(startTimestamp)s
+                                                  AND project_id =  %(project_id)s
+                                                  AND bsess.user_id = sessions.user_id
+                                                LIMIT 1))
+                              GROUP BY user_id) AS users_list
+                                 LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
+                                                           user_id
+                                                    FROM sessions
+                                                    WHERE users_list.user_id = sessions.user_id
+                                                      AND %(startTimestamp)s <=sessions.start_ts
+                                                      AND sessions.project_id =  %(project_id)s
+                                                      AND sessions.start_ts < (%(endTimestamp)s - 1)
+                                                    GROUP BY connexion_week, user_id
+                            ) AS connexions_list ON (TRUE)
+                        GROUP BY week
+                        ORDER BY  week;"""
+
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        print(cur.mogrify(pg_query, params))
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+        rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
+    return __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
+
+
+@dev.timed
+def get_users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                          filters=[],
+                          **args):
+    startTimestamp = TimeUTC.trunc_week(startTimestamp)
+    endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+    pg_sub_query.append("user_id IS NOT NULL")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT EXTRACT(EPOCH FROM first_connexion_week::date)::bigint*1000 AS first_connexion_week,
                                FLOOR(DATE_PART('day', connexion_week - first_connexion_week) / 7)::integer AS week,
@@ -184,7 +251,7 @@ def get_users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
                               WHERE {" AND ".join(pg_sub_query)} 
                                 AND NOT EXISTS((SELECT 1
                                                 FROM sessions AS bsess
-                                                WHERE bsess.start_ts<EXTRACT('EPOCH' FROM DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000))) * 1000
+                                                WHERE bsess.start_ts<%(startTimestamp)s
                                                   AND project_id = %(project_id)s
                                                   AND bsess.user_id = sessions.user_id
                                                 LIMIT 1))
@@ -206,14 +273,14 @@ def get_users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
         # print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-        rows = __compute_retention_percentage(helper.list_to_camel_case(rows))
-    return __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
+        rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
+    return __complete_acquisition(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
 
 
 @dev.timed
-def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
-                          filters=[],
-                          **args):
+def get_feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                            filters=[],
+                            **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -292,8 +359,8 @@ def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
         # print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-        rows = __compute_retention_percentage(helper.list_to_camel_case(rows))
-    return __complete_retention(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
+        rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
+    return __complete_acquisition(rows=rows, start_date=startTimestamp, end_date=TimeUTC.now())
 
 
 @dev.timed
