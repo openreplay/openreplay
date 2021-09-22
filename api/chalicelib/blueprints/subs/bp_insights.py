@@ -29,6 +29,17 @@ def get_insights_journey(projectId, context):
     return {"data": insights.get_journey(project_id=projectId, **{**data, **args})}
 
 
+@app.route('/{projectId}/insights/users_acquisition', methods=['GET', 'POST'])
+def get_users_acquisition(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.get_users_acquisition(project_id=projectId, **{**data, **args})}
+
+
 @app.route('/{projectId}/insights/users_retention', methods=['GET', 'POST'])
 def get_users_retention(projectId, context):
     data = app.current_request.json_body
@@ -40,15 +51,15 @@ def get_users_retention(projectId, context):
     return {"data": insights.get_users_retention(project_id=projectId, **{**data, **args})}
 
 
-@app.route('/{projectId}/insights/feature_retention', methods=['GET', 'POST'])
-def get_feature_retention(projectId, context):
+@app.route('/{projectId}/insights/feature_acquisition', methods=['GET', 'POST'])
+def get_feature_acquisition(projectId, context):
     data = app.current_request.json_body
     if data is None:
         data = {}
     params = app.current_request.query_params
     args = dashboard.dashboard_args(params)
 
-    return {"data": insights.get_feature_retention(project_id=projectId, **{**data, **args})}
+    return {"data": insights.get_feature_acquisition(project_id=projectId, **{**data, **args})}
 
 
 @app.route('/{projectId}/insights/feature_popularity_frequency', methods=['GET', 'POST'])
