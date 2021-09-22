@@ -161,7 +161,6 @@ export default class AssistManager {
         if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
             this.setStatus(ConnectionStatus.Connecting);
-            console.log("peerunavailable")
             this.connectToPeer();
           } else {
             this.setStatus(ConnectionStatus.Disconnected);
@@ -175,7 +174,6 @@ export default class AssistManager {
       peer.on("open", () => {
         if (this.peeropened) { return; }
         this.peeropened = true;
-        console.log('peeropen')
         this.connectToPeer();        
       });
     });
@@ -186,11 +184,9 @@ export default class AssistManager {
     if (!this.peer) { return; }
     this.setStatus(ConnectionStatus.Connecting);
     const id = this.peerID;
-    console.log("trying to connect to", id)
     const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
     conn.on('open', () => {
       window.addEventListener("beforeunload", ()=>conn.open &&conn.send("unload"));
-      console.log("peer connected")
       
       let i = 0;
       let firstMessage = true;
@@ -252,7 +248,6 @@ export default class AssistManager {
     const onDataClose = () => {
       this.initiateCallEnd();
       this.setStatus(ConnectionStatus.Connecting);
-      console.log('closed peer conn. Reconnecting...')
       this.connectToPeer();
     }
 
@@ -263,7 +258,6 @@ export default class AssistManager {
     // }, 3000);
     conn.on('close', onDataClose);// Does it work ?
     conn.on("error", (e) => {
-      console.log("PeerJS connection error", e);
       this.setStatus(ConnectionStatus.Error);
     })
   }
@@ -290,12 +284,10 @@ export default class AssistManager {
   private notifyCallEnd() {
     const dataConn = this.dataConnection;
     if (dataConn) {
-      console.log("notifyCallEnd send")
       dataConn.send("call_end");
     }
   }
   private initiateCallEnd = () => {
-    console.log('initiateCallEnd')
     this.forceCallEnd();
     this.notifyCallEnd();
     this.onCallEnd?.();
@@ -349,7 +341,6 @@ export default class AssistManager {
     if (!this.peer || getState().calling !== CallingState.False) { return null; }
     
     update({ calling: CallingState.Requesting });
-    console.log('calling...')
     
     const call =  this.peer.call(this.peerID, localStream);
     call.on('stream', stream => {
@@ -393,12 +384,10 @@ export default class AssistManager {
   }
 
   clear() {
-    console.log('clearing', this.peerID)
     this.initiateCallEnd();
     this.dataCheckIntervalID && clearInterval(this.dataCheckIntervalID);
     if (this.peer) {
       this.peer.connections[this.peerID]?.forEach(c => c.open && c.close());
-      console.log("destroying peer...")
       this.peer.disconnect();
       this.peer.destroy();
       this.peer = null;

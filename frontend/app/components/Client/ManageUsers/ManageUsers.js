@@ -27,7 +27,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   fetchList,
   generateInviteLink
 })
-@withPageTitle('Manage Users - OpenReplay Preferences')
+@withPageTitle('Users - OpenReplay Preferences')
 class ManageUsers extends React.PureComponent {
   state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining, invited: false }
 
@@ -50,7 +50,7 @@ class ManageUsers extends React.PureComponent {
 
   deleteHandler = async (user) => {
     if (await confirm({
-      header: 'Manage Users',
+      header: 'Users',
       confirmation: `Are you sure you want to remove this user?`
     })) {
       this.props.deleteMember(user.id).then(() => {

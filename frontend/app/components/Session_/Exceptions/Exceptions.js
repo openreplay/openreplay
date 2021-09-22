@@ -14,7 +14,7 @@ import BottomBlock from '../BottomBlock';
 @connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
   errorStack: state.getIn([ 'sessions', 'errorStack' ]),
-  sourceMapUploaded: state.getIn([ 'sessions', 'sourceMapUploaded' ]),
+  sourcemapUploaded: state.getIn([ 'sessions', 'sourcemapUploaded' ]),
   loading: state.getIn([ 'sessions', 'fetchErrorStackList', 'loading' ])
 }), { fetchErrorStackList })
 export default class Exceptions extends React.PureComponent {
@@ -33,7 +33,7 @@ export default class Exceptions extends React.PureComponent {
   closeModal = () => this.setState({ currentError: null})
 
   render() {
-    const { exceptions, loading, errorStack, sourceMapUploaded } = this.props;
+    const { exceptions, loading, errorStack, sourcemapUploaded } = this.props;
     const { filter, currentError } = this.state;
     const filterRE = getRE(filter, 'i');
 
@@ -63,7 +63,7 @@ export default class Exceptions extends React.PureComponent {
                   show={ !loading && errorStack.size === 0 }
                   title="Nothing found!"
                 >
-                  <ErrorDetails error={ currentError.name } errorStack={errorStack} sourceMapUploaded={sourceMapUploaded} />
+                  <ErrorDetails error={ currentError.name } errorStack={errorStack} sourcemapUploaded={sourcemapUploaded} />
                 </NoContent>
               </Loader> 
             </div>
