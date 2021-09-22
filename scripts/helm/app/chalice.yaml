@@ -54,8 +54,6 @@ env:
   sessions_bucket: mobs
   sourcemaps_bucket: sourcemaps
   js_cache_bucket: sessions-assets
-  sourcemaps_reader: 'http://utilities-openreplay.app.svc.cluster.local:9000/assist/sourcemaps'
-  peers: 'http://utilities-openreplay.app.svc.cluster.local:9000/assist/peers'
   # Enable logging for python app
   # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
   PYTHONUNBUFFERED: '0'
