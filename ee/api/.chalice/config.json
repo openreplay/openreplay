@@ -35,7 +35,7 @@
         "put_S3_TTL": "20",
         "sourcemaps_reader": "http://utilities-openreplay.app.svc.cluster.local:9000/sourcemaps",
         "sourcemaps_bucket": "sourcemaps",
-        "peers": "http://utilities-openreplay.app.svc.cluster.local:9000/assist/peers",
+        "peers": "http://utilities-openreplay.app.svc.cluster.local:9000/assist/%s/peers",
         "js_cache_bucket": "sessions-assets",
         "async_Token": "",
         "EMAIL_HOST": "",

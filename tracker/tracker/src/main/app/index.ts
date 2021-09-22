@@ -11,6 +11,12 @@ import type { Options as ObserverOptions } from './observer';
 
 import type { Options as WebworkerOptions, WorkerMessageData } from '../../messages/webworker';
 
+interface OnStartInfo {
+  sessionID: string, 
+  sessionToken: string, 
+  userUUID: string,
+}
+
 export type Options = {
   revID: string;
   node_id: string;
@@ -19,13 +25,16 @@ export type Options = {
   local_uuid_key: string;
   ingestPoint: string;
   __is_snippet: boolean;
-  onStart?: (info: { sessionID: string, sessionToken: string, userUUID: string }) => void;
+  __debug_report_edp: string | null;
+  onStart?: (info: OnStartInfo) => void;
 } & ObserverOptions & WebworkerOptions;
 
 type Callback = () => void;
 type CommitCallback = (messages: Array<Message>) => void;
 
-export const DEFAULT_INGEST_POINT = 'https://ingest.openreplay.com';
+
+// TODO: use backendHost only
+export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
 
 export default class App {
   readonly nodes: Nodes;
@@ -57,6 +66,7 @@ export default class App {
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
         __is_snippet: false,
+        __debug_report_edp: null,
         obscureTextEmails: true,
         obscureTextNumbers: false,
       },
@@ -99,8 +109,23 @@ export default class App {
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
-    } catch (e) { /* TODO: send report */}
+    } catch (e) { 
+      this.sendDebugReport("worker_start", e);
+    }
   }
+
+  private sendDebugReport(context: string, e: any) {
+    if(this.options.__debug_report_edp !== null) {
+      fetch(this.options.__debug_report_edp, {
+        method: 'POST',
+        body: JSON.stringify({
+          context,
+          error: `${e}`
+        })
+      });
+    }
+  }
+
   send(message: Message, urgent = false): void {
     if (!this.isActive) {
       return;
@@ -184,7 +209,7 @@ export default class App {
   active(): boolean {
     return this.isActive;
   }
-  _start(reset: boolean): void {   // TODO: return a promise instead of onStart handling
+  private _start(reset: boolean): Promise<OnStartInfo> {
     if (!this.isActive) {
       this.isActive = true;
       if (!this.worker) {
@@ -208,7 +233,7 @@ export default class App {
         connAttemptGap: this.options.connAttemptGap,
       }
       this.worker.postMessage(messageData); // brings delay of 10th ms?
-      window.fetch(this.options.ingestPoint + '/v1/web/start', {
+      return window.fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -230,14 +255,17 @@ export default class App {
         if (r.status === 200) {
           return r.json()
         } else { // TODO: handle canceling && 403
-          throw new Error("Server error");
+          return r.text().then(text => {
+            throw new Error(`Server error: ${r.status}. ${text}`);
+          });
         }
       })
       .then(r => {
-        const { token, userUUID, sessionID } = r;
+        const { token, userUUID, sessionID, beaconSizeLimit } = r;
         if (typeof token !== 'string' ||
-            typeof userUUID !== 'string') {
-          throw new Error("Incorrect server response");
+            typeof userUUID !== 'string' ||
+            (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
+          throw new Error(`Incorrect server response: ${ JSON.stringify(r) }`);
         }
         sessionStorage.setItem(this.options.session_token_key, token);
         localStorage.setItem(this.options.local_uuid_key, userUUID);
@@ -247,34 +275,40 @@ export default class App {
         if (!this.worker) {
           throw new Error("Stranger things: no worker found after start request");
         }
-        this.worker.postMessage({ token });
+        this.worker.postMessage({ token, beaconSizeLimit });
         this.startCallbacks.forEach((cb) => cb());
         this.observer.observe();
         this.ticker.start();
 
         log("OpenReplay tracking started.");
+        const onStartInfo = { sessionToken: token, userUUID, sessionID };
         if (typeof this.options.onStart === 'function') {
-          this.options.onStart({ sessionToken: token, userUUID, sessionID });
+          this.options.onStart(onStartInfo);
         }
+        return onStartInfo;
       })
       .catch(e => {
         this.stop();
-        /* TODO: send report */
+        this.sendDebugReport("session_start", e);
+        throw e;
       })
     }
+    return Promise.reject("Player is active");
   }
 
-  start(reset: boolean = false): void {
+  start(reset: boolean = false): Promise<OnStartInfo> {
     if (!document.hidden) {
-      this._start(reset);
+      return this._start(reset);
     } else {
-      const onVisibilityChange = () => {
-        if (!document.hidden) {
-          document.removeEventListener("visibilitychange", onVisibilityChange);
-          this._start(reset);
+      return new Promise((resolve) => {
+        const onVisibilityChange = () => {
+          if (!document.hidden) {
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            resolve(this._start(reset));
+          }
         }
-      }
-      document.addEventListener("visibilitychange", onVisibilityChange);
+        document.addEventListener("visibilitychange", onVisibilityChange);
+      });
     }
   }
   stop(): void {

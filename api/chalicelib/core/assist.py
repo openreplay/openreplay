@@ -21,7 +21,7 @@ SESSION_PROJECTION_COLS = """s.project_id,
 
 def get_live_sessions(project_id, filters=None):
     project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(environ["peers"] + f"/{project_key}")
+    connected_peers = requests.get(environ["peers"] % environ["S3_KEY"] + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
@@ -65,7 +65,7 @@ def get_live_sessions(project_id, filters=None):
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(environ["peers"] + f"/{project_key}")
+    connected_peers = requests.get(environ["peers"] % environ["S3_KEY"] + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)

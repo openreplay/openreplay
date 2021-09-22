@@ -8,6 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"golang.org/x/net/http2"
+
 
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/flakeid"
@@ -131,6 +133,7 @@ func main() {
 			}
 		}),
 	}
+	http2.ConfigureServer(server, nil)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			log.Fatalf("Server error: %v\n", err)

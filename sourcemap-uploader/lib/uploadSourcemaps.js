@@ -1,15 +1,22 @@
 const https = require('https');
 
-const getUploadURLs = (api_key, project_key, js_file_urls) =>
+const getUploadURLs = (api_key, project_key, js_file_urls, server) =>
   new Promise((resolve, reject) => {
     if (js_file_urls.length === 0) {
       resolve([]);
     }
 
-    const pathPrefix = (global.SERVER.pathname + "/").replace(/\/+/g, '/');
+    let serverURL;
+    try {
+      serverURL = new URL(server);
+    } catch(e) {
+      return reject(`Failed to parse server URL "${server}".`)
+    }
+
+    const pathPrefix = (serverURL.pathname + "/").replace(/\/+/g, '/');
     const options = {
       method: 'PUT',
-      hostname: global.SERVER.host,
+      hostname: serverURL.host,
       path: pathPrefix + `${project_key}/sourcemaps/`,
       headers: { Authorization: api_key, 'Content-Type': 'application/json' },
     }
@@ -74,11 +81,12 @@ const uploadSourcemap = (upload_url, body) =>
     req.end();
   });
 
-module.exports = (api_key, project_key, sourcemaps) =>
+module.exports = (api_key, project_key, sourcemaps, server) =>
   getUploadURLs(
     api_key,
     project_key,
     sourcemaps.map(({ js_file_url }) => js_file_url),
+    server || "https://api.openreplay.com",
   ).then(upload_urls =>
     Promise.all(
       upload_urls.map((upload_url, i) =>
