@@ -11,6 +11,7 @@ type Settings = {
   pageNo?: number;
   startTimestamp?: number;
   timeAdjustment?: number;
+  beaconSizeLimit?: number;
 } & Partial<Options>;
 
 export type WorkerMessageData = null | "stop" | Settings | Array<{ _id: number }>;

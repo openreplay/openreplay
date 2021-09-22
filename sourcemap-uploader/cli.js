@@ -58,15 +58,9 @@ const { command, api_key, project_key, server, verbose, ...args } = parser.parse
 
 global._VERBOSE = !!verbose;
 
-try {
-  global.SERVER = new URL(server || "https://api.openreplay.com");
-} catch (e) {
-  console.error(`Sourcemap Uploader: server URL parse error. ${e}`)
-}
-
 (command === 'file'
-  ? uploadFile(api_key, project_key, args.sourcemap_file_path, args.js_file_url)
-  : uploadDir(api_key, project_key, args.sourcemap_dir_path, args.js_dir_url)
+  ? uploadFile(api_key, project_key, args.sourcemap_file_path, args.js_file_url, server)
+  : uploadDir(api_key, project_key, args.sourcemap_dir_path, args.js_dir_url, server)
 )
 .then((sourceFiles) => 
   sourceFiles.length > 0 
