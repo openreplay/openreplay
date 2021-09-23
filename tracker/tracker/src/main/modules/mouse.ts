@@ -72,14 +72,23 @@ function getTargetLabel(target: Element): string {
   return '';
 }
 
+interface HeatmapsOptions {
+  finder: FinderOptions,
+}
+
 export interface Options {
-  selectorFinder: boolean | FinderOptions;
+  heatmaps: boolean | HeatmapsOptions;
 }
 
 export default function (app: App, opts: Partial<Options>): void {
   const options: Options = Object.assign(
     {
-      selectorFinder: true,
+      heatmaps: {
+        finder: {
+          threshold: 5,
+          maxNumberOfTries: 600,
+        },
+      },
     },
     opts,
   );
@@ -106,9 +115,9 @@ export default function (app: App, opts: Partial<Options>): void {
 
   const selectorMap: {[id:number]: string} = {};
   function getSelector(id: number, target: Element): string {
-    if (options.selectorFinder === false) { return '' }
+    if (options.heatmaps === false) { return '' }
     return selectorMap[id] = selectorMap[id] || 
-      finder(target, options.selectorFinder === true ? undefined : options.selectorFinder);
+      finder(target, options.heatmaps === true ? undefined : options.heatmaps.finder);
   }
 
   app.attachEventListener(
