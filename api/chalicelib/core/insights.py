@@ -533,6 +533,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
                                            chart=True, data=args)
 
+    pg_sub_query_chart.append("user_id IS NOT NULL")
     period = "DAY"
     for f in filters:
         if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
@@ -562,3 +563,28 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
         row_users = cur.fetchone()
 
     return row_users
+
+
+@dev.timed
+def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                 filters=[],**args):
+    pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
+    pg_sub_query.append("user_id IS NOT NULL")
+
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(day_users_partition) AS partition
+                        FROM (SELECT number_of_days, COUNT(user_id) AS count
+                              FROM (SELECT user_id, COUNT(DISTINCT DATE_TRUNC('day', to_timestamp(start_ts / 1000))) AS number_of_days
+                                    FROM sessions
+                                    WHERE {" AND ".join(pg_sub_query)}
+                                    GROUP BY 1) AS users_connexions
+                              GROUP BY number_of_days
+                              ORDER BY number_of_days) AS day_users_partition;"""
+        params = {"project_id": project_id,
+                  "startTimestamp": startTimestamp,"endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        row_users = cur.fetchone()
+
+    return helper.dict_to_camel_case(row_users)
