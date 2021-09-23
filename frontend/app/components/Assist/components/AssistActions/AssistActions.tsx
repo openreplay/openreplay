@@ -10,6 +10,19 @@ import { CallingState, ConnectionStatus } from 'Player/MessageDistributor/manage
 import { toast } from 'react-toastify';
 import stl from './AassistActions.css'
 
+function onClose(stream) {
+  stream.getTracks().forEach(t=>t.stop());
+}
+
+function onReject() {
+  toast.info(`Call was rejected.`);
+}
+
+function onError(e) {
+  toast.error(e);
+}
+
+
 interface Props {
   userId: String,
   toggleChatWindow: (state) => void,
@@ -31,18 +44,6 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       toast.info(`Live session was closed.`);
     }    
   }, [peerConnectionStatus])
-
-  function onClose(stream) {    
-    stream.getTracks().forEach(t=>t.stop());    
-  }
-
-  function onReject() {
-    toast.info(`Call was rejected.`);
-  }
-  
-  function onError(e) {
-    toast.error(e);
-  }
 
   function onCallConnect(lStream) {
     setLocalStream(lStream);
