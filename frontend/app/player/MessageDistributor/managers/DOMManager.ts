@@ -3,7 +3,7 @@ import type { Message, SetNodeScroll, CreateElementNode } from '../messages';
 import type { TimedMessage } from '../Timed';
 
 import logger from 'App/logger';
-import StylesManager from './StylesManager';
+import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
 import ListWalker from './ListWalker';
 import type { Timed }from '../Timed';
 
@@ -147,6 +147,7 @@ export default class DOMManager extends ListWalker<TimedMessage> {
         this.insertNode(msg);
       break;
       case "create_element_node":
+    //  console.log('elementnode', msg)
         if (msg.svg) {
           this.nl[ msg.id ] = document.createElementNS('http://www.w3.org/2000/svg', msg.tag);
         } else {
@@ -207,9 +208,14 @@ export default class DOMManager extends ListWalker<TimedMessage> {
       break;
       case "set_node_data":
       case "set_css_data":
-        if (!this.nl[ msg.id ]) { logger.error("Node not found", msg); break; }
+        node = this.nl[ msg.id ]
+        if (!node) { logger.error("Node not found", msg); break; }
         // @ts-ignore
-        this.nl[ msg.id ].data = msg.data;
+        node.data = msg.data;
+        if (node instanceof HTMLStyleElement) {
+          const doc = this.screen.document
+          doc && rewriteNodeStyleSheet(doc, node)
+        }
       break;
       case "css_insert_rule":
         node = this.nl[ msg.id ];
@@ -239,6 +245,23 @@ export default class DOMManager extends ListWalker<TimedMessage> {
         } catch (e) {
           logger.warn(e, msg)
         }
+      break;
+      case "create_i_frame_document":
+      // console.log('ifr', msg)
+        node = this.nl[ msg.frameID ];
+        if (!(node instanceof HTMLIFrameElement)) {
+          logger.warn("create_i_frame_document message. Node is not iframe")
+          return;
+        }
+        console.log("iframe", msg)
+      //   await new Promise(resolve => { node.onload = resolve })
+
+        const doc = node.contentDocument;
+        if (!doc) {
+          logger.warn("No iframe doc", msg, node, node.contentDocument);
+          return;
+        }
+        this.nl[ msg.id ] = doc.documentElement
       break;
         //not sure what to do with this one
       //case "disconnected":
