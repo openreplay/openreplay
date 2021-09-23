@@ -36,6 +36,8 @@ export const ID_TP_MAP = {
   54: "connection_information",
   55: "set_page_visibility",
   59: "long_task",
+  69: "mouse_click",
+  70: "create_i_frame_document",
 } as const;
 
 
@@ -255,11 +257,26 @@ export interface LongTask {
   containerName: string,
 }
 
+export interface MouseClick {
+  tp: "mouse_click",
+  id: number,
+  hesitationTime: number,
+  label: string,
+  selector: string,
+}
 
-export type Message = Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask;
+export interface CreateIFrameDocument {
+  tp: "create_i_frame_document",
+  frameID: number,
+  id: number,
+}
+
+
+export type Message = Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | MouseClick | CreateIFrameDocument;
 
 export default function (r: PrimitiveReader): Message | null {
-  switch (r.readUint()) {
+  const ui= r.readUint()
+  switch (ui) {
   
   case 0:
     return {
@@ -509,7 +526,24 @@ export default function (r: PrimitiveReader): Message | null {
       containerName: r.readString(),      
     };
   
+  case 69:
+    return {
+      tp: ID_TP_MAP[69], 
+      id: r.readUint(),
+      hesitationTime: r.readUint(),
+      label: r.readString(),
+      selector: r.readString(),      
+    };
+  
+  case 70:
+    return {
+      tp: ID_TP_MAP[70], 
+      frameID: r.readUint(),
+      id: r.readUint(),      
+    };
+  
   default:
+  console.log("wtf is this", ui)
     r.readUint(); // IOS skip timestamp  
     r.skip(r.readUint()); 
     return null;
