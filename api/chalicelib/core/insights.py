@@ -1,5 +1,4 @@
 from chalicelib.core import sessions_metas
-from chalicelib.utils import args_transformer
 from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -32,7 +31,7 @@ JOURNEY_TYPES = {
 
 
 @dev.timed
-def get_journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[], **args):
+def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[], **args):
     pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                             time_constraint=True)
     event_start = None
@@ -189,8 +188,8 @@ def __complete_acquisition(rows, start_date, end_date=None):
 
 
 @dev.timed
-def get_users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
-                        **args):
+def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
+                    **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -237,9 +236,9 @@ def get_users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
 
 
 @dev.timed
-def get_users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
-                          filters=[],
-                          **args):
+def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                      filters=[],
+                      **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -285,9 +284,9 @@ def get_users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
 
 
 @dev.timed
-def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
-                          filters=[],
-                          **args):
+def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                      filters=[],
+                      **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -302,12 +301,12 @@ def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_type = f["value"]
-        elif f["type"] == "EVENT_VALUE" and JOURNEY_TYPES.get(f["value"]):
+        elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
+            default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
-        default = False
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
     pg_sub_query.append(f"feature.{event_column} = %(value)s")
@@ -375,9 +374,9 @@ def get_feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70)
 
 
 @dev.timed
-def get_feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
-                            filters=[],
-                            **args):
+def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                        filters=[],
+                        **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -392,12 +391,12 @@ def get_feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-7
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_type = f["value"]
-        elif f["type"] == "EVENT_VALUE" and JOURNEY_TYPES.get(f["value"]):
+        elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
+            default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
-        default = False
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
 
@@ -525,3 +524,41 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
             p["frequency"] = frequencies[p["value"]] / total_usage
 
     return popularity
+
+
+@dev.timed
+def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                 filters=[],
+                 **args):
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+                                           chart=True, data=args)
+
+    period = "DAY"
+    for f in filters:
+        if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
+            period = f["value"]
+        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
+
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(chart) AS chart
+                        FROM (SELECT generated_timestamp       AS timestamp,
+                                     COALESCE(COUNT(users), 0) AS count
+                              FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                                       LEFT JOIN LATERAL ( SELECT DISTINCT user_id
+                                                           FROM public.sessions
+                                                           WHERE {" AND ".join(pg_sub_query_chart)}
+                                  ) AS users ON (TRUE)
+                              GROUP BY generated_timestamp
+                              ORDER BY generated_timestamp) AS chart;"""
+        params = {"step_size": TimeUTC.MS_DAY if period == "DAY" else TimeUTC.MS_WEEK,
+                  "project_id": project_id,
+                  "startTimestamp": TimeUTC.trunc_day(startTimestamp) if period == "DAY" else TimeUTC.trunc_week(
+                      startTimestamp),
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        row_users = cur.fetchone()
+
+    return row_users
