@@ -36,9 +36,6 @@ func main() {
 	  	// 	return
 	  	// }
 	  	typeID := message.Meta().TypeID
-	  	if typeID == 70 {
-	  		log.Println("iframe here")
-	  	}
 	  	if !messages.IsReplayerType(typeID) {
 	  		return
 	  	}
