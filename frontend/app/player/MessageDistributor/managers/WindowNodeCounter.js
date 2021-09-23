@@ -57,11 +57,12 @@ export default class WindowNodeCounter {
 
 	addNode(id: number, parentID: number) {
 		if (!this._nodes[ parentID ]) {
-			console.error(`Wrong! Node with id ${ parentID } (parentId) not found.`);
+			//TODO: iframe case
+			//console.error(`Wrong! Node with id ${ parentID } (parentId) not found.`);
 			return;
 		}
 		if (!!this._nodes[ id ]) {
-			console.error(`Wrong! Node with id ${ id } already exists.`);
+			//console.error(`Wrong! Node with id ${ id } already exists.`);
 			return;
 		}
 		this._nodes[id] = this._nodes[ parentID ].newChild();
