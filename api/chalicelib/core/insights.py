@@ -530,8 +530,6 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
 def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                      filters=[],
                      **args):
-    startTimestamp = TimeUTC.trunc_week(startTimestamp)
-    endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                      time_constraint=True)
     event_type = "CLICK"
@@ -593,6 +591,65 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
         cur.execute(cur.mogrify(pg_query, params))
         adoption = cur.fetchone()["count"] / all_user_count
     return {"target": all_user_count, "adoption": adoption,
+            "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
+
+
+@dev.timed
+def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                               filters=[],
+                               **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+    pg_sub_query.append("user_id IS NOT NULL")
+    event_type = "CLICK"
+    event_value = '/'
+    extra_values = {}
+    default = True
+    for f in filters:
+        if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
+            event_type = f["value"]
+        elif f["type"] == "EVENT_VALUE":
+            event_value = f["value"]
+            default = False
+        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+    event_table = JOURNEY_TYPES[event_type]["table"]
+    event_column = JOURNEY_TYPES[event_type]["column"]
+    with pg_client.PostgresClient() as cur:
+        pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
+        pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+        pg_sub_query.append(f"length({event_column})>2")
+        if default:
+            # get most used value
+            pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
+                        FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
+                        WHERE {" AND ".join(pg_sub_query[:-1])}
+                                AND length({event_column}) > 2
+                        GROUP BY value
+                        ORDER BY count DESC
+                        LIMIT 1;"""
+            params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                      "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+            cur.execute(cur.mogrify(pg_query, params))
+            row = cur.fetchone()
+            if row is not None:
+                event_value = row["value"]
+        extra_values["value"] = event_value
+        pg_sub_query.append(f"feature.{event_column} = %(value)s")
+        pg_query = f"""SELECT user_id, COUNT(DISTINCT session_id) AS count
+                        FROM {event_table} AS feature
+                                 INNER JOIN sessions USING (session_id)
+                        WHERE {" AND ".join(pg_sub_query)}
+                        GROUP BY 1
+                        ORDER BY 2 DESC
+                        LIMIT 10;"""
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+    return {"users": helper.list_to_camel_case(rows),
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 

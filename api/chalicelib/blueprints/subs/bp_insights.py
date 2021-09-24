@@ -105,6 +105,16 @@ def get_feature_adoption(projectId, context):
 
     return {"data": insights.feature_adoption(project_id=projectId, **{**data, **args})}
 
+@app.route('/{projectId}/insights/feature_adoption_top_users', methods=['GET', 'POST'])
+def get_feature_adoption(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_adoption_top_users(project_id=projectId, **{**data, **args})}
+
 
 @app.route('/{projectId}/insights/users_active', methods=['GET', 'POST'])
 def get_users_active(projectId, context):
