@@ -24,7 +24,7 @@ const TrackerUpdateMessage= (props) => {
                 <Icon name="info-circle" size="14" color="gray-darkest" />
               </div>
               <div className="ml-2color-gray-darkest mr-auto">
-                Please <a href="#" className="link" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>update</a> your tracker (Asayer) to the latest OpenReplay version  ({window.ENV.TRACKER_VERSION}) to benefit from all new features we recently shipped.
+                There might be a mismatch between the tracker and the backend versions. Please make sure to <a href="#" className="link" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>update</a> the tracker to latest version (<a href="https://www.npmjs.com/package/@openreplay/tracker" target="_blank">{window.ENV.TRACKER_VERSION}</a>).
               </div>
             </div>
           </div>
