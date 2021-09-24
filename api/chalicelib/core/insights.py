@@ -567,7 +567,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
 
 @dev.timed
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
-                 filters=[],**args):
+                filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
     pg_sub_query.append("user_id IS NOT NULL")
 
@@ -581,10 +581,74 @@ def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimes
                               GROUP BY number_of_days
                               ORDER BY number_of_days) AS day_users_partition;"""
         params = {"project_id": project_id,
-                  "startTimestamp": startTimestamp,"endTimestamp": endTimestamp, **__get_constraint_values(args)}
+                  "startTimestamp": startTimestamp, "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         # print(cur.mogrify(pg_query, params))
         # print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
         row_users = cur.fetchone()
 
     return helper.dict_to_camel_case(row_users)
+
+
+@dev.timed
+def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                   filters=[], **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+    pg_sub_query.append("user_id IS NOT NULL")
+    pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
+    pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+    event_type = "PAGES"
+    event_value = "/"
+    extra_values = {}
+    default = True
+    for f in filters:
+        if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
+            event_type = f["value"]
+        elif f["type"] == "EVENT_VALUE":
+            event_value = f["value"]
+            default = False
+        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
+    event_table = JOURNEY_TYPES[event_type]["table"]
+    event_column = JOURNEY_TYPES[event_type]["column"]
+    pg_sub_query.append(f"feature.{event_column} = %(value)s")
+
+    with pg_client.PostgresClient() as cur:
+        if default:
+            # get most used value
+            pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
+                            FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
+                            WHERE {" AND ".join(pg_sub_query[:-1])}
+                                    AND length({event_column}) > 2
+                            GROUP BY value
+                            ORDER BY count DESC
+                            LIMIT 1;"""
+            params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                      "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+            cur.execute(cur.mogrify(pg_query, params))
+            row = cur.fetchone()
+            if row is not None:
+                event_value = row["value"]
+        extra_values["value"] = event_value
+
+        pg_query = f"""SELECT user_id, last_time,interactions_count, MIN(start_ts) AS first_seen, MAX(start_ts) AS last_seen
+                        FROM (SELECT user_id, MAX(timestamp) AS last_time, COUNT(DISTINCT session_id) AS interactions_count
+                              FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(pg_sub_query)}
+                              GROUP BY user_id) AS user_last_usage
+                                 INNER JOIN sessions USING (user_id)
+                        WHERE EXTRACT(EPOCH FROM now()) * 1000 - last_time > 7 * 24 * 60 * 60 * 1000
+                        GROUP BY user_id, last_time,interactions_count;"""
+
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+        # print(cur.mogrify(pg_query, params))
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+    return {
+        "startTimestamp": startTimestamp,
+        "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}],
+        "chart": helper.list_to_camel_case(rows)
+    }
