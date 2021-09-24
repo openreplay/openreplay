@@ -33,7 +33,7 @@
         "sourcemaps_reader": "http://utilities-openreplay.app.svc.cluster.local:9000/sourcemaps",
         "sourcemaps_bucket": "sourcemaps",
         "js_cache_bucket": "sessions-assets",
-        "peers": "http://utilities-openreplay.app.svc.cluster.local:9000/assist/peers",
+        "peers": "http://utilities-openreplay.app.svc.cluster.local:9000/assist/%s/peers",
         "async_Token": "",
         "EMAIL_HOST": "",
         "EMAIL_PORT": "587",

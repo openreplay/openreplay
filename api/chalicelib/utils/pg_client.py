@@ -51,7 +51,7 @@ class PostgresClient:
         try:
             self.connection.commit()
             self.cursor.close()
-        except:
+        except Exception as error:
             print("Error while committing/closing PG-connection", error)
             raise error
         finally:

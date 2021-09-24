@@ -11,7 +11,7 @@ type Perf = {
   }
 }
 
-const perf: Perf = IN_BROWSER && 'memory' in performance // works in Chrome only
+const perf: Perf = IN_BROWSER && 'performance' in window && 'memory' in performance // works in Chrome only
   ? performance as any
   : { memory: {} }
 
@@ -19,7 +19,19 @@ const perf: Perf = IN_BROWSER && 'memory' in performance // works in Chrome only
 export const deviceMemory = IN_BROWSER ? ((navigator as any).deviceMemory || 0) * 1024 : 0;
 export const jsHeapSizeLimit = perf.memory.jsHeapSizeLimit || 0;
 
-export default function (app: App): void {
+export interface Options {
+  capturePerformance: boolean;
+}
+
+export default function (app: App, opts: Partial<Options>): void {
+  const options: Options = Object.assign(
+    {
+      capturePerformance: true,
+    },
+    opts,
+  );
+  if (!options.capturePerformance) { return; }
+
   let frames: number | undefined;
   let ticks: number | undefined;
 

@@ -1,4 +1,4 @@
-import { timestamp, log } from '../utils';
+import { timestamp, log, warn } from '../utils';
 import { Timestamp, TechnicalInfo, PageClose } from '../../messages';
 import Message from '../../messages/message';
 import Nodes from './nodes';
@@ -11,6 +11,12 @@ import type { Options as ObserverOptions } from './observer';
 
 import type { Options as WebworkerOptions, WorkerMessageData } from '../../messages/webworker';
 
+interface OnStartInfo {
+  sessionID: string, 
+  sessionToken: string, 
+  userUUID: string,
+}
+
 export type Options = {
   revID: string;
   node_id: string;
@@ -18,14 +24,19 @@ export type Options = {
   session_pageno_key: string;
   local_uuid_key: string;
   ingestPoint: string;
+  resourceBaseHref: string, // resourceHref?
+  //resourceURLRewriter: (url: string) => string | boolean,
   __is_snippet: boolean;
-  onStart?: (info: { sessionID: string, sessionToken: string, userUUID: string }) => void;
+  __debug_report_edp: string | null;
+  onStart?: (info: OnStartInfo) => void;
 } & ObserverOptions & WebworkerOptions;
 
 type Callback = () => void;
 type CommitCallback = (messages: Array<Message>) => void;
 
-export const DEFAULT_INGEST_POINT = 'https://ingest.openreplay.com';
+
+// TODO: use backendHost only
+export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
 
 export default class App {
   readonly nodes: Nodes;
@@ -56,9 +67,12 @@ export default class App {
         session_pageno_key: '__openreplay_pageno',
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
+        resourceBaseHref: '',
         __is_snippet: false,
+        __debug_report_edp: null,
         obscureTextEmails: true,
         obscureTextNumbers: false,
+        captureIFrames: false,
       },
       opts,
     );
@@ -99,8 +113,24 @@ export default class App {
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
-    } catch (e) { /* TODO: send report */}
+    } catch (e) { 
+      this.sendDebugReport("worker_start", e);
+    }
   }
+
+  private sendDebugReport(context: string, e: any) {
+    if(this.options.__debug_report_edp !== null) {
+      fetch(this.options.__debug_report_edp, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context,
+          error: `${e}`
+        })
+      });
+    }
+  }
+
   send(message: Message, urgent = false): void {
     if (!this.isActive) {
       return;
@@ -174,22 +204,37 @@ export default class App {
     return this._sessionID || undefined;
   }
   getHost(): string {
-    return new URL(this.options.ingestPoint).host;
+    return new URL(this.options.ingestPoint).hostname
+  }
+  getProjectKey(): string {
+    return this.projectKey
+  }
+  getBaseHref(): string {
+    if (this.options.resourceBaseHref) {
+      return this.options.resourceBaseHref
+    }
+    if (document.baseURI) {
+      return document.baseURI
+    }
+    // IE only
+    return document.head
+      ?.getElementsByTagName("base")[0]
+      ?.getAttribute("href") || location.origin + location.pathname
   }
 
   isServiceURL(url: string): boolean {
-    return url.startsWith(this.options.ingestPoint);
+    return url.startsWith(this.options.ingestPoint)
   }
 
   active(): boolean {
     return this.isActive;
   }
-  _start(reset: boolean): void {   // TODO: return a promise instead of onStart handling
+  private _start(reset: boolean): Promise<OnStartInfo> {
     if (!this.isActive) {
-      this.isActive = true;
       if (!this.worker) {
-        throw new Error("Stranger things: no worker found");
+        return Promise.reject("No worker found: perhaps, CSP is not set.");
       }
+      this.isActive = true;
 
       let pageNo: number = 0;
       const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
@@ -208,7 +253,7 @@ export default class App {
         connAttemptGap: this.options.connAttemptGap,
       }
       this.worker.postMessage(messageData); // brings delay of 10th ms?
-      window.fetch(this.options.ingestPoint + '/v1/web/start', {
+      return window.fetch(this.options.ingestPoint + '/v1/web/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -230,14 +275,17 @@ export default class App {
         if (r.status === 200) {
           return r.json()
         } else { // TODO: handle canceling && 403
-          throw new Error("Server error");
+          return r.text().then(text => {
+            throw new Error(`Server error: ${r.status}. ${text}`);
+          });
         }
       })
       .then(r => {
-        const { token, userUUID, sessionID } = r;
+        const { token, userUUID, sessionID, beaconSizeLimit } = r;
         if (typeof token !== 'string' ||
-            typeof userUUID !== 'string') {
-          throw new Error("Incorrect server response");
+            typeof userUUID !== 'string' ||
+            (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
+          throw new Error(`Incorrect server response: ${ JSON.stringify(r) }`);
         }
         sessionStorage.setItem(this.options.session_token_key, token);
         localStorage.setItem(this.options.local_uuid_key, userUUID);
@@ -245,36 +293,43 @@ export default class App {
           this._sessionID = sessionID;
         }
         if (!this.worker) {
-          throw new Error("Stranger things: no worker found after start request");
+          throw new Error("no worker found after start request (this might not happen)");
         }
-        this.worker.postMessage({ token });
+        this.worker.postMessage({ token, beaconSizeLimit });
         this.startCallbacks.forEach((cb) => cb());
         this.observer.observe();
         this.ticker.start();
 
         log("OpenReplay tracking started.");
+        const onStartInfo = { sessionToken: token, userUUID, sessionID };
         if (typeof this.options.onStart === 'function') {
-          this.options.onStart({ sessionToken: token, userUUID, sessionID });
+          this.options.onStart(onStartInfo);
         }
+        return onStartInfo;
       })
       .catch(e => {
         this.stop();
-        /* TODO: send report */
+        warn("OpenReplay was unable to start. ", e)
+        this.sendDebugReport("session_start", e);
+        throw e;
       })
     }
+    return Promise.reject("Player is active");
   }
 
-  start(reset: boolean = false): void {
+  start(reset: boolean = false): Promise<OnStartInfo> {
     if (!document.hidden) {
-      this._start(reset);
+      return this._start(reset);
     } else {
-      const onVisibilityChange = () => {
-        if (!document.hidden) {
-          document.removeEventListener("visibilitychange", onVisibilityChange);
-          this._start(reset);
+      return new Promise((resolve) => {
+        const onVisibilityChange = () => {
+          if (!document.hidden) {
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            resolve(this._start(reset));
+          }
         }
-      }
-      document.addEventListener("visibilitychange", onVisibilityChange);
+        document.addEventListener("visibilitychange", onVisibilityChange);
+      });
     }
   }
   stop(): void {

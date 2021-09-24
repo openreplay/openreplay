@@ -1,6 +1,5 @@
 import App from '../app';
 import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from '../../messages';
-import { getBaseURI } from '../utils';
 
 export default function(app: App | null) {
   if (app === null) {
@@ -14,7 +13,7 @@ export default function(app: App | null) {
   const processOperation = app.safe(
     (stylesheet: CSSStyleSheet, index: number, rule?: string) => {
       const sendMessage = typeof rule === 'string' 
-        ? (nodeID: number) => app.send(new CSSInsertRuleURLBased(nodeID, rule, index, getBaseURI()))
+        ? (nodeID: number) => app.send(new CSSInsertRuleURLBased(nodeID, rule, index, app.getBaseHref()))
         : (nodeID: number) => app.send(new CSSDeleteRule(nodeID, index));
       // TODO: Extend messages to maintain nested rules (CSSGroupingRule prototype, as well as CSSKeyframesRule)
       if (stylesheet.ownerNode == null) { 

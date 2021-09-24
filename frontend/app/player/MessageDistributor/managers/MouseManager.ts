@@ -7,6 +7,7 @@ import ListWalker from './ListWalker';
 type MouseMoveTimed = MouseMove & Timed;
 
 const HOVER_CLASS = "-openreplay-hover";
+const HOVER_CLASS_DEPR = "-asayer-hover";
 
 export default class MouseManager extends ListWalker<MouseMoveTimed> {
 	private hoverElements: Array<Element> = [];
@@ -19,8 +20,14 @@ export default class MouseManager extends ListWalker<MouseMoveTimed> {
     const diffAdd = curHoverElements.filter(elem => !this.hoverElements.includes(elem));
     const diffRemove = this.hoverElements.filter(elem => !curHoverElements.includes(elem));
     this.hoverElements = curHoverElements;
-    diffAdd.forEach(elem => elem.classList.add(HOVER_CLASS));
-    diffRemove.forEach(elem => elem.classList.remove(HOVER_CLASS));
+    diffAdd.forEach(elem => {
+      elem.classList.add(HOVER_CLASS)
+      elem.classList.add(HOVER_CLASS_DEPR)
+    });
+    diffRemove.forEach(elem => {
+      elem.classList.remove(HOVER_CLASS)
+      elem.classList.remove(HOVER_CLASS_DEPR)
+    });
   }
 
   reset(): void {

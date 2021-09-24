@@ -7,6 +7,7 @@ class TimeUTC:
     MS_MINUTE = 60 * 1000
     MS_HOUR = MS_MINUTE * 60
     MS_DAY = MS_HOUR * 24
+    MS_WEEK = MS_DAY * 7
     MS_MONTH = MS_DAY * 30
     MS_MONTH_TRUE = monthrange(datetime.now(pytz.utc).astimezone(pytz.utc).year,
                                datetime.now(pytz.utc).astimezone(pytz.utc).month)[1] * MS_DAY
@@ -113,3 +114,11 @@ class TimeUTC:
     @staticmethod
     def get_utc_offset():
         return int((datetime.now(pytz.utc).now() - datetime.now(pytz.utc).replace(tzinfo=None)).total_seconds() * 1000)
+
+    @staticmethod
+    def trunc_week(timestamp):
+        dt = TimeUTC.from_ms_timestamp(timestamp)
+        start = dt - timedelta(days=dt.weekday())
+        return TimeUTC.datetime_to_timestamp(start
+                                             .replace(hour=0, minute=0, second=0, microsecond=0)
+                                             .astimezone(pytz.utc))

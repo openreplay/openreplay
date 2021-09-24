@@ -16,16 +16,6 @@ export function isURL(s: string): boolean {
   return s.substr(0, 8) === 'https://' || s.substr(0, 7) === 'http://';
 }
 
-export function getBaseURI(): string {
-	if (document.baseURI) {
-		return document.baseURI;
-	}
-	// IE only
-	return document.head
-		?.getElementsByTagName("base")[0]
-		?.getAttribute("href") || location.origin + location.pathname;
-}
-
 export const IN_BROWSER = !(typeof window === "undefined");
 
 export const log = console.log

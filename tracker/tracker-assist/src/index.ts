@@ -1,3 +1,4 @@
+import './_slim';
 import Peer, { MediaConnection } from 'peerjs';
 import type { DataConnection } from 'peerjs';
 import { App, Messages } from '@openreplay/tracker';
@@ -5,12 +6,13 @@ import type Message from '@openreplay/tracker';
 
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
-import Confirm from './Confirm';
+import ConfirmWindow from './ConfirmWindow';
 
 
 export interface Options {
   confirmText: string,
   confirmStyle: Object, // Styles object
+  session_calling_peer_key: string,
 }
 
 
@@ -25,6 +27,7 @@ export default function(opts: Partial<Options> = {})  {
     { 
       confirmText: "You have a call. Do you want to answer?",
       confirmStyle: {},
+      session_calling_peer_key: "__openreplay_calling_peer",
     },
     opts,
   );
@@ -34,20 +37,28 @@ export default function(opts: Partial<Options> = {})  {
       return;
     }
 
+    let assistDemandedRestart = false;
+    let peer : Peer | null = null;
+
+    app.attachStopCallback(function() {
+      if (assistDemandedRestart) { return; }
+      peer && peer.destroy();
+    });
+
     app.attachStartCallback(function() {
-      // @ts-ignore
+      if (assistDemandedRestart) { return; }
       const peerID = `${app.projectKey}-${app.getSessionID()}`
-      const peer = new Peer(peerID, {
+      peer = new Peer(peerID, {
               // @ts-ignore
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
       });
       console.log('OpenReplay tracker-assist peerID:', peerID)
+      peer.on('error', e => console.log("OpenReplay tracker-assist peer error: ", e.type, e))
       peer.on('connection', function(conn) { 
         window.addEventListener("beforeunload", () => conn.open && conn.send("unload"));
 
-        peer.on('error', e => console.log("OpenReplay tracker-assist peer error: ", e.type, e))
         console.log('OpenReplay tracker-assist: Connecting...')
         conn.on('open', function() {
           
@@ -66,9 +77,12 @@ export default function(opts: Partial<Options> = {})  {
               buffering = false;
             }
           }
+
+          assistDemandedRestart = true;
           app.stop();
           //@ts-ignore (should update tracker dependency)
           app.addCommitCallback((messages: Array<Message>): void => {
+            if (!conn.open) { return; } // TODO: clear commit callbacks on connection close
             let i = 0;
             while (i < messages.length) {
               buffer.push(messages.slice(i, i+=1000));
@@ -78,39 +92,57 @@ export default function(opts: Partial<Options> = {})  {
               sendNext(); 
             }
           });
-          app.start();
+          app.start().then(() => { assistDemandedRestart = false; });
         });
       });
 
 
-      let calling: CallingState  = CallingState.False;
+      let callingState: CallingState = CallingState.False;
       peer.on('call', function(call) {
+        if (!peer) { return; }
         const dataConn: DataConnection | undefined = peer
                 .connections[call.peer].find(c => c.type === 'data');
-        if (calling !== CallingState.False || !dataConn) {
+        if (callingState !== CallingState.False || !dataConn) {
           call.close();
           return;
         }
 
-        calling = CallingState.Requesting;
+        function setCallingState(newState: CallingState) {
+          if (newState === CallingState.True) {
+            sessionStorage.setItem(options.session_calling_peer_key, call.peer);
+          } else if (newState === CallingState.False) {
+            sessionStorage.removeItem(options.session_calling_peer_key);
+          }
+          callingState = newState;
+        }
+
         const notifyCallEnd = () => {
           dataConn.open && dataConn.send("call_end");
         }
 
-        const confirm = new Confirm(options.confirmText, options.confirmStyle);
-        dataConn.on('data', (data) => { // if call closed by a caller before confirm
-          if (data === "call_end") {
-            //console.log('OpenReplay tracker-assist: receiving callend onconfirm')
-            calling = CallingState.False;
-            confirm.remove();
-          }                    
-        });
-        confirm.mount();
-        confirm.onAnswer(agreed => {
+
+        let confirmAnswer: Promise<boolean>
+        const peerOnCall = sessionStorage.getItem(options.session_calling_peer_key)
+        if (peerOnCall === call.peer) {
+          confirmAnswer = Promise.resolve(true)
+        } else {
+          setCallingState(CallingState.Requesting);
+          const confirm = new ConfirmWindow(options.confirmText, options.confirmStyle);
+          confirmAnswer = confirm.mount();
+          dataConn.on('data', (data) => { // if call closed by a caller before confirm
+            if (data === "call_end") {
+              //console.log('OpenReplay tracker-assist: receiving callend onconfirm')
+              setCallingState(CallingState.False);
+              confirm.remove();
+            }                    
+          });
+        }
+
+        confirmAnswer.then(agreed => {
           if (!agreed || !dataConn.open) {
             call.close();
             notifyCallEnd();
-            calling = CallingState.False;
+            setCallingState(CallingState.False);
             return;
           }
 
@@ -119,11 +151,10 @@ export default function(opts: Partial<Options> = {})  {
 
           const onCallConnect = lStream => {
             const onCallEnd = () => {
-              //console.log("on callend", call.open)
               mouse.remove();
               callUI?.remove();
               lStream.getTracks().forEach(t => t.stop());
-              calling = CallingState.False;
+              setCallingState(CallingState.False);
             }
             const initiateCallEnd = () => {
               //console.log("callend initiated")
@@ -133,6 +164,7 @@ export default function(opts: Partial<Options> = {})  {
             }
 
             call.answer(lStream);
+            setCallingState(CallingState.True)
 
             dataConn.on("close", onCallEnd);
 
@@ -164,6 +196,11 @@ export default function(opts: Partial<Options> = {})  {
             });
             call.on('stream', function(rStream) {
               callUI.setRemoteStream(rStream);
+              const onInteraction = () => {
+                callUI.playRemote()
+                document.removeEventListener("click", onInteraction)
+              }
+              document.addEventListener("click", onInteraction)
             });
             dataConn.on('data', (data: any) => {
               if (data === "call_end") {
@@ -188,7 +225,7 @@ export default function(opts: Partial<Options> = {})  {
             .then(onCallConnect)
             .catch(e => console.log("OpenReplay tracker-assist: cant reach media devices. ", e));
           });
-        });
+        }).catch(); // in case of Confirm.remove() without any confirmation
       });
     });
   }
