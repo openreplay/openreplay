@@ -8,7 +8,9 @@
     "module": true,
     "console": true,
     "Promise": true,
-    "Buffer": true
+    "Buffer": true,
+    "URL": true,
+    "global": true
   },
   "plugins": [
     "prettier"

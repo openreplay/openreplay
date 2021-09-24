@@ -1,4 +1,4 @@
-import { stars, hasOpenreplayAttribute, getBaseURI } from '../utils';
+import { stars, hasOpenreplayAttribute } from '../utils';
 import {
   CreateDocument,
   CreateElementNode,
@@ -10,37 +10,49 @@ import {
   RemoveNodeAttribute,
   MoveNode,
   RemoveNode,
+  CreateIFrameDocument,
 } from '../../messages';
 import App from './index';
 
+interface Window extends WindowProxy {
+  HTMLInputElement: typeof HTMLInputElement,
+  HTMLLinkElement: typeof HTMLLinkElement,
+  HTMLStyleElement: typeof HTMLStyleElement,
+  SVGStyleElement: typeof SVGStyleElement,
+  HTMLIFrameElement: typeof HTMLIFrameElement,
+  Text: typeof Text,
+  Element: typeof Element,
+  //parent: Window,
+}
+
+
+type WindowConstructor = 
+  Document |
+  Element | 
+  Text | 
+  HTMLInputElement | 
+  HTMLLinkElement | 
+  HTMLStyleElement | 
+  HTMLIFrameElement
+
+// type ConstructorNames = 
+//   'Element' | 
+//   'Text' | 
+//   'HTMLInputElement' | 
+//   'HTMLLinkElement' |
+//   'HTMLStyleElement' |
+//   'HTMLIFrameElement'
+type Constructor<T> = { new (...args: any[]): T , name: string  };
+
+
 function isSVGElement(node: Element): node is SVGElement {
   return node.namespaceURI === 'http://www.w3.org/2000/svg';
-}
-function isIgnored(node: Node): boolean {
-  if (node instanceof Text) {
-    return false;
-  }
-  if (!(node instanceof Element)) {
-    return true;
-  }
-  const tag = node.tagName.toUpperCase();
-  if (tag === 'LINK') {
-    const rel = node.getAttribute('rel');
-    const as = node.getAttribute('as');
-    return !(rel?.includes('stylesheet') || as === "style" || as === "font");
-  }
-  return (
-    tag === 'SCRIPT' ||
-    tag === 'NOSCRIPT' ||
-    tag === 'META' ||
-    tag === 'TITLE' ||
-    tag === 'BASE'
-  );
 }
 
 export interface Options {
   obscureTextEmails: boolean;
   obscureTextNumbers: boolean;
+  captureIFrames: boolean;
 }
 
 export default class Observer {
@@ -51,17 +63,33 @@ export default class Observer {
   private readonly attributesList: Array<Set<string> | undefined>;
   private readonly textSet: Set<number>;
   private readonly textMasked: Set<number>;
-  private readonly options: Options;
-  constructor(private readonly app: App, opts: Options) {
-    this.options = opts;
+  constructor(private readonly app: App, private readonly options: Options, private readonly context: Window = window) {
     this.observer = new MutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
           const target = mutation.target;
-          if (isIgnored(target) || !document.contains(target)) {
+          const type = mutation.type;
+
+          // Special case
+          // Document 'childList' might happen in case of iframe. 
+          // TODO: generalize as much as possible
+          if (this.isInstance(target, Document) 
+              && type === 'childList' 
+              //&& new Array(mutation.addedNodes).some(node => this.isInstance(node, HTMLHtmlElement))
+          ) {
+            const parentFrame = target.defaultView?.frameElement
+            if (!parentFrame) { continue }
+            this.bindTree(target.documentElement)
+            const frameID = this.app.nodes.getID(parentFrame)
+            const docID = this.app.nodes.getID(target.documentElement)
+            if (frameID === undefined || docID === undefined) { continue }
+            this.app.send(CreateIFrameDocument(frameID, docID));
             continue;
           }
-          const type = mutation.type;
+
+          if (this.isIgnored(target) || !context.document.contains(target)) {
+            continue;
+          }
           if (type === 'childList') {
             for (let i = 0; i < mutation.removedNodes.length; i++) {
               this.bindTree(mutation.removedNodes[i]);
@@ -114,6 +142,43 @@ export default class Observer {
     this.textMasked.clear();
   }
 
+  // TODO: we need a type expert here so we won't have to ignore the lines
+  private isInstance<T extends WindowConstructor>(node: Node, constr: Constructor<T>): node is T {
+    let context = this.context;
+    while(context.parent && context.parent !== context) {
+      // @ts-ignore
+      if (node instanceof context[constr.name]) {
+        return true
+      }
+      // @ts-ignore
+      context = context.parent
+    }
+    // @ts-ignore
+    return node instanceof context[constr.name]
+  }
+
+  private isIgnored(node: Node): boolean {
+    if (this.isInstance(node, Text)) {
+      return false;
+    }
+    if (!this.isInstance(node, Element)) {
+      return true;
+    }
+    const tag = node.tagName.toUpperCase();
+    if (tag === 'LINK') {
+      const rel = node.getAttribute('rel');
+      const as = node.getAttribute('as');
+      return !(rel?.includes('stylesheet') || as === "style" || as === "font");
+    }
+    return (
+      tag === 'SCRIPT' ||
+      tag === 'NOSCRIPT' ||
+      tag === 'META' ||
+      tag === 'TITLE' ||
+      tag === 'BASE'
+    );
+  }
+
   private sendNodeAttribute(
     id: number,
     node: Element,
@@ -130,7 +195,7 @@ export default class Observer {
         if (value.length > 1e5) {
           value = '';
         }
-        this.app.send(new SetNodeAttributeURLBased(id, name, value, getBaseURI()));
+        this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       } else {
         this.app.send(new SetNodeAttribute(id, name, value));
       }
@@ -148,7 +213,7 @@ export default class Observer {
     }
     if (
       name === 'value' &&
-      node instanceof HTMLInputElement &&
+      this.isInstance(node, HTMLInputElement) &&
       node.type !== 'button' &&
       node.type !== 'reset' &&
       node.type !== 'submit'
@@ -159,8 +224,8 @@ export default class Observer {
       this.app.send(new RemoveNodeAttribute(id, name));
       return;
     }
-    if (name === 'style' || name === 'href' && node instanceof HTMLLinkElement) {
-      this.app.send(new SetNodeAttributeURLBased(id, name, value, getBaseURI()));
+    if (name === 'style' || name === 'href' && this.isInstance(node, HTMLLinkElement)) {
+      this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       return;
     }
     if (name === 'href' || value.length > 1e5) {
@@ -170,8 +235,8 @@ export default class Observer {
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
-    if (parentElement instanceof HTMLStyleElement || parentElement instanceof SVGStyleElement) {
-      this.app.send(new SetCSSDataURLBased(id, data, getBaseURI()));
+    if (this.isInstance(parentElement, HTMLStyleElement) || this.isInstance(parentElement, SVGStyleElement)) {
+      this.app.send(new SetCSSDataURLBased(id, data, this.app.getBaseHref()));
       return;
     }
     if (this.textMasked.has(id)) {
@@ -201,7 +266,7 @@ export default class Observer {
   }
 
   private bindTree(node: Node): void {
-    if (isIgnored(node)) {
+    if (this.isIgnored(node)) {
       return;
     }
     this.bindNode(node);
@@ -210,7 +275,7 @@ export default class Observer {
       NodeFilter.SHOW_ELEMENT + NodeFilter.SHOW_TEXT,
       {
         acceptNode: (node) =>
-          isIgnored(node) || this.app.nodes.getID(node) !== undefined
+          this.isIgnored(node) || this.app.nodes.getID(node) !== undefined
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT,
       },
@@ -231,7 +296,9 @@ export default class Observer {
   private _commitNode(id: number, node: Node): boolean {
     const parent = node.parentNode;
     let parentID: number | undefined;
-    if (id !== 0) {
+    if (this.isInstance(node, HTMLHtmlElement)) { 
+      this.indexes[id] = 0
+    } else {
       if (parent === null) {
         this.unbindNode(node);
         return false;
@@ -247,7 +314,7 @@ export default class Observer {
       }
       if (
         this.textMasked.has(parentID) ||
-        (node instanceof Element && hasOpenreplayAttribute(node, 'masked'))
+        (this.isInstance(node, Element) && hasOpenreplayAttribute(node, 'masked'))
       ) {
         this.textMasked.add(id);
       }
@@ -271,7 +338,7 @@ export default class Observer {
       throw 'commitNode: missing node index';
     }
     if (isNew === true) {
-      if (node instanceof Element) {
+      if (this.isInstance(node, Element)) {
         if (parentID !== undefined) {
           this.app.send(new 
             CreateElementNode(
@@ -287,7 +354,12 @@ export default class Observer {
           const attr = node.attributes[i];
           this.sendNodeAttribute(id, node, attr.nodeName, attr.value);
         }
-      } else if (node instanceof Text) {
+
+        if (this.isInstance(node, HTMLIFrameElement) && 
+          (this.options.captureIFrames || node.getAttribute("data-openreplay-capture"))) {
+          this.handleIframe(node);
+        }
+      } else if (this.isInstance(node, Text)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(new CreateTextNode(id, parentID as number, index));
         this.sendNodeData(id, parent as Element, node.data);
@@ -299,7 +371,7 @@ export default class Observer {
     }
     const attr = this.attributesList[id];
     if (attr !== undefined) {
-      if (!(node instanceof Element)) {
+      if (!this.isInstance(node, Element)) {
         throw 'commitNode: node is not an element';
       }
       for (const name of attr) {
@@ -307,7 +379,7 @@ export default class Observer {
       }
     }
     if (this.textSet.has(id)) {
-      if (!(node instanceof Text)) {
+      if (!this.isInstance(node, Text)) {
         throw 'commitNode: node is not a text';
       }
       // for text node id != 0, hence parent is Element
@@ -337,8 +409,44 @@ export default class Observer {
     this.clear();
   }
 
+  private iframeObservers: Observer[] = [];
+  private handleIframe(iframe: HTMLIFrameElement): void {
+    const handle = () => {
+      const context = iframe.contentWindow as Window | null
+      const id = this.app.nodes.getID(iframe)
+      if (!context || id === undefined) { return }
+
+      const observer = new Observer(this.app, this.options, context)
+      this.iframeObservers.push(observer)
+      observer.observeIframe(id, context)
+    }
+    this.app.attachEventListener(iframe, "load", handle)
+    handle()
+  }
+
+  // TODO: abstract common functionality, separate FrameObserver
+  private observeIframe(id: number, context: Window) {
+    const doc = context.document;
+    this.observer.observe(doc, {
+      childList: true,
+      attributes: true,
+      characterData: true,
+      subtree: true,
+      attributeOldValue: false,
+      characterDataOldValue: false,
+    });
+    this.bindTree(doc.documentElement);
+    const docID = this.app.nodes.getID(doc.documentElement);
+    if (docID === undefined) {
+      console.log("Wrong")
+      return;
+    }
+    this.app.send(CreateIFrameDocument(id,docID));
+    this.commitNodes();
+  }
+
   observe(): void {
-    this.observer.observe(document, {
+    this.observer.observe(this.context.document, {
       childList: true,
       attributes: true,
       characterData: true,
@@ -347,11 +455,13 @@ export default class Observer {
       characterDataOldValue: false,
     });
     this.app.send(new CreateDocument());
-    this.bindTree(document.documentElement);
+    this.bindTree(this.context.document.documentElement);
     this.commitNodes();
   }
 
   disconnect(): void {
+    this.iframeObservers.forEach(o => o.disconnect());
+    this.iframeObservers = [];
     this.observer.disconnect();
     this.clear();
   }

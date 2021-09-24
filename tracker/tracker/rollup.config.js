@@ -8,5 +8,5 @@ export default {
     file: 'build/webworker.js',
     format: 'cjs',
   },
-  plugins: [resolve(), babel({ babelHelpers: 'bundled' }), terser()],
+  plugins: [resolve(), babel({ babelHelpers: 'bundled' }), terser({ mangle: { reserved: ['$'] } })],
 };

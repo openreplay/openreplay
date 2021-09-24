@@ -1,13 +1,9 @@
+import type { Options as FinderOptions } from '../vendors/finder/finder';
 import { finder } from '../vendors/finder/finder';
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils';
 import App from '../app';
 import { MouseMove, MouseClick } from '../../messages';
 import { getInputLabel } from './input';
-
-const selectorMap: {[id:number]: string} = {};
-function getSelector(id: number, target: Element): string {
-  return selectorMap[id] = selectorMap[id] || finder(target);
-}
 
 function getTarget(target: EventTarget | null): Element | null {
   if (target instanceof Element) {
@@ -76,7 +72,27 @@ function getTargetLabel(target: Element): string {
   return '';
 }
 
-export default function (app: App): void {
+interface HeatmapsOptions {
+  finder: FinderOptions,
+}
+
+export interface Options {
+  heatmaps: boolean | HeatmapsOptions;
+}
+
+export default function (app: App, opts: Partial<Options>): void {
+  const options: Options = Object.assign(
+    {
+      heatmaps: {
+        finder: {
+          threshold: 5,
+          maxNumberOfTries: 600,
+        },
+      },
+    },
+    opts,
+  );
+
   let mousePositionX = -1;
   let mousePositionY = -1;
   let mousePositionChanged = false;
@@ -96,6 +112,13 @@ export default function (app: App): void {
       mousePositionChanged = false;
     }
   };
+
+  const selectorMap: {[id:number]: string} = {};
+  function getSelector(id: number, target: Element): string {
+    if (options.heatmaps === false) { return '' }
+    return selectorMap[id] = selectorMap[id] || 
+      finder(target, options.heatmaps === true ? undefined : options.heatmaps.finder);
+  }
 
   app.attachEventListener(
     <HTMLElement>document.documentElement,

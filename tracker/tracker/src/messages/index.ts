@@ -885,3 +885,19 @@ export const MouseClick = bindNew(_MouseClick);
 classes.set(69, MouseClick);
 
 
+class _CreateIFrameDocument implements Message {
+  readonly _id: number = 70;
+  constructor(
+    public frameID: number,
+    public id: number
+  ) {}
+  encode(writer: Writer): boolean {
+    return writer.uint(70) &&
+      writer.uint(this.frameID) &&
+      writer.uint(this.id); 
+  }
+}
+export const CreateIFrameDocument = bindNew(_CreateIFrameDocument);
+classes.set(70, CreateIFrameDocument);
+
+

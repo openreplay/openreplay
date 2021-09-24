@@ -7,6 +7,7 @@ export default class CallWindow {
   private audioBtn: HTMLAnchorElement | null = null;
   private videoBtn: HTMLAnchorElement | null = null;
   private userNameSpan: HTMLSpanElement | null = null;
+  private vPlaceholder: HTMLParagraphElement | null = null;
 
   private tsInterval: ReturnType<typeof setInterval>;
   constructor(endCall: () => void) {
@@ -23,83 +24,83 @@ export default class CallWindow {
       height: "200px",
       width: "200px",
     });
-    //iframe.src = "//static.openreplay.com/tracker-assist/index.html";
-    iframe.onload = () => {
-      const doc = iframe.contentDocument;
-      if (!doc) {
-        console.error("OpenReplay: CallWindow iframe document is not reachable.")
-        return; 
-      }
-      fetch("https://static.openreplay.com/tracker-assist/index.html")
-      //fetch("file:///Users/shikhu/work/asayer-tester/dist/assist/index.html")
-      .then(r => r.text())
-      .then((text) => {
-        iframe.onload = () => {
-          doc.body.removeChild(doc.body.children[0]); //?!!>R#
-          const assistSection = doc.getElementById("or-assist")
-          assistSection && assistSection.removeAttribute("style");
-          iframe.style.height = doc.body.scrollHeight + 'px';
-          iframe.style.width = doc.body.scrollWidth + 'px';
-          iframe.onload = null;
-        }
-
-        text = text.replace(/href="css/g, "href=\"https://static.openreplay.com/tracker-assist/css")
-        doc.open();
-        doc.write(text);
-        doc.close();
-
-        
-        this.vLocal = doc.getElementById("video-local") as HTMLVideoElement;
-        this.vRemote = doc.getElementById("video-remote") as HTMLVideoElement;
-        this._trySetStreams();
-        //
-        this.vLocal.parentElement && this.vLocal.parentElement.classList.add("d-none");
-
-        this.audioBtn = doc.getElementById("audio-btn") as HTMLAnchorElement;
-        this.audioBtn.onclick = () => this.toggleAudio();
-        this.videoBtn = doc.getElementById("video-btn") as HTMLAnchorElement;
-        this.videoBtn.onclick = () => this.toggleVideo();
-
-        this.userNameSpan = doc.getElementById("username") as HTMLSpanElement;
-        this._trySetAssistentName();
-
-        const endCallBtn = doc.getElementById("end-call-btn") as HTMLAnchorElement;
-        endCallBtn.onclick = endCall;
-
-        const tsText = doc.getElementById("time-stamp");
-        const startTs = Date.now();
-        if (tsText) {
-          this.tsInterval = setInterval(() => {
-            const ellapsed = Date.now() - startTs;
-            const secsFull = ~~(ellapsed / 1000);
-            const mins = ~~(secsFull / 60);
-            const secs = secsFull - mins * 60
-            tsText.innerText = `${mins}:${secs < 10 ? 0 : ''}${secs}`;
-          }, 500);
-        }
-
-            // TODO: better D'n'D 
-        doc.body.setAttribute("draggable", "true");
-        doc.body.ondragstart = (e) => {
-          if (!e.dataTransfer || !e.target) { return; }
-          //@ts-ignore
-          if (!e.target.classList || !e.target.classList.contains("card-header")) { return; }
-          e.dataTransfer.setDragImage(doc.body, e.clientX, e.clientY);
-        };
-        doc.body.ondragend = e => {
-          Object.assign(iframe.style, {
-            left: `${e.clientX}px`,
-            top: `${e.clientY}px`,
-            bottom: 'auto',
-            right: 'auto',
-          })
-        }
-      });
-    }
-
     document.body.appendChild(iframe);
 
+    const doc = iframe.contentDocument;
+    if (!doc) {
+      console.error("OpenReplay: CallWindow iframe document is not reachable.")
+      return; 
+    }
+    fetch("https://static.openreplay.com/tracker-assist/index.html")
+    //fetch("file:///Users/shikhu/work/asayer-tester/dist/assist/index.html")
+    .then(r => r.text())
+    .then((text) => {
+      iframe.onload = () => {
+        doc.body.removeChild(doc.body.children[0]); //?!!>R#
+        const assistSection = doc.getElementById("or-assist")
+        assistSection && assistSection.removeAttribute("style");
+        iframe.style.height = doc.body.scrollHeight + 'px';
+        iframe.style.width = doc.body.scrollWidth + 'px';
+        iframe.onload = null;
+      }
+
+      text = text.replace(/href="css/g, "href=\"https://static.openreplay.com/tracker-assist/css")
+      doc.open();
+      doc.write(text);
+      doc.close();
+
+      
+      this.vLocal = doc.getElementById("video-local") as HTMLVideoElement;
+      this.vRemote = doc.getElementById("video-remote") as HTMLVideoElement;
+      
+      //
+      this.vLocal.parentElement && this.vLocal.parentElement.classList.add("d-none");
+
+      this.audioBtn = doc.getElementById("audio-btn") as HTMLAnchorElement;
+      this.audioBtn.onclick = () => this.toggleAudio();
+      this.videoBtn = doc.getElementById("video-btn") as HTMLAnchorElement;
+      this.videoBtn.onclick = () => this.toggleVideo();
+
+      this.userNameSpan = doc.getElementById("username") as HTMLSpanElement;
+      this.vPlaceholder = doc.querySelector("#remote-stream p")
+      this._trySetAssistentName();
+      this._trySetStreams();
+
+      const endCallBtn = doc.getElementById("end-call-btn") as HTMLAnchorElement;
+      endCallBtn.onclick = endCall;
+
+      const tsText = doc.getElementById("time-stamp");
+      const startTs = Date.now();
+      if (tsText) {
+        this.tsInterval = setInterval(() => {
+          const ellapsed = Date.now() - startTs;
+          const secsFull = ~~(ellapsed / 1000);
+          const mins = ~~(secsFull / 60);
+          const secs = secsFull - mins * 60
+          tsText.innerText = `${mins}:${secs < 10 ? 0 : ''}${secs}`;
+        }, 500);
+      }
+
+      // TODO: better D'n'D 
+      doc.body.setAttribute("draggable", "true");
+      doc.body.ondragstart = (e) => {
+        if (!e.dataTransfer || !e.target) { return; }
+        //@ts-ignore
+        if (!e.target.classList || !e.target.classList.contains("card-header")) { return; }
+        e.dataTransfer.setDragImage(doc.body, e.clientX, e.clientY);
+      };
+      doc.body.ondragend = e => {
+        Object.assign(iframe.style, {
+          left: `${e.clientX}px`, // TODO: fix in case e is inside the iframe
+          top: `${e.clientY}px`,
+          bottom: 'auto',
+          right: 'auto',
+        })
+      }
+    });
   }
+
+  // TODO: load(): Promise
 
   private aRemote: HTMLAudioElement | null = null;
   private localStream: MediaStream | null = null;
@@ -109,7 +110,11 @@ export default class CallWindow {
   private _trySetStreams() {
     if (this.vRemote && !this.vRemote.srcObject && this.remoteStream) {
       this.vRemote.srcObject = this.remoteStream;
-      // Hack for audio (doesen't work in iframe because of some magical reasons)
+
+      if (this.vPlaceholder) {
+        this.vPlaceholder.innerText = "Video has been paused. Click anywhere to resume.";
+      }
+      // Hack for audio (doesen't work in iframe because of some magical reasons (check if it is connected to autoplay?))
       this.aRemote = document.createElement("audio");
       this.aRemote.autoplay = true;
       this.aRemote.style.display = "none"
@@ -131,6 +136,10 @@ export default class CallWindow {
     this.localStream = lStream;
     this.setLocalVideoStream = setLocalVideoStream;
     this._trySetStreams();
+  }
+
+  playRemote() {
+    this.vRemote && this.vRemote.play()
   }
 
 

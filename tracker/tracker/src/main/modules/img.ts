@@ -1,4 +1,4 @@
-import { timestamp, isURL, getBaseURI } from '../utils';
+import { timestamp, isURL } from '../utils';
 import App from '../app';
 import { ResourceTiming, SetNodeAttributeURLBased } from '../../messages';
 
@@ -17,7 +17,7 @@ export default function (app: App): void {
         app.send(new ResourceTiming(timestamp(), 0, 0, 0, 0, 0, src, 'img'));
       }
     } else if (src.length < 1e5) {
-      app.send(new SetNodeAttributeURLBased(id, 'src', src, getBaseURI()));
+      app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
     }
   });
 
@@ -30,7 +30,7 @@ export default function (app: App): void {
           return;
         }
         const src = target.src;
-        app.send(new SetNodeAttributeURLBased(id, 'src', src, getBaseURI()));
+        app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
       }
     }
   });

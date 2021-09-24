@@ -1,6 +1,7 @@
 import { isURL } from '../utils';
 import App from '../app';
 import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../../messages';
+import type Message from '../../messages/message';
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 
@@ -104,21 +105,28 @@ export default function (app: App, opts: Partial<Options>): void {
   if (!('PerformanceObserver' in window)) {
     options.captureResourceTimings = false;
   }
-  if (!options.captureResourceTimings) {
-    options.capturePageLoadTimings = false;
-    options.capturePageRenderTimings = false;
-  }
+  if (!options.captureResourceTimings) { return } // Resources are necessary for all timings
 
-  let resources: ResourcesTimeMap | null = options.captureResourceTimings
-    ? {}
-    : null;
+  const mQueue: Message[] = []
+  function sendOnStart(m: Message) {
+    if (app.active()) {
+      app.send(m)
+    } else {
+      mQueue.push(m)
+    }
+  }
+  app.attachStartCallback(function() {
+    mQueue.forEach(m => app.send(m))
+  })
+
+  let resources: ResourcesTimeMap | null = {}
 
   function resourceTiming(entry: PerformanceResourceTiming): void {
     if (entry.duration <= 0 || !isURL(entry.name) || app.isServiceURL(entry.name)) return;
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration;
     }
-    app.send(new 
+    sendOnStart(new 
       ResourceTiming(
         entry.startTime + performance.timing.navigationStart,
         entry.duration,
@@ -136,20 +144,17 @@ export default function (app: App, opts: Partial<Options>): void {
     );
   }
 
-  const observer: PerformanceObserver | null = options.captureResourceTimings
-    ? new PerformanceObserver((list) =>
-        list.getEntries().forEach(resourceTiming),
-      )
-    : null;
-  if (observer !== null) {
-    performance.getEntriesByType('resource').forEach(resourceTiming);
-    observer.observe({ entryTypes: ['resource'] });
-  }
+  const observer: PerformanceObserver = new PerformanceObserver(
+    (list) => list.getEntries().forEach(resourceTiming),
+  )
+  performance.getEntriesByType('resource').forEach(resourceTiming)
+  observer.observe({ entryTypes: ['resource'] })
+
 
   let firstPaint = 0,
     firstContentfulPaint = 0;
 
-  if (options.capturePageLoadTimings && observer !== null) {
+  if (options.capturePageLoadTimings) {
 
     let pageLoadTimingSent: boolean = false;
     app.ticker.attach(() => {
@@ -200,7 +205,7 @@ export default function (app: App, opts: Partial<Options>): void {
     }, 30);
   }
 
-  if (options.capturePageRenderTimings && observer !== null) {
+  if (options.capturePageRenderTimings) {
     let visuallyComplete = 0,
       interactiveWindowStartTime = 0,
       interactiveWindowTickTime: number | null = 0,
