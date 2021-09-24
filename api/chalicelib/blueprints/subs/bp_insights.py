@@ -105,6 +105,16 @@ def get_users_power(projectId, context):
 
     return {"data": insights.users_power(project_id=projectId, **{**data, **args})}
 
+@app.route('/{projectId}/insights/users_slipping', methods=['GET', 'POST'])
+def get_users_slipping(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.users_slipping(project_id=projectId, **{**data, **args})}
+
 #
 #
 # @app.route('/{projectId}/dashboard/{widget}/search', methods=['GET'])
