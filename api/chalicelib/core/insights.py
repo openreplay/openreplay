@@ -527,6 +527,41 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
 
 
 @dev.timed
+def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                      filters=[],
+                      **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+    pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
+    pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+    event_table = JOURNEY_TYPES["CLICK"]["table"]
+    event_column = JOURNEY_TYPES["CLICK"]["column"]
+    for f in filters:
+        if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
+            event_table = JOURNEY_TYPES[f["value"]]["table"]
+            event_column = JOURNEY_TYPES[f["value"]]["column"]
+        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+    pg_sub_query.append(f"length({event_column})>2")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT {event_column} AS value, AVG(DISTINCT session_id) AS avg
+                    FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
+                    WHERE {" AND ".join(pg_sub_query)}
+                    GROUP BY value
+                    ORDER BY avg DESC
+                    LIMIT 7;"""
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+
+    return rows
+
+
+@dev.timed
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                  filters=[],
                  **args):
