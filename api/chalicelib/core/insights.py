@@ -633,7 +633,7 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
                 event_value = row["value"]
         extra_values["value"] = event_value
 
-        pg_query = f"""SELECT user_id, last_time,interactions_count, MIN(start_ts) AS first_seen, MAX(start_ts) AS last_seen
+        pg_query = f"""SELECT user_id, last_time, interactions_count, MIN(start_ts) AS first_seen, MAX(start_ts) AS last_seen
                         FROM (SELECT user_id, MAX(timestamp) AS last_time, COUNT(DISTINCT session_id) AS interactions_count
                               FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
                               WHERE {" AND ".join(pg_sub_query)}
