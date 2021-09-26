@@ -253,7 +253,6 @@ export default class DOMManager extends ListWalker<TimedMessage> {
           logger.warn("create_i_frame_document message. Node is not iframe")
           return;
         }
-        console.log("iframe", msg)
       //   await new Promise(resolve => { node.onload = resolve })
 
         const doc = node.contentDocument;
