@@ -26,7 +26,18 @@ def get_insights_journey(projectId, context):
     params = app.current_request.query_params
     args = dashboard.dashboard_args(params)
 
-    return {"data": insights.get_journey(project_id=projectId, **{**data, **args})}
+    return {"data": insights.journey(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/users_acquisition', methods=['GET', 'POST'])
+def get_users_acquisition(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.users_acquisition(project_id=projectId, **{**data, **args})}
 
 
 @app.route('/{projectId}/insights/users_retention', methods=['GET', 'POST'])
@@ -37,7 +48,105 @@ def get_users_retention(projectId, context):
     params = app.current_request.query_params
     args = dashboard.dashboard_args(params)
 
-    return {"data": insights.get_retention(project_id=projectId, **{**data, **args})}
+    return {"data": insights.users_retention(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/feature_retention', methods=['GET', 'POST'])
+def get_feature_rentention(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_retention(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/feature_acquisition', methods=['GET', 'POST'])
+def get_feature_acquisition(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_acquisition(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/feature_popularity_frequency', methods=['GET', 'POST'])
+def get_feature_popularity_frequency(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_popularity_frequency(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/feature_intensity', methods=['GET', 'POST'])
+def get_feature_intensity(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_intensity(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/feature_adoption', methods=['GET', 'POST'])
+def get_feature_adoption(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_adoption(project_id=projectId, **{**data, **args})}
+
+@app.route('/{projectId}/insights/feature_adoption_top_users', methods=['GET', 'POST'])
+def get_feature_adoption(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_adoption_top_users(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/users_active', methods=['GET', 'POST'])
+def get_users_active(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.users_active(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/users_power', methods=['GET', 'POST'])
+def get_users_power(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.users_power(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/users_slipping', methods=['GET', 'POST'])
+def get_users_slipping(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.users_slipping(project_id=projectId, **{**data, **args})}
 
 #
 #
