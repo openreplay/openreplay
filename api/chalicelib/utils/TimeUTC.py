@@ -116,6 +116,13 @@ class TimeUTC:
         return int((datetime.now(pytz.utc).now() - datetime.now(pytz.utc).replace(tzinfo=None)).total_seconds() * 1000)
 
     @staticmethod
+    def trunc_day(timestamp):
+        dt = TimeUTC.from_ms_timestamp(timestamp)
+        return TimeUTC.datetime_to_timestamp(dt
+                                             .replace(hour=0, minute=0, second=0, microsecond=0)
+                                             .astimezone(pytz.utc))
+
+    @staticmethod
     def trunc_week(timestamp):
         dt = TimeUTC.from_ms_timestamp(timestamp)
         start = dt - timedelta(days=dt.weekday())

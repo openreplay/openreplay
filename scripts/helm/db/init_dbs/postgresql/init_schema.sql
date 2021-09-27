@@ -172,7 +172,7 @@ CREATE TABLE projects
       "defaultInputMode": "plain"
     }'::jsonb -- ??????
 );
-CREATE INDEX projects_tenant_id_idx ON projects(tenant_id);
+CREATE INDEX projects_tenant_id_idx ON projects (tenant_id);
 
 CREATE OR REPLACE FUNCTION notify_project() RETURNS trigger AS
 $$
@@ -248,7 +248,7 @@ create table webhooks
     index       integer   default 0                            not null,
     name        varchar(100)
 );
-CREATE INDEX webhooks_tenant_id_idx ON webhooks(tenant_id);
+CREATE INDEX webhooks_tenant_id_idx ON webhooks (tenant_id);
 
 -- --- notifications.sql ---
 
@@ -388,7 +388,7 @@ CREATE TABLE issues
 );
 CREATE INDEX ON issues (issue_id, type);
 CREATE INDEX issues_context_string_gin_idx ON public.issues USING GIN (context_string gin_trgm_ops);
-CREATE INDEX issues_project_id_idx ON issues(project_id);
+CREATE INDEX issues_project_id_idx ON issues (project_id);
 
 -- --- errors.sql ---
 
@@ -522,6 +522,8 @@ CREATE INDEX sessions_start_ts_idx ON public.sessions (start_ts) WHERE duration 
 CREATE INDEX sessions_project_id_idx ON public.sessions (project_id) WHERE duration > 0;
 CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions (session_id, project_id, start_ts) WHERE duration > 0;
 CREATE INDEX sessions_session_id_project_id_start_ts_durationNN_idx ON sessions (session_id, project_id, start_ts) WHERE duration IS NOT NULL;
+CREATE INDEX sessions_user_id_useridNN_idx ON sessions (user_id) WHERE user_id IS NOT NULL;
+CREATE INDEX sessions_uid_projectid_startts_sessionid_uidNN_durGTZ_idx ON sessions (user_id, project_id, start_ts, session_id) WHERE user_id IS NOT NULL AND duration > 0;
 
 ALTER TABLE public.sessions
     ADD CONSTRAINT web_browser_constraint CHECK ( (sessions.platform = 'web' AND sessions.user_browser NOTNULL) OR
@@ -679,6 +681,7 @@ CREATE INDEX pages_timestamp_metgt0_idx ON events.pages (timestamp) WHERE respon
 CREATE INDEX pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, speed_index) WHERE speed_index > 0 AND speed_index IS NOT NULL;
 CREATE INDEX pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
 CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
+CREATE INDEX pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHERE length(base_path) > 2;
 
 
 CREATE TABLE events.clicks
@@ -872,6 +875,6 @@ CREATE TABLE jobs
 );
 CREATE INDEX ON jobs (status);
 CREATE INDEX ON jobs (start_at);
-CREATE INDEX jobs_project_id_idx ON jobs(project_id);
+CREATE INDEX jobs_project_id_idx ON jobs (project_id);
 
 COMMIT;
