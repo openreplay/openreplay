@@ -20,8 +20,6 @@ data:
       proxy_set_header Connection "";
       chunked_transfer_encoding off;
 
-      client_max_body_size 50M;
-
       proxy_pass http://minio.db.svc.cluster.local:9000;
     }
 
@@ -134,6 +132,7 @@ data:
       # server_name _;
       # return 301 https://$host$request_uri;
       include /etc/nginx/conf.d/location.list;
+      client_max_body_size 50M;
     }
     server {
       listen                443 ssl;
@@ -142,4 +141,5 @@ data:
       ssl_protocols TLSv1.2 TLSv1.3;
       ssl_ciphers "EECDH+ECDSA+AESGCM EECDH+aRSA+AESGCM EECDH+ECDSA+SHA384 EECDH+ECDSA+SHA256 EECDH+aRSA+SHA384 EECDH+aRSA+SHA256 EECDH+aRSA+RC4 EECDH EDH+aRSA HIGH !RC4 !aNULL !eNULL !LOW !3DES !MD5 !EXP !PSK !SRP !DSS";
       include /etc/nginx/conf.d/location.list;
+      client_max_body_size 50M;
     }
