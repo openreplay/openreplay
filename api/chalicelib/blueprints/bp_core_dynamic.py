@@ -360,7 +360,11 @@ def process_invitation_link():
         return {"errors": ["invitation not found"]}
     if user["expiredInvitation"]:
         return {"errors": ["expired invitation, please ask your admin to send a new one"]}
-    pass_token = users.allow_password_change(user_id=user["userId"])
+    if user["expiredChange"] is not None and not user["expiredChange"] \
+            and user["changePwdToken"] is not None and user["changePwdAge"] < -5 * 60:
+        pass_token = user["changePwdToken"]
+    else:
+        pass_token = users.allow_password_change(user_id=user["userId"])
     return Response(
         status_code=307,
         body='',
