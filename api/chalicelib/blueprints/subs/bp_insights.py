@@ -9,15 +9,6 @@ app = Blueprint(__name__)
 _overrides.chalice_app(app)
 
 
-#
-# @app.route('/{projectId}/dashboard/metadata', methods=['GET'])
-# def get_metadata_map(projectId, context):
-#     metamap = []
-#     for m in metadata.get(project_id=projectId):
-#         metamap.append({"name": m["key"], "key": f"metadata{m['index']}"})
-#     return {"data": metamap}
-#
-#
 @app.route('/{projectId}/insights/journey', methods=['GET', 'POST'])
 def get_insights_journey(projectId, context):
     data = app.current_request.json_body
@@ -105,6 +96,7 @@ def get_feature_adoption(projectId, context):
 
     return {"data": insights.feature_adoption(project_id=projectId, **{**data, **args})}
 
+
 @app.route('/{projectId}/insights/feature_adoption_top_users', methods=['GET', 'POST'])
 def get_feature_adoption(projectId, context):
     data = app.current_request.json_body
@@ -114,6 +106,17 @@ def get_feature_adoption(projectId, context):
     args = dashboard.dashboard_args(params)
 
     return {"data": insights.feature_adoption_top_users(project_id=projectId, **{**data, **args})}
+
+
+@app.route('/{projectId}/insights/feature_adoption_daily_usage', methods=['GET', 'POST'])
+def get_feature_adoption_daily_usage(projectId, context):
+    data = app.current_request.json_body
+    if data is None:
+        data = {}
+    params = app.current_request.query_params
+    args = dashboard.dashboard_args(params)
+
+    return {"data": insights.feature_adoption_daily_usage(project_id=projectId, **{**data, **args})}
 
 
 @app.route('/{projectId}/insights/users_active', methods=['GET', 'POST'])
@@ -148,31 +151,13 @@ def get_users_slipping(projectId, context):
 
     return {"data": insights.users_slipping(project_id=projectId, **{**data, **args})}
 
-#
-#
-# @app.route('/{projectId}/dashboard/{widget}/search', methods=['GET'])
-# def get_dashboard_autocomplete(projectId, widget, context):
-#     params = app.current_request.query_params
-#     if params is None or params.get('q') is None or len(params.get('q')) == 0:
-#         return {"data": []}
-#     params['q'] = '^' + params['q']
-#
-#     if widget in ['performance']:
-#         data = dashboard.search(params.get('q', ''), params.get('type', ''), project_id=projectId,
-#                                 platform=params.get('platform', None), performance=True)
-#     elif widget in ['pages', 'pages_dom_buildtime', 'top_metrics', 'time_to_render',
-#                     'impacted_sessions_by_slow_pages', 'pages_response_time']:
-#         data = dashboard.search(params.get('q', ''), params.get('type', ''), project_id=projectId,
-#                                 platform=params.get('platform', None), pages_only=True)
-#     elif widget in ['resources_loading_time']:
-#         data = dashboard.search(params.get('q', ''), params.get('type', ''), project_id=projectId,
-#                                 platform=params.get('platform', None), performance=False)
-#     elif widget in ['time_between_events', 'events']:
-#         data = dashboard.search(params.get('q', ''), params.get('type', ''), project_id=projectId,
-#                                 platform=params.get('platform', None), performance=False, events_only=True)
-#     elif widget in ['metadata']:
-#         data = dashboard.search(params.get('q', ''), None, project_id=projectId,
-#                                 platform=params.get('platform', None), metadata=True, key=params.get("key"))
-#     else:
-#         return {"errors": [f"unsupported widget: {widget}"]}
-#     return {'data': data}
+
+@app.route('/{projectId}/insights/search', methods=['GET'])
+def get_insights_autocomplete(projectId, context):
+    params = app.current_request.query_params
+    if params is None or params.get('q') is None or len(params.get('q')) == 0:
+        return {"data": []}
+    # params['q'] = '^' + params['q']
+
+    return {'data': insights.search(params.get('q', ''), project_id=projectId,
+                                    platform=params.get('platform', None), feature_type=params.get("key"))}

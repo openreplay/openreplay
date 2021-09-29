@@ -11,8 +11,8 @@ def __transform_journey(rows):
     nodes = []
     links = []
     for r in rows:
-        source = r["source_event"][r["source_event"].index("_"):]
-        target = r["target_event"][r["target_event"].index("_"):]
+        source = r["source_event"][r["source_event"].index("_") + 1:]
+        target = r["target_event"][r["target_event"].index("_") + 1:]
         if source not in nodes:
             nodes.append(source)
         if target not in nodes:
@@ -25,7 +25,7 @@ JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
     "PAGES": {"table": "events.pages", "column": "base_path", "table_id": "message_id"},
     "CLICK": {"table": "events.clicks", "column": "label", "table_id": "message_id"},
-    "VIEW": {"table": "events_ios.views", "column": "name", "table_id": "seq_index"},
+    # "VIEW": {"table": "events_ios.views", "column": "name", "table_id": "seq_index"}, TODO: enable this for SAAS only
     "EVENT": {"table": "events_common.customs", "column": "name", "table_id": "seq_index"}
 }
 
@@ -97,7 +97,7 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, "event_start": event_start, "JOURNEY_DEPTH": JOURNEY_DEPTH,
                   **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
+        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
 
@@ -596,8 +596,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
 
 @dev.timed
 def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
-                               filters=[],
-                               **args):
+                               filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                      time_constraint=True)
     pg_sub_query.append("user_id IS NOT NULL")
@@ -644,6 +643,69 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
                         ORDER BY 2 DESC
                         LIMIT 10;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+        # print(cur.mogrify(pg_query, params))
+        # print("---------------------")
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+    return {"users": helper.list_to_camel_case(rows),
+            "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
+
+
+@dev.timed
+def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
+                                 filters=[], **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
+                                     time_constraint=True)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+                                           chart=True, data=args)
+    event_type = "CLICK"
+    event_value = '/'
+    extra_values = {}
+    default = True
+    for f in filters:
+        if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
+            event_type = f["value"]
+        elif f["type"] == "EVENT_VALUE":
+            event_value = f["value"]
+            default = False
+        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
+    event_table = JOURNEY_TYPES[event_type]["table"]
+    event_column = JOURNEY_TYPES[event_type]["column"]
+    with pg_client.PostgresClient() as cur:
+        pg_sub_query_chart.append("feature.timestamp >= %(startTimestamp)s")
+        pg_sub_query_chart.append("feature.timestamp < %(endTimestamp)s")
+        pg_sub_query_chart.append(f"length({event_column})>2")
+        pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
+        pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+        pg_sub_query.append(f"length({event_column})>2")
+        if default:
+            # get most used value
+            pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
+                        FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
+                        WHERE {" AND ".join(pg_sub_query)}
+                        GROUP BY value
+                        ORDER BY count DESC
+                        LIMIT 1;"""
+            params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                      "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+            cur.execute(cur.mogrify(pg_query, params))
+            row = cur.fetchone()
+            if row is not None:
+                event_value = row["value"]
+        extra_values["value"] = event_value
+        pg_sub_query_chart.append(f"feature.{event_column} = %(value)s")
+        pg_query = f"""SELECT generated_timestamp       AS timestamp,
+                               COALESCE(COUNT(session_id), 0) AS count
+                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                                 LEFT JOIN LATERAL ( SELECT DISTINCT session_id
+                                                     FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
+                                                     WHERE {" AND ".join(pg_sub_query_chart)}
+                            ) AS users ON (TRUE)
+                        GROUP BY generated_timestamp
+                        ORDER BY generated_timestamp;"""
+        params = {"step_size": TimeUTC.MS_DAY, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
         # print(cur.mogrify(pg_query, params))
         # print("---------------------")
@@ -814,3 +876,44 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
         "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}],
         "chart": helper.list_to_camel_case(rows)
     }
+
+
+@dev.timed
+def search(text, feature_type, project_id, platform=None):
+    if not feature_type:
+        resource_type = "ALL"
+        data = search(text=text, feature_type=resource_type, project_id=project_id, platform=platform)
+        return data
+
+    pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, duration=True,
+                                     data={} if platform is None else {"platform": platform})
+
+    params = {"startTimestamp": TimeUTC.now() - 2 * TimeUTC.MS_MONTH,
+              "endTimestamp": TimeUTC.now(),
+              "project_id": project_id,
+              "value": helper.string_to_sql_like(text.lower()),
+              "platform_0": platform}
+    if feature_type == "ALL":
+        with pg_client.PostgresClient() as cur:
+            sub_queries = []
+            for e in JOURNEY_TYPES:
+                sub_queries.append(f"""(SELECT DISTINCT {JOURNEY_TYPES[e]["column"]} AS value, '{e}' AS "type"
+                             FROM {JOURNEY_TYPES[e]["table"]} INNER JOIN public.sessions USING(session_id)
+                             WHERE {" AND ".join(pg_sub_query)} AND {JOURNEY_TYPES[e]["column"]} ILIKE %(value)s
+                             LIMIT 10)""")
+            pg_query = "UNION ALL".join(sub_queries)
+            # print(cur.mogrify(pg_query, params))
+            cur.execute(cur.mogrify(pg_query, params))
+            rows = cur.fetchall()
+    elif JOURNEY_TYPES.get(feature_type) is not None:
+        with pg_client.PostgresClient() as cur:
+            pg_query = f"""SELECT DISTINCT {JOURNEY_TYPES[feature_type]["column"]} AS value, '{feature_type}' AS "type"
+                             FROM {JOURNEY_TYPES[feature_type]["table"]} INNER JOIN public.sessions USING(session_id)
+                             WHERE {" AND ".join(pg_sub_query)} AND {JOURNEY_TYPES[feature_type]["column"]} ILIKE %(value)s
+                             LIMIT 10;"""
+            # print(cur.mogrify(pg_query, params))
+            cur.execute(cur.mogrify(pg_query, params))
+            rows = cur.fetchall()
+    else:
+        return []
+    return [helper.dict_to_camel_case(row) for row in rows]
