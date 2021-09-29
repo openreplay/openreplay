@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import { connectPlayer } from 'Player';
+import { connectPlayer, jump } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
@@ -200,6 +200,7 @@ export default class Network extends React.PureComponent {
           fetchPresented = { fetchPresented }
           resourcesSize={resourcesSize}
           transferredSize={transferredSize}
+          onRowClick={ (e, index) => { jump(e.time); } }
         />
         {/* <BottomBlock>
           <BottomBlock.Header>
