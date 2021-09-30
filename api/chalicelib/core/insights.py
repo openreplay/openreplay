@@ -97,7 +97,7 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, "event_start": event_start, "JOURNEY_DEPTH": JOURNEY_DEPTH,
                   **__get_constraint_values(args), **extra_values}
-        print(cur.mogrify(pg_query, params))
+        # print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
 
@@ -225,7 +225,7 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        # print(cur.mogrify(pg_query, params))
+        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
@@ -273,7 +273,7 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        # print(cur.mogrify(pg_query, params))
+        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
@@ -328,7 +328,8 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
             if row is not None:
                 event_value = row["value"]
         extra_values["value"] = event_value
-
+        if len(event_value) > 2:
+            pg_sub_query.append(f"length({event_column})>2")
         pg_query = f"""SELECT FLOOR(DATE_PART('day', connexion_week - to_timestamp(%(startTimestamp)s/1000)) / 7)::integer AS week,
                                COUNT(DISTINCT connexions_list.user_id)                                     AS users_count,
                                ARRAY_AGG(DISTINCT connexions_list.user_id)                                 AS connected_users
@@ -347,8 +348,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                               GROUP BY user_id) AS users_list
                                  LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
                                                            user_id
-                                                    FROM sessions
-                                                             INNER JOIN events.pages AS feature USING (session_id)
+                                                    FROM sessions INNER JOIN {event_table} AS feature USING (session_id)
                                                     WHERE users_list.user_id = sessions.user_id
                                                       AND %(startTimestamp)s <= sessions.start_ts
                                                       AND sessions.project_id = 1
@@ -362,7 +362,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
+        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
@@ -419,7 +419,8 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
             if row is not None:
                 event_value = row["value"]
         extra_values["value"] = event_value
-
+        if len(event_value) > 2:
+            pg_sub_query.append(f"length({event_column})>2")
         pg_query = f"""SELECT EXTRACT(EPOCH FROM first_connexion_week::date)::bigint*1000 AS first_connexion_week,
                                FLOOR(DATE_PART('day', connexion_week - first_connexion_week) / 7)::integer AS week,
                                COUNT(DISTINCT connexions_list.user_id)                            AS users_count,
@@ -454,7 +455,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
+        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
@@ -475,12 +476,14 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                                      time_constraint=True)
     event_table = JOURNEY_TYPES["CLICK"]["table"]
     event_column = JOURNEY_TYPES["CLICK"]["column"]
+    extra_values = {}
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
@@ -488,7 +491,7 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                         WHERE {" AND ".join(pg_sub_query)}
                             AND user_id IS NOT NULL;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
         # print(cur.mogrify(pg_query, params))
         # print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
@@ -505,16 +508,18 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                     GROUP BY value
                     ORDER BY count DESC
                     LIMIT 7;"""
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
+        # TODO: solve full scan
+        print(cur.mogrify(pg_query, params))
+        print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
         popularity = cur.fetchall()
         pg_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
                         FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY value;"""
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
+        # TODO: solve full scan
+        print(cur.mogrify(pg_query, params))
+        print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
         frequencies = cur.fetchall()
         total_usage = sum([f["count"] for f in frequencies])
@@ -544,6 +549,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
     with pg_client.PostgresClient() as cur:
@@ -552,7 +558,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
                         WHERE {" AND ".join(pg_sub_query)}
                             AND user_id IS NOT NULL;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
         # print(cur.mogrify(pg_query, params))
         # print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
@@ -562,7 +568,6 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
                                                             {"type": "EVENT_VALUE", "value": event_value}], }
         pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
         pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
-        pg_sub_query.append(f"length({event_column})>2")
         if default:
             # get most used value
             pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
@@ -579,6 +584,8 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             if row is not None:
                 event_value = row["value"]
         extra_values["value"] = event_value
+        if len(event_value) > 2:
+            pg_sub_query.append(f"length({event_column})>2")
         pg_sub_query.append(f"feature.{event_column} = %(value)s")
         pg_query = f"""SELECT COUNT(DISTINCT user_id) AS count
                     FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
@@ -612,12 +619,12 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
     with pg_client.PostgresClient() as cur:
         pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
         pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
-        pg_sub_query.append(f"length({event_column})>2")
         if default:
             # get most used value
             pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
@@ -634,6 +641,8 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             if row is not None:
                 event_value = row["value"]
         extra_values["value"] = event_value
+        if len(event_value) > 2:
+            pg_sub_query.append(f"length({event_column})>2")
         pg_sub_query.append(f"feature.{event_column} = %(value)s")
         pg_query = f"""SELECT user_id, COUNT(DISTINCT session_id) AS count
                         FROM {event_table} AS feature
@@ -671,20 +680,20 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
     with pg_client.PostgresClient() as cur:
         pg_sub_query_chart.append("feature.timestamp >= %(startTimestamp)s")
         pg_sub_query_chart.append("feature.timestamp < %(endTimestamp)s")
-        pg_sub_query_chart.append(f"length({event_column})>2")
         pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
         pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
-        pg_sub_query.append(f"length({event_column})>2")
         if default:
             # get most used value
             pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
                         FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
+                            AND length({event_column})>2
                         GROUP BY value
                         ORDER BY count DESC
                         LIMIT 1;"""
@@ -695,6 +704,8 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             if row is not None:
                 event_value = row["value"]
         extra_values["value"] = event_value
+        if len(event_value) > 2:
+            pg_sub_query.append(f"length({event_column})>2")
         pg_sub_query_chart.append(f"feature.{event_column} = %(value)s")
         pg_query = f"""SELECT generated_timestamp       AS timestamp,
                                COALESCE(COUNT(session_id), 0) AS count
@@ -707,8 +718,8 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
                         ORDER BY generated_timestamp;"""
         params = {"step_size": TimeUTC.MS_DAY, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
+        print(cur.mogrify(pg_query, params))
+        print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
     return {"users": helper.list_to_camel_case(rows),
@@ -725,12 +736,14 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
     event_table = JOURNEY_TYPES["CLICK"]["table"]
     event_column = JOURNEY_TYPES["CLICK"]["column"]
+    extra_values = {}
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
     pg_sub_query.append(f"length({event_column})>2")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT {event_column} AS value, AVG(DISTINCT session_id) AS avg
@@ -740,10 +753,10 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                     ORDER BY avg DESC
                     LIMIT 7;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+        # TODO: solve full scan issue
+        print(cur.mogrify(pg_query, params))
+        print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
 
@@ -759,11 +772,13 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
 
     pg_sub_query_chart.append("user_id IS NOT NULL")
     period = "DAY"
+    extra_values = {}
     for f in filters:
         if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
             period = f["value"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
+            extra_values["user_id"] = f["value"]
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(chart) AS chart
@@ -780,7 +795,8 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
                   "project_id": project_id,
                   "startTimestamp": TimeUTC.trunc_day(startTimestamp) if period == "DAY" else TimeUTC.trunc_week(
                       startTimestamp),
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args),
+                  **extra_values}
         # print(cur.mogrify(pg_query, params))
         # print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
@@ -856,7 +872,8 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
             if row is not None:
                 event_value = row["value"]
         extra_values["value"] = event_value
-
+        if len(event_value) > 2:
+            pg_sub_query.append(f"length({event_column})>2")
         pg_query = f"""SELECT user_id, last_time, interactions_count, MIN(start_ts) AS first_seen, MAX(start_ts) AS last_seen
                         FROM (SELECT user_id, MAX(timestamp) AS last_time, COUNT(DISTINCT session_id) AS interactions_count
                               FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
@@ -874,7 +891,7 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
     return {
         "startTimestamp": startTimestamp,
         "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}],
-        "chart": helper.list_to_camel_case(rows)
+        "list": helper.list_to_camel_case(rows)
     }
 
 
