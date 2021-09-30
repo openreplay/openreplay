@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import { connectPlayer, jump } from 'Player';
+import { connectPlayer, jump, pause } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
@@ -131,6 +131,7 @@ export function renderDuration(r) {
   domContentLoadedTime: state.domContentLoadedTime,
   loadTime: state.loadTime,
   time: state.time,
+  playing: state.playing,
   domBuildingTime: state.domBuildingTime,
   fetchPresented: state.fetchList.length > 0,
 }))
@@ -138,6 +139,13 @@ export default class Network extends React.PureComponent {
   state = {
     filter: '',
     activeTab: ALL,
+    currentIndex: 0
+  }
+
+  onRowClick = (e, index) => {
+    pause();
+    jump(e.time);
+    this.setState({ currentIndex: index })
   }
 
   onTabClick = activeTab => this.setState({ activeTab })
@@ -151,9 +159,10 @@ export default class Network extends React.PureComponent {
       loadTime,
       domBuildingTime,
       fetchPresented,
-      time
+      time,
+      playing
     } = this.props;
-    const { filter, activeTab } = this.state;
+    const { filter, activeTab, currentIndex } = this.state;
     const filterRE = getRE(filter, 'i');
     let filtered = resources.filter(({ type, name }) =>
       filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
@@ -200,7 +209,8 @@ export default class Network extends React.PureComponent {
           fetchPresented = { fetchPresented }
           resourcesSize={resourcesSize}
           transferredSize={transferredSize}
-          onRowClick={ (e, index) => { jump(e.time); } }
+          onRowClick={ this.onRowClick }
+          currentIndex={playing ? null : currentIndex}
         />
         {/* <BottomBlock>
           <BottomBlock.Header>
