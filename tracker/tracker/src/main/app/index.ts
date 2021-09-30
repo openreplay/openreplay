@@ -1,5 +1,5 @@
 import { timestamp, log, warn } from '../utils';
-import { Timestamp, TechnicalInfo, PageClose } from '../../messages';
+import { Timestamp, PageClose } from '../../messages';
 import Message from '../../messages/message';
 import Nodes from './nodes';
 import Observer from './observer';
@@ -24,10 +24,11 @@ export type Options = {
   session_pageno_key: string;
   local_uuid_key: string;
   ingestPoint: string;
-  resourceBaseHref: string, // resourceHref?
+  resourceBaseHref: string | null, // resourceHref?
   //resourceURLRewriter: (url: string) => string | boolean,
   __is_snippet: boolean;
   __debug_report_edp: string | null;
+  __debug_log: boolean;
   onStart?: (info: OnStartInfo) => void;
 } & ObserverOptions & WebworkerOptions;
 
@@ -67,9 +68,10 @@ export default class App {
         session_pageno_key: '__openreplay_pageno',
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
-        resourceBaseHref: '',
+        resourceBaseHref: null,
         __is_snippet: false,
         __debug_report_edp: null,
+        __debug_log: false,
         obscureTextEmails: true,
         obscureTextNumbers: false,
         captureIFrames: false,
@@ -90,10 +92,9 @@ export default class App {
           new Blob([`WEBWORKER_BODY`], { type: 'text/javascript' }),
         ),
       );
-      // this.worker.onerror = e => {
-      //   this.send(new TechnicalInfo("webworker_error", JSON.stringify(e)));
-      // /* TODO: send report */
-      // }
+      this.worker.onerror = e => {
+        this._debug("webworker_error", e)
+      }
       let lastTs = timestamp();
       let fileno = 0;
       this.worker.onmessage = ({ data }: MessageEvent) => {
@@ -114,11 +115,11 @@ export default class App {
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { 
-      this.sendDebugReport("worker_start", e);
+      this._debug("worker_start", e);
     }
   }
 
-  private sendDebugReport(context: string, e: any) {
+  private _debug(context: string, e: any) {
     if(this.options.__debug_report_edp !== null) {
       fetch(this.options.__debug_report_edp, {
         method: 'POST',
@@ -128,6 +129,9 @@ export default class App {
           error: `${e}`
         })
       });
+    }
+    if(this.options.__debug_log) {
+      warn("OpenReplay errror: ", context, e)
     }
   }
 
@@ -160,12 +164,11 @@ export default class App {
       try {
         fn.apply(this, args);
       } catch (e) {
-        app.send(new TechnicalInfo("error", JSON.stringify({
-          time: timestamp(),
-          name: e.name,
-          message: e.message,
-          stack: e.stack
-        })));
+        this._debug("safe_fn_call", e)
+        // time: timestamp(),
+        // name: e.name,
+        // message: e.message,
+        // stack: e.stack
       }
     } as any // TODO: correct typing
   }
@@ -210,8 +213,10 @@ export default class App {
     return this.projectKey
   }
   getBaseHref(): string {
-    if (this.options.resourceBaseHref) {
+    if (typeof this.options.resourceBaseHref === 'string') {
       return this.options.resourceBaseHref
+    } else if (typeof this.options.resourceBaseHref === 'object') {
+      //switch between  types
     }
     if (document.baseURI) {
       return document.baseURI
@@ -220,6 +225,12 @@ export default class App {
     return document.head
       ?.getElementsByTagName("base")[0]
       ?.getAttribute("href") || location.origin + location.pathname
+  }
+  resolveResourceURL(resourceURL: string): string {
+    const base = new URL(this.getBaseHref())
+    base.pathname += "/" + new URL(resourceURL).pathname
+    base.pathname.replace(/\/+/g, "/")
+    return base.toString()
   }
 
   isServiceURL(url: string): boolean {
@@ -310,7 +321,7 @@ export default class App {
       .catch(e => {
         this.stop();
         warn("OpenReplay was unable to start. ", e)
-        this.sendDebugReport("session_start", e);
+        this._debug("session_start", e);
         throw e;
       })
     }

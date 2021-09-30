@@ -49,7 +49,7 @@ function sendBatch(batch: Uint8Array):void {
       if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
         reset();
         sendQueue.length = 0;
-        if (this.status === 403) { // Unauthorised (Token expired)
+        if (this.status === 401) { // Unauthorised (Token expired)
           self.postMessage("restart")
           return
         }
@@ -74,6 +74,7 @@ function sendBatch(batch: Uint8Array):void {
     attemptsCount++;
     setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT);
   }
+  // TODO: handle offline exception
   req.send(batch.buffer);
 }
 
