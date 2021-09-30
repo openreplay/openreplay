@@ -682,7 +682,7 @@ CREATE INDEX pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, 
 CREATE INDEX pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
 CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
 CREATE INDEX pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHERE length(base_path) > 2;
-
+CREATE INDEX pages_session_id_timestamp_idx ON events.pages (session_id, timestamp);
 
 CREATE TABLE events.clicks
 (
@@ -702,6 +702,7 @@ CREATE INDEX clicks_label_session_id_timestamp_idx ON events.clicks (label, sess
 CREATE INDEX clicks_url_idx ON events.clicks (url);
 CREATE INDEX clicks_url_gin_idx ON events.clicks USING GIN (url gin_trgm_ops);
 CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp, selector);
+CREATE INDEX clicks_session_id_timestamp_idx ON events.clicks (session_id, timestamp);
 
 
 CREATE TABLE events.inputs
