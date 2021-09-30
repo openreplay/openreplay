@@ -48,11 +48,11 @@ func isCachable(rawurl string) bool {
 
 func GetFullCachableURL(baseURL string, relativeURL string) (string, bool) {
 	if !isRelativeCachable(relativeURL) {
-		return "", false
+		return relativeURL, false
 	}
 	fullURL := ResolveURL(baseURL, relativeURL)
 	if !isCachable(fullURL) {
-		return "", false
+		return fullURL, false
 	}
 	return fullURL, true
 }
@@ -77,7 +77,7 @@ func GetCachePathForAssets(sessionID uint64, rawurl string) string {
 func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string) string {
 	fullURL, cachable := GetFullCachableURL(baseURL, relativeURL)
 	if !cachable {
-		return relativeURL
+		return fullURL
 	}
 
   u := url.URL{
