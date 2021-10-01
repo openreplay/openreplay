@@ -90,7 +90,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
             <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
           </div>
         }
-        content={ `Call ${userId}` }
+        content={ `Call ${userId ? userId : 'User'}` }
         size="tiny"
         inverted
         position="top right"
