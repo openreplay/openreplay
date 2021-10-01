@@ -1,0 +1,8 @@
+.row {
+  display: flex;
+  padding: 5px 0px;
+  padding-left: 20px;
+  &:hover {
+    background-color: $active-blue;
+  }
+}
