@@ -24,7 +24,7 @@ import (
 	"openreplay/backend/services/http/uaparser"
 
 )
-
+ 
 var rewriter *assets.Rewriter
 var producer types.Producer
 var pgconn *cache.PGCache
