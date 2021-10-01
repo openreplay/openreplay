@@ -1,0 +1,9 @@
+.row {
+  display: flex;
+  padding: 5px 0px;
+  font-size: 13px;
+  /* padding-left: 20px; */
+  &:hover {
+    background-color: $active-blue;
+  }
+}
