@@ -3,7 +3,6 @@ import { NoContent } from 'UI'
 import stl from './headers.css'
 
 function Headers(props) {
-  console.log('props', props);
   return (
     <div>
       <NoContent
