@@ -172,7 +172,7 @@ CREATE TABLE projects
       "defaultInputMode": "plain"
     }'::jsonb -- ??????
 );
-CREATE INDEX projects_tenant_id_idx ON projects(tenant_id);
+CREATE INDEX ON public.projects (project_key);
 
 CREATE OR REPLACE FUNCTION notify_project() RETURNS trigger AS
 $$
@@ -248,7 +248,6 @@ create table webhooks
     index       integer   default 0                            not null,
     name        varchar(100)
 );
-CREATE INDEX webhooks_tenant_id_idx ON webhooks(tenant_id);
 
 -- --- notifications.sql ---
 
@@ -388,7 +387,7 @@ CREATE TABLE issues
 );
 CREATE INDEX ON issues (issue_id, type);
 CREATE INDEX issues_context_string_gin_idx ON public.issues USING GIN (context_string gin_trgm_ops);
-CREATE INDEX issues_project_id_idx ON issues(project_id);
+CREATE INDEX issues_project_id_idx ON issues (project_id);
 
 -- --- errors.sql ---
 
@@ -872,6 +871,6 @@ CREATE TABLE jobs
 );
 CREATE INDEX ON jobs (status);
 CREATE INDEX ON jobs (start_at);
-CREATE INDEX jobs_project_id_idx ON jobs(project_id);
+CREATE INDEX jobs_project_id_idx ON jobs (project_id);
 
 COMMIT;
