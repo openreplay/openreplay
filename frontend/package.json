@@ -55,7 +55,7 @@
     "redux": "^4.0.5",
     "redux-immutable": "^4.0.0",
     "redux-thunk": "^2.3.0",
-    "semantic-ui-react": "^0.87.3",
+    "semantic-ui-react": "^0.88.2",
     "socket.io-client": "^3.0.3",
     "source-map": "^0.7.3",
     "syncod": "^0.0.1",
