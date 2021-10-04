@@ -83,12 +83,12 @@ export interface Options {
 export default function (app: App, opts: Partial<Options>): void {
   const options: Options = Object.assign(
     {
-      heatmaps: {
-        finder: {
-          threshold: 5,
-          maxNumberOfTries: 600,
-        },
-      },
+      heatmaps: false // {
+        // finder: {
+        //   threshold: 5,
+        //   maxNumberOfTries: 600,
+        // },
+      // },
     },
     opts,
   );
