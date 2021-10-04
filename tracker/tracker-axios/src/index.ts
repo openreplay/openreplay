@@ -9,7 +9,7 @@ export interface Options {
   instance: AxiosInstance;
   failuresOnly: boolean;
   captureWhen: (AxiosRequestConfig) => boolean;
-  ingoreHeaders: Array<string> | boolean;
+  ignoreHeaders: Array<string> | boolean;
 }
 
 export default function(opts: Partial<Options> = {}) {
@@ -18,7 +18,7 @@ export default function(opts: Partial<Options> = {}) {
     	instance: axios,
     	failuresOnly: false,
     	captureWhen: () => true,
-    	ingoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
+    	ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
     },
     opts,
   );
@@ -27,7 +27,7 @@ export default function(opts: Partial<Options> = {}) {
       return;
     }
 
-    const ihOpt = options.ingoreHeaders
+    const ihOpt = options.ignoreHeaders
     const isHIgnoring = Array.isArray(ihOpt)
       ? name => ihOpt.includes(name)
       : () => ihOpt

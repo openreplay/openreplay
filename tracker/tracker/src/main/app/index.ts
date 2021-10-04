@@ -164,7 +164,7 @@ export default class App {
       try {
         fn.apply(this, args);
       } catch (e) {
-        this._debug("safe_fn_call", e)
+        app._debug("safe_fn_call", e)
         // time: timestamp(),
         // name: e.name,
         // message: e.message,

@@ -4,7 +4,7 @@ export interface Options {
   sessionTokenHeader?: string;
   replaceDefault: boolean; // overrideDefault ?
   failuresOnly: boolean;
-  ingoreHeaders: Array<string> | boolean;
+  ignoreHeaders: Array<string> | boolean;
 }
 
 export default function(opts: Partial<Options> = {}) {
@@ -12,7 +12,7 @@ export default function(opts: Partial<Options> = {}) {
     {
       replaceDefault: false,
       failuresOnly: false,
-      ingoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
+      ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
     },
     opts,
   );
@@ -22,7 +22,7 @@ export default function(opts: Partial<Options> = {}) {
       return window.fetch;
     }
 
-    const ihOpt = options.ingoreHeaders
+    const ihOpt = options.ignoreHeaders
     const isHIgnoring = Array.isArray(ihOpt)
       ? name => ihOpt.includes(name)
       : () => ihOpt
