@@ -31,7 +31,7 @@ Options:
   failuresOnly: boolean;                         // default: false
   captureWhen: (AxiosRequestConfig) => boolean;  // default: () => true
   sessionTokenHeader: string;                    // default: undefined
-  ingoreHeaders: Array<string> | boolean,        // default [ 'Cookie', 'Set-Cookie', 'Authorization' ]
+  ignoreHeaders: Array<string> | boolean,        // default [ 'Cookie', 'Set-Cookie', 'Authorization' ]
 }
 ```
 By default plugin connects to the static `axios` instance, but you can specify one with the `instance` option.
@@ -42,4 +42,4 @@ Set `failuresOnly` option to `true` if you want to record only failed requests, 
 
 In case you use [OpenReplay integrations (sentry, bugsnag or others)](https://docs.openreplay.com/integrations), you can use `sessionTokenHeader` option to specify the header name. This header will be appended automatically to the each axios request and will contain OpenReplay session identificator value.
 
-You can define list of headers that you don't want to capture with the `ingoreHeaders` options. Set its value to `false` if you want to catch them all (`true` if opposite). By default plugin ignores the list of headers that might be sensetive such as `[ 'Cookie', 'Set-Cookie', 'Authorization' ]`.
+You can define list of headers that you don't want to capture with the `ignoreHeaders` options. Set its value to `false` if you want to catch them all (`true` if opposite). By default plugin ignores the list of headers that might be sensetive such as `[ 'Cookie', 'Set-Cookie', 'Authorization' ]`.
