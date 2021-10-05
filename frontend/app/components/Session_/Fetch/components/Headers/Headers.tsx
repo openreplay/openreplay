@@ -1,5 +1,5 @@
 import React from 'react'
-import { NoContent } from 'UI'
+import { NoContent, TextEllipsis } from 'UI'
 import stl from './headers.css'
 
 function Headers(props) {
@@ -19,7 +19,9 @@ function Headers(props) {
                 Object.keys(props.requestHeaders).map(h => (
                   <div className={stl.row}>
                     <div className="mr-2 font-medium">{h}:</div>
-                    <div>{props.requestHeaders[h]}</div>
+                    <div className="flex-1">
+                      <TextEllipsis text={props.requestHeaders[h]} />
+                    </div>
                   </div>
                 ))
               }

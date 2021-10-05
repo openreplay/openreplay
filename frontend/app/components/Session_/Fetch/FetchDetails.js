@@ -26,12 +26,14 @@ export default class FetchDetails extends React.PureComponent {
     try {
       jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload
       requestHeaders = jsonPayload.headers
+      jsonPayload.body = typeof jsonPayload.body === 'string' ? JSON.parse(jsonPayload.body) : jsonPayload.body
       delete jsonPayload.headers
     } catch (e) {}
 
     try {
       jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
       responseHeaders = jsonResponse.headers
+      jsonResponse.body = typeof jsonResponse.body === 'string' ? JSON.parse(jsonResponse.body) : jsonResponse.body
       delete jsonResponse.headers
     } catch (e) {}
     

@@ -6,4 +6,8 @@
   &:hover {
     background-color: $active-blue;
   }
+
+  & div:last-child  {
+    max-width: 80%;
+  }
 }
