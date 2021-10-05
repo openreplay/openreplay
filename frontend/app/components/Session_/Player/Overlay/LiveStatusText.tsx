@@ -7,5 +7,5 @@ interface Props {
 }
 
 export default function LiveStatusText({ text }: Props) {
-  return <div className={ovStl.overlay}><span className={stl.text}>{text}</span></div>
+  return <div className={ovStl.overlay}><div className={stl.text}>{text}</div></div>
 }
