@@ -52,14 +52,10 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT source_event,
                                target_event,
-                               MAX(target_id)  max_target_id,
-                               MAX(source_id) max_source_id,
                                count(*) AS      value
                         
                         FROM (SELECT event_number || '_' || value as target_event,
-                                     message_id AS target_id,
-                                     LAG(event_number || '_' || value, 1) OVER ( PARTITION BY session_rank ) AS source_event,
-                                     LAG(message_id, 1) OVER ( PARTITION BY session_rank ) AS source_id
+                                     LAG(event_number || '_' || value, 1) OVER ( PARTITION BY session_rank ) AS source_event
                               FROM (SELECT value,
                                            session_rank,
                                            message_id,

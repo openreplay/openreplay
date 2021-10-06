@@ -54,14 +54,10 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT source_event,
                                target_event,
-                               MAX(target_id) max_target_id,
-                               MAX(source_id) max_source_id,
                                count(*) AS    value
-                        FROM (SELECT toString(event_number) || '_' || value                  as target_event,
-                                     toString(session_rank) || '_' || toString(event_number) AS target_id,
-                                     lagInFrame(toString(event_number) || '_' || value)         OVER (PARTITION BY session_rank ORDER BY datetime ASC ROWS
-                                         BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS source_event, lagInFrame(toString(session_rank) || '_' || toString(event_number)) OVER (PARTITION BY session_rank ORDER BY datetime ASC ROWS
-                                         BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS source_id
+                        FROM (SELECT toString(event_number) || '_' || value                   AS target_event,
+                                     lagInFrame(toString(event_number) || '_' || value) OVER (PARTITION BY session_rank ORDER BY datetime ASC ROWS
+                                         BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS source_event
                               FROM (SELECT session_rank,
                                            datetime,
                                            value,
