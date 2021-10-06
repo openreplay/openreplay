@@ -206,7 +206,7 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
                                                   AND project_id =  %(project_id)s
                                                   AND bsess.user_id = sessions.user_id
                                                 LIMIT 1))
-                              GROUP BY user_id) AS users_list
+                              ) AS users_list
                                  LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
                                                            user_id
                                                     FROM sessions
@@ -245,7 +245,7 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                                FLOOR(DATE_PART('day', connexion_week - first_connexion_week) / 7)::integer AS week,
                                COUNT(DISTINCT connexions_list.user_id)                            AS users_count,
                                ARRAY_AGG(DISTINCT connexions_list.user_id)                        AS connected_users
-                        FROM (SELECT DISTINCT user_id, MIN(DATE_TRUNC('week', to_timestamp(start_ts / 1000))) AS first_connexion_week
+                        FROM (SELECT user_id, MIN(DATE_TRUNC('week', to_timestamp(start_ts / 1000))) AS first_connexion_week
                               FROM sessions
                               WHERE {" AND ".join(pg_sub_query)} 
                                 AND NOT EXISTS((SELECT 1
@@ -261,7 +261,7 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                                                     WHERE users_list.user_id = sessions.user_id
                                                       AND first_connexion_week <=
                                                           DATE_TRUNC('week', to_timestamp(sessions.start_ts / 1000)::timestamp)
-                                                      AND sessions.project_id = 1
+                                                      AND sessions.project_id = %(project_id)s
                                                       AND sessions.start_ts < (%(endTimestamp)s - 1)
                                                     GROUP BY connexion_week, user_id) AS connexions_list ON (TRUE)
                         GROUP BY first_connexion_week, week
@@ -347,7 +347,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                                                     FROM sessions INNER JOIN {event_table} AS feature USING (session_id)
                                                     WHERE users_list.user_id = sessions.user_id
                                                       AND %(startTimestamp)s <= sessions.start_ts
-                                                      AND sessions.project_id = 1
+                                                      AND sessions.project_id = %(project_id)s
                                                       AND sessions.start_ts < (%(endTimestamp)s - 1)
                                                       AND feature.timestamp >= %(startTimestamp)s
                                                       AND feature.timestamp < %(endTimestamp)s
