@@ -8,6 +8,7 @@ import ChatWindow from '../../ChatWindow';
 import { callPeer } from 'Player'
 import { CallingState, ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
 import { toast } from 'react-toastify';
+import { confirm } from 'UI/Confirmation';
 import stl from './AassistActions.css'
 
 function onClose(stream) {
@@ -65,6 +66,16 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       });
   }
 
+  const confirmCall =  async () => {
+    if (await confirm({
+      header: 'Start Call',
+      confirmButton: 'Call',
+      confirmation: `Are you sure you want to call ${userId ? userId : 'User'}?`
+    })) {
+      call()
+    }
+  }
+
   const inCall = calling !== CallingState.False;
 
   return (
@@ -79,7 +90,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
                 {[stl.disabled]: peerConnectionStatus !== ConnectionStatus.Connected}
               )
             }
-            onClick={ inCall ? endCall : call}
+            onClick={ inCall ? endCall : confirmCall}
             role="button"
           >
             <Icon

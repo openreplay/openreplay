@@ -19,6 +19,7 @@
       "Types": ["./app/types" ],
       "Types/*": ["./app/types/*"], // Sublime hack
       "UI": ["./app/components/ui"],
+      "UI/*": ["./app/components/ui/*"],
       "Duck": ["./app/duck"],
       "Duck/*": ["./app/duck/*"],
       "Shared": ["./app/components/shared"],
