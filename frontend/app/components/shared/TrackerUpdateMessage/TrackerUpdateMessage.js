@@ -10,7 +10,9 @@ const TrackerUpdateMessage= (props) => {
   const { site, sites, match: { params: { siteId } } } = props;
   const activeSite = sites.find(s => s.id == siteId);
   const hasSessions = !!activeSite && !activeSite.recorded;
-  const needUpdate = !hasSessions && site.trackerVersion !== window.ENV.TRACKER_VERSION;
+  const appVersionInt = parseInt(window.ENV.TRACKER_VERSION.split(".").join(""))
+  const trackerVersionInt = site.trackerVersion ? parseInt(site.trackerVersion.split(".").join("")) : 0
+  const needUpdate = !hasSessions && trackerVersionInt >= appVersionInt;
   return needUpdate ? (
     <>
       {(
