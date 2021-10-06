@@ -14,6 +14,7 @@ import NewSiteForm from '../Client/Sites/NewSiteForm';
 @connect(state => ({  
   sites: state.getIn([ 'site', 'list' ]),
   siteId: state.getIn([ 'user', 'siteId' ]),
+  account: state.getIn([ 'user', 'account' ]),
 }), {
   setSiteId,
   pushNewSite,
@@ -32,11 +33,13 @@ export default class SiteDropdown extends React.PureComponent {
   }
 
   render() {
-    const { sites, siteId, location: { pathname } } = this.props;
+    const { sites, siteId, account, location: { pathname } } = this.props;
     const { showProductModal } = this.state;
+    const isAdmin = account.admin || account.superAdmin;
     const activeSite = sites.find(s => s.id == siteId);
     const disabled = !siteChangeAvaliable(pathname);
     const showCurrent = hasSiteId(pathname) || siteChangeAvaliable(pathname);
+    const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
     return (
       <div className={ styles.wrapper }>
         {
@@ -64,7 +67,7 @@ export default class SiteDropdown extends React.PureComponent {
             }
           </ul>
           <div
-            className={cn(styles.btnNew, 'flex items-center justify-center py-3 cursor-pointer')}
+            className={cn(styles.btnNew, 'flex items-center justify-center py-3 cursor-pointer', { [styles.disabled] : !canAddSites })}
             onClick={this.newSite}
           >
             <Icon 

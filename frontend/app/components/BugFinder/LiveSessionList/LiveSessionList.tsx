@@ -4,6 +4,9 @@ import { connect } from 'react-redux';
 import { NoContent, Loader } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
+import { KEYS } from 'Types/filter/customFilter';
+import { applyFilter, addAttribute } from 'Duck/filters';
+import Filter from 'Types/filter';
 
 const AUTOREFRESH_INTERVAL = 1 * 60 * 1000
 
@@ -12,12 +15,14 @@ interface Props {
   list?: List<any>,  
   fetchList: (params) => void,
   applyFilter: () => void,
-  filters: List<any>
+  filters: Filter
+  addAttribute: (obj) => void,
 }
 
 function LiveSessionList(props: Props) {
   const { loading, list, filters } = props;  
   var timeoutId;
+  const hasUserFilter = filters && filters.filters.map(i => i.key).includes(KEYS.USERID);
 
   useEffect(() => {     
     props.fetchList(filters.toJS());
@@ -26,6 +31,16 @@ function LiveSessionList(props: Props) {
       clearTimeout(timeoutId)
     }
   }, [])
+
+  const onUserClick = (userId, userAnonymousId) => {
+    if (userId) {
+      props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId })
+    } else {
+      props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
+    }
+    
+    props.applyFilter()
+  }
 
   const timeout = () => {
     timeoutId = setTimeout(() => {
@@ -51,7 +66,9 @@ function LiveSessionList(props: Props) {
             <SessionItem
               key={ session.sessionId }
               session={ session }
-              live              
+              live
+              hasUserFilter={hasUserFilter}
+              onUserClick={onUserClick}
             />
           ))}
         </Loader>
@@ -64,4 +81,4 @@ export default connect(state => ({
   list: state.getIn(['sessions', 'liveSessions']),
   loading: state.getIn([ 'sessions', 'loading' ]),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
-}), { fetchList })(LiveSessionList)
+}), { fetchList, applyFilter, addAttribute })(LiveSessionList)
