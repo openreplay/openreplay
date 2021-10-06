@@ -195,42 +195,43 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
                     **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
-    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-                                     time_constraint=True)
-    pg_sub_query.append("user_id IS NOT NULL")
-    pg_sub_query.append("DATE_TRUNC('week', to_timestamp(start_ts / 1000)) = to_timestamp(%(startTimestamp)s / 1000)")
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT FLOOR(DATE_PART('day', connexion_week - DATE_TRUNC('week', to_timestamp(%(startTimestamp)s / 1000)::timestamp)) / 7)::integer AS week,
-                               COUNT(DISTINCT connexions_list.user_id)                                     AS users_count,
-                               ARRAY_AGG(DISTINCT connexions_list.user_id)                                 AS connected_users
+    ch_sub_query = __get_basic_constraints(table_name='sessions', data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("user_id IS NOT NULL")
+    ch_sub_query.append("not empty(user_id)")
+    ch_sub_query.append("sessions.duration>0")
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT toInt8((start_of_week - toDate(%(startTimestamp)s / 1000)) / 7) AS week,
+                               COUNT(DISTINCT all_connexions.user_id)             AS users_count,
+                               groupArray(100)(all_connexions.user_id)            AS connected_users
                         FROM (SELECT DISTINCT user_id
-                              FROM sessions
-                              WHERE {" AND ".join(pg_sub_query)} 
-                                AND DATE_PART('week', to_timestamp((sessions.start_ts - %(startTimestamp)s)/1000)) = 1
-                                AND NOT EXISTS((SELECT 1
-                                                FROM sessions AS bsess
-                                                WHERE bsess.start_ts < %(startTimestamp)s
-                                                  AND project_id =  %(project_id)s
-                                                  AND bsess.user_id = sessions.user_id
-                                                LIMIT 1))
-                              GROUP BY user_id) AS users_list
-                                 LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
-                                                           user_id
-                                                    FROM sessions
-                                                    WHERE users_list.user_id = sessions.user_id
-                                                      AND %(startTimestamp)s <=sessions.start_ts
-                                                      AND sessions.project_id =  %(project_id)s
-                                                      AND sessions.start_ts < (%(endTimestamp)s - 1)
-                                                    GROUP BY connexion_week, user_id
-                            ) AS connexions_list ON (TRUE)
-                        GROUP BY week
-                        ORDER BY  week;"""
-
+                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(ch_sub_query)}
+                                AND toStartOfWeek(sessions.datetime,1) = toDate(%(startTimestamp)s / 1000)
+                                AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
+                                AND sessions.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
+                                AND isNull((SELECT 1
+                                            FROM sessions_metadata AS bmsess INNER JOIN sessions AS bsess USING (session_id)
+                                            WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
+                                              AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
+                                              AND bsess.project_id = %(project_id)s
+                                              AND bmsess.user_id = sessions_metadata.user_id
+                                            LIMIT 1))
+                                 ) AS users_list
+                                 INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime,1) AS start_of_week
+                                             FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                                             WHERE {" AND ".join(ch_sub_query)}
+                                               AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
+                                             ORDER BY start_of_week, user_id
+                            ) AS all_connexions USING (user_id)
+                        GROUP BY start_of_week
+                        ORDER BY start_of_week;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(cur.mogrify(pg_query, params))
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
+        # print(ch_query % params)
+        rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
         "startTimestamp": startTimestamp,
