@@ -86,3 +86,24 @@ db_resource_override:
     #     memory: 256Mi
   redis: {{ db_resource_override.redis|default({}) }}
   clickhouse: {{ db_resource_override.clickhouse|default({}) }}
+
+## Sane defaults
+s3_endpoint: "{{ s3_endpoint }}"
+aws_region: "{{ aws_region }}"
+kafka_endpoint: "{{ kafka_endpoint }}"
+kafka_ssl: "{{ kafka_ssl }}"
+postgres_endpoint: "{{ postgres_endpoint }}"
+postgres_port: "{{ postgres_port }}"
+postgres_db_name: "{{ postgres_db_name }}"
+postgres_db_user: "{{ postgres_db_user }}"
+postgres_db_password: "{{ postgres_db_password }}"
+redis_endpoint: "{{ redis_endpoint }}"
+email_host: "{{ email_host }}"
+email_port: "{{ email_port }}"
+email_user: "{{ email_user }}"
+email_password: "{{ email_password }}"
+email_use_tls: "{{ email_use_tls }}"
+email_use_ssl: "{{ email_use_ssl }}"
+email_ssl_key: "{{ email_ssl_key }}"
+email_ssl_cert: "{{ email_ssl_cert }}"
+email_from: "{{ email_from }}"
