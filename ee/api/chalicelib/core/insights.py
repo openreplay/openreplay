@@ -289,7 +289,7 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         # print(ch_query%params)
-        rows =ch.execute(ch_query, params)
+        rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
         "startTimestamp": startTimestamp,
@@ -303,11 +303,12 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                       **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
-    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-                                     time_constraint=True)
-    pg_sub_query.append("user_id IS NOT NULL")
-    pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
-    pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+    ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("user_id IS NOT NULL")
+    ch_sub_query.append("not empty(user_id)")
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
     event_type = "PAGES"
     event_value = "/"
     extra_values = {}
@@ -319,66 +320,60 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
             event_value = f["value"]
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            ch_sub_query.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
-    pg_sub_query.append(f"feature.{event_column} = %(value)s")
 
-    with pg_client.PostgresClient() as cur:
+    with ch_client.ClickHouseClient() as ch:
         if default:
             # get most used value
-            pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                        FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query[:-1])}
+            ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
+                            FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                            WHERE {" AND ".join(ch_sub_query)}
                                 AND length({event_column}) > 2
-                        GROUP BY value
-                        ORDER BY count DESC
-                        LIMIT 1;"""
+                            GROUP BY value
+                            ORDER BY count DESC
+                            LIMIT 1;"""
             params = {"project_id": project_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-            cur.execute(cur.mogrify(pg_query, params))
-            row = cur.fetchone()
-            if row is not None:
-                event_value = row["value"]
+            # print(ch_query% params)
+            row = ch.execute(ch_query, params)
+            if len(row) > 0:
+                event_value = row[0]["value"]
         extra_values["value"] = event_value
-        if len(event_value) > 2:
-            pg_sub_query.append(f"length({event_column})>2")
-        pg_query = f"""SELECT FLOOR(DATE_PART('day', connexion_week - to_timestamp(%(startTimestamp)s/1000)) / 7)::integer AS week,
-                               COUNT(DISTINCT connexions_list.user_id)                                     AS users_count,
-                               ARRAY_AGG(DISTINCT connexions_list.user_id)                                 AS connected_users
+        ch_sub_query.append(f"feature.{event_column} = %(value)s")
+        ch_query = f"""SELECT toInt8((connexion_week - toDate(%(startTimestamp)s / 1000)) / 7) AS week,
+                               COUNT(DISTINCT all_connexions.user_id)             AS users_count,
+                               groupArray(100)(all_connexions.user_id)            AS connected_users
                         FROM (SELECT DISTINCT user_id
-                              FROM sessions INNER JOIN {event_table} AS feature USING (session_id)
-                              WHERE {" AND ".join(pg_sub_query)}
-                                AND DATE_PART('week', to_timestamp((sessions.start_ts - %(startTimestamp)s)/1000)) = 1
-                                AND NOT EXISTS((SELECT 1
-                                                FROM sessions AS bsess INNER JOIN {event_table} AS bfeature USING (session_id)
-                                                WHERE bsess.start_ts<%(startTimestamp)s
-                                                  AND project_id = %(project_id)s
-                                                  AND bsess.user_id = sessions.user_id
-                                                  AND bfeature.timestamp<%(startTimestamp)s
-                                                  AND bfeature.{event_column}=%(value)s
-                                                LIMIT 1))
-                              GROUP BY user_id) AS users_list
-                                 LEFT JOIN LATERAL (SELECT DATE_TRUNC('week', to_timestamp(start_ts / 1000)::timestamp) AS connexion_week,
-                                                           user_id
-                                                    FROM sessions INNER JOIN {event_table} AS feature USING (session_id)
-                                                    WHERE users_list.user_id = sessions.user_id
-                                                      AND %(startTimestamp)s <= sessions.start_ts
-                                                      AND sessions.project_id = 1
-                                                      AND sessions.start_ts < (%(endTimestamp)s - 1)
-                                                      AND feature.timestamp >= %(startTimestamp)s
-                                                      AND feature.timestamp < %(endTimestamp)s
-                                                      AND feature.{event_column} = %(value)s
-                                                    GROUP BY connexion_week, user_id) AS connexions_list ON (TRUE)
-                        GROUP BY week
-                        ORDER BY week;"""
+                              FROM sessions_metadata INNER JOIN {event_table} AS feature USING (session_id)
+                              WHERE {" AND ".join(ch_sub_query)}
+                                AND toStartOfWeek(feature.datetime,1) = toDate(%(startTimestamp)s / 1000)
+                                AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
+                                AND feature.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
+                                AND isNull((SELECT 1
+                                            FROM sessions_metadata AS bmsess INNER JOIN {event_table} AS bsess USING (session_id)
+                                            WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
+                                              AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
+                                              AND bsess.project_id = %(project_id)s
+                                              AND bmsess.user_id = sessions_metadata.user_id
+                                              AND bsess.{event_column}=%(value)s
+                                            LIMIT 1))
+                                 ) AS users_list
+                                 INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime,1) AS connexion_week
+                                             FROM sessions_metadata INNER JOIN {event_table} AS feature USING (session_id)
+                                             WHERE {" AND ".join(ch_sub_query)}
+                                               AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
+                                             ORDER BY connexion_week, user_id
+                            ) AS all_connexions USING (user_id)
+                        GROUP BY connexion_week
+                        ORDER BY connexion_week;"""
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(cur.mogrify(pg_query, params))
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
+        print(ch_query % params)
+        rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
         "startTimestamp": startTimestamp,
