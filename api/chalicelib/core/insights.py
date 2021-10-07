@@ -718,7 +718,7 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
         print("---------------------")
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
-    return {"users": helper.list_to_camel_case(rows),
+    return {"chart": helper.list_to_camel_case(rows),
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
