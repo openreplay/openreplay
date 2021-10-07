@@ -3,8 +3,6 @@ from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils import ch_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
-import math
 from chalicelib.core.dashboard import __get_constraint_values
 from chalicelib.core.dashboard import __get_basic_constraints, __get_meta_constraint
 
@@ -475,8 +473,12 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                                  filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
-    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-                                     time_constraint=True)
+    ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+
     event_table = JOURNEY_TYPES["CLICK"]["table"]
     event_column = JOURNEY_TYPES["CLICK"]["column"]
     extra_values = {}
@@ -485,46 +487,45 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            ch_sub_query.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
 
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
-                        FROM sessions
-                        WHERE {" AND ".join(pg_sub_query)}
-                            AND user_id IS NOT NULL;"""
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
+                        FROM sessions AS feature INNER JOIN sessions_metadata USING (session_id)
+                        WHERE {" AND ".join(ch_sub_query)}
+                            AND user_id IS NOT NULL
+                            AND not empty(user_id);"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        all_user_count = cur.fetchone()["count"]
-        if all_user_count == 0:
+        print(ch_query % params)
+        print("---------------------")
+        all_user_count = ch.execute(ch_query, params)
+        if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
             return []
-        pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
-        pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
-        pg_sub_query.append(f"length({event_column})>2")
-        pg_query = f"""SELECT {event_column} AS value, COUNT(DISTINCT user_id) AS count
-                    FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
-                    WHERE {" AND ".join(pg_sub_query)}
+        all_user_count = all_user_count[0]["count"]
+        ch_sub_query.append(f"length({event_column})>2")
+        ch_query = f"""SELECT {event_column} AS value, COUNT(DISTINCT user_id) AS count
+                    FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                    WHERE {" AND ".join(ch_sub_query)}
                         AND user_id IS NOT NULL
+                        AND not empty(user_id)
                     GROUP BY value
                     ORDER BY count DESC
                     LIMIT 7;"""
-        # TODO: solve full scan
-        print(cur.mogrify(pg_query, params))
+
+        print(ch_query % params)
         print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        popularity = cur.fetchall()
-        pg_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
-                        FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)}
+        popularity = ch.execute(ch_query, params)
+
+        ch_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
+                        FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                        WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY value;"""
-        # TODO: solve full scan
-        print(cur.mogrify(pg_query, params))
+
+        print(ch_query % params)
         print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        frequencies = cur.fetchall()
+        frequencies = ch.execute(ch_query, params)
         total_usage = sum([f["count"] for f in frequencies])
         frequencies = {f["value"]: f["count"] for f in frequencies}
         for p in popularity:
