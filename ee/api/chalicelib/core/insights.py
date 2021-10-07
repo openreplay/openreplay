@@ -3,7 +3,7 @@ from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils import ch_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core.dashboard import __get_constraint_values
+from chalicelib.core.dashboard import __get_constraint_values, __complete_missing_steps
 from chalicelib.core.dashboard import __get_basic_constraints, __get_meta_constraint
 
 
@@ -667,14 +667,11 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
 @dev.timed
 def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[], **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-                                     time_constraint=True)
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
     event_type = "CLICK"
     event_value = '/'
     extra_values = {}
     default = True
+    meta_condition = []
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_type = f["value"]
@@ -682,50 +679,47 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             event_value = f["value"]
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.datetime >= %(startTimestamp)s")
+            meta_condition.append("sessions_metadata.datetime < %(endTimestamp)s")
+
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
-    with pg_client.PostgresClient() as cur:
-        pg_sub_query_chart.append("feature.timestamp >= %(startTimestamp)s")
-        pg_sub_query_chart.append("feature.timestamp < %(endTimestamp)s")
-        pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
-        pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+    ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
+    meta_condition += __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    with ch_client.ClickHouseClient() as ch:
         if default:
             # get most used value
-            pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                        FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query)}
-                            AND length({event_column})>2
-                        GROUP BY value
-                        ORDER BY count DESC
-                        LIMIT 1;"""
+            ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
+                            FROM {event_table} AS feature {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
+                            WHERE {" AND ".join(ch_sub_query)}
+                                AND length({event_column}) > 2
+                            GROUP BY value
+                            ORDER BY count DESC
+                            LIMIT 1;"""
             params = {"project_id": project_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-            cur.execute(cur.mogrify(pg_query, params))
-            row = cur.fetchone()
-            if row is not None:
-                event_value = row["value"]
+            # print(ch_query% params)
+            row = ch.execute(ch_query, params)
+            if len(row) > 0:
+                event_value = row[0]["value"]
         extra_values["value"] = event_value
-        if len(event_value) > 2:
-            pg_sub_query.append(f"length({event_column})>2")
-        pg_sub_query_chart.append(f"feature.{event_column} = %(value)s")
-        pg_query = f"""SELECT generated_timestamp       AS timestamp,
-                               COALESCE(COUNT(session_id), 0) AS count
-                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                 LEFT JOIN LATERAL ( SELECT DISTINCT session_id
-                                                     FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
-                                                     WHERE {" AND ".join(pg_sub_query_chart)}
-                            ) AS users ON (TRUE)
-                        GROUP BY generated_timestamp
-                        ORDER BY generated_timestamp;"""
+        ch_sub_query.append(f"feature.{event_column} = %(value)s")
+        ch_query = f"""SELECT toUnixTimestamp(day)*1000 AS timestamp, count
+                        FROM (SELECT toStartOfDay(feature.datetime) AS day, COUNT(DISTINCT session_id) AS count
+                              FROM {event_table} AS feature {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
+                              WHERE {" AND ".join(ch_sub_query)}
+                              GROUP BY day
+                              ORDER BY day) AS raw_results;"""
         params = {"step_size": TimeUTC.MS_DAY, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(cur.mogrify(pg_query, params))
-        print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
-    return {"users": helper.list_to_camel_case(rows),
+        # print(ch_query % params)
+        rows = ch.execute(ch_query, params)
+    return {"chart": __complete_missing_steps(rows=rows, start_time=startTimestamp, end_time=endTimestamp,
+                                              density=(endTimestamp - startTimestamp) // TimeUTC.MS_DAY,
+                                              neutral={"count": 0}),
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
