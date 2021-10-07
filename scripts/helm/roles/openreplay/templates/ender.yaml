@@ -5,6 +5,9 @@ image:
 {% endif %}
 env:
   LICENSE_KEY: "{{ enterprise_edition_license }}"
+  REDIS_STRING: "{{ redis_endpoint }}"
+  KAFKA_SERVERS: "{{ kafka_endpoint }}"
+  KAFKA_USE_SSL: "{{ kafka_ssl }}"
 
 {% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []
