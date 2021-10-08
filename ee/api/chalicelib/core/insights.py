@@ -538,12 +538,11 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
 @dev.timed
 def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                      filters=[], **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-                                     time_constraint=True)
     event_type = "CLICK"
     event_value = '/'
     extra_values = {}
     default = True
+    meta_condition = []
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_type = f["value"]
@@ -551,55 +550,55 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             event_value = f["value"]
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
-                        FROM sessions
-                        WHERE {" AND ".join(pg_sub_query)}
-                            AND user_id IS NOT NULL;"""
+
+    ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
+    meta_condition += __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+    ch_sub_query.append("user_id IS NOT NULL")
+    ch_sub_query.append("not empty(user_id)")
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT COUNT(DISTINCT user_id) AS count
+                        FROM sessions_metadata INNER JOIN sessions AS feature USING(session_id)
+                        WHERE {" AND ".join(ch_sub_query)};"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
         # print(cur.mogrify(pg_query, params))
         # print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        all_user_count = cur.fetchone()["count"]
-        if all_user_count == 0:
+        all_user_count = ch.execute(ch_query, params)
+        if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
             return {"adoption": 0, "target": 0, "filters": [{"type": "EVENT_TYPE", "value": event_type},
                                                             {"type": "EVENT_VALUE", "value": event_value}], }
-        pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
-        pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
+        all_user_count = all_user_count[0]["count"]
         if default:
             # get most used value
-            pg_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                        FROM {event_table} AS feature INNER JOIN public.sessions USING (session_id)
-                        WHERE {" AND ".join(pg_sub_query[:-1])}
-                                AND length({event_column}) > 2
+            ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
+                        FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                        WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY value
                         ORDER BY count DESC
                         LIMIT 1;"""
             params = {"project_id": project_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-            cur.execute(cur.mogrify(pg_query, params))
-            row = cur.fetchone()
-            if row is not None:
-                event_value = row["value"]
+            row = ch.execute(ch_query, params)
+            if len(row) > 0:
+                event_value = row[0]["value"]
         extra_values["value"] = event_value
-        if len(event_value) > 2:
-            pg_sub_query.append(f"length({event_column})>2")
-        pg_sub_query.append(f"feature.{event_column} = %(value)s")
-        pg_query = f"""SELECT COUNT(DISTINCT user_id) AS count
-                    FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
-                    WHERE {" AND ".join(pg_sub_query)}
-                        AND user_id IS NOT NULL;"""
+        ch_sub_query.append(f"feature.{event_column} = %(value)s")
+        ch_query = f"""SELECT COUNT(DISTINCT user_id) AS count
+                    FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                    WHERE {" AND ".join(ch_sub_query)};"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
+        # print(ch_query% params)
         # print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        adoption = cur.fetchone()["count"] / all_user_count
+        adoption = ch.execute(ch_query, params)
+        adoption = adoption[0]["count"] / all_user_count
     return {"target": all_user_count, "adoption": adoption,
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
