@@ -18,10 +18,8 @@ function Headers(props) {
               {
                 Object.keys(props.requestHeaders).map(h => (
                   <div className={stl.row}>
-                    <div className="mr-2 font-medium">{h}:</div>
-                    <div className="flex-1">
-                      <TextEllipsis text={props.requestHeaders[h]} />
-                    </div>
+                    <span className="mr-2 font-medium">{h}:</span>
+                    <span>{props.requestHeaders[h]}</span>
                   </div>
                 ))
               }
@@ -36,8 +34,8 @@ function Headers(props) {
             {
               Object.keys(props.responseHeaders).map(h => (
                 <div className={stl.row}>
-                  <div className="mr-2 font-medium">{h}:</div>
-                  <div>{props.responseHeaders[h]}</div>
+                  <span className="mr-2 font-medium">{h}:</span>
+                  <span>{props.responseHeaders[h]}</span>
                 </div>
               ))
             }
