@@ -799,7 +799,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
         avg = ch.execute(ch_query, params)
         if len(avg) == 0 or avg[0]["avg"] == 0:
             return {"avg": 0, "chart": []}
-        avg=avg[0]["avg"]
+        avg = avg[0]["avg"]
         ch_query = f"""SELECT toUnixTimestamp(toDateTime(period))*1000 AS timestamp, count
                         FROM (SELECT {period_function}(sessions_metadata.datetime) AS period, count(DISTINCT user_id) AS count
                               FROM sessions_metadata INNER JOIN sessions USING (session_id)
@@ -815,26 +815,40 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
 
 @dev.timed
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[], **args):
-    pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
-    pg_sub_query.append("user_id IS NOT NULL")
+    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("user_id IS NOT NULL")
+    ch_sub_query.append("not empty(user_id)")
 
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(day_users_partition) AS partition
-                        FROM (SELECT number_of_days, COUNT(user_id) AS count
-                              FROM (SELECT user_id, COUNT(DISTINCT DATE_TRUNC('day', to_timestamp(start_ts / 1000))) AS number_of_days
-                                    FROM sessions
-                                    WHERE {" AND ".join(pg_sub_query)}
-                                    GROUP BY 1) AS users_connexions
-                              GROUP BY number_of_days
-                              ORDER BY number_of_days) AS day_users_partition;"""
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT AVG(count) AS avg
+                        FROM(SELECT COUNT(user_id) AS count
+                        FROM (SELECT user_id, COUNT(DISTINCT toStartOfDay(datetime)) AS number_of_days
+                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(ch_sub_query)}
+                              GROUP BY user_id) AS users_connexions
+                        GROUP BY number_of_days
+                        ORDER BY number_of_days) AS results;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp, "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        row_users = cur.fetchone()
+        avg = ch.execute(ch_query, params)
+        if len(avg) == 0 or avg[0]["avg"] == 0:
+            return {"avg": 0, "partition": []}
+        avg = avg[0]["avg"]
+        ch_query = f"""SELECT number_of_days, COUNT(user_id) AS count
+                        FROM (SELECT user_id, COUNT(DISTINCT toStartOfDay(datetime)) AS number_of_days
+                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(ch_sub_query)}
+                              GROUP BY user_id) AS users_connexions
+                        GROUP BY number_of_days
+                        ORDER BY number_of_days;"""
 
-    return helper.dict_to_camel_case(row_users)
+        # print(ch_query%params)
+        # print("---------------------")
+        rows = ch.execute(ch_query, params)
+
+    return {"avg": avg, "partition": helper.list_to_camel_case(rows)}
 
 
 @dev.timed
