@@ -916,32 +916,33 @@ def search(text, feature_type, project_id, platform=None):
         resource_type = "ALL"
         data = search(text=text, feature_type=resource_type, project_id=project_id, platform=platform)
         return data
-
-    pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, duration=True,
-                                     data={} if platform is None else {"platform": platform})
-
-    params = {"startTimestamp": TimeUTC.now() - 2 * TimeUTC.MS_MONTH,
+    args = {} if platform is None else {"platform": platform}
+    ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+    params = {"startTimestamp": TimeUTC.now() - 1 * TimeUTC.MS_MONTH,
               "endTimestamp": TimeUTC.now(),
               "project_id": project_id,
               "value": helper.string_to_sql_like(text.lower()),
               "platform_0": platform}
     if feature_type == "ALL":
-        with pg_client.PostgresClient() as cur:
+        with ch_client.ClickHouseClient() as ch:
             sub_queries = []
             for e in JOURNEY_TYPES:
                 sub_queries.append(f"""(SELECT DISTINCT {JOURNEY_TYPES[e]["column"]} AS value, '{e}' AS "type"
-                             FROM {JOURNEY_TYPES[e]["table"]} INNER JOIN public.sessions USING(session_id)
-                             WHERE {" AND ".join(pg_sub_query)} AND {JOURNEY_TYPES[e]["column"]} ILIKE %(value)s
+                             FROM {JOURNEY_TYPES[e]["table"]} AS feature INNER JOIN sessions_metadata USING(session_id)
+                             WHERE {" AND ".join(ch_sub_query)} AND positionUTF8({JOURNEY_TYPES[e]["column"]},%(value)s)!=0
                              LIMIT 10)""")
-            pg_query = "UNION ALL".join(sub_queries)
+            ch_query = "UNION ALL".join(sub_queries)
             # print(cur.mogrify(pg_query, params))
-            cur.execute(cur.mogrify(pg_query, params))
-            rows = cur.fetchall()
+            rows = ch.execute(ch_query, params)
     elif JOURNEY_TYPES.get(feature_type) is not None:
         with pg_client.PostgresClient() as cur:
             pg_query = f"""SELECT DISTINCT {JOURNEY_TYPES[feature_type]["column"]} AS value, '{feature_type}' AS "type"
-                             FROM {JOURNEY_TYPES[feature_type]["table"]} INNER JOIN public.sessions USING(session_id)
-                             WHERE {" AND ".join(pg_sub_query)} AND {JOURNEY_TYPES[feature_type]["column"]} ILIKE %(value)s
+                             FROM {JOURNEY_TYPES[feature_type]["table"]} AS feature INNER JOIN sessions_metadata USING(session_id)
+                             WHERE {" AND ".join(ch_sub_query)} AND positionUTF8({JOURNEY_TYPES[feature_type]["column"]},%(value)s)!=0
                              LIMIT 10;"""
             # print(cur.mogrify(pg_query, params))
             cur.execute(cur.mogrify(pg_query, params))
