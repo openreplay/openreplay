@@ -759,45 +759,58 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     return rows
 
 
+PERIOD_TO_FUNCTION = {
+    "DAY": "toStartOfDay",
+    "WEEK": "toStartOfWeek"
+}
+
+
 @dev.timed
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                  **args):
-    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
-                                           chart=True, data=args)
-
-    pg_sub_query_chart.append("user_id IS NOT NULL")
+    meta_condition = []
     period = "DAY"
     extra_values = {}
     for f in filters:
         if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
             period = f["value"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
-
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT AVG(count) AS avg, JSONB_AGG(chart) AS chart
-                        FROM (SELECT generated_timestamp       AS timestamp,
-                                     COALESCE(COUNT(users), 0) AS count
-                              FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
-                                       LEFT JOIN LATERAL ( SELECT DISTINCT user_id
-                                                           FROM public.sessions
-                                                           WHERE {" AND ".join(pg_sub_query_chart)}
-                                  ) AS users ON (TRUE)
-                              GROUP BY generated_timestamp
-                              ORDER BY generated_timestamp) AS chart;"""
+    period_function = PERIOD_TO_FUNCTION[period]
+    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
+    meta_condition += __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("user_id IS NOT NULL")
+    ch_sub_query.append("not empty(user_id)")
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT SUM(count) / intDiv(%(endTimestamp)s - %(startTimestamp)s, %(step_size)s) AS avg
+                        FROM (SELECT {period_function}(sessions_metadata.datetime) AS period, count(DISTINCT user_id) AS count
+                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(ch_sub_query)}
+                              GROUP BY period) AS daily_users;"""
         params = {"step_size": TimeUTC.MS_DAY if period == "DAY" else TimeUTC.MS_WEEK,
                   "project_id": project_id,
                   "startTimestamp": TimeUTC.trunc_day(startTimestamp) if period == "DAY" else TimeUTC.trunc_week(
-                      startTimestamp),
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args),
+                      startTimestamp), "endTimestamp": endTimestamp, **__get_constraint_values(args),
                   **extra_values}
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        row_users = cur.fetchone()
+        avg = ch.execute(ch_query, params)
+        if len(avg) == 0 or avg[0]["avg"] == 0:
+            return {"avg": 0, "chart": []}
+        avg=avg[0]["avg"]
+        ch_query = f"""SELECT toUnixTimestamp(toDateTime(period))*1000 AS timestamp, count
+                        FROM (SELECT {period_function}(sessions_metadata.datetime) AS period, count(DISTINCT user_id) AS count
+                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              WHERE {" AND ".join(ch_sub_query)}
+                              GROUP BY period
+                              ORDER BY period) AS raw_results"""
 
-    return row_users
+        # print(pg_query%params)
+        # print("---------------------")
+        rows = ch.execute(ch_query, params)
+    return {"avg": avg, "chart": rows}
 
 
 @dev.timed
