@@ -726,35 +726,33 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
 @dev.timed
 def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                       **args):
-    pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
-                                     time_constraint=True)
-    pg_sub_query.append("feature.timestamp >= %(startTimestamp)s")
-    pg_sub_query.append("feature.timestamp < %(endTimestamp)s")
     event_table = JOURNEY_TYPES["CLICK"]["table"]
     event_column = JOURNEY_TYPES["CLICK"]["column"]
     extra_values = {}
+    meta_condition = []
     for f in filters:
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            pg_sub_query.append(f"sessions.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
-    pg_sub_query.append(f"length({event_column})>2")
-    with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT {event_column} AS value, AVG(DISTINCT session_id) AS avg
-                    FROM {event_table} AS feature INNER JOIN sessions USING (session_id)
-                    WHERE {" AND ".join(pg_sub_query)}
+    ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
+    meta_condition += __get_meta_constraint(args)
+    ch_sub_query += meta_condition
+    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+    with ch_client.ClickHouseClient() as ch:
+        ch_query = f"""SELECT {event_column} AS value, AVG(DISTINCT session_id) AS avg
+                    FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                    WHERE {" AND ".join(ch_sub_query)}
                     GROUP BY value
                     ORDER BY avg DESC
                     LIMIT 7;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # TODO: solve full scan issue
-        print(cur.mogrify(pg_query, params))
-        print("---------------------")
-        cur.execute(cur.mogrify(pg_query, params))
-        rows = cur.fetchall()
+        # print(ch_query % params)
+        rows = ch.execute(ch_query, params)
 
     return rows
 
