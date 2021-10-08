@@ -1,6 +1,5 @@
 from chalicelib.core import sessions_metas
 from chalicelib.utils import helper, dev
-from chalicelib.utils import pg_client
 from chalicelib.utils import ch_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.core.dashboard import __get_constraint_values, __complete_missing_steps
@@ -368,7 +367,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
+        # print(ch_query % params)
         rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
@@ -458,7 +457,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
+        # print(ch_query % params)
         rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
@@ -498,7 +497,7 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                             AND not empty(user_id);"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
+        # print(ch_query % params)
         print("---------------------")
         all_user_count = ch.execute(ch_query, params)
         if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
@@ -514,8 +513,8 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                     ORDER BY count DESC
                     LIMIT 7;"""
 
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         popularity = ch.execute(ch_query, params)
 
         ch_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
@@ -523,8 +522,8 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY value;"""
 
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         frequencies = ch.execute(ch_query, params)
         total_usage = sum([f["count"] for f in frequencies])
         frequencies = {f["value"]: f["count"] for f in frequencies}
@@ -568,8 +567,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
                         WHERE {" AND ".join(ch_sub_query)};"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(cur.mogrify(pg_query, params))
-        # print("---------------------")
+        # print(ch_query%params)
         all_user_count = ch.execute(ch_query, params)
         if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
             return {"adoption": 0, "target": 0, "filters": [{"type": "EVENT_TYPE", "value": event_type},
@@ -653,7 +651,7 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
                         LIMIT 10;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(pg_query%params)
+        # print(ch_query%params)
         rows = ch.execute(ch_query, params)
     return {"users": helper.list_to_camel_case(rows),
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
@@ -800,7 +798,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
                               GROUP BY period
                               ORDER BY period) AS raw_results"""
 
-        # print(pg_query%params)
+        # print(ch_query%params)
         # print("---------------------")
         rows = ch.execute(ch_query, params)
     return {"avg": avg, "chart": rows}
@@ -936,17 +934,16 @@ def search(text, feature_type, project_id, platform=None):
                              WHERE {" AND ".join(ch_sub_query)} AND positionUTF8({JOURNEY_TYPES[e]["column"]},%(value)s)!=0
                              LIMIT 10)""")
             ch_query = "UNION ALL".join(sub_queries)
-            # print(cur.mogrify(pg_query, params))
+            # print(ch_query, params)
             rows = ch.execute(ch_query, params)
     elif JOURNEY_TYPES.get(feature_type) is not None:
-        with pg_client.PostgresClient() as cur:
-            pg_query = f"""SELECT DISTINCT {JOURNEY_TYPES[feature_type]["column"]} AS value, '{feature_type}' AS "type"
+        with ch_client.ClickHouseClient() as ch:
+            ch_query = f"""SELECT DISTINCT {JOURNEY_TYPES[feature_type]["column"]} AS value, '{feature_type}' AS "type"
                              FROM {JOURNEY_TYPES[feature_type]["table"]} AS feature INNER JOIN sessions_metadata USING(session_id)
                              WHERE {" AND ".join(ch_sub_query)} AND positionUTF8({JOURNEY_TYPES[feature_type]["column"]},%(value)s)!=0
                              LIMIT 10;"""
-            # print(cur.mogrify(pg_query, params))
-            cur.execute(cur.mogrify(pg_query, params))
-            rows = cur.fetchall()
+            # print(ch_query, params)
+            rows = ch.execute(ch_query, params)
     else:
         return []
     return [helper.dict_to_camel_case(row) for row in rows]
