@@ -47,6 +47,17 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- if .Values.pvc }}
+      {{- if eq .Values.pvc.name "hostPath" }}
+          volumeMounts:
+          - mountPath: {{ .Values.pvc.mountPath }}
+            name: {{ .Values.pvc.name }}
+      volumes:
+      - name: mydir
+        hostPath:
+          # Ensure the file directory is created.
+          path: {{ .Values.pvc.hostMountPath }}
+          type: DirectoryOrCreate
+      {{- else }}
           volumeMounts:
           - name: {{ .Values.pvc.name }}
             mountPath: {{ .Values.pvc.mountPath }}
@@ -54,6 +65,7 @@ spec:
       - name: {{ .Values.pvc.name }}
         persistentVolumeClaim:
           claimName: {{ .Values.pvc.volumeName }}
+      {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
