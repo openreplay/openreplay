@@ -1,3 +1,4 @@
+from chalicelib.utils.helper import environ
 from chalicelib.utils import pg_client
 from chalicelib.core import unlock
 
@@ -14,7 +15,8 @@ def get_status(tenant_id):
             "edition": r.get("edition", "").upper(),
             "versionNumber": r.get("version_number", ""),
             "license": license[0:2] + "*" * (len(license) - 4) + license[-2:],
-            "expirationDate": unlock.get_expiration_date()
+            "expirationDate": unlock.get_expiration_date(),
+            "teamMember": int(environ.get("numberOfSeats", 0))
         },
         "count": {
             "teamMember": r.get("t_users"),
