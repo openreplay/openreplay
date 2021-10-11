@@ -26,7 +26,7 @@ SAML2 = {
 }
 idp = None
 # SAML2 config handler
-if len(environ.get("SAML2_MD_URL")) > 0:
+if len(environ.get("SAML2_MD_URL","")) > 0:
     print("SAML2_MD_URL provided, getting IdP metadata config")
     from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
