@@ -8,7 +8,7 @@ env:
   AWS_SECRET_ACCESS_KEY: "{{ minio_secret_key }}"
   LICENSE_KEY: "{{ enterprise_edition_license }}"
   AWS_REGION: "{{ aws_region }}"
-  POSTGRES_STRING: "postgres://{{ postgres_db_user }}:{{ postgres_password }}@{{ postgres_endpoint }}:{{ postgres_port }}"
+  POSTGRES_STRING: "postgres://{{ postgres_db_user }}:{{ postgres_db_password }}@{{ postgres_endpoint }}:{{ postgres_port }}"
   REDIS_STRING: "{{ redis_endpoint }}"
   KAFKA_SERVERS: "{{ kafka_endpoint }}"
   KAFKA_USE_SSL: "{{ kafka_ssl }}"
