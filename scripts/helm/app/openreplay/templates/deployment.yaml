@@ -50,9 +50,9 @@ spec:
       {{- if eq .Values.pvc.name "hostPath" }}
           volumeMounts:
           - mountPath: {{ .Values.pvc.mountPath }}
-            name: {{ .Values.pvc.name }}
+            name: datadir
       volumes:
-      - name: mydir
+      - name: datadir
         hostPath:
           # Ensure the file directory is created.
           path: {{ .Values.pvc.hostMountPath }}
