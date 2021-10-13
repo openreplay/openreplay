@@ -14,7 +14,7 @@ read dns_name
 echo please enter your email id:
 read emai_id
 ssh_ansible_user=$(whoami)
-certbot_home=/etc/letsencrypt/archive/$dns_name
+certbot_home=/etc/letsencrypt/live/$dns_name
 
 
 #Check certbot installed or not
@@ -26,8 +26,8 @@ fi
 
 sudo certbot certonly --non-interactive --agree-tos -m $emai_id -d $dns_name --standalone
 
-sudo cp $certbot_home/privkey1.pem ${homedir}/site.key
-sudo cp $certbot_home/fullchain1.pem ${homedir}/site.crt
+sudo cp $certbot_home/privkey.pem ${homedir}/site.key
+sudo cp $certbot_home/fullchain.pem ${homedir}/site.crt
 sudo chown -R $ssh_ansible_user:$ssh_ansible_user ${homedir}/site.key ${homedir}/site.crt
 sudo chmod 775 ${homedir}/site.crt ${homedir}/site.key
 
