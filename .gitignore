@@ -4,12 +4,3 @@ node_modules
 *DS_Store
 *.env
 .idea
-/ee/api/chalicelib/core/heatmaps.py
-/ee/api/entrypoint.bundle.sh
-/ee/api/entrypoint.sh
-/ee/api/env_handler.py
-/ee/api/chalicelib/blueprints/app/v1_api.py
-/ee/api/build.sh
-/ee/api/chalicelib/core/assist.py
-/ee/api/chalicelib/blueprints/app/__init__.py
-/ee/api/Dockerfile.bundle
