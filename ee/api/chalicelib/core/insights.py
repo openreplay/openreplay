@@ -44,6 +44,9 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append(f"sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
+            meta_condition.append(f"sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)")
             extra_values["user_id"] = f["value"]
     ch_sub_query = __get_basic_constraints(table_name=event_table, data=args)
     meta_condition += __get_meta_constraint(args)
@@ -192,62 +195,33 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
                     **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
-    ch_sub_query = __get_basic_constraints(table_name='sessions', data=args)
+    ch_sub_query = __get_basic_constraints(table_name='sessions_metadata', data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
-    ch_sub_query.append("sessions.duration>0")
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
+    ch_sub_query.append("sessions_metadata.user_id IS NOT NULL")
+    ch_sub_query.append("not empty(sessions_metadata.user_id)")
     with ch_client.ClickHouseClient() as ch:
-        # current optimization: from 6s to 4-5s
-        ch_query = f"""SELECT toInt8((toStartOfWeek(datetime, 1) - toDate(1630886400000 / 1000)) / 7) AS week,
-                               COUNT(DISTINCT user_id)                                                 AS users_count
-                        FROM sessions_metadata INNER JOIN sessions USING (session_id)
-                        WHERE {" AND ".join(ch_sub_query)}
-                          AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
-                          AND user_id IN (SELECT DISTINCT user_id
-                                          FROM sessions_metadata
-                                                   INNER JOIN sessions USING (session_id)
-                                          WHERE {" AND ".join(ch_sub_query)}
-                                             AND toStartOfWeek(sessions.datetime,1) = toDate(%(startTimestamp)s / 1000)
-                                             AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
-                                             AND sessions.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
-                                             AND isNull((SELECT 1
-                                                        FROM sessions_metadata AS bmsess
-                                                                 INNER JOIN sessions AS bsess USING (session_id)
-                                                        WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
-                                                           AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
-                                                           AND bsess.project_id = %(project_id)s
-                                                           AND bmsess.user_id = sessions_metadata.user_id
-                                                        LIMIT 1))
-                        )
-                        GROUP BY week;"""
-        # THIS IS THE ORIGINAL QUERY, PROBABLY WILL BE REUSED AGAIN WHEN CH-STRUCTURE CHANGES
-        # ch_query = f"""SELECT toInt8((connexion_week - toDate(%(startTimestamp)s / 1000)) / 7) AS week,
-        #                        COUNT(all_connexions.user_id)             AS users_count,
-        #                        groupArray(100)(all_connexions.user_id)            AS connected_users
-        #                 FROM (SELECT DISTINCT user_id
-        #                       FROM sessions_metadata INNER JOIN sessions USING (session_id)
-        #                       WHERE {" AND ".join(ch_sub_query)}
-        #                         AND toStartOfWeek(sessions.datetime,1) = toDate(%(startTimestamp)s / 1000)
-        #                         AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
-        #                         AND sessions.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
-        #                         AND isNull((SELECT 1
-        #                                     FROM sessions_metadata AS bmsess INNER JOIN sessions AS bsess USING (session_id)
-        #                                     WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
-        #                                       AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
-        #                                       AND bsess.project_id = %(project_id)s
-        #                                       AND bmsess.user_id = sessions_metadata.user_id
-        #                                     LIMIT 1))
-        #                          ) AS users_list
-        #                          INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime,1) AS connexion_week
-        #                                      FROM sessions_metadata INNER JOIN sessions USING (session_id)
-        #                                      WHERE {" AND ".join(ch_sub_query)}
-        #                                        AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
-        #                     ) AS all_connexions USING (user_id)
-        #                 GROUP BY connexion_week
-        #                 ORDER BY connexion_week;"""
+        ch_query = f"""SELECT toInt8((connexion_week - toDate(%(startTimestamp)s / 1000)) / 7) AS week,
+                               COUNT(all_connexions.user_id)             AS users_count,
+                               groupArray(100)(all_connexions.user_id)            AS connected_users
+                        FROM (SELECT DISTINCT user_id
+                              FROM sessions_metadata
+                              WHERE {" AND ".join(ch_sub_query)}
+                                AND toStartOfWeek(sessions_metadata.datetime,1) = toDate(%(startTimestamp)s / 1000)
+                                AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
+                                AND isNull((SELECT 1
+                                            FROM sessions_metadata AS bmsess
+                                            WHERE bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
+                                              AND bmsess.project_id = %(project_id)s
+                                              AND bmsess.user_id = sessions_metadata.user_id
+                                            LIMIT 1))
+                                 ) AS users_list
+                                 INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime,1) AS connexion_week
+                                             FROM sessions_metadata
+                                             WHERE {" AND ".join(ch_sub_query)}
+                            ) AS all_connexions USING (user_id)
+                        GROUP BY connexion_week
+                        ORDER BY connexion_week;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         # print(ch_query % params)
@@ -264,15 +238,13 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                       filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
-    ch_sub_query = __get_basic_constraints(table_name='sessions', data=args)
+    ch_sub_query = __get_basic_constraints(table_name='sessions_metadata', data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
-    ch_sub_query.append("sessions.duration>0")
+    ch_sub_query.append("sessions_metadata.user_id IS NOT NULL")
+    ch_sub_query.append("not empty(sessions_metadata.user_id)")
     ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
     with ch_client.ClickHouseClient() as ch:
-        # TODO: optimize after DB structure change, optimization from 6s to 4s
         ch_query = f"""SELECT toUnixTimestamp(toDateTime(first_connexion_week))*1000 AS first_connexion_week,
                            week,
                            users_count,
@@ -281,24 +253,21 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                             SELECT first_connexion_week,
                                    toInt8((connexion_week - first_connexion_week) / 7) AS week,
                                    COUNT(DISTINCT all_connexions.user_id)              AS users_count,
-                                   groupArray(100)(all_connexions.user_id)             AS connected_users
-                            FROM (SELECT user_id, MIN(toStartOfWeek(sessions.datetime, 1)) AS first_connexion_week
-                                  FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                                   groupArray(20)(all_connexions.user_id)             AS connected_users
+                            FROM (SELECT user_id, MIN(toStartOfWeek(sessions_metadata.datetime, 1)) AS first_connexion_week
+                                  FROM sessions_metadata
                                   WHERE {" AND ".join(ch_sub_query)}
                                     AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
-                                    AND sessions.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
                                     AND isNull((SELECT 1
-                                                FROM sessions_metadata AS bmsess INNER JOIN sessions AS bsess USING (session_id)
-                                                WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
-                                                  AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
-                                                  AND bsess.project_id = %(project_id)s
+                                                FROM sessions_metadata AS bmsess
+                                                WHERE bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
+                                                  AND bmsess.project_id = %(project_id)s
                                                   AND bmsess.user_id = sessions_metadata.user_id
                                                 LIMIT 1))
                                   GROUP BY user_id) AS users_list
                                      INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime, 1) AS connexion_week
-                                                 FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                                                 FROM sessions_metadata
                                                  WHERE {" AND ".join(ch_sub_query)}
-                                                   AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
                                                  ORDER BY connexion_week, user_id
                                 ) AS all_connexions USING (user_id)
                             WHERE first_connexion_week <= connexion_week
@@ -308,7 +277,7 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch_query % params)
+        # print(ch_query % params)
         rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
@@ -324,10 +293,6 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
     meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
     event_type = "PAGES"
     event_value = "/"
     extra_values = {}
@@ -339,7 +304,12 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
             event_value = f["value"]
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            ch_sub_query.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
@@ -348,9 +318,9 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         if default:
             # get most used value
             ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                            FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                            FROM {event_table} AS feature
+                                {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
                             WHERE {" AND ".join(ch_sub_query)}
-                                AND length({event_column}) > 2
                             GROUP BY value
                             ORDER BY count DESC
                             LIMIT 1;"""
@@ -360,7 +330,22 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
             row = ch.execute(ch_query, params)
             if len(row) > 0:
                 event_value = row[0]["value"]
+            else:
+                print(f"no {event_table} most used value")
+                return {
+                    "startTimestamp": startTimestamp,
+                    "filters": [{"type": "EVENT_TYPE", "value": event_type},
+                                {"type": "EVENT_VALUE", "value": ""}],
+                    "chart": __complete_retention(rows=[], start_date=startTimestamp, end_date=TimeUTC.now())
+                }
         extra_values["value"] = event_value
+        if len(meta_condition) == 0:
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+        ch_sub_query += meta_condition
         ch_sub_query.append(f"feature.{event_column} = %(value)s")
         ch_query = f"""SELECT toInt8((connexion_week - toDate(%(startTimestamp)s / 1000)) / 7) AS week,
                                COUNT(DISTINCT all_connexions.user_id)             AS users_count,
@@ -376,6 +361,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                                             WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
                                               AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
                                               AND bsess.project_id = %(project_id)s
+                                              AND bmsess.project_id = %(project_id)s
                                               AND bmsess.user_id = sessions_metadata.user_id
                                               AND bsess.{event_column}=%(value)s
                                             LIMIT 1))
@@ -383,7 +369,6 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
                                  INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime,1) AS connexion_week
                                              FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
                                              WHERE {" AND ".join(ch_sub_query)}
-                                               AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
                                              ORDER BY connexion_week, user_id
                             ) AS all_connexions USING (user_id)
                         GROUP BY connexion_week
@@ -408,10 +393,6 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
     meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
 
     event_type = "PAGES"
     event_value = "/"
@@ -424,7 +405,13 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
             event_value = f["value"]
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            ch_sub_query.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
@@ -432,9 +419,9 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
         if default:
             # get most used value
             ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                            FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                            FROM {event_table} AS feature 
+                                    {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
                             WHERE {" AND ".join(ch_sub_query)}
-                                AND length({event_column}) > 2
                             GROUP BY value
                             ORDER BY count DESC
                             LIMIT 1;"""
@@ -444,7 +431,24 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
             row = ch.execute(ch_query, params)
             if len(row) > 0:
                 event_value = row[0]["value"]
+            else:
+                print(f"no {event_table} most used value")
+                return {
+                    "startTimestamp": startTimestamp,
+                    "filters": [{"type": "EVENT_TYPE", "value": event_type},
+                                {"type": "EVENT_VALUE", "value": ""}],
+                    "chart": __complete_acquisition(rows=[], start_date=startTimestamp, end_date=TimeUTC.now())
+                }
         extra_values["value"] = event_value
+
+        if len(meta_condition) == 0:
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+
+        ch_sub_query += meta_condition
         ch_sub_query.append(f"feature.{event_column} = %(value)s")
         ch_query = f"""SELECT toUnixTimestamp(toDateTime(first_connexion_week))*1000 AS first_connexion_week,
                                week,
@@ -461,17 +465,19 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
                                         AND sessions_metadata.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
                                         AND feature.datetime < toDateTime(%(startTimestamp)s/1000 + 8 * 24 * 60 * 60 )
                                         AND isNull((SELECT 1
-                                                    FROM sessions_metadata AS bmsess INNER JOIN sessions AS bsess USING (session_id)
+                                                    FROM sessions_metadata AS bmsess 
+                                                        INNER JOIN {event_table} AS bsess USING (session_id)
                                                     WHERE bsess.datetime < toDateTime(%(startTimestamp)s / 1000)
                                                       AND bmsess.datetime < toDateTime(%(startTimestamp)s / 1000)
                                                       AND bsess.project_id = %(project_id)s
+                                                      AND bmsess.project_id = %(project_id)s
                                                       AND bmsess.user_id = sessions_metadata.user_id
+                                                      AND bsess.{event_column} = %(value)s
                                                     LIMIT 1))
                                       GROUP BY user_id) AS users_list
                                          INNER JOIN (SELECT DISTINCT user_id, toStartOfWeek(datetime, 1) AS connexion_week
                                                      FROM sessions_metadata INNER JOIN {event_table} AS feature USING (session_id)
                                                      WHERE {" AND ".join(ch_sub_query)}
-                                                       AND sessions_metadata.datetime < toDateTime(%(endTimestamp)s / 1000)
                                                      ORDER BY connexion_week, user_id
                                     ) AS all_connexions USING (user_id)
                                 WHERE first_connexion_week <= connexion_week
@@ -481,7 +487,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
 
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        # print(ch_query % params)
+        print(ch_query % params)
         rows = ch.execute(ch_query, params)
         rows = __compute_weekly_percentage(helper.list_to_camel_case(rows))
     return {
@@ -498,9 +504,6 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
     endTimestamp = startTimestamp + 10 * TimeUTC.MS_WEEK
     ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
     meta_condition = __get_meta_constraint(args)
-    ch_sub_query += meta_condition
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
 
     event_table = JOURNEY_TYPES["CLICK"]["table"]
     event_column = JOURNEY_TYPES["CLICK"]["column"]
@@ -510,47 +513,55 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-            ch_sub_query.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
             extra_values["user_id"] = f["value"]
 
     with ch_client.ClickHouseClient() as ch:
-        # TODO: change this query to not use join, optimization from 5s to 1s
-        ch_query = f"""SELECT  COUNT(DISTINCT user_id) AS count
-                        FROM sessions AS feature INNER JOIN sessions_metadata USING (session_id)
-                        WHERE {" AND ".join(ch_sub_query)}
-                            AND user_id IS NOT NULL
-                            AND not empty(user_id);"""
+        if len(meta_condition) == 0:
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+        ch_sub_query += meta_condition
+        ch_query = f"""SELECT COUNT(DISTINCT user_id) AS count
+                        FROM sessions_metadata
+                        WHERE {" AND ".join(meta_condition)};"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         all_user_count = ch.execute(ch_query, params)
         if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
             return []
         all_user_count = all_user_count[0]["count"]
-        ch_sub_query.append(f"length({event_column})>2")
         ch_query = f"""SELECT {event_column} AS value, COUNT(DISTINCT user_id) AS count
                     FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
                     WHERE {" AND ".join(ch_sub_query)}
-                        AND user_id IS NOT NULL
-                        AND not empty(user_id)
+                        AND length({event_column})>2
                     GROUP BY value
                     ORDER BY count DESC
                     LIMIT 7;"""
 
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         popularity = ch.execute(ch_query, params)
         params["values"] = [p["value"] for p in popularity]
-
+        if len(params["values"]) == 0:
+            return []
         ch_query = f"""SELECT {event_column} AS value, COUNT(session_id) AS count
                         FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
                         WHERE {" AND ".join(ch_sub_query)}
                             AND {event_column} IN %(values)s
                         GROUP BY value;"""
 
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         frequencies = ch.execute(ch_query, params)
         total_usage = sum([f["count"] for f in frequencies])
         frequencies = {f["value"]: f["count"] for f in frequencies}
@@ -577,6 +588,11 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
@@ -584,48 +600,58 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
     ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
     meta_condition += __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
     with ch_client.ClickHouseClient() as ch:
-        # TODO: optimize this when DB structure changes, optimization from 3s to 1s
-        ch_query = f"""SELECT COUNT(DISTINCT user_id) AS count
-                        FROM sessions_metadata INNER JOIN sessions AS feature USING(session_id)
-                        WHERE {" AND ".join(ch_sub_query)};"""
-        params = {"project_id": project_id, "startTimestamp": startTimestamp,
-                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
-        print("---------------------")
-        all_user_count = ch.execute(ch_query, params)
-        if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
-            return {"adoption": 0, "target": 0, "filters": [{"type": "EVENT_TYPE", "value": event_type},
-                                                            {"type": "EVENT_VALUE", "value": event_value}], }
-        all_user_count = all_user_count[0]["count"]
         if default:
             # get most used value
             ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                        FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                        FROM {event_table} AS feature 
+                            {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY value
                         ORDER BY count DESC
                         LIMIT 1;"""
             params = {"project_id": project_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-            print(ch_query % params)
-            print("---------------------")
+            # print(ch_query % params)
+            # print("---------------------")
             row = ch.execute(ch_query, params)
             if len(row) > 0:
                 event_value = row[0]["value"]
+            # else:
+            #     print(f"no {event_table} most used value")
+            #     return {"target": 0, "adoption": 0,
+            #             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": ""}]}
+
         extra_values["value"] = event_value
+
+        if len(meta_condition) == 0:
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            ch_sub_query += meta_condition
+        ch_query = f"""SELECT COUNT(DISTINCT user_id) AS count
+                                FROM sessions_metadata
+                                WHERE {" AND ".join(meta_condition)};"""
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
+        # print(ch_query % params)
+        # print("---------------------")
+        all_user_count = ch.execute(ch_query, params)
+        if len(all_user_count) == 0 or all_user_count[0]["count"] == 0:
+            return {"adoption": 0, "target": 0, "filters": [{"type": "EVENT_TYPE", "value": event_type},
+                                                            {"type": "EVENT_VALUE", "value": event_value}], }
+        all_user_count = all_user_count[0]["count"]
+
         ch_sub_query.append(f"feature.{event_column} = %(value)s")
         ch_query = f"""SELECT COUNT(DISTINCT user_id) AS count
                     FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
                     WHERE {" AND ".join(ch_sub_query)};"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         adoption = ch.execute(ch_query, params)
         adoption = adoption[0]["count"] / all_user_count
     return {"target": all_user_count, "adoption": adoption,
@@ -648,21 +674,24 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("user_id IS NOT NULL")
+            meta_condition.append("not empty(sessions_metadata.user_id)")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
     ch_sub_query = __get_basic_constraints(table_name='feature', data=args)
     meta_condition += __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
+
     with ch_client.ClickHouseClient() as ch:
         if default:
             # get most used value
             ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                        FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                        FROM {event_table} AS feature 
+                            {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY value
                         ORDER BY count DESC
@@ -672,9 +701,19 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             row = ch.execute(ch_query, params)
             if len(row) > 0:
                 event_value = row[0]["value"]
+            else:
+                print(f"no {event_table} most used value")
+                return {"users": [],
+                        "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": ""}]}
+
         extra_values["value"] = event_value
+        if len(meta_condition) == 0:
+            ch_sub_query.append("user_id IS NOT NULL")
+            ch_sub_query.append("not empty(sessions_metadata.user_id)")
+            ch_sub_query.append("sessions_metadata.project_id = %(project_id)s")
+            ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
         ch_sub_query.append(f"feature.{event_column} = %(value)s")
-        # TODO: no possible optimization right now
         ch_query = f"""SELECT user_id, COUNT(DISTINCT session_id) AS count
                         FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
                         WHERE {" AND ".join(ch_sub_query)}
@@ -683,7 +722,7 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
                         LIMIT 10;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-        print(ch_query % params)
+        # print(ch_query % params)
         rows = ch.execute(ch_query, params)
     return {"users": helper.list_to_camel_case(rows),
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
@@ -705,8 +744,9 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
-            meta_condition.append("sessions_metadata.datetime >= %(startTimestamp)s")
-            meta_condition.append("sessions_metadata.datetime < %(endTimestamp)s")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
 
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -726,13 +766,20 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
                             LIMIT 1;"""
             params = {"project_id": project_id, "startTimestamp": startTimestamp,
                       "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
-            # print(ch_query% params)
+            # print(ch_query % params)
             row = ch.execute(ch_query, params)
             if len(row) > 0:
                 event_value = row[0]["value"]
+            else:
+                print(f"no {event_table} most used value")
+                return {
+                    "startTimestamp": startTimestamp,
+                    "filters": [{"type": "EVENT_TYPE", "value": event_type},
+                                {"type": "EVENT_VALUE", "value": ""}],
+                    "chart": __complete_acquisition(rows=[], start_date=startTimestamp, end_date=TimeUTC.now())
+                }
         extra_values["value"] = event_value
         ch_sub_query.append(f"feature.{event_column} = %(value)s")
-        # optimal
         ch_query = f"""SELECT toUnixTimestamp(day)*1000 AS timestamp, count
                         FROM (SELECT toStartOfDay(feature.datetime) AS day, COUNT(DISTINCT session_id) AS count
                               FROM {event_table} AS feature {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
@@ -762,15 +809,17 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
             event_column = JOURNEY_TYPES[f["value"]]["column"]
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
             extra_values["user_id"] = f["value"]
     ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
     meta_condition += __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT {event_column} AS value, AVG(DISTINCT session_id) AS avg
-                    FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                    FROM {event_table} AS feature
+                        {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)}
                     GROUP BY value
                     ORDER BY avg DESC
@@ -792,7 +841,7 @@ PERIOD_TO_FUNCTION = {
 @dev.timed
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                  **args):
-    meta_condition = []
+    meta_condition = __get_meta_constraint(args)
     period = "DAY"
     extra_values = {}
     for f in filters:
@@ -802,18 +851,14 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     period_function = PERIOD_TO_FUNCTION[period]
-    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
-    meta_condition += __get_meta_constraint(args)
+    ch_sub_query = __get_basic_constraints(table_name="sessions_metadata", data=args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
+    ch_sub_query.append("sessions_metadata.user_id IS NOT NULL")
+    ch_sub_query.append("not empty(sessions_metadata.user_id)")
     with ch_client.ClickHouseClient() as ch:
-        # TODO: optimize this when DB structure changes, optimization from 3s to 1s
         ch_query = f"""SELECT SUM(count) / intDiv(%(endTimestamp)s - %(startTimestamp)s, %(step_size)s) AS avg
                         FROM (SELECT {period_function}(sessions_metadata.datetime) AS period, count(DISTINCT user_id) AS count
-                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              FROM sessions_metadata
                               WHERE {" AND ".join(ch_sub_query)}
                               GROUP BY period) AS daily_users;"""
         params = {"step_size": TimeUTC.MS_DAY if period == "DAY" else TimeUTC.MS_WEEK,
@@ -821,8 +866,8 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
                   "startTimestamp": TimeUTC.trunc_day(startTimestamp) if period == "DAY" else TimeUTC.trunc_week(
                       startTimestamp), "endTimestamp": endTimestamp, **__get_constraint_values(args),
                   **extra_values}
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         avg = ch.execute(ch_query, params)
         if len(avg) == 0 or avg[0]["avg"] == 0:
             return {"avg": 0, "chart": []}
@@ -830,53 +875,51 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
         # TODO: optimize this when DB structure changes, optimization from 3s to 1s
         ch_query = f"""SELECT toUnixTimestamp(toDateTime(period))*1000 AS timestamp, count
                         FROM (SELECT {period_function}(sessions_metadata.datetime) AS period, count(DISTINCT user_id) AS count
-                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              FROM sessions_metadata
                               WHERE {" AND ".join(ch_sub_query)}
                               GROUP BY period
                               ORDER BY period) AS raw_results;"""
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         rows = ch.execute(ch_query, params)
     return {"avg": avg, "chart": rows}
 
 
 @dev.timed
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[], **args):
-    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
+    ch_sub_query = __get_basic_constraints(table_name="sessions_metadata", data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
+    ch_sub_query.append("sessions_metadata.user_id IS NOT NULL")
+    ch_sub_query.append("not empty(sessions_metadata.user_id)")
 
     with ch_client.ClickHouseClient() as ch:
-        # TODO: optimize this when DB structure changes, optimization from 4s to 1s
-        ch_query = f"""SELECT AVG(count) AS avg
+        ch_query = f"""SELECT ifNotFinite(AVG(count),0) AS avg
                         FROM(SELECT COUNT(user_id) AS count
                         FROM (SELECT user_id, COUNT(DISTINCT toStartOfDay(datetime)) AS number_of_days
-                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              FROM sessions_metadata
                               WHERE {" AND ".join(ch_sub_query)}
                               GROUP BY user_id) AS users_connexions
                         GROUP BY number_of_days
                         ORDER BY number_of_days) AS results;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp, "endTimestamp": endTimestamp, **__get_constraint_values(args)}
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         avg = ch.execute(ch_query, params)
         if len(avg) == 0 or avg[0]["avg"] == 0:
             return {"avg": 0, "partition": []}
         avg = avg[0]["avg"]
-        # TODO: optimize this when DB structure changes, optimization from 4s to 1s
         ch_query = f"""SELECT number_of_days, COUNT(user_id) AS count
                         FROM (SELECT user_id, COUNT(DISTINCT toStartOfDay(datetime)) AS number_of_days
-                              FROM sessions_metadata INNER JOIN sessions USING (session_id)
+                              FROM sessions_metadata
                               WHERE {" AND ".join(ch_sub_query)}
                               GROUP BY user_id) AS users_connexions
                         GROUP BY number_of_days
                         ORDER BY number_of_days;"""
 
-        print(ch_query % params)
-        print("---------------------")
+        # print(ch_query % params)
+        # print("---------------------")
         rows = ch.execute(ch_query, params)
 
     return {"avg": avg, "partition": helper.list_to_camel_case(rows)}
@@ -885,6 +928,7 @@ def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimes
 @dev.timed
 def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                    **args):
+    ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
     event_type = "PAGES"
     event_value = "/"
     extra_values = {}
@@ -898,22 +942,21 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
             default = False
         elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
+            meta_condition.append("sessions_metadata.project_id = %(project_id)s")
+            meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            meta_condition.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
     event_column = JOURNEY_TYPES[event_type]["column"]
 
-    ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
     meta_condition += __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("user_id IS NOT NULL")
-    ch_sub_query.append("not empty(user_id)")
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
     with ch_client.ClickHouseClient() as ch:
         if default:
             # get most used value
             ch_query = f"""SELECT {event_column} AS value, COUNT(*) AS count
-                            FROM {event_table} AS feature INNER JOIN sessions_metadata USING (session_id)
+                            FROM {event_table} AS feature 
+                                {"INNER JOIN sessions_metadata USING (session_id)" if len(meta_condition) > 0 else ""}
                             WHERE {" AND ".join(ch_sub_query)}
                             GROUP BY value
                             ORDER BY count DESC
@@ -924,9 +967,22 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
             row = ch.execute(ch_query, params)
             if len(row) > 0:
                 event_value = row[0]["value"]
+            else:
+                print(f"no {event_table} most used value")
+                return {
+                    "startTimestamp": startTimestamp,
+                    "filters": [{"type": "EVENT_TYPE", "value": event_type},
+                                {"type": "EVENT_VALUE", "value": ""}],
+                    "list": []
+                }
         extra_values["value"] = event_value
+        if len(meta_condition) == 0:
+            ch_sub_query.append("sessions_metadata.user_id IS NOT NULL")
+            ch_sub_query.append("not empty(sessions_metadata.user_id)")
+            ch_sub_query.append("sessions_metadata.project_id = %(project_id)s")
+            ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
+            ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
         ch_sub_query.append(f"feature.{event_column} = %(value)s")
-        # TODO: no possible optimization right now
         ch_query = f"""SELECT user_id,
                                toUnixTimestamp(last_time)*1000 AS last_time,
                                interactions_count,
@@ -938,7 +994,9 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
                                     WHERE {" AND ".join(ch_sub_query)}
                                     GROUP BY user_id ) AS user_last_usage INNER JOIN sessions_metadata USING (user_id)
                               WHERE now() - last_time > 7
-                              GROUP BY user_id, last_time, interactions_count) AS raw_results;"""
+                              GROUP BY user_id, last_time, interactions_count
+                              ORDER BY interactions_count DESC, last_time DESC
+                              LIMIT 50) AS raw_results;"""
         params = {"project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args), **extra_values}
         print(ch_query % params)
@@ -960,31 +1018,29 @@ def search(text, feature_type, project_id, platform=None):
     ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
-    ch_sub_query.append("sessions_metadata.datetime < toDateTime(%(endTimestamp)s/1000)")
     params = {"startTimestamp": TimeUTC.now() - 1 * TimeUTC.MS_MONTH,
               "endTimestamp": TimeUTC.now(),
               "project_id": project_id,
-              "value": helper.string_to_sql_like(text.lower()),
+              "value": text.lower(),
               "platform_0": platform}
     if feature_type == "ALL":
         with ch_client.ClickHouseClient() as ch:
             sub_queries = []
             for e in JOURNEY_TYPES:
                 sub_queries.append(f"""(SELECT DISTINCT {JOURNEY_TYPES[e]["column"]} AS value, '{e}' AS "type"
-                             FROM {JOURNEY_TYPES[e]["table"]} AS feature INNER JOIN sessions_metadata USING(session_id)
+                             FROM {JOURNEY_TYPES[e]["table"]} AS feature
                              WHERE {" AND ".join(ch_sub_query)} AND positionUTF8({JOURNEY_TYPES[e]["column"]},%(value)s)!=0
                              LIMIT 10)""")
             ch_query = "UNION ALL".join(sub_queries)
-            # print(ch_query, params)
+            print(ch_query % params)
             rows = ch.execute(ch_query, params)
     elif JOURNEY_TYPES.get(feature_type) is not None:
         with ch_client.ClickHouseClient() as ch:
             ch_query = f"""SELECT DISTINCT {JOURNEY_TYPES[feature_type]["column"]} AS value, '{feature_type}' AS "type"
-                             FROM {JOURNEY_TYPES[feature_type]["table"]} AS feature INNER JOIN sessions_metadata USING(session_id)
+                             FROM {JOURNEY_TYPES[feature_type]["table"]} AS feature
                              WHERE {" AND ".join(ch_sub_query)} AND positionUTF8({JOURNEY_TYPES[feature_type]["column"]},%(value)s)!=0
                              LIMIT 10;"""
-            # print(ch_query, params)
+            print(ch_query % params)
             rows = ch.execute(ch_query, params)
     else:
         return []
