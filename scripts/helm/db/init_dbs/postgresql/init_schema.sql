@@ -731,6 +731,7 @@ CREATE TABLE events.errors
     PRIMARY KEY (session_id, message_id)
 );
 CREATE INDEX ON events.errors (session_id);
+CREATE INDEX errors_error_id_idx ON events.errors (error_id);
 CREATE INDEX errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
 CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
 CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);

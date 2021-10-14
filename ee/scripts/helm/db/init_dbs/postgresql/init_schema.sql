@@ -732,6 +732,7 @@ CREATE TABLE events.errors
 );
 CREATE INDEX ON events.errors (session_id);
 CREATE INDEX ON events.errors (timestamp);
+CREATE INDEX errors_error_id_idx ON events.errors (error_id);
 
 
 CREATE TABLE events.graphql
