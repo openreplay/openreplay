@@ -6,4 +6,5 @@ CREATE INDEX pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHER
 
 CREATE INDEX clicks_session_id_timestamp_idx ON events.clicks (session_id, timestamp);
 CREATE INDEX errors_error_id_idx ON errors (error_id);
+CREATE INDEX errors_error_id_idx ON events.errors (error_id);
 COMMIT;
