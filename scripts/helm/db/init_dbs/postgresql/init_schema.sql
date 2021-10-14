@@ -407,6 +407,7 @@ CREATE TABLE errors
     stacktrace           jsonb, --to save the stacktrace and not query S3 another time
     stacktrace_parsed_at timestamp
 );
+CREATE INDEX errors_error_id_idx ON errors (error_id);
 CREATE INDEX ON errors (project_id, source);
 CREATE INDEX errors_message_gin_idx ON public.errors USING GIN (message gin_trgm_ops);
 CREATE INDEX errors_name_gin_idx ON public.errors USING GIN (name gin_trgm_ops);
