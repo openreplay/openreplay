@@ -321,7 +321,7 @@ def get_details_chart(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        SELECT browser_details.error_id,
+        SELECT browser_details.error_id AS error_id,
                browsers_partition,
                os_partition,
                device_partition,
