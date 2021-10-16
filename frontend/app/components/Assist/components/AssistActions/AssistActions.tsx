@@ -7,6 +7,9 @@ import { connectPlayer } from 'Player/store';
 import ChatWindow from '../../ChatWindow';
 import { callPeer } from 'Player'
 import { CallingState, ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
+import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
+import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
+
 import { toast } from 'react-toastify';
 import stl from './AassistActions.css'
 
@@ -32,7 +35,7 @@ interface Props {
 
 function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus }: Props) {  
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
-  const [ localStream, setLocalStream ] = useState<MediaStream | null>(null);
+  const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
 
   useEffect(() => {
@@ -45,24 +48,18 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
     }    
   }, [peerConnectionStatus])
 
-  function onCallConnect(lStream) {
-    setLocalStream(lStream);
-    setEndCall(() => callPeer(
-      lStream,
-      setIncomeStream,
-      onClose.bind(null, lStream),
-      onReject,
-      onError
-    ));
-  }
 
   function call() {
-    navigator.mediaDevices.getUserMedia({video:true, audio:true})
-      .then(onCallConnect).catch(error => { // TODO retry only if specific error
-        navigator.mediaDevices.getUserMedia({audio:true})
-          .then(onCallConnect)
-          .catch(onError)
-      });
+    RequestLocalStream().then(lStream => {
+      setLocalStream(lStream);
+      setEndCall(() => callPeer(
+        lStream,
+        setIncomeStream,
+        lStream.stop.bind(lStream),
+        onReject,
+        onError
+      ));
+    }).catch(onError)
   }
 
   const inCall = calling !== CallingState.False;
