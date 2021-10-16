@@ -1,0 +1,86 @@
+.connecting-message {
+  margin-top: 50%;
+  font-size: 20px;
+  color: #aaa;
+  text-align: center;
+  display: none;
+}
+
+.status-connecting .connecting-message {
+  display: block;
+}
+.status-connecting .card {
+  display: none;
+}
+
+.card{
+  min-width: 324px;
+  width: 350px;
+  max-width: 800px;
+  /*min-height: 220px;*/
+  max-height: 450px;
+  /*resize: both;
+  overflow: auto;*/
+}
+
+.card .card-header{
+  cursor: move;
+}
+#agent-name, #duration{
+  cursor:default;
+}
+
+#local-stream, #remote-stream {
+  display:none;
+}
+#video-container.remote #remote-stream {
+  display: block;
+}
+#video-container.local {
+  min-height: 100px;
+}
+#video-container.local #local-stream {
+  display: block;
+}
+
+#local-stream{
+  width: 35%;
+  position: absolute;
+  z-index: 99;
+  bottom: 5px;
+  right: 5px;
+  border: thin solid rgba(255,255,255, .3);
+}
+
+
+#audio-btn .bi-mic-mute {
+  display:none;
+}
+#audio-btn:after {
+  content: 'Mute'
+}
+#audio-btn.muted .bi-mic-mute {
+  display: inline-block;
+}
+#audio-btn.muted .bi-mic {
+  display:none;
+}
+#audio-btn.muted:after {
+  content: 'Unmute'
+}
+
+#video-btn .bi-camera-video-off {
+  display:none;
+}
+#video-btn.off:after {
+  content: 'Start Video'
+}
+#video-btn.off .bi-camera-video-off {
+  display: inline-block;
+}
+#video-btn.off .bi-camera-video {
+  display:none;
+}
+#video-btn:after {
+  content: 'Stop Video'
+}

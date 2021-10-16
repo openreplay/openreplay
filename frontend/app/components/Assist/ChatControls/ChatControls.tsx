@@ -2,27 +2,26 @@ import React, { useState } from 'react'
 import stl from './ChatControls.css'
 import cn from 'classnames'
 import { Button, Icon } from 'UI'
+import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
+
 
 interface Props {
-  stream: MediaStream | null,
+  stream: LocalStream | null,
   endCall: () => void
 }
 function ChatControls({ stream, endCall } : Props) {
   const [audioEnabled, setAudioEnabled] = useState(true)
-  const [videoEnabled, setVideoEnabled] = useState(true)
+  const [videoEnabled, setVideoEnabled] = useState(false)
 
   const toggleAudio = () => {
     if (!stream) { return; }
-    const aEn = !audioEnabled
-    stream.getAudioTracks().forEach(track => track.enabled = aEn);
-    setAudioEnabled(aEn);
+    setAudioEnabled(stream.toggleAudio());
   }
   
   const toggleVideo = () => {
     if (!stream) { return; }
-    const vEn = !videoEnabled;
-    stream.getVideoTracks().forEach(track => track.enabled = vEn);
-    setVideoEnabled(vEn)
+    stream.toggleVideo()
+    .then(setVideoEnabled)
   }
 
   return (
