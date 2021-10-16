@@ -5,6 +5,7 @@ import type { TimedMessage } from '../Timed';
 import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
 import store from 'App/store';
+import type { LocalStream } from './LocalStream';
 
 import { update, getState } from '../../store';
 
@@ -349,13 +350,14 @@ export default class AssistManager {
 
 
   private localCallData: {
-    localStream: MediaStream,
+    localStream: LocalStream,
     onStream: (s: MediaStream)=>void,
     onCallEnd: () => void,
     onReject: () => void, 
     onError?: ()=> void
   } | null = null
-  call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
+
+  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
     this.localCallData = {
       localStream,
       onStream,
@@ -379,7 +381,17 @@ export default class AssistManager {
 
     //console.log('calling...', this.localCallData.localStream)
     
-    const call =  this.peer.call(this.peerID, this.localCallData.localStream);
+    const call =  this.peer.call(this.peerID, this.localCallData.localStream.stream);
+    this.localCallData.localStream.onVideoTrack(vTrack => {
+      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+      if (!sender) {
+        //logger.warn("No video sender found")
+        return
+      }
+      //logger.log("sender found:", sender)
+      sender.replaceTrack(vTrack)
+    })
+
     call.on('stream', stream => {
       update({ calling: CallingState.True });
       this.localCallData && this.localCallData.onStream(stream);
@@ -388,7 +400,9 @@ export default class AssistManager {
       });
 
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+
     });
+    //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
     call.on("close", this.localCallData.onCallEnd);
     call.on("error", (e) => {

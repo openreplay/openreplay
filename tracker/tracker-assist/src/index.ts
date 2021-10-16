@@ -8,14 +8,13 @@ import BufferingConnection from './BufferingConnection';
 import Mouse from './Mouse';
 import CallWindow from './CallWindow';
 import ConfirmWindow from './ConfirmWindow';
-
+import RequestLocalStream from './LocalStream';
 
 export interface Options {
   confirmText: string,
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
 }
-
 
 enum CallingState {
   Requesting,
@@ -39,7 +38,7 @@ export default function(opts: Partial<Options> = {})  {
     }
 
     function log(...args) {
-      // TODO: use warn/log from assist
+      // TODO: use centralised warn/log from tracker (?)
       appOptions.__debug_log && console.log("OpenReplay Assist. ", ...args)
     }
     function warn(...args) {
@@ -89,6 +88,7 @@ export default function(opts: Partial<Options> = {})  {
 
 
       let callingState: CallingState = CallingState.False;
+
       peer.on('call', function(call) {
         log("Call: ", call)
         if (!peer) { return; }
@@ -96,6 +96,7 @@ export default function(opts: Partial<Options> = {})  {
           openDataConnections[call.peer]?.conn;
         if (callingState !== CallingState.False || !dataConn || !dataConn.open) {
           call.close();
+          warn("Call closed instantly: ", callingState, dataConn, dataConn.open)
           return;
         }
 
@@ -106,7 +107,7 @@ export default function(opts: Partial<Options> = {})  {
             sessionStorage.removeItem(options.session_calling_peer_key);
           }
           callingState = newState;
-        }
+        }      
 
         const notifyCallEnd = () => {
           dataConn.open && dataConn.send("call_end");
@@ -121,74 +122,59 @@ export default function(opts: Partial<Options> = {})  {
           setCallingState(CallingState.Requesting);
           const confirm = new ConfirmWindow(options.confirmText, options.confirmStyle);
           confirmAnswer = confirm.mount();
-          dataConn.on('data', (data) => { // if call closed by a caller before confirm
+          dataConn.on('data', (data) => { // if call cancelled by a caller before confirmation
             if (data === "call_end") {
-              log("Recieved call_end during confirm opened")
-              setCallingState(CallingState.False);
+              log("Recieved call_end during confirm window opened")
               confirm.remove();
+              setCallingState(CallingState.False);
             }                    
           });
         }
 
         confirmAnswer.then(agreed => {
           if (!agreed || !dataConn.open) {
-            call.close();
-            notifyCallEnd();
-            setCallingState(CallingState.False);
-            return;
+            !dataConn.open && warn("Call cancelled because data connection is closed.")
+            call.close()
+            notifyCallEnd()
+            setCallingState(CallingState.False)
+            return
           }
 
-          const mouse = new Mouse();
-          let callUI;
+          const mouse = new Mouse()
+          let callUI = new CallWindow()
 
-          const onCallConnect = lStream => {
-            const onCallEnd = () => {
-              mouse.remove();
-              callUI?.remove();
-              lStream.getTracks().forEach(t => t.stop());
-              setCallingState(CallingState.False);
-            }
-            const initiateCallEnd = () => {
-              log("initiateCallEnd")
-              call.close()
-              notifyCallEnd();
-              onCallEnd();
-            }
-
-            call.answer(lStream);
-            setCallingState(CallingState.True)
-
-            dataConn.on("close", onCallEnd);
-
+          const onCallEnd = () => {
+            mouse.remove();
+            callUI.remove();
+            setCallingState(CallingState.False);
+          }
+          const initiateCallEnd = () => {
+            log("initiateCallEnd")
+            call.close()
+            notifyCallEnd();
+            onCallEnd();
+          }
+          RequestLocalStream().then(lStream => {
+            dataConn.on("close", onCallEnd); // For what case?
             //call.on('close', onClose); // Works from time to time (peerjs bug)
-            const intervalID = setInterval(() => {
+            const checkConnInterval = setInterval(() => {
               if (!dataConn.open) {
                 initiateCallEnd();
-                clearInterval(intervalID);
+                clearInterval(checkConnInterval);
               }
               if (!call.open) {
                 onCallEnd();
-                clearInterval(intervalID);
+                clearInterval(checkConnInterval);
               }
             }, 3000);
-            call.on('error', initiateCallEnd);
-
-            callUI = new CallWindow(initiateCallEnd);
-            callUI.setLocalStream(lStream, (stream) => {
-              //let videoTrack = stream.getVideoTracks()[0];
-              //lStream.addTrack(videoTrack);
-
-              //call.peerConnection.addTrack(videoTrack);
-
-              // call.peerConnection.getSenders()
-              // var sender = call.peerConnection.getSenders().find(function(s) {
-              //   return s.track .kind == videoTrack.kind;
-              // });
-              //sender.replaceTrack(videoTrack);
+            call.on('error', e => {
+              warn("Call error:", e)
+              initiateCallEnd()
             });
+
             call.on('stream', function(rStream) {
               callUI.setRemoteStream(rStream);
-              const onInteraction = () => {
+              const onInteraction = () => { // only if hidden?
                 callUI.playRemote()
                 document.removeEventListener("click", onInteraction)
               }
@@ -200,6 +186,10 @@ export default function(opts: Partial<Options> = {})  {
                 onCallEnd();
                 return;
               }
+              // if (data && typeof data.video === 'boolean') {
+              //   log('Recieved video toggle signal: ', data.video)
+              //   callUI.toggleRemoteVideo(data.video)
+              // }
               if (data && typeof data.name === 'string') {
                 log('Recieved name: ', data.name)
                 callUI.setAssistentName(data.name);
@@ -208,14 +198,25 @@ export default function(opts: Partial<Options> = {})  {
                 mouse.move(data);
               }
             });
-          }
 
-          navigator.mediaDevices.getUserMedia({video:true, audio:true})
-          .then(onCallConnect)
-          .catch(_ => { // TODO retry only if specific error
-            navigator.mediaDevices.getUserMedia({audio:true}) // in case there is no camera on device
-            .then(onCallConnect)
-            .catch(e => warn("Can't reach media devices. ", e));
+            lStream.onVideoTrack(vTrack => {
+              const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+              if (!sender) {
+                warn("No video sender found")
+                return
+              }
+              log("sender found:", sender)
+              sender.replaceTrack(vTrack)
+            })
+
+            callUI.setCallEndAction(initiateCallEnd)
+            callUI.setLocalStream(lStream)
+            call.answer(lStream.stream)
+            setCallingState(CallingState.True)
+          })
+          .catch(e => {
+            warn("Audio mediadevice request error:", e)
+            onCallEnd()
           });
         }).catch(); // in case of Confirm.remove() without any confirmation
       });
