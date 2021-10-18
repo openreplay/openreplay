@@ -7,6 +7,7 @@ import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { setActiveFlow, clearEvents } from 'Duck/filters';
 import { setActiveTab } from 'Duck/sessions';
 import { issues_types } from 'Types/session/issue'
+import NewBadge from 'Shared/NewBadge';
 
 function SessionsMenu(props) {
   const { 
@@ -75,11 +76,15 @@ function SessionsMenu(props) {
       <div className={stl.divider} />
       <div className="my-3">
         <SideMenuitem
-          title="Assist"
+          title={ <div className="flex items-center">
+            <div>Assist</div>
+            <div className="ml-2">{ <NewBadge />}</div>
+          </div>  }
           iconName="person"
           active={activeTab.type === 'live'}
           onClick={() => onMenuItemClick({ name: 'Assist', type: 'live' })}
         />
+
       </div>
 
       <div className={stl.divider} />

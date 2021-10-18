@@ -72,7 +72,7 @@ function PreferencesMenu({ activeTab, appearance, history }) {
       <div className="mb-4">
         <SideMenuitem
           active={ activeTab === CLIENT_TABS.MANAGE_USERS }
-          title="Manage Users"
+          title="Users"
           iconName="users"
           onClick={() => setTab(CLIENT_TABS.MANAGE_USERS) }
         />

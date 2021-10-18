@@ -49,7 +49,7 @@ func ReadUint(reader io.Reader) (uint64, error) {
 		}
 		if b < 0x80 {
 			if i > 9 || i == 9 && b > 1 {
-				return x, errors.New("overflow")
+				return x, errors.New("uint overflow")
 			}
 			return x | uint64(b)<<s, nil
 		}

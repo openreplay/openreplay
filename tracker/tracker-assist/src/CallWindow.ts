@@ -1,15 +1,23 @@
+import type { LocalStream } from './LocalStream';
 
+const SS_START_TS_KEY = "__openreplay_assist_call_start_ts"
 
 export default class CallWindow {
-  private iframe: HTMLIFrameElement;
-  private vRemote: HTMLVideoElement | null = null;
-  private vLocal: HTMLVideoElement | null = null;
-  private audioBtn: HTMLAnchorElement | null = null;
-  private videoBtn: HTMLAnchorElement | null = null;
-  private userNameSpan: HTMLSpanElement | null = null;
+  private iframe: HTMLIFrameElement
+  private vRemote: HTMLVideoElement | null = null
+  private vLocal: HTMLVideoElement | null = null
+  private audioBtn: HTMLElement | null = null
+  private videoBtn: HTMLElement | null = null
+  private endCallBtn: HTMLElement | null = null
+  private agentNameElem: HTMLElement | null = null
+  private videoContainer: HTMLElement | null = null
+  private vPlaceholder: HTMLElement | null = null
 
-  private tsInterval: ReturnType<typeof setInterval>;
-  constructor(endCall: () => void) {
+  private tsInterval: ReturnType<typeof setInterval>
+
+  private load: Promise<void>
+
+  constructor() {
     const iframe = this.iframe = document.createElement('iframe');
     Object.assign(iframe.style, {
       position: "fixed",
@@ -23,188 +31,228 @@ export default class CallWindow {
       height: "200px",
       width: "200px",
     });
-    //iframe.src = "//static.openreplay.com/tracker-assist/index.html";
-    iframe.onload = () => {
-      const doc = iframe.contentDocument;
-      if (!doc) {
-        console.error("OpenReplay: CallWindow iframe document is not reachable.")
-        return; 
-      }
-      fetch("https://static.openreplay.com/tracker-assist/index.html")
-      //fetch("file:///Users/shikhu/work/asayer-tester/dist/assist/index.html")
-      .then(r => r.text())
-      .then((text) => {
-        iframe.onload = () => {
-          doc.body.removeChild(doc.body.children[0]); //?!!>R#
-          const assistSection = doc.getElementById("or-assist")
-          assistSection && assistSection.removeAttribute("style");
-          iframe.style.height = doc.body.scrollHeight + 'px';
-          iframe.style.width = doc.body.scrollWidth + 'px';
-          iframe.onload = null;
-        }
-
-        text = text.replace(/href="css/g, "href=\"https://static.openreplay.com/tracker-assist/css")
-        doc.open();
-        doc.write(text);
-        doc.close();
-
-        
-        this.vLocal = doc.getElementById("video-local") as HTMLVideoElement;
-        this.vRemote = doc.getElementById("video-remote") as HTMLVideoElement;
-        this._trySetStreams();
-        //
-        this.vLocal.parentElement && this.vLocal.parentElement.classList.add("d-none");
-
-        this.audioBtn = doc.getElementById("audio-btn") as HTMLAnchorElement;
-        this.audioBtn.onclick = () => this.toggleAudio();
-        this.videoBtn = doc.getElementById("video-btn") as HTMLAnchorElement;
-        this.videoBtn.onclick = () => this.toggleVideo();
-
-        this.userNameSpan = doc.getElementById("username") as HTMLSpanElement;
-        this._trySetAssistentName();
-
-        const endCallBtn = doc.getElementById("end-call-btn") as HTMLAnchorElement;
-        endCallBtn.onclick = endCall;
-
-        const tsText = doc.getElementById("time-stamp");
-        const startTs = Date.now();
-        if (tsText) {
-          this.tsInterval = setInterval(() => {
-            const ellapsed = Date.now() - startTs;
-            const secsFull = ~~(ellapsed / 1000);
-            const mins = ~~(secsFull / 60);
-            const secs = secsFull - mins * 60
-            tsText.innerText = `${mins}:${secs < 10 ? 0 : ''}${secs}`;
-          }, 500);
-        }
-
-            // TODO: better D'n'D 
-        doc.body.setAttribute("draggable", "true");
-        doc.body.ondragstart = (e) => {
-          if (!e.dataTransfer || !e.target) { return; }
-          //@ts-ignore
-          if (!e.target.classList || !e.target.classList.contains("card-header")) { return; }
-          e.dataTransfer.setDragImage(doc.body, e.clientX, e.clientY);
-        };
-        doc.body.ondragend = e => {
-          Object.assign(iframe.style, {
-            left: `${e.clientX}px`,
-            top: `${e.clientY}px`,
-            bottom: 'auto',
-            right: 'auto',
-          })
-        }
-      });
-    }
-
     document.body.appendChild(iframe);
 
+    const doc = iframe.contentDocument;
+    if (!doc) {
+      console.error("OpenReplay: CallWindow iframe document is not reachable.")
+      return; 
+    }
+
+
+    //const baseHref = "https://static.openreplay.com/tracker-assist/test"
+    const baseHref = "https://static.openreplay.com/tracker-assist/3.4.4"
+    this.load = fetch(baseHref + "/index.html")
+    .then(r => r.text())
+    .then((text) => {
+      iframe.onload = () => {
+        const assistSection = doc.getElementById("or-assist")
+        assistSection?.classList.remove("status-connecting")
+        //iframe.style.height = doc.body.scrollHeight + 'px';
+        //iframe.style.width = doc.body.scrollWidth + 'px';
+        this.adjustIframeSize()
+        iframe.onload = null;
+      }
+
+      // ?
+      text = text.replace(/href="css/g, `href="${baseHref}/css`)
+      doc.open();
+      doc.write(text);
+      doc.close();
+
+      
+      this.vLocal = doc.getElementById("video-local") as (HTMLVideoElement | null);
+      this.vRemote = doc.getElementById("video-remote") as (HTMLVideoElement | null);
+      this.videoContainer = doc.getElementById("video-container");
+      
+      this.audioBtn = doc.getElementById("audio-btn");
+      if (this.audioBtn) {
+        this.audioBtn.onclick = () => this.toggleAudio();
+      }
+      this.videoBtn = doc.getElementById("video-btn");
+      if (this.videoBtn) {
+        this.videoBtn.onclick = () => this.toggleVideo();
+      }
+      this.endCallBtn = doc.getElementById("end-call-btn");
+
+      this.agentNameElem = doc.getElementById("agent-name");
+      this.vPlaceholder = doc.querySelector("#remote-stream p")
+
+      const tsElem = doc.getElementById("duration");
+      if (tsElem) {
+        const startTs = Number(sessionStorage.getItem(SS_START_TS_KEY)) || Date.now()
+        sessionStorage.setItem(SS_START_TS_KEY, startTs.toString())
+        this.tsInterval = setInterval(() => {
+          const ellapsed = Date.now() - startTs
+          const secsFull = ~~(ellapsed / 1000)
+          const mins = ~~(secsFull / 60)
+          const secs = secsFull - mins * 60
+          tsElem.innerText = `${mins}:${secs < 10 ? 0 : ''}${secs}`
+        }, 500);
+      }
+
+      // TODO: better D'n'D 
+      // mb set cursor:move here?
+      doc.body.setAttribute("draggable", "true");
+      doc.body.ondragstart = (e) => {
+        if (!e.dataTransfer || !e.target) { return; }
+        //@ts-ignore
+        if (!e.target.classList || !e.target.classList.contains("drag-area")) { return; }
+        e.dataTransfer.setDragImage(doc.body, e.clientX, e.clientY);
+      };
+      doc.body.ondragend = e => {
+        Object.assign(iframe.style, {
+          left: `${e.clientX}px`, // TODO: fix the case when ecoordinates are inside the iframe
+          top: `${e.clientY}px`,
+          bottom: 'auto',
+          right: 'auto',
+        })
+      }
+    });
+
+    //this.toggleVideoUI(false)
+    //this.toggleRemoteVideoUI(false)
   }
 
-  private aRemote: HTMLAudioElement | null = null;
-  private localStream: MediaStream | null = null;
-  private remoteStream: MediaStream | null = null;
-  private setLocalVideoStream: (MediaStream) => void = () => {};
-  private videoRequested: boolean = true; // TODO: green camera light
-  private _trySetStreams() {
-    if (this.vRemote && !this.vRemote.srcObject && this.remoteStream) {
-      this.vRemote.srcObject = this.remoteStream;
-      // Hack for audio (doesen't work in iframe because of some magical reasons)
-      this.aRemote = document.createElement("audio");
-      this.aRemote.autoplay = true;
-      this.aRemote.style.display = "none"
-      this.aRemote.srcObject = this.remoteStream;
-      document.body.appendChild(this.aRemote)
-    }
-    if (this.vLocal && !this.vLocal.srcObject && this.localStream) {
-      this.vLocal.srcObject = this.localStream;
-    }
+  private adjustIframeSize() {
+    const doc = this.iframe.contentDocument
+    if (!doc) { return }
+    this.iframe.style.height = doc.body.scrollHeight + 'px';
+    this.iframe.style.width = doc.body.scrollWidth + 'px';
   }
+
+  setCallEndAction(endCall: () => void) {
+    this.load.then(() => {
+      if (this.endCallBtn) {
+        this.endCallBtn.onclick = endCall
+      }
+    })
+  }
+
+  private aRemote: HTMLAudioElement | null = null; 
+  private checkRemoteVideoInterval: ReturnType<typeof setInterval>
   setRemoteStream(rStream: MediaStream) {
-    this.remoteStream = rStream;
-    this._trySetStreams();
-  }
-  setLocalStream(lStream: MediaStream, setLocalVideoStream: (MediaStream) => void) {    
-    lStream.getVideoTracks().forEach(track => {
-      track.enabled = false;
-    });
-    this.localStream = lStream;
-    this.setLocalVideoStream = setLocalVideoStream;
-    this._trySetStreams();
+    this.load.then(() => {
+      if (this.vRemote && !this.vRemote.srcObject) {
+        this.vRemote.srcObject = rStream;
+        if (this.vPlaceholder) {
+          this.vPlaceholder.innerText = "Video has been paused. Click anywhere to resume.";
+        }
+
+        // Hack for audio. Doesen't work inside the iframe because of some magical reasons (check if it is connected to autoplay?)
+        this.aRemote = document.createElement("audio");
+        this.aRemote.autoplay = true;
+        this.aRemote.style.display = "none"
+        this.aRemote.srcObject = rStream;
+        document.body.appendChild(this.aRemote)
+      }
+
+      // Hack to determine if the remote video is enabled
+      if (this.checkRemoteVideoInterval) { clearInterval(this.checkRemoteVideoInterval) } // just in case
+      let enable = false
+      this.checkRemoteVideoInterval = setInterval(() => {
+        const settings = rStream.getVideoTracks()[0]?.getSettings()
+        //console.log(settings)
+        const isDummyVideoTrack = !!settings && (settings.width === 2 || settings.frameRate === 0)
+        const shouldEnable = !isDummyVideoTrack
+        if (enable !== shouldEnable) {
+          this.toggleRemoteVideoUI(enable=shouldEnable)
+        }
+      }, 1000)
+    })
   }
 
-
-  // TODO: determined workflow
-  _trySetAssistentName() {
-    if (this.userNameSpan && this.assistentName) {
-      this.userNameSpan.innerText = this.assistentName;
-    }
+  toggleRemoteVideoUI(enable: boolean) {
+    this.load.then(() => {
+      if (this.videoContainer) {
+        if (enable) {
+          this.videoContainer.classList.add("remote")
+        } else {
+          this.videoContainer.classList.remove("remote")
+        }
+        this.adjustIframeSize()
+      }
+    })
   }
-  private assistentName: string = "";
+
+  private localStream: LocalStream | null = null;
+
+  // TODO: on construction?
+  setLocalStream(lStream: LocalStream) {    
+    this.localStream = lStream
+  }
+
+  playRemote() {
+    this.vRemote && this.vRemote.play()
+  }
+
   setAssistentName(name: string) {
-    this.assistentName = name;
-    this._trySetAssistentName();
+    this.load.then(() => {
+      if (this.agentNameElem) {
+        this.agentNameElem.innerText = name
+      }
+    })
   }
 
-  toggleAudio() {
-    let enabled = true;
-    this.localStream?.getAudioTracks().forEach(track => {
-      enabled = enabled && !track.enabled;
-      track.enabled = enabled;
-    });
-    const cList = this.audioBtn?.classList;
+
+  private toggleAudioUI(enabled: boolean) {
     if (!this.audioBtn) { return; } 
     if (enabled) {
-      this.audioBtn.classList.remove("muted");
-      this.audioBtn.childNodes[1].textContent = "Mute";
+      this.audioBtn.classList.remove("muted")
     } else {
-      this.audioBtn.classList.add("muted");
-      this.audioBtn.childNodes[1].textContent = "Unmute";
+      this.audioBtn.classList.add("muted")
     }
   }
 
-  private _toggleVideoUI(enabled) {
-    if (!this.videoBtn || !this.vLocal || !this.vLocal.parentElement) { return; } 
+  private toggleAudio() {
+    const enabled = this.localStream?.toggleAudio() || false
+    this.toggleAudioUI(enabled)
+    // if (!this.audioBtn) { return; } 
+    // if (enabled) {
+    //   this.audioBtn.classList.remove("muted");
+    //   this.audioBtn.childNodes[1].textContent = "Mute";
+    // } else {
+    //   this.audioBtn.classList.add("muted");
+    //   this.audioBtn.childNodes[1].textContent = "Unmute";
+    // }
+  }
+
+  private toggleVideoUI(enabled: boolean) {
+    if (!this.videoBtn || !this.videoContainer) { return; } 
     if (enabled) {
-      this.vLocal.parentElement.classList.remove("d-none");
+      this.videoContainer.classList.add("local")
       this.videoBtn.classList.remove("off");
-      this.videoBtn.childNodes[1].textContent = "Stop Video";
     } else {
-      this.vLocal.parentElement.classList.add("d-none");
+      this.videoContainer.classList.remove("local")
       this.videoBtn.classList.add("off");
-      this.videoBtn.childNodes[1].textContent = "Start Video";
     }
+    this.adjustIframeSize()
   }
 
-  toggleVideo() {
-    if (!this.videoRequested) {
-      navigator.mediaDevices.getUserMedia({video:true, audio:false}).then(vd => {
-        this.videoRequested = true;
-        this.setLocalVideoStream(vd);
-        this._toggleVideoUI(true);
-        this.localStream?.getVideoTracks().forEach(track => {
-          track.enabled = true;
-        })
-      });
-      return;
-    }
-    let enabled = true;
-    this.localStream?.getVideoTracks().forEach(track => {
-      enabled = enabled && !track.enabled;
-      track.enabled = enabled;
-    });
-    this._toggleVideoUI(enabled);
-    
+  private videoRequested: boolean = false
+  private toggleVideo() {
+    this.localStream?.toggleVideo()
+    .then(enabled => {
+      this.toggleVideoUI(enabled)
+      this.load.then(() => {
+        if (this.vLocal && this.localStream && !this.vLocal.srcObject) {
+          this.vLocal.srcObject = this.localStream.stream
+        }
+      })
+    })    
   }
 
   remove() {
-    clearInterval(this.tsInterval);
+    this.localStream?.stop()
+    clearInterval(this.tsInterval)
+    clearInterval(this.checkRemoteVideoInterval)
     if (this.iframe.parentElement) {
-      document.body.removeChild(this.iframe);   
+      document.body.removeChild(this.iframe) 
     }
     if (this.aRemote && this.aRemote.parentElement) {
-      document.body.removeChild(this.aRemote);  
+      document.body.removeChild(this.aRemote) 
     }
+    sessionStorage.removeItem(SS_START_TS_KEY)
   }
 
 }

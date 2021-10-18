@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-fetch",
   "description": "Tracker plugin for fetch requests recording ",
-  "version": "3.0.0",
+  "version": "3.4.1",
   "keywords": [
     "fetch",
     "logging",

@@ -5,11 +5,13 @@ import type { TimedMessage } from '../Timed';
 import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
 import store from 'App/store';
+import type { LocalStream } from './LocalStream';
 
 import { update, getState } from '../../store';
 
 
 export enum CallingState {
+  Reconnecting,
   Requesting,
   True,
   False,
@@ -38,7 +40,7 @@ export function getStatusText(status: ConnectionStatus): string {
     case ConnectionStatus.Error:
       return "Something went wrong. Try to reload the page.";
     case ConnectionStatus.WaitingMessages:
-      return "Connected. Waiting for the data..."
+      return "Connected. Waiting for the data... (The tab might be inactive)"
   }
 }
  
@@ -161,7 +163,6 @@ export default class AssistManager {
         if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
           if (this.peer && this.connectionAttempts++ < MAX_RECONNECTION_COUNT) {
             this.setStatus(ConnectionStatus.Connecting);
-            console.log("peerunavailable")
             this.connectToPeer();
           } else {
             this.setStatus(ConnectionStatus.Disconnected);
@@ -175,7 +176,6 @@ export default class AssistManager {
       peer.on("open", () => {
         if (this.peeropened) { return; }
         this.peeropened = true;
-        console.log('peeropen')
         this.connectToPeer();        
       });
     });
@@ -186,11 +186,16 @@ export default class AssistManager {
     if (!this.peer) { return; }
     this.setStatus(ConnectionStatus.Connecting);
     const id = this.peerID;
-    console.log("trying to connect to", id)
     const conn = this.peer.connect(id, { serialization: 'json', reliable: true});
     conn.on('open', () => {
       window.addEventListener("beforeunload", ()=>conn.open &&conn.send("unload"));
-      console.log("peer connected")
+
+      //console.log("peer connected")
+
+
+      if (getState().calling === CallingState.Reconnecting) {
+        this._call()
+      }
       
       let i = 0;
       let firstMessage = true;
@@ -199,7 +204,7 @@ export default class AssistManager {
 
       conn.on('data', (data) => {
         if (!Array.isArray(data)) { return this.handleCommand(data); }
-        this.mesagesRecieved = true;
+        this.disconnectTimeout && clearTimeout(this.disconnectTimeout);
         if (firstMessage) {
           firstMessage = false;
           this.setStatus(ConnectionStatus.Connected)
@@ -250,9 +255,8 @@ export default class AssistManager {
 
 
     const onDataClose = () => {
-      this.initiateCallEnd();
-      this.setStatus(ConnectionStatus.Connecting);
-      console.log('closed peer conn. Reconnecting...')
+      this.onCallDisconnect()
+      //console.log('closed peer conn. Reconnecting...')
       this.connectToPeer();
     }
 
@@ -263,7 +267,6 @@ export default class AssistManager {
     // }, 3000);
     conn.on('close', onDataClose);// Does it work ?
     conn.on("error", (e) => {
-      console.log("PeerJS connection error", e);
       this.setStatus(ConnectionStatus.Error);
     })
   }
@@ -282,49 +285,49 @@ export default class AssistManager {
   }
 
 
-  private onCallEnd: null | (()=>void) = null;
-  private onReject: null | (()=>void) = null;
   private forceCallEnd() {
     this.callConnection?.close();
   }
   private notifyCallEnd() {
     const dataConn = this.dataConnection;
     if (dataConn) {
-      console.log("notifyCallEnd send")
       dataConn.send("call_end");
     }
   }
   private initiateCallEnd = () => {
-    console.log('initiateCallEnd')
     this.forceCallEnd();
     this.notifyCallEnd();
-    this.onCallEnd?.();
+    this.localCallData && this.localCallData.onCallEnd();
   }
 
   private onTrackerCallEnd = () => {
+    console.log('onTrackerCallEnd')
     this.forceCallEnd();
     if (getState().calling === CallingState.Requesting) {
-      this.onReject?.();
+      this.localCallData && this.localCallData.onReject();
     }
-    this.onCallEnd?.();
+    this.localCallData && this.localCallData.onCallEnd();
+  }
+
+  private onCallDisconnect = () => {
+    if (getState().calling === CallingState.True) {
+      update({ calling: CallingState.Reconnecting });
+    }
   }
 
 
-
-  private mesagesRecieved: boolean = false;
+  private disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   private handleCommand(command: string) {
+    console.log("Data command", command)
     switch (command) {
       case "unload":
-        this.onTrackerCallEnd();
-        this.mesagesRecieved = false;
-        setTimeout(() => {
-          if (this.mesagesRecieved) {
-            return;
-          }
-          // @ts-ignore
-          this.dataConnection?.close();
+        //this.onTrackerCallEnd();
+        this.onCallDisconnect()
+        this.dataConnection?.close();
+        this.disconnectTimeout = setTimeout(() => {
+          this.onTrackerCallEnd();
           this.setStatus(ConnectionStatus.Disconnected);
-        }, 8000); // TODO: more convenient way
+        }, 15000); // TODO: more convenient way
         //this.dataConnection?.close();
         return;
       case "call_end":
@@ -345,63 +348,80 @@ export default class AssistManager {
     conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
   }
 
-  call(localStream: MediaStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
-    if (!this.peer || getState().calling !== CallingState.False) { return null; }
+
+  private localCallData: {
+    localStream: LocalStream,
+    onStream: (s: MediaStream)=>void,
+    onCallEnd: () => void,
+    onReject: () => void, 
+    onError?: ()=> void
+  } | null = null
+
+  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
+    this.localCallData = {
+      localStream,
+      onStream,
+      onCallEnd: () => {
+        onCallEnd();
+        this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
+        update({ calling: CallingState.False });
+        this.localCallData = null;
+      },
+      onReject,
+      onError,
+    }
+    this._call()
+    return this.initiateCallEnd;
+  }
+
+  private _call() {
+    if (!this.peer || !this.localCallData || ![CallingState.False, CallingState.Reconnecting].includes(getState().calling)) { return null; }
     
     update({ calling: CallingState.Requesting });
-    console.log('calling...')
-    
-    const call =  this.peer.call(this.peerID, localStream);
-    call.on('stream', stream => {
-      //call.peerConnection.ontrack = (t)=> console.log('ontrack', t)
 
+    //console.log('calling...', this.localCallData.localStream)
+    
+    const call =  this.peer.call(this.peerID, this.localCallData.localStream.stream);
+    this.localCallData.localStream.onVideoTrack(vTrack => {
+      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+      if (!sender) {
+        //logger.warn("No video sender found")
+        return
+      }
+      //logger.log("sender found:", sender)
+      sender.replaceTrack(vTrack)
+    })
+
+    call.on('stream', stream => {
       update({ calling: CallingState.True });
-      onStream(stream);
+      this.localCallData && this.localCallData.onStream(stream);
       this.send({ 
         name: store.getState().getIn([ 'user', 'account', 'name']),
       });
 
-      // @ts-ignore ??
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+
     });
+    //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
-    this.onCallEnd = () => {
-      onCallEnd();
-      // @ts-ignore ??
-      this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
-      update({ calling: CallingState.False });
-      this.onCallEnd = null;
-    }
-
-    call.on("close", this.onCallEnd);
+    call.on("close", this.localCallData.onCallEnd);
     call.on("error", (e) => {
       console.error("PeerJS error (on call):", e)
-      this.initiateCallEnd?.();
-      onError?.();
+      this.initiateCallEnd();
+      this.localCallData && this.localCallData.onError && this.localCallData.onError();
     });
 
-    // const intervalID = setInterval(() => {
-    //   if (!call.open && getState().calling === CallingState.True) {
-    //     this.onCallEnd?.();
-    //     clearInterval(intervalID);
-    //   }
-    // }, 5000);
-
     window.addEventListener("beforeunload", this.initiateCallEnd)
-    
-    return this.initiateCallEnd;
   }
 
   clear() {
-    console.log('clearing', this.peerID)
     this.initiateCallEnd();
     this.dataCheckIntervalID && clearInterval(this.dataCheckIntervalID);
     if (this.peer) {
-      this.peer.connections[this.peerID]?.forEach(c => c.open && c.close());
-      console.log("destroying peer...")
-      this.peer.disconnect();
-      this.peer.destroy();
+      //console.log("destroying peer...")
+      const peer = this.peer; // otherwise it calls reconnection on data chan close
       this.peer = null;
+      peer.destroy();
     }
   }
 }

@@ -3,6 +3,7 @@ import ToggleContent from '../../../shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';
 
 const VueDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <div>This plugin allows you to capture VueX mutations/state and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.</div>
@@ -18,7 +19,7 @@ const VueDoc = (props) => {
 
       
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import Vuex from 'vuex'
@@ -26,7 +27,7 @@ import OpenReplay from '@openreplay/tracker';
 import trackerVuex from '@openreplay/tracker-vuex';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 tracker.start();
 //...
@@ -43,7 +44,7 @@ import OpenReplay from '@openreplay/tracker/cjs';
 import trackerVuex from '@openreplay/tracker-vuex/cjs';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 //...
 function SomeFunctionalComponent() {

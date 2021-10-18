@@ -44,6 +44,11 @@ if msg.UserDeviceHeapSize, err = ReadUint(reader); err != nil { return nil, err 
 if msg.UserCountry, err = ReadString(reader); err != nil { return nil, err }
       return msg, nil
   
+    case 2:
+      msg := &SessionDisconnect{ meta: &meta{ TypeID: 2} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
     case 3:
       msg := &SessionEnd{ meta: &meta{ TypeID: 3} }
       if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
@@ -519,6 +524,12 @@ if msg.BaseURL, err = ReadString(reader); err != nil { return nil, err }
 if msg.HesitationTime, err = ReadUint(reader); err != nil { return nil, err }
 if msg.Label, err = ReadString(reader); err != nil { return nil, err }
 if msg.Selector, err = ReadString(reader); err != nil { return nil, err }
+      return msg, nil
+  
+    case 70:
+      msg := &CreateIFrameDocument{ meta: &meta{ TypeID: 70} }
+      if msg.FrameID, err = ReadUint(reader); err != nil { return nil, err }
+if msg.ID, err = ReadUint(reader); err != nil { return nil, err }
       return msg, nil
   
     case 90:

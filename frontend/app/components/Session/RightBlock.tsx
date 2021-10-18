@@ -4,9 +4,10 @@ import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel'
 import { Controls as PlayerControls } from 'Player';
 import { Tabs } from 'UI';
 import { connectPlayer } from 'Player';
+import NewBadge from 'Shared/NewBadge';
 
 const EVENTS = 'Events';
-const HEATMAPS = 'Heatmaps';
+const HEATMAPS = 'Click Map';
 
 const TABS = [ EVENTS, HEATMAPS ].map(tab => ({ text: tab, key: tab }));
 
@@ -29,12 +30,15 @@ export default function RightBlock() {
   }
   return (
     <div style={{ width: '270px', height: 'calc(100vh- 50px)'}} className="flex flex-col">
-      <Tabs 
-        tabs={ TABS }
-        active={ activeTab }
-        onClick={ (tab) => setActiveTab(tab) }
-        border={ true }
-      />
+      <div className="relative">
+        <Tabs
+          tabs={ TABS }
+          active={ activeTab }
+          onClick={ (tab) => setActiveTab(tab) }
+          border={ true }
+        />
+        <div className="absolute" style={{ left: '160px', top: '13px' }}>{ <NewBadge />}</div>
+      </div>
       {
         renderActiveTab(activeTab)       
       }            

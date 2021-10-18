@@ -1,7 +1,7 @@
 import Record from 'Types/Record';
 import Target from 'Types/target';
 import { camelCased } from 'App/utils';
-// import { getEventIcon } from 'Types/filter';
+import { getEventIcon } from 'Types/filter';
 
 const CLICK = 'CLICK';
 const INPUT = 'INPUT';
@@ -105,6 +105,6 @@ export default Record({
     operator: event.operator || getOperatorDefault(event.type),
     // value: target ? target.label : event.value,
     value: typeof value === 'string' ? [value] : value,
-    icon: 'filters/metadata'
+    icon: event.type ? getEventIcon(event.type) : 'filters/metadata'
   }),
 })

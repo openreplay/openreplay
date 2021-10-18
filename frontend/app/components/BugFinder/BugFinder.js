@@ -25,9 +25,8 @@ import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from '../shared/NoSessionsMessage';
+import TrackerUpdateMessage from '../shared/TrackerUpdateMessage';
 import LiveSessionList from './LiveSessionList'
-
-const AUTOREFRESH_INTERVAL = 10 * 60 * 1000;
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -37,7 +36,6 @@ const weakEqual = (val1, val2) => {
 
 @withLocationHandlers()
 @connect(state => ({
-  shouldAutorefresh: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size === 0,
   filter: state.getIn([ 'filters', 'appliedFilter' ]),
   showLive: state.getIn([ 'user', 'account', 'appearance', 'sessionsLive' ]),
   variables: state.getIn([ 'customFields', 'list' ]), 
@@ -93,12 +91,6 @@ export default class BugFinder extends React.PureComponent {
     this.props.resetFunnel();
     this.props.resetFunnelFilters();
 
-    this.autorefreshIntervalId = setInterval(() => {
-      if (this.props.shouldAutorefresh) {
-        props.applyFilter();        
-      }
-    }, AUTOREFRESH_INTERVAL);
-
     props.fetchFunnelsList(LAST_7_DAYS)
   }
 
@@ -129,10 +121,6 @@ export default class BugFinder extends React.PureComponent {
     }.bind(this));
   }
 
-  componentWillUnmount() {
-    clearInterval(this.autorefreshIntervalId);
-  }
-
   setActiveTab = tab => {
     this.props.setActiveTab(tab);
   }
@@ -151,6 +139,7 @@ export default class BugFinder extends React.PureComponent {
             />
           </div>
           <div className={cn("side-menu-margined", stl.searchWrapper) }>
+            <TrackerUpdateMessage />
             <NoSessionsMessage />
             <div 
               data-hidden={ activeTab === 'live' || activeTab === 'favorite' }

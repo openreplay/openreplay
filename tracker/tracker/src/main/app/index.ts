@@ -1,5 +1,5 @@
-import { timestamp, log } from '../utils';
-import { Timestamp, TechnicalInfo, PageClose } from '../../messages';
+import { timestamp, log, warn } from '../utils';
+import { Timestamp, PageClose } from '../../messages';
 import Message from '../../messages/message';
 import Nodes from './nodes';
 import Observer from './observer';
@@ -24,8 +24,11 @@ export type Options = {
   session_pageno_key: string;
   local_uuid_key: string;
   ingestPoint: string;
+  resourceBaseHref: string | null, // resourceHref?
+  //resourceURLRewriter: (url: string) => string | boolean,
   __is_snippet: boolean;
   __debug_report_edp: string | null;
+  __debug_log: boolean;
   onStart?: (info: OnStartInfo) => void;
 } & ObserverOptions & WebworkerOptions;
 
@@ -65,10 +68,13 @@ export default class App {
         session_pageno_key: '__openreplay_pageno',
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
+        resourceBaseHref: null,
         __is_snippet: false,
         __debug_report_edp: null,
+        __debug_log: false,
         obscureTextEmails: true,
         obscureTextNumbers: false,
+        captureIFrames: false,
       },
       opts,
     );
@@ -86,10 +92,9 @@ export default class App {
           new Blob([`WEBWORKER_BODY`], { type: 'text/javascript' }),
         ),
       );
-      // this.worker.onerror = e => {
-      //   this.send(new TechnicalInfo("webworker_error", JSON.stringify(e)));
-      // /* TODO: send report */
-      // }
+      this.worker.onerror = e => {
+        this._debug("webworker_error", e)
+      }
       let lastTs = timestamp();
       let fileno = 0;
       this.worker.onmessage = ({ data }: MessageEvent) => {
@@ -110,19 +115,23 @@ export default class App {
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { 
-      this.sendDebugReport("worker_start", e);
+      this._debug("worker_start", e);
     }
   }
 
-  private sendDebugReport(context: string, e: any) {
+  private _debug(context: string, e: any) {
     if(this.options.__debug_report_edp !== null) {
       fetch(this.options.__debug_report_edp, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           context,
           error: `${e}`
         })
       });
+    }
+    if(this.options.__debug_log) {
+      warn("OpenReplay errror: ", context, e)
     }
   }
 
@@ -155,12 +164,11 @@ export default class App {
       try {
         fn.apply(this, args);
       } catch (e) {
-        app.send(new TechnicalInfo("error", JSON.stringify({
-          time: timestamp(),
-          name: e.name,
-          message: e.message,
-          stack: e.stack
-        })));
+        app._debug("safe_fn_call", e)
+        // time: timestamp(),
+        // name: e.name,
+        // message: e.message,
+        // stack: e.stack
       }
     } as any // TODO: correct typing
   }
@@ -199,11 +207,34 @@ export default class App {
     return this._sessionID || undefined;
   }
   getHost(): string {
-    return new URL(this.options.ingestPoint).host;
+    return new URL(this.options.ingestPoint).hostname
+  }
+  getProjectKey(): string {
+    return this.projectKey
+  }
+  getBaseHref(): string {
+    if (typeof this.options.resourceBaseHref === 'string') {
+      return this.options.resourceBaseHref
+    } else if (typeof this.options.resourceBaseHref === 'object') {
+      //switch between  types
+    }
+    if (document.baseURI) {
+      return document.baseURI
+    }
+    // IE only
+    return document.head
+      ?.getElementsByTagName("base")[0]
+      ?.getAttribute("href") || location.origin + location.pathname
+  }
+  resolveResourceURL(resourceURL: string): string {
+    const base = new URL(this.getBaseHref())
+    base.pathname += "/" + new URL(resourceURL).pathname
+    base.pathname.replace(/\/+/g, "/")
+    return base.toString()
   }
 
   isServiceURL(url: string): boolean {
-    return url.startsWith(this.options.ingestPoint);
+    return url.startsWith(this.options.ingestPoint)
   }
 
   active(): boolean {
@@ -211,10 +242,10 @@ export default class App {
   }
   private _start(reset: boolean): Promise<OnStartInfo> {
     if (!this.isActive) {
-      this.isActive = true;
       if (!this.worker) {
-        throw new Error("Stranger things: no worker found");
+        return Promise.reject("No worker found: perhaps, CSP is not set.");
       }
+      this.isActive = true;
 
       let pageNo: number = 0;
       const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
@@ -273,7 +304,7 @@ export default class App {
           this._sessionID = sessionID;
         }
         if (!this.worker) {
-          throw new Error("Stranger things: no worker found after start request");
+          throw new Error("no worker found after start request (this might not happen)");
         }
         this.worker.postMessage({ token, beaconSizeLimit });
         this.startCallbacks.forEach((cb) => cb());
@@ -289,7 +320,8 @@ export default class App {
       })
       .catch(e => {
         this.stop();
-        this.sendDebugReport("session_start", e);
+        warn("OpenReplay was unable to start. ", e)
+        this._debug("session_start", e);
         throw e;
       })
     }

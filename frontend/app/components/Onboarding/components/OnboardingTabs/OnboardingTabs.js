@@ -22,7 +22,6 @@ class TrackingCodeModal extends React.PureComponent {
   }
 
   renderActiveTab = () => {
-    console.log('rendering...')
     switch (this.state.activeTab) {
       case PROJECT:
         return <ProjectCodeSnippet />

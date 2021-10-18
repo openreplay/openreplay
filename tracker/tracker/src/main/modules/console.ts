@@ -123,7 +123,7 @@ export default function (app: App, opts: Partial<Options>): void {
 
   options.consoleMethods.forEach((method) => {
     if (consoleMethods.indexOf(method) === -1) {
-      console.error(`Asayer: unsupported console method ${method}`);
+      console.error(`OpenReplay: unsupported console method "${method}"`);
       return;
     }
     const fn = (console as any)[method];

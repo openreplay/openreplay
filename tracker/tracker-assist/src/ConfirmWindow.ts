@@ -67,26 +67,32 @@ export default class ConfirmWindow {
     this.wrapper = wrapper;
 
     answerBtn.onclick = () => {
-      this.remove();
-      this.callback(true);
+      this._remove();
+      this.resolve(true);
     }
     declineBtn.onclick = () => {
-      this.remove();
-      this.callback(false);
+      this._remove();
+      this.resolve(false);
     }
   }
 
-  mount() {
+  private resolve: (result: boolean) => void = ()=>{};
+  private reject: ()=>void = ()=>{};
+
+  mount(): Promise<boolean> {
     document.body.appendChild(this.wrapper);
+    return new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+    });
   }
 
-  private callback: (result: boolean) => void = ()=>{};
-  onAnswer(callback: (result: boolean) => void) {
-    this.callback = callback;
-  }
-
-  remove() {
+  private _remove() {
     if (!this.wrapper.parentElement) { return; }
     document.body.removeChild(this.wrapper);
+  }
+  remove() {
+    this._remove();
+    this.reject();
   }
 }

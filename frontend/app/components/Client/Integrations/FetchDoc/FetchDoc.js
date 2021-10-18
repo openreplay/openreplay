@@ -3,6 +3,7 @@ import ToggleContent from 'Shared/ToggleContent'
 import DocLink from 'Shared/DocLink/DocLink';
 
 const FetchDoc = (props) => {
+  const { projectKey } = props;
   return (
     <div className="p-4">
       <div>This plugin allows you to capture fetch payloads and inspect them later on while replaying session recordings. This is very useful for understanding and fixing issues.</div>
@@ -18,14 +19,14 @@ const FetchDoc = (props) => {
 
       <div className="font-bold my-2">Usage</div>
       <ToggleContent
-        label="Is SSR?"
+        label="Server-Side-Rendered (SSR)?"
         first={
           <Highlight className="js">
         {`import tracker from '@openreplay/tracker';
 import trackerFetch from '@openreplay/tracker-fetch';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 tracker.start();
 //...
@@ -40,7 +41,7 @@ fetch('https://api.openreplay.com/').then(response => console.log(response.json(
 import trackerFetch from '@openreplay/tracker-fetch/cjs';
 //...
 const tracker = new OpenReplay({
-  projectKey: PROJECT_KEY
+  projectKey: '${projectKey}'
 });
 //...
 function SomeFunctionalComponent() {

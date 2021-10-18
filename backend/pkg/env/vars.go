@@ -36,8 +36,13 @@ func Uint16(key string) uint16 {
 	return uint16(n)
 }
 
+const MAX_INT = uint64(^uint(0) >> 1)
 func Int(key string) int {
-	return int(Uint64(key))
+	val := Uint64(key)
+	if val > MAX_INT {
+		log.Fatalln(key + " is too big. ")
+	}
+	return int(val)
 }
 
 func Bool(key string) bool {

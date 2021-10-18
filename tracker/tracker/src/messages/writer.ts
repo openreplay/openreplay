@@ -77,6 +77,9 @@ export default class Writer {
     return this.offset <= this.size;
   }
   uint(value: number): boolean {
+    if (value < 0 || value > Number.MAX_SAFE_INTEGER) {
+      value = 0
+    }
     while (value >= 0x80) {
       this.data[this.offset++] = value % 0x100 | 0x80;
       value = Math.floor(value / 128);
