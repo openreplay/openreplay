@@ -2,13 +2,17 @@ import { App, Messages } from '@openreplay/tracker';
 
 export interface Options {
   sessionTokenHeader?: string;
-  failuresOnly?: boolean;
+  replaceDefault: boolean; // overrideDefault ?
+  failuresOnly: boolean;
+  ignoreHeaders: Array<string> | boolean;
 }
 
 export default function(opts: Partial<Options> = {}) {
   const options: Options = Object.assign(
     {
+      replaceDefault: false,
       failuresOnly: false,
+      ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
     },
     opts,
   );
@@ -18,7 +22,12 @@ export default function(opts: Partial<Options> = {}) {
       return window.fetch;
     }
 
-    return async (input: RequestInfo, init: RequestInit = {}) => {
+    const ihOpt = options.ignoreHeaders
+    const isHIgnoring = Array.isArray(ihOpt)
+      ? name => ihOpt.includes(name)
+      : () => ihOpt
+
+    const fetch = async (input: RequestInfo, init: RequestInit = {}) => {
       if (typeof input !== 'string') {
         return window.fetch(input, init);
       }
@@ -44,20 +53,50 @@ export default function(opts: Partial<Options> = {}) {
         return response
       }
       const r = response.clone();
-      r.text().then(text =>
+
+      r.text().then(text => {
+        const reqHs: Record<string, string> = {}
+        const resHs: Record<string, string> = {}
+        if (ihOpt !== true) {
+          function writeReqHeader([n, v]) {
+            if (!isHIgnoring(n)) { reqHs[n] = v }
+          }
+          if (init.headers instanceof Headers) {
+            init.headers.forEach((v, n) => writeReqHeader([n, v]))
+          } else if (Array.isArray(init.headers)) {
+            init.headers.forEach(writeReqHeader);
+          } else if (typeof init.headers === 'object') {
+            Object.entries(init.headers).forEach(writeReqHeader)
+          }
+
+          r.headers.forEach((v, n) => { if (!isHIgnoring(n)) resHs[n] = v })
+        }
+        const req = JSON.stringify({
+          headers: reqHs,
+          body: typeof init.body === 'string' ? init.body : '',
+        })
+        const res = JSON.stringify({
+          headers: resHs,
+          body: text,
+        })
         app.send(
           Messages.Fetch(
-            typeof init.method === 'string' ? init.method : 'GET',
+            typeof init.method === 'string' ? init.method.toUpperCase() : 'GET',
             input,
-            typeof init.body === 'string' ? init.body : '',
-            text,
+            req,
+            res,
             r.status,
             startTime + performance.timing.navigationStart,
             duration,
           ),
-        ),
-      );
+        ) 
+      });
       return response;
     };
+    if (options.replaceDefault) {
+      window.fetch = fetch
+    }
+    return fetch;
   };
+
 }

@@ -24,10 +24,11 @@ resources:
 pvc:
   # PVC Created from filesink.yaml
   create: false
-  name: nfs
+  name: hostPath
   storageClassName: nfs
   volumeName: nfs
   mountPath: /mnt/efs
+  hostMountPath: /openreplay/storage/nfs
   storageSize: 5Gi
 
 env:
@@ -43,3 +44,4 @@ env:
   KAFKA_SERVERS: kafka.db.svc.cluster.local:9092
   KAFKA_USE_SSL: false
   LICENSE_KEY: ""
+  FS_CLEAN_HRS: 24

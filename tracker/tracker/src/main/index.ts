@@ -17,7 +17,7 @@ import Scroll from './modules/scroll';
 import Viewport from './modules/viewport';
 import Longtasks from './modules/longtasks';
 import CSSRules from './modules/cssrules';
-import { IN_BROWSER, deprecationWarn } from './utils';
+import { IN_BROWSER, deprecationWarn, DOCS_HOST } from './utils';
 
 import { Options as AppOptions } from './app';
 import { Options as ConsoleOptions } from './modules/console';
@@ -41,13 +41,13 @@ const DOCS_SETUP = '/installation/setup-or';
 
 function processOptions(obj: any): obj is Options {
   if (obj == null) {
-    console.error(`OpenReplay: invalid options argument type. Please, check documentation on https://docs.openreplay.com${ DOCS_SETUP }`);
+    console.error(`OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`);
     return false;
   }
   if (typeof obj.projectKey !== 'string') {
     if (typeof obj.projectKey !== 'number') {
       if (typeof obj.projectID !== 'number') { // Back compatability
-        console.error(`OpenReplay: projectKey is missing or wrong type (string is expected). Please, check https://docs.openreplay.com${ DOCS_SETUP } for more information.`)
+        console.error(`OpenReplay: projectKey is missing or wrong type (string is expected). Please, check ${DOCS_HOST}${DOCS_SETUP} for more information.`)
         return false
       } else {
         obj.projectKey = obj.projectID.toString();
@@ -59,7 +59,7 @@ function processOptions(obj: any): obj is Options {
     }
   }
   if (typeof obj.sessionToken !== 'string' && obj.sessionToken != null) {
-    console.warn(`OpenReplay: invalid options argument type. Please, check documentation on https://docs.openreplay.com${ DOCS_SETUP }`)
+    console.warn(`OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
   }
   return true;
 }
@@ -69,6 +69,10 @@ export default class API {
   constructor(private readonly options: Options) {
     if (!IN_BROWSER || !processOptions(options)) {
       return;
+    }
+    if ((window as any).__OPENREPLAY__) {
+      console.error("OpenReplay: one tracker instance has been initialised already")
+      return
     }
     if (!options.__DISABLE_SECURE_MODE && location.protocol !== 'https:') {
       console.error("OpenReplay: Your website must be publicly accessible and running on SSL in order for OpenReplay to properly capture and replay the user session. You can disable this check by setting `__DISABLE_SECURE_MODE` option to `true` if you are testing in localhost. Keep in mind, that asset files on a local machine are not available to the outside world. This might affect tracking if you use css files.")
@@ -99,9 +103,9 @@ export default class API {
       Performance(this.app, options);
       Scroll(this.app);
       Longtasks(this.app);
-      (window as any).__OPENREPLAY__ = (window as any).__OPENREPLAY__ || this;
+      (window as any).__OPENREPLAY__ = this;
     } else {
-      console.log("OpenReplay: browser doesn't support API required for tracking.")
+      console.log("OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1.")
       const req = new XMLHttpRequest();
       const orig = options.ingestPoint || DEFAULT_INGEST_POINT;
       req.open("POST", orig + "/v1/web/not-started");
@@ -133,7 +137,7 @@ export default class API {
 
   start(): void {
     if (!IN_BROWSER) {
-      console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on https://docs.openreplay.com${ DOCS_SETUP }`)
+      console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
       return;
     }
     if (this.app === null) {

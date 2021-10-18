@@ -86,6 +86,18 @@ p = WriteString(msg.UserCountry, buf, p)
   return buf[:p]
 }
 
+type SessionDisconnect struct {
+  *meta
+  Timestamp uint64
+}
+func (msg *SessionDisconnect) Encode() []byte{
+  buf := make([]byte, 11 )
+  buf[0] = 2
+  p := 1
+  p = WriteUint(msg.Timestamp, buf, p)
+  return buf[:p]
+}
+
 type SessionEnd struct {
   *meta
   Timestamp uint64
@@ -1163,6 +1175,20 @@ func (msg *MouseClick) Encode() []byte{
 p = WriteUint(msg.HesitationTime, buf, p)
 p = WriteString(msg.Label, buf, p)
 p = WriteString(msg.Selector, buf, p)
+  return buf[:p]
+}
+
+type CreateIFrameDocument struct {
+  *meta
+  FrameID uint64
+ID uint64
+}
+func (msg *CreateIFrameDocument) Encode() []byte{
+  buf := make([]byte, 21 )
+  buf[0] = 70
+  p := 1
+  p = WriteUint(msg.FrameID, buf, p)
+p = WriteUint(msg.ID, buf, p)
   return buf[:p]
 }
 

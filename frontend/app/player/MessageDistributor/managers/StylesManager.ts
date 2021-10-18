@@ -1,4 +1,3 @@
-// @flow
 
 import type StatedScreen from '../StatedScreen';
 import type { CssInsertRule, CssDeleteRule } from '../messages';
@@ -10,21 +9,35 @@ type TimedCSSRuleMessage = Timed & CSSRuleMessage;
 import logger from 'App/logger';
 import ListWalker from './ListWalker';
 
-export default class StylesManager extends ListWalker<TimedCSSRuleMessage> {
-  #screen: StatedScreen;
-  _linkLoadingCount: number = 0;
-  _linkLoadPromises: Array<Promise<void>> = [];
-  _skipCSSLinks: Array<string> = []; // should be common for all pages
 
-  constructor(screen: StatedScreen) {
+const HOVER_CN = "-openreplay-hover";
+const HOVER_SELECTOR = `.${HOVER_CN}`;
+
+// Doesn't work with css files (hasOwnProperty)
+export function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTMLStyleElement) {
+  const ss = Object.values(doc.styleSheets).find(s => s.ownerNode === node);
+  if (!ss || !ss.hasOwnProperty('rules')) { return; }
+  for(let i = 0; i < ss.rules.length; i++){
+    const r = ss.rules[i]
+    if (r instanceof CSSStyleRule) {
+      r.selectorText = r.selectorText.replace('/\:hover/g', HOVER_SELECTOR)
+    }
+  }
+}
+
+export default class StylesManager extends ListWalker<TimedCSSRuleMessage> {
+  private linkLoadingCount: number = 0;
+  private linkLoadPromises: Array<Promise<void>> = [];
+  private skipCSSLinks: Array<string> = []; // should be common for all pages
+
+  constructor(private readonly screen: StatedScreen) {
     super();
-    this.#screen = screen;
   }
 
   reset():void {
     super.reset();
-    this._linkLoadingCount = 0;
-    this._linkLoadPromises = [];
+    this.linkLoadingCount = 0;
+    this.linkLoadPromises = [];
 
     //cancel all promises? tothinkaboutit
   }
@@ -32,30 +45,34 @@ export default class StylesManager extends ListWalker<TimedCSSRuleMessage> {
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
     let timeoutId;
     const promise = new Promise((resolve) => {
-      if (this._skipCSSLinks.includes(value)) resolve();
-      this._linkLoadingCount++;
-      this.#screen.setCSSLoading(true);
-      const setSkipAndResolve = () => {
-        this._skipCSSLinks.push(value); // watch out
-        resolve();
+      if (this.skipCSSLinks.includes(value)) resolve(null);
+      this.linkLoadingCount++;
+      this.screen.setCSSLoading(true);
+      const addSkipAndResolve = () => {
+        this.skipCSSLinks.push(value); // watch out
+        resolve(null);
       }
-      timeoutId = setTimeout(setSkipAndResolve, 4000);
+      timeoutId = setTimeout(addSkipAndResolve, 4000);
 
-      node.onload = resolve;
-      node.onerror = setSkipAndResolve;
+      node.onload = () => {
+        const doc = this.screen.document;
+        doc && rewriteNodeStyleSheet(doc, node);
+        resolve(null);
+      }
+      node.onerror = addSkipAndResolve;
     }).then(() => {
       node.onload = null;
       node.onerror = null;
       clearTimeout(timeoutId);
-      this._linkLoadingCount--;
-      if (this._linkLoadingCount === 0) {
-        this.#screen.setCSSLoading(false);
+      this.linkLoadingCount--;
+      if (this.linkLoadingCount === 0) {
+        this.screen.setCSSLoading(false);
       }
     });
-    this._linkLoadPromises.push(promise);
+    this.linkLoadPromises.push(promise);
   }
 
-  #manageRule = (msg: CSSRuleMessage):void => {
+  private manageRule = (msg: CSSRuleMessage):void => {
     // if (msg.tp === "css_insert_rule") {
     //   let styleSheet = this.#screen.document.styleSheets[ msg.stylesheetID ];
     //   if (!styleSheet) { 
@@ -86,7 +103,7 @@ export default class StylesManager extends ListWalker<TimedCSSRuleMessage> {
   }
 
   moveReady(t: number): Promise<void> {
-    return Promise.all(this._linkLoadPromises)
-      .then(() => this.moveApply(t, this.#manageRule));
+    return Promise.all(this.linkLoadPromises)
+      .then(() => this.moveApply(t, this.manageRule));
   }
 }

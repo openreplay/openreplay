@@ -399,7 +399,7 @@ export default class Controls extends React.Component {
                   icon="tachometer-slow"
                 />
               }
-              { !live && showLongtasks &&
+              {/* { !live && showLongtasks &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(LONGTASKS) }
@@ -407,7 +407,7 @@ export default class Controls extends React.Component {
                   label="Long Tasks"
                   icon="business-time"
                 />
-              }
+              } */}
               <div className={ styles.divider } /> 
               { !live && 
                 <React.Fragment>

@@ -75,6 +75,7 @@ export default Record({
   crashes: [],
   socket: null,
   isIOS: false,
+  revId: ''
 }, {
   fromJS:({ 
     startTs=0, 

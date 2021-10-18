@@ -29,7 +29,6 @@ env:
   AWS_SECRET_ACCESS_KEY: "m1n10s3CretK3yPassw0rd"
   AWS_REGION: us-east-1
   POSTGRES_STRING: postgres://postgres:asayerPostgres@postgresql.db.svc.cluster.local:5432
-  CACHE_ASSETS: false
   #
   REDIS_STRING: redis-master.db.svc.cluster.local:6379
   KAFKA_SERVERS: kafka.db.svc.cluster.local:9092

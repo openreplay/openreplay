@@ -14,7 +14,8 @@ parser.addArgument(['-k', '--api-key'], {
   help: 'API key',
   required: true,
 });
-parser.addArgument(['-p', '-i', '--project-key'], { // -i is depricated
+parser.addArgument(['-p', '-i', '--project-key'], {
+  // -i is depricated
   help: 'Project Key',
   required: true,
 });
@@ -54,19 +55,34 @@ dir.addArgument(['-u', '--js-dir-url'], {
 
 // TODO: exclude in dir
 
-const { command, api_key, project_key, server, verbose, ...args } = parser.parseArgs();
+const { command, api_key, project_key, server, verbose, ...args } =
+  parser.parseArgs();
 
 global._VERBOSE = !!verbose;
 
 (command === 'file'
-  ? uploadFile(api_key, project_key, args.sourcemap_file_path, args.js_file_url, server)
-  : uploadDir(api_key, project_key, args.sourcemap_dir_path, args.js_dir_url, server)
+  ? uploadFile(
+      api_key,
+      project_key,
+      args.sourcemap_file_path,
+      args.js_file_url,
+      server,
+    )
+  : uploadDir(
+      api_key,
+      project_key,
+      args.sourcemap_dir_path,
+      args.js_dir_url,
+      server,
+    )
 )
-.then((sourceFiles) => 
-  sourceFiles.length > 0 
-  ? console.log(`Successfully uploaded ${sourceFiles.length} sourcemap file${sourceFiles.length > 1 ? "s" : ""} for: \n` 
-    + sourceFiles.join("\t\n")
+  .then((sourceFiles) =>
+    sourceFiles.length > 0
+      ? console.log(
+          `Successfully uploaded ${sourceFiles.length} sourcemap file${
+            sourceFiles.length > 1 ? 's' : ''
+          } for: \n` + sourceFiles.join('\t\n'),
+        )
+      : console.log(`No sourcemaps found in ${args.sourcemap_dir_path}`),
   )
-  : console.log(`No sourcemaps found in ${ args.sourcemap_dir_path }`)
-)
-.catch(e => console.error(`Sourcemap Uploader: ${e}`));
+  .catch((e) => console.error(`Sourcemap Uploader: ${e}`));

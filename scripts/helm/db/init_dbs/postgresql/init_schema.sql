@@ -172,7 +172,6 @@ CREATE TABLE projects
       "defaultInputMode": "plain"
     }'::jsonb -- ??????
 );
-CREATE INDEX projects_tenant_id_idx ON projects (tenant_id);
 
 CREATE OR REPLACE FUNCTION notify_project() RETURNS trigger AS
 $$
@@ -248,7 +247,6 @@ create table webhooks
     index       integer   default 0                            not null,
     name        varchar(100)
 );
-CREATE INDEX webhooks_tenant_id_idx ON webhooks (tenant_id);
 
 -- --- notifications.sql ---
 

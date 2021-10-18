@@ -6,7 +6,7 @@ import Metadata from '../Metadata'
 import { withRequest } from 'HOCs'
 import SessionList from '../Metadata/SessionList'
 
-function UserCard({ className, userNumericHash, userDisplayName, similarSessions, userId, userAnonymousId, request, loading }) {
+function UserCard({ className, userNumericHash, userDisplayName, similarSessions, userId, userAnonymousId, request, loading, revId }) {
   const [showUserSessions, setShowUserSessions] = useState(false)
   const hasUserDetails = !!userId || !!userAnonymousId;
 
@@ -29,6 +29,11 @@ function UserCard({ className, userNumericHash, userDisplayName, similarSessions
           </TextEllipsis>
         </div>
       </div>
+      {revId && (
+        <div className="border-t py-2 px-3">
+          <span className="font-medium">Rev ID:</span> {revId}
+        </div>
+      )}
       <div className="border-t">
         <Metadata />
       </div>
