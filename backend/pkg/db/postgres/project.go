@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx/v4"
 	. "openreplay/backend/pkg/db/types"
 )
 
@@ -14,9 +13,6 @@ func (conn *Conn) GetProjectByKey(projectKey string) (*Project, error) {
 	`,
 		projectKey,
 	).Scan(&p.MaxSessionDuration, &p.SampleRate, &p.ProjectID); err != nil {
-		if err == pgx.ErrNoRows {
-			err = nil
-		}
 		return nil, err
 	}
 	return p, nil
@@ -36,9 +32,6 @@ func (conn *Conn) GetProject(projectID uint32) (*Project, error) {
 	).Scan(&p.ProjectKey,&p.MaxSessionDuration,
 			&p.Metadata1, &p.Metadata2, &p.Metadata3, &p.Metadata4, &p.Metadata5,
 			&p.Metadata6, &p.Metadata7, &p.Metadata8, &p.Metadata9, &p.Metadata10); err != nil {
-		if err == pgx.ErrNoRows {
-			err = nil
-		}
 		return nil, err
 	}
 	return p, nil

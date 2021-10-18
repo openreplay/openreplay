@@ -51,8 +51,8 @@ package main
 // 		return
 // 	}
 // 	p, err := pgconn.GetProject(uint32(projectID))
-// 	if p == nil {
-// 		if err == nil {
+// 	if err != nil {
+// 		if postgres.IsNoRowsErr(err) {
 // 			responseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
 // 		} else {
 // 			responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
