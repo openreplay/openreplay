@@ -100,34 +100,34 @@ func main() {
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
-			// case "/v1/ios/start":
-			// 	switch r.Method {
-			// 	case http.MethodPost:
-			// 		startSessionHandlerIOS(w, r)
-			// 	default:
-			// 		w.WriteHeader(http.StatusMethodNotAllowed)
-			// 	}
-			// case "/v1/ios/append":
-			// 	switch r.Method {
-			// 	case http.MethodPost:
-			// 		pushMessagesHandler(w, r)
-			// 	default:
-			// 		w.WriteHeader(http.StatusMethodNotAllowed)
-			// 	}
-			// case "/v1/ios/late":
-			// 	switch r.Method {
-			// 	case http.MethodPost:
-			// 		pushLateMessagesHandler(w, r)
-			// 	default:
-			// 		w.WriteHeader(http.StatusMethodNotAllowed)
-			// 	}
-			// case "/v1/ios/images":
-			// 	switch r.Method {
-			// 	case http.MethodPost:
-			// 		iosImagesUploadHandler(w, r)
-			// 	default:
-			// 		w.WriteHeader(http.StatusMethodNotAllowed)
-			// 	}
+			case "/v1/ios/start":
+				switch r.Method {
+				case http.MethodPost:
+					startSessionHandlerIOS(w, r)
+				default:
+					w.WriteHeader(http.StatusMethodNotAllowed)
+				}
+			case "/v1/ios/i":
+				switch r.Method {
+				case http.MethodPost:
+					pushMessagesHandler(w, r)
+				default:
+					w.WriteHeader(http.StatusMethodNotAllowed)
+				}
+			case "/v1/ios/late":
+				switch r.Method {
+				case http.MethodPost:
+					pushLateMessagesHandler(w, r)
+				default:
+					w.WriteHeader(http.StatusMethodNotAllowed)
+				}
+			case "/v1/ios/images":
+				switch r.Method {
+				case http.MethodPost:
+					iosImagesUploadHandler(w, r)
+				default:
+					w.WriteHeader(http.StatusMethodNotAllowed)
+				}
 			default:
 				w.WriteHeader(http.StatusNotFound)
 			}
