@@ -9,6 +9,7 @@ local_prefix = 'local-'
 from os import environ, path
 
 import json
+from decouple import config
 
 
 def get_version_number():
@@ -16,7 +17,7 @@ def get_version_number():
 
 
 def get_stage_name():
-    stage = environ["stage"]
+    stage = config("stage")
     return stage[len(local_prefix):] if stage.startswith(local_prefix) else stage
 
 
@@ -33,7 +34,7 @@ def is_onprem():
 
 
 def is_local():
-    return environ["stage"].startswith(local_prefix)
+    return config("stage").startswith(local_prefix)
 
 
 def generate_salt():
@@ -336,22 +337,23 @@ def is_enterprise_edition():
     return __sbool_to_bool(environ.get("isEE"))
 
 
-stag_config_file = f"chalicelib/.configs/{environ['stage']}.json"
-if not path.isfile(stag_config_file):
-    print("!! stage config file not found, using .chalice/config.json only")
-else:
-    print("!! stage config file found, merging with priority to .chalice/config.json")
-    with open(stag_config_file) as json_file:
-        config = json.load(json_file)
-    environ = {**config, **environ}
-
-if (is_free_open_source_edition() or is_enterprise_edition()) and environ.get("config_file"):
-    if not path.isfile(environ.get("config_file")):
-        print("!! config file not found, using default environment")
-    else:
-        with open(environ.get("config_file")) as json_file:
-            config = json.load(json_file)
-        environ = {**environ, **config}
+#
+# stag_config_file = f"chalicelib/.configs/{environ['stage']}.json"
+# if not path.isfile(stag_config_file):
+#     print("!! stage config file not found, using .chalice/config.json only")
+# else:
+#     print("!! stage config file found, merging with priority to .chalice/config.json")
+#     with open(stag_config_file) as json_file:
+#         config = json.load(json_file)
+#     environ = {**config, **environ}
+#
+# if (is_free_open_source_edition() or is_enterprise_edition()) and environ.get("config_file"):
+#     if not path.isfile(environ.get("config_file")):
+#         print("!! config file not found, using default environment")
+#     else:
+#         with open(environ.get("config_file")) as json_file:
+#             config = json.load(json_file)
+#         environ = {**environ, **config}
 
 
 def get_internal_project_id(project_id64):
@@ -366,4 +368,4 @@ def get_internal_project_id(project_id64):
 
 
 def has_smtp():
-    return environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
+    return config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0

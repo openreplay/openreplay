@@ -6,7 +6,7 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils import dev
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
+from decouple import config
 
 from chalicelib.core import tenants
 import secrets
@@ -204,7 +204,7 @@ def create_member(tenant_id, user_id, data):
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-    helper.async_post(environ['email_basic'] % 'member_invitation',
+    helper.async_post(config('email_basic') % 'member_invitation',
                       {
                           "email": data["email"],
                           "invitationLink": new_member["invitationLink"],
@@ -215,7 +215,7 @@ def create_member(tenant_id, user_id, data):
 
 
 def __get_invitation_link(invitation_token):
-    return environ["SITE_URL"] + environ["invitation_link"] % invitation_token
+    return config("SITE_URL") + config("invitation_link") % invitation_token
 
 
 def allow_password_change(user_id, delta_min=10):

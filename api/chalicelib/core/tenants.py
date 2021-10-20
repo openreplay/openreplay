@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.utils import pg_client
 from chalicelib.utils import helper
 from chalicelib.core import users
@@ -62,18 +63,18 @@ def edit_client(tenant_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def update(tenant_id, user_id, data):
+def update(tenant_id, user_id, data: schemas.UpdateTenantSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
         return {"error": "unauthorized"}
-    if "name" not in data and "optOut" not in data:
+    if data.name is None and data.opt_out is None:
         return {"errors": ["please provide 'name' of 'optOut' attribute for update"]}
     changes = {}
-    if "name" in data:
-        changes["name"] = data["name"]
-    if "optOut" in data:
-        changes["optOut"] = data["optOut"]
+    if data.name is not None and len(data.name) > 0:
+        changes["name"] = data.name
+    if data.opt_out is not None:
+        changes["optOut"] = data.opt_out
     return edit_client(tenant_id=tenant_id, changes=changes)
 
 

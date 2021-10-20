@@ -1,12 +1,12 @@
 import psycopg2
 import psycopg2.extras
-from chalicelib.utils.helper import environ
+from decouple import config
 
-PG_CONFIG = {"host": environ["pg_host"],
-             "database": environ["pg_dbname"],
-             "user": environ["pg_user"],
-             "password": environ["pg_password"],
-             "port": int(environ["pg_port"])}
+PG_CONFIG = {"host": config("pg_host"),
+             "database": config("pg_dbname"),
+             "user": config("pg_user"),
+             "password": config("pg_password"),
+             "port": config("pg_port")}
 
 from psycopg2 import pool
 from threading import Semaphore
@@ -27,7 +27,8 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
 
 try:
-    postgreSQL_pool = ORThreadedConnectionPool(50, 100, **PG_CONFIG)
+    # postgreSQL_pool = ORThreadedConnectionPool(50, 100, **PG_CONFIG)
+    postgreSQL_pool = ORThreadedConnectionPool(5, 100, **PG_CONFIG)
     if (postgreSQL_pool):
         print("Connection pool created successfully")
 except (Exception, psycopg2.DatabaseError) as error:
