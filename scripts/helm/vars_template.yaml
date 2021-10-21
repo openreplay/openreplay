@@ -90,6 +90,9 @@ db_resource_override:
 ## Sane defaults
 s3_endpoint: "{{ s3_endpoint }}"
 aws_region: "{{ aws_region }}"
+assets_bucket: "{{ assets_bucket }}"
+recordings_bucket: "{{ recordings_bucket }}"
+sourcemaps_bucket: "{{ sourcemaps_bucket }}"
 kafka_endpoint: "{{ kafka_endpoint }}"
 kafka_ssl: "{{ kafka_ssl }}"
 postgres_endpoint: "{{ postgres_endpoint }}"
