@@ -5,7 +5,7 @@ image:
 {% endif %}
 env:
   LICENSE_KEY: "{{ enterprise_edition_license }}"
-  POSTGRES_STRING: "postgres://{{ postgres_db_user }}:{{ postgres_db_password }}@{{ postgres_endpoint }}:{{ postgres_port }}"
+  POSTGRES_STRING: "postgres://{{ postgres_db_user }}:{{ postgres_db_password }}@{{ postgres_endpoint }}:{{ postgres_port }}/{{ postgres_db_name }}"
   #
   REDIS_STRING: "{{ redis_endpoint }}"
   KAFKA_SERVERS: "{{ kafka_endpoint }}"
