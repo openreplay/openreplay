@@ -291,7 +291,7 @@ def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(JW
 
 # this endpoint supports both jira & github based on `provider` attribute
 @app.post('/integrations/issues', tags=["integrations"])
-def add_edit_jira_cloud_github(data: schemas.CreateEditJiraGithubSchema,
+def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
                                context: schemas.CurrentContext = Depends(JWTBearer())):
     provider = data.provider.upper()
     error, integration = integrations_manager.get_integration(tool=provider, tenant_id=context.tenant_id,
