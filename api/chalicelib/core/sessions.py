@@ -358,7 +358,8 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
 
                 else:
                     continue
-
+                if event_index == 0:
+                    event_where += ss_constraints
                 if is_not:
                     if event_index == 0:
                         events_query_from.append(cur.mogrify(f"""\
@@ -369,7 +370,7 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                                           FROM sessions
                                           WHERE EXISTS(SELECT session_id 
                                                         FROM {event_from} 
-                                                        WHERE {" AND ".join(event_where + ss_constraints)} 
+                                                        WHERE {" AND ".join(event_where)} 
                                                             AND sessions.session_id=ms.session_id) IS FALSE
                                             AND project_id = %(projectId)s 
                                             AND start_ts >= %(startDate)s
@@ -383,14 +384,14 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                     event_0.session_id, 
                     event_{event_index - 1}.timestamp AS timestamp, 
                     {event_index} AS funnel_step
-                  WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where + ss_constraints)}) IS FALSE
+                  WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) IS FALSE
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
                 else:
                     events_query_from.append(cur.mogrify(f"""\
                 (SELECT main.session_id, MIN(timestamp) AS timestamp,{event_index} AS funnel_step
                   FROM {event_from}
-                  WHERE {" AND ".join(event_where + ss_constraints)}
+                  WHERE {" AND ".join(event_where)}
                   GROUP BY 1
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
