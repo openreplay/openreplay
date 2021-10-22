@@ -162,6 +162,7 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                     "projectId": project_id,
                     "userId": user_id}
     with pg_client.PostgresClient() as cur:
+        ss_constraints = []
         extra_constraints = [
             cur.mogrify("s.project_id = %(project_id)s", {"project_id": project_id}),
             cur.mogrify("s.duration IS NOT NULL", {})
@@ -173,7 +174,96 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
             extra_constraints.append(cur.mogrify("fs.user_id = %(userId)s", {"userId": user_id}))
         events_query_part = ""
 
+        if "filters" in data:
+            meta_keys = metadata.get(project_id=project_id)
+            meta_keys = {m["key"]: m["index"] for m in meta_keys}
+            for f in data["filters"]:
+                if not isinstance(f.get("value"), list):
+                    f["value"] = [f.get("value")]
+                if len(f["value"]) == 0 or f["value"][0] is None:
+                    continue
+                filter_type = f["type"].upper()
+                f["value"] = __get_sql_value_multiple(f["value"])
+                if filter_type == sessions_metas.meta_type.USERBROWSER:
+                    op = __get_sql_operator_multiple(f["operator"])
+                    extra_constraints.append(cur.mogrify(f's.user_browser {op} %(value)s', {"value": f["value"]}))
+                    ss_constraints.append(cur.mogrify(f'ms.user_browser {op} %(value)s', {"value": f["value"]}))
+
+                elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
+                    op = __get_sql_operator_multiple(f["operator"])
+                    extra_constraints.append(cur.mogrify(f's.user_os {op} %(value)s', {"value": f["value"]}))
+                    ss_constraints.append(cur.mogrify(f'ms.user_os {op} %(value)s', {"value": f["value"]}))
+
+                elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
+                    op = __get_sql_operator_multiple(f["operator"])
+                    extra_constraints.append(cur.mogrify(f's.user_device {op} %(value)s', {"value": f["value"]}))
+                    ss_constraints.append(cur.mogrify(f'ms.user_device {op} %(value)s', {"value": f["value"]}))
+
+                elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
+                    op = __get_sql_operator_multiple(f["operator"])
+                    extra_constraints.append(cur.mogrify(f's.user_country {op} %(value)s', {"value": f["value"]}))
+                    ss_constraints.append(cur.mogrify(f'ms.user_country {op} %(value)s', {"value": f["value"]}))
+                elif filter_type == "duration".upper():
+                    if len(f["value"]) > 0 and f["value"][0] is not None:
+                        extra_constraints.append(
+                            cur.mogrify("s.duration >= %(minDuration)s", {"minDuration": f["value"][0]}))
+                        ss_constraints.append(
+                            cur.mogrify("ms.duration >= %(minDuration)s", {"minDuration": f["value"][0]}))
+                    if len(f["value"]) > 1 and f["value"][1] is not None and f["value"][1] > 0:
+                        extra_constraints.append(
+                            cur.mogrify("s.duration <= %(maxDuration)s", {"maxDuration": f["value"][1]}))
+                        ss_constraints.append(
+                            cur.mogrify("ms.duration <= %(maxDuration)s", {"maxDuration": f["value"][1]}))
+                elif filter_type == sessions_metas.meta_type.REFERRER:
+                    # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
+                    extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
+                    op = __get_sql_operator_multiple(f["operator"])
+                    extra_constraints.append(
+                        cur.mogrify(f"p.base_referrer {op} %(referrer)s", {"referrer": f["value"]}))
+                elif filter_type == events.event_type.METADATA.ui_type:
+                    op = __get_sql_operator(f["operator"])
+                    if f.get("key") in meta_keys.keys():
+                        extra_constraints.append(
+                            cur.mogrify(f"s.{metadata.index_to_colname(meta_keys[f['key']])} {op} %(value)s",
+                                        {"value": helper.string_to_sql_like_with_op(f["value"][0], op)}))
+                        ss_constraints.append(
+                            cur.mogrify(f"ms.{metadata.index_to_colname(meta_keys[f['key']])} {op} %(value)s",
+                                        {"value": helper.string_to_sql_like_with_op(f["value"][0], op)}))
+                elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+                    op = __get_sql_operator(f["operator"])
+                    extra_constraints.append(
+                        cur.mogrify(f"s.user_id {op} %(value)s",
+                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
+                    )
+                    ss_constraints.append(
+                        cur.mogrify(f"ms.user_id {op} %(value)s",
+                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
+                    )
+                elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
+                                     sessions_metas.meta_type.USERANONYMOUSID_IOS]:
+                    op = __get_sql_operator(f["operator"])
+                    extra_constraints.append(
+                        cur.mogrify(f"s.user_anonymous_id {op} %(value)s",
+                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
+                    )
+                    ss_constraints.append(
+                        cur.mogrify(f"ms.user_anonymous_id {op} %(value)s",
+                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
+                    )
+                elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
+                    op = __get_sql_operator(f["operator"])
+                    extra_constraints.append(
+                        cur.mogrify(f"s.rev_id {op} %(value)s",
+                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
+                    )
+                    ss_constraints.append(
+                        cur.mogrify(f"ms.rev_id {op} %(value)s",
+                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
+                    )
+
+        # ---------------------------------------------------------------------------
         if len(data.get("events", [])) > 0:
+            ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
             events_query_from = []
             event_index = 0
 
@@ -279,7 +369,7 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                                           FROM sessions
                                           WHERE EXISTS(SELECT session_id 
                                                         FROM {event_from} 
-                                                        WHERE {" AND ".join(event_where)} 
+                                                        WHERE {" AND ".join(event_where + ss_constraints)} 
                                                             AND sessions.session_id=ms.session_id) IS FALSE
                                             AND project_id = %(projectId)s 
                                             AND start_ts >= %(startDate)s
@@ -293,14 +383,14 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                     event_0.session_id, 
                     event_{event_index - 1}.timestamp AS timestamp, 
                     {event_index} AS funnel_step
-                  WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) IS FALSE
+                  WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where + ss_constraints)}) IS FALSE
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
                 else:
                     events_query_from.append(cur.mogrify(f"""\
                 (SELECT main.session_id, MIN(timestamp) AS timestamp,{event_index} AS funnel_step
                   FROM {event_from}
-                  WHERE {" AND ".join(event_where)}
+                  WHERE {" AND ".join(event_where + ss_constraints)}
                   GROUP BY 1
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
@@ -315,73 +405,6 @@ def search2_pg(data, project_id, user_id, favorite_only=False, errors_only=False
                                         {fav_only_join}"""
         else:
             data["events"] = []
-
-        # ---------------------------------------------------------------------------
-        if "filters" in data:
-            meta_keys = metadata.get(project_id=project_id)
-            meta_keys = {m["key"]: m["index"] for m in meta_keys}
-            for f in data["filters"]:
-                if not isinstance(f.get("value"), list):
-                    f["value"] = [f.get("value")]
-                if len(f["value"]) == 0 or f["value"][0] is None:
-                    continue
-                filter_type = f["type"].upper()
-                f["value"] = __get_sql_value_multiple(f["value"])
-                if filter_type == sessions_metas.meta_type.USERBROWSER:
-                    op = __get_sql_operator_multiple(f["operator"])
-                    extra_constraints.append(
-                        cur.mogrify(f's.user_browser {op} %(value)s', {"value": f["value"]}))
-
-                elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
-                    op = __get_sql_operator_multiple(f["operator"])
-                    extra_constraints.append(cur.mogrify(f's.user_os {op} %(value)s', {"value": f["value"]}))
-
-                elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
-                    op = __get_sql_operator_multiple(f["operator"])
-                    extra_constraints.append(cur.mogrify(f's.user_device {op} %(value)s', {"value": f["value"]}))
-
-                elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
-                    op = __get_sql_operator_multiple(f["operator"])
-                    extra_constraints.append(cur.mogrify(f's.user_country {op} %(value)s', {"value": f["value"]}))
-                elif filter_type == "duration".upper():
-                    if len(f["value"]) > 0 and f["value"][0] is not None:
-                        extra_constraints.append(
-                            cur.mogrify("s.duration >= %(minDuration)s", {"minDuration": f["value"][0]}))
-                    if len(f["value"]) > 1 and f["value"][1] is not None and f["value"][1] > 0:
-                        extra_constraints.append(
-                            cur.mogrify("s.duration <= %(maxDuration)s", {"maxDuration": f["value"][1]}))
-                elif filter_type == sessions_metas.meta_type.REFERRER:
-                    # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
-                    extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
-                    op = __get_sql_operator_multiple(f["operator"])
-                    extra_constraints.append(
-                        cur.mogrify(f"p.base_referrer {op} %(referrer)s", {"referrer": f["value"]}))
-                elif filter_type == events.event_type.METADATA.ui_type:
-                    op = __get_sql_operator(f["operator"])
-                    if f.get("key") in meta_keys.keys():
-                        extra_constraints.append(
-                            cur.mogrify(f"s.{metadata.index_to_colname(meta_keys[f['key']])} {op} %(value)s",
-                                        {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
-                        )
-                elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-                    op = __get_sql_operator(f["operator"])
-                    extra_constraints.append(
-                        cur.mogrify(f"s.user_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
-                    )
-                elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
-                                     sessions_metas.meta_type.USERANONYMOUSID_IOS]:
-                    op = __get_sql_operator(f["operator"])
-                    extra_constraints.append(
-                        cur.mogrify(f"s.user_anonymous_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
-                    )
-                elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
-                    op = __get_sql_operator(f["operator"])
-                    extra_constraints.append(
-                        cur.mogrify(f"s.rev_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f["value"][0], op)})
-                    )
 
         # ---------------------------------------------------------------------------
 
