@@ -76,6 +76,9 @@ func main() {
 				return
 			}
 
+			log.Printf("Request: %v  -  %v  ",  r.Method, r.URL.Path)
+
+
 			switch r.URL.Path {
 			case "/":
 				w.WriteHeader(http.StatusOK)
