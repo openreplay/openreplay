@@ -2,7 +2,7 @@ from decouple import config
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 import schemas
-from auth.auth_bearer import JWTBearer
+from auth.auth_jwt import JWTAuth
 from chalicelib.core import boarding
 from chalicelib.core import errors
 from chalicelib.core import errors_favorite_viewed
@@ -15,7 +15,7 @@ from chalicelib.utils import captcha
 from chalicelib.utils import helper
 
 public_app = APIRouter()
-app = APIRouter(dependencies=[Depends(JWTBearer())])
+app = APIRouter(dependencies=[Depends(JWTAuth())])
 
 
 @public_app.get('/signup', tags=['signup'])
@@ -29,23 +29,20 @@ def signup_handler(data: schemas.UserSignupSchema = Body(...)):
     return signup.create_step1(data.dict())
 
 
-@public_app.post('/login')
+@public_app.post('/login', tags=["authentication"])
 def login(data: schemas.UserLoginSchema = Body(...)):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid captcha."
         )
-        # return {"errors": ["Invalid captcha."]}
+
     r = users.authenticate(data.email, data.password, for_plugin=False)
     if r is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You’ve entered invalid Email or Password."
         )
-        # return Response(status_code=401, body={
-        #     'errors': ['You’ve entered invalid Email or Password.']
-        # })
 
     tenant_id = r.pop("tenantId")
 
@@ -69,7 +66,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 
 
 @app.get('/account', tags=['accounts'])
-def get_account(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_account(context: schemas.CurrentContext = Depends(JWTAuth())):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
     return {
         'data': {
@@ -86,7 +83,7 @@ def get_account(context: schemas.CurrentContext = Depends(JWTBearer())):
 
 
 @app.get('/projects', tags=['projects'])
-def get_projects(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_projects(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
                                           stack_integrations=True)}
 
@@ -94,24 +91,24 @@ def get_projects(context: schemas.CurrentContext = Depends(JWTBearer())):
 @app.post('/projects', tags=['projects'])
 @app.put('/projects', tags=['projects'])
 def create_project(data: schemas.CreateProjectSchema = Body(...),
-                   context: schemas.CurrentContext = Depends(JWTBearer())):
+                   context: schemas.CurrentContext = Depends(JWTAuth())):
     return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
 @app.post('/projects/{projectId}', tags=['projects'])
 @app.put('/projects/{projectId}', tags=['projects'])
 def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(JWTBearer())):
+                 context: schemas.CurrentContext = Depends(JWTAuth())):
     return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
 
 
 @app.delete('/projects/{projectId}', tags=['projects'])
-def delete_project(projectId, context: schemas.CurrentContext = Depends(JWTBearer())):
+def delete_project(projectId, context: schemas.CurrentContext = Depends(JWTAuth())):
     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
 
 
 @app.get('/projects/limit', tags=['projects'])
-def get_projects_limit(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_projects_limit(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": {
         "current": projects.count_by_tenant(tenant_id=context.tenant_id),
         "remaining": -1
@@ -119,7 +116,7 @@ def get_projects_limit(context: schemas.CurrentContext = Depends(JWTBearer())):
 
 
 @app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_project(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
                                 include_gdpr=True)
     if data is None:
@@ -128,7 +125,7 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(JWTBea
 
 
 @app.get('/client', tags=['projects'])
-def get_client(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_client(context: schemas.CurrentContext = Depends(JWTAuth())):
     r = tenants.get_by_tenant_id(context.tenant_id)
     if r is not None:
         r.pop("createdAt")
@@ -140,7 +137,7 @@ def get_client(context: schemas.CurrentContext = Depends(JWTBearer())):
 
 
 @app.get('/client/new_api_key', tags=['client'])
-def generate_new_tenant_token(context: schemas.CurrentContext = Depends(JWTBearer())):
+def generate_new_tenant_token(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {
         'data': tenants.generate_new_api_key(context.tenant_id)
     }
@@ -148,13 +145,13 @@ def generate_new_tenant_token(context: schemas.CurrentContext = Depends(JWTBeare
 
 @app.put('/client', tags=['client'])
 @app.post('/client', tags=['client'])
-def edit_client(data: schemas.UpdateTenantSchema = Body(...), context: schemas.CurrentContext = Depends(JWTBearer())):
+def edit_client(data: schemas.UpdateTenantSchema = Body(...), context: schemas.CurrentContext = Depends(JWTAuth())):
     return tenants.update(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
 @app.put('/integrations/slack', tags=['integrations'])
 @app.post('/integrations/slack', tags=['integrations'])
-def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(JWTBearer())):
+def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(JWTAuth())):
     if "url" not in data or "name" not in data:
         return {"errors": ["please provide a url and a name"]}
     n = Slack.add_channel(tenant_id=context.tenant_id, url=data.url, name=data.name)
@@ -168,7 +165,7 @@ def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentConte
 @app.put('/integrations/slack/{integrationId}', tags=['integrations'])
 @app.post('/integrations/slack/{integrationId}', tags=['integrations'])
 def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(JWTBearer())):
+                           context: schemas.CurrentContext = Depends(JWTAuth())):
     if len(data.url) > 0:
         old = webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)
         if old["endpoint"] != data.url:
@@ -183,20 +180,20 @@ def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = B
 
 @app.post('/{projectId}/errors/search', tags=['errors'])
 def errors_search(projectId: int, status: str = "ALL", favorite: bool = False,
-                  data: schemas.SearchErrorsSchema = Body(...), context: schemas.CurrentContext = Depends(JWTBearer())):
+                  data: schemas.SearchErrorsSchema = Body(...), context: schemas.CurrentContext = Depends(JWTAuth())):
     return errors.search(data, projectId, user_id=context.user_id, status=status,
                          favorite_only=favorite)
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
 def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
-                 context: schemas.CurrentContext = Depends(JWTBearer())):
+                 context: schemas.CurrentContext = Depends(JWTAuth())):
     return errors.stats(projectId, user_id=context.user_id, startTimestamp=startTimestamp, endTimestamp=endTimestamp)
 
 
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
 def errors_get_details(projectId: int, errorId: str, density24: int, density30: int,
-                       context: schemas.CurrentContext = Depends(JWTBearer())):
+                       context: schemas.CurrentContext = Depends(JWTAuth())):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
@@ -206,14 +203,14 @@ def errors_get_details(projectId: int, errorId: str, density24: int, density30: 
 
 @app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
 def errors_get_details_right_column(projectId: int, errorId: int, startDate: int, endDate: int, density: int,
-                                    context: schemas.CurrentContext = Depends(JWTBearer())):
+                                    context: schemas.CurrentContext = Depends(JWTAuth())):
     data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                     **{"startDate": startDate, "endDate": endDate, "density": density})
     return data
 
 
 @app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'])
-def errors_get_details_sourcemaps(projectId: int, errorId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def errors_get_details_sourcemaps(projectId: int, errorId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
         return data
@@ -236,19 +233,19 @@ def send_alerts_notification_async(step: str, data: schemas.AlertNotificationSch
 
 
 @app.get('/notifications', tags=['notifications'])
-def get_notifications(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_notifications(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
 
 
 @app.get('/notifications/{notificationId}/view', tags=['notifications'])
-def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": notifications.view_notification(notification_ids=[notificationId], user_id=context.user_id)}
 
 
 @app.post('/notifications/view', tags=['notifications'])
 @app.put('/notifications/view', tags=['notifications'])
 def batch_view_notifications(data: schemas.NotificationsViewSchema,
-                             context: schemas.CurrentContext = Depends(JWTBearer())):
+                             context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": notifications.view_notification(notification_ids=data.ids,
                                                     startTimestamp=data.startTimestamp,
                                                     endTimestamp=data.endTimestamp,
@@ -265,34 +262,34 @@ def create_notifications(data: schemas.CreateNotificationSchema):
 
 
 @app.get('/boarding', tags=['boarding'])
-def get_boarding_state(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_boarding_state(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": boarding.get_state(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/installing', tags=['boarding'])
-def get_boarding_state_installing(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_boarding_state_installing(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": boarding.get_state_installing(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/identify-users', tags=["boarding"])
-def get_boarding_state_identify_users(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_boarding_state_identify_users(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": boarding.get_state_identify_users(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/manage-users', tags=["boarding"])
-def get_boarding_state_manage_users(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_boarding_state_manage_users(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": boarding.get_state_manage_users(tenant_id=context.tenant_id)}
 
 
 @app.get('/boarding/integrations', tags=["boarding"])
-def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": boarding.get_state_integrations(tenant_id=context.tenant_id)}
 
 
 # this endpoint supports both jira & github based on `provider` attribute
 @app.post('/integrations/issues', tags=["integrations"])
 def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
-                               context: schemas.CurrentContext = Depends(JWTBearer())):
+                               context: schemas.CurrentContext = Depends(JWTAuth())):
     provider = data.provider.upper()
     error, integration = integrations_manager.get_integration(tool=provider, tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
@@ -302,45 +299,45 @@ def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
 
 
 @app.get('/integrations/slack/{integrationId}', tags=["integrations"])
-def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)}
 
 
 @app.get('/integrations/slack/channels', tags=["integrations"])
-def get_slack_integration(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_slack_integration(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type='slack')}
 
 
 @app.delete('/integrations/slack/{integrationId}', tags=["integrations"])
-def delete_slack_integration(integrationId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def delete_slack_integration(integrationId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     return webhook.delete(context.tenant_id, integrationId)
 
 
 @app.post('/webhooks', tags=["webhooks"])
 @app.put('/webhooks', tags=["webhooks"])
 def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(JWTBearer())):
+                     context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data.dict(), replace_none=True)}
 
 
 @app.get('/webhooks', tags=["webhooks"])
-def get_webhooks(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_webhooks(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": webhook.get_by_tenant(tenant_id=context.tenant_id, replace_none=True)}
 
 
 @app.delete('/webhooks/{webhookId}', tags=["webhooks"])
-def delete_webhook(webhookId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def delete_webhook(webhookId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)}
 
 
 @app.get('/client/members', tags=["client"])
-def get_members(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_members(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": users.get_members(tenant_id=context.tenant_id)}
 
 
 @app.post('/client/members', tags=["client"])
 @app.put('/client/members', tags=["client"])
-def add_member(data: schemas.CreateMemberSchema = Body(...), context: schemas.CurrentContext = Depends(JWTBearer())):
+def add_member(data: schemas.CreateMemberSchema = Body(...), context: schemas.CurrentContext = Depends(JWTAuth())):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict())
 
 
@@ -378,29 +375,29 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 
 @app.put('/client/members/{memberId}', tags=["client"])
 @app.post('/client/members/{memberId}', tags=["client"])
-def edit_member(memberId: int, data: schemas.EditMemberSchema, context: schemas.CurrentContext = Depends(JWTBearer())):
+def edit_member(memberId: int, data: schemas.EditMemberSchema, context: schemas.CurrentContext = Depends(JWTAuth())):
     return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data.dict(),
                       user_id_to_update=memberId)
 
 
 @app.get('/client/members/{memberId}/reset', tags=["client"])
-def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     return users.reset_member(tenant_id=context.tenant_id, editor_id=context.user_id, user_id_to_update=memberId)
 
 
 @app.delete('/client/members/{memberId}', tags=["client"])
-def delete_member(memberId: int, context: schemas.CurrentContext = Depends(JWTBearer())):
+def delete_member(memberId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
     return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
 
 
 @app.get('/account/new_api_key', tags=["account"])
-def generate_new_user_token(context: schemas.CurrentContext = Depends(JWTBearer())):
+def generate_new_user_token(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {"data": users.generate_new_api_key(user_id=context.user_id)}
 
 
 @app.post('/account', tags=["account"])
 @app.put('/account', tags=["account"])
-def edit_account(data: schemas.EditUserSchema = Body(...), context: schemas.CurrentContext = Depends(JWTBearer())):
+def edit_account(data: schemas.EditUserSchema = Body(...), context: schemas.CurrentContext = Depends(JWTAuth())):
     return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data.dict(),
                       editor_id=context.user_id)
 
@@ -408,7 +405,7 @@ def edit_account(data: schemas.EditUserSchema = Body(...), context: schemas.Curr
 @app.post('/account/password', tags=["account"])
 @app.put('/account/password', tags=["account"])
 def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(JWTBearer())):
+                           context: schemas.CurrentContext = Depends(JWTAuth())):
     return users.change_password(email=context.email, old_password=data.old_password,
                                  new_password=data.new_password, tenant_id=context.tenant_id,
                                  user_id=context.user_id)
@@ -416,7 +413,7 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
 
 @app.get('/metadata/session_search', tags=["metadata"])
 def search_sessions_by_metadata(projectId: int, key: str, value: str,
-                                context: schemas.CurrentContext = Depends(JWTBearer())):
+                                context: schemas.CurrentContext = Depends(JWTAuth())):
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
     if len(value) == 0:
@@ -429,7 +426,7 @@ def search_sessions_by_metadata(projectId: int, key: str, value: str,
 
 
 @app.get('/plans', tags=["plan"])
-def get_current_plan(context: schemas.CurrentContext = Depends(JWTBearer())):
+def get_current_plan(context: schemas.CurrentContext = Depends(JWTAuth())):
     return {
         "data": license.get_status(context.tenant_id)
     }

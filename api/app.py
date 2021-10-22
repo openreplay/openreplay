@@ -109,7 +109,6 @@
 # app.register_blueprint(v1_api.app)
 
 
-
 from typing import Optional
 
 from fastapi import FastAPI, Body, Depends
@@ -118,11 +117,12 @@ from fastapi import FastAPI, Body, Depends
 # from app.auth.auth_bearer import JWTBearer
 # from app.auth.auth_handler import signJWT
 from pydantic import BaseModel
-from routes import core,core_dynamic
+from routes import core, core_dynamic
 
 app = FastAPI()
 
-
+app.include_router(core.public_app)
 app.include_router(core.app)
+app.include_router(core.app_apikey)
 app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)

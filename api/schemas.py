@@ -56,6 +56,10 @@ class CurrentContext(BaseModel):
     email: str = Field(...)
 
 
+class CurrentAPIContext(BaseModel):
+    tenant_id: int = Field(...)
+
+
 class AddSlackSchema(BaseModel):
     name: str = Field(...)
     url: HttpUrl = Field(...)
@@ -256,3 +260,70 @@ class MemberInvitationPayloadSchema(BaseModel):
     invitation_link: str = Field(...)
     client_id: str = Field(...)
     sender_name: str = Field(...)
+
+
+class ErrorIdsPayloadSchema(BaseModel):
+    errors: List[str] = Field([])
+
+
+class _AlertMessageSchema(BaseModel):
+    type: str = Field(...)
+    value: str = Field(...)
+
+
+class _AlertOptionSchema(BaseModel):
+    message: List[_AlertMessageSchema] = Field([])
+    currentPeriod: int = Field(...)
+    previousPeriod: int = Field(...)
+    lastNotification: Optional[int] = Field(...)
+    renotifyInterval: int = Field(...)
+
+
+class _AlertQuerySchema(BaseModel):
+    left: float = Field(...)
+    right: float = Field(...)
+    operator: str = Field(...)
+
+
+class AlertSchema(BaseModel):
+    name: str = Field(...)
+    detectionMethod: str = Field(...)
+    description: Optional[str] = Field(...)
+    options: _AlertOptionSchema = Field(...)
+    query: _AlertQuerySchema = Field(...)
+
+
+class SessionsFilterSchema(BaseModel):
+    pass
+
+
+class FunnelSchema(BaseModel):
+    name: str = Field(...)
+    filter: SessionsFilterSchema = Field([])
+    is_public: bool = Field(False)
+
+
+class SourcemapUploadPayloadSchema(BaseModel):
+    urls: List[str] = Field(..., alias="URL")
+
+
+class _SessionSearchEventSchema(BaseModel):
+    value: Optional[str] = Field(...)
+    type: str = Field(...)
+    operator: str = Field(...)
+    source: Optional[str] = Field(...)
+
+
+class _SessionSearchFilterSchema(_SessionSearchEventSchema):
+    value: List[str] = Field(...)
+
+
+class SessionsSearchPayloadSchema(BaseModel):
+    events: List[_SessionSearchEventSchema] = Field([])
+    filters: List[_SessionSearchFilterSchema] = Field([])
+    # custom:dict=Field(...)
+    # rangeValue:str=Field(...)
+    startDate: int = Field(...)
+    endDate: int = Field(...)
+    sort: str = Field(...)
+    order: str = Field(...)
