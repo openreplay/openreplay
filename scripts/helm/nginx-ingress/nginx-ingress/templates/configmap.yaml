@@ -2,9 +2,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx
-  namespace: { { .Release.Namespace } }
+  namespace: {{ .Release.Namespace }}
 data:
   location.list: |-
+    location ~* /general_stats {
+          deny all;
+    }
     location /healthz {
       return 200 'OK';
     }
@@ -84,9 +87,6 @@ data:
       proxy_pass http://minio.db.svc.cluster.local:9000/frontend/;
       proxy_intercept_errors on; # see http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_intercept_errors
       error_page 404 =200 /index.html;
-    }
-    location ~* /general_stats {
-      deny all;
     }
   compression.conf: |-
     # Compression                                           
