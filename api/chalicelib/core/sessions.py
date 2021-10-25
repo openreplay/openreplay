@@ -765,3 +765,9 @@ def delete_sessions_by_user_ids(project_id, user_ids):
         cur.execute(query=query)
 
     return True
+
+
+def count_all():
+    with pg_client.PostgresClient() as cur:
+        row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
+    return row.get("count", 0)
