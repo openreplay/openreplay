@@ -5,6 +5,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   location.list: |-
+    location ~* /general_stats {
+          deny all;
+    }
     location /healthz {
       return 200 'OK';
     }

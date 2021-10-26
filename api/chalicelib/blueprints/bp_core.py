@@ -897,3 +897,8 @@ def sessions_live_search(projectId, context):
 def get_heatmaps_by_url(projectId, context):
     data = app.current_request.json_body
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data)}
+
+
+@app.route('/general_stats', methods=['GET'], authorizer=None)
+def get_general_stats():
+    return {"data": {"sessions:": sessions.count_all()}}

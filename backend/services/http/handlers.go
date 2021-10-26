@@ -14,8 +14,8 @@ import (
 	gzip "github.com/klauspost/pgzip"
 
 	"openreplay/backend/pkg/db/postgres"
-	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/token"
+	. "openreplay/backend/pkg/messages"
 )
 
 const JSON_SIZE_LIMIT int64 = 1e3  // 1Kb

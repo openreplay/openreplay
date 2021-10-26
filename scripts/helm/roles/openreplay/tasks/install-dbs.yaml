@@ -21,7 +21,7 @@
         file="{{ item|basename }}"
         kubectl exec -n db postgresql-postgresql-0 -- /bin/bash -c "rm -rf /tmp/$file"
         kubectl cp -n db $file postgresql-postgresql-0:/tmp/
-        kubectl exec -n db postgresql-postgresql-0 -- /bin/bash -c "PGPASSWORD=asayerPostgres psql -U postgres -f /tmp/$file" &> "{{ playbook_dir }}"/postgresql_init.log
+        kubectl exec -n db postgresql-postgresql-0 -- /bin/bash -c "PGPASSWORD=asayerPostgres psql -v ON_ERROR_STOP=1 -U postgres -f /tmp/$file" &> "{{ playbook_dir }}"/postgresql_init.log
       args:
         chdir: db/init_dbs/postgresql
       with_fileglob:
