@@ -1,3 +1,4 @@
+from routes.or_dependencies import OR_context, ORRoute
 from fastapi import APIRouter, Depends, Body
 from decouple import config
 import schemas
@@ -13,20 +14,20 @@ from chalicelib.utils import email_helper
 from auth.auth_jwt import JWTAuth
 from auth.auth_apikey import APIKeyAuth
 
-public_app = APIRouter()
-app = APIRouter(dependencies=[Depends(JWTAuth())])
-app_apikey = APIRouter(dependencies=[Depends(APIKeyAuth())])
+public_app = APIRouter(route_class=ORRoute)
+app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)
+app_apikey = APIRouter(dependencies=[Depends(APIKeyAuth())], route_class=ORRoute)
 
 
 @app.get('/{projectId}/sessions2/favorite', tags=["sessions"])
-def get_favorite_sessions(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_favorite_sessions(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {
         'data': sessions.get_favorite_sessions(project_id=projectId, user_id=context.user_id, include_viewed=True)
     }
 
 
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
-def get_session2(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_session2(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context.user_id,
                                   include_fav_viewed=True, group_metadata=True)
     if data is None:
@@ -40,14 +41,14 @@ def get_session2(projectId: int, sessionId: int, context: schemas.CurrentContext
 
 @app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
-                                 context: schemas.CurrentContext = Depends(JWTAuth())):
+                                 context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": sessions_favorite_viewed.favorite_session(project_id=projectId, user_id=context.user_id,
                                                           session_id=sessionId)}
 
 
 @app.get('/{projectId}/sessions2/{sessionId}/assign', tags=["sessions"])
-def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(JWTAuth())):
+def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
                                                tenant_id=context.tenant_id,
                                                user_id=context.user_id)
@@ -60,7 +61,7 @@ def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = 
 
 @app.get('/{projectId}/sessions2/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 def get_error_trace(projectId: int, sessionId: int, errorId: str,
-                    context: schemas.CurrentContext = Depends(JWTAuth())):
+                    context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
         return data
@@ -71,7 +72,7 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
 
 @app.get('/{projectId}/sessions2/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 def assign_session(projectId: int, sessionId: int, issueId: int,
-                   context: schemas.CurrentContext = Depends(JWTAuth())):
+                   context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
                                     tenant_id=context.tenant_id, user_id=context.user_id)
     if "errors" in data:
@@ -84,7 +85,7 @@ def assign_session(projectId: int, sessionId: int, issueId: int,
 @app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 @app.put('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 def comment_assignment(projectId: int, sessionId: int, issueId: int, data: schemas.CommentAssignmentSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(JWTAuth())):
+                       context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
                                         session_id=sessionId, assignment_id=issueId,
                                         user_id=context.user_id, message=data.message)
@@ -97,7 +98,7 @@ def comment_assignment(projectId: int, sessionId: int, issueId: int, data: schem
 
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str, type: str, key: str, source: str,
-                  context: schemas.CurrentContext = Depends(JWTAuth())):
+                  context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
     result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source,
@@ -107,23 +108,24 @@ def events_search(projectId: int, q: str, type: str, key: str, source: str,
 
 @app.post('/{projectId}/sessions/search2', tags=["sessions"])
 def sessions_search2(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(JWTAuth())):
+                     context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search2_pg(data.dict(), projectId, user_id=context.user_id)
     return {'data': data}
 
 
 @app.get('/{projectId}/sessions/filters', tags=["sessions"])
-def session_filter_values(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def session_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_metas.get_key_values(projectId)}
 
 
 @app.get('/{projectId}/sessions/filters/top', tags=["sessions"])
-def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_metas.get_top_key_values(projectId)}
 
 
 @app.get('/{projectId}/sessions/filters/search', tags=["sessions"])
-def get_session_filters_meta(projectId: int, q: str, type: str, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_session_filters_meta(projectId: int, q: str, type: str,
+                             context: schemas.CurrentContext = Depends(OR_context)):
     meta_type = type
     if len(meta_type) == 0:
         return {"data": []}
@@ -136,7 +138,7 @@ def get_session_filters_meta(projectId: int, q: str, type: str, context: schemas
 @app.put('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])
 def integration_notify(projectId: int, integration: str, integrationId: int, source: str, sourceId: str,
                        data: schemas.IntegrationNotificationSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(JWTAuth())):
+                       context: schemas.CurrentContext = Depends(OR_context)):
     comment = None
     if data.comment:
         comment = data.comment
@@ -152,12 +154,12 @@ def integration_notify(projectId: int, integration: str, integrationId: int, sou
 
 
 @app.get('/integrations/sentry', tags=["integrations"])
-def get_all_sentry(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_sentry(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/sentry', tags=["integrations"])
-def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.get(project_id=projectId)}
 
 
@@ -170,210 +172,210 @@ def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth
 #
 #
 @app.delete('/{projectId}/integrations/sentry', tags=["integrations"])
-def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/{projectId}/integrations/sentry/events/{eventId}', tags=["integrations"])
-def proxy_sentry(projectId: int, eventId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def proxy_sentry(projectId: int, eventId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.proxy_get(tenant_id=context.tenant_id, project_id=projectId, event_id=eventId)}
 
 
 @app.get('/integrations/datadog', tags=["integrations"])
-def get_all_datadog(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_datadog(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/datadog', tags=["integrations"])
-def get_datadog(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/datadog', tags=["integrations"])
 @app.put('/{projectId}/integrations/datadog', tags=["integrations"])
 def add_edit_datadog(projectId: int, data: schemas.DatadogSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(JWTAuth())):
+                     context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/datadog', tags=["integrations"])
-def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_datadog.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/stackdriver', tags=["integrations"])
-def get_all_stackdriver(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_stackdriver(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/stackdriver', tags=["integrations"])
-def get_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/stackdriver', tags=["integrations"])
 @app.put('/{projectId}/integrations/stackdriver', tags=["integrations"])
 def add_edit_stackdriver(projectId: int, data: schemas.StackdriverSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(JWTAuth())):
+                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/stackdriver', tags=["integrations"])
-def delete_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_stackdriver(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_stackdriver.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/newrelic', tags=["integrations"])
-def get_all_newrelic(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_newrelic(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/newrelic', tags=["integrations"])
-def get_newrelic(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/newrelic', tags=["integrations"])
 @app.put('/{projectId}/integrations/newrelic', tags=["integrations"])
 def add_edit_newrelic(projectId: int, data: schemas.NewrelicSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(JWTAuth())):
+                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/newrelic', tags=["integrations"])
-def delete_newrelic(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_newrelic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_newrelic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/rollbar', tags=["integrations"])
-def get_all_rollbar(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_rollbar(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/rollbar', tags=["integrations"])
-def get_rollbar(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_rollbar(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.get(project_id=projectId)}
 
 
 @app.route('/{projectId}/integrations/rollbar', methods=['POST', 'PUT'])
 def add_edit_rollbar(projectId: int, data: schemas.RollbarSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(JWTAuth())):
+                     context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/rollbar', tags=["integrations"])
-def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.route('/integrations/bugsnag/list_projects', methods=['POST'])
 def list_projects_bugsnag(data: schemas.BugsnagBasicSchema = Body(...),
-                          context: schemas.CurrentContext = Depends(JWTAuth())):
+                          context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.list_projects(auth_token=data.authorizationToken)}
 
 
 @app.get('/integrations/bugsnag', tags=["integrations"])
-def get_all_bugsnag(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_bugsnag(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/bugsnag', tags=["integrations"])
-def get_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.get(project_id=projectId)}
 
 
 @app.route('/{projectId}/integrations/bugsnag', methods=['POST', 'PUT'])
 def add_edit_bugsnag(projectId: int, data: schemas.BugsnagSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(JWTAuth())):
+                     context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/bugsnag', tags=["integrations"])
-def delete_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.route('/integrations/cloudwatch/list_groups', methods=['POST'])
 def list_groups_cloudwatch(data: schemas.CloudwatchBasicSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(JWTAuth())):
+                           context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.list_log_groups(aws_access_key_id=data.awsAccessKeyId,
                                                         aws_secret_access_key=data.awsSecretAccessKey,
                                                         region=data.region)}
 
 
 @app.get('/integrations/cloudwatch', tags=["integrations"])
-def get_all_cloudwatch(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_cloudwatch(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-def get_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/integrations/cloudwatch', tags=["integrations"])
 @app.put('/{projectId}/integrations/cloudwatch', tags=["integrations"])
 def add_edit_cloudwatch(projectId: int, data: schemas.CloudwatchSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(JWTAuth())):
+                        context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/cloudwatch', tags=["integrations"])
-def delete_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_cloudwatch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/elasticsearch', tags=["integrations"])
-def get_all_elasticsearch(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_elasticsearch(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-def get_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.get(project_id=projectId)}
 
 
 @app.route('/integrations/elasticsearch/test', methods=['POST'])
 def test_elasticsearch_connection(data: schemas.ElasticsearchBasicSchema = Body(...),
-                                  context: schemas.CurrentContext = Depends(JWTAuth())):
+                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.ping(tenant_id=context.tenant_id, **data.dict())}
 
 
 @app.route('/{projectId}/integrations/elasticsearch', methods=['POST', 'PUT'])
 def add_edit_elasticsearch(projectId: int, data: schemas.ElasticsearchSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(JWTAuth())):
+                           context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": log_tool_elasticsearch.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/elasticsearch', tags=["integrations"])
-def delete_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/sumologic', tags=["integrations"])
-def get_all_sumologic(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_sumologic(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.get_all(tenant_id=context.tenant_id)}
 
 
 @app.get('/{projectId}/integrations/sumologic', tags=["integrations"])
-def get_sumologic(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.get(project_id=projectId)}
 
 
 @app.route('/{projectId}/integrations/sumologic', methods=['POST', 'PUT'])
 def add_edit_sumologic(projectId: int, data: schemas.SumologicSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(JWTAuth())):
+                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
 
 
 @app.delete('/{projectId}/integrations/sumologic', tags=["integrations"])
-def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
 @app.get('/integrations/issues', tags=["integrations"])
-def get_integration_status(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -384,7 +386,7 @@ def get_integration_status(context: schemas.CurrentContext = Depends(JWTAuth()))
 @app.post('/integrations/jira', tags=["integrations"])
 @app.put('/integrations/jira', tags=["integrations"])
 def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(JWTAuth())):
+                        context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
@@ -396,7 +398,7 @@ def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
 
 @app.route('/integrations/github', methods=['POST', 'PUT'])
 def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
-                    context: schemas.CurrentContext = Depends(JWTAuth())):
+                    context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
@@ -407,7 +409,7 @@ def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
 
 
 @app.delete('/integrations/issues', tags=["integrations"])
-def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -416,7 +418,7 @@ def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends
 
 
 @app.delete('/integrations/jira', tags=["integrations"])
-def delete_jira_cloud(context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_jira_cloud(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
@@ -426,7 +428,7 @@ def delete_jira_cloud(context: schemas.CurrentContext = Depends(JWTAuth())):
 
 
 @app.delete('/integrations/github', tags=["integrations"])
-def delete_github(context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_github(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
@@ -436,7 +438,7 @@ def delete_github(context: schemas.CurrentContext = Depends(JWTAuth())):
 
 
 @app.get('/integrations/issues/list_projects', tags=["integrations"])
-def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -448,7 +450,7 @@ def get_all_issue_tracking_projects(context: schemas.CurrentContext = Depends(JW
 
 
 @app.get('/integrations/issues/{integrationProjectId}', tags=["integrations"])
-def get_integration_metadata(integrationProjectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_integration_metadata(integrationProjectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
     if error is not None:
@@ -460,7 +462,7 @@ def get_integration_metadata(integrationProjectId: int, context: schemas.Current
 
 
 @app.get('/{projectId}/assignments', tags=["assignment"])
-def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_all(project_id=projectId, user_id=context.user_id)
     return {
         'data': data
@@ -470,7 +472,7 @@ def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depend
 @app.route('/{projectId}/sessions2/{sessionId}/assign/projects/{integrationProjectId}', methods=['POST', 'PUT'])
 def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
                             data: schemas.AssignmentSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(JWTAuth())):
+                            context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.create_new_assignment(tenant_id=context.tenant_id, project_id=projectId,
                                                       session_id=sessionId,
                                                       creator_id=context.user_id, assignee=data.assignee,
@@ -485,14 +487,14 @@ def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId
 
 
 @app.get('/{projectId}/gdpr', tags=["projects", "gdpr"])
-def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_gdpr(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_gdpr(project_id=projectId)}
 
 
 @app.post('/{projectId}/gdpr', tags=["projects", "gdpr"])
 @app.put('/{projectId}/gdpr', tags=["projects", "gdpr"])
 def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
-              context: schemas.CurrentContext = Depends(JWTAuth())):
+              context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.edit_gdpr(project_id=projectId, gdpr=data.dict())}
 
 
@@ -505,39 +507,39 @@ def reset_password_handler(data: schemas.ForgetPasswordPayloadSchema = Body(...)
 
 
 @app.get('/{projectId}/metadata', tags=["metadata"])
-def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_metadata(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": metadata.get(project_id=projectId)}
 
 
 @app.post('/{projectId}/metadata/list', tags=["metadata"])
 @app.put('/{projectId}/metadata/list', tags=["metadata"])
 def add_edit_delete_metadata(projectId: int, data: schemas.MetadataListSchema = Body(...),
-                             context: schemas.CurrentContext = Depends(JWTAuth())):
+                             context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.add_edit_delete(tenant_id=context.tenant_id, project_id=projectId, new_metas=data.list)
 
 
 @app.post('/{projectId}/metadata', tags=["metadata"])
 @app.put('/{projectId}/metadata', tags=["metadata"])
 def add_metadata(projectId: int, data: schemas.MetadataBasicSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(JWTAuth())):
+                 context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.add(tenant_id=context.tenant_id, project_id=projectId, new_name=data.key)
 
 
 @app.post('/{projectId}/metadata/{index}', tags=["metadata"])
 @app.put('/{projectId}/metadata/{index}', tags=["metadata"])
 def edit_metadata(projectId: int, index: int, data: schemas.MetadataBasicSchema = Body(...),
-                  context: schemas.CurrentContext = Depends(JWTAuth())):
+                  context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=int(index),
                          new_name=data.key)
 
 
 @app.delete('/{projectId}/metadata/{index}', tags=["metadata"])
-def delete_metadata(projectId: int, index: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_metadata(projectId: int, index: int, context: schemas.CurrentContext = Depends(OR_context)):
     return metadata.delete(tenant_id=context.tenant_id, project_id=projectId, index=index)
 
 
 @app.get('/{projectId}/metadata/search', tags=["metadata"])
-def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentContext = Depends(JWTAuth())):
+def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0 and len(key) == 0:
         return {"data": []}
     if len(q) == 0:
@@ -548,7 +550,7 @@ def search_metadata(projectId: int, q: str, key: str, context: schemas.CurrentCo
 
 
 @app.get('/{projectId}/integration/sources', tags=["integrations"])
-def search_integrations(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def search_integrations(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return log_tools.search(project_id=projectId)
 
 
@@ -576,30 +578,30 @@ def async_basic_emails(data: schemas.MemberInvitationPayloadSchema = Body(...)):
 
 
 @app.get('/{projectId}/sample_rate', tags=["projects"])
-def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_capture_status(project_id=projectId)}
 
 
 @app.post('/{projectId}/sample_rate', tags=["projects"])
 @app.put('/{projectId}/sample_rate', tags=["projects"])
 def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
-                          context: schemas.CurrentContext = Depends(JWTAuth())):
+                          context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
 
 
 @app.get('/announcements', tags=["announcements"])
-def get_all_announcements(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.get_all(context.user_id)}
 
 
 @app.get('/announcements/view', tags=["announcements"])
-def get_all_announcements(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.view(user_id=context.user_id)}
 
 
 @app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
 def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int, endDate: int,
-                              context: schemas.CurrentContext = Depends(JWTAuth())):
+                              context: schemas.CurrentContext = Depends(OR_context)):
     if action == "favorite":
         return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
     elif action == "sessions":
@@ -616,49 +618,49 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
 
 @app.post('/{projectId}/errors/merge', tags=["errors"])
 def errors_merge(projectId: int, data: schemas.ErrorIdsPayloadSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(JWTAuth())):
+                 context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.merge(error_ids=data.errors)
     return data
 
 
 @app.get('/show_banner', tags=["banner"])
-def errors_merge(context: schemas.CurrentContext = Depends(JWTAuth())):
+def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": False}
 
 
 @app.post('/{projectId}/alerts', tags=["alerts"])
 @app.put('/{projectId}/alerts', tags=["alerts"])
 def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(JWTAuth())):
+                 context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.create(projectId, data.dict())
 
 
 @app.get('/{projectId}/alerts', tags=["alerts"])
-def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get_all(projectId)}
 
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get(alertId)}
 
 
 @app.post('/{projectId}/alerts/{alertId}', tags=["alerts"])
 @app.put('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(JWTAuth())):
+                 context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.update(alertId, data.dict())
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
-def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return alerts.delete(projectId, alertId)
 
 
 @app.post('/{projectId}/funnels', tags=["funnels"])
 @app.put('/{projectId}/funnels', tags=["funnels"])
 def add_funnel(projectId: int, data: schemas.FunnelSchema = Body(...),
-               context: schemas.CurrentContext = Depends(JWTAuth())):
+               context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.create(project_id=projectId,
                           user_id=context.user_id,
                           name=data.name,
@@ -667,7 +669,7 @@ def add_funnel(projectId: int, data: schemas.FunnelSchema = Body(...),
 
 
 @app.get('/{projectId}/funnels', tags=["funnels"])
-def get_funnels(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_funnels(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_by_user(project_id=projectId,
                                         user_id=context.user_id,
                                         range_value=None,
@@ -678,7 +680,7 @@ def get_funnels(projectId: int, context: schemas.CurrentContext = Depends(JWTAut
 
 @app.get('/{projectId}/funnels/details', tags=["funnels"])
 def get_funnels_with_details(projectId: int, rangeValue: str = None, startDate: int = None, endDate: int = None,
-                             context: schemas.CurrentContext = Depends(JWTAuth())):
+                             context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_by_user(project_id=projectId,
                                         user_id=context.user_id,
                                         range_value=rangeValue,
@@ -688,13 +690,13 @@ def get_funnels_with_details(projectId: int, rangeValue: str = None, startDate: 
 
 
 @app.get('/{projectId}/funnels/issue_types', tags=["funnels"])
-def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_possible_issue_types(project_id=projectId)}
 
 
 @app.route('/{projectId}/funnels/{funnelId}/insights', methods=['GET'])
 def get_funnel_insights(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
-                        context: schemas.CurrentContext = Depends(JWTAuth())):
+                        context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.get_top_insights(funnel_id=funnelId, project_id=projectId,
                                     range_value=rangeValue,
                                     start_date=startDate,
@@ -715,7 +717,7 @@ def get_funnel_insights(projectId: int, funnelId, rangeValue: str = None, startD
 #
 @app.get('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
-                      context: schemas.CurrentContext = Depends(JWTAuth())):
+                      context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.get_issues(funnel_id=funnelId, project_id=projectId,
                               range_value=rangeValue,
                               start_date=startDate, end_date=endDate)
@@ -736,7 +738,7 @@ def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDat
 #
 @app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
 def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
-                        endDate: int = None, context: schemas.CurrentContext = Depends(JWTAuth())):
+                        endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_sessions(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
                                          range_value=rangeValue,
                                          start_date=startDate,
@@ -757,7 +759,7 @@ def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, s
 #
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
 def get_issue_sessions(projectId: int, issueId: int, startDate: int = None, endDate: int = None,
-                       context: schemas.CurrentContext = Depends(JWTAuth())):
+                       context: schemas.CurrentContext = Depends(OR_context)):
     issue = issues.get(project_id=projectId, issue_id=issueId)
     return {
         "data": {"sessions": sessions.search_by_issue(user_id=context.user_id, project_id=projectId, issue=issue,
@@ -782,7 +784,7 @@ def get_issue_sessions(projectId: int, issueId: int, startDate: int = None, endD
 #
 #
 @app.get('/{projectId}/funnels/{funnelId}', tags=["funnels"])
-def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.get(funnel_id=funnelId,
                        project_id=projectId)
     if data is None:
@@ -802,13 +804,13 @@ def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = 
 #
 #
 @app.delete('/{projectId}/funnels/{funnelId}', tags=["funnels"])
-def delete_filter(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def delete_filter(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.delete(user_id=context.user_id, funnel_id=funnelId, project_id=projectId)
 
 
 @app_apikey.put('/{projectKey}/sourcemaps', tags=["sourcemaps"])
 def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
-                              context: schemas.CurrentContext = Depends(APIKeyAuth())):
+                              context: schemas.CurrentContext = Depends(OR_context)):
     project_id = projects.get_internal_project_id(projectKey)
     if project_id is None:
         pass
@@ -819,35 +821,35 @@ def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayl
 
 
 @app.get('/config/weekly_report', tags=["weekly report config"])
-def get_weekly_report_config(context: schemas.CurrentContext = Depends(JWTAuth())):
+def get_weekly_report_config(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": weekly_report.get_config(user_id=context.user_id)}
 
 
 @app.post('/config/weekly_report', tags=["weekly report config"])
 @app.put('/config/weekly_report', tags=["weekly report config"])
 def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...),
-                              context: schemas.CurrentContext = Depends(JWTAuth())):
+                              context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": weekly_report.edit_config(user_id=context.user_id, weekly_report=data.weekly_report)}
 
 
 @app.get('/{projectId}/issue_types', tags=["issues"])
-def issue_types(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
-    # return {"data": issues.get_types_by_project(project_id=projectId)}
+# def issue_types(projectId: int, context: schemas.CurrentContext = Depends(current_or_context)):
+def issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": issues.get_all_types()}
 
 
 @app.get('/issue_types', tags=["issues"])
-def all_issue_types(context: schemas.CurrentContext = Depends(JWTAuth())):
+def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": issues.get_all_types()}
 
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
-def sessions_live(projectId: int, context: schemas.CurrentContext = Depends(JWTAuth())):
+def sessions_live(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_sessions(projectId)
     return {'data': data}
 
 
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
-                        context: schemas.CurrentContext = Depends(JWTAuth())):
+                        context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data.dict())}

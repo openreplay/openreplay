@@ -23,4 +23,6 @@ class APIKeyAuth(APIKeyHeader):
             )
         r["authorizer_identity"] = "api_key"
         print(r)
-        return CurrentAPIContext(tenant_id=r["tenantId"])
+        request.state.authorizer_identity = "api_key"
+        request.state.currentContext = CurrentAPIContext(tenant_id=r["tenantId"])
+        return request.state.currentContext

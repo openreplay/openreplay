@@ -1,6 +1,8 @@
-# import sentry_sdk
+import json
+
+import sentry_sdk
 # from chalice import Chalice, Response
-# from sentry_sdk import configure_scope
+from sentry_sdk import configure_scope
 #
 # from chalicelib import _overrides
 # from chalicelib.blueprints import bp_authorizers
@@ -8,8 +10,8 @@
 # from chalicelib.blueprints.app import v1_api
 # from chalicelib.blueprints import bp_core_dynamic, bp_core_dynamic_crons
 # from chalicelib.blueprints.subs import bp_dashboard
-# from chalicelib.utils import helper
-# from chalicelib.utils import pg_client
+from chalicelib.utils import helper
+from chalicelib.utils import pg_client
 # from chalicelib.utils.helper import environ
 #
 # app = Chalice(app_name='parrot')
@@ -56,47 +58,7 @@
 # _overrides.chalice_app(app)
 #
 #
-# @app.middleware('http')
-# def or_middleware(event, get_response):
-#     global OR_SESSION_TOKEN
-#     OR_SESSION_TOKEN = app.current_request.headers.get('vnd.openreplay.com.sid',
-#                                                        app.current_request.headers.get('vnd.asayer.io.sid'))
-#     if "authorizer" in event.context and event.context["authorizer"] is None:
-#         print("Deleted user!!")
-#         pg_client.close()
-#         return Response(body={"errors": ["Deleted user"]}, status_code=403)
-#
-#     try:
-#         if helper.TRACK_TIME:
-#             import time
-#             now = int(time.time() * 1000)
-#         response = get_response(event)
-#
-#         if response.status_code == 200 and response.body is not None and response.body.get("errors") is not None:
-#             if "not found" in response.body["errors"][0]:
-#                 response = Response(status_code=404, body=response.body)
-#             else:
-#                 response = Response(status_code=400, body=response.body)
-#         if response.status_code // 100 == 5 and helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
-#             with configure_scope() as scope:
-#                 scope.set_tag('stage', environ["stage"])
-#                 scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
-#                 scope.set_extra("context", event.context)
-#             sentry_sdk.capture_exception(Exception(response.body))
-#         if helper.TRACK_TIME:
-#             print(f"Execution time: {int(time.time() * 1000) - now} ms")
-#     except Exception as e:
-#         if helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
-#             with configure_scope() as scope:
-#                 scope.set_tag('stage', environ["stage"])
-#                 scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
-#                 scope.set_extra("context", event.context)
-#             sentry_sdk.capture_exception(e)
-#         response = Response(body={"Code": "InternalServerError",
-#                                   "Message": "An internal server error occurred [level=Fatal]."},
-#                             status_code=500)
-#     pg_client.close()
-#     return response
+
 #
 #
 # # Open source
@@ -111,18 +73,50 @@
 
 from typing import Optional
 
-from fastapi import FastAPI, Body, Depends
-
+from fastapi import FastAPI, Body, Depends, Request, Response
+from starlette import status
+from starlette.exceptions import HTTPException
+from starlette.responses import StreamingResponse
+from decouple import config
 # from app.models import PostSchema, UserSchema, UserLoginSchema
 # from app.auth.auth_bearer import JWTBearer
 # from app.auth.auth_handler import signJWT
 from pydantic import BaseModel
 from routes import core, core_dynamic
+import time
 
 app = FastAPI()
+
+
+@app.middleware('http')
+async def or_middleware(request: Request, call_next):
+    global OR_SESSION_TOKEN
+    OR_SESSION_TOKEN = request.headers.get('vnd.openreplay.com.sid', request.headers.get('vnd.asayer.io.sid'))
+
+    try:
+        if helper.TRACK_TIME:
+            import time
+            now = int(time.time() * 1000)
+        response: StreamingResponse = await call_next(request)
+        if helper.TRACK_TIME:
+            print(f"Execution time: {int(time.time() * 1000) - now} ms")
+    except Exception as e:
+        if helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
+            with configure_scope() as scope:
+                scope.set_tag('stage', config["stage"])
+                scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
+                if hasattr(request.state, "currentContext"):
+                    scope.set_extra("context", request.state.currentContext.dict())
+            sentry_sdk.capture_exception(e)
+        pg_client.close()
+        raise e
+    pg_client.close()
+    return response
+
 
 app.include_router(core.public_app)
 app.include_router(core.app)
 app.include_router(core.app_apikey)
 app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)
+app.include_router(core_dynamic.app_apikey)

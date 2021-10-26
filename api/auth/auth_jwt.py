@@ -26,11 +26,14 @@ class JWTAuth(HTTPBearer):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token or expired token.")
             user = users.get(user_id=jwt_payload["userId"], tenant_id=jwt_payload["tenantId"])
             if user is None:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
             jwt_payload["authorizer_identity"] = "jwt"
             print(jwt_payload)
-            return CurrentContext(tenant_id=jwt_payload["tenantId"], user_id=jwt_payload["userId"],
-                                  email=user["email"])
+            request.state.authorizer_identity = "jwt"
+            request.state.currentContext = CurrentContext(tenant_id=jwt_payload["tenantId"],
+                                                          user_id=jwt_payload["userId"],
+                                                          email=user["email"])
+            return request.state.currentContext
 
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code.")

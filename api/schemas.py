@@ -50,14 +50,13 @@ class CreateProjectSchema(BaseModel):
     name: str = Field("my first project")
 
 
-class CurrentContext(BaseModel):
-    tenant_id: int = Field(...)
-    user_id: int = Field(...)
-    email: str = Field(...)
-
-
 class CurrentAPIContext(BaseModel):
     tenant_id: int = Field(...)
+
+
+class CurrentContext(CurrentAPIContext):
+    user_id: int = Field(...)
+    email: str = Field(...)
 
 
 class AddSlackSchema(BaseModel):
