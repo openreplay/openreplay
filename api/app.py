@@ -1,24 +1,7 @@
-import json
-
 import sentry_sdk
-# from chalice import Chalice, Response
 from sentry_sdk import configure_scope
-#
-# from chalicelib import _overrides
-# from chalicelib.blueprints import bp_authorizers
-# from chalicelib.blueprints import bp_core, bp_core_crons
-# from chalicelib.blueprints.app import v1_api
-# from chalicelib.blueprints import bp_core_dynamic, bp_core_dynamic_crons
-# from chalicelib.blueprints.subs import bp_dashboard
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-# from chalicelib.utils.helper import environ
-#
-# app = Chalice(app_name='parrot')
-# app.debug = not helper.is_production() or helper.is_local()
-#
-# sentry_sdk.init(environ["sentryURL"])
-#
 # # Monkey-patch print for DataDog hack
 # import sys
 # import traceback
@@ -53,37 +36,13 @@ from chalicelib.utils import pg_client
 # sys.stdout = F()
 # sys.stderr = F()
 # # ---End Monkey-patch
-#
-#
-# _overrides.chalice_app(app)
-#
-#
 
-#
-#
-# # Open source
-# app.register_blueprint(bp_authorizers.app)
-# app.register_blueprint(bp_core.app)
-# app.register_blueprint(bp_core_crons.app)
-# app.register_blueprint(bp_core_dynamic.app)
-# app.register_blueprint(bp_core_dynamic_crons.app)
-# app.register_blueprint(bp_dashboard.app)
-# app.register_blueprint(v1_api.app)
-
-
-from typing import Optional
-
-from fastapi import FastAPI, Body, Depends, Request, Response
-from starlette import status
-from starlette.exceptions import HTTPException
+from fastapi import FastAPI, Request
 from starlette.responses import StreamingResponse
 from decouple import config
-# from app.models import PostSchema, UserSchema, UserLoginSchema
-# from app.auth.auth_bearer import JWTBearer
-# from app.auth.auth_handler import signJWT
-from pydantic import BaseModel
 from routes import core, core_dynamic
-import time
+from routes.subs import dashboard, insights
+from routes.app import v1_api
 
 app = FastAPI()
 
@@ -120,3 +79,6 @@ app.include_router(core.app_apikey)
 app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)
 app.include_router(core_dynamic.app_apikey)
+app.include_router(dashboard.app)
+app.include_router(insights.app)
+app.include_router(v1_api.app_apikey)

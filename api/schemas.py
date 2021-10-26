@@ -326,3 +326,10 @@ class SessionsSearchPayloadSchema(BaseModel):
     endDate: int = Field(...)
     sort: str = Field(...)
     order: str = Field(...)
+
+
+class MetricPayloadSchema(BaseModel):
+    start_timestamp: int = Field(TimeUTC.now(delta_days=-1))
+    end_timestamp: int = Field(TimeUTC.now())
+    density: int = Field(7)
+    filters: List[dict] = Field([])
