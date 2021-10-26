@@ -110,7 +110,7 @@ export default function (app: App, opts: Partial<Options>): void {
     return;
   }
 
-  const sendConsoleLog = app.safe((level: string, args: any[]): void =>
+  const sendConsoleLog = app.safe((level: string, args: unknown[]): void =>
     app.send(new ConsoleLog(level, printf(args))),
   );
 
@@ -121,18 +121,36 @@ export default function (app: App, opts: Partial<Options>): void {
   app.attachStartCallback(reset);
   app.ticker.attach(reset, 33, false);
 
-  options.consoleMethods.forEach((method) => {
-    if (consoleMethods.indexOf(method) === -1) {
-      console.error(`OpenReplay: unsupported console method "${method}"`);
-      return;
-    }
-    const fn = (console as any)[method];
-    (console as any)[method] = function (...args: any[]): void {
-      fn.apply(this, args);
-      if (n++ > options.consoleThrottling) {
+  const patchConsole = (console: Console) =>
+    options.consoleMethods!.forEach((method) => {
+      if (consoleMethods.indexOf(method) === -1) {
+        console.error(`OpenReplay: unsupported console method "${method}"`);
         return;
       }
-      sendConsoleLog(method, args);
-    };
-  });
+      const fn = (console as any)[method];
+      (console as any)[method] = function (...args: unknown[]): void {
+        fn.apply(this, args);
+        if (n++ > options.consoleThrottling) {
+          return;
+        }
+        sendConsoleLog(method, args);
+      };
+    });
+  patchConsole(window.console);
+
+  app.nodes.attachNodeCallback(node => {
+    if (node instanceof HTMLIFrameElement) {
+      let context = node.contentWindow
+      if (context) {
+        patchConsole((context as (Window & typeof globalThis)).console)
+      }
+      app.attachEventListener(node, "load", () => {
+        if (node.contentWindow !== context) {
+          context = node.contentWindow
+          patchConsole((context as (Window & typeof globalThis)).console)
+        }
+      })
+    }
+
+  })
 }
