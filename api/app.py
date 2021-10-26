@@ -2,6 +2,7 @@ import sentry_sdk
 from sentry_sdk import configure_scope
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
+from fastapi.middleware.cors import CORSMiddleware
 # # Monkey-patch print for DataDog hack
 # import sys
 # import traceback
@@ -73,6 +74,17 @@ async def or_middleware(request: Request, call_next):
     return response
 
 
+origins = [
+    "*",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(core.public_app)
 app.include_router(core.app)
 app.include_router(core.app_apikey)
