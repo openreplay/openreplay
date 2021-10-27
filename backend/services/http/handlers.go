@@ -124,15 +124,17 @@ func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64) {
 	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
 	//defer body.Close()
 	var reader io.ReadCloser
+	var err Error
 	switch r.Header.Get("Content-Encoding") {
 	case "gzip":
 		log.Println("Gzip", reader)
 
-		reader, err := gzip.NewReader(body)
+		reader, err = gzip.NewReader(body)
 		if err != nil {
 			responseWithError(w, http.StatusInternalServerError, err) // TODO: stage-dependent responce
 			return
 		}
+		log.Println("Gzip reader init", reader)
 		defer reader.Close()
 	default:
 		reader = body
