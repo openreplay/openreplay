@@ -1,3 +1,5 @@
+from typing import Union
+
 from routes.or_dependencies import OR_context, ORRoute
 from decouple import config
 from fastapi import APIRouter, Body, Depends, HTTPException, status
@@ -183,10 +185,12 @@ def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = B
 
 
 @app.post('/{projectId}/errors/search', tags=['errors'])
-def errors_search(projectId: int, status: str = "ALL", favorite: bool = False,
+def errors_search(projectId: int, status: str = "ALL", favorite: Union[str, bool] = False,
                   data: schemas.SearchErrorsSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    return errors.search(data, projectId, user_id=context.user_id, status=status,
+    if isinstance(favorite, str):
+        favorite = True if len(favorite) == 0 else False
+    return errors.search(data.dict(), projectId, user_id=context.user_id, status=status,
                          favorite_only=favorite)
 
 
@@ -304,14 +308,14 @@ def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
     return {"data": integration.add_edit(data=data.dict())}
 
 
+@app.get('/integrations/slack/channels', tags=["integrations"])
+def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type='slack')}
+
+
 @app.get('/integrations/slack/{integrationId}', tags=["integrations"])
 def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)}
-
-
-@app.get('/integrations/slack/channels', tags=["integrations"])
-def get_slack_integration(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type='slack')}
 
 
 @app.delete('/integrations/slack/{integrationId}', tags=["integrations"])

@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client
 from chalicelib.utils import helper
-from chalicelib.utils.helper import environ
+from decouple import config
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
@@ -22,7 +22,7 @@ def get_all(user_id):
         for a in announcements:
             a["createdAt"] = TimeUTC.datetime_to_timestamp(a["createdAt"])
             if a["imageUrl"] is not None and len(a["imageUrl"]) > 0:
-                a["imageUrl"] = environ["announcement_url"] + a["imageUrl"]
+                a["imageUrl"] = config("announcement_url") + a["imageUrl"]
         return announcements
 
 

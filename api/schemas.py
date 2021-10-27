@@ -70,7 +70,7 @@ class EditSlackSchema(BaseModel):
 
 
 class SearchErrorsSchema(BaseModel):
-    platform: Optional[str] = Field(...)
+    platform: Optional[str] = Field(None)
     startDate: Optional[int] = Field(TimeUTC.now(-7))
     endDate: Optional[int] = Field(TimeUTC.now())
     density: Optional[int] = Field(7)
@@ -332,4 +332,8 @@ class MetricPayloadSchema(BaseModel):
     start_timestamp: int = Field(TimeUTC.now(delta_days=-1))
     end_timestamp: int = Field(TimeUTC.now())
     density: int = Field(7)
+    filters: List[dict] = Field([])
+
+
+class AssistSearchPayloadSchema(BaseModel):
     filters: List[dict] = Field([])

@@ -1,6 +1,6 @@
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
+from decouple import config
 from chalicelib.utils.helper import get_issue_title
 
 LOWEST_BAR_VALUE = 3
@@ -227,7 +227,7 @@ def cron():
                     if j["type"] in keep_types:
                         keep.append(j)
                 i["partition"] = keep
-            helper.async_post(environ['email_funnel'] % "weekly_report2",
+            helper.async_post(config('email_funnel') % "weekly_report2",
                               {"email": p.pop("emails"),
                                "data": {
                                    **p,

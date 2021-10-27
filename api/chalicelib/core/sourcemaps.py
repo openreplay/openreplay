@@ -1,4 +1,4 @@
-from chalicelib.utils.helper import environ
+from decouple import config
 from chalicelib.utils import helper
 
 from chalicelib.utils import s3
@@ -17,7 +17,7 @@ def __get_key(project_id, url):
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(s3.get_presigned_url_for_sharing(bucket=environ['sourcemaps_bucket'], expires_in=120,
+        results.append(s3.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
                                                         key=__get_key(project_id, u),
                                                         check_exists=True))
     return results
@@ -26,7 +26,7 @@ def presign_share_urls(project_id, urls):
 def presign_upload_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(s3.get_presigned_url_for_upload(bucket=environ['sourcemaps_bucket'],
+        results.append(s3.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
                                                        expires_in=1800,
                                                        key=__get_key(project_id, u)))
     return results

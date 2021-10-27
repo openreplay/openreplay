@@ -1,6 +1,5 @@
 import json
 
-import schemas
 from chalicelib.utils import pg_client, helper, dev
 from chalicelib.core import sourcemaps, sessions
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -419,18 +418,22 @@ def __get_sort_key(key):
 
 
 @dev.timed
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=False):
     status = status.upper()
     if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
         return {"errors": ["invalid error status"]}
-    pg_sub_query = __get_basic_constraints(data.platform, project_key="sessions.project_id")
+    pg_sub_query = __get_basic_constraints(data.get('platform'), project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
                      "pe.project_id=%(project_id)s"]
-    pg_sub_query_chart = __get_basic_constraints(data.platform, time_constraint=False, chart=True)
+    pg_sub_query_chart = __get_basic_constraints(data.get('platform'), time_constraint=False, chart=True)
     pg_sub_query_chart.append("source ='js_exception'")
     pg_sub_query_chart.append("errors.error_id =details.error_id")
     statuses = []
     error_ids = None
+    if data.get("startDate") is None:
+        data["startDate"] = TimeUTC.now(-30)
+    if data.get("endDate") is None:
+        data["endDate"] = TimeUTC.now(1)
     if len(data.get("events", [])) > 0 or len(data.get("filters", [])) > 0 or status != "ALL" or favorite_only:
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                        error_status=status, favorite_only=favorite_only)
@@ -441,18 +444,22 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
             }}
         error_ids = [e["error_id"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        density = data.density
-        step_size = __get_step_size(data.startDate, data.endDate, density, factor=1)
+        if data.get("startDate") is None:
+            data["startDate"] = TimeUTC.now(-7)
+        if data.get("endDate") is None:
+            data["endDate"] = TimeUTC.now()
+        density = data.get("density", 7)
+        step_size = __get_step_size(data["startDate"], data["endDate"], density, factor=1)
         sort = __get_sort_key('datetime')
-        if data.sort is not None:
-            sort = __get_sort_key(data.sort)
+        if data.get("sort") is not None:
+            sort = __get_sort_key(data["sort"])
         order = "DESC"
-        if data.order is not None:
-            order = data.order
+        if data.get("order") is not None:
+            order = data["order"]
 
         params = {
-            "startDate": data.startDate,
-            "endDate": data.endDate,
+            "startDate": data['startDate'],
+            "endDate": data['endDate'],
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}

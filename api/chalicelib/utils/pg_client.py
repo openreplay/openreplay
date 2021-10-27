@@ -27,8 +27,8 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
 
 try:
-    # postgreSQL_pool = ORThreadedConnectionPool(50, 100, **PG_CONFIG)
-    postgreSQL_pool = ORThreadedConnectionPool(5, 100, **PG_CONFIG)
+    postgreSQL_pool = ORThreadedConnectionPool(50, 100, **PG_CONFIG)
+    # postgreSQL_pool = ORThreadedConnectionPool(5, 100, **PG_CONFIG)
     if (postgreSQL_pool):
         print("Connection pool created successfully")
 except (Exception, psycopg2.DatabaseError) as error:

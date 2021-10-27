@@ -1,5 +1,5 @@
 from datetime import datetime
-from chalicelib.utils.helper import environ
+from decouple import config
 
 from chalicelib.core.collaboration_slack import Slack
 
@@ -10,7 +10,7 @@ def send(notification, destination):
     return Slack.send_text(tenant_id=notification["tenantId"],
                            webhook_id=destination,
                            text=notification["description"] \
-                                + f"\n<{environ['SITE_URL']}{notification['buttonUrl']}|{notification['buttonText']}>",
+                                + f"\n<{config('SITE_URL')}{notification['buttonUrl']}|{notification['buttonText']}>",
                            title=notification["title"],
                            title_link=notification["buttonUrl"], )
 
@@ -23,7 +23,7 @@ def send_batch(notifications_list):
         if n.get("destination") not in webhookId_map:
             webhookId_map[n.get("destination")] = {"tenantId": n["notification"]["tenantId"], "batch": []}
         webhookId_map[n.get("destination")]["batch"].append({"text": n["notification"]["description"] \
-                                                                     + f"\n<{environ['SITE_URL']}{n['notification']['buttonUrl']}|{n['notification']['buttonText']}>",
+                                                                     + f"\n<{config('SITE_URL')}{n['notification']['buttonUrl']}|{n['notification']['buttonText']}>",
                                                              "title": n["notification"]["title"],
                                                              "title_link": n["notification"]["buttonUrl"],
                                                              "ts": datetime.now().timestamp()})

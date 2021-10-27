@@ -1,5 +1,5 @@
 import time
-from chalicelib.utils.helper import environ
+from decouple import config
 
 from chalicelib.core import notifications
 from chalicelib.utils import pg_client, helper, email_helper
@@ -132,7 +132,7 @@ def process_notifications(data):
     BATCH_SIZE = 200
     for t in full.keys():
         for i in range(0, len(full[t]), BATCH_SIZE):
-            helper.async_post(environ['alert_ntf'] % t, {"notifications": full[t][i:i + BATCH_SIZE]})
+            helper.async_post(config('alert_ntf') % t, {"notifications": full[t][i:i + BATCH_SIZE]})
 
 
 def send_by_email(notification, destination):

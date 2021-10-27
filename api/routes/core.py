@@ -849,6 +849,13 @@ def sessions_live(projectId: int, context: schemas.CurrentContext = Depends(OR_c
     return {'data': data}
 
 
+@app.post('/{projectId}/assist/sessions', tags=["assist"])
+def sessions_live_search(projectId: int, data: schemas.AssistSearchPayloadSchema = Body(...),
+                         context: schemas.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_sessions(projectId, filters=data.filters)
+    return {'data': data}
+
+
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
