@@ -126,6 +126,8 @@ func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64) {
 	var reader io.ReadCloser
 	switch r.Header.Get("Content-Encoding") {
 	case "gzip":
+		log.Println("Gzip", reader)
+
 		reader, err := gzip.NewReader(body)
 		if err != nil {
 			responseWithError(w, http.StatusInternalServerError, err) // TODO: stage-dependent responce
@@ -135,6 +137,7 @@ func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64) {
 	default:
 		reader = body
 	}
+	log.Println("Reader after switch:", reader)
 	buf, err := ioutil.ReadAll(reader)
 	if err != nil {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
