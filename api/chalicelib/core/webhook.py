@@ -76,6 +76,12 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
     allow_update = ["name", "index", "authHeader", "endpoint"]
     with pg_client.PostgresClient() as cur:
         sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys() if k in allow_update]
+        print(cur.mogrify(f"""\
+                    UPDATE public.webhooks
+                    SET {','.join(sub_query)}
+                    WHERE webhook_id =%(id)s AND deleted_at ISNULL
+                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
+                        {"id": webhook_id, **changes}))
         cur.execute(
             cur.mogrify(f"""\
                     UPDATE public.webhooks
@@ -114,7 +120,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
 
 
 def add_edit(tenant_id, data, replace_none=None):
-    if "webhookId" in data:
+    if data.get("webhookId") is not None:
         return update(tenant_id=tenant_id, webhook_id=data["webhookId"],
                       changes={"endpoint": data["endpoint"],
                                "authHeader": None if "authHeader" not in data else data["authHeader"],

@@ -97,7 +97,7 @@ def comment_assignment(projectId: int, sessionId: int, issueId: int, data: schem
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str, type: str, key: str, source: str,
+def events_search(projectId: int, q: str, type: str = None, key: str = None, source: str = None,
                   context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
@@ -586,7 +586,7 @@ def get_capture_status(projectId: int, context: schemas.CurrentContext = Depends
 @app.put('/{projectId}/sample_rate', tags=["projects"])
 def update_capture_status(projectId: int, data: schemas.SampleRateSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.update_capture_status(project_id=projectId, changes=data)}
+    return {"data": projects.update_capture_status(project_id=projectId, changes=data.dict())}
 
 
 @app.get('/announcements', tags=["announcements"])

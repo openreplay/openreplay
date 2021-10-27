@@ -6,7 +6,7 @@ PG_CONFIG = {"host": config("pg_host"),
              "database": config("pg_dbname"),
              "user": config("pg_user"),
              "password": config("pg_password"),
-             "port": config("pg_port")}
+             "port": config("pg_port", cast=int)}
 
 from psycopg2 import pool
 from threading import Semaphore
@@ -28,7 +28,6 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
 try:
     postgreSQL_pool = ORThreadedConnectionPool(50, 100, **PG_CONFIG)
-    # postgreSQL_pool = ORThreadedConnectionPool(5, 100, **PG_CONFIG)
     if (postgreSQL_pool):
         print("Connection pool created successfully")
 except (Exception, psycopg2.DatabaseError) as error:

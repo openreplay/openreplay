@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Literal
 from pydantic import BaseModel, Field, EmailStr, HttpUrl
 
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -36,6 +36,9 @@ class ForgetPasswordPayloadSchema(_Grecaptcha):
 class EditUserPasswordSchema(BaseModel):
     old_password: str = Field(...)
     new_password: str = Field(...)
+
+    class Config:
+        alias_generator = key_to_camel_case
 
 
 class UpdateTenantSchema(BaseModel):
@@ -109,14 +112,14 @@ class JiraGithubSchema(BaseModel):
 
 
 class CreateEditWebhookSchema(BaseModel):
-    webhookId: Optional[int] = Field(...)
+    webhookId: Optional[int] = Field(None)
     endpoint: str = Field(...)
-    authHeader: Optional[str] = Field(...)
+    authHeader: Optional[str] = Field(None)
     name: Optional[str] = Field(...)
 
 
 class CreateMemberSchema(BaseModel):
-    userId: Optional[int] = Field(...)
+    userId: Optional[int] = Field(None)
     name: str = Field(...)
     email: str = Field(...)
     admin: bool = Field(False)
@@ -164,6 +167,9 @@ class SampleRateSchema(BaseModel):
 
 class WeeklyReportConfigSchema(BaseModel):
     weekly_report: bool = Field(True)
+
+    class Config:
+        alias_generator = key_to_camel_case
 
 
 class GetHeatmapPayloadSchema(BaseModel):
@@ -228,12 +234,8 @@ class SumologicSchema(BaseModel):
 
 
 class MetadataBasicSchema(BaseModel):
-    index: Optional[int] = Field(...)
+    index: Optional[int] = Field(None)
     key: str = Field(...)
-
-
-class MetadataSchema(MetadataBasicSchema):
-    index: int = Field(...)
 
 
 class MetadataListSchema(BaseModel):
@@ -274,20 +276,20 @@ class _AlertOptionSchema(BaseModel):
     message: List[_AlertMessageSchema] = Field([])
     currentPeriod: int = Field(...)
     previousPeriod: int = Field(...)
-    lastNotification: Optional[int] = Field(...)
-    renotifyInterval: int = Field(...)
+    lastNotification: Optional[int] = Field(None)
+    renotifyInterval: Optional[int] = Field(720)
 
 
 class _AlertQuerySchema(BaseModel):
-    left: float = Field(...)
+    left: str = Field(...)
     right: float = Field(...)
-    operator: str = Field(...)
+    operator: Literal["<", ">", "<=", ">="] = Field(...)
 
 
 class AlertSchema(BaseModel):
     name: str = Field(...)
     detectionMethod: str = Field(...)
-    description: Optional[str] = Field(...)
+    description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
 

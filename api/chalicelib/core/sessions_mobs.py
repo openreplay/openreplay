@@ -7,7 +7,7 @@ def get_web(sessionId):
     return client.generate_presigned_url(
         'get_object',
         Params={
-            'Bucket': environ["sessions_bucket"],
+            'Bucket': config("sessions_bucket"),
             'Key': sessionId
         },
         ExpiresIn=100000
