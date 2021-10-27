@@ -1,12 +1,11 @@
 from typing import Union
 
-from routes.or_dependencies import OR_context, ORRoute
 from decouple import config
 from fastapi import APIRouter, Body, Depends, HTTPException, status
 
 import schemas
-from auth.auth_jwt import JWTAuth
 from auth.auth_apikey import APIKeyAuth
+from auth.auth_jwt import JWTAuth
 from chalicelib.core import boarding
 from chalicelib.core import errors
 from chalicelib.core import errors_favorite_viewed
@@ -17,6 +16,7 @@ from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
+from or_dependencies import OR_context, ORRoute
 
 public_app = APIRouter(route_class=ORRoute)
 app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)

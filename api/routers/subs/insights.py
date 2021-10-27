@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, Body
 import schemas
 from auth.auth_apikey import APIKeyAuth
 from auth.auth_jwt import JWTAuth
-from routes.or_dependencies import ORRoute
+from or_dependencies import ORRoute
 
 public_app = APIRouter(route_class=ORRoute)
 app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)

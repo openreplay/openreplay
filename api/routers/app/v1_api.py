@@ -5,7 +5,7 @@ from auth.auth_apikey import APIKeyAuth
 from auth.auth_jwt import JWTAuth
 from chalicelib.core import sessions, events, jobs, projects
 from chalicelib.utils.TimeUTC import TimeUTC
-from routes.or_dependencies import ORRoute, OR_context
+from or_dependencies import ORRoute, OR_context
 
 public_app = APIRouter(route_class=ORRoute)
 app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)

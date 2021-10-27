@@ -1,8 +1,16 @@
 import sentry_sdk
+from decouple import config
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk import configure_scope
+from starlette.responses import StreamingResponse
+
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from fastapi.middleware.cors import CORSMiddleware
+from routers import core, core_dynamic
+from routers.app import v1_api
+from routers.subs import dashboard, insights
+
 # # Monkey-patch print for DataDog hack
 # import sys
 # import traceback
@@ -37,13 +45,6 @@ from fastapi.middleware.cors import CORSMiddleware
 # sys.stdout = F()
 # sys.stderr = F()
 # # ---End Monkey-patch
-
-from fastapi import FastAPI, Request
-from starlette.responses import StreamingResponse
-from decouple import config
-from routes import core, core_dynamic
-from routes.subs import dashboard, insights
-from routes.app import v1_api
 
 app = FastAPI()
 
