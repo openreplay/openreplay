@@ -23,11 +23,11 @@ import { Options as AppOptions } from './app';
 import { Options as ConsoleOptions } from './modules/console';
 import { Options as ExceptionOptions } from './modules/exception';
 import { Options as InputOptions } from './modules/input';
-import { Options as MouseOptions } from './modules/mouse';
 import { Options as PerformanceOptions } from './modules/performance';
 import { Options as TimingOptions } from './modules/timing';
+
 export type Options = Partial<
-  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & MouseOptions & PerformanceOptions & TimingOptions
+  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & PerformanceOptions & TimingOptions
 > & {
   projectID?: number; // For the back compatibility only (deprecated)
   projectKey: string;
@@ -98,7 +98,7 @@ export default class API {
       Exception(this.app, options);
       Img(this.app);
       Input(this.app, options);
-      Mouse(this.app, options);
+      Mouse(this.app);
       Timing(this.app, options);
       Performance(this.app, options);
       Scroll(this.app);

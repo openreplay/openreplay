@@ -146,12 +146,16 @@ func iosImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	r.Body = http.MaxBytesReader(w, r.Body, FILES_SIZE_LIMIT)
 	// defer r.Body.Close()
-	err = r.ParseMultipartForm(1e5) // 100Kb
+	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		responseWithError(w, http.StatusUnsupportedMediaType, err)
 	// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
 	} else if err != nil {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+	}
+
+	if (r.MultipartForm == nil) {
+		responseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
 	}
 
 	if len(r.MultipartForm.Value["projectKey"]) == 0 {

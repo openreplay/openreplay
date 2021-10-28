@@ -47,5 +47,5 @@ export default function (app: App): void {
   const observer: PerformanceObserver = new PerformanceObserver((list) =>
     list.getEntries().forEach(longTask),
   );
-  observer.observe({ entryTypes: ['longtask'], buffered: true });
+  observer.observe({ entryTypes: ['longtask'] });
 }
