@@ -1,21 +1,20 @@
 from http import cookies
 from urllib.parse import urlparse, parse_qsl
 
+from decouple import config
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
-
-from chalicelib.utils.helper import environ
 
 SAML2 = {
     "strict": True,
     "debug": True,
     "sp": {
-        "entityId": environ["SITE_URL"] + "/api/saml2/metadata/",
+        "entityId": config("SITE_URL") + "/api/saml2/metadata/",
         "assertionConsumerService": {
-            "url": environ["SITE_URL"] + "/api/saml2/acs",
+            "url": config("SITE_URL") + "/api/saml2/acs",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": environ["SITE_URL"] + "/api/saml2/sls",
+            "url": config("SITE_URL") + "/api/saml2/sls",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -26,28 +25,28 @@ SAML2 = {
 }
 idp = None
 # SAML2 config handler
-if environ.get("SAML2_MD_URL") is not None and len(environ["SAML2_MD_URL"]) > 0:
+if config("SAML2_MD_URL", default=None) is not None and len(config("SAML2_MD_URL")) > 0:
     print("SAML2_MD_URL provided, getting IdP metadata config")
     from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
-    idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote(environ.get("SAML2_MD_URL"))
+    idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote(config("SAML2_MD_URL", default=None))
     idp = idp_data.get("idp")
 
 if SAML2["idp"] is None:
-    if len(environ.get("idp_entityId", "")) > 0 \
-            and len(environ.get("idp_sso_url", "")) > 0 \
-            and len(environ.get("idp_x509cert", "")) > 0:
+    if len(config("idp_entityId", default="")) > 0 \
+            and len(config("idp_sso_url", default="")) > 0 \
+            and len(config("idp_x509cert", default="")) > 0:
         idp = {
-            "entityId": environ["idp_entityId"],
+            "entityId": config("idp_entityId"),
             "singleSignOnService": {
-                "url": environ["idp_sso_url"],
+                "url": config("idp_sso_url"),
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
             },
-            "x509cert": environ["idp_x509cert"]
+            "x509cert": config("idp_x509cert")
         }
-        if len(environ.get("idp_sls_url", "")) > 0:
+        if len(config("idp_sls_url", default="")) > 0:
             idp["singleLogoutService"] = {
-                "url": environ["idp_sls_url"],
+                "url": config("idp_sls_url"),
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
             }
 

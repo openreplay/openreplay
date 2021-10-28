@@ -15,7 +15,7 @@ from chalicelib.core import sessions
 from chalicelib.core import tenants, users, metadata, projects, license, signup, slack, alerts, notifications
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import captcha
+from chalicelib.utils import captcha, SAML2_helper
 from chalicelib.utils import helper
 from or_dependencies import OR_context, ORRoute
 
@@ -83,7 +83,8 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
                 "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
             },
             **license.get_status(context.tenant_id),
-            "smtp": helper.has_smtp()
+            "smtp": helper.has_smtp(),
+            "saml2": SAML2_helper.is_saml2_available()
         }
     }
 
@@ -350,6 +351,8 @@ def get_members(context: schemas.CurrentContext = Depends(OR_context)):
 @app.put('/client/members', tags=["client"])
 def add_member(data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
+    if SAML2_helper.is_saml2_available():
+        return {"errors": ["please use your SSO server to add teammates"]}
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict())
 
 
@@ -429,6 +432,9 @@ def search_sessions_by_metadata(projectId: int, key: str, value: str,
                                 context: schemas.CurrentContext = Depends(OR_context)):
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
+
+    if not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id):
+        return {"errors": ["unauthorized project"]}
     if len(value) == 0:
         return {"errors": ["please provide a value for search"]}
     if len(key) == 0:
