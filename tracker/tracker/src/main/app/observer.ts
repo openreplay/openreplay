@@ -411,11 +411,13 @@ export default class Observer {
 
   private iframeObservers: Observer[] = [];
   private handleIframe(iframe: HTMLIFrameElement): void {
+    let context: Window | null = null
     const handle = () => {
-      const context = iframe.contentWindow as Window | null
       const id = this.app.nodes.getID(iframe)
-      if (!context || id === undefined) { return }
-
+      if (id === undefined) { return }
+      if (iframe.contentWindow === context) { return }
+      context = iframe.contentWindow as Window | null;
+      if (!context) { return }
       const observer = new Observer(this.app, this.options, context)
       this.iframeObservers.push(observer)
       observer.observeIframe(id, context)

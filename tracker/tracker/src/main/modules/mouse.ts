@@ -1,10 +1,30 @@
-import type { Options as FinderOptions } from '../vendors/finder/finder';
-import { finder } from '../vendors/finder/finder';
 import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils';
 import App from '../app';
 import { MouseMove, MouseClick } from '../../messages';
 import { getInputLabel } from './input';
 
+function _getSelector(target: Element): string {
+  let el: Element | null = target
+  let selector: string | null = null
+  do {
+    if (el.id) {
+      return `#${el.id}` + (selector ? ` > ${selector}` : '')
+    }
+    selector =
+      el.className.split(' ')
+        .map(cn => cn.trim())
+        .filter(cn => cn !== '')
+        .reduce((sel, cn) => `${sel}.${cn}`, el.tagName.toLowerCase()) + 
+      (selector ?  ` > ${selector}` : '');
+     if (el === document.body) {
+       return selector
+     }
+     el = el.parentElement
+  } while (el !== document.body && el !== null)
+  return selector
+}
+
+//TODO: fix (typescript doesn't allow work when the guard is inside the function)
 function getTarget(target: EventTarget | null): Element | null {
   if (target instanceof Element) {
     return _getTarget(target);
@@ -72,26 +92,11 @@ function getTargetLabel(target: Element): string {
   return '';
 }
 
-interface HeatmapsOptions {
-  finder: FinderOptions,
-}
-
-export interface Options {
-  heatmaps: boolean | HeatmapsOptions;
-}
-
-export default function (app: App, opts: Partial<Options>): void {
-  const options: Options = Object.assign(
-    {
-      heatmaps: false // {
-        // finder: {
-        //   threshold: 5,
-        //   maxNumberOfTries: 600,
-        // },
-      // },
-    },
-    opts,
-  );
+export default function (app: App): void {
+  // const options: Options = Object.assign(
+  //   {},
+  //   opts,
+  // );
 
   let mousePositionX = -1;
   let mousePositionY = -1;
@@ -115,9 +120,7 @@ export default function (app: App, opts: Partial<Options>): void {
 
   const selectorMap: {[id:number]: string} = {};
   function getSelector(id: number, target: Element): string {
-    if (options.heatmaps === false) { return '' }
-    return selectorMap[id] = selectorMap[id] || 
-      finder(target, options.heatmaps === true ? undefined : options.heatmaps.finder);
+    return selectorMap[id] = selectorMap[id] || _getSelector(target);
   }
 
   app.attachEventListener(

@@ -6,6 +6,7 @@ image:
 env:
   AWS_ACCESS_KEY_ID: "{{ minio_access_key }}"
   AWS_SECRET_ACCESS_KEY: "{{ minio_secret_key }}"
+  S3_BUCKET_ASSETS: "{{ assets_bucket }}"
   LICENSE_KEY: "{{ enterprise_edition_license }}"
   AWS_ENDPOINT: "{{ s3_endpoint }}"
   AWS_REGION: "{{ aws_region }}"
