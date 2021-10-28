@@ -7,7 +7,7 @@ from chalicelib.blueprints import bp_authorizers
 from chalicelib.blueprints import bp_core, bp_core_crons
 from chalicelib.blueprints.app import v1_api
 from chalicelib.blueprints import bp_core_dynamic, bp_core_dynamic_crons
-from chalicelib.blueprints.subs import bp_dashboard,bp_insights
+from chalicelib.blueprints.subs import bp_dashboard
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.helper import environ
@@ -122,7 +122,6 @@ app.register_blueprint(bp_core_crons.app)
 app.register_blueprint(bp_core_dynamic.app)
 app.register_blueprint(bp_core_dynamic_crons.app)
 app.register_blueprint(bp_dashboard.app)
-app.register_blueprint(bp_insights.app)
 app.register_blueprint(v1_api.app)
 # Enterprise
 app.register_blueprint(bp_ee.app)
