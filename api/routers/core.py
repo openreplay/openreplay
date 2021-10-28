@@ -847,3 +847,8 @@ def sessions_live_search(projectId: int, data: schemas.AssistSearchPayloadSchema
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data.dict())}
+
+
+@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
+def get_general_stats():
+    return {"data": {"sessions:": sessions.count_all()}}

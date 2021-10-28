@@ -60,7 +60,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True)
+                                          stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
     return {
         'jwt': r.pop('jwt'),
@@ -91,7 +91,7 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
 @app.get('/projects', tags=['projects'])
 def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True)}
+                                          stack_integrations=True, version=True)}
 
 
 @app.post('/projects', tags=['projects'])
@@ -136,7 +136,7 @@ def get_client(context: schemas.CurrentContext = Depends(OR_context)):
     if r is not None:
         r.pop("createdAt")
         r["projects"] = projects.get_projects(tenant_id=context.tenant_id, recording_state=True, recorded=True,
-                                              stack_integrations=True)
+                                              stack_integrations=True, version=True)
     return {
         'data': r
     }
@@ -267,7 +267,7 @@ def batch_view_notifications(data: schemas.NotificationsViewSchema,
 @public_app.post('/notifications', tags=['notifications'])
 @public_app.put('/notifications', tags=['notifications'])
 def create_notifications(data: schemas.CreateNotificationSchema):
-    if data.token != "nF46JdQqAM5v9KI9lPMpcu8o9xiJGvNNWOGL7TJP":
+    if data.token != config("async_Token"):
         return {"errors": ["missing token"]}
     return notifications.create(data.notifications)
 
@@ -351,9 +351,6 @@ def get_members(context: schemas.CurrentContext = Depends(OR_context)):
 def add_member(data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict())
-
-
-
 
 
 @public_app.get('/users/invitation', tags=['users'])
