@@ -154,6 +154,10 @@ func iosImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 	}
 
+	if (r.MultipartForm == nil) {
+		responseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
+	}
+
 	if len(r.MultipartForm.Value["projectKey"]) == 0 {
 		responseWithError(w, http.StatusBadRequest, errors.New("projectKey parameter missing")) // status for missing/wrong parameter?
 		return
