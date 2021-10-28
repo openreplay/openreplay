@@ -164,14 +164,13 @@ def get_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_cont
     return {"data": log_tool_sentry.get(project_id=projectId)}
 
 
-#
-# @app.route('/{projectId}/integrations/sentry', methods=['POST', 'PUT'])
-# def add_edit_sentry(projectId:int, context: schemas.CurrentContext = Depends(JWTBearer())):
-#     data = app.current_request.json_body
-#
-#     return {"data": log_tool_sentry.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data)}
-#
-#
+@app.post('/{projectId}/integrations/sentry', tags=["integrations"])
+@app.put('/{projectId}/integrations/sentry', tags=["integrations"])
+def add_edit_sentry(projectId: int, data: schemas.SentrySchema = Body(...),
+                    context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": log_tool_sentry.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
+
+
 @app.delete('/{projectId}/integrations/sentry', tags=["integrations"])
 def delete_sentry(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sentry.delete(tenant_id=context.tenant_id, project_id=projectId)}
@@ -258,7 +257,8 @@ def get_rollbar(projectId: int, context: schemas.CurrentContext = Depends(OR_con
     return {"data": log_tool_rollbar.get(project_id=projectId)}
 
 
-@app.route('/{projectId}/integrations/rollbar', methods=['POST', 'PUT'])
+@app.post('/{projectId}/integrations/rollbar', tags=["integrations"])
+@app.put('/{projectId}/integrations/rollbar', tags=["integrations"])
 def add_edit_rollbar(projectId: int, data: schemas.RollbarSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_rollbar.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
@@ -269,7 +269,7 @@ def delete_datadog(projectId: int, context: schemas.CurrentContext = Depends(OR_
     return {"data": log_tool_rollbar.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.route('/integrations/bugsnag/list_projects', methods=['POST'])
+@app.post('/integrations/bugsnag/list_projects', tags=["integrations"])
 def list_projects_bugsnag(data: schemas.BugsnagBasicSchema = Body(...),
                           context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.list_projects(auth_token=data.authorizationToken)}
@@ -285,7 +285,8 @@ def get_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_con
     return {"data": log_tool_bugsnag.get(project_id=projectId)}
 
 
-@app.route('/{projectId}/integrations/bugsnag', methods=['POST', 'PUT'])
+@app.post('/{projectId}/integrations/bugsnag', tags=["integrations"])
+@app.put('/{projectId}/integrations/bugsnag', tags=["integrations"])
 def add_edit_bugsnag(projectId: int, data: schemas.BugsnagSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_bugsnag.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
@@ -296,7 +297,7 @@ def delete_bugsnag(projectId: int, context: schemas.CurrentContext = Depends(OR_
     return {"data": log_tool_bugsnag.delete(tenant_id=context.tenant_id, project_id=projectId)}
 
 
-@app.route('/integrations/cloudwatch/list_groups', methods=['POST'])
+@app.post('/integrations/cloudwatch/list_groups', tags=["integrations"])
 def list_groups_cloudwatch(data: schemas.CloudwatchBasicSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_cloudwatch.list_log_groups(aws_access_key_id=data.awsAccessKeyId,
@@ -336,13 +337,14 @@ def get_elasticsearch(projectId: int, context: schemas.CurrentContext = Depends(
     return {"data": log_tool_elasticsearch.get(project_id=projectId)}
 
 
-@app.route('/integrations/elasticsearch/test', methods=['POST'])
+@app.post('/integrations/elasticsearch/test', tags=["integrations"])
 def test_elasticsearch_connection(data: schemas.ElasticsearchBasicSchema = Body(...),
                                   context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_elasticsearch.ping(tenant_id=context.tenant_id, **data.dict())}
 
 
-@app.route('/{projectId}/integrations/elasticsearch', methods=['POST', 'PUT'])
+@app.post('/{projectId}/integrations/elasticsearch', tags=["integrations"])
+@app.put('/{projectId}/integrations/elasticsearch', tags=["integrations"])
 def add_edit_elasticsearch(projectId: int, data: schemas.ElasticsearchSchema = Body(...),
                            context: schemas.CurrentContext = Depends(OR_context)):
     return {
@@ -364,7 +366,8 @@ def get_sumologic(projectId: int, context: schemas.CurrentContext = Depends(OR_c
     return {"data": log_tool_sumologic.get(project_id=projectId)}
 
 
-@app.route('/{projectId}/integrations/sumologic', methods=['POST', 'PUT'])
+@app.post('/{projectId}/integrations/sumologic', tags=["integrations"])
+@app.put('/{projectId}/integrations/sumologic', tags=["integrations"])
 def add_edit_sumologic(projectId: int, data: schemas.SumologicSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": log_tool_sumologic.add_edit(tenant_id=context.tenant_id, project_id=projectId, data=data.dict())}
@@ -397,7 +400,8 @@ def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
     return {"data": integration.add_edit(data=data.dict())}
 
 
-@app.route('/integrations/github', methods=['POST', 'PUT'])
+@app.post('/integrations/github', tags=["integrations"])
+@app.put('/integrations/github', tags=["integrations"])
 def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
                     context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tool=integration_github.PROVIDER,
@@ -470,7 +474,8 @@ def get_all_assignments(projectId: int, context: schemas.CurrentContext = Depend
     }
 
 
-@app.route('/{projectId}/sessions2/{sessionId}/assign/projects/{integrationProjectId}', methods=['POST', 'PUT'])
+@app.post('/{projectId}/sessions2/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
+@app.put('/{projectId}/sessions2/{sessionId}/assign/projects/{integrationProjectId}', tags=["assignment"])
 def create_issue_assignment(projectId: int, sessionId: int, integrationProjectId,
                             data: schemas.AssignmentSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
@@ -695,27 +700,22 @@ def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = D
     return {"data": funnels.get_possible_issue_types(project_id=projectId)}
 
 
-@app.route('/{projectId}/funnels/{funnelId}/insights', methods=['GET'])
-def get_funnel_insights(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
-                        context: schemas.CurrentContext = Depends(OR_context)):
+@app.get('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
+def get_funnel_insights(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
+                        endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.get_top_insights(funnel_id=funnelId, project_id=projectId,
                                     range_value=rangeValue,
                                     start_date=startDate,
                                     end_date=endDate)
 
 
-# @app.route('/{projectId}/funnels/{funnelId}/insights', methods=['POST', 'PUT'])
-# def get_funnel_insights_on_the_fly(projectId:int, funnelId, context: schemas.CurrentContext = Depends(JWTBearer())):
-#     params = app.current_request.query_params
-#     if params is None:
-#         params = {}
-#     data = app.current_request.json_body
-#     if data is None:
-#         data = {}
-#
-#     return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data={**params, **data})
-#
-#
+@app.post('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
+@app.put('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
+def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSchema = Body(...),
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())
+
+
 @app.get('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
                       context: schemas.CurrentContext = Depends(OR_context)):
@@ -724,19 +724,13 @@ def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDat
                               start_date=startDate, end_date=endDate)
 
 
-#
-# @app.route('/{projectId}/funnels/{funnelId}/issues', methods=['POST', 'PUT'])
-# def get_funnel_issues_on_the_fly(projectId:int, funnelId, context: schemas.CurrentContext = Depends(JWTBearer())):
-#     params = app.current_request.query_params
-#     if params is None:
-#         params = {}
-#     data = app.current_request.json_body
-#     if data is None:
-#         data = {}
-#
-#     return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data={**params, **data})}
-#
-#
+@app.post('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
+@app.put('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
+def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSchema = Body(...),
+                                 context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data)}
+
+
 @app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
 def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
                         endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
@@ -746,18 +740,14 @@ def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, s
                                          end_date=endDate)}
 
 
-# @app.route('/{projectId}/funnels/{funnelId}/sessions', methods=['POST', 'PUT'])
-# def get_funnel_sessions_on_the_fly(projectId:int, funnelId, context: schemas.CurrentContext = Depends(JWTBearer())):
-#     params = app.current_request.query_params
-#     if params is None:
-#         params = {}
-#     data = app.current_request.json_body
-#     if data is None:
-#         data = {}
-#     return {"data": funnels.get_sessions_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-#                                                     data={**params, **data})}
-#
-#
+@app.post('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
+@app.put('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
+def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSchema = Body(...),
+                                   context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": funnels.get_sessions_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                                    data=data.dict())}
+
+
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
 def get_issue_sessions(projectId: int, issueId: int, startDate: int = None, endDate: int = None,
                        context: schemas.CurrentContext = Depends(OR_context)):
@@ -769,41 +759,40 @@ def get_issue_sessions(projectId: int, issueId: int, startDate: int = None, endD
                  "issue": issue}}
 
 
-# @app.route('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', methods=['POST', 'PUT'])
-# def get_funnel_issue_sessions(projectId:int, funnelId, issueId, context: schemas.CurrentContext = Depends(JWTBearer())):
-#     data = app.current_request.json_body
-#
-#     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
-#                                    funnel_id=funnelId, data=data)
-#     if "errors" in data:
-#         return data
-#     if data.get("issue") is None:
-#         data["issue"] = issues.get(project_id=projectId, issue_id=issueId)
-#     return {
-#         "data": data
-#     }
-#
-#
+@app.post('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
+@app.put('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
+def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: int, data: schemas.FunnelSchema = Body(...),
+                              context: schemas.CurrentContext = Depends(OR_context)):
+    data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
+                                   funnel_id=funnelId, data=data.dict())
+    if "errors" in data:
+        return data
+    if data.get("issue") is None:
+        data["issue"] = issues.get(project_id=projectId, issue_id=issueId)
+    return {
+        "data": data
+    }
+
+
 @app.get('/{projectId}/funnels/{funnelId}', tags=["funnels"])
 def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = funnels.get(funnel_id=funnelId,
-                       project_id=projectId)
+    data = funnels.get(funnel_id=funnelId, project_id=projectId)
     if data is None:
         return {"errors": ["funnel not found"]}
     return data
 
 
-#
-# @app.route('/{projectId}/funnels/{funnelId}', methods=['POST', 'PUT'])
-# def edit_funnel(projectId:int, funnelId, context: schemas.CurrentContext = Depends(JWTBearer())):
-#     data = app.current_request.json_body
-#     return funnels.update(funnel_id=funnelId,
-#                           user_id=context.user_id,
-#                           name=data.get("name"),
-#                           filter=data.get("filter"),
-#                           is_public=data.get("isPublic"))
-#
-#
+@app.post('/{projectId}/funnels/{funnelId}', tags=["funnels"])
+@app.put('/{projectId}/funnels/{funnelId}', tags=["funnels"])
+def edit_funnel(projectId: int, funnelId: int, data: schemas.FunnelSchema = Body(...),
+                context: schemas.CurrentContext = Depends(OR_context)):
+    return funnels.update(funnel_id=funnelId,
+                          user_id=context.user_id,
+                          name=data.name,
+                          filter=data.filter,
+                          is_public=data.is_public)
+
+
 @app.delete('/{projectId}/funnels/{funnelId}', tags=["funnels"])
 def delete_filter(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.delete(user_id=context.user_id, funnel_id=funnelId, project_id=projectId)
@@ -814,9 +803,7 @@ def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayl
                               context: schemas.CurrentContext = Depends(OR_context)):
     project_id = projects.get_internal_project_id(projectKey)
     if project_id is None:
-        pass
-        # TODO return error
-        # return Response(status_code=400, body='invalid projectId')
+        return {"errors": ["Project not found."]}
 
     return {"data": sourcemaps.presign_upload_urls(project_id=project_id, urls=data.urls)}
 
@@ -834,7 +821,6 @@ def edit_weekly_report_config(data: schemas.WeeklyReportConfigSchema = Body(...)
 
 
 @app.get('/{projectId}/issue_types', tags=["issues"])
-# def issue_types(projectId: int, context: schemas.CurrentContext = Depends(current_or_context)):
 def issue_types(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": issues.get_all_types()}
 

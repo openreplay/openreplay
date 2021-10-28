@@ -1,4 +1,5 @@
 from typing import Optional, List, Literal
+
 from pydantic import BaseModel, Field, EmailStr, HttpUrl
 
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -80,8 +81,6 @@ class SearchErrorsSchema(BaseModel):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
 
-
-#     TODO: events and filters
 
 class EmailNotificationSchema(BaseModel):
     notification: str = Field(...)
@@ -303,6 +302,9 @@ class FunnelSchema(BaseModel):
     filter: SessionsFilterSchema = Field([])
     is_public: bool = Field(False)
 
+    class Config:
+        alias_generator = key_to_camel_case
+
 
 class SourcemapUploadPayloadSchema(BaseModel):
     urls: List[str] = Field(..., alias="URL")
@@ -339,3 +341,9 @@ class MetricPayloadSchema(BaseModel):
 
 class AssistSearchPayloadSchema(BaseModel):
     filters: List[dict] = Field([])
+
+
+class SentrySchema(BaseModel):
+    projectSlug: str = Field(...)
+    organizationSlug: str = Field(...)
+    token: str = Field(...)

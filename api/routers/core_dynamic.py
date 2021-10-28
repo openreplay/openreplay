@@ -2,6 +2,7 @@ from typing import Union
 
 from decouple import config
 from fastapi import APIRouter, Body, Depends, HTTPException, status
+from starlette.responses import RedirectResponse
 
 import schemas
 from auth.auth_apikey import APIKeyAuth
@@ -352,6 +353,9 @@ def add_member(data: schemas.CreateMemberSchema = Body(...),
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict())
 
 
+
+
+
 @public_app.get('/users/invitation', tags=['users'])
 def process_invitation_link(token: str):
     if token is None or len(token) < 64:
@@ -362,12 +366,7 @@ def process_invitation_link(token: str):
     if user["expiredInvitation"]:
         return {"errors": ["expired invitation, please ask your admin to send a new one"]}
     pass_token = users.allow_password_change(user_id=user["userId"])
-    # TODO: find how to send a redirect response with fastAPI
-    # return Response(
-    #     status_code=307,
-    #     body='',
-    #     headers={'Location': environ["SITE_URL"] + environ["change_password_link"] % (params["token"], pass_token),
-    #              'Content-Type': 'text/plain'})
+    return RedirectResponse(url=config("SITE_URL") + config("change_password_link") % (token, pass_token))
 
 
 @public_app.post('/users/invitation/password', tags=["users"])
