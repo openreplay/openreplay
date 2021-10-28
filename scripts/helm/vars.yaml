@@ -90,6 +90,9 @@ db_resource_override:
 ## Sane defaults
 s3_endpoint: "http://minio.db.svc.cluster.local:9000"
 aws_region: "us-east-1"
+assets_bucket: sessions-assets
+recordings_bucket: mobs
+sourcemaps_bucket: sourcemaps
 kafka_endpoint: kafka.db.svc.cluster.local:9042
 kafka_ssl: false
 postgres_endpoint: postgresql.db.svc.cluster.local

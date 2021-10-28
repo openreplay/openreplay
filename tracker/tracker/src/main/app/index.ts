@@ -131,7 +131,7 @@ export default class App {
       });
     }
     if(this.options.__debug_log) {
-      warn("OpenReplay errror: ", context, e)
+      warn("OpenReplay error: ", context, e)
     }
   }
 
@@ -153,8 +153,12 @@ export default class App {
     }
   }
 
-  addCommitCallback(cb: CommitCallback): void {
+  attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
+  }
+  // @Depricated (TODO: remove in 3.5.*)
+  addCommitCallback(cb: CommitCallback): void {
+    this.attachCommitCallback(cb)
   }
 
 

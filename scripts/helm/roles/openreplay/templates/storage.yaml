@@ -10,6 +10,8 @@ env:
   AWS_ENDPOINT: "{{ s3_endpoint }}"
   AWS_REGION_WEB: "{{ aws_region }}"
   AWS_REGION_IOS: "{{ aws_region }}"
+  S3_BUCKET_WEB: "{{ recordings_bucket }}"
+  S3_BUCKET_IOS: "{{ recordings_bucket }}"
   REDIS_STRING: "{{ redis_endpoint }}"
   KAFKA_SERVERS: "{{ kafka_endpoint }}"
   KAFKA_USE_SSL: "{{ kafka_ssl }}"
