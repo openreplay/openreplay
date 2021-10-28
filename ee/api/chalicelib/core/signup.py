@@ -4,7 +4,7 @@ from chalicelib.core import users, telemetry, tenants
 from chalicelib.utils import captcha
 import json
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
+from decouple import config
 
 
 def create_step1(data):
@@ -60,7 +60,7 @@ def create_step1(data):
     params = {"email": email, "password": password,
               "fullname": fullname, "companyName": company_name,
               "projectName": project_name,
-              "versionNumber": environ["version_number"],
+              "versionNumber": config("version_number"),
               "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})}
     query = """\
             WITH t AS (

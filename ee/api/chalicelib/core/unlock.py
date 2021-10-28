@@ -1,7 +1,10 @@
-from chalicelib.utils.helper import environ
-from chalicelib.utils.TimeUTC import TimeUTC
-import requests
 import uuid
+from os import environ
+
+import requests
+from decouple import config
+
+from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def __get_mid():
@@ -9,11 +12,11 @@ def __get_mid():
 
 
 def get_license():
-    return environ.get("LICENSE_KEY", "")
+    return config("LICENSE_KEY", default="")
 
 
 def check():
-    license=get_license()
+    license = get_license()
     print(f"validating: {license}")
     r = requests.post('https://parrot.asayer.io/os/license', json={"mid": __get_mid(), "license": get_license()})
     if r.status_code != 200 or "errors" in r.json() or not r.json()["data"].get("valid"):
@@ -26,10 +29,10 @@ def check():
 
 
 def get_expiration_date():
-    return int(environ.get("expiration", 0))
+    return config("expiration", default=0, cast=int)
 
 
 def is_valid():
-    if environ.get("lastCheck") is None:
+    if config("lastCheck", default=None) is None:
         check()
     return get_expiration_date() - TimeUTC.now() > 0
