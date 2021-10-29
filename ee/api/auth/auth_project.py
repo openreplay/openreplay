@@ -1,18 +1,25 @@
-from typing import Optional
-
 from fastapi import Request
 from starlette import status
 from starlette.exceptions import HTTPException
 
-from schemas import CurrentContext
+import schemas
+from chalicelib.core import projects
+from or_dependencies import OR_context
 
-# Add it as a dependency to the main app
+
 class ProjectAuthorizer:
-    def __init__(self):
-        print(">>>ProjectAuthorizer")
+    def __init__(self, project_identifier):
+        self.project_identifier: str = project_identifier
 
-    async def __call__(self, request: Request) -> Optional[CurrentContext]:
-        print(">>>ProjectAuthorizer")
-        print(request.path_params)
-        # TODO: project authorization
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+    async def __call__(self, request: Request) -> None:
+        if len(request.path_params.keys()) == 0 or request.path_params.get(self.project_identifier) is None:
+            return
+        current_user: schemas.CurrentContext = await OR_context(request)
+        project_identifier = request.path_params[self.project_identifier]
+        if (self.project_identifier == "projectId" \
+            and not projects.is_authorized(project_id=project_identifier, tenant_id=current_user.tenant_id)) \
+                or (self.project_identifier.lower() == "projectKey" \
+                    and not projects.is_authorized(project_id=projects.get_internal_project_id(project_identifier),
+                                                   tenant_id=current_user.tenant_id)):
+            print("unauthorized project")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")

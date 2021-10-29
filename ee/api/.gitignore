@@ -244,8 +244,6 @@ Pipfile
 /build.sh
 /routers/core.py
 /routers/crons/core_crons.py
-/routers/core_dynamic.py
-/routers/crons/core_dynamic_crons.py
 /routers/subs/dashboard.py
 /db_changes.sql
 /Dockerfile.bundle

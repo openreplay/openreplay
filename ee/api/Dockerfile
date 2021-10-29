@@ -1,10 +1,10 @@
-FROM python:3.6-slim
+FROM python:3.8.9-slim
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
+LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apt-get update && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf /var/lib/apt/lists/*
 WORKDIR /work
 COPY . .
 RUN pip install -r requirements.txt -t ./vendor --upgrade
-RUN pip install chalice==1.22.2
 
 # Add Tini
 # Startup daemon

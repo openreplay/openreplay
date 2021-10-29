@@ -131,11 +131,12 @@
 import sentry_sdk
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk import configure_scope
 from starlette.responses import StreamingResponse
 
+from auth.auth_project import ProjectAuthorizer
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from routers import core, core_dynamic
@@ -179,7 +180,9 @@ from routers.subs import dashboard, insights
 # sys.stderr = F()
 # # ---End Monkey-patch
 
+# app = FastAPI(dependencies=[Depends(ProjectAuthorizer())])
 app = FastAPI()
+# print(app.dependency_overrides)
 #
 #
 # @app.middleware('http')
@@ -219,21 +222,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# app.include_router(core.public_app)
-# app.include_router(core.app)
-# app.include_router(core.app_apikey)
-# app.include_router(core_dynamic.public_app)
-# app.include_router(core_dynamic.app)
-# app.include_router(core_dynamic.app_apikey)
-# app.include_router(dashboard.app)
-# app.include_router(insights.app)
-# app.include_router(v1_api.app_apikey)
+app.include_router(core.public_app)
+app.include_router(core.app)
+app.include_router(core.app_apikey)
+app.include_router(core_dynamic.public_app)
+app.include_router(core_dynamic.app)
+app.include_router(core_dynamic.app_apikey)
+app.include_router(dashboard.app)
+app.include_router(insights.app)
+app.include_router(v1_api.app_apikey)
 
 Schedule = AsyncIOScheduler()
 Schedule.start()
-#
-# for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
-#     Schedule.add_job(id=job["func"].__name__, **job)
+
+for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
+    Schedule.add_job(id=job["func"].__name__, **job)
 
 # for job in Schedule.get_jobs():
 #     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
