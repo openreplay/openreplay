@@ -1,5 +1,3 @@
-from chalicelib.utils.helper import environ
-
 from chalice import Blueprint
 from chalice import Response
 
@@ -11,9 +9,10 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps
+    assist, heatmaps, mobile
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
+from chalicelib.utils.helper import environ
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
@@ -902,3 +901,9 @@ def get_heatmaps_by_url(projectId, context):
 @app.route('/general_stats', methods=['GET'], authorizer=None)
 def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
+
+
+@app.route('/mobile/urls', methods=['POST'])
+def mobile_signe(context):
+    data = app.current_request.json_body
+    return {"data": mobile.sign_urls(data["URL"])}
