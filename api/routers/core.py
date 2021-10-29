@@ -1,9 +1,7 @@
 from decouple import config
-from fastapi import APIRouter, Depends, Body
+from fastapi import Depends, Body
 
 import schemas
-from auth.auth_apikey import APIKeyAuth
-from auth.auth_jwt import JWTAuth
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
     sessions_metas, alerts, funnels, issues, integrations_manager, errors_favorite_viewed, metadata, \
     log_tool_elasticsearch, log_tool_datadog, \
@@ -13,11 +11,10 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     assist, heatmaps
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
-from or_dependencies import OR_context, ORRoute
+from or_dependencies import OR_context
+from routers.base import get_routers
 
-public_app = APIRouter(route_class=ORRoute)
-app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)
-app_apikey = APIRouter(dependencies=[Depends(APIKeyAuth())], route_class=ORRoute)
+public_app, app, app_apikey = get_routers()
 
 
 @app.get('/{projectId}/sessions2/favorite', tags=["sessions"])

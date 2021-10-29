@@ -1,12 +1,10 @@
 from typing import Union
 
 from decouple import config
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import Body, Depends, HTTPException, status
 from starlette.responses import RedirectResponse
 
 import schemas
-from auth.auth_apikey import APIKeyAuth
-from auth.auth_jwt import JWTAuth
 from chalicelib.core import boarding
 from chalicelib.core import errors
 from chalicelib.core import errors_favorite_viewed
@@ -17,11 +15,10 @@ from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
-from or_dependencies import OR_context, ORRoute
+from or_dependencies import OR_context
+from routers.base import get_routers
 
-public_app = APIRouter(route_class=ORRoute)
-app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)
-app_apikey = APIRouter(dependencies=[Depends(APIKeyAuth())], route_class=ORRoute)
+public_app, app, app_apikey = get_routers()
 
 
 @public_app.get('/signup', tags=['signup'])

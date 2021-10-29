@@ -1,15 +1,10 @@
-from fastapi import APIRouter, Depends, Body
+from fastapi import Body
 
 import schemas
-from auth.auth_apikey import APIKeyAuth
-from auth.auth_jwt import JWTAuth
-from or_dependencies import ORRoute
-
-public_app = APIRouter(route_class=ORRoute)
-app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)
-app_apikey = APIRouter(dependencies=[Depends(APIKeyAuth())], route_class=ORRoute)
-
 from chalicelib.core import insights
+from routers.base import get_routers
+
+public_app, app, app_apikey = get_routers()
 
 
 @app.post('/{projectId}/insights/journey', tags=["insights"])

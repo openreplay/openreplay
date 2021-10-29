@@ -1,15 +1,12 @@
-from fastapi import APIRouter, Depends, Body
+from fastapi import Depends, Body
 
 import schemas
-from auth.auth_apikey import APIKeyAuth
-from auth.auth_jwt import JWTAuth
 from chalicelib.core import sessions, events, jobs, projects
 from chalicelib.utils.TimeUTC import TimeUTC
-from or_dependencies import ORRoute, OR_context
+from or_dependencies import OR_context
+from routers.base import get_routers
 
-public_app = APIRouter(route_class=ORRoute)
-app = APIRouter(dependencies=[Depends(JWTAuth())], route_class=ORRoute)
-app_apikey = APIRouter(dependencies=[Depends(APIKeyAuth())], route_class=ORRoute)
+public_app, app, app_apikey = get_routers()
 
 
 @app_apikey.get('/v1/{projectKey}/users/{userId}/sessions', tags=["api"])
