@@ -131,12 +131,12 @@
 import sentry_sdk
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from decouple import config
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk import configure_scope
 from starlette.responses import StreamingResponse
 
-from auth.auth_project import ProjectAuthorizer
+from chalicelib.core import traces
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from routers import core, core_dynamic
@@ -182,33 +182,32 @@ from routers.subs import dashboard, insights
 
 # app = FastAPI(dependencies=[Depends(ProjectAuthorizer())])
 app = FastAPI()
-# print(app.dependency_overrides)
-#
-#
-# @app.middleware('http')
-# async def or_middleware(request: Request, call_next):
-#     global OR_SESSION_TOKEN
-#     OR_SESSION_TOKEN = request.headers.get('vnd.openreplay.com.sid', request.headers.get('vnd.asayer.io.sid'))
-#
-#     try:
-#         if helper.TRACK_TIME:
-#             import time
-#             now = int(time.time() * 1000)
-#         response: StreamingResponse = await call_next(request)
-#         if helper.TRACK_TIME:
-#             print(f"Execution time: {int(time.time() * 1000) - now} ms")
-#     except Exception as e:
-#         if helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
-#             with configure_scope() as scope:
-#                 scope.set_tag('stage', config["stage"])
-#                 scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
-#                 if hasattr(request.state, "currentContext"):
-#                     scope.set_extra("context", request.state.currentContext.dict())
-#             sentry_sdk.capture_exception(e)
-#         pg_client.close()
-#         raise e
-#     pg_client.close()
-#     return response
+
+
+@app.middleware('http')
+async def or_middleware(request: Request, call_next):
+    global OR_SESSION_TOKEN
+    OR_SESSION_TOKEN = request.headers.get('vnd.openreplay.com.sid', request.headers.get('vnd.asayer.io.sid'))
+    try:
+        if helper.TRACK_TIME:
+            import time
+            now = int(time.time() * 1000)
+        response: StreamingResponse = await call_next(request)
+        if helper.TRACK_TIME:
+            print(f"Execution time: {int(time.time() * 1000) - now} ms")
+    except Exception as e:
+        if helper.allow_sentry() and OR_SESSION_TOKEN is not None and not helper.is_local():
+            with configure_scope() as scope:
+                scope.set_tag('stage', config["stage"])
+                scope.set_tag('openReplaySessionToken', OR_SESSION_TOKEN)
+                if hasattr(request.state, "currentContext"):
+                    scope.set_extra("context", request.state.currentContext.dict())
+            sentry_sdk.capture_exception(e)
+        pg_client.close()
+        raise e
+    pg_client.close()
+    traces.trace(request)
+    return response
 
 
 origins = [
