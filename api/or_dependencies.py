@@ -3,10 +3,10 @@ from typing import Callable
 
 from fastapi.routing import APIRoute
 from starlette import status
+from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
 import schemas
-from starlette.requests import Request
 
 
 async def OR_context(request: Request) -> schemas.CurrentContext:
@@ -23,8 +23,8 @@ class ORRoute(APIRoute):
         async def custom_route_handler(request: Request) -> Response:
             response: Response = await original_route_handler(request)
             if isinstance(response, JSONResponse):
-                jresponse: JSONResponse = response
-                body = json.loads(jresponse.body.decode('utf8'))
+                response: JSONResponse = response
+                body = json.loads(response.body.decode('utf8'))
                 if response.status_code == 200 and body is not None and body.get("errors") is not None:
                     if "not found" in body["errors"][0]:
                         response.status_code = status.HTTP_404_NOT_FOUND
