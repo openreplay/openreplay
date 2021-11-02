@@ -31,8 +31,7 @@ class ORRoute(APIRoute):
                         response.status_code = status.HTTP_404_NOT_FOUND
                     else:
                         response.status_code = status.HTTP_400_BAD_REQUEST
-            traces.trace(request, response)
+            traces.trace(action=self.name, path_format=self.path_format, request=request, response=response)
             return response
-
 
         return custom_route_handler

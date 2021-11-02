@@ -16,8 +16,9 @@ logger.setLevel(logging.DEBUG)
 class TraceSchema(BaseModel):
     user_id: int = Field(...)
     action: str = Field(...)
-    endpoint: str = Field(...)
     method: str = Field(...)
+    path_format: str = Field(...)
+    endpoint: str = Field(...)
     payload: Optional[dict] = Field(None)
     parameters: Optional[dict] = Field(None)
     status: Optional[int] = Field(None)
@@ -31,24 +32,25 @@ async def write_trace(trace: TraceSchema):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""INSERT INTO traces(user_id, action, method, endpoint, payload, parameters, status)
-                    VALUES (%(user_id)s, %(action)s, %(method)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
+                f"""INSERT INTO traces(user_id, action, method, path_format, endpoint, payload, parameters, status)
+                    VALUES (%(user_id)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
                 data)
         )
 
 
-async def process_trace(request: Request, response: Response):
+async def process_trace(action: str, path_format: str, request: Request, response: Response):
     current_context: CurrentContext = request.state.currentContext
     body = None
     if request.method in ["POST", "PUT", "DELETE"]:
         body = await request.json()
-    current_trace = TraceSchema(user_id=current_context.user_id, action="",
+    current_trace = TraceSchema(user_id=current_context.user_id, action=action,
                                 endpoint=str(request.url.path), method=request.method,
                                 payload=body,
                                 parameters=dict(request.query_params),
-                                status=response.status_code)
+                                status=response.status_code,
+                                path_format=path_format)
     await write_trace(current_trace)
 
 
-def trace(request: Request, response: Response):
-    response.background = BackgroundTask(process_trace, request, response)
+def trace(action: str, path_format: str, request: Request, response: Response):
+    response.background = BackgroundTask(process_trace, action, path_format, request, response)
