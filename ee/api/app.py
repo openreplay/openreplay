@@ -206,7 +206,6 @@ async def or_middleware(request: Request, call_next):
         pg_client.close()
         raise e
     pg_client.close()
-    traces.trace(request)
     return response
 
 
