@@ -5,3 +5,4 @@ google-cloud-bigquery
 pandas==1.2.3
 PyYAML==5.4.1
 pandas-gbq==0.14.1
+rsa>=4.7 # not directly required, pinned by Snyk to avoid a vulnerability
