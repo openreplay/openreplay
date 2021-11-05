@@ -293,19 +293,6 @@ class AlertSchema(BaseModel):
     query: _AlertQuerySchema = Field(...)
 
 
-class SessionsFilterSchema(BaseModel):
-    pass
-
-
-class FunnelSchema(BaseModel):
-    name: str = Field(...)
-    filter: SessionsFilterSchema = Field([])
-    is_public: bool = Field(False)
-
-    class Config:
-        alias_generator = key_to_camel_case
-
-
 class SourcemapUploadPayloadSchema(BaseModel):
     urls: List[str] = Field(..., alias="URL")
 
@@ -330,6 +317,22 @@ class SessionsSearchPayloadSchema(BaseModel):
     endDate: int = Field(...)
     sort: str = Field(...)
     order: str = Field(...)
+
+
+class SessionsFilterSchema(SessionsSearchPayloadSchema):
+    range_value: str = Field(None)
+
+    class Config:
+        alias_generator = key_to_camel_case
+
+
+class FunnelSchema(BaseModel):
+    name: str = Field(...)
+    filter: SessionsFilterSchema = Field([])
+    is_public: bool = Field(False)
+
+    class Config:
+        alias_generator = key_to_camel_case
 
 
 class MetricPayloadSchema(BaseModel):
