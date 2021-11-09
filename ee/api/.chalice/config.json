@@ -55,7 +55,6 @@
         "S3_HOST": "",
         "S3_KEY": "",
         "S3_SECRET": "",
-        "version_number": "1.0.0",
         "LICENSE_KEY": "",
         "SAML2_MD_URL": "",
         "idp_entityId": "",
@@ -63,7 +62,9 @@
         "idp_x509cert": "",
         "idp_sls_url": "",
         "invitation_link": "/api/users/invitation?token=%s",
-        "change_password_link": "/reset-password?invitation=%s&&pass=%s"
+        "change_password_link": "/reset-password?invitation=%s&&pass=%s",
+        "iosBucket": "openreplay-ios-images",
+        "version_number": "1.4.0"
       },
       "lambda_timeout": 150,
       "lambda_memory_size": 400,
