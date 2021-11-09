@@ -54,6 +54,7 @@
         "S3_SECRET": "",
         "invitation_link": "/api/users/invitation?token=%s",
         "change_password_link": "/reset-password?invitation=%s&&pass=%s",
+        "iosBucket": "openreplay-ios-images",
         "version_number": "1.2.0"
       },
       "lambda_timeout": 150,
