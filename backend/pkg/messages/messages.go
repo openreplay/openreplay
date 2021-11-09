@@ -1192,6 +1192,22 @@ p = WriteUint(msg.ID, buf, p)
   return buf[:p]
 }
 
+type IOSBatchMeta struct {
+  *meta
+  Timestamp uint64
+Length uint64
+FirstIndex uint64
+}
+func (msg *IOSBatchMeta) Encode() []byte{
+  buf := make([]byte, 31 )
+  buf[0] = 107
+  p := 1
+  p = WriteUint(msg.Timestamp, buf, p)
+p = WriteUint(msg.Length, buf, p)
+p = WriteUint(msg.FirstIndex, buf, p)
+  return buf[:p]
+}
+
 type IOSSessionStart struct {
   *meta
   Timestamp uint64
