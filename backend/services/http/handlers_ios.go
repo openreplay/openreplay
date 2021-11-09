@@ -172,6 +172,7 @@ func iosImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 				continue // TODO: send server error or accumulate successful files
 			}
 			key := prefix + fileHeader.Filename
+			log.Printf("Uploading ios screen: %v", key)
 			go s3.Upload(file, key, "image/png", false)
 		}
 	}
