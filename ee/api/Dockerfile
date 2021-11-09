@@ -4,7 +4,7 @@ LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apt-get update && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf /var/lib/apt/lists/*
 WORKDIR /work
 COPY . .
-RUN pip install -r requirements.txt -t ./vendor --upgrade
+RUN pip install -r requirements.txt
 
 # Add Tini
 # Startup daemon
