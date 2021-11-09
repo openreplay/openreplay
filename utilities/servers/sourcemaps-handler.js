@@ -46,7 +46,7 @@ module.exports.sourcemapReader = async event => {
                 console.log(err);
                 return reject(err);
             }
-            const sourcemap = data.Body.toString();
+            let sourcemap = data.Body.toString();
 
             return new sourceMap.SourceMapConsumer(sourcemap)
                 .then(consumer => {
@@ -91,10 +91,14 @@ module.exports.sourcemapReader = async event => {
                         // console.log(result);
                         results.push(result);
                     }
-
+                    consumer = undefined;
                     // Use this code if you don't use the http event with the LAMBDA-PROXY integration
                     return resolve(results);
-                });
+                })
+                .finally(() => {
+                    sourcemap = undefined;
+                })
+
         });
     });
 };
