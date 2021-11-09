@@ -903,7 +903,7 @@ def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
 
 
-@app.route('/mobile/urls', methods=['POST'])
-def mobile_signe(context):
+@app.route('/{projectId}/mobile/{sessionId}/urls', methods=['POST'])
+def mobile_signe(projectId, sessionId, context):
     data = app.current_request.json_body
-    return {"data": mobile.sign_urls(data["URL"])}
+    return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data["keys"])}
