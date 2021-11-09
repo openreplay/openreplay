@@ -168,13 +168,17 @@ func iosImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
-			file, err := fileHeader.Open()
+			file, err := fileHeader.Open() //TODO: mime type from header
 			if err != nil {
 				continue // TODO: send server error or accumulate successful files
 			}
 			key := prefix + fileHeader.Filename
 			log.Printf("Uploading ios screen: %v", key)
-			go s3.Upload(file, key, "image/png", false)
+			go func() {
+				if err := s3.Upload(file, key, "image/jpeg", false); err != nil {
+					log.Printf("Upload ios screen error. %v", err)
+				}
+			}()
 		}
 	}
 
