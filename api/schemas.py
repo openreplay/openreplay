@@ -353,4 +353,4 @@ class SentrySchema(BaseModel):
 
 
 class MobileSignPayloadSchema(BaseModel):
-    URL: List[str] = Field(...)
+    keys: List[str] = Field(...)

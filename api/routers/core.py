@@ -851,7 +851,7 @@ def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
 
 
-@app.post('/mobile/urls', tags=['mobile'])
-def mobile_signe(data: schemas.MobileSignPayloadSchema = Body(...),
+@app.post('/{projectId}/mobile/{sessionId}/urls', tags=['mobile'])
+def mobile_signe(projectId: int, sessionId: int, data: schemas.MobileSignPayloadSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": mobile.sign_urls(data.URL)}
+    return {"data": mobile.sign_keys(project_id=projectId, session_id=sessionId, keys=data.keys)}
