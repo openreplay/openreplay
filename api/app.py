@@ -12,7 +12,8 @@ from routers import core, core_dynamic
 from routers.app import v1_api
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
-from routers.subs import dashboard, insights
+from routers.subs import dashboard
+# from routers.subs import  insights
 
 # # Monkey-patch print for DataDog hack
 # import sys
@@ -96,7 +97,7 @@ app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)
 app.include_router(core_dynamic.app_apikey)
 app.include_router(dashboard.app)
-app.include_router(insights.app)
+# app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
 
 Schedule = AsyncIOScheduler()
