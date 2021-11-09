@@ -53,6 +53,7 @@ func main() {
 	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000 * 60 * 20)
 	defer pgconn.Close()
 	s3 = storage.NewS3(env.String("S3_BUCKET_IOS_IMAGES"), env.String("AWS_REGION"))
+	log.Printf("Sr storage: %v, %v ",env.String("S3_BUCKET_IOS_IMAGES"), env.String("AWS_REGION"))
 	tokenizer = token.NewTokenizer(env.String("TOKEN_SECRET"))
 	uaParser = uaparser.NewUAParser(env.String("UAPARSER_FILE"))
 	geoIP = geoip.NewGeoIP(env.String("MAXMINDDB_FILE"))
