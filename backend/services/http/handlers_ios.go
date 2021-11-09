@@ -7,6 +7,7 @@ import (
 	"time"
 	"math/rand"
 	"strconv"
+	"log"
 
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/token"
