@@ -8,7 +8,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps
+    assist, heatmaps, mobile
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
 from or_dependencies import OR_context
@@ -849,3 +849,9 @@ def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = 
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
 def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
+
+
+@app.post('/mobile/urls', tags=['mobile'])
+def mobile_signe(data: schemas.MobileSignPayloadSchema = Body(...),
+                 context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": mobile.sign_urls(data.URL)}

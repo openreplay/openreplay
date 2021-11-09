@@ -350,3 +350,7 @@ class SentrySchema(BaseModel):
     projectSlug: str = Field(...)
     organizationSlug: str = Field(...)
     token: str = Field(...)
+
+
+class MobileSignPayloadSchema(BaseModel):
+    URL: List[str] = Field(...)
