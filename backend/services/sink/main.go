@@ -28,7 +28,7 @@ func main() {
 		env.String("GROUP_SINK"),
 		[]string{ 
 			env.String("TOPIC_RAW_WEB"),
-			env.String("TOPIC_RAW_IOS")
+			env.String("TOPIC_RAW_IOS"),
 	  },
 	  func(sessionID uint64, message Message, _ *types.Meta) {
 	  	//typeID, err := GetMessageTypeID(value)
