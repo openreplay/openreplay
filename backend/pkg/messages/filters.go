@@ -7,5 +7,5 @@ func IsReplayerType(id uint64) bool {
 }
 
 func IsIOSType(id uint64) bool {
-	return 90 == id || 91 == id || 92 == id || 93 == id || 94 == id || 95 == id || 96 == id || 97 == id || 98 == id || 99 == id || 100 == id || 101 == id || 102 == id || 103 == id || 104 == id || 105 == id || 110 == id || 111 == id
+	return 107 == id || 90 == id || 91 == id || 92 == id || 93 == id || 94 == id || 95 == id || 96 == id || 97 == id || 98 == id || 99 == id || 100 == id || 101 == id || 102 == id || 103 == id || 104 == id || 105 == id || 110 == id || 111 == id
 }

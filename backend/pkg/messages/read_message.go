@@ -591,7 +591,11 @@ if msg.Value, err = ReadString(reader); err != nil { return nil, err }
     case 96:
       msg := &IOSScreenChanges{ meta: &meta{ TypeID: 96} }
       if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
-if msg.SkipData, err = ReadData(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.X, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Y, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Width, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Height, err = ReadUint(reader); err != nil { return nil, err }
       return msg, nil
   
     case 97:
