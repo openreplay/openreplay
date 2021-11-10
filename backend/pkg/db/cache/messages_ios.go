@@ -22,6 +22,7 @@ func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) er
 		UserOSVersion: s.UserOSVersion,
 		UserDevice: s.UserDevice,
 		UserCountry: s.UserCountry,
+		UserDeviceType: s.UserDeviceType,
 	}
 	if err := c.Conn.InsertSessionStart(sessionID, c.sessions[ sessionID ]); err != nil { 
 		c.sessions[ sessionID ] = nil
