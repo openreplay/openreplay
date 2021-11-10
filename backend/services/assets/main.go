@@ -15,7 +15,6 @@ import (
 	"openreplay/backend/services/assets/cacher"
 )
 
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
