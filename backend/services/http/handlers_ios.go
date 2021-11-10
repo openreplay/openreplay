@@ -14,7 +14,7 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const FILES_SIZE_LIMIT int64 = 1e8		// 100Mb
+const FILES_SIZE_LIMIT int64 = 1e7		// 10Mb
 
 func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	type request struct {
