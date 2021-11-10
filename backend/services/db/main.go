@@ -31,7 +31,7 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_DB"),
 		[]string{ 
-			env.String("TOPIC_IOS_RAW"),
+			env.String("TOPIC_RAW_IOS"),
 			env.String("TOPIC_TRIGGER"),
 	  },
 	  func(sessionID uint64, msg messages.Message, _ *types.Meta) {
