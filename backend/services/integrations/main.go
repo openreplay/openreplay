@@ -19,7 +19,7 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	TOPIC_RAW := env.String("TOPIC_RAW")
+	TOPIC_RAW := env.String("TOPIC_RAW_WEB")
 	POSTGRES_STRING := env.String("POSTGRES_STRING")
 
 	pg := postgres.NewConn(POSTGRES_STRING)

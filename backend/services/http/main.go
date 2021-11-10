@@ -34,10 +34,11 @@ var geoIP *geoip.GeoIP
 var tokenizer *token.Tokenizer
 var s3 *storage.S3
 
-var TOPIC_RAW string
+var TOPIC_RAW_WEB string
+var TOPIC_RAW_IOS string
+var TOPIC_CACHE string
 var TOPIC_TRIGGER string
-var TOPIC_ANALYTICS string
-// var kafkaTopicEvents string
+//var TOPIC_ANALYTICS string
 var CACHE_ASSESTS bool
 var BEACON_SIZE_LIMIT int64
 
@@ -46,9 +47,11 @@ func main() {
 
 	producer = queue.NewProducer()
 	defer producer.Close(15000)
-	TOPIC_RAW = env.String("TOPIC_RAW")
+	TOPIC_RAW_WEB = env.String("TOPIC_RAW_WEB")
+	TOPIC_RAW_IOS = env.String("TOPIC_RAW_IOS")
+	TOPIC_CACHE = env.String("TOPIC_CACHE")
 	TOPIC_TRIGGER = env.String("TOPIC_TRIGGER")
-	TOPIC_ANALYTICS = env.String("TOPIC_ANALYTICS")
+	//TOPIC_ANALYTICS = env.String("TOPIC_ANALYTICS")
 	rewriter = assets.NewRewriter(env.String("ASSETS_ORIGIN"))
 	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000 * 60 * 20)
 	defer pgconn.Close()
@@ -85,7 +88,7 @@ func main() {
 			case "/v1/web/not-started": 
 				switch r.Method {
 				case http.MethodPost:
-					notStartedHandler(w, r)
+					notStartedHandlerWeb(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
@@ -99,7 +102,7 @@ func main() {
 			case "/v1/web/i":
 				switch r.Method {
 				case http.MethodPost:
-					pushMessagesSeparatelyHandler(w, r)
+					pushMessagesHandlerWeb(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
@@ -113,21 +116,21 @@ func main() {
 			case "/v1/ios/i":
 				switch r.Method {
 				case http.MethodPost:
-					pushMessagesHandler(w, r)
+					pushMessagesHandlerIOS(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			case "/v1/ios/late":
 				switch r.Method {
 				case http.MethodPost:
-					pushLateMessagesHandler(w, r)
+					pushLateMessagesHandlerIOS(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}
 			case "/v1/ios/images":
 				switch r.Method {
 				case http.MethodPost:
-					iosImagesUploadHandler(w, r)
+					imagesUploadHandlerIOS(w, r)
 				default:
 					w.WriteHeader(http.StatusMethodNotAllowed)
 				}

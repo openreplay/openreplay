@@ -97,7 +97,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
 
 		// The difference with web is mostly here:
-		producer.Produce(TOPIC_RAW, tokenData.ID, Encode(&IOSSessionStart{
+		producer.Produce(TOPIC_RAW_IOS, tokenData.ID, Encode(&IOSSessionStart{
 			Timestamp:            req.Timestamp,
 			ProjectID:            uint64(p.ProjectID),
 			TrackerVersion:       req.TrackerVersion,
@@ -127,18 +127,29 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func pushLateMessagesHandler(w http.ResponseWriter, r *http.Request) {
+func pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
+	if err != nil {
+		responseWithError(w, http.StatusUnauthorized, err)
+		return
+	}
+	pushMessages(w, r, sessionData.ID, TOPIC_RAW_IOS)
+}
+
+
+
+func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
 	if err != nil && err != token.EXPIRED {
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
 	// Check timestamps here?
-	pushMessages(w, r, sessionData.ID)
+	pushMessages(w, r, sessionData.ID,TOPIC_RAW_IOS)
 }
 
 
-func iosImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
+func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
 		responseWithError(w, http.StatusUnauthorized, err)
@@ -168,13 +179,12 @@ func iosImagesUploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
-			file, err := fileHeader.Open() //TODO: mime type from header
+			file, err := fileHeader.Open()
 			if err != nil {
 				continue // TODO: send server error or accumulate successful files
 			}
 			key := prefix + fileHeader.Filename
-			log.Printf("Uploading ios screen: %v", key)
-			go func() {
+			go func() {  //TODO: mime type from header
 				if err := s3.Upload(file, key, "image/jpeg", false); err != nil {
 					log.Printf("Upload ios screen error. %v", err)
 				}
