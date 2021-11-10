@@ -10,9 +10,9 @@ import (
 	"syscall"
 
 	"openreplay/backend/pkg/env"
-	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	. "openreplay/backend/pkg/messages"
 )
 
  
@@ -27,16 +27,17 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_SINK"),
 		[]string{ 
-			env.String("TOPIC_RAW"),
+			env.String("TOPIC_RAW_WEB"),
+			env.String("TOPIC_RAW_IOS")
 	  },
-	  func(sessionID uint64, message messages.Message, _ *types.Meta) {
-	  	//typeID, err := messages.GetMessageTypeID(value)
+	  func(sessionID uint64, message Message, _ *types.Meta) {
+	  	//typeID, err := GetMessageTypeID(value)
 	  	// if err != nil {
 	  	// 	log.Printf("Message type decoding error: %v", err)
 	  	// 	return
 	  	// }
 	  	typeID := message.Meta().TypeID
-	  	if !messages.IsReplayerType(typeID) {
+	  	if !IsReplayerType(typeID) {
 	  		return
 	  	}
 
@@ -44,7 +45,7 @@ func main() {
 
 	  	value := message.Encode()
 	  	var data []byte
-	  	if messages.IsIOSType(typeID) {
+	  	if IsIOSType(typeID) {
 	  		data = value
 	  	} else {
 				data = make([]byte, len(value)+8)
