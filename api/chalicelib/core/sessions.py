@@ -79,10 +79,6 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['userEvents'] = events_ios.get_customs_by_sessionId(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_ios(sessionId=session_id)
-                    data["socket"] = socket_ios.start_replay(project_id=project_id, session_id=session_id,
-                                                             device=data["userDevice"],
-                                                             os_version=data["userOsVersion"],
-                                                             mob_url=data["mobsUrl"])
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)

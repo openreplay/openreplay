@@ -532,6 +532,13 @@ if msg.Selector, err = ReadString(reader); err != nil { return nil, err }
 if msg.ID, err = ReadUint(reader); err != nil { return nil, err }
       return msg, nil
   
+    case 107:
+      msg := &IOSBatchMeta{ meta: &meta{ TypeID: 107} }
+      if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.FirstIndex, err = ReadUint(reader); err != nil { return nil, err }
+      return msg, nil
+  
     case 90:
       msg := &IOSSessionStart{ meta: &meta{ TypeID: 90} }
       if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
@@ -584,7 +591,11 @@ if msg.Value, err = ReadString(reader); err != nil { return nil, err }
     case 96:
       msg := &IOSScreenChanges{ meta: &meta{ TypeID: 96} }
       if msg.Timestamp, err = ReadUint(reader); err != nil { return nil, err }
-if msg.SkipData, err = ReadData(reader); err != nil { return nil, err }
+if msg.Length, err = ReadUint(reader); err != nil { return nil, err }
+if msg.X, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Y, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Width, err = ReadUint(reader); err != nil { return nil, err }
+if msg.Height, err = ReadUint(reader); err != nil { return nil, err }
       return msg, nil
   
     case 97:

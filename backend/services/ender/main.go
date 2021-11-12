@@ -16,7 +16,6 @@ import (
 	"openreplay/backend/services/ender/builder"
 )
 
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
@@ -30,7 +29,8 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		GROUP_EVENTS, 
 		[]string{ 
-			env.String("TOPIC_RAW"),
+			env.String("TOPIC_RAW_WEB"),
+			env.String("TOPIC_RAW_IOS"),
 		}, 
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			lastTs = meta.Timestamp

@@ -47,7 +47,15 @@ jobs:
         #
         # Getting the images to build
         #
-        git diff --name-only HEAD HEAD~1 | grep backend/services | grep -vE ^ee/ | cut -d '/' -f3 | uniq > backend/images_to_build.txt
+
+        {
+          git diff --name-only HEAD HEAD~1 | grep backend/services | grep -vE ^ee/ | cut -d '/' -f3  
+        
+          git diff --name-only HEAD HEAD~1 | grep backend/pkg | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
+            grep -rl "pkg/$pkg_name" backend/services | cut -d '/' -f3 
+          done
+        } | uniq > backend/images_to_build.txt
+
         [[ $(cat backend/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
         #
         # Pushing image to registry

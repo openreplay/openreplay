@@ -17,7 +17,6 @@ import (
 	"openreplay/backend/services/db/heuristics"
 ) 
 
-
 var pg *cache.PGCache
 
 func main() {
@@ -32,13 +31,13 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_DB"),
 		[]string{ 
-			//env.String("TOPIC_RAW"),
+			env.String("TOPIC_RAW_IOS"),
 			env.String("TOPIC_TRIGGER"),
 	  },
 	  func(sessionID uint64, msg messages.Message, _ *types.Meta) {
 	  	if err := insertMessage(sessionID, msg); err != nil {
 	  		if !postgres.IsPkeyViolation(err) {
-		  		log.Printf("Message Insertion Error %v, Message %v", err, msg)
+		  		log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err,sessionID, msg)
 	  		}
 	  		return
 	  	}
@@ -46,13 +45,13 @@ func main() {
 	  	session, err := pg.GetSession(sessionID)
 			if err != nil {
 				// Might happen due to the assets-related message TODO: log only if session is necessary for this kind of message
-				log.Printf("Error on session retrieving from cache: %v, Message %v, sessionID %v", err, msg, sessionID)
+				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
 				return;
 			}
 
 	  	err = insertStats(session, msg)
 	  	if err != nil {
-	  		log.Printf("Stats Insertion Error %v; Session:%v, Message: %v", err, session, msg)
+	  		log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
 	  	}
 
 			heurFinder.HandleMessage(session, msg)
@@ -60,14 +59,14 @@ func main() {
 				// TODO: DRY code (carefully with the return statement logic)
 				if err := insertMessage(sessionID, msg); err != nil {
 		  		if !postgres.IsPkeyViolation(err) {
-		  			log.Printf("Message Insertion Error %v, Message %v", err, msg)
+		  			log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 		  		}
 		  		return
 		  	}
 
 		  	err = insertStats(session, msg)
 		  	if err != nil {
-		  		log.Printf("Stats Insertion Error %v", err)
+		  		log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 		  	}	
 			})
 		},
