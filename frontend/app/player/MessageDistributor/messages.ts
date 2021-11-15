@@ -358,7 +358,8 @@ export interface IosNetworkCall {
 export type Message = Timestamp | SessionDisconnect | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | MouseClick | CreateIFrameDocument | IosSessionStart | IosCustomEvent | IosScreenChanges | IosClickEvent | IosPerformanceEvent | IosLog | IosNetworkCall;
 
 export default function (r: PrimitiveReader): Message | null {
-  switch (r.readUint()) {
+  const tp = r.readUint()
+  switch (tp) {
   
   case 0:
     return {
@@ -708,8 +709,7 @@ export default function (r: PrimitiveReader): Message | null {
     };
   
   default:
-    r.readUint(); // IOS skip timestamp  
-    r.skip(r.readUint()); 
+    throw new Error(`Unrecognizable message type: ${ tp }`)
     return null;
   }
 }
