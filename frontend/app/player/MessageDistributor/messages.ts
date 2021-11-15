@@ -5,6 +5,7 @@ import PrimitiveReader from './PrimitiveReader';
 export const ID_TP_MAP = {
 
   0: "timestamp",
+  2: "session_disconnect",
   4: "set_page_location",
   5: "set_viewport_size",
   6: "set_viewport_scroll",
@@ -38,11 +39,22 @@ export const ID_TP_MAP = {
   59: "long_task",
   69: "mouse_click",
   70: "create_i_frame_document",
+  90: "ios_session_start",
+  93: "ios_custom_event",
+  100: "ios_click_event",
+  102: "ios_performance_event",
+  103: "ios_log",
+  105: "ios_network_call",
 } as const;
 
 
 export interface Timestamp {
   tp: "timestamp",
+  timestamp: number,
+}
+
+export interface SessionDisconnect {
+  tp: "session_disconnect",
   timestamp: number,
 }
 
@@ -271,16 +283,81 @@ export interface CreateIFrameDocument {
   id: number,
 }
 
+export interface IosSessionStart {
+  tp: "ios_session_start",
+  timestamp: number,
+  projectID: number,
+  trackerVersion: string,
+  revID: string,
+  userUUID: string,
+  userOS: string,
+  userOSVersion: string,
+  userDevice: string,
+  userDeviceType: string,
+  userCountry: string,
+}
 
-export type Message = Timestamp | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | MouseClick | CreateIFrameDocument;
+export interface IosCustomEvent {
+  tp: "ios_custom_event",
+  timestamp: number,
+  length: number,
+  name: string,
+  payload: string,
+}
+
+export interface IosClickEvent {
+  tp: "ios_click_event",
+  timestamp: number,
+  length: number,
+  label: string,
+  x: number,
+  y: number,
+}
+
+export interface IosPerformanceEvent {
+  tp: "ios_performance_event",
+  timestamp: number,
+  length: number,
+  name: string,
+  value: number,
+}
+
+export interface IosLog {
+  tp: "ios_log",
+  timestamp: number,
+  length: number,
+  severity: string,
+  content: string,
+}
+
+export interface IosNetworkCall {
+  tp: "ios_network_call",
+  timestamp: number,
+  length: number,
+  duration: number,
+  headers: string,
+  body: string,
+  url: string,
+  success: boolean,
+  method: string,
+  status: number,
+}
+
+
+export type Message = Timestamp | SessionDisconnect | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | MouseClick | CreateIFrameDocument | IosSessionStart | IosCustomEvent | IosClickEvent | IosPerformanceEvent | IosLog | IosNetworkCall;
 
 export default function (r: PrimitiveReader): Message | null {
-  const ui= r.readUint()
-  switch (ui) {
+  switch (r.readUint()) {
   
   case 0:
     return {
       tp: ID_TP_MAP[0], 
+      timestamp: r.readUint(),      
+    };
+  
+  case 2:
+    return {
+      tp: ID_TP_MAP[2], 
       timestamp: r.readUint(),      
     };
   
@@ -542,8 +619,73 @@ export default function (r: PrimitiveReader): Message | null {
       id: r.readUint(),      
     };
   
+  case 90:
+    return {
+      tp: ID_TP_MAP[90], 
+      timestamp: r.readUint(),
+      projectID: r.readUint(),
+      trackerVersion: r.readString(),
+      revID: r.readString(),
+      userUUID: r.readString(),
+      userOS: r.readString(),
+      userOSVersion: r.readString(),
+      userDevice: r.readString(),
+      userDeviceType: r.readString(),
+      userCountry: r.readString(),      
+    };
+  
+  case 93:
+    return {
+      tp: ID_TP_MAP[93], 
+      timestamp: r.readUint(),
+      length: r.readUint(),
+      name: r.readString(),
+      payload: r.readString(),      
+    };
+  
+  case 100:
+    return {
+      tp: ID_TP_MAP[100], 
+      timestamp: r.readUint(),
+      length: r.readUint(),
+      label: r.readString(),
+      x: r.readUint(),
+      y: r.readUint(),      
+    };
+  
+  case 102:
+    return {
+      tp: ID_TP_MAP[102], 
+      timestamp: r.readUint(),
+      length: r.readUint(),
+      name: r.readString(),
+      value: r.readUint(),      
+    };
+  
+  case 103:
+    return {
+      tp: ID_TP_MAP[103], 
+      timestamp: r.readUint(),
+      length: r.readUint(),
+      severity: r.readString(),
+      content: r.readString(),      
+    };
+  
+  case 105:
+    return {
+      tp: ID_TP_MAP[105], 
+      timestamp: r.readUint(),
+      length: r.readUint(),
+      duration: r.readUint(),
+      headers: r.readString(),
+      body: r.readString(),
+      url: r.readString(),
+      success: r.readBoolean(),
+      method: r.readString(),
+      status: r.readUint(),      
+    };
+  
   default:
-  console.log("wtf is this", ui)
     r.readUint(); // IOS skip timestamp  
     r.skip(r.readUint()); 
     return null;
