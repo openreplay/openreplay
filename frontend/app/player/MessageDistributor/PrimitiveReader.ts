@@ -1,6 +1,10 @@
 export default class PrimitiveReader {
   protected p = 0
   constructor(protected readonly buf: Uint8Array) {}
+
+  hasNext() {
+    return this.buf.length < this.buf.p
+  }
   
   readUint() {
     var r = 0, s = 1, b;
