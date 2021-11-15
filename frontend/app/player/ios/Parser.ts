@@ -4,14 +4,14 @@ import PrimitiveReader from '../MessageDistributor/PrimitiveReader';
 
 export default class Parser {
 	private reader: PrimitiveReader
-	private error = null
+	private error: boolean = false
 	constructor(byteArray) {
 		this.reader = new PrimitiveReader(byteArray)
 	}
 
 	parseEach(cb) {
 		while (this.hasNext()) {
-			const msg = this.parseNext();
+			const msg = this.next();
 			if (msg !== null) {
 				cb(msg);
 			}
@@ -22,8 +22,14 @@ export default class Parser {
 		return !this.error && this.reader.hasNext();
 	}
 
-	parseNext() {
-		return readMessage(this.reader);
+	next() {
+		try {
+			return readMessage(this.reader)
+		} catch(e) {
+			console.warn(e)
+			this.error = true
+			return null
+		}
 	}
 
 }
