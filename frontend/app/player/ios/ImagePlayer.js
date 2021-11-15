@@ -21,7 +21,7 @@ import {
   createListState,
   createScreenListState,
 } from './lists';
-import Parser from './parser';
+import Parser from './Parser';
 import PerformanceList from './PerformanceList';
 
 const HIGHEST_SPEED = 3;

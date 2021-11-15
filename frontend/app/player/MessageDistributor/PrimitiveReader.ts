@@ -3,7 +3,7 @@ export default class PrimitiveReader {
   constructor(protected readonly buf: Uint8Array) {}
 
   hasNext() {
-    return this.buf.length < this.buf.p
+    return this.buf.length < this.p
   }
   
   readUint() {
