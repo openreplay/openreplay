@@ -41,6 +41,7 @@ export const ID_TP_MAP = {
   70: "create_i_frame_document",
   90: "ios_session_start",
   93: "ios_custom_event",
+  96: "ios_screen_changes",
   100: "ios_click_event",
   102: "ios_performance_event",
   103: "ios_log",
@@ -305,6 +306,16 @@ export interface IosCustomEvent {
   payload: string,
 }
 
+export interface IosScreenChanges {
+  tp: "ios_screen_changes",
+  timestamp: number,
+  length: number,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+}
+
 export interface IosClickEvent {
   tp: "ios_click_event",
   timestamp: number,
@@ -344,7 +355,7 @@ export interface IosNetworkCall {
 }
 
 
-export type Message = Timestamp | SessionDisconnect | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | MouseClick | CreateIFrameDocument | IosSessionStart | IosCustomEvent | IosClickEvent | IosPerformanceEvent | IosLog | IosNetworkCall;
+export type Message = Timestamp | SessionDisconnect | SetPageLocation | SetViewportSize | SetViewportScroll | CreateDocument | CreateElementNode | CreateTextNode | MoveNode | RemoveNode | SetNodeAttribute | RemoveNodeAttribute | SetNodeData | SetCssData | SetNodeScroll | SetInputValue | SetInputChecked | MouseMove | ConsoleLog | CssInsertRule | CssDeleteRule | Fetch | Profiler | OTable | Redux | Vuex | MobX | NgRx | GraphQl | PerformanceTrack | ConnectionInformation | SetPageVisibility | LongTask | MouseClick | CreateIFrameDocument | IosSessionStart | IosCustomEvent | IosScreenChanges | IosClickEvent | IosPerformanceEvent | IosLog | IosNetworkCall;
 
 export default function (r: PrimitiveReader): Message | null {
   switch (r.readUint()) {
@@ -641,6 +652,17 @@ export default function (r: PrimitiveReader): Message | null {
       length: r.readUint(),
       name: r.readString(),
       payload: r.readString(),      
+    };
+  
+  case 96:
+    return {
+      tp: ID_TP_MAP[96], 
+      timestamp: r.readUint(),
+      length: r.readUint(),
+      x: r.readUint(),
+      y: r.readUint(),
+      width: r.readUint(),
+      height: r.readUint(),      
     };
   
   case 100:
