@@ -22,6 +22,12 @@ enum CallingState {
   False,
 };
 
+// type IncomeMessages = 
+//   "call_end" | 
+//   { type: "agent_name", name: string } | 
+//   { type: "click", x: number, y: number } |
+//   { x: number, y: number }
+
 export default function(opts: Partial<Options> = {})  {
   const options: Options = Object.assign(
     { 
@@ -181,20 +187,24 @@ export default function(opts: Partial<Options> = {})  {
               document.addEventListener("click", onInteraction)
             });
             dataConn.on('data', (data: any) => {
+              if (!data) { return }
               if (data === "call_end") {
-                log('Recieved call_end during call')
+                //console.log('receiving callend on call')
                 onCallEnd();
                 return;
               }
-              // if (data && typeof data.video === 'boolean') {
-              //   log('Recieved video toggle signal: ', data.video)
-              //   callUI.toggleRemoteVideo(data.video)
-              // }
-              if (data && typeof data.name === 'string') {
-                log('Recieved name: ', data.name)
+              if (data.name === 'string') {
+                //console.log("name",data)
                 callUI.setAssistentName(data.name);
               }
-              if (data && typeof data.x === 'number' && typeof data.y === 'number') {
+              if (data.type === "click" && typeof data.x === 'number' && typeof data.y === 'number') {
+                const el = document.elementFromPoint(data.x, data.y)
+                if (el instanceof HTMLElement) {
+                  el.click()
+                }
+                return
+              }
+              if (typeof data.x === 'number' && typeof data.y === 'number') {
                 mouse.move(data);
               }
             });
