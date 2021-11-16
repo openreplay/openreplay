@@ -347,6 +347,13 @@ export default class AssistManager {
     conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
   }
 
+  private onMouseClick = (e: MouseEvent): void => {
+    const conn = this.dataConnection;
+    if (!conn) { return; }
+    const data = this.md.getInternalCoordinates(e);
+    // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
+    conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
+  }
 
   private localCallData: {
     localStream: MediaStream,
@@ -362,6 +369,7 @@ export default class AssistManager {
       onCallEnd: () => {
         onCallEnd();
         this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
+        this.md.overlay.removeEventListener("click",  this.onMouseClick);
         update({ calling: CallingState.False });
         this.localCallData = null;
       },
@@ -388,6 +396,7 @@ export default class AssistManager {
       });
 
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+      this.md.overlay.addEventListener("click", this.onMouseClick)
     });
 
     call.on("close", this.localCallData.onCallEnd);
