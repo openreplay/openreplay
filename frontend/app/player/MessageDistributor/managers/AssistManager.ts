@@ -47,11 +47,13 @@ export function getStatusText(status: ConnectionStatus): string {
 export interface State {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
+  remoteControl: boolean,
 }
 
 export const INITIAL_STATE: State = {
   calling: CallingState.False,
   peerConnectionStatus: ConnectionStatus.Connecting,
+  remoteControl: false,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -348,6 +350,24 @@ export default class AssistManager {
     conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
   }
 
+  private onMouseClick = (e: MouseEvent): void => {
+    const conn = this.dataConnection;
+    if (!conn) { return; }
+    const data = this.md.getInternalCoordinates(e);
+    // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
+    conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
+  }
+
+  private toggleRemoteControl = () => {
+    if (getState().remoteControl) {
+      this.md.overlay.removeEventListener("click", this.onMouseClick);
+      update({ remoteControl: false })
+    } else {
+      this.md.overlay.addEventListener("click", this.onMouseClick);
+      update({ remoteControl: true })
+    }
+  }
+
 
   private localCallData: {
     localStream: LocalStream,
@@ -357,7 +377,7 @@ export default class AssistManager {
     onError?: ()=> void
   } | null = null
 
-  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
+  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): { end: Function, toggleRemoteControl: Function } {
     this.localCallData = {
       localStream,
       onStream,
@@ -371,7 +391,10 @@ export default class AssistManager {
       onError,
     }
     this._call()
-    return this.initiateCallEnd;
+    return {
+      end: this.initiateCallEnd,
+      toggleRemoteControl: this.toggleRemoteControl,
+    }
   }
 
   private _call() {
