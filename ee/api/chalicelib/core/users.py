@@ -1,13 +1,13 @@
 import json
+import secrets
 
 from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants
+from chalicelib.utils import dev
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from chalicelib.utils import dev
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import environ
-import secrets
 
 
 def __generate_invitation_token():
@@ -541,11 +541,12 @@ def get_by_invitation_token(token, pass_token=None):
                         *,
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
-                        change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change
+                        change_pwd_expire_at <= timezone('utc'::text, now()) AS expired_change,
+                        (EXTRACT(EPOCH FROM current_timestamp-basic_authentication.change_pwd_expire_at))::BIGINT AS change_pwd_age
                     FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                     WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
                     LIMIT 1;""",
-                {"token": token, "pass_token": token})
+                {"token": token, "pass_token": pass_token})
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)
