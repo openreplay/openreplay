@@ -1,6 +1,7 @@
 from decouple import config
-from chalicelib.utils.s3 import client
+
 from chalicelib.utils import s3
+from chalicelib.utils.s3 import client
 
 
 def get_web(sessionId):
@@ -8,7 +9,7 @@ def get_web(sessionId):
         'get_object',
         Params={
             'Bucket': config("sessions_bucket"),
-            'Key': sessionId
+            'Key': str(sessionId)
         },
         ExpiresIn=100000
     )
@@ -19,7 +20,7 @@ def get_ios(sessionId):
         'get_object',
         Params={
             'Bucket': config("ios_bucket"),
-            'Key': sessionId
+            'Key': str(sessionId)
         },
         ExpiresIn=100000
     )
