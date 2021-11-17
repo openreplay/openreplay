@@ -293,7 +293,7 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
 
     keys = list(changes.keys())
     for k in keys:
-        if k not in ALLOW_EDIT:
+        if k not in ALLOW_EDIT or changes[k] is None:
             changes.pop(k)
     keys = list(changes.keys())
 
