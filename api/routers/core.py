@@ -3,7 +3,7 @@ from fastapi import Depends, Body
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
-    sessions_metas, alerts, funnels, issues, integrations_manager, errors_favorite_viewed, metadata, \
+    sessions_metas, alerts, funnels, issues, integrations_manager, metadata, \
     log_tool_elasticsearch, log_tool_datadog, \
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
@@ -600,23 +600,6 @@ def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context))
 @app.get('/announcements/view', tags=["announcements"])
 def get_all_announcements(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": announcements.view(user_id=context.user_id)}
-
-
-@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
-def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int, endDate: int,
-                              context: schemas.CurrentContext = Depends(OR_context)):
-    if action == "favorite":
-        return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
-    elif action == "sessions":
-        start_date = startDate
-        end_date = endDate
-        return {
-            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                        start_date=start_date, end_date=end_date)}
-    elif action in list(errors.ACTION_STATE.keys()):
-        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
-    else:
-        return {"errors": ["undefined action"]}
 
 
 @app.post('/{projectId}/errors/merge', tags=["errors"])

@@ -227,6 +227,23 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
     }
 
 
+@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
+def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int, endDate: int,
+                              context: schemas.CurrentContext = Depends(OR_context)):
+    if action == "favorite":
+        return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
+    elif action == "sessions":
+        start_date = startDate
+        end_date = endDate
+        return {
+            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
+                                        start_date=start_date, end_date=end_date)}
+    elif action in list(errors.ACTION_STATE.keys()):
+        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
+    else:
+        return {"errors": ["undefined action"]}
+
+
 @public_app.post('/async/alerts/notifications/{step}', tags=["async", "alerts"])
 @public_app.put('/async/alerts/notifications/{step}', tags=["async", "alerts"])
 def send_alerts_notification_async(step: str, data: schemas.AlertNotificationSchema = Body(...)):
