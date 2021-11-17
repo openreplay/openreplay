@@ -334,6 +334,11 @@ class FunnelSchema(BaseModel):
         alias_generator = key_to_camel_case
 
 
+class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
+    sort: Optional[str] = Field(...)
+    order: Optional[str] = Field(...)
+
+
 class MetricPayloadSchema(BaseModel):
     start_timestamp: int = Field(TimeUTC.now(delta_days=-1))
     end_timestamp: int = Field(TimeUTC.now())
