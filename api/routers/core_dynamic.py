@@ -15,6 +15,7 @@ from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
+from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -199,7 +200,7 @@ def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
 
 
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
-def errors_get_details(projectId: int, errorId: str, density24: int, density30: int,
+def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
@@ -209,7 +210,8 @@ def errors_get_details(projectId: int, errorId: str, density24: int, density30: 
 
 
 @app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
-def errors_get_details_right_column(projectId: int, errorId: str, startDate: int, endDate: int, density: int,
+def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
+                                    endDate: int = TimeUTC.now(), density: int = 7,
                                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                     **{"startDate": startDate, "endDate": endDate, "density": density})
