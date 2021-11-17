@@ -209,7 +209,7 @@ def errors_get_details(projectId: int, errorId: str, density24: int, density30: 
 
 
 @app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
-def errors_get_details_right_column(projectId: int, errorId: int, startDate: int, endDate: int, density: int,
+def errors_get_details_right_column(projectId: int, errorId: str, startDate: int, endDate: int, density: int,
                                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                     **{"startDate": startDate, "endDate": endDate, "density": density})
@@ -217,7 +217,7 @@ def errors_get_details_right_column(projectId: int, errorId: int, startDate: int
 
 
 @app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'])
-def errors_get_details_sourcemaps(projectId: int, errorId: int,
+def errors_get_details_sourcemaps(projectId: int, errorId: str,
                                   context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
