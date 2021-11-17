@@ -24,10 +24,10 @@ class UserSignupSchema(UserLoginSchema):
 
 
 class EditUserSchema(BaseModel):
-    name: str = Field(...)
-    email: str = Field(...)
-    admin: bool = Field(False)
-    appearance: dict = Field({})
+    name: Optional[str] = Field(...)
+    email: Optional[str] = Field(...)
+    admin: Optional[bool] = Field(False)
+    appearance: Optional[dict] = Field({})
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):
