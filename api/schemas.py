@@ -24,8 +24,8 @@ class UserSignupSchema(UserLoginSchema):
 
 
 class EditUserSchema(BaseModel):
-    name: Optional[str] = Field(...)
-    email: Optional[str] = Field(...)
+    name: Optional[str] = Field(None)
+    email: Optional[str] = Field(None)
     admin: Optional[bool] = Field(False)
     appearance: Optional[dict] = Field({})
 
@@ -335,8 +335,8 @@ class FunnelSchema(BaseModel):
 
 
 class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
-    sort: Optional[str] = Field(...)
-    order: Optional[str] = Field(...)
+    sort: Optional[str] = Field(None)
+    order: Optional[str] = Field(None)
 
 
 class MetricPayloadSchema(BaseModel):

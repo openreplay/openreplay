@@ -230,8 +230,8 @@ def errors_get_details_sourcemaps(projectId: int, errorId: str,
 
 
 @app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
-def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int, endDate: int,
-                              context: schemas.CurrentContext = Depends(OR_context)):
+def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
+                              endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
     if action == "favorite":
         return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
     elif action == "sessions":
