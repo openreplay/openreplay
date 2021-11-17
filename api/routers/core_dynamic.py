@@ -157,8 +157,6 @@ def edit_client(data: schemas.UpdateTenantSchema = Body(...),
 @app.put('/integrations/slack', tags=['integrations'])
 @app.post('/integrations/slack', tags=['integrations'])
 def add_slack_client(data: schemas.AddSlackSchema, context: schemas.CurrentContext = Depends(OR_context)):
-    if "url" not in data or "name" not in data:
-        return {"errors": ["please provide a url and a name"]}
     n = Slack.add_channel(tenant_id=context.tenant_id, url=data.url, name=data.name)
     if n is None:
         return {
