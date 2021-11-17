@@ -1,7 +1,7 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Body, Depends, HTTPException, status
+from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from starlette.responses import RedirectResponse
 
 import schemas
@@ -364,9 +364,10 @@ def get_members(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.post('/client/members', tags=["client"])
 @app.put('/client/members', tags=["client"])
-def add_member(data: schemas.CreateMemberSchema = Body(...),
+def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
-    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict())
+    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
+                               background_tasks=background_tasks)
 
 
 @public_app.get('/users/invitation', tags=['users'])
@@ -463,6 +464,6 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
 
 @public_app.post('/alerts/notifications', tags=["alerts"])
 @public_app.put('/alerts/notifications', tags=["alerts"])
-def send_alerts_notifications(data: schemas.AlertNotificationSchema = Body(...)):
+def send_alerts_notifications(background_tasks: BackgroundTasks, data: schemas.AlertNotificationSchema = Body(...)):
     # TODO: validate token
-    return {"data": alerts.process_notifications(data.notifications)}
+    return {"data": alerts.process_notifications(data.notifications, background_tasks=background_tasks)}

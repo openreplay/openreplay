@@ -1,7 +1,7 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Body, Depends, HTTPException, status
+from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from starlette.responses import RedirectResponse
 
 import schemas
@@ -15,6 +15,7 @@ from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, SAML2_helper
 from chalicelib.utils import helper
+from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -200,7 +201,7 @@ def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
 
 
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
-def errors_get_details(projectId: int, errorId: str, density24: int, density30: int,
+def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
@@ -210,7 +211,8 @@ def errors_get_details(projectId: int, errorId: str, density24: int, density30: 
 
 
 @app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
-def errors_get_details_right_column(projectId: int, errorId: int, startDate: int, endDate: int, density: int,
+def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
+                                    endDate: int = TimeUTC.now(), density: int = 7,
                                     context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
                                     **{"startDate": startDate, "endDate": endDate, "density": density})
@@ -218,7 +220,7 @@ def errors_get_details_right_column(projectId: int, errorId: int, startDate: int
 
 
 @app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'])
-def errors_get_details_sourcemaps(projectId: int, errorId: int,
+def errors_get_details_sourcemaps(projectId: int, errorId: str,
                                   context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_trace(project_id=projectId, error_id=errorId)
     if "errors" in data:
@@ -363,11 +365,12 @@ def get_members(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.post('/client/members', tags=["client"])
 @app.put('/client/members', tags=["client"])
-def add_member(data: schemas.CreateMemberSchema = Body(...),
+def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
     if SAML2_helper.is_saml2_available():
         return {"errors": ["please use your SSO server to add teammates"]}
-    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict())
+    return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
+                               background_tasks=background_tasks)
 
 
 @public_app.get('/users/invitation', tags=['users'])
@@ -392,13 +395,13 @@ def process_invitation_link(token: str):
 def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
-    user = users.get_by_invitation_token(token=data.token, pass_token=data.passphrase)
+    user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
     if user is None:
         return {"errors": ["invitation not found"]}
     if user["expiredChange"]:
         return {"errors": ["expired change, please re-use the invitation link"]}
 
-    return users.set_password_invitation(new_password=data.password, user_id=user["userId"])
+    return users.set_password_invitation(new_password=data.password, user_id=user["userId"], tenant_id=user["tenantId"])
 
 
 @app.put('/client/members/{memberId}', tags=["client"])
@@ -467,6 +470,6 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
 
 @public_app.post('/alerts/notifications', tags=["alerts"])
 @public_app.put('/alerts/notifications', tags=["alerts"])
-def send_alerts_notifications(data: schemas.AlertNotificationSchema = Body(...)):
+def send_alerts_notifications(background_tasks: BackgroundTasks, data: schemas.AlertNotificationSchema = Body(...)):
     # TODO: validate token
-    return {"data": alerts.process_notifications(data.notifications)}
+    return {"data": alerts.process_notifications(data.notifications, background_tasks=background_tasks)}

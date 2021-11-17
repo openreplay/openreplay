@@ -13,7 +13,7 @@ croniter==1.0.12
 
 
 fastapi
-uvicorn
+uvicorn[standard]
 PyJWT
 python-decouple
 pydantic[email]

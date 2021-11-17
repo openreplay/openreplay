@@ -1,15 +1,15 @@
 import json
+import secrets
+
+from decouple import config
+from fastapi import BackgroundTasks
 
 from chalicelib.core import authorizers, metadata, projects
-
+from chalicelib.core import tenants
+from chalicelib.utils import dev, email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from chalicelib.utils import dev
 from chalicelib.utils.TimeUTC import TimeUTC
-from decouple import config
-
-from chalicelib.core import tenants
-import secrets
 
 
 def __generate_invitation_token():
@@ -181,7 +181,7 @@ def update(tenant_id, user_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def create_member(tenant_id, user_id, data):
+def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
     admin = get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -204,13 +204,20 @@ def create_member(tenant_id, user_id, data):
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-    helper.async_post(config('email_basic') % 'member_invitation',
-                      {
-                          "email": data["email"],
-                          "invitationLink": new_member["invitationLink"],
-                          "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
-                          "senderName": admin["name"]
-                      })
+
+    # helper.async_post(config('email_basic') % 'member_invitation',
+    #                   {
+    #                       "email": data["email"],
+    #                       "invitationLink": new_member["invitationLink"],
+    #                       "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
+    #                       "senderName": admin["name"]
+    #                   })
+    background_tasks.add_task(email_helper.send_team_invitation, **{
+        "recipient": data["email"],
+        "invitation_link": new_member["invitationLink"],
+        "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
+        "sender_name": admin["name"]
+    })
     return {"data": new_member}
 
 

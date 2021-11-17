@@ -1,10 +1,11 @@
+import json
 import time
-from decouple import config
 
-from chalicelib.core import notifications
+from fastapi import BackgroundTasks
+
+from chalicelib.core import notifications, slack, webhook
 from chalicelib.utils import pg_client, helper, email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import json
 
 ALLOW_UPDATE = ["name", "description", "active", "detectionMethod", "query", "options"]
 
@@ -111,7 +112,7 @@ def update(id, changes):
     return {"data": __process_circular(a)}
 
 
-def process_notifications(data):
+def process_notifications(data, background_tasks: BackgroundTasks):
     full = {}
     for n in data:
         if "message" in n["options"]:
@@ -132,7 +133,15 @@ def process_notifications(data):
     BATCH_SIZE = 200
     for t in full.keys():
         for i in range(0, len(full[t]), BATCH_SIZE):
-            helper.async_post(config('alert_ntf') % t, {"notifications": full[t][i:i + BATCH_SIZE]})
+            # helper.async_post(config('alert_ntf') % t, {"notifications": full[t][i:i + BATCH_SIZE]})
+            notifications_list = full[t][i:i + BATCH_SIZE]
+
+            if t == "slack":
+                background_tasks.add_task(slack.send_batch, notifications_list=notifications_list)
+            elif t == "email":
+                background_tasks.add_task(send_by_email_batch, notifications_list=notifications_list)
+            elif t == "webhook":
+                background_tasks.add_task(webhook.trigger_batch, data_list=notifications_list)
 
 
 def send_by_email(notification, destination):
