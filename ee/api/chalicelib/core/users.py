@@ -297,6 +297,9 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
     if user["superAdmin"] and "admin" in changes:
         changes.pop("admin")
 
+    if editor_id == user_id_to_update and user["admin"] != changes["admin"]:
+        return {"errors": ["cannot change your own role"]}
+
     keys = list(changes.keys())
     for k in keys:
         if k not in ALLOW_EDIT or changes[k] is None:
