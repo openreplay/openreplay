@@ -692,7 +692,7 @@ def get_funnel_insights(projectId: int, funnelId: int, rangeValue: str = None, s
 
 @app.post('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
-def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSchema = Body(...),
+def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())
 
