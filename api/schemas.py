@@ -343,7 +343,7 @@ class MetricPayloadSchema(BaseModel):
     start_timestamp: int = Field(TimeUTC.now(delta_days=-1))
     end_timestamp: int = Field(TimeUTC.now())
     density: int = Field(7)
-    filters: List[dict] = Field([]),
+    filters: List[dict] = Field([])
     type: Optional[str] = Field(None)
 
 
