@@ -131,7 +131,6 @@ class EditMemberSchema(BaseModel):
 
 
 class EditPasswordByInvitationSchema(BaseModel):
-    token: str = Field(...)
     invitation: str = Field(...)
     passphrase: str = Field(..., alias="pass")
     password: str = Field(...)

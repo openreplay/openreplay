@@ -391,7 +391,7 @@ def process_invitation_link(token: str):
 def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema = Body(...)):
     if data is None or len(data.invitation) < 64 or len(data.passphrase) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
-    user = users.get_by_invitation_token(token=data.token, pass_token=data.passphrase)
+    user = users.get_by_invitation_token(token=data.invitation, pass_token=data.passphrase)
     if user is None:
         return {"errors": ["invitation not found"]}
     if user["expiredChange"]:
