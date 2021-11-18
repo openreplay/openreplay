@@ -707,7 +707,7 @@ def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDat
 
 @app.post('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
-def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.SessionsFilterSchema = Body(...),
+def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())}
 
@@ -723,7 +723,7 @@ def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, s
 
 @app.post('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
-def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.SessionsFilterSchema = Body(...),
+def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_sessions_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
                                                     data=data.dict())}

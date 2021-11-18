@@ -325,9 +325,14 @@ class SessionsFilterSchema(SessionsSearchPayloadSchema):
         alias_generator = key_to_camel_case
 
 
+class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
+    sort: Optional[str] = Field(None)
+    order: Optional[str] = Field(None)
+
+
 class FunnelSchema(BaseModel):
     name: str = Field(...)
-    filter: SessionsFilterSchema = Field([])
+    filter: FunnelSearchPayloadSchema = Field([])
     is_public: bool = Field(False)
 
     class Config:
@@ -336,7 +341,7 @@ class FunnelSchema(BaseModel):
 
 class UpdateFunnelSchema(FunnelSchema):
     name: Optional[str] = Field(None)
-    filter: Optional[SessionsFilterSchema] = Field(None)
+    filter: Optional[FunnelSearchPayloadSchema] = Field(None)
     is_public: Optional[bool] = Field(None)
 
 
