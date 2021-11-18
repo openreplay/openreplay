@@ -709,7 +709,7 @@ def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDat
 @app.put('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.SessionsFilterSchema = Body(...),
                                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data)}
+    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())}
 
 
 @app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
