@@ -13,6 +13,7 @@ export interface Options {
   confirmText: string,
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
+  config: Object
 }
 
 
@@ -28,6 +29,7 @@ export default function(opts: Partial<Options> = {})  {
       confirmText: "You have a call. Do you want to answer?",
       confirmStyle: {},
       session_calling_peer_key: "__openreplay_calling_peer",
+      config: null
     },
     opts,
   );
@@ -48,12 +50,16 @@ export default function(opts: Partial<Options> = {})  {
     app.attachStartCallback(function() {
       if (assistDemandedRestart) { return; }
       const peerID = `${app.projectKey}-${app.getSessionID()}`
-      peer = new Peer(peerID, {
-              // @ts-ignore
+      const _opt = {
+        // @ts-ignore
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
-      });
+      }
+      if (options.config) {
+        _opt['config'] = options.config
+      }
+      peer = new Peer(peerID, _opt);
       console.log('OpenReplay tracker-assist peerID:', peerID)
       peer.on('error', e => console.log("OpenReplay tracker-assist peer error: ", e.type, e))
       peer.on('connection', function(conn) { 
