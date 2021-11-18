@@ -334,6 +334,12 @@ class FunnelSchema(BaseModel):
         alias_generator = key_to_camel_case
 
 
+class UpdateFunnelSchema(FunnelSchema):
+    name: Optional[str] = Field(None)
+    filter: Optional[SessionsFilterSchema] = Field(None)
+    is_public: Optional[bool] = Field(None)
+
+
 class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
