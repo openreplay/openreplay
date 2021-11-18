@@ -30,16 +30,17 @@ interface Props {
   userId: String,
   toggleChatWindow: (state) => void,
   calling: CallingState,
-  peerConnectionStatus: ConnectionStatus
+  peerConnectionStatus: ConnectionStatus,
+  remoteControlEnabled: boolean,
 }
 
-function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus }: Props) {  
+function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlEnabled }: Props) {  
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
-  const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
+  const [ callObject, setCallObject ] = useState<{ end: ()=>void, toggleRemoteControl: ()=>void } | null >(null);
 
   useEffect(() => {
-    return endCall
+    return callObject?.end()
   }, [])
 
   useEffect(() => {
@@ -52,7 +53,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
   function call() {
     RequestLocalStream().then(lStream => {
       setLocalStream(lStream);
-      setEndCall(() => callPeer(
+      setCallObject(callPeer(
         lStream,
         setIncomeStream,
         lStream.stop.bind(lStream),
@@ -76,7 +77,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
                 {[stl.disabled]: peerConnectionStatus !== ConnectionStatus.Connected}
               )
             }
-            onClick={ inCall ? endCall : call}
+            onClick={ inCall ? callObject?.end : call}
             role="button"
           >
             <Icon
@@ -84,7 +85,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               size="20"
               color={ inCall ? "red" : "gray-darkest" }
             />
-            <span className={cn("ml-2", { 'text-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
+            <span className={cn("ml-2", { 'color-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
           </div>
         }
         content={ `Call ${userId}` }
@@ -92,8 +93,26 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         inverted
         position="top right"
       />
+      { calling === CallingState.True &&
+        <div
+          className={
+            cn(
+              'cursor-pointer p-2 mr-2 flex items-center',
+            )
+          }
+          onClick={ callObject?.toggleRemoteControl }
+          role="button"
+        >
+          <Icon
+            name="remote-control"
+            size="20"
+            color={ remoteControlEnabled ? "green" : "gray-darkest"}
+          />
+          <span className={cn("ml-2", { 'color-green' : remoteControlEnabled })}>{ 'Remote Control' }</span>
+        </div>
+      }
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
-        { inCall && <ChatWindow endCall={endCall} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
+        { inCall && callObject && <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
       </div>
     </div>
   )
@@ -103,5 +122,6 @@ const con = connect(null, { toggleChatWindow })
 
 export default con(connectPlayer(state => ({
   calling: state.calling,
+  remoteControlEnabled: state.remoteControl,
   peerConnectionStatus: state.peerConnectionStatus,
 }))(AssistActions))
