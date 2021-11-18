@@ -770,7 +770,7 @@ def edit_funnel(projectId: int, funnelId: int, data: schemas.UpdateFunnelSchema 
     return funnels.update(funnel_id=funnelId,
                           user_id=context.user_id,
                           name=data.name,
-                          filter=data.filter,
+                          filter=data.filter.dict(),
                           is_public=data.is_public)
 
 
