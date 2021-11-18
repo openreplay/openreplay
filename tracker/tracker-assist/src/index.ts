@@ -22,6 +22,9 @@ enum CallingState {
   False,
 };
 
+//@ts-ignore   webpack5 hack (?!)
+Peer = Peer.default || Peer;
+
 // type IncomeMessages = 
 //   "call_end" | 
 //   { type: "agent_name", name: string } | 
