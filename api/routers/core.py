@@ -760,7 +760,7 @@ def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = 
     data = funnels.get(funnel_id=funnelId, project_id=projectId)
     if data is None:
         return {"errors": ["funnel not found"]}
-    return data
+    return {"data": data}
 
 
 @app.post('/{projectId}/funnels/{funnelId}', tags=["funnels"])
