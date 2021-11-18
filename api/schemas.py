@@ -318,16 +318,13 @@ class SessionsSearchPayloadSchema(BaseModel):
     order: str = Field(...)
 
 
-class SessionsFilterSchema(SessionsSearchPayloadSchema):
-    range_value: str = Field(None)
+class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
+    range_value: Optional[str] = Field(None)
+    sort: Optional[str] = Field(None)
+    order: Optional[str] = Field(None)
 
     class Config:
         alias_generator = key_to_camel_case
-
-
-class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
 
 
 class FunnelSchema(BaseModel):
