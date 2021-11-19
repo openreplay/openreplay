@@ -408,6 +408,7 @@ export default class AssistManager {
       });
 
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+      this.md.overlay.addEventListener("click", this.onMouseClick)
     });
     //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
