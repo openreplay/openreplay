@@ -1,4 +1,4 @@
-# OpenReplay Tracker Axios plugin
+# OpenReplay Tracker Assist plugin
 
 Tracker plugin for WebRTC video support at your site.
 
