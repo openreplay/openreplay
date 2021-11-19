@@ -8,7 +8,7 @@ import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import Filter from 'Types/filter';
 
-const AUTOREFRESH_INTERVAL = 1 * 60 * 1000
+const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
 
 interface Props {
   loading: Boolean,
