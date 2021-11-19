@@ -6,10 +6,12 @@ import Counter from 'App/components/shared/SessionItem/Counter'
 import stl from './chatWindow.css'
 import ChatControls from '../ChatControls/ChatControls'
 import Draggable from 'react-draggable';
+import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
+
 
 export interface Props {
   incomeStream: MediaStream | null,
-  localStream: MediaStream | null,
+  localStream: LocalStream | null,
   userId: String,
   endCall: () => void
 }
@@ -30,7 +32,7 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localS
         <div className={cn(stl.videoWrapper, {'hidden' : minimize}, 'relative')}>
           <VideoContainer stream={ incomeStream } />
           <div className="absolute bottom-0 right-0 z-50">
-            <VideoContainer stream={ localStream } muted width={50} />
+            <VideoContainer stream={ localStream ? localStream.stream : null } muted width={50} />
           </div>
         </div>
         <ChatControls stream={localStream} endCall={endCall} />
