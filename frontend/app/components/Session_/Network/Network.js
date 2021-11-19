@@ -101,7 +101,7 @@ function renderSize(r) {
 export function renderDuration(r) {
   if (!r.success) return 'x';
 
-  const text = `${ r.duration }ms`;
+  const text = `${ Math.round(r.duration) }ms`;
   if (!r.isRed() && !r.isYellow()) return text;
 
   let tooltipText;
