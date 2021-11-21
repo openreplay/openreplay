@@ -6,8 +6,8 @@ import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
 import store from 'App/store';
 import type { LocalStream } from './LocalStream';
-
 import { update, getState } from '../../store';
+import { iceServerConfigFromString } from 'App/utils'
 
 
 export enum CallingState {
@@ -149,12 +149,20 @@ export default class AssistManager {
     this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
       // @ts-ignore
-      const peer = new Peer({
+      const iceServers = iceServerConfigFromString(window.ENV.ICE_SERVERS);
+      const _config = {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
         path: '/assist',
         port:  location.protocol === 'https:' ? 443 : 80,
-      });
+        sdpSemantics: 'unified-plan'
+      }
+
+      if (iceServers) {
+        _config['config'] = iceServers;
+      }
+
+      const peer = new Peer(_config);
       this.peer = peer;
       peer.on('error', e => {
         if (e.type !== 'peer-unavailable') {
