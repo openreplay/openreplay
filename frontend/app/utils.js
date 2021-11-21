@@ -204,3 +204,26 @@ export const colorScale = (values, colors) => {
 }
 
 export const truncate = (input, max = 10) => input.length > max ? `${input.substring(0, max)}...` : input;
+
+export const iceServerConfigFromString = (str) => {
+  if (!str || typeof str !== 'string'|| str.length === 0) {
+    return null;
+  }
+  
+  return str.split("|").map(function(c) {
+    let server = null
+    const arr = c.split(",")
+  
+    if (!!arr[0] !== "") {
+      server = {}
+      server.urls = arr[0]
+      if (!!arr[1]) {
+        server.username = arr[1]
+        if (!!arr[2]) {
+          server.password = arr[2]
+        }
+      }
+      return server
+    }
+  })
+}
