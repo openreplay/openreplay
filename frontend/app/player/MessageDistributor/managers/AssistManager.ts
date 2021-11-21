@@ -155,11 +155,13 @@ export default class AssistManager {
         host: new URL(window.ENV.API_EDP).host,
         path: '/assist',
         port:  location.protocol === 'https:' ? 443 : 80,
-        sdpSemantics: 'unified-plan'
       }
 
       if (iceServers) {
-        _config['config'] = iceServers;
+        _config['config'] = {
+          iceServers: iceServers,
+          sdpSemantics: 'unified-plan',
+        };
       }
 
       const peer = new Peer(_config);
