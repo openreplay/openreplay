@@ -161,6 +161,7 @@ export default class AssistManager {
         _config['config'] = {
           iceServers: iceServers,
           sdpSemantics: 'unified-plan',
+          iceTransportPolicy: 'relay',
         };
       }
 
