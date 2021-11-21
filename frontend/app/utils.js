@@ -220,7 +220,7 @@ export const iceServerConfigFromString = (str) => {
       if (!!arr[1]) {
         server.username = arr[1]
         if (!!arr[2]) {
-          server.password = arr[2]
+          server.credential = arr[2]
           if (!!arr[3]) {
             server.transport = arr[3]
           }
