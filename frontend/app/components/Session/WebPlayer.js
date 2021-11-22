@@ -35,9 +35,9 @@ function PlayerContent({ live, fullscreen, showEvents }) {
   )
 }
 
-function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt }) {
+function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config }) {
   useEffect(() => {
-    initPlayer(session, jwt);
+    initPlayer(session, jwt, config);
     return () => cleanPlayer()
   }, [ session.sessionId ]);
 
@@ -60,6 +60,7 @@ function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscr
 export default connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
   jwt: state.get('jwt'),
+  config: state.getIn([ 'user', 'account', 'iceServers' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
 }), {
   toggleFullscreen,

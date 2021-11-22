@@ -30,9 +30,9 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, iceServers }) {
+function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config }) {
   useEffect(() => {
-    initPlayer(session, jwt, iceServers);
+    initPlayer(session, jwt, config);
     return () => cleanPlayer()
   }, [ session.sessionId ]);
 
@@ -59,7 +59,7 @@ export default connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
   showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
   jwt: state.get('jwt'),
-  iceServers: state.getIn([ 'user', 'account', 'iceServers' ]),
+  config: state.getIn([ 'user', 'account', 'iceServers' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
 }), {
   toggleFullscreen,
