@@ -1,22 +1,20 @@
 from chalice import Blueprint, Response
 
 from chalicelib import _overrides
-from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integration_github, \
-    integrations_manager
+from chalicelib.core import boarding
+from chalicelib.core import errors
+from chalicelib.core import license
+from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integrations_manager, assist
+from chalicelib.core import notifications
+from chalicelib.core import projects
+from chalicelib.core import signup
+from chalicelib.core import tenants
+from chalicelib.core import users
+from chalicelib.core import webhook
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.helper import environ
-
-from chalicelib.core import tenants
-from chalicelib.core import signup
-from chalicelib.core import users
-from chalicelib.core import projects
-from chalicelib.core import errors
-from chalicelib.core import notifications
-from chalicelib.core import boarding
-from chalicelib.core import webhook
-from chalicelib.core import license
-from chalicelib.core.collaboration_slack import Slack
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
@@ -47,6 +45,7 @@ def login():
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -68,7 +67,8 @@ def get_account(context):
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },
             **license.get_status(context["tenantId"]),
-            "smtp": helper.has_smtp()
+            "smtp": helper.has_smtp(),
+            "iceServers": assist.get_ice_servers()
         }
     }
 

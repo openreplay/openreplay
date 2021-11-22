@@ -63,3 +63,4 @@ env:
   idp_sso_url: ''
   idp_x509cert: ''
   idp_sls_url: ''
+  iceServers: ''
