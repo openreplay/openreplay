@@ -10,7 +10,7 @@ from chalicelib.core import errors
 from chalicelib.core import errors_favorite_viewed
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
-from chalicelib.core import tenants, users, metadata, projects, license, signup, slack, alerts, notifications
+from chalicelib.core import tenants, users, metadata, projects, license, signup, slack, alerts, notifications, assist
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, SAML2_helper
@@ -60,6 +60,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
+    c["iceServers"]: assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -82,7 +83,8 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
             },
             **license.get_status(context.tenant_id),
             "smtp": helper.has_smtp(),
-            "saml2": SAML2_helper.is_saml2_available()
+            "saml2": SAML2_helper.is_saml2_available(),
+            "iceServers": assist.get_ice_servers()
         }
     }
 

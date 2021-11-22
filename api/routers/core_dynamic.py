@@ -1,10 +1,5 @@
-from typing import Union
-
-from decouple import config
-from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
-from starlette.responses import RedirectResponse
-
 import schemas
+from chalicelib.core import assist
 from chalicelib.core import boarding
 from chalicelib.core import errors
 from chalicelib.core import errors_favorite_viewed
@@ -16,8 +11,12 @@ from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
+from decouple import config
+from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from or_dependencies import OR_context
 from routers.base import get_routers
+from starlette.responses import RedirectResponse
+from typing import Union
 
 public_app, app, app_apikey = get_routers()
 
@@ -60,6 +59,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
+    c["iceServers"]: assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -81,7 +81,8 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
                 "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
             },
             **license.get_status(context.tenant_id),
-            "smtp": helper.has_smtp()
+            "smtp": helper.has_smtp(),
+            "iceServers": assist.get_ice_servers()
         }
     }
 
