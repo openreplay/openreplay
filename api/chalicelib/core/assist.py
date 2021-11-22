@@ -1,6 +1,6 @@
-from chalicelib.utils import pg_client, helper
-from chalicelib.core import projects, sessions, sessions_metas
 import requests
+from chalicelib.core import projects, sessions, sessions_metas
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.helper import environ
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -72,3 +72,8 @@ def is_live(project_id, session_id, project_key=None):
         return False
     connected_peers = connected_peers.json().get("data", [])
     return str(session_id) in connected_peers
+
+
+def get_ice_servers():
+    return environ.get("iceServers") if environ.get("iceServers") is not None \
+                                        and len(environ["iceServers"]) > 0 else None

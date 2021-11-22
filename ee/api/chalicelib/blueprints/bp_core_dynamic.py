@@ -16,6 +16,7 @@ from chalicelib.core import notifications
 from chalicelib.core import boarding
 from chalicelib.core import webhook
 from chalicelib.core import license
+from chalicelib.core import assist
 from chalicelib.core.collaboration_slack import Slack
 
 app = Blueprint(__name__)
@@ -48,6 +49,9 @@ def login():
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
+    c["smtp"] = helper.has_smtp()
+    c["iceServers"] = assist.get_ice_servers()
+
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -70,7 +74,8 @@ def get_account(context):
             },
             **license.get_status(context["tenantId"]),
             "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0,
-            "saml2": SAML2_helper.is_saml2_available()
+            "saml2": SAML2_helper.is_saml2_available(),
+            "iceServers": assist.get_ice_servers()
         }
     }
 
