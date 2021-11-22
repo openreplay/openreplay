@@ -1,22 +1,20 @@
 from chalice import Blueprint, Response
 
 from chalicelib import _overrides
-from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integration_github, \
-    integrations_manager
+from chalicelib.core import boarding
+from chalicelib.core import errors
+from chalicelib.core import license
+from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integrations_manager, assist
+from chalicelib.core import notifications
+from chalicelib.core import projects
+from chalicelib.core import signup
+from chalicelib.core import tenants
+from chalicelib.core import users
+from chalicelib.core import webhook
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, SAML2_helper
 from chalicelib.utils import helper
 from chalicelib.utils.helper import environ
-
-from chalicelib.core import tenants
-from chalicelib.core import signup
-from chalicelib.core import users
-from chalicelib.core import projects
-from chalicelib.core import errors
-from chalicelib.core import notifications
-from chalicelib.core import boarding
-from chalicelib.core import webhook
-from chalicelib.core import license
-from chalicelib.core.collaboration_slack import Slack
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
@@ -70,7 +68,8 @@ def get_account(context):
             },
             **license.get_status(context["tenantId"]),
             "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0,
-            "saml2": SAML2_helper.is_saml2_available()
+            "saml2": SAML2_helper.is_saml2_available(),
+            "iceServers": assist.get_ice_servers()
         }
     }
 

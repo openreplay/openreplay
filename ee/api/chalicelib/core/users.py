@@ -1,7 +1,7 @@
 import json
 import secrets
 
-from chalicelib.core import authorizers, metadata, projects
+from chalicelib.core import authorizers, metadata, projects, assist
 from chalicelib.core import tenants
 from chalicelib.utils import dev
 from chalicelib.utils import helper
@@ -450,6 +450,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -477,6 +478,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
