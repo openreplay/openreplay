@@ -69,7 +69,7 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
 
 
 @app.get('/{projectId}/sessions2/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
-def assign_session(projectId: int, sessionId: int, issueId: int,
+def assign_session(projectId: int, sessionId: int, issueId: str,
                    context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get(project_id=projectId, session_id=sessionId, assignment_id=issueId,
                                     tenant_id=context.tenant_id, user_id=context.user_id)
@@ -82,7 +82,7 @@ def assign_session(projectId: int, sessionId: int, issueId: int,
 
 @app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 @app.put('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
-def comment_assignment(projectId: int, sessionId: int, issueId: int, data: schemas.CommentAssignmentSchema = Body(...),
+def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.comment(tenant_id=context.tenant_id, project_id=projectId,
                                         session_id=sessionId, assignment_id=issueId,
@@ -730,7 +730,7 @@ def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.
 
 
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
-def get_issue_sessions(projectId: int, issueId: int, startDate: int = None, endDate: int = None,
+def get_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
                        context: schemas.CurrentContext = Depends(OR_context)):
     issue = issues.get(project_id=projectId, issue_id=issueId)
     return {
@@ -742,7 +742,7 @@ def get_issue_sessions(projectId: int, issueId: int, startDate: int = None, endD
 
 @app.post('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
-def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: int, data: schemas.FunnelSchema = Body(...),
+def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str, data: schemas.FunnelSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
                                    funnel_id=funnelId, data=data.dict())
