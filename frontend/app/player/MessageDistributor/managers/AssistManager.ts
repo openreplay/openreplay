@@ -117,7 +117,7 @@ function resolveCSS(baseURL: string, css: string): string {
 
 
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor) {}
+  constructor(private session, private config, private md: MessageDistributor) {}
 
 
   private setStatus(status: ConnectionStatus) {
@@ -149,7 +149,7 @@ export default class AssistManager {
     this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
       // @ts-ignore
-      const iceServers = iceServerConfigFromString(window.ENV.ICE_SERVERS);
+      const iceServers = iceServerConfigFromString(this.config);
       const _config = {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
