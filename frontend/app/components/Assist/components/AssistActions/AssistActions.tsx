@@ -35,7 +35,7 @@ interface Props {
 }
 
 function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus }: Props) {  
-  const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
+  const [ remoteStream, setRemoteStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ endCall, setEndCall ] = useState<()=>void>(()=>{});
 
@@ -55,7 +55,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       setLocalStream(lStream);
       setEndCall(() => callPeer(
         lStream,
-        setIncomeStream,
+        setRemoteStream,
         lStream.stop.bind(lStream),
         onReject,
         onError
@@ -104,7 +104,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         position="top right"
       />
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
-        { inCall && <ChatWindow endCall={endCall} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
+        { inCall && <ChatWindow endCall={endCall} userId={userId} remoteStream={remoteStream} localStream={localStream} /> }
       </div>
     </div>
   )

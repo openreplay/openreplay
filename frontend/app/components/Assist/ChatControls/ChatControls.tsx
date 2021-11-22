@@ -7,11 +7,12 @@ import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream
 
 interface Props {
   stream: LocalStream | null,
-  endCall: () => void
+  endCall: () => void,
+  videoEnabled: boolean,
+  setVideoEnabled: (boolean) => void
 }
-function ChatControls({ stream, endCall } : Props) {
+function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled } : Props) {
   const [audioEnabled, setAudioEnabled] = useState(true)
-  const [videoEnabled, setVideoEnabled] = useState(false)
 
   const toggleAudio = () => {
     if (!stream) { return; }
