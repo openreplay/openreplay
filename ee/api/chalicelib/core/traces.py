@@ -26,7 +26,7 @@ IGNORE_ROUTES = [
     {"method": ["GET"], "path": "/{projectId}/metadata"},
     {"method": ["GET"], "path": "/{projectId}/integration/sources"},
     {"method": ["GET"], "path": "/{projectId}/funnels"},
-    {"method": ["GET"], "path": re.compile("^/errors/*")},
+    {"method": ["GET"], "path": re.compile("^/{projectId}/errors/*")},
     {"method": ["GET"], "path": "/integrations/slack/channels"},
     {"method": ["GET"], "path": "/webhooks"},
     {"method": ["GET"], "path": "/{projectId}/alerts"},
