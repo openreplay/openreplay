@@ -3,7 +3,6 @@ urllib3==1.26.6
 boto3==1.16.1
 pyjwt==1.7.1
 psycopg2-binary==2.8.6
-pytz==2020.1
 elasticsearch==7.9.1
 jira==2.0.0
 
@@ -11,7 +10,6 @@ jira==2.0.0
 
 fastapi
 uvicorn[standard]
-PyJWT
 python-decouple
 pydantic[email]
 apscheduler
