@@ -23,7 +23,7 @@ class JWTAuth(HTTPBearer):
                     or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
                     or not users.auth_exists(user_id=jwt_payload["userId"], tenant_id=jwt_payload["tenantId"],
                                              jwt_iat=jwt_payload["iat"], jwt_aud=jwt_payload["aud"]):
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token or expired token.")
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
             user = users.get(user_id=jwt_payload["userId"], tenant_id=jwt_payload["tenantId"])
             if user is None:
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
