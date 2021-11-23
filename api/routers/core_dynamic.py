@@ -1,3 +1,9 @@
+from typing import Union
+
+from decouple import config
+from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
+from starlette.responses import RedirectResponse
+
 import schemas
 from chalicelib.core import assist
 from chalicelib.core import boarding
@@ -11,12 +17,8 @@ from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from decouple import config
-from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from or_dependencies import OR_context
 from routers.base import get_routers
-from starlette.responses import RedirectResponse
-from typing import Union
 
 public_app, app, app_apikey = get_routers()
 
@@ -466,3 +468,8 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
 def send_alerts_notifications(background_tasks: BackgroundTasks, data: schemas.AlertNotificationSchema = Body(...)):
     # TODO: validate token
     return {"data": alerts.process_notifications(data.notifications, background_tasks=background_tasks)}
+
+
+@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
+def get_general_stats():
+    return {"data": {"sessions:": sessions.count_all()}}

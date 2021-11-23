@@ -473,3 +473,8 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
 def send_alerts_notifications(background_tasks: BackgroundTasks, data: schemas.AlertNotificationSchema = Body(...)):
     # TODO: validate token
     return {"data": alerts.process_notifications(data.notifications, background_tasks=background_tasks)}
+
+
+@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
+def get_general_stats():
+    return {"data": {"sessions:": sessions.count_all()}}

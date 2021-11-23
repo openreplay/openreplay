@@ -742,7 +742,8 @@ def get_issue_sessions(projectId: int, issueId: str, startDate: int = None, endD
 
 @app.post('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
-def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str, data: schemas.FunnelSearchPayloadSchema = Body(...),
+def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
+                              data: schemas.FunnelSearchPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
                                    funnel_id=funnelId, data=data.dict())
@@ -828,11 +829,6 @@ def sessions_live_search(projectId: int, data: schemas.AssistSearchPayloadSchema
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": heatmaps.get_by_url(project_id=projectId, data=data.dict())}
-
-
-@public_app.get('/general_stats', tags=["private"], include_in_schema=False)
-def get_general_stats():
-    return {"data": {"sessions:": sessions.count_all()}}
 
 
 @app.post('/{projectId}/mobile/{sessionId}/urls', tags=['mobile'])
