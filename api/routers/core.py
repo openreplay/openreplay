@@ -742,7 +742,7 @@ def get_issue_sessions(projectId: int, issueId: str, startDate: int = None, endD
 
 @app.post('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/issues/{issueId}/sessions', tags=["funnels"])
-def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str, data: schemas.FunnelSchema = Body(...),
+def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str, data: schemas.FunnelSearchPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
                                    funnel_id=funnelId, data=data.dict())
