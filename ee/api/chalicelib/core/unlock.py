@@ -33,6 +33,6 @@ def get_expiration_date():
 
 
 def is_valid():
-    if config("lastCheck", default=None) is None:
+    if config("lastCheck", default=None) is None or (get_expiration_date() - TimeUTC.now()) <= 0:
         check()
     return get_expiration_date() - TimeUTC.now() > 0
