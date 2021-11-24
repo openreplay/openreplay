@@ -150,6 +150,8 @@ func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 
 
 func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	log.Printf("recieved imagerequest")
+
 	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
 		responseWithError(w, http.StatusUnauthorized, err)
@@ -184,6 +186,7 @@ func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 				continue // TODO: send server error or accumulate successful files
 			}
 			key := prefix + fileHeader.Filename
+			log.Printf("Uploading image... %v", key)
 			go func() {  //TODO: mime type from header
 				if err := s3.Upload(file, key, "image/jpeg", false); err != nil {
 					log.Printf("Upload ios screen error. %v", err)

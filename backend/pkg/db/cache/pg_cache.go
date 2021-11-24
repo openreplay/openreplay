@@ -2,6 +2,7 @@ package cache
 
 import  (
 	"time"
+	"sync"
 
 	"openreplay/backend/pkg/db/postgres"
 	. "openreplay/backend/pkg/db/types"
@@ -20,8 +21,8 @@ type ProjectMeta struct {
 type PGCache struct {
 	*postgres.Conn
 	sessions map[uint64]*Session
-	projects map[uint32]*ProjectMeta
-	projectsByKeys map[string]*ProjectMeta
+	projects  map[uint32]*ProjectMeta
+	projectsByKeys sync.Map // map[string]*ProjectMeta
 	projectExpirationTimeout time.Duration
 }
 
@@ -31,7 +32,7 @@ func NewPGCache(pgConn *postgres.Conn, projectExpirationTimeoutMs int64) *PGCach
 		Conn: pgConn,
 		sessions: make(map[uint64]*Session),
 		projects: make(map[uint32]*ProjectMeta),
-		projectsByKeys: make(map[string]*ProjectMeta),
+		//projectsByKeys: make(map[string]*ProjectMeta),
 		projectExpirationTimeout: time.Duration(1000 * projectExpirationTimeoutMs),
 	}
 }

@@ -450,7 +450,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]: assist.get_ice_servers()
+    c["iceServers"]= assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -478,7 +478,7 @@ def set_password_invitation(user_id, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]: assist.get_ice_servers()
+    c["iceServers"]= assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {

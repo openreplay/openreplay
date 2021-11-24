@@ -9,5 +9,5 @@ def sign_keys(project_id, session_id, keys):
     for k in keys:
         result.append(s3.get_presigned_url_for_sharing(bucket=config("iosBucket"),
                                                        key=f"{project_key}/{session_id}/{k}",
-                                                       expires_in=10 * 60))
+                                                       expires_in=60 * 60))
     return result

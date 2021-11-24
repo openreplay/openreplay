@@ -204,7 +204,7 @@ Pipfile
 /chalicelib/core/log_tool_sentry.py
 /chalicelib/core/log_tool_stackdriver.py
 /chalicelib/core/log_tool_sumologic.py
-/chalicelib/core/sessions.py
+/chalicelib/core/mobile.py
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_favorite_viewed.py
 /chalicelib/core/sessions_metas.py
@@ -215,7 +215,6 @@ Pipfile
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
 /chalicelib/core/weekly_report.py
-/chalicelib/core/mobile.py
 /chalicelib/saml
 /chalicelib/utils/html/
 /chalicelib/utils/__init__.py
