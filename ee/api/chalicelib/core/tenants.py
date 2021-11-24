@@ -1,6 +1,6 @@
-from chalicelib.utils import pg_client
-from chalicelib.utils import helper
 from chalicelib.core import users
+from chalicelib.utils import helper
+from chalicelib.utils import pg_client
 
 
 def get_by_tenant_key(tenant_key):

@@ -294,7 +294,7 @@ def generate_new_api_key(user_id):
 
 
 def edit(user_id_to_update, tenant_id, changes, editor_id):
-    ALLOW_EDIT = ["name", "email", "admin", "appearance","roleId"]
+    ALLOW_EDIT = ["name", "email", "admin", "appearance", "roleId"]
     user = get(user_id=user_id_to_update, tenant_id=tenant_id)
     if editor_id != user_id_to_update or "admin" in changes and changes["admin"] != user["admin"]:
         admin = get(tenant_id=tenant_id, user_id=editor_id)
