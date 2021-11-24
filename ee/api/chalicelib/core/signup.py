@@ -69,10 +69,10 @@ def create_step1(data):
                     RETURNING tenant_id, api_key
             ),
                  r AS (
-                     INSERT INTO public.roles(tenant_id, name, description, permissions)
-                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'The company''s owner', '{}'::text[]),
-                               ((SELECT tenant_id FROM t), 'Admin', 'Admin member', '{}'::text[]),
-                               ((SELECT tenant_id FROM t), 'Member', 'A member', '{}'::text[])
+                     INSERT INTO public.roles(tenant_id, name, description, permissions, protected)
+                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'The company''s owner', '{}'::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Admin', 'Admin member', '{}'::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Member', 'A member', '{}'::text[], TRUE)
                         RETURNING *
                  ),
                  u AS (
