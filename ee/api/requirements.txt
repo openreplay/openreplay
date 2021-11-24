@@ -5,7 +5,7 @@ pyjwt==1.7.1
 psycopg2-binary==2.8.6
 elasticsearch==7.9.1
 jira==2.0.0
-
+clickhouse-driver==0.2.2
 
 
 fastapi
