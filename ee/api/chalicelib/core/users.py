@@ -1,26 +1,27 @@
 import json
+import secrets
 
+from chalicelib.core import assist
 from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants
+from chalicelib.utils import dev
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from chalicelib.utils import dev
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.helper import environ
-import secrets
 
 
 def __generate_invitation_token():
     return secrets.token_urlsafe(64)
 
 
-def create_new_member(tenant_id, email, invitation_token, admin, name, owner=False):
+def create_new_member(tenant_id, email, invitation_token, admin, name, owner=False, role_id=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH u AS (
-                        INSERT INTO public.users (tenant_id, email, role, name, data)
-                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s)
-                            RETURNING user_id,email,role,name,appearance
+                        INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
+                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(role_id)s)
+                            RETURNING user_id,email,role,name,appearance, role_id
                     ),
                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
                              VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
@@ -35,19 +36,20 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           au.invitation_token
+                           au.invitation_token,
+                           u.role_id
                     FROM u,au;""",
                             {"tenantId": tenant_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-                             "invitation_token": invitation_token})
+                             "invitation_token": invitation_token, "role_id": role_id})
         cur.execute(
             query
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def restore_member(tenant_id, user_id, email, invitation_token, admin, name, owner=False):
+def restore_member(tenant_id, user_id, email, invitation_token, admin, name, owner=False, role_id=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     UPDATE public.users
@@ -56,7 +58,8 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                         deleted_at= NULL,
                         created_at = timezone('utc'::text, now()),
                         tenant_id= %(tenant_id)s,
-                        api_key= generate_api_key(20)
+                        api_key= generate_api_key(20),
+                        role_id= %(role_id)s
                     WHERE user_id=%(user_id)s
                     RETURNING user_id                                           AS id,
                            email,
@@ -65,9 +68,11 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                            TRUE                                                 AS change_password,
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
+                           (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                           role_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, "email": email,
-                             "role": "owner" if owner else "admin" if admin else "member", "name": name})
+                             "role": "owner" if owner else "admin" if admin else "member", "name": name,
+                             "role_id": role_id})
         cur.execute(
             query
         )
@@ -157,7 +162,8 @@ def update(tenant_id, user_id, changes):
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.appearance;""",
+                                users.appearance,
+                                users.role_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -198,14 +204,15 @@ def create_member(tenant_id, user_id, data):
         return {"errors": ["invalid user name"]}
     if name is None:
         name = data["email"]
+    role_id = data.get("roleId")
     invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
         new_member = restore_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                    admin=data.get("admin", False), name=name, user_id=user["userId"])
+                                    admin=data.get("admin", False), name=name, user_id=user["userId"], role_id=role_id)
     else:
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
-                                       admin=data.get("admin", False), name=name)
+                                       admin=data.get("admin", False), name=name, role_id=role_id)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
     helper.async_post(environ['email_basic'] % 'member_invitation',
                       {
@@ -280,7 +287,7 @@ def generate_new_api_key(user_id):
 
 
 def edit(user_id_to_update, tenant_id, changes, editor_id):
-    ALLOW_EDIT = ["name", "email", "admin", "appearance"]
+    ALLOW_EDIT = ["name", "email", "admin", "appearance","roleId"]
     user = get(user_id=user_id_to_update, tenant_id=tenant_id)
     if editor_id != user_id_to_update or "admin" in changes and changes["admin"] != user["admin"]:
         admin = get(tenant_id=tenant_id, user_id=editor_id)
@@ -450,7 +457,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]= assist.get_ice_servers()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -478,7 +485,7 @@ def set_password_invitation(tenant_id, user_id, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]= assist.get_ice_servers()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -597,7 +604,8 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                     users.appearance,
-                    users.origin
+                    users.origin,
+                    users.role_id
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
@@ -637,7 +645,8 @@ def authenticate_sso(email, internal_id, exp=None):
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                     users.appearance,
-                    origin
+                    origin,
+                    role_id
                 FROM public.users AS users
                 WHERE users.email = %(email)s AND internal_id = %(internal_id)s;""",
             {"email": email, "internal_id": internal_id})
