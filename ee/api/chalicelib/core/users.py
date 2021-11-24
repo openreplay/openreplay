@@ -383,7 +383,8 @@ def get_members(tenant_id):
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
                         basic_authentication.password IS NOT NULL AS joined,
-                        invitation_token
+                        invitation_token,
+                        role_id
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id 
                     WHERE users.tenant_id = %(tenantId)s AND users.deleted_at IS NULL
                     ORDER BY name, id""",
