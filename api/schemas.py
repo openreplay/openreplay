@@ -142,6 +142,9 @@ class AssignmentSchema(BaseModel):
     title: str = Field(...)
     issue_type: str = Field(...)
 
+    class Config:
+        alias_generator = key_to_camel_case
+
 
 class CommentAssignmentSchema(BaseModel):
     message: str = Field(...)
@@ -260,6 +263,9 @@ class MemberInvitationPayloadSchema(BaseModel):
     client_id: str = Field(...)
     sender_name: str = Field(...)
 
+    class Config:
+        alias_generator = key_to_camel_case
+
 
 class ErrorIdsPayloadSchema(BaseModel):
     errors: List[str] = Field([])
@@ -353,6 +359,9 @@ class MetricPayloadSchema(BaseModel):
     density: int = Field(7)
     filters: List[dict] = Field([])
     type: Optional[str] = Field(None)
+
+    class Config:
+        alias_generator = key_to_camel_case
 
 
 class AssistSearchPayloadSchema(BaseModel):
