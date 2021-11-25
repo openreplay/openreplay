@@ -252,7 +252,6 @@ Pipfile
 /entrypoint.bundle.sh
 /entrypoint.sh
 /chalicelib/core/heatmaps.py
-/chalicelib/core/insights.py
 /routers/subs/insights.py
 /schemas.py
 /chalicelib/blueprints/app/v1_api.py
