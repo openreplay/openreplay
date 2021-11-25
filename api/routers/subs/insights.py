@@ -16,67 +16,67 @@ def get_insights_journey(projectId: int, data: schemas.MetricPayloadSchema = Bod
 @app.post('/{projectId}/insights/users_acquisition', tags=["insights"])
 @app.get('/{projectId}/insights/users_acquisition', tags=["insights"])
 def get_users_acquisition(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.users_acquisition(project_id=projectId, **data)}
+    return {"data": insights.users_acquisition(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/users_retention', tags=["insights"])
 @app.get('/{projectId}/insights/users_retention', tags=["insights"])
 def get_users_retention(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.users_retention(project_id=projectId, **data)}
+    return {"data": insights.users_retention(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/feature_retention', tags=["insights"])
 @app.get('/{projectId}/insights/feature_retention', tags=["insights"])
 def get_feature_rentention(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.feature_retention(project_id=projectId, **data)}
+    return {"data": insights.feature_retention(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/feature_acquisition', tags=["insights"])
 @app.get('/{projectId}/insights/feature_acquisition', tags=["insights"])
 def get_feature_acquisition(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.feature_acquisition(project_id=projectId, **data)}
+    return {"data": insights.feature_acquisition(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/feature_popularity_frequency', tags=["insights"])
 @app.get('/{projectId}/insights/feature_popularity_frequency', tags=["insights"])
 def get_feature_popularity_frequency(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.feature_popularity_frequency(project_id=projectId, **data)}
+    return {"data": insights.feature_popularity_frequency(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/feature_intensity', tags=["insights"])
 @app.get('/{projectId}/insights/feature_intensity', tags=["insights"])
 def get_feature_intensity(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.feature_intensity(project_id=projectId, **data)}
+    return {"data": insights.feature_intensity(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/feature_adoption', tags=["insights"])
 @app.get('/{projectId}/insights/feature_adoption', tags=["insights"])
 def get_feature_adoption(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.feature_adoption(project_id=projectId, **data)}
+    return {"data": insights.feature_adoption(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/feature_adoption_top_users', tags=["insights"])
 @app.get('/{projectId}/insights/feature_adoption_top_users', tags=["insights"])
 def get_feature_adoption(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.feature_adoption_top_users(project_id=projectId, **data)}
+    return {"data": insights.feature_adoption_top_users(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/users_active', tags=["insights"])
 @app.get('/{projectId}/insights/users_active', tags=["insights"])
 def get_users_active(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.users_active(project_id=projectId, **data)}
+    return {"data": insights.users_active(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/users_power', tags=["insights"])
 @app.get('/{projectId}/insights/users_power', tags=["insights"])
 def get_users_power(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.users_power(project_id=projectId, **data)}
+    return {"data": insights.users_power(project_id=projectId, **data.dict())}
 
 
 @app.post('/{projectId}/insights/users_slipping', tags=["insights"])
 @app.get('/{projectId}/insights/users_slipping', tags=["insights"])
 def get_users_slipping(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": insights.users_slipping(project_id=projectId, **data)}
+    return {"data": insights.users_slipping(project_id=projectId, **data.dict())}
 
 #
 #
