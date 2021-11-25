@@ -3,6 +3,7 @@ from typing import Callable
 
 from fastapi.routing import APIRoute
 from starlette import status
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
@@ -21,7 +22,14 @@ class ORRoute(APIRoute):
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
-            response: Response = await original_route_handler(request)
+            try:
+                response: Response = await original_route_handler(request)
+            except HTTPException as e:
+                if e.status_code // 100 == 4:
+                    return JSONResponse(content={"errors": [e.detail]}, status_code=e.status_code)
+                else:
+                    raise e
+
             if isinstance(response, JSONResponse):
                 response: JSONResponse = response
                 body = json.loads(response.body.decode('utf8'))
