@@ -20,7 +20,8 @@ def get_roles(context):
 @app.route('/client/roles', methods=['POST', 'PUT'])
 def add_role(context):
     data = app.current_request.json_body
-    data = roles.create(tenant_id=context['tenantId'], user_id=context['userId'], **data)
+    data = roles.create(tenant_id=context['tenantId'], user_id=context['userId'], name=data["name"],
+                        description=data.get("description"), permissions=data["permissions"])
     if "errors" in data:
         return data
 
