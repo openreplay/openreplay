@@ -33,6 +33,7 @@ import announcements from './announcements';
 import errors from './errors';
 import funnels from './funnels';
 import config from './config';
+import roles from './roles';
 
 export default combineReducers({
   jwt,
@@ -66,6 +67,7 @@ export default combineReducers({
   errors,
   funnels,
   config,
+  roles,
   ...integrations,
   ...sources,
 });

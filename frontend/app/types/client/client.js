@@ -10,7 +10,8 @@ export default Record({
   tenantId: undefined,
   name: undefined,
   sites: List(),
-  optOut: true
+  optOut: true,
+  edition: '',
 }, {
   fromJS: ({
     projects,

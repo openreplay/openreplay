@@ -52,5 +52,6 @@ export { default as QuestionMarkHint } from './QuestionMarkHint';
 export { default as TimelinePointer } from './TimelinePointer';
 export { default as CopyButton } from './CopyButton';
 export { default as HighlightCode } from './HighlightCode';
+export { default as NoPermission } from './NoPermission';
 
 export { Input, Modal, Form, Message, Card } from 'semantic-ui-react';

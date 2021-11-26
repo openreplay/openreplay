@@ -15,6 +15,7 @@ import styles from './client.css';
 import cn from 'classnames';
 import PreferencesMenu from './PreferencesMenu';
 import Notifications from './Notifications';
+import Roles from './Roles';
 
 @connect((state) => ({
   appearance: state.getIn([ 'user', 'account', 'appearance' ]),
@@ -42,6 +43,7 @@ export default class Client extends React.PureComponent {
       <Route exact strict path={ clientRoute(CLIENT_TABS.CUSTOM_FIELDS) } component={ CustomFields } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.WEBHOOKS) } component={ Webhooks } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.NOTIFICATIONS) } component={ Notifications } />
+      <Route exact strict path={ clientRoute(CLIENT_TABS.MANAGE_ROLES) } component={ Roles } />
       <Redirect to={ clientRoute(CLIENT_TABS.PROFILE) } />
     </Switch>
   )

@@ -60,6 +60,7 @@ export const CLIENT_TABS = {
   INTEGRATIONS: 'integrations',
   PROFILE: 'account',
   MANAGE_USERS: 'manage-users',
+  MANAGE_ROLES: 'manage-roles',
   SITES: 'projects',  
   CUSTOM_FIELDS: 'metadata',
   WEBHOOKS: 'webhooks',
