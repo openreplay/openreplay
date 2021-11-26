@@ -39,8 +39,6 @@ const RoleForm = ({ role, closeModal, edit, save, saving, permissions }: Props) 
     focusElement && focusElement.current && focusElement.current.focus()
   }, [])
 
-  console.log('role.permissions', role.permissions)
-
   return (
     <div className={ stl.form }>
       <form onSubmit={ _save } >

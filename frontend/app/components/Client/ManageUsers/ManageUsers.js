@@ -82,7 +82,6 @@ class ManageUsers extends React.PureComponent {
   
   formContent = (member, account, roles) => {
     const options = roles.map(r => ({ text: r.name, value: r.roleId })).toJS();
-    console.log('options', options)
 
     return (
       <div className={ styles.form }>

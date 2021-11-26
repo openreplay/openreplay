@@ -34,7 +34,6 @@ function Roles(props: Props) {
   }
 
   const editHandler = role => {
-    console.log('role', role)
     init(role)
     setShowmModal(true)
   }
