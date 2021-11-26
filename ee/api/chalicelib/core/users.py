@@ -183,7 +183,8 @@ def update(tenant_id, user_id, changes):
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.appearance;""",
+                                users.appearance,
+                                users.role_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
 
@@ -257,7 +258,8 @@ def get(user_id, tenant_id):
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         appearance,
                         api_key,
-                        origin
+                        origin,
+                        role_id
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
                     WHERE
                      users.user_id = %(userId)s
@@ -556,7 +558,7 @@ def get_by_invitation_token(token, pass_token=None):
                     FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                     WHERE invitation_token = %(token)s {"AND change_pwd_token = %(pass_token)s" if pass_token else ""}
                     LIMIT 1;""",
-                {"token": token, "pass_token": token})
+                {"token": token, "pass_token": pass_token})
         )
         r = cur.fetchone()
     return helper.dict_to_camel_case(r)

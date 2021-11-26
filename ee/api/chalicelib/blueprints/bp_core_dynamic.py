@@ -386,7 +386,7 @@ def change_password_by_invitation():
     data = app.current_request.json_body
     if data is None or len(data.get("invitation", "")) < 64 or len(data.get("pass", "")) < 8:
         return {"errors": ["please provide a valid invitation & pass"]}
-    user = users.get_by_invitation_token(token=data["token"], pass_token=data["pass"])
+    user = users.get_by_invitation_token(token=data["invitation"], pass_token=data["pass"])
     if user is None:
         return {"errors": ["invitation not found"]}
     if user["expiredChange"]:
