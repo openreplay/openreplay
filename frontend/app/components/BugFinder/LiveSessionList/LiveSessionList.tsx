@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { NoContent, Loader } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
+import withPermissions from 'HOCs/withPermissions'
 
 const AUTOREFRESH_INTERVAL = 1 * 60 * 1000
 
@@ -60,8 +61,13 @@ function LiveSessionList(props: Props) {
   )
 }
 
-export default connect(state => ({
-  list: state.getIn(['sessions', 'liveSessions']),
-  loading: state.getIn([ 'sessions', 'loading' ]),
-  filters: state.getIn([ 'filters', 'appliedFilter' ]),
-}), { fetchList })(LiveSessionList)
+export default withPermissions(['ASSIST_LIVE'])(connect(
+  (state) => ({
+    list: state.getIn(['sessions', 'liveSessions']),
+    loading: state.getIn([ 'sessions', 'loading' ]),
+    filters: state.getIn([ 'filters', 'appliedFilter' ]),
+  }),
+  {
+    fetchList
+  }
+)(LiveSessionList));
