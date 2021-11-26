@@ -259,8 +259,11 @@ def get(user_id, tenant_id):
                         appearance,
                         api_key,
                         origin,
-                        role_id
-                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
+                        role_id,
+                        roles.name AS role_name,
+                        roles.permissions
+                    FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
+                        LEFT JOIN public.roles USING (role_id)
                     WHERE
                      users.user_id = %(userId)s
                      AND tenant_id = %(tenantId)s
@@ -387,8 +390,7 @@ def get_members(tenant_id):
                         basic_authentication.password IS NOT NULL AS joined,
                         invitation_token,
                         role_id,
-                        roles.name AS role_name,
-                        roles.permissions
+                        roles.name AS role_name
                     FROM public.users 
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
@@ -612,8 +614,11 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                     users.appearance,
                     users.origin,
-                    users.role_id
+                    users.role_id,
+                    roles.name AS role_name,
+                    roles.permissions
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
+                    LEFT JOIN public.roles USING (role_id)
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
                     AND basic_authentication.user_id = (SELECT su.user_id FROM public.users AS su WHERE su.email=%(email)s AND su.deleted_at IS NULL LIMIT 1)
