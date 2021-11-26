@@ -1,7 +1,6 @@
 package cache
 
 import  (
-	"log"
 	"time"
 	. "openreplay/backend/pkg/db/types"
 )
