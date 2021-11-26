@@ -267,9 +267,8 @@ def get(user_id, tenant_id):
                     WHERE
                      users.user_id = %(userId)s
                      AND users.tenant_id = %(tenantId)s
-                     AND roles.tenant_id = %(tenantId)s
                      AND users.deleted_at IS NULL
-                     AND (roles.role_id IS NULL or roles.deleted_at IS NULL) 
+                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenantId)s) 
                     LIMIT 1;""",
                 {"userId": user_id, "tenantId": tenant_id})
         )
@@ -624,6 +623,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
                     AND basic_authentication.user_id = (SELECT su.user_id FROM public.users AS su WHERE su.email=%(email)s AND su.deleted_at IS NULL LIMIT 1)
+                    AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenantId)s)
                 LIMIT 1;""",
             {"email": email, "password": password})
 
