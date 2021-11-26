@@ -1,7 +1,9 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { IconButton, SlideModal, Input, Button, Loader, NoContent, Popup, CopyButton } from 'UI';
+import { 
+  IconButton, SlideModal, Input, Button, Loader,
+  NoContent, Popup, CopyButton, Dropdown } from 'UI';
 import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import styles from './manageUsers.css';
 import UserItem from './UserItem';
@@ -19,6 +21,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   errors: state.getIn([ 'members', 'saveRequest', 'errors' ]),
   loading: state.getIn([ 'members', 'loading' ]),
   saving: state.getIn([ 'members', 'saveRequest', 'loading' ]),
+  roles: state.getIn(['roles', 'list'])
 }), {
   init,
   save,
@@ -31,6 +34,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
 class ManageUsers extends React.PureComponent {
   state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining, invited: false }
 
+  // writeOption = (e, { name, value }) => this.props.edit({ [ name ]: value });
   onChange = (e, { name, value }) => this.props.edit({ [ name ]: value });
   onChangeCheckbox = ({ target: { checked, name } }) => this.props.edit({ [ name ]: checked });
   setFocus = () => this.focusElement.focus();
@@ -76,81 +80,98 @@ class ManageUsers extends React.PureComponent {
       });
   }
   
-  formContent = (member, account) => (
-    <div className={ styles.form }>
-      <form onSubmit={ this.save } >
-        <div className={ styles.formGroup }>
-          <label>{ 'Full Name' }</label>
-          <Input
-            ref={ (ref) => { this.focusElement = ref; } }
-            name="name"
-            value={ member.name }
-            onChange={ this.onChange }
-            className={ styles.input }
-            id="name-field"
-          />
-        </div>
+  formContent = (member, account, roles) => {
+    const options = roles.map(r => ({ text: r.name, value: r.roleId })).toJS();
+    console.log('options', options)
 
-        <div className={ styles.formGroup }>
-          <label>{ 'Email Address' }</label>
-          <Input
-            disabled={member.exists()}
-            name="email"
-            value={ member.email }
-            onChange={ this.onChange }
-            className={ styles.input }
-          />
-        </div>
-        { !account.smtp &&
-          <div className={cn("mb-4 p-2", styles.smtpMessage)}>
-            SMTP is not configured. Please follow (see <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">here</a> how to set it up).  You can still add new users, but you’d have to manually copy then send them the invitation link.
-          </div>
-        }
-        <div className={ styles.formGroup }>
-          <label className={ styles.checkbox }>
-            <input
-              name="admin"
-              type="checkbox"
-              value={ member.admin }
-              checked={ !!member.admin }
-              onChange={ this.onChangeCheckbox }
-              disabled={member.superAdmin}
+    return (
+      <div className={ styles.form }>
+        <form onSubmit={ this.save } >
+          <div className={ styles.formGroup }>
+            <label>{ 'Full Name' }</label>
+            <Input
+              ref={ (ref) => { this.focusElement = ref; } }
+              name="name"
+              value={ member.name }
+              onChange={ this.onChange }
+              className={ styles.input }
+              id="name-field"
             />
-            <span>{ 'Admin' }</span>
-          </label>
-          <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
-        </div>
-      </form>
+          </div>
 
-      <div className="flex items-center">
-        <div className="flex items-center mr-auto">
-          <Button
-            onClick={ this.save }    
-            disabled={ !member.validate() }
-            loading={ this.props.saving }
-            primary
-            marginRight
-          >
-            { member.exists() ? 'Update' : 'Invite' }
-          </Button>
-          <Button
-            data-hidden={ !member.exists() }
-            onClick={ this.closeModal }
-            outline
-          >
-            { 'Cancel' }
-          </Button>
+          <div className={ styles.formGroup }>
+            <label>{ 'Email Address' }</label>
+            <Input
+              disabled={member.exists()}
+              name="email"
+              value={ member.email }
+              onChange={ this.onChange }
+              className={ styles.input }
+            />
+          </div>
+          { !account.smtp &&
+            <div className={cn("mb-4 p-2", styles.smtpMessage)}>
+              SMTP is not configured. Please follow (see <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">here</a> how to set it up).  You can still add new users, but you’d have to manually copy then send them the invitation link.
+            </div>
+          }
+          <div className={ styles.formGroup }>
+            <label className={ styles.checkbox }>
+              <input
+                name="admin"
+                type="checkbox"
+                value={ member.admin }
+                checked={ !!member.admin }
+                onChange={ this.onChangeCheckbox }
+                disabled={member.superAdmin}
+              />
+              <span>{ 'Admin' }</span>
+            </label>
+            <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
+          </div>
+
+          <div className={ styles.formGroup }>
+            <label htmlFor="role">{ 'Role' }</label>
+            <Dropdown
+              placeholder="Role"
+              selection
+              options={ options }
+              name="roleId"
+              value={ member.roleId }
+              onChange={ this.onChange }
+            />
+          </div>
+        </form>
+
+        <div className="flex items-center">
+          <div className="flex items-center mr-auto">
+            <Button
+              onClick={ this.save }    
+              disabled={ !member.validate() }
+              loading={ this.props.saving }
+              primary
+              marginRight
+            >
+              { member.exists() ? 'Update' : 'Invite' }
+            </Button>
+            <Button
+              data-hidden={ !member.exists() }
+              onClick={ this.closeModal }
+              outline
+            >
+              { 'Cancel' }
+            </Button>
+          </div>
+          { !member.joined && member.invitationLink &&
+            <CopyButton
+              content={member.invitationLink}
+              className="link"
+              btnText="Copy invite link"
+            />
+          }
         </div>
-        { !member.joined && member.invitationLink &&
-          <CopyButton
-            content={member.invitationLink}
-            className="link"
-            btnText="Copy invite link"
-          />
-        }
       </div>
-    </div>
-  )
+    )
+  }
 
   init = (v) => {
     this.props.init(v);
@@ -160,7 +181,7 @@ class ManageUsers extends React.PureComponent {
 
   render() {
     const {
-      members, member, loading, account, hideHeader = false,
+      members, member, loading, account, hideHeader = false, roles
     } = this.props;
     const { showModal, remaining, invited } = this.state;
     const isAdmin = account.admin || account.superAdmin;
@@ -173,7 +194,7 @@ class ManageUsers extends React.PureComponent {
             title="Inivte People"
             size="small"
             isDisplayed={ showModal }
-            content={ this.formContent(member, account) }
+            content={ this.formContent(member, account, roles) }
             onClose={ this.closeModal }
           />
           <div className={ styles.wrapper }>

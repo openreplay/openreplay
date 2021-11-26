@@ -1,5 +1,6 @@
 import { connect } from 'react-redux';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';
+import withPermissions from 'HOCs/withPermissions'
 import { UNRESOLVED, RESOLVED, IGNORED } from "Types/errorInfo";
 import { getRE } from 'App/utils';
 import { fetchBookmarks } from "Duck/errors";
@@ -33,6 +34,7 @@ function getStatusLabel(status) {
 	}
 }
 
+@withPermissions(['ERRORS'], 'page-margin container-90')
 @withSiteIdRouter
 @connect(state => ({
 	list: state.getIn([ "errors", "list" ]),

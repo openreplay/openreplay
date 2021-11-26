@@ -11,7 +11,8 @@ export default Record({
   superAdmin: false,
   joined: false,
   expiredInvitation: false,
-  invitationLink: ''
+  roleId: undefined,
+  invitationLink: '',
 }, {
   idKey: 'id',
   methods: {

@@ -73,7 +73,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
             className={
               cn(
                 'cursor-pointer p-2 mr-2 flex items-center',
-                {[stl.inCall] : inCall },
+                // {[stl.inCall] : inCall },
                 {[stl.disabled]: peerConnectionStatus !== ConnectionStatus.Connected}
               )
             }

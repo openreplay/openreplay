@@ -9,7 +9,6 @@ function FunnelDropdown(props) {
 
   const writeOption = (e, { name, value }) => {
     const { siteId, history } = props;
-    console.log(value)    
     history.push(withSiteId(funnelRoute(parseInt(value)), siteId));
   }
 
