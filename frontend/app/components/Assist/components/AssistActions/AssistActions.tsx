@@ -32,9 +32,11 @@ interface Props {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
   remoteControlEnabled: boolean,
+  hasPermission: boolean,
+  isEnterprise: boolean,
 }
 
-function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlEnabled }: Props) {  
+function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlEnabled, hasPermission, isEnterprise }: Props) {  
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ callObject, setCallObject ] = useState<{ end: ()=>void, toggleRemoteControl: ()=>void } | null >(null);
@@ -64,6 +66,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
   }
 
   const inCall = calling !== CallingState.False;
+  const cannotCall = (peerConnectionStatus !== ConnectionStatus.Connected) || (isEnterprise && !hasPermission)
 
   return (
     <div className="flex items-center">
@@ -74,7 +77,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               cn(
                 'cursor-pointer p-2 mr-2 flex items-center',
                 // {[stl.inCall] : inCall },
-                {[stl.disabled]: peerConnectionStatus !== ConnectionStatus.Connected}
+                {[stl.disabled]: cannotCall}
               )
             }
             onClick={ inCall ? callObject?.end : call}
@@ -118,7 +121,13 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
   )
 }
 
-const con = connect(null, { toggleChatWindow })
+const con = connect(state => {
+  const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || []
+  return {
+    hasPermission: permissions.includes('ASSIST_CALL'),
+    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  }
+}, { toggleChatWindow })
 
 export default con(connectPlayer(state => ({
   calling: state.calling,
