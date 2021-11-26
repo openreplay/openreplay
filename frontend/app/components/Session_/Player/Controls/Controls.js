@@ -97,12 +97,17 @@ function getStorageName(type) {
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
 }))
-@connect((state, props) => ({  
-  fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-  bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
-  showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
-  showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
-}), {
+@connect((state, props) => {  
+  const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
+  const isEnterprise = state.getIn([ 'user', 'client', 'edition' ]) === 'ee';
+  return {
+    disabled: props.disabled || (isEnterprise && !permissions.includes('DEV_TOOLS')),
+    fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+    bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
+    showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
+    showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
+  }
+}, {
   fullscreenOn,
   fullscreenOff,
   toggleBottomBlock,
