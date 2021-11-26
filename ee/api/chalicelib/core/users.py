@@ -251,7 +251,7 @@ def get(user_id, tenant_id):
                         users.user_id AS id,
                         email, 
                         role, 
-                        name, 
+                        users.name, 
                         basic_authentication.generated_password,
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
