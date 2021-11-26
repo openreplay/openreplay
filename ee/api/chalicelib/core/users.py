@@ -266,8 +266,10 @@ def get(user_id, tenant_id):
                         LEFT JOIN public.roles USING (role_id)
                     WHERE
                      users.user_id = %(userId)s
-                     AND tenant_id = %(tenantId)s
-                     AND deleted_at IS NULL
+                     AND users.tenant_id = %(tenantId)s
+                     AND roles.tenant_id = %(tenantId)s
+                     AND users.deleted_at IS NULL
+                     AND (roles.role_id IS NULL or roles.deleted_at IS NULL) 
                     LIMIT 1;""",
                 {"userId": user_id, "tenantId": tenant_id})
         )
