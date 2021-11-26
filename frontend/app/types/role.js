@@ -7,7 +7,7 @@ export default Record({
   name: '',
   permissions: List(),
   protected: false,
-  description: 'test'
+  description: ''
 }, {
   idKey: 'roleId',
   methods: {
