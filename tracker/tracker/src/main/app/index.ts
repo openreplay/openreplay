@@ -1,15 +1,15 @@
-import { timestamp, log, warn } from '../utils';
-import { Timestamp, PageClose } from '../../messages';
-import Message from '../../messages/message';
-import Nodes from './nodes';
-import Observer from './observer';
-import Ticker from './ticker';
+import { timestamp, log, warn } from "../utils.js";
+import { Timestamp, PageClose } from "../../messages/index.js";
+import Message from "../../messages/message.js";
+import Nodes from "./nodes.js";
+import Observer from "./observer.js";
+import Ticker from "./ticker.js";
 
-import { deviceMemory, jsHeapSizeLimit } from '../modules/performance';
+import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 
-import type { Options as ObserverOptions } from './observer';
+import type { Options as ObserverOptions } from "./observer.js";
 
-import type { Options as WebworkerOptions, WorkerMessageData } from '../../messages/webworker';
+import type { Options as WebworkerOptions, WorkerMessageData } from "../../messages/webworker.js";
 
 interface OnStartInfo {
   sessionID: string, 

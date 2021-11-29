@@ -1,7 +1,7 @@
-import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from '../utils';
-import App from '../app';
-import { MouseMove, MouseClick } from '../../messages';
-import { getInputLabel } from './input';
+import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from "../utils.js";
+import App from "../app/index.js";
+import { MouseMove, MouseClick } from "../../messages/index.js";
+import { getInputLabel } from "./input.js";
 
 function _getSelector(target: Element): string {
   let el: Element | null = target

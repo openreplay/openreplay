@@ -1,6 +1,6 @@
-import { timestamp, isURL } from '../utils';
-import App from '../app';
-import { ResourceTiming, SetNodeAttributeURLBased } from '../../messages';
+import { timestamp, isURL } from "../utils.js";
+import App from "../app/index.js";
+import { ResourceTiming, SetNodeAttributeURLBased } from "../../messages/index.js";
 
 export default function (app: App): void {
   const sendImgSrc = app.safe(function (this: HTMLImageElement): void {

@@ -1,6 +1,6 @@
-import App from '../app';
-import { IN_BROWSER } from '../utils';
-import { ConsoleLog } from '../../messages';
+import App from "../app/index.js";
+import { IN_BROWSER } from "../utils.js";
+import { ConsoleLog } from "../../messages/index.js";
 
 const printError: (e: Error) => string =
   IN_BROWSER && 'InstallTrigger' in window // detect Firefox
