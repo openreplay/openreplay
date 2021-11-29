@@ -274,7 +274,10 @@ export default class App {
       .then(r => {
         if (r.status === 200) {
           return r.json()
-        } else { // TODO: handle canceling && 403
+        } else if (r.status === 403) {
+          warn("OpenReplay tracking has been cancelled");
+          this.stop();
+        } else {
           return r.text().then(text => {
             throw new Error(`Server error: ${r.status}. ${text}`);
           });
