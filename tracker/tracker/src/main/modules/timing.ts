@@ -122,7 +122,7 @@ export default function (app: App, opts: Partial<Options>): void {
   let resources: ResourcesTimeMap | null = {}
 
   function resourceTiming(entry: PerformanceResourceTiming): void {
-    if (entry.duration <= 0 || !isURL(entry.name) || app.isServiceURL(entry.name)) return;
+    if (entry.duration < 0 || !isURL(entry.name) || app.isServiceURL(entry.name)) return;
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration;
     }

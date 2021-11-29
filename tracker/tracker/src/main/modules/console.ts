@@ -138,7 +138,7 @@ export default function (app: App, opts: Partial<Options>): void {
     });
   patchConsole(window.console);
 
-  app.nodes.attachNodeCallback(node => {
+  app.nodes.attachNodeCallback(app.safe(node => {
     if (node instanceof HTMLIFrameElement) {
       let context = node.contentWindow
       if (context) {
@@ -151,6 +151,5 @@ export default function (app: App, opts: Partial<Options>): void {
         }
       })
     }
-
-  })
+  }))
 }

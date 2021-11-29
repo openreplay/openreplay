@@ -71,32 +71,32 @@ function _getTarget(target: Element): Element | null {
   return target === document.documentElement ? null : target;
 }
 
-function getTargetLabel(target: Element): string {
-  const dl = getLabelAttribute(target);
-  if (dl !== null) {
-    return dl;
-  }
-  const tag = target.tagName.toUpperCase();
-  if (tag === 'INPUT') {
-    return getInputLabel(target as HTMLInputElement)
-  }
-  if (tag === 'BUTTON' ||
-      tag === 'A' ||
-      tag === 'LI' ||
-      (target as HTMLElement).onclick != null ||
-      target.getAttribute('role') === 'button'
-    ) {
-    const label: string = (target as HTMLElement).innerText || '';
-    return normSpaces(label).slice(0, 100);
-  }
-  return '';
-}
-
 export default function (app: App): void {
   // const options: Options = Object.assign(
   //   {},
   //   opts,
   // );
+
+  function getTargetLabel(target: Element): string {
+    const dl = getLabelAttribute(target);
+    if (dl !== null) {
+      return dl;
+    }
+    const tag = target.tagName.toUpperCase();
+    if (tag === 'INPUT') {
+      return getInputLabel(target as HTMLInputElement)
+    }
+    if (tag === 'BUTTON' ||
+        tag === 'A' ||
+        tag === 'LI' ||
+        (target as HTMLElement).onclick != null ||
+        target.getAttribute('role') === 'button'
+      ) {
+      const label: string = app.observer.getInnerTextSecure(target as HTMLElement);
+      return normSpaces(label).slice(0, 100);
+    }
+    return '';
+  }
 
   let mousePositionX = -1;
   let mousePositionY = -1;
