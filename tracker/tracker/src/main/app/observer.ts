@@ -1,4 +1,4 @@
-import { stars, hasOpenreplayAttribute } from '../utils';
+import { stars, hasOpenreplayAttribute } from "../utils.js";
 import {
   CreateDocument,
   CreateElementNode,
@@ -11,8 +11,8 @@ import {
   MoveNode,
   RemoveNode,
   CreateIFrameDocument,
-} from '../../messages';
-import App from './index';
+} from "../../messages/index.js";
+import App from "./index.js";
 
 interface Window extends WindowProxy {
   HTMLInputElement: typeof HTMLInputElement,
@@ -292,6 +292,7 @@ export default class Observer {
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT,
       },
+      // @ts-ignore
       false,
     );
     while (walker.nextNode()) {

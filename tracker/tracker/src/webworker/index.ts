@@ -1,8 +1,8 @@
-import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from '../messages';
-import Message from '../messages/message';
-import Writer from '../messages/writer';
+import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from "../messages/index.js";
+import Message from "../messages/message.js";
+import Writer from "../messages/writer.js";
 
-import type { WorkerMessageData } from '../messages/webworker';
+import type { WorkerMessageData } from "../messages/webworker.js";
 
 
 const SEND_INTERVAL = 20 * 1000;
