@@ -1,4 +1,4 @@
-import type { LocalStream } from './LocalStream';
+import type { LocalStream } from './LocalStream.js';
 
 const SS_START_TS_KEY = "__openreplay_assist_call_start_ts"
 
@@ -149,14 +149,14 @@ export default class CallWindow {
 
       // Hack to determine if the remote video is enabled
       if (this.checkRemoteVideoInterval) { clearInterval(this.checkRemoteVideoInterval) } // just in case
-      let enable = false
+      let enabled = false
       this.checkRemoteVideoInterval = setInterval(() => {
         const settings = rStream.getVideoTracks()[0]?.getSettings()
         //console.log(settings)
         const isDummyVideoTrack = !!settings && (settings.width === 2 || settings.frameRate === 0)
-        const shouldEnable = !isDummyVideoTrack
-        if (enable !== shouldEnable) {
-          this.toggleRemoteVideoUI(enable=shouldEnable)
+        const shouldBeEnabled = !isDummyVideoTrack
+        if (enabled !== shouldBeEnabled) {
+          this.toggleRemoteVideoUI(enabled=shouldBeEnabled)
         }
       }, 1000)
     })

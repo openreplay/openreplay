@@ -1,20 +1,20 @@
-import './_slim';
-import Peer, { MediaConnection } from 'peerjs';
+import './_slim.js';
+import Peer from 'peerjs';
 import type { DataConnection } from 'peerjs';
 import { App, Messages } from '@openreplay/tracker';
 import type Message from '@openreplay/tracker';
 
-import BufferingConnection from './BufferingConnection';
-import Mouse from './Mouse';
-import CallWindow from './CallWindow';
-import ConfirmWindow from './ConfirmWindow';
-import RequestLocalStream from './LocalStream';
+import BufferingConnection from './BufferingConnection.js';
+import Mouse from './Mouse.js';
+import CallWindow from './CallWindow.js';
+import ConfirmWindow from './ConfirmWindow.js';
+import RequestLocalStream from './LocalStream.js';
 
 export interface Options {
   confirmText: string,
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
-  config: Object
+  config: RTCConfiguration,
 }
 
 enum CallingState {
@@ -23,7 +23,7 @@ enum CallingState {
   False,
 };
 
-//@ts-ignore   webpack5 hack (?!)
+//@ts-ignore  peerjs hack for webpack5 (?!)
 Peer = Peer.default || Peer;
 
 // type IncomeMessages = 
@@ -35,7 +35,7 @@ Peer = Peer.default || Peer;
 export default function(opts: Partial<Options> = {})  {
   const options: Options = Object.assign(
     { 
-      confirmText: "You have a call. Do you want to answer?",
+      confirmText: "You have an incoming call. Do you want to answer?",
       confirmStyle: {},
       session_calling_peer_key: "__openreplay_calling_peer",
       config: null
@@ -198,18 +198,19 @@ export default function(opts: Partial<Options> = {})  {
             dataConn.on('data', (data: any) => {
               if (!data) { return }
               if (data === "call_end") {
-                //console.log('receiving callend on call')
+                log('"call_end" received')
                 onCallEnd();
                 return;
               }
               if (data.name === 'string') {
-                //console.log("name",data)
+                log("name recieved: ", data)
                 callUI.setAssistentName(data.name);
               }
               if (data.type === "click" && typeof data.x === 'number' && typeof data.y === 'number') {
                 const el = document.elementFromPoint(data.x, data.y)
                 if (el instanceof HTMLElement) {
                   el.click()
+                  el.focus()
                 }
                 return
               }
