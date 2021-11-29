@@ -24,7 +24,7 @@ resources:
 env:
   ASSETS_ORIGIN: /sessions-assets # TODO: full path (with the minio prefix)
   TOKEN_SECRET: secret_token_string # TODO: generate on buld
-  S3_BUCKET_IMAGES_IOS: sessions-mobile-assets
+  S3_BUCKET_IOS_IMAGES: sessions-mobile-assets
   AWS_ACCESS_KEY_ID: "minios3AccessKeyS3cr3t"
   AWS_SECRET_ACCESS_KEY: "m1n10s3CretK3yPassw0rd"
   AWS_REGION: us-east-1
