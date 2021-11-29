@@ -21,7 +21,8 @@ const LIMIT_WARNING = 'You have reached users limit.';
   errors: state.getIn([ 'members', 'saveRequest', 'errors' ]),
   loading: state.getIn([ 'members', 'loading' ]),
   saving: state.getIn([ 'members', 'saveRequest', 'loading' ]),
-  roles: state.getIn(['roles', 'list'])
+  roles: state.getIn(['roles', 'list']).map(r => ({ text: r.name, value: r.roleId })).toJS(),
+  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }), {
   init,
   save,
@@ -80,8 +81,8 @@ class ManageUsers extends React.PureComponent {
       });
   }
   
-  formContent = (member, account, roles) => {
-    const options = roles.map(r => ({ text: r.name, value: r.roleId })).toJS();
+  formContent = () => {
+    const { member, account, isEnterprise, roles } = this.props;
 
     return (
       <div className={ styles.form }>
@@ -127,18 +128,20 @@ class ManageUsers extends React.PureComponent {
             </label>
             <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
           </div>
-
-          <div className={ styles.formGroup }>
-            <label htmlFor="role">{ 'Role' }</label>
-            <Dropdown
-              placeholder="Role"
-              selection
-              options={ options }
-              name="roleId"
-              value={ member.roleId }
-              onChange={ this.onChange }
-            />
-          </div>
+          
+          { isEnterprise && (
+            <div className={ styles.formGroup }>
+              <label htmlFor="role">{ 'Role' }</label>
+              <Dropdown
+                placeholder="Role"
+                selection
+                options={ roles }
+                name="roleId"
+                value={ member.roleId }
+                onChange={ this.onChange }
+              />
+            </div>
+          )}
         </form>
 
         <div className="flex items-center">
@@ -180,7 +183,7 @@ class ManageUsers extends React.PureComponent {
 
   render() {
     const {
-      members, member, loading, account, hideHeader = false, roles
+      members, loading, account, hideHeader = false
     } = this.props;
     const { showModal, remaining, invited } = this.state;
     const isAdmin = account.admin || account.superAdmin;
@@ -193,7 +196,7 @@ class ManageUsers extends React.PureComponent {
             title="Inivte People"
             size="small"
             isDisplayed={ showModal }
-            content={ this.formContent(member, account, roles) }
+            content={ this.formContent() }
             onClose={ this.closeModal }
           />
           <div className={ styles.wrapper }>
