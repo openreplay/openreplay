@@ -300,22 +300,20 @@ export default class Integrations extends React.PureComponent {
 								onClick={ () => this.showIntegrationConfig(NGRX) }
 								// integrated={ sentryIntegrated }
 							/>
-
+              <IntegrationItem
+								title="MobX"
+								icon="integrations/mobx"
+								url={ null }
+								dockLink="https://docs.openreplay.com/integrations/sentry"
+								onClick={ () => this.showIntegrationConfig(MOBX) }
+								// integrated={ sentryIntegrated }
+							/>
 							<IntegrationItem
 								title="Fetch"
 								icon="integrations/openreplay"
 								url={ null }
 								dockLink="https://docs.openreplay.com/integrations/sentry"
 								onClick={ () => this.showIntegrationConfig(FETCH) }
-								// integrated={ sentryIntegrated }
-							/>
-
-							<IntegrationItem
-								title="MobX"
-								icon="integrations/mobx"
-								url={ null }
-								dockLink="https://docs.openreplay.com/integrations/sentry"
-								onClick={ () => this.showIntegrationConfig(MOBX) }
 								// integrated={ sentryIntegrated }
 							/>
 							<IntegrationItem
@@ -327,19 +325,19 @@ export default class Integrations extends React.PureComponent {
 								// integrated={ sentryIntegrated }
 							/>
               <IntegrationItem
-								title="Assist"
-								icon="integrations/assist"
-								url={ null }
-								dockLink="https://docs.openreplay.com/installation/assist"
-								onClick={ () => this.showIntegrationConfig(ASSIST) }
-								// integrated={ sentryIntegrated }
-							/>
-              <IntegrationItem
 								title="Axios"
 								icon="integrations/openreplay"
 								url={ null }
 								dockLink="https://docs.openreplay.com/plugins/axios"
 								onClick={ () => this.showIntegrationConfig(AXIOS) }
+								// integrated={ sentryIntegrated }
+							/>
+              <IntegrationItem
+								title="Assist"
+								icon="integrations/assist"
+								url={ null }
+								dockLink="https://docs.openreplay.com/installation/assist"
+								onClick={ () => this.showIntegrationConfig(ASSIST) }
 								// integrated={ sentryIntegrated }
 							/>
 						</div>
