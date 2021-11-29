@@ -44,7 +44,7 @@ export default class App {
   readonly ticker: Ticker;
   readonly projectKey: string;
   private readonly messages: Array<Message> = [];
-  private readonly observer: Observer;
+  /*private*/ readonly observer: Observer; // temp, for fast security fix. TODO: separate security/obscure module with nodeCallback that incapsulates `textMasked` functionality from Observer
   private readonly startCallbacks: Array<Callback> = [];
   private readonly stopCallbacks: Array<Callback> = [];
   private readonly commitCallbacks: Array<CommitCallback> = [];
@@ -323,13 +323,14 @@ export default class App {
         return onStartInfo;
       })
       .catch(e => {
-        this.stop();
+        sessionStorage.removeItem(this.options.session_token_key)
+        this.stop()
         warn("OpenReplay was unable to start. ", e)
         this._debug("session_start", e);
-        throw e;
+        throw e
       })
     }
-    return Promise.reject("Player is active");
+    return Promise.reject("Player is already active");
   }
 
   start(reset: boolean = false): Promise<OnStartInfo> {
