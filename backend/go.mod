@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/aws/aws-sdk-go v1.35.23
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/confluentinc/confluent-kafka-go v1.5.2 // indirect
+	github.com/confluentinc/confluent-kafka-go v1.7.0 // indirect
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.1.2
@@ -24,6 +24,6 @@ require (
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce
 	github.com/ua-parser/uap-go v0.0.0-20200325213135-e1c09f13e2fe
 	google.golang.org/api v0.50.0
-	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.5.2
+	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.7.0
 
 )
