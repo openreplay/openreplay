@@ -11,7 +11,7 @@ import type { Options as ObserverOptions } from "./observer.js";
 
 import type { Options as WebworkerOptions, WorkerMessageData } from "../../messages/webworker.js";
 
-interface OnStartInfo {
+export interface OnStartInfo {
   sessionID: string, 
   sessionToken: string, 
   userUUID: string,
