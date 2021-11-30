@@ -29,6 +29,8 @@ def get_temporary_credentials():
 
 def get_full_config():
     servers = assist.get_ice_servers()
+    if servers is None:
+        return None
     servers = servers.split("|")
     credentials = get_temporary_credentials()
     if __get_secret() is not None:
