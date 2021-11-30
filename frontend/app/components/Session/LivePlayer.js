@@ -63,7 +63,7 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
 }
 
 export default withRequest({
-  initialData: {},
+  initialData: null,
 	endpoint: '/assist/credentials',
 	dataWrapper: data => data,
 	dataName: 'assistCredendials',
