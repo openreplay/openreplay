@@ -55,5 +55,4 @@ def delete_role(roleId, context):
 
 @app.route('/assist/credentials', methods=['GET'])
 def get_assist_credentials(context):
-    username, credential = assist_helper.get_temporary_credentials()
-    return {"data": {'username': username, 'credential': credential}}
+    return {"data": assist_helper.get_full_config()}
