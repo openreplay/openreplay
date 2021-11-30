@@ -60,6 +60,7 @@ def delete_role(roleId, context):
     }
 
 
+@app.route('/v1/assist/credentials', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
 @app.route('/assist/credentials', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
 def get_assist_credentials(context):
     user = helper.generate_salt()
