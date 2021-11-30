@@ -10,5 +10,7 @@ _overrides.chalice_app(app)
 
 @app.route('/v1/assist/credentials', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
 def get_assist_credentials(context):
-    username, credential = assist_helper.get_temporary_credentials()
-    return {"data": {'username': username, 'credential': credential}}
+    credentials = assist_helper.get_temporary_credentials()
+    if "errors" in credentials:
+        return credentials
+    return {"data": credentials}
