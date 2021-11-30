@@ -1,16 +1,9 @@
-import base64
-import hashlib
-import hmac
-from time import time
-
 from chalice import Blueprint
 
 from chalicelib import _overrides
-from chalicelib.blueprints import bp_authorizers
 from chalicelib.core import roles
 from chalicelib.core import unlock
-from chalicelib.utils import helper
-from chalicelib.utils.helper import environ
+from chalicelib.utils import assist_helper
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
@@ -60,16 +53,7 @@ def delete_role(roleId, context):
     }
 
 
-@app.route('/v1/assist/credentials', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
-@app.route('/assist/credentials', methods=['GET'], authorizer=bp_authorizers.api_key_authorizer)
+@app.route('/assist/credentials', methods=['GET'])
 def get_assist_credentials(context):
-    user = helper.generate_salt()
-    secret = environ["assist_secret"]
-    ttl = int(environ.get("assist_ttl", 48)) * 3600
-    timestamp = int(time()) + ttl
-    username = str(timestamp) + ':' + user
-    dig = hmac.new(bytes(secret, 'utf-8'), bytes(username, 'utf-8'), hashlib.sha1)
-    dig = dig.digest()
-    password = base64.b64encode(dig).decode()
-
-    return {"data": {'username': username, 'password': password}}
+    username, credential = assist_helper.get_temporary_credentials()
+    return {"data": {'username': username, 'credential': credential}}

@@ -5,14 +5,13 @@ from sentry_sdk import configure_scope
 from chalicelib import _overrides
 from chalicelib.blueprints import bp_authorizers
 from chalicelib.blueprints import bp_core, bp_core_crons
-from chalicelib.blueprints.app import v1_api
 from chalicelib.blueprints import bp_core_dynamic, bp_core_dynamic_crons
+from chalicelib.blueprints import bp_ee, bp_ee_crons, bp_saml
+from chalicelib.blueprints.app import v1_api, v1_api_ee
 from chalicelib.blueprints.subs import bp_dashboard
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.helper import environ
-
-from chalicelib.blueprints import bp_ee, bp_ee_crons, bp_saml
 
 app = Chalice(app_name='parrot')
 app.debug = not helper.is_production() or helper.is_local()
@@ -123,6 +122,7 @@ app.register_blueprint(bp_core_dynamic.app)
 app.register_blueprint(bp_core_dynamic_crons.app)
 app.register_blueprint(bp_dashboard.app)
 app.register_blueprint(v1_api.app)
+app.register_blueprint(v1_api_ee.app)
 # Enterprise
 app.register_blueprint(bp_ee.app)
 app.register_blueprint(bp_ee_crons.app)
