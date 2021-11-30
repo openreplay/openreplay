@@ -117,10 +117,8 @@ function resolveCSS(baseURL: string, css: string): string {
   return rewriteCSSLinks(css, rawurl => resolveURL(baseURL, rawurl));
 }
 
-
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor) {}
-
+  constructor(private session, private md: MessageDistributor, private config) {}
 
   private setStatus(status: ConnectionStatus) {
     if (status === ConnectionStatus.Connecting) {
@@ -150,13 +148,22 @@ export default class AssistManager {
     }
     this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
-      // @ts-ignore
-      const peer = new Peer({
+      const _config = {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
         path: '/assist',
         port:  location.protocol === 'https:' ? 443 : 80,
-      });
+      }
+
+      if (this.config) {
+        _config['config'] = {
+          iceServers: this.config,
+          sdpSemantics: 'unified-plan',
+          iceTransportPolicy: 'relay',
+        };
+      }
+      
+      const peer = new Peer(_config);
       this.peer = peer;
       peer.on('error', e => {
         if (e.type !== 'peer-unavailable') {
