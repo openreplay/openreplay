@@ -118,7 +118,7 @@ export default class MessageDistributor extends StatedScreen {
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
 
-	constructor(private readonly session: any /*Session*/, jwt: string, config: string) {
+	constructor(private readonly session: any /*Session*/, jwt: string, config) {
     super();
     this.pagesManager = new PagesManager(this, this.session.isMobile)
     this.mouseManager = new MouseManager(this);

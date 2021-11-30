@@ -118,7 +118,7 @@ function resolveCSS(baseURL: string, css: string): string {
 }
 
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor, private config: Object) {}
+  constructor(private session, private md: MessageDistributor, private config) {}
 
   private setStatus(status: ConnectionStatus) {
     if (status === ConnectionStatus.Connecting) {
