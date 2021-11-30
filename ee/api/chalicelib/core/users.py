@@ -619,11 +619,11 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                     roles.name AS role_name,
                     roles.permissions
                 FROM public.users AS users INNER JOIN public.basic_authentication USING(user_id)
-                    LEFT JOIN public.roles USING (role_id)
+                    LEFT JOIN public.roles ON (roles.role_id = users.role_id AND roles.tenant_id = users.tenant_id)
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
                     AND basic_authentication.user_id = (SELECT su.user_id FROM public.users AS su WHERE su.email=%(email)s AND su.deleted_at IS NULL LIMIT 1)
-                    AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenantId)s)
+                    AND (roles.role_id IS NULL OR roles.deleted_at IS NULL)
                 LIMIT 1;""",
             {"email": email, "password": password})
 
