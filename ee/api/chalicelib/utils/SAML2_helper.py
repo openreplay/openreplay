@@ -9,13 +9,13 @@ SAML2 = {
     "strict": True,
     "debug": True,
     "sp": {
-        "entityId": environ["SITE_URL"] + "/api/sso/saml2/metadata/",
+        "entityId": environ["SITE_URL"] + "/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": environ["SITE_URL"] + "/api/sso/saml2/acs",
+            "url": environ["SITE_URL"] + "/sso/saml2/acs",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": environ["SITE_URL"] + "/api/sso/saml2/sls",
+            "url": environ["SITE_URL"] + "/sso/saml2/sls",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
