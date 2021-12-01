@@ -231,7 +231,11 @@ export default class DOMManager extends ListWalker<TimedMessage> {
           node.sheet.insertRule(msg.rule, msg.index)
         } catch (e) {
           logger.warn(e, msg)
-          node.sheet.insertRule(msg.rule)
+          try {
+            node.sheet.insertRule(msg.rule)
+          } catch (e) {
+            logger.warn("Cannot insert rule.", e, msg)
+          }
         }
       break;
       case "css_delete_rule":

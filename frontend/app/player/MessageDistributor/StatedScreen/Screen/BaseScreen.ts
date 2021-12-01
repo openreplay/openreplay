@@ -128,7 +128,12 @@ export default abstract class BaseScreen {
 
   getElementBySelector(selector: string): Element | null {
     if (!selector) return null;
-    return this.document?.querySelector(selector) || null;
+    try {
+      return this.document?.querySelector(selector) || null;
+    } catch (e) {
+      console.error("Can not select element. ", e)
+      return null
+    }
   }
 
   display(flag: boolean = true) {
