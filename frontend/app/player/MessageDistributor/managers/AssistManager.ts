@@ -349,12 +349,29 @@ export default class AssistManager {
     }
   }
 
-  private onMouseMove = (e: MouseEvent ): void => {
-    const conn = this.dataConnection;
-    if (!conn) { return; }
-    // @ts-ignore ???
+  // private mmtid?:ReturnType<typeof setTimeout>
+  private onMouseMove = (e: MouseEvent): void => {
+    // this.mmtid && clearTimeout(this.mmtid)
+    // this.mmtid = setTimeout(() => {
     const data = this.md.getInternalCoordinates(e);
-    conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    this.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    // }, 5)
+  }
+
+
+  // private wtid?: ReturnType<typeof setTimeout>
+  // private scrollDelta: [number, number] = [0,0]
+  private onWheel = (e: WheelEvent): void => {
+    e.preventDefault()
+    //throttling makes movements less smooth
+    // this.wtid && clearTimeout(this.wtid)
+    // this.scrollDelta[0] += e.deltaX
+    // this.scrollDelta[1] += e.deltaY
+    // this.wtid = setTimeout(() => {
+    this.send({ type: "scroll",  delta: [ e.deltaX, e.deltaY ]})//this.scrollDelta });
+    this.onMouseMove(e)
+    //   this.scrollDelta = [0,0]
+    // }, 20)
   }
 
   private onMouseClick = (e: MouseEvent): void => {
@@ -362,16 +379,27 @@ export default class AssistManager {
     if (!conn) { return; }
     const data = this.md.getInternalCoordinates(e);
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
+    const el = this.md.getElementFromInternalPoint(data)
+    if (el instanceof HTMLElement) { 
+      el.focus()
+      el.oninput = e => e.preventDefault();
+      el.onkeydown = e => e.preventDefault();
+    }
     conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
   }
 
-  private toggleRemoteControl = () => {
-    if (getState().remoteControl) {
-      this.md.overlay.removeEventListener("click", this.onMouseClick);
-      update({ remoteControl: false })
-    } else {
+  private toggleRemoteControl = (flag?: boolean) => {
+    const state = getState().remoteControl;
+    const newState = typeof flag === 'boolean' ? flag : !state;
+    if (state === newState) { return }
+    if (newState) {
       this.md.overlay.addEventListener("click", this.onMouseClick);
+      this.md.overlay.addEventListener("wheel", this.onWheel)
       update({ remoteControl: true })
+    } else {
+      this.md.overlay.removeEventListener("click", this.onMouseClick);
+      this.md.overlay.removeEventListener("wheel", this.onWheel);
+      update({ remoteControl: false })
     }
   }
 
@@ -390,6 +418,7 @@ export default class AssistManager {
       onStream,
       onCallEnd: () => {
         onCallEnd();
+        this.toggleRemoteControl(false);
         this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
         update({ calling: CallingState.False });
         this.localCallData = null;
