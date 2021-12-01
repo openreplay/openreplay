@@ -2,18 +2,26 @@ import React, { useState, useEffect } from 'react'
 import { connect } from 'react-redux'
 import SessionItem from 'Shared/SessionItem'
 import { fetchSessions, fetchSessionsFiltered } from 'Duck/funnels'
+import { setFunnelPage } from 'Duck/sessions'
 import { LoadMoreButton, NoContent, Loader } from 'UI'
 import FunnelSessionsHeader from '../FunnelSessionsHeader'
 
 const PER_PAGE = 10;
 
 function FunnelSessionList(props) {
-  const { list, sessionsTotal, sessionsSort, inDetails = false } = props;
+  const { funnelId, issueId, list, sessionsTotal, sessionsSort, inDetails = false } = props;
 
   const [showPages, setShowPages] = useState(1)
   const displayedCount = Math.min(showPages * PER_PAGE, list.size);
 
   const addPage = () => setShowPages(showPages + 1);
+
+  useEffect(() => {
+    props.setFunnelPage({
+      funnelId,
+      issueId
+    })
+  }, [])
 
   return (
     <div>
@@ -24,7 +32,7 @@ function FunnelSessionList(props) {
         subtext="Please try changing your search parameters."
         icon="exclamation-circle"
         show={ list.size === 0}
-      >        
+      >
         { list.take(displayedCount).map(session => (
           <SessionItem
             key={ session.sessionId }
@@ -37,7 +45,7 @@ function FunnelSessionList(props) {
           displayedCount={displayedCount}
           totalCount={list.size}
           onClick={addPage}
-        />        
+        />
       </NoContent>
     </div>
   )
@@ -51,4 +59,4 @@ export default connect(state => ({
   liveFilters: state.getIn(['funnelFilters', 'appliedFilter']),
   funnelFilters: state.getIn(['funnels', 'funnelFilters']),
   sessionsSort: state.getIn(['funnels', 'sessionsSort']),
-}), { fetchSessions, fetchSessionsFiltered })(FunnelSessionList)
+}), { fetchSessions, fetchSessionsFiltered, setFunnelPage })(FunnelSessionList)

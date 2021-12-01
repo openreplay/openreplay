@@ -28,7 +28,7 @@ function FunnelIssueDetails(props) {
       <Loader loading={loading}>
         <IssueItem issue={issue} inDetails onBack={onBack} />
         <div className="my-6" />
-        <FunnelSessionList issuId={issueId} inDetails />
+        <FunnelSessionList funnelId={funnelId} issueId={issueId} inDetails />
       </Loader>
     </div>
   )
