@@ -11,7 +11,6 @@ const sortOptions = Object.entries(sortOptionsMap)
   .map(([ value, text ]) => ({ value, text }));
 
 function FunnelSessionsHeader({ sessionsCount, inDetails = false }) {
-  const onSort = () => {}
   return (
     <div className="flex items-center">
       <div className="flex items-center mr-auto text-xl">
