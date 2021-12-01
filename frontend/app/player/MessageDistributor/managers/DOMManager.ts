@@ -120,16 +120,18 @@ export default class DOMManager extends ListWalker<TimedMessage> {
 
   private applyMessage = (msg: Message): void => {
     let node;
+    let doc: Document | null;
     switch (msg.tp) {
       case "create_document":
-        // @ts-ignore ??
-        this.screen.document.open();
-        // @ts-ignore ??
-        this.screen.document.write(`${ msg.doctype || "<!DOCTYPE html>" }<html></html>`);
-        // @ts-ignore ??
-        this.screen.document.close();
-        // @ts-ignore ??
-        const fRoot = this.screen.document.documentElement;
+        doc = this.screen.document;
+        if (!doc) {
+          logger.error("No iframe document found", msg)
+          return;
+        }
+        doc.open();
+        doc.write("<!DOCTYPE html><html></html>");
+        doc.close();
+        const fRoot = doc.documentElement;
         fRoot.innerText = '';
         this.nl = [ fRoot ];
 
@@ -213,7 +215,7 @@ export default class DOMManager extends ListWalker<TimedMessage> {
         // @ts-ignore
         node.data = msg.data;
         if (node instanceof HTMLStyleElement) {
-          const doc = this.screen.document
+          doc = this.screen.document
           doc && rewriteNodeStyleSheet(doc, node)
         }
       break;
@@ -255,7 +257,7 @@ export default class DOMManager extends ListWalker<TimedMessage> {
         }
       //   await new Promise(resolve => { node.onload = resolve })
 
-        const doc = node.contentDocument;
+        doc = node.contentDocument;
         if (!doc) {
           logger.warn("No iframe doc", msg, node, node.contentDocument);
           return;
