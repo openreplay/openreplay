@@ -15,7 +15,7 @@ from chalice import Response
 from chalicelib.core import users, tenants
 
 
-@app.route("/saml2", methods=['GET'], authorizer=None)
+@app.route('/sso/saml2', methods=['GET'], authorizer=None)
 def start_sso():
     app.current_request.path = ''
     req = prepare_request(request=app.current_request)
@@ -28,7 +28,7 @@ def start_sso():
         headers={'Location': sso_built_url, 'Content-Type': 'text/plain'})
 
 
-@app.route('/saml2/acs', methods=['POST'], content_types=['application/x-www-form-urlencoded'], authorizer=None)
+@app.route('/sso/saml2/acs', methods=['POST'], content_types=['application/x-www-form-urlencoded'], authorizer=None)
 def process_sso_assertion():
     req = prepare_request(request=app.current_request)
     session = req["cookie"]["session"]
@@ -100,7 +100,7 @@ def process_sso_assertion():
     return users.authenticate_sso(email=email, internal_id=internal_id, exp=auth.get_session_expiration())
 
 
-@app.route('/saml2/slo', methods=['GET'])
+@app.route('/sso/saml2/slo', methods=['GET'])
 def process_slo_request(context):
     req = prepare_request(request=app.current_request)
     session = req["cookie"]["session"]
@@ -127,7 +127,7 @@ def process_slo_request(context):
                                          spnq=name_id_spnq), 'Content-Type': 'text/plain'})
 
 
-@app.route('/saml2/sls', methods=['GET'], authorizer=None)
+@app.route('/sso/saml2/sls', methods=['GET'], authorizer=None)
 def process_sls_assertion():
     req = prepare_request(request=app.current_request)
     session = req["cookie"]["session"]
@@ -169,7 +169,7 @@ def process_sls_assertion():
         headers={'Location': environ["SITE_URL"], 'Content-Type': 'text/plain'})
 
 
-@app.route('/saml2/metadata', methods=['GET'], authorizer=None)
+@app.route('/sso/saml2/metadata', methods=['GET'], authorizer=None)
 def saml2_metadata():
     req = prepare_request(request=app.current_request)
     auth = init_saml_auth(req)
