@@ -15,6 +15,7 @@ export interface Options {
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
   config: RTCConfiguration,
+  __messages_per_send?: number,
 }
 
 enum CallingState {
@@ -23,7 +24,7 @@ enum CallingState {
   False,
 };
 
-//@ts-ignore  peerjs hack for webpack5 (?!)
+//@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;
 
 // type IncomeMessages = 
@@ -32,13 +33,13 @@ Peer = Peer.default || Peer;
 //   { type: "click", x: number, y: number } |
 //   { x: number, y: number }
 
-export default function(opts: Partial<Options> = {})  {
+export default function(opts?: Partial<Options>)  {
   const options: Options = Object.assign(
     { 
       confirmText: "You have an incoming call. Do you want to answer?",
       confirmStyle: {},
       session_calling_peer_key: "__openreplay_calling_peer",
-      config: null
+      config: null,
     },
     opts,
   );
@@ -58,6 +59,7 @@ export default function(opts: Partial<Options> = {})  {
 
     let assistDemandedRestart = false
     let peer : Peer | null = null
+    // This is required because internal peerjs connection list is not stable. https://peerjs.com/docs.html#peerconnections
     const openDataConnections: Record<string, BufferingConnection>  = {}
 
     app.addCommitCallback(function(messages) {
@@ -66,7 +68,10 @@ export default function(opts: Partial<Options> = {})  {
 
     app.attachStopCallback(function() {
       if (assistDemandedRestart) { return; }
-      peer && peer.destroy();
+      if (peer) {
+        peer.destroy();
+        log('Peer destroyed!')
+      }
     });
 
     app.attachStartCallback(function() {
@@ -77,6 +82,7 @@ export default function(opts: Partial<Options> = {})  {
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
+        //debug: // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
       }
       if (options.config) {
         _opt['config'] = options.config
@@ -92,7 +98,7 @@ export default function(opts: Partial<Options> = {})  {
           log('Connection opened.')
           assistDemandedRestart = true;
           app.stop();
-          openDataConnections[conn.peer] = new BufferingConnection(conn)
+          openDataConnections[conn.peer] = new BufferingConnection(conn, options.__messages_per_send)
           conn.on('close', () => {
             log("Connection close: ", conn.peer)
             delete openDataConnections[conn.peer] // TODO: check if works properly
@@ -205,6 +211,26 @@ export default function(opts: Partial<Options> = {})  {
               if (data.name === 'string') {
                 log("name recieved: ", data)
                 callUI.setAssistentName(data.name);
+              }
+              if (data.type === "scroll" && Array.isArray(data.delta)) {
+                const scrEl = document.scrollingElement || document.documentElement
+                const [mouseX, mouseY] = mouse.getPosition()
+                const [dX, dY] = data.delta;
+                const el = document.elementFromPoint(mouseX-scrEl.scrollLeft, mouseY-scrEl.scrollTop)
+                let scrolled = false // what would be the browser-like logic?
+                if (el) {
+                  if(el.scrollWidth > el.clientWidth) {
+                    el.scrollLeft += data.delta[0]
+                    scrolled = true
+                  } 
+                  if (el && el.scrollHeight > el.clientHeight) {
+                    el.scrollTop += data.delta[1]
+                    scrolled = true
+                  }                  
+                }
+                if (!scrolled) {
+                  window.scroll(scrEl.scrollLeft + data.delta[0], scrEl.scrollTop + data.delta[1])
+                }
               }
               if (data.type === "click" && typeof data.x === 'number' && typeof data.y === 'number') {
                 const el = document.elementFromPoint(data.x, data.y)
