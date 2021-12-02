@@ -236,7 +236,7 @@ Pipfile
 /chalicelib/utils/TimeUTC.py
 /chalicelib/core/heatmaps.py
 /entrypoint.bundle.sh
-/entrypoint.sh
+#/entrypoint.sh
 /env_handler.py
 /chalicelib/blueprints/app/v1_api.py
 /build.sh
