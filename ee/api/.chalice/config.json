@@ -61,6 +61,7 @@
         "idp_sso_url": "",
         "idp_x509cert": "",
         "idp_sls_url": "",
+        "idp_name": "",
         "invitation_link": "/api/users/invitation?token=%s",
         "change_password_link": "/reset-password?invitation=%s&&pass=%s",
         "iosBucket": "openreplay-ios-images",
