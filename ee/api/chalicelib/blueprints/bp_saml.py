@@ -22,7 +22,6 @@ def start_sso():
     auth = init_saml_auth(req)
     sso_built_url = auth.login()
     return Response(
-        # status_code=301,
         status_code=307,
         body='',
         headers={'Location': sso_built_url, 'Content-Type': 'text/plain'})

@@ -102,3 +102,6 @@ def prepare_request(request):
 
 def is_saml2_available():
     return idp is not None
+
+def get_saml2_provider():
+    return "Okta"
