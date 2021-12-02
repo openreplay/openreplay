@@ -26,9 +26,7 @@ def login():
     data = app.current_request.json_body
     if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
         return {"errors": ["Invalid captcha."]}
-    r = users.authenticate(data['email'], data['password'],
-                           for_plugin=False
-                           )
+    r = users.authenticate(data['email'], data['password'], for_plugin=False)
     if r is None:
         return Response(status_code=401, body={
             'errors': ['You’ve entered invalid Email or Password.']
