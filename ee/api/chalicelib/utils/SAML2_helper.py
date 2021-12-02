@@ -105,4 +105,5 @@ def is_saml2_available():
 
 
 def get_saml2_provider():
-    return environ.get("idp_name", "saml2") if is_saml2_available() else None
+    return environ.get("idp_name", "saml2") if is_saml2_available() and len(
+        environ.get("idp_name", "saml2")) > 0 else None
