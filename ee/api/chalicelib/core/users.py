@@ -339,13 +339,13 @@ def get_by_email_only(email):
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         origin
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
-                    WHERE
-                     users.email = %(email)s                     
-                     AND users.deleted_at IS NULL;""",
+                    WHERE users.email = %(email)s                     
+                     AND users.deleted_at IS NULL
+                    LIMIT 1;""",
                 {"email": email})
         )
-        r = cur.fetchall()
-    return helper.list_to_camel_case(r)
+        r = cur.fetchone()
+    return helper.dict_to_camel_case(r)
 
 
 def get_by_email_reset(email, reset_token):
