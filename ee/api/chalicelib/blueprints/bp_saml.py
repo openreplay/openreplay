@@ -72,13 +72,13 @@ def process_sso_assertion():
                               name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                               internal_id=internal_id)
     else:
-        if existing.get("origin") is None:
-            print(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
-            users.update(tenant_id=t['tenantId'], user_id=existing[0]["id"],
-                         changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
-        elif t['tenantId'] != existing["tenantId"]:
+        if t['tenantId'] != existing["tenantId"]:
             print("user exists for a different tenant")
             return {"errors": ["user exists for a different tenant"]}
+        if existing.get("origin") is None:
+            print(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
+            users.update(tenant_id=t['tenantId'], user_id=existing["id"],
+                         changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
 
     return users.authenticate_sso(email=email, internal_id=internal_id, exp=auth.get_session_expiration())
 
