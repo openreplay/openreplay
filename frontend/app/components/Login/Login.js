@@ -15,7 +15,8 @@ const recaptchaRef = React.createRef();
   state => ({
     errors: state.getIn([ 'user', 'loginRequest', 'errors' ]),
     loading: state.getIn([ 'user', 'loginRequest', 'loading' ]),
-    existingTenant: state.getIn(['user', 'existingTenant'])
+    // existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
+    authDetails: state.getIn(['user', 'authDetails']),
   }),
   { login, },
 )
@@ -45,7 +46,7 @@ export default class Login extends React.Component {
   write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
 
   render() {
-    const { errors, loading, existingTenant } = this.props;
+    const { errors, loading, authDetails } = this.props;
     return (
       <div className="flex" style={{ height: '100vh'}}>
         <div className={cn("w-6/12", stl.left)}>
@@ -63,7 +64,7 @@ export default class Login extends React.Component {
             <form onSubmit={ this.onSubmit }>
               <div className="mb-8">
                 <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
-                { !existingTenant && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
+                { !authDetails.tenants && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
               </div>
               <Loader loading={ loading }>
                 { window.ENV.CAPTCHA_ENABLED && (
@@ -126,6 +127,14 @@ export default class Login extends React.Component {
                 </div>
               </div>
             </form>
+            { authDetails.sso && (
+              <div className="py-2 flex flex-col items-center">
+                <div className="mb-4">or</div>
+                <a href="/api/sso/saml2" rel="noopener noreferrer">
+                  <Button type="button" outline type="submit" primary >{ 'Login with SSO (Okta)' }</Button>
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
