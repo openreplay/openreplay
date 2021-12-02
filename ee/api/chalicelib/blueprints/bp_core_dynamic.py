@@ -354,8 +354,8 @@ def get_members(context):
 
 @app.route('/client/members', methods=['PUT', 'POST'])
 def add_member(context):
-    if SAML2_helper.is_saml2_available():
-        return {"errors": ["please use your SSO server to add teammates"]}
+    # if SAML2_helper.is_saml2_available():
+    #     return {"errors": ["please use your SSO server to add teammates"]}
     data = app.current_request.json_body
     return users.create_member(tenant_id=context['tenantId'], user_id=context['userId'], data=data)
 

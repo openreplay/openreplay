@@ -90,7 +90,7 @@ def prepare_request(request):
         'https': 'on' if request.headers.get('x-forwarded-proto', 'http') == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': "/api"+request.path,
+        'script_name': "/api" + request.path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
@@ -103,5 +103,6 @@ def prepare_request(request):
 def is_saml2_available():
     return idp is not None
 
+
 def get_saml2_provider():
-    return "Okta"
+    return environ.get("idp_name", "saml2") if is_saml2_available() else None
