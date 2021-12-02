@@ -1,23 +1,21 @@
 from chalice import Blueprint, Response
 
 from chalicelib import _overrides
-from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integration_github, \
-    integrations_manager
+from chalicelib.core import assist
+from chalicelib.core import boarding
+from chalicelib.core import errors
+from chalicelib.core import license
+from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integrations_manager
+from chalicelib.core import notifications
+from chalicelib.core import projects
+from chalicelib.core import signup
+from chalicelib.core import tenants
+from chalicelib.core import users
+from chalicelib.core import webhook
+from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, SAML2_helper
 from chalicelib.utils import helper
 from chalicelib.utils.helper import environ
-
-from chalicelib.core import tenants
-from chalicelib.core import signup
-from chalicelib.core import users
-from chalicelib.core import projects
-from chalicelib.core import errors
-from chalicelib.core import notifications
-from chalicelib.core import boarding
-from chalicelib.core import webhook
-from chalicelib.core import license
-from chalicelib.core import assist
-from chalicelib.core.collaboration_slack import Slack
 
 app = Blueprint(__name__)
 _overrides.chalice_app(app)
@@ -148,7 +146,10 @@ def put_client(context):
 
 @app.route('/signup', methods=['GET'], authorizer=None)
 def get_all_signup():
-    return {"data": tenants.tenants_exists()}
+    return {"data": {"tenants": tenants.tenants_exists(),
+                     "sso": SAML2_helper.is_saml2_available(),
+                     "ssoProvider": SAML2_helper.get_saml2_provider(),
+                     "edition": helper.get_edition()}}
 
 
 @app.route('/signup', methods=['POST', 'PUT'], authorizer=None)
