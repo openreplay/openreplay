@@ -4,7 +4,7 @@ import secrets
 from chalicelib.core import assist
 from chalicelib.core import authorizers, metadata, projects
 from chalicelib.core import tenants
-from chalicelib.utils import dev
+from chalicelib.utils import dev, SAML2_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -293,7 +293,7 @@ def generate_new_api_key(user_id):
 
 
 def edit(user_id_to_update, tenant_id, changes, editor_id):
-    ALLOW_EDIT = ["name", "email", "admin", "appearance","roleId"]
+    ALLOW_EDIT = ["name", "email", "admin", "appearance", "roleId"]
     user = get(user_id=user_id_to_update, tenant_id=tenant_id)
     if editor_id != user_id_to_update or "admin" in changes and changes["admin"] != user["admin"]:
         admin = get(tenant_id=tenant_id, user_id=editor_id)
@@ -629,9 +629,20 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
 
         cur.execute(query)
         r = cur.fetchone()
+        if r is None and SAML2_helper.is_saml2_available():
+            query = cur.mogrify(
+                f"""SELECT 1
+                    FROM public.users
+                    WHERE users.email = %(email)s 
+                        AND users.deleted_at IS NULL
+                        AND users.origin IS NOT NULL
+                    LIMIT 1;""",
+                {"email": email})
+            cur.execute(query)
+            if cur.fetchone() is not None:
+                return {"errors": ["must sign-in with SSO"]}
+
     if r is not None:
-        if r["origin"] is not None:
-            return {"errors": ["must sign-in with SSO"]}
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
