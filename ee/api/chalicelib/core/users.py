@@ -388,7 +388,7 @@ def get_members(tenant_id):
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                         DATE_PART('day',timezone('utc'::text, now()) \
                             - COALESCE(basic_authentication.invited_at,'2000-01-01'::timestamp ))>=1 AS expired_invitation,
-                        basic_authentication.password IS NOT NULL AS joined,
+                        basic_authentication.password IS NOT NULL OR users.origin IS NOT NULL AS joined,
                         invitation_token,
                         role_id,
                         roles.name AS role_name
