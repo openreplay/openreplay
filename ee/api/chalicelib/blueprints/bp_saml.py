@@ -1,6 +1,7 @@
 from chalice import Blueprint
 
 from chalicelib import _overrides
+from chalicelib.utils import SAML2_helper
 from chalicelib.utils.SAML2_helper import prepare_request, init_saml_auth
 
 app = Blueprint(__name__)
@@ -9,7 +10,6 @@ _overrides.chalice_app(app)
 from chalicelib.utils.helper import environ
 
 from onelogin.saml2.auth import OneLogin_Saml2_Logout_Request
-from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
 from chalice import Response
 from chalicelib.core import users, tenants
@@ -54,22 +54,27 @@ def process_sso_assertion():
         # session['samlSessionExpiration'] = auth.get_session_expiration()
         # print('>>>>')
         # print(session)
-        self_url = OneLogin_Saml2_Utils.get_self_url(req)
-        if 'RelayState' in request.form and self_url != request.form['RelayState']:
-            print("====>redirect")
-            return Response(
-                status_code=307,
-                body='',
-                headers={'Location': auth.redirect_to(request.form['RelayState']), 'Content-Type': 'text/plain'})
+
+        # ---- ignore relay-state
+        # self_url = OneLogin_Saml2_Utils.get_self_url(req)
+        # if 'RelayState' in request.form and self_url != request.form['RelayState']:
+        #     print("====>redirect to")
+        #     print("====>redirect to")
+        #     return Response(
+        #         status_code=307,
+        #         body='',
+        #         headers={'Location': auth.redirect_to(request.form['RelayState']), 'Content-Type': 'text/plain'})
     elif auth.get_settings().is_debug_active():
         error_reason = auth.get_last_error_reason()
         return {"errors": [error_reason]}
 
     email = auth.get_nameid()
+    print("received nameId:")
+    print(email)
     existing = users.get_by_email_only(auth.get_nameid())
 
     internal_id = next(iter(user_data.get("internalId", [])), None)
-    if len(existing) == 0 or existing[0].get("origin") != 'saml':
+    if len(existing) == 0 or existing[0].get("origin") is None:
         tenant_key = user_data.get("tenantKey", [])
         if len(tenant_key) == 0:
             print("tenantKey not present in assertion")
@@ -86,15 +91,16 @@ def process_sso_assertion():
                     headers={'Location': auth.redirect_to(request.form['RelayState']), 'Content-Type': 'text/plain'})
         if len(existing) == 0:
             print("== new user ==")
-            users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=True, origin='saml',
+            users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=True,
+                                  origin=SAML2_helper.get_saml2_provider(),
                                   name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                                   internal_id=internal_id)
         else:
             existing = existing[0]
-            if existing.get("origin") != 'saml':
-                print("== migrating user to SAML ==")
+            if existing.get("origin") is None:
+                print(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
                 users.update(tenant_id=t['tenantId'], user_id=existing["id"],
-                             changes={"origin": 'saml', "internal_id": internal_id})
+                             changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
 
     return users.authenticate_sso(email=email, internal_id=internal_id, exp=auth.get_session_expiration())
 

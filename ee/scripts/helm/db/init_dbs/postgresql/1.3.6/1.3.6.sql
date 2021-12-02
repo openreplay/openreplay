@@ -60,5 +60,21 @@ FROM (SELECT tenant_id, role_id
 WHERE users.tenant_id = r.tenant_id
   AND users.role = 'member';
 
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM pg_type WHERE typname = 'user_origin') THEN
+            CREATE TYPE user_origin AS ENUM ('saml');
+        END IF;
+    END
+$$;
+ALTER TABLE public.users
+    ADD COLUMN IF NOT EXISTS origin      user_origin NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS internal_id text        NULL DEFAULT NULL;
 
+
+
+ALTER TABLE public.users
+    ALTER COLUMN origin TYPE text;
+DROP TYPE IF EXISTS user_origin;
 COMMIT;
