@@ -5,6 +5,7 @@ import {
   IconButton, SlideModal, Input, Button, Loader,
   NoContent, Popup, CopyButton, Dropdown } from 'UI';
 import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
+import { fetchList as fetchRoles } from 'Duck/roles';
 import styles from './manageUsers.css';
 import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
@@ -29,7 +30,8 @@ const LIMIT_WARNING = 'You have reached users limit.';
   edit,
   deleteMember,
   fetchList,
-  generateInviteLink
+  generateInviteLink,
+  fetchRoles
 })
 @withPageTitle('Users - OpenReplay Preferences')
 class ManageUsers extends React.PureComponent {
@@ -42,6 +44,7 @@ class ManageUsers extends React.PureComponent {
   closeModal = () => this.setState({ showModal: false });
   componentWillMount = () => {
     this.props.fetchList();
+    this.props.fetchRoles();
   }
   
   adminLabel = (user) => {
