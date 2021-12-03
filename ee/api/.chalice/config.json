@@ -62,7 +62,7 @@
         "idp_x509cert": "",
         "idp_sls_url": "",
         "idp_name": "",
-        "sso_exp_delta_seconds": "86400",
+        "sso_exp_delta_seconds": "172800",
         "sso_landing": "/login?jwt=%s",
         "invitation_link": "/api/users/invitation?token=%s",
         "change_password_link": "/reset-password?invitation=%s&&pass=%s",
