@@ -683,17 +683,10 @@ def authenticate_sso(email, internal_id, exp=None):
 
         if r is not None:
             r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
-            query = cur.mogrify(
-                f"""UPDATE public.users
-                   SET jwt_iat = timezone('utc'::text, now())
-                   WHERE user_id = %(user_id)s 
-                   RETURNING jwt_iat;""",
-                {"user_id": r["id"]})
-            cur.execute(query)
-            rt = TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"])
+            jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['id']))
             return authorizers.generate_jwt(r['id'], r['tenantId'],
-                                            rt, aud=f"front:{helper.get_stage_name()}",
-                                            exp=(exp + rt // 1000) if exp is not None else None)
+                                            jwt_iat, aud=f"front:{helper.get_stage_name()}",
+                                            exp=(exp + jwt_iat // 1000) if exp is not None else None)
     return None
 
 
