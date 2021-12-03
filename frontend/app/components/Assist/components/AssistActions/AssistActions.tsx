@@ -38,7 +38,7 @@ interface Props {
 }
 
 function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlEnabled, hasPermission, isEnterprise }: Props) {
-  const [ remoteStream, setRemoteStream ] = useState<MediaStream | null>(null);
+  const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ callObject, setCallObject ] = useState<{ end: ()=>void, toggleRemoteControl: ()=>void } | null >(null);
 
@@ -63,6 +63,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         onError
       ));
     }).catch(onError)
+  }
 
   const confirmCall =  async () => {
     if (await confirm({
@@ -124,7 +125,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         </div>
       }
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
-        { inCall && callObject && <ChatWindow endCall={callObject.end} userId={userId} remoteStream={remoteStream} localStream={localStream} /> }
+        { inCall && callObject && <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
       </div>
     </div>
   )
