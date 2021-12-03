@@ -118,7 +118,7 @@ function resolveCSS(baseURL: string, css: string): string {
 }
 
 export default class AssistManager {
-  constructor(private session, private config, private md: MessageDistributor, private config) {}
+  constructor(private session, private md: MessageDistributor, private config) {}
 
   private setStatus(status: ConnectionStatus) {
     if (status === ConnectionStatus.Connecting) {
@@ -401,14 +401,6 @@ export default class AssistManager {
       this.md.overlay.removeEventListener("wheel", this.onWheel);
       update({ remoteControl: false })
     }
-  }
-
-  private onMouseClick = (e: MouseEvent): void => {
-    const conn = this.dataConnection;
-    if (!conn) { return; }
-    const data = this.md.getInternalCoordinates(e);
-    // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
-    conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
   }
 
   private localCallData: {

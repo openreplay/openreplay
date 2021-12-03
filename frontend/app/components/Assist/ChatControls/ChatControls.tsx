@@ -13,7 +13,6 @@ interface Props {
 }
 function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled } : Props) {
   const [audioEnabled, setAudioEnabled] = useState(true)
-  const [videoEnabled, setVideoEnabled] = useState(false)
 
   const toggleAudio = () => {
     if (!stream) { return; }
