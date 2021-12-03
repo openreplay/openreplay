@@ -448,7 +448,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     if item is None:
         return {"errors": ["access denied"]}
     if item["origin"] is not None and item["hasPassword"] is False:
-        return {"errors": ["cannot change your password because you are logged-in form an SSO service"]}
+        return {"errors": ["cannot change your password because you are logged-in from an SSO service"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
     auth = authenticate(email, old_password, for_change_password=True)

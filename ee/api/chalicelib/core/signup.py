@@ -70,9 +70,8 @@ def create_step1(data):
             ),
                  r AS (
                      INSERT INTO public.roles(tenant_id, name, description, permissions, protected)
-                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'The company''s owner', '{}'::text[], TRUE),
-                               ((SELECT tenant_id FROM t), 'Admin', 'Admin member', '{}'::text[], TRUE),
-                               ((SELECT tenant_id FROM t), 'Member', 'A member', '{}'::text[], TRUE)
+                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Member', 'Member', '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], FALSE)
                         RETURNING *
                  ),
                  u AS (
