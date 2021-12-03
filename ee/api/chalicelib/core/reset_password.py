@@ -10,7 +10,8 @@ def reset(data):
         return {"errors": ["Invalid captcha."]}
     if "email" not in data:
         return {"errors": ["email not found in body"]}
-
+    if not helper.has_smtp():
+        return {"errors": ["no SMTP configuration found"]}
     a_user = users.get_by_email_only(data["email"])
     if a_user is not None:
         # ---FOR SSO
