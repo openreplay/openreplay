@@ -261,7 +261,8 @@ def get(user_id, tenant_id):
                         origin,
                         role_id,
                         roles.name AS role_name,
-                        roles.permissions
+                        roles.permissions,
+                        basic_authentication.password IS NOT NULL AS has_password
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
                     WHERE
@@ -446,7 +447,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     item = get(tenant_id=tenant_id, user_id=user_id)
     if item is None:
         return {"errors": ["access denied"]}
-    if item["origin"] is not None:
+    if item["origin"] is not None and item["hasPassword"] is False:
         return {"errors": ["cannot change your password because you are logged-in form an SSO service"]}
     if old_password == new_password:
         return {"errors": ["old and new password are the same"]}
