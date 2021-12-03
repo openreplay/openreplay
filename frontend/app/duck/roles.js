@@ -10,7 +10,7 @@ const initialState = Map({
   list: List(),
   permissions: List([
     { name: 'Session Replay', value: 'SESSION_REPLAY' },
-    { name: 'Develoepr Tools', value: 'DEV_TOOLS' },
+    { name: 'Developer Tools', value: 'DEV_TOOLS' },
     { name: 'Errors', value: 'ERRORS' },
     { name: 'Metrics', value: 'METRICS' },
     { name: 'Assist Live', value: 'ASSIST_LIVE' },
