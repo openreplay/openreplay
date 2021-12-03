@@ -1,4 +1,4 @@
-## Licenses (as of April 30, 2021)
+## Licenses (as of October 28, 2021)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -86,3 +86,6 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | lib/pq | MIT | Go |
 | peerjs | MIT | JavaScript |
 | antonmedv/finder | MIT | JavaScript |
+| elasticsearch-py | Apache2 | Python |
+| sentry-python | BSD2 | Python |
+| jira | BSD2 | Python |

@@ -196,7 +196,7 @@ class ManageUsers extends React.PureComponent {
       <React.Fragment>
         <Loader loading={ loading }>
           <SlideModal
-            title="Inivte People"
+            title="Invite People"
             size="small"
             isDisplayed={ showModal }
             content={ this.formContent() }

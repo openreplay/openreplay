@@ -1,16 +1,20 @@
 import React from 'react'
 import { Icon, Popup } from 'UI'
-import { connectPlayer, toggleEvents } from 'Player';
+import { connectPlayer, toggleEvents, scale } from 'Player';
 import cn from 'classnames'
 import stl from './EventsToggleButton.css'
 
 function EventsToggleButton({ showEvents, toggleEvents }) {
+  const toggle = () => {
+    toggleEvents()
+    scale()
+  }
   return (
     <Popup
       trigger={
         <button
           className={cn("absolute right-0 z-50", stl.wrapper)}
-          onClick={toggleEvents}
+          onClick={toggle}
         >
           <Icon
             name={ showEvents ? 'chevron-double-right' : 'chevron-double-left' }

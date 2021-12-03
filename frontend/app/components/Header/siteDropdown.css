@@ -118,3 +118,8 @@
     transition: all 0.2s;
   }
 }
+
+.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}

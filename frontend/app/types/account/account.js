@@ -14,6 +14,7 @@ export default Member.extend({
   license: '',
   expirationDate: undefined,
   permissions: [],
+  iceServers: undefined
 }, {
   fromJS: ({ current = {}, ...account})=> ({
     ...account,

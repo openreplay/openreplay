@@ -59,7 +59,7 @@ spec:
           type: DirectoryOrCreate
       {{- else }}
           volumeMounts:
-          - name: {{ .Values.pvc.name }}
+          - name: datadir
             mountPath: {{ .Values.pvc.mountPath }}
       volumes:
       - name: {{ .Values.pvc.name }}

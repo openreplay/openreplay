@@ -109,7 +109,7 @@ export default class ForgotPassword extends React.PureComponent {
           </div>
         </div>
         <div className="w-6/12 flex items-center justify-center">
-          <form onSubmit={ this.onSubmit } style={{ minWidth: '50%'}}>
+          <form onSubmit={ this.onSubmit } style={{ minWidth: '50%', textAlign: 'center'}}>
             <div className="mb-8">
               <h2 className="text-center text-3xl mb-6">{`${resetting ? 'Create' : 'Reset'} Password`}</h2>
             </div>

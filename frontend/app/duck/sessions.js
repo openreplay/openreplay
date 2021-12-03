@@ -248,7 +248,7 @@ const reducer = (state = initialState, action = {}) => {
 };
 
 export default withRequestState({
-  _: [ FETCH, FETCH_LIST ],
+  _: [ FETCH, FETCH_LIST, FETCH_LIVE_LIST ],
   fetchFavoriteListRequest: FETCH_FAVORITE_LIST,
   toggleFavoriteRequest: TOGGLE_FAVORITE,
   fetchErrorStackList: FETCH_ERROR_STACK,

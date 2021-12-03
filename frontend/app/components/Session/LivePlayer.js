@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
 import { withRequest } from 'HOCs'
-import { 
+import {
   PlayerProvider,
   connectPlayer,
   init as initPlayer,
