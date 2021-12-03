@@ -50,7 +50,6 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
 
       { 
         <div className="mb-4">
-
           <SideMenuitem
             active={ activeTab === CLIENT_TABS.WEBHOOKS }
             title="Webhooks"

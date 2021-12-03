@@ -16,11 +16,17 @@ interface Props {
   roles: any[],
   deleteRole: (id: any) => void,
   fetchList: () => Promise<void>,
+  account: any,
+  permissionsMap: any
 }
 
 function Roles(props: Props) {
-  const { loading, instance, roles, init, edit, deleteRole } = props
+  const { loading, instance, roles, init, edit, deleteRole, account, permissionsMap } = props
   const [showModal, setShowmModal] = useState(false)
+  const isAdmin = account.admin || account.superAdmin;
+
+  console.log('permissionsMap', permissionsMap)
+
 
   useEffect(() => {
     props.fetchList()
@@ -69,10 +75,12 @@ function Roles(props: Props) {
                       circle
                       icon="plus"
                       outline
+                      disabled={ !isAdmin }
                       onClick={ () => setShowmModal(true) }
                     />
                   </div>
                 }
+                disabled={ isAdmin }
                 size="tiny"
                 inverted
                 position="top left"
@@ -90,6 +98,7 @@ function Roles(props: Props) {
               {roles.map(role => (
                 <RoleItem
                   role={role}
+                  permissions={permissionsMap}
                   editHandler={editHandler}
                   deleteHandler={deleteHandler}
                 />
@@ -102,8 +111,17 @@ function Roles(props: Props) {
   )
 }
 
-export default connect(state => ({
-  instance: state.getIn(['roles', 'instance']) || null,
-  roles: state.getIn(['roles', 'list']),
-  loading: state.getIn(['roles', 'fetchRequest', 'loading']),
-}), { init, edit, fetchList, deleteRole })(Roles)
+export default connect(state => {
+  const permissions = state.getIn(['roles', 'permissions'])
+  const permissionsMap = {}
+  permissions.forEach(p => {
+    permissionsMap[p.value] = p.name
+  });
+  return {
+    instance: state.getIn(['roles', 'instance']) || null,
+    permissionsMap: permissionsMap,
+    roles: state.getIn(['roles', 'list']),
+    loading: state.getIn(['roles', 'fetchRequest', 'loading']),
+    account: state.getIn([ 'user', 'account' ])
+  }
+}, { init, edit, fetchList, deleteRole })(Roles)

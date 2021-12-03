@@ -97,4 +97,5 @@ const RoleForm = ({ role, closeModal, edit, save, saving, permissions }: Props) 
 export default connect(state => ({
   role: state.getIn(['roles', 'instance']),
   permissions: state.getIn(['roles', 'permissions']),
+  saving: state.getIn([ 'roles', 'saveRequest', 'loading' ]),
 }), { edit, save })(RoleForm);
