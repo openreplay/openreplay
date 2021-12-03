@@ -681,12 +681,12 @@ def authenticate_sso(email, internal_id, exp=None):
         cur.execute(query)
         r = cur.fetchone()
 
-        if r is not None:
-            r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
-            jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['id']))
-            return authorizers.generate_jwt(r['id'], r['tenantId'],
-                                            jwt_iat, aud=f"front:{helper.get_stage_name()}",
-                                            exp=(exp + jwt_iat // 1000) if exp is not None else None)
+    if r is not None:
+        r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
+        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['id']))
+        return authorizers.generate_jwt(r['id'], r['tenantId'],
+                                        jwt_iat, aud=f"front:{helper.get_stage_name()}",
+                                        exp=(exp + jwt_iat // 1000) if exp is not None else None)
     return None
 
 
@@ -697,6 +697,10 @@ def create_sso_user(tenant_id, email, admin, name, origin, internal_id=None):
                         INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id)
                             VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s)
                             RETURNING *
+                    ),
+                    au AS (
+                        INSERT INTO public.basic_authentication(user_id)
+                        VALUES ((SELECT user_id FROM u))
                     )
                     SELECT u.user_id                                              AS id,
                            u.email,
