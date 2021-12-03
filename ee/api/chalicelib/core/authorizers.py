@@ -1,10 +1,10 @@
-from chalicelib.utils.helper import environ
 import jwt
-from chalicelib.utils import helper
-from chalicelib.utils.TimeUTC import TimeUTC
 
 from chalicelib.core import tenants
 from chalicelib.core import users
+from chalicelib.utils import helper
+from chalicelib.utils.TimeUTC import TimeUTC
+from chalicelib.utils.helper import environ
 
 
 def jwt_authorizer(token):
@@ -44,7 +44,7 @@ def generate_jwt(id, tenant_id, iat, aud, exp=None):
             "userId": id,
             "tenantId": tenant_id,
             "exp": iat // 1000 + int(environ["jwt_exp_delta_seconds"]) + TimeUTC.get_utc_offset() // 1000 \
-                if exp is None else exp,
+                if exp is None else exp + TimeUTC.get_utc_offset() // 1000,
             "iss": environ["jwt_issuer"],
             "iat": iat // 1000,
             "aud": aud
