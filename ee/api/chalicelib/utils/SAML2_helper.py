@@ -9,13 +9,13 @@ SAML2 = {
     "strict": True,
     "debug": True,
     "sp": {
-        "entityId": environ["SITE_URL"] + "/api/saml2/metadata/",
+        "entityId": environ["SITE_URL"] + "/api/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": environ["SITE_URL"] + "/api/saml2/acs",
+            "url": environ["SITE_URL"] + "/api/sso/saml2/acs",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": environ["SITE_URL"] + "/api/saml2/sls",
+            "url": environ["SITE_URL"] + "/api/sso/saml2/sls",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -26,7 +26,7 @@ SAML2 = {
 }
 idp = None
 # SAML2 config handler
-if len(environ.get("SAML2_MD_URL","")) > 0:
+if environ.get("SAML2_MD_URL") is not None and len(environ["SAML2_MD_URL"]) > 0:
     print("SAML2_MD_URL provided, getting IdP metadata config")
     from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
@@ -90,7 +90,7 @@ def prepare_request(request):
         'https': 'on' if request.headers.get('x-forwarded-proto', 'http') == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': request.path,
+        'script_name': "/api" + request.path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
@@ -102,3 +102,12 @@ def prepare_request(request):
 
 def is_saml2_available():
     return idp is not None
+
+
+def get_saml2_provider():
+    return environ.get("idp_name", "saml2") if is_saml2_available() and len(
+        environ.get("idp_name", "saml2")) > 0 else None
+
+
+def get_landing_URL(jwt):
+    return environ["SITE_URL"] + environ.get("sso_landing", "/login?jwt=%s") % jwt

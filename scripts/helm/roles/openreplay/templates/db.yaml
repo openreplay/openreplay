@@ -5,6 +5,10 @@ image:
 {% endif %}
 env:
   LICENSE_KEY: "{{ enterprise_edition_license }}"
+  POSTGRES_STRING: "postgres://{{ postgres_db_user }}:{{ postgres_db_password }}@{{ postgres_endpoint }}:{{ postgres_port }}/{{ postgres_db_name }}"
+  REDIS_STRING: "{{ redis_endpoint }}"
+  KAFKA_SERVERS: "{{ kafka_endpoint }}"
+  KAFKA_USE_SSL: "{{ kafka_ssl }}"
 {% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []
 {% endif %}

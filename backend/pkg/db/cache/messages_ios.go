@@ -22,6 +22,7 @@ func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) er
 		UserOSVersion: s.UserOSVersion,
 		UserDevice: s.UserDevice,
 		UserCountry: s.UserCountry,
+		UserDeviceType: s.UserDeviceType,
 	}
 	if err := c.Conn.InsertSessionStart(sessionID, c.sessions[ sessionID ]); err != nil { 
 		c.sessions[ sessionID ] = nil
@@ -92,49 +93,6 @@ func (c *PGCache) InsertIOSIssueEvent(sessionID uint64, issueEvent *IOSIssueEven
 	// if err := c.Conn.InsertIssueEvent(sessionID, session.ProjectID, issueEvent); err != nil {
 	// 	return err
 	// }
-	return nil
-}
-
-func (c *PGCache) InsertUserID(sessionID uint64, userID *IOSUserID) error {
-	if err := c.Conn.InsertIOSUserID(sessionID, userID); err != nil {
-		return err
-	}
-	session, err := c.GetSession(sessionID)
-	if err != nil {
-		return err
-	}
-	session.UserID = &userID.Value
-	return nil
-}
-
-func (c *PGCache) InsertUserAnonymousID(sessionID uint64, userAnonymousID *IOSUserAnonymousID) error {
-	if err := c.Conn.InsertIOSUserAnonymousID(sessionID, userAnonymousID); err != nil {
-		return err
-	}
-	session, err := c.GetSession(sessionID)
-	if err != nil {
-		return err
-	}
-	session.UserAnonymousID = &userAnonymousID.Value
-	return nil
-}
-
-func (c *PGCache) InsertMetadata(sessionID uint64, metadata *Metadata) error {
-	session, err := c.GetSession(sessionID)
-	if err != nil {
-		return err
-	}
-	project, err := c.GetProject(session.ProjectID)
-	if err != nil {
-		return err
-	}
-
-	keyNo := project.GetMetadataNo(metadata.Key)
-	if err := c.Conn.InsertMetadata(sessionID, keyNo, metadata.Value); err != nil {
-		return err
-	}
-	
-	session.SetMetadata(keyNo, metadata.Value)
 	return nil
 }
 

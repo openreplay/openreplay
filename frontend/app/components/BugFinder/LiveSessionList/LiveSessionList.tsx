@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import { NoContent, Loader } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
+import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import Filter from 'Types/filter';
@@ -38,7 +39,7 @@ function LiveSessionList(props: Props) {
     } else {
       props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
     }
-    
+
     props.applyFilter()
   }
 
@@ -77,8 +78,12 @@ function LiveSessionList(props: Props) {
   )
 }
 
-export default connect(state => ({
-  list: state.getIn(['sessions', 'liveSessions']),
-  loading: state.getIn([ 'sessions', 'loading' ]),
-  filters: state.getIn([ 'filters', 'appliedFilter' ]),
-}), { fetchList, applyFilter, addAttribute })(LiveSessionList)
+export default withPermissions(['ASSIST_LIVE'])(connect(
+  (state) => ({
+    list: state.getIn(['sessions', 'liveSessions']),
+    loading: state.getIn([ 'sessions', 'loading' ]),
+    filters: state.getIn([ 'filters', 'appliedFilter' ]),
+  }),
+  {
+    fetchList, applyFilter, addAttribute }
+)(LiveSessionList));

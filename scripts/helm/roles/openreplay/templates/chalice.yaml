@@ -12,9 +12,34 @@ env:
   S3_SECRET: "{{ minio_secret_key }}"
   sourcemaps_bucket_key: "{{ minio_access_key }}"
   sourcemaps_bucket_secret: "{{ minio_secret_key }}"
-  S3_HOST: "https://{{ domain_name }}"
   SITE_URL: "https://{{ domain_name }}"
   jwt_secret: "{{ jwt_secret_key }}"
+  pg_host: "{{ postgres_endpoint }}"
+  pg_port: "{{ postgres_port }}"
+  pg_dbname: "{{ postgres_db_name }}"
+  pg_user: "{{ postgres_db_user }}"
+  pg_password: "{{ postgres_db_password }}"
+  EMAIL_HOST: "{{ email_host }}"
+  EMAIL_PORT: "{{ email_port }}"
+  EMAIL_USER: "{{ email_user }}"
+  EMAIL_PASSWORD: "{{ email_password }}"
+  EMAIL_USE_TLS: "{{ email_use_tls }}"
+  EMAIL_USE_SSL: "{{ email_use_ssl }}"
+  EMAIL_SSL_KEY: "{{ email_ssl_key }}"
+  EMAIL_SSL_CERT: "{{ email_ssl_cert }}"
+  EMAIL_FROM: "{{ email_from }}"
+  AWS_DEFAULT_REGION: "{{ aws_region }}"
+  sessions_region: "{{ aws_region }}"
+  sessions_bucket: "{{ recordings_bucket }}"
+  sourcemaps_bucket: "{{ sourcemaps_bucket }}"
+  js_cache_bucket: "{{ assets_bucket }}"
+  # In case of minio, the instance is running inside kuberntes,
+  # which is accessible via nginx ingress.
+{% if s3_endpoint == "http://minio.db.svc.cluster.local:9000" %}
+  S3_HOST: "https://{{ domain_name }}"
+{% else %}
+  S3_HOST: "{{ s3_endpoint }}"
+{% endif %} 
 {% if env is defined and env.chalice is defined and env.chalice%}
   {{ env.chalice | to_nice_yaml | trim | indent(2) }}
 {% endif %}

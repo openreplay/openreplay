@@ -10,21 +10,21 @@ import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream
 
 
 export interface Props {
-  remoteStream: MediaStream | null,
+  incomeStream: MediaStream | null,
   localStream: LocalStream | null,
   userId: String,
   endCall: () => void
 }
 
-const ChatWindow: FC<Props> = function ChatWindow({ userId, remoteStream, localStream, endCall }) {
+const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localStream, endCall }) {
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false)
   const [remoteVideoEnabled, setRemoteVideoEnabled] = useState(false)
 
-  
+
   useEffect(() => {
-    if (!remoteStream) { return }
+    if (!incomeStream) { return }
     const iid = setInterval(() => {
-      const settings = remoteStream.getVideoTracks()[0]?.getSettings()
+      const settings = incomeStream.getVideoTracks()[0]?.getSettings()
       const isDummyVideoTrack = !!settings ? (settings.width === 2 || settings.frameRate === 0) : true
       console.log(isDummyVideoTrack, settings)
       const shouldBeEnabled = !isDummyVideoTrack
@@ -33,7 +33,7 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, remoteStream, localS
       }
     }, 1000)
     return () => clearInterval(iid)
-  }, [ remoteStream, localVideoEnabled ])
+  }, [ incomeStream, localVideoEnabled ])
 
   const minimize = !localVideoEnabled && !remoteVideoEnabled
 
@@ -48,7 +48,7 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, remoteStream, localS
           <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />          
         </div>
         <div className={cn(stl.videoWrapper, {'hidden' : minimize}, 'relative')}>
-          <VideoContainer stream={ remoteStream } />
+          <VideoContainer stream={ incomeStream } />
           <div className="absolute bottom-0 right-0 z-50">
             <VideoContainer stream={ localStream ? localStream.stream : null } muted width={50} />
           </div>

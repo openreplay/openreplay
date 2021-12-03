@@ -1,4 +1,4 @@
-import App from './index';
+import App from "./index.js";
 
 type Callback = () => void;
 function wrap(callback: Callback, n: number): Callback {

@@ -108,11 +108,11 @@ func (b *builder) buildInputEvent() {
 }
 
 func (b *builder) handleMessage(message Message, messageID uint64) {
-	timestamp := uint64(message.Meta().Timestamp)
-	if b.timestamp <= timestamp { // unnecessary. TODO: test and remove
+	timestamp := GetTimestamp(message)
+	if b.timestamp <= timestamp { // unnecessary? TODO: test and remove
 		b.timestamp = timestamp
 	}
-	// Before  the first timestamp.
+	// Might happen before  the first timestamp.
 	switch msg := message.(type) {
 	case *SessionStart,
 			*Metadata,

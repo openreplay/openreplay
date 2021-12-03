@@ -68,10 +68,16 @@ def create_step1(data):
                     VALUES (%(companyName)s, %(versionNumber)s, 'ee')
                     RETURNING tenant_id, api_key
             ),
+                 r AS (
+                     INSERT INTO public.roles(tenant_id, name, description, permissions, protected)
+                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Member', 'Member', '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], FALSE)
+                        RETURNING *
+                 ),
                  u AS (
-                     INSERT INTO public.users (tenant_id, email, role, name, data)
-                         VALUES ((SELECT tenant_id FROM t), %(email)s, 'owner', %(fullname)s,%(data)s)
-                         RETURNING user_id,email,role,name
+                     INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
+                         VALUES ((SELECT tenant_id FROM t), %(email)s, 'owner', %(fullname)s,%(data)s, (SELECT role_id FROM r WHERE name ='Owner'))
+                         RETURNING user_id,email,role,name,role_id
                  ),
                  au AS (
                     INSERT INTO public.basic_authentication (user_id, password, generated_password)

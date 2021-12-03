@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { sessions as sessionsRoute, funnelIssue as funnelIssueRoute, withSiteId } from 'App/routes';
+import { sessions as sessionsRoute, funnel as funnelRoute, funnelIssue as funnelIssueRoute, withSiteId } from 'App/routes';
 import { Icon, CountryFlag, IconButton, BackLink } from 'UI';
 import { toggleFavorite } from 'Duck/sessions';
 import cn from 'classnames';
@@ -36,12 +36,13 @@ function capitalise(str) {
   local: state.getIn(['sessions', 'timezone']),
   funnelRef: state.getIn(['funnels', 'navRef']),
   siteId: state.getIn([ 'user', 'siteId' ]),
+  funnelPage: state.getIn(['sessions', 'funnelPage']),
 }), {
   toggleFavorite, fetchListIntegration
 })
 @withRouter
 export default class PlayerBlockHeader extends React.PureComponent {
-  componentDidMount() {    
+  componentDidMount() {
     if (!this.props.issuesFetched)
       this.props.fetchListIntegration('issues')
   }
@@ -53,10 +54,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
   );
 
   backHandler = () => {
-    const { history, siteId } = this.props;
-    if (history.action !== 'POP')
-      history.goBack();
-    else 
+    const { history, siteId, funnelPage } = this.props;
+    if (funnelPage) {
+      if (funnelPage.get('issueId')) {
+        history.push(withSiteId(funnelIssueRoute(funnelPage.get('funnelId'), funnelPage.get('issueId')), siteId))
+      } else
+        history.push(withSiteId(funnelRoute(funnelPage.get('funnelId')), siteId));
+    } else 
       history.push(withSiteId(SESSIONS_ROUTE), siteId);
   }
 
@@ -87,6 +91,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       jiraConfig,
       fullscreen,
     } = this.props;
+    const { history, siteId } = this.props;
 
     return (
       <div className={ cn(cls.header, "flex justify-between", { "hidden" : fullscreen}) }>
@@ -111,7 +116,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
             { live && <AssistActions isLive userId={userId} /> }
             { !live && (
               <>
-                <Autoplay />            
+                <Autoplay />
                 <div className={ cls.divider } />
                 <IconButton
                   className="mr-2"

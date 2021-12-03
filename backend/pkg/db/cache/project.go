@@ -6,16 +6,21 @@ import  (
 )
 
 func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
-	if c.projectsByKeys[ projectKey ] != nil && 
-		time.Now().Before(c.projectsByKeys[ projectKey ].expirationTime) {
-		return c.projectsByKeys[ projectKey ].Project, nil
+	pmInterface, found := c.projectsByKeys.Load(projectKey)
+	if found {
+		if pm, ok := pmInterface.(*ProjectMeta); ok {
+			if time.Now().Before(pm.expirationTime) {
+				return pm.Project, nil
+			}
+		}
 	}
+
 	p, err := c.Conn.GetProjectByKey(projectKey)
-	if p == nil {
+	if err != nil {
 		return nil, err
 	}
-	c.projectsByKeys[ projectKey ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
-	c.projects[ p.ProjectID ] = c.projectsByKeys[ projectKey ]
+	//c.projects[ p.ProjectID ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
+	c.projectsByKeys.Store(projectKey, p)
 	return p, nil
 }
 
@@ -27,11 +32,11 @@ func (c *PGCache) GetProject(projectID uint32) (*Project, error) {
 		return c.projects[ projectID ].Project, nil
 	}
 	p, err := c.Conn.GetProject(projectID)
-	if p == nil {
+	if err != nil {
 		return nil, err
 	}
 	c.projects[ projectID ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
-	c.projectsByKeys[ p.ProjectKey ] = c.projects[ projectID ]
+	//c.projectsByKeys.Store(p.ProjectKey, c.projects[ projectID ])
 	return p, nil
 }
 

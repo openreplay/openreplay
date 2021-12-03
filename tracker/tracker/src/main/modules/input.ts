@@ -1,6 +1,6 @@
-import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from '../utils';
-import App from '../app';
-import { SetInputTarget, SetInputValue, SetInputChecked } from '../../messages';
+import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from "../utils.js";
+import App from "../app/index.js";
+import { SetInputTarget, SetInputValue, SetInputChecked } from "../../messages/index.js";
 
 function isInput(node: any): node is HTMLInputElement {
   if (!(node instanceof HTMLInputElement)) {

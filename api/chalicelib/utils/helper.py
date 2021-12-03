@@ -1,8 +1,8 @@
-import math
 import random
 import re
 import string
 
+import math
 import requests
 
 local_prefix = 'local-'
@@ -367,3 +367,7 @@ def get_internal_project_id(project_id64):
 
 def has_smtp():
     return environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0
+
+
+def get_edition():
+    return "foss" if is_free_open_source_edition() else "ee"

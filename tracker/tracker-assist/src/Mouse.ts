@@ -1,8 +1,7 @@
 
-
-
 export default class Mouse {
   private mouse: HTMLDivElement
+  private position: [number,number] = [0,0]
   constructor() {
     this.mouse = document.createElement('div');
     Object.assign(this.mouse.style, {
@@ -17,11 +16,16 @@ export default class Mouse {
     document.body.appendChild(this.mouse);
   }
 
-  move({x, y}: {x?: number, y?: number}) {
+  move({x, y}: {x: number, y: number}) {
+    this.position = [x, y];
     Object.assign(this.mouse.style, {
       left: `${x || 0}px`,
       top: `${y || 0}px`
     })
+  }
+
+  getPosition(): [ number, number] {
+    return this.position;
   }
 
   remove() {

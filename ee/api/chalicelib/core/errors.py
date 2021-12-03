@@ -321,7 +321,7 @@ def get_details_chart(project_id, error_id, user_id, **data):
             "error_id": error_id}
 
         main_ch_query = f"""\
-        SELECT error_id,
+        SELECT browser_details.error_id AS error_id,
                browsers_partition,
                os_partition,
                device_partition,
@@ -516,7 +516,7 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
                                 FROM errors
                                 WHERE {" AND ".join(ch_sub_query)}
                                 GROUP BY error_id, timestamp
-                                ORDER BY timestamp)
+                                ORDER BY timestamp) AS sub_table
                                 GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
             # print("--------------------")

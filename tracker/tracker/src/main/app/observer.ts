@@ -1,4 +1,4 @@
-import { stars, hasOpenreplayAttribute } from '../utils';
+import { stars, hasOpenreplayAttribute } from "../utils.js";
 import {
   CreateDocument,
   CreateElementNode,
@@ -11,8 +11,8 @@ import {
   MoveNode,
   RemoveNode,
   CreateIFrameDocument,
-} from '../../messages';
-import App from './index';
+} from "../../messages/index.js";
+import App from "./index.js";
 
 interface Window extends WindowProxy {
   HTMLInputElement: typeof HTMLInputElement,
@@ -234,30 +234,43 @@ export default class Observer {
     this.app.send(new SetNodeAttribute(id, name, value));
   }
 
+  /* TODO:  abstract sanitation */
+  getInnerTextSecure(el: HTMLElement): string {
+    const id = this.app.nodes.getID(el)
+    if (!id) { return '' }
+    return this.checkObscure(id, el.innerText)
+
+  }
+
+  private checkObscure(id: number, data: string): string {
+    if (this.textMasked.has(id)) {
+      return data.replace(
+        /[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g,
+        '█',
+      );
+    } 
+    if (this.options.obscureTextNumbers) {
+      data = data.replace(/\d/g, '0');
+    }
+    if (this.options.obscureTextEmails) {
+      data = data.replace(
+        /([^\s]+)@([^\s]+)\.([^\s]+)/g,
+        (...f: Array<string>) =>
+          stars(f[1]) + '@' + stars(f[2]) + '.' + stars(f[3]),
+      );
+    }
+    return data
+  }
+
   private sendNodeData(id: number, parentElement: Element, data: string): void {
     if (this.isInstance(parentElement, HTMLStyleElement) || this.isInstance(parentElement, SVGStyleElement)) {
       this.app.send(new SetCSSDataURLBased(id, data, this.app.getBaseHref()));
       return;
     }
-    if (this.textMasked.has(id)) {
-      data = data.replace(
-        /[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g,
-        '█',
-      );
-    } else {
-      if (this.options.obscureTextNumbers) {
-        data = data.replace(/\d/g, '0');
-      }
-      if (this.options.obscureTextEmails) {
-        data = data.replace(
-          /([^\s]+)@([^\s]+)\.([^\s]+)/g,
-          (...f: Array<string>) =>
-            stars(f[1]) + '@' + stars(f[2]) + '.' + stars(f[3]),
-        );
-      }
-    }
+    data = this.checkObscure(id, data)
     this.app.send(new SetNodeData(id, data));
   }
+  /* end TODO:  abstract sanitation */
 
   private bindNode(node: Node): void {
     const r = this.app.nodes.registerNode(node);
@@ -279,6 +292,7 @@ export default class Observer {
             ? NodeFilter.FILTER_REJECT
             : NodeFilter.FILTER_ACCEPT,
       },
+      // @ts-ignore
       false,
     );
     while (walker.nextNode()) {
@@ -411,15 +425,17 @@ export default class Observer {
 
   private iframeObservers: Observer[] = [];
   private handleIframe(iframe: HTMLIFrameElement): void {
-    const handle = () => {
-      const context = iframe.contentWindow as Window | null
+    let context: Window | null = null
+    const handle = this.app.safe(() => {
       const id = this.app.nodes.getID(iframe)
-      if (!context || id === undefined) { return }
-
+      if (id === undefined) { return }
+      if (iframe.contentWindow === context) { return }
+      context = iframe.contentWindow as Window | null;
+      if (!context) { return }
       const observer = new Observer(this.app, this.options, context)
       this.iframeObservers.push(observer)
       observer.observeIframe(id, context)
-    }
+    })
     this.app.attachEventListener(iframe, "load", handle)
     handle()
   }

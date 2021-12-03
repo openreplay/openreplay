@@ -21,7 +21,8 @@ export const IN_BROWSER = !(typeof window === "undefined");
 export const log = console.log
 export const warn = console.warn
 
-const DOCS_HOST = 'https://docs.openreplay.com';
+export const DOCS_HOST = 'https://docs.openreplay.com';
+
 const warnedFeatures: { [key: string]: boolean; } = {};
 export function deprecationWarn(nameOfFeature: string, useInstead: string, docsPath: string = "/"): void {
 	if (warnedFeatures[ nameOfFeature ]) {
@@ -55,4 +56,5 @@ export function hasOpenreplayAttribute(e: Element, name: string): boolean {
 	}
 	return false;
 }
+
 

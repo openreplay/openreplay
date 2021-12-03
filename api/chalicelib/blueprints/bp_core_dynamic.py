@@ -11,6 +11,8 @@ from chalicelib.core import signup
 from chalicelib.core import tenants
 from chalicelib.core import users
 from chalicelib.core import webhook
+from chalicelib.core import license
+from chalicelib.core import assist
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper

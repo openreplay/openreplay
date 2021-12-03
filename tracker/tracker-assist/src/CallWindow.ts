@@ -129,7 +129,7 @@ export default class CallWindow {
     })
   }
 
-  private aRemote: HTMLAudioElement | null = null; 
+  private aRemote: HTMLAudioElement | null = null;
   private checkRemoteVideoInterval: ReturnType<typeof setInterval>
   setRemoteStream(rStream: MediaStream) {
     this.load.then(() => {
@@ -149,14 +149,14 @@ export default class CallWindow {
 
       // Hack to determine if the remote video is enabled
       if (this.checkRemoteVideoInterval) { clearInterval(this.checkRemoteVideoInterval) } // just in case
-      let enable = false
+      let enabled = false
       this.checkRemoteVideoInterval = setInterval(() => {
         const settings = rStream.getVideoTracks()[0]?.getSettings()
         //console.log(settings)
         const isDummyVideoTrack = !!settings && (settings.width === 2 || settings.frameRate === 0)
-        const shouldEnable = !isDummyVideoTrack
-        if (enable !== shouldEnable) {
-          this.toggleRemoteVideoUI(enable=shouldEnable)
+        const shouldBeEnabled = !isDummyVideoTrack
+        if (enabled !== shouldBeEnabled) {
+          this.toggleRemoteVideoUI(enabled=shouldBeEnabled)
         }
       }, 1000)
     })
@@ -178,7 +178,7 @@ export default class CallWindow {
   private localStream: LocalStream | null = null;
 
   // TODO: on construction?
-  setLocalStream(lStream: LocalStream) {    
+  setLocalStream(lStream: LocalStream) {
     this.localStream = lStream
   }
 
@@ -207,7 +207,7 @@ export default class CallWindow {
   private toggleAudio() {
     const enabled = this.localStream?.toggleAudio() || false
     this.toggleAudioUI(enabled)
-    // if (!this.audioBtn) { return; } 
+    // if (!this.audioBtn) { return; }
     // if (enabled) {
     //   this.audioBtn.classList.remove("muted");
     //   this.audioBtn.childNodes[1].textContent = "Mute";
@@ -218,7 +218,7 @@ export default class CallWindow {
   }
 
   private toggleVideoUI(enabled: boolean) {
-    if (!this.videoBtn || !this.videoContainer) { return; } 
+    if (!this.videoBtn || !this.videoContainer) { return; }
     if (enabled) {
       this.videoContainer.classList.add("local")
       this.videoBtn.classList.remove("off");
@@ -239,7 +239,7 @@ export default class CallWindow {
           this.vLocal.srcObject = this.localStream.stream
         }
       })
-    })    
+    })
   }
 
   remove() {
@@ -247,10 +247,10 @@ export default class CallWindow {
     clearInterval(this.tsInterval)
     clearInterval(this.checkRemoteVideoInterval)
     if (this.iframe.parentElement) {
-      document.body.removeChild(this.iframe) 
+      document.body.removeChild(this.iframe)
     }
     if (this.aRemote && this.aRemote.parentElement) {
-      document.body.removeChild(this.aRemote) 
+      document.body.removeChild(this.aRemote)
     }
     sessionStorage.removeItem(SS_START_TS_KEY)
   }

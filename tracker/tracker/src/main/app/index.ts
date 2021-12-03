@@ -1,17 +1,17 @@
-import { timestamp, log, warn } from '../utils';
-import { Timestamp, TechnicalInfo, PageClose } from '../../messages';
-import Message from '../../messages/message';
-import Nodes from './nodes';
-import Observer from './observer';
-import Ticker from './ticker';
+import { timestamp, log, warn } from "../utils.js";
+import { Timestamp, PageClose } from "../../messages/index.js";
+import Message from "../../messages/message.js";
+import Nodes from "./nodes.js";
+import Observer from "./observer.js";
+import Ticker from "./ticker.js";
 
-import { deviceMemory, jsHeapSizeLimit } from '../modules/performance';
+import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 
-import type { Options as ObserverOptions } from './observer';
+import type { Options as ObserverOptions } from "./observer.js";
 
-import type { Options as WebworkerOptions, WorkerMessageData } from '../../messages/webworker';
+import type { Options as WebworkerOptions, WorkerMessageData } from "../../messages/webworker.js";
 
-interface OnStartInfo {
+export interface OnStartInfo {
   sessionID: string, 
   sessionToken: string, 
   userUUID: string,
@@ -24,10 +24,11 @@ export type Options = {
   session_pageno_key: string;
   local_uuid_key: string;
   ingestPoint: string;
-  resourceBaseHref: string, // resourceHref?
+  resourceBaseHref: string | null, // resourceHref?
   //resourceURLRewriter: (url: string) => string | boolean,
   __is_snippet: boolean;
   __debug_report_edp: string | null;
+  __debug_log: boolean;
   onStart?: (info: OnStartInfo) => void;
 } & ObserverOptions & WebworkerOptions;
 
@@ -43,7 +44,7 @@ export default class App {
   readonly ticker: Ticker;
   readonly projectKey: string;
   private readonly messages: Array<Message> = [];
-  private readonly observer: Observer;
+  /*private*/ readonly observer: Observer; // temp, for fast security fix. TODO: separate security/obscure module with nodeCallback that incapsulates `textMasked` functionality from Observer
   private readonly startCallbacks: Array<Callback> = [];
   private readonly stopCallbacks: Array<Callback> = [];
   private readonly commitCallbacks: Array<CommitCallback> = [];
@@ -67,9 +68,10 @@ export default class App {
         session_pageno_key: '__openreplay_pageno',
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
-        resourceBaseHref: '',
+        resourceBaseHref: null,
         __is_snippet: false,
         __debug_report_edp: null,
+        __debug_log: false,
         obscureTextEmails: true,
         obscureTextNumbers: false,
         captureIFrames: false,
@@ -90,10 +92,9 @@ export default class App {
           new Blob([`WEBWORKER_BODY`], { type: 'text/javascript' }),
         ),
       );
-      // this.worker.onerror = e => {
-      //   this.send(new TechnicalInfo("webworker_error", JSON.stringify(e)));
-      // /* TODO: send report */
-      // }
+      this.worker.onerror = e => {
+        this._debug("webworker_error", e)
+      }
       let lastTs = timestamp();
       let fileno = 0;
       this.worker.onmessage = ({ data }: MessageEvent) => {
@@ -114,11 +115,11 @@ export default class App {
       this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { 
-      this.sendDebugReport("worker_start", e);
+      this._debug("worker_start", e);
     }
   }
 
-  private sendDebugReport(context: string, e: any) {
+  private _debug(context: string, e: any) {
     if(this.options.__debug_report_edp !== null) {
       fetch(this.options.__debug_report_edp, {
         method: 'POST',
@@ -128,6 +129,9 @@ export default class App {
           error: `${e}`
         })
       });
+    }
+    if(this.options.__debug_log) {
+      warn("OpenReplay error: ", context, e)
     }
   }
 
@@ -149,8 +153,12 @@ export default class App {
     }
   }
 
-  addCommitCallback(cb: CommitCallback): void {
+  attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
+  }
+  // @Depricated (TODO: remove in 3.5.*)
+  addCommitCallback(cb: CommitCallback): void {
+    this.attachCommitCallback(cb)
   }
 
 
@@ -160,12 +168,11 @@ export default class App {
       try {
         fn.apply(this, args);
       } catch (e) {
-        app.send(new TechnicalInfo("error", JSON.stringify({
-          time: timestamp(),
-          name: e.name,
-          message: e.message,
-          stack: e.stack
-        })));
+        app._debug("safe_fn_call", e)
+        // time: timestamp(),
+        // name: e.name,
+        // message: e.message,
+        // stack: e.stack
       }
     } as any // TODO: correct typing
   }
@@ -210,8 +217,10 @@ export default class App {
     return this.projectKey
   }
   getBaseHref(): string {
-    if (this.options.resourceBaseHref) {
+    if (typeof this.options.resourceBaseHref === 'string') {
       return this.options.resourceBaseHref
+    } else if (typeof this.options.resourceBaseHref === 'object') {
+      //switch between  types
     }
     if (document.baseURI) {
       return document.baseURI
@@ -220,6 +229,12 @@ export default class App {
     return document.head
       ?.getElementsByTagName("base")[0]
       ?.getAttribute("href") || location.origin + location.pathname
+  }
+  resolveResourceURL(resourceURL: string): string {
+    const base = new URL(this.getBaseHref())
+    base.pathname += "/" + new URL(resourceURL).pathname
+    base.pathname.replace(/\/+/g, "/")
+    return base.toString()
   }
 
   isServiceURL(url: string): boolean {
@@ -308,13 +323,14 @@ export default class App {
         return onStartInfo;
       })
       .catch(e => {
-        this.stop();
+        sessionStorage.removeItem(this.options.session_token_key)
+        this.stop()
         warn("OpenReplay was unable to start. ", e)
-        this.sendDebugReport("session_start", e);
-        throw e;
+        this._debug("session_start", e);
+        throw e
       })
     }
-    return Promise.reject("Player is active");
+    return Promise.reject("Player is already active");
   }
 
   start(reset: boolean = false): Promise<OnStartInfo> {

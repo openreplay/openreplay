@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker",
   "description": "The OpenReplay tracker main package",
-  "version": "3.4.0",
+  "version": "3.4.9",
   "keywords": [
     "logging",
     "replay"
@@ -35,10 +35,9 @@
     "rollup": "^2.17.0",
     "rollup-plugin-terser": "^6.1.0",
     "semver": "^6.3.0",
-    "typescript": "^4.3.4"
+    "typescript": "^4.6.0-dev.20211126"
   },
   "dependencies": {
-    "@medv/finder": "^2.0.0",
     "error-stack-parser": "^2.0.6"
   },
   "engines": {

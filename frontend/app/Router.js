@@ -69,7 +69,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     organisation: state.getIn([ 'user', 'client', 'name' ]),
     tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
     tenants: state.getIn(['user', 'tenants']),
-    existingTenant: state.getIn(['user', 'existingTenant']),
+    existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {

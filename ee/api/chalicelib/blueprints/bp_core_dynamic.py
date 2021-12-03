@@ -1,10 +1,11 @@
 from chalice import Blueprint, Response
 
 from chalicelib import _overrides
+from chalicelib.core import assist
 from chalicelib.core import boarding
 from chalicelib.core import errors
 from chalicelib.core import license
-from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integrations_manager, assist
+from chalicelib.core import metadata, errors_favorite_viewed, slack, alerts, sessions, integrations_manager
 from chalicelib.core import notifications
 from chalicelib.core import projects
 from chalicelib.core import signup
@@ -25,9 +26,7 @@ def login():
     data = app.current_request.json_body
     if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
         return {"errors": ["Invalid captcha."]}
-    r = users.authenticate(data['email'], data['password'],
-                           for_plugin=False
-                           )
+    r = users.authenticate(data['email'], data['password'], for_plugin=False)
     if r is None:
         return Response(status_code=401, body={
             'errors': ['You’ve entered invalid Email or Password.']
@@ -46,6 +45,9 @@ def login():
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
+    c["smtp"] = helper.has_smtp()
+    c["iceServers"] = assist.get_ice_servers()
+
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -142,7 +144,10 @@ def put_client(context):
 
 @app.route('/signup', methods=['GET'], authorizer=None)
 def get_all_signup():
-    return {"data": tenants.tenants_exists()}
+    return {"data": {"tenants": tenants.tenants_exists(),
+                     "sso": SAML2_helper.is_saml2_available(),
+                     "ssoProvider": SAML2_helper.get_saml2_provider(),
+                     "edition": helper.get_edition()}}
 
 
 @app.route('/signup', methods=['POST', 'PUT'], authorizer=None)
@@ -347,8 +352,8 @@ def get_members(context):
 
 @app.route('/client/members', methods=['PUT', 'POST'])
 def add_member(context):
-    if SAML2_helper.is_saml2_available():
-        return {"errors": ["please use your SSO server to add teammates"]}
+    # if SAML2_helper.is_saml2_available():
+    #     return {"errors": ["please use your SSO server to add teammates"]}
     data = app.current_request.json_body
     return users.create_member(tenant_id=context['tenantId'], user_id=context['userId'], data=data)
 

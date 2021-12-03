@@ -1,5 +1,5 @@
-import App from '../app';
-import { ConnectionInformation } from '../../messages';
+import App from "../app/index.js";
+import { ConnectionInformation } from "../../messages/index.js";
 
 export default function(app: App): void {
   const connection:
