@@ -4,28 +4,40 @@ import { Icon, Loader, Button, Link } from 'UI';
 import { login } from 'Duck/user';
 import { forgotPassword, signup } from 'App/routes';
 import ReCAPTCHA from 'react-google-recaptcha';
+import { withRouter } from 'react-router-dom';
 import stl from './login.css';
 import cn from 'classnames';
+import { setJwt } from 'Duck/jwt';
 
 const FORGOT_PASSWORD = forgotPassword();
 const SIGNUP_ROUTE = signup();
 const recaptchaRef = React.createRef();
 
 @connect(
-  state => ({
+  (state, props) => ({
     errors: state.getIn([ 'user', 'loginRequest', 'errors' ]),
     loading: state.getIn([ 'user', 'loginRequest', 'loading' ]),
-    // existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
     authDetails: state.getIn(['user', 'authDetails']),
+    params: new URLSearchParams(props.location.search)
   }),
-  { login, },
+  { login, setJwt },
 )
 @withPageTitle('Login - OpenReplay')
+@withRouter
 export default class Login extends React.Component {
   state = {
     email: '',
     password: '',
   };
+
+  componentDidMount() {
+    const { params } = this.props;
+    const jwt = params.get('jwt')
+    if (jwt) {
+      this.props.setJwt(jwt);
+      window.location.href = '/';
+    }
+  }
 
   handleSubmit = (token) => {
     const { email, password } = this.state;
