@@ -11,7 +11,7 @@ def reset(data):
     if "email" not in data:
         return {"errors": ["email not found in body"]}
     if not helper.has_smtp():
-        return {"errors": ["no SMTP configuration found"]}
+        return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
     a_user = users.get_by_email_only(data["email"])
     if a_user is not None:
         # ---FOR SSO

@@ -11,7 +11,7 @@ def reset(data):
     if "email" not in data:
         return {"errors": ["email not found in body"]}
     if not helper.has_smtp():
-        return {"errors": ["no SMTP configuration found"]}
+        return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
     a_users = users.get_by_email_only(data["email"])
     if len(a_users) > 1:
         print(f"multiple users found for [{data['email']}] please contact our support")
