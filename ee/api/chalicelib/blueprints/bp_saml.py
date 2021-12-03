@@ -31,7 +31,6 @@ def start_sso():
 def process_sso_assertion():
     req = prepare_request(request=app.current_request)
     session = req["cookie"]["session"]
-    request = req['request']
     auth = init_saml_auth(req)
 
     request_id = None
@@ -80,16 +79,21 @@ def process_sso_assertion():
             users.update(tenant_id=t['tenantId'], user_id=existing["id"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
     expiration = auth.get_session_expiration()
-    print("TTL:")
-    print(auth.get_session_expiration())
-    return users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
+    expiration = expiration if expiration is not None and expiration > 10 * 60 \
+        else int(environ.get("sso_exp_delta_seconds", 24 * 60 * 60))
+    jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
+    if jwt is None:
+        return {"errors": ["null JWT"]}
+    return Response(
+        status_code=307,
+        body='',
+        headers={'Location': SAML2_helper.get_landing_URL(jwt), 'Content-Type': 'text/plain'})
 
 
 @app.route('/sso/saml2/sls', methods=['GET'], authorizer=None)
 def process_sls_assertion():
     req = prepare_request(request=app.current_request)
     session = req["cookie"]["session"]
-    request = req['request']
     auth = init_saml_auth(req)
     request_id = None
     if 'LogoutRequestID' in session:

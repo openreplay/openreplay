@@ -690,14 +690,10 @@ def authenticate_sso(email, internal_id, exp=None):
                    RETURNING jwt_iat;""",
                 {"user_id": r["id"]})
             cur.execute(query)
-            return {
-                "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
-                                                TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),
-                                                aud=f"front:{helper.get_stage_name()}",
-                                                exp=exp),
-                "email": email,
-                **r
-            }
+            return authorizers.generate_jwt(r['id'], r['tenantId'],
+                                            TimeUTC.datetime_to_timestamp(cur.fetchone()["jwt_iat"]),
+                                            aud=f"front:{helper.get_stage_name()}",
+                                            exp=exp)
     return None
 
 
