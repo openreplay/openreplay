@@ -79,8 +79,10 @@ def process_sso_assertion():
             print(f"== migrating user to {SAML2_helper.get_saml2_provider()} ==")
             users.update(tenant_id=t['tenantId'], user_id=existing["id"],
                          changes={"origin": SAML2_helper.get_saml2_provider(), "internal_id": internal_id})
-
-    return users.authenticate_sso(email=email, internal_id=internal_id, exp=auth.get_session_expiration())
+    expiration = auth.get_session_expiration()
+    print("TTL:")
+    print(auth.get_session_expiration())
+    return users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
 
 
 @app.route('/sso/saml2/sls', methods=['GET'], authorizer=None)
