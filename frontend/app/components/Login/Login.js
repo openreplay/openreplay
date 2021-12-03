@@ -59,6 +59,7 @@ export default class Login extends React.Component {
 
   render() {
     const { errors, loading, authDetails } = this.props;
+
     return (
       <div className="flex" style={{ height: '100vh'}}>
         <div className={cn("w-6/12", stl.left)}>
