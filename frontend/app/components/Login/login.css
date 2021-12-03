@@ -145,3 +145,7 @@
     margin-bottom: 10px !important;
   }
 }
+
+.sso {
+  border-top: solid thin $gray-light;
+}
