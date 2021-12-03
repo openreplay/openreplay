@@ -10,3 +10,10 @@ export default (state = null, action = {}) => {
   }
   return state;
 };
+
+export function setJwt(data) {
+  return {
+    type: UPDATE,
+    data,
+  };
+}
