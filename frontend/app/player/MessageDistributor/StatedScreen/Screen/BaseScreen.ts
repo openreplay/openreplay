@@ -76,9 +76,8 @@ export default abstract class BaseScreen {
     //return this.boundingRect;
   }
 
-  getInternalCoordinates({ x, y }: Point): Point {
+  getInternalViewportCoordinates({ x, y }: Point): Point {
     const { x: overlayX, y: overlayY, width } = this.getBoundingClientRect();
-    //console.log("x y ", x,y,'ovx y', overlayX, overlayY, width)
 
     const screenWidth = this.overlay.offsetWidth;
 
@@ -89,7 +88,19 @@ export default abstract class BaseScreen {
     return { x: screenX, y: screenY };
   }
 
+  getInternalCoordinates(p: Point): Point {
+    const { x, y } = this.getInternalViewportCoordinates(p);
+
+    const docEl = this.document?.documentElement
+    const scrollX = docEl ? docEl.scrollLeft : 0
+    const scrollY = docEl ? docEl.scrollTop : 0
+
+    return { x: x+scrollX, y: y+scrollY };
+  }
+
   getElementFromInternalPoint({ x, y }: Point): Element | null {
+    // elementFromPoint && elementFromPoints require viewpoint-related coordinates, 
+    //                                                 not document-related
     return this.document?.elementFromPoint(x, y) || null;
   }
 
@@ -108,16 +119,21 @@ export default abstract class BaseScreen {
   }
 
   getElementFromPoint(point: Point): Element | null {
-    return this.getElementFromInternalPoint(this.getInternalCoordinates(point));
+    return this.getElementFromInternalPoint(this.getInternalViewportCoordinates(point));
   }
 
   getElementsFromPoint(point: Point): Element[] {
-    return this.getElementsFromInternalPoint(this.getInternalCoordinates(point));
+    return this.getElementsFromInternalPoint(this.getInternalViewportCoordinates(point));
   }
 
   getElementBySelector(selector: string): Element | null {
     if (!selector) return null;
-    return this.document?.querySelector(selector) || null;
+    try {
+      return this.document?.querySelector(selector) || null;
+    } catch (e) {
+      console.error("Can not select element. ", e)
+      return null
+    }
   }
 
   display(flag: boolean = true) {

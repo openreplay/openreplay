@@ -1,9 +1,9 @@
-import App from '../app';
+import App from "../app/index.js";
 import {
   SetPageLocation,
   SetViewportSize,
   SetPageVisibility,
-} from '../../messages';
+} from "../../messages/index.js";
 
 export default function (app: App): void {
   let url: string, width: number, height: number;

@@ -6,7 +6,7 @@ import stl from './preferencesMenu.css';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
-function PreferencesMenu({ activeTab, appearance, history }) {
+function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
 
   const setTab = (tab) => {
     history.push(clientRoute(tab));
@@ -50,7 +50,6 @@ function PreferencesMenu({ activeTab, appearance, history }) {
 
       { 
         <div className="mb-4">
-
           <SideMenuitem
             active={ activeTab === CLIENT_TABS.WEBHOOKS }
             title="Webhooks"
@@ -76,7 +75,18 @@ function PreferencesMenu({ activeTab, appearance, history }) {
           iconName="users"
           onClick={() => setTab(CLIENT_TABS.MANAGE_USERS) }
         />
-      </div>  
+      </div>
+
+      { isEnterprise && (
+        <div className="mb-4">
+          <SideMenuitem
+            active={ activeTab === CLIENT_TABS.MANAGE_ROLES }
+            title="Roles"
+            iconName="shield-lock"
+            onClick={() => setTab(CLIENT_TABS.MANAGE_ROLES) }
+          />
+        </div> 
+      )}
 
       <div className="mb-4">
         <SideMenuitem
@@ -92,4 +102,5 @@ function PreferencesMenu({ activeTab, appearance, history }) {
 
 export default connect(state => ({
   appearance: state.getIn([ 'user', 'account', 'appearance' ]),
+  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }))(withRouter(PreferencesMenu));

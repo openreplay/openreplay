@@ -8,9 +8,11 @@ export default Record({
   loggerOptions: LoggerOptions(),
   apiKey: undefined,
   tenantId: undefined,
+  tenantKey: '',
   name: undefined,
   sites: List(),
-  optOut: true
+  optOut: true,
+  edition: '',
 }, {
   fromJS: ({
     projects,

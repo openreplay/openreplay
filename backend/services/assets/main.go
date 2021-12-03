@@ -15,12 +15,11 @@ import (
 	"openreplay/backend/services/assets/cacher"
 )
 
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	GROUP_CACHE :=  env.String("GROUP_CACHE") 
-	TOPIC_TRIGGER := env.String("TOPIC_TRIGGER")
+	TOPIC_CACHE := env.String("TOPIC_CACHE")
 
 	cacher := cacher.NewCacher(
 		env.String("AWS_REGION"),
@@ -31,7 +30,7 @@ func main() {
 
 	consumer := queue.NewMessageConsumer(
 		GROUP_CACHE, 
-		[]string{ TOPIC_TRIGGER }, 
+		[]string{ TOPIC_CACHE }, 
 		func(sessionID uint64, message messages.Message, e *types.Meta) {
 			switch msg := message.(type) {			
 			case *messages.AssetCache:

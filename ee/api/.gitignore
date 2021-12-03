@@ -204,6 +204,8 @@ Pipfile
 /chalicelib/core/log_tool_sentry.py
 /chalicelib/core/log_tool_stackdriver.py
 /chalicelib/core/log_tool_sumologic.py
+/chalicelib/core/mobile.py
+/chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
 /chalicelib/core/sessions_favorite_viewed.py
 /chalicelib/core/sessions_metas.py
@@ -233,3 +235,12 @@ Pipfile
 /chalicelib/utils/smtp.py
 /chalicelib/utils/strings.py
 /chalicelib/utils/TimeUTC.py
+/chalicelib/core/heatmaps.py
+/entrypoint.bundle.sh
+/entrypoint.sh
+/env_handler.py
+/chalicelib/blueprints/app/v1_api.py
+/build.sh
+/chalicelib/core/assist.py
+/chalicelib/blueprints/app/__init__.py
+/Dockerfile.bundle

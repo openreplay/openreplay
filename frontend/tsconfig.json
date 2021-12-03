@@ -22,6 +22,8 @@
       "UI/*": ["./app/components/ui/*"],
       "Duck": ["./app/duck"],
       "Duck/*": ["./app/duck/*"],
+      "HOCs": ["./app/components/hocs"],
+      "HOCs/*": ["./app/components/hocs/*"],
       "Shared": ["./app/components/shared"],
       "Shared/*": ["./app/components/shared/*"],
       "Player": ["./app/player"],

@@ -13,7 +13,7 @@ const oss = {
 	ORIGIN: () => 'window.location.origin',
 	API_EDP: () => 'window.location.origin + "/api"',
 	ASSETS_HOST: () => 'window.location.origin + "/assets"',
-	VERSION: '1.3.5',
+	VERSION: '1.3.6',
 	SOURCEMAP: true,
 	MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
 	MINIO_PORT: process.env.MINIO_PORT,
@@ -21,7 +21,7 @@ const oss = {
 	MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
 	MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
 	ICE_SERVERS: process.env.ICE_SERVERS,
-	TRACKER_VERSION: '3.4.7', // trackerInfo.version,
+	TRACKER_VERSION: '3.4.10', // trackerInfo.version,
 }
 
 module.exports = {

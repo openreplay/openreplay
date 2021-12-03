@@ -30,7 +30,7 @@ function Autoplay(props) {
         tooltip={'Autoplay'}
       />
       
-      <Link to={ sessionRoute(nextId) } siteId={ 1 } disabled={!nextId}>
+      <Link to={ sessionRoute(nextId) } disabled={!nextId}>
 		  	<Icon name="next1" size="20" color="teal" />
 		  </Link>
     </div>

@@ -26,7 +26,7 @@ import stl from './storage.css';
 function getActionsName(type) {
 	switch(type) {
 		case STORAGE_TYPES.MOBX:
-			return "EVENTS";
+			return "MUTATIONS";
 		case STORAGE_TYPES.VUEX:
 			return "MUTATIONS";
 		default: 
@@ -141,7 +141,7 @@ export default class Storage extends React.PureComponent {
 			break;
 			case STORAGE_TYPES.MOBX:
 				src = item.payload;
-				name = `@${item.type} ${src && src.name}`;
+				name = `@${item.type} ${src && src.type}`;
 			break;
 		}
 

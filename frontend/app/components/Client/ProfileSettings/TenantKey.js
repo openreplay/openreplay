@@ -4,37 +4,35 @@ import { connect } from 'react-redux';
 import styles from './profileSettings.css';
 
 @connect(state => ({
-  key: state.getIn([ 'user', 'client', 'tenantKey' ]),
-  loading: state.getIn([ 'user', 'updateAccountRequest', 'loading' ]) ||
-    state.getIn([ 'user', 'putClientRequest', 'loading' ]),
+  tenantKey: state.getIn([ 'user', 'client', 'tenantKey' ]),
 }))
 export default class TenantKey extends React.PureComponent {
   state = { copied: false }
 
   copyHandler = () => {
-    const { key } = this.props;
+    const { tenantKey } = this.props;
     this.setState({ copied: true });
-    copy(key);
+    copy(tenantKey);
     setTimeout(() => {
       this.setState({ copied: false });
     }, 1000);
   };
 
   render() {
-    const { key } = this.props;
+    const { tenantKey } = this.props;
     const { copied } = this.state;
 
     return (
       <form onSubmit={ this.handleSubmit } className={ styles.form }>
         <div className={ styles.formGroup }>
-          <label htmlFor="key">{ 'Tenant Key' }</label>
+          <label htmlFor="tenantKey">{ 'Tenant Key' }</label>
           <div className="ui action input">
             <input
-              name="key"
-              id="key"
+              name="tenantKey"
+              id="tenantKey"
               type="text"
               readOnly={ true }
-              value={ key }
+              value={ tenantKey }
             />
             <div
               className="ui button copy-button"

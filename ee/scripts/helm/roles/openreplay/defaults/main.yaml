@@ -4,7 +4,6 @@ app_name: ""
 db_name: ""
 db_list:
   - "minio"
-  - "nfs-server-provisioner"
   - "postgresql"
   - "redis"
   - "clickhouse"

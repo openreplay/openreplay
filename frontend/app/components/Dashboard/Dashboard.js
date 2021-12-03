@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
+import withPermissions from 'HOCs/withPermissions'
 import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
 import { NoContent } from 'UI';
 import { WIDGET_KEYS } from 'Types/dashboard';
@@ -103,6 +104,7 @@ function isInViewport(el) {
   );
 }
 
+@withPermissions(['METRICS'], 'page-margin container-90')
 @connect(state => ({
   period: state.getIn([ 'dashboard', 'period' ]),
   comparing: state.getIn([ 'dashboard', 'comparing' ]),

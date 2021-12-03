@@ -1,33 +1,35 @@
-import App, { DEFAULT_INGEST_POINT } from './app';
-export { default as App } from './app';
+import App, { DEFAULT_INGEST_POINT } from "./app/index.js";
+export { default as App } from './app/index.js';
 
-import { UserID, UserAnonymousID, Metadata, RawCustomEvent, CustomIssue } from '../messages';
-import * as _Messages from '../messages';
+import { UserID, UserAnonymousID, Metadata, RawCustomEvent, CustomIssue } from "../messages/index.js";
+import * as _Messages from "../messages/index.js";
 export const Messages = _Messages;
 
-import Connection from './modules/connection';
-import Console from './modules/console';
-import Exception, { getExceptionMessageFromEvent, getExceptionMessage } from './modules/exception';
-import Img from './modules/img';
-import Input from './modules/input';
-import Mouse from './modules/mouse';
-import Timing from './modules/timing';
-import Performance from './modules/performance';
-import Scroll from './modules/scroll';
-import Viewport from './modules/viewport';
-import Longtasks from './modules/longtasks';
-import CSSRules from './modules/cssrules';
-import { IN_BROWSER, deprecationWarn } from './utils';
+import Connection from "./modules/connection.js";
+import Console from "./modules/console.js";
+import Exception, { getExceptionMessageFromEvent, getExceptionMessage } from "./modules/exception.js";
+import Img from "./modules/img.js";
+import Input from "./modules/input.js";
+import Mouse from "./modules/mouse.js";
+import Timing from "./modules/timing.js";
+import Performance from "./modules/performance.js";
+import Scroll from "./modules/scroll.js";
+import Viewport from "./modules/viewport.js";
+import Longtasks from "./modules/longtasks.js";
+import CSSRules from "./modules/cssrules.js";
+import { IN_BROWSER, deprecationWarn, DOCS_HOST } from "./utils.js";
 
-import { Options as AppOptions } from './app';
-import { Options as ConsoleOptions } from './modules/console';
-import { Options as ExceptionOptions } from './modules/exception';
-import { Options as InputOptions } from './modules/input';
-import { Options as MouseOptions } from './modules/mouse';
-import { Options as PerformanceOptions } from './modules/performance';
-import { Options as TimingOptions } from './modules/timing';
+import { Options as AppOptions } from "./app/index.js";
+import { Options as ConsoleOptions } from "./modules/console.js";
+import { Options as ExceptionOptions } from "./modules/exception.js";
+import { Options as InputOptions } from "./modules/input.js";
+import { Options as PerformanceOptions } from "./modules/performance.js";
+import { Options as TimingOptions } from "./modules/timing.js";
+
+export type { OnStartInfo } from './app/index.js';
+
 export type Options = Partial<
-  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & MouseOptions & PerformanceOptions & TimingOptions
+  AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & PerformanceOptions & TimingOptions
 > & {
   projectID?: number; // For the back compatibility only (deprecated)
   projectKey: string;
@@ -41,13 +43,13 @@ const DOCS_SETUP = '/installation/setup-or';
 
 function processOptions(obj: any): obj is Options {
   if (obj == null) {
-    console.error(`OpenReplay: invalid options argument type. Please, check documentation on https://docs.openreplay.com${ DOCS_SETUP }`);
+    console.error(`OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`);
     return false;
   }
   if (typeof obj.projectKey !== 'string') {
     if (typeof obj.projectKey !== 'number') {
       if (typeof obj.projectID !== 'number') { // Back compatability
-        console.error(`OpenReplay: projectKey is missing or wrong type (string is expected). Please, check https://docs.openreplay.com${ DOCS_SETUP } for more information.`)
+        console.error(`OpenReplay: projectKey is missing or wrong type (string is expected). Please, check ${DOCS_HOST}${DOCS_SETUP} for more information.`)
         return false
       } else {
         obj.projectKey = obj.projectID.toString();
@@ -59,7 +61,7 @@ function processOptions(obj: any): obj is Options {
     }
   }
   if (typeof obj.sessionToken !== 'string' && obj.sessionToken != null) {
-    console.warn(`OpenReplay: invalid options argument type. Please, check documentation on https://docs.openreplay.com${ DOCS_SETUP }`)
+    console.warn(`OpenReplay: invalid options argument type. Please, check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
   }
   return true;
 }
@@ -70,11 +72,18 @@ export default class API {
     if (!IN_BROWSER || !processOptions(options)) {
       return;
     }
+    if ((window as any).__OPENREPLAY__) {
+      console.error("OpenReplay: one tracker instance has been initialised already")
+      return
+    }
     if (!options.__DISABLE_SECURE_MODE && location.protocol !== 'https:') {
       console.error("OpenReplay: Your website must be publicly accessible and running on SSL in order for OpenReplay to properly capture and replay the user session. You can disable this check by setting `__DISABLE_SECURE_MODE` option to `true` if you are testing in localhost. Keep in mind, that asset files on a local machine are not available to the outside world. This might affect tracking if you use css files.")
       return;
     }
-    const doNotTrack = options.respectDoNotTrack && (navigator.doNotTrack == '1' || window.doNotTrack == '1');
+    const doNotTrack = options.respectDoNotTrack && 
+      (navigator.doNotTrack == '1' 
+        // @ts-ignore
+        || window.doNotTrack == '1');
     this.app = doNotTrack ||
       !('Map' in window) ||
       !('Set' in window) ||
@@ -94,14 +103,14 @@ export default class API {
       Exception(this.app, options);
       Img(this.app);
       Input(this.app, options);
-      Mouse(this.app, options);
+      Mouse(this.app);
       Timing(this.app, options);
       Performance(this.app, options);
       Scroll(this.app);
       Longtasks(this.app);
-      (window as any).__OPENREPLAY__ = (window as any).__OPENREPLAY__ || this;
+      (window as any).__OPENREPLAY__ = this;
     } else {
-      console.log("OpenReplay: browser doesn't support API required for tracking.")
+      console.log("OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1.")
       const req = new XMLHttpRequest();
       const orig = options.ingestPoint || DEFAULT_INGEST_POINT;
       req.open("POST", orig + "/v1/web/not-started");
@@ -131,15 +140,15 @@ export default class API {
     return this.isActive();
   }
 
-  start(): void {
+  start() /*: Promise<OnStartInfo>*/ {
     if (!IN_BROWSER) {
-      console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on https://docs.openreplay.com${ DOCS_SETUP }`)
-      return;
+      console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
+      return Promise.reject("Trying to start not in browser.");
     }
     if (this.app === null) {
-      return;
+      return Promise.reject("Browser doesn't support required api, or doNotTrack is active.");
     }
-    this.app.start();
+    return this.app.start();
   }
   stop(): void {
     if (this.app === null) {

@@ -18,7 +18,7 @@ import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchList as fetchIntegrationVariables, fetchSources } from 'Duck/customField';
 import { RehydrateSlidePanel } from './WatchDogs/components';
-import { setActiveTab } from 'Duck/sessions';
+import { setActiveTab, setFunnelPage } from 'Duck/sessions';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
 import SessionFlowList from './SessionFlowList/SessionFlowList';
 import { LAST_7_DAYS } from 'Types/app/period';
@@ -74,7 +74,8 @@ const allowedQueryKeys = [
   fetchSiteList,
   fetchFunnelsList,
   resetFunnel,
-  resetFunnelFilters
+  resetFunnelFilters,
+  setFunnelPage
 })
 @withPageTitle("Sessions - OpenReplay")
 export default class BugFinder extends React.PureComponent {
@@ -112,6 +113,10 @@ export default class BugFinder extends React.PureComponent {
     if (queryFilter.hasOwnProperty('userId')) {
       props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
     }
+  }
+
+  componentDidMount() {
+    this.props.setFunnelPage(false);
   }
 
   toggleRehydratePanel = () => {

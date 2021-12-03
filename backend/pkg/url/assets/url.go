@@ -8,7 +8,7 @@ import (
 )
 
 func getSessionKey(sessionID uint64) string {
-	// Based on timestamp, changes once per week. Check out utils/flacker for understanding sessionID
+	// Based on timestamp, changes once per week. Check pkg/flakeid for understanding sessionID
 	return strconv.FormatUint(sessionID>>50, 10) 
 }
 

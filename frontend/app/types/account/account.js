@@ -13,6 +13,7 @@ export default Member.extend({
   smtp: false,
   license: '',
   expirationDate: undefined,
+  permissions: [],
   iceServers: undefined
 }, {
   fromJS: ({ current = {}, ...account})=> ({

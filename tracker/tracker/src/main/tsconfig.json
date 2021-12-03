@@ -6,5 +6,6 @@
   },
   "references": [
     { "path": "../messages" }
-  ]
+  ],
+  "exclude": ["app/observer"]
 }

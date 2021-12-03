@@ -28,3 +28,52 @@ func (c *PGCache) InsertIssueEvent(sessionID uint64, crash *IssueEvent) error {
 	}
 	return c.Conn.InsertIssueEvent(sessionID, session.ProjectID, crash)
 }
+
+
+func (c *PGCache) InsertUserID(sessionID uint64, userID *IOSUserID) error {
+	if err := c.Conn.InsertIOSUserID(sessionID, userID); err != nil {
+		return err
+	}
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	session.UserID = &userID.Value
+	return nil
+}
+
+func (c *PGCache) InsertUserAnonymousID(sessionID uint64, userAnonymousID *IOSUserAnonymousID) error {
+	if err := c.Conn.InsertIOSUserAnonymousID(sessionID, userAnonymousID); err != nil {
+		return err
+	}
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	session.UserAnonymousID = &userAnonymousID.Value
+	return nil
+}
+
+func (c *PGCache) InsertMetadata(sessionID uint64, metadata *Metadata) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	project, err := c.GetProject(session.ProjectID)
+	if err != nil {
+		return err
+	}
+
+	keyNo := project.GetMetadataNo(metadata.Key)
+
+	if keyNo == 0 {
+		// insert project metadata
+	}
+	
+	if err := c.Conn.InsertMetadata(sessionID, keyNo, metadata.Value); err != nil {
+		return err
+	}
+	
+	session.SetMetadata(keyNo, metadata.Value)
+	return nil
+}

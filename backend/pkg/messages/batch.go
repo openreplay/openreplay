@@ -30,6 +30,14 @@ func ReadBatch(b []byte, callback func(Message)) error {
 			timestamp = m.Timestamp
 			isBatchMeta = true
 			// continue readLoop
+		case *IOSBatchMeta:
+			if index != 0 { // Might be several 0-0 BatchMeta in a row without a error though
+				return errors.New("Batch Meta found at the end of the batch")
+			}
+			index =  m.FirstIndex
+			timestamp = int64(m.Timestamp)
+			isBatchMeta = true
+			// continue readLoop
 		case *Timestamp:
 			timestamp = int64(m.Timestamp) // TODO(?): replace timestamp type to int64 everywhere (including encoding part in tracker)
 			// No skipping here for making it easy to encode back the same sequence of message

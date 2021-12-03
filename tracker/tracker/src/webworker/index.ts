@@ -1,8 +1,8 @@
-import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from '../messages';
-import Message from '../messages/message';
-import Writer from '../messages/writer';
+import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from "../messages/index.js";
+import Message from "../messages/message.js";
+import Writer from "../messages/writer.js";
 
-import type { WorkerMessageData } from '../messages/webworker';
+import type { WorkerMessageData } from "../messages/webworker.js";
 
 
 const SEND_INTERVAL = 20 * 1000;
@@ -49,7 +49,7 @@ function sendBatch(batch: Uint8Array):void {
       if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
         reset();
         sendQueue.length = 0;
-        if (this.status === 403) { // Unauthorised (Token expired)
+        if (this.status === 401) { // Unauthorised (Token expired)
           self.postMessage("restart")
           return
         }
@@ -74,6 +74,7 @@ function sendBatch(batch: Uint8Array):void {
     attemptsCount++;
     setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT);
   }
+  // TODO: handle offline exception
   req.send(batch.buffer);
 }
 

@@ -7,6 +7,14 @@ env:
   AWS_ACCESS_KEY_ID: "{{ minio_access_key }}"
   AWS_SECRET_ACCESS_KEY: "{{ minio_secret_key }}"
   LICENSE_KEY: "{{ enterprise_edition_license }}"
+  AWS_ENDPOINT: "{{ s3_endpoint }}"
+  AWS_REGION_WEB: "{{ aws_region }}"
+  AWS_REGION_IOS: "{{ aws_region }}"
+  S3_BUCKET_WEB: "{{ recordings_bucket }}"
+  S3_BUCKET_IOS: "{{ recordings_bucket }}"
+  REDIS_STRING: "{{ redis_endpoint }}"
+  KAFKA_SERVERS: "{{ kafka_endpoint }}"
+  KAFKA_USE_SSL: "{{ kafka_ssl }}"
 
 {% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []

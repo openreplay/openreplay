@@ -7,7 +7,7 @@ import (
 
 func sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
 	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL); cacheable {
-		producer.Produce(TOPIC_TRIGGER, sessionID, messages.Encode(&messages.AssetCache{
+		producer.Produce(TOPIC_CACHE, sessionID, messages.Encode(&messages.AssetCache{
 			URL: fullURL,
 		}))
 	}

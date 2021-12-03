@@ -19,7 +19,7 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	TOPIC_RAW := env.String("TOPIC_RAW")
+	TOPIC_RAW_WEB := env.String("TOPIC_RAW_WEB")
 	POSTGRES_STRING := env.String("POSTGRES_STRING")
 
 	pg := postgres.NewConn(POSTGRES_STRING)
@@ -80,7 +80,7 @@ func main() {
 				sessionID = sessData.ID
 			}
 			// TODO: send to ready-events topic. Otherwise it have to go through the events worker. 
-			producer.Produce(TOPIC_RAW, sessionID, messages.Encode(event.RawErrorEvent))
+			producer.Produce(TOPIC_RAW_WEB, sessionID, messages.Encode(event.RawErrorEvent))
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:

@@ -28,7 +28,7 @@ const MetadataList = (props) => {
       header: 'Metadata',
       confirmation: `Are you sure you want to remove?`
     })) {
-      this.props.remove(site.id, field.index);
+      props.remove(site.id, field.index);
     }
   }
 

@@ -47,11 +47,13 @@ export function getStatusText(status: ConnectionStatus): string {
 export interface State {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
+  remoteControl: boolean,
 }
 
 export const INITIAL_STATE: State = {
   calling: CallingState.False,
   peerConnectionStatus: ConnectionStatus.Connecting,
+  remoteControl: false,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -115,10 +117,8 @@ function resolveCSS(baseURL: string, css: string): string {
   return rewriteCSSLinks(css, rawurl => resolveURL(baseURL, rawurl));
 }
 
-
 export default class AssistManager {
-  constructor(private session, private config, private md: MessageDistributor) {}
-
+  constructor(private session, private md: MessageDistributor, private config) {}
 
   private setStatus(status: ConnectionStatus) {
     if (status === ConnectionStatus.Connecting) {
@@ -148,8 +148,6 @@ export default class AssistManager {
     }
     this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
-      // @ts-ignore
-      const iceServers = iceServerConfigFromString(this.config);
       const _config = {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
@@ -157,9 +155,9 @@ export default class AssistManager {
         port:  location.protocol === 'https:' ? 443 : 80,
       }
 
-      if (iceServers) {
+      if (this.config) {
         _config['config'] = {
-          iceServers: iceServers,
+          iceServers: this.config,
           sdpSemantics: 'unified-plan',
           iceTransportPolicy: 'relay',
         };
@@ -351,12 +349,29 @@ export default class AssistManager {
     }
   }
 
-  private onMouseMove = (e: MouseEvent ): void => {
-    const conn = this.dataConnection;
-    if (!conn) { return; }
-    // @ts-ignore ???
+  // private mmtid?:ReturnType<typeof setTimeout>
+  private onMouseMove = (e: MouseEvent): void => {
+    // this.mmtid && clearTimeout(this.mmtid)
+    // this.mmtid = setTimeout(() => {
     const data = this.md.getInternalCoordinates(e);
-    conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    this.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    // }, 5)
+  }
+
+
+  // private wtid?: ReturnType<typeof setTimeout>
+  // private scrollDelta: [number, number] = [0,0]
+  private onWheel = (e: WheelEvent): void => {
+    e.preventDefault()
+    //throttling makes movements less smooth
+    // this.wtid && clearTimeout(this.wtid)
+    // this.scrollDelta[0] += e.deltaX
+    // this.scrollDelta[1] += e.deltaY
+    // this.wtid = setTimeout(() => {
+    this.send({ type: "scroll",  delta: [ e.deltaX, e.deltaY ]})//this.scrollDelta });
+    this.onMouseMove(e)
+    //   this.scrollDelta = [0,0]
+    // }, 20)
   }
 
   private onMouseClick = (e: MouseEvent): void => {
@@ -364,7 +379,28 @@ export default class AssistManager {
     if (!conn) { return; }
     const data = this.md.getInternalCoordinates(e);
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
+    const el = this.md.getElementFromInternalPoint(data)
+    if (el instanceof HTMLElement) {
+      el.focus()
+      el.oninput = e => e.preventDefault();
+      el.onkeydown = e => e.preventDefault();
+    }
     conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
+  }
+
+  private toggleRemoteControl = (flag?: boolean) => {
+    const state = getState().remoteControl;
+    const newState = typeof flag === 'boolean' ? flag : !state;
+    if (state === newState) { return }
+    if (newState) {
+      this.md.overlay.addEventListener("click", this.onMouseClick);
+      this.md.overlay.addEventListener("wheel", this.onWheel)
+      update({ remoteControl: true })
+    } else {
+      this.md.overlay.removeEventListener("click", this.onMouseClick);
+      this.md.overlay.removeEventListener("wheel", this.onWheel);
+      update({ remoteControl: false })
+    }
   }
 
   private localCallData: {
@@ -375,12 +411,13 @@ export default class AssistManager {
     onError?: ()=> void
   } | null = null
 
-  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): null | Function {
+  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): { end: Function, toggleRemoteControl: Function } {
     this.localCallData = {
       localStream,
       onStream,
       onCallEnd: () => {
         onCallEnd();
+        this.toggleRemoteControl(false);
         this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
         this.md.overlay.removeEventListener("click",  this.onMouseClick);
         update({ calling: CallingState.False });
@@ -390,7 +427,10 @@ export default class AssistManager {
       onError,
     }
     this._call()
-    return this.initiateCallEnd;
+    return {
+      end: this.initiateCallEnd,
+      toggleRemoteControl: this.toggleRemoteControl,
+    }
   }
 
   private _call() {
@@ -402,7 +442,7 @@ export default class AssistManager {
     
     const call =  this.peer.call(this.peerID, this.localCallData.localStream.stream);
     this.localCallData.localStream.onVideoTrack(vTrack => {
-      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
       if (!sender) {
         //logger.warn("No video sender found")
         return

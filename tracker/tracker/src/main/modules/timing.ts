@@ -1,7 +1,7 @@
-import { isURL } from '../utils';
-import App from '../app';
-import { ResourceTiming, PageLoadTiming, PageRenderTiming } from '../../messages';
-import type Message from '../../messages/message';
+import { isURL } from "../utils.js";
+import App from "../app/index.js";
+import { ResourceTiming, PageLoadTiming, PageRenderTiming } from "../../messages/index.js";
+import type Message from "../../messages/message.js";
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 
@@ -122,7 +122,7 @@ export default function (app: App, opts: Partial<Options>): void {
   let resources: ResourcesTimeMap | null = {}
 
   function resourceTiming(entry: PerformanceResourceTiming): void {
-    if (entry.duration <= 0 || !isURL(entry.name) || app.isServiceURL(entry.name)) return;
+    if (entry.duration < 0 || !isURL(entry.name) || app.isServiceURL(entry.name)) return;
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration;
     }
