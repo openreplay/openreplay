@@ -46,7 +46,7 @@ def create(tenant_id, user_id, name, description, permissions):
                            RETURNING *;""",
                         {"tenant_id": tenant_id, "name": name, "description": description, "permissions": permissions})
         )
-        row=cur.fetchone()
+        row = cur.fetchone()
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     return helper.dict_to_camel_case(row)
 
@@ -65,6 +65,23 @@ def get_roles(tenant_id):
         for r in rows:
             r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
     return helper.list_to_camel_case(rows)
+
+
+def get_role_by_name(tenant_id, name):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""SELECT *
+                    FROM public.roles
+                    where tenant_id =%(tenant_id)s
+                        AND deleted_at IS NULL
+                        AND name ILIKE %(name)s
+                    ;""",
+                        {"tenant_id": tenant_id, "name": name})
+        )
+        row = cur.fetchone()
+        if row is not None:
+            row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
 
 
 def delete(tenant_id, user_id, role_id):
