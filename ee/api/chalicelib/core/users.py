@@ -690,12 +690,12 @@ def authenticate_sso(email, internal_id, exp=None):
     return None
 
 
-def create_sso_user(tenant_id, email, admin, name, origin, internal_id=None):
+def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(f"""\
                     WITH u AS (
-                        INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id)
-                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s)
+                        INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
+                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s, %(role_id)s)
                             RETURNING *
                     ),
                     au AS (
@@ -715,7 +715,7 @@ def create_sso_user(tenant_id, email, admin, name, origin, internal_id=None):
                     FROM u;""",
                             {"tenantId": tenant_id, "email": email, "internal_id": internal_id,
                              "role": "admin" if admin else "member", "name": name, "origin": origin,
-                             "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
+                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
         cur.execute(
             query
         )

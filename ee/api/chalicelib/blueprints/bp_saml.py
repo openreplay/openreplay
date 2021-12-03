@@ -12,7 +12,7 @@ from chalicelib.utils.helper import environ
 from onelogin.saml2.auth import OneLogin_Saml2_Logout_Request
 
 from chalice import Response
-from chalicelib.core import users, tenants
+from chalicelib.core import users, tenants, roles
 
 
 @app.route('/sso/saml2', methods=['GET'], authorizer=None)
@@ -63,13 +63,21 @@ def process_sso_assertion():
         if t is None:
             print("invalid tenantKey, please copy the correct value from Preferences > Account")
             return {"errors": ["invalid tenantKey, please copy the correct value from Preferences > Account"]}
-
+    print(user_data)
+    role_name = user_data.get("role", [])
+    if len(role_name) == 0:
+        print("No role specified, setting role to member")
+        role_name = ["member"]
+    role_name = role_name[0]
+    role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
+    if role is None:
+        return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
     if existing is None:
         print("== new user ==")
         users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=True,
                               origin=SAML2_helper.get_saml2_provider(),
                               name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                              internal_id=internal_id)
+                              internal_id=internal_id, role_id=role["roleId"])
     else:
         if t['tenantId'] != existing["tenantId"]:
             print("user exists for a different tenant")
