@@ -6,7 +6,7 @@ By participating in this project, you are expected to uphold our [Code of Conduc
 
 ## First-time Contributors
 
-We appreciate all contributions, especially those coming from first time contributors. Good first issues is the best way start. If you're not sure how to help, feel free to reach out anytime for assistance via [email](mailto:hey@openreplay.com) or [Slack](https://slack.openreplay.com).
+We appreciate all contributions, especially those coming from first time contributors. Good first issues is the best way start. If you're not sure how to help, feel free to reach out anytime for assistance via [email](mailto:hey@openreplay.com) or [Slack](https://slack.openreplay.com). All contributors must approve our [Contributor License Agreement](https://cla-assistant.io/openreplay/openreplay).
 
 ## Areas for Contributing
 
@@ -70,5 +70,6 @@ We try to answer the below questions when reviewing a PR:
 - How will it perform with millions of sessions and users events?
 - Has it been tested?
 - Is it introducing any security flaws?
+- Did the contributor approve our CLA?
 
 Once your PR passes, we will merge it. Otherwise, we'll politely ask you to make a change.

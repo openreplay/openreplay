@@ -27,9 +27,9 @@ enum CallingState {
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;
 
-// type IncomeMessages = 
-//   "call_end" | 
-//   { type: "agent_name", name: string } | 
+// type IncomeMessages =
+//   "call_end" |
+//   { type: "agent_name", name: string } |
 //   { type: "click", x: number, y: number } |
 //   { x: number, y: number }
 
@@ -113,7 +113,7 @@ export default function(opts?: Partial<Options>)  {
       peer.on('call', function(call) {
         log("Call: ", call)
         if (!peer) { return; }
-        const dataConn: DataConnection | undefined = 
+        const dataConn: DataConnection | undefined =
           openDataConnections[call.peer]?.conn;
         if (callingState !== CallingState.False || !dataConn || !dataConn.open) {
           call.close();
@@ -128,7 +128,7 @@ export default function(opts?: Partial<Options>)  {
             sessionStorage.removeItem(options.session_calling_peer_key);
           }
           callingState = newState;
-        }      
+        }
 
         const notifyCallEnd = () => {
           dataConn.open && dataConn.send("call_end");
@@ -145,7 +145,7 @@ export default function(opts?: Partial<Options>)  {
           confirmAnswer = confirm.mount();
           dataConn.on('data', (data) => { // if call cancelled by a caller before confirmation
             if (data === "call_end") {
-              log("Recieved call_end during confirm window opened")
+              log("Received call_end during confirm window opened")
               confirm.remove();
               setCallingState(CallingState.False);
             }                    
@@ -209,7 +209,7 @@ export default function(opts?: Partial<Options>)  {
                 return;
               }
               if (data.name === 'string') {
-                log("name recieved: ", data)
+                log("Name received: ", data)
                 callUI.setAssistentName(data.name);
               }
               if (data.type === "scroll" && Array.isArray(data.delta)) {
@@ -222,11 +222,11 @@ export default function(opts?: Partial<Options>)  {
                   if(el.scrollWidth > el.clientWidth) {
                     el.scrollLeft += data.delta[0]
                     scrolled = true
-                  } 
+                  }
                   if (el && el.scrollHeight > el.clientHeight) {
                     el.scrollTop += data.delta[1]
                     scrolled = true
-                  }                  
+                  }
                 }
                 if (!scrolled) {
                   window.scroll(scrEl.scrollLeft + data.delta[0], scrEl.scrollTop + data.delta[1])
@@ -246,7 +246,7 @@ export default function(opts?: Partial<Options>)  {
             });
 
             lStream.onVideoTrack(vTrack => {
-              const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+              const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
               if (!sender) {
                 warn("No video sender found")
                 return

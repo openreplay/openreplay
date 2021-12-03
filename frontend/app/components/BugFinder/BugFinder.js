@@ -5,7 +5,7 @@ import {
   fetchFavoriteList as fetchFavoriteSessionList
 } from 'Duck/sessions';
 import { countries } from 'App/constants';
-import { applyFilter, clearEvents } from 'Duck/filters';
+import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { defaultFilters, preloadedFilters } from 'Types/filter';
 import { KEYS } from 'Types/filter/customFilter';
@@ -34,6 +34,21 @@ const weakEqual = (val1, val2) => {
   return `${ val1 }` === `${ val2 }`;
 }
 
+const allowedQueryKeys = [
+  'userOs',
+  'userId',
+  'userBrowser',
+  'userDevice',
+  'userCountry',
+  'startDate',
+  'endDate',
+  'minDuration',
+  'maxDuration',
+  'referrer',
+  'sort',
+  'order',
+];
+
 @withLocationHandlers()
 @connect(state => ({
   filter: state.getIn([ 'filters', 'appliedFilter' ]),
@@ -50,6 +65,7 @@ const weakEqual = (val1, val2) => {
 }), {
   fetchFavoriteSessionList,
   applyFilter,
+  addAttribute,
   fetchFilterVariables,
   fetchIntegrationVariables,
   fetchSources,
@@ -89,10 +105,14 @@ export default class BugFinder extends React.PureComponent {
       };
     });    
 
-    this.props.resetFunnel();
-    this.props.resetFunnelFilters();
-
+    props.resetFunnel();
+    props.resetFunnelFilters();
     props.fetchFunnelsList(LAST_7_DAYS)
+
+    const queryFilter = this.props.query.all(allowedQueryKeys);
+    if (queryFilter.hasOwnProperty('userId')) {
+      props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
+    }
   }
 
   componentDidMount() {

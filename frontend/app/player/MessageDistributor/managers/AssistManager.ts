@@ -6,8 +6,8 @@ import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
 import store from 'App/store';
 import type { LocalStream } from './LocalStream';
-
 import { update, getState } from '../../store';
+import { iceServerConfigFromString } from 'App/utils'
 
 
 export enum CallingState {
@@ -118,7 +118,7 @@ function resolveCSS(baseURL: string, css: string): string {
 }
 
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor, private config) {}
+  constructor(private session, private config, private md: MessageDistributor, private config) {}
 
   private setStatus(status: ConnectionStatus) {
     if (status === ConnectionStatus.Connecting) {
@@ -162,7 +162,7 @@ export default class AssistManager {
           iceTransportPolicy: 'relay',
         };
       }
-      
+
       const peer = new Peer(_config);
       this.peer = peer;
       peer.on('error', e => {
@@ -380,7 +380,7 @@ export default class AssistManager {
     const data = this.md.getInternalCoordinates(e);
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
-    if (el instanceof HTMLElement) { 
+    if (el instanceof HTMLElement) {
       el.focus()
       el.oninput = e => e.preventDefault();
       el.onkeydown = e => e.preventDefault();
@@ -403,6 +403,13 @@ export default class AssistManager {
     }
   }
 
+  private onMouseClick = (e: MouseEvent): void => {
+    const conn = this.dataConnection;
+    if (!conn) { return; }
+    const data = this.md.getInternalCoordinates(e);
+    // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
+    conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
+  }
 
   private localCallData: {
     localStream: LocalStream,
@@ -420,6 +427,7 @@ export default class AssistManager {
         onCallEnd();
         this.toggleRemoteControl(false);
         this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
+        this.md.overlay.removeEventListener("click",  this.onMouseClick);
         update({ calling: CallingState.False });
         this.localCallData = null;
       },
@@ -442,7 +450,7 @@ export default class AssistManager {
     
     const call =  this.peer.call(this.peerID, this.localCallData.localStream.stream);
     this.localCallData.localStream.onVideoTrack(vTrack => {
-      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
       if (!sender) {
         //logger.warn("No video sender found")
         return
@@ -459,7 +467,7 @@ export default class AssistManager {
       });
 
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
-
+      this.md.overlay.addEventListener("click", this.onMouseClick)
     });
     //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 

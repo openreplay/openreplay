@@ -255,6 +255,15 @@ $$
                   "defaultInputMode": "plain"
                 }'::jsonb -- ??????
             );
+            CREATE INDEX ON public.projects (project_key);
+
+            CREATE OR REPLACE FUNCTION notify_project() RETURNS trigger AS
+            $$
+            BEGIN
+                PERFORM pg_notify('project', row_to_json(NEW)::text);
+                RETURN NEW;
+            END;
+            $$ LANGUAGE plpgsql;
 
             CREATE TRIGGER on_insert_or_update
                 AFTER INSERT OR UPDATE

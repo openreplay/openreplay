@@ -37,7 +37,7 @@ def login():
     tenant_id = r.pop("tenantId")
     # change this in open-source
     r["limits"] = {
-        "teamMember": -1,
+        "teamMember": int(environ.get("numberOfSeats", 0)),
         "projects": -1,
         "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
 
@@ -64,7 +64,7 @@ def get_account(context):
         'data': {
             **r,
             "limits": {
-                "teamMember": -1,
+                "teamMember": int(environ.get("numberOfSeats", 0)),
                 "projects": -1,
                 "metadata": metadata.get_remaining_metadata_with_count(context['tenantId'])
             },

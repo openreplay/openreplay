@@ -1,6 +1,8 @@
 import requests
 from chalicelib.core import projects, sessions, sessions_metas
 from chalicelib.utils import pg_client, helper
+from chalicelib.core import projects, sessions, sessions_metas
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.helper import environ
 
 SESSION_PROJECTION_COLS = """s.project_id,

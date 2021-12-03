@@ -80,12 +80,12 @@ function NetworkTab(props) {
         onRowClick={ (e, index) => { setCurrent(e); setCurrentIndex(index)} }
         additionalHeight={vh}
         fetchPresented = { run.fetchPresented }
-        
         loadTime = { run.loadTime }
         domBuildingTime = { run.domBuildingTime }        
         resourcesSize = { run.resourcesSize }
         transferredSize = { run.transferredSize }
         domContentLoadedTime = { run.domContentLoadedTime }
+        currentIndex={currentIndex}
       />
     </div>
   )

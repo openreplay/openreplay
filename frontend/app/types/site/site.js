@@ -21,6 +21,7 @@ export default Record({
   recorded: undefined,
   stackIntegrations: false,
   projectKey: undefined,
+  trackerVersion: undefined,
 }, {
   idKey: 'id',
   methods: {

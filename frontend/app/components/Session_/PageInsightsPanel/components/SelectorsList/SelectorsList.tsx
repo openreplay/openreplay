@@ -3,6 +3,7 @@ import { NoContent } from 'UI'
 import { connectPlayer } from 'Player/store';
 import SelectorCard from '../SelectorCard/SelectorCard';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
+import stl from './selectorList.css'
 
 interface Props {
   targets: Array<MarkedTarget>,
@@ -16,9 +17,11 @@ function SelectorsList({ targets, activeTargetIndex }: Props) {
       size="small"
       show={ targets && targets.length === 0 }
     >
-      { targets && targets.map((target, index) => (
-        <SelectorCard target={target} index={index} showContent={activeTargetIndex === index} />
-      ))}
+      <div className={stl.wrapper}>
+        { targets && targets.map((target, index) => (
+          <SelectorCard target={target} index={index} showContent={activeTargetIndex === index} />
+        ))}
+      </div>
     </NoContent>    
   )
 }

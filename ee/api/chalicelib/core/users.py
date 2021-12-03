@@ -1,8 +1,7 @@
 import json
 import secrets
 
-from chalicelib.core import assist
-from chalicelib.core import authorizers, metadata, projects
+from chalicelib.core import authorizers, metadata, projects, assist
 from chalicelib.core import tenants
 from chalicelib.utils import dev, SAML2_helper
 from chalicelib.utils import helper
