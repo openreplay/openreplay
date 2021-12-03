@@ -24,9 +24,10 @@ CREATE TABLE roles
 INSERT INTO roles(tenant_id, name, description, permissions, protected)
 SELECT *
 FROM (SELECT tenant_id FROM tenants) AS tenants,
-     (VALUES ('Owner', 'The company''s owner', '{}'::text[], TRUE),
-             ('Admin', 'Admin member', '{}'::text[], TRUE),
-             ('Member', 'A member', '{}'::text[], TRUE)
+     (VALUES ('Owner', 'Owner',
+              '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], TRUE),
+             ('Member', 'Member',
+              '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], FALSE)
      ) AS default_roles(name, description, permissions, protected);
 
 
@@ -47,18 +48,9 @@ SET role_id = r.role_id
 FROM (SELECT tenant_id, role_id
       FROM tenants
                INNER JOIN roles USING (tenant_id)
-      WHERE roles.name = 'Admin') AS r(tenant_id, role_id)
-WHERE users.tenant_id = r.tenant_id
-  AND users.role = 'admin';
-
-UPDATE users
-SET role_id = r.role_id
-FROM (SELECT tenant_id, role_id
-      FROM tenants
-               INNER JOIN roles USING (tenant_id)
       WHERE roles.name = 'Member') AS r(tenant_id, role_id)
 WHERE users.tenant_id = r.tenant_id
-  AND users.role = 'member';
+  AND users.role != 'owner';
 
 DO
 $$
