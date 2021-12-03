@@ -85,7 +85,7 @@ def process_sso_assertion():
     if jwt is None:
         return {"errors": ["null JWT"]}
     return Response(
-        status_code=307,
+        status_code=302,
         body='',
         headers={'Location': SAML2_helper.get_landing_URL(jwt), 'Content-Type': 'text/plain'})
 
