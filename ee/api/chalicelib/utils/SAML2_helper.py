@@ -107,3 +107,7 @@ def is_saml2_available():
 def get_saml2_provider():
     return environ.get("idp_name", "saml2") if is_saml2_available() and len(
         environ.get("idp_name", "saml2")) > 0 else None
+
+
+def get_landing_URL(jwt):
+    return environ["SITE_URL"] + environ.get("sso_landing", "/login?jwt=%s") % jwt
