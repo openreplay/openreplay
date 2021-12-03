@@ -22,7 +22,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   errors: state.getIn([ 'members', 'saveRequest', 'errors' ]),
   loading: state.getIn([ 'members', 'loading' ]),
   saving: state.getIn([ 'members', 'saveRequest', 'loading' ]),
-  roles: state.getIn(['roles', 'list']).map(r => ({ text: r.name, value: r.roleId })).toJS(),
+  roles: state.getIn(['roles', 'list']).filter(r => !r.protected).map(r => ({ text: r.name, value: r.roleId })).toJS(),
   isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }), {
   init,
@@ -127,7 +127,7 @@ class ManageUsers extends React.PureComponent {
                 onChange={ this.onChangeCheckbox }
                 disabled={member.superAdmin}
               />
-              <span>{ 'Admin' }</span>
+              <span>{ 'Admin Privileges' }</span>
             </label>
             <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
           </div>
@@ -220,7 +220,7 @@ class ManageUsers extends React.PureComponent {
                       />
                     </div>
                   }
-                  // disabled={ canAddUsers }
+                  disabled={ canAddUsers }
                   content={ `${ !canAddUsers ? (!isAdmin ? PERMISSION_WARNING : LIMIT_WARNING) : 'Add team member' }` }
                   size="tiny"
                   inverted

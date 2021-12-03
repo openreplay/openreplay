@@ -35,3 +35,13 @@
     opacity: 0.5;
   }
 }
+
+.label {
+  margin-left: 10px;
+  padding: 0 10px;
+  border-radius: 3px;
+  background-color: $gray-lightest;
+  font-size: 12px;
+  border: solid thin $gray-light;
+  width: fit-content;
+}

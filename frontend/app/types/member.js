@@ -12,6 +12,7 @@ export default Record({
   joined: false,
   expiredInvitation: false,
   roleId: undefined,
+  roleName: undefined,
   invitationLink: '',
 }, {
   idKey: 'id',
