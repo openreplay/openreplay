@@ -24,8 +24,8 @@ domain_name: ""
 docker_registry_username: ""
 docker_registry_password: ""
 docker_registry_url: "rg.fr-par.scw.cloud/foss"
-image_tag: "v1.3.6"
-openreplay_version: "v1.3.6"
+image_tag: "v1.3.5"
+openreplay_version: "v1.3.5"
 
 # Nginx ssl certificates.
 # in cert format
