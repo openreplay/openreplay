@@ -65,8 +65,11 @@ patch(){
     )
     for var in ${vars[@]};do
         # Get old value
-        old_val=`grep $var ${openreplay_old_dir}/scripts/helm/app/chalice.yaml|xargs`
-        sed -i "s#${var}.*#$old_val#g" app/chalice.yaml
+        old_val=`grep $var ${openreplay_old_dir}/scripts/helm/app/chalice.yaml| cutl -d" " f4|xargs`
+        # Coverting caps env var to small ansible variable.
+        # In chalice EMAIL_HOST translates to email_host in vars.yaml
+        # Ref: https://stackoverflow.com/questions/2264428/how-to-convert-a-string-to-lower-case-in-bash
+        sed -i "s#${var,,}.*#${var,,}: \"$old_val\"#g" vars_template.yaml
     done
 }
 
