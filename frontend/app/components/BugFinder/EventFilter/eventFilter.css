@@ -57,3 +57,21 @@
   right: 9px;
   top: 9px;
 }
+
+.placeholder {
+  color: $gray-medium;
+  font-weight: 300;
+  font-size: 16px;
+  user-select: none;
+
+  & span {
+    font-weight: 400;
+    color: $teal;
+    cursor: pointer;
+    border-bottom: dashed thin $teal;
+    
+    &:hover {
+      color: $teal-dark;
+    }
+  }
+}
