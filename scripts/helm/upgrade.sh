@@ -2,6 +2,8 @@
 
 # upgrade.sh v1.10
 
+set -e
+
 cwd=$PWD
 openreplay_old_dir=$1
 vars_file_path=${openreplay_old_dir}/scripts/helm/vars.yaml
