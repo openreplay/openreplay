@@ -30,18 +30,17 @@
           db_path: []
       - name: generating migration db paths
         set_fact:
-          db_path: "{{dst_list | default([])}} + [ '{{ item[0] }}/*.sql' ]" 
+          db_path: "{{ db_path }} + [ '{{playbook_dir}}/db/init_dbs/clickhouse/{{ item }}/*.sql' ]"
         with_items: "{{ migration_versions.split(',') }}"
       - name: Restoring clickhouse data
         shell: |
           file="{{ item|basename }}"
           kubectl exec -n db clickhouse-0 -- /bin/bash -c "rm -rf /tmp/$file"
-          kubectl cp -n db $file clickhouse-0:/tmp/
+          kubectl cp -n db {{ item }} clickhouse-0:/tmp/
           kubectl exec -n db clickhouse-0 -- /bin/bash -c "clickhouse-client < /tmp/$file" 2>&1 | tee -a "{{ playbook_dir }}"/clickhouse_init.log
         args:
-          chdir: db/init_dbs/clickhouse/create
-        with_fileglob:
-          - "{{ db_path }}"
+          chdir: db/init_dbs/clickhouse/
+        with_fileglob: "{{ db_path }}"
         retries: 3
         delay: 60
         register: result
