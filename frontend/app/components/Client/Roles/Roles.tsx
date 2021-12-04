@@ -80,6 +80,7 @@ function Roles(props: Props) {
                     />
                   </div>
                 }
+                content="You don’t have the permissions to perform this action."
                 disabled={ isAdmin }
                 size="tiny"
                 inverted
