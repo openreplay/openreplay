@@ -57,7 +57,7 @@ function Session({
 	);
 }
 
-export default withPermissions(['SESSION_REPLAY'])(connect((state, props) => {
+export default withPermissions(['SESSION_REPLAY'], '', '/')(connect((state, props) => {
 	const { match: { params: { sessionId } } } = props;
   return {
     sessionId,
