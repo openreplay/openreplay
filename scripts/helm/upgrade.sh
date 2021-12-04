@@ -2,6 +2,8 @@
 
 # upgrade.sh v1.10
 
+set -e
+
 cwd=$PWD
 openreplay_old_dir=$1
 vars_file_path=${openreplay_old_dir}/scripts/helm/vars.yaml
@@ -35,7 +37,7 @@ migration(){
     # Ref: https://stackoverflow.com/questions/1527049/how-can-i-join-elements-of-an-array-in-bash
     # Creating an array of versions to migrate.
     db=$1
-    migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}'`)
+    migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
     joined_migration_versions=$(IFS=, ; echo "${migration_versions[*]}")
 
@@ -65,8 +67,11 @@ patch(){
     )
     for var in ${vars[@]};do
         # Get old value
-        old_val=`grep $var ${openreplay_old_dir}/scripts/helm/app/chalice.yaml|xargs`
-        sed -i "s/${var}.*/$old_val/g" app/chalice.yaml
+        old_val=`grep $var ${openreplay_old_dir}/scripts/helm/app/chalice.yaml| cut -d" " -f4|xargs`
+        # Coverting caps env var to small ansible variable.
+        # In chalice EMAIL_HOST translates to email_host in vars.yaml
+        # Ref: https://stackoverflow.com/questions/2264428/how-to-convert-a-string-to-lower-case-in-bash
+        sed -i "s#${var,,}.*#${var,,}: \"$old_val\"#g" vars.yaml
     done
 }
 
@@ -74,6 +79,11 @@ patch(){
 patch
 
 installation_type=1
+if [[ ${ENTERPRISE} -eq 1 ]]; then
+    cp -rf ../../ee/scripts/helm/db/* db/
+    echo -e "Migrating clickhouse"
+    migration clickhouse
+fi
 echo -e "Migrating postgresql"
 migration postgresql
 

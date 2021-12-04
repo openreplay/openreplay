@@ -88,25 +88,25 @@ db_resource_override:
   clickhouse: {{ db_resource_override.clickhouse|default({}) }}
 
 ## Sane defaults
-s3_endpoint: "{{ s3_endpoint }}"
-aws_region: "{{ aws_region }}"
-assets_bucket: "{{ assets_bucket }}"
-recordings_bucket: "{{ recordings_bucket }}"
-sourcemaps_bucket: "{{ sourcemaps_bucket }}"
-kafka_endpoint: "{{ kafka_endpoint }}"
-kafka_ssl: "{{ kafka_ssl }}"
-postgres_endpoint: "{{ postgres_endpoint }}"
-postgres_port: "{{ postgres_port }}"
-postgres_db_name: "{{ postgres_db_name }}"
-postgres_db_user: "{{ postgres_db_user }}"
-postgres_db_password: "{{ postgres_db_password }}"
-redis_endpoint: "{{ redis_endpoint }}"
-email_host: "{{ email_host }}"
-email_port: "{{ email_port }}"
-email_user: "{{ email_user }}"
-email_password: "{{ email_password }}"
-email_use_tls: "{{ email_use_tls }}"
-email_use_ssl: "{{ email_use_ssl }}"
-email_ssl_key: "{{ email_ssl_key }}"
-email_ssl_cert: "{{ email_ssl_cert }}"
-email_from: "{{ email_from }}"
+s3_endpoint: "http://minio.db.svc.cluster.local:9000"
+aws_region: "us-east-1"
+assets_bucket: sessions-assets
+recordings_bucket: mobs
+sourcemaps_bucket: sourcemaps
+kafka_endpoint: kafka.db.svc.cluster.local:9042
+kafka_ssl: 'false'
+postgres_endpoint: postgresql.db.svc.cluster.local
+postgres_port: 5432
+postgres_db_name: postgres
+postgres_db_user: postgres
+postgres_db_password: asayerPostgres
+redis_endpoint: redis-master.db.svc.cluster.local:6379
+email_host: ''
+email_port: '587'
+email_user: ''
+email_password: ''
+email_use_tls: 'true'
+email_use_ssl: 'false'
+email_ssl_key: ''
+email_ssl_cert: ''
+email_from: OpenReplay<do-not-reply@openreplay.com>
