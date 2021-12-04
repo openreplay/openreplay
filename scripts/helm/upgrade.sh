@@ -79,6 +79,11 @@ patch(){
 patch
 
 installation_type=1
+if [[ ${ENTERPRISE} -eq 1 ]]; then
+    cp -rf ../../ee/scripts/helm/db/* db/
+    echo -e "Migrating clickhouse"
+    migration clickhouse
+fi
 echo -e "Migrating postgresql"
 migration postgresql
 
