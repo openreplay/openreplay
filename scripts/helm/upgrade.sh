@@ -37,7 +37,7 @@ migration(){
     # Ref: https://stackoverflow.com/questions/1527049/how-can-i-join-elements-of-an-array-in-bash
     # Creating an array of versions to migrate.
     db=$1
-    migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}'`)
+    migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
     # Can't pass the space seperated array to ansible for migration. So joining them with ,
     joined_migration_versions=$(IFS=, ; echo "${migration_versions[*]}")
 
