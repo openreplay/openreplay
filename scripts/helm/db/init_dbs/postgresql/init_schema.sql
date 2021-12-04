@@ -460,6 +460,7 @@ $$
             CREATE INDEX errors_project_id_error_id_js_exception_idx ON public.errors (project_id, error_id) WHERE source = 'js_exception';
             CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
             CREATE INDEX errors_project_id_error_id_integration_idx ON public.errors (project_id, error_id) WHERE source != 'js_exception';
+            CREATE INDEX errors_error_id_idx ON errors (error_id);
 
             CREATE TABLE user_favorite_errors
             (
@@ -642,7 +643,9 @@ $$
                 payload    jsonb DEFAULT NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
-
+            CREATE INDEX issues_issue_id_timestamp_idx ON events_common.issues (issue_id, timestamp);
+            CREATE INDEX issues_timestamp_idx ON events_common.issues (timestamp);
+            CREATE INDEX issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
 
             CREATE TABLE events_common.requests
             (
@@ -751,6 +754,7 @@ $$
             CREATE INDEX clicks_url_idx ON events.clicks (url);
             CREATE INDEX clicks_url_gin_idx ON events.clicks USING GIN (url gin_trgm_ops);
             CREATE INDEX clicks_url_session_id_timestamp_selector_idx ON events.clicks (url, session_id, timestamp, selector);
+            CREATE INDEX clicks_session_id_timestamp_idx ON events.clicks (session_id, timestamp);
 
 
             CREATE TABLE events.inputs
@@ -782,6 +786,7 @@ $$
             CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
             CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
             CREATE INDEX errors_error_id_timestamp_session_id_idx ON events.errors (error_id, timestamp, session_id);
+            CREATE INDEX errors_error_id_idx ON events.errors (error_id);
 
             CREATE TABLE events.graphql
             (
