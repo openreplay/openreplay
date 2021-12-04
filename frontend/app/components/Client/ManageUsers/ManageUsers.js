@@ -44,7 +44,9 @@ class ManageUsers extends React.PureComponent {
   closeModal = () => this.setState({ showModal: false });
   componentWillMount = () => {
     this.props.fetchList();
-    this.props.fetchRoles();
+    if (this.props.isEnterprise) {
+      this.props.fetchRoles();
+    }
   }
   
   adminLabel = (user) => {
