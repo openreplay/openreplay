@@ -149,7 +149,7 @@ export default class DOMManager extends ListWalker<TimedMessage> {
         this.insertNode(msg);
       break;
       case "create_element_node":
-    //  console.log('elementnode', msg)
+      // console.log('elementnode', msg)
         if (msg.svg) {
           this.nl[ msg.id ] = document.createElementNS('http://www.w3.org/2000/svg', msg.tag);
         } else {
@@ -253,20 +253,27 @@ export default class DOMManager extends ListWalker<TimedMessage> {
         }
       break;
       case "create_i_frame_document":
-      // console.log('ifr', msg)
         node = this.nl[ msg.frameID ];
-        if (!(node instanceof HTMLIFrameElement)) {
-          logger.warn("create_i_frame_document message. Node is not iframe")
-          return;
-        }
-      //   await new Promise(resolve => { node.onload = resolve })
+        // console.log('ifr', msg, node)
 
-        doc = node.contentDocument;
-        if (!doc) {
-          logger.warn("No iframe doc", msg, node, node.contentDocument);
+        if (node instanceof HTMLIFrameElement) {
+          doc = node.contentDocument;
+          if (!doc) {
+            logger.warn("No iframe doc", msg, node, node.contentDocument);
+            return;
+          }
+          this.nl[ msg.id ] = doc.documentElement
           return;
+        } else if (node instanceof Element) { // shadow DOM
+          try {
+            this.nl[ msg.id ] = node.attachShadow({ mode: 'open' })
+          } catch(e) {
+            logger.warn("Can not attach shadow dom", e, msg)
+          }
+        } else {
+          logger.warn("Context message host is not Element", msg)
         }
-        this.nl[ msg.id ] = doc.documentElement
+        
       break;
         //not sure what to do with this one
       //case "disconnected":
