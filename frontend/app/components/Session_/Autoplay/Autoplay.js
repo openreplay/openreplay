@@ -24,7 +24,7 @@ function Autoplay(props) {
             name="sessionsLive"
             onChange={ props.toggleAutoplay }
             checked={ autoplay }
-            style={{ margin: '0 10px' }}
+            style={{ margin: '0px 10px 0px 12px'}}
           />
         }
         tooltip={'Autoplay'}

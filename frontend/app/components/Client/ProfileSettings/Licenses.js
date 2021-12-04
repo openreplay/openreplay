@@ -6,8 +6,8 @@ function Licenses({ account }) {
     <div>
       <div>{account.license}</div>
       {account.expirationDate && (
-        <div className="font-medium text-sm">
-          Expires At: {account.expirationDate.toFormat('LLL dd, yyyy')}
+        <div className="">
+          (Expires on {account.expirationDate.toFormat('LLL dd, yyyy')})
         </div>
       )}
     </div>

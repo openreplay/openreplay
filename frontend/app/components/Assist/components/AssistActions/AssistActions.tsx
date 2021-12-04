@@ -101,7 +101,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
             <span className={cn("ml-2", { 'color-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
           </div>
         }
-        content={ `Call ${userId ? userId : 'User'}` }
+        content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
         size="tiny"
         inverted
         position="top right"

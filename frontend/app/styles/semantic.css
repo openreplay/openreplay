@@ -310,3 +310,7 @@
 a:hover {
   color: $teal;
 }
+
+.ui.toggle.checkbox {
+  min-height: 20px !important;
+}

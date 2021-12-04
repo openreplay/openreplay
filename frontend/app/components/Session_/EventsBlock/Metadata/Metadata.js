@@ -38,7 +38,7 @@ export default connect(state => ({
       />
       { visible && 
         <div className={ stl.modal } >
-          <NoContent show={ metadata.size === 0 } size="small" >
+          <NoContent show={ metadata.size === 0 } size="small">
             { metadata.map((i) => {
               const key = Object.keys(i)[0]
               const value = i[key]
