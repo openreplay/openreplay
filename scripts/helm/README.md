@@ -6,6 +6,7 @@ Installation components are separated by namespaces.
   
 - **app:** Core OpenReplay application related components.
   - alerts
+  - utilities
   - assets
   - chalice
   - ender
