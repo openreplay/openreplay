@@ -23,7 +23,7 @@ function AssistScript(props) {
   r.issue=function(k,p){r.push([6,k,p])};
   r.isActive=function(){return false};
   r.getSessionToken=function(){};
-})(0, "${props.projectKey}", "//static.openreplay.com/3.4.0/openreplay-assist.js",1,28);
+})(0, "${props.projectKey}", "//static.openreplay.com/3.4.9/openreplay-assist.js",1,28);
 </script>`}
       </Highlight>
     </div>

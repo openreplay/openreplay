@@ -55,11 +55,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
   backHandler = () => {
     const { history, siteId, funnelPage } = this.props;
-    if (funnelPage) {
-      if (funnelPage.get('issueId')) {
-        history.push(withSiteId(funnelIssueRoute(funnelPage.get('funnelId'), funnelPage.get('issueId')), siteId))
+    const funnelId = funnelPage && funnelPage.get('funnelId');
+    const issueId = funnelPage && funnelPage.get('issueId');
+    if (funnelId || issueId) {
+      if (issueId) {
+        history.push(withSiteId(funnelIssueRoute(funnelId, issueId), siteId))
       } else
-        history.push(withSiteId(funnelRoute(funnelPage.get('funnelId')), siteId));
+        history.push(withSiteId(funnelRoute(funnelId), siteId));
     } else 
       history.push(withSiteId(SESSIONS_ROUTE), siteId);
   }

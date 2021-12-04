@@ -49,7 +49,7 @@ export default class Fetch extends React.PureComponent {
     const { filter, current, currentIndex } = this.state;
     const filterRE = getRE(filter, 'i');
     const filtered = list
-      .filter(({ name }) => filterRE.test(name));      
+      .filter((r) => filterRE.test(r.name) || filterRE.test(r.url) || filterRE.test(r.method) || filterRE.test(r.status));
 
     return (
       <React.Fragment>
@@ -90,7 +90,7 @@ export default class Fetch extends React.PureComponent {
             <h4 className="text-lg">Fetch</h4>
             <Input
               className="input-small"
-              placeholder="Filter by Name"
+              placeholder="Filter"
               icon="search"
               iconPosition="left"
               name="filter"

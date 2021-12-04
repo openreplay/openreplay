@@ -56,7 +56,7 @@ class Webhooks extends React.PureComponent {
         
         <Loader loading={ loading }>
           <NoContent
-            title="No webhooks are available."
+            title="No webhooks available."
             size="small"
             show={ noSlackWebhooks.size === 0 }
             icon

@@ -7,6 +7,7 @@ import RoleForm from './components/RoleForm'
 import { init, edit, fetchList, remove as deleteRole } from 'Duck/roles';
 import RoleItem from './components/RoleItem'
 import { confirm } from 'UI/Confirmation';
+import { toast } from 'react-toastify';
 
 interface Props {
   loading: boolean
@@ -14,19 +15,17 @@ interface Props {
   edit: (role: any) => void,
   instance: any,
   roles: any[],
-  deleteRole: (id: any) => void,
+  deleteRole: (id: any) => Promise<void>,
   fetchList: () => Promise<void>,
   account: any,
-  permissionsMap: any
+  permissionsMap: any,
+  removeErrors: any
 }
 
 function Roles(props: Props) {
-  const { loading, instance, roles, init, edit, deleteRole, account, permissionsMap } = props
+  const { loading, instance, roles, init, edit, deleteRole, account, permissionsMap, removeErrors } = props
   const [showModal, setShowmModal] = useState(false)
   const isAdmin = account.admin || account.superAdmin;
-
-  console.log('permissionsMap', permissionsMap)
-
 
   useEffect(() => {
     props.fetchList()
@@ -49,7 +48,13 @@ function Roles(props: Props) {
       header: 'Roles',
       confirmation: `Are you sure you want to remove this role?`
     })) {
-      deleteRole(role.roleId)
+      deleteRole(role.roleId).then(() => {
+        if (removeErrors && removeErrors.size > 0) {
+          removeErrors.forEach(e => {
+            toast.error(e)
+          })
+        }
+      })
     }
   }
 
@@ -80,6 +85,7 @@ function Roles(props: Props) {
                     />
                   </div>
                 }
+                content="You don’t have the permissions to perform this action."
                 disabled={ isAdmin }
                 size="tiny"
                 inverted
@@ -98,6 +104,7 @@ function Roles(props: Props) {
               {roles.map(role => (
                 <RoleItem
                   role={role}
+                  isAdmin={isAdmin}
                   permissions={permissionsMap}
                   editHandler={editHandler}
                   deleteHandler={deleteHandler}
@@ -121,6 +128,7 @@ export default connect(state => {
     instance: state.getIn(['roles', 'instance']) || null,
     permissionsMap: permissionsMap,
     roles: state.getIn(['roles', 'list']),
+    removeErrors: state.getIn(['roles', 'removeRequest', 'errors']),
     loading: state.getIn(['roles', 'fetchRequest', 'loading']),
     account: state.getIn([ 'user', 'account' ])
   }
