@@ -27,7 +27,7 @@ export default connect(state => ({
         }
         content={
           <div className="p-2">
-            Metadata must be explicitly specified from the dashboard from <a href="/client/metadata" className="link">Preferences &#62; Metadata</a>.
+            Check <a href="https://docs.openreplay.com/installation/metadata" target="_blank" className="link">how to use Metadata</a> if you haven’t yet done so.
           </div>
         }
         on="click"
