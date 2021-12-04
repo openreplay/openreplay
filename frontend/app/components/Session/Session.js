@@ -5,6 +5,7 @@ import { fetch as fetchSession } from 'Duck/sessions';
 import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { Link, NoContent, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
+import withPermissions from 'HOCs/withPermissions'
 
 import LivePlayer from './LivePlayer';
 import WebPlayer from './WebPlayer';
@@ -56,7 +57,7 @@ function Session({
 	);
 }
 
-export default connect((state, props) => {
+export default withPermissions(['SESSION_REPLAY'])(connect((state, props) => {
 	const { match: { params: { sessionId } } } = props;
   return {
     sessionId,
@@ -67,4 +68,4 @@ export default connect((state, props) => {
 }, {
   fetchSession,
   fetchSlackList,
-})(Session);
+})(Session));
