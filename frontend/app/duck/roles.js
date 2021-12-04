@@ -13,8 +13,8 @@ const initialState = Map({
     { name: 'Developer Tools', value: 'DEV_TOOLS' },
     { name: 'Errors', value: 'ERRORS' },
     { name: 'Metrics', value: 'METRICS' },
-    { name: 'Assist Live', value: 'ASSIST_LIVE' },
-    { name: 'Assist Call', value: 'ASSIST_CALL' },
+    { name: 'Assist (Live)', value: 'ASSIST_LIVE' },
+    { name: 'Assist (Call)', value: 'ASSIST_CALL' },
   ])
 });
 

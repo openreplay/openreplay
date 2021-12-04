@@ -16,11 +16,11 @@
   }
 
   & .adminLabel {
-    margin-left: 10px;
+    margin-left: 5px;
     padding: 0 10px;
     border-radius: 3px;
     background-color: $gray-lightest;
-    font-size: 12px;
+    font-size: 10px;
     border: solid thin $gray-light;
   }
 }
