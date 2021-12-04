@@ -221,6 +221,7 @@ $$
                 role_id       integer                     REFERENCES roles (role_id) ON DELETE SET NULL,
                 internal_id   text                        NULL     DEFAULT NULL
             );
+            CREATE INDEX users_tenant_id_deleted_at_N_idx ON users (tenant_id) WHERE deleted_at ISNULL;
 
 
             CREATE TABLE basic_authentication
@@ -462,6 +463,7 @@ $$
             );
             CREATE INDEX ON issues (issue_id, type);
             CREATE INDEX issues_context_string_gin_idx ON public.issues USING GIN (context_string gin_trgm_ops);
+            CREATE INDEX issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
 
 -- --- errors.sql ---
 
@@ -590,6 +592,8 @@ $$
             CREATE INDEX ON sessions (project_id, user_country);
             CREATE INDEX ON sessions (project_id, user_browser);
             CREATE INDEX sessions_session_id_project_id_start_ts_durationNN_idx ON sessions (session_id, project_id, start_ts) WHERE duration IS NOT NULL;
+            CREATE INDEX sessions_user_id_useridNN_idx ON sessions (user_id) WHERE user_id IS NOT NULL;
+            CREATE INDEX sessions_uid_projectid_startts_sessionid_uidNN_durGTZ_idx ON sessions (user_id, project_id, start_ts, session_id) WHERE user_id IS NOT NULL AND duration > 0;
 
 
             ALTER TABLE public.sessions
@@ -664,6 +668,8 @@ $$
                 payload    jsonb DEFAULT NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
+            CREATE INDEX issues_issue_id_timestamp_idx ON events_common.issues (issue_id, timestamp);
+            CREATE INDEX issues_timestamp_idx ON events_common.issues (timestamp);
 
 
             CREATE TABLE events_common.requests
@@ -739,6 +745,7 @@ $$
             CREATE INDEX pages_load_time_idx ON events.pages (load_time) WHERE load_time > 0;
             CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
             CREATE INDEX pages_session_id_timestamp_idx ON events.pages (session_id, timestamp);
+            CREATE INDEX pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHERE length(base_path) > 2;
 
             CREATE TABLE events.clicks
             (
