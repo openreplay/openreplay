@@ -50,7 +50,7 @@ class ManageUsers extends React.PureComponent {
   }
   
   adminLabel = (user) => {
-    if (user.superAdmin) return 'Owner';
+    if (user.superAdmin) return null;
     return user.admin ? 'Admin' : '';
   };
 
@@ -207,8 +207,8 @@ class ManageUsers extends React.PureComponent {
           <div className={ styles.wrapper }>
             <div className={ cn(styles.tabHeader, 'flex items-center') }>
               <div className="flex items-center mr-auto">
-                { !hideHeader && <h3 className={ cn(styles.tabTitle, "text-2xl") }>{ (isAdmin ? 'Manage ' : '') + 'Users' }</h3> }
-                { hideHeader && <h3 className={ cn(styles.tabTitle, "text-xl") }>{ `Team Size ${members.size}` }</h3>}
+                { !hideHeader && <h3 className={ cn(styles.tabTitle, "text-2xl") }>{ (isAdmin ? 'Manage ' : '') + `Users (${members.size})` }</h3> }
+                { hideHeader && <h3 className={ cn(styles.tabTitle, "text-xl") }>{ `Users (${members.size})` }</h3>}
                 <Popup
                   trigger={
                     <div>

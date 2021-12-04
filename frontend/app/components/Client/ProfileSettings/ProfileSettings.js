@@ -76,6 +76,7 @@ export default class ProfileSettings extends React.PureComponent {
             <div className="flex items-center">
               <div className={ styles.left }>
                 <h4 className="text-lg mb-4">{ 'License' }</h4>
+                <div className={ styles.info }>{ 'License key and expiration date.' }</div>
               </div>
               <div><Licenses /></div>
             </div>
