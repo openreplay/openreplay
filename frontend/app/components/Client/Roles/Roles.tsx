@@ -25,9 +25,6 @@ function Roles(props: Props) {
   const [showModal, setShowmModal] = useState(false)
   const isAdmin = account.admin || account.superAdmin;
 
-  console.log('permissionsMap', permissionsMap)
-
-
   useEffect(() => {
     props.fetchList()
   }, [])
