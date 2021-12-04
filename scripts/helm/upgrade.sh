@@ -66,7 +66,7 @@ patch(){
     for var in ${vars[@]};do
         # Get old value
         old_val=`grep $var ${openreplay_old_dir}/scripts/helm/app/chalice.yaml|xargs`
-        sed -i "s/${var}.*/$old_val/g" app/chalice.yaml
+        sed -i "s#${var}.*#$old_val#g" app/chalice.yaml
     done
 }
 
