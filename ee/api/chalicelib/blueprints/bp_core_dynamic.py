@@ -41,7 +41,7 @@ def login():
             "teamMember": int(environ.get("numberOfSeats", 0)),
             "projects": -1,
             "metadata": metadata.get_remaining_metadata_with_count(tenant_id)},
-        # **license.get_status(tenant_id),
+        **license.get_status(tenant_id),
         "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0,
         "saml2": SAML2_helper.is_saml2_available(),
         "iceServers": assist.get_ice_servers()
@@ -54,8 +54,7 @@ def login():
         'jwt': r.pop('jwt'),
         'data': {
             "user": r,
-            "client": c,
-            **license.get_status(tenant_id),
+            "client": c
         }
     }
 
