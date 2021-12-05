@@ -26,7 +26,6 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localS
     const iid = setInterval(() => {
       const settings = incomeStream.getVideoTracks()[0]?.getSettings()
       const isDummyVideoTrack = !!settings ? (settings.width === 2 || settings.frameRate === 0) : true
-      console.log(isDummyVideoTrack, settings)
       const shouldBeEnabled = !isDummyVideoTrack
       if (shouldBeEnabled !== localVideoEnabled) {
         setRemoteVideoEnabled(shouldBeEnabled)
