@@ -47,6 +47,7 @@ def login():
                                           stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
+    c["saml2"] = SAML2_helper.is_saml2_available()
     c = {**c, **license.get_status(tenant_id)}
     return {
         'jwt': r.pop('jwt'),
