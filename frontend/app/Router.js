@@ -86,13 +86,9 @@ class Router extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.email !== this.props.email) {
-      this.onLoginLogout();
+    if (prevProps.email !== this.props.email && !this.props.email) {
+      this.props.fetchTenants();
     }
-  }
-
-  onLoginLogout() {
-    const { email, account, organisation } = this.props;
   }
 
   render() {    
