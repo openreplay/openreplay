@@ -31,6 +31,14 @@ function Roles(props: Props) {
     props.fetchList()
   }, [])
 
+  useEffect(() => {
+    if (removeErrors && removeErrors.size > 0) {
+      removeErrors.forEach(e => {
+        toast.error(e)
+      })
+    }
+  }, [removeErrors])
+
   const closeModal = () => {
     setShowmModal(false)
     setTimeout(() => {
@@ -48,13 +56,7 @@ function Roles(props: Props) {
       header: 'Roles',
       confirmation: `Are you sure you want to remove this role?`
     })) {
-      deleteRole(role.roleId).then(() => {
-        if (removeErrors && removeErrors.size > 0) {
-          removeErrors.forEach(e => {
-            toast.error(e)
-          })
-        }
-      })
+      deleteRole(role.roleId)
     }
   }
 
