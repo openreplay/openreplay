@@ -10,7 +10,9 @@ export default function ChromePluginMessage({ style }) {
     >
       <div className="flex items-center">
         <Icon name="info-circle" size="14" color="gray-darkest" />
-        <div className="ml-2 mr-2 color-gray-darkest">Finding it difficult to add steps? Try our Chrome <a className="color-teal" target="_blank" href={links['chrome-plugin']}>Test Recorder</a></div>
+        <div className="ml-2 mr-2 color-gray-darkest">
+          Finding it difficult to add steps? Try our Chrome <a className="color-teal" rel="noopener noreferrer" target="_blank" href={links['chrome-plugin']}>Test Recorder</a>
+        </div>
         <Icon name="external-link-alt" size="14" color="teal" />        
       </div>      
     </div>
