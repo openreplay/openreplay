@@ -40,6 +40,7 @@
     "react-dnd": "^2.6.0",
     "react-dnd-html5-backend": "^2.6.0",
     "react-dom": "^16.13.1",
+    "react-draggable": "^4.4.4",
     "react-google-recaptcha": "^1.1.0",
     "react-highlight": "^0.14.0",
     "react-json-view": "^1.19.1",
