@@ -53,7 +53,7 @@ export interface State {
 export const INITIAL_STATE: State = {
   calling: CallingState.False,
   peerConnectionStatus: ConnectionStatus.Connecting,
-  remoteControl: false,
+  remoteControl: true,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -391,6 +391,7 @@ export default class AssistManager {
   private toggleRemoteControl = (flag?: boolean) => {
     const state = getState().remoteControl;
     const newState = typeof flag === 'boolean' ? flag : !state;
+    console.log('flag', flag, state, newState)
     if (state === newState) { return }
     if (newState) {
       this.md.overlay.addEventListener("click", this.onMouseClick);
