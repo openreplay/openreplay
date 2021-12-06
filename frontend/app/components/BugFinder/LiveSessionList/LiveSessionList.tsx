@@ -78,7 +78,7 @@ function LiveSessionList(props: Props) {
   )
 }
 
-export default withPermissions(['ASSIST_LIVE'])(connect(
+export default withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(connect(
   (state) => ({
     list: state.getIn(['sessions', 'liveSessions']),
     loading: state.getIn([ 'sessions', 'loading' ]),

@@ -80,7 +80,7 @@ class Router extends React.Component {
     super(props);
     if (props.isLoggedIn) {
       Promise.all([props.fetchUserInfo()])
-      .then(() => this.onLoginLogout());
+      // .then(() => this.onLoginLogout());
     }
     props.fetchTenants();
   }
