@@ -36,23 +36,25 @@ def login():
 
     tenant_id = r.pop("tenantId")
     # change this in open-source
-    r["limits"] = {
-        "teamMember": int(environ.get("numberOfSeats", 0)),
-        "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
-
+    r = {**r,
+        "limits": {
+            "teamMember": int(environ.get("numberOfSeats", 0)),
+            "projects": -1,
+            "metadata": metadata.get_remaining_metadata_with_count(tenant_id)},
+        **license.get_status(tenant_id),
+        "smtp": environ["EMAIL_HOST"] is not None and len(environ["EMAIL_HOST"]) > 0,
+        "saml2": SAML2_helper.is_saml2_available(),
+        "iceServers": assist.get_ice_servers()
+    }
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
-    c["smtp"] = helper.has_smtp()
-    c["iceServers"] = assist.get_ice_servers()
-    c = {**c, **license.get_status(tenant_id)}
     return {
         'jwt': r.pop('jwt'),
         'data': {
             "user": r,
-            "client": c,
+            "client": c
         }
     }
 

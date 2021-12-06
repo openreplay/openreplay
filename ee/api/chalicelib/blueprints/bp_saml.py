@@ -72,9 +72,15 @@ def process_sso_assertion():
     role = roles.get_role_by_name(tenant_id=t['tenantId'], name=role_name)
     if role is None:
         return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
+
+    admin_privileges = user_data.get("adminPrivileges", [])
+    admin_privileges = not (len(admin_privileges) == 0
+                            or admin_privileges[0] is None
+                            or admin_privileges[0].lower() == "false")
+
     if existing is None:
         print("== new user ==")
-        users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=True,
+        users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
                               origin=SAML2_helper.get_saml2_provider(),
                               name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
                               internal_id=internal_id, role_id=role["roleId"])
