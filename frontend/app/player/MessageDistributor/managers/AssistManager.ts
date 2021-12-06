@@ -188,8 +188,6 @@ export default class AssistManager {
         this.connectToPeer();        
       });
     });
-
-    this.toggleRemoteControl(false);
   }
 
   private dataCheckIntervalID: ReturnType<typeof setInterval> | undefined;
@@ -393,7 +391,6 @@ export default class AssistManager {
   private toggleRemoteControl = (flag?: boolean) => {
     const state = getState().remoteControl;
     const newState = typeof flag === 'boolean' ? flag : !state;
-    console.log('flag', flag, state, newState)
     if (state === newState) { return }
     if (newState) {
       this.md.overlay.addEventListener("click", this.onMouseClick);
@@ -461,8 +458,8 @@ export default class AssistManager {
         name: store.getState().getIn([ 'user', 'account', 'name']),
       });
 
-      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
-      this.md.overlay.addEventListener("click", this.onMouseClick)
+      // this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+      // this.md.overlay.addEventListener("click", this.onMouseClick)
     });
     //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
