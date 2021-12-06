@@ -25,7 +25,7 @@
     "jsbi": "^4.1.0",
     "jshint": "^2.11.1",
     "luxon": "^1.24.1",
-    "mobx": "^6.0.4",
+    "mobx": "^6.3.8",
     "mobx-react-lite": "^3.1.6",
     "moment": "^2.27.0",
     "moment-range": "^4.0.2",
