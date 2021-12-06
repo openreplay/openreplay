@@ -74,9 +74,9 @@ def process_sso_assertion():
         return {"errors": [f"role {role_name}  not found, please create it in openreplay first"]}
 
     admin_privileges = user_data.get("adminPrivileges", [])
-    admin_privileges = len(admin_privileges) == 0 \
-                       or admin_privileges[0] is None \
-                       or admin_privileges[0].lower() == "false"
+    admin_privileges = not (len(admin_privileges) == 0
+                            or admin_privileges[0] is None
+                            or admin_privileges[0].lower() == "false")
 
     if existing is None:
         print("== new user ==")
