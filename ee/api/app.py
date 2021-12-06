@@ -1,4 +1,3 @@
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette import status
@@ -6,10 +5,10 @@ from starlette.responses import StreamingResponse, JSONResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from routers import core, core_dynamic,saml
-from routers.app import v1_api
-from routers.crons import core_crons
-from routers.crons import core_dynamic_crons
+from routers import core, core_dynamic, saml
+from routers.app import v1_api, v1_api_ee
+# from routers.crons import core_crons
+# from routers.crons import core_dynamic_crons
 from routers.subs import dashboard
 
 app = FastAPI()
@@ -60,12 +59,13 @@ app.include_router(saml.app_apikey)
 app.include_router(dashboard.app)
 # app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
+app.include_router(v1_api_ee.app_apikey)
 
-Schedule = AsyncIOScheduler()
-Schedule.start()
-
-for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
-    Schedule.add_job(id=job["func"].__name__, **job)
+# Schedule = AsyncIOScheduler()
+# Schedule.start()
+#
+# for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
+#     Schedule.add_job(id=job["func"].__name__, **job)
 
 # for job in Schedule.get_jobs():
 #     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})

@@ -1,8 +1,10 @@
 from http import cookies
-from urllib.parse import urlparse, parse_qsl
+from urllib.parse import urlparse
 
 from decouple import config
+from fastapi import Request
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
+from starlette.datastructures import FormData
 
 SAML2 = {
     "strict": True,
@@ -66,10 +68,10 @@ def init_saml_auth(req):
     return auth
 
 
-def prepare_request(request):
+async def prepare_request(request: Request):
     request.args = dict(request.query_params).copy() if request.query_params else {}
-    request.form = dict(request.json_body).copy() if request.json_body else dict(
-        parse_qsl(request.raw_body.decode())) if request.raw_body else {}
+    form: FormData = await request.form()
+    request.form = dict(form)
     cookie_str = request.headers.get("cookie", "")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
@@ -89,7 +91,7 @@ def prepare_request(request):
         'https': 'on' if request.headers.get('x-forwarded-proto', 'http') == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': "/api" + request.path,
+        'script_name': "/api" + request.url.path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
@@ -104,9 +106,9 @@ def is_saml2_available():
 
 
 def get_saml2_provider():
-    return config("idp_name",default= "saml2") if is_saml2_available() and len(
-        config("idp_name",default= "saml2")) > 0 else None
+    return config("idp_name", default="saml2") if is_saml2_available() and len(
+        config("idp_name", default="saml2")) > 0 else None
 
 
 def get_landing_URL(jwt):
-    return config("SITE_URL") + config("sso_landing",default= "/login?jwt=%s") % jwt
+    return config("SITE_URL") + config("sso_landing", default="/login?jwt=%s") % jwt

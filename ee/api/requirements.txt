@@ -9,6 +9,7 @@ clickhouse-driver==0.2.2
 python3-saml==1.12.0
 
 fastapi
+python-multipart
 uvicorn[standard]
 python-decouple
 pydantic[email]

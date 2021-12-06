@@ -1,5 +1,6 @@
 from chalicelib.core import roles
 from chalicelib.core import unlock
+from chalicelib.utils import assist_helper
 
 unlock.check()
 
@@ -52,3 +53,8 @@ def delete_role(roleId: int, context: schemas.CurrentContext = Depends(OR_contex
     return {
         'data': data
     }
+
+
+@app.get('/assist/credentials', tags=["assist"])
+def get_assist_credentials():
+    return {"data": assist_helper.get_full_config()}

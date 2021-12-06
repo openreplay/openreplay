@@ -210,7 +210,6 @@ Pipfile
 /chalicelib/core/sessions_favorite_viewed.py
 /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
-/chalicelib/core/sessions.py
 /chalicelib/core/significance.py
 /chalicelib/core/slack.py
 /chalicelib/core/socket_ios.py
