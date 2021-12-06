@@ -8,7 +8,7 @@ export default (requiredPermissions, className, backLink = '') => BaseComponent 
 }))
 class extends React.PureComponent {
   render() {
-    const hasPermission = this.props.permissions.some(permission => requiredPermissions.includes(permission));
+    const hasPermission = requiredPermissions.every(permission => this.props.permissions.includes(permission));
 
     return !this.props.isEnterprise || hasPermission ? <BaseComponent {...this.props} /> : <div className={className}><NoPermission backLink={backLink} /></div>
   }
