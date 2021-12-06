@@ -4,7 +4,7 @@ import { Loader, IconButton, Popup, NoContent, SlideModal } from 'UI'
 import { connect } from 'react-redux'
 import stl from './roles.css'
 import RoleForm from './components/RoleForm'
-import { init, edit, fetchList, remove as deleteRole } from 'Duck/roles';
+import { init, edit, fetchList, remove as deleteRole, resetErrors } from 'Duck/roles';
 import RoleItem from './components/RoleItem'
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
@@ -19,7 +19,8 @@ interface Props {
   fetchList: () => Promise<void>,
   account: any,
   permissionsMap: any,
-  removeErrors: any
+  removeErrors: any,
+  resetErrors: () => void
 }
 
 function Roles(props: Props) {
@@ -36,6 +37,9 @@ function Roles(props: Props) {
       removeErrors.forEach(e => {
         toast.error(e)
       })
+    }
+    return () => {
+      props.resetErrors()
     }
   }, [removeErrors])
 
@@ -134,4 +138,4 @@ export default connect(state => {
     loading: state.getIn(['roles', 'fetchRequest', 'loading']),
     account: state.getIn([ 'user', 'account' ])
   }
-}, { init, edit, fetchList, deleteRole })(Roles)
+}, { init, edit, fetchList, deleteRole, resetErrors })(Roles)
