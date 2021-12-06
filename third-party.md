@@ -63,7 +63,6 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | react-dnd-html5-backend | MIT | JavaScript |
 | react-dom | MIT | JavaScript |
 | react-google-recaptcha | MIT | JavaScript |
-| react-json-tree | MIT | JavaScript |
 | react-json-view | MIT | JavaScript |
 | react-lazyload | MIT | JavaScript |
 | react-redux | MIT | JavaScript |
