@@ -130,7 +130,8 @@ export default class EventFilter extends React.PureComponent {
             onClick={ this.onPlaceholderClick }
           >
             { !searchQuery && 
-              <RandomPlaceholder onClick={ this.onPlaceholderItemClick } appliedFilterKeys={ appliedFilterKeys } />
+              <div className={ stl.placeholder }>Search for users, clicks, page visits, requests, errors and more</div>
+              // <RandomPlaceholder onClick={ this.onPlaceholderItemClick } appliedFilterKeys={ appliedFilterKeys } />
             }
           </div>
         }

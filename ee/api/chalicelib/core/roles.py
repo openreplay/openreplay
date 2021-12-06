@@ -24,10 +24,13 @@ def update(tenant_id, user_id, role_id, changes):
                             WHERE role_id = %(role_id)s
                                 AND tenant_id = %(tenant_id)s
                                 AND deleted_at ISNULL
-                                AND protected = FALSE;""",
+                                AND protected = FALSE
+                            RETURNING *;""",
                         {"tenant_id": tenant_id, "role_id": role_id, **changes})
         )
-    return get_roles(tenant_id=tenant_id)
+        row = cur.fetchone()
+        row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
 
 
 def create(tenant_id, user_id, name, description, permissions):
@@ -39,10 +42,13 @@ def create(tenant_id, user_id, name, description, permissions):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""INSERT INTO roles(tenant_id, name, description, permissions)
-                           VALUES (%(tenant_id)s, %(name)s, %(description)s, %(permissions)s::text[]);""",
+                           VALUES (%(tenant_id)s, %(name)s, %(description)s, %(permissions)s::text[])
+                           RETURNING *;""",
                         {"tenant_id": tenant_id, "name": name, "description": description, "permissions": permissions})
         )
-    return get_roles(tenant_id=tenant_id)
+        row = cur.fetchone()
+        row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
 
 
 def get_roles(tenant_id):
@@ -59,6 +65,23 @@ def get_roles(tenant_id):
         for r in rows:
             r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
     return helper.list_to_camel_case(rows)
+
+
+def get_role_by_name(tenant_id, name):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""SELECT *
+                    FROM public.roles
+                    where tenant_id =%(tenant_id)s
+                        AND deleted_at IS NULL
+                        AND name ILIKE %(name)s
+                    ;""",
+                        {"tenant_id": tenant_id, "name": name})
+        )
+        row = cur.fetchone()
+        if row is not None:
+            row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+    return helper.dict_to_camel_case(row)
 
 
 def delete(tenant_id, user_id, role_id):

@@ -1,4 +1,4 @@
-import React, { useState, FC } from 'react'
+import React, { useState, FC, useEffect } from 'react'
 import VideoContainer from '../components/VideoContainer'
 import { Icon, Popup, Button } from 'UI'
 import cn from 'classnames'
@@ -17,7 +17,24 @@ export interface Props {
 }
 
 const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localStream, endCall }) {
-  const [minimize, setMinimize] = useState(false)
+  const [localVideoEnabled, setLocalVideoEnabled] = useState(false)
+  const [remoteVideoEnabled, setRemoteVideoEnabled] = useState(false)
+
+
+  useEffect(() => {
+    if (!incomeStream) { return }
+    const iid = setInterval(() => {
+      const settings = incomeStream.getVideoTracks()[0]?.getSettings()
+      const isDummyVideoTrack = !!settings ? (settings.width === 2 || settings.frameRate === 0) : true
+      const shouldBeEnabled = !isDummyVideoTrack
+      if (shouldBeEnabled !== localVideoEnabled) {
+        setRemoteVideoEnabled(shouldBeEnabled)
+      }
+    }, 1000)
+    return () => clearInterval(iid)
+  }, [ incomeStream, localVideoEnabled ])
+
+  const minimize = !localVideoEnabled && !remoteVideoEnabled
 
   return (
     <Draggable handle=".handle" bounds="body">
@@ -35,7 +52,7 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localS
             <VideoContainer stream={ localStream ? localStream.stream : null } muted width={50} />
           </div>
         </div>
-        <ChatControls stream={localStream} endCall={endCall} />
+        <ChatControls videoEnabled={localVideoEnabled} setVideoEnabled={setLocalVideoEnabled} stream={localStream} endCall={endCall} />
       </div>
     </Draggable>
   )

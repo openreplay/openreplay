@@ -11,6 +11,7 @@ import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
 
 import { toast } from 'react-toastify';
+import { confirm } from 'UI/Confirmation';
 import stl from './AassistActions.css'
 
 function onClose(stream) {
@@ -32,9 +33,11 @@ interface Props {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
   remoteControlEnabled: boolean,
+  hasPermission: boolean,
+  isEnterprise: boolean,
 }
 
-function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlEnabled }: Props) {  
+function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlEnabled, hasPermission, isEnterprise }: Props) {
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ callObject, setCallObject ] = useState<{ end: ()=>void, toggleRemoteControl: ()=>void } | null >(null);
@@ -49,7 +52,6 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
     }    
   }, [peerConnectionStatus])
 
-
   function call() {
     RequestLocalStream().then(lStream => {
       setLocalStream(lStream);
@@ -63,7 +65,18 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
     }).catch(onError)
   }
 
+  const confirmCall =  async () => {
+    if (await confirm({
+      header: 'Start Call',
+      confirmButton: 'Call',
+      confirmation: `Are you sure you want to call ${userId ? userId : 'User'}?`
+    })) {
+      call()
+    }
+  }
+
   const inCall = calling !== CallingState.False;
+  const cannotCall = (peerConnectionStatus !== ConnectionStatus.Connected) || (isEnterprise && !hasPermission)
 
   return (
     <div className="flex items-center">
@@ -73,11 +86,11 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
             className={
               cn(
                 'cursor-pointer p-2 mr-2 flex items-center',
-                {[stl.inCall] : inCall },
-                {[stl.disabled]: peerConnectionStatus !== ConnectionStatus.Connected}
+                // {[stl.inCall] : inCall },
+                {[stl.disabled]: cannotCall}
               )
             }
-            onClick={ inCall ? callObject?.end : call}
+            onClick={ inCall ? callObject?.end : confirmCall}
             role="button"
           >
             <Icon
@@ -88,7 +101,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
             <span className={cn("ml-2", { 'color-red' : inCall })}>{ inCall ? 'End Call' : 'Call' }</span>
           </div>
         }
-        content={ `Call ${userId}` }
+        content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
         size="tiny"
         inverted
         position="top right"
@@ -118,7 +131,13 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
   )
 }
 
-const con = connect(null, { toggleChatWindow })
+const con = connect(state => {
+  const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || []
+  return {
+    hasPermission: permissions.includes('ASSIST_CALL'),
+    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  }
+}, { toggleChatWindow })
 
 export default con(connectPlayer(state => ({
   calling: state.calling,

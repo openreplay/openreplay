@@ -6,7 +6,9 @@ const UserItem = ({ user, adminLabel, deleteHandler, editHandler, generateInvite
   <div className={ styles.wrapper } id="user-row">
     <Icon name="user-alt" size="16" marginRight="10" />
     <div id="user-name">{ user.name || user.email }</div>
+    <div className="px-2"/>
     { adminLabel && <div className={ styles.adminLabel }>{ adminLabel }</div>}
+    { user.roleName && <div className={ styles.adminLabel }>{ user.roleName }</div>}
     <div className={ styles.actions }>
       { user.expiredInvitation && !user.joined &&
         <Popup

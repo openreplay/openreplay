@@ -1,0 +1,47 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border-bottom: solid thin #e6e6e6;
+  padding: 10px 0px;
+}
+
+.actions {
+  margin-left: auto;
+  /* opacity: 0; */
+  transition: all 0.4s;
+  display: flex;
+  align-items: center;
+  & .button {
+    padding: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &:hover {
+      & svg {
+        fill: $teal-dark;
+      }
+    }
+    &.disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+  }
+
+  & .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.label {
+  margin-left: 10px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background-color: $gray-lightest;
+  font-size: 10px;
+  border: solid thin $gray-light;
+  width: fit-content;
+}

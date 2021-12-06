@@ -6,8 +6,8 @@ import type { Message } from '../messages'
 import { ID_TP_MAP } from '../messages';
 import store from 'App/store';
 import type { LocalStream } from './LocalStream';
-
 import { update, getState } from '../../store';
+import { iceServerConfigFromString } from 'App/utils'
 
 
 export enum CallingState {
@@ -117,10 +117,8 @@ function resolveCSS(baseURL: string, css: string): string {
   return rewriteCSSLinks(css, rawurl => resolveURL(baseURL, rawurl));
 }
 
-
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor) {}
-
+  constructor(private session, private md: MessageDistributor, private config) {}
 
   private setStatus(status: ConnectionStatus) {
     if (status === ConnectionStatus.Connecting) {
@@ -150,13 +148,22 @@ export default class AssistManager {
     }
     this.setStatus(ConnectionStatus.Connecting)
     import('peerjs').then(({ default: Peer }) => {
-      // @ts-ignore
-      const peer = new Peer({
+      const _config = {
         // @ts-ignore
         host: new URL(window.ENV.API_EDP).host,
         path: '/assist',
         port:  location.protocol === 'https:' ? 443 : 80,
-      });
+      }
+
+      if (this.config) {
+        _config['config'] = {
+          iceServers: this.config,
+          sdpSemantics: 'unified-plan',
+          iceTransportPolicy: 'relay',
+        };
+      }
+
+      const peer = new Peer(_config);
       this.peer = peer;
       peer.on('error', e => {
         if (e.type !== 'peer-unavailable') {
@@ -342,12 +349,29 @@ export default class AssistManager {
     }
   }
 
-  private onMouseMove = (e: MouseEvent ): void => {
-    const conn = this.dataConnection;
-    if (!conn) { return; }
-    // @ts-ignore ???
+  // private mmtid?:ReturnType<typeof setTimeout>
+  private onMouseMove = (e: MouseEvent): void => {
+    // this.mmtid && clearTimeout(this.mmtid)
+    // this.mmtid = setTimeout(() => {
     const data = this.md.getInternalCoordinates(e);
-    conn.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    this.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    // }, 5)
+  }
+
+
+  // private wtid?: ReturnType<typeof setTimeout>
+  // private scrollDelta: [number, number] = [0,0]
+  private onWheel = (e: WheelEvent): void => {
+    e.preventDefault()
+    //throttling makes movements less smooth
+    // this.wtid && clearTimeout(this.wtid)
+    // this.scrollDelta[0] += e.deltaX
+    // this.scrollDelta[1] += e.deltaY
+    // this.wtid = setTimeout(() => {
+    this.send({ type: "scroll",  delta: [ e.deltaX, e.deltaY ]})//this.scrollDelta });
+    this.onMouseMove(e)
+    //   this.scrollDelta = [0,0]
+    // }, 20)
   }
 
   private onMouseClick = (e: MouseEvent): void => {
@@ -355,19 +379,29 @@ export default class AssistManager {
     if (!conn) { return; }
     const data = this.md.getInternalCoordinates(e);
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
+    const el = this.md.getElementFromInternalPoint(data)
+    if (el instanceof HTMLElement) {
+      el.focus()
+      el.oninput = e => e.preventDefault();
+      el.onkeydown = e => e.preventDefault();
+    }
     conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
   }
 
-  private toggleRemoteControl = () => {
-    if (getState().remoteControl) {
-      this.md.overlay.removeEventListener("click", this.onMouseClick);
-      update({ remoteControl: false })
-    } else {
+  private toggleRemoteControl = (flag?: boolean) => {
+    const state = getState().remoteControl;
+    const newState = typeof flag === 'boolean' ? flag : !state;
+    if (state === newState) { return }
+    if (newState) {
       this.md.overlay.addEventListener("click", this.onMouseClick);
+      this.md.overlay.addEventListener("wheel", this.onWheel)
       update({ remoteControl: true })
+    } else {
+      this.md.overlay.removeEventListener("click", this.onMouseClick);
+      this.md.overlay.removeEventListener("wheel", this.onWheel);
+      update({ remoteControl: false })
     }
   }
-
 
   private localCallData: {
     localStream: LocalStream,
@@ -383,7 +417,9 @@ export default class AssistManager {
       onStream,
       onCallEnd: () => {
         onCallEnd();
+        this.toggleRemoteControl(false);
         this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
+        this.md.overlay.removeEventListener("click",  this.onMouseClick);
         update({ calling: CallingState.False });
         this.localCallData = null;
       },
@@ -406,7 +442,7 @@ export default class AssistManager {
     
     const call =  this.peer.call(this.peerID, this.localCallData.localStream.stream);
     this.localCallData.localStream.onVideoTrack(vTrack => {
-      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
       if (!sender) {
         //logger.warn("No video sender found")
         return
@@ -422,8 +458,8 @@ export default class AssistManager {
         name: store.getState().getIn([ 'user', 'account', 'name']),
       });
 
-      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
-
+      // this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+      // this.md.overlay.addEventListener("click", this.onMouseClick)
     });
     //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 

@@ -24,6 +24,7 @@ const SET_TIMEZONE = 'sessions/SET_TIMEZONE';
 const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
 const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
 const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
+const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
@@ -54,7 +55,8 @@ const initialState = Map({
   visitedEvents: List(),
   insights: List(),
   insightFilters: defaultDateFilters,
-  host: ''
+  host: '',
+  funnelPage: Map(),
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -117,9 +119,11 @@ const reducer = (state = initialState, action = {}) => {
 
       }
 
+      const sessionIds = list.map(({ sessionId }) => sessionId ).toJS();
+
       return state
         .set('list', list)
-        .set('sessionIds', list.map(({ sessionId }) => sessionId ).toJS())
+        .set('sessionIds', sessionIds)
         .set('favoriteList', list.filter(({ favorite }) => favorite))
         .set('total', total)
         .set('keyMap', keyMap)
@@ -236,14 +240,15 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('showChatWindow', action.state)
     case FETCH_INSIGHTS.SUCCESS:       
       return state.set('insights', List(action.data).sort((a, b) => b.count - a.count));
-    
+    case SET_FUNNEL_PAGE_FLAG:
+      return state.set('funnelPage', action.funnelPage ? Map(action.funnelPage) : false);
     default:
       return state;
   }
 };
 
 export default withRequestState({
-  _: [ FETCH, FETCH_LIST ],
+  _: [ FETCH, FETCH_LIST, FETCH_LIVE_LIST ],
   fetchFavoriteListRequest: FETCH_FAVORITE_LIST,
   toggleFavoriteRequest: TOGGLE_FAVORITE,
   fetchErrorStackList: FETCH_ERROR_STACK,
@@ -361,6 +366,13 @@ export function setEventFilter(filter) {
   return {
     type: SET_EVENT_QUERY,
     filter
+  }
+}
+
+export function setFunnelPage(funnelPage) {
+  return {
+    type: SET_FUNNEL_PAGE_FLAG,
+    funnelPage
   }
 }
 

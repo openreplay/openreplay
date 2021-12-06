@@ -1,7 +1,7 @@
 import json
 
-from chalicelib.utils import pg_client, helper, dev
 from chalicelib.core import sourcemaps, sessions
+from chalicelib.utils import pg_client, helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
 
@@ -39,7 +39,10 @@ def get_batch(error_ids):
             FROM error_family;""",
             {"error_ids": tuple(error_ids)})
         cur.execute(query=query)
-        return helper.list_to_camel_case(cur.fetchall())
+        errors = cur.fetchall()
+        for e in errors:
+            e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
+        return helper.list_to_camel_case(errors)
 
 
 def __flatten_sort_key_count_version(data, merge_nested=False):

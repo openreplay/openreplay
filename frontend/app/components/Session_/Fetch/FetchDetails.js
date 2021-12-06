@@ -1,14 +1,14 @@
-import { JSONTree, Label, Button, Tabs } from 'UI'
+import { JSONTree, NoContent, Button, Tabs } from 'UI'
 import cn from 'classnames';
 import copy from 'copy-to-clipboard';
 import stl from './fetchDetails.css';
-import ResultTimings from '../../shared/ResultTimings/ResultTimings';
+import Headers from './components/Headers'
 
+const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
 const RESPONSE = 'RESPONSE';
-const TIMINGS = 'TIMINGS';
 
-const TABS = [ REQUEST, RESPONSE, TIMINGS ].map(tab => ({ text: tab, key: tab }));
+const TABS = [ HEADERS, REQUEST, RESPONSE ].map(tab => ({ text: tab, key: tab }));
 
 export default class FetchDetails extends React.PureComponent {
 	state = { activeTab: REQUEST, tabs: [] };
@@ -20,53 +20,64 @@ export default class FetchDetails extends React.PureComponent {
 	}
 
 	renderActiveTab = tab => {
-		const { resource: { duration, timings }, isResult } = this.props;
+		const { resource: { payload, response = this.props.resource.body} } = this.props;
+    let jsonPayload, jsonResponse, requestHeaders, responseHeaders = undefined;
+
+    try {
+      jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload
+      requestHeaders = jsonPayload.headers
+      jsonPayload.body = typeof jsonPayload.body === 'string' ? JSON.parse(jsonPayload.body) : jsonPayload.body
+      delete jsonPayload.headers
+    } catch (e) {}
+
+    try {
+      jsonResponse = typeof response === 'string' ? JSON.parse(response) : response;
+      responseHeaders = jsonResponse.headers
+      jsonResponse.body = typeof jsonResponse.body === 'string' ? JSON.parse(jsonResponse.body) : jsonResponse.body
+      delete jsonResponse.headers
+    } catch (e) {}
+    
 		switch(tab) {
 			case REQUEST:
-				const { resource: { payload } } = this.props;
-				let jsonPayload = undefined;
-				try {
-					jsonPayload = typeof payload === 'string' ? JSON.parse(payload) : payload
-				} catch (e) {}
-				
-				return !!payload ? (
-					<div>
-						<div className="mt-6">
-							{/* <h5>{ 'Payload '}</h5> */}
-							{ jsonPayload === undefined 
-								? <div className="ml-3 break-words my-3"> { payload } </div>
-								: <JSONTree src={ jsonPayload } collapsed={ false } enableClipboard />
-							}
-						</div>
-						<div className="divider"/>
-					</div>
-				) : ''
-				break;
+				return (
+          <NoContent
+            title="Body is Empty."
+            size="small"
+            show={ !payload }
+            icon="exclamation-circle"
+          >
+            <div>
+              <div className="mt-6">
+                { jsonPayload === undefined 
+                  ? <div className="ml-3 break-words my-3"> { payload } </div>
+                  : <JSONTree src={ jsonPayload } collapsed={ false } enableClipboard />
+                }
+              </div>
+              <div className="divider"/>
+            </div>
+          </NoContent>
+        )
 			case RESPONSE:
-				const { resource: { response = this.props.resource.body } } = this.props; // for IOS compat.
-				let jsonResponse = undefined;
-				try {
-					jsonResponse = JSON.parse(response);
-				} catch (e) {}
-								
-				return !!response ? (
-					<div>
-						<div className="mt-6">
-							{/* <h5>{ 'Response '}</h5> */}
-							{ jsonResponse === undefined 
-								? <div className="ml-3 break-words my-3"> { response } </div>
-								: <JSONTree src={ jsonResponse } collapsed={ false } enableClipboard />
-							}
-						</div>
-						<div className="divider"/>
-					</div>
-					// jsonResponse === undefined 
-					// 	? <div className="ml-3 break-words my-3"> { response } </div>
-					// 	: <JSONTree src={ jsonResponse } collapsed={ false } enableClipboard />
-				) : ''
-				break;
-			case TIMINGS:
-				return <ResultTimings duration={duration} timing={timings} />
+				return (
+          <NoContent
+            title="Body is Empty."
+            size="small"
+            show={ !response }
+            icon="exclamation-circle"
+          >
+            <div>
+              <div className="mt-6">
+                { jsonResponse === undefined 
+                  ? <div className="ml-3 break-words my-3"> { response } </div>
+                  : <JSONTree src={ jsonResponse } collapsed={ false } enableClipboard />
+                }
+              </div>
+              <div className="divider"/>
+            </div>
+          </NoContent>
+        )
+      case HEADERS:
+        return <Headers requestHeaders={requestHeaders} responseHeaders={responseHeaders} />
 		}
 	}
 
@@ -78,21 +89,18 @@ export default class FetchDetails extends React.PureComponent {
 
 	checkTabs() {
 		const { resource: { payload, response, body }, isResult } = this.props;	
-		const _tabs = TABS.filter(t => {
-			if (t.key == REQUEST && !!payload) {
-				return true
-			}
+    const _tabs = TABS
+		// const _tabs = TABS.filter(t => {
+		// 	if (t.key == REQUEST && !!payload) {
+		// 		return true
+		// 	}
 
-			if (t.key == RESPONSE && !!response) {
-				return true;
-			}
+		// 	if (t.key == RESPONSE && !!response) {
+		// 		return true;
+		// 	}
 
-			if (t.key == TIMINGS && isResult) {
-				return true;
-			}
-
-			return false;
-		})
+		// 	return false;
+		// })
 		this.setState({ tabs: _tabs, activeTab: _tabs.length > 0 ? _tabs[0].key : null })
 	}
 

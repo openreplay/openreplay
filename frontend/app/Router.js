@@ -69,7 +69,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     organisation: state.getIn([ 'user', 'client', 'name' ]),
     tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
     tenants: state.getIn(['user', 'tenants']),
-    existingTenant: state.getIn(['user', 'existingTenant']),
+    existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
@@ -80,19 +80,15 @@ class Router extends React.Component {
     super(props);
     if (props.isLoggedIn) {
       Promise.all([props.fetchUserInfo()])
-      .then(() => this.onLoginLogout());
+      // .then(() => this.onLoginLogout());
     }
     props.fetchTenants();
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.email !== this.props.email) {
-      this.onLoginLogout();
+    if (prevProps.email !== this.props.email && !this.props.email) {
+      this.props.fetchTenants();
     }
-  }
-
-  onLoginLogout() {
-    const { email, account, organisation } = this.props;
   }
 
   render() {    

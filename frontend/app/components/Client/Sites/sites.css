@@ -21,6 +21,7 @@
   &:hover {
     & .actions button {
       display: unset;
+      opacity: 1 !important;
     }
   }
 
@@ -38,6 +39,10 @@
         &:disabled {
           opacity: 0.3;
         }
+      }
+
+      & button:not(:last-child) {
+        opacity: 0;
       }
   }
 }

@@ -11,10 +11,11 @@ import { connect } from 'react-redux';
 @withPageTitle('Account - OpenReplay Preferences')
 @connect(state => ({
   account: state.getIn([ 'user', 'account' ]),
+  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }))
 export default class ProfileSettings extends React.PureComponent {  
   render() {
-    const { account } = this.props;
+    const { account, isEnterprise } = this.props;
     return (
       <React.Fragment>
         <div className="flex items-center">
@@ -55,15 +56,19 @@ export default class ProfileSettings extends React.PureComponent {
           <div><TenantKey /></div>
         </div>
 
-        <div className="divider" />
+        { !isEnterprise && (
+          <>
+            <div className="divider" />
+            <div className="flex items-center">
+              <div className={ styles.left }>
+                <h4 className="text-lg mb-4">{ 'Data Collection' }</h4>
+                <div className={ styles.info }>{ 'Enables you to control how OpenReplay captures data on your organization’s usage to improve our product.' }</div>
+              </div>
+              <div><OptOut /></div>
+            </div>
+          </>
+        )}
 
-        <div className="flex items-center">
-          <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Data Collection' }</h4>
-            <div className={ styles.info }>{ 'Enables you to control how OpenReplay captures data on your organization’s usage to improve our product.' }</div>
-          </div>
-          <div><OptOut /></div>
-        </div>
         { account.license && (
           <>
             <div className="divider" />
@@ -71,6 +76,7 @@ export default class ProfileSettings extends React.PureComponent {
             <div className="flex items-center">
               <div className={ styles.left }>
                 <h4 className="text-lg mb-4">{ 'License' }</h4>
+                <div className={ styles.info }>{ 'License key and expiration date.' }</div>
               </div>
               <div><Licenses /></div>
             </div>

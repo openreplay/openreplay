@@ -1,6 +1,6 @@
-import App from '../app';
-import { IN_BROWSER } from '../utils';
-import { PerformanceTrack } from '../../messages';
+import App from "../app/index.js";
+import { IN_BROWSER } from "../utils.js";
+import { PerformanceTrack } from "../../messages/index.js";
 
 
 type Perf = {

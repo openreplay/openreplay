@@ -196,9 +196,9 @@ class Sites extends React.PureComponent {
                       <Icon name="trash" size="16" color="teal" />
                     </button>
                     <button
-                      className={cn({'hidden' : !canDeleteSites})}
-                      disabled={ !canDeleteSites }
-                      onClick={ () => canDeleteSites && this.edit(_site) }
+                      className={cn({'hidden' : !isAdmin})}
+                      disabled={ !isAdmin }
+                      onClick={ () => isAdmin && this.edit(_site) }
                       data-clickable
                     >
                       <Icon name="edit" size="16" color="teal"/>

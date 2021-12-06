@@ -5,7 +5,7 @@ import {
   fetchFavoriteList as fetchFavoriteSessionList
 } from 'Duck/sessions';
 import { countries } from 'App/constants';
-import { applyFilter, clearEvents } from 'Duck/filters';
+import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { defaultFilters, preloadedFilters } from 'Types/filter';
 import { KEYS } from 'Types/filter/customFilter';
@@ -18,7 +18,7 @@ import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchList as fetchIntegrationVariables, fetchSources } from 'Duck/customField';
 import { RehydrateSlidePanel } from './WatchDogs/components';
-import { setActiveTab } from 'Duck/sessions';
+import { setActiveTab, setFunnelPage } from 'Duck/sessions';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
 import SessionFlowList from './SessionFlowList/SessionFlowList';
 import { LAST_7_DAYS } from 'Types/app/period';
@@ -33,6 +33,21 @@ const weakEqual = (val1, val2) => {
   if (!val1 !== !val2) return false;
   return `${ val1 }` === `${ val2 }`;
 }
+
+const allowedQueryKeys = [
+  'userOs',
+  'userId',
+  'userBrowser',
+  'userDevice',
+  'userCountry',
+  'startDate',
+  'endDate',
+  'minDuration',
+  'maxDuration',
+  'referrer',
+  'sort',
+  'order',
+];
 
 @withLocationHandlers()
 @connect(state => ({
@@ -50,6 +65,7 @@ const weakEqual = (val1, val2) => {
 }), {
   fetchFavoriteSessionList,
   applyFilter,
+  addAttribute,
   fetchFilterVariables,
   fetchIntegrationVariables,
   fetchSources,
@@ -58,7 +74,8 @@ const weakEqual = (val1, val2) => {
   fetchSiteList,
   fetchFunnelsList,
   resetFunnel,
-  resetFunnelFilters
+  resetFunnelFilters,
+  setFunnelPage
 })
 @withPageTitle("Sessions - OpenReplay")
 export default class BugFinder extends React.PureComponent {
@@ -88,10 +105,18 @@ export default class BugFinder extends React.PureComponent {
       };
     });    
 
-    this.props.resetFunnel();
-    this.props.resetFunnelFilters();
-
+    props.resetFunnel();
+    props.resetFunnelFilters();
     props.fetchFunnelsList(LAST_7_DAYS)
+
+    const queryFilter = this.props.query.all(allowedQueryKeys);
+    if (queryFilter.hasOwnProperty('userId')) {
+      props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
+    }
+  }
+
+  componentDidMount() {
+    this.props.setFunnelPage(false);
   }
 
   toggleRehydratePanel = () => {

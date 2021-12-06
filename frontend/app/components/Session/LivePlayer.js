@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
-import { 
+import { withRequest } from 'HOCs'
+import {
   PlayerProvider,
   connectPlayer,
   init as initPlayer,
@@ -30,17 +31,24 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt }) {
+function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request }) {
   useEffect(() => {
-    initPlayer(session, jwt);
+    if (!loadingCredentials) {
+      initPlayer(session, jwt, assistCredendials);
+    }
     return () => cleanPlayer()
-  }, [ session.sessionId ]);
+  }, [ session.sessionId, loadingCredentials, assistCredendials ]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
-  useEffect(() => () => {
-    toggleFullscreen(false);
-    closeBottomBlock();
+  useEffect(() => {
+    request();
+    return () => {
+      toggleFullscreen(false);
+      closeBottomBlock();
+    }
   }, [])
+
+
   return (
     <PlayerProvider>
       <InitLoader className="flex-1 p-3">
@@ -54,14 +62,18 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
   );
 }
 
-
-export default connect(state => ({
-  session: state.getIn([ 'sessions', 'current' ]),
-  showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
-  jwt: state.get('jwt'),
-  fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-}), {
-  toggleFullscreen,
-  closeBottomBlock,
-})(WebPlayer) 
-
+export default withRequest({
+  initialData: null,
+	endpoint: '/assist/credentials',
+	dataWrapper: data => data,
+	dataName: 'assistCredendials',
+  loadingName: 'loadingCredentials',
+})(connect(
+  state => ({
+    session: state.getIn([ 'sessions', 'current' ]),
+    showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
+    jwt: state.get('jwt'),
+    fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+  }),
+  { toggleFullscreen, closeBottomBlock },
+)(WebPlayer));

@@ -1,8 +1,8 @@
-import { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import axios from 'axios';
 import { App, Messages } from '@openreplay/tracker';
-import { getExceptionMessage } from '@openreplay/tracker/lib/modules/exception';  // TODO: export from tracker root
-import { buildFullPath } from './url';
+import { getExceptionMessage } from '@openreplay/tracker/lib/modules/exception.js';  // TODO: export from tracker root
+import { buildFullPath } from './url.js';
 
 export interface Options {
 	sessionTokenHeader?: string;
@@ -10,6 +10,13 @@ export interface Options {
   failuresOnly: boolean;
   captureWhen: (AxiosRequestConfig) => boolean;
   ignoreHeaders: Array<string> | boolean;
+}
+
+
+function isAxiosResponse(r: any): r is AxiosResponse {
+  return typeof r === "object" &&
+    typeof r.config === "object" &&
+    typeof r.status === "number"
 }
 
 export default function(opts: Partial<Options> = {}) {
@@ -144,6 +151,11 @@ export default function(opts: Partial<Options> = {}) {
 	  	} else if (!axios.isCancel(error) && error instanceof Error) {
 	  		app.send(getExceptionMessage(error, []));
 	  	}
+
+      // TODO: common case (selector)
+      if (isAxiosResponse(error)) {
+        sendFetchMessage(error)
+      }
 
 	    return Promise.reject(error);
 	  });

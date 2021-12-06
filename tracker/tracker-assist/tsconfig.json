@@ -5,7 +5,7 @@
     "alwaysStrict": true,
     "target": "es6",
     "module": "es6",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "allowSyntheticDefaultImports": true,
     "declaration": true,
     "outDir": "./lib"

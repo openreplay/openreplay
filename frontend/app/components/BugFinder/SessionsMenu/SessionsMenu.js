@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
+import { SideMenuitem, SavedSearchList, Progress, Popup, Icon, CircularLoader } from 'UI'
 import stl from './sessionMenu.css';
 import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { setActiveFlow, clearEvents } from 'Duck/filters';
 import { setActiveTab } from 'Duck/sessions';
 import { issues_types } from 'Types/session/issue'
-import NewBadge from 'Shared/NewBadge';
+import { fetchList as fetchSessionList } from 'Duck/sessions';
 
 function SessionsMenu(props) {
   const { 
     activeFlow, activeTab, watchdogs = [], keyMap, wdTypeCount,
-    fetchWatchdogStatus, toggleRehydratePanel } = props;
+    fetchWatchdogStatus, toggleRehydratePanel, filters, sessionsLoading } = props;
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
@@ -76,10 +76,19 @@ function SessionsMenu(props) {
       <div className={stl.divider} />
       <div className="my-3">
         <SideMenuitem
-          title={ <div className="flex items-center">
-            <div>Assist</div>
-            <div className="ml-2">{ <NewBadge />}</div>
-          </div>  }
+          title={
+            <div className="flex items-center">
+              <div>Assist</div>
+              { activeTab.type === 'live' && (
+                <div
+                  className="ml-4 h-5 w-6 flex items-center justify-center"
+                  onClick={() => !sessionsLoading && props.fetchSessionList(filters.toJS())}
+                >
+                  { sessionsLoading ? <CircularLoader className="ml-1" /> : <Icon name="sync-alt" size="14" />}
+                </div>
+              )}
+            </div>
+          }
           iconName="person"
           active={activeTab.type === 'live'}
           onClick={() => onMenuItemClick({ name: 'Assist', type: 'live' })}
@@ -109,6 +118,8 @@ export default connect(state => ({
   wdTypeCount: state.getIn([ 'sessions', 'wdTypeCount' ]),
   activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
   captureRate: state.getIn(['watchdogs', 'captureRate']),
+  filters: state.getIn([ 'filters', 'appliedFilter' ]),
+  sessionsLoading: state.getIn([ 'sessions', 'loading' ]),
 }), { 
-  fetchWatchdogStatus, setActiveFlow, clearEvents, setActiveTab
+  fetchWatchdogStatus, setActiveFlow, clearEvents, setActiveTab, fetchSessionList
 })(SessionsMenu);

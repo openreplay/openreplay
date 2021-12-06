@@ -2,7 +2,7 @@
 //import cn from 'classnames';
 import { getRE } from 'App/utils';
 import { Label, NoContent, Input, SlideModal, CloseButton } from 'UI';
-import { connectPlayer } from 'Player';
+import { connectPlayer, pause } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
 import TimeTable from '../TimeTable';
@@ -20,6 +20,7 @@ export default class Fetch extends React.PureComponent {
   onFilterChange = (e, { value }) => this.setState({ filter: value })
 
   setCurrent = (item, index) => {
+    pause()
     this.setState({ current: item, currentIndex: index });
   }
 
@@ -48,12 +49,11 @@ export default class Fetch extends React.PureComponent {
     const { filter, current, currentIndex } = this.state;
     const filterRE = getRE(filter, 'i');
     const filtered = list
-      .filter(({ name }) => filterRE.test(name));      
+      .filter((r) => filterRE.test(r.name) || filterRE.test(r.url) || filterRE.test(r.method) || filterRE.test(r.status));
 
     return (
       <React.Fragment>
         <SlideModal
-          overlay={false}
           right 
           size="middle"
           title={
@@ -90,7 +90,7 @@ export default class Fetch extends React.PureComponent {
             <h4 className="text-lg">Fetch</h4>
             <Input
               className="input-small"
-              placeholder="Filter by Name"
+              placeholder="Filter"
               icon="search"
               iconPosition="left"
               name="filter"

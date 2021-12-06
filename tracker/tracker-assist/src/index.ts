@@ -1,20 +1,21 @@
-import './_slim';
-import Peer, { MediaConnection } from 'peerjs';
+import './_slim.js';
+import Peer from 'peerjs';
 import type { DataConnection } from 'peerjs';
 import { App, Messages } from '@openreplay/tracker';
 import type Message from '@openreplay/tracker';
 
-import BufferingConnection from './BufferingConnection';
-import Mouse from './Mouse';
-import CallWindow from './CallWindow';
-import ConfirmWindow from './ConfirmWindow';
-import RequestLocalStream from './LocalStream';
+import BufferingConnection from './BufferingConnection.js';
+import Mouse from './Mouse.js';
+import CallWindow from './CallWindow.js';
+import ConfirmWindow from './ConfirmWindow.js';
+import RequestLocalStream from './LocalStream.js';
 
 export interface Options {
   confirmText: string,
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
-  config: Object
+  config: RTCConfiguration,
+  __messages_per_send?: number,
 }
 
 enum CallingState {
@@ -23,22 +24,22 @@ enum CallingState {
   False,
 };
 
-//@ts-ignore   webpack5 hack (?!)
+//@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;
 
-// type IncomeMessages = 
-//   "call_end" | 
-//   { type: "agent_name", name: string } | 
+// type IncomeMessages =
+//   "call_end" |
+//   { type: "agent_name", name: string } |
 //   { type: "click", x: number, y: number } |
 //   { x: number, y: number }
 
-export default function(opts: Partial<Options> = {})  {
+export default function(opts?: Partial<Options>)  {
   const options: Options = Object.assign(
     { 
-      confirmText: "You have a call. Do you want to answer?",
+      confirmText: "You have an incoming call. Do you want to answer?",
       confirmStyle: {},
       session_calling_peer_key: "__openreplay_calling_peer",
-      config: null
+      config: null,
     },
     opts,
   );
@@ -58,6 +59,7 @@ export default function(opts: Partial<Options> = {})  {
 
     let assistDemandedRestart = false
     let peer : Peer | null = null
+    // This is required because internal peerjs connection list is not stable. https://peerjs.com/docs.html#peerconnections
     const openDataConnections: Record<string, BufferingConnection>  = {}
 
     app.addCommitCallback(function(messages) {
@@ -66,7 +68,10 @@ export default function(opts: Partial<Options> = {})  {
 
     app.attachStopCallback(function() {
       if (assistDemandedRestart) { return; }
-      peer && peer.destroy();
+      if (peer) {
+        peer.destroy();
+        log('Peer destroyed!')
+      }
     });
 
     app.attachStartCallback(function() {
@@ -77,6 +82,7 @@ export default function(opts: Partial<Options> = {})  {
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
+        //debug: // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
       }
       if (options.config) {
         _opt['config'] = options.config
@@ -92,7 +98,7 @@ export default function(opts: Partial<Options> = {})  {
           log('Connection opened.')
           assistDemandedRestart = true;
           app.stop();
-          openDataConnections[conn.peer] = new BufferingConnection(conn)
+          openDataConnections[conn.peer] = new BufferingConnection(conn, options.__messages_per_send)
           conn.on('close', () => {
             log("Connection close: ", conn.peer)
             delete openDataConnections[conn.peer] // TODO: check if works properly
@@ -107,7 +113,7 @@ export default function(opts: Partial<Options> = {})  {
       peer.on('call', function(call) {
         log("Call: ", call)
         if (!peer) { return; }
-        const dataConn: DataConnection | undefined = 
+        const dataConn: DataConnection | undefined =
           openDataConnections[call.peer]?.conn;
         if (callingState !== CallingState.False || !dataConn || !dataConn.open) {
           call.close();
@@ -122,7 +128,7 @@ export default function(opts: Partial<Options> = {})  {
             sessionStorage.removeItem(options.session_calling_peer_key);
           }
           callingState = newState;
-        }      
+        }
 
         const notifyCallEnd = () => {
           dataConn.open && dataConn.send("call_end");
@@ -139,7 +145,7 @@ export default function(opts: Partial<Options> = {})  {
           confirmAnswer = confirm.mount();
           dataConn.on('data', (data) => { // if call cancelled by a caller before confirmation
             if (data === "call_end") {
-              log("Recieved call_end during confirm window opened")
+              log("Received call_end during confirm window opened")
               confirm.remove();
               setCallingState(CallingState.False);
             }                    
@@ -198,18 +204,39 @@ export default function(opts: Partial<Options> = {})  {
             dataConn.on('data', (data: any) => {
               if (!data) { return }
               if (data === "call_end") {
-                //console.log('receiving callend on call')
+                log('"call_end" received')
                 onCallEnd();
                 return;
               }
               if (data.name === 'string') {
-                //console.log("name",data)
+                log("Name received: ", data)
                 callUI.setAssistentName(data.name);
+              }
+              if (data.type === "scroll" && Array.isArray(data.delta)) {
+                const scrEl = document.scrollingElement || document.documentElement
+                const [mouseX, mouseY] = mouse.getPosition()
+                const [dX, dY] = data.delta;
+                const el = document.elementFromPoint(mouseX-scrEl.scrollLeft, mouseY-scrEl.scrollTop)
+                let scrolled = false // what would be the browser-like logic?
+                if (el) {
+                  if(el.scrollWidth > el.clientWidth) {
+                    el.scrollLeft += data.delta[0]
+                    scrolled = true
+                  }
+                  if (el && el.scrollHeight > el.clientHeight) {
+                    el.scrollTop += data.delta[1]
+                    scrolled = true
+                  }
+                }
+                if (!scrolled) {
+                  window.scroll(scrEl.scrollLeft + data.delta[0], scrEl.scrollTop + data.delta[1])
+                }
               }
               if (data.type === "click" && typeof data.x === 'number' && typeof data.y === 'number') {
                 const el = document.elementFromPoint(data.x, data.y)
                 if (el instanceof HTMLElement) {
                   el.click()
+                  el.focus()
                 }
                 return
               }
@@ -219,7 +246,7 @@ export default function(opts: Partial<Options> = {})  {
             });
 
             lStream.onVideoTrack(vTrack => {
-              const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video") 
+              const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
               if (!sender) {
                 warn("No video sender found")
                 return

@@ -19,8 +19,8 @@ func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.projects[ p.ProjectID ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
-	c.projectsByKeys.Store(projectKey, c.projects[ p.ProjectID ])
+	//c.projects[ p.ProjectID ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
+	c.projectsByKeys.Store(projectKey, p)
 	return p, nil
 }
 
@@ -36,7 +36,7 @@ func (c *PGCache) GetProject(projectID uint32) (*Project, error) {
 		return nil, err
 	}
 	c.projects[ projectID ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
-	c.projectsByKeys.Store(p.ProjectKey, c.projects[ projectID ])
+	//c.projectsByKeys.Store(p.ProjectKey, c.projects[ projectID ])
 	return p, nil
 }
 

@@ -157,13 +157,14 @@ export default class NetworkContent extends React.PureComponent {
       additionalHeight = 0,
       resourcesSize,
       transferredSize,
-      time
+      time,
+      currentIndex
     } = this.props;
     const { filter, activeTab } = this.state;
     const filterRE = getRE(filter, 'i');
     let filtered = resources.filter(({ type, name }) =>
       filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
-    const lastIndex = filtered.filter(item => item.time <= time).length - 1;    
+    const lastIndex = currentIndex || filtered.filter(item => item.time <= time).length - 1;
 
     const referenceLines = [];
     if (domContentLoadedTime != null) {

@@ -29,6 +29,7 @@ import FetchDoc from './FetchDoc';
 import MobxDoc from './MobxDoc';
 import ProfilerDoc from './ProfilerDoc';
 import AssistDoc from './AssistDoc';
+import AxiosDoc from './AxiosDoc/AxiosDoc';
 
 const NONE = -1;
 const SENTRY = 0;
@@ -51,6 +52,7 @@ const FETCH = 16;
 const MOBX = 17;
 const PROFILER = 18;
 const ASSIST = 19;
+const AXIOS = 20;
 
 const TITLE = {
 	[ SENTRY ]: 'Sentry',
@@ -73,6 +75,7 @@ const TITLE = {
 	[ MOBX ] : 'MobX',
 	[ PROFILER ] : 'Profiler',
 	[ ASSIST ] : 'Assist',
+	[ AXIOS ] : 'Axios',
 }
 
 const DOCS = [REDUX, VUE, GRAPHQL, NGRX, FETCH, MOBX, PROFILER, ASSIST]
@@ -191,6 +194,8 @@ export default class Integrations extends React.PureComponent {
 				return <ProfilerDoc onClose={ this.closeModal } projectKey={projectKey} />
       case ASSIST:
         return <AssistDoc onClose={ this.closeModal } projectKey={projectKey} />
+      case AXIOS:
+        return <AxiosDoc onClose={ this.closeModal } projectKey={projectKey} />
       default:
         return null;
     }
@@ -295,7 +300,14 @@ export default class Integrations extends React.PureComponent {
 								onClick={ () => this.showIntegrationConfig(NGRX) }
 								// integrated={ sentryIntegrated }
 							/>
-
+              <IntegrationItem
+								title="MobX"
+								icon="integrations/mobx"
+								url={ null }
+								dockLink="https://docs.openreplay.com/integrations/sentry"
+								onClick={ () => this.showIntegrationConfig(MOBX) }
+								// integrated={ sentryIntegrated }
+							/>
 							<IntegrationItem
 								title="Fetch"
 								icon="integrations/openreplay"
@@ -304,22 +316,20 @@ export default class Integrations extends React.PureComponent {
 								onClick={ () => this.showIntegrationConfig(FETCH) }
 								// integrated={ sentryIntegrated }
 							/>
-
-							<IntegrationItem
-								title="MobX"
-								icon="integrations/mobx"
-								url={ null }
-								dockLink="https://docs.openreplay.com/integrations/sentry"
-								onClick={ () => this.showIntegrationConfig(MOBX) }
-								// integrated={ sentryIntegrated }
-							/>
-
 							<IntegrationItem
 								title="Profiler"
 								icon="integrations/openreplay"
 								url={ null }
 								dockLink="https://docs.openreplay.com/integrations/sentry"
 								onClick={ () => this.showIntegrationConfig(PROFILER) }
+								// integrated={ sentryIntegrated }
+							/>
+              <IntegrationItem
+								title="Axios"
+								icon="integrations/openreplay"
+								url={ null }
+								dockLink="https://docs.openreplay.com/plugins/axios"
+								onClick={ () => this.showIntegrationConfig(AXIOS) }
 								// integrated={ sentryIntegrated }
 							/>
               <IntegrationItem

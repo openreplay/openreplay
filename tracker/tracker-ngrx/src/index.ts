@@ -1,5 +1,5 @@
 import { App, Messages } from '@openreplay/tracker';
-import { Encoder, sha1 } from './syncod';
+import { Encoder, sha1 } from './syncod/index.js';
 
 export interface Options {
   actionFilter: (action: any) => boolean;

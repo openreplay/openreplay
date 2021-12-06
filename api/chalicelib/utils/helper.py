@@ -328,3 +328,7 @@ def __decimal_limit(value, limit):
 
 def has_smtp():
     return config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0
+
+
+def get_edition():
+    return "foss" if is_free_open_source_edition() else "ee"

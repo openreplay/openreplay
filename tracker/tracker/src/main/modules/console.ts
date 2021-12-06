@@ -1,6 +1,6 @@
-import App from '../app';
-import { IN_BROWSER } from '../utils';
-import { ConsoleLog } from '../../messages';
+import App from "../app/index.js";
+import { IN_BROWSER } from "../utils.js";
+import { ConsoleLog } from "../../messages/index.js";
 
 const printError: (e: Error) => string =
   IN_BROWSER && 'InstallTrigger' in window // detect Firefox
@@ -138,7 +138,7 @@ export default function (app: App, opts: Partial<Options>): void {
     });
   patchConsole(window.console);
 
-  app.nodes.attachNodeCallback(node => {
+  app.nodes.attachNodeCallback(app.safe(node => {
     if (node instanceof HTMLIFrameElement) {
       let context = node.contentWindow
       if (context) {
@@ -151,6 +151,5 @@ export default function (app: App, opts: Partial<Options>): void {
         }
       })
     }
-
-  })
+  }))
 }
