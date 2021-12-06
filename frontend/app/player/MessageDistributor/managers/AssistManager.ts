@@ -53,7 +53,7 @@ export interface State {
 export const INITIAL_STATE: State = {
   calling: CallingState.False,
   peerConnectionStatus: ConnectionStatus.Connecting,
-  remoteControl: true,
+  remoteControl: false,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -188,6 +188,8 @@ export default class AssistManager {
         this.connectToPeer();        
       });
     });
+
+    this.toggleRemoteControl(false);
   }
 
   private dataCheckIntervalID: ReturnType<typeof setInterval> | undefined;
