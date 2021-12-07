@@ -12,7 +12,7 @@ def get_status(tenant_id):
     return {
         "hasActivePlan": unlock.is_valid(),
         "current": {
-            "edition": r.get("edition", "").upper(),
+            "edition": r.get("edition", "").lower(),
             "versionNumber": r.get("version_number", ""),
             "license": license[0:2] + "*" * (len(license) - 4) + license[-2:],
             "expirationDate": unlock.get_expiration_date(),
