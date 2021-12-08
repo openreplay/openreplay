@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf
 WORKDIR /work
 COPY . .
 RUN pip install -r requirements.txt
+RUN mv .env.default .env
 
 # Add Tini
 # Startup daemon

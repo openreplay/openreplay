@@ -25,7 +25,10 @@ public_app, app, app_apikey = get_routers()
 
 @public_app.get('/signup', tags=['signup'])
 def get_all_signup():
-    return {"data": tenants.tenants_exists()}
+    return {"data": {"tenants": tenants.tenants_exists(),
+                     "sso": None,
+                     "ssoProvider": None,
+                     "edition": helper.get_edition()}}
 
 
 @public_app.put('/signup', tags=['signup'])
