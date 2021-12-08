@@ -40,7 +40,7 @@ class ManageUsers extends React.PureComponent {
   // writeOption = (e, { name, value }) => this.props.edit({ [ name ]: value });
   onChange = (e, { name, value }) => this.props.edit({ [ name ]: value });
   onChangeCheckbox = ({ target: { checked, name } }) => this.props.edit({ [ name ]: checked });
-  setFocus = () => this.focusElement.focus();
+  setFocus = () => this.focusElement && this.focusElement.focus();
   closeModal = () => this.setState({ showModal: false });
   componentWillMount = () => {
     this.props.fetchList();
@@ -181,9 +181,10 @@ class ManageUsers extends React.PureComponent {
   }
 
   init = (v) => {
-    this.props.init(v);
+    const { roles } = this.props;
+    this.props.init(v ? v : { roleId: roles[0] ? roles[0].value : null });
     this.setState({ showModal: true });
-    this.setFocus();
+    setTimeout(this.setFocus, 100);
   }
 
   render() {
@@ -201,7 +202,7 @@ class ManageUsers extends React.PureComponent {
             title="Invite People"
             size="small"
             isDisplayed={ showModal }
-            content={ this.formContent() }
+            content={ showModal && this.formContent() }
             onClose={ this.closeModal }
           />
           <div className={ styles.wrapper }>
