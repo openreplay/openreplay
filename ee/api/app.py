@@ -5,7 +5,7 @@ from starlette.responses import StreamingResponse, JSONResponse
 
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
-from routers import core, core_dynamic, saml
+from routers import core, core_dynamic,ee, saml
 from routers.app import v1_api, v1_api_ee
 # from routers.crons import core_crons
 # from routers.crons import core_dynamic_crons
@@ -53,6 +53,9 @@ app.include_router(core.app_apikey)
 app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)
 app.include_router(core_dynamic.app_apikey)
+app.include_router(ee.public_app)
+app.include_router(ee.app)
+app.include_router(ee.app_apikey)
 app.include_router(saml.public_app)
 app.include_router(saml.app)
 app.include_router(saml.app_apikey)
