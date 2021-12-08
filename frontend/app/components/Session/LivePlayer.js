@@ -9,7 +9,7 @@ import {
   init as initPlayer,
   clean as cleanPlayer,
 } from 'Player';
-import { Controls as PlayerControls } from 'Player';
+import withPermissions from 'HOCs/withPermissions'
 import Assist from 'Components/Assist'
 
 
@@ -68,7 +68,7 @@ export default withRequest({
 	dataWrapper: data => data,
 	dataName: 'assistCredendials',
   loadingName: 'loadingCredentials',
-})(connect(
+})(withPermissions(['SESSION_REPLAY', 'ASSIST_LIVE'], '', true)(connect(
   state => ({
     session: state.getIn([ 'sessions', 'current' ]),
     showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
@@ -76,4 +76,4 @@ export default withRequest({
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   }),
   { toggleFullscreen, closeBottomBlock },
-)(WebPlayer));
+)(WebPlayer)));
