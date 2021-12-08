@@ -5,6 +5,7 @@ from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from starlette.responses import RedirectResponse
 
 import schemas
+import schemas_ee
 from chalicelib.core import boarding
 from chalicelib.core import errors
 from chalicelib.core import errors_favorite_viewed
@@ -368,10 +369,8 @@ def get_members(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.post('/client/members', tags=["client"])
 @app.put('/client/members', tags=["client"])
-def add_member(background_tasks: BackgroundTasks, data: schemas.CreateMemberSchema = Body(...),
+def add_member(background_tasks: BackgroundTasks, data: schemas_ee.CreateMemberSchema = Body(...),
                context: schemas.CurrentContext = Depends(OR_context)):
-    if SAML2_helper.is_saml2_available():
-        return {"errors": ["please use your SSO server to add teammates"]}
     return users.create_member(tenant_id=context.tenant_id, user_id=context.user_id, data=data.dict(),
                                background_tasks=background_tasks)
 
@@ -409,7 +408,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 
 @app.put('/client/members/{memberId}', tags=["client"])
 @app.post('/client/members/{memberId}', tags=["client"])
-def edit_member(memberId: int, data: schemas.EditMemberSchema,
+def edit_member(memberId: int, data: schemas_ee.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data.dict(),
                       user_id_to_update=memberId)
