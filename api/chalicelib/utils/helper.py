@@ -1,8 +1,8 @@
-import math
 import random
 import re
 import string
 
+import math
 import requests
 
 local_prefix = 'local-'
@@ -331,4 +331,4 @@ def has_smtp():
 
 
 def get_edition():
-    return "foss" if is_free_open_source_edition() else "ee"
+    return "ee" if "ee" in config("ENTERPRISE_BUILD", default="").lower() else "foss"
