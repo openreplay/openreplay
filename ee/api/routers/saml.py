@@ -96,7 +96,9 @@ async def process_sso_assertion(request: Request):
     jwt = users.authenticate_sso(email=email, internal_id=internal_id, exp=expiration)
     if jwt is None:
         return {"errors": ["null JWT"]}
-    return RedirectResponse(url=SAML2_helper.get_landing_URL(jwt))
+    return Response(
+        status_code=status.HTTP_302_FOUND,
+        headers={'Location': SAML2_helper.get_landing_URL(jwt)})
 
 
 @public_app.get('/sso/saml2/sls', tags=["saml2"])
