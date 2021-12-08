@@ -10,7 +10,13 @@ imagePullSecrets: []
 env:
   S3_KEY: "{{ minio_access_key }}"
   S3_SECRET: "{{ minio_secret_key }}"
+  # In case of minio, the instance is running inside kuberntes,
+  # which is accessible via nginx ingress.
+{% if s3_endpoint == "http://minio.db.svc.cluster.local:9000" %}
   S3_HOST: "https://{{ domain_name }}"
+{% else %}
+  S3_HOST: "{{ s3_endpoint }}"
+{% endif %} 
   jwt_secret: "{{ jwt_secret_key }}"
   AWS_DEFAULT_REGION: "{{ aws_region }}"
 {% if env is defined and env.chalice is defined and env.chalice%}
