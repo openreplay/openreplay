@@ -12,6 +12,11 @@ env:
   REDIS_STRING: "{{ redis_endpoint }}"
   KAFKA_SERVERS: "{{ kafka_endpoint }}"
   KAFKA_USE_SSL: "{{ kafka_ssl }}"
+  # In case of minio, the instance is running inside kuberntes,
+  # which is accessible via nginx ingress.
+{% if s3_endpoint != "http://minio.db.svc.cluster.local:9000" %}
+  ASSETS_ORIGIN: "https://{{assets_bucket}}.{{ s3_endpoint.split('https://')[-1] }}"
+{% endif %} 
 
 {% if not (docker_registry_username is defined and docker_registry_username and docker_registry_password is defined and docker_registry_password) %}
 imagePullSecrets: []
