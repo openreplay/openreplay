@@ -13,7 +13,7 @@ interface Props {
   role: any,
   edit: (role: any) => void,
   save: (role: any) => Promise<void>,
-  closeModal: () => void,
+  closeModal: (toastMessage?: string) => void,
   saving: boolean,
   permissions: Array<Permission>[]
 }
@@ -22,7 +22,7 @@ const RoleForm = ({ role, closeModal, edit, save, saving, permissions }: Props) 
   let focusElement = useRef<any>(null)
   const _save = () => {
     save(role).then(() => {
-      closeModal()
+      closeModal(role.exists() ? "Role updated" : "Role created");
     })
   }
 

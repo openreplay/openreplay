@@ -43,7 +43,11 @@ function Roles(props: Props) {
     }
   }, [removeErrors])
 
-  const closeModal = () => {
+  const closeModal = (showToastMessage) => {
+    if (showToastMessage) {
+      toast.success(showToastMessage)
+      props.fetchList()
+    }
     setShowmModal(false)
     setTimeout(() => {
       init()
