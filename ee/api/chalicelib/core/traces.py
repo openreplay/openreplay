@@ -31,6 +31,7 @@ IGNORE_ROUTES = [
     {"method": ["GET"], "path": "/webhooks"},
     {"method": ["GET"], "path": "/{projectId}/alerts"},
     {"method": ["GET"], "path": "/client/members"},
+    {"method": ["GET"], "path": "/client/roles"},
     {"method": ["GET"], "path": "/announcements/view"},
     {"method": ["GET"], "path": "/config/weekly_report"},
     {"method": ["GET"], "path": "/{projectId}/events/search"},
