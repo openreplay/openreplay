@@ -36,7 +36,7 @@ def add_role(data: schemas_ee.RolePayloadSchema = Body(...), context: schemas.Cu
 @app.put('/client/roles/{roleId}', tags=["client", "roles"])
 def edit_role(roleId: int, data: schemas_ee.RolePayloadSchema = Body(...),
               context: schemas.CurrentContext = Depends(OR_context)):
-    data = roles.update(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId, changes=data)
+    data = roles.update(tenant_id=context.tenant_id, user_id=context.user_id, role_id=roleId, changes=data.dict())
     if "errors" in data:
         return data
 
