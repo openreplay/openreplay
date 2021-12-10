@@ -12,7 +12,7 @@ class RolePayloadSchema(BaseModel):
 
 
 class CreateMemberSchema(schemas.CreateMemberSchema):
-    roleId: int = Field(...)
+    roleId: Optional[int] = Field(None)
 
 
 class EditMemberSchema(schemas.EditMemberSchema):

@@ -4,7 +4,7 @@ import secrets
 from decouple import config
 from fastapi import BackgroundTasks
 
-from chalicelib.core import authorizers, metadata, projects
+from chalicelib.core import authorizers, metadata, projects, roles
 from chalicelib.core import tenants, assist
 from chalicelib.utils import dev, SAML2_helper
 from chalicelib.utils import helper, email_helper
@@ -207,6 +207,8 @@ def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
     if name is None:
         name = data["email"]
     role_id = data.get("roleId")
+    if role_id is None:
+        role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
     invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
