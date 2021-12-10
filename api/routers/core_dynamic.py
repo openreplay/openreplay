@@ -34,7 +34,7 @@ def get_all_signup():
 @public_app.put('/signup', tags=['signup'])
 @public_app.post('/signup', tags=['signup'])
 def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-    return signup.create_step1(data.dict())
+    return signup.create_step1(data)
 
 
 @public_app.post('/login', tags=["authentication"])
