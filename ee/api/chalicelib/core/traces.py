@@ -7,7 +7,7 @@ from typing import Optional, List
 from decouple import config
 from fastapi import Request, Response
 from pydantic import BaseModel, Field
-from starlette.background import BackgroundTask
+from starlette.background import BackgroundTasks, BackgroundTask
 
 import app as main_app
 from chalicelib.utils import pg_client
@@ -132,7 +132,8 @@ def trace(action: str, path_format: str, request: Request, response: Response):
             or isinstance(p["path"], re.Pattern) and re.search(p["path"], path_format)) \
                 and (p["method"][0] == "*" or request.method in p["method"]):
             return
-    response.background = BackgroundTask(process_trace, action, path_format, request, response)
+    tasks: BackgroundTasks = response.background
+    tasks.add_task(BackgroundTask(process_trace, action, path_format, request, response))
 
 
 async def process_traces_queue():
