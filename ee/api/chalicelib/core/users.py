@@ -22,7 +22,7 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
                             VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(role_id)s)
-                            RETURNING user_id,email,role,name,appearance, role_id
+                            RETURNING tenant_id,user_id,email,role,name,appearance, role_id
                     ),
                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
                              VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
@@ -38,8 +38,11 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                            au.invitation_token,
-                           u.role_id
-                    FROM u,au;""",
+                           u.role_id,
+                           roles.name AS role_name,
+                           roles.permissions,
+                           TRUE AS has_password
+                    FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id = %(role_id)s;""",
                             {"tenantId": tenant_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
