@@ -31,7 +31,7 @@ def create_step1(data: schemas.UserSignupSchema):
             errors.append("Email address previously deleted.")
 
     print("Verifying captcha")
-    if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
+    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         errors.append("Invalid captcha.")
 
     print("Verifying password validity")
