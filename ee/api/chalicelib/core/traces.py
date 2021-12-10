@@ -132,8 +132,12 @@ def trace(action: str, path_format: str, request: Request, response: Response):
             or isinstance(p["path"], re.Pattern) and re.search(p["path"], path_format)) \
                 and (p["method"][0] == "*" or request.method in p["method"]):
             return
+    background_task: BackgroundTask = BackgroundTask(process_trace, action, path_format, request, response)
     tasks: BackgroundTasks = response.background
-    tasks.add_task(BackgroundTask(process_trace, action, path_format, request, response))
+    if tasks is None:
+        tasks = background_task
+    else:
+        tasks.add_task(background_task)
 
 
 async def process_traces_queue():
