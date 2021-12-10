@@ -1,13 +1,17 @@
 import json
 import logging
+import queue
 import re
-from typing import Optional
+from typing import Optional, List
 
+from decouple import config
 from fastapi import Request, Response
 from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
+import app as main_app
 from chalicelib.utils import pg_client
+from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import CurrentContext
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -56,19 +60,46 @@ class TraceSchema(BaseModel):
     payload: Optional[dict] = Field(None)
     parameters: Optional[dict] = Field(None)
     status: Optional[int] = Field(None)
+    created_at: int = Field(...)
 
 
-async def write_trace(trace: TraceSchema):
+def __process_trace(trace: TraceSchema):
     data = trace.dict()
     data["parameters"] = json.dumps(trace.parameters) if trace.parameters is not None and len(
         trace.parameters.keys()) > 0 else None
     data["payload"] = json.dumps(trace.payload) if trace.payload is not None and len(trace.payload.keys()) > 0 else None
+    return data
+
+
+async def write_trace(trace: TraceSchema):
+    data = __process_trace(trace)
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""INSERT INTO traces(user_id, action, method, path_format, endpoint, payload, parameters, status)
-                    VALUES (%(user_id)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
+                f"""INSERT INTO traces(user_id,created_at , action, method, path_format, endpoint, payload, parameters, status)
+                    VALUES (%(user_id)s, %(created_at)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
                 data)
+        )
+
+
+async def write_traces_batch(traces: List[TraceSchema]):
+    if len(traces) == 0:
+        return
+    params = {}
+    values = []
+    for i, t in enumerate(traces):
+        data = __process_trace(t)
+        for key in data.keys():
+            params[f"{key}_{i}"] = data[key]
+        values.append(
+            f"(%(user_id_{i})s, %(created_at_{i})s, %(action_{i})s, %(method_{i})s, %(path_format_{i})s, %(endpoint_{i})s, %(payload_{i})s::jsonb, %(parameters_{i})s::jsonb, %(status_{i})s)")
+
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""INSERT INTO traces(user_id,created_at , action, method, path_format, endpoint, payload, parameters, status)
+                    VALUES {" , ".join(values)};""",
+                params)
         )
 
 
@@ -87,8 +118,12 @@ async def process_trace(action: str, path_format: str, request: Request, respons
                                 payload=body,
                                 parameters=dict(request.query_params),
                                 status=response.status_code,
-                                path_format=path_format)
-    await write_trace(current_trace)
+                                path_format=path_format,
+                                created_at=TimeUTC.now())
+    if not hasattr(main_app.app, "queue_system"):
+        main_app.app.queue_system = queue.Queue()
+    q: queue.Queue = main_app.app.queue_system
+    q.put(current_trace)
 
 
 def trace(action: str, path_format: str, request: Request, response: Response):
@@ -98,3 +133,18 @@ def trace(action: str, path_format: str, request: Request, response: Response):
                 and (p["method"][0] == "*" or request.method in p["method"]):
             return
     response.background = BackgroundTask(process_trace, action, path_format, request, response)
+
+
+async def process_traces_queue():
+    queue_system: queue.Queue = main_app.app.queue_system
+    traces = []
+    while not queue_system.empty():
+        obj = queue_system.get_nowait()
+        traces.append(obj)
+    if len(traces) > 0:
+        await write_traces_batch(traces)
+
+
+cron_jobs = [
+    {"func": process_traces_queue, "trigger": "interval", "seconds": config("traces_period", cast=int, default=60)}
+]
