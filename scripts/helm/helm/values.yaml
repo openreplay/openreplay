@@ -1,0 +1,12 @@
+postgresql:
+  # For genrating psswords
+  # `openssl rand -hex 20`
+  postgresqlPassword: ""
+
+minio:
+  global:
+    minio:
+      # For genrating psswords
+      # `openssl rand -hex 20`
+      accessKey: ""
+      secretKey: ""
