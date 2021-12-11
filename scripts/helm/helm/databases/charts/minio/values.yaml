@@ -3,9 +3,9 @@
 ## Current available global Docker image parameters: imageRegistry and imagePullSecrets
 ##
 global:
- minio:
-   accessKey: "minios3AccessKeyS3cr3t"
-   secretKey: "m1n10s3CretK3yPassw0rd"
+ minio: {}
+#  accessKey: "minios3AccessKeyS3cr3t"
+#  secretKey: "m1n10s3CretK3yPassw0rd"
 #  minio: {}
 #    existingSecret: ""
 #    accessKey: ""
