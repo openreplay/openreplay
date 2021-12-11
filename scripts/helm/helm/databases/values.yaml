@@ -99,6 +99,7 @@ redis:
         memory: 128Mi
 
 postgresql:
+  # postgresqlPassword: asayerPostgres
   fullnameOverride: postgresql
   image:
     tag: 13.3.0-debian-10-r53
