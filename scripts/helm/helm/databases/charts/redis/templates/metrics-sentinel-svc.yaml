@@ -1,0 +1,35 @@
+{{- if and .Values.sentinel.enabled .Values.sentinel.metrics.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redis.fullname" . }}-sentinel-metrics
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: {{ include "redis.name" . }}
+    chart: {{ include "redis.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    app.kubernetes.io/component: "sentinel-metrics"
+    {{- if .Values.sentinel.metrics.service.labels -}}
+    {{- include "common.tplvalues.render" (dict "value" .Values.sentinel.metrics.service.labels "context" $) | nindent 4 }}
+    {{- end -}}
+  {{- if .Values.sentinel.metrics.service.annotations }}
+  annotations: {{- toYaml .Values.sentinel.metrics.service.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.sentinel.metrics.service.type }}
+  {{- if eq .Values.sentinel.metrics.service.type "LoadBalancer" }}
+  externalTrafficPolicy: {{ .Values.sentinel.metrics.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and (eq .Values.sentinel.metrics.service.type "LoadBalancer") .Values.sentinel.metrics.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.sentinel.metrics.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.sentinel.metrics.service.port }}
+      targetPort: sentinelmetrics
+      protocol: TCP
+      name: sentinelmetrics
+  selector:
+    app: {{ include "redis.name" . }}
+    release: {{ .Release.Name }}
+{{- end }}

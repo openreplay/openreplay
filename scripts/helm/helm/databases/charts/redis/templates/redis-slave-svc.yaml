@@ -1,0 +1,43 @@
+{{- if and .Values.cluster.enabled (not .Values.sentinel.enabled) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "redis.fullname" . }}-slave
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: {{ template "redis.name" . }}
+    chart: {{ template "redis.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    {{- if .Values.slave.service.labels -}}
+    {{- toYaml .Values.slave.service.labels | nindent 4 }}
+    {{- end -}}
+{{- if .Values.slave.service.annotations }}
+  annotations: {{- toYaml .Values.slave.service.annotations | nindent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.slave.service.type }}
+  {{ if eq .Values.slave.service.type "LoadBalancer" }}
+  externalTrafficPolicy: {{ .Values.slave.service.externalTrafficPolicy }}
+  {{- end }}
+  {{- if and (eq .Values.slave.service.type "LoadBalancer") .Values.slave.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.slave.service.loadBalancerIP }}
+  {{- end }}
+  {{- if and (eq .Values.slave.service.type "LoadBalancer") .Values.slave.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+    {{- with .Values.slave.service.loadBalancerSourceRanges }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  ports:
+    - name: tcp-redis
+      port: {{ .Values.slave.service.port }}
+      targetPort: redis
+      {{- if .Values.slave.service.nodePort }}
+      nodePort: {{ .Values.slave.service.nodePort }}
+      {{- end }}
+  selector:
+    app: {{ template "redis.name" . }}
+    release: {{ .Release.Name }}
+    role: slave
+{{- end }}

@@ -1,0 +1,43 @@
+{{- if and .Values.ingress.enabled (not .Values.disableWebUI ) -}}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {{ include "minio.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "minio.labels" . | nindent 4 }}
+{{- range $key, $value := .Values.ingress.labels }}
+    {{ $key }}: {{ $value }}
+{{- end }}
+  annotations:
+    {{- if .Values.ingress.certManager }}
+    kubernetes.io/tls-acme: "true"
+    {{- end }}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .name }}
+      http:
+        paths:
+          - path: {{ default "/" .path }}
+            backend:
+              serviceName: {{ include "minio.fullname" $ }}
+              servicePort: minio
+    {{- end }}
+  tls:
+    {{- range .Values.ingress.hosts }}
+    {{- if .tls }}
+    - hosts:
+        {{- if .tlsHosts }}
+        {{- range $host := .tlsHosts }}
+        - {{ $host }}
+        {{- end }}
+        {{- else }}
+        - {{ .name }}
+        {{- end }}
+      secretName: {{ .tlsSecret }}
+    {{- end }}
+    {{- end }}
+{{- end }}

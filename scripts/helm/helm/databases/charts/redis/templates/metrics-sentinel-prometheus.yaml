@@ -1,0 +1,33 @@
+{{- if and .Values.sentinel.enabled .Values.sentinel.metrics.enabled .Values.sentinel.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "redis.fullname" . }}-sentinel-metrics
+  {{- if .Values.sentinel.metrics.serviceMonitor.namespace }}
+  namespace: {{ .Values.sentinel.metrics.serviceMonitor.namespace }}
+  {{- else }}
+  namespace: {{ .Release.Namespace | quote }}
+  {{- end }}
+  labels:
+    app: {{ include "redis.name" . }}
+    chart: {{ include "redis.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    {{- range $key, $value := .Values.sentinel.metrics.serviceMonitor.selector }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+spec:
+  endpoints:
+    - port: sentinelmetrics
+      {{- if .Values.sentinel.metrics.serviceMonitor.interval }}
+      interval: {{ .Values.sentinel.metrics.serviceMonitor.interval }}
+      {{- end }}
+  selector:
+    matchLabels:
+      app: {{ include "redis.name" . }}
+      release: {{ .Release.Name }}
+      app.kubernetes.io/component: "sentinel-metrics"
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+{{- end -}}
