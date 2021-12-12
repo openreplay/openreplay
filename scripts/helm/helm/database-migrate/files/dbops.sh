@@ -46,6 +46,12 @@ function init(){
         postgresql)
             /bin/bash postgresql.sh init
             ;;
+        clickhouse)
+            /bin/bash clickhouse.sh init
+            ;;
+        kafka)
+            /bin/bash kafka.sh init
+            ;;
         *)
             echo "Unknown operation for db init; exiting."
             exit 1

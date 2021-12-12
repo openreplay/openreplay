@@ -67,11 +67,12 @@ spec:
         - name: dbmigrationscript
           mountPath: /opt/migrations/
       - name: clickhouse
-        image: yandex/clickhouse-server:20.9
+        image: yandex/clickhouse-client:20.9
         command: 
         - /bin/bash
-        - /opt/migration.sh
+        - /opt/migrations/dbops.sh
         - "{{ .Release.IsUpgrade }}"
+        - clickhouse
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
@@ -83,6 +84,7 @@ spec:
         - /bin/bash
         - /opt/migration.sh
         - "{{ .Release.IsUpgrade }}"
+        - kafka
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
