@@ -75,6 +75,11 @@ spec:
       # Enterprise migration
       - name: clickhouse
         image: yandex/clickhouse-client:20.9
+        env:
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
@@ -87,6 +92,11 @@ spec:
           mountPath: /opt/migrations/
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
+        env:
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
         command: 
         - /bin/bash
         - /opt/migration.sh

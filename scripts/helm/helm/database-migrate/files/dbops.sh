@@ -28,8 +28,8 @@ function migration() {
         postgresql)
             /bin/bash postgresql.sh migrate $migration_versions
             ;;
-        chalice)
-            /bin/bash chalice.sh migrate $migration_versions
+        clickhouse)
+            /bin/bash clickhouse.sh migrate $migration_versions
             ;;
         kafka)
             /bin/bash kafka.sh migrate $migration_versions
@@ -61,7 +61,7 @@ function init(){
 }
 
 
-# dbops.sh true(upgrade) chalice
+# dbops.sh true(upgrade) clickhouse
 case "$1" in
     "false")
         init $2
