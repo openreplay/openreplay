@@ -5,11 +5,12 @@ metadata:
   name: postgres-migration-script
 data:
   pgmigration.sh: |-
+    ls -la /opt/openreplay/openreplay
     old_version={{ .Values.fromVersion }}
     [[ old_version == "" ]] && (echo "From version for migrtion not set. eg use --set fromVersion=v1.4.0"; exit 100)
-    git clone https://github.com/openreplay/openreplay -b {{ .Chart.AppVersion }}
-    cd openreplay/scripts/helm
+    cd /opt/openreplay/openreplay/scripts/helm
     migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
+    echo $migration_versions
 
 ---
 apiVersion: batch/v1
@@ -19,10 +20,25 @@ metadata:
   labels:
     app: postgresql
 spec:
+  backoffLimit: 1
   template:
     metadata:
       name: postgresqlMigrate
     spec:
+      initContainers:
+      - name: git
+        image: alpine/git
+        command:
+          - git
+        args:
+          - clone
+          - https://github.com/openreplay/openreplay
+          - -b
+          - {{ .Chart.AppVersion }}
+          - /opt/openreplay/openreplay
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
       containers:
       - name: postgres
         image: bitnami/postgresql:13.3.0-debian-10-r53
@@ -30,11 +46,43 @@ spec:
         - /bin/bash
         - /opt/migration.sh
         volumeMounts:
-        - name: migrationscript
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: pgmigrationscript
+          mountPath: /opt/migration.sh
+          subPath: pgmigration.sh
+      - name: clickhouse
+        image: yandex/clickhouse-server:20.9
+        command: 
+        - /bin/bash
+        - /opt/migration.sh
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: clickhousemigrationscript
+          mountPath: /opt/migration.sh
+          subPath: pgmigration.sh
+      - name: kafka
+        image: bitnami/kafka:2.6.0-debian-10-r30
+        command: 
+        - /bin/bash
+        - /opt/migration.sh
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: kafkamigrationscript
           mountPath: /opt/migration.sh
           subPath: pgmigration.sh
       volumes:
-      - name: migrationscript
+      - name: clickhousemigrationscript
         configMap:
           name: postgres-migration-script
-      restartPolicy: OnFailure
+      - name: kafkamigrationscript
+        configMap:
+          name: postgres-migration-script
+      - name: pgmigrationscript
+        configMap:
+          name: postgres-migration-script
+      - name: shared
+        emptyDir: {}
+      restartPolicy: Never
