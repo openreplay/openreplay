@@ -5,22 +5,23 @@ set -e
 clickhousedir=/opt/openreplay/openreplay/scripts/helm/db/init_dbs/clickhouse
 
 function migrate() {
-    echo "Starting postgresql migration"
+    echo "Starting clickhouse migration"
     migration_versions=$1
     for version in $migration_versions; do
-        echo "Migrating postgresql version $version"
-        clickhouse-client -h clickhouse.db.svc.cluster.local -p 9000 < ${clickhousedir}/${version}/${version}.sql
+        echo "Migrating clickhouse version $version"
+        clickhouse-client -h clickhouse.db.svc.cluster.local --port 9000 < ${clickhousedir}/${version}/${version}.sql
     done
 }
 
 function init() {
-    echo "Initializing postgresql"
+    echo "Initializing clickhouse"
     for file in `ls ${clickhousedir}/create/*.sql`; do
-        clickhouse-client  -h clickhouse.db.svc.cluster.local -p 9000 < $file
+        echo "Injecting $file"
+        clickhouse-client  -h clickhouse.db.svc.cluster.local --port 9000 < $file
     done
 }
 
-# /bin/bash postgresql.sh migrate $migration_versions
+# /bin/bash clickhouse.sh migrate $migration_versions
 case "$1" in
     migrate)
         migrate $2
