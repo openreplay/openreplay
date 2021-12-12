@@ -5,56 +5,16 @@ metadata:
   name: db-migration-script
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
-    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
 data:
-  pgmigration.sh: |-
-    set -x
-
-    function chalice_migration() {
-      
-    }
-
-    function migration() {
-        ls -la /opt/openreplay/openreplay
-        db=$1
-        old_version=$2
-
-        if [[ old_version == {{ .Chart.AppVersion }} ]]; then
-            echo "No application version change. Not upgrading."
-            exit 0
-        fi
-        chalice
-
-        cd /opt/openreplay/openreplay/scripts/helm
-        migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
-        echo $migration_versions
-    }
-
-    function init(){
-        echo init db
-    }
-
-    # migration.sh true/false chalice
-    case "$1" in
-        "false")
-            init
-            ;;
-        "true")
-            migration $2 {{ .Chart.AppVersion }}
-            ;;
-        *)
-            echo "Unknown operation for db migration; exiting."
-            exit 1
-            ;;
-    esac
-
+  {{- (.Files.Glob "files/*").AsConfig | nindent 2 }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: postgresql-migrate
+  name: databases-migrate
   labels:
-    app: postgresql
+    app: databases
   annotations:
     "helm.sh/hook": pre-install, pre-upgrade
     "helm.sh/hook-weight": "-5"
@@ -80,17 +40,30 @@ spec:
           mountPath: /opt/openreplay
       containers:
       - name: postgres
+        env:
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
+          - name: PGHOST
+            value: "{{ .Values.postgresql.postgresqlHost }}"
+          - name: PGPORT
+            value: "{{ .Values.postgresql.postgresqlPort }}"
+          - name: PGDATABASE
+            value: "{{ .Values.postgresql.postgresqlDatabase }}"
+          - name: PGUSER
+            value: "{{ .Values.postgresql.postgresqlUser }}"
+          - name: PGPASSWORD
+            value: "{{ .Values.postgresql.postgresqlPassword }}"
         image: bitnami/postgresql:13.3.0-debian-10-r53
         command: 
         - /bin/bash
-        - /opt/migration.sh
+        - /opt/migrations/dbops.sh
         - "{{ .Release.IsUpgrade }}"
+        - "postgresql"
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
-        - name: pgmigrationscript
-          mountPath: /opt/migration.sh
-          subPath: pgmigration.sh
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
       - name: clickhouse
         image: yandex/clickhouse-server:20.9
         command: 
@@ -100,9 +73,8 @@ spec:
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
-        - name: clickhousemigrationscript
-          mountPath: /opt/migration.sh
-          subPath: pgmigration.sh
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
         command: 
@@ -112,17 +84,10 @@ spec:
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
-        - name: kafkamigrationscript
-          mountPath: /opt/migration.sh
-          subPath: pgmigration.sh
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
       volumes:
-      - name: clickhousemigrationscript
-        configMap:
-          name: db-migration-script
-      - name: kafkamigrationscript
-        configMap:
-          name: db-migration-script
-      - name: pgmigrationscript
+      - name: dbmigrationscript
         configMap:
           name: db-migration-script
       - name: shared

@@ -1,12 +1,16 @@
 postgresql:
   # For genrating psswords
   # `openssl rand -hex 20`
-  postgresqlPassword: ""
+  postgresqlPassword: "asdfasdfasdcasdc"
+  postgresqlHost: "postgresql.db.svc.cluster.local"
+  postgresqlPort: "5432"
+  postgresqlUser: "postgres"
+  postgresqlDatabase: "postgres"
 
 minio:
   global:
     minio:
       # For genrating psswords
       # `openssl rand -hex 20`
-      accessKey: ""
-      secretKey: ""
+      accessKey: "sasdcasdcasd"
+      secretKey: "sdvasdfasdfasdf"
