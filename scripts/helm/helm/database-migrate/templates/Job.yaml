@@ -2,15 +2,42 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: postgres-migration-script
+  name: db-migration-script
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-5"
 data:
   pgmigration.sh: |-
-    ls -la /opt/openreplay/openreplay
-    old_version={{ .Values.fromVersion }}
-    [[ old_version == "" ]] && (echo "From version for migrtion not set. eg use --set fromVersion=v1.4.0"; exit 100)
-    cd /opt/openreplay/openreplay/scripts/helm
-    migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
-    echo $migration_versions
+    function chalice_migration() {
+        ls -la /opt/openreplay/openreplay
+        old_version=$1
+
+        if [[ old_version == {{ .Chart.AppVersion }} ]]; then
+            echo "No application version change. Not upgrading."
+            exit 0
+        fi
+
+        cd /opt/openreplay/openreplay/scripts/helm
+        migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
+        echo $migration_versions
+    }
+
+    function init(){
+        echo init db
+    }
+
+    case "$1" in
+        "false")
+            init
+            ;;
+        "true")
+            chalice_migration {{ .Chart.AppVersion }}
+            ;;
+        *)
+            echo "Unknown operation for db migration; exiting."
+            exit 1
+            ;;
+    esac
 
 ---
 apiVersion: batch/v1
@@ -19,6 +46,9 @@ metadata:
   name: postgresql-migrate
   labels:
     app: postgresql
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-5"
 spec:
   backoffLimit: 1
   template:
@@ -45,6 +75,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migration.sh
+        - "{{ .Release.IsUpgrade }}"
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
@@ -56,6 +87,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migration.sh
+        - "{{ .Release.IsUpgrade }}"
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
@@ -67,6 +99,7 @@ spec:
         command: 
         - /bin/bash
         - /opt/migration.sh
+        - "{{ .Release.IsUpgrade }}"
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
@@ -76,13 +109,13 @@ spec:
       volumes:
       - name: clickhousemigrationscript
         configMap:
-          name: postgres-migration-script
+          name: db-migration-script
       - name: kafkamigrationscript
         configMap:
-          name: postgres-migration-script
+          name: db-migration-script
       - name: pgmigrationscript
         configMap:
-          name: postgres-migration-script
+          name: db-migration-script
       - name: shared
         emptyDir: {}
       restartPolicy: Never
