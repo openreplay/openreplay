@@ -8,14 +8,22 @@ metadata:
     "helm.sh/hook-weight": "-5"
 data:
   pgmigration.sh: |-
+    set -x
+
     function chalice_migration() {
+      
+    }
+
+    function migration() {
         ls -la /opt/openreplay/openreplay
-        old_version=$1
+        db=$1
+        old_version=$2
 
         if [[ old_version == {{ .Chart.AppVersion }} ]]; then
             echo "No application version change. Not upgrading."
             exit 0
         fi
+        chalice
 
         cd /opt/openreplay/openreplay/scripts/helm
         migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${old_version} '$NF > number {print $NF}' | grep -v create`)
@@ -26,12 +34,13 @@ data:
         echo init db
     }
 
+    # migration.sh true/false chalice
     case "$1" in
         "false")
             init
             ;;
         "true")
-            chalice_migration {{ .Chart.AppVersion }}
+            migration $2 {{ .Chart.AppVersion }}
             ;;
         *)
             echo "Unknown operation for db migration; exiting."
