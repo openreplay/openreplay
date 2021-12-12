@@ -9,7 +9,9 @@ function migrate() {
     migration_versions=$1
     for version in $migration_versions; do
         echo "Migrating clickhouse version $version"
-        clickhouse-client -h clickhouse.db.svc.cluster.local --port 9000 < ${clickhousedir}/${version}/${version}.sql
+        # For now, we can ignore the clickhouse db inject errors.
+        # TODO: Better error handling in script
+        clickhouse-client -h clickhouse.db.svc.cluster.local --port 9000 < ${clickhousedir}/${version}/${version}.sql || true
     done
 }
 
