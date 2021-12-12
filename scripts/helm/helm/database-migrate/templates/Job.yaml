@@ -27,14 +27,19 @@ spec:
       initContainers:
       - name: git
         image: alpine/git
+        env:
+          - name: ENTERPRISE_EDITION_LICENSE
+            value: "{{ .Values.global.enterprise_edition_license }}"
         command:
-          - git
+          - /bin/sh
+          - -c
         args:
-          - clone
-          - https://github.com/openreplay/openreplay
-          - -b
-          - {{ .Chart.AppVersion }}
-          - /opt/openreplay/openreplay
+          - |
+            git clone https://github.com/openreplay/openreplay -b {{ .Chart.AppVersion }} /opt/openreplay/openreplay
+            if [ ENTERPRISE_EDITION_LICENSE != "" ]; then
+              cd /opt/openreplay/openreplay 
+              cp -rf ee/scripts/* scripts/
+            fi
         volumeMounts:
         - name: shared
           mountPath: /opt/openreplay
