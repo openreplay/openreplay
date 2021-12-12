@@ -93,13 +93,19 @@ spec:
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
         env:
+          - name: KAFKA_HOST
+            value: "{{ .Values.kafka.kafkaHost }}"
+          - name: KAFKA_PORT
+            value: "{{ .Values.kafka.kafkaPort }}"
+          - name: KAFKA_SSL
+            value: "{{ .Values.kafka.kafkaUseSsl }}"
           - name: PREVIOUS_APP_VERSION
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
         command: 
         - /bin/bash
-        - /opt/migration.sh
+        - /opt/migrations/dbops.sh
         - "{{ .Release.IsUpgrade }}"
         - kafka
         volumeMounts:

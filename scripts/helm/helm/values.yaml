@@ -7,6 +7,11 @@ postgresql:
   postgresqlUser: "postgres"
   postgresqlDatabase: "postgres"
 
+kafka:
+  kafkaHost: "kafka.db.svc.cluster.local"
+  kafkaPort: "9092"
+  kafkaUseSsl: "false"
+
 minio:
   global:
     minio:
