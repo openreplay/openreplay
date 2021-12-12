@@ -71,6 +71,8 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
+      {{- if .Values.global.enterprise_edition_license }}
+      # Enterprise migration
       - name: clickhouse
         image: yandex/clickhouse-client:20.9
         command: 
@@ -95,6 +97,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
+        {{- end}}
       volumes:
       - name: dbmigrationscript
         configMap:
