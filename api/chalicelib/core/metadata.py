@@ -90,7 +90,9 @@ def delete(tenant_id, project_id, index: int):
         cur.execute(query=query)
         query = cur.mogrify(f"""UPDATE public.sessions 
                                 SET {colname}= NULL
-                                WHERE project_id = %(project_id)s""",
+                                WHERE project_id = %(project_id)s
+                                    AND {colname} IS NOT NULL
+                                """,
                             {"project_id": project_id})
         cur.execute(query=query)
 
