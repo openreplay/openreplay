@@ -11,6 +11,8 @@ import ConfirmWindow from './ConfirmWindow.js';
 import RequestLocalStream from './LocalStream.js';
 
 export interface Options {
+  onAgentConnect: () => (()=>{} | void),
+  onCallStart: () => (()=>{} | void),
   confirmText: string,
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
@@ -40,6 +42,8 @@ export default function(opts?: Partial<Options>)  {
       confirmStyle: {},
       session_calling_peer_key: "__openreplay_calling_peer",
       config: null,
+      onCallStart: ()=>{},
+      onAgentConnect: ()=>{},
     },
     opts,
   );
@@ -99,7 +103,10 @@ export default function(opts?: Partial<Options>)  {
           assistDemandedRestart = true;
           app.stop();
           openDataConnections[conn.peer] = new BufferingConnection(conn, options.__messages_per_send)
+          
+          const onAgentDisconnect = options.onAgentConnect();
           conn.on('close', () => {
+            onAgentDisconnect?.();
             log("Connection close: ", conn.peer)
             delete openDataConnections[conn.peer] // TODO: check if works properly
           })
@@ -136,8 +143,8 @@ export default function(opts?: Partial<Options>)  {
 
 
         let confirmAnswer: Promise<boolean>
-        const peerOnCall = sessionStorage.getItem(options.session_calling_peer_key)
-        if (peerOnCall === call.peer) {
+        const callingPeer = sessionStorage.getItem(options.session_calling_peer_key)
+        if (callingPeer === call.peer) {
           confirmAnswer = Promise.resolve(true)
         } else {
           setCallingState(CallingState.Requesting);
@@ -161,10 +168,13 @@ export default function(opts?: Partial<Options>)  {
             return
           }
 
+          const onCallEnd = options.onCallStart()
+
           const mouse = new Mouse()
           let callUI = new CallWindow()
 
-          const onCallEnd = () => {
+          const handleCallEnd = () => {
+            onCallEnd?.()
             mouse.remove();
             callUI.remove();
             setCallingState(CallingState.False);
@@ -173,10 +183,10 @@ export default function(opts?: Partial<Options>)  {
             log("initiateCallEnd")
             call.close()
             notifyCallEnd();
-            onCallEnd();
+            handleCallEnd();
           }
           RequestLocalStream().then(lStream => {
-            dataConn.on("close", onCallEnd); // For what case?
+            dataConn.on("close", handleCallEnd); // For what case?
             //call.on('close', onClose); // Works from time to time (peerjs bug)
             const checkConnInterval = setInterval(() => {
               if (!dataConn.open) {
@@ -184,7 +194,7 @@ export default function(opts?: Partial<Options>)  {
                 clearInterval(checkConnInterval);
               }
               if (!call.open) {
-                onCallEnd();
+                handleCallEnd();
                 clearInterval(checkConnInterval);
               }
             }, 3000);
@@ -205,7 +215,7 @@ export default function(opts?: Partial<Options>)  {
               if (!data) { return }
               if (data === "call_end") {
                 log('"call_end" received')
-                onCallEnd();
+                handleCallEnd();
                 return;
               }
               if (data.name === 'string') {
@@ -262,7 +272,7 @@ export default function(opts?: Partial<Options>)  {
           })
           .catch(e => {
             warn("Audio mediadevice request error:", e)
-            onCallEnd()
+            handleCallEnd()
           });
         }).catch(); // in case of Confirm.remove() without any confirmation
       });

@@ -1,4 +1,4 @@
-import type { LocalStream } from './LocalStream';
+import type { LocalStream } from './LocalStream.js';
 
 const SS_START_TS_KEY = "__openreplay_assist_call_start_ts"
 
