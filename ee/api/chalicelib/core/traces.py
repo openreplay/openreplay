@@ -136,7 +136,7 @@ def trace(action: str, path_format: str, request: Request, response: Response):
     if response.background is None:
         response.background = background_task
     else:
-        response.background.add_task(background_task)
+        response.background.add_task(background_task.func, *background_task.args, *background_task.kwargs)
 
 
 async def process_traces_queue():
