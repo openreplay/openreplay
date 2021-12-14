@@ -152,7 +152,7 @@ class CommentAssignmentSchema(BaseModel):
 
 
 class IntegrationNotificationSchema(BaseModel):
-    comment: str = Field(...)
+    comment: Optional[str] = Field(None)
 
 
 class GdprSchema(BaseModel):
