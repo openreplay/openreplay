@@ -506,7 +506,7 @@ def edit_gdpr(projectId: int, data: schemas.GdprSchema = Body(...),
 def reset_password_handler(data: schemas.ForgetPasswordPayloadSchema = Body(...)):
     if len(data.email) < 5:
         return {"errors": ["please provide a valid email address"]}
-    return reset_password.reset(data.dict())
+    return reset_password.reset(data)
 
 
 @app.get('/{projectId}/metadata', tags=["metadata"])
