@@ -48,3 +48,8 @@
   background-color: $gray-lightest;
   box-shadow: 0 0 0 1px $gray-light inset;
 }
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
