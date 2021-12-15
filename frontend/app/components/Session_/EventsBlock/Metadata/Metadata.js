@@ -4,18 +4,19 @@ import { NoContent, IconButton, Popup } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import MetadataItem from './MetadataItem';
 import stl from './metadata.css';
+import cn from 'classnames';
 
 export default connect(state => ({
   metadata: state.getIn([ 'sessions', 'current', 'metadata' ]),
 }))(function Metadata ({ metadata }) {
   const [ visible, setVisible ] = useState(false);
-  const toggle = useCallback(() => metadata.size > 0 && setVisible(v => !v), []);
+  const toggle = useCallback(() => metadata.length > 0 && setVisible(v => !v), []);
   return (
     <>
       <Popup
         trigger={
           <IconButton
-            className="w-full"
+            className={cn("w-full", { 'opacity-25' : metadata.length === 0 })}
             onClick={ toggle }
             icon="id-card"
             plain
@@ -23,6 +24,7 @@ export default connect(state => ({
             primaryText
             active={ visible }
             id="metadata-button"
+            // disabled={ metadata.length === 0 }
           />
         }
         content={
