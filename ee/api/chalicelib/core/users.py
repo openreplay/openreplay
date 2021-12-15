@@ -312,11 +312,11 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
         admin = get(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
-    if user["superAdmin"] and "admin" in changes:
-        changes.pop("admin")
-
-    if editor_id == user_id_to_update and user["admin"] != changes["admin"]:
-        return {"errors": ["cannot change your own role"]}
+    if editor_id == user_id_to_update:
+        if user["superAdmin"]:
+            changes.pop("admin")
+        elif user["admin"] != changes["admin"]:
+            return {"errors": ["cannot change your own role"]}
 
     keys = list(changes.keys())
     for k in keys:
