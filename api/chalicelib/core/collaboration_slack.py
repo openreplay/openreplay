@@ -1,5 +1,5 @@
 import requests
-from chalicelib.utils.helper import environ
+from decouple import config
 from datetime import datetime
 from chalicelib.core import webhook
 
@@ -95,8 +95,8 @@ class Slack:
     def share_session(cls, tenant_id, project_id, session_id, user, comment, integration_id=None):
         args = {"fallback": f"{user} has shared the below session!",
                 "pretext": f"{user} has shared the below session!",
-                "title": f"{environ['SITE_URL']}/{project_id}/session/{session_id}",
-                "title_link": f"{environ['SITE_URL']}/{project_id}/session/{session_id}",
+                "title": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
+                "title_link": f"{config('SITE_URL')}/{project_id}/session/{session_id}",
                 "text": comment}
         return {"data": cls.__share_to_slack(tenant_id, integration_id, **args)}
 
@@ -104,8 +104,8 @@ class Slack:
     def share_error(cls, tenant_id, project_id, error_id, user, comment, integration_id=None):
         args = {"fallback": f"{user} has shared the below error!",
                 "pretext": f"{user} has shared the below error!",
-                "title": f"{environ['SITE_URL']}/{project_id}/errors/{error_id}",
-                "title_link": f"{environ['SITE_URL']}/{project_id}/errors/{error_id}",
+                "title": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
+                "title_link": f"{config('SITE_URL')}/{project_id}/errors/{error_id}",
                 "text": comment}
         return {"data": cls.__share_to_slack(tenant_id, integration_id, **args)}
 

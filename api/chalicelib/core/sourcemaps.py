@@ -1,4 +1,4 @@
-from chalicelib.utils.helper import environ
+from decouple import config
 from chalicelib.utils import helper
 
 from chalicelib.utils import s3
@@ -17,7 +17,7 @@ def __get_key(project_id, url):
 def presign_share_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(s3.get_presigned_url_for_sharing(bucket=environ['sourcemaps_bucket'], expires_in=120,
+        results.append(s3.get_presigned_url_for_sharing(bucket=config('sourcemaps_bucket'), expires_in=120,
                                                         key=__get_key(project_id, u),
                                                         check_exists=True))
     return results
@@ -26,7 +26,7 @@ def presign_share_urls(project_id, urls):
 def presign_upload_urls(project_id, urls):
     results = []
     for u in urls:
-        results.append(s3.get_presigned_url_for_upload(bucket=environ['sourcemaps_bucket'],
+        results.append(s3.get_presigned_url_for_upload(bucket=config('sourcemaps_bucket'),
                                                        expires_in=1800,
                                                        key=__get_key(project_id, u)))
     return results
@@ -87,7 +87,7 @@ def get_traces_group(project_id, payload):
         print(key)
         print("===============================")
         if key not in payloads:
-            file_exists = s3.exists(environ['sourcemaps_bucket'], key)
+            file_exists = s3.exists(config('sourcemaps_bucket'), key)
             all_exists = all_exists and file_exists
             if not file_exists:
                 print(f"{u['absPath']} sourcemap (key '{key}') doesn't exist in S3")
@@ -130,10 +130,10 @@ def fetch_missed_contexts(frames):
         if frames[i]["frame"]["absPath"] in source_cache:
             file = source_cache[frames[i]["frame"]["absPath"]]
         else:
-            file = s3.get_file(environ['js_cache_bucket'], get_js_cache_path(frames[i]["frame"]["absPath"]))
+            file = s3.get_file(config('js_cache_bucket'), get_js_cache_path(frames[i]["frame"]["absPath"]))
             if file is None:
                 print(
-                    f"File {get_js_cache_path(frames[i]['frame']['absPath'])} not found in {environ['js_cache_bucket']}")
+                    f"File {get_js_cache_path(frames[i]['frame']['absPath'])} not found in {config('js_cache_bucket')}")
             source_cache[frames[i]["frame"]["absPath"]] = file
         if file is None:
             continue

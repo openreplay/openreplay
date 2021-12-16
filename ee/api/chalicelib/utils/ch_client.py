@@ -1,14 +1,14 @@
 import clickhouse_driver
-from chalicelib.utils.helper import environ
+from decouple import config
 
 
 class ClickHouseClient:
     __client = None
 
     def __init__(self):
-        self.__client = clickhouse_driver.Client(host=environ["ch_host"],
+        self.__client = clickhouse_driver.Client(host=config("ch_host"),
                                                  database="default",
-                                                 port=int(environ["ch_port"])) \
+                                                 port=config("ch_port", cast=int)) \
             if self.__client is None else self.__client
 
     def __enter__(self):

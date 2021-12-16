@@ -1,7 +1,10 @@
-from chalicelib.utils.helper import environ
-from chalicelib.utils.TimeUTC import TimeUTC
-import requests
 import uuid
+from os import environ
+
+import requests
+from decouple import config
+
+from chalicelib.utils.TimeUTC import TimeUTC
 
 
 def __get_mid():
@@ -9,7 +12,7 @@ def __get_mid():
 
 
 def get_license():
-    return environ.get("LICENSE_KEY", "")
+    return config("LICENSE_KEY", default="")
 
 
 def check():
@@ -33,10 +36,10 @@ def check():
 
 
 def get_expiration_date():
-    return int(environ.get("expiration", 0))
+    return config("expiration", default=0, cast=int)
 
 
 def is_valid():
-    if environ.get("lastCheck") is None:
+    if config("lastCheck", default=None) is None or (get_expiration_date() - TimeUTC.now()) <= 0:
         check()
     return get_expiration_date() - TimeUTC.now() > 0

@@ -1,24 +1,24 @@
 from botocore.exceptions import ClientError
-from chalicelib.utils.helper import environ
+from decouple import config
 from datetime import datetime, timedelta
 import boto3
 import botocore
 from botocore.client import Config
 
-client = boto3.client('s3', endpoint_url=environ["S3_HOST"],
-                      aws_access_key_id=environ["S3_KEY"],
-                      aws_secret_access_key=environ["S3_SECRET"],
+client = boto3.client('s3', endpoint_url=config("S3_HOST"),
+                      aws_access_key_id=config("S3_KEY"),
+                      aws_secret_access_key=config("S3_SECRET"),
                       config=Config(signature_version='s3v4'),
-                      region_name=environ["sessions_region"])
+                      region_name=config("sessions_region"))
 
 
 def exists(bucket, key):
     try:
-        boto3.resource('s3', endpoint_url=environ["S3_HOST"],
-                       aws_access_key_id=environ["S3_KEY"],
-                       aws_secret_access_key=environ["S3_SECRET"],
+        boto3.resource('s3', endpoint_url=config("S3_HOST"),
+                       aws_access_key_id=config("S3_KEY"),
+                       aws_secret_access_key=config("S3_SECRET"),
                        config=Config(signature_version='s3v4'),
-                       region_name=environ["sessions_region"]) \
+                       region_name=config("sessions_region")) \
             .Object(bucket, key).load()
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
@@ -73,21 +73,21 @@ def get_file(source_bucket, source_key):
 
 
 def rename(source_bucket, source_key, target_bucket, target_key):
-    s3 = boto3.resource('s3', endpoint_url=environ["S3_HOST"],
-                        aws_access_key_id=environ["S3_KEY"],
-                        aws_secret_access_key=environ["S3_SECRET"],
+    s3 = boto3.resource('s3', endpoint_url=config("S3_HOST"),
+                        aws_access_key_id=config("S3_KEY"),
+                        aws_secret_access_key=config("S3_SECRET"),
                         config=Config(signature_version='s3v4'),
-                        region_name=environ["sessions_region"])
+                        region_name=config("sessions_region"))
     s3.Object(target_bucket, target_key).copy_from(CopySource=f'{source_bucket}/{source_key}')
     s3.Object(source_bucket, source_key).delete()
 
 
 def schedule_for_deletion(bucket, key):
-    s3 = boto3.resource('s3', endpoint_url=environ["S3_HOST"],
-                        aws_access_key_id=environ["S3_KEY"],
-                        aws_secret_access_key=environ["S3_SECRET"],
+    s3 = boto3.resource('s3', endpoint_url=config("S3_HOST"),
+                        aws_access_key_id=config("S3_KEY"),
+                        aws_secret_access_key=config("S3_SECRET"),
                         config=Config(signature_version='s3v4'),
-                        region_name=environ["sessions_region"])
+                        region_name=config("sessions_region"))
     s3_object = s3.Object(bucket, key)
     s3_object.copy_from(CopySource={'Bucket': bucket, 'Key': key},
                         Expires=datetime.now() + timedelta(days=7),

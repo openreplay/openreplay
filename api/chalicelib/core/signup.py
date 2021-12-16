@@ -1,21 +1,24 @@
-from chalicelib.utils import helper
-from chalicelib.utils import pg_client
+import json
+
+from decouple import config
+
+import schemas
 from chalicelib.core import users, telemetry, tenants
 from chalicelib.utils import captcha
-import json
+from chalicelib.utils import helper
+from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
 
 
-def create_step1(data):
+def create_step1(data: schemas.UserSignupSchema):
     print(f"===================== SIGNUP STEP 1 AT {TimeUTC.to_human_readable(TimeUTC.now())} UTC")
     errors = []
     if tenants.tenants_exists():
         return {"errors": ["tenants already registered"]}
 
-    email = data.get("email")
+    email = data.email
     print(f"=====================> {email}")
-    password = data.get("password")
+    password = data.password
 
     print("Verifying email validity")
     if email is None or len(email) < 5 or not helper.is_valid_email(email):
@@ -28,25 +31,25 @@ def create_step1(data):
             errors.append("Email address previously deleted.")
 
     print("Verifying captcha")
-    if helper.allow_captcha() and not captcha.is_valid(data["g-recaptcha-response"]):
+    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         errors.append("Invalid captcha.")
 
     print("Verifying password validity")
-    if len(data["password"]) < 6:
+    if len(password) < 6:
         errors.append("Password is too short, it must be at least 6 characters long.")
 
     print("Verifying fullname validity")
-    fullname = data.get("fullname")
+    fullname = data.fullname
     if fullname is None or len(fullname) < 1 or not helper.is_alphabet_space_dash(fullname):
         errors.append("Invalid full name.")
 
     print("Verifying company's name validity")
-    company_name = data.get("organizationName")
+    company_name = data.organizationName
     if company_name is None or len(company_name) < 1 or not helper.is_alphanumeric_space(company_name):
         errors.append("invalid organization's name")
 
     print("Verifying project's name validity")
-    project_name = data.get("projectName")
+    project_name = data.projectName
     if project_name is None or len(project_name) < 1:
         project_name = "my first project"
 
@@ -61,7 +64,7 @@ def create_step1(data):
         "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
         "organizationName": company_name,
-        "versionNumber": environ["version_number"]
+        "versionNumber": config("version_number")
     }
     query = f"""\
                 WITH t AS (

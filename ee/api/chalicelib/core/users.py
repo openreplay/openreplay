@@ -1,13 +1,15 @@
 import json
 import secrets
 
-from chalicelib.core import authorizers, metadata, projects, assist
-from chalicelib.core import tenants
+from decouple import config
+from fastapi import BackgroundTasks
+
+from chalicelib.core import authorizers, metadata, projects, roles
+from chalicelib.core import tenants, assist
 from chalicelib.utils import dev, SAML2_helper
-from chalicelib.utils import helper
+from chalicelib.utils import helper, email_helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
 
 
 def __generate_invitation_token():
@@ -20,7 +22,7 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
                             VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(role_id)s)
-                            RETURNING user_id,email,role,name,appearance, role_id
+                            RETURNING tenant_id,user_id,email,role,name,appearance, role_id
                     ),
                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
                              VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
@@ -36,8 +38,11 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
                            au.invitation_token,
-                           u.role_id
-                    FROM u,au;""",
+                           u.role_id,
+                           roles.name AS role_name,
+                           roles.permissions,
+                           TRUE AS has_password
+                    FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id = %(role_id)s;""",
                             {"tenantId": tenant_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
@@ -190,7 +195,7 @@ def update(tenant_id, user_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def create_member(tenant_id, user_id, data):
+def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
     admin = get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -205,6 +210,8 @@ def create_member(tenant_id, user_id, data):
     if name is None:
         name = data["email"]
     role_id = data.get("roleId")
+    if role_id is None:
+        role_id = roles.get_role_by_name(tenant_id=tenant_id, name="member").get("roleId")
     invitation_token = __generate_invitation_token()
     user = get_deleted_user_by_email(email=data["email"])
     if user is not None:
@@ -214,18 +221,24 @@ def create_member(tenant_id, user_id, data):
         new_member = create_new_member(tenant_id=tenant_id, email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name, role_id=role_id)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-    helper.async_post(environ['email_basic'] % 'member_invitation',
-                      {
-                          "email": data["email"],
-                          "invitationLink": new_member["invitationLink"],
-                          "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
-                          "senderName": admin["name"]
-                      })
+    # helper.async_post(config('email_basic') % 'member_invitation',
+    #                   {
+    #                       "email": data["email"],
+    #                       "invitationLink": new_member["invitationLink"],
+    #                       "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
+    #                       "senderName": admin["name"]
+    #                   })
+    background_tasks.add_task(email_helper.send_team_invitation, **{
+        "recipient": data["email"],
+        "invitation_link": new_member["invitationLink"],
+        "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
+        "sender_name": admin["name"]
+    })
     return {"data": new_member}
 
 
 def __get_invitation_link(invitation_token):
-    return environ["SITE_URL"] + environ["invitation_link"] % invitation_token
+    return config("SITE_URL") + config("invitation_link") % invitation_token
 
 
 def allow_password_change(user_id, delta_min=10):
@@ -299,12 +312,15 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
         admin = get(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
-    if user["superAdmin"] and "admin" in changes:
-        changes.pop("admin")
+    if editor_id == user_id_to_update:
+        if user["superAdmin"]:
+            changes.pop("admin")
+        elif user["admin"] != changes["admin"]:
+            return {"errors": ["cannot change your own role"]}
 
     keys = list(changes.keys())
     for k in keys:
-        if k not in ALLOW_EDIT:
+        if k not in ALLOW_EDIT or changes[k] is None:
             changes.pop(k)
     keys = list(changes.keys())
 
