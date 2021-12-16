@@ -1,5 +1,4 @@
 import json
-import logging
 import queue
 import re
 from typing import Optional, List
@@ -13,9 +12,6 @@ import app as main_app
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import CurrentContext
-
-logger: logging.Logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 IGNORE_ROUTES = [
     {"method": ["*"], "path": "/notifications"},
