@@ -11,7 +11,7 @@ from starlette.background import BackgroundTask
 import app as main_app
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from schemas import CurrentContext
+from schemas import CurrentContext, CurrentAPIContext
 
 IGNORE_ROUTES = [
     {"method": ["*"], "path": "/notifications"},
@@ -48,7 +48,9 @@ IGNORE_IN_PAYLOAD = ["token", "password", "authorizationToken", "authHeader", "x
 
 
 class TraceSchema(BaseModel):
-    user_id: int = Field(...)
+    user_id: Optional[int] = Field(None)
+    tenant_id: int = Field(...)
+    auth: str = Optional[Field](None)
     action: str = Field(...)
     method: str = Field(...)
     path_format: str = Field(...)
@@ -72,8 +74,8 @@ async def write_trace(trace: TraceSchema):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""INSERT INTO traces(user_id,created_at , action, method, path_format, endpoint, payload, parameters, status)
-                    VALUES (%(user_id)s, %(created_at)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
+                f"""INSERT INTO traces(user_id, tenant_id, created_at, action, method, path_format, endpoint, payload, parameters, status)
+                    VALUES (%(user_id)s, %(tenant_id)s, %(created_at)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
                 data)
         )
 
@@ -88,12 +90,12 @@ async def write_traces_batch(traces: List[TraceSchema]):
         for key in data.keys():
             params[f"{key}_{i}"] = data[key]
         values.append(
-            f"(%(user_id_{i})s, %(created_at_{i})s, %(action_{i})s, %(method_{i})s, %(path_format_{i})s, %(endpoint_{i})s, %(payload_{i})s::jsonb, %(parameters_{i})s::jsonb, %(status_{i})s)")
+            f"(%(user_id_{i})s, %(tenant_id_{i})s, %(created_at_{i})s, %(action_{i})s, %(method_{i})s, %(path_format_{i})s, %(endpoint_{i})s, %(payload_{i})s::jsonb, %(parameters_{i})s::jsonb, %(status_{i})s)")
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""INSERT INTO traces(user_id,created_at , action, method, path_format, endpoint, payload, parameters, status)
+                f"""INSERT INTO traces(user_id, tenant_id, created_at , action, method, path_format, endpoint, payload, parameters, status)
                     VALUES {" , ".join(values)};""",
                 params)
         )
@@ -109,7 +111,11 @@ async def process_trace(action: str, path_format: str, request: Request, respons
         intersect = list(set(body.keys()) & set(IGNORE_IN_PAYLOAD))
         for attribute in intersect:
             body[attribute] = "HIDDEN"
-    current_trace = TraceSchema(user_id=current_context.user_id, action=action,
+    current_trace = TraceSchema(tenant_id=current_context.tenant_id,
+                                user_id=current_context.user_id if isinstance(current_context, CurrentContext) \
+                                    else None,
+                                auth="apiKey" if isinstance(current_context, CurrentAPIContext) else "jwt",
+                                action=action,
                                 endpoint=str(request.url.path), method=request.method,
                                 payload=body,
                                 parameters=dict(request.query_params),

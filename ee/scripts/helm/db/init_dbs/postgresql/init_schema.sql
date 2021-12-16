@@ -912,8 +912,10 @@ $$
 
             CREATE TABLE traces
             (
-                user_id     text   NOT NULL DEFAULT generate_api_key(20),
+                user_id     text   NULL REFERENCES users (user_id) ON DELETE NO ACTION,
+                tenant_id   text   NOT NULL REFERENCES tenants (tenant_id) ON DELETE CASCADE,
                 created_at  bigint NOT NULL DEFAULT (EXTRACT(EPOCH FROM now() at time zone 'utc') * 1000)::bigint,
+                auth        text   NULL,
                 action      text   NOT NULL,
                 method      text   NOT NULL,
                 path_format text   NOT NULL,
@@ -922,6 +924,8 @@ $$
                 parameters  jsonb  NULL,
                 status      int    NULL
             );
+            CREATE INDEX traces_user_id_idx ON traces (user_id);
+            CREATE INDEX traces_tenant_id_idx ON traces (tenant_id);
 
             raise notice 'DB created';
         END IF;
