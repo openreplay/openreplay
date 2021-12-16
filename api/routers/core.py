@@ -783,6 +783,7 @@ def delete_filter(projectId: int, funnelId: int, context: schemas.CurrentContext
     return funnels.delete(user_id=context.user_id, funnel_id=funnelId, project_id=projectId)
 
 
+@app_apikey.put('/{projectKey}/sourcemaps/', tags=["sourcemaps"])
 @app_apikey.put('/{projectKey}/sourcemaps', tags=["sourcemaps"])
 def sign_sourcemap_for_upload(projectKey: str, data: schemas.SourcemapUploadPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
