@@ -10,6 +10,6 @@ async def weekly_report2() -> None:
 
 
 cron_jobs = [
-    {"func": run_scheduled_jobs, "trigger": "interval", "seconds": 60},
+    {"func": run_scheduled_jobs, "trigger": "interval", "seconds": 60, "misfire_grace_time": 20},
     {"func": weekly_report2, "trigger": "cron", "day_of_week": "mon", "hour": 5}
 ]

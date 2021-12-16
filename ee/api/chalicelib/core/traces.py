@@ -150,5 +150,6 @@ async def process_traces_queue():
 
 
 cron_jobs = [
-    {"func": process_traces_queue, "trigger": "interval", "seconds": config("traces_period", cast=int, default=60)}
+    {"func": process_traces_queue, "trigger": "interval", "seconds": config("traces_period", cast=int, default=60),
+     "misfire_grace_time": 20}
 ]
