@@ -1,22 +1,16 @@
-from typing import Union
-
 from decouple import config
 from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from starlette.responses import RedirectResponse
 
 import schemas
 from chalicelib.core import assist
-from chalicelib.core import boarding
-from chalicelib.core import errors
-from chalicelib.core import errors_favorite_viewed
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
-from chalicelib.core import tenants, users, metadata, projects, license, signup, slack, alerts, notifications
+from chalicelib.core import tenants, users, metadata, projects, license, alerts
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha
 from chalicelib.utils import helper
-from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -29,12 +23,6 @@ def get_all_signup():
                      "sso": None,
                      "ssoProvider": None,
                      "edition": helper.get_edition()}}
-
-
-@public_app.put('/signup', tags=['signup'])
-@public_app.post('/signup', tags=['signup'])
-def signup_handler(data: schemas.UserSignupSchema = Body(...)):
-    return signup.create_step1(data)
 
 
 @public_app.post('/login', tags=["authentication"])
@@ -92,31 +80,6 @@ def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     }
 
 
-@app.get('/projects', tags=['projects'])
-def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True, version=True)}
-
-
-@app.post('/projects', tags=['projects'])
-@app.put('/projects', tags=['projects'])
-def create_project(data: schemas.CreateProjectSchema = Body(...),
-                   context: schemas.CurrentContext = Depends(OR_context)):
-    return projects.create(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
-
-
-@app.post('/projects/{projectId}', tags=['projects'])
-@app.put('/projects/{projectId}', tags=['projects'])
-def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return projects.edit(tenant_id=context.tenant_id, user_id=context.user_id, data=data, project_id=projectId)
-
-
-@app.delete('/projects/{projectId}', tags=['projects'])
-def delete_project(projectId, context: schemas.CurrentContext = Depends(OR_context)):
-    return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
-
-
 @app.get('/projects/limit', tags=['projects'])
 def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": {
@@ -132,32 +95,6 @@ def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_con
     if data is None:
         return {"errors": ["project not found"]}
     return {"data": data}
-
-
-@app.get('/client', tags=['projects'])
-def get_client(context: schemas.CurrentContext = Depends(OR_context)):
-    r = tenants.get_by_tenant_id(context.tenant_id)
-    if r is not None:
-        r.pop("createdAt")
-        r["projects"] = projects.get_projects(tenant_id=context.tenant_id, recording_state=True, recorded=True,
-                                              stack_integrations=True, version=True)
-    return {
-        'data': r
-    }
-
-
-@app.get('/client/new_api_key', tags=['client'])
-def generate_new_tenant_token(context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': tenants.generate_new_api_key(context.tenant_id)
-    }
-
-
-@app.put('/client', tags=['client'])
-@app.post('/client', tags=['client'])
-def edit_client(data: schemas.UpdateTenantSchema = Body(...),
-                context: schemas.CurrentContext = Depends(OR_context)):
-    return tenants.update(tenant_id=context.tenant_id, user_id=context.user_id, data=data)
 
 
 @app.put('/integrations/slack', tags=['integrations'])
@@ -187,136 +124,6 @@ def edit_slack_integration(integrationId: int, data: schemas.EditSlackSchema = B
                                    changes={"name": data.name, "endpoint": data.url})}
 
 
-@app.post('/{projectId}/errors/search', tags=['errors'])
-def errors_search(projectId: int, status: str = "ALL", favorite: Union[str, bool] = False,
-                  data: schemas.SearchErrorsSchema = Body(...),
-                  context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(favorite, str):
-        favorite = True if len(favorite) == 0 else False
-    return errors.search(data.dict(), projectId, user_id=context.user_id, status=status,
-                         favorite_only=favorite)
-
-
-@app.get('/{projectId}/errors/stats', tags=['errors'])
-def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return errors.stats(projectId, user_id=context.user_id, startTimestamp=startTimestamp, endTimestamp=endTimestamp)
-
-
-@app.get('/{projectId}/errors/{errorId}', tags=['errors'])
-def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                              **{"density24": density24, "density30": density30})
-    if data.get("data") is not None:
-        errors_favorite_viewed.viewed_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
-    return data
-
-
-@app.get('/{projectId}/errors/{errorId}/stats', tags=['errors'])
-def errors_get_details_right_column(projectId: int, errorId: str, startDate: int = TimeUTC.now(-7),
-                                    endDate: int = TimeUTC.now(), density: int = 7,
-                                    context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_details_chart(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                    **{"startDate": startDate, "endDate": endDate, "density": density})
-    return data
-
-
-@app.get('/{projectId}/errors/{errorId}/sourcemaps', tags=['errors'])
-def errors_get_details_sourcemaps(projectId: int, errorId: str,
-                                  context: schemas.CurrentContext = Depends(OR_context)):
-    data = errors.get_trace(project_id=projectId, error_id=errorId)
-    if "errors" in data:
-        return data
-    return {
-        'data': data
-    }
-
-
-@app.get('/{projectId}/errors/{errorId}/{action}', tags=["errors"])
-def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDate: int = TimeUTC.now(-7),
-                              endDate: int = TimeUTC.now(), context: schemas.CurrentContext = Depends(OR_context)):
-    if action == "favorite":
-        return errors_favorite_viewed.favorite_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
-    elif action == "sessions":
-        start_date = startDate
-        end_date = endDate
-        return {
-            "data": errors.get_sessions(project_id=projectId, user_id=context.user_id, error_id=errorId,
-                                        start_date=start_date, end_date=end_date)}
-    elif action in list(errors.ACTION_STATE.keys()):
-        return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
-    else:
-        return {"errors": ["undefined action"]}
-
-
-@public_app.post('/async/alerts/notifications/{step}', tags=["async", "alerts"])
-@public_app.put('/async/alerts/notifications/{step}', tags=["async", "alerts"])
-def send_alerts_notification_async(step: str, data: schemas.AlertNotificationSchema = Body(...)):
-    if data.auth != config("async_Token"):
-        return {"errors": ["missing auth"]}
-    if step == "slack":
-        slack.send_batch(notifications_list=data.notifications)
-    elif step == "email":
-        alerts.send_by_email_batch(notifications_list=data.notifications)
-    elif step == "webhook":
-        webhook.trigger_batch(data_list=data.notifications)
-
-
-@app.get('/notifications', tags=['notifications'])
-def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
-
-
-@app.get('/notifications/{notificationId}/view', tags=['notifications'])
-def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.view_notification(notification_ids=[notificationId], user_id=context.user_id)}
-
-
-@app.post('/notifications/view', tags=['notifications'])
-@app.put('/notifications/view', tags=['notifications'])
-def batch_view_notifications(data: schemas.NotificationsViewSchema,
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": notifications.view_notification(notification_ids=data.ids,
-                                                    startTimestamp=data.startTimestamp,
-                                                    endTimestamp=data.endTimestamp,
-                                                    user_id=context.user_id,
-                                                    tenant_id=context.tenant_id)}
-
-
-@public_app.post('/notifications', tags=['notifications'])
-@public_app.put('/notifications', tags=['notifications'])
-def create_notifications(data: schemas.CreateNotificationSchema):
-    if data.token != config("async_Token"):
-        return {"errors": ["missing token"]}
-    return notifications.create(data.notifications)
-
-
-@app.get('/boarding', tags=['boarding'])
-def get_boarding_state(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/installing', tags=['boarding'])
-def get_boarding_state_installing(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_installing(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/identify-users', tags=["boarding"])
-def get_boarding_state_identify_users(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_identify_users(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/manage-users', tags=["boarding"])
-def get_boarding_state_manage_users(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_manage_users(tenant_id=context.tenant_id)}
-
-
-@app.get('/boarding/integrations', tags=["boarding"])
-def get_boarding_state_integrations(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": boarding.get_state_integrations(tenant_id=context.tenant_id)}
-
-
 # this endpoint supports both jira & github based on `provider` attribute
 @app.post('/integrations/issues', tags=["integrations"])
 def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
@@ -327,43 +134,6 @@ def add_edit_jira_cloud_github(data: schemas.JiraGithubSchema,
     if error is not None:
         return error
     return {"data": integration.add_edit(data=data.dict())}
-
-
-@app.get('/integrations/slack/channels', tags=["integrations"])
-def get_slack_channels(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_type(tenant_id=context.tenant_id, webhook_type='slack')}
-
-
-@app.get('/integrations/slack/{integrationId}', tags=["integrations"])
-def get_slack_webhook(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get(tenant_id=context.tenant_id, webhook_id=integrationId)}
-
-
-@app.delete('/integrations/slack/{integrationId}', tags=["integrations"])
-def delete_slack_integration(integrationId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return webhook.delete(context.tenant_id, integrationId)
-
-
-@app.post('/webhooks', tags=["webhooks"])
-@app.put('/webhooks', tags=["webhooks"])
-def add_edit_webhook(data: schemas.CreateEditWebhookSchema = Body(...),
-                     context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.add_edit(tenant_id=context.tenant_id, data=data.dict(), replace_none=True)}
-
-
-@app.get('/webhooks', tags=["webhooks"])
-def get_webhooks(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.get_by_tenant(tenant_id=context.tenant_id, replace_none=True)}
-
-
-@app.delete('/webhooks/{webhookId}', tags=["webhooks"])
-def delete_webhook(webhookId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": webhook.delete(tenant_id=context.tenant_id, webhook_id=webhookId)}
-
-
-@app.get('/client/members', tags=["client"])
-def get_members(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": users.get_members(tenant_id=context.tenant_id)}
 
 
 @app.post('/client/members', tags=["client"])
@@ -411,38 +181,6 @@ def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data.dict(),
                       user_id_to_update=memberId)
-
-
-@app.get('/client/members/{memberId}/reset', tags=["client"])
-def reset_reinvite_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return users.reset_member(tenant_id=context.tenant_id, editor_id=context.user_id, user_id_to_update=memberId)
-
-
-@app.delete('/client/members/{memberId}', tags=["client"])
-def delete_member(memberId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return users.delete_member(tenant_id=context.tenant_id, user_id=context.user_id, id_to_delete=memberId)
-
-
-@app.get('/account/new_api_key', tags=["account"])
-def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": users.generate_new_api_key(user_id=context.user_id)}
-
-
-@app.post('/account', tags=["account"])
-@app.put('/account', tags=["account"])
-def edit_account(data: schemas.EditUserSchema = Body(...),
-                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data.dict(),
-                      editor_id=context.user_id)
-
-
-@app.post('/account/password', tags=["account"])
-@app.put('/account/password', tags=["account"])
-def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
-                           context: schemas.CurrentContext = Depends(OR_context)):
-    return users.change_password(email=context.email, old_password=data.old_password,
-                                 new_password=data.new_password, tenant_id=context.tenant_id,
-                                 user_id=context.user_id)
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
