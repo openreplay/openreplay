@@ -1,3 +1,5 @@
+from typing import Optional
+
 from decouple import config
 from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from starlette.responses import RedirectResponse
@@ -185,12 +187,12 @@ def edit_member(memberId: int, data: schemas_ee.EditMemberSchema,
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
-def search_sessions_by_metadata(projectId: int, key: str, value: str,
+def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
                                 context: schemas.CurrentContext = Depends(OR_context)):
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
 
-    if not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id):
+    if projectId is not None and not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id):
         return {"errors": ["unauthorized project"]}
     if len(value) == 0:
         return {"errors": ["please provide a value for search"]}

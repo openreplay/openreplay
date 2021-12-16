@@ -1,3 +1,5 @@
+from typing import Optional
+
 from decouple import config
 from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
 from starlette.responses import RedirectResponse
@@ -184,7 +186,7 @@ def edit_member(memberId: int, data: schemas.EditMemberSchema,
 
 
 @app.get('/metadata/session_search', tags=["metadata"])
-def search_sessions_by_metadata(projectId: int, key: str, value: str,
+def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] = None,
                                 context: schemas.CurrentContext = Depends(OR_context)):
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
