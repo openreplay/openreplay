@@ -74,8 +74,8 @@ async def write_trace(trace: TraceSchema):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""INSERT INTO traces(user_id, tenant_id, created_at, action, method, path_format, endpoint, payload, parameters, status)
-                    VALUES (%(user_id)s, %(tenant_id)s, %(created_at)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
+                f"""INSERT INTO traces(user_id, tenant_id, created_at, auth, action, method, path_format, endpoint, payload, parameters, status)
+                    VALUES (%(user_id)s, %(tenant_id)s, %(created_at)s, %(auth)s, %(action)s, %(method)s, %(path_format)s, %(endpoint)s, %(payload)s::jsonb, %(parameters)s::jsonb, %(status)s);""",
                 data)
         )
 
@@ -90,12 +90,12 @@ async def write_traces_batch(traces: List[TraceSchema]):
         for key in data.keys():
             params[f"{key}_{i}"] = data[key]
         values.append(
-            f"(%(user_id_{i})s, %(tenant_id_{i})s, %(created_at_{i})s, %(action_{i})s, %(method_{i})s, %(path_format_{i})s, %(endpoint_{i})s, %(payload_{i})s::jsonb, %(parameters_{i})s::jsonb, %(status_{i})s)")
+            f"(%(user_id_{i})s, %(tenant_id_{i})s, %(created_at_{i})s, %(auth_{i})s, %(action_{i})s, %(method_{i})s, %(path_format_{i})s, %(endpoint_{i})s, %(payload_{i})s::jsonb, %(parameters_{i})s::jsonb, %(status_{i})s)")
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"""INSERT INTO traces(user_id, tenant_id, created_at , action, method, path_format, endpoint, payload, parameters, status)
+                f"""INSERT INTO traces(user_id, tenant_id, created_at, auth, action, method, path_format, endpoint, payload, parameters, status)
                     VALUES {" , ".join(values)};""",
                 params)
         )
