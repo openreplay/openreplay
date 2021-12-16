@@ -1,6 +1,6 @@
 import requests
 
-from chalicelib.utils.helper import environ
+from decouple import config
 
 
 def get_original_trace(key, positions):
@@ -8,13 +8,13 @@ def get_original_trace(key, positions):
         "key": key,
         "positions": positions,
         "padding": 5,
-        "bucket": environ['sourcemaps_bucket'],
-        "S3_HOST": environ['S3_HOST'],
-        "S3_KEY": environ['S3_KEY'],
-        "S3_SECRET": environ['S3_SECRET'],
-        "region": environ['sessions_region']
+        "bucket": config('sourcemaps_bucket'),
+        "S3_HOST": config('S3_HOST'),
+        "S3_KEY": config('S3_KEY'),
+        "S3_SECRET": config('S3_SECRET'),
+        "region": config('sessions_region')
     }
-    r = requests.post(environ["sourcemaps_reader"], json=payload)
+    r = requests.post(config("sourcemaps_reader"), json=payload)
     if r.status_code != 200:
         return {}
 

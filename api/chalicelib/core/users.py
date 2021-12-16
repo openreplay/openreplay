@@ -1,16 +1,15 @@
 import json
 import secrets
 
-from chalicelib.core import authorizers, metadata, projects, assist
-from chalicelib.core import tenants
-from chalicelib.utils import dev
+from decouple import config
+from fastapi import BackgroundTasks
+
+from chalicelib.core import authorizers, metadata, projects
+from chalicelib.core import tenants, assist
+from chalicelib.utils import dev, email_helper
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
-
-from chalicelib.core import tenants, assist
-import secrets
 
 
 def __generate_invitation_token():
@@ -182,7 +181,7 @@ def update(tenant_id, user_id, changes):
         return helper.dict_to_camel_case(cur.fetchone())
 
 
-def create_member(tenant_id, user_id, data):
+def create_member(tenant_id, user_id, data, background_tasks: BackgroundTasks):
     admin = get(tenant_id=tenant_id, user_id=user_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
@@ -205,18 +204,25 @@ def create_member(tenant_id, user_id, data):
         new_member = create_new_member(email=data["email"], invitation_token=invitation_token,
                                        admin=data.get("admin", False), name=name)
     new_member["invitationLink"] = __get_invitation_link(new_member.pop("invitationToken"))
-    helper.async_post(environ['email_basic'] % 'member_invitation',
-                      {
-                          "email": data["email"],
-                          "invitationLink": new_member["invitationLink"],
-                          "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
-                          "senderName": admin["name"]
-                      })
+
+    # helper.async_post(config('email_basic') % 'member_invitation',
+    #                   {
+    #                       "email": data["email"],
+    #                       "invitationLink": new_member["invitationLink"],
+    #                       "clientId": tenants.get_by_tenant_id(tenant_id)["name"],
+    #                       "senderName": admin["name"]
+    #                   })
+    background_tasks.add_task(email_helper.send_team_invitation, **{
+        "recipient": data["email"],
+        "invitation_link": new_member["invitationLink"],
+        "client_id": tenants.get_by_tenant_id(tenant_id)["name"],
+        "sender_name": admin["name"]
+    })
     return {"data": new_member}
 
 
 def __get_invitation_link(invitation_token):
-    return environ["SITE_URL"] + environ["invitation_link"] % invitation_token
+    return config("SITE_URL") + config("invitation_link") % invitation_token
 
 
 def allow_password_change(user_id, delta_min=10):
@@ -282,12 +288,15 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
         admin = get(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
-    if user["superAdmin"]:
-        changes.pop("admin")
+    if editor_id == user_id_to_update:
+        if user["superAdmin"]:
+            changes.pop("admin")
+        elif user["admin"] != changes["admin"]:
+            return {"errors": ["cannot change your own role"]}
 
     keys = list(changes.keys())
     for k in keys:
-        if k not in ALLOW_EDIT:
+        if k not in ALLOW_EDIT or changes[k] is None:
             changes.pop(k)
     keys = list(changes.keys())
 
@@ -441,7 +450,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]= assist.get_ice_servers()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {
@@ -469,7 +478,7 @@ def set_password_invitation(user_id, new_password):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]= assist.get_ice_servers()
+    c["iceServers"] = assist.get_ice_servers()
     return {
         'jwt': r.pop('jwt'),
         'data': {

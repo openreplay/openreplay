@@ -132,7 +132,7 @@ def get_scheduled_jobs():
 def execute_jobs():
     jobs = get_scheduled_jobs()
     if len(jobs) == 0:
-        print('No jobs to execute.')
+        # No jobs to execute
         return
 
     for job in jobs:

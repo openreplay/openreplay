@@ -1,6 +1,6 @@
-from chalicelib.utils import pg_client, helper, dev
-from chalicelib.core import events, sessions_metas, socket_ios, metadata, events_ios, \
+from chalicelib.core import events, sessions_metas, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist
+from chalicelib.utils import pg_client, helper, dev
 
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,

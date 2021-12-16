@@ -3,9 +3,13 @@ urllib3==1.26.6
 boto3==1.16.1
 pyjwt==1.7.1
 psycopg2-binary==2.8.6
-pytz==2020.1
-sentry-sdk==0.19.1
 elasticsearch==7.9.1
 jira==2.0.0
-schedule==1.1.0
-croniter==1.0.12
+
+
+
+fastapi==0.70.1
+uvicorn[standard]==0.16.0
+python-decouple==3.5
+pydantic[email]==1.8.2
+apscheduler==3.8.1
