@@ -11,7 +11,7 @@ from starlette.background import BackgroundTask
 import app as main_app
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from schemas import CurrentContext, CurrentAPIContext
+from schemas import CurrentContext
 
 IGNORE_ROUTES = [
     {"method": ["*"], "path": "/notifications"},
@@ -114,7 +114,7 @@ async def process_trace(action: str, path_format: str, request: Request, respons
     current_trace = TraceSchema(tenant_id=current_context.tenant_id,
                                 user_id=current_context.user_id if isinstance(current_context, CurrentContext) \
                                     else None,
-                                auth="apiKey" if isinstance(current_context, CurrentAPIContext) else "jwt",
+                                auth="jwt" if isinstance(current_context, CurrentContext) else "apiKey",
                                 action=action,
                                 endpoint=str(request.url.path), method=request.method,
                                 payload=body,
