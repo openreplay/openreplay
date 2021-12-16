@@ -50,7 +50,7 @@ IGNORE_IN_PAYLOAD = ["token", "password", "authorizationToken", "authHeader", "x
 class TraceSchema(BaseModel):
     user_id: Optional[int] = Field(None)
     tenant_id: int = Field(...)
-    auth: str = Optional[Field](None)
+    auth: Optional[str] = Field(None)
     action: str = Field(...)
     method: str = Field(...)
     path_format: str = Field(...)
