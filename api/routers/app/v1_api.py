@@ -10,7 +10,7 @@ public_app, app, app_apikey = get_routers()
 
 
 @app_apikey.get('/v1/{projectKey}/users/{userId}/sessions', tags=["api"])
-def get_user_sessions(projectKey: str, userId: int, start_date: int = None, end_date: int = None):
+def get_user_sessions(projectKey: str, userId: str, start_date: int = None, end_date: int = None):
     projectId = projects.get_internal_project_id(projectKey)
 
     return {
@@ -35,7 +35,7 @@ def get_session_events(projectKey: str, sessionId: int):
 
 
 @app_apikey.get('/v1/{projectKey}/users/{userId}', tags=["api"])
-def get_user_details(projectKey: str, userId: int):
+def get_user_details(projectKey: str, userId: str):
     projectId = projects.get_internal_project_id(projectKey)
     return {
         'data': sessions.get_session_user(
@@ -46,7 +46,7 @@ def get_user_details(projectKey: str, userId: int):
 
 
 @app_apikey.delete('/v1/{projectKey}/users/{userId}', tags=["api"])
-def schedule_to_delete_user_data(projectKey: str, userId: int):
+def schedule_to_delete_user_data(projectKey: str, userId: str):
     projectId = projects.get_internal_project_id(projectKey)
     data = {"action": "delete_user_data",
             "reference_id": userId,
