@@ -1,7 +1,7 @@
 BEGIN;
 CREATE TABLE traces
 (
-    user_id     integer NULL REFERENCES users (user_id) ON DELETE NO ACTION,
+    user_id     integer NULL REFERENCES users (user_id) ON DELETE CASCADE,
     tenant_id   integer NOT NULL REFERENCES tenants (tenant_id) ON DELETE CASCADE,
     created_at  bigint  NOT NULL DEFAULT (EXTRACT(EPOCH FROM now() at time zone 'utc') * 1000)::bigint,
     auth        text    NULL,
