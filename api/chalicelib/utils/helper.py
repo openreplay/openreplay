@@ -5,6 +5,8 @@ import string
 import math
 import requests
 
+import schemas
+
 local_prefix = 'local-'
 from decouple import config
 
@@ -172,7 +174,7 @@ def string_to_sql_like_with_op(value, op):
         _value = value
     if _value is None:
         return _value
-    if op.lower() != 'ilike':
+    if op.upper() != 'ILIKE':
         return _value.replace("%", "%%")
     _value = _value.replace("*", "%")
     if _value.startswith("^"):
@@ -185,6 +187,20 @@ def string_to_sql_like_with_op(value, op):
     elif not _value.endswith("%"):
         _value = _value + '%'
     return _value.replace("%", "%%")
+
+
+def string_to_op(value: str, op: schemas.SearchEventOperator):
+    if isinstance(value, list) and len(value) > 0:
+        _value = value[0]
+    else:
+        _value = value
+    if _value is None:
+        return _value
+    if op == schemas.SearchEventOperator._starts_with:
+        _value = '^' + _value
+    elif op == schemas.SearchEventOperator._ends_with:
+        _value = _value + '$'
+    return _value
 
 
 def is_valid_email(email):
