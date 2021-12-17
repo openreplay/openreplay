@@ -290,8 +290,30 @@ class _AlertOptionSchema(BaseModel):
     renotifyInterval: Optional[int] = Field(720)
 
 
+class AlertColumn(str, Enum):
+    performance__dom_content_loaded__average = "performance.dom_content_loaded.average"
+    performance__first_meaningful_paint__average = "performance.first_meaningful_paint.average"
+    performance__page_load_time__average = "performance.page_load_time.average"
+    performance__dom_build_time__average = "performance.dom_build_time.average"
+    performance__speed_index__average = "performance.speed_index.average"
+    performance__page_response_time__average = "performance.page_response_time.average"
+    performance__ttfb__average = "performance.ttfb.average"
+    performance__time_to_render__average = "performance.time_to_render.average"
+    performance__image_load_time__average = "performance.image_load_time.average"
+    performance__request_load_time__average = "performance.request_load_time.average"
+    resources__load_time__average = "resources.load_time.average"
+    resources__missing__count = "resources.missing.count"
+    errors__4xx_5xx__count = "errors.4xx_5xx.count"
+    errors__4xx__count = "errors.4xx.count"
+    errors__5xx__count = "errors.5xx.count"
+    errors__javascript__impacted_sessions__count = "errors.javascript.impacted_sessions.count"
+    performance__crashes__count = "performance.crashes.count"
+    errors__javascript__count = "errors.javascript.count"
+    errors__backend__count = "errors.backend.count"
+
+
 class _AlertQuerySchema(BaseModel):
-    left: str = Field(...)
+    left: AlertColumn = Field(...)
     right: float = Field(...)
     operator: Literal["<", ">", "<=", ">="] = Field(...)
 
