@@ -310,15 +310,15 @@ class SourcemapUploadPayloadSchema(BaseModel):
 
 class SearchEventOperator(str, Enum):
     _is = "is"
-    _is_any = "isany"
+    _is_any = "isAny"
     _on = "on"
-    _on_any = "onany"
-    _isnot = "isnot"
-    _noton = "noton"
+    _on_any = "onAny"
+    _isnot = "isNot"
+    _noton = "notOn"
     _contains = "contains"
-    _notcontains = "notcontains"
-    _starts_with = "startswith"
-    _ends_with = "endswith"
+    _notcontains = "notContains"
+    _starts_with = "startsWith"
+    _ends_with = "endsWith"
 
 
 class PlatformType(str, Enum):
