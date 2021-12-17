@@ -26,11 +26,11 @@ function build_api(){
         envarg="default-ee"
         tag="ee-"
     }
-    docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/api:${git_sha1} .
+    docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/chalice:${git_sha1} .
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/api:${git_sha1}
-        docker tag ${DOCKER_REPO:-'local'}/api:${git_sha1} ${DOCKER_REPO:-'local'}/api:${tag}latest
-        docker push ${DOCKER_REPO:-'local'}/api:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
+        docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/chalice:${tag}latest
     }
 }
 
