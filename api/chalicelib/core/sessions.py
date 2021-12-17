@@ -135,7 +135,8 @@ def __reverse_sql_operator(op):
 
 
 def __get_sql_operator_multiple(op: schemas.SearchEventOperator):
-    return " IN " if __is_multivalue(op) else " NOT IN "
+    # op == schemas.SearchEventOperator._is  is for filter support
+    return " IN " if __is_multivalue(op) or op == schemas.SearchEventOperator._is else " NOT IN "
 
 
 def __get_sql_value_multiple(values):
