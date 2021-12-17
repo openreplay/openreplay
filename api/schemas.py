@@ -1,9 +1,14 @@
-from typing import Optional, List, Literal
+from enum import Enum
+from typing import Optional, List, Literal, Union
 
 from pydantic import BaseModel, Field, EmailStr, HttpUrl
 
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import key_to_camel_case
+
+
+def attribute_to_camel_case(snake_str):
+    components = snake_str.split("_")
+    return components[0] + ''.join(x.title() for x in components[1:])
 
 
 class _Grecaptcha(BaseModel):
@@ -21,7 +26,7 @@ class UserSignupSchema(UserLoginSchema):
     projectName: str = Field(default="my first project")
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class EditUserSchema(BaseModel):
@@ -40,7 +45,7 @@ class EditUserPasswordSchema(BaseModel):
     new_password: str = Field(...)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class UpdateTenantSchema(BaseModel):
@@ -48,7 +53,7 @@ class UpdateTenantSchema(BaseModel):
     opt_out: Optional[bool] = Field(None)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class CreateProjectSchema(BaseModel):
@@ -144,7 +149,7 @@ class AssignmentSchema(BaseModel):
     issue_type: str = Field(...)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class CommentAssignmentSchema(BaseModel):
@@ -171,7 +176,7 @@ class WeeklyReportConfigSchema(BaseModel):
     weekly_report: bool = Field(True)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class GetHeatmapPayloadSchema(BaseModel):
@@ -265,7 +270,7 @@ class MemberInvitationPayloadSchema(BaseModel):
     sender_name: str = Field(...)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class ErrorIdsPayloadSchema(BaseModel):
@@ -303,10 +308,30 @@ class SourcemapUploadPayloadSchema(BaseModel):
     urls: List[str] = Field(..., alias="URL")
 
 
+class SearchEventOperator(str, Enum):
+    _is = "is"
+    _is_any = "isany"
+    _on = "on"
+    _on_any = "onany"
+    _isnot = "isnot"
+    _noton = "noton"
+    _contains = "contains"
+    _notcontains = "notcontains"
+    _starts_with = "startswith"
+    _ends_with = "endswith"
+
+
+class PlatformType(str, Enum):
+    mobile = "mobile"
+    desktop = "desktop"
+
+
 class _SessionSearchEventSchema(BaseModel):
-    value: Optional[str] = Field(...)
+    custom: Optional[str] = Field(None)
+    key: Optional[str] = Field(None)
+    value: Union[Optional[str], Optional[List[str]]] = Field(...)
     type: str = Field(...)
-    operator: str = Field(...)
+    operator: SearchEventOperator = Field(...)
     source: Optional[str] = Field(...)
 
 
@@ -319,10 +344,11 @@ class SessionsSearchPayloadSchema(BaseModel):
     filters: List[_SessionSearchFilterSchema] = Field([])
     # custom:dict=Field(...)
     # rangeValue:str=Field(...)
-    startDate: int = Field(...)
-    endDate: int = Field(...)
+    startDate: int = Field(None)
+    endDate: int = Field(None)
     sort: str = Field(...)
-    order: str = Field(...)
+    order: str = Field(default="DESC")
+    platform: Optional[PlatformType] = Field(None)
 
 
 class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
@@ -331,7 +357,7 @@ class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class FunnelSchema(BaseModel):
@@ -340,7 +366,7 @@ class FunnelSchema(BaseModel):
     is_public: bool = Field(False)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class UpdateFunnelSchema(FunnelSchema):
@@ -362,7 +388,7 @@ class MetricPayloadSchema(BaseModel):
     type: Optional[str] = Field(None)
 
     class Config:
-        alias_generator = key_to_camel_case
+        alias_generator = attribute_to_camel_case
 
 
 class AssistSearchPayloadSchema(BaseModel):
