@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chalice.fullname" . }}
+  labels:
+    {{- include "chalice.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "chalice.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "chalice.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "chalice.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: pg_host
+              value: '{{ .Values.global.postgresql.postgresqlHost }}'
+            - name: pg_port
+              value: "5432"
+            - name: pg_dbname
+              value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+            - name: pg_user
+              value: '{{ .Values.global.postgresql.postgresqlUser }}'
+            - name: pg_password
+              value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+            - name: S3_HOST
+              {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+              value: 'https://{{ .Values.global.domainName }}'
+              {{- else}}
+              value: '{{ .Values.global.s3.endpoint }}'
+              {{- end}}
+            - name: S3_KEY
+              value: '{{ .Values.global.s3.accessKey }}'
+            - name: S3_SECRET
+              value: '{{ .Values.global.s3.secretKey }}'
+            - name: AWS_DEFAULT_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: sessions_region
+              value: '{{ .Values.global.s3.region }}' 
+            - name: sessions_bucket
+              value: '{{ .Values.global.s3.recordings_bucket }}'
+            - name: sourcemaps_bucket
+              value: '{{ .Values.global.s3.sourcemaps_bucket }}' 
+            - name: js_cache_bucket
+              value: '{{ .Values.global.s3.assetsBucket }}' 
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

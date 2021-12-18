@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "openreplay.fullname" . }}
+  name: {{ include "db.fullname" . }}
   labels:
-    {{- include "openreplay.labels" . | nindent 4 }}
+    {{- include "db.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "openreplay.selectorLabels" . | nindent 6 }}
+      {{- include "db.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "openreplay.selectorLabels" . | nindent 8 }}
+        {{- include "db.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "openreplay.serviceAccountName" . }}
+      serviceAccountName: {{ include "db.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -33,9 +33,24 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
+            - name: REDIS_STRING
+              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
+            - name: KAFKA_SERVERS
+              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+            - name: KAFKA_USE_SSL
+              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            - name: POSTGRES_STRING
+              value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
             httpGet:

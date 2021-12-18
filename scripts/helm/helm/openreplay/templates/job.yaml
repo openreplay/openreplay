@@ -1,0 +1,123 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-migration-script
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-6" # Higher precidence, so the first the config map will get created.
+data:
+  {{- (.Files.Glob "files/*").AsConfig | nindent 2 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: databases-migrate
+  labels:
+    app: databases
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-5"
+spec:
+  backoffLimit: 0 # Don't restart failing containers
+  template:
+    metadata:
+      name: postgresqlMigrate
+    spec:
+      initContainers:
+      - name: git
+        image: alpine/git
+        env:
+          - name: ENTERPRISE_EDITION_LICENSE
+            value: "{{ .Values.global.enterpriseEditionLicense }}"
+        command:
+          - /bin/sh
+          - -c
+        args:
+          - |
+            git clone https://github.com/openreplay/openreplay -b {{ .Chart.AppVersion }} /opt/openreplay/openreplay
+            if [ ENTERPRISE_EDITION_LICENSE != "" ]; then
+              cd /opt/openreplay/openreplay 
+              cp -rf ee/scripts/* scripts/
+            fi
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+      containers:
+      - name: postgres
+        env:
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
+          - name: PGHOST
+            value: "{{ .Values.global.postgresql.postgresqlHost }}"
+          - name: PGPORT
+            value: "{{ .Values.global.postgresql.postgresqlPort }}"
+          - name: PGDATABASE
+            value: "{{ .Values.global.postgresql.postgresqlDatabase }}"
+          - name: PGUSER
+            value: "{{ .Values.global.postgresql.postgresqlUser }}"
+          - name: PGPASSWORD
+            value: "{{ .Values.global.postgresql.postgresqlPassword }}"
+        image: bitnami/postgresql:13.3.0-debian-10-r53
+        command: 
+        - /bin/bash
+        - /opt/migrations/dbops.sh
+        - "{{ .Release.IsUpgrade }}"
+        - "postgresql"
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+      {{- if .Values.global.enterpriseEditionLicense }}
+      # Enterprise migration
+      - name: clickhouse
+        image: yandex/clickhouse-client:20.9
+        env:
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
+        command: 
+        - /bin/bash
+        - /opt/migrations/dbops.sh
+        - "{{ .Release.IsUpgrade }}"
+        - clickhouse
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+      - name: kafka
+        image: bitnami/kafka:2.6.0-debian-10-r30
+        env:
+          - name: KAFKA_HOST
+            value: "{{ .Values.global.kafka.kafkaHost }}"
+          - name: KAFKA_PORT
+            value: "{{ .Values.global.kafka.kafkaPort }}"
+          - name: KAFKA_SSL
+            value: "{{ .Values.global.kafka.kafkaUseSsl }}"
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.global.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
+        command: 
+        - /bin/bash
+        - /opt/migrations/dbops.sh
+        - "{{ .Release.IsUpgrade }}"
+        - kafka
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
+        {{- end}}
+      volumes:
+      - name: dbmigrationscript
+        configMap:
+          name: db-migration-script
+      - name: shared
+        emptyDir: {}
+      restartPolicy: Never
