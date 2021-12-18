@@ -1,4 +1,4 @@
-postgresql:
+postgresql: &postgres
   # For genrating psswords
   # `openssl rand -hex 20`
   postgresqlPassword: "changeMePassword"
@@ -7,18 +7,42 @@ postgresql:
   postgresqlUser: "postgres"
   postgresqlDatabase: "postgres"
 
-kafka:
+kafka: &kafka
   kafkaHost: "kafka.db.svc.cluster.local"
   kafkaPort: "9092"
   kafkaUseSsl: "false"
+
+redis: &redis
+  redisHost: "redis-master.db.svc.cluster.local"
+  redisPort: "6379"
 
 minio:
   global:
     minio:
       # For genrating psswords
       # `openssl rand -hex 20`
-      accessKey: "changeMePassword"
-      secretKey: "changeMePassword"
+      accessKey: "changeMeMinioAccessKey"
+      secretKey: "changeMeMinioPasword"
 
 global:
-  enterprise_edition_license: ""
+  postgresql: *postgres
+  kafka: *kafka
+  redis: *redis
+  s3:
+    region: "us-east-1"
+    endpoint: "http://minio.db.svc.cluster.local:9000"
+    assetsBucket: "sessions-assets"
+    recordings_bucket: "mobs"
+    sourcemaps_bucket: "sourcemaps"
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
+    accessKey: "changeMeMinioAccessKey"
+    secretKey: "changeMeMinioPassword"
+
+  chalice:
+    env:
+      jwt_secret: "SetARandomStringHere"
+
+  enterpriseEditionLicense: ""
+  domainName: ""
