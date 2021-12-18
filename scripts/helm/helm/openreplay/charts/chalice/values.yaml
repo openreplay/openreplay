@@ -5,14 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: nginx
+  repository: rg.fr-par.scw.cloud/foss/chalice
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: "chalice"
+fullnameOverride: "chalice"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,7 +38,7 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 80
+  port: 9000
 
 ingress:
   enabled: false
@@ -69,11 +69,45 @@ resources: {}
   #   memory: 128Mi
 
 autoscaling:
-  enabled: false
+  enabled: true
   minReplicas: 1
-  maxReplicas: 100
+  maxReplicas: 5
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
+
+env:
+  ch_host: clickhouse.db.svc.cluster.local
+  ch_port: 9000
+  captcha_server: ''
+  captcha_key: ''
+  async_Token: ''
+  EMAIL_HOST: ''
+  EMAIL_PORT: '587'
+  EMAIL_USER: ''
+  EMAIL_PASSWORD: ''
+  EMAIL_USE_TLS: 'true'
+  EMAIL_USE_SSL: 'false'
+  EMAIL_SSL_KEY: ''
+  EMAIL_SSL_CERT: ''
+  EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
+  SITE_URL: ''
+  announcement_url: ''
+  jwt_secret: "SetARandomStringHere"
+  jwt_algorithm: HS512
+  jwt_exp_delta_seconds: '2592000'
+  # Enable logging for python app
+  # Ref: https://stackoverflow.com/questions/43969743/logs-in-kubernetes-pod-not-showing-up
+  PYTHONUNBUFFERED: '0'
+  version_number: '1.3.6'
+  SAML2_MD_URL: ''
+  idp_entityId: ''
+  idp_sso_url: ''
+  idp_x509cert: ''
+  idp_sls_url: ''
+  idp_name: ''
+  assist_secret: ''
+  iceServers: ''
+
 
 nodeSelector: {}
 
