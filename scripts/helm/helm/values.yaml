@@ -46,3 +46,16 @@ global:
 
   enterpriseEditionLicense: ""
   domainName: ""
+
+
+# If you want to override something
+# chartname:
+#   filedFrom chart/Values.yaml:
+#     key: value
+#
+# For example:
+#
+# alerts:
+#   resources:
+#     limits:
+#       cpu: 1
