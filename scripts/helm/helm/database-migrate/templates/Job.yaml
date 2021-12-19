@@ -29,7 +29,7 @@ spec:
         image: alpine/git
         env:
           - name: ENTERPRISE_EDITION_LICENSE
-            value: "{{ .Values.global.enterprise_edition_license }}"
+            value: "{{ .Values.global.enterpriseEditionLicense }}"
         command:
           - /bin/sh
           - -c
@@ -71,7 +71,7 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
-      {{- if .Values.global.enterprise_edition_license }}
+      {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
       - name: clickhouse
         image: yandex/clickhouse-client:20.9
