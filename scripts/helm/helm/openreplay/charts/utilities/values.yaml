@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: rg.fr-par.scw.cloud/foss/utililities
+  repository: rg.fr-par.scw.cloud/foss/utilities
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
