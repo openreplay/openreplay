@@ -330,6 +330,36 @@ class SourcemapUploadPayloadSchema(BaseModel):
     urls: List[str] = Field(..., alias="URL")
 
 
+class ErrorSource(str, Enum):
+    js_exception = "js_exception"
+    bugsnag = "bugsnag"
+    cloudwatch = "cloudwatch"
+    datadog = "datadog"
+    newrelic = "newrelic"
+    rollbar = "rollbar"
+    sentry = "sentry"
+    stackdriver = "stackdriver"
+    sumologic = "sumologic"
+
+
+class EventType(str, Enum):
+    click = "CLICK"
+    input = "INPUT"
+    location = "LOCATION"
+    custom = "CUSTOM"
+    request = "REQUEST"
+    graphql = "GRAPHQL"
+    state_action = "STATEACTION"
+    error = "ERROR"
+    metadata = "METADATA"
+    click_ios = "CLICK_IOS"
+    input_ios = "INPUT_IOS"
+    view_ios = "VIEW_IOS"
+    custom_ios = "CUSTOM_IOS"
+    request_ios = "REQUEST_IOS"
+    error_ios = "ERROR_IOS"
+
+
 class SearchEventOperator(str, Enum):
     _is = "is"
     _is_any = "isAny"
@@ -348,13 +378,19 @@ class PlatformType(str, Enum):
     desktop = "desktop"
 
 
+class SearchEventOrder(str, Enum):
+    _then = "then"
+    _or = "or"
+    _and = "and"
+
+
 class _SessionSearchEventSchema(BaseModel):
-    custom: Optional[str] = Field(None)
+    custom: Optional[List[str]] = Field(None)
     key: Optional[str] = Field(None)
     value: Union[Optional[str], Optional[List[str]]] = Field(...)
-    type: str = Field(...)
+    type: EventType = Field(...)
     operator: SearchEventOperator = Field(...)
-    source: Optional[str] = Field(...)
+    source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
 
 
 class _SessionSearchFilterSchema(_SessionSearchEventSchema):
@@ -371,6 +407,10 @@ class SessionsSearchPayloadSchema(BaseModel):
     sort: str = Field(...)
     order: str = Field(default="DESC")
     platform: Optional[PlatformType] = Field(None)
+    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
