@@ -109,7 +109,6 @@ def __is_multivalue(op: schemas.SearchEventOperator):
 
 
 def __get_sql_operator(op: schemas.SearchEventOperator):
-    op = op.lower()
     return {
         schemas.SearchEventOperator._is: "=",
         schemas.SearchEventOperator._is_any: "IN",
@@ -143,6 +142,22 @@ def __get_sql_value_multiple(values):
     if isinstance(values, tuple):
         return values
     return tuple(values) if isinstance(values, list) else (values,)
+
+
+def __multiple_conditions(condition, values, value_key="value"):
+    query = []
+    for i in range(len(values)):
+        k = f"{value_key}_{i}"
+        query.append(condition.replace("value", k))
+    return "(" + " OR ".join(query) + ")"
+
+
+def __multiple_values(values, value_key="value"):
+    query_values = {}
+    for i in range(len(values)):
+        k = f"{value_key}_{i}"
+        query_values[k] = values[i]
+    return query_values
 
 
 @dev.timed
@@ -257,15 +272,17 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
             events_query_from = []
             event_index = 0
-
+            events_joiner = " FULL JOIN " if data.events_order == schemas.SearchEventOrder._or else " INNER JOIN LATERAL "
             for event in data.events:
                 event_type = event.type.upper()
+                if not isinstance(event.value, list):
+                    event.value = [event.value]
                 op = __get_sql_operator(event.operator)
                 is_not = False
                 if __is_negation_operator(event.operator):
                     is_not = True
                     op = __reverse_sql_operator(op)
-                if event_index == 0:
+                if event_index == 0 or data.events_order == schemas.SearchEventOrder._or:
                     event_from = "%s INNER JOIN public.sessions AS ms USING (session_id)"
                     event_where = ["ms.project_id = %(projectId)s", "main.timestamp >= %(startDate)s",
                                    "main.timestamp <= %(endDate)s", "ms.start_ts >= %(startDate)s",
@@ -273,13 +290,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 else:
                     event_from = "%s"
                     event_where = ["main.timestamp >= %(startDate)s", "main.timestamp <= %(endDate)s",
-                                   f"event_{event_index - 1}.timestamp <= main.timestamp",
                                    "main.session_id=event_0.session_id"]
-                if __is_multivalue(event.operator):
-                    event_args = {"value": __get_sql_value_multiple(event.value)}
-                else:
-                    event.value = helper.string_to_op(value=event.value, op=event.operator)
-                    event_args = {"value": helper.string_to_sql_like_with_op(event.value, op)}
+                    if data.events_order == schemas.SearchEventOrder._then:
+                        event_where.append(f"event_{event_index - 1}.timestamp <= main.timestamp")
+
+                event.value = helper.values_for_operator(value=event.value, op=event.operator)
+                event_args = __multiple_values(event.value)
                 if event_type not in list(events.SUPPORTED_TYPES.keys()) \
                         or event.value in [None, "", "*"] \
                         and (event_type != events.event_type.ERROR.ui_type \
@@ -287,32 +303,50 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     continue
                 if event_type == events.event_type.CLICK.ui_type:
                     event_from = event_from % f"{events.event_type.CLICK.table} AS main "
-                    event_where.append(f"main.{events.event_type.CLICK.column} {op} %(value)s")
+                    event_where.append(__multiple_conditions(f"main.{events.event_type.CLICK.column} {op} %(value)s",
+                                                             event.value))
+                    # event_where.append(f"main.{events.event_type.CLICK.column} {op} %(value)s")
 
                 elif event_type == events.event_type.INPUT.ui_type:
                     event_from = event_from % f"{events.event_type.INPUT.table} AS main "
-                    event_where.append(f"main.{events.event_type.INPUT.column} {op} %(value)s")
+                    event_where.append(__multiple_conditions(f"main.{events.event_type.INPUT.column} {op} %(value)s",
+                                                             event.value))
+                    # event_where.append(f"main.{events.event_type.INPUT.column} {op} %(value)s")
                     if len(event.custom) > 0:
-                        event_where.append("main.value ILIKE %(custom)s")
-                        event_args["custom"] = helper.string_to_sql_like_with_op(event.custom, "ILIKE")
+                        event_where.append(__multiple_conditions(f"main.value ILIKE %(custom)s",
+                                                                 event.custom, value_key="custom"))
+                        event_args = {**event_args, **__multiple_values(event.custom, value_key="custom")}
+                        # event_where.append("main.value ILIKE %(custom)s")
+                        # event_args["custom"] = helper.string_to_sql_like_with_op(event.custom, "ILIKE")
                 elif event_type == events.event_type.LOCATION.ui_type:
                     event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
-                    event_where.append(f"main.{events.event_type.LOCATION.column} {op} %(value)s")
+                    event_where.append(__multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %(value)s",
+                                                             event.value))
+                    # event_where.append(f"main.{events.event_type.LOCATION.column} {op} %(value)s")
                 elif event_type == events.event_type.CUSTOM.ui_type:
                     event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
-                    event_where.append(f"main.{events.event_type.CUSTOM.column} {op} %(value)s")
+                    event_where.append(__multiple_conditions(f"main.{events.event_type.CUSTOM.column} {op} %(value)s",
+                                                             event.value))
+                    # event_where.append(f"main.{events.event_type.CUSTOM.column} {op} %(value)s")
                 elif event_type == events.event_type.REQUEST.ui_type:
                     event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
-                    event_where.append(f"main.{events.event_type.REQUEST.column} {op} %(value)s")
+                    event_where.append(__multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %(value)s",
+                                                             event.value))
+                    # event_where.append(f"main.{events.event_type.REQUEST.column} {op} %(value)s")
                 elif event_type == events.event_type.GRAPHQL.ui_type:
                     event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
-                    event_where.append(f"main.{events.event_type.GRAPHQL.column} {op} %(value)s")
+                    event_where.append(__multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %(value)s",
+                                                             event.value))
+                    # event_where.append(f"main.{events.event_type.GRAPHQL.column} {op} %(value)s")
                 elif event_type == events.event_type.STATEACTION.ui_type:
                     event_from = event_from % f"{events.event_type.STATEACTION.table} AS main "
-                    event_where.append(f"main.{events.event_type.STATEACTION.column} {op} %(value)s")
+                    event_where.append(
+                        __multiple_conditions(f"main.{events.event_type.STATEACTION.column} {op} %(value)s",
+                                              event.value))
+                    # event_where.append(f"main.{events.event_type.STATEACTION.column} {op} %(value)s")
                 elif event_type == events.event_type.ERROR.ui_type:
-                    if event.source in [None, "*", ""]:
-                        event.source = "js_exception"
+                    # if event.source in [None, "*", ""]:
+                    #     event.source = "js_exception"
                     event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
                     if event.value not in [None, "*", ""]:
                         event_where.append(f"(main1.message {op} %(value)s OR main1.name {op} %(value)s)")
@@ -326,40 +360,55 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 # ----- IOS
                 elif event_type == events.event_type.CLICK_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.CLICK_IOS.table} AS main "
-                    event_where.append(f"main.{events.event_type.CLICK_IOS.column} {op} %(value)s")
+                    event_where.append(
+                        __multiple_conditions(f"main.{events.event_type.CLICK_IOS.column} {op} %(value)s", event.value))
+                    # event_where.append(f"main.{events.event_type.CLICK_IOS.column} {op} %(value)s")
 
                 elif event_type == events.event_type.INPUT_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.INPUT_IOS.table} AS main "
-                    event_where.append(f"main.{events.event_type.INPUT_IOS.column} {op} %(value)s")
-
+                    event_where.append(
+                        __multiple_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %(value)s", event.value))
+                    # event_where.append(f"main.{events.event_type.INPUT_IOS.column} {op} %(value)s")
                     if len(event.custom) > 0:
-                        event_where.append("main.value ILIKE %(custom)s")
-                        event_args["custom"] = helper.string_to_sql_like_with_op(event.custom, "ILIKE")
+                        event_where.append(__multiple_conditions("main.value ILIKE %(custom)s", event.custom))
+                        event_args = {**event_args, **__multiple_values(event.custom, "custom")}
+                        # event_where.append("main.value ILIKE %(custom)s")
+                        # event_args["custom"] = helper.string_to_sql_like_with_op(event.custom, "ILIKE")
                 elif event_type == events.event_type.VIEW_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "
-                    event_where.append(f"main.{events.event_type.VIEW_IOS.column} {op} %(value)s")
+                    event_where.append(
+                        __multiple_conditions(f"main.{events.event_type.VIEW_IOS.column} {op} %(value)s", event.value))
+                    # event_where.append(f"main.{events.event_type.VIEW_IOS.column} {op} %(value)s")
                 elif event_type == events.event_type.CUSTOM_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.CUSTOM_IOS.table} AS main "
-                    event_where.append(f"main.{events.event_type.CUSTOM_IOS.column} {op} %(value)s")
+                    event_where.append(
+                        __multiple_conditions(f"main.{events.event_type.CUSTOM_IOS.column} {op} %(value)s",
+                                              event.value))
+                    # event_where.append(f"main.{events.event_type.CUSTOM_IOS.column} {op} %(value)s")
                 elif event_type == events.event_type.REQUEST_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.REQUEST_IOS.table} AS main "
-                    event_where.append(f"main.{events.event_type.REQUEST_IOS.column} {op} %(value)s")
+                    event_where.append(
+                        __multiple_conditions(f"main.{events.event_type.REQUEST_IOS.column} {op} %(value)s",
+                                              event.value))
+                    # event_where.append(f"main.{events.event_type.REQUEST_IOS.column} {op} %(value)s")
                 elif event_type == events.event_type.ERROR_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                     if event.value not in [None, "*", ""]:
-                        event_where.append(f"(main1.reason {op} %(value)s OR main1.name {op} %(value)s)")
+                        event_where.append(
+                            __multiple_conditions(f"(main1.reason {op} %(value)s OR main1.name {op} %(value)s)",
+                                                  event.value))
+                        # event_where.append(f"(main1.reason {op} %(value)s OR main1.name {op} %(value)s)")
 
                 else:
                     continue
-                if event_index == 0:
+                if event_index == 0 or data.events_order == schemas.SearchEventOrder._or:
                     event_where += ss_constraints
                 if is_not:
                     if event_index == 0:
                         events_query_from.append(cur.mogrify(f"""\
                                         (SELECT
                                             session_id, 
-                                            0 AS timestamp, 
-                                            {event_index} AS funnel_step
+                                            0 AS timestamp
                                           FROM sessions
                                           WHERE EXISTS(SELECT session_id 
                                                         FROM {event_from} 
@@ -375,14 +424,13 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         events_query_from.append(cur.mogrify(f"""\
                 (SELECT
                     event_0.session_id, 
-                    event_{event_index - 1}.timestamp AS timestamp, 
-                    {event_index} AS funnel_step
+                    event_{event_index - 1}.timestamp AS timestamp
                   WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) IS FALSE
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
                 else:
                     events_query_from.append(cur.mogrify(f"""\
-                (SELECT main.session_id, MIN(timestamp) AS timestamp,{event_index} AS funnel_step
+                (SELECT main.session_id, MIN(timestamp) AS timestamp
                   FROM {event_from}
                   WHERE {" AND ".join(event_where)}
                   GROUP BY 1
@@ -394,7 +442,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                             event_0.session_id, 
                                             MIN(event_0.timestamp) AS first_event_ts, 
                                             MAX(event_{event_index - 1}.timestamp) AS last_event_ts
-                                        FROM {(" INNER JOIN LATERAL ").join(events_query_from)}
+                                        FROM {events_joiner.join(events_query_from)}
                                         GROUP BY 1
                                         {fav_only_join}"""
         else:
@@ -488,8 +536,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                         ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
                                      generic_args)
 
-        # print("--------------------")
-        # print(main_query)
+        print("--------------------")
+        print(main_query)
 
         cur.execute(main_query)
 

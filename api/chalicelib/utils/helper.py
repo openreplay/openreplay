@@ -1,6 +1,7 @@
 import random
 import re
 import string
+from typing import Union
 
 import math
 import requests
@@ -168,39 +169,56 @@ def string_to_sql_like(value):
 
 
 def string_to_sql_like_with_op(value, op):
-    if isinstance(value, list) and len(value) > 0:
-        _value = value[0]
+    if isinstance(value, list):
+        r = []
+        for v in value:
+            r.append(string_to_sql_like_with_op(v, op))
+        return r
     else:
         _value = value
-    if _value is None:
-        return _value
-    if op.upper() != 'ILIKE':
+        if _value is None:
+            return _value
+        if op.upper() != 'ILIKE':
+            return _value.replace("%", "%%")
+        _value = _value.replace("*", "%")
+        if _value.startswith("^"):
+            _value = _value[1:]
+        elif not _value.startswith("%"):
+            _value = '%' + _value
+
+        if _value.endswith("$"):
+            _value = _value[:-1]
+        elif not _value.endswith("%"):
+            _value = _value + '%'
         return _value.replace("%", "%%")
-    _value = _value.replace("*", "%")
-    if _value.startswith("^"):
-        _value = _value[1:]
-    elif not _value.startswith("%"):
-        _value = '%' + _value
-
-    if _value.endswith("$"):
-        _value = _value[:-1]
-    elif not _value.endswith("%"):
-        _value = _value + '%'
-    return _value.replace("%", "%%")
 
 
-def string_to_op(value: str, op: schemas.SearchEventOperator):
-    if isinstance(value, list) and len(value) > 0:
-        _value = value[0]
+likable_operators = [schemas.SearchEventOperator._starts_with, schemas.SearchEventOperator._ends_with,
+                     schemas.SearchEventOperator._contains, schemas.SearchEventOperator._notcontains]
+
+
+def is_likable(op: schemas.SearchEventOperator):
+    return op in likable_operators
+
+
+def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator):
+    if not is_likable(op):
+        return value
+    if isinstance(value, list):
+        r = []
+        for v in value:
+            r.append(values_for_operator(v, op))
+        return r
     else:
-        _value = value
-    if _value is None:
-        return _value
-    if op == schemas.SearchEventOperator._starts_with:
-        _value = '^' + _value
-    elif op == schemas.SearchEventOperator._ends_with:
-        _value = _value + '$'
-    return _value
+        if value is None:
+            return value
+        if op == schemas.SearchEventOperator._starts_with:
+            return value + '%%'
+        elif op == schemas.SearchEventOperator._ends_with:
+            return '%%' + value
+        elif op == schemas.SearchEventOperator._contains:
+            return '%%' + value + '%%'
+    return value
 
 
 def is_valid_email(email):
