@@ -108,6 +108,7 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
                             s.project_key
                             {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_id = %(project_id)s) AS last_recorded_session_at" if include_last_session else ""}
                             {',s.gdpr' if include_gdpr else ''}
+                            {tracker_query}
                     FROM public.projects AS s
                     where s.tenant_id =%(tenant_id)s 
                         AND s.project_id =%(project_id)s
