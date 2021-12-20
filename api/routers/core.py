@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 from decouple import config
 from fastapi import Depends, Body
@@ -848,9 +848,10 @@ def signup_handler(data: schemas.UserSignupSchema = Body(...)):
 
 
 @app.get('/projects', tags=['projects'])
-def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
+def get_projects(last_tracker_version: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True, version=True)}
+                                          stack_integrations=True, version=True,
+                                          last_tracker_version=last_tracker_version)}
 
 
 @app.post('/projects', tags=['projects'])
