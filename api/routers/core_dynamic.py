@@ -54,7 +54,9 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
                                           stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
-    c["iceServers"]: assist.get_ice_servers()
+    c["iceServers"] = assist.get_ice_servers()
+    r["smtp"] = c["smtp"]
+    r["iceServers"] = c["iceServers"]
     return {
         'jwt': r.pop('jwt'),
         'data': {
