@@ -88,8 +88,19 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         return helper.list_to_camel_case(rows)
 
 
-def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
+def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None, version=False,
+                last_tracker_version=None):
     with pg_client.PostgresClient() as cur:
+        tracker_query = ""
+        if last_tracker_version is not None and len(last_tracker_version) > 0:
+            tracker_query = cur.mogrify(
+                """,(SELECT tracker_version FROM public.sessions 
+                    WHERE sessions.project_id = s.project_id 
+                    AND tracker_version=%(version)s AND tracker_version IS NOT NULL LIMIT 1) AS tracker_version""",
+                {"version": last_tracker_version}).decode('UTF-8')
+        elif version:
+            tracker_query = ",(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version"
+
         query = cur.mogrify(f"""\
                     SELECT
                            s.project_id,

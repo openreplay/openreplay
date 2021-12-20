@@ -91,9 +91,10 @@ def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_project(projectId: int, last_tracker_version: Optional[str] = None,
+                context: schemas.CurrentContext = Depends(OR_context)):
     data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
-                                include_gdpr=True)
+                                include_gdpr=True, last_tracker_version=last_tracker_version)
     if data is None:
         return {"errors": ["project not found"]}
     return {"data": data}
