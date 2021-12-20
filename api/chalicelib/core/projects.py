@@ -42,18 +42,29 @@ def __create(tenant_id, name):
 
 
 @dev.timed
-def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False,version=False):
+def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, version=False,
+                 last_tracker_version=None):
     with pg_client.PostgresClient() as cur:
+        tracker_query = ""
+        if last_tracker_version is not None and len(last_tracker_version)>0:
+            tracker_query = cur.mogrify(
+                """,(SELECT tracker_version FROM public.sessions 
+                    WHERE sessions.project_id = s.project_id 
+                    AND tracker_version=%(version)s AND tracker_version IS NOT NULL LIMIT 1) AS tracker_version""",
+                {"version": last_tracker_version}).decode('UTF-8')
+        elif version:
+            tracker_query = ",(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version"
+
         cur.execute(f"""\
                     SELECT
                            s.project_id, s.name, s.project_key 
                             {',s.gdpr' if gdpr else ''} 
                             {',COALESCE((SELECT TRUE FROM public.sessions WHERE sessions.project_id = s.project_id LIMIT 1), FALSE) AS recorded' if recorded else ''}
                             {',stack_integrations.count>0 AS stack_integrations' if stack_integrations else ''}
-                            {',(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version' if version else ''}
+                            {tracker_query}
                     FROM public.projects AS s
                             {'LEFT JOIN LATERAL (SELECT COUNT(*) AS count FROM public.integrations WHERE s.project_id = integrations.project_id LIMIT 1) AS stack_integrations ON TRUE' if stack_integrations else ''}
-                    where s.deleted_at IS NULL
+                    WHERE s.deleted_at IS NULL
                     ORDER BY s.project_id;"""
                     )
         rows = cur.fetchall()
