@@ -194,7 +194,7 @@ def string_to_sql_like_with_op(value, op):
 
 
 likable_operators = [schemas.SearchEventOperator._starts_with, schemas.SearchEventOperator._ends_with,
-                     schemas.SearchEventOperator._contains, schemas.SearchEventOperator._notcontains]
+                     schemas.SearchEventOperator._contains, schemas.SearchEventOperator._not_contains]
 
 
 def is_likable(op: schemas.SearchEventOperator):

@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.event_filter_definition import SupportedFilter
 
@@ -109,21 +110,21 @@ def __generic_autocomplete(typename):
 
 
 class meta_type:
-    USEROS = "USEROS"
-    USERBROWSER = "USERBROWSER"
-    USERDEVICE = "USERDEVICE"
-    USERCOUNTRY = "USERCOUNTRY"
-    USERID = "USERID"
-    USERANONYMOUSID = "USERANONYMOUSID"
-    REFERRER = "REFERRER"
-    REVID = "REVID"
+    USEROS = schemas.FilterType.user_os
+    USERBROWSER = schemas.FilterType.user_browser
+    USERDEVICE = schemas.FilterType.user_device
+    USERCOUNTRY = schemas.FilterType.user_country
+    USERID = schemas.FilterType.user_id
+    USERANONYMOUSID = schemas.FilterType.user_anonymous_id
+    REFERRER = schemas.FilterType.referrer
+    REVID = schemas.FilterType.rev_id
     # IOS
-    USEROS_IOS = "USEROS_IOS"
-    USERDEVICE_IOS = "USERDEVICE_IOS"
-    USERCOUNTRY_IOS = "USERCOUNTRY_IOS"
-    USERID_IOS = "USERID_IOS"
-    USERANONYMOUSID_IOS = "USERANONYMOUSID_IOS"
-    REVID_IOS = "REVID_IOS"
+    USEROS_IOS = schemas.FilterType.user_os_ios
+    USERDEVICE_IOS = schemas.FilterType.user_device_ios
+    USERCOUNTRY_IOS = schemas.FilterType.user_country_ios
+    USERID_IOS = schemas.FilterType.user_id_ios
+    USERANONYMOUSID_IOS = schemas.FilterType.user_anonymous_id_ios
+    REVID_IOS = schemas.FilterType.rev_id_ios
 
 
 SUPPORTED_TYPES = {
