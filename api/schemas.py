@@ -433,7 +433,7 @@ class SessionsSearchPayloadSchema(BaseModel):
     endDate: int = Field(None)
     sort: str = Field(...)
     order: str = Field(default="DESC")
-    platform: Optional[PlatformType] = Field(None)
+    # platform: Optional[PlatformType] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
 
     class Config:
