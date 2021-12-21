@@ -104,29 +104,25 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
     return None
 
 
-def __is_multivalue(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._is_any, schemas.SearchEventOperator._on_any]
-
-
 def __get_sql_operator(op: schemas.SearchEventOperator):
     return {
         schemas.SearchEventOperator._is: "=",
         schemas.SearchEventOperator._is_any: "IN",
         schemas.SearchEventOperator._on: "=",
         schemas.SearchEventOperator._on_any: "IN",
-        schemas.SearchEventOperator._isnot: "!=",
-        schemas.SearchEventOperator._noton: "!=",
+        schemas.SearchEventOperator._is_not: "!=",
+        schemas.SearchEventOperator._not_on: "!=",
         schemas.SearchEventOperator._contains: "ILIKE",
-        schemas.SearchEventOperator._notcontains: "NOT ILIKE",
+        schemas.SearchEventOperator._not_contains: "NOT ILIKE",
         schemas.SearchEventOperator._starts_with: "ILIKE",
         schemas.SearchEventOperator._ends_with: "ILIKE",
     }.get(op, "=")
 
 
 def __is_negation_operator(op: schemas.SearchEventOperator):
-    return op in [schemas.SearchEventOperator._isnot,
-                  schemas.SearchEventOperator._noton,
-                  schemas.SearchEventOperator._notcontains]
+    return op in [schemas.SearchEventOperator._is_not,
+                  schemas.SearchEventOperator._not_on,
+                  schemas.SearchEventOperator._not_contains]
 
 
 def __reverse_sql_operator(op):
@@ -134,8 +130,8 @@ def __reverse_sql_operator(op):
 
 
 def __get_sql_operator_multiple(op: schemas.SearchEventOperator):
-    # op == schemas.SearchEventOperator._is  is for filter support
-    return " IN " if __is_multivalue(op) or op == schemas.SearchEventOperator._is else " NOT IN "
+    return " IN " if op not in [schemas.SearchEventOperator._is_not, schemas.SearchEventOperator._not_on,
+                                schemas.SearchEventOperator._not_contains] else " NOT IN "
 
 
 def __get_sql_value_multiple(values):
@@ -144,12 +140,12 @@ def __get_sql_value_multiple(values):
     return tuple(values) if isinstance(values, list) else (values,)
 
 
-def __multiple_conditions(condition, values, value_key="value"):
+def __multiple_conditions(condition, values, value_key="value", is_not=False):
     query = []
     for i in range(len(values)):
         k = f"{value_key}_{i}"
         query.append(condition.replace("value", k))
-    return "(" + " OR ".join(query) + ")"
+    return "(" + (" AND " if is_not else " OR ").join(query) + ")"
 
 
 def __multiple_values(values, value_key="value"):
@@ -181,41 +177,63 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         events_query_part = ""
 
         if len(data.filters) > 0:
-            meta_keys = metadata.get(project_id=project_id)
-            meta_keys = {m["key"]: m["index"] for m in meta_keys}
+            meta_keys = None
             for f in data.filters:
                 if not isinstance(f.value, list):
                     f.value = [f.value]
                 if len(f.value) == 0 or f.value[0] is None:
                     continue
-                filter_type = f.type.upper()
-                f.value = __get_sql_value_multiple(f.value)
+                filter_type = f.type
+                # f.value = __get_sql_value_multiple(f.value)
+                f.value = helper.values_for_operator(value=f.value, op=f.operator)
+                filter_args = __multiple_values(f.value)
+                op = __get_sql_operator(f.operator)
+                is_not = False
+                if __is_negation_operator(f.operator):
+                    is_not = True
+                    # op = __reverse_sql_operator(op)
                 if filter_type == sessions_metas.meta_type.USERBROWSER:
-                    op = __get_sql_operator_multiple(f.operator)
-                    extra_constraints.append(cur.mogrify(f's.user_browser {op} %(value)s', {"value": f.value}))
-                    ss_constraints.append(cur.mogrify(f'ms.user_browser {op} %(value)s', {"value": f.value}))
+                    # op = __get_sql_operator_multiple(f.operator)
+                    extra_constraints.append(
+                        cur.mogrify(__multiple_conditions(f's.user_browser {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
+                    ss_constraints.append(
+                        cur.mogrify(__multiple_conditions(f'ms.user_browser {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
 
                 elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
-                    op = __get_sql_operator_multiple(f.operator)
-                    extra_constraints.append(cur.mogrify(f's.user_os {op} %(value)s', {"value": f.value}))
-                    ss_constraints.append(cur.mogrify(f'ms.user_os {op} %(value)s', {"value": f.value}))
+                    # op = __get_sql_operator_multiple(f.operator)
+                    extra_constraints.append(
+                        cur.mogrify(__multiple_conditions(f's.user_os {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
+                    ss_constraints.append(
+                        cur.mogrify(__multiple_conditions(f'ms.user_os {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
 
                 elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
-                    op = __get_sql_operator_multiple(f.operator)
-                    extra_constraints.append(cur.mogrify(f's.user_device {op} %(value)s', {"value": f.value}))
-                    ss_constraints.append(cur.mogrify(f'ms.user_device {op} %(value)s', {"value": f.value}))
+                    # op = __get_sql_operator_multiple(f.operator)
+                    extra_constraints.append(
+                        cur.mogrify(__multiple_conditions(f's.user_device {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
+                    ss_constraints.append(
+                        cur.mogrify(__multiple_conditions(f'ms.user_device {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
 
                 elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
-                    op = __get_sql_operator_multiple(f.operator)
-                    extra_constraints.append(cur.mogrify(f's.user_country {op} %(value)s', {"value": f.value}))
-                    ss_constraints.append(cur.mogrify(f'ms.user_country {op} %(value)s', {"value": f.value}))
-                elif filter_type == "duration".upper():
+                    # op = __get_sql_operator_multiple(f.operator)
+                    extra_constraints.append(
+                        cur.mogrify(__multiple_conditions(f's.user_country {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
+                    ss_constraints.append(
+                        cur.mogrify(__multiple_conditions(f'ms.user_country {op} %(value)s', f.value, is_not=is_not),
+                                    filter_args))
+                elif filter_type == schemas.FilterType.duration:
                     if len(f.value) > 0 and f.value[0] is not None:
                         extra_constraints.append(
                             cur.mogrify("s.duration >= %(minDuration)s", {"minDuration": f.value[0]}))
                         ss_constraints.append(
                             cur.mogrify("ms.duration >= %(minDuration)s", {"minDuration": f.value[0]}))
-                    if len(f.value) > 1 and f.value[1] is not None and f.value[1] > 0:
+                    if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
                         extra_constraints.append(
                             cur.mogrify("s.duration <= %(maxDuration)s", {"maxDuration": f.value[1]}))
                         ss_constraints.append(
@@ -223,48 +241,69 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 elif filter_type == sessions_metas.meta_type.REFERRER:
                     # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                     extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
-                    op = __get_sql_operator_multiple(f.operator)
+                    # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(f"p.base_referrer {op} %(referrer)s", {"referrer": f.value}))
+                        cur.mogrify(__multiple_conditions(f"p.base_referrer {op} %(value)s", f.value, is_not=is_not),
+                                    filter_args))
                 elif filter_type == events.event_type.METADATA.ui_type:
-                    op = __get_sql_operator(f.operator)
+                    # get metadata list only if you need it
+                    if meta_keys is None:
+                        meta_keys = metadata.get(project_id=project_id)
+                        meta_keys = {m["key"]: m["index"] for m in meta_keys}
+                    # op = __get_sql_operator(f.operator)
                     if f.key in meta_keys.keys():
                         extra_constraints.append(
-                            cur.mogrify(f"s.{metadata.index_to_colname(meta_keys[f.key])} {op} %(value)s",
-                                        {"value": helper.string_to_sql_like_with_op(f.value[0], op)}))
+                            cur.mogrify(
+                                __multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.key])} {op} %(value)s",
+                                                      f.value, is_not=is_not), filter_args))
                         ss_constraints.append(
-                            cur.mogrify(f"ms.{metadata.index_to_colname(meta_keys[f.key])} {op} %(value)s",
-                                        {"value": helper.string_to_sql_like_with_op(f.value[0], op)}))
+                            cur.mogrify(__multiple_conditions(
+                                f"ms.{metadata.index_to_colname(meta_keys[f.key])} {op} %(value)s", f.value,
+                                is_not=is_not),
+                                filter_args))
                 elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
-                    op = __get_sql_operator(f.operator)
+                    # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(f"s.user_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f.value[0], op)})
+                        cur.mogrify(__multiple_conditions(f"s.user_id {op} %(value)s", f.value, is_not=is_not),
+                                    filter_args)
                     )
                     ss_constraints.append(
-                        cur.mogrify(f"ms.user_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f.value[0], op)})
+                        cur.mogrify(__multiple_conditions(f"ms.user_id {op} %(value)s", f.value, is_not=is_not),
+                                    filter_args)
                     )
                 elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
                                      sessions_metas.meta_type.USERANONYMOUSID_IOS]:
-                    op = __get_sql_operator(f.operator)
+                    # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(f"s.user_anonymous_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f.value[0], op)})
+                        cur.mogrify(
+                            __multiple_conditions(f"s.user_anonymous_id {op} %(value)s", f.value, is_not=is_not),
+                            filter_args)
                     )
                     ss_constraints.append(
-                        cur.mogrify(f"ms.user_anonymous_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f.value[0], op)})
+                        cur.mogrify(
+                            __multiple_conditions(f"ms.user_anonymous_id {op} %(value)s", f.value, is_not=is_not),
+                            filter_args)
                     )
                 elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
-                    op = __get_sql_operator(f.operator)
+                    # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(f"s.rev_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f.value[0], op)})
+                        cur.mogrify(__multiple_conditions(f"s.rev_id {op} %(value)s", f.value, is_not=is_not),
+                                    filter_args)
                     )
                     ss_constraints.append(
-                        cur.mogrify(f"ms.rev_id {op} %(value)s",
-                                    {"value": helper.string_to_sql_like_with_op(f.value[0], op)})
+                        cur.mogrify(__multiple_conditions(f"ms.rev_id {op} %(value)s", f.value, is_not=is_not),
+                                    filter_args)
+                    )
+                elif filter_type == schemas.FilterType.platform:
+                    # op = __get_sql_operator(f.operator)
+                    extra_constraints.append(
+                        cur.mogrify(__multiple_conditions(f"s.user_device_type {op} %(value)s", f.value, is_not=is_not),
+                                    filter_args)
+                    )
+                    ss_constraints.append(
+                        cur.mogrify(
+                            __multiple_conditions(f"ms.user_device_type {op} %(value)s", f.value, is_not=is_not),
+                            filter_args)
                     )
 
         # ---------------------------------------------------------------------------
@@ -493,12 +532,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         else:
             data.endDate = None
 
-        if data.platform is not None:
-            if data.platform == schemas.PlatformType.mobile:
-                extra_constraints.append(b"s.user_os in ('Android','BlackBerry OS','iOS','Tizen','Windows Phone')")
-            elif data.platform == schemas.PlatformType.desktop:
-                extra_constraints.append(
-                    b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
+        # if data.platform is not None:
+        #     if data.platform == schemas.PlatformType.mobile:
+        #         extra_constraints.append(b"s.user_os in ('Android','BlackBerry OS','iOS','Tizen','Windows Phone')")
+        #     elif data.platform == schemas.PlatformType.desktop:
+        #         extra_constraints.append(
+        #             b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
 
         order = "DESC"
         if data.order is not None:

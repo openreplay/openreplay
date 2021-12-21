@@ -360,15 +360,37 @@ class EventType(str, Enum):
     error_ios = "ERROR_IOS"
 
 
+class FilterType(str, Enum):
+    user_os = "USEROS"
+    user_browser = "USERBROWSER"
+    user_device = "USERDEVICE"
+    user_country = "USERCOUNTRY"
+    user_id = "USERID"
+    user_anonymous_id = "USERANONYMOUSID"
+    referrer = "REFERRER"
+    rev_id = "REVID"
+    # IOS
+    user_os_ios = "USEROS_IOS"
+    user_device_ios = "USERDEVICE_IOS"
+    user_country_ios = "USERCOUNTRY_IOS"
+    user_id_ios = "USERID_IOS"
+    user_anonymous_id_ios = "USERANONYMOUSID_IOS"
+    rev_id_ios = "REVID_IOS"
+    #
+    duration = "DURATION"
+    platform = "PLATFORM"
+    metadata = "METADATA"
+
+
 class SearchEventOperator(str, Enum):
     _is = "is"
     _is_any = "isAny"
     _on = "on"
     _on_any = "onAny"
-    _isnot = "isNot"
-    _noton = "notOn"
+    _is_not = "isNot"
+    _not_on = "notOn"
     _contains = "contains"
-    _notcontains = "notContains"
+    _not_contains = "notContains"
     _starts_with = "startsWith"
     _ends_with = "endsWith"
 
@@ -393,8 +415,13 @@ class _SessionSearchEventSchema(BaseModel):
     source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
 
 
-class _SessionSearchFilterSchema(_SessionSearchEventSchema):
-    value: List[str] = Field(...)
+class _SessionSearchFilterSchema(BaseModel):
+    custom: Optional[List[str]] = Field(None)
+    key: Optional[str] = Field(None)
+    value: Union[Optional[Union[str, int]], Optional[List[Union[str, int]]]] = Field(...)
+    type: FilterType = Field(...)
+    operator: SearchEventOperator = Field(...)
+    source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
 
 
 class SessionsSearchPayloadSchema(BaseModel):
