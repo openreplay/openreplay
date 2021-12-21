@@ -12,7 +12,7 @@ const TrackerUpdateMessage= (props) => {
   const hasSessions = !!activeSite && !activeSite.recorded;
   const appVersionInt = parseInt(window.ENV.TRACKER_VERSION.split(".").join(""))
   const trackerVersionInt = site.trackerVersion ? parseInt(site.trackerVersion.split(".").join("")) : 0
-  const needUpdate = !hasSessions && trackerVersionInt > appVersionInt;
+  const needUpdate = !hasSessions && appVersionInt > trackerVersionInt;
   return needUpdate ? (
     <>
       {(
