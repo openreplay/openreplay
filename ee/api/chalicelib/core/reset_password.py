@@ -9,8 +9,6 @@ def reset(data: schemas.ForgetPasswordPayloadSchema):
     if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
         print("error: Invalid captcha.")
         return {"errors": ["Invalid captcha."]}
-    if "email" not in data:
-        return {"errors": ["email not found in body"]}
     if not helper.has_smtp():
         return {"errors": ["no SMTP configuration found, you can ask your admin to reset your password"]}
     a_user = users.get_by_email_only(data.email)
