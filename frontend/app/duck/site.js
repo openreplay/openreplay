@@ -19,6 +19,7 @@ import {
 import { createRequestReducer } from './funcTools/request';
 import { Map, List, fromJS } from "immutable";
 
+const trackerVersion = window.ENV.TRACKER_VERSION
 const name = 'project';
 const idKey = 'id';
 const itemInListUpdater = createItemInListUpdater(idKey)
@@ -72,7 +73,7 @@ export function saveGDPR(siteId, gdpr) {
   };
 }
 
-export const fetchList = createFetchList(name);
+export const fetchList = createFetchList(name, `/${ name }s?last_tracker_version=${ trackerVersion }`);
 export const init = createInit(name);
 export const edit = createEdit(name);
 export const save = createSave(name);

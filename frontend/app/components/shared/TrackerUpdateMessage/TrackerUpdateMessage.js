@@ -6,12 +6,11 @@ import { onboarding as onboardingRoute } from 'App/routes'
 import { withSiteId } from 'App/routes';
 
 const TrackerUpdateMessage= (props) => {
-  // const { site } = props;
-  const { site, sites, match: { params: { siteId } } } = props;
+  const { sites, match: { params: { siteId } } } = props;
   const activeSite = sites.find(s => s.id == siteId);
   const hasSessions = !!activeSite && !activeSite.recorded;
   const appVersionInt = parseInt(window.ENV.TRACKER_VERSION.split(".").join(""))
-  const trackerVersionInt = site.trackerVersion ? parseInt(site.trackerVersion.split(".").join("")) : 0
+  const trackerVersionInt = activeSite.trackerVersion ? parseInt(activeSite.trackerVersion.split(".").join("")) : 0
   const needUpdate = !hasSessions && appVersionInt > trackerVersionInt;
   return needUpdate ? (
     <>
