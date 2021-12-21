@@ -272,7 +272,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
             events_query_from = []
             event_index = 0
-            events_joiner = " FULL JOIN " if data.events_order == schemas.SearchEventOrder._or else " INNER JOIN LATERAL "
+            or_events = data.events_order == schemas.SearchEventOrder._or
+            # events_joiner = " FULL JOIN " if or_events else " INNER JOIN LATERAL "
+            events_joiner = " UNION " if or_events else " INNER JOIN LATERAL "
             for event in data.events:
                 event_type = event.type.upper()
                 if not isinstance(event.value, list):
@@ -282,7 +284,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 if __is_negation_operator(event.operator):
                     is_not = True
                     op = __reverse_sql_operator(op)
-                if event_index == 0 or data.events_order == schemas.SearchEventOrder._or:
+                if event_index == 0 or or_events:
                     event_from = "%s INNER JOIN public.sessions AS ms USING (session_id)"
                     event_where = ["ms.project_id = %(projectId)s", "main.timestamp >= %(startDate)s",
                                    "main.timestamp <= %(endDate)s", "ms.start_ts >= %(startDate)s",
@@ -401,7 +403,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
                 else:
                     continue
-                if event_index == 0 or data.events_order == schemas.SearchEventOrder._or:
+                if event_index == 0 or or_events:
                     event_where += ss_constraints
                 if is_not:
                     if event_index == 0:
@@ -434,13 +436,22 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                   FROM {event_from}
                   WHERE {" AND ".join(event_where)}
                   GROUP BY 1
-                ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
+                ) {"" if or_events else (f"AS event_{event_index}" + ("ON(TRUE)" if event_index > 0 else ""))}\
                 """, {**generic_args, **event_args}).decode('UTF-8'))
                 event_index += 1
             if event_index > 0:
-                events_query_part = f"""SELECT
-                                            event_0.session_id, 
-                                            MIN(event_0.timestamp) AS first_event_ts, 
+                if or_events:
+                    events_query_part = f"""SELECT
+                                                session_id, 
+                                                MIN(timestamp) AS first_event_ts, 
+                                                MAX(timestamp) AS last_event_ts
+                                            FROM ({events_joiner.join(events_query_from)}) AS u
+                                            GROUP BY 1
+                                            {fav_only_join}"""
+                else:
+                    events_query_part = f"""SELECT
+                                            event_0.session_id,
+                                            MIN(event_0.timestamp) AS first_event_ts,
                                             MAX(event_{event_index - 1}.timestamp) AS last_event_ts
                                         FROM {events_joiner.join(events_query_from)}
                                         GROUP BY 1
