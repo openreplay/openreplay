@@ -78,7 +78,7 @@ autoscaling:
 env:
   TOKEN_SECRET: secret_token_string # TODO: generate on buld
   S3_BUCKET_IOS_IMAGES: sessions-mobile-assets
-  CACHE_ASSETS: true
+  CACHE_ASSETS: false
   HTTP_PORT: 80
 
 
