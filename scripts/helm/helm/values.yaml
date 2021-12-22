@@ -23,7 +23,7 @@ minio:
       # For genrating psswords
       # `openssl rand -hex 20`
       accessKey: "changeMeMinioAccessKey"
-      secretKey: "changeMeMinioPasword"
+      secretKey: "changeMeMinioPassword"
 
 # Application specific variables
 global:
