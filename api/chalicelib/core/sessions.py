@@ -140,15 +140,15 @@ def __get_sql_value_multiple(values):
     return tuple(values) if isinstance(values, list) else (values,)
 
 
-def __multiple_conditions(condition, values, value_key="value", is_not=False):
+def _multiple_conditions(condition, values, value_key="value", is_not=False):
     query = []
     for i in range(len(values)):
         k = f"{value_key}_{i}"
-        query.append(condition.replace("value", k))
+        query.append(condition.replace(value_key, k))
     return "(" + (" AND " if is_not else " OR ").join(query) + ")"
 
 
-def __multiple_values(values, value_key="value"):
+def _multiple_values(values, value_key="value"):
     query_values = {}
     for i in range(len(values)):
         k = f"{value_key}_{i}"
@@ -156,29 +156,33 @@ def __multiple_values(values, value_key="value"):
     return query_values
 
 
+def _isAny_opreator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
+
+
 @dev.timed
 def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, favorite_only=False, errors_only=False,
                error_status="ALL",
                count_only=False, issue=None):
-    generic_args = {"startDate": data.startDate, "endDate": data.endDate,
-                    "projectId": project_id,
-                    "userId": user_id}
     with pg_client.PostgresClient() as cur:
         ss_constraints = []
+        full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
+                     "projectId": project_id, "userId": user_id}
         extra_constraints = [
-            cur.mogrify("s.project_id = %(project_id)s", {"project_id": project_id}),
-            cur.mogrify("s.duration IS NOT NULL", {})
+            "s.project_id = %(project_id)s",
+            "s.duration IS NOT NULL"
         ]
         extra_from = ""
         fav_only_join = ""
         if favorite_only and not errors_only:
             fav_only_join = "LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id"
-            extra_constraints.append(cur.mogrify("fs.user_id = %(userId)s", {"userId": user_id}))
+            extra_constraints.append("fs.user_id = %(userId)s")
+            full_args["userId"] = user_id
         events_query_part = ""
 
         if len(data.filters) > 0:
             meta_keys = None
-            for f in data.filters:
+            for i, f in enumerate(data.filters):
                 if not isinstance(f.value, list):
                     f.value = [f.value]
                 if len(f.value) == 0 or f.value[0] is None:
@@ -186,7 +190,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 filter_type = f.type
                 # f.value = __get_sql_value_multiple(f.value)
                 f.value = helper.values_for_operator(value=f.value, op=f.operator)
-                filter_args = __multiple_values(f.value)
+                f_k = f"f_value{i}"
+                full_args = {**full_args, **_multiple_values(f.value, value_key=f_k)}
                 op = __get_sql_operator(f.operator)
                 is_not = False
                 if __is_negation_operator(f.operator):
@@ -195,56 +200,45 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 if filter_type == sessions_metas.meta_type.USERBROWSER:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f's.user_browser {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(__multiple_conditions(f'ms.user_browser {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
                 elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f's.user_os {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(__multiple_conditions(f'ms.user_os {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
                 elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f's.user_device {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(__multiple_conditions(f'ms.user_device {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
                 elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f's.user_country {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(__multiple_conditions(f'ms.user_country {op} %(value)s', f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                 elif filter_type == schemas.FilterType.duration:
                     if len(f.value) > 0 and f.value[0] is not None:
-                        extra_constraints.append(
-                            cur.mogrify("s.duration >= %(minDuration)s", {"minDuration": f.value[0]}))
-                        ss_constraints.append(
-                            cur.mogrify("ms.duration >= %(minDuration)s", {"minDuration": f.value[0]}))
+                        extra_constraints.append("s.duration >= %(minDuration)s")
+                        ss_constraints.append("ms.duration >= %(minDuration)s")
+                        full_args["minDuration"] = f.value[0]
                     if len(f.value) > 1 and f.value[1] is not None and int(f.value[1]) > 0:
-                        extra_constraints.append(
-                            cur.mogrify("s.duration <= %(maxDuration)s", {"maxDuration": f.value[1]}))
-                        ss_constraints.append(
-                            cur.mogrify("ms.duration <= %(maxDuration)s", {"maxDuration": f.value[1]}))
+                        extra_constraints.append("s.duration <= %(maxDuration)s")
+                        ss_constraints.append("ms.duration <= %(maxDuration)s")
+                        full_args["maxDuration"] = f.value[1]
                 elif filter_type == sessions_metas.meta_type.REFERRER:
                     # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                     extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f"p.base_referrer {op} %(value)s", f.value, is_not=is_not),
-                                    filter_args))
+                        _multiple_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
                 elif filter_type == events.event_type.METADATA.ui_type:
                     # get metadata list only if you need it
                     if meta_keys is None:
@@ -253,70 +247,52 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     # op = __get_sql_operator(f.operator)
                     if f.key in meta_keys.keys():
                         extra_constraints.append(
-                            cur.mogrify(
-                                __multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.key])} {op} %(value)s",
-                                                      f.value, is_not=is_not), filter_args))
+                            _multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.key])} {op} %({f_k})s",
+                                                 f.value, is_not=is_not, value_key=f_k))
                         ss_constraints.append(
-                            cur.mogrify(__multiple_conditions(
-                                f"ms.{metadata.index_to_colname(meta_keys[f.key])} {op} %(value)s", f.value,
-                                is_not=is_not),
-                                filter_args))
+                            _multiple_conditions(f"ms.{metadata.index_to_colname(meta_keys[f.key])} {op} %({f_k})s",
+                                                 f.value, is_not=is_not, value_key=f_k))
                 elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f"s.user_id {op} %(value)s", f.value, is_not=is_not),
-                                    filter_args)
-                    )
+                        _multiple_conditions(f"s.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(__multiple_conditions(f"ms.user_id {op} %(value)s", f.value, is_not=is_not),
-                                    filter_args)
-                    )
+                        _multiple_conditions(f"ms.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
                 elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
                                      sessions_metas.meta_type.USERANONYMOUSID_IOS]:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(
-                            __multiple_conditions(f"s.user_anonymous_id {op} %(value)s", f.value, is_not=is_not),
-                            filter_args)
-                    )
+                        _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(
-                            __multiple_conditions(f"ms.user_anonymous_id {op} %(value)s", f.value, is_not=is_not),
-                            filter_args)
-                    )
+                        _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
                 elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f"s.rev_id {op} %(value)s", f.value, is_not=is_not),
-                                    filter_args)
-                    )
+                        _multiple_conditions(f"s.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(__multiple_conditions(f"ms.rev_id {op} %(value)s", f.value, is_not=is_not),
-                                    filter_args)
-                    )
+                        _multiple_conditions(f"ms.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
                 elif filter_type == schemas.FilterType.platform:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
-                        cur.mogrify(__multiple_conditions(f"s.user_device_type {op} %(value)s", f.value, is_not=is_not),
-                                    filter_args)
-                    )
+                        _multiple_conditions(f"s.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
-                        cur.mogrify(
-                            __multiple_conditions(f"ms.user_device_type {op} %(value)s", f.value, is_not=is_not),
-                            filter_args)
-                    )
+                        _multiple_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
 
         # ---------------------------------------------------------------------------
         if len(data.events) > 0:
-            ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
+            # ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
             events_query_from = []
             event_index = 0
             or_events = data.events_order == schemas.SearchEventOrder._or
             # events_joiner = " FULL JOIN " if or_events else " INNER JOIN LATERAL "
             events_joiner = " UNION " if or_events else " INNER JOIN LATERAL "
-            for event in data.events:
+            for i, event in enumerate(data.events):
                 event_type = event.type
-                is_any = event.operator in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
+                is_any = _isAny_opreator(event.operator)
                 if not isinstance(event.value, list):
                     event.value = [event.value]
                 op = __get_sql_operator(event.operator)
@@ -337,7 +313,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event_where.append(f"event_{event_index - 1}.timestamp <= main.timestamp")
 
                 event.value = helper.values_for_operator(value=event.value, op=event.operator)
-                event_args = __multiple_values(event.value)
+                # event_args = _multiple_values(event.value)
+                e_k = f"e_value{i}"
+                full_args = {**full_args, **_multiple_values(event.value, value_key=e_k)}
                 if event_type not in list(events.SUPPORTED_TYPES.keys()) \
                         or event.value in [None, "", "*"] \
                         and (event_type != events.event_type.ERROR.ui_type \
@@ -347,121 +325,106 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     event_from = event_from % f"{events.event_type.CLICK.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.CLICK.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.CLICK.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.CLICK.column} {op} %({e_k})s", event.value,
+                                                 value_key=e_k))
 
                 elif event_type == events.event_type.INPUT.ui_type:
                     event_from = event_from % f"{events.event_type.INPUT.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.INPUT.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.INPUT.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.INPUT.column} {op} %({e_k})s", event.value,
+                                                 value_key=e_k))
                     if len(event.custom) > 0:
-                        event_where.append(__multiple_conditions(f"main.value ILIKE %(custom)s",
-                                                                 event.custom, value_key="custom"))
-                        event_args = {**event_args, **__multiple_values(event.custom, value_key="custom")}
-                        # event_where.append("main.value ILIKE %(custom)s")
-                        # event_args["custom"] = helper.string_to_sql_like_with_op(event.custom, "ILIKE")
+                        event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.custom,
+                                                                value_key=f"custom{i}"))
+                        full_args = {**full_args, **_multiple_values(event.custom, value_key=f"custom{i}")}
+
                 elif event_type == events.event_type.LOCATION.ui_type:
                     event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.LOCATION.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
                 elif event_type == events.event_type.CUSTOM.ui_type:
                     event_from = event_from % f"{events.event_type.CUSTOM.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.CUSTOM.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.CUSTOM.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.CUSTOM.column} {op} %({e_k})s", event.value,
+                                                 value_key=e_k))
                 elif event_type == events.event_type.REQUEST.ui_type:
                     event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.REQUEST.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value,
+                                                 value_key=e_k))
                 elif event_type == events.event_type.GRAPHQL.ui_type:
                     event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.GRAPHQL.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k})s", event.value,
+                                                 value_key=e_k))
                 elif event_type == events.event_type.STATEACTION.ui_type:
                     event_from = event_from % f"{events.event_type.STATEACTION.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.STATEACTION.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.STATEACTION.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.STATEACTION.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
                 elif event_type == events.event_type.ERROR.ui_type:
                     # if event.source in [None, "*", ""]:
                     #     event.source = "js_exception"
                     event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
                     if event.value not in [None, "*", ""]:
                         if not is_any:
-                            event_where.append(f"(main1.message {op} %(value)s OR main1.name {op} %(value)s)")
+                            event_where.append(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)")
                         if event.source not in [None, "*", ""]:
                             event_where.append(f"main1.source = %(source)s")
-                            event_args["source"] = event.source
+                            full_args["source"] = event.source
                     elif event.source not in [None, "*", ""]:
                         event_where.append(f"main1.source = %(source)s")
-                        event_args["source"] = event.source
+                        full_args["source"] = event.source
 
                 # ----- IOS
                 elif event_type == events.event_type.CLICK_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.CLICK_IOS.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.CLICK_IOS.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.CLICK_IOS.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.CLICK_IOS.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
 
                 elif event_type == events.event_type.INPUT_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.INPUT_IOS.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.INPUT_IOS.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
                     if len(event.custom) > 0:
-                        event_where.append(__multiple_conditions("main.value ILIKE %(custom)s", event.custom))
-                        event_args = {**event_args, **__multiple_values(event.custom, "custom")}
-                        # event_where.append("main.value ILIKE %(custom)s")
-                        # event_args["custom"] = helper.string_to_sql_like_with_op(event.custom, "ILIKE")
+                        event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.custom,
+                                                                value_key="custom{i}"))
+                        full_args = {**full_args, **_multiple_values(event.custom, f"custom{i}")}
                 elif event_type == events.event_type.VIEW_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.VIEW_IOS.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.VIEW_IOS.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.VIEW_IOS.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
                 elif event_type == events.event_type.CUSTOM_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.CUSTOM_IOS.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.CUSTOM_IOS.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.CUSTOM_IOS.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.CUSTOM_IOS.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
                 elif event_type == events.event_type.REQUEST_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.REQUEST_IOS.table} AS main "
                     if not is_any:
                         event_where.append(
-                            __multiple_conditions(f"main.{events.event_type.REQUEST_IOS.column} {op} %(value)s",
-                                                  event.value))
-                    # event_where.append(f"main.{events.event_type.REQUEST_IOS.column} {op} %(value)s")
+                            _multiple_conditions(f"main.{events.event_type.REQUEST_IOS.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
                 elif event_type == events.event_type.ERROR_IOS.ui_type:
                     event_from = event_from % f"{events.event_type.ERROR_IOS.table} AS main INNER JOIN public.crashes_ios AS main1 USING(crash_id)"
                     if not is_any and event.value not in [None, "*", ""]:
                         event_where.append(
-                            __multiple_conditions(f"(main1.reason {op} %(value)s OR main1.name {op} %(value)s)",
-                                                  event.value))
-                        # event_where.append(f"(main1.reason {op} %(value)s OR main1.name {op} %(value)s)")
+                            _multiple_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                                                 event.value, value_key=e_k))
 
                 else:
                     continue
@@ -469,7 +432,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     event_where += ss_constraints
                 if is_not:
                     if event_index == 0:
-                        events_query_from.append(cur.mogrify(f"""\
+                        events_query_from.append(f"""\
                                         (SELECT
                                             session_id, 
                                             0 AS timestamp
@@ -483,23 +446,23 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                             AND start_ts <= %(endDate)s
                                             AND duration IS NOT NULL
                                         ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
-                                        """, {**generic_args, **event_args}).decode('UTF-8'))
+                                        """)
                     else:
-                        events_query_from.append(cur.mogrify(f"""\
+                        events_query_from.append(f"""\
                 (SELECT
                     event_0.session_id, 
                     event_{event_index - 1}.timestamp AS timestamp
                   WHERE EXISTS(SELECT session_id FROM {event_from} WHERE {" AND ".join(event_where)}) IS FALSE
                 ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
-                """, {**generic_args, **event_args}).decode('UTF-8'))
+                """)
                 else:
-                    events_query_from.append(cur.mogrify(f"""\
+                    events_query_from.append(f"""\
                 (SELECT main.session_id, MIN(timestamp) AS timestamp
                   FROM {event_from}
                   WHERE {" AND ".join(event_where)}
                   GROUP BY 1
-                ) {"" if or_events else (f"AS event_{event_index}" + ("ON(TRUE)" if event_index > 0 else ""))}\
-                """, {**generic_args, **event_args}).decode('UTF-8'))
+                ) {"" if or_events else (f"AS event_{event_index} " + ("ON(TRUE)" if event_index > 0 else ""))}\
+                """)
                 event_index += 1
             if event_index > 0:
                 if or_events:
@@ -524,13 +487,10 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         # ---------------------------------------------------------------------------
 
         if data.startDate is not None:
-            extra_constraints.append(cur.mogrify("s.start_ts >= %(startDate)s", {"startDate": data.startDate}))
-        else:
-            data.startDate = None
+            extra_constraints.append("s.start_ts >= %(startDate)s")
+
         if data.endDate is not None:
-            extra_constraints.append(cur.mogrify("s.start_ts <= %(endDate)s", {"endDate": data.endDate}))
-        else:
-            data.endDate = None
+            extra_constraints.append("s.start_ts <= %(endDate)s")
 
         # if data.platform is not None:
         #     if data.platform == schemas.PlatformType.mobile:
@@ -557,7 +517,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
                 extra_constraints.append(cur.mogrify("ufe.user_id = %(user_id)s", {"user_id": user_id}))
 
-        extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
+        # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
         if not favorite_only and not errors_only:
             extra_from += """LEFT JOIN (SELECT user_id, session_id
                                                                 FROM public.user_favorite_sessions
@@ -594,20 +554,20 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                      WHERE er.error_id = ve.error_id
                                                        AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
                                 {query_part};""",
-                                     generic_args)
+                                     full_args)
 
         elif count_only:
             main_query = cur.mogrify(
                 f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""",
-                generic_args)
+                full_args)
         else:
             main_query = cur.mogrify(f"""SELECT * FROM
                                         (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                         {query_part}
                                         ORDER BY s.session_id desc) AS filtred_sessions
                                         ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
-                                     generic_args)
+                                     full_args)
 
         print("--------------------")
         print(main_query)
