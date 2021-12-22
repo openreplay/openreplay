@@ -30,7 +30,7 @@ function build_api(){
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/api:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/api:${git_sha1} ${DOCKER_REPO:-'local'}/api:${tag}latest
-        docker push ${DOCKER_REPO:-'local'}/api:${tag}api
+        docker push ${DOCKER_REPO:-'local'}/api:${tag}latest
     }
 }
 
