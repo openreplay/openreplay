@@ -36,7 +36,9 @@ spec:
         args:
           - |
             git clone https://github.com/openreplay/openreplay /opt/openreplay/openreplay
-            if [ ENTERPRISE_EDITION_LICENSE != "" ]; then
+            # Checking variable is empty. shell indipendant method
+            if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
+              echo "Copying enterprise code"
               cd /opt/openreplay/openreplay 
               cp -rf ee/scripts/* scripts/
             fi
