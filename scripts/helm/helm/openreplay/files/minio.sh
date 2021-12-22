@@ -3,6 +3,8 @@
 set -e
 
 
+cd /tmp
+
 buckets=("mobs" "sessions-assets" "static" "sourcemaps")
 
 mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
