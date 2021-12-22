@@ -82,6 +82,7 @@ tolerations: []
 affinity: {}
 
 nginx-ingress:
+  fullnameOverride: nginx-ingress
   image:
     # Using openresty because we need lua support,
     # and dynamic resolve config from local.
@@ -90,3 +91,24 @@ nginx-ingress:
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: "buster"
+
+alerts:
+  fullnameOverride: alerts-openreplay
+assets:
+  fullnameOverride: assets-openreplay
+chalice:
+  fullnameOverride: chalice-openreplay
+db:
+  fullnameOverride: db-openreplay
+ender:
+  fullnameOverride: ender-openreplay
+http:
+  fullnameOverride: http-openreplay
+integrations:
+  fullnameOverride: integrations-openreplay
+sink:
+  fullnameOverride: sink-openreplay
+storage:
+  fullnameOverride: storage-openreplay
+utilities:
+  fullnameOverride: utilities-openreplay
