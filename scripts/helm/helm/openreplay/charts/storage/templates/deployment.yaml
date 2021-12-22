@@ -41,9 +41,9 @@ spec:
             - name: AWS_ENDPOINT
               value: '{{ .Values.global.s3.endpoint }}'
             - name: AWS_REGION_WEB
-              value: '{{ .Values.global.s3.endpoint }}'
+              value: '{{ .Values.global.s3.region }}'
             - name: AWS_REGION_IOS
-              value: '{{ .Values.global.s3.endpoint }}'
+              value: '{{ .Values.global.s3.region }}'
             - name: S3_BUCKET_WEB
               value: '{{ .Values.global.s3.recordings_bucket }}'
             - name: S3_BUCKET_IOS
