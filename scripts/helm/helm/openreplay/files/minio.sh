@@ -13,7 +13,7 @@ function init() {
 echo "Initializing minio"
 
 for bucket in ${buckets[*]}; do
-mc mb minio/${bucket}
+mc mb minio/${bucket} || true
 mc ilm import minio/${bucket} <<EOF
 {
     "Rules": [
@@ -30,7 +30,7 @@ EOF
 done
 
 # Creating frontend bucket
-mc mb minio/frontend
+mc mb minio/frontend || true
 mc policy set download minio/frontend
 mc policy set download minio/sessions-assets
 mc policy set download minio/static
