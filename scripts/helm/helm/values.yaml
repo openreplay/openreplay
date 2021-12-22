@@ -1,3 +1,4 @@
+# Databases specific variables
 postgresql: &postgres
   # For genrating psswords
   # `openssl rand -hex 20`
@@ -23,6 +24,8 @@ minio:
       # `openssl rand -hex 20`
       accessKey: "changeMeMinioAccessKey"
       secretKey: "changeMeMinioPasword"
+
+# Application specific variables
 
 global:
   postgresql: *postgres
