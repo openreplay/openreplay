@@ -439,6 +439,9 @@ class SessionsSearchPayloadSchema(BaseModel):
     class Config:
         alias_generator = attribute_to_camel_case
 
+class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
+    sort: Optional[str] = Field(default=None)
+    order: Optional[str] = Field(default=None)
 
 class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
