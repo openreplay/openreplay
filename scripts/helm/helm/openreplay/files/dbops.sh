@@ -28,6 +28,9 @@ function migration() {
         postgresql)
             /bin/bash postgresql.sh migrate $migration_versions
             ;;
+        minio)
+            /bin/bash minio.sh migrate $migration_versions
+            ;;
         clickhouse)
             /bin/bash clickhouse.sh migrate $migration_versions
             ;;
@@ -45,6 +48,9 @@ function init(){
     case $1 in
         postgresql)
             /bin/bash postgresql.sh init
+            ;;
+        minio)
+            /bin/bash minio.sh migrate $migration_versions
             ;;
         clickhouse)
             /bin/bash clickhouse.sh init

@@ -71,6 +71,27 @@ spec:
           mountPath: /opt/openreplay
         - name: dbmigrationscript
           mountPath: /opt/migrations/
+      - name: minio
+        image: bitnami/minio:2020.10.9-debian-10-r6
+        env:
+          - name: PREVIOUS_APP_VERSION
+            value: "{{ .Values.fromVersion }}"
+          - name: CHART_APP_VERSION
+            value: "{{ .Chart.AppVersion }}"
+          - name: MINIO_ACCESS_KEY
+            value: "{{ .Values.global.s3.accessKey }}"
+          - name: MINIO_SECRET_KEY
+            value: "{{ .Values.global.s3.secretKey }}"
+        command: 
+        - /bin/bash
+        - /opt/migrations/dbops.sh
+        - "{{ .Release.IsUpgrade }}"
+        - minio
+        volumeMounts:
+        - name: shared
+          mountPath: /opt/openreplay
+        - name: dbmigrationscript
+          mountPath: /opt/migrations/
       {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
       - name: clickhouse
