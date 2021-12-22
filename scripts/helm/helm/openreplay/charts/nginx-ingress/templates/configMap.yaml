@@ -121,7 +121,8 @@ data:
     ;
 
   sites.conf: |-
-    resolver {{ .Values.kubeDnsIP }};
+    # Ref: https://github.com/openresty/openresty/#resolvconf-parsing
+    resolver local=on;
     # Need real ip address for flags in replay.
     # Some LBs will forward real ips as x-forwarded-for
     # So making that as priority
@@ -150,3 +151,4 @@ data:
       include /etc/nginx/conf.d/location.list;
       client_max_body_size 10M;
     }
+

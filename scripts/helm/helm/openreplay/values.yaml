@@ -80,3 +80,13 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+nginx-ingress:
+  image:
+    # Using openresty because we need lua support,
+    # and dynamic resolve config from local.
+    # Ref: https://serverfault.com/questions/638822/nginx-resolver-address-from-etc-resolv-conf
+    repository: openresty/openresty
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "buster"

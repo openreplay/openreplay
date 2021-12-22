@@ -26,7 +26,6 @@ minio:
       secretKey: "changeMeMinioPasword"
 
 # Application specific variables
-
 global:
   postgresql: *postgres
   kafka: *kafka
