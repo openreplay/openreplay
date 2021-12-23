@@ -562,29 +562,40 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                         {query_part};""",
                 full_args)
         else:
-            main_query = cur.mogrify(f"""SELECT * FROM
-                                        (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
-                                        {query_part}
-                                        ORDER BY s.session_id desc) AS filtred_sessions
-                                        ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
+            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200) AS sessions
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn FROM
+                                            (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            {query_part}
+                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                            ORDER BY favorite DESC, issue_score DESC, {sort} {order}) AS full_sessions;""",
                                      full_args)
+
+            # main_query = cur.mogrify(f"""SELECT * FROM
+            #                             (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+            #                             {query_part}
+            #                             ORDER BY s.session_id desc) AS filtred_sessions
+            #                             ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
+            #                          full_args)
 
         print("--------------------")
         print(main_query)
 
         cur.execute(main_query)
-
+        print("Executed--------------------")
         if count_only:
             return helper.dict_to_camel_case(cur.fetchone())
-        sessions = []
-        total = cur.rowcount
-        row = cur.fetchone()
-        limit = 200
-        while row is not None and len(sessions) < limit:
-            if row.get("favorite"):
-                limit += 1
-            sessions.append(row)
-            row = cur.fetchone()
+        sessions = cur.fetchone()
+        total = sessions["count"]
+        sessions = sessions["sessions"]
+        # sessions = []
+        # total = cur.rowcount
+        # row = cur.fetchone()
+        # limit = 200
+        # while row is not None and len(sessions) < limit:
+        #     if row.get("favorite"):
+        #         limit += 1
+        #     sessions.append(row)
+        #     row = cur.fetchone()
 
     if errors_only:
         return sessions
