@@ -458,7 +458,7 @@ export default class AssistManager {
         name: store.getState().getIn([ 'user', 'account', 'name']),
       });
 
-      // this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
       // this.md.overlay.addEventListener("click", this.onMouseClick)
     });
     //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))

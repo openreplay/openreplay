@@ -23,7 +23,7 @@ import { confirm } from 'UI/Confirmation';
 })
 @withPageTitle('Metadata - OpenReplay Preferences')
 class CustomFields extends React.Component {
-  state = { showModal: false, currentSite: this.props.sites.get(0) };
+  state = { showModal: false, currentSite: this.props.sites.get(0), deletingItem: null };
 
   componentWillMount() {
     const activeSite = this.props.sites.get(0);
@@ -60,15 +60,15 @@ class CustomFields extends React.Component {
       confirmation: `Are you sure you want to remove?`
     })) {
       const { currentSite } = this.state;
-      this.props.remove(currentSite.id, field.index).then(() => {
-        
-      });
+      this.setState({ deletingItem: field.index });
+      this.props.remove(currentSite.id, field.index)
+        .then(() => this.setState({ deletingItem: null }));
     }
   }
 
   render() {
     const { fields, field, loading } = this.props;
-    const { showModal, currentSite } = this.state;
+    const { showModal, currentSite, deletingItem } = this.state;
     return (
       <div>
         <SlideModal
@@ -105,6 +105,7 @@ class CustomFields extends React.Component {
             <div className={ styles.list }>
               { fields.filter(i => i.index).map(field => (
                 <ListItem
+                  disabled={deletingItem && deletingItem === field.index}
                   key={ field._key }
                   field={ field }
                   onEdit={ this.init }

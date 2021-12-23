@@ -104,9 +104,9 @@ class CreateNotificationSchema(BaseModel):
 
 
 class NotificationsViewSchema(BaseModel):
-    ids: Optional[List] = Field(...)
-    startTimestamp: int = Field(...)
-    endTimestamp: int = Field(...)
+    ids: Optional[List] = Field(default=[])
+    startTimestamp: Optional[int] = Field(default=None)
+    endTimestamp: Optional[int] = Field(default=None)
 
 
 class JiraGithubSchema(BaseModel):
