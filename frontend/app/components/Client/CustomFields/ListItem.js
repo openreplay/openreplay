@@ -3,9 +3,9 @@ import cn from 'classnames'
 import { Icon } from 'UI';
 import styles from './listItem.css';
 
-const ListItem = ({ field, onEdit, onDelete }) => {
+const ListItem = ({ field, onEdit, onDelete, disabled }) => {
   return (
-    <div className={ cn(styles.wrapper, field.index === 0 ? styles.preDefined : '' ) } onClick={ () => field.index != 0 && onEdit(field) } >
+    <div className={ cn(styles.wrapper, field.index === 0 ? styles.preDefined : '', { [styles.disabled] : disabled} ) } onClick={ () => field.index != 0 && onEdit(field) } >
       <span>{ field.key }</span>      
       <div className={ styles.actions } data-hidden={ field.index === 0}>
         <div className={ styles.button } onClick={ (e) => { e.stopPropagation(); onDelete(field) } }>
