@@ -562,7 +562,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                         {query_part};""",
                 full_args)
         else:
-            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200) AS sessions
+            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
                                             FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn FROM
                                             (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                             {query_part}
@@ -825,7 +825,7 @@ def get_session_ids_by_user_ids(project_id, user_ids):
 
 
 def delete_sessions_by_session_ids(session_ids):
-    with pg_client.PostgresClient() as cur:
+    with pg_client.PostgresClient(long_query=True) as cur:
         query = cur.mogrify(
             """\
             DELETE FROM public.sessions
@@ -839,7 +839,7 @@ def delete_sessions_by_session_ids(session_ids):
 
 
 def delete_sessions_by_user_ids(project_id, user_ids):
-    with pg_client.PostgresClient() as cur:
+    with pg_client.PostgresClient(long_query=True) as cur:
         query = cur.mogrify(
             """\
             DELETE FROM public.sessions
@@ -853,6 +853,6 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 
 def count_all():
-    with pg_client.PostgresClient() as cur:
+    with pg_client.PostgresClient(long_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)

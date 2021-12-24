@@ -1,6 +1,7 @@
+from decouple import config
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from decouple import config
 from chalicelib.utils.helper import get_issue_title
 
 LOWEST_BAR_VALUE = 3
@@ -30,7 +31,7 @@ def edit_config(user_id, weekly_report):
 
 
 def cron():
-    with pg_client.PostgresClient() as cur:
+    with pg_client.PostgresClient(long_query=True) as cur:
         params = {"3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),
                   "2_week_ago": TimeUTC.midnight(delta_days=-14),
