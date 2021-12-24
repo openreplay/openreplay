@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, List, Literal, Union
+from typing import Optional, List, Union
 
 from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator
 
@@ -312,10 +312,18 @@ class AlertColumn(str, Enum):
     errors__backend__count = "errors.backend.count"
 
 
+class MathOperator(str, Enum):
+    _less = "<"
+    _greater = ">"
+    _less_eq = "<="
+    _greater_eq = ">="
+
+
 class _AlertQuerySchema(BaseModel):
     left: AlertColumn = Field(...)
     right: float = Field(...)
-    operator: Literal["<", ">", "<=", ">="] = Field(...)
+    # operator: Literal["<", ">", "<=", ">="] = Field(...)
+    operator: MathOperator = Field(...)
 
 
 class AlertSchema(BaseModel):
@@ -360,6 +368,12 @@ class EventType(str, Enum):
     error_ios = "ERROR_IOS"
 
 
+class PerformanceEventType(str, Enum):
+    location_dom_complete = "DOM_COMPLETE"
+    location_largest_contentful_paint_time = "LARGEST_CONTENTFUL_PAINT_TIME"
+    time_between_events = "TIME_BETWEEN_EVENTS"
+
+
 class FilterType(str, Enum):
     user_os = "USEROS"
     user_browser = "USERBROWSER"
@@ -399,6 +413,7 @@ class SearchEventOperator(str, Enum):
 class PlatformType(str, Enum):
     mobile = "mobile"
     desktop = "desktop"
+    tablet = "tablet"
 
 
 class SearchEventOrder(str, Enum):
@@ -422,13 +437,32 @@ class IssueType(str, Enum):
     js_exception = 'js_exception'
 
 
-class _SessionSearchEventSchema(BaseModel):
-    custom: Optional[List[str]] = Field(None)
+class _SessionSearchEventRaw(BaseModel):
+    custom: Optional[List[Union[str, int]]] = Field(None)
+    customOperator: Optional[MathOperator] = Field(None)
     key: Optional[str] = Field(None)
-    value: Union[Optional[str], Optional[List[str]]] = Field(...)
-    type: EventType = Field(...)
+    value: Union[str, List[str]] = Field(...)
+    type: Union[EventType, PerformanceEventType] = Field(...)
     operator: SearchEventOperator = Field(...)
     source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
+
+    @root_validator
+    def check_card_number_omitted(cls, values):
+        if isinstance(values.get("type"), PerformanceEventType):
+            assert values.get("custom") is not None, "custom should not be None for PerformanceEventType"
+            assert values.get("customOperator") is not None \
+                , "customOperator should not be None for PerformanceEventType"
+            if values["type"] == PerformanceEventType.time_between_events:
+                assert len(values.get("value", [])) == 2, \
+                    f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
+                assert isinstance(values["value"][0], _SessionSearchEventRaw) \
+                       and isinstance(values["value"][1], _SessionSearchEventRaw) \
+                    , f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
+        return values
+
+
+class _SessionSearchEventSchema(_SessionSearchEventRaw):
+    value: Union[List[_SessionSearchEventRaw], str, List[str]] = Field(...)
 
 
 class _SessionSearchFilterSchema(BaseModel):
