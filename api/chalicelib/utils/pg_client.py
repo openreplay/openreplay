@@ -1,15 +1,17 @@
+from threading import Semaphore
+
 import psycopg2
 import psycopg2.extras
 from decouple import config
+from psycopg2 import pool
 
 PG_CONFIG = {"host": config("pg_host"),
              "database": config("pg_dbname"),
              "user": config("pg_user"),
              "password": config("pg_password"),
              "port": config("pg_port", cast=int)}
-
-from psycopg2 import pool
-from threading import Semaphore
+if config("pg_timeout", cast=int, default=0) > 0:
+    PG_CONFIG["options"] = f"-c statement_timeout={config('pg_timeout', cast=int) * 1000}"
 
 
 class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
@@ -27,7 +29,7 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
 
 try:
-    postgreSQL_pool = ORThreadedConnectionPool(50, 100, **PG_CONFIG)
+    postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20), 100, **PG_CONFIG)
     if (postgreSQL_pool):
         print("Connection pool created successfully")
 except (Exception, psycopg2.DatabaseError) as error:
@@ -38,9 +40,14 @@ except (Exception, psycopg2.DatabaseError) as error:
 class PostgresClient:
     connection = None
     cursor = None
+    long_query = False
 
-    def __init__(self):
-        self.connection = postgreSQL_pool.getconn()
+    def __init__(self, long_query=False):
+        self.long_query = long_query
+        if long_query:
+            self.connection = psycopg2.connect(**PG_CONFIG)
+        else:
+            self.connection = postgreSQL_pool.getconn()
 
     def __enter__(self):
         if self.cursor is None:
@@ -51,6 +58,8 @@ class PostgresClient:
         try:
             self.connection.commit()
             self.cursor.close()
+            if self.long_query:
+                self.connection.close()
         except Exception as error:
             print("Error while committing/closing PG-connection", error)
             raise error
