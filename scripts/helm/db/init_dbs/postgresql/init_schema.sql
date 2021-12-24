@@ -523,8 +523,6 @@ $$
                 metadata_8              text                  DEFAULT NULL,
                 metadata_9              text                  DEFAULT NULL,
                 metadata_10             text                  DEFAULT NULL
---   ,
---   rehydration_id integer REFERENCES rehydrations(rehydration_id) ON DELETE SET NULL
             );
             CREATE INDEX ON sessions (project_id, start_ts);
             CREATE INDEX ON sessions (project_id, user_id);
@@ -542,7 +540,6 @@ $$
             CREATE INDEX ON sessions (project_id, metadata_8);
             CREATE INDEX ON sessions (project_id, metadata_9);
             CREATE INDEX ON sessions (project_id, metadata_10);
--- CREATE INDEX ON sessions (rehydration_id);
             CREATE INDEX ON sessions (project_id, watchdogs_score DESC);
             CREATE INDEX platform_idx ON public.sessions (platform);
 
