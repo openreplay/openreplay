@@ -281,6 +281,13 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     ss_constraints.append(
                         _multiple_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                              value_key=f_k))
+                elif filter_type == schemas.FilterType.issue:
+                    extra_constraints.append(
+                        _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                                             value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                                             value_key=f_k))
 
         # ---------------------------------------------------------------------------
         if len(data.events) > 0:

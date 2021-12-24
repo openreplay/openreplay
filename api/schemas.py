@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional, List, Literal, Union
 
-from pydantic import BaseModel, Field, EmailStr, HttpUrl
+from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -380,6 +380,7 @@ class FilterType(str, Enum):
     duration = "DURATION"
     platform = "PLATFORM"
     metadata = "METADATA"
+    issue = "ISSUE"
 
 
 class SearchEventOperator(str, Enum):
@@ -406,6 +407,21 @@ class SearchEventOrder(str, Enum):
     _and = "and"
 
 
+class IssueType(str, Enum):
+    click_rage = 'click_rage'
+    dead_click = 'dead_click'
+    excessive_scrolling = 'excessive_scrolling'
+    bad_request = 'bad_request'
+    missing_resource = 'missing_resource'
+    memory = 'memory'
+    cpu = 'cpu'
+    slow_resource = 'slow_resource'
+    slow_page_load = 'slow_page_load'
+    crash = 'crash'
+    custom = 'custom'
+    js_exception = 'js_exception'
+
+
 class _SessionSearchEventSchema(BaseModel):
     custom: Optional[List[str]] = Field(None)
     key: Optional[str] = Field(None)
@@ -418,10 +434,21 @@ class _SessionSearchEventSchema(BaseModel):
 class _SessionSearchFilterSchema(BaseModel):
     custom: Optional[List[str]] = Field(None)
     key: Optional[str] = Field(None)
-    value: Union[Optional[Union[str, int]], Optional[List[Union[str, int]]]] = Field(...)
+    value: Union[Optional[Union[str, int, IssueType, PlatformType]],
+                 Optional[List[Union[str, int, IssueType, PlatformType]]]] = Field(...)
     type: FilterType = Field(...)
     operator: SearchEventOperator = Field(...)
     source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
+
+    @root_validator
+    def check_card_number_omitted(cls, values):
+        if values.get("type") == FilterType.issue:
+            for v in values.get("value"):
+                assert IssueType(v)
+        elif values.get("type") == FilterType.platform:
+            for v in values.get("value"):
+                assert PlatformType(v)
+        return values
 
 
 class SessionsSearchPayloadSchema(BaseModel):
@@ -439,9 +466,11 @@ class SessionsSearchPayloadSchema(BaseModel):
     class Config:
         alias_generator = attribute_to_camel_case
 
+
 class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(default=None)
     order: Optional[str] = Field(default=None)
+
 
 class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
