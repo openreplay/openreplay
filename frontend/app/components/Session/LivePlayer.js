@@ -31,7 +31,7 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request }) {
+function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise }) {
   useEffect(() => {
     if (!loadingCredentials) {
       initPlayer(session, jwt, assistCredendials);
@@ -41,7 +41,9 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
-    request();
+    if (isEnterprise) {
+      request();
+    }
     return () => {
       toggleFullscreen(false);
       closeBottomBlock();
@@ -74,6 +76,7 @@ export default withRequest({
     showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
     jwt: state.get('jwt'),
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
   }),
   { toggleFullscreen, closeBottomBlock },
 )(WebPlayer)));
