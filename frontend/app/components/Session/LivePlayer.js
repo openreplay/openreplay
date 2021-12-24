@@ -31,7 +31,7 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request }) {
+const WebPlayer = React.memo(({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request }) => {
   useEffect(() => {
     if (!loadingCredentials) {
       initPlayer(session, jwt, assistCredendials);
@@ -60,7 +60,7 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
       </InitLoader>
     </PlayerProvider>
   );
-}
+});
 
 export default withRequest({
   initialData: null,
