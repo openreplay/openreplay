@@ -34,8 +34,8 @@ export default Record({
   startDate,
   endDate,
 
-  sort: undefined,
-  order: undefined,
+  sort: 'startTs',
+  order: 'desc',
 
   viewed: undefined,
   consoleLogCount: undefined,

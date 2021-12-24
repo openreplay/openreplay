@@ -15,6 +15,7 @@ import cls from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';
+import AssistTabs from '../Assist/components/AssistTabs';
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -115,6 +116,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
 
           <div className='ml-auto flex items-center'>
+            { live && <AssistTabs />}
             { live && <AssistActions isLive userId={userId} /> }
             { !live && (
               <>
