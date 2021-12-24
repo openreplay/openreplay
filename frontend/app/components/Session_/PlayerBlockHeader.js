@@ -116,7 +116,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
 
           <div className='ml-auto flex items-center'>
-            { live && <AssistTabs />}
+            { live && <AssistTabs userId={userId} />}
             { live && <AssistActions isLive userId={userId} /> }
             { !live && (
               <>
