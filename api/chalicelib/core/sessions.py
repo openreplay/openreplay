@@ -1,6 +1,6 @@
 import schemas
 from chalicelib.core import events, sessions_metas, metadata, events_ios, \
-    sessions_mobs, issues, projects, errors, resources, assist
+    sessions_mobs, issues, projects, errors, resources, assist, performance_event
 from chalicelib.utils import pg_client, helper, dev
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -318,16 +318,16 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                    "main.session_id=event_0.session_id"]
                     if data.events_order == schemas.SearchEventOrder._then:
                         event_where.append(f"event_{event_index - 1}.timestamp <= main.timestamp")
-
-                event.value = helper.values_for_operator(value=event.value, op=event.operator)
-                # event_args = _multiple_values(event.value)
                 e_k = f"e_value{i}"
-                full_args = {**full_args, **_multiple_values(event.value, value_key=e_k)}
-                if event_type not in list(events.SUPPORTED_TYPES.keys()) \
-                        or event.value in [None, "", "*"] \
-                        and (event_type != events.event_type.ERROR.ui_type \
-                             or event_type != events.event_type.ERROR_IOS.ui_type):
-                    continue
+                if event.type != schemas.PerformanceEventType.time_between_events:
+                    event.value = helper.values_for_operator(value=event.value, op=event.operator)
+                    full_args = {**full_args, **_multiple_values(event.value, value_key=e_k)}
+
+                # if event_type not in list(events.SUPPORTED_TYPES.keys()) \
+                #         or event.value in [None, "", "*"] \
+                #         and (event_type != events.event_type.ERROR.ui_type \
+                #              or event_type != events.event_type.ERROR_IOS.ui_type):
+                #     continue
                 if event_type == events.event_type.CLICK.ui_type:
                     event_from = event_from % f"{events.event_type.CLICK.table} AS main "
                     if not is_any:
@@ -432,6 +432,52 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event_where.append(
                             _multiple_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                                  event.value, value_key=e_k))
+                elif event_type == [schemas.PerformanceEventType.location_dom_complete,
+                                    schemas.PerformanceEventType.location_largest_contentful_paint_time]:
+                    event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
+                    e_k += "_custom"
+                    full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+                    event_where.append(
+                        _multiple_conditions(
+                            f"main.{performance_event.get_col(event_type)} {event.customOperator} %({e_k})s",
+                            event.custom, value_key=e_k))
+                elif event_type == schemas.PerformanceEventType.time_between_events:
+                    event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
+                    if not isinstance(event.value[0].value, list):
+                        event.value[0].value = [event.value[0].value]
+                    if not isinstance(event.value[1].value, list):
+                        event.value[1].value = [event.value[1].value]
+                    event.value[0].value = helper.values_for_operator(value=event.value[0].value, op=event.operator)
+                    event.value[1].value = helper.values_for_operator(value=event.value[1].value, op=event.operator)
+                    e_k1 = e_k + "_e1"
+                    e_k2 = e_k + "_e2"
+                    full_args = {**full_args,
+                                 **_multiple_values(event.value[0].value, value_key=e_k1),
+                                 **_multiple_values(event.value[1].value, value_key=e_k2)}
+                    s_op = __get_sql_operator(event.value[0].operator)
+                    event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
+                    if event_index > 0 and not or_events:
+                        event_where.append("main2.session_id=event_0.session_id")
+                    event_where.append(
+                        _multiple_conditions(
+                            f"main.{getattr(events.event_type, event.value[0].type).column} {s_op} %({e_k1})s",
+                            event.value[0].value, value_key=e_k1))
+                    s_op = __get_sql_operator(event.value[1].operator)
+                    event_where.append(
+                        _multiple_conditions(
+                            f"main2.{getattr(events.event_type, event.value[1].type).column} {s_op} %({e_k2})s",
+                            event.value[1].value, value_key=e_k2))
+
+                    e_k += "_custom"
+                    full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+                    event_where.append(
+                        _multiple_conditions(f"main2.timestamp - main.timestamp {event.customOperator} %({e_k})s",
+                                             event.custom, value_key=e_k))
+
 
                 else:
                     continue
@@ -464,7 +510,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 """)
                 else:
                     events_query_from.append(f"""\
-                (SELECT main.session_id, MIN(timestamp) AS timestamp
+                (SELECT main.session_id, MIN(main.timestamp) AS timestamp
                   FROM {event_from}
                   WHERE {" AND ".join(event_where)}
                   GROUP BY 1
