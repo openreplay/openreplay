@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import { fetchList } from 'Duck/sessions';
 import { KEYS } from 'Types/filter/customFilter';
-import { Link } from 'UI';
+import { Link, Loader } from 'UI';
 import Filter from 'Types/filter';
 import { List } from 'immutable';
 import Counter from 'App/components/shared/SessionItem/Counter';
@@ -34,6 +34,13 @@ interface Props {
 
 const AssistTabs = React.memo((props: Props) => {
   const [showMenu, setShowMenu] = useState(false)
+
+  useEffect(() => {
+    if (showMenu) {
+      props.fetchLiveList();
+    }
+  }, [showMenu])
+
   useEffect(() => {
     if (!props.loading && props.list.size === 0) {
       props.fetchLiveList();
@@ -48,9 +55,11 @@ const AssistTabs = React.memo((props: Props) => {
           className="border z-10 absolute bg-white rounded shadow right-0"
           style={{ minWidth: "180px"}}
         >
-          {props.list.map((item, index) => (
-            <RowItem key={index} startedAt={item.startedAt} sessionId={item.sessionId} />
-          ))}
+          <Loader loading={props.loading} size="small">
+            {props.list.map((item, index) => (
+              <RowItem key={index} startedAt={item.startedAt} sessionId={item.sessionId} />
+            ))}  
+          </Loader>
         </div>
       )}
     </div>
@@ -60,7 +69,7 @@ const AssistTabs = React.memo((props: Props) => {
 export default connect(state => {
   const session = state.getIn([ 'sessions', 'current' ]);
   return {
-    loading: state.getIn([ 'sessions', 'loading' ]),
+    loading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
     list: state.getIn(['sessions', 'liveSessions']).filter(i => i.userId === session.userId),
     session,
     filters: state.getIn([ 'filters', 'appliedFilter' ]),
