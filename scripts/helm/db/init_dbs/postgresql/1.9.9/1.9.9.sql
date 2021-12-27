@@ -6,4 +6,6 @@ CREATE INDEX IF NOT EXISTS pages_session_id_timestamp_idx ON events.pages (sessi
 
 CREATE INDEX ON events.errors (timestamp);
 CREATE INDEX ON public.projects (project_key);
-END;
+
+
+COMMIT;
