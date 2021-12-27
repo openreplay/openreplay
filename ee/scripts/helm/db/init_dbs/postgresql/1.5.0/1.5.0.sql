@@ -16,5 +16,4 @@ CREATE TABLE traces
 CREATE INDEX traces_user_id_idx ON traces (user_id);
 CREATE INDEX traces_tenant_id_idx ON traces (tenant_id);
 
-CREATE INDEX user_favorite_sessions_user_id_session_id_idx ON user_favorite_sessions(user_id,session_id);
 COMMIT;
