@@ -18,8 +18,8 @@ function SessionList(props: Props) {
   return (
     <Loader loading={props.loading}>
       <NoContent 
-        show={ !props.loading && (props.list.length === 0 )}
-        title="No recordings found."
+        show={ !props.loading && (props.list.size === 0 )}
+        title="No live sessions."
       >
         <div className="p-4">
           { props.list.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
