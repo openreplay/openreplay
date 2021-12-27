@@ -192,7 +192,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 f.value = helper.values_for_operator(value=f.value, op=f.operator)
                 f_k = f"f_value{i}"
                 full_args = {**full_args, **_multiple_values(f.value, value_key=f_k)}
-                op = __get_sql_operator(f.operator)
+                op = __get_sql_operator(f.operator) \
+                    if filter_type not in [schemas.FilterType.events_count] else f.operator
                 is_not = False
                 if __is_negation_operator(f.operator):
                     is_not = True
@@ -288,6 +289,13 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     ss_constraints.append(
                         _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
                                              value_key=f_k))
+                elif filter_type == schemas.FilterType.events_count:
+                    extra_constraints.append(
+                        _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"ms.events_count {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
 
         # ---------------------------------------------------------------------------
         if len(data.events) > 0:
@@ -341,7 +349,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event_where.append(
                             _multiple_conditions(f"main.{events.event_type.INPUT.column} {op} %({e_k})s", event.value,
                                                  value_key=e_k))
-                    if len(event.custom) > 0:
+                    if event.custom is not None and len(event.custom) > 0:
                         event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.custom,
                                                                 value_key=f"custom{i}"))
                         full_args = {**full_args, **_multiple_values(event.custom, value_key=f"custom{i}")}
@@ -404,7 +412,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event_where.append(
                             _multiple_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %({e_k})s",
                                                  event.value, value_key=e_k))
-                    if len(event.custom) > 0:
+                    if event.custom is not None and len(event.custom) > 0:
                         event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.custom,
                                                                 value_key="custom{i}"))
                         full_args = {**full_args, **_multiple_values(event.custom, f"custom{i}")}
@@ -484,7 +492,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 if event_index == 0 or or_events:
                     event_where += ss_constraints
                 if is_not:
-                    if event_index == 0:
+                    if event_index == 0 or or_events:
                         events_query_from.append(f"""\
                                         (SELECT
                                             session_id, 
@@ -498,7 +506,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                             AND start_ts >= %(startDate)s
                                             AND start_ts <= %(endDate)s
                                             AND duration IS NOT NULL
-                                        ) AS event_{event_index} {"ON(TRUE)" if event_index > 0 else ""}\
+                                        ) {"" if or_events else ("AS event_{event_index}" + ("ON(TRUE)" if event_index > 0 else ""))}\
                                         """)
                     else:
                         events_query_from.append(f"""\
