@@ -7,6 +7,7 @@ import TimeTracker from './TimeTracker';
 import { ReduxTime } from './Time';
 import stl from './timeline.css';
 import { TYPES } from 'Types/session/event';
+import { setTimelinePointer } from 'Duck/sessions';
 
 const getPointerIcon = (type) => {
   // exception, 
@@ -69,7 +70,7 @@ const getPointerIcon = (type) => {
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
   returningLocationTime: state.getIn([ 'sessions', 'current', 'returningLocation' ]) &&
     state.getIn([ 'sessions', 'current', 'returningLocationTime' ]),
-}))
+}), { setTimelinePointer })
 export default class Timeline extends React.PureComponent {
   seekProgress = (e) => {
     const { endTime } = this.props;
@@ -78,9 +79,10 @@ export default class Timeline extends React.PureComponent {
     this.props.jump(time);
   }
 
-  createEventClickHandler = time => (e) => {
+  createEventClickHandler = pointer => (e) => {
     e.stopPropagation();
-    this.props.jump(time)
+    this.props.jump(pointer.time);
+    this.props.setTimelinePointer(pointer);
   }
 
   componentDidMount() {
@@ -144,7 +146,7 @@ export default class Timeline extends React.PureComponent {
                     //width: `${ 2000 * scale }%`
                   } } 
                   className={ stl.clickRage }
-                  onClick={ this.createEventClickHandler(iss.time) }
+                  onClick={ this.createEventClickHandler(iss) }
                 >
                   <TimelinePointer
                     icon={iss.icon}
@@ -165,7 +167,7 @@ export default class Timeline extends React.PureComponent {
                   //width: `${ 2000 * scale }%`
                 } } 
                 className={ stl.clickRage }
-                onClick={ this.createEventClickHandler(e.time) }
+                onClick={ this.createEventClickHandler(e) }
               >
                 <TimelinePointer
                   icon={getPointerIcon('click_rage')}
@@ -259,7 +261,7 @@ export default class Timeline extends React.PureComponent {
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
                   style={ { left: `${ e.time * scale }%`, top: '-30px' } }
-                  onClick={ this.createEventClickHandler(e.time) }
+                  onClick={ this.createEventClickHandler(e) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('exception')}
@@ -305,7 +307,7 @@ export default class Timeline extends React.PureComponent {
                     //[ stl.info ]: !l.isYellow() && !l.isRed(),
                   }) }
                   style={ { left: `${ l.time * scale }%`, top: '-30px' } }
-                  onClick={ this.createEventClickHandler(l.time) }
+                  onClick={ this.createEventClickHandler(l) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('log')}
@@ -360,7 +362,7 @@ export default class Timeline extends React.PureComponent {
                     [ stl.warning ]: r.isYellow(),
                   }) }
                   style={ { left: `${ r.time * scale }%`, top: '-30px' } }
-                  onClick={ this.createEventClickHandler(r.time) }
+                  onClick={ this.createEventClickHandler(r) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('resource')}
@@ -407,7 +409,7 @@ export default class Timeline extends React.PureComponent {
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
                   style={ { left: `${ e.time * scale }%`, top: '-30px' } }
-                  onClick={ this.createEventClickHandler(e.time) }
+                  onClick={ this.createEventClickHandler(e) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('fetch')}
@@ -448,7 +450,7 @@ export default class Timeline extends React.PureComponent {
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
                   style={ { left: `${ e.time * scale }%`, top: '-30px' } }
-                  onClick={ this.createEventClickHandler(e.time) }
+                  onClick={ this.createEventClickHandler(e) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('stack')}

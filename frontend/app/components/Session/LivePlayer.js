@@ -31,10 +31,10 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise }) {
+function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise, hasSessionsPath }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, jwt, assistCredendials);
+      initPlayer(session, jwt, assistCredendials, !hasSessionsPath && session.live);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
@@ -62,7 +62,7 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
       </InitLoader>
     </PlayerProvider>
   );
-}
+};
 
 export default withRequest({
   initialData: null,
@@ -76,7 +76,11 @@ export default withRequest({
     showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
     jwt: state.get('jwt'),
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+<<<<<<< HEAD
+    hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
+=======
     isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+>>>>>>> e2eec140e9dce5709f8ff9fd3b114a1e2a0f0e11
   }),
   { toggleFullscreen, closeBottomBlock },
 )(WebPlayer)));
