@@ -76,11 +76,8 @@ export default withRequest({
     showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
     jwt: state.get('jwt'),
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-<<<<<<< HEAD
     hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
-=======
     isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
->>>>>>> e2eec140e9dce5709f8ff9fd3b114a1e2a0f0e11
   }),
   { toggleFullscreen, closeBottomBlock },
 )(WebPlayer)));
