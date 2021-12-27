@@ -58,4 +58,4 @@ ALTER TABLE tenants
     ALTER COLUMN name SET NOT NULL;
 
 
-END;
+COMMIT;
