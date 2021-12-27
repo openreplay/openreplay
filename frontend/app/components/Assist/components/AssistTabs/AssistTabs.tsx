@@ -1,18 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import { SlideModal } from 'UI';
+import { SlideModal, Icon } from 'UI';
 import SessionList from '../SessionList';
+import stl from './assistTabs.css'
 
 interface Props {
   userId: any,
 }
 
-const AssistTabs = React.memo((props: Props) => {
+const AssistTabs = (props: Props) => {
   const [showMenu, setShowMenu] = useState(false)
 
   return (
     <div className="relative mr-4">
-      <div className="p-2 cursor-pointer" onClick={() => setShowMenu(!showMenu)}>
-        Live Sessions
+      <div className="flex items-center">
+        <div
+          className={stl.btnLink}
+          onClick={() => setShowMenu(!showMenu)}
+        >
+          More Live Sessions
+        </div>
+        <span className="mx-3 color-gray-medium">by</span>
+        <div className="flex items-center">
+          <Icon name="user-alt" color="gray-darkest" />
+          <div className="ml-2">{props.userId}</div>
+        </div>
       </div>
       <SlideModal
         title={ <div>Live Sessions by {props.userId}</div> }
@@ -22,6 +33,6 @@ const AssistTabs = React.memo((props: Props) => {
       />
     </div>
   );
-});
+};
 
 export default AssistTabs;

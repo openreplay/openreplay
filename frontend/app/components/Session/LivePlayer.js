@@ -31,10 +31,10 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-const WebPlayer = React.memo(({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request }) => {
+function WebPlayer({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request, hasSessionsPath }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, jwt, assistCredendials);
+      initPlayer(session, jwt, assistCredendials, !hasSessionsPath && session.live);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
@@ -60,7 +60,7 @@ const WebPlayer = React.memo(({ showAssist, session, toggleFullscreen, closeBott
       </InitLoader>
     </PlayerProvider>
   );
-});
+};
 
 export default withRequest({
   initialData: null,
@@ -74,6 +74,7 @@ export default withRequest({
     showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
     jwt: state.get('jwt'),
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+    hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
   }),
   { toggleFullscreen, closeBottomBlock },
 )(WebPlayer)));

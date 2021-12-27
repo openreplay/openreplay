@@ -6,7 +6,6 @@ import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { Link, NoContent, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
 import withPermissions from 'HOCs/withPermissions'
-import { fetchLiveList } from 'Duck/sessions';
 
 import LivePlayer from './LivePlayer';
 import WebPlayer from './WebPlayer';
@@ -21,8 +20,7 @@ function Session({
 	session, 
 	fetchSession,
   fetchSlackList,
-  fetchLiveList,
-  filters
+  hasSessionsPath
  }) {
  	usePageTitle("OpenReplay Session Player");
  	useEffect(() => {
@@ -37,13 +35,7 @@ function Session({
 		return () => {
 			if (!session.exists()) return;
 		}
-	},[ sessionId ]);
-
-  // useEffect(() => {
-  //  if (session && session.live) {
-  //   fetchLiveList(filters.toJS())
-  //  }
-  // }, [session])
+	},[ sessionId, hasSessionsPath ]);
 
 	return (
 		<NoContent
@@ -59,7 +51,7 @@ function Session({
     	<Loader className="flex-1" loading={ loading || sessionId !== session.sessionId }> 
     		{ session.isIOS 
     			? <IOSPlayer session={session} />
-    			: (session.live ? <LivePlayer /> : <WebPlayer />)
+    			: (session.live && !hasSessionsPath ? <LivePlayer /> : <WebPlayer />)
       	}
     	</Loader>
     </NoContent>
@@ -73,10 +65,9 @@ export default withPermissions(['SESSION_REPLAY'], '', true)(connect((state, pro
     loading: state.getIn([ 'sessions', 'loading' ]),
     hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
     session: state.getIn([ 'sessions', 'current' ]),
-    filters: state.getIn([ 'filters', 'appliedFilter' ]),
+    hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
   };
 }, {
   fetchSession,
   fetchSlackList,
-  fetchLiveList,
 })(Session));
