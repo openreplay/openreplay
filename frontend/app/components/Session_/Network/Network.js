@@ -6,6 +6,7 @@ import { TYPES } from 'Types/session/resource';
 import stl from './network.css';
 import NetworkContent from './NetworkContent';
 import { connect } from 'react-redux';
+import { setTimelinePointer } from 'Duck/sessions';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -83,7 +84,7 @@ export function renderDuration(r) {
 }))
 @connect(state => ({
   timelinePointer: state.getIn(['sessions', 'timelinePointer']),
-}))
+}), { setTimelinePointer })
 export default class Network extends React.PureComponent {
   state = {
     filter: '',
@@ -96,6 +97,7 @@ export default class Network extends React.PureComponent {
     pause();
     jump(e.time);
     this.setState({ currentIndex: index })
+    this.props.setTimelinePointer(null);
   }
 
   onTabClick = activeTab => this.setState({ activeTab })

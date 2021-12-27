@@ -2,19 +2,20 @@
 import { getRE } from 'App/utils';
 import { Label, NoContent, Input, SlideModal, CloseButton } from 'UI';
 import { connectPlayer, pause, jump } from 'Player';
-import Autoscroll from '../Autoscroll';
+// import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
 import TimeTable from '../TimeTable';
 import FetchDetails from './FetchDetails';
 import { renderName, renderDuration } from '../Network';
 import { connect } from 'react-redux';
+import { setTimelinePointer } from 'Duck/sessions';
 
 @connectPlayer(state => ({
   list: state.fetchList,
 }))
 @connect(state => ({
   timelinePointer: state.getIn(['sessions', 'timelinePointer']),
-}))
+}), { setTimelinePointer })
 export default class Fetch extends React.PureComponent {
 	state = {
 		filter: "",
@@ -43,27 +44,28 @@ export default class Fetch extends React.PureComponent {
   onRowClick = (item, index) => {
     pause()
     this.setState({ current: item, currentIndex: index, showFetchDetails: true });
+    this.props.setTimelinePointer(null);
   }
 
   closeModal = () => this.setState({ current: null, showFetchDetails: false });
 
   nextClickHander = () => {
-    const { list } = this.props;
-    const { currentIndex } = this.state;
+    // const { list } = this.props;
+    const { currentIndex, filteredList } = this.state;
     
-    if (currentIndex === list.length  - 1) return;
+    if (currentIndex === filteredList.length  - 1) return;
     const newIndex = currentIndex + 1;
-    this.setCurrent(list[newIndex], newIndex);
+    this.setCurrent(filteredList[newIndex], newIndex);
     this.setState({ showFetchDetails: true });
   }
 
   prevClickHander = () => {
-    const { list } = this.props;
-    const { currentIndex } = this.state;
+    // const { list } = this.props;
+    const { currentIndex, filteredList } = this.state;
 
     if (currentIndex === 0) return;
     const newIndex = currentIndex - 1;
-    this.setCurrent(list[newIndex], newIndex);
+    this.setCurrent(filteredList[newIndex], newIndex);
     this.setState({ showFetchDetails: true });
   }
 
