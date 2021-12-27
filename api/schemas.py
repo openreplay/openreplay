@@ -372,6 +372,7 @@ class PerformanceEventType(str, Enum):
     location_dom_complete = "DOM_COMPLETE"
     location_largest_contentful_paint_time = "LARGEST_CONTENTFUL_PAINT_TIME"
     time_between_events = "TIME_BETWEEN_EVENTS"
+    ttfb = "TTFB"
 
 
 class FilterType(str, Enum):
@@ -459,6 +460,9 @@ class _SessionSearchEventRaw(BaseModel):
                 assert isinstance(values["value"][0], _SessionSearchEventRaw) \
                        and isinstance(values["value"][1], _SessionSearchEventRaw) \
                     , f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
+            else:
+                for c in values["custom"]:
+                    assert isinstance(c, int), f"custom value should be of type int for {values.get('type')}"
         return values
 
 

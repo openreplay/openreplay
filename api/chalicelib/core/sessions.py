@@ -440,8 +440,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event_where.append(
                             _multiple_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                                  event.value, value_key=e_k))
-                elif event_type == [schemas.PerformanceEventType.location_dom_complete,
-                                    schemas.PerformanceEventType.location_largest_contentful_paint_time]:
+                elif event_type in [schemas.PerformanceEventType.location_dom_complete,
+                                    schemas.PerformanceEventType.location_largest_contentful_paint_time,
+                                    schemas.PerformanceEventType.ttfb]:
                     event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                     if not is_any:
                         event_where.append(
@@ -488,6 +489,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
 
                 else:
+                    print("LLLLLLLLLLLLLL")
                     continue
                 if event_index == 0 or or_events:
                     event_where += ss_constraints
