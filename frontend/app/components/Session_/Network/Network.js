@@ -110,11 +110,6 @@ export default class Network extends React.PureComponent {
 
     this.setState({ filter: value, filteredList: value ? filtered : resources, currentIndex: 0 });
   }
-  // onFilterChange = (e, { value }) => this.setState({ filter: value })
-
-  componentDidUpdate() {
-    console.log('test')
-  }
 
   static getDerivedStateFromProps(nextProps, prevState) {
     const { filteredList } = prevState;
