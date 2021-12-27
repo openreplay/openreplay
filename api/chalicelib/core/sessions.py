@@ -450,9 +450,10 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                  event.value, value_key=e_k))
                     e_k += "_custom"
                     full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+                    colname=performance_event.get_col(event_type)
                     event_where.append(
                         _multiple_conditions(
-                            f"main.{performance_event.get_col(event_type)} {event.customOperator} %({e_k})s",
+                            f"main.{colname} {event.customOperator} %({e_k})s AND {colname} IS NOT NULL AND {colname}>0",
                             event.custom, value_key=e_k))
                 elif event_type == schemas.PerformanceEventType.time_between_events:
                     event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
