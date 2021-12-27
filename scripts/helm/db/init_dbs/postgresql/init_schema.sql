@@ -108,7 +108,7 @@ $$
             CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- --- accounts.sql ---
 
-            CREATE TABLE IF NOT EXISTS public.tenants
+            CREATE TABLE tenants
             (
                 tenant_id      integer                     NOT NULL DEFAULT 1,
                 user_id        text                        NOT NULL DEFAULT generate_api_key(20),
@@ -256,6 +256,7 @@ $$
                 }'::jsonb -- ??????
             );
 
+            CREATE INDEX ON public.projects (project_key);
             CREATE TRIGGER on_insert_or_update
                 AFTER INSERT OR UPDATE
                 ON projects
@@ -780,6 +781,7 @@ $$
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX ON events.errors (session_id);
+            CREATE INDEX ON events.errors (timestamp);
             CREATE INDEX errors_session_id_timestamp_error_id_idx ON events.errors (session_id, timestamp, error_id);
             CREATE INDEX errors_error_id_timestamp_idx ON events.errors (error_id, timestamp);
             CREATE INDEX errors_timestamp_error_id_session_id_idx ON events.errors (timestamp, error_id, session_id);
@@ -836,6 +838,8 @@ $$
             CREATE INDEX ON events.resources (type);
             CREATE INDEX ON events.resources (duration) WHERE duration > 0;
             CREATE INDEX ON events.resources (url_host);
+            CREATE INDEX ON events.resources (timestamp);
+            CREATE INDEX ON events.resources (success);
 
             CREATE INDEX resources_url_gin_idx ON events.resources USING GIN (url gin_trgm_ops);
             CREATE INDEX resources_url_idx ON events.resources (url);
