@@ -395,6 +395,7 @@ class FilterType(str, Enum):
     platform = "PLATFORM"
     metadata = "METADATA"
     issue = "ISSUE"
+    events_count = "EVENTS_COUNT"
 
 
 class SearchEventOperator(str, Enum):
@@ -438,7 +439,7 @@ class IssueType(str, Enum):
 
 
 class _SessionSearchEventRaw(BaseModel):
-    custom: Optional[List[Union[str, int]]] = Field(None)
+    custom: Optional[List[Union[int, str]]] = Field(None)
     customOperator: Optional[MathOperator] = Field(None)
     key: Optional[str] = Field(None)
     value: Union[str, List[str]] = Field(...)
@@ -468,20 +469,29 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
 class _SessionSearchFilterSchema(BaseModel):
     custom: Optional[List[str]] = Field(None)
     key: Optional[str] = Field(None)
-    value: Union[Optional[Union[str, int, IssueType, PlatformType]],
-                 Optional[List[Union[str, int, IssueType, PlatformType]]]] = Field(...)
+    value: Union[Optional[Union[IssueType, PlatformType, int, str]],
+                 Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
     type: FilterType = Field(...)
-    operator: SearchEventOperator = Field(...)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
     source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
 
     @root_validator
     def check_card_number_omitted(cls, values):
         if values.get("type") == FilterType.issue:
             for v in values.get("value"):
-                assert IssueType(v)
+                assert isinstance(v, IssueType), f"value should be of type IssueType for {values.get('type')} filter"
         elif values.get("type") == FilterType.platform:
             for v in values.get("value"):
-                assert PlatformType(v)
+                assert isinstance(v, PlatformType), \
+                    f"value should be of type PlatformType for {values.get('type')} filter"
+        elif values.get("type") == FilterType.events_count:
+            assert isinstance(values.get("operator"), MathOperator), \
+                f"operator should be of type MathOperator for {values.get('type')} filter"
+            for v in values.get("value"):
+                assert isinstance(v, int), f"value should be of type int for {values.get('type')} filter"
+        else:
+            assert isinstance(values.get("operator"), SearchEventOperator), \
+                f"operator should be of type SearchEventOperator for {values.get('type')} filter"
         return values
 
 
