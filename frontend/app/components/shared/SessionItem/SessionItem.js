@@ -10,21 +10,33 @@ import {
   TextEllipsis
 } from 'UI';
 import { deviceTypeIcon } from 'App/iconNames';
-import { toggleFavorite } from 'Duck/sessions';
-import { session as sessionRoute } from 'App/routes';
+import { toggleFavorite, setSessionPath } from 'Duck/sessions';
+import { session as sessionRoute, withSiteId } from 'App/routes';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
 import LiveTag from 'Shared/LiveTag';
 import Bookmark from 'Shared/Bookmark';
 import Counter from './Counter'
+import { withRouter } from 'react-router-dom';
 
 const Label = ({ label = '', color = 'color-gray-medium'}) => (
   <div className={ cn('font-light text-sm', color)}>{label}</div>
 )
 @connect(state => ({
-  timezone: state.getIn(['sessions', 'timezone'])
-}), { toggleFavorite })
+  timezone: state.getIn(['sessions', 'timezone']),
+  isAssist: state.getIn(['sessions', 'activeTab']).type === 'live',
+  siteId: state.getIn([ 'user', 'siteId' ]),
+}), { toggleFavorite, setSessionPath })
+@withRouter
 export default class SessionItem extends React.PureComponent {
+
+  replaySession = () => {
+    const { history, session: { sessionId }, siteId, isAssist } = this.props;
+    if (!isAssist) {
+      this.props.setSessionPath(history.location.pathname)
+    }
+    history.push(withSiteId(sessionRoute(sessionId), siteId))
+  }
   // eslint-disable-next-line complexity
   render() {
     const {
@@ -110,9 +122,9 @@ export default class SessionItem extends React.PureComponent {
           </div>
           
           <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
-            <Link to={ sessionRoute(sessionId) }>
+            <div onClick={this.replaySession}>
               <Icon name={ viewed ? 'play-fill' : 'play-circle-light' } size="30" color="teal" />
-            </Link>
+            </div>
           </div>
         </div>
       </div>

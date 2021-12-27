@@ -4,14 +4,14 @@ import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
 import { sessions as sessionsRoute, funnel as funnelRoute, funnelIssue as funnelIssueRoute, withSiteId } from 'App/routes';
 import { Icon, CountryFlag, IconButton, BackLink } from 'UI';
-import { toggleFavorite } from 'Duck/sessions';
+import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
 import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 
-import cls from './playerBlockHeader.css';
+import stl from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';
@@ -38,8 +38,9 @@ function capitalise(str) {
   funnelRef: state.getIn(['funnels', 'navRef']),
   siteId: state.getIn([ 'user', 'siteId' ]),
   funnelPage: state.getIn(['sessions', 'funnelPage']),
+  hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
 }), {
-  toggleFavorite, fetchListIntegration
+  toggleFavorite, fetchListIntegration, setSessionPath
 })
 @withRouter
 export default class PlayerBlockHeader extends React.PureComponent {
@@ -87,21 +88,24 @@ export default class PlayerBlockHeader extends React.PureComponent {
         userDevice,
         userBrowserVersion,
         userDeviceType,
+        live,
       },
       loading,
-      live,
+      // live,
       disabled,
       jiraConfig,
       fullscreen,
+      hasSessionsPath
     } = this.props;
-    const { history, siteId } = this.props;
+    // const { history, siteId } = this.props;
+    const _live = live && !hasSessionsPath;
 
     return (
-      <div className={ cn(cls.header, "flex justify-between", { "hidden" : fullscreen}) }>
+      <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
         <div className="flex w-full">
           <BackLink	onClick={this.backHandler} label="Back" />
           
-          <div className={ cls.divider } />
+          <div className={ stl.divider } />
           
           <div className="mx-4 flex items-center">
             <CountryFlag country={ userCountry } />
@@ -116,12 +120,17 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
 
           <div className='ml-auto flex items-center'>
-            { live && <AssistTabs userId={userId} />}
-            { live && <AssistActions isLive userId={userId} /> }
-            { !live && (
+            { live && hasSessionsPath && (
+              <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
+                This Session is Now Continuing Live
+              </div>
+            )}
+            { _live && <AssistTabs userId={userId} />}
+            { _live && <AssistActions isLive userId={userId} /> }
+            { !_live && (
               <>
                 <Autoplay />
-                <div className={ cls.divider } />
+                <div className={ stl.divider } />
                 <IconButton
                   className="mr-2"
                   tooltip="Bookmark"
@@ -145,7 +154,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 />
               </>
             )}
-            { !live && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
+            { !_live && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>
       </div>

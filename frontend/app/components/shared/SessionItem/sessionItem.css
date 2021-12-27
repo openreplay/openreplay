@@ -92,7 +92,7 @@
   display: flex;
   align-items: center;
   transition: all 0.2s;
-  /* opacity: 0; */
+  cursor: pointer;
   &[data-viewed=true] {
     opacity: 1;
   }
