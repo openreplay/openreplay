@@ -696,6 +696,7 @@ $$
             CREATE INDEX pages_base_path_gin_idx ON events.pages USING GIN (base_path gin_trgm_ops);
             CREATE INDEX pages_base_referrer_gin_idx ON events.pages USING GIN (base_referrer gin_trgm_ops);
             CREATE INDEX ON events.pages (timestamp);
+            CREATE INDEX pages_session_id_timestamp_idx ON events.pages (session_id, timestamp);
             CREATE INDEX pages_base_path_gin_idx2 ON events.pages USING GIN (RIGHT(base_path, length(base_path) - 1) gin_trgm_ops);
             CREATE INDEX pages_base_path_idx ON events.pages (base_path);
             CREATE INDEX pages_base_path_idx2 ON events.pages (RIGHT(base_path, length(base_path) - 1));
