@@ -118,7 +118,7 @@ export default class MessageDistributor extends StatedScreen {
   private navigationStartOffset: number = 0;
   private lastMessageTime: number = 0;
 
-	constructor(private readonly session: any /*Session*/, jwt: string, config) {
+	constructor(private readonly session: any /*Session*/, jwt: string, config, live: boolean) {
     super();
     this.pagesManager = new PagesManager(this, this.session.isMobile)
     this.mouseManager = new MouseManager(this);
@@ -126,7 +126,7 @@ export default class MessageDistributor extends StatedScreen {
 
     this.sessionStart = this.session.startedAt;
 
-    if (this.session.live) {
+    if (live) {
       // const sockUrl = `wss://live.openreplay.com/1/${ this.session.siteId }/${ this.session.sessionId }/${ jwt }`;
       // this.subscribeOnMessages(sockUrl);
       initListsDepr({})
