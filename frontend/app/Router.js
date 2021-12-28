@@ -76,6 +76,9 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
   fetchUserInfo, fetchTenants
 })
 class Router extends React.Component {
+  state = {
+    destinationPath: null
+  }
   constructor(props) {
     super(props);
     if (props.isLoggedIn) {
@@ -85,9 +88,21 @@ class Router extends React.Component {
     props.fetchTenants();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidMount() {
+    const { isLoggedIn, location } = this.props;
+    if (!isLoggedIn) {
+      this.setState({ destinationPath: location.pathname });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
     if (prevProps.email !== this.props.email && !this.props.email) {
       this.props.fetchTenants();
+    }
+
+    if (!prevProps.isLoggedIn && this.props.isLoggedIn && this.state.destinationPath !== routes.login()) {
+      this.props.history.push(this.state.destinationPath);
+      this.setState({ destinationPath: null });
     }
   }
 
