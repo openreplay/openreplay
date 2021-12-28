@@ -372,7 +372,8 @@ class PerformanceEventType(str, Enum):
     location_dom_complete = "DOM_COMPLETE"
     location_largest_contentful_paint_time = "LARGEST_CONTENTFUL_PAINT_TIME"
     time_between_events = "TIME_BETWEEN_EVENTS"
-    ttfb = "TTFB"
+    location_ttfb = "TTFB"
+    location_avg_cpu_load = "AVG_CPU_LOAD"
 
 
 class FilterType(str, Enum):
