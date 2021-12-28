@@ -442,19 +442,28 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                  event.value, value_key=e_k))
                 elif event_type in [schemas.PerformanceEventType.location_dom_complete,
                                     schemas.PerformanceEventType.location_largest_contentful_paint_time,
-                                    schemas.PerformanceEventType.ttfb]:
+                                    schemas.PerformanceEventType.location_ttfb,
+                                    schemas.PerformanceEventType.location_avg_cpu_load
+                                    ]:
                     event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
+                    col = performance_event.get_col(event_type)
+                    colname = col["column"]
+                    tname = "main"
+                    if col.get("extraJoin") is not None:
+                        tname = "ej"
+                        event_from += f" INNER JOIN {col['extraJoin']} AS {tname} USING(session_id)"
+                        event_where += [f"{tname}.timestamp >= main.timestamp", f"{tname}.timestamp >= %(startDate)s",
+                                        f"{tname}.timestamp <= %(endDate)s"]
                     if not is_any:
                         event_where.append(
                             _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
                                                  event.value, value_key=e_k))
                     e_k += "_custom"
                     full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
-                    colname=performance_event.get_col(event_type)
-                    event_where.append(
-                        _multiple_conditions(
-                            f"main.{colname} {event.customOperator} %({e_k})s AND {colname} IS NOT NULL AND {colname}>0",
-                            event.custom, value_key=e_k))
+
+                    event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
+                                       _multiple_conditions(f"{tname}.{colname} {event.customOperator} %({e_k})s",
+                                                            event.custom, value_key=e_k))
                 elif event_type == schemas.PerformanceEventType.time_between_events:
                     event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
                     if not isinstance(event.value[0].value, list):
