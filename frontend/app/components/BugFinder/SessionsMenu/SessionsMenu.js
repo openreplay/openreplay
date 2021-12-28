@@ -119,7 +119,7 @@ export default connect(state => ({
   activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
-  sessionsLoading: state.getIn([ 'sessions', 'loading' ]),
+  sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
 }), { 
   fetchWatchdogStatus, setActiveFlow, clearEvents, setActiveTab, fetchSessionList
 })(SessionsMenu);
