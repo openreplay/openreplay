@@ -399,6 +399,9 @@ class FilterType(str, Enum):
     metadata = "METADATA"
     issue = "ISSUE"
     events_count = "EVENTS_COUNT"
+    utm_source = "UTM_SOURCE"
+    utm_medium = "UTM_MEDIUM"
+    utm_campaign = "UTM_CAMPAIGN"
 
 
 class SearchEventOperator(str, Enum):

@@ -390,18 +390,18 @@ def search_pg2(text, event_type, project_id, source, key):
     if not event_type:
         return {"data": __get_autocomplete_table(text, project_id)}
 
-    if event_type.upper() in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type.upper()].get(project_id=project_id, value=text, key=key, source=source)
-        if event_type.upper() + "_IOS" in SUPPORTED_TYPES.keys():
-            rows += SUPPORTED_TYPES[event_type.upper() + "_IOS"].get(project_id=project_id, value=text, key=key,
-                                                                     source=source)
-    elif event_type.upper() + "_IOS" in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type.upper() + "_IOS"].get(project_id=project_id, value=text, key=key,
-                                                                source=source)
-    elif event_type.upper() in sessions_metas.SUPPORTED_TYPES.keys():
+    if event_type in SUPPORTED_TYPES.keys():
+        rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
+        if event_type + "_IOS" in SUPPORTED_TYPES.keys():
+            rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
+                                                             source=source)
+    elif event_type + "_IOS" in SUPPORTED_TYPES.keys():
+        rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
+                                                        source=source)
+    elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
-    elif event_type.upper().endswith("_IOS") \
-            and event_type.upper()[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
+    elif event_type.endswith("_IOS") \
+            and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
     else:
         return {"errors": ["unsupported event"]}

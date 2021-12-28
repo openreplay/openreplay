@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core import events, sessions_metas, metadata, events_ios, \
+from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event
 from chalicelib.utils import pg_client, helper, dev
 
@@ -194,37 +194,71 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 full_args = {**full_args, **_multiple_values(f.value, value_key=f_k)}
                 op = __get_sql_operator(f.operator) \
                     if filter_type not in [schemas.FilterType.events_count] else f.operator
+                is_any = _isAny_opreator(f.operator)
                 is_not = False
                 if __is_negation_operator(f.operator):
                     is_not = True
                     # op = __reverse_sql_operator(op)
-                if filter_type == sessions_metas.meta_type.USERBROWSER:
+                if filter_type == schemas.FilterType.user_browser:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-                elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
+                elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-                elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
+                elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
-                elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
+                elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
                     # op = __get_sql_operator_multiple(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+
+                elif filter_type in [schemas.FilterType.utm_source]:
+                    if is_any:
+                        extra_constraints.append('s.utm_source IS NOT NULL')
+                        ss_constraints.append('ms.utm_source  IS NOT NULL')
+                    else:
+                        extra_constraints.append(
+                            _multiple_conditions(f's.utm_source {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            _multiple_conditions(f'ms.utm_source {op} %({f_k})s', f.value, is_not=is_not,
+                                                 value_key=f_k))
+                elif filter_type in [schemas.FilterType.utm_medium]:
+                    if is_any:
+                        extra_constraints.append('s.utm_medium IS NOT NULL')
+                        ss_constraints.append('ms.utm_medium IS NOT NULL')
+                    else:
+                        extra_constraints.append(
+                            _multiple_conditions(f's.utm_medium {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            _multiple_conditions(f'ms.utm_medium {op} %({f_k})s', f.value, is_not=is_not,
+                                                 value_key=f_k))
+                elif filter_type in [schemas.FilterType.utm_campaign]:
+                    if is_any:
+                        extra_constraints.append('s.utm_campaign IS NOT NULL')
+                        ss_constraints.append('ms.utm_campaign IS NOT NULL')
+                    else:
+                        extra_constraints.append(
+                            _multiple_conditions(f's.utm_campaign {op} %({f_k})s', f.value, is_not=is_not,
+                                                 value_key=f_k))
+                        ss_constraints.append(
+                            _multiple_conditions(f'ms.utm_campaign {op} %({f_k})s', f.value, is_not=is_not,
+                                                 value_key=f_k))
+
                 elif filter_type == schemas.FilterType.duration:
                     if len(f.value) > 0 and f.value[0] is not None:
                         extra_constraints.append("s.duration >= %(minDuration)s")
@@ -234,7 +268,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         extra_constraints.append("s.duration <= %(maxDuration)s")
                         ss_constraints.append("ms.duration <= %(maxDuration)s")
                         full_args["maxDuration"] = f.value[1]
-                elif filter_type == sessions_metas.meta_type.REFERRER:
+                elif filter_type == schemas.FilterType.referrer:
                     # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                     extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
                     # op = __get_sql_operator_multiple(f.operator)
@@ -253,14 +287,14 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         ss_constraints.append(
                             _multiple_conditions(f"ms.{metadata.index_to_colname(meta_keys[f.key])} {op} %({f_k})s",
                                                  f.value, is_not=is_not, value_key=f_k))
-                elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+                elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f"s.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f"ms.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
-                elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
-                                     sessions_metas.meta_type.USERANONYMOUSID_IOS]:
+                elif filter_type in [schemas.FilterType.user_anonymous_id,
+                                     schemas.FilterType.user_anonymous_id_ios]:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
@@ -268,7 +302,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                     ss_constraints.append(
                         _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
                                              value_key=f_k))
-                elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
+                elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                     # op = __get_sql_operator(f.operator)
                     extra_constraints.append(
                         _multiple_conditions(f"s.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
@@ -695,8 +729,8 @@ def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
 
     available_keys = metadata.get_keys_by_projects(project_ids)
     for i in available_keys:
-        available_keys[i]["user_id"] = sessions_metas.meta_type.USERID
-        available_keys[i]["user_anonymous_id"] = sessions_metas.meta_type.USERANONYMOUSID
+        available_keys[i]["user_id"] = schemas.FilterType.user_id
+        available_keys[i]["user_anonymous_id"] = schemas.FilterType.user_anonymous_id
     results = {}
     for i in project_ids:
         if m_key not in available_keys[i].values():

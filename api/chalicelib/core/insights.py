@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.core import sessions_metas
 from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
@@ -45,7 +46,7 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
         elif f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query_subset.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
 
@@ -300,7 +301,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -390,7 +391,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -477,7 +478,7 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
 
@@ -543,7 +544,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -613,7 +614,7 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -674,7 +675,7 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
@@ -737,7 +738,7 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     pg_sub_query.append(f"length({event_column})>2")
@@ -772,7 +773,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     for f in filters:
         if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
             period = f["value"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query_chart.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
 
@@ -844,7 +845,7 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             pg_sub_query.append(f"sessions.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     event_table = JOURNEY_TYPES[event_type]["table"]
