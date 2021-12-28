@@ -119,7 +119,6 @@ const reducer = (state = initialState, action = {}) => {
       let stages = [];
       if (action.isRefresh) {        
         const activeStages = state.get('activeStages');
-        console.log('test', activeStages);
         const oldInsights = state.get('insights');
         const lastStage = action.data.stages[action.data.stages.length - 1]
         const lastStageIndex = activeStages.toJS()[1];

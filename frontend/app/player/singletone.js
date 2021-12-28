@@ -28,11 +28,11 @@ document.addEventListener("visibilitychange", function() {
   }
 });
 
-export function init(session, jwt, config) {
-  const live = session.live;
+export function init(session, jwt, config, live = false) {
+  // const live = session.live;
   const endTime = !live && session.duration.valueOf();
 
-  instance = new Player(session, jwt, config);
+  instance = new Player(session, jwt, config, live);
   update({
     initialized: true,
     live,

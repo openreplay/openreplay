@@ -88,6 +88,7 @@ export default Record({
     ...session 
   }) => {
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
+    const durationSeconds = duration.valueOf();
     const startedAt = +startTs;
 
     const userDevice = session.userDevice || session.userDeviceType || 'Other';
@@ -96,7 +97,7 @@ export default Record({
 
     const events = List(session.events)
       .map(e => SessionEvent({ ...e, time: e.timestamp - startedAt }))
-      .filter(({ type }) => type !== TYPES.CONSOLE);
+      .filter(({ type, time }) => type !== TYPES.CONSOLE && time <= durationSeconds);
 
     let resources = List(session.resources)
       .map(Resource);

@@ -20,6 +20,7 @@ function Session({
 	session, 
 	fetchSession,
   fetchSlackList,
+  hasSessionsPath
  }) {
  	usePageTitle("OpenReplay Session Player");
  	useEffect(() => {
@@ -34,7 +35,7 @@ function Session({
 		return () => {
 			if (!session.exists()) return;
 		}
-	},[ sessionId ]);
+	},[ sessionId, hasSessionsPath ]);
 
 	return (
 		<NoContent
@@ -50,7 +51,7 @@ function Session({
     	<Loader className="flex-1" loading={ loading || sessionId !== session.sessionId }> 
     		{ session.isIOS 
     			? <IOSPlayer session={session} />
-    			: (session.live ? <LivePlayer /> : <WebPlayer />)
+    			: (session.live && !hasSessionsPath ? <LivePlayer /> : <WebPlayer />)
       	}
     	</Loader>
     </NoContent>
@@ -64,6 +65,7 @@ export default withPermissions(['SESSION_REPLAY'], '', true)(connect((state, pro
     loading: state.getIn([ 'sessions', 'loading' ]),
     hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
     session: state.getIn([ 'sessions', 'current' ]),
+    hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
   };
 }, {
   fetchSession,
