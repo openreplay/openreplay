@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.core import projects, sessions, sessions_metas
 import requests
@@ -44,7 +45,7 @@ def get_live_sessions(project_id, filters=None):
                 continue
             filter_type = f["type"].upper()
             f["value"] = sessions.__get_sql_value_multiple(f["value"])
-            if filter_type == sessions_metas.meta_type.USERID:
+            if filter_type == schemas.FilterType.user_id:
                 op = sessions.__get_sql_operator(f["operator"])
                 extra_constraints.append(f"user_id {op} %(value_{i})s")
                 extra_params[f"value_{i}"] = helper.string_to_sql_like_with_op(f["value"][0], op)

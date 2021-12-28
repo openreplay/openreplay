@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.core import metadata
 from chalicelib.utils import args_transformer
 from chalicelib.utils import helper, dev
@@ -94,25 +95,25 @@ def __get_meta_constraint(project_id, data):
         else:
             filter_type = f["key"].upper()
             filter_type = [filter_type, "USER" + filter_type, filter_type[4:]]
-            if any(item in [sessions_metas.meta_type.USERBROWSER] \
+            if any(item in [schemas.FilterType.user_browser] \
                    for item in filter_type):
                 constraints.append(f"sessions.user_browser = %({f['key']}_{i})s")
-            elif any(item in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS] \
+            elif any(item in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_os = %({f['key']}_{i})s")
-            elif any(item in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS] \
+            elif any(item in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_device = %({f['key']}_{i})s")
-            elif any(item in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS] \
+            elif any(item in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_country  = %({f['key']}_{i})s")
-            elif any(item in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS] \
+            elif any(item in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_id = %({f['key']}_{i})s")
-            elif any(item in [sessions_metas.meta_type.USERANONYMOUSID, sessions_metas.meta_type.USERANONYMOUSID_IOS] \
+            elif any(item in [schemas.FilterType.user_anonymous_id, schemas.FilterType.user_anonymous_id_ios] \
                      for item in filter_type):
                 constraints.append(f"sessions.user_anonymous_id = %({f['key']}_{i})s")
-            elif any(item in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS] \
+            elif any(item in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios] \
                      for item in filter_type):
                 constraints.append(f"sessions.rev_id = %({f['key']}_{i})s")
     return constraints

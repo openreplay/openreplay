@@ -514,6 +514,9 @@ $$
                 watchdogs_score         bigint       NOT NULL DEFAULT 0,
                 issue_score             bigint       NOT NULL DEFAULT 0,
                 issue_types             issue_type[] NOT NULL DEFAULT '{}'::issue_type[],
+                utm_source              text         NULL     DEFAULT NULL,
+                utm_medium              text         NULL     DEFAULT NULL,
+                utm_campaign            text         NULL     DEFAULT NULL,
                 metadata_1              text                  DEFAULT NULL,
                 metadata_2              text                  DEFAULT NULL,
                 metadata_3              text                  DEFAULT NULL,
@@ -568,6 +571,9 @@ $$
             CREATE INDEX sessions_session_id_project_id_start_ts_durationNN_idx ON sessions (session_id, project_id, start_ts) WHERE duration IS NOT NULL;
             CREATE INDEX sessions_user_id_useridNN_idx ON sessions (user_id) WHERE user_id IS NOT NULL;
             CREATE INDEX sessions_uid_projectid_startts_sessionid_uidNN_durGTZ_idx ON sessions (user_id, project_id, start_ts, session_id) WHERE user_id IS NOT NULL AND duration > 0;
+            CREATE INDEX sessions_utm_source_gin_idx ON public.sessions USING GIN (utm_source gin_trgm_ops);
+            CREATE INDEX sessions_utm_medium_gin_idx ON public.sessions USING GIN (utm_medium gin_trgm_ops);
+            CREATE INDEX sessions_utm_campaign_gin_idx ON public.sessions USING GIN (utm_campaign gin_trgm_ops);
 
             ALTER TABLE public.sessions
                 ADD CONSTRAINT web_browser_constraint CHECK (

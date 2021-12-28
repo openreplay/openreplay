@@ -59,22 +59,22 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
             values = {**values,
                       **sessions._multiple_values(helper.values_for_operator(value=f["value"], op=f["operator"]),
                                                   value_key=f_k)}
-            if filter_type == sessions_metas.meta_type.USERBROWSER:
+            if filter_type == schemas.FilterType.user_browser:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.user_browser {op} %({f_k})s', f["value"], value_key=f_k))
 
-            elif filter_type in [sessions_metas.meta_type.USEROS, sessions_metas.meta_type.USEROS_IOS]:
+            elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.user_os {op} %({f_k})s', f["value"], value_key=f_k))
 
-            elif filter_type in [sessions_metas.meta_type.USERDEVICE, sessions_metas.meta_type.USERDEVICE_IOS]:
+            elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.user_device {op} %({f_k})s', f["value"], value_key=f_k))
 
-            elif filter_type in [sessions_metas.meta_type.USERCOUNTRY, sessions_metas.meta_type.USERCOUNTRY_IOS]:
+            elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.user_country {op} %({f_k})s', f["value"], value_key=f_k))
@@ -85,7 +85,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 if len(f["value"]) > 1 and f["value"][1] is not None and int(f["value"][1]) > 0:
                     first_stage_extra_constraints.append('s.duration <= %(maxDuration)s')
                     values["maxDuration"] = f["value"][1]
-            elif filter_type == sessions_metas.meta_type.REFERRER:
+            elif filter_type == schemas.FilterType.referrer:
                 # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                 filter_extra_from = [f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"]
                 # op = sessions.__get_sql_operator_multiple(f["operator"])
@@ -102,18 +102,18 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                             f's.{metadata.index_to_colname(meta_keys[f["key"]])} {op} %({f_k})s', f["value"],
                             value_key=f_k))
                     # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+            elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.user_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [sessions_metas.meta_type.USERANONYMOUSID,
-                                 sessions_metas.meta_type.USERANONYMOUSID_IOS]:
+            elif filter_type in [schemas.FilterType.user_anonymous_id,
+                                 schemas.FilterType.user_anonymous_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.user_anonymous_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
-            elif filter_type in [sessions_metas.meta_type.REVID, sessions_metas.meta_type.REVID_IOS]:
+            elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                 # op = sessions.__get_sql_operator(f["operator"])
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.rev_id {op} %({f_k})s', f["value"], value_key=f_k))
@@ -561,7 +561,8 @@ def get_top_insights(filter_d, project_id):
             "dropDueToIssues": 0
 
         }]
-        counts = sessions.search2_pg(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d), project_id=project_id, user_id=None, count_only=True)
+        counts = sessions.search2_pg(data=schemas.SessionsSearchCountSchema.parse_obj(filter_d), project_id=project_id,
+                                     user_id=None, count_only=True)
         output[0]["sessionsCount"] = counts["countSessions"]
         output[0]["usersCount"] = counts["countUsers"]
         return output, 0
