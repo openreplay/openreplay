@@ -443,7 +443,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                 elif event_type in [schemas.PerformanceEventType.location_dom_complete,
                                     schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                     schemas.PerformanceEventType.location_ttfb,
-                                    schemas.PerformanceEventType.location_avg_cpu_load
+                                    schemas.PerformanceEventType.location_avg_cpu_load,
+                                    schemas.PerformanceEventType.location_avg_memory_usage
                                     ]:
                     event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
                     col = performance_event.get_col(event_type)

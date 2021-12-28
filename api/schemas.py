@@ -374,6 +374,7 @@ class PerformanceEventType(str, Enum):
     time_between_events = "TIME_BETWEEN_EVENTS"
     location_ttfb = "TTFB"
     location_avg_cpu_load = "AVG_CPU_LOAD"
+    location_avg_memory_usage = "AVG_MEMORY_USAGE"
 
 
 class FilterType(str, Enum):
