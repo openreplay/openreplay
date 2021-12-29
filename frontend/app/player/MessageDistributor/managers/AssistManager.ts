@@ -147,12 +147,13 @@ export default class AssistManager {
       return;
     }
     this.setStatus(ConnectionStatus.Connecting)
+    const urlObject = new URL(window.ENV.API_EDP)
     import('peerjs').then(({ default: Peer }) => {
       const _config = {
         // @ts-ignore
-        host: new URL(window.ENV.API_EDP).host,
+        host: urlObject.hostname,
         path: '/assist',
-        port:  location.protocol === 'https:' ? 443 : 80,
+        port: urlObject.port === "" ? location.protocol === 'https:' ? 443 : 80 : urlObject.port,
       }
 
       if (this.config) {
