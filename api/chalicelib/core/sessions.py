@@ -505,8 +505,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event.value[0].value = [event.value[0].value]
                     if not isinstance(event.value[1].value, list):
                         event.value[1].value = [event.value[1].value]
-                    event.value[0].value = helper.values_for_operator(value=event.value[0].value, op=event.operator)
-                    event.value[1].value = helper.values_for_operator(value=event.value[1].value, op=event.operator)
+                    event.value[0].value = helper.values_for_operator(value=event.value[0].value, op=event.value[0].operator)
+                    event.value[1].value = helper.values_for_operator(value=event.value[1].value, op=event.value[0].operator)
                     e_k1 = e_k + "_e1"
                     e_k2 = e_k + "_e2"
                     full_args = {**full_args,
@@ -534,7 +534,6 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
 
                 else:
-                    print("LLLLLLLLLLLLLL")
                     continue
                 if event_index == 0 or or_events:
                     event_where += ss_constraints

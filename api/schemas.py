@@ -313,6 +313,7 @@ class AlertColumn(str, Enum):
 
 
 class MathOperator(str, Enum):
+    _equal = "="
     _less = "<"
     _greater = ">"
     _less_eq = "<="
