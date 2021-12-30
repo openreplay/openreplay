@@ -299,7 +299,8 @@ func (b *builder) checkTimeouts(ts int64) bool {
 		b.buildPerformanceTrackAggr()
 	}
 
-	lastTsGap := ts - b.lastProcessedTimestamp
+	lastTsGap := ts - int64(b.timestamp)
+	//b.lastProcessedTimestamp
 	//log.Printf("checking timeouts for sess %v: %v now, %v sesstime; gap %v",b.sid,  ts, b.timestamp, lastTsGap)
 	if lastTsGap > intervals.EVENTS_SESSION_END_TIMEOUT {
 		if rm := b.ddDetector.Build(); rm != nil {
