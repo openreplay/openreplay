@@ -35,10 +35,12 @@ def get_full_config():
     servers = servers.split("|")
     credentials = get_temporary_credentials()
     if __get_secret() is not None:
-        servers = [{"url": s.split(",")[0], **credentials} for s in servers]
+        for i in range(len(servers)):
+            url = servers[i].split(",")[0]
+            servers[i] = {"url": url} if url.lower().startswith("stun") else {"url": url, **credentials}
     else:
         for i in range(len(servers)):
-            s = servers[i].split("|")
+            s = servers[i].split(",")
             if len(s) == 3:
                 servers[i] = {"url": s[0], "username": s[1], "credential": s[2]}
             else:
