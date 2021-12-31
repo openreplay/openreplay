@@ -528,24 +528,24 @@ $$
                 metadata_9              text                  DEFAULT NULL,
                 metadata_10             text                  DEFAULT NULL
             );
-            CREATE INDEX ON sessions (project_id, start_ts);
-            CREATE INDEX ON sessions (project_id, user_id);
-            CREATE INDEX ON sessions (project_id, user_anonymous_id);
-            CREATE INDEX ON sessions (project_id, user_device);
-            CREATE INDEX ON sessions (project_id, user_country);
-            CREATE INDEX ON sessions (project_id, user_browser);
-            CREATE INDEX ON sessions (project_id, metadata_1);
-            CREATE INDEX ON sessions (project_id, metadata_2);
-            CREATE INDEX ON sessions (project_id, metadata_3);
-            CREATE INDEX ON sessions (project_id, metadata_4);
-            CREATE INDEX ON sessions (project_id, metadata_5);
-            CREATE INDEX ON sessions (project_id, metadata_6);
-            CREATE INDEX ON sessions (project_id, metadata_7);
-            CREATE INDEX ON sessions (project_id, metadata_8);
-            CREATE INDEX ON sessions (project_id, metadata_9);
-            CREATE INDEX ON sessions (project_id, metadata_10);
-            CREATE INDEX ON sessions (project_id, watchdogs_score DESC);
-            CREATE INDEX platform_idx ON public.sessions (platform);
+            CREATE INDEX sessions_project_id_start_ts_idx ON sessions (project_id, start_ts);
+            CREATE INDEX sessions_project_id_user_id_idx ON sessions (project_id, user_id);
+            CREATE INDEX sessions_project_id_user_anonymous_id_idx ON sessions (project_id, user_anonymous_id);
+            CREATE INDEX sessions_project_id_user_device_idx ON sessions (project_id, user_device);
+            CREATE INDEX sessions_project_id_user_country_idx ON sessions (project_id, user_country);
+            CREATE INDEX sessions_project_id_user_browser_idx ON sessions (project_id, user_browser);
+            CREATE INDEX sessions_project_id_metadata_1_idx ON sessions (project_id, metadata_1);
+            CREATE INDEX sessions_project_id_metadata_2_idx ON sessions (project_id, metadata_2);
+            CREATE INDEX sessions_project_id_metadata_3_idx ON sessions (project_id, metadata_3);
+            CREATE INDEX sessions_project_id_metadata_4_idx ON sessions (project_id, metadata_4);
+            CREATE INDEX sessions_project_id_metadata_5_idx ON sessions (project_id, metadata_5);
+            CREATE INDEX sessions_project_id_metadata_6_idx ON sessions (project_id, metadata_6);
+            CREATE INDEX sessions_project_id_metadata_7_idx ON sessions (project_id, metadata_7);
+            CREATE INDEX sessions_project_id_metadata_8_idx ON sessions (project_id, metadata_8);
+            CREATE INDEX sessions_project_id_metadata_9_idx ON sessions (project_id, metadata_9);
+            CREATE INDEX sessions_project_id_metadata_10_idx ON sessions (project_id, metadata_10);
+            CREATE INDEX sessions_project_id_watchdogs_score_idx ON sessions (project_id, watchdogs_score DESC);
+            CREATE INDEX sessions_platform_idx ON public.sessions (platform);
 
             CREATE INDEX sessions_metadata1_gin_idx ON public.sessions USING GIN (metadata_1 gin_trgm_ops);
             CREATE INDEX sessions_metadata2_gin_idx ON public.sessions USING GIN (metadata_2 gin_trgm_ops);
@@ -563,8 +563,6 @@ $$
             CREATE INDEX sessions_user_id_gin_idx ON public.sessions USING GIN (user_id gin_trgm_ops);
             CREATE INDEX sessions_user_anonymous_id_gin_idx ON public.sessions USING GIN (user_anonymous_id gin_trgm_ops);
             CREATE INDEX sessions_user_country_gin_idx ON public.sessions (project_id, user_country);
-            CREATE INDEX ON sessions (project_id, user_country);
-            CREATE INDEX ON sessions (project_id, user_browser);
             CREATE INDEX sessions_start_ts_idx ON public.sessions (start_ts) WHERE duration > 0;
             CREATE INDEX sessions_project_id_idx ON public.sessions (project_id) WHERE duration > 0;
             CREATE INDEX sessions_session_id_project_id_start_ts_idx ON sessions (session_id, project_id, start_ts) WHERE duration > 0;

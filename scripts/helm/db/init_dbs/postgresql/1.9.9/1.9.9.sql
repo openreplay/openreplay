@@ -17,4 +17,8 @@ CREATE INDEX IF NOT EXISTS sessions_utm_medium_gin_idx ON public.sessions USING 
 CREATE INDEX IF NOT EXISTS sessions_utm_campaign_gin_idx ON public.sessions USING GIN (utm_campaign gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS requests_timestamp_session_id_failed_idx ON events_common.requests (timestamp, session_id) WHERE success = FALSE;
 
+
+DROP INDEX IF EXISTS sessions_project_id_user_browser_idx1;
+DROP INDEX IF EXISTS sessions_project_id_user_country_idx1;
+ALTER INDEX IF EXISTS platform_idx RENAME TO sessions_platform_idx;
 COMMIT;
