@@ -21,4 +21,6 @@ CREATE INDEX IF NOT EXISTS requests_timestamp_session_id_failed_idx ON events_co
 DROP INDEX IF EXISTS sessions_project_id_user_browser_idx1;
 DROP INDEX IF EXISTS sessions_project_id_user_country_idx1;
 ALTER INDEX IF EXISTS platform_idx RENAME TO sessions_platform_idx;
+ALTER INDEX IF EXISTS events.resources_duration_idx RENAME TO resources_duration_durationgt0_idx;
+DROP INDEX IF EXISTS projects_project_key_idx1;
 COMMIT;

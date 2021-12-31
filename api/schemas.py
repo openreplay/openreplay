@@ -377,7 +377,7 @@ class PerformanceEventType(str, Enum):
     location_avg_cpu_load = "AVG_CPU_LOAD"
     location_avg_memory_usage = "AVG_MEMORY_USAGE"
     fetch_failed = "FETCH_FAILED"
-    fetch_duration = "FETCH_DURATION"
+    # fetch_duration = "FETCH_DURATION"
 
 
 class FilterType(str, Enum):
