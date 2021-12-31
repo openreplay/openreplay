@@ -474,6 +474,29 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event_where.append(
                             _multiple_conditions(f"(main1.reason {op} %({e_k})s OR main1.name {op} %({e_k})s)",
                                                  event.value, value_key=e_k))
+                elif event_type == schemas.PerformanceEventType.fetch_failed:
+                    event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
+                    col = performance_event.get_col(event_type)
+                    colname = col["column"]
+                    event_where.append(f"main.{colname} = FALSE")
+                elif event_type == schemas.PerformanceEventType.fetch_duration:
+                    event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                    if not is_any:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s",
+                                                 event.value, value_key=e_k))
+                    col = performance_event.get_col(event_type)
+                    colname = col["column"]
+                    tname = "main"
+                    e_k += "_custom"
+                    full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+                    event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
+                                       _multiple_conditions(f"{tname}.{colname} {event.customOperator} %({e_k})s",
+                                                            event.custom, value_key=e_k))
                 elif event_type in [schemas.PerformanceEventType.location_dom_complete,
                                     schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                     schemas.PerformanceEventType.location_ttfb,
@@ -505,8 +528,10 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                         event.value[0].value = [event.value[0].value]
                     if not isinstance(event.value[1].value, list):
                         event.value[1].value = [event.value[1].value]
-                    event.value[0].value = helper.values_for_operator(value=event.value[0].value, op=event.value[0].operator)
-                    event.value[1].value = helper.values_for_operator(value=event.value[1].value, op=event.value[0].operator)
+                    event.value[0].value = helper.values_for_operator(value=event.value[0].value,
+                                                                      op=event.value[0].operator)
+                    event.value[1].value = helper.values_for_operator(value=event.value[1].value,
+                                                                      op=event.value[0].operator)
                     e_k1 = e_k + "_e1"
                     e_k2 = e_k + "_e2"
                     full_args = {**full_args,
