@@ -709,6 +709,7 @@ $$
                                                                                                                       THEN 8
                                                                                                                   ELSE 0 END))
                                                                                     gin_trgm_ops);
+            CREATE INDEX requests_timestamp_session_id_failed_idx ON events_common.requests (timestamp, session_id) WHERE success = FALSE;
 
 -- --- events.sql ---
             CREATE SCHEMA IF NOT EXISTS events;

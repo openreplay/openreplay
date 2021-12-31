@@ -376,6 +376,8 @@ class PerformanceEventType(str, Enum):
     location_ttfb = "TTFB"
     location_avg_cpu_load = "AVG_CPU_LOAD"
     location_avg_memory_usage = "AVG_MEMORY_USAGE"
+    fetch_failed = "FETCH_FAILED"
+    fetch_duration = "FETCH_DURATION"
 
 
 class FilterType(str, Enum):
@@ -457,6 +459,8 @@ class _SessionSearchEventRaw(BaseModel):
     @root_validator
     def check_card_number_omitted(cls, values):
         if isinstance(values.get("type"), PerformanceEventType):
+            if values.get("type") == PerformanceEventType.fetch_failed:
+                return values
             assert values.get("custom") is not None, "custom should not be None for PerformanceEventType"
             assert values.get("customOperator") is not None \
                 , "customOperator should not be None for PerformanceEventType"
