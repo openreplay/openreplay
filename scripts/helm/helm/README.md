@@ -7,3 +7,8 @@
   - have to have another helm chart with low hook value for higher prioriry
 - install app
   - customize values.yaml file
+
+
+## Installation
+helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./values.yaml --atomic
+helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./values.yaml --atomic
