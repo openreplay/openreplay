@@ -462,6 +462,7 @@ $$
             CREATE INDEX errors_project_id_error_id_idx ON public.errors (project_id, error_id);
             CREATE INDEX errors_project_id_error_id_integration_idx ON public.errors (project_id, error_id) WHERE source != 'js_exception';
             CREATE INDEX errors_error_id_idx ON errors (error_id);
+            CREATE INDEX errors_parent_error_id_idx ON errors (parent_error_id);
 
             CREATE TABLE user_favorite_errors
             (

@@ -72,4 +72,5 @@ DROP INDEX IF EXISTS sessions_project_id_user_country_idx1;
 ALTER INDEX IF EXISTS platform_idx RENAME TO sessions_platform_idx;
 ALTER INDEX IF EXISTS events.resources_duration_idx RENAME TO resources_duration_durationgt0_idx;
 DROP INDEX IF EXISTS projects_project_key_idx1;
+CREATE INDEX IF NOT EXISTS errors_parent_error_id_idx ON errors (parent_error_id);
 COMMIT;
