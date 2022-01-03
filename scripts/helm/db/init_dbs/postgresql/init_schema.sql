@@ -878,6 +878,11 @@ $$
                 max_used_js_heap_size  bigint   NOT NULL,
                 PRIMARY KEY (session_id, message_id)
             );
+            CREATE INDEX performance_session_id_idx ON events.performance (session_id);
+            CREATE INDEX performance_timestamp_idx ON events.performance (timestamp);
+            CREATE INDEX performance_session_id_timestamp_idx ON events.performance (session_id, timestamp);
+            CREATE INDEX performance_avg_cpu_gt0_idx ON events.performance (avg_cpu) WHERE avg_cpu > 0;
+            CREATE INDEX performance_avg_used_js_heap_size_gt0_idx ON events.performance (avg_used_js_heap_size) WHERE avg_used_js_heap_size > 0;
 
 
 -- --- autocomplete.sql ---
