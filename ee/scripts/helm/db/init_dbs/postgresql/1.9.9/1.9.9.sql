@@ -73,4 +73,11 @@ ALTER INDEX IF EXISTS platform_idx RENAME TO sessions_platform_idx;
 ALTER INDEX IF EXISTS events.resources_duration_idx RENAME TO resources_duration_durationgt0_idx;
 DROP INDEX IF EXISTS projects_project_key_idx1;
 CREATE INDEX IF NOT EXISTS errors_parent_error_id_idx ON errors (parent_error_id);
+
+CREATE INDEX IF NOT EXISTS performance_session_id_idx ON events.performance (session_id);
+CREATE INDEX IF NOT EXISTS performance_timestamp_idx ON events.performance (timestamp);
+CREATE INDEX IF NOT EXISTS performance_session_id_timestamp_idx ON events.performance (session_id, timestamp);
+CREATE INDEX IF NOT EXISTS performance_avg_cpu_gt0_idx ON events.performance (avg_cpu) WHERE avg_cpu > 0;
+CREATE INDEX IF NOT EXISTS performance_avg_used_js_heap_size_gt0_idx ON events.performance (avg_used_js_heap_size) WHERE avg_used_js_heap_size > 0;
+
 COMMIT;
