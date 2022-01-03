@@ -256,12 +256,6 @@ class EmailPayloadSchema(BaseModel):
     message: str = Field(...)
 
 
-class WeeklyReportPayloadSchema(BaseModel):
-    auth: str = Field(...)
-    email: EmailStr = Field(...)
-    data: dict = Field(...)
-
-
 class MemberInvitationPayloadSchema(BaseModel):
     auth: str = Field(...)
     email: EmailStr = Field(...)

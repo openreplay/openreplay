@@ -566,15 +566,6 @@ def async_send_signup_emails(data: schemas.EmailPayloadSchema = Body(...)):
     email_helper.send_assign_session(recipient=data.email, link=data.link, message=data.message)
 
 
-# TODO: transform this to a background task when you find a way to run it without an attached request
-@public_app.post('/async/funnel/weekly_report2', tags=["async mail"])
-def async_weekly_report(data: schemas.WeeklyReportPayloadSchema = Body(...)):
-    print("=========================> Sending weekly report")
-    if data.auth != config("async_Token"):
-        return {}
-    email_helper.weekly_report2(recipients=data.email, data=data.data)
-
-
 # @public_app.post('/async/basic/member_invitation', tags=["async mail"])
 # def async_basic_emails(data: schemas.MemberInvitationPayloadSchema = Body(...)):
 #     if data.auth != config("async_Token"):
