@@ -71,13 +71,17 @@ export default withRequest({
 	dataName: 'assistCredendials',
   loadingName: 'loadingCredentials',
 })(withPermissions(['SESSION_REPLAY', 'ASSIST_LIVE'], '', true)(connect(
-  state => ({
-    session: state.getIn([ 'sessions', 'current' ]),
-    showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
-    jwt: state.get('jwt'),
-    fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-    hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
-    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
-  }),
+  state => {
+    const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
+    const hasSessioPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
+    return {
+      session: state.getIn([ 'sessions', 'current' ]),
+      showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
+      jwt: state.get('jwt'),
+      fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+      hasSessionsPath: hasSessioPath && !isAssist,
+      isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    }
+  },
   { toggleFullscreen, closeBottomBlock },
 )(WebPlayer)));

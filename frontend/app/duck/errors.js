@@ -17,6 +17,7 @@ const IGNORE = "errors/IGNORE";
 const MERGE = "errors/MERGE";
 const TOGGLE_FAVORITE = "errors/TOGGLE_FAVORITE";
 const FETCH_TRACE = "errors/FETCH_TRACE";
+const UPDATE_CURRENT_PAGE = "errors/UPDATE_CURRENT_PAGE";
 
 function chartWrapper(chart = []) {
   return chart.map(point => ({ ...point, count: Math.max(point.count, 0) }));
@@ -33,7 +34,8 @@ const initialState = Map({
 	instance: ErrorInfo(),
 	instanceTrace: List(),
 	stats: Map(),
-	sourcemapUploaded: true
+	sourcemapUploaded: true,
+  currentPage: 1,
 });
 
 
@@ -67,7 +69,8 @@ function reducer(state = initialState, action = {}) {
 			return state.update("list", list => list.filter(e => !ids.includes(e.errorId)));
 		case success(FETCH_NEW_ERRORS_COUNT):
 			return state.set('stats', action.data);
-
+    case UPDATE_CURRENT_PAGE:
+      return state.set('currentPage', action.page);
 	}
 	return state;
 }
@@ -166,3 +169,9 @@ export function fetchNewErrorsCount(params = {}) {
 	}
 }
 
+export function updateCurrentPage(page) {
+  return {
+    type: 'errors/UPDATE_CURRENT_PAGE',
+    page,
+  };
+}
