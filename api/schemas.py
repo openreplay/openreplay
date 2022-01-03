@@ -442,7 +442,7 @@ class IssueType(str, Enum):
 
 
 class _SessionSearchEventRaw(BaseModel):
-    custom: Optional[List[Union[int, str]]] = Field(None)
+    custom: Optional[List[Union[int, str]]] = Field(None, min_items=1)
     customOperator: Optional[MathOperator] = Field(None)
     key: Optional[str] = Field(None)
     value: Union[str, List[str]] = Field(...)
@@ -455,9 +455,9 @@ class _SessionSearchEventRaw(BaseModel):
         if isinstance(values.get("type"), PerformanceEventType):
             if values.get("type") == PerformanceEventType.fetch_failed:
                 return values
-            assert values.get("custom") is not None, "custom should not be None for PerformanceEventType"
+            assert values.get("custom") is not None, "custom should not be null for PerformanceEventType"
             assert values.get("customOperator") is not None \
-                , "customOperator should not be None for PerformanceEventType"
+                , "customOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
