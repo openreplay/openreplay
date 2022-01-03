@@ -28,18 +28,23 @@ function capitalise(str) {
   live: state.live,
   loading: state.cssLoading || state.messagesLoading,
 }))
-@connect((state, props) => ({
-  session: state.getIn([ 'sessions', 'current' ]),
-  loading: state.getIn([ 'sessions', 'toggleFavoriteRequest', 'loading' ]),
-  disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]) || props.loading,
-  jiraConfig: state.getIn([ 'issues', 'list' ]).first(),
-  issuesFetched: state.getIn([ 'issues', 'issuesFetched' ]),
-  local: state.getIn(['sessions', 'timezone']),
-  funnelRef: state.getIn(['funnels', 'navRef']),
-  siteId: state.getIn([ 'user', 'siteId' ]),
-  funnelPage: state.getIn(['sessions', 'funnelPage']),
-  hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
-}), {
+@connect((state, props) => {
+  const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
+  const hasSessioPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
+  return {
+    session: state.getIn([ 'sessions', 'current' ]),
+    sessionPath: state.getIn([ 'sessions', 'sessionPath' ]),
+    loading: state.getIn([ 'sessions', 'toggleFavoriteRequest', 'loading' ]),
+    disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]) || props.loading,
+    jiraConfig: state.getIn([ 'issues', 'list' ]).first(),
+    issuesFetched: state.getIn([ 'issues', 'issuesFetched' ]),
+    local: state.getIn(['sessions', 'timezone']),
+    funnelRef: state.getIn(['funnels', 'navRef']),
+    siteId: state.getIn([ 'user', 'siteId' ]),
+    funnelPage: state.getIn(['sessions', 'funnelPage']),
+    hasSessionsPath: hasSessioPath && !isAssist,
+  }
+}, {
   toggleFavorite, fetchListIntegration, setSessionPath
 })
 @withRouter
@@ -56,16 +61,22 @@ export default class PlayerBlockHeader extends React.PureComponent {
   );
 
   backHandler = () => {
-    const { history, siteId, funnelPage } = this.props;
-    const funnelId = funnelPage && funnelPage.get('funnelId');
-    const issueId = funnelPage && funnelPage.get('issueId');
-    if (funnelId || issueId) {
-      if (issueId) {
-        history.push(withSiteId(funnelIssueRoute(funnelId, issueId), siteId))
-      } else
-        history.push(withSiteId(funnelRoute(funnelId), siteId));
-    } else 
+    const { history, siteId, funnelPage, sessionPath } = this.props;
+    // alert(sessionPath)
+    if (sessionPath === history.location.pathname) {
       history.push(withSiteId(SESSIONS_ROUTE), siteId);
+    } else {
+      history.push(sessionPath ? sessionPath : withSiteId(SESSIONS_ROUTE, siteId));
+    }
+    // const funnelId = funnelPage && funnelPage.get('funnelId');
+    // const issueId = funnelPage && funnelPage.get('issueId');
+    // if (funnelId || issueId) {
+    //   if (issueId) {
+    //     history.push(withSiteId(funnelIssueRoute(funnelId, issueId), siteId))
+    //   } else
+    //     history.push(withSiteId(funnelRoute(funnelId), siteId));
+    // } else 
+    //   history.push(withSiteId(SESSIONS_ROUTE), siteId);
   }
 
   toggleFavorite = () => {

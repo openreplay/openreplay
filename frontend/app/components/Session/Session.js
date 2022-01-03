@@ -60,12 +60,14 @@ function Session({
 
 export default withPermissions(['SESSION_REPLAY'], '', true)(connect((state, props) => {
 	const { match: { params: { sessionId } } } = props;
+  const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
+  const hasSessiosPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
   return {
     sessionId,
     loading: state.getIn([ 'sessions', 'loading' ]),
     hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
     session: state.getIn([ 'sessions', 'current' ]),
-    hasSessionsPath: state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions'),
+    hasSessionsPath: hasSessiosPath && !isAssist,
   };
 }, {
   fetchSession,
