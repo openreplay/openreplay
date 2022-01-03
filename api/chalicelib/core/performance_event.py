@@ -10,5 +10,6 @@ def get_col(perf: schemas.PerformanceEventType):
                                                                  "extraJoin": "events.performance"},
         schemas.PerformanceEventType.fetch_failed: {"column": "success", "extraJoin": None},
         # schemas.PerformanceEventType.fetch_duration: {"column": "duration", "extraJoin": None},
-        # schemas.PerformanceEventType.location_largest_contentful_paint_time: "timestamp"
+        schemas.PerformanceEventType.location_largest_contentful_paint_time: {"column": "first_contentful_paint_time",
+                                                                              "extraJoin": None}
     }.get(perf)
