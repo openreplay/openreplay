@@ -576,3 +576,33 @@ class SentrySchema(BaseModel):
 
 class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
+
+
+class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+    startDate: Optional[int] = Field(None)
+    endDate: Optional[int] = Field(None)
+    sort: Optional[str] = Field(None)
+    order: Optional[str] = Field(None)
+
+
+class CustomMetricCreateSeriesSchema(BaseModel):
+    title: Optional[str] = Field(None)
+    index: Optional[int] = Field(None)
+    filter: Optional[CustomMetricSeriesFilterSchema] = Field([])
+
+
+class CreateCustomMetricsSchema(BaseModel):
+    title: str = Field(...)
+    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
+    is_public: Optional[bool] = Field(False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
+    series_id: Optional[int] = Field(None)
+
+
+class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
+    series: List[CustomMetricUpdateSeriesSchema] = Field(..., min_items=1)

@@ -10,7 +10,8 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, slack, users
+    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, slack, users, \
+    custom_metrics
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -1086,3 +1087,38 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
     return users.change_password(email=context.email, old_password=data.old_password,
                                  new_password=data.new_password, tenant_id=context.tenant_id,
                                  user_id=context.user_id)
+
+
+@app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
+def try_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    return custom_metrics.try_live(project_id=projectId, data=data)
+
+@app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
+def add_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
+                       context: schemas.CurrentContext = Depends(OR_context)):
+    return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
+
+
+@app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
+def get_custom_metrics(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
+
+
+@app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+
+
+@app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),
+                         context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.update(user_id=context.user_id, metric_id=metric_id,data=data)}
+
+
+@app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
