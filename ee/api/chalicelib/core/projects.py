@@ -1,5 +1,6 @@
 import json
 
+import schemas
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -104,8 +105,8 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         query = cur.mogrify(f"""\
                     SELECT
                            s.project_id,
-                           s.name,
-                            s.project_key
+                           s.project_key,
+                           s.name
                             {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_id = %(project_id)s) AS last_recorded_session_at" if include_last_session else ""}
                             {',s.gdpr' if include_gdpr else ''}
                             {tracker_query}
@@ -129,20 +130,20 @@ def is_authorized(project_id, tenant_id):
     return get_project(tenant_id=tenant_id, project_id=project_id) is not None
 
 
-def create(tenant_id, user_id, data, skip_authorization=False):
+def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
     if not skip_authorization:
         admin = users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
-    return {"data": __create(tenant_id=tenant_id, name=data.get("name", "my first project"))}
+    return {"data": __create(tenant_id=tenant_id, name=data.name)}
 
 
-def edit(tenant_id, user_id, project_id, data):
+def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
-                             changes={"name": data.get("name", "my first project")})}
+                             changes={"name": data.name})}
 
 
 def delete(tenant_id, user_id, project_id):
