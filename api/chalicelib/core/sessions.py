@@ -1,7 +1,7 @@
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event
-from chalicelib.utils import pg_client, helper, dev
+from chalicelib.utils import pg_client, helper, dev, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
@@ -199,11 +199,11 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             #                             ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
             #                          full_args)
 
-        print("--------------------")
-        print(main_query)
+        # print("--------------------")
+        # print(main_query)
 
         cur.execute(main_query)
-        print("--------------------")
+        # print("--------------------")
         if count_only:
             return helper.dict_to_camel_case(cur.fetchone())
         sessions = cur.fetchone()
@@ -228,6 +228,35 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         'total': total,
         'sessions': helper.list_to_camel_case(sessions)
     }
+
+
+@dev.timed
+def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int):
+    step_size = metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
+                                               density=density, factor=1)
+    full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
+                                                     favorite_only=False, issue=None, project_id=project_id,
+                                                     user_id=None)
+    full_args["step_size"] = step_size
+    with pg_client.PostgresClient() as cur:
+        main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
+                                                        {query_part})
+                                    SELECT generated_timestamp AS timestamp,
+                                           COUNT(s)            AS count
+                                    FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                             LEFT JOIN LATERAL ( SELECT 1 AS s
+                                                                 FROM full_sessions
+                                                                 WHERE start_ts >= generated_timestamp
+                                                                   AND start_ts < generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                    GROUP BY generated_timestamp
+                                    ORDER BY generated_timestamp;""", full_args)
+
+        # print("--------------------")
+        # print(main_query)
+        cur.execute(main_query)
+        # print("--------------------")
+        sessions = cur.fetchall()
+        return sessions
 
 
 def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id):
@@ -707,11 +736,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
             extra_constraints.append("ufe.user_id = %(user_id)s")
     # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
-    if not favorite_only and not errors_only:
+    if not favorite_only and not errors_only and user_id is not None:
         extra_from += """LEFT JOIN (SELECT user_id, session_id
-                                                            FROM public.user_favorite_sessions
-                                                            WHERE user_id = %(userId)s) AS favorite_sessions
-                                                           USING (session_id)"""
+                                    FROM public.user_favorite_sessions
+                                    WHERE user_id = %(userId)s) AS favorite_sessions
+                                    USING (session_id)"""
     extra_join = ""
     if issue is not None:
         extra_join = """
