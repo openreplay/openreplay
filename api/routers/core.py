@@ -11,7 +11,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
     assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, slack, users, \
-    custom_metrics
+    custom_metrics, saved_search
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -752,7 +752,7 @@ def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
 
 @app.get('/{projectId}/funnels/{funnelId}', tags=["funnels"])
 def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = funnels.get(funnel_id=funnelId, project_id=projectId)
+    data = funnels.get(funnel_id=funnelId, project_id=projectId, user_id=context.user_id)
     if data is None:
         return {"errors": ["funnel not found"]}
     return {"data": data}
@@ -766,7 +766,8 @@ def edit_funnel(projectId: int, funnelId: int, data: schemas.UpdateFunnelSchema 
                           user_id=context.user_id,
                           name=data.name,
                           filter=data.filter.dict(),
-                          is_public=data.is_public)
+                          is_public=data.is_public,
+                          project_id=projectId)
 
 
 @app.delete('/{projectId}/funnels/{funnelId}', tags=["funnels"])
@@ -1117,9 +1118,39 @@ def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentCo
 @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.update(user_id=context.user_id, metric_id=metric_id, data=data)}
+    return {
+        "data": custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)}
 
 
 @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+
+
+@app.post('/{projectId}/saved_search', tags=["savedSearch"])
+@app.put('/{projectId}/saved_search', tags=["savedSearch"])
+def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    return saved_search.create(project_id=projectId, user_id=context.user_id, data=data)
+
+
+@app.get('/{projectId}/saved_search', tags=["savedSearch"])
+def get_saved_searches(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.get_all(project_id=projectId, user_id=context.user_id)}
+
+
+@app.get('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+def get_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.get(project_id=projectId, search_id=search_id, user_id=context.user_id)}
+
+
+@app.post('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+@app.put('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+def update_saved_search(projectId: int, search_id: int, data: schemas.SavedSearchSchema = Body(...),
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.update(user_id=context.user_id, search_id=search_id, data=data, project_id=projectId)}
+
+
+@app.delete('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+def delete_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}

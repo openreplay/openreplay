@@ -592,7 +592,7 @@ class CustomMetricCreateSeriesSchema(BaseModel):
 
 
 class CreateCustomMetricsSchema(BaseModel):
-    title: str = Field(...)
+    name: str = Field(...)
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
     is_public: Optional[bool] = Field(False)
 
@@ -618,3 +618,7 @@ class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
 
 class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
     series: List[CustomMetricUpdateSeriesSchema] = Field(..., min_items=1)
+
+
+class SavedSearchSchema(FunnelSchema):
+    pass

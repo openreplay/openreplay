@@ -40,7 +40,7 @@ def create(project_id, user_id, name, filter, is_public):
         return {"data": r}
 
 
-def update(funnel_id, user_id, name=None, filter=None, is_public=None):
+def update(funnel_id, user_id, project_id, name=None, filter=None, is_public=None):
     s_query = []
     if filter is not None:
         helper.delete_keys_from_dict(filter, REMOVE_KEYS)
@@ -56,9 +56,10 @@ def update(funnel_id, user_id, name=None, filter=None, is_public=None):
             UPDATE public.funnels 
             SET {" , ".join(s_query)}
             WHERE funnel_id=%(funnel_id)s
-            RETURNING *;""",
-                            {"user_id": user_id, "funnel_id": funnel_id, "name": name,
-                             "filter": json.dumps(filter) if filter is not None else None, "is_public": is_public})
+                AND project_id = %(project_id)s
+                AND (user_id = %(user_id)s OR is_public)
+            RETURNING *;""", {"user_id": user_id, "funnel_id": funnel_id, "name": name,
+                              "filter": json.dumps(filter) if filter is not None else None, "is_public": is_public})
         # print("--------------------")
         # print(query)
         # print("--------------------")
@@ -74,13 +75,12 @@ def update(funnel_id, user_id, name=None, filter=None, is_public=None):
 
 def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date=None, details=False):
     with pg_client.PostgresClient() as cur:
-        team_query = ""
         cur.execute(
             cur.mogrify(
                 f"""\
-                SELECT DISTINCT ON (funnels.funnel_id) funnel_id,project_id, user_id, name, created_at, deleted_at, is_public
+                SELECT funnel_id, project_id, user_id, name, created_at, deleted_at, is_public
                     {",filter" if details else ""}
-                FROM public.funnels {team_query}
+                FROM public.funnels
                 WHERE project_id = %(project_id)s
                   AND funnels.deleted_at IS NULL
                   AND (funnels.user_id = %(user_id)s OR funnels.is_public);""",
@@ -135,7 +135,8 @@ def delete(project_id, funnel_id, user_id):
             UPDATE public.funnels 
             SET deleted_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
-              AND funnel_id = %(funnel_id)s;""",
+              AND funnel_id = %(funnel_id)s
+              AND (user_id = %(user_id)s OR is_public);""",
                         {"funnel_id": funnel_id, "project_id": project_id, "user_id": user_id})
         )
 
@@ -220,7 +221,7 @@ def get_issues_on_the_fly(funnel_id, project_id, data):
                                          last_stage=last_stage))}
 
 
-def get(funnel_id, project_id):
+def get(funnel_id, project_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -230,8 +231,9 @@ def get(funnel_id, project_id):
                 FROM public.funnels
                 WHERE project_id = %(project_id)s
                   AND deleted_at IS NULL
-                  AND funnel_id = %(funnel_id)s;""",
-                {"funnel_id": funnel_id, "project_id": project_id}
+                  AND funnel_id = %(funnel_id)s
+                  AND (user_id = %(user_id)s OR is_public);""",
+                {"funnel_id": funnel_id, "project_id": project_id, "user_id": user_id}
             )
         )
 
@@ -247,7 +249,7 @@ def get(funnel_id, project_id):
 @dev.timed
 def search_by_issue(user_id, project_id, funnel_id, issue_id, data, range_value=None, start_date=None, end_date=None):
     if len(data.get("events", [])) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=data.get('startDate', start_date),
