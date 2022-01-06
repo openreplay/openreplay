@@ -600,10 +600,16 @@ class CreateCustomMetricsSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
+class MetricViewType(str, Enum):
+    line_chart = "lineChart"
+    progress = "progress"
+
+
 class TryCustomMetricsSchema(CreateCustomMetricsSchema):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
     density: int = Field(7)
+    view_type: MetricViewType = Field(MetricViewType.line_chart)
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
