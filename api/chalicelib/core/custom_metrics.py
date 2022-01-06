@@ -37,12 +37,12 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
         data.series = None
         params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
         query = cur.mogrify(f"""\
-            WITH m AS (INSERT INTO metrics (project_id, user_id, title)
-                         VALUES (%(project_id)s, %(user_id)s, %(title)s)
+            WITH m AS (INSERT INTO metrics (project_id, user_id, name)
+                         VALUES (%(project_id)s, %(user_id)s, %(name)s)
                          RETURNING *)
             INSERT
-            INTO metric_series(metric_id, index, title, filter)
-            VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(title_{i})s, %(filter_{i})s::jsonb)"
+            INTO metric_series(metric_id, index, name, filter)
+            VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(name_{i})s, %(filter_{i})s::jsonb)"
                               for i in range(series_len)])}
             RETURNING metric_id;""", params)
 
@@ -69,13 +69,14 @@ def __get_series_id(metric_id):
     return [r["series_id"] for r in rows]
 
 
-def update(metric_id, user_id, data: schemas.UpdateCustomMetricsSchema):
+def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSchema):
     series_ids = __get_series_id(metric_id)
     n_series = []
     d_series_ids = []
     u_series = []
     u_series_ids = []
-    params = {"metric_id": metric_id, "is_public": data.is_public, "title": data.title}
+    params = {"metric_id": metric_id, "is_public": data.is_public, "name": data.name,
+              "user_id": user_id, "project_id": project_id}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.series_id is None:
@@ -98,18 +99,18 @@ def update(metric_id, user_id, data: schemas.UpdateCustomMetricsSchema):
         sub_queries = []
         if len(n_series) > 0:
             sub_queries.append(f"""\
-            n AS (INSERT INTO metric_series (metric_id, index, title, filter)
-                 VALUES {",".join([f"(%(metric_id)s, %(n_index_{s['i']})s, %(n_title_{s['i']})s, %(n_filter_{s['i']})s::jsonb)"
+            n AS (INSERT INTO metric_series (metric_id, index, name, filter)
+                 VALUES {",".join([f"(%(metric_id)s, %(n_index_{s['i']})s, %(n_name_{s['i']})s, %(n_filter_{s['i']})s::jsonb)"
                                    for s in n_series])}
                  RETURNING 1)""")
         if len(u_series) > 0:
             sub_queries.append(f"""\
             u AS (UPDATE metric_series
-                    SET title=series.title,
+                    SET name=series.name,
                         filter=series.filter,
                         index=series.filter.index
-                    FROM (VALUES {",".join([f"(%(u_series_id_{s['i']})s,%(u_index_{s['i']})s,%(u_title_{s['i']})s,%(u_filter_{s['i']})s::jsonb)"
-                                            for s in n_series])}) AS series(series_id, index, title, filter)
+                    FROM (VALUES {",".join([f"(%(u_series_id_{s['i']})s,%(u_index_{s['i']})s,%(u_name_{s['i']})s,%(u_filter_{s['i']})s::jsonb)"
+                                            for s in n_series])}) AS series(series_id, index, name, filter)
                     WHERE metric_id =%(metric_id)s AND series_id=series.series_id
                  RETURNING 1)""")
         if len(d_series_ids) > 0:
@@ -119,7 +120,10 @@ def update(metric_id, user_id, data: schemas.UpdateCustomMetricsSchema):
         query = cur.mogrify(f"""\
             {"WITH " if len(sub_queries) > 0 else ""}{",".join(sub_queries)}
             UPDATE metrics
-            SET title = %(title)s, is_public= %(is_public)s WHERE metric_id = %(metric_id)s 
+            SET name = %(name)s, is_public= %(is_public)s 
+            WHERE metric_id = %(metric_id)s
+            AND project_id = %(project_id)s 
+            AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
         cur.execute(
             query
@@ -161,7 +165,8 @@ def delete(project_id, metric_id, user_id):
             UPDATE public.metrics 
             SET deleted_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
-              AND metric_id = %(metric_id)s;""",
+              AND metric_id = %(metric_id)s
+              AND (user_id = %(user_id)s OR is_public);""",
                         {"metric_id": metric_id, "project_id": project_id, "user_id": user_id})
         )
 
@@ -188,5 +193,5 @@ def get(metric_id, project_id, user_id):
             )
         )
         row = cur.fetchone()
-        row["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+        row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     return helper.dict_to_camel_case(row)

@@ -186,6 +186,7 @@ Pipfile
 /chalicelib/core/errors_favorite_viewed.py
 /chalicelib/core/events.py
 /chalicelib/core/events_ios.py
+/chalicelib/core/funnels.py
 /chalicelib/core/integration_base.py
 /chalicelib/core/integration_base_issue.py
 /chalicelib/core/integration_github.py
