@@ -1091,14 +1091,15 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
 
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
-    return custom_metrics.try_live(project_id=projectId, data=data)
+def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.try_live(project_id=projectId, data=data)}
+
 
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
 def add_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
-                       context: schemas.CurrentContext = Depends(OR_context)):
+                      context: schemas.CurrentContext = Depends(OR_context)):
     return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
 
 
@@ -1116,7 +1117,7 @@ def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentCo
 @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.update(user_id=context.user_id, metric_id=metric_id,data=data)}
+    return {"data": custom_metrics.update(user_id=context.user_id, metric_id=metric_id, data=data)}
 
 
 @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])

@@ -600,6 +600,12 @@ class CreateCustomMetricsSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
+class TryCustomMetricsSchema(CreateCustomMetricsSchema):
+    startDate: int = Field(TimeUTC.now(-7))
+    endDate: int = Field(TimeUTC.now())
+    density: int = Field(7)
+
+
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
     series_id: Optional[int] = Field(None)
 

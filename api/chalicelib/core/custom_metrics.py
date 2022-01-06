@@ -1,37 +1,19 @@
 import json
 
 import schemas
+from chalicelib.core import sessions
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def try_live(project_id,data: schemas.CreateCustomMetricsSchema):
-    with pg_client.PostgresClient() as cur:
-        _data = {}
-        for i, s in enumerate(data.series):
-            for k in s.dict().keys():
-                _data[f"{k}_{i}"] = s.__getattribute__(k)
-            _data[f"index_{i}"] = i
-            _data[f"filter_{i}"] = s.filter.json()
-        series_len = len(data.series)
-        data.series = None
-        params = { "project_id": project_id, **data.dict(), **_data}
-        query = cur.mogrify(f"""\
-            WITH m AS (INSERT INTO metrics (project_id, user_id, title)
-                         VALUES (%(project_id)s, %(user_id)s, %(title)s)
-                         RETURNING *)
-            INSERT
-            INTO metric_series(metric_id, index, title, filter)
-            VALUES {",".join([f"((SELECT metric_id FROM m), %(index_{i})s, %(title_{i})s, %(filter_{i})s::jsonb)"
-                              for i in range(series_len)])}
-            RETURNING metric_id;""", params)
+def try_live(project_id, data: schemas.TryCustomMetricsSchema):
+    results = []
+    for s in data.series:
+        s.filter.startDate = data.startDate
+        s.filter.endDate = data.endDate
+        results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density))
+    return results
 
-        cur.execute(
-            query
-        )
-        r = cur.fetchone()
-        r = helper.dict_to_camel_case(r)
-        return {"data": r}
 
 def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
     with pg_client.PostgresClient() as cur:
