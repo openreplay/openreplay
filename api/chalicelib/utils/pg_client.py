@@ -21,20 +21,38 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
     def getconn(self, *args, **kwargs):
         self._semaphore.acquire()
-        return super().getconn(*args, **kwargs)
+        try:
+            return super().getconn(*args, **kwargs)
+        except psycopg2.pool.PoolError as e:
+            if str(e) == "connection pool is closed":
+                make_pool()
+            raise e
 
     def putconn(self, *args, **kwargs):
         super().putconn(*args, **kwargs)
         self._semaphore.release()
 
 
-try:
-    postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20), 100, **PG_CONFIG)
-    if (postgreSQL_pool):
-        print("Connection pool created successfully")
-except (Exception, psycopg2.DatabaseError) as error:
-    print("Error while connecting to PostgreSQL", error)
-    raise error
+postgreSQL_pool: ORThreadedConnectionPool = None
+
+
+def make_pool():
+    global postgreSQL_pool
+    if postgreSQL_pool is not None:
+        try:
+            postgreSQL_pool.closeall()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("Error while closing all connexions to PostgreSQL", error)
+    try:
+        postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20), 100, **PG_CONFIG)
+        if (postgreSQL_pool):
+            print("Connection pool created successfully")
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error while connecting to PostgreSQL", error)
+        raise error
+
+
+make_pool()
 
 
 class PostgresClient:
@@ -62,7 +80,11 @@ class PostgresClient:
                 self.connection.close()
         except Exception as error:
             print("Error while committing/closing PG-connection", error)
-            raise error
+            if str(error) == "connection already closed":
+                print("Recreating the connexion pool")
+                make_pool()
+            else:
+                raise error
         finally:
             postgreSQL_pool.putconn(self.connection)
 
