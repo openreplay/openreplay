@@ -231,7 +231,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
 
 @dev.timed
-def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int):
+def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
+                   view_type: schemas.MetricViewType):
     step_size = metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                density=density, factor=1)
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
@@ -239,23 +240,30 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                      user_id=None)
     full_args["step_size"] = step_size
     with pg_client.PostgresClient() as cur:
-        main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
-                                                        {query_part})
-                                    SELECT generated_timestamp AS timestamp,
-                                           COUNT(s)            AS count
-                                    FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                             LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                 FROM full_sessions
-                                                                 WHERE start_ts >= generated_timestamp
-                                                                   AND start_ts < generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
-                                    GROUP BY generated_timestamp
-                                    ORDER BY generated_timestamp;""", full_args)
+        if view_type == schemas.MetricViewType.line_chart:
+            main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
+                                                            {query_part})
+                                        SELECT generated_timestamp AS timestamp,
+                                               COUNT(s)            AS count
+                                        FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                 LEFT JOIN LATERAL ( SELECT 1 AS s
+                                                                     FROM full_sessions
+                                                                     WHERE start_ts >= generated_timestamp
+                                                                       AND start_ts < generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                        GROUP BY generated_timestamp
+                                        ORDER BY generated_timestamp;""", full_args)
+        else:
+            main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
+                                        {query_part};""", full_args)
 
         # print("--------------------")
         # print(main_query)
         cur.execute(main_query)
         # print("--------------------")
-        sessions = cur.fetchall()
+        if view_type == schemas.MetricViewType.line_chart:
+            sessions = cur.fetchall()
+        else:
+            sessions = cur.fetchone()["count"]
         return sessions
 
 

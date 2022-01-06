@@ -11,7 +11,17 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
     for s in data.series:
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
-        results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density))
+        results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
+                                               view_type=data.view_type))
+        if data.view_type == schemas.MetricViewType.progress:
+            r = {"count": results[-1]}
+            diff = s.filter.endDate - s.filter.startDate
+            s.filter.startDate = data.endDate
+            s.filter.endDate = data.endDate - diff
+            r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
+                                                         view_type=data.view_type)
+            r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            results[-1] = r
     return results
 
 
