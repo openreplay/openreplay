@@ -12,17 +12,23 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                               view_type=data.view_type))
-        if data.view_type == schemas.MetricViewType.progress:
+                                               view_type=data.viewType))
+        if data.viewType == schemas.MetricViewType.progress:
             r = {"count": results[-1]}
             diff = s.filter.endDate - s.filter.startDate
             s.filter.startDate = data.endDate
             s.filter.endDate = data.endDate - diff
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                                         view_type=data.view_type)
+                                                         view_type=data.viewType)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
             results[-1] = r
     return results
+
+
+def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
+    return try_live(project_id=project_id, data=metric)
 
 
 def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):

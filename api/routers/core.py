@@ -1114,6 +1114,13 @@ def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentCo
     return {"data": custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
 
 
+@app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
+def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                              data=data)}
+
+
 @app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),

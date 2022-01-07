@@ -586,7 +586,7 @@ class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
 
 
 class CustomMetricCreateSeriesSchema(BaseModel):
-    title: Optional[str] = Field(None)
+    name: Optional[str] = Field(None)
     index: Optional[int] = Field(None)
     filter: Optional[CustomMetricSeriesFilterSchema] = Field([])
 
@@ -605,11 +605,18 @@ class MetricViewType(str, Enum):
     progress = "progress"
 
 
-class TryCustomMetricsSchema(CreateCustomMetricsSchema):
+class CustomMetricChartPayloadSchema(BaseModel):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
     density: int = Field(7)
-    view_type: MetricViewType = Field(MetricViewType.line_chart)
+    viewType: MetricViewType = Field(MetricViewType.line_chart)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class TryCustomMetricsSchema(CreateCustomMetricsSchema, CustomMetricChartPayloadSchema):
+    name: Optional[str] = Field(None)
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
