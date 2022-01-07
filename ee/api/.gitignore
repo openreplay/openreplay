@@ -258,3 +258,6 @@ Pipfile
 /schemas.py
 /chalicelib/blueprints/app/v1_api.py
 /routers/app/v1_api.py
+/chalicelib/core/custom_metrics.py
+/chalicelib/core/performance_event.py
+/chalicelib/core/saved_search.py
