@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Literal
 
 from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator
 
@@ -278,8 +278,8 @@ class _AlertMessageSchema(BaseModel):
 
 class _AlertOptionSchema(BaseModel):
     message: List[_AlertMessageSchema] = Field([])
-    currentPeriod: int = Field(...)
-    previousPeriod: int = Field(...)
+    currentPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(...)
+    previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
     lastNotification: Optional[int] = Field(None)
     renotifyInterval: Optional[int] = Field(720)
 
@@ -304,6 +304,7 @@ class AlertColumn(str, Enum):
     performance__crashes__count = "performance.crashes.count"
     errors__javascript__count = "errors.javascript.count"
     errors__backend__count = "errors.backend.count"
+    custom = "CUSTOM"
 
 
 class MathOperator(str, Enum):
@@ -321,12 +322,24 @@ class _AlertQuerySchema(BaseModel):
     operator: MathOperator = Field(...)
 
 
+class AlertDetectionMethod(str, Enum):
+    threshold = "threshold"
+    change = "change"
+
+
 class AlertSchema(BaseModel):
     name: str = Field(...)
-    detectionMethod: str = Field(...)
+    detectionMethod: AlertDetectionMethod = Field(...)
     description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
+    series_id: Optional[int] = Field(None)
+
+    @root_validator
+    def alert_validator(cls, values):
+        if values.get("query") is not None and values["query"].left == AlertColumn.custom:
+            assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
+        return values
 
 
 class SourcemapUploadPayloadSchema(BaseModel):
@@ -451,7 +464,7 @@ class _SessionSearchEventRaw(BaseModel):
     source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
 
     @root_validator
-    def check_card_number_omitted(cls, values):
+    def event_validator(cls, values):
         if isinstance(values.get("type"), PerformanceEventType):
             if values.get("type") == PerformanceEventType.fetch_failed:
                 return values
@@ -484,7 +497,7 @@ class _SessionSearchFilterSchema(BaseModel):
     source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
 
     @root_validator
-    def check_card_number_omitted(cls, values):
+    def filter_validator(cls, values):
         if values.get("type") == FilterType.issue:
             for v in values.get("value"):
                 assert isinstance(v, IssueType), f"value should be of type IssueType for {values.get('type')} filter"

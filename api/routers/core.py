@@ -613,7 +613,7 @@ def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
 @app.put('/{projectId}/alerts', tags=["alerts"])
 def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.create(projectId, data.dict())
+    return alerts.create(projectId, data)
 
 
 @app.get('/{projectId}/alerts', tags=["alerts"])
@@ -630,7 +630,7 @@ def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = De
 @app.put('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.update(alertId, data.dict())
+    return alerts.update(alertId, data)
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])

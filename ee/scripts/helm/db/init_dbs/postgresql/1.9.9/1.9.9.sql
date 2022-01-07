@@ -119,5 +119,10 @@ CREATE TABLE searches
 
 CREATE INDEX IF NOT EXISTS searches_user_id_is_public_idx ON public.searches (user_id, is_public);
 CREATE INDEX IF NOT EXISTS searches_project_id_idx ON public.searches (project_id);
+CREATE INDEX IF NOT EXISTS alerts_project_id_idx ON alerts (project_id);
 
+ALTER TABLE alerts
+    ADD COLUMN series_id integer NULL REFERENCES metric_series (series_id) ON DELETE CASCADE;
+
+CREATE INDEX IF NOT EXISTS alerts_series_id_idx ON alerts (series_id);
 COMMIT;
