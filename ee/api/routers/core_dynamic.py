@@ -8,7 +8,7 @@ import schemas
 import schemas_ee
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
-from chalicelib.core import tenants, users, metadata, projects, license, alerts, assist
+from chalicelib.core import tenants, users, metadata, projects, license, assist
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, SAML2_helper
@@ -211,13 +211,6 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
     return {
         "data": license.get_status(context.tenant_id)
     }
-
-
-@public_app.post('/alerts/notifications', tags=["alerts"])
-@public_app.put('/alerts/notifications', tags=["alerts"])
-def send_alerts_notifications(background_tasks: BackgroundTasks, data: schemas.AlertNotificationSchema = Body(...)):
-    # TODO: validate token
-    return {"data": alerts.process_notifications(data.notifications, background_tasks=background_tasks)}
 
 
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)

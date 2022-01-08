@@ -88,16 +88,6 @@ class SearchErrorsSchema(BaseModel):
     order: Optional[str] = Field(None)
 
 
-class EmailNotificationSchema(BaseModel):
-    notification: str = Field(...)
-    destination: str = Field(...)
-
-
-class AlertNotificationSchema(BaseModel):
-    auth: str = Field(...)
-    notifications: List[EmailNotificationSchema] = Field(...)
-
-
 class CreateNotificationSchema(BaseModel):
     token: str = Field(...)
     notifications: List = Field(...)

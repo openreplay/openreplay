@@ -22,15 +22,19 @@ function build_api(){
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/api/* ./
-        cp -rf ../ee/api/.chalice/* ./.chalice/
         envarg="default-ee"
         tag="ee-"
     }
     docker build -f ./Dockerfile --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/api:${git_sha1} .
+    docker build -f ./Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/api:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/api:${git_sha1} ${DOCKER_REPO:-'local'}/api:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/api:${tag}latest
+
+        docker push ${DOCKER_REPO:-'local'}/alerts:${git_sha1}
+        docker tag ${DOCKER_REPO:-'local'}/alerts:${git_sha1} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
+        docker push ${DOCKER_REPO:-'local'}/alerts:${tag}latest
     }
 }
 

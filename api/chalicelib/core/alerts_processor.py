@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core import sessions
+from chalicelib.core import sessions, alerts
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -112,10 +112,8 @@ def Build(a):
                     WHERE project_id = %(project_id)s 
                         {"AND " + colDef["condition"] if colDef.get("condition") is not None else ""}"""
         j_s = colDef.get("joinSessions", True)
-        print(">>>>>>>>>>>>>")
-        print(j_s)
-    # q = sq.Select(fmt.Sprint("value, coalesce(value,0)", a.Query.Operator, a.Query.Right, " AS valid"))
-    q = f"""SELECT value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
+
+    q = f"""SELECT coalesce(value,0) AS value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
 
     # if len(colDef.group) > 0 {
     # subQ = subQ.Column(colDef.group + " AS group_value")
@@ -196,8 +194,10 @@ def Build(a):
 
 
 def process():
+    notifications = []
     with pg_client.PostgresClient(long_query=True) as cur:
-        query = """SELECT alert_id,
+        query = """SELECT -1 AS tenant_id,
+                           alert_id,
                            project_id,
                            detection_method,
                            query,
@@ -217,14 +217,49 @@ def process():
                     ORDER BY alerts.created_at;"""
         cur.execute(query=query)
         all_alerts = helper.list_to_camel_case(cur.fetchall())
+
+    with pg_client.PostgresClient() as cur:
         for alert in all_alerts:
-            if True or can_check(alert):
+            if can_check(alert):
                 print(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
                 query = cur.mogrify(query, params)
                 # print(alert)
                 # print(query)
-                cur.execute(query)
-                result = cur.fetchone()
-                if result["valid"]:
-                    print("Valid alert, notifying users")
+                try:
+                    cur.execute(query)
+                    result = cur.fetchone()
+                    if result["valid"]:
+                        print("Valid alert, notifying users")
+                        notifications.append({
+                            "alertId": alert["alertId"],
+                            "tenantId": alert["tenantId"],
+                            "title": alert["name"],
+                            "description": f"has been triggered, {alert['query']['left']} = {result['value']} ({alert['query']['operator']} {alert['query']['right']}).",
+                            "buttonText": "Check metrics for more details",
+                            "buttonUrl": f"/{alert['projectId']}/metrics",
+                            "imageUrl": None,
+                            "options": {"source": "ALERT", "sourceId": alert["alertId"],
+                                        "sourceMeta": alert["detectionMethod"],
+                                        "message": alert["options"]["message"], "projectId": alert["projectId"],
+                                        "data": {"title": alert["name"],
+                                                 "limitValue": alert["query"]["right"], "actualValue": result["value"],
+                                                 "operator": alert["query"]["operator"],
+                                                 "trigger": alert["query"]["left"],
+                                                 "alertId": alert["alertId"],
+                                                 "detectionMethod": alert["detectionMethod"],
+                                                 "currentPeriod": alert["options"]["currentPeriod"],
+                                                 "previousPeriod": alert["options"]["previousPeriod"],
+                                                 "createdAt": TimeUTC.now()}},
+                        })
+                except Exception as e:
+                    print(f"!!!Error while running alert query for alertId:{alert['alertId']}")
+                    print(str(e))
+                    print(query)
+        if len(notifications) > 0:
+            cur.execute(
+                cur.mogrify(f"""UPDATE public.Alerts 
+                                SET options = options||'{{"lastNotification":{TimeUTC.now()}}}'::jsonb 
+                                WHERE alert_id IN %(ids)s;""", {"ids": tuple([n["alertId"] for n in notifications])}))
+    if len(notifications) > 0:
+        alerts.process_notifications(notifications)
