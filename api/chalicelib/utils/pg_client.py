@@ -86,7 +86,8 @@ class PostgresClient:
             else:
                 raise error
         finally:
-            postgreSQL_pool.putconn(self.connection)
+            if not self.long_query:
+                postgreSQL_pool.putconn(self.connection)
 
 
 def close():

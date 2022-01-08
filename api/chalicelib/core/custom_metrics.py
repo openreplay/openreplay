@@ -201,3 +201,25 @@ def get(metric_id, project_id, user_id):
         row = cur.fetchone()
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
     return helper.dict_to_camel_case(row)
+
+
+def get_series_for_alert(project_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """SELECT metric_id, 
+                        series_id, 
+                        metrics.name AS metric_name, 
+                        metric_series.name AS series_name, 
+                        index AS series_index
+                    FROM metric_series
+                             INNER JOIN metrics USING (metric_id)
+                    WHERE metrics.deleted_at ISNULL
+                      AND metrics.project_id = %(project_id)s
+                      AND (user_id = %(user_id)s OR is_public)
+                    ORDER BY metric_name, series_index, series_name;""",
+                {"project_id": project_id, "user_id": user_id}
+            )
+        )
+        rows = cur.fetchall()
+    return helper.list_to_camel_case(rows)

@@ -77,5 +77,8 @@ ALTER TABLE alerts
     ADD COLUMN series_id integer NULL REFERENCES metric_series (series_id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS alerts_series_id_idx ON alerts (series_id);
-
+UPDATE alerts
+SET options=jsonb_set(options, '{change}', '"change"')
+WHERE detection_method = 'change'
+  AND options -> 'change' ISNULL;
 COMMIT;
