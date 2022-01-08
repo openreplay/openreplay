@@ -10,7 +10,7 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, slack, users, \
+    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
     custom_metrics, saved_search
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
@@ -952,19 +952,6 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
         return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
     else:
         return {"errors": ["undefined action"]}
-
-
-@public_app.post('/async/alerts/notifications/{step}', tags=["async", "alerts"])
-@public_app.put('/async/alerts/notifications/{step}', tags=["async", "alerts"])
-def send_alerts_notification_async(step: str, data: schemas.AlertNotificationSchema = Body(...)):
-    if data.auth != config("async_Token"):
-        return {"errors": ["missing auth"]}
-    if step == "slack":
-        slack.send_batch(notifications_list=data.notifications)
-    elif step == "email":
-        alerts.send_by_email_batch(notifications_list=data.notifications)
-    elif step == "webhook":
-        webhook.trigger_batch(data_list=data.notifications)
 
 
 @app.get('/notifications', tags=['notifications'])

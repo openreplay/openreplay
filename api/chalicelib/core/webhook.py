@@ -1,6 +1,7 @@
+import requests
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import requests
 
 
 def get_by_id(webhook_id):
@@ -81,7 +82,7 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
                     SET {','.join(sub_query)}
                     WHERE webhook_id =%(id)s AND deleted_at ISNULL
                     RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
-                        {"id": webhook_id, **changes}))
+                          {"id": webhook_id, **changes}))
         cur.execute(
             cur.mogrify(f"""\
                     UPDATE public.webhooks
@@ -150,21 +151,17 @@ def trigger_batch(data_list):
     for w in data_list:
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
-        __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
+        if webhooks_map[w["destination"]] is None:
+            print(f"!!Error webhook not found: webhook_id={w['destination']}")
+        else:
+            __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
 
 def __trigger(hook, data):
-    if hook["type"] == 'webhook':
+    if hook is not None and hook["type"] == 'webhook':
         headers = {}
         if hook["authHeader"] is not None and len(hook["authHeader"]) > 0:
             headers = {"Authorization": hook["authHeader"]}
-
-        # body = {
-        #     "webhookId": hook["id"],
-        #     "createdAt": TimeUTC.now(),
-        #     "event": event,
-        #     "data": data
-        # }
 
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:

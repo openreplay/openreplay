@@ -1,8 +1,6 @@
 import json
 import time
 
-from fastapi import BackgroundTasks
-
 import schemas
 from chalicelib.core import notifications, slack, webhook
 from chalicelib.utils import pg_client, helper, email_helper
@@ -125,7 +123,7 @@ def update(id, data: schemas.AlertSchema):
     return {"data": __process_circular(a)}
 
 
-def process_notifications(data, background_tasks: BackgroundTasks):
+def process_notifications(data):
     full = {}
     for n in data:
         if "message" in n["options"]:
@@ -150,11 +148,23 @@ def process_notifications(data, background_tasks: BackgroundTasks):
             notifications_list = full[t][i:i + BATCH_SIZE]
 
             if t == "slack":
-                background_tasks.add_task(slack.send_batch, notifications_list=notifications_list)
+                try:
+                    slack.send_batch(notifications_list=notifications_list)
+                except Exception as e:
+                    print("!!!Error while sending slack notifications batch")
+                    print(str(e))
             elif t == "email":
-                background_tasks.add_task(send_by_email_batch, notifications_list=notifications_list)
+                try:
+                    send_by_email_batch(notifications_list=notifications_list)
+                except Exception as e:
+                    print("!!!Error while sending email notifications batch")
+                    print(str(e))
             elif t == "webhook":
-                background_tasks.add_task(webhook.trigger_batch, data_list=notifications_list)
+                try:
+                    webhook.trigger_batch(data_list=notifications_list)
+                except Exception as e:
+                    print("!!!Error while sending webhook notifications batch")
+                    print(str(e))
 
 
 def send_by_email(notification, destination):
