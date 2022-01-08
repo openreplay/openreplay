@@ -1097,6 +1097,19 @@ def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsSchema = Bod
     return {"data": custom_metrics.try_live(project_id=projectId, data=data)}
 
 
+@app.post('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
+def get_custom_metric_chart(projectId: int, data: schemas.CustomMetricChartPayloadSchema2 = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=data.metric_id,
+                                              data=data)}
+
+
+@app.get('/{projectId}/custom_metrics/series', tags=["customMetrics"])
+def get_series_for_alert(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
+
+
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
 def add_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),

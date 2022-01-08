@@ -276,12 +276,18 @@ class _AlertMessageSchema(BaseModel):
     value: str = Field(...)
 
 
+class AlertDetectionChangeType(str, Enum):
+    percent = "percent"
+    change = "change"
+
+
 class _AlertOptionSchema(BaseModel):
     message: List[_AlertMessageSchema] = Field([])
     currentPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(...)
     previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
     lastNotification: Optional[int] = Field(None)
     renotifyInterval: Optional[int] = Field(720)
+    change: Optional[AlertDetectionChangeType] = Field(None)
 
 
 class AlertColumn(str, Enum):
@@ -339,7 +345,15 @@ class AlertSchema(BaseModel):
     def alert_validator(cls, values):
         if values.get("query") is not None and values["query"].left == AlertColumn.custom:
             assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
+        if values.get("detectionMethod") is not None \
+                and values["detectionMethod"] == AlertDetectionMethod.change \
+                and values.get("options") is not None:
+            assert values["options"].change is not None, \
+                "options.change should not be null for detection method 'change'"
         return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class SourcemapUploadPayloadSchema(BaseModel):
@@ -628,12 +642,19 @@ class CustomMetricChartPayloadSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
+class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):
+    metric_id: int = Field(...)
+
+
 class TryCustomMetricsSchema(CreateCustomMetricsSchema, CustomMetricChartPayloadSchema):
     name: Optional[str] = Field(None)
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
     series_id: Optional[int] = Field(None)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
