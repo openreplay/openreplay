@@ -4,7 +4,7 @@ LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 WORKDIR /work
 COPY . .
 RUN pip install -r requirements.txt
-RUN mv .env.default .env && rm app.py && ren app_alerts.py app.py
+RUN mv .env.default .env && rm app.py && mv app_alerts.py app.py
 ENV pg_minconn 2
 
 # Add Tini
