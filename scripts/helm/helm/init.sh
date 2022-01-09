@@ -71,10 +71,10 @@ echo " Downloading vars file"
 curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version}/scripts/helm/helm/vars.yaml
 
 echo "Creating dynamic passwords"
-sed -i "s/postgresqlPassword: .*/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/accessKey: .*/accessKey: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/secretKey: .*/secretKey: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/jwt_secret: .*/jwt_secret: \"$(randomPass)\"/g" vars.yaml
+sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
+sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
+sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
+sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/domainName: .*/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 
 }
