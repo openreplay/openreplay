@@ -49,8 +49,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 ## Installing openssl
-apt update > /dev/null
-apt install openssl -y > /dev/null
+apt update &> /dev/null
+apt install openssl -y &> /dev/null
 
 randomPass() {
     openssl rand -hex 10
