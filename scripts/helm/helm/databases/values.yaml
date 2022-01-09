@@ -85,6 +85,7 @@ affinity: {}
 
 ## Child charts
 redis:
+  enabled: true
   fullnameOverride: redis
   usePassword: false
   cluster:
@@ -127,3 +128,13 @@ minio:
 
 kafka:
   fullnameOverride: kafka
+  enabled: false
+
+
+# Enterprise dbs
+clickhouse:
+  enabled: false
+
+postgreql:
+  enabled: true
+
