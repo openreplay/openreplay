@@ -118,7 +118,7 @@ ssl_certificate: |-
   w7yMPvE+TIh6+HwDZc2jNLkv/8tY
   -----END CERTIFICATE-----
 
-ssl_privkey: |-
+ssl_privatekey: |-
   -----BEGIN PRIVATE KEY-----
   MIIJQwIBADANBgkqhkiG9w0BAQEFAASCCS0wggkpAgEAAoICAQDJdNfpHCo1Uz4t
   K9zlOS4GfGXDWwfG2SSiPClvBq+vpxxJ22hgHspjBy5+HTPPctpIOA82pK05/rCE
