@@ -1,10 +1,25 @@
 #/bin/bash
 
+# --- helper functions for logs ---
+info()
+{
+    echo '[INFO] ' "$@"
+}
+warn()
+{
+    echo '[WARN] ' "$@" >&2
+}
+fatal()
+{
+    echo '[ERROR] ' "$@" >&2
+    exit 1
+}
+
 version=${OPENREPLAY_VERSION:-'v1.3.6'}
 
 # Check whether script is root user
 [[ $(id -u) -eq 0 ]] || {
-    echo "Please run the script as root user"
+    fatal "Please run the script as root user"
     exit 100
 }
 
@@ -16,19 +31,19 @@ chmod 0644 ~/.kube/config
 
 ## installing kubectl
 which kubectl &> /dev/null || {
-    echo "kubectl not installed. Installing it..."
+    info "kubectl not installed. Installing it..."
     sudo curl -SsL https://dl.k8s.io/release/v1.20.0/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl ; sudo chmod +x /usr/local/bin/kubectl
 }
 
 ## installing stern
 which stern &> /dev/null || {
-    echo "stern not installed. installing..."
+    info "stern not installed. installing..."
     sudo curl -SsL https://github.com/derdanne/stern/releases/download/2.1.16/stern_linux_amd64 -o /usr/local/bin/stern ; sudo chmod +x /usr/local/bin/stern
 }
 
 ## installing k9s
 which k9s &> /dev/null || {
-    echo "k9s not installed. Installing it..."
+    info "k9s not installed. Installing it..."
     sudo curl -SsL https://github.com/derailed/k9s/releases/download/v0.24.2/k9s_Linux_x86_64.tar.gz -o /tmp/k9s.tar.gz
     cd /tmp
     tar -xf k9s.tar.gz
@@ -40,7 +55,7 @@ which k9s &> /dev/null || {
 ## installing helm
 which helm &> /dev/null
 if [[ $? -ne 0 ]]; then
-    echo "helm not installed. Installing it..."
+    info "helm not installed. Installing it..."
     curl -ssl https://get.helm.sh/helm-v3.4.2-linux-amd64.tar.gz -o /tmp/helm.tar.gz
     tar -xf /tmp/helm.tar.gz
     chmod +x linux-amd64/helm
@@ -59,18 +74,20 @@ randomPass() {
 ## Prepping the infra
 
 ## Don't override existing variables file.
-[[ -f vars.yaml ]] || {
+[[ -f vars.yaml ]] && {
+    warn "Existing Variables file. Not overriding."
+}|| {
 
 [[ -z $DOMAIN_NAME ]] && {
-echo "DOMAIN_NAME variable is empty. Rerun the script"
-echo "curl -sL get.openreplay.com | sudo DOMAIN_NAME=openerplay.mycomp.org bash - "
+fatal "DOMAIN_NAME variable is empty. Rerun the script"
+info "curl -sL get.openreplay.com | sudo DOMAIN_NAME=openerplay.mycomp.org bash - "
 exit 101
 }
 
-echo " Downloading vars file"
+info " Downloading vars file"
 curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version}/scripts/helm/helm/vars.yaml
 
-echo "Creating dynamic passwords"
+info "Creating dynamic passwords"
 sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
@@ -80,8 +97,8 @@ sed -i "s/domainName: .*/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 }
 
 ## Installing OpenReplay
-echo "Installing databases"
+info "Installing databases"
 helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
-echo "Installing application"
+info "Installing application"
 helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
 
