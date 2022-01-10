@@ -33,7 +33,7 @@ function make_submodule() {
       # -- end of generated part
     }
     cp -R ./{Dockerfile.alerts,requirements_alerts.txt,.env.default,entrypoint.sh} ./alerts/
-    cp ./chalicelib/utils/html ./alerts/chalicelib/utils/html
+    cp -R ./chalicelib/utils/html ./alerts/chalicelib/utils/html
 }
 
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
