@@ -35,3 +35,4 @@ function build_api(){
 
 check_prereq
 build_api $1
+IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1
