@@ -1,4 +1,9 @@
 BEGIN;
+CREATE OR REPLACE FUNCTION openreplay_version()
+    RETURNS text AS
+$$
+SELECT 'v1.9.9'
+$$ LANGUAGE sql IMMUTABLE;
 
 CREATE INDEX IF NOT EXISTS user_favorite_sessions_user_id_session_id_idx ON user_favorite_sessions (user_id, session_id);
 

@@ -3,6 +3,12 @@ BEGIN;
 CREATE SCHEMA IF NOT EXISTS events_common;
 CREATE SCHEMA IF NOT EXISTS events;
 
+CREATE OR REPLACE FUNCTION openreplay_version()
+    RETURNS text AS
+$$
+SELECT 'v1.9.9-ee'
+$$ LANGUAGE sql IMMUTABLE;
+
 -- --- accounts.sql ---
 
 CREATE OR REPLACE FUNCTION generate_api_key(length integer) RETURNS text AS
