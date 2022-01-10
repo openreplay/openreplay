@@ -261,6 +261,5 @@ Pipfile
 /chalicelib/core/custom_metrics.py
 /chalicelib/core/performance_event.py
 /chalicelib/core/saved_search.py
-/Dockerfile.alerts
 /requirements_alerts.txt
 /app_alerts.py
