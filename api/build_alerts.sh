@@ -43,12 +43,13 @@ function build_api(){
     }
     make_submodule
     docker build -f ./Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
+    cd ..
+    rm -rf alerts
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/alerts:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/alerts:${git_sha1} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/alerts:${tag}latest
     }
-    rm -rf alerts
 }
 
 check_prereq
