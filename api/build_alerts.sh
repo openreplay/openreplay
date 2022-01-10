@@ -19,8 +19,7 @@ function make_submodule() {
     cp -R ./chalicelib/utils/{__init__,TimeUTC,pg_client,helper,event_filter_definition,dev,email_helper,email_handler,smtp,s3,metrics_helper}.py ./alerts/chalicelib/utils/
     # -- end of generated part
 
-    cp -R ./{Dockerfile.alerts,requirements.txt} ./alerts/
-    cd alerts
+    cp -R ./{Dockerfile.alerts,requirements.txt,.env.default} ./alerts/
 }
 
 git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
@@ -42,6 +41,7 @@ function build_api(){
         tag="ee-"
     }
     make_submodule
+    cd alerts
     docker build -f ./Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
     cd ..
     rm -rf alerts
