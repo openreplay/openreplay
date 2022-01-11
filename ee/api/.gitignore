@@ -178,6 +178,7 @@ README/*
 Pipfile
 
 /chalicelib/core/alerts.py
+/chalicelib/core/alerts_processor.py
 /chalicelib/core/announcements.py
 /chalicelib/blueprints/bp_app_api.py
 /chalicelib/blueprints/bp_core.py
@@ -261,5 +262,5 @@ Pipfile
 /chalicelib/core/custom_metrics.py
 /chalicelib/core/performance_event.py
 /chalicelib/core/saved_search.py
-/requirements_alerts.txt
 /app_alerts.py
+/build_alerts.sh
