@@ -1010,7 +1010,7 @@ $$
                 }'::jsonb
             );
             CREATE INDEX alerts_project_id_idx ON alerts (project_id);
-            CREATE INDEX alerts_project_id_idx ON alerts (series_id);
+            CREATE INDEX alerts_series_id_idx ON alerts (series_id);
             CREATE TRIGGER on_insert_or_update_or_delete
                 AFTER INSERT OR UPDATE OR DELETE
                 ON alerts
