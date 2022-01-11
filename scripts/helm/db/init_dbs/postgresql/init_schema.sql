@@ -779,7 +779,7 @@ $$
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX inputs_session_id_idx ON events.inputs (session_id);
-            CREATE INDEX inputs_label_idx ON events.inputs (label, value);
+            CREATE INDEX inputs_label_value_idx ON events.inputs (label, value);
             CREATE INDEX inputs_label_gin_idx ON events.inputs USING GIN (label gin_trgm_ops);
             CREATE INDEX inputs_label_idx ON events.inputs (label);
             CREATE INDEX inputs_timestamp_idx ON events.inputs (timestamp);
