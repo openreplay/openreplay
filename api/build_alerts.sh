@@ -15,7 +15,7 @@ function make_submodule() {
       mkdir -p ./alerts/chalicelib/
       cp -R ./chalicelib/__init__.py ./alerts/chalicelib/
       mkdir -p ./alerts/chalicelib/core/
-      cp -R ./chalicelib/core/{__init__,alerts_processor,sessions,events,issues,sessions_metas,metadata,projects,users,authorizers,tenants,assist,events_ios,sessions_mobs,errors,sourcemaps,sourcemaps_parser,resources,performance_event,alerts,notifications,slack,collaboration_slack,webhook}.py ./alerts/chalicelib/core/
+      cp -R ./chalicelib/core/{__init__,alerts_processor,alerts_listener,sessions,events,issues,sessions_metas,metadata,projects,users,authorizers,tenants,assist,events_ios,sessions_mobs,errors,sourcemaps,sourcemaps_parser,resources,performance_event,alerts,notifications,slack,collaboration_slack,webhook}.py ./alerts/chalicelib/core/
       mkdir -p ./alerts/chalicelib/utils/
       cp -R ./chalicelib/utils/{__init__,TimeUTC,pg_client,helper,event_filter_definition,dev,email_helper,email_handler,smtp,s3,metrics_helper}.py ./alerts/chalicelib/utils/
       # -- end of generated part
@@ -27,7 +27,7 @@ function make_submodule() {
       mkdir -p ./alerts/chalicelib/
       cp -R ./chalicelib/__init__.py ./alerts/chalicelib/
       mkdir -p ./alerts/chalicelib/core/
-      cp -R ./chalicelib/core/{__init__,alerts_processor,sessions,events,issues,sessions_metas,metadata,projects,users,authorizers,tenants,roles,assist,events_ios,sessions_mobs,errors,dashboard,sourcemaps,sourcemaps_parser,resources,performance_event,alerts,notifications,slack,collaboration_slack,webhook}.py ./alerts/chalicelib/core/
+      cp -R ./chalicelib/core/{__init__,alerts_processor,alerts_listener,sessions,events,issues,sessions_metas,metadata,projects,users,authorizers,tenants,roles,assist,events_ios,sessions_mobs,errors,dashboard,sourcemaps,sourcemaps_parser,resources,performance_event,alerts,notifications,slack,collaboration_slack,webhook}.py ./alerts/chalicelib/core/
       mkdir -p ./alerts/chalicelib/utils/
       cp -R ./chalicelib/utils/{__init__,TimeUTC,pg_client,helper,event_filter_definition,dev,SAML2_helper,email_helper,email_handler,smtp,s3,args_transformer,ch_client,metrics_helper}.py ./alerts/chalicelib/utils/
       # -- end of generated part

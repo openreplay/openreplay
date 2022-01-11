@@ -1,6 +1,7 @@
 import schemas
+from chalicelib.core import alerts_listener
 from chalicelib.core import sessions, alerts
-from chalicelib.utils import pg_client, helper
+from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 LeftToDb = {
@@ -195,29 +196,7 @@ def Build(a):
 
 def process():
     notifications = []
-    with pg_client.PostgresClient(long_query=True) as cur:
-        query = """SELECT -1 AS tenant_id,
-                           alert_id,
-                           project_id,
-                           detection_method,
-                           query,
-                           options,
-                           (EXTRACT(EPOCH FROM alerts.created_at) * 1000)::BIGINT AS created_at,
-                           alerts.name,
-                           alerts.series_id,
-                           filter
-                    FROM public.alerts
-                             LEFT JOIN metric_series USING (series_id)
-                             INNER JOIN projects USING (project_id)
-                    WHERE alerts.deleted_at ISNULL
-                      AND alerts.active
-                      AND projects.active
-                      AND projects.deleted_at ISNULL
-                      AND (alerts.series_id ISNULL OR metric_series.deleted_at ISNULL)
-                    ORDER BY alerts.created_at;"""
-        cur.execute(query=query)
-        all_alerts = helper.list_to_camel_case(cur.fetchall())
-
+    all_alerts = alerts_listener.get_all_alerts()
     with pg_client.PostgresClient() as cur:
         for alert in all_alerts:
             if can_check(alert):
@@ -235,7 +214,7 @@ def process():
                             "alertId": alert["alertId"],
                             "tenantId": alert["tenantId"],
                             "title": alert["name"],
-                            "description": f"has been triggered, {alert['query']['left']} = {result['value']} ({alert['query']['operator']} {alert['query']['right']}).",
+                            "description": f"has been triggered, {alert['query']['left']} = {round(result['value'], 2)} ({alert['query']['operator']} {alert['query']['right']}).",
                             "buttonText": "Check metrics for more details",
                             "buttonUrl": f"/{alert['projectId']}/metrics",
                             "imageUrl": None,
