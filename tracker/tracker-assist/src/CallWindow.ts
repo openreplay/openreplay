@@ -207,14 +207,6 @@ export default class CallWindow {
   private toggleAudio() {
     const enabled = this.localStream?.toggleAudio() || false
     this.toggleAudioUI(enabled)
-    // if (!this.audioBtn) { return; }
-    // if (enabled) {
-    //   this.audioBtn.classList.remove("muted");
-    //   this.audioBtn.childNodes[1].textContent = "Mute";
-    // } else {
-    //   this.audioBtn.classList.add("muted");
-    //   this.audioBtn.childNodes[1].textContent = "Unmute";
-    // }
   }
 
   private toggleVideoUI(enabled: boolean) {
