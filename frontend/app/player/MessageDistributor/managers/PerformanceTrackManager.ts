@@ -1,10 +1,6 @@
 import type { PerformanceTrack, SetPageVisibility } from '../messages';
-import type { Timed } from '../Timed';
 
 import ListWalker from './ListWalker';
-
-type TimedPerformanceTrack = Timed & PerformanceTrack;
-type TimedSetPageVisibility = Timed & SetPageVisibility;
 
 export type PerformanceChartPoint = {
 	time: number,
@@ -15,7 +11,7 @@ export type PerformanceChartPoint = {
 	nodesCount: number,
 }
 
-export default class PerformanceTrackManager extends ListWalker<TimedPerformanceTrack> {
+export default class PerformanceTrackManager extends ListWalker<PerformanceTrack> {
 	private chart: Array<PerformanceChartPoint> = [];
 	private isHidden: boolean = false;
 	private timeCorrection: number = 0;
@@ -26,7 +22,7 @@ export default class PerformanceTrackManager extends ListWalker<TimedPerformance
 	private prevNodesCount: number = 0;
 
 
-	add(msg: TimedPerformanceTrack):void {
+	add(msg: PerformanceTrack):void {
 		let fps: number | undefined;
 		let cpu: number | undefined;
 		if (!this.isHidden && this.prevTime != null) {
@@ -76,7 +72,7 @@ export default class PerformanceTrackManager extends ListWalker<TimedPerformance
 		}
 	} 
 
-	handleVisibility(msg: TimedSetPageVisibility):void {
+	handleVisibility(msg: SetPageVisibility):void {
 		if (!this.isHidden && msg.hidden && this.prevTime != null) {
 			this.timeCorrection = msg.time - this.prevTime;
 		}
