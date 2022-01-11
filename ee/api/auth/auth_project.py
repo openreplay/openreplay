@@ -16,10 +16,12 @@ class ProjectAuthorizer:
             return
         current_user: schemas.CurrentContext = await OR_context(request)
         project_identifier = request.path_params[self.project_identifier]
+        user_id = current_user.user_id if request.state.authorizer_identity == "jwt" else None
         if (self.project_identifier == "projectId" \
-            and not projects.is_authorized(project_id=project_identifier, tenant_id=current_user.tenant_id)) \
+            and not projects.is_authorized(project_id=project_identifier, tenant_id=current_user.tenant_id,
+                                           user_id=user_id)) \
                 or (self.project_identifier.lower() == "projectKey" \
                     and not projects.is_authorized(project_id=projects.get_internal_project_id(project_identifier),
-                                                   tenant_id=current_user.tenant_id)):
+                                                   tenant_id=current_user.tenant_id, user_id=user_id)):
             print("unauthorized project")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized project.")

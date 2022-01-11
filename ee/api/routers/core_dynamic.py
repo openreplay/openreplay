@@ -52,7 +52,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True, version=True)
+                                          stack_integrations=True, version=True, user_id=r["id"])
     c["smtp"] = helper.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     r["smtp"] = c["smtp"]
@@ -195,7 +195,8 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
 
-    if projectId is not None and not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id):
+    if projectId is not None and not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id,
+                                                            user_id=context.user_id):
         return {"errors": ["unauthorized project"]}
     if len(value) == 0:
         return {"errors": ["please provide a value for search"]}
