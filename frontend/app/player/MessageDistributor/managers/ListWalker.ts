@@ -1,4 +1,4 @@
-import type { Timed } from '../Timed';
+import type { Timed } from '../messages/timed';
 
 export default class ListWalker<T extends Timed> {
 	// Optimisation: #prop compiles to method that costs mor than strict property call.
