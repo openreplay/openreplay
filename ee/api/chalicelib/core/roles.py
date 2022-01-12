@@ -96,7 +96,7 @@ def create(tenant_id, user_id, data: schemas_ee.RolePayloadSchema):
 def get_roles(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""SELECT *, COALESCE(projects, '{}') AS projects
+            cur.mogrify("""SELECT roles.*, COALESCE(projects, '{}') AS projects
                             FROM public.roles
                                 LEFT JOIN LATERAL (SELECT array_agg(project_id) AS projects
                                                     FROM roles_projects
