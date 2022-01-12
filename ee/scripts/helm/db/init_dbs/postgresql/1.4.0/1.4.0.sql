@@ -2,8 +2,25 @@ BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.9.9-ee'
+SELECT 'v1.4.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
+
+CREATE TABLE IF NOT EXISTS traces
+(
+    user_id     integer NULL REFERENCES users (user_id) ON DELETE CASCADE,
+    tenant_id   integer NOT NULL REFERENCES tenants (tenant_id) ON DELETE CASCADE,
+    created_at  bigint  NOT NULL DEFAULT (EXTRACT(EPOCH FROM now() at time zone 'utc') * 1000)::bigint,
+    auth        text    NULL,
+    action      text    NOT NULL,
+    method      text    NOT NULL,
+    path_format text    NOT NULL,
+    endpoint    text    NOT NULL,
+    payload     jsonb   NULL,
+    parameters  jsonb   NULL,
+    status      int     NULL
+);
+CREATE INDEX IF NOT EXISTS traces_user_id_idx ON traces (user_id);
+CREATE INDEX IF NOT EXISTS traces_tenant_id_idx ON traces (tenant_id);
 
 CREATE INDEX IF NOT EXISTS user_favorite_sessions_user_id_session_id_idx ON user_favorite_sessions (user_id, session_id);
 
