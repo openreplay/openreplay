@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 from chalicelib.utils import pg_client, helper
@@ -77,12 +79,6 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
     allow_update = ["name", "index", "authHeader", "endpoint"]
     with pg_client.PostgresClient() as cur:
         sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys() if k in allow_update]
-        print(cur.mogrify(f"""\
-                    UPDATE public.webhooks
-                    SET {','.join(sub_query)}
-                    WHERE webhook_id =%(id)s AND deleted_at ISNULL
-                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
-                          {"id": webhook_id, **changes}))
         cur.execute(
             cur.mogrify(f"""\
                     UPDATE public.webhooks
@@ -152,7 +148,7 @@ def trigger_batch(data_list):
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
         if webhooks_map[w["destination"]] is None:
-            print(f"!!Error webhook not found: webhook_id={w['destination']}")
+            logging.error(f"!!Error webhook not found: webhook_id={w['destination']}")
         else:
             __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
@@ -165,10 +161,10 @@ def __trigger(hook, data):
 
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            print("=======> webhook: something went wrong")
-            print(r)
-            print(r.status_code)
-            print(r.text)
+            logging.error("=======> webhook: something went wrong")
+            logging.error(r)
+            logging.error(r.status_code)
+            logging.error(r.text)
             return
         response = None
         try:
@@ -177,5 +173,5 @@ def __trigger(hook, data):
             try:
                 response = r.text
             except:
-                print("no response found")
+                logging.info("no response found")
         return response

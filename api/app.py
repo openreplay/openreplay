@@ -1,3 +1,5 @@
+import logging
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,5 +62,8 @@ Schedule.start()
 for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
     Schedule.add_job(id=job["func"].__name__, **job)
 
-# for job in Schedule.get_jobs():
-#     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+for job in Schedule.get_jobs():
+    print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+
+logging.basicConfig(level=logging.INFO)
+logging.getLogger('apscheduler').setLevel(logging.INFO)

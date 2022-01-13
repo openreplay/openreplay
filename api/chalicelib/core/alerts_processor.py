@@ -1,3 +1,5 @@
+import logging
+
 import schemas
 from chalicelib.core import alerts_listener
 from chalicelib.core import sessions, alerts
@@ -80,7 +82,7 @@ def can_check(a) -> bool:
         else a["options"]["previousPeriod"]
 
     if TimeInterval.get(repetitionBase) is None:
-        print(f"repetitionBase: {repetitionBase} NOT FOUND")
+        logging.error(f"repetitionBase: {repetitionBase} NOT FOUND")
         return False
 
     return (a["options"]["renotifyInterval"] <= 0 or
@@ -200,16 +202,16 @@ def process():
     with pg_client.PostgresClient() as cur:
         for alert in all_alerts:
             if can_check(alert):
-                print(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
+                logging.info(f"Querying alertId:{alert['alertId']} name: {alert['name']}")
                 query, params = Build(alert)
                 query = cur.mogrify(query, params)
-                # print(alert)
-                # print(query)
+                logging.debug(alert)
+                logging.debug(query)
                 try:
                     cur.execute(query)
                     result = cur.fetchone()
                     if result["valid"]:
-                        print("Valid alert, notifying users")
+                        logging.info("Valid alert, notifying users")
                         notifications.append({
                             "alertId": alert["alertId"],
                             "tenantId": alert["tenantId"],
@@ -232,9 +234,9 @@ def process():
                                                  "createdAt": TimeUTC.now()}},
                         })
                 except Exception as e:
-                    print(f"!!!Error while running alert query for alertId:{alert['alertId']}")
-                    print(str(e))
-                    print(query)
+                    logging.error(f"!!!Error while running alert query for alertId:{alert['alertId']}")
+                    logging.error(str(e))
+                    logging.error(query)
         if len(notifications) > 0:
             cur.execute(
                 cur.mogrify(f"""UPDATE public.Alerts 
