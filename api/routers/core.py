@@ -843,7 +843,7 @@ def signup_handler(data: schemas.UserSignupSchema = Body(...)):
 def get_projects(last_tracker_version: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
                                           stack_integrations=True, version=True,
-                                          last_tracker_version=last_tracker_version)}
+                                          last_tracker_version=last_tracker_version, user_id=context.user_id)}
 
 
 @app.post('/projects', tags=['projects'])

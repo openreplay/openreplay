@@ -43,7 +43,7 @@ def __create(tenant_id, name):
 
 @dev.timed
 def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, version=False,
-                 last_tracker_version=None):
+                 last_tracker_version=None, user_id=None):
     with pg_client.PostgresClient() as cur:
         tracker_query = ""
         if last_tracker_version is not None and len(last_tracker_version) > 0:
