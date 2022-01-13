@@ -325,7 +325,7 @@ class AlertDetectionMethod(str, Enum):
 
 class AlertSchema(BaseModel):
     name: str = Field(...)
-    detectionMethod: AlertDetectionMethod = Field(...)
+    detection_method: AlertDetectionMethod = Field(...)
     description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
