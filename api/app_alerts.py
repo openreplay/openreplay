@@ -24,5 +24,5 @@ app.schedule.add_job(id="alerts_processor", **{"func": alerts_processor.process,
 for job in app.schedule.get_jobs():
     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 logging.getLogger('apscheduler').setLevel(logging.INFO)

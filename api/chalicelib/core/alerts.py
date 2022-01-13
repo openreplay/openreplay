@@ -5,7 +5,7 @@ import schemas
 from chalicelib.core import notifications, slack, webhook
 from chalicelib.utils import pg_client, helper, email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
-
+import logging
 
 def get(id):
     with pg_client.PostgresClient() as cur:
@@ -110,20 +110,20 @@ def process_notifications(data):
                 try:
                     slack.send_batch(notifications_list=notifications_list)
                 except Exception as e:
-                    print("!!!Error while sending slack notifications batch")
-                    print(str(e))
+                    logging.error("!!!Error while sending slack notifications batch")
+                    logging.error(str(e))
             elif t == "email":
                 try:
                     send_by_email_batch(notifications_list=notifications_list)
                 except Exception as e:
-                    print("!!!Error while sending email notifications batch")
-                    print(str(e))
+                    logging.error("!!!Error while sending email notifications batch")
+                    logging.error(str(e))
             elif t == "webhook":
                 try:
                     webhook.trigger_batch(data_list=notifications_list)
                 except Exception as e:
-                    print("!!!Error while sending webhook notifications batch")
-                    print(str(e))
+                    logging.error("!!!Error while sending webhook notifications batch")
+                    logging.error(str(e))
 
 
 def send_by_email(notification, destination):
