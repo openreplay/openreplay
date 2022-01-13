@@ -2,6 +2,7 @@ import logging
 import queue
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from decouple import config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette import status
@@ -81,5 +82,5 @@ app.schedule.add_job(id="trace_worker", **traces.cron_jobs[0])
 for job in app.schedule.get_jobs():
     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('apscheduler').setLevel(logging.INFO)
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
