@@ -187,8 +187,7 @@ def delete(tenant_id, user_id, project_id):
         return {"errors": ["unauthorized"]}
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                            UPDATE public.projects 
+            cur.mogrify("""UPDATE public.projects 
                             SET 
                               deleted_at = timezone('utc'::text, now()),
                               active = FALSE
