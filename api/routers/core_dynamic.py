@@ -212,3 +212,22 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
 def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
+
+
+@app.get('/client', tags=['projects'])
+def get_client(context: schemas.CurrentContext = Depends(OR_context)):
+    r = tenants.get_by_tenant_id(context.tenant_id)
+    if r is not None:
+        r.pop("createdAt")
+        r["projects"] = projects.get_projects(tenant_id=context.tenant_id, recording_state=True, recorded=True,
+                                              stack_integrations=True, version=True)
+    return {
+        'data': r
+    }
+
+
+@app.get('/projects', tags=['projects'])
+def get_projects(last_tracker_version: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
+                                          stack_integrations=True, version=True,
+                                          last_tracker_version=last_tracker_version)}
