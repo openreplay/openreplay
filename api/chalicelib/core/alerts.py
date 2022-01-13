@@ -110,7 +110,7 @@ def update(id, data: schemas.AlertSchema):
                     UPDATE public.alerts
                     SET name = %(name)s,
                         description = %(description)s,
-                        active = %(active)s,
+                        active = TRUE,
                         detection_method = %(detection_method)s,
                         query = %(query)s,
                         options = %(options)s,
