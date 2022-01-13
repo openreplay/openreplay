@@ -20,9 +20,8 @@ app.schedule.start()
 app.schedule.add_job(id="alerts_processor", **{"func": alerts_processor.process, "trigger": "interval",
                                                "minutes": config("ALERTS_INTERVAL", cast=int, default=5),
                                                "misfire_grace_time": 20})
-
 for job in app.schedule.get_jobs():
     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
-logging.basicConfig(level=logging.INFO)
-logging.getLogger('apscheduler').setLevel(logging.INFO)
+logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
+logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))

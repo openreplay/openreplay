@@ -1,3 +1,4 @@
+import decimal
 import logging
 
 import schemas
@@ -224,7 +225,10 @@ def process():
                                         "sourceMeta": alert["detectionMethod"],
                                         "message": alert["options"]["message"], "projectId": alert["projectId"],
                                         "data": {"title": alert["name"],
-                                                 "limitValue": alert["query"]["right"], "actualValue": result["value"],
+                                                 "limitValue": alert["query"]["right"],
+                                                 "actualValue": float(result["value"]) \
+                                                     if isinstance(result["value"], decimal.Decimal) \
+                                                     else result["value"],
                                                  "operator": alert["query"]["operator"],
                                                  "trigger": alert["query"]["left"],
                                                  "alertId": alert["alertId"],
