@@ -1,0 +1,394 @@
+{{- if or (not .Values.cluster.enabled) (not .Values.sentinel.enabled) }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "redis.fullname" . }}-master
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app: {{ template "redis.name" . }}
+    chart: {{ template "redis.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  {{- if .Values.master.statefulset.labels }}
+  {{- toYaml .Values.master.statefulset.labels | nindent 4 }}
+  {{- end }}
+{{- if .Values.master.statefulset.annotations }}
+  annotations:
+    {{- toYaml .Values.master.statefulset.annotations | nindent 4 }}
+{{- end }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "redis.name" . }}
+      release: {{ .Release.Name }}
+      role: master
+  serviceName: {{ template "redis.fullname" . }}-headless
+  template:
+    metadata:
+      labels:
+        app: {{ template "redis.name" . }}
+        chart: {{ template "redis.chart" . }}
+        release: {{ .Release.Name }}
+        role: master
+      {{- if .Values.master.podLabels }}
+      {{- toYaml .Values.master.podLabels | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.metrics.enabled .Values.metrics.podLabels }}
+      {{- toYaml .Values.metrics.podLabels | nindent 8 }}
+      {{- end }}
+      annotations:
+        checksum/health: {{ include (print $.Template.BasePath "/health-configmap.yaml") . | sha256sum }}
+        checksum/configmap: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      {{- if .Values.master.podAnnotations }}
+      {{- toYaml .Values.master.podAnnotations | nindent 8 }}
+      {{- end }}
+      {{- if and .Values.metrics.enabled .Values.metrics.podAnnotations }}
+      {{- toYaml .Values.metrics.podAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "redis.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.master.hostAliases }}
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.master.hostAliases "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext: {{- omit .Values.securityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "redis.serviceAccountName" . }}
+      {{- if .Values.master.priorityClassName }}
+      priorityClassName: {{ .Values.master.priorityClassName | quote }}
+      {{- end }}
+      {{- with .Values.master.affinity }}
+      affinity: {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.nodeSelector }}
+      nodeSelector: {{- toYaml .Values.master.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.tolerations }}
+      tolerations: {{- toYaml .Values.master.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.master.shareProcessNamespace }}
+      shareProcessNamespace: {{ .Values.master.shareProcessNamespace }}
+      {{- end }}
+      {{- if .Values.master.schedulerName }}
+      schedulerName: {{ .Values.master.schedulerName }}
+      {{- end }}
+      containers:
+        - name: {{ template "redis.name" . }}
+          image: {{ template "redis.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - -c
+            - /opt/bitnami/scripts/start-scripts/start-master.sh
+          env:
+            - name: REDIS_REPLICATION_MODE
+              value: master
+            {{- if .Values.usePassword }}
+            {{- if .Values.usePasswordFile }}
+            - name: REDIS_PASSWORD_FILE
+              value: "/opt/bitnami/redis/secrets/redis-password"
+            {{- else }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "redis.secretName" . }}
+                  key: {{ template "redis.secretPasswordKey" . }}
+            {{- end }}
+            {{- else }}
+            - name: ALLOW_EMPTY_PASSWORD
+              value: "yes"
+            {{- end }}
+            - name: REDIS_TLS_ENABLED
+              value: {{ ternary "yes" "no" .Values.tls.enabled | quote }}
+            {{- if .Values.tls.enabled }}
+            - name: REDIS_TLS_PORT
+              value: {{ .Values.redisPort | quote }}
+            - name:  REDIS_TLS_AUTH_CLIENTS
+              value: {{ ternary "yes" "no" .Values.tls.authClients | quote }}
+            - name:  REDIS_TLS_CERT_FILE
+              value: {{ template "redis.tlsCert" . }}
+            - name:  REDIS_TLS_KEY_FILE
+              value: {{ template "redis.tlsCertKey" . }}
+            - name:  REDIS_TLS_CA_FILE
+              value: {{ template "redis.tlsCACert" . }}
+            {{- if .Values.tls.dhParamsFilename }}
+            - name:  REDIS_TLS_DH_PARAMS_FILE
+              value: {{ template "redis.tlsDHParams" . }}
+            {{- end }}
+            {{- else }}
+            - name: REDIS_PORT
+              value: {{ .Values.redisPort | quote }}
+            {{- end }}
+            {{- if .Values.master.extraEnvVars }}
+            {{- include "redis.tplValue" (dict "value" .Values.master.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+         {{- if or .Values.master.extraEnvVarsCM .Values.master.extraEnvVarsSecret }}
+          envFrom:
+            {{- if .Values.master.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ .Values.master.extraEnvVarsCM }}
+            {{- end }}
+            {{- if .Values.master.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ .Values.master.extraEnvVarsSecret }}
+            {{- end }}
+          {{- end }}
+          ports:
+            - name: redis
+              containerPort: {{ .Values.redisPort }}
+          {{- if .Values.master.livenessProbe.enabled }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.master.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.master.livenessProbe.periodSeconds }}
+            # One second longer than command timeout should prevent generation of zombie processes.
+            timeoutSeconds: {{ add1 .Values.master.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.master.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.master.livenessProbe.failureThreshold }}
+            exec:
+              command:
+                - sh
+                - -c
+                - /health/ping_liveness_local.sh {{ .Values.master.livenessProbe.timeoutSeconds }}
+          {{- else if .Values.master.customLivenessProbe }}
+          livenessProbe: {{- toYaml .Values.master.customLivenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.master.readinessProbe.enabled}}
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.master.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.master.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ add1 .Values.master.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.master.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.master.readinessProbe.failureThreshold }}
+            exec:
+              command:
+                - sh
+                - -c
+                - /health/ping_readiness_local.sh {{ .Values.master.readinessProbe.timeoutSeconds }}
+          {{- else if .Values.master.customReadinessProbe }}
+          readinessProbe: {{- toYaml .Values.master.customReadinessProbe | nindent 12 }}
+          {{- end }}
+          resources: {{- toYaml .Values.master.resources | nindent 12 }}
+          volumeMounts:
+            - name: start-scripts
+              mountPath: /opt/bitnami/scripts/start-scripts
+            - name: health
+              mountPath: /health
+            {{- if .Values.usePasswordFile }}
+            - name: redis-password
+              mountPath: /opt/bitnami/redis/secrets/
+            {{- end }}
+            - name: redis-data
+              mountPath: {{ .Values.master.persistence.path }}
+              subPath: {{ .Values.master.persistence.subPath }}
+            - name: config
+              mountPath: /opt/bitnami/redis/mounted-etc
+            - name: redis-tmp-conf
+              mountPath: /opt/bitnami/redis/etc/
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.tls.enabled }}
+            - name: redis-certificates
+              mountPath: /opt/bitnami/redis/certs
+              readOnly: true
+            {{- end }}
+            {{- if .Values.master.extraVolumeMounts }}
+            {{- include "common.tplvalues.render" ( dict "value" .Values.master.extraVolumeMounts "context" $ ) | nindent 12 }}
+            {{- end }}
+  {{- if .Values.metrics.enabled }}
+        - name: metrics
+          image: {{ template "redis.metrics.image" . }}
+          imagePullPolicy: {{ .Values.metrics.image.pullPolicy | quote }}
+          {{- if .Values.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              if [[ -f '/secrets/redis-password' ]]; then
+              export REDIS_PASSWORD=$(cat /secrets/redis-password)
+              fi
+              redis_exporter{{- range $key, $value := .Values.metrics.extraArgs }} --{{ $key }}={{ $value }}{{- end }}
+          env:
+            - name: REDIS_ALIAS
+              value: {{ template "redis.fullname" . }}
+            {{- if .Values.usePassword }}
+            - name: REDIS_USER
+              value: default
+              {{- if (not .Values.usePasswordFile) }}
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "redis.secretName" . }}
+                  key: {{ template "redis.secretPasswordKey" . }}
+              {{- end }}
+            {{- end }}
+            {{- if .Values.tls.enabled }}
+            - name: REDIS_ADDR
+              value: rediss://{{ .Values.metrics.redisTargetHost }}:{{ .Values.redisPort }}
+              {{- if .Values.tls.authClients }}
+            - name: REDIS_EXPORTER_TLS_CLIENT_KEY_FILE
+              value: {{ template "redis.tlsCertKey" . }}
+            - name: REDIS_EXPORTER_TLS_CLIENT_CERT_FILE
+              value: {{ template "redis.tlsCert" . }}
+              {{- end }}
+            - name: REDIS_EXPORTER_TLS_CA_CERT_FILE
+              value: {{ template "redis.tlsCACert" . }}
+            {{- end }}
+          volumeMounts:
+            {{- if .Values.usePasswordFile }}
+            - name: redis-password
+              mountPath: /secrets/
+            {{- end }}
+            {{- if .Values.tls.enabled }}
+            - name: redis-certificates
+              mountPath: /opt/bitnami/redis/certs
+              readOnly: true
+            {{- end }}
+          ports:
+            - name: metrics
+              containerPort: 9121
+          resources: {{- toYaml .Values.metrics.resources | nindent 12 }}
+  {{- end }}
+      {{- $needsVolumePermissions := and .Values.volumePermissions.enabled .Values.master.persistence.enabled .Values.securityContext.enabled .Values.containerSecurityContext.enabled }}
+      {{- if or $needsVolumePermissions .Values.sysctlImage.enabled }}
+      initContainers:
+      {{- if $needsVolumePermissions }}
+      - name: volume-permissions
+        image: "{{ template "redis.volumePermissions.image" . }}"
+        imagePullPolicy: {{ .Values.volumePermissions.image.pullPolicy | quote }}
+        command:
+          - /bin/bash
+          - -ec
+          - |
+            {{- if eq ( toString ( .Values.volumePermissions.securityContext.runAsUser )) "auto" }}
+            chown -R `id -u`:`id -G | cut -d " " -f2` {{ .Values.master.persistence.path }}
+            {{- else }}
+            chown -R {{ .Values.containerSecurityContext.runAsUser }}:{{ .Values.securityContext.fsGroup }} {{ .Values.master.persistence.path }}
+            {{- end }}
+        {{- if eq ( toString ( .Values.volumePermissions.securityContext.runAsUser )) "auto "}}
+        securityContext: {{- omit .Values.volumePermissions.securityContext "runAsUser" | toYaml | nindent 12 }}
+        {{- else }}
+        securityContext: {{- .Values.volumePermissions.securityContext | toYaml | nindent 12 }}
+        {{- end }}
+        resources: {{- toYaml .Values.volumePermissions.resources | nindent 10 }}
+        volumeMounts:
+          - name: redis-data
+            mountPath: {{ .Values.master.persistence.path }}
+            subPath: {{ .Values.master.persistence.subPath }}
+      {{- end }}
+      {{- if .Values.sysctlImage.enabled }}
+      - name: init-sysctl
+        image: {{ template "redis.sysctl.image" . }}
+        imagePullPolicy: {{ default "" .Values.sysctlImage.pullPolicy | quote }}
+        resources: {{- toYaml .Values.sysctlImage.resources | nindent 10 }}
+        {{- if .Values.sysctlImage.mountHostSys }}
+        volumeMounts:
+          - name: host-sys
+            mountPath: /host-sys
+        {{- end }}
+        command: {{- toYaml .Values.sysctlImage.command | nindent 10 }}
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      {{- end }}
+      {{- end }}
+      volumes:
+        - name: start-scripts
+          configMap:
+            name: {{ include "redis.fullname" . }}-scripts
+            defaultMode: 0755
+        - name: health
+          configMap:
+            name: {{ template "redis.fullname" . }}-health
+            defaultMode: 0755
+        {{- if .Values.usePasswordFile }}
+        - name: redis-password
+          secret:
+            secretName: {{ template "redis.secretName" . }}
+            items:
+            - key: {{ template "redis.secretPasswordKey" . }}
+              path: redis-password
+        {{- end }}
+        - name: config
+          configMap:
+            name: {{ template "redis.fullname" . }}
+        {{- if not .Values.master.persistence.enabled }}
+        - name: "redis-data"
+          emptyDir: {}
+        {{- else }}
+        {{- if .Values.persistence.existingClaim }}
+        - name: "redis-data"
+          persistentVolumeClaim:
+            claimName: {{ include "redis.tplValue" (dict "value" .Values.persistence.existingClaim "context" $) }}
+        {{- end }}
+        {{- if .Values.master.persistence.volumes }}
+        {{- toYaml .Values.master.persistence.volumes | nindent 8 }}
+        {{- end }}
+        {{- end }}
+        {{- if .Values.sysctlImage.mountHostSys }}
+        - name: host-sys
+          hostPath:
+            path: /sys
+        {{- end }}
+        - name: redis-tmp-conf
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.master.extraVolumes }}
+        {{- include "common.tplvalues.render" ( dict "value" .Values.master.extraVolumes "context" $ ) | nindent 8 }}
+        {{- end }}
+        {{- if .Values.tls.enabled }}
+        - name: redis-certificates
+          secret:
+            secretName: {{ required "A secret containing the certificates for the TLS traffic is required when TLS in enabled" .Values.tls.certificatesSecret }}
+            defaultMode: 256
+        {{- end }}
+  {{- if and .Values.master.persistence.enabled (not .Values.persistence.existingClaim) (not .Values.master.persistence.volumes) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+        labels:
+          app: {{ template "redis.name" . }}
+          release: {{ .Release.Name }}
+          heritage: {{ .Release.Service }}
+          component: master
+        {{- if .Values.master.statefulset.volumeClaimTemplates.labels }}
+        {{- toYaml .Values.master.statefulset.volumeClaimTemplates.labels | nindent 10 }}
+        {{- end }}
+      {{- if .Values.master.statefulset.volumeClaimTemplates.annotations }}
+        annotations:
+          {{- toYaml .Values.master.statefulset.volumeClaimTemplates.annotations | nindent 10 }}
+      {{- end }}
+      spec:
+        accessModes:
+        {{- range .Values.master.persistence.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.master.persistence.size | quote }}
+        {{ include "redis.master.storageClass" . }}
+        selector:
+        {{- if .Values.master.persistence.matchLabels }}
+          matchLabels: {{- toYaml .Values.master.persistence.matchLabels | nindent 12 }}
+        {{- end -}}
+        {{- if .Values.master.persistence.matchExpressions }}
+          matchExpressions: {{- toYaml .Values.master.persistence.matchExpressions | nindent 12 }}
+        {{- end -}}
+  {{- end }}
+  updateStrategy:
+    type: {{ .Values.master.statefulset.updateStrategy }}
+    {{- if .Values.master.statefulset.rollingUpdatePartition }}
+    {{- if (eq "Recreate" .Values.master.statefulset.updateStrategy) }}
+    rollingUpdate: null
+    {{- else }}
+    rollingUpdate:
+      partition: {{ .Values.master.statefulset.rollingUpdatePartition }}
+    {{- end }}
+    {{- end }}
+{{- end }}

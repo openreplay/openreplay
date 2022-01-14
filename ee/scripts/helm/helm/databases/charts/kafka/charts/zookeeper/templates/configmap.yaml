@@ -1,0 +1,17 @@
+{{- if .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "zookeeper.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "zookeeper.labels" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "zookeeper.tplValue" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "zookeeper.tplValue" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+data:
+  zoo.cfg: |-
+{{ .Values.config | indent 4 }}
+{{- end -}}
