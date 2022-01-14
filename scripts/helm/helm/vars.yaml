@@ -9,7 +9,13 @@ postgresql: &postgres
   postgresqlUser: "postgres"
   postgresqlDatabase: "postgres"
 
+clickhouse: {}
+  # For enterpriseEdition
+  # enabled: true
+
 kafka: &kafka
+  # For enterpriseEdition
+  # enabled: true
   kafkaHost: "kafka.db.svc.cluster.local"
   kafkaPort: "9092"
   kafkaUseSsl: "false"
@@ -21,7 +27,7 @@ redis: &redis
 minio:
   global:
     minio:
-      # For genrating psswords
+      # For generating passwords
       # `openssl rand -hex 20`
       accessKey: "changeMeMinioAccessKey"
       secretKey: "changeMeMinioPassword"
