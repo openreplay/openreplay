@@ -169,6 +169,8 @@ def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authoriza
         admin = users.get(user_id=user_id, tenant_id=tenant_id)
         if not admin["admin"] and not admin["superAdmin"]:
             return {"errors": ["unauthorized"]}
+        if admin["roleId"] is not None and not admin["allProjects"]:
+            return {"errors": ["unauthorized: you need allProjects permission to create a new project"]}
     return {"data": __create(tenant_id=tenant_id, name=data.name)}
 
 

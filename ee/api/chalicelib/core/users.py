@@ -274,6 +274,7 @@ def get(user_id, tenant_id):
                         role_id,
                         roles.name AS role_name,
                         roles.permissions,
+                        roles.all_projects,
                         basic_authentication.password IS NOT NULL AS has_password
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
