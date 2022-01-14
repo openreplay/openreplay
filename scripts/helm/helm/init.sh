@@ -75,8 +75,13 @@ randomPass() {
 
 ## Don't override existing variables file.
 [[ -f vars.yaml ]] && {
-    warn "Existing Variables file. Not overriding."
+    warn "Existing Variables file. Not downloading."
 }|| {
+
+info " Downloading vars file"
+curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version}/scripts/helm/helm/vars.yaml
+
+}
 
 [[ -z $DOMAIN_NAME ]] && {
 fatal "DOMAIN_NAME variable is empty. Rerun the script"
@@ -84,17 +89,13 @@ info "curl -sL get.openreplay.com | sudo DOMAIN_NAME=openerplay.mycomp.org bash 
 exit 101
 }
 
-info " Downloading vars file"
-curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version}/scripts/helm/helm/vars.yaml
-
 info "Creating dynamic passwords"
 sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/domainName: .*/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 
-}
 
 ## Installing OpenReplay
 info "Installing databases"
