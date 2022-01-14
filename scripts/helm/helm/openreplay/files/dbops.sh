@@ -8,7 +8,7 @@ function migration() {
 
     # Checking if previous app version is set.
     if [[ $PREVIOUS_APP_VERSION == "" ]]; then
-        echo "Previous app verision to be migrated is not set. Rerun using --set fromVersion=v1.3.5"
+        echo "Previous app version to be migrated is not set. Rerun using --set fromVersion=v1.3.5"
         exit 100
     fi
 
