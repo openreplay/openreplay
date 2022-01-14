@@ -1,0 +1,68 @@
+# Databases specific variables
+postgresql: &postgres
+  # For genrating psswords
+  # `openssl rand -hex 20`
+  postgresqlPassword: "changeMePassword"
+  postgresqlHost: "postgresql.db.svc.cluster.local"
+  postgresqlPort: "5432"
+  postgresqlUser: "postgres"
+  postgresqlDatabase: "postgres"
+
+kafka: &kafka
+  kafkaHost: "kafka.db.svc.cluster.local"
+  kafkaPort: "9092"
+  kafkaUseSsl: "false"
+
+redis: &redis
+  redisHost: "redis-master.db.svc.cluster.local"
+  redisPort: "6379"
+
+minio:
+  global:
+    minio:
+      # For genrating psswords
+      # `openssl rand -hex 20`
+      accessKey: "changeMeMinioAccessKey"
+      secretKey: "changeMeMinioPassword"
+
+# Application specific variables
+global:
+  postgresql: *postgres
+  kafka: *kafka
+  redis: *redis
+  s3:
+    region: "us-east-1"
+    endpoint: "http://minio.db.svc.cluster.local:9000"
+    assetsBucket: "sessions-assets"
+    recordings_bucket: "mobs"
+    sourcemaps_bucket: "sourcemaps"
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
+    accessKey: "changeMeMinioAccessKey"
+    secretKey: "changeMeMinioPassword"
+
+  chalice:
+    env:
+      jwt_secret: "SetARandomStringHere"
+
+  enterpriseEditionLicense: ""
+  domainName: ""
+
+
+# If you want to override something
+# chartname:
+#   filedFrom chart/Values.yaml:
+#     key: value
+
+# For example:
+#
+# alerts:
+#   resources:
+#     limits:
+#       cpu: 1
+
+# If you want to redirect nginx http to https
+# nginx-ingress:
+#   customServerConfigs: |
+#      return 301 https://$host$request_uri;
