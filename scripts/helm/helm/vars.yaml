@@ -46,6 +46,12 @@ global:
   chalice:
     env:
       jwt_secret: "SetARandomStringHere"
+      # EMAIL_HOST: ''
+      # EMAIL_PORT: '587'
+      # EMAIL_USER: ''
+      # EMAIL_PASSWORD: ''
+      # EMAIL_USE_TLS: 'true'
+      # EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
 
   enterpriseEditionLicense: ""
   domainName: ""
