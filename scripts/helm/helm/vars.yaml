@@ -1,3 +1,4 @@
+fromVersion: "v1.3.6"
 # Databases specific variables
 postgresql: &postgres
   # For genrating psswords
