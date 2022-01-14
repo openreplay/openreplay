@@ -62,7 +62,7 @@ data:
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "Upgrade";
       proxy_set_header Host $host;
-      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Proto $origin_proto;
       proxy_pass http://chalice-openreplay.app.svc.cluster.local:8000;
     }
     location /assist/ {
@@ -132,6 +132,10 @@ data:
     map $http_upgrade $connection_upgrade {
       default upgrade;
       '' close;
+    }
+    map $http_x_forwarded_proto $origin_proto {
+      default $http_x_forwarded_proto;
+      '' $scheme;
     }
     server {
       listen 80 default_server;
