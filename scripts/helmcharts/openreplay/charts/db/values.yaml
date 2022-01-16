@@ -75,7 +75,8 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-env: {}
+env:
+  CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
 
 
 nodeSelector: {}
