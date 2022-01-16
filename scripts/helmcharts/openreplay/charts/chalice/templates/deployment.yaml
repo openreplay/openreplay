@@ -38,6 +38,8 @@ spec:
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: version_number
               value: '{{ .Chart.AppVersion }}'
             - name: pg_host
