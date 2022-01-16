@@ -1,7 +1,7 @@
 fromVersion: "v1.4.0"
 # Databases specific variables
 postgresql: &postgres
-  # For genrating psswords
+  # For generating passwords
   # `openssl rand -hex 20`
   postgresqlPassword: "changeMePassword"
   postgresqlHost: "postgresql.db.svc.cluster.local"
@@ -21,6 +21,8 @@ kafka: &kafka
   kafkaUseSsl: "false"
 
 redis: &redis
+  # For enterpriseEdition
+  # enabled: false
   redisHost: "redis-master.db.svc.cluster.local"
   redisPort: "6379"
 
