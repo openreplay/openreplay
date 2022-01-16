@@ -38,6 +38,8 @@ spec:
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: version_number
+              value: '{{ .Chart.AppVersion }}'
             - name: pg_host
               value: '{{ .Values.global.postgresql.postgresqlHost }}'
             - name: pg_port
