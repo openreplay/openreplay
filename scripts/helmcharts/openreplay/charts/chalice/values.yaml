@@ -81,15 +81,6 @@ env:
   captcha_server: ''
   captcha_key: ''
   async_Token: ''
-  EMAIL_HOST: ''
-  EMAIL_PORT: '587'
-  EMAIL_USER: ''
-  EMAIL_PASSWORD: ''
-  EMAIL_USE_TLS: 'true'
-  EMAIL_USE_SSL: 'false'
-  EMAIL_SSL_KEY: ''
-  EMAIL_SSL_CERT: ''
-  EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
   SITE_URL: ''
   announcement_url: ''
   jwt_secret: "SetARandomStringHere"
