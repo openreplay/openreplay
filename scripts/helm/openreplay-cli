@@ -109,7 +109,7 @@ legacyInstall() {
 }
 
 helmInstall() {
-    helm upgrade --install openreplay openreplay -f vars.yaml
+    helm upgrade --install openreplay -n app openreplay -f vars.yaml
 }
 
 upgrade() {
@@ -127,7 +127,7 @@ status() {
 
 [[ $# -eq 0 ]] && usage && exit 1
 
-PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:i:I: --long verbose,help,status,start:,stop:,logs:,restart:,legacy-install:,helm-install: -- "$@")
+PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:i:I --long verbose,help,status,start:,stop:,logs:,restart:,legacy-install:,helm-install -- "$@")
 VALID_ARGUMENTS=$?
 if [[ "$VALID_ARGUMENTS" != "0" ]]; then
   usage
@@ -140,12 +140,12 @@ do
     -v | --verbose) VERBOSE=1    ; shift   ;;
     -h | --help)    usage        ; shift   ;;
     -d | --status)  status       ; shift   ;;
+    -I | --helm-install) helmInstall; shift ;;
     -s | --stop)    stop $2      ; shift 2 ;;
     -S | --start)   start $2     ; shift 2 ;;
     -l | --logs)    logs "$2"    ; shift 2 ;;
     -r | --restart) restart "$2" ; shift 2 ;;
     -i | --legacy-install) legacyInstall "$2" ; shift 2 ;;
-    -I | --helm-install) helmInstall "$2" ; shift 2 ;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break ;;
     # If invalid options were passed, then getopt should have reported an error,
