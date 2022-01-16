@@ -51,11 +51,11 @@ spec:
             - name: pg_password
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
             - name: S3_HOST
-              { { - if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" } }
+              {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
               value: 'https://{{ .Values.global.domainName }}'
-              { { - else } }
+              {{- else }}
               value: '{{ .Values.global.s3.endpoint }}'
-              { { - end } }
+              {{- end }}
             - name: S3_KEY
               value: '{{ .Values.global.s3.accessKey }}'
             - name: S3_SECRET
@@ -80,10 +80,10 @@ spec:
               value: '{{ .Values.global.email.emailSslCert }}'
             - name: EMAIL_FROM
               value: '{{ .Values.global.email.emailFrom }}'
-            { { - range $key, $val := .Values.env } }
-            - name: { { $key } }
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
               value: '{{ $val }}'
-            { { - end } }
+            {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
