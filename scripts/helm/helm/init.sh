@@ -84,9 +84,7 @@ curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${v
 }
 
 [[ -z $DOMAIN_NAME ]] && {
-fatal "DOMAIN_NAME variable is empty. Rerun the script"
-info "curl -sL get.openreplay.com | sudo DOMAIN_NAME=openerplay.mycomp.org bash - "
-exit 101
+fatal 'DOMAIN_NAME variable is empty. Rerun the script `curl -sL get.openreplay.com | sudo DOMAIN_NAME=openerplay.mycomp.org bash - `'
 }
 
 info "Creating dynamic passwords"
