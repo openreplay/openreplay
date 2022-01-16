@@ -103,7 +103,7 @@ postgresql:
   # postgresqlPassword: asayerPostgres
   fullnameOverride: postgresql
   image:
-    tag: 13.3.0-debian-10-r53
+    tag: 13.5.0-debian-10-r62
   resources:
     limits:
       cpu: 1
