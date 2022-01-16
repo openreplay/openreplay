@@ -39,7 +39,7 @@ class GithubIntegrationIssue(BaseIntegrationIssue):
         for a in assignees:
             for u in metas["users"]:
                 if a == str(u["id"]):
-                    real_assignees.append(u["login"])
+                    real_assignees.append(u["name"])
                     break
         real_labels = ["OpenReplay"]
         for l in labels:

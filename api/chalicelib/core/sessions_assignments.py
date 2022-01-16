@@ -1,4 +1,4 @@
-from chalicelib.utils.helper import environ as env
+from decouple import config
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils import pg_client
@@ -32,7 +32,7 @@ def create_new_assignment(tenant_id, project_id, session_id, creator_id, assigne
 
     if i is None:
         return {"errors": [f"integration not found"]}
-    link = env["SITE_URL"] + f"/{project_id}/session/{session_id}"
+    link = config("SITE_URL") + f"/{project_id}/session/{session_id}"
     description += f"\n> {link}"
     try:
         issue = integration.issue_handler.create_new_assignment(title=title, assignee=assignee, description=description,

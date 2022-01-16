@@ -1,10 +1,7 @@
-
 import type StatedScreen from '../StatedScreen';
 import type { CssInsertRule, CssDeleteRule } from '../messages';
-import type { Timed } from '../Timed';
 
 type CSSRuleMessage = CssInsertRule | CssDeleteRule;
-type TimedCSSRuleMessage = Timed & CSSRuleMessage;
 
 import logger from 'App/logger';
 import ListWalker from './ListWalker';
@@ -25,7 +22,7 @@ export function rewriteNodeStyleSheet(doc: Document, node: HTMLLinkElement | HTM
   }
 }
 
-export default class StylesManager extends ListWalker<TimedCSSRuleMessage> {
+export default class StylesManager extends ListWalker<CSSRuleMessage> {
   private linkLoadingCount: number = 0;
   private linkLoadPromises: Array<Promise<void>> = [];
   private skipCSSLinks: Array<string> = []; // should be common for all pages

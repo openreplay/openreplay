@@ -1,6 +1,9 @@
+import logging
+
+import requests
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import requests
 
 
 def get_by_id(webhook_id):
@@ -114,7 +117,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
 
 
 def add_edit(tenant_id, data, replace_none=None):
-    if "webhookId" in data:
+    if data.get("webhookId") is not None:
         return update(tenant_id=tenant_id, webhook_id=data["webhookId"],
                       changes={"endpoint": data["endpoint"],
                                "authHeader": None if "authHeader" not in data else data["authHeader"],
@@ -144,28 +147,24 @@ def trigger_batch(data_list):
     for w in data_list:
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
-        __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
+        if webhooks_map[w["destination"]] is None:
+            logging.error(f"!!Error webhook not found: webhook_id={w['destination']}")
+        else:
+            __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
 
 def __trigger(hook, data):
-    if hook["type"] == 'webhook':
+    if hook is not None and hook["type"] == 'webhook':
         headers = {}
         if hook["authHeader"] is not None and len(hook["authHeader"]) > 0:
             headers = {"Authorization": hook["authHeader"]}
 
-        # body = {
-        #     "webhookId": hook["id"],
-        #     "createdAt": TimeUTC.now(),
-        #     "event": event,
-        #     "data": data
-        # }
-
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            print("=======> webhook: something went wrong")
-            print(r)
-            print(r.status_code)
-            print(r.text)
+            logging.error("=======> webhook: something went wrong")
+            logging.error(r)
+            logging.error(r.status_code)
+            logging.error(r.text)
             return
         response = None
         try:
@@ -174,5 +173,5 @@ def __trigger(hook, data):
             try:
                 response = r.text
             except:
-                print("no response found")
+                logging.info("no response found")
         return response

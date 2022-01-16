@@ -6,7 +6,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from chalicelib.utils import helper, smtp
-from chalicelib.utils.helper import environ
+from decouple import config
 
 
 def __get_subject(subject):
@@ -16,7 +16,7 @@ def __get_subject(subject):
 def __get_html_from_file(source, formatting_variables):
     if formatting_variables is None:
         formatting_variables = {}
-    formatting_variables["frontend_url"] = environ["SITE_URL"]
+    formatting_variables["frontend_url"] = config("SITE_URL")
     with open(source, "r") as body:
         BODY_HTML = body.read()
         if formatting_variables is not None and len(formatting_variables.keys()) > 0:
@@ -50,7 +50,7 @@ def send_html(BODY_HTML, SUBJECT, recipient, bcc=None):
         recipient = [recipient]
     msg = MIMEMultipart()
     msg['Subject'] = Header(__get_subject(SUBJECT), 'utf-8')
-    msg['From'] = environ["EMAIL_FROM"]
+    msg['From'] = config("EMAIL_FROM")
     msg['To'] = ""
     body = MIMEText(BODY_HTML.encode('utf-8'), 'html', "utf-8")
     msg.attach(body)
@@ -75,7 +75,7 @@ def send_text(recipients, text, subject):
     with smtp.SMTPClient() as s:
         msg = MIMEMultipart()
         msg['Subject'] = Header(__get_subject(subject), 'utf-8')
-        msg['From'] = environ["EMAIL_FROM"]
+        msg['From'] = config("EMAIL_FROM")
         msg['To'] = ", ".join(recipients)
         body = MIMEText(text)
         msg.attach(body)

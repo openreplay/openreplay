@@ -1,0 +1,115 @@
+fromVersion: "v1.4.0"
+# Databases specific variables
+postgresql: &postgres
+  # For genrating psswords
+  # `openssl rand -hex 20`
+  postgresqlPassword: "changeMePassword"
+  postgresqlHost: "postgresql.db.svc.cluster.local"
+  postgresqlPort: "5432"
+  postgresqlUser: "postgres"
+  postgresqlDatabase: "postgres"
+
+clickhouse: {}
+  # For enterpriseEdition
+  # enabled: true
+
+kafka: &kafka
+  # For enterpriseEdition
+  # enabled: true
+  kafkaHost: "kafka.db.svc.cluster.local"
+  kafkaPort: "9092"
+  kafkaUseSsl: "false"
+
+redis: &redis
+  redisHost: "redis-master.db.svc.cluster.local"
+  redisPort: "6379"
+
+minio:
+  global:
+    minio:
+      # For generating passwords
+      # `openssl rand -hex 20`
+      accessKey: "changeMeMinioAccessKey"
+      secretKey: "changeMeMinioPassword"
+
+# Application specific variables
+global:
+  postgresql: *postgres
+  kafka: *kafka
+  redis: *redis
+  s3:
+    region: "us-east-1"
+    endpoint: "http://minio.db.svc.cluster.local:9000"
+    assetsBucket: "sessions-assets"
+    recordings_bucket: "mobs"
+    sourcemaps_bucket: "sourcemaps"
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
+    accessKey: "changeMeMinioAccessKey"
+    secretKey: "changeMeMinioPassword"
+
+  enterpriseEditionLicense: ""
+  domainName: ""
+
+chalice:
+  env:
+    jwt_secret: "SetARandomStringHere"
+    # EMAIL_HOST: ''
+    # EMAIL_PORT: '587'
+    # EMAIL_USER: ''
+    # EMAIL_PASSWORD: ''
+    # EMAIL_USE_TLS: 'true'
+    # EMAIL_USE_SSL: 'false'
+    # EMAIL_SSL_KEY: ''
+    # EMAIL_SSL_CERT: ''
+    # EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
+    # SAML2_MD_URL: ''
+    # idp_entityId: ''
+    # idp_sso_url: ''
+    # idp_x509cert: ''
+    # idp_sls_url: ''
+    # idp_name: ''
+
+
+# If you want to override something
+# chartname:
+#   filedFrom chart/Values.yaml:
+#     key: value
+
+# For example:
+#
+# alerts:
+#   resources:
+#     limits:
+#       cpu: 1
+
+# nginx-ingress:
+#
+### If you want to redirect nginx http to https
+#   customServerConfigs: |
+#      return 301 https://$host$request_uri;
+#
+### Change the ssl certificates
+#
+### Public certificate ( content from site.crt, mind the indentation )
+#   ssl_certificate: |-
+#     -----BEGIN CERTIFICATE-----
+#     MIIFITCCAwmgAwIBAgIUQ8hQoDbW3Z4DxRVjIYlIlbEHp/8wDQYJKoZIhvcNAQEL
+#     BQAwIDEeMBwGA1UEAwwVb3BlbnJlcGxheS5sb2NhbC5ob3N0MB4XDTIxMTIyMjA3
+#     NDIxOVoXDTIyMTIyMjA3NDIxOVowIDEeMBwGA1UEAwwVb3BlbnJlcGxheS5sb2Nh
+#     -----END CERTIFICATE-----
+#   
+### Private certificate ( content from site.key, mind the indentation. )
+#   ssl_privatekey: |-
+#     -----BEGIN PRIVATE KEY-----
+#     TbXr+1+HXWQGs4Go63gpvhI/yzOScTTiuI88lbjM9QA/aDlZm2TlXdcB71PDtO5T
+#     e2Zw7SH2h7yLK6uP2FamVgUSe0rWf9zQmKTkFzJcgwelvuk7MHBMw4JSYeoB7dJP
+#     3+FMchvzM1exCC/kNxTqvAyYWzdNPBIPSekHn1I9eEgr14cwZ+1RV9SK16uxsMT9
+#     WnjLAoIBADKutRKB8nH+wD3sa4cP782QNbkDqJCcb3rPntnCWI/jA2TeY/wAvrXa
+#     8yFtSSeYSwN9Wr+UosSkQ+OQSO0WmT2NrxdkH8jK8kYnzYkJ9+EFE2YpMN2UosSb
+#     esQ9oEMnivBMNv8DnB4IuO8LjTj1rhqcBmWJH1zvDi1Ur+/uAb+6XLm0Dp/59/Rn
+#     PSlLQmFraq6mrUkKTU40zyT6eK8AvIn/+sXAF1Xb9Vnm8Ndl+gZ4imzjcCubbq+6
+#     PqvLjFJNGyya6b3MX4RSxVGfkIf5f6bcSSZ0zzSB3qLbCKS+JawwR1WF2rJp6Hj5
+#     7qINKoGovqXB1oAdopIl1z64e7MWVE4=
+#     -----END PRIVATE KEY-----

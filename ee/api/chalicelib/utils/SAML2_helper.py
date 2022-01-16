@@ -1,21 +1,22 @@
 from http import cookies
-from urllib.parse import urlparse, parse_qsl
+from urllib.parse import urlparse
 
+from decouple import config
+from fastapi import Request
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
-
-from chalicelib.utils.helper import environ
+from starlette.datastructures import FormData
 
 SAML2 = {
     "strict": True,
     "debug": True,
     "sp": {
-        "entityId": environ["SITE_URL"] + "/api/sso/saml2/metadata/",
+        "entityId": config("SITE_URL") + "/api/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": environ["SITE_URL"] + "/api/sso/saml2/acs",
+            "url": config("SITE_URL") + "/api/sso/saml2/acs",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": environ["SITE_URL"] + "/api/sso/saml2/sls",
+            "url": config("SITE_URL") + "/api/sso/saml2/sls",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -26,28 +27,28 @@ SAML2 = {
 }
 idp = None
 # SAML2 config handler
-if environ.get("SAML2_MD_URL") is not None and len(environ["SAML2_MD_URL"]) > 0:
+if config("SAML2_MD_URL", default=None) is not None and len(config("SAML2_MD_URL")) > 0:
     print("SAML2_MD_URL provided, getting IdP metadata config")
     from onelogin.saml2.idp_metadata_parser import OneLogin_Saml2_IdPMetadataParser
 
-    idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote(environ.get("SAML2_MD_URL"))
+    idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote(config("SAML2_MD_URL", default=None))
     idp = idp_data.get("idp")
 
 if SAML2["idp"] is None:
-    if len(environ.get("idp_entityId", "")) > 0 \
-            and len(environ.get("idp_sso_url", "")) > 0 \
-            and len(environ.get("idp_x509cert", "")) > 0:
+    if len(config("idp_entityId", default="")) > 0 \
+            and len(config("idp_sso_url", default="")) > 0 \
+            and len(config("idp_x509cert", default="")) > 0:
         idp = {
-            "entityId": environ["idp_entityId"],
+            "entityId": config("idp_entityId"),
             "singleSignOnService": {
-                "url": environ["idp_sso_url"],
+                "url": config("idp_sso_url"),
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
             },
-            "x509cert": environ["idp_x509cert"]
+            "x509cert": config("idp_x509cert")
         }
-        if len(environ.get("idp_sls_url", "")) > 0:
+        if len(config("idp_sls_url", default="")) > 0:
             idp["singleLogoutService"] = {
-                "url": environ["idp_sls_url"],
+                "url": config("idp_sls_url"),
                 "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
             }
 
@@ -67,10 +68,10 @@ def init_saml_auth(req):
     return auth
 
 
-def prepare_request(request):
+async def prepare_request(request: Request):
     request.args = dict(request.query_params).copy() if request.query_params else {}
-    request.form = dict(request.json_body).copy() if request.json_body else dict(
-        parse_qsl(request.raw_body.decode())) if request.raw_body else {}
+    form: FormData = await request.form()
+    request.form = dict(form)
     cookie_str = request.headers.get("cookie", "")
     if "session" in cookie_str:
         cookie = cookies.SimpleCookie()
@@ -90,7 +91,7 @@ def prepare_request(request):
         'https': 'on' if request.headers.get('x-forwarded-proto', 'http') == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': "/api" + request.path,
+        'script_name': "/api" + request.url.path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
@@ -105,9 +106,9 @@ def is_saml2_available():
 
 
 def get_saml2_provider():
-    return environ.get("idp_name", "saml2") if is_saml2_available() and len(
-        environ.get("idp_name", "saml2")) > 0 else None
+    return config("idp_name", default="saml2") if is_saml2_available() and len(
+        config("idp_name", default="saml2")) > 0 else None
 
 
 def get_landing_URL(jwt):
-    return environ["SITE_URL"] + environ.get("sso_landing", "/login?jwt=%s") % jwt
+    return config("SITE_URL") + config("sso_landing", default="/login?jwt=%s") % jwt

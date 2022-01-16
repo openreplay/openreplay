@@ -1,4 +1,4 @@
-import type { LocalStream } from './LocalStream';
+import type { LocalStream } from './LocalStream.js';
 
 const SS_START_TS_KEY = "__openreplay_assist_call_start_ts"
 
@@ -207,14 +207,6 @@ export default class CallWindow {
   private toggleAudio() {
     const enabled = this.localStream?.toggleAudio() || false
     this.toggleAudioUI(enabled)
-    // if (!this.audioBtn) { return; }
-    // if (enabled) {
-    //   this.audioBtn.classList.remove("muted");
-    //   this.audioBtn.childNodes[1].textContent = "Mute";
-    // } else {
-    //   this.audioBtn.classList.add("muted");
-    //   this.audioBtn.childNodes[1].textContent = "Unmute";
-    // }
   }
 
   private toggleVideoUI(enabled: boolean) {

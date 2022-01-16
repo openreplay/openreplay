@@ -1,9 +1,11 @@
+import schemas
+from chalicelib.utils import pg_client, helper
+from chalicelib.core import projects, sessions, sessions_metas
 import requests
+from decouple import config
+
 from chalicelib.core import projects, sessions, sessions_metas
 from chalicelib.utils import pg_client, helper
-from chalicelib.core import projects, sessions, sessions_metas
-from chalicelib.utils import pg_client, helper
-from chalicelib.utils.helper import environ
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,
@@ -23,7 +25,7 @@ SESSION_PROJECTION_COLS = """s.project_id,
 
 def get_live_sessions(project_id, filters=None):
     project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(environ["peers"] % environ["S3_KEY"] + f"/{project_key}")
+    connected_peers = requests.get(config("peers") % config("S3_KEY") + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
@@ -43,7 +45,7 @@ def get_live_sessions(project_id, filters=None):
                 continue
             filter_type = f["type"].upper()
             f["value"] = sessions.__get_sql_value_multiple(f["value"])
-            if filter_type == sessions_metas.meta_type.USERID:
+            if filter_type == schemas.FilterType.user_id:
                 op = sessions.__get_sql_operator(f["operator"])
                 extra_constraints.append(f"user_id {op} %(value_{i})s")
                 extra_params[f"value_{i}"] = helper.string_to_sql_like_with_op(f["value"][0], op)
@@ -67,7 +69,7 @@ def get_live_sessions(project_id, filters=None):
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(environ["peers"] % environ["S3_KEY"] + f"/{project_key}")
+    connected_peers = requests.get(config("peers") % config("S3_KEY") + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
@@ -77,5 +79,5 @@ def is_live(project_id, session_id, project_key=None):
 
 
 def get_ice_servers():
-    return environ.get("iceServers") if environ.get("iceServers") is not None \
-                                        and len(environ["iceServers"]) > 0 else None
+    return config("iceServers") if config("iceServers", default=None) is not None \
+                                   and len(config("iceServers")) > 0 else None

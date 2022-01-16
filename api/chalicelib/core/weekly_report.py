@@ -1,6 +1,5 @@
-from chalicelib.utils import pg_client, helper
+from chalicelib.utils import pg_client, helper, email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.helper import environ
 from chalicelib.utils.helper import get_issue_title
 
 LOWEST_BAR_VALUE = 3
@@ -30,7 +29,7 @@ def edit_config(user_id, weekly_report):
 
 
 def cron():
-    with pg_client.PostgresClient() as cur:
+    with pg_client.PostgresClient(long_query=True) as cur:
         params = {"3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),
                   "2_week_ago": TimeUTC.midnight(delta_days=-14),
@@ -83,6 +82,7 @@ def cron():
                      ) AS month_1_issues ON (TRUE)
             WHERE projects.deleted_at ISNULL;"""), params)
         projects_data = cur.fetchall()
+        emails_to_send = []
         for p in projects_data:
             params["project_id"] = p["project_id"]
             print(f"checking {p['project_name']} : {p['project_id']}")
@@ -227,13 +227,14 @@ def cron():
                     if j["type"] in keep_types:
                         keep.append(j)
                 i["partition"] = keep
-            helper.async_post(environ['email_funnel'] % "weekly_report2",
-                              {"email": p.pop("emails"),
-                               "data": {
-                                   **p,
-                                   "days_partition": days_partition,
-                                   "issues_by_type": issues_by_type,
-                                   "issues_breakdown_by_day": issues_breakdown_by_day,
-                                   "issues_breakdown_list": issues_breakdown_list
-                               }
-                               })
+            emails_to_send.append({"email": p.pop("emails"),
+                                   "data": {
+                                       **p,
+                                       "days_partition": days_partition,
+                                       "issues_by_type": issues_by_type,
+                                       "issues_breakdown_by_day": issues_breakdown_by_day,
+                                       "issues_breakdown_list": issues_breakdown_list
+                                   }})
+        print(f">>> Sending weekly report to {len(emails_to_send)} email-group")
+        for e in emails_to_send:
+            email_helper.weekly_report2(recipients=e["email"], data=e["data"])

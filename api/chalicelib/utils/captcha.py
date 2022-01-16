@@ -1,10 +1,10 @@
-from chalicelib.utils.helper import environ as env
+from decouple import config
 import requests
 from chalicelib.utils import helper
 
 
 def __get_captcha_config():
-    return env["captcha_server"], env["captcha_key"]
+    return config("captcha_server"), config("captcha_key")
 
 
 def is_valid(response):
