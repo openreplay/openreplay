@@ -109,7 +109,7 @@ legacyInstall() {
 }
 
 helmInstall() {
-    helm upgrade --install openreplay helmv2/openreplay -f helmv2/vars.yaml
+    helm upgrade --install openreplay helmcharts/openreplay -f helmcharts/vars.yaml
 }
 
 upgrade() {
