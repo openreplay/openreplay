@@ -97,7 +97,7 @@ spec:
       {{- if .Values.global.enterpriseEditionLicense }}
       # Enterprise migration
       - name: clickhouse
-        image: yandex/clickhouse-client:20.9
+        image: yandex/clickhouse-client:21.9.4.35
         env:
           - name: PREVIOUS_APP_VERSION
             value: "{{ .Values.fromVersion }}"
