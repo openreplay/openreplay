@@ -62,6 +62,24 @@ spec:
               value: '{{ .Values.global.s3.secretKey }}'
             - name: AWS_DEFAULT_REGION
               value: '{{ .Values.global.s3.region }}'
+            - name: EMAIL_HOST
+              value: '{{ .Values.global.email.emailHost }}'
+            - name: EMAIL_PORT
+              value: '{{ .Values.global.email.emailPort }}'
+            - name: EMAIL_USER
+              value: '{{ .Values.global.email.emailUser }}'
+            - name: EMAIL_PASSWORD
+              value: '{{ .Values.global.email.emailPassword }}'
+            - name: EMAIL_USE_TLS
+              value: '{{ .Values.global.email.emailUseTls }}'
+            - name: EMAIL_USE_SSL
+              value: '{{ .Values.global.email.emailUseSsl }}'
+            - name: EMAIL_SSL_KEY
+              value: '{{ .Values.global.email.emailSslKey }}'
+            - name: EMAIL_SSL_CERT
+              value: '{{ .Values.global.email.emailSslCert }}'
+            - name: EMAIL_FROM
+              value: '{{ .Values.global.email.emailFrom }}'
             { { - range $key, $val := .Values.env } }
             - name: { { $key } }
               value: '{{ $val }}'
