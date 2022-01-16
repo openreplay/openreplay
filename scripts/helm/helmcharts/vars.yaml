@@ -49,18 +49,27 @@ global:
     accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
 
-  chalice:
-    env:
-      jwt_secret: "SetARandomStringHere"
-      # EMAIL_HOST: ''
-      # EMAIL_PORT: '587'
-      # EMAIL_USER: ''
-      # EMAIL_PASSWORD: ''
-      # EMAIL_USE_TLS: 'true'
-      # EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
-
   enterpriseEditionLicense: ""
   domainName: ""
+
+chalice:
+  env:
+    jwt_secret: "SetARandomStringHere"
+    # EMAIL_HOST: ''
+    # EMAIL_PORT: '587'
+    # EMAIL_USER: ''
+    # EMAIL_PASSWORD: ''
+    # EMAIL_USE_TLS: 'true'
+    # EMAIL_USE_SSL: 'false'
+    # EMAIL_SSL_KEY: ''
+    # EMAIL_SSL_CERT: ''
+    # EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
+    # SAML2_MD_URL: ''
+    # idp_entityId: ''
+    # idp_sso_url: ''
+    # idp_x509cert: ''
+    # idp_sls_url: ''
+    # idp_name: ''
 
 
 # If you want to override something
