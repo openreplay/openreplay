@@ -123,7 +123,7 @@ spec:
           - name: KAFKA_SSL
             value: "{{ .Values.global.kafka.kafkaUseSsl }}"
           - name: PREVIOUS_APP_VERSION
-            value: "{{ .Values.global.fromVersion }}"
+            value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
         command: 
