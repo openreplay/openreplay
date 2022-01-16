@@ -50,6 +50,8 @@ spec:
               value: '{{ .Values.global.postgresql.postgresqlUser }}'
             - name: pg_password
               value: '{{ .Values.global.postgresql.postgresqlPassword }}'
+            - name: SITE_URL
+              value: 'https://{{ .Values.global.domainName }}'
             - name: S3_HOST
               {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
               value: 'https://{{ .Values.global.domainName }}'
