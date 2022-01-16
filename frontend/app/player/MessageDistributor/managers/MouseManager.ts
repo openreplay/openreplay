@@ -1,15 +1,12 @@
 import type StatedScreen from '../StatedScreen';
 import type { MouseMove } from '../messages';
-import type { Timed } from '../Timed';
 
 import ListWalker from './ListWalker';
-
-type MouseMoveTimed = MouseMove & Timed;
 
 const HOVER_CLASS = "-openreplay-hover";
 const HOVER_CLASS_DEPR = "-asayer-hover";
 
-export default class MouseManager extends ListWalker<MouseMoveTimed> {
+export default class MouseManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = [];
 
 	constructor(private screen: StatedScreen) {super();}
@@ -39,6 +36,7 @@ export default class MouseManager extends ListWalker<MouseMoveTimed> {
 		if (!!lastMouseMove){
       // @ts-ignore TODO
       this.screen.cursor.move(lastMouseMove);
+      //window.getComputedStyle(this.screen.getCursorTarget()).cursor === 'pointer' // might nfluence performance though
       this.updateHover();
     }
 	}

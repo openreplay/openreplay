@@ -3,6 +3,7 @@ package builder
 import (
 	"net/url"
 	"strings"
+	"time"
 
 	"openreplay/backend/pkg/intervals"
 	. "openreplay/backend/pkg/messages"
@@ -42,6 +43,7 @@ func getResourceType(initiator string, URL string) string {
 type builder struct {
 	readyMsgs                         []Message
 	timestamp                         uint64
+	lastProcessedTimestamp						int64
 	peBuilder 												*pageEventBuilder
 	ptaBuilder       									*performanceTrackAggrBuilder
 	ieBuilder													*inputEventBuilder
@@ -112,6 +114,10 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	if b.timestamp <= timestamp { // unnecessary? TODO: test and remove
 		b.timestamp = timestamp
 	}
+
+	b.lastProcessedTimestamp = time.Now().UnixNano()/1e6
+
+
 	// Might happen before  the first timestamp.
 	switch msg := message.(type) {
 	case *SessionStart,
@@ -294,6 +300,7 @@ func (b *builder) checkTimeouts(ts int64) bool {
 	}
 
 	lastTsGap := ts - int64(b.timestamp)
+	//b.lastProcessedTimestamp
 	//log.Printf("checking timeouts for sess %v: %v now, %v sesstime; gap %v",b.sid,  ts, b.timestamp, lastTsGap)
 	if lastTsGap > intervals.EVENTS_SESSION_END_TIMEOUT {
 		if rm := b.ddDetector.Build(); rm != nil {

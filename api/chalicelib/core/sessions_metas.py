@@ -1,3 +1,4 @@
+import schemas
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.event_filter_definition import SupportedFilter
 
@@ -8,40 +9,47 @@ def get_key_values(project_id):
             cur.mogrify(
                 f"""\
                 SELECT ARRAY_AGG(DISTINCT s.user_os
-                       ORDER BY s.user_os) FILTER ( WHERE s.user_os IS NOT NULL AND s.platform='web')                                             AS {meta_type.USEROS},
+                       ORDER BY s.user_os) FILTER ( WHERE s.user_os IS NOT NULL AND s.platform='web')                                             AS {schemas.FilterType.user_os},
                        ARRAY_AGG(DISTINCT s.user_browser
                        ORDER BY s.user_browser)
-                       FILTER ( WHERE s.user_browser IS NOT NULL AND s.platform='web')                                                            AS {meta_type.USERBROWSER},
+                       FILTER ( WHERE s.user_browser IS NOT NULL AND s.platform='web')                                                            AS {schemas.FilterType.user_browser},
                        ARRAY_AGG(DISTINCT s.user_device
                        ORDER BY s.user_device)
-                       FILTER ( WHERE s.user_device IS NOT NULL AND s.user_device != '' AND s.platform='web')                                      AS {meta_type.USERDEVICE},
+                       FILTER ( WHERE s.user_device IS NOT NULL AND s.user_device != '' AND s.platform='web')                                      AS {schemas.FilterType.user_device},
                        ARRAY_AGG(DISTINCT s.user_country
                        ORDER BY s.user_country)
-                       FILTER ( WHERE s.user_country IS NOT NULL AND s.platform='web')::text[]                                                     AS {meta_type.USERCOUNTRY},
+                       FILTER ( WHERE s.user_country IS NOT NULL AND s.platform='web')::text[]                                                     AS {schemas.FilterType.user_country},
                        ARRAY_AGG(DISTINCT s.user_id
-                       ORDER BY s.user_id) FILTER ( WHERE s.user_id IS NOT NULL AND s.user_id != 'none' AND s.user_id != '' AND s.platform='web') AS {meta_type.USERID},
+                       ORDER BY s.user_id) FILTER ( WHERE s.user_id IS NOT NULL AND s.user_id != 'none' AND s.user_id != '' AND s.platform='web') AS {schemas.FilterType.user_id},
                        ARRAY_AGG(DISTINCT s.user_anonymous_id
-                       ORDER BY s.user_anonymous_id) FILTER ( WHERE s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != 'none' AND s.user_anonymous_id != '' AND s.platform='web') AS {meta_type.USERANONYMOUSID},
+                       ORDER BY s.user_anonymous_id) FILTER ( WHERE s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != 'none' AND s.user_anonymous_id != '' AND s.platform='web') AS {schemas.FilterType.user_anonymous_id},
                        ARRAY_AGG(DISTINCT s.rev_id
-                       ORDER BY s.rev_id) FILTER ( WHERE s.rev_id IS NOT NULL AND s.platform='web')                                                AS {meta_type.REVID},
+                       ORDER BY s.rev_id) FILTER ( WHERE s.rev_id IS NOT NULL AND s.platform='web')                                                AS {schemas.FilterType.rev_id},
                        ARRAY_AGG(DISTINCT p.referrer
                        ORDER BY p.referrer)
-                       FILTER ( WHERE p.referrer != '' )                                                                      AS {meta_type.REFERRER},
+                       FILTER ( WHERE p.referrer != '' )                                                                      AS {schemas.FilterType.referrer},
+
+                       ARRAY_AGG(DISTINCT s.utm_source
+                       ORDER BY s.utm_source) FILTER ( WHERE s.utm_source IS NOT NULL AND s.utm_source != 'none' AND s.utm_source != '') AS {schemas.FilterType.utm_source},
+                       ARRAY_AGG(DISTINCT s.utm_medium
+                       ORDER BY s.utm_medium) FILTER ( WHERE s.utm_medium IS NOT NULL AND s.utm_medium != 'none' AND s.utm_medium != '') AS {schemas.FilterType.utm_medium},
+                       ARRAY_AGG(DISTINCT s.utm_campaign
+                       ORDER BY s.utm_campaign) FILTER ( WHERE s.utm_campaign IS NOT NULL AND s.utm_campaign != 'none' AND s.utm_campaign != '') AS {schemas.FilterType.utm_campaign},
 
                        ARRAY_AGG(DISTINCT s.user_os
-                       ORDER BY s.user_os) FILTER ( WHERE s.user_os IS NOT NULL AND s.platform='ios' )                        AS {meta_type.USEROS_IOS},
+                       ORDER BY s.user_os) FILTER ( WHERE s.user_os IS NOT NULL AND s.platform='ios' )                        AS {schemas.FilterType.user_os_ios},
                        ARRAY_AGG(DISTINCT s.user_device
                        ORDER BY s.user_device)
-                       FILTER ( WHERE s.user_device IS NOT NULL AND s.user_device != '' AND s.platform='ios')                 AS {meta_type.USERDEVICE},
+                       FILTER ( WHERE s.user_device IS NOT NULL AND s.user_device != '' AND s.platform='ios')                 AS {schemas.FilterType.user_device_ios},
                        ARRAY_AGG(DISTINCT s.user_country
                        ORDER BY s.user_country)
-                       FILTER ( WHERE s.user_country IS NOT NULL AND s.platform='ios')::text[]                                AS {meta_type.USERCOUNTRY_IOS},
+                       FILTER ( WHERE s.user_country IS NOT NULL AND s.platform='ios')::text[]                                AS {schemas.FilterType.user_country_ios},
                        ARRAY_AGG(DISTINCT s.user_id
-                       ORDER BY s.user_id) FILTER ( WHERE s.user_id IS NOT NULL AND s.user_id != 'none' AND s.user_id != '' AND s.platform='ios') AS {meta_type.USERID_IOS},
+                       ORDER BY s.user_id) FILTER ( WHERE s.user_id IS NOT NULL AND s.user_id != 'none' AND s.user_id != '' AND s.platform='ios') AS {schemas.FilterType.user_id_ios},
                        ARRAY_AGG(DISTINCT s.user_anonymous_id
-                       ORDER BY s.user_anonymous_id) FILTER ( WHERE s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != 'none' AND s.user_anonymous_id != '' AND s.platform='ios') AS {meta_type.USERANONYMOUSID_IOS},
+                       ORDER BY s.user_anonymous_id) FILTER ( WHERE s.user_anonymous_id IS NOT NULL AND s.user_anonymous_id != 'none' AND s.user_anonymous_id != '' AND s.platform='ios') AS {schemas.FilterType.user_anonymous_id_ios},
                        ARRAY_AGG(DISTINCT s.rev_id
-                       ORDER BY s.rev_id) FILTER ( WHERE s.rev_id IS NOT NULL AND s.platform='ios')                                                AS {meta_type.REVID_IOS}
+                       ORDER BY s.rev_id) FILTER ( WHERE s.rev_id IS NOT NULL AND s.platform='ios')                                                AS {schemas.FilterType.rev_id_ios}
                 FROM public.sessions AS s
                          LEFT JOIN events.pages AS p USING (session_id)
                 WHERE s.project_id = %(site_id)s;""",
@@ -108,119 +116,137 @@ def __generic_autocomplete(typename):
     return f
 
 
-class meta_type:
-    USEROS = "USEROS"
-    USERBROWSER = "USERBROWSER"
-    USERDEVICE = "USERDEVICE"
-    USERCOUNTRY = "USERCOUNTRY"
-    USERID = "USERID"
-    USERANONYMOUSID = "USERANONYMOUSID"
-    REFERRER = "REFERRER"
-    REVID = "REVID"
-    # IOS
-    USEROS_IOS = "USEROS_IOS"
-    USERDEVICE_IOS = "USERDEVICE_IOS"
-    USERCOUNTRY_IOS = "USERCOUNTRY_IOS"
-    USERID_IOS = "USERID_IOS"
-    USERANONYMOUSID_IOS = "USERANONYMOUSID_IOS"
-    REVID_IOS = "REVID_IOS"
-
-
 SUPPORTED_TYPES = {
-    meta_type.USEROS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USEROS),
-                                      query=__generic_query(typename=meta_type.USEROS),
-                                      value_limit=0,
-                                      starts_with="",
-                                      starts_limit=0,
-                                      ignore_if_starts_with=["/"]),
-    meta_type.USERBROWSER: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERBROWSER),
-                                           query=__generic_query(typename=meta_type.USERBROWSER),
-                                           value_limit=0,
-                                           starts_with="",
-                                           starts_limit=0,
-                                           ignore_if_starts_with=["/"]),
-    meta_type.USERDEVICE: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERDEVICE),
-                                          query=__generic_query(typename=meta_type.USERDEVICE),
-                                          value_limit=3,
-                                          starts_with="",
-                                          starts_limit=3,
-                                          ignore_if_starts_with=["/"]),
-    meta_type.USERCOUNTRY: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERCOUNTRY),
-                                           query=__generic_query(typename=meta_type.USERCOUNTRY),
-                                           value_limit=2,
-                                           starts_with="",
-                                           starts_limit=2,
-                                           ignore_if_starts_with=["/"]),
-    meta_type.USERID: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERID),
-                                      query=__generic_query(typename=meta_type.USERID),
-                                      value_limit=2,
-                                      starts_with="",
-                                      starts_limit=2,
-                                      ignore_if_starts_with=["/"]),
-    meta_type.USERANONYMOUSID: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERANONYMOUSID),
-                                               query=__generic_query(typename=meta_type.USERANONYMOUSID),
-                                               value_limit=3,
-                                               starts_with="",
-                                               starts_limit=3,
-                                               ignore_if_starts_with=["/"]),
-    meta_type.REVID: SupportedFilter(get=__generic_autocomplete(typename=meta_type.REVID),
-                                     query=__generic_query(typename=meta_type.REVID),
-                                     value_limit=0,
-                                     starts_with="",
-                                     starts_limit=0,
-                                     ignore_if_starts_with=["/"]),
-    meta_type.REFERRER: SupportedFilter(get=__generic_autocomplete(typename=meta_type.REFERRER),
-                                        query=__generic_query(typename=meta_type.REFERRER),
-                                        value_limit=5,
-                                        starts_with="/",
-                                        starts_limit=5,
-                                        ignore_if_starts_with=[]),
+    schemas.FilterType.user_os: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_os),
+        query=__generic_query(typename=schemas.FilterType.user_os),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_browser: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_browser),
+        query=__generic_query(typename=schemas.FilterType.user_browser),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_device: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_device),
+        query=__generic_query(typename=schemas.FilterType.user_device),
+        value_limit=3,
+        starts_with="",
+        starts_limit=3,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_country: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_country),
+        query=__generic_query(typename=schemas.FilterType.user_country),
+        value_limit=2,
+        starts_with="",
+        starts_limit=2,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_id: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_id),
+        query=__generic_query(typename=schemas.FilterType.user_id),
+        value_limit=2,
+        starts_with="",
+        starts_limit=2,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_anonymous_id: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_anonymous_id),
+        query=__generic_query(typename=schemas.FilterType.user_anonymous_id),
+        value_limit=3,
+        starts_with="",
+        starts_limit=3,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.rev_id: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.rev_id),
+        query=__generic_query(typename=schemas.FilterType.rev_id),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.referrer: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.referrer),
+        query=__generic_query(typename=schemas.FilterType.referrer),
+        value_limit=5,
+        starts_with="/",
+        starts_limit=5,
+        ignore_if_starts_with=[]),
+    schemas.FilterType.utm_campaign: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.utm_campaign),
+        query=__generic_query(typename=schemas.FilterType.utm_campaign),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.utm_medium: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.utm_medium),
+        query=__generic_query(typename=schemas.FilterType.utm_medium),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.utm_source: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.utm_source),
+        query=__generic_query(typename=schemas.FilterType.utm_source),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
     # IOS
-    meta_type.USEROS_IOS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USEROS_IOS),
-                                          query=__generic_query(typename=meta_type.USEROS_IOS),
-                                          value_limit=0,
-                                          starts_with="",
-                                          starts_limit=0,
-                                          ignore_if_starts_with=["/"]),
-    meta_type.USERDEVICE_IOS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERDEVICE_IOS),
-                                              query=__generic_query(typename=meta_type.USERDEVICE_IOS),
-                                              value_limit=3,
-                                              starts_with="",
-                                              starts_limit=3,
-                                              ignore_if_starts_with=["/"]),
-    meta_type.USERCOUNTRY_IOS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERCOUNTRY_IOS),
-                                               query=__generic_query(typename=meta_type.USERCOUNTRY_IOS),
-                                               value_limit=2,
-                                               starts_with="",
-                                               starts_limit=2,
-                                               ignore_if_starts_with=["/"]),
-    meta_type.USERID_IOS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERID_IOS),
-                                          query=__generic_query(typename=meta_type.USERID_IOS),
-                                          value_limit=2,
-                                          starts_with="",
-                                          starts_limit=2,
-                                          ignore_if_starts_with=["/"]),
-    meta_type.USERANONYMOUSID_IOS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.USERANONYMOUSID_IOS),
-                                                   query=__generic_query(typename=meta_type.USERANONYMOUSID_IOS),
-                                                   value_limit=3,
-                                                   starts_with="",
-                                                   starts_limit=3,
-                                                   ignore_if_starts_with=["/"]),
-    meta_type.REVID_IOS: SupportedFilter(get=__generic_autocomplete(typename=meta_type.REVID_IOS),
-                                         query=__generic_query(typename=meta_type.REVID_IOS),
-                                         value_limit=0,
-                                         starts_with="",
-                                         starts_limit=0,
-                                         ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_os_ios: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_os_ios),
+        query=__generic_query(typename=schemas.FilterType.user_os_ios),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_device_ios: SupportedFilter(
+        get=__generic_autocomplete(
+            typename=schemas.FilterType.user_device_ios),
+        query=__generic_query(typename=schemas.FilterType.user_device_ios),
+        value_limit=3,
+        starts_with="",
+        starts_limit=3,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_country_ios: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_country_ios),
+        query=__generic_query(typename=schemas.FilterType.user_country_ios),
+        value_limit=2,
+        starts_with="",
+        starts_limit=2,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_id_ios: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_id_ios),
+        query=__generic_query(typename=schemas.FilterType.user_id_ios),
+        value_limit=2,
+        starts_with="",
+        starts_limit=2,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.user_anonymous_id_ios: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.user_anonymous_id_ios),
+        query=__generic_query(typename=schemas.FilterType.user_anonymous_id_ios),
+        value_limit=3,
+        starts_with="",
+        starts_limit=3,
+        ignore_if_starts_with=["/"]),
+    schemas.FilterType.rev_id_ios: SupportedFilter(
+        get=__generic_autocomplete(typename=schemas.FilterType.rev_id_ios),
+        query=__generic_query(typename=schemas.FilterType.rev_id_ios),
+        value_limit=0,
+        starts_with="",
+        starts_limit=0,
+        ignore_if_starts_with=["/"]),
 
 }
 
 
 def search(text, meta_type, project_id):
     rows = []
-    if meta_type.upper() not in list(SUPPORTED_TYPES.keys()):
+    if meta_type not in list(SUPPORTED_TYPES.keys()):
         return {"errors": ["unsupported type"]}
-    rows += SUPPORTED_TYPES[meta_type.upper()].get(project_id=project_id, text=text)
-    if meta_type.upper() + "_IOS" in list(SUPPORTED_TYPES.keys()):
-        rows += SUPPORTED_TYPES[meta_type.upper() + "_IOS"].get(project_id=project_id, text=text)
+    rows += SUPPORTED_TYPES[meta_type].get(project_id=project_id, text=text)
+    if meta_type + "_IOS" in list(SUPPORTED_TYPES.keys()):
+        rows += SUPPORTED_TYPES[meta_type + "_IOS"].get(project_id=project_id, text=text)
     return {"data": rows}

@@ -1,7 +1,7 @@
-from chalicelib.utils import pg_client, helper, dev
+import re
 
 from chalicelib.core import projects
-import re
+from chalicelib.utils import pg_client, dev
 
 MAX_INDEXES = 10
 
@@ -28,6 +28,30 @@ def get(project_id):
                 if metas[k] is not None:
                     results.append({"key": metas[k], "index": i + 1})
         return results
+
+
+def get_batch(project_ids):
+    if project_ids is None or len(project_ids) == 0:
+        return []
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                f"""\
+            SELECT  
+                project_id, {",".join(_get_column_names())}
+            FROM public.projects
+            WHERE project_id IN %(project_ids)s 
+                AND deleted_at ISNULL;""", {"project_ids": tuple(project_ids)})
+        )
+        full_metas = cur.fetchall()
+    results = {}
+    if full_metas is not None and len(full_metas) > 0:
+        for metas in full_metas:
+            results[str(metas["project_id"])] = []
+            for i, k in enumerate(metas.keys()):
+                if metas[k] is not None and k != "project_id":
+                    results[str(metas["project_id"])].append({"key": metas[k], "index": i + 1})
+    return results
 
 
 regex = re.compile(r'^[a-z0-9_-]+$', re.IGNORECASE)
@@ -90,7 +114,9 @@ def delete(tenant_id, project_id, index: int):
         cur.execute(query=query)
         query = cur.mogrify(f"""UPDATE public.sessions 
                                 SET {colname}= NULL
-                                WHERE project_id = %(project_id)s""",
+                                WHERE project_id = %(project_id)s
+                                    AND {colname} IS NOT NULL
+                                """,
                             {"project_id": project_id})
         cur.execute(query=query)
 
@@ -251,12 +277,13 @@ def add_edit_delete(tenant_id, project_id, new_metas):
 def get_remaining_metadata_with_count(tenant_id):
     all_projects = projects.get_projects(tenant_id=tenant_id)
     results = []
+    used_metas = get_batch([p["projectId"] for p in all_projects])
     for p in all_projects:
-        used_metas = get(p["projectId"])
         if MAX_INDEXES < 0:
             remaining = -1
         else:
-            remaining = MAX_INDEXES - len(used_metas)
-        results.append({**p, "limit": MAX_INDEXES, "remaining": remaining, "count": len(used_metas)})
+            remaining = MAX_INDEXES - len(used_metas[str(p["projectId"])])
+        results.append(
+            {**p, "limit": MAX_INDEXES, "remaining": remaining, "count": len(used_metas[str(p["projectId"])])})
 
     return results

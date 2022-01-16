@@ -1,6 +1,7 @@
+import requests
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import requests
 
 
 def get_by_id(webhook_id):
@@ -121,7 +122,7 @@ def add(tenant_id, endpoint, auth_header=None, webhook_type='webhook', name="", 
 
 
 def add_edit(tenant_id, data, replace_none=None):
-    if "webhookId" in data:
+    if data.get("webhookId") is not None:
         return update(tenant_id=tenant_id, webhook_id=data["webhookId"],
                       changes={"endpoint": data["endpoint"],
                                "authHeader": None if "authHeader" not in data else data["authHeader"],

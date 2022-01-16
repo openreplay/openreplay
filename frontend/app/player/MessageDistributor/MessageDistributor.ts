@@ -25,12 +25,11 @@ import WindowNodeCounter from './managers/WindowNodeCounter';
 import ActivityManager from './managers/ActivityManager';
 import AssistManager from './managers/AssistManager';
 
-import MessageReader from './MessageReader';
+import MFileReader from './messages/MFileReader';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
 
-import type { TimedMessage } from './Timed';
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
 
@@ -82,32 +81,24 @@ import type {
   SetViewportScroll,
 } from './messages';
 
-interface Timed { //TODO: to common space
-  time: number;
-}
-
-type ReduxDecoded = Timed & {
-  action: {},
-  state: {},
-  duration: number,
-}
+import type { Timed } from './messages/timed';
 
 export default class MessageDistributor extends StatedScreen {
   // TODO: consistent with the other data-lists
   private readonly locationEventManager: ListWalker<any>/*<LocationEvent>*/ = new ListWalker();
-  private readonly locationManager: ListWalker<SetPageLocation & Timed> = new ListWalker();
-  private readonly loadedLocationManager: ListWalker<SetPageLocation  & Timed> = new ListWalker();
-  private readonly connectionInfoManger: ListWalker<ConnectionInformation  & Timed> = new ListWalker();
+  private readonly locationManager: ListWalker<SetPageLocation> = new ListWalker();
+  private readonly loadedLocationManager: ListWalker<SetPageLocation> = new ListWalker();
+  private readonly connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
   private readonly performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
   private readonly windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
   private readonly clickManager: ListWalker<Timed> = new ListWalker();
 
-  private readonly resizeManager: ListWalker<SetViewportSize & Timed> = new ListWalker([]);
+  private readonly resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
   private readonly pagesManager: PagesManager;
   private readonly mouseManager: MouseManager;
   private readonly assistManager: AssistManager;
 
-  private readonly scrollManager: ListWalker<SetViewportScroll & Timed> = new ListWalker();
+  private readonly scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
 
   private readonly decoder = new Decoder();
   private readonly lists = initLists();
@@ -184,7 +175,7 @@ export default class MessageDistributor extends StatedScreen {
     window.fetch(fileUrl)
     .then(r => r.arrayBuffer())
     .then(b => {
-      const r = new MessageReader(new Uint8Array(b), this.sessionStart);
+      const r = new MFileReader(new Uint8Array(b), this.sessionStart);
       const msgs: Array<Message> = [];
 
       while (r.hasNext()) {
@@ -334,7 +325,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   /* Binded */
-  distributeMessage = (msg: TimedMessage, index: number): void => {
+  distributeMessage = (msg: Message, index: number): void => {
     if ([ 
       "mouse_move",
       "mouse_click",

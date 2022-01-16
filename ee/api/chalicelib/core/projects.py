@@ -1,5 +1,6 @@
 import json
 
+import schemas
 from chalicelib.core import users
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -40,8 +41,28 @@ def __create(tenant_id, name):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
-def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, version=False):
+def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, version=False,
+                 last_tracker_version=None, user_id=None):
     with pg_client.PostgresClient() as cur:
+        tracker_query = ""
+        if last_tracker_version is not None and len(last_tracker_version) > 0:
+            tracker_query = cur.mogrify(
+                """,(SELECT tracker_version FROM public.sessions 
+                    WHERE sessions.project_id = s.project_id 
+                    AND tracker_version=%(version)s AND tracker_version IS NOT NULL LIMIT 1) AS tracker_version""",
+                {"version": last_tracker_version}).decode('UTF-8')
+        elif version:
+            tracker_query = ",(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version"
+
+        role_query = """INNER JOIN LATERAL (SELECT 1
+                     FROM users
+                              INNER JOIN roles USING (role_id)
+                              LEFT JOIN roles_projects USING (role_id)
+                     WHERE users.user_id = %(user_id)s
+                       AND users.deleted_at ISNULL
+                       AND users.tenant_id = %(tenant_id)s
+                       AND (roles.all_projects OR roles_projects.project_id = s.project_id)
+                    ) AS role_project ON (TRUE)"""
         cur.execute(
             cur.mogrify(f"""\
                     SELECT
@@ -49,13 +70,14 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
                             {',s.gdpr' if gdpr else ''} 
                             {',COALESCE((SELECT TRUE FROM public.sessions WHERE sessions.project_id = s.project_id LIMIT 1), FALSE) AS recorded' if recorded else ''}
                             {',stack_integrations.count>0 AS stack_integrations' if stack_integrations else ''}
-                            {',(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version' if version else ''}
+                            {tracker_query}
                     FROM public.projects AS s
                             {'LEFT JOIN LATERAL (SELECT COUNT(*) AS count FROM public.integrations WHERE s.project_id = integrations.project_id LIMIT 1) AS stack_integrations ON TRUE' if stack_integrations else ''}
-                    where s.tenant_id =%(tenant_id)s
+                            {role_query if user_id is not None else ""}
+                    WHERE s.tenant_id =%(tenant_id)s
                         AND s.deleted_at IS NULL
                     ORDER BY s.project_id;""",
-                        {"tenant_id": tenant_id})
+                        {"tenant_id": tenant_id, "user_id": user_id})
         )
         rows = cur.fetchall()
         if recording_state:
@@ -77,15 +99,27 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         return helper.list_to_camel_case(rows)
 
 
-def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None):
+def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=None, version=False,
+                last_tracker_version=None):
     with pg_client.PostgresClient() as cur:
+        tracker_query = ""
+        if last_tracker_version is not None and len(last_tracker_version) > 0:
+            tracker_query = cur.mogrify(
+                """,(SELECT tracker_version FROM public.sessions 
+                    WHERE sessions.project_id = s.project_id 
+                    AND tracker_version=%(version)s AND tracker_version IS NOT NULL LIMIT 1) AS tracker_version""",
+                {"version": last_tracker_version}).decode('UTF-8')
+        elif version:
+            tracker_query = ",(SELECT tracker_version FROM public.sessions WHERE sessions.project_id = s.project_id ORDER BY start_ts DESC LIMIT 1) AS tracker_version"
+
         query = cur.mogrify(f"""\
                     SELECT
                            s.project_id,
-                           s.name,
-                            s.project_key
+                           s.project_key,
+                           s.name
                             {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_id = %(project_id)s) AS last_recorded_session_at" if include_last_session else ""}
                             {',s.gdpr' if include_gdpr else ''}
+                            {tracker_query}
                     FROM public.projects AS s
                     where s.tenant_id =%(tenant_id)s 
                         AND s.project_id =%(project_id)s
@@ -100,25 +134,52 @@ def get_project(tenant_id, project_id, include_last_session=False, include_gdpr=
         return helper.dict_to_camel_case(row)
 
 
-def is_authorized(project_id, tenant_id):
+def is_authorized(project_id, tenant_id, user_id=None):
     if project_id is None or not str(project_id).isdigit():
         return False
-    return get_project(tenant_id=tenant_id, project_id=project_id) is not None
+    with pg_client.PostgresClient() as cur:
+        role_query = """INNER JOIN LATERAL (SELECT 1
+                             FROM users
+                                      INNER JOIN roles USING (role_id)
+                                      LEFT JOIN roles_projects USING (role_id)
+                             WHERE users.user_id = %(user_id)s 
+                                AND users.deleted_at ISNULL 
+                                AND users.tenant_id = %(tenant_id)s 
+                                AND (roles.all_projects OR roles_projects.project_id = %(project_id)s)
+                        ) AS role_project ON (TRUE)"""
+
+        query = cur.mogrify(f"""\
+                    SELECT project_id
+                    FROM public.projects AS s
+                    {role_query if user_id is not None else ""}
+                    where s.tenant_id =%(tenant_id)s 
+                        AND s.project_id =%(project_id)s
+                        AND s.deleted_at IS NULL
+                    LIMIT 1;""",
+                            {"tenant_id": tenant_id, "project_id": project_id, "user_id": user_id})
+        cur.execute(
+            query=query
+        )
+        row = cur.fetchone()
+    return row is not None
 
 
-def create(tenant_id, user_id, data):
-    admin = users.get(user_id=user_id, tenant_id=tenant_id)
-    if not admin["admin"] and not admin["superAdmin"]:
-        return {"errors": ["unauthorized"]}
-    return {"data": __create(tenant_id=tenant_id, name=data.get("name", "my first project"))}
+def create(tenant_id, user_id, data: schemas.CreateProjectSchema, skip_authorization=False):
+    if not skip_authorization:
+        admin = users.get(user_id=user_id, tenant_id=tenant_id)
+        if not admin["admin"] and not admin["superAdmin"]:
+            return {"errors": ["unauthorized"]}
+        if admin["roleId"] is not None and not admin["allProjects"]:
+            return {"errors": ["unauthorized: you need allProjects permission to create a new project"]}
+    return {"data": __create(tenant_id=tenant_id, name=data.name)}
 
 
-def edit(tenant_id, user_id, project_id, data):
+def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
     if not admin["admin"] and not admin["superAdmin"]:
         return {"errors": ["unauthorized"]}
     return {"data": __update(tenant_id=tenant_id, project_id=project_id,
-                             changes={"name": data.get("name", "my first project")})}
+                             changes={"name": data.name})}
 
 
 def delete(tenant_id, user_id, project_id):
@@ -128,8 +189,7 @@ def delete(tenant_id, user_id, project_id):
         return {"errors": ["unauthorized"]}
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""\
-                            UPDATE public.projects 
+            cur.mogrify("""UPDATE public.projects 
                             SET 
                               deleted_at = timezone('utc'::text, now()),
                               active = FALSE
@@ -228,3 +288,44 @@ def update_capture_status(project_id, changes):
         )
 
     return changes
+
+
+def get_project_by_key(tenant_id, project_key, include_last_session=False, include_gdpr=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+                    SELECT                           
+                           s.project_key,
+                           s.name
+                            {",(SELECT max(ss.start_ts) FROM public.sessions AS ss WHERE ss.project_key = %(project_key)s) AS last_recorded_session_at" if include_last_session else ""}
+                            {',s.gdpr' if include_gdpr else ''}
+                    FROM public.projects AS s
+                    where s.project_key =%(project_key)s
+                        AND s.tenant_id =%(tenant_id)s
+                        AND s.deleted_at IS NULL
+                    LIMIT 1;""",
+                            {"project_key": project_key, "tenant_id": tenant_id})
+
+        cur.execute(
+            query=query
+        )
+        row = cur.fetchone()
+        return helper.dict_to_camel_case(row)
+
+
+def is_authorized_batch(project_ids, tenant_id):
+    if project_ids is None or not len(project_ids):
+        return False
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("""\
+                    SELECT project_id
+                    FROM public.projects
+                    where tenant_id =%(tenant_id)s 
+                        AND project_id IN %(project_ids)s
+                        AND deleted_at IS NULL;""",
+                            {"tenant_id": tenant_id, "project_ids": tuple(project_ids)})
+
+        cur.execute(
+            query=query
+        )
+        rows = cur.fetchall()
+        return [r["project_id"] for r in rows]

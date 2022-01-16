@@ -1,6 +1,9 @@
-from datetime import datetime, timedelta
 from calendar import monthrange
-import pytz
+from datetime import datetime, timedelta
+
+import zoneinfo
+
+UTC_ZI = zoneinfo.ZoneInfo("UTC")
 
 
 class TimeUTC:
@@ -9,20 +12,20 @@ class TimeUTC:
     MS_DAY = MS_HOUR * 24
     MS_WEEK = MS_DAY * 7
     MS_MONTH = MS_DAY * 30
-    MS_MONTH_TRUE = monthrange(datetime.now(pytz.utc).astimezone(pytz.utc).year,
-                               datetime.now(pytz.utc).astimezone(pytz.utc).month)[1] * MS_DAY
+    MS_MONTH_TRUE = monthrange(datetime.now(UTC_ZI).astimezone(UTC_ZI).year,
+                               datetime.now(UTC_ZI).astimezone(UTC_ZI).month)[1] * MS_DAY
     RANGE_VALUE = None
 
     @staticmethod
     def midnight(delta_days=0):
-        return int((datetime.now(pytz.utc) + timedelta(delta_days)) \
+        return int((datetime.now(UTC_ZI) + timedelta(delta_days)) \
                    .replace(hour=0, minute=0, second=0, microsecond=0) \
-                   .astimezone(pytz.utc).timestamp() * 1000)
+                   .astimezone(UTC_ZI).timestamp() * 1000)
 
     @staticmethod
     def __now(delta_days=0, delta_minutes=0, delta_seconds=0):
-        return (datetime.now(pytz.utc) + timedelta(days=delta_days, minutes=delta_minutes, seconds=delta_seconds)) \
-            .astimezone(pytz.utc)
+        return (datetime.now(UTC_ZI) + timedelta(days=delta_days, minutes=delta_minutes, seconds=delta_seconds)) \
+            .astimezone(UTC_ZI)
 
     @staticmethod
     def now(delta_days=0, delta_minutes=0, delta_seconds=0):
@@ -32,28 +35,28 @@ class TimeUTC:
     @staticmethod
     def month_start(delta_month=0):
         month = TimeUTC.__now().month + delta_month
-        return int(datetime.now(pytz.utc) \
+        return int(datetime.now(UTC_ZI) \
                    .replace(year=TimeUTC.__now().year + ((-12 + month) // 12 if month % 12 <= 0 else month // 12),
                             month=12 + month % 12 if month % 12 <= 0 else month % 12 if month > 12 else month,
                             day=1,
                             hour=0, minute=0,
                             second=0,
                             microsecond=0) \
-                   .astimezone(pytz.utc).timestamp() * 1000)
+                   .astimezone(UTC_ZI).timestamp() * 1000)
 
     @staticmethod
     def year_start(delta_year=0):
-        return int(datetime.now(pytz.utc) \
+        return int(datetime.now(UTC_ZI) \
                    .replace(year=TimeUTC.__now().year + delta_year, month=1, day=1, hour=0, minute=0, second=0,
                             microsecond=0) \
-                   .astimezone(pytz.utc).timestamp() * 1000)
+                   .astimezone(UTC_ZI).timestamp() * 1000)
 
     @staticmethod
     def custom(year=None, month=None, day=None, hour=None, minute=None):
         args = locals()
-        return int(datetime.now(pytz.utc) \
+        return int(datetime.now(UTC_ZI) \
                    .replace(**{key: args[key] for key in args if args[key] is not None}, second=0, microsecond=0) \
-                   .astimezone(pytz.utc).timestamp() * 1000)
+                   .astimezone(UTC_ZI).timestamp() * 1000)
 
     @staticmethod
     def future(delta_day, delta_hour, delta_minute, minutes_period=None, start=None):
@@ -78,7 +81,7 @@ class TimeUTC:
 
     @staticmethod
     def from_ms_timestamp(ts):
-        return datetime.fromtimestamp(ts // 1000, pytz.utc)
+        return datetime.fromtimestamp(ts // 1000, UTC_ZI)
 
     @staticmethod
     def to_human_readable(ts, fmt='%Y-%m-%d %H:%M:%S UTC'):
@@ -113,14 +116,14 @@ class TimeUTC:
 
     @staticmethod
     def get_utc_offset():
-        return int((datetime.now(pytz.utc).now() - datetime.now(pytz.utc).replace(tzinfo=None)).total_seconds() * 1000)
+        return int((datetime.now(UTC_ZI).now() - datetime.now(UTC_ZI).replace(tzinfo=None)).total_seconds() * 1000)
 
     @staticmethod
     def trunc_day(timestamp):
         dt = TimeUTC.from_ms_timestamp(timestamp)
         return TimeUTC.datetime_to_timestamp(dt
                                              .replace(hour=0, minute=0, second=0, microsecond=0)
-                                             .astimezone(pytz.utc))
+                                             .astimezone(UTC_ZI))
 
     @staticmethod
     def trunc_week(timestamp):
@@ -128,4 +131,4 @@ class TimeUTC:
         start = dt - timedelta(days=dt.weekday())
         return TimeUTC.datetime_to_timestamp(start
                                              .replace(hour=0, minute=0, second=0, microsecond=0)
-                                             .astimezone(pytz.utc))
+                                             .astimezone(UTC_ZI))

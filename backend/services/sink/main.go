@@ -20,8 +20,13 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	writer := NewWriter(env.Uint16("FS_ULIMIT"), env.String("FS_DIR"))
-  
+	FS_DIR := env.String("FS_DIR");
+	if _, err := os.Stat(FS_DIR); os.IsNotExist(err) {
+		log.Fatalf("%v doesn't exist. %v", FS_DIR, err)
+	}
+
+	writer := NewWriter(env.Uint16("FS_ULIMIT"), FS_DIR)
+
   count := 0
 
 	consumer := queue.NewMessageConsumer(

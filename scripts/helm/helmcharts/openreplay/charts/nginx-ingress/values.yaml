@@ -1,0 +1,173 @@
+# Default values for nginx-ingress.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: http
+    - port: 443
+      targetPort: https
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+ssl_certificate: |-
+  -----BEGIN CERTIFICATE-----
+  MIIFITCCAwmgAwIBAgIUQ8hQoDbW3Z4DxRVjIYlIlbEHp/8wDQYJKoZIhvcNAQEL
+  BQAwIDEeMBwGA1UEAwwVb3BlbnJlcGxheS5sb2NhbC5ob3N0MB4XDTIxMTIyMjA3
+  NDIxOVoXDTIyMTIyMjA3NDIxOVowIDEeMBwGA1UEAwwVb3BlbnJlcGxheS5sb2Nh
+  bC5ob3N0MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAyXTX6RwqNVM+
+  LSvc5TkuBnxlw1sHxtkkojwpbwavr6ccSdtoYB7KYwcufh0zz3LaSDgPNqStOf6w
+  hAWV830bxvOvU6yJ7MgP8/htfY1KWIoNS6ducoct4VhgshWXWwQtrtWZJku+cyds
+  QTkr2BziSX+Y7/1rALKbOU4CIRCKtJ2jeaI+c4kcXXB+ARauDlqB7+CS4B+wjlfX
+  sOoC2bWgZOxyZnHolb3hKMLfBswLwYq0DRjjNMDqX8xS6V1AgoTrCxl1DqPLw47o
+  immbSKZ4voot60cSBYVK4qOX5Nqw5RmqwELb9Ib4QPVCt9HjbYQp77EcOonkgE4l
+  fYabvvOeM/U6vdtZhI2CJg0tkytuJ4+Hb7i7nRK2SRMppmtP7yDDXpMGoAXK2bVZ
+  ipZBRct0onxLifH5vdrUNbOlXItjWLQMfiHlDeG48kbXbKaJPv3tRvU0Gix2X8SJ
+  OlRNezNNz8pce0Bbgx3YoQhrRTad4CC6cIpRjgTt/pww3BoF7jDLl6RNI1cXfy4u
+  tkSlMqAQV6x0aig9Ldg1VFM2oCaEyvzx0BWDm/jmbZcyVizlb+uQQ/huNSJXT++p
+  CmPNG7rP6eYNTh7+7DDWvKBQQFWOPaVfwvrhzvb7q2B2Bmc33bDXeRuF4MJE6syA
+  YUCV2Ztw65uI864PRDIKO4ru1UQgx5sCAwEAAaNTMFEwHQYDVR0OBBYEFIdNQGn2
+  z3xmJfExKAUeohFnLjzsMB8GA1UdIwQYMBaAFIdNQGn2z3xmJfExKAUeohFnLjzs
+  MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggIBAJvkSX+RoYGOcU0z
+  qEWlAN6Jy0CzLsTp/VoSZY9gd+hLFd/lK7SjXhAnNyEELpeanGs04ytJpXnSH1bA
+  dGs0UeWYalOxrHSN4ln5SNzWVE8kODM1zcyNePllI/PVcXLmujQz5wNbNoC5Qt8p
+  0RoZ2wInmyh2wTQcflIPUtncsw84ozVVuebmc6jiuPxnxdTAXeYOwKUF25t8rSp6
+  5n23F0GP8Ypu7vjT7N2RpUe0zkutaij+uISBHZw50ohrelPlV4V9qhp6MV+h9xuh
+  0z8OEyq2vK4KNn96A97mSRuqqt6Ajb2MHdErTr6fgj5/CtSD337oIK3froRmID8s
+  /JXADsNnBEqQBfcM6gSaw1M/fHDPNZzwVv6yAN+bKrI+KEmKJD31Tm2G55oPvLTP
+  XZdmVIAqxIu89v/GOJ2J29vC+h9pTjTze31DFg0niwLcr1aNawiC2d4n2wdDwKwc
+  HnCnflELyYcn4KgvpLNz5wEKEHTAQ3JF5VIel1/uqYN9cosw1vjRskPK/g3nIEPG
+  T247naj+JbW244P0jxb57VWiD/7IJ4ZErA1KrvqR/y1NnGxrgXoRjwmhCv/4YIYi
+  qgnvF7IkwGozdoLPiBMmvjNq/AmVLrfZNPxZjHL3nIW+PBEeBD/lkH36mcakg/1S
+  w7yMPvE+TIh6+HwDZc2jNLkv/8tY
+  -----END CERTIFICATE-----
+
+ssl_privatekey: |-
+  -----BEGIN PRIVATE KEY-----
+  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
+  7qINKoGovqXB1oAdopIl1z64e7MWVE4=
+  -----END PRIVATE KEY-----

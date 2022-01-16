@@ -22,7 +22,25 @@ resources:
     memory: 1Mi
 
 env:
-  ALERT_NOTIFICATION_STRING: http://chalice-openreplay.app.svc.cluster.local:8000/alerts/notifications
-  CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
-  POSTGRES_STRING: postgres://postgres:asayerPostgres@postgresql.db.svc.cluster.local:5432
+  pg_host: postgresql.db.svc.cluster.local
+  pg_port: 5432
+  pg_dbname: postgres
+  pg_user: postgres
+  pg_password: asayerPostgres
+  EMAIL_HOST: ''
+  EMAIL_PORT: '587'
+  EMAIL_USER: ''
+  EMAIL_PASSWORD: ''
+  EMAIL_USE_TLS: 'true'
+  EMAIL_USE_SSL: 'false'
+  EMAIL_SSL_KEY: ''
+  EMAIL_SSL_CERT: ''
+  EMAIL_FROM: OpenReplay<do-not-reply@openreplay.com>
+  SITE_URL: ''
+  S3_HOST: 'http://minio.db.svc.cluster.local:9000'
+  S3_KEY: minios3AccessKeyS3cr3t
+  S3_SECRET: m1n10s3CretK3yPassw0rd
+  AWS_DEFAULT_REGION: us-east-1
   LICENSE_KEY: ""
+  PYTHONUNBUFFERED: '0'
+  version_number: '1.3.6'

@@ -1,0 +1,27 @@
+{{- if and .Values.metrics.enabled .Values.metrics.prometheusRule.enabled .Values.metrics.prometheusRule.rules }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "zookeeper.fullname" . }}
+  {{- if .Values.metrics.prometheusRule.namespace }}
+  namespace: {{ .Values.metrics.prometheusRule.namespace }}
+  {{- else }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels: {{- include "zookeeper.labels" . | nindent 4 }}
+    app.kubernetes.io/component: zookeeper
+    {{- range $key, $value := .Values.metrics.prometheusRule.selector }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- if .Values.commonLabels }}
+    {{- include "zookeeper.tplValue" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "zookeeper.tplValue" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  groups:
+  - name: {{ include "zookeeper.fullname" . }}
+    rules: {{- toYaml .Values.metrics.prometheusRule.rules | nindent 6 }}
+{{- end }}
+

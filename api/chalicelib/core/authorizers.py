@@ -1,8 +1,7 @@
-from chalicelib.utils.helper import environ
 import jwt
 from chalicelib.utils import helper
 from chalicelib.utils.TimeUTC import TimeUTC
-
+from decouple import config
 from chalicelib.core import tenants
 from chalicelib.core import users
 
@@ -14,8 +13,8 @@ def jwt_authorizer(token):
     try:
         payload = jwt.decode(
             token[1],
-            environ["jwt_secret"],
-            algorithms=environ["jwt_algorithm"],
+            config("jwt_secret"),
+            algorithms=config("jwt_algorithm"),
             audience=[f"plugin:{helper.get_stage_name()}", f"front:{helper.get_stage_name()}"]
         )
     except jwt.ExpiredSignatureError:
@@ -43,15 +42,15 @@ def generate_jwt(id, tenant_id, iat, aud):
         payload={
             "userId": id,
             "tenantId": tenant_id,
-            "exp": iat // 1000 + int(environ["jwt_exp_delta_seconds"]) + TimeUTC.get_utc_offset() // 1000,
-            "iss": environ["jwt_issuer"],
+            "exp": iat // 1000 + config("jwt_exp_delta_seconds",cast=int) + TimeUTC.get_utc_offset() // 1000,
+            "iss": config("jwt_issuer"),
             "iat": iat // 1000,
             "aud": aud
         },
-        key=environ["jwt_secret"],
-        algorithm=environ["jwt_algorithm"]
+        key=config("jwt_secret"),
+        algorithm=config("jwt_algorithm")
     )
-    return token.decode("utf-8")
+    return token
 
 
 def api_key_authorizer(token):

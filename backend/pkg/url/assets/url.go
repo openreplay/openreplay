@@ -43,7 +43,8 @@ func isCachable(rawurl string) bool {
 		ext == ".woff" ||
 		ext == ".woff2" ||
 		ext == ".ttf" ||
-		ext == ".otf"
+		ext == ".otf" ||
+		ext == ".eot"
 }
 
 func GetFullCachableURL(baseURL string, relativeURL string) (string, bool) {

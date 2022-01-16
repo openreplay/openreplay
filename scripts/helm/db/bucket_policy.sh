@@ -1,5 +1,5 @@
 #!/bin/bash
-buckets=("mobs" "sessions-assets" "static" "sourcemaps")
+buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets")
 
 mc alias set minio http://localhost:9000 $1 $2
 

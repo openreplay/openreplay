@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "assets.fullname" . }}
+  labels:
+    {{- include "assets.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "assets.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "assets.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "assets.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if .Values.global.enterpriseEditionLicense }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
+          {{- else }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: '{{ .Values.global.s3.accessKey }}'
+            - name: AWS_SECRET_ACCESS_KEY
+              value: '{{ .Values.global.s3.secretKey }}'
+            - name: S3_BUCKET_ASSETS
+              value: '{{ .Values.global.s3.assetsBucket }}'
+            - name: LICENSE_KEY
+              value: '{{ .Values.global.enterpriseEditionLicense }}'
+            - name: AWS_ENDPOINT
+              value: '{{ .Values.global.s3.endpoint }}'
+            - name: AWS_REGION
+              value: '{{ .Values.global.s3.region }}'
+            - name: REDIS_STRING
+              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
+            - name: KAFKA_SERVERS
+              value: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+            - name: KAFKA_USE_SSL
+              value: '{{ .Values.global.kafka.kafkaUseSsl }}'
+            # Ref: https://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
+            # We need https://bucketname.s3endpoint
+            - name: ASSETS_ORIGIN
+              value: '{{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}'
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: '{{ $val }}'
+            {{- end}}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
