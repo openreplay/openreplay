@@ -70,16 +70,6 @@ randomPass() {
 
 ## Prepping the infra
 
-## Don't override existing variables file.
-[[ -f vars.yaml ]] && {
-    warn "Existing Variables file. Not downloading."
-}|| {
-
-info " Downloading vars file"
-curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version="v1.4.0"
-
-}
-
 [[ -z $DOMAIN_NAME ]] && {
 fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
 }
