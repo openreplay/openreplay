@@ -81,7 +81,6 @@ env:
   captcha_server: ''
   captcha_key: ''
   async_Token: ''
-  SITE_URL: ''
   announcement_url: ''
   jwt_secret: "SetARandomStringHere"
   jwt_algorithm: HS512

@@ -76,7 +76,6 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  SITE_URL: ''
   PYTHONUNBUFFERED: '0'
 
 
