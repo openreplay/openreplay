@@ -133,6 +133,8 @@ kafka:
 
 # Enterprise dbs
 clickhouse:
+  image:
+    tag: "21.9.4.35"
   enabled: false
 
 postgreql:
