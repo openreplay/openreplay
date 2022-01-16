@@ -736,3 +736,57 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
             query
         )
         return helper.dict_to_camel_case(cur.fetchone())
+
+
+def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, internal_id=None):
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify(f"""\
+                    WITH u AS (
+                        UPDATE public.users 
+                        SET tenant_id= %(tenantId)s,
+                         role= %(role)s, 
+                         name= %(name)s,
+                         data= %(data)s, 
+                         origin= %(origin)s, 
+                         internal_id= %(internal_id)s, 
+                         role_id= %(role_id)s,
+                         deleted_at= NULL,
+                         created_at= default,
+                         api_key= default,
+                         jwt_iat= NULL,
+                         appearance= default,
+                         weekly_report= default
+                        WHERE user_id = %(user_id)s
+                        RETURNING *
+                    ),
+                    au AS (
+                        UPDATE public.basic_authentication
+                        SET password= default,
+                            generated_password= default,
+                            invitation_token= default,
+                            invited_at= default,
+                            change_pwd_token= default,
+                            change_pwd_expire_at= default,
+                            changed_at= NULL  
+                        WHERE user_id = %(user_id)s
+                        RETURNING user_id
+                    )
+                    SELECT u.user_id                                              AS id,
+                           u.email,
+                           u.role,
+                           u.name,
+                           TRUE                                                   AS change_password,
+                           (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
+                           (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
+                           (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
+                           u.appearance,
+                           origin
+                    FROM u;""",
+                            {"tenantId": tenant_id, "email": email, "internal_id": internal_id,
+                             "role": "admin" if admin else "member", "name": name, "origin": origin,
+                             "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
+                             "user_id": user_id})
+        cur.execute(
+            query
+        )
+        return helper.dict_to_camel_case(cur.fetchone())
