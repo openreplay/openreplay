@@ -15,7 +15,7 @@ fatal()
     exit 1
 }
 
-version=${OPENREPLAY_VERSION:-'v1.4.0'}
+version="v1.4.0"
 usr=`whoami`
 
 # Installing k3s
@@ -76,7 +76,7 @@ randomPass() {
 }|| {
 
 info " Downloading vars file"
-curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version}/scripts/helm/helm/vars.yaml
+curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${version="v1.4.0"
 
 }
 
