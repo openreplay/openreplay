@@ -24,7 +24,6 @@ async def start_sso(request: Request):
     return RedirectResponse(url=sso_built_url)
 
 
-# @public_app.post('/sso/saml2/acs', tags=["saml2"], content_types=['application/x-www-form-urlencoded'])
 @public_app.post('/sso/saml2/acs', tags=["saml2"])
 async def process_sso_assertion(request: Request):
     req = await prepare_request(request=request)
@@ -77,11 +76,19 @@ async def process_sso_assertion(request: Request):
                             or admin_privileges[0].lower() == "false")
 
     if existing is None:
-        print("== new user ==")
-        users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
-                              origin=SAML2_helper.get_saml2_provider(),
-                              name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
-                              internal_id=internal_id, role_id=role["roleId"])
+        deleted = users.get_deleted_user_by_email(auth.get_nameid())
+        if deleted is not None:
+            print("== restore deleted user ==")
+            users.restore_sso_user(user_id=deleted["userId"], tenant_id=t['tenantId'], email=email,
+                                   admin=admin_privileges, origin=SAML2_helper.get_saml2_provider(),
+                                   name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
+                                   internal_id=internal_id, role_id=role["roleId"])
+        else:
+            print("== new user ==")
+            users.create_sso_user(tenant_id=t['tenantId'], email=email, admin=admin_privileges,
+                                  origin=SAML2_helper.get_saml2_provider(),
+                                  name=" ".join(user_data.get("firstName", []) + user_data.get("lastName", [])),
+                                  internal_id=internal_id, role_id=role["roleId"])
     else:
         if t['tenantId'] != existing["tenantId"]:
             print("user exists for a different tenant")
