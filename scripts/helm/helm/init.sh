@@ -15,19 +15,16 @@ fatal()
     exit 1
 }
 
-version=${OPENREPLAY_VERSION:-'v1.3.6'}
-
-# Check whether script is root user
-[[ $(id -u) -eq 0 ]] || {
-    fatal "Please run the script as root user"
-    exit 100
-}
+version=${OPENREPLAY_VERSION:-'v1.4.0'}
+usr=`whoami`
 
 # Installing k3s
 curl -sL https://get.k3s.io | sudo K3S_KUBECONFIG_MODE="644" INSTALL_K3S_VERSION='v1.19.5+k3s2' INSTALL_K3S_EXEC="--no-deploy=traefik" sh -
 mkdir ~/.kube
-cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 chmod 0644 ~/.kube/config
+sudo chown -R $usr ~/.kube/config
+
 
 ## installing kubectl
 which kubectl &> /dev/null || {
@@ -64,8 +61,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 ## Installing openssl
-apt update &> /dev/null
-apt install openssl -y &> /dev/null
+sudo apt update &> /dev/null
+sudo apt install openssl -y &> /dev/null
 
 randomPass() {
     openssl rand -hex 10
@@ -84,7 +81,7 @@ curl -L -O vars.yaml https://raw.githubusercontent.com/rjshrjndrn/openreplay/${v
 }
 
 [[ -z $DOMAIN_NAME ]] && {
-fatal 'DOMAIN_NAME variable is empty. Rerun the script `curl -sL get.openreplay.com | sudo DOMAIN_NAME=openerplay.mycomp.org bash - `'
+fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
 }
 
 info "Creating dynamic passwords"
@@ -100,4 +97,3 @@ info "Installing databases"
 helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic
 info "Installing application"
 helm upgrade --install openreplay ./openreplay -n app --create-namespace --wait -f ./vars.yaml --atomic
-
