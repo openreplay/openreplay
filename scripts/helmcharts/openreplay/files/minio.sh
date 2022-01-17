@@ -5,7 +5,7 @@ set -e
 
 cd /tmp
 
-buckets=("mobs" "sessions-assets" "static" "sourcemaps")
+buckets=("mobs" "sessions-assets" "static" "sourcemaps" "sessions-mobile-assets")
 
 mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MINIO_SECRET_KEY
 
