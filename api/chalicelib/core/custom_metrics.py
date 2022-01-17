@@ -56,8 +56,7 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
             query
         )
         r = cur.fetchone()
-        r = helper.dict_to_camel_case(r)
-        return {"data": r}
+    return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
 def __get_series_id(metric_id):
@@ -135,8 +134,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             query
         )
         r = cur.fetchone()
-        r = helper.dict_to_camel_case(r)
-        return r
+    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
 def get_all(project_id, user_id):
