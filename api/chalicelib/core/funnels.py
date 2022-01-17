@@ -1,6 +1,7 @@
 import json
 
 import chalicelib.utils.helper
+import schemas
 from chalicelib.core import events, significance, sessions
 from chalicelib.utils import dev
 from chalicelib.utils import helper, pg_client
@@ -144,28 +145,28 @@ def delete(project_id, funnel_id, user_id):
 
 
 def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id)
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
     return sessions.search2_pg(data=f["filter"], project_id=project_id, user_id=user_id)
 
 
-def get_sessions_on_the_fly(funnel_id, project_id, user_id, data):
-    data["events"] = filter_stages(data.get("events", []))
-    if len(data["events"]) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
+    data.events = filter_stages(data.events)
+    if len(data.events) == 0:
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
-        get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
-                           start_date=data.get('startDate', None),
-                           end_date=data.get('endDate', None))
-        data = f["filter"]
-    return sessions.search2_pg(data=data, project_id=project_id, user_id=user_id)
+        get_start_end_time(filter_d=f["filter"], range_value=data.range_value,
+                           start_date=data.startDate, end_date=data.endDate)
+        data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
+    return sessions.search2_pg(data=data, project_id=project_id,
+                               user_id=user_id)
 
 
-def get_top_insights(project_id, funnel_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id)
+def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
@@ -175,10 +176,10 @@ def get_top_insights(project_id, funnel_id, range_value=None, start_date=None, e
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
-def get_top_insights_on_the_fly(funnel_id, project_id, data):
+def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data):
     data["events"] = filter_stages(data.get("events", []))
     if len(data["events"]) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
@@ -192,8 +193,8 @@ def get_top_insights_on_the_fly(funnel_id, project_id, data):
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
-def get_issues(project_id, funnel_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id)
+def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
@@ -203,12 +204,12 @@ def get_issues(project_id, funnel_id, range_value=None, start_date=None, end_dat
 
 
 @dev.timed
-def get_issues_on_the_fly(funnel_id, project_id, data):
+def get_issues_on_the_fly(funnel_id, user_id, project_id, data):
     first_stage = data.get("firstStage")
     last_stage = data.get("lastStage")
     data["events"] = filter_stages(data.get("events", []))
     if len(data["events"]) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
@@ -257,7 +258,8 @@ def search_by_issue(user_id, project_id, funnel_id, issue_id, data, range_value=
         data = f["filter"]
 
     # insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data, project_id=project_id)
-    issues = get_issues_on_the_fly(funnel_id=funnel_id, project_id=project_id, data=data).get("issues", {})
+    issues = get_issues_on_the_fly(funnel_id=funnel_id, user_id=user_id, project_id=project_id, data=data) \
+        .get("issues", {})
     issues = issues.get("significant", []) + issues.get("insignificant", [])
     issue = None
     for i in issues:
