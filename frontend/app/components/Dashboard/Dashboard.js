@@ -5,6 +5,7 @@ import withPermissions from 'HOCs/withPermissions'
 import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
 import { NoContent } from 'UI';
 import { WIDGET_KEYS } from 'Types/dashboard';
+import CustomMetrics from 'Shared/CustomMetrics';
 
 import { 
   MissingResources,
@@ -184,6 +185,7 @@ export default class Dashboard extends React.PureComponent {
           <div>
             <div className={ cn(styles.header, "flex items-center w-full") }>            
               <MetricsFilters />
+              <CustomMetrics />
             </div>
             <div className="">
               <NoContent

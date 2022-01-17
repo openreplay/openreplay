@@ -5,13 +5,13 @@ require('dotenv').config()
 
 const oss = {
 	name: 'oss',
-	PRODUCTION: true,
+	PRODUCTION: false,
 	SENTRY_ENABLED: false,
 	SENTRY_URL: "",
 	CAPTCHA_ENABLED: process.env.CAPTCHA_ENABLED === 'true',
 	CAPTCHA_SITE_KEY: process.env.CAPTCHA_SITE_KEY,
 	ORIGIN: () => 'window.location.origin',
-	API_EDP: () => 'window.location.origin + "/api"',
+	API_EDP: "https://dol.openreplay.com/api",
 	ASSETS_HOST: () => 'window.location.origin + "/assets"',
 	VERSION: '1.3.6',
 	SOURCEMAP: true,

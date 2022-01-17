@@ -7,7 +7,7 @@ import { LinkStyledInput, CircularLoader } from 'UI';
 import { KEYS } from 'Types/filter/customFilter';
 import Event, { TYPES } from 'Types/filter/event';
 import CustomFilter from 'Types/filter/customFilter';
-import { setActiveKey, addCustomFilter, removeCustomFilter, applyFilter } from 'Duck/filters';
+import { setActiveKey, addCustomFilter, removeCustomFilter, applyFilter, updateValue } from 'Duck/filters';
 import DurationFilter from '../DurationFilter/DurationFilter';
 import AutoComplete from '../AutoComplete';
 
@@ -24,6 +24,7 @@ const getHeader = (type) => {
   addCustomFilter,
   removeCustomFilter,
   applyFilter,
+  updateValue,
 })
 class AttributeValueField extends React.PureComponent {
   state = {
@@ -134,25 +135,46 @@ class AttributeValueField extends React.PureComponent {
     return params;
   }
 
+  onAddValue = () => {
+    const { index, filter } = this.props;
+    this.props.updateValue('filters', index, filter.value.concat(""));
+  }
+
+  onRemoveValue = (valueIndex) => {
+    const { index, filter } = this.props;
+    this.props.updateValue('filters', index, filter.value.filter((_, i) => i !== valueIndex));
+  }
+
+  onChange = (name, value, valueIndex) => {
+    const { index, filter } = this.props;
+    this.props.updateValue('filters', index, filter.value.map((item, i) => i === valueIndex ? value : item));
+  }
+
   render() {
-    const { filter, onChange, onTargetChange } = this.props;
+    // const { filter, onChange } = this.props;
+    const { filter } = this.props;
     const _showAutoComplete = this.isAutoComplete(filter.type);
     const _params = _showAutoComplete ? this.getParams(filter) : {};    
-    let _optionsEndpoint= '/events/search';    
+    let _optionsEndpoint= '/events/search';
 
     return (
       <React.Fragment>
-        { _showAutoComplete ? 
-          <AutoComplete            
+        { _showAutoComplete ? filter.value.map((v, i) => (
+          <AutoComplete
             name={ 'value' }
             endpoint={ _optionsEndpoint }
-            value={ filter.value }
+            value={ v }
+            index={ i }
             params={ _params }           
             optionMapping={this.optionMapping}            
-            onSelect={ onChange }
+            onSelect={ (e, { name, value }) => onChange(name, value, i) }
             headerText={ <h5 className={ stl.header }>{ getHeader(filter.type) }</h5> }
             fullWidth={ (filter.type === TYPES.CONSOLE || filter.type === TYPES.LOCATION || filter.type === TYPES.CUSTOM) && filter.value }
+            onRemoveValue={() => this.onRemoveValue(i)}
+            onAddValue={this.onAddValue}
+            showCloseButton={i !== filter.value.length - 1}
           />
+        ))
         : this.renderField()
         }
         { filter.type === 'INPUT' &&
