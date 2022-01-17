@@ -1,4 +1,4 @@
-CREATE TABLE sessions_metadata
+CREATE TABLE IF NOT EXISTS sessions_metadata
 (
     session_id           UInt64,
     project_id           UInt32,
