@@ -24,8 +24,10 @@ import SessionFlowList from './SessionFlowList/SessionFlowList';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
-import NoSessionsMessage from '../shared/NoSessionsMessage';
-import TrackerUpdateMessage from '../shared/TrackerUpdateMessage';
+import NoSessionsMessage from 'Shared/NoSessionsMessage';
+import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
+import SessionSearchField from 'Shared/SessionSearchField'
+import SavedSearch from 'Shared/SavedSearch'
 import LiveSessionList from './LiveSessionList'
 
 const weakEqual = (val1, val2) => {
@@ -170,8 +172,12 @@ export default class BugFinder extends React.PureComponent {
               data-hidden={ activeTab === 'live' || activeTab === 'favorite' }
               className="mb-5"
             >
+              <div className="flex items-center">
+                <div style={{ width: "70%", marginRight: "10px"}}><SessionSearchField /></div>
+                <SavedSearch />
+              </div>
               <EventFilter />
-            </div>            
+            </div>
             { activeFlow && activeFlow.type === 'flows' && <FunnelList /> }
             { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }
             { activeTab.type === 'live' && <LiveSessionList /> }

@@ -9,12 +9,13 @@ class SegmentSelection extends React.Component {
   }
 
   render() {
-    const { className, list, primary = false, size = "normal" } = this.props;
+    const { className, list, small = false, extraSmall = false, primary = false, size = "normal" } = this.props;
 
     return (
       <div className={ cn(styles.wrapper, { 
           [styles.primary] : primary,
-          [styles.small]  : size === 'small'
+          [styles.small]  : size === 'small' || small,
+          [styles.extraSmall]  : extraSmall,
         }, className) }
       >
         { list.map(item => (
