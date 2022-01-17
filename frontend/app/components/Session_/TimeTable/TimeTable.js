@@ -135,7 +135,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
         ...computeTimeLine(this.props.rows, this.state.firstVisibleRowIndex, this.visibleCount),
       });
     }    
-    if (this.props.activeIndex && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current != null) {
+    if (this.props.activeIndex >= 0 && prevProps.activeIndex !== this.props.activeIndex && this.scroller.current != null) {
       this.scroller.current.scrollToRow(this.props.activeIndex);
     }
   }
@@ -168,7 +168,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       <div
         style={ rowStyle }
         key={ key } 
-        className={ cn('border-b border-color-gray-light-shade', stl.row, { [ stl.hoverable ]: hoverable, "error color-red": !!row.isRed && row.isRed(), 'cursor-pointer' : typeof onRowClick === "function", [stl.activeRow] : activeIndex === index, 'color-white' : activeIndex === index }) }
+        className={ cn('border-b border-color-gray-light-shade', stl.row, { [ stl.hoverable ]: hoverable, "error color-red": !!row.isRed && row.isRed(), 'cursor-pointer' : typeof onRowClick === "function", [stl.activeRow] : activeIndex === index }) }
         onClick={ typeof onRowClick === "function" ? () => onRowClick(row, index) : null }
         id="table-row"
       >
@@ -223,7 +223,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
       navigation=false,
       referenceLines = [],
       additionalHeight = 0,
-      activeIndex
+      activeIndex,
     } = this.props;
     const { 
       timewidth,
@@ -247,7 +247,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     return (
       <div className={ cn(className, "relative") }>
         { navigation && 
-          <div className={ cn(autoscrollStl.navButtons, "flex items-center") } style={{ top: '-33px', right: '30px' }} >
+          <div className={ cn(autoscrollStl.navButtons, "flex items-center") } >
             <IconButton 
               size="small" 
               icon="chevron-up" 
