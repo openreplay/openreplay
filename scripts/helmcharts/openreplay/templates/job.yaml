@@ -36,7 +36,7 @@ spec:
         args:
           - |
             git clone https://github.com/openreplay/openreplay /opt/openreplay/openreplay -b {{ .Chart.AppVersion }}
-            # Checking variable is empty. shell indipendant method
+            # Checking variable is empty. Shell independant method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
               echo "Copying enterprise code"
               cd /opt/openreplay/openreplay 
