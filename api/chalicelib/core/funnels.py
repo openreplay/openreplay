@@ -12,23 +12,24 @@ REMOVE_KEYS = ["key", "_key", "startDate", "endDate"]
 ALLOW_UPDATE_FOR = ["name", "filter"]
 
 
-def filter_stages(stages):
-    ALLOW_TYPES = [events.event_type.CLICK.ui_type, events.event_type.INPUT.ui_type,
-                   events.event_type.LOCATION.ui_type, events.event_type.CUSTOM.ui_type,
-                   events.event_type.CLICK_IOS.ui_type, events.event_type.INPUT_IOS.ui_type,
-                   events.event_type.VIEW_IOS.ui_type, events.event_type.CUSTOM_IOS.ui_type, ]
-    return [s for s in stages if s["type"] in ALLOW_TYPES and s.get("value") is not None]
+# def filter_stages(stages):
+#     ALLOW_TYPES = [events.event_type.CLICK.ui_type, events.event_type.INPUT.ui_type,
+#                    events.event_type.LOCATION.ui_type, events.event_type.CUSTOM.ui_type,
+#                    events.event_type.CLICK_IOS.ui_type, events.event_type.INPUT_IOS.ui_type,
+#                    events.event_type.VIEW_IOS.ui_type, events.event_type.CUSTOM_IOS.ui_type, ]
+#     return [s for s in stages if s["type"] in ALLOW_TYPES and s.get("value") is not None]
 
 
-def create(project_id, user_id, name, filter, is_public):
+def create(project_id, user_id, name, filter: schemas.FunnelSearchPayloadSchema, is_public):
     helper.delete_keys_from_dict(filter, REMOVE_KEYS)
-    filter["events"] = filter_stages(stages=filter.get("events", []))
+    # filter.events = filter_stages(stages=filter.events)
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
             INSERT INTO public.funnels (project_id, user_id, name, filter,is_public) 
             VALUES (%(project_id)s, %(user_id)s, %(name)s, %(filter)s::jsonb,%(is_public)s)
             RETURNING *;""",
-                            {"user_id": user_id, "project_id": project_id, "name": name, "filter": json.dumps(filter),
+                            {"user_id": user_id, "project_id": project_id, "name": name,
+                             "filter": json.dumps(filter.dict()),
                              "is_public": is_public})
 
         cur.execute(
@@ -94,7 +95,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
             if details:
-                row["filter"]["events"] = filter_stages(row["filter"]["events"])
+                # row["filter"]["events"] = filter_stages(row["filter"]["events"])
                 get_start_end_time(filter_d=row["filter"], range_value=range_value, start_date=start_date,
                                    end_date=end_date)
                 counts = sessions.search2_pg(data=row["filter"], project_id=project_id, user_id=None, count_only=True)
@@ -153,7 +154,7 @@ def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=No
 
 
 def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
-    data.events = filter_stages(data.events)
+    # data.events = filter_stages(data.events)
     if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
@@ -177,7 +178,7 @@ def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_dat
 
 
 def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data):
-    data["events"] = filter_stages(data.get("events", []))
+    # data["events"] = filter_stages(data.get("events", []))
     if len(data["events"]) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
@@ -207,7 +208,7 @@ def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None
 def get_issues_on_the_fly(funnel_id, user_id, project_id, data):
     first_stage = data.get("firstStage")
     last_stage = data.get("lastStage")
-    data["events"] = filter_stages(data.get("events", []))
+    # data["events"] = filter_stages(data.get("events", []))
     if len(data["events"]) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
@@ -243,7 +244,7 @@ def get(funnel_id, project_id, user_id):
         return None
 
     f["createdAt"] = TimeUTC.datetime_to_timestamp(f["createdAt"])
-    f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
+    # f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
     return f
 
 

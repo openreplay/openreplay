@@ -645,7 +645,7 @@ def add_funnel(projectId: int, data: schemas.FunnelSchema = Body(...),
     return funnels.create(project_id=projectId,
                           user_id=context.user_id,
                           name=data.name,
-                          filter=data.filter.dict(),
+                          filter=data.filter,
                           is_public=data.is_public)
 
 
