@@ -3,14 +3,10 @@ import { connectPlayer, jump, pause } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
-import { formatBytes } from 'App/utils';
-import { formatMs } from 'App/date';
-
-import TimeTable from '../TimeTable';
-import BottomBlock from '../BottomBlock';
-import InfoLine from '../BottomBlock/InfoLine';
 import stl from './network.css';
 import NetworkContent from './NetworkContent';
+import { connect } from 'react-redux';
+import { setTimelinePointer } from 'Duck/sessions';
 
 const ALL = 'ALL';
 const XHR = 'xhr';
@@ -28,73 +24,24 @@ const TAB_TO_TYPE_MAP = {
   [ MEDIA ]: TYPES.MEDIA,
   [ OTHER ]: TYPES.OTHER
 }
-const TABS = [ ALL, XHR, JS, CSS, IMG, MEDIA, OTHER ].map(tab => ({ 
-  text: tab,
-  key: tab,
-}));
-
-const DOM_LOADED_TIME_COLOR = "teal";
-const LOAD_TIME_COLOR = "red";
 
 export function renderName(r) { 
   return (
-    <Popup
-      trigger={ <div className={ stl.popupNameTrigger }>{ r.name }</div> }
-      content={ <div className={ stl.popupNameContent }>{ r.url }</div> }
-      size="mini"
-      position="right center"
-    />
-  );
-}
-
-const renderXHRText = () => (
-  <span className="flex items-center">
-    {XHR}
-    <QuestionMarkHint
-      onHover
-      content={ 
-        <>
-          Use our <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/plugins/fetch">Fetch plugin</a>
-          {' to capture HTTP requests and responses, including status codes and bodies.'} <br/>
-          We also provide <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/plugins/graphql">support for GraphQL</a>
-          {' for easy debugging of your queries.'}
-        </>
-      }
-      className="ml-1"
-    />
-  </span>
-);
-
-function renderSize(r) {
-  let triggerText;
-  let content;
-  if (r.decodedBodySize == null) {
-    triggerText = "x";
-    content = "Not captured";
-  } else {
-    const headerSize = r.headerSize || 0;
-    const encodedSize = r.encodedBodySize || 0;
-    const transferred = headerSize + encodedSize;
-    const showTransferred = r.headerSize != null;
-
-    triggerText = formatBytes(r.decodedBodySize);
-    content = (
-      <ul>
-        { showTransferred && 
-          <li>{`${formatBytes( r.encodedBodySize + headerSize )} transfered over network`}</li>
-        }
-        <li>{`Resource size: ${formatBytes(r.decodedBodySize)} `}</li>
-      </ul>
-    );
-  }
-
-  return (
-    <Popup
-      trigger={ <div>{ triggerText }</div> }
-      content={ content }
-      size="mini"
-      position="right center"
-    />
+    <div className="flex w-full relative items-center">
+      <Popup
+        trigger={ <div className={ stl.popupNameTrigger }>{ r.name }</div> }
+        content={ <div className={ stl.popupNameContent }>{ r.url }</div> }
+        size="mini"
+        position="right center"
+      />
+      <div
+        className="absolute right-0 text-xs uppercase p-2 color-gray-500 hover:color-black"
+        onClick={ (e) => {
+          e.stopPropagation();
+          jump(r.time)
+        }}
+      >Jump</div>
+    </div>
   );
 }
 
@@ -130,14 +77,18 @@ export function renderDuration(r) {
   resources: state.resourceList,
   domContentLoadedTime: state.domContentLoadedTime,
   loadTime: state.loadTime,
-  time: state.time,
+  // time: state.time,
   playing: state.playing,
   domBuildingTime: state.domBuildingTime,
   fetchPresented: state.fetchList.length > 0,
 }))
+@connect(state => ({
+  timelinePointer: state.getIn(['sessions', 'timelinePointer']),
+}), { setTimelinePointer })
 export default class Network extends React.PureComponent {
   state = {
     filter: '',
+    filteredList: this.props.resources,
     activeTab: ALL,
     currentIndex: 0
   }
@@ -146,10 +97,29 @@ export default class Network extends React.PureComponent {
     pause();
     jump(e.time);
     this.setState({ currentIndex: index })
+    this.props.setTimelinePointer(null);
   }
 
   onTabClick = activeTab => this.setState({ activeTab })
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+
+  onFilterChange = (e, { value }) => {
+    const { resources } = this.props;
+    const filterRE = getRE(value, 'i');
+    const filtered = resources.filter(({ type, name }) =>
+      filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
+
+    this.setState({ filter: value, filteredList: value ? filtered : resources, currentIndex: 0 });
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    const { filteredList } = prevState;
+    if (nextProps.timelinePointer) {
+      const activeItem = filteredList.find((r) => r.time >= nextProps.timelinePointer.time);
+      return {
+        currentIndex: activeItem ? filteredList.indexOf(activeItem) : filteredList.length - 1,
+      };
+    }    
+  }
 
   render() {
     const {
@@ -159,50 +129,23 @@ export default class Network extends React.PureComponent {
       loadTime,
       domBuildingTime,
       fetchPresented,
-      time,
+      // time,
       playing
     } = this.props;
-    const { filter, activeTab, currentIndex } = this.state;
-    const filterRE = getRE(filter, 'i');
-    let filtered = resources.filter(({ type, name }) =>
-      filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
-
-//     const referenceLines = [];
-//     if (domContentLoadedTime != null) {
-//       referenceLines.push({
-//         time: domContentLoadedTime,
-//         color: DOM_LOADED_TIME_COLOR,
-//       })
-//     }
-//     if (loadTime != null) {
-//       referenceLines.push({
-//         time: loadTime,
-//         color: LOAD_TIME_COLOR,
-//       })
-//     }
-// 
-//     let tabs = TABS;
-//     if (!fetchPresented) {
-//       tabs = TABS.map(tab => tab.key === XHR 
-//         ? {
-//             text: renderXHRText(),
-//             key: XHR,
-//           } 
-//         : tab
-//       );
-//     }
-
-    const resourcesSize = filtered.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0);
-    const transferredSize = filtered
+    const { filter, activeTab, currentIndex, filteredList } = this.state;
+    // const filterRE = getRE(filter, 'i');
+    // let filtered = resources.filter(({ type, name }) =>
+    //   filterRE.test(name) && (activeTab === ALL || type === TAB_TO_TYPE_MAP[ activeTab ]));
+    const resourcesSize = filteredList.reduce((sum, { decodedBodySize }) => sum + (decodedBodySize || 0), 0);
+    const transferredSize = filteredList
       .reduce((sum, { headerSize, encodedBodySize }) => sum + (headerSize || 0) + (encodedBodySize || 0), 0);
 
     return (
       <React.Fragment>
         <NetworkContent
-          // {...this.props }
-          time = { time }
+          // time = { time }
           location = { location }
-          resources = { resources }
+          resources = { filteredList }
           domContentLoadedTime = { domContentLoadedTime }
           loadTime = { loadTime }
           domBuildingTime = { domBuildingTime }
@@ -210,91 +153,8 @@ export default class Network extends React.PureComponent {
           resourcesSize={resourcesSize}
           transferredSize={transferredSize}
           onRowClick={ this.onRowClick }
-          currentIndex={playing ? null : currentIndex}
+          currentIndex={currentIndex}
         />
-        {/* <BottomBlock>
-          <BottomBlock.Header>
-            <Tabs 
-              className="uppercase"
-              tabs={ tabs }
-              active={ activeTab }
-              onClick={ this.onTabClick }
-              border={ false }
-            />
-            <Input
-              className="input-small"
-              placeholder="Filter by Name"
-              icon="search"
-              iconPosition="left"
-              name="filter"
-              onChange={ this.onFilterChange }
-            />
-          </BottomBlock.Header>
-          <BottomBlock.Content>
-            <InfoLine>
-              <InfoLine.Point label={ filtered.length } value=" requests" />
-              <InfoLine.Point 
-                label={ formatBytes(transferredSize) } 
-                value="transferred"
-                display={ transferredSize > 0 } 
-              />
-              <InfoLine.Point 
-                label={ formatBytes(resourcesSize) }
-                value="resources"
-                display={ resourcesSize > 0 }
-              />
-              <InfoLine.Point 
-                label="DOM Building Time"
-                value={ formatMs(domBuildingTime)}
-                display={ domBuildingTime != null }
-              />
-              <InfoLine.Point 
-                label="DOMContentLoaded"
-                value={ formatMs(domContentLoadedTime)}
-                display={ domContentLoadedTime != null }
-                dotColor={ DOM_LOADED_TIME_COLOR }
-              />
-              <InfoLine.Point 
-                label="Load"
-                value={ formatMs(loadTime)}
-                display={ loadTime != null }
-                dotColor={ LOAD_TIME_COLOR }
-              />
-            </InfoLine>
-            <TimeTable
-              rows={ filtered }
-              referenceLines={referenceLines}
-              renderPopup
-              navigation
-            >
-              {[
-                {
-                  label: "Status",
-                  dataKey: 'status',
-                  width: 70,
-                }, {
-                  label: "Type",
-                  dataKey: 'type',
-                  width: 60,
-                }, {
-                  label: "Name",
-                  width: 130,
-                  render: renderName,
-                },
-                {
-                  label: "Size",
-                  width: 60,
-                  render: renderSize,
-                },
-                {
-                  label: "Time",
-                  width: 80,
-                  render: renderDuration,
-                }
-              ]}
-            </TimeTable>
-          </BottomBlock.Content>
-        </BottomBlock> */}
       </React.Fragment>
     );
   }

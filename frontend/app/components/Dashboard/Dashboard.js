@@ -175,7 +175,7 @@ export default class Dashboard extends React.PureComponent {
       <div className="page-margin container-90">
         <div className="side-menu">
           <SideMenuSection
-						title="Sessions"
+						title="Metrics"
 						onItemClick={this.onMenuItemClick}
 						items={menuList}
 					/>

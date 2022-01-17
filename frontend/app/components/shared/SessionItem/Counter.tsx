@@ -3,7 +3,7 @@ import { Duration } from 'luxon';
 
 interface Props {
   startTime: any,
-  className: string
+  className?: string
 }
 
 function Counter({ startTime, className }: Props) {
