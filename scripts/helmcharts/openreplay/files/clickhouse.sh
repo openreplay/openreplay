@@ -19,7 +19,7 @@ function init() {
     echo "Initializing clickhouse"
     for file in `ls ${clickhousedir}/create/*.sql`; do
         echo "Injecting $file"
-        clickhouse-client  -h clickhouse.db.svc.cluster.local --port 9000 < $file
+        clickhouse-client  -h clickhouse.db.svc.cluster.local --port 9000 < $file || true
     done
 }
 
