@@ -59,7 +59,7 @@ global:
     emailUseSsl: 'false'
     emailSslKey: ''
     emailSslCert: ''
-    emailFrom: OpenReplay<do-not-reply@openreplay.com>
+    emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
 
   enterpriseEditionLicense: ""
   domainName: ""
