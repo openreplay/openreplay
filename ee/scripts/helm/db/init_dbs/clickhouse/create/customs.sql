@@ -1,4 +1,4 @@
-CREATE TABLE customs
+CREATE TABLE IF NOT EXISTS customs
 (
     session_id           UInt64,
     project_id           UInt32,
