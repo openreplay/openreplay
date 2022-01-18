@@ -2,7 +2,7 @@ import json
 
 import chalicelib.utils.helper
 import schemas
-from chalicelib.core import events, significance, sessions
+from chalicelib.core import significance, sessions
 from chalicelib.utils import dev
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -61,7 +61,8 @@ def update(funnel_id, user_id, project_id, name=None, filter=None, is_public=Non
                 AND project_id = %(project_id)s
                 AND (user_id = %(user_id)s OR is_public)
             RETURNING *;""", {"user_id": user_id, "funnel_id": funnel_id, "name": name,
-                              "filter": json.dumps(filter) if filter is not None else None, "is_public": is_public})
+                              "filter": json.dumps(filter) if filter is not None else None, "is_public": is_public,
+                              "project_id": project_id})
         # print("--------------------")
         # print(query)
         # print("--------------------")

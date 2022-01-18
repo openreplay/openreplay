@@ -223,9 +223,9 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     params = {"project_id": project_id, "startTimestamp": filter_d["startDate"], "endTimestamp": filter_d["endDate"],
               "issueTypes": tuple(filter_issues), **values}
     with pg_client.PostgresClient() as cur:
-        print("---------------------------------------------------")
-        print(cur.mogrify(n_stages_query, params))
-        print("---------------------------------------------------")
+        # print("---------------------------------------------------")
+        # print(cur.mogrify(n_stages_query, params))
+        # print("---------------------------------------------------")
         cur.execute(cur.mogrify(n_stages_query, params))
         rows = cur.fetchall()
     return rows
