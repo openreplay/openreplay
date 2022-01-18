@@ -739,7 +739,7 @@ def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
                               data: schemas.FunnelSearchPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
-                                   funnel_id=funnelId, data=data.dict())
+                                   funnel_id=funnelId, data=data)
     if "errors" in data:
         return data
     if data.get("issue") is None:
