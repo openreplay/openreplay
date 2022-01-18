@@ -13,7 +13,7 @@ topics=(
 touch /tmp/config.txt
 
 if [[ $KAFKA_SSL == "true" ]]; then
-    echo 'securty.protocol=SSL' > /tmp/config.txt
+    echo 'security.protocol=SSL' > /tmp/config.txt
 fi
 
 function init() {
