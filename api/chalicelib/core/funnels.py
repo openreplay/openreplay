@@ -250,17 +250,19 @@ def get(funnel_id, project_id, user_id):
 
 
 @dev.timed
-def search_by_issue(user_id, project_id, funnel_id, issue_id, data, range_value=None, start_date=None, end_date=None):
-    if len(data.get("events", [])) == 0:
+def search_by_issue(user_id, project_id, funnel_id, issue_id, data: schemas.FunnelSearchPayloadSchema, range_value=None,
+                    start_date=None, end_date=None):
+    if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
-        get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=data.get('startDate', start_date),
-                           end_date=data.get('endDate', end_date))
-        data = f["filter"]
+        data.startDate = data.startDate if data.startDate is not None else start_date
+        data.endDate = data.endDate if data.endDate is not None else end_date
+        get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=data.startDate,
+                           end_date=data.endDate)
+        data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
 
-    # insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data, project_id=project_id)
-    issues = get_issues_on_the_fly(funnel_id=funnel_id, user_id=user_id, project_id=project_id, data=data) \
+    issues = get_issues_on_the_fly(funnel_id=funnel_id, user_id=user_id, project_id=project_id, data=data.dict()) \
         .get("issues", {})
     issues = issues.get("significant", []) + issues.get("insignificant", [])
     issue = None
