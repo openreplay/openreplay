@@ -645,7 +645,7 @@ def add_funnel(projectId: int, data: schemas.FunnelSchema = Body(...),
     return funnels.create(project_id=projectId,
                           user_id=context.user_id,
                           name=data.name,
-                          filter=data.filter.dict(),
+                          filter=data.filter,
                           is_public=data.is_public)
 
 
@@ -678,32 +678,31 @@ def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = D
 @app.get('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 def get_funnel_insights(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
                         endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_top_insights(funnel_id=funnelId, project_id=projectId,
-                                    range_value=rangeValue,
-                                    start_date=startDate,
-                                    end_date=endDate)
+    return funnels.get_top_insights(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                    range_value=rangeValue, start_date=startDate, end_date=endDate)
 
 
 @app.post('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelInsightsPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())
+    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                               data=data.dict())
 
 
 @app.get('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_issues(funnel_id=funnelId, project_id=projectId,
-                              range_value=rangeValue,
-                              start_date=startDate, end_date=endDate)
+    return funnels.get_issues(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                              range_value=rangeValue, start_date=startDate, end_date=endDate)
 
 
 @app.post('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())}
+    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                                  data=data.dict())}
 
 
 @app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
@@ -720,7 +719,7 @@ def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, s
 def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_sessions_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                                    data=data.dict())}
+                                                    data=data)}
 
 
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
@@ -740,7 +739,7 @@ def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
                               data: schemas.FunnelSearchPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
-                                   funnel_id=funnelId, data=data.dict())
+                                   funnel_id=funnelId, data=data)
     if "errors" in data:
         return data
     if data.get("issue") is None:
