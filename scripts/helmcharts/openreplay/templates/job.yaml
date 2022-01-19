@@ -81,9 +81,9 @@ spec:
           - name: CHART_APP_VERSION
             value: "{{ .Chart.AppVersion }}"
           - name: MINIO_ACCESS_KEY
-            value: "{{ .Values.global.s3.accessKey }}"
+            value: "{{ .Values.minio.global.minio.accessKey }}"
           - name: MINIO_SECRET_KEY
-            value: "{{ .Values.global.s3.secretKey }}"
+            value: "{{ .Values.minio.global.minio.secretKey }}"
         command: 
         - /bin/bash
         - /opt/migrations/dbops.sh
