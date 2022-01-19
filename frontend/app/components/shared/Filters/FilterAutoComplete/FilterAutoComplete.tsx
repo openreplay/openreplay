@@ -12,6 +12,7 @@ const hiddenStyle = {
 
 interface Props {
   showOrButton?: boolean;
+  showCloseButton?: boolean;
   onRemoveValue?: () => void;
   onAddValue?: () => void;
   endpoint?: string;
@@ -25,6 +26,7 @@ interface Props {
 
 function FilterAutoComplete(props: Props) {
   const {
+      showCloseButton = false,
       placeholder = 'Type to search',
       method = 'GET',
       showOrButton = false,
@@ -94,7 +96,7 @@ function FilterAutoComplete(props: Props) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center">
       <div className={stl.wrapper}>
         <input
           name="query"
@@ -115,10 +117,12 @@ function FilterAutoComplete(props: Props) {
           className={stl.right}
           // onClick={showOrButton ? onRemoveValue : onAddValue}
         >
-          { !showOrButton && <Icon onClick={onRemoveValue} name="close" size="18" /> }
-          { showOrButton && <span onClick={onAddValue} className="px-1">or</span>}
+          { showCloseButton && <div onClick={onRemoveValue}><Icon name="close" size="18" /></div> }
+          { showOrButton && <div onClick={onAddValue} className="color-teal"><span className="px-1">or</span></div> }
         </div>
       </div>
+
+      { !showOrButton && <div className="ml-3">or</div> }
 
       {/* <textarea style={hiddenStyle} ref={(ref) => this.hiddenInput = ref }></textarea> */}
 

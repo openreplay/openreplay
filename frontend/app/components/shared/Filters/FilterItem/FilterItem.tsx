@@ -44,26 +44,29 @@ function FitlerItem(props: Props) {
   }
 
   return (
-    <div className="flex items-center mb-3">
+    <div className="flex items-center mb-4">
       <div className="flex items-start mr-auto">
         <div className="mt-1 w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div>
         <FilterSelection filter={filter} onFilterClick={replaceFilter} />
-        <FilterOperator filter={filter} onChange={onOperatorChange} className="mx-2"/>
+        <FilterOperator filter={filter} onChange={onOperatorChange} className="mx-2 flex-shrink-0"/>
         <div className="grid grid-cols-3 gap-3">
           {filter.value && filter.value.map((value, valueIndex) => (
             <FilterValue
+              showCloseButton={filter.value.length > 1}
               showOrButton={valueIndex === filter.value.length - 1}
-              key={valueIndex}
+              // filter={filter}
+              // key={valueIndex}
               value={value}
+              key={filter.key}
               index={valueIndex}
               onAddValue={onAddValue}
               onRemoveValue={() => onRemoveValue(valueIndex)}
-              onSelect={(e, item) => onSelect(e, valueIndex, item)}
+              onSelect={(e, item) => onSelect(e, item, valueIndex)}
             />
           ))}
         </div>
       </div>
-      <div className="flex">
+      <div className="flex self-start mt-2">
         <div
           className="cursor-pointer"
           onClick={props.onRemoveFilter}

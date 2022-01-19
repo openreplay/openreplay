@@ -1,38 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { IconButton, SlideModal } from 'UI'
 import CustomMetricForm from './CustomMetricForm';
 
 interface Props {}
 function CustomMetrics(props: Props) {
+  const [showModal, setShowModal] = useState(true);
+
   return (
-    <div>
-      <IconButton outline icon="plus" label="CREATE METRIC" />
+    <div className="self-start">
+      <IconButton outline icon="plus" label="CREATE METRIC" onClick={() => setShowModal(true)} />
 
       <SlideModal
         title={
           <div className="flex items-center">
             <span className="mr-3">{ 'Custom Metric' }</span>
-            {/* <IconButton 
-              circle
-              size="small"
-              icon="plus" 
-              outline
-              id="add-button"
-              // onClick={ () => toggleForm({}, true) }
-            /> */}
           </div>
         }
-        isDisplayed={ true }
-        // onClose={ () => {
-        //   toggleForm({}, false);
-        //   setShowAlerts(false);
-        // } }
+        isDisplayed={ showModal }
+        onClose={ () => setShowModal(false)}
         // size="medium"
-        content={
-          <div className="bg-gray-light-shade">
+        content={ showModal && (
+          <div style={{ backgroundColor: '#f6f6f6'}}>
             <CustomMetricForm />
           </div>
-        }
+        )}
       />
     </div>
   );

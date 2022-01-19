@@ -17,6 +17,7 @@ export const FilterSeries = Record({
   methods: {
     toData() {
       const js = this.toJS();
+      delete js.key;
       // js.filter = js.filter.toData();
       return js;
     },
@@ -42,6 +43,7 @@ export default Record({
 
     toData() {
       const js = this.toJS();
+      
       js.series = js.series.map(series => {
         series.filter.filters = series.filter.filters.map(filter => {
           delete filter.operatorOptions
@@ -50,6 +52,8 @@ export default Record({
         });
         return series;
       });
+
+      delete js.key;
 
       return js;
     },
