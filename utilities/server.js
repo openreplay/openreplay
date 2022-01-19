@@ -2,10 +2,10 @@ var sourcemapsReaderServer = require('./servers/sourcemaps-server');
 var {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 var express = require('express');
 const {ExpressPeerServer} = require('peer');
+const socket = require("./servers/websocket");
 
 const HOST = '0.0.0.0';
 const PORT = 9000;
-
 
 var app = express();
 app.use((req, res, next) => {
@@ -15,6 +15,7 @@ app.use((req, res, next) => {
 
 app.use('/sourcemaps', sourcemapsReaderServer);
 app.use('/assist', peerRouter);
+app.use('/assist', socket.wsRouter);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);
@@ -31,4 +32,5 @@ peerServer.on('disconnect', peerDisconnect);
 peerServer.on('error', peerError);
 app.use('/', peerServer);
 app.enable('trust proxy');
+socket.start(server);
 module.exports = server;
