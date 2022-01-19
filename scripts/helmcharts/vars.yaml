@@ -87,14 +87,14 @@ chalice:
 #     limits:
 #       cpu: 1
 
-# nginx-ingress:
+##  Changes to nginx
 #
-### If you want to redirect nginx http to https
+# nginx-ingress:
 #   customServerConfigs: |
+#      # Redirecting http to https
 #      return 301 https://$host$request_uri;
 #
 ### Change the ssl certificates
-#
 ### Public certificate ( content from site.crt, mind the indentation )
 #   ssl_certificate: |-
 #     -----BEGIN CERTIFICATE-----
@@ -109,10 +109,5 @@ chalice:
 #     TbXr+1+HXWQGs4Go63gpvhI/yzOScTTiuI88lbjM9QA/aDlZm2TlXdcB71PDtO5T
 #     e2Zw7SH2h7yLK6uP2FamVgUSe0rWf9zQmKTkFzJcgwelvuk7MHBMw4JSYeoB7dJP
 #     3+FMchvzM1exCC/kNxTqvAyYWzdNPBIPSekHn1I9eEgr14cwZ+1RV9SK16uxsMT9
-#     WnjLAoIBADKutRKB8nH+wD3sa4cP782QNbkDqJCcb3rPntnCWI/jA2TeY/wAvrXa
-#     8yFtSSeYSwN9Wr+UosSkQ+OQSO0WmT2NrxdkH8jK8kYnzYkJ9+EFE2YpMN2UosSb
-#     esQ9oEMnivBMNv8DnB4IuO8LjTj1rhqcBmWJH1zvDi1Ur+/uAb+6XLm0Dp/59/Rn
-#     PSlLQmFraq6mrUkKTU40zyT6eK8AvIn/+sXAF1Xb9Vnm8Ndl+gZ4imzjcCubbq+6
-#     PqvLjFJNGyya6b3MX4RSxVGfkIf5f6bcSSZ0zzSB3qLbCKS+JawwR1WF2rJp6Hj5
 #     7qINKoGovqXB1oAdopIl1z64e7MWVE4=
 #     -----END PRIVATE KEY-----
