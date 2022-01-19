@@ -39,6 +39,7 @@ import SideMenuSection from './SideMenu/SideMenuSection';
 import styles from './dashboard.css';
 import WidgetSection from 'Shared/WidgetSection/WidgetSection';
 import OverviewWidgets from './Widgets/OverviewWidgets/OverviewWidgets';
+import CustomMetricsWidgets from './Widgets/CustomMetricsWidgets/CustomMetricsWidgets';
 import WidgetHolder from './WidgetHolder/WidgetHolder';
 import MetricsFilters from 'Shared/MetricsFilters/MetricsFilters';
 import { withRouter } from 'react-router';
@@ -47,6 +48,7 @@ const OVERVIEW = 'overview';
 const PERFORMANCE = 'performance';
 const ERRORS_N_CRASHES = 'errors_n_crashes';
 const RESOURCES = 'resources';
+const CUSTOM_METRICS = 'custom_metrics';
 
 const menuList = [
   {
@@ -198,6 +200,12 @@ export default class Dashboard extends React.PureComponent {
                 <WidgetSection title="Overview" type="overview" className="mb-4" description="(Average Values)">
                   <div className="grid grid-cols-4 gap-4" ref={this.list[OVERVIEW]}>
                     <OverviewWidgets isOverview />
+                  </div>
+                </WidgetSection>
+
+                <WidgetSection title="Custom Metrics" type="customMetrics" className="mb-4">
+                  <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[CUSTOM_METRICS]}>
+                    <CustomMetricsWidgets />
                   </div>
                 </WidgetSection>
 

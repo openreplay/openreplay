@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, SegmentSelection, Button } from 'UI';
+import { Form, SegmentSelection, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save } from 'Duck/customMetrics';
@@ -68,13 +68,13 @@ function CustomMetricForm(props: Props) {
         <div className="form-group">
           <label className="font-medium">Metric Type</label>
           <div className="flex items-center">
-            <span>Timeseries</span>
-            <span className="mx-2">of</span>
-            <div style={{ width: "250px"}}>
+            <span className="bg-white p-1 px-2 border rounded">Timeseries</span>
+            <span className="mx-2 color-gray-medium">of</span>
+            <div>
               <SegmentSelection
                 primary
                 name="condition"
-                extraSmall={true}
+                small={true}
                 // className="my-3"
                 onSelect={ changeConditionTab }
                 value={{ value: metric.type }}
@@ -88,7 +88,7 @@ function CustomMetricForm(props: Props) {
         </div>
 
         <div className="form-group">
-          <label className="font-medium">Sereis</label>
+          <label className="font-medium">Series</label>
           {metric.series && metric.series.size > 0 && metric.series.map((series: any, index: number) => (
             <div className="mb-2">
               <FilterSeries
@@ -100,7 +100,9 @@ function CustomMetricForm(props: Props) {
           ))}
         </div>
 
-        <Button onClick={addSeries}>Add Series</Button>
+        <div className="flex justify-end">
+          <IconButton onClick={addSeries} primaryText label="SERIES" icon="plus" />
+        </div>
       </div>
 
       <div className="absolute w-full bottom-0 px-5 py-2 bg-white">

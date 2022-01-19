@@ -10,19 +10,20 @@ interface Props {
 }
 function FilterSelection(props: Props) {
   const { filter, onFilterClick, children } = props;
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false);
+
   return (
-    <div>
+    <div className="relative flex-shrink-0">
       <OutsideClickDetectingDiv
         className="relative"
         onClickOutside={ () => setTimeout(function() {
           setShowModal(false)
-        }, 20)}
+        }, 50)}
       >
         { children ? React.cloneElement(children, { onClick: () => setShowModal(true)}) : (
           <div
-            className="rounded border py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis"
-            style={{ width: '140px', height: '30px'}}
+            className="rounded py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis"
+            style={{ width: '140px', height: '30px', border: 'solid thin rgba(34, 36, 38, 0.15)'}}
             onClick={() => setShowModal(true)}
           >
             <span className="mr-auto truncate">{filter.label}</span>

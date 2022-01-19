@@ -14,11 +14,9 @@ import { newFiltersList } from 'Types/filter'
 import NewFilter, { filtersMap } from 'Types/filter/newFilter';
 
 const filterOptions = {}
-// newFiltersList.forEach(filter => {
-//   filterOptions[filter.category] = filter
-// })
 
 Object.keys(filtersMap).forEach(key => {
+  // const filter = NewFilter(filtersMap[key]);
   const filter = filtersMap[key];
   if (filterOptions.hasOwnProperty(filter.category)) {
     filterOptions[filter.category].push(filter);

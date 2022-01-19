@@ -141,21 +141,21 @@ export default class EventFilter extends React.PureComponent {
         { hasFilters &&
             <div className={cn("bg-white rounded border-gray-light mt-2 relative", { 'blink-border' : blink })}>            
               <div className="absolute right-0 top-0 m-3 z-10 flex items-center">
-              <div className="mr-2">Operator</div>
-              <SegmentSelection
-                primary
-                name="condition"
-                extraSmall={true}
-                // className="my-3"
-                onSelect={ this.changeConditionTab }
-                value={{ value: appliedFilter.condition }}
-                list={ [
-                  { name: 'AND', value: 'and' },
-                  { name: 'OR', value: 'or' },
-                  { name: 'THEN', value: 'then' },
-                ]}
-              />
-            </div>
+                <div className="mr-2">Operator</div>
+                <SegmentSelection
+                  primary
+                  name="condition"
+                  extraSmall={true}
+                  // className="my-3"
+                  onSelect={ this.changeConditionTab }
+                  value={{ value: appliedFilter.condition }}
+                  list={ [
+                    { name: 'AND', value: 'and' },
+                    { name: 'OR', value: 'or' },
+                    { name: 'THEN', value: 'then' },
+                  ]}
+                />
+              </div>
             
             { events.size > 0 &&
               <>

@@ -1,0 +1,6 @@
+.wrapper {
+  background-color: white;
+  /* border: solid thin $gray-medium; */
+  border-radius: 3px;
+  padding: 10px;
+}

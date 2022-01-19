@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import { edit, updateSeries } from 'Duck/customMetrics';
 import { connect } from 'react-redux';
-import { IconButton, Button, Icon } from 'UI';
+import { IconButton, Button, Icon, SegmentSelection } from 'UI';
 import FilterSelection from '../../Filters/FilterSelection';
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 }
 
 function FilterSeries(props: Props) {
+  const [expanded, setExpanded] = useState(false)
   const { series, seriesIndex } = props;
 
   const onAddFilter = (filter) => {
@@ -46,6 +47,16 @@ function FilterSeries(props: Props) {
     });
   }
 
+  const onChangeEventsOrder = (e, { name, value }) => {
+    props.updateSeries(seriesIndex, {
+      ...series.toData(),
+      filter: {
+        ...series.filter,
+        eventsOrder: value,
+      }
+    });
+  }
+
   const onRemoveFilter = (filterIndex) => {
     const newFilters = series.filter.filters.filter((_filter, i) => {
       return i !== filterIndex;
@@ -62,35 +73,43 @@ function FilterSeries(props: Props) {
 
   return (
     <div className="border rounded bg-white">
-      <div className="border-b px-5 h-12 flex items-center">
-        <span className="mr-auto">{ series.name }</span>
-        <div className="flex items-center cursor-pointer" onClick={props.onRemoveSeries}>
-          <Icon name="trash" size="16" />
+      <div className="border-b px-5 h-12 flex items-center relative">
+        <div className="font-medium">{ series.name }</div>
+        
+        <div className="flex items-center cursor-pointer ml-auto" >
+          <div onClick={props.onRemoveSeries} className="ml-3">
+            <Icon name="trash" size="16" />
+          </div>
+
+          <div onClick={() => setExpanded(!expanded)} className="ml-3">
+            <Icon name="chevron-down" size="16" />
+          </div>
+          
         </div>
       </div>
-      <div className="p-5">
-        { series.filter.filters.size > 0 ? (
-          <FilterList
-            filters={series.filter.filters.toJS()}
-            onUpdateFilter={onUpdateFilter}
-            onRemoveFilter={onRemoveFilter}
-          />
-        ): (
-          <div>Add user event or filter to build the series.</div>
-        )}
-      </div>
-      <div className="px-5 border-t h-12 flex items-center">
-        <FilterSelection
-          filter={undefined}
-          onFilterClick={onAddFilter}
-        >
-          {/* <Button className="flex items-center">
-            <Icon name="plus" size="16" />
-            <span>Add Step</span>
-          </Button> */}
-          <IconButton primaryText label="ADD STEP" icon="plus" />
-        </FilterSelection>
-      </div>
+      { expanded && (
+        <>
+          <div className="p-5">
+            { series.filter.filters.size > 0 ? (
+              <FilterList
+                filters={series.filter.filters.toJS()}
+                onUpdateFilter={onUpdateFilter}
+                onRemoveFilter={onRemoveFilter}
+              />
+            ): (
+              <div className="color-gray-medium">Add user event or filter to build the series.</div>
+            )}
+          </div>
+          <div className="px-5 border-t h-12 flex items-center">
+            <FilterSelection
+              filter={undefined}
+              onFilterClick={onAddFilter}
+            >
+              <IconButton primaryText label="ADD STEP" icon="plus" />
+            </FilterSelection>
+          </div>
+        </>
+      )}
     </div>
   );
 }

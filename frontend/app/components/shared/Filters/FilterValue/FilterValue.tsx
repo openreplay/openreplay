@@ -4,25 +4,29 @@ import FilterAutoComplete from '../FilterAutoComplete';
 interface Props {
   index: number;
   value: any; // event/filter
+  // type: string;
+  key: string;
   onRemoveValue?: () => void;
   onAddValue?: () => void;
+  showCloseButton: boolean;
   showOrButton: boolean;
   onSelect: (e, item) => void;
 }
 function FilterValue(props: Props) {
-  const { index, value, showOrButton, onRemoveValue , onAddValue } = props;
+  const { index, value, key, showOrButton, showCloseButton, onRemoveValue , onAddValue } = props;
 
   return (
     <FilterAutoComplete
       value={value}
+      showCloseButton={showCloseButton}
       showOrButton={showOrButton}
       onAddValue={onAddValue}
       onRemoveValue={onRemoveValue}
       method={'GET'}
       endpoint='/events/search'
-      params={undefined}
+      params={{ type: key  }}
       headerText={''}
-      placeholder={''}
+      // placeholder={''}
       onSelect={props.onSelect}
     />
   );

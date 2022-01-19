@@ -107,8 +107,9 @@
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
   & label {
+    display: inline-block;
     margin-bottom: 5px;
   }
 }

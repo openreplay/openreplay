@@ -219,41 +219,41 @@ export const booleanOptions = [
 ]
 
 export const filtersMap = {
-  [TYPES.CLICK]: { category: 'interactions', label: 'Click', operator: 'on', operatorOptions: targetFilterOptions, icon: 'filters/click' },
-  [TYPES.INPUT]: { category: 'interactions', label: 'Input', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.LOCATION]: { category: 'interactions', label: 'Page', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.CLICK]: { key: TYPES.CLICK, type: 'multiple', category: 'interactions', label: 'Click', operator: 'on', operatorOptions: targetFilterOptions, icon: 'filters/click', isEvent: true },
+  [TYPES.INPUT]: { key: TYPES.INPUT, type: 'multiple', category: 'interactions', label: 'Input', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click', isEvent: true },
+  [TYPES.LOCATION]: { key: TYPES.LOCATION, type: 'multiple', category: 'interactions', label: 'Page', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click', isEvent: true },
 
-  [TYPES.USER_OS]: { category: 'gear', label: 'User OS', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.USER_BROWSER]: { category: 'gear', label: 'User Browser', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.USER_DEVICE]: { category: 'gear', label: 'User Device', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.PLATFORM]: { category: 'gear', label: 'Platform', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.REVID]: { category: 'gear', label: 'RevId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.USER_OS]: { key: TYPES.USER_OS, type: 'multiple', category: 'gear', label: 'User OS', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.USER_BROWSER]: { key: TYPES.USER_BROWSER, type: 'multiple', category: 'gear', label: 'User Browser', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.USER_DEVICE]: { key: TYPES.USER_DEVICE, type: 'multiple', category: 'gear', label: 'User Device', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.PLATFORM]: { key: TYPES.PLATFORM, type: 'multiple', category: 'gear', label: 'Platform', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.REVID]: { key: TYPES.REVID, type: 'multiple', category: 'gear', label: 'RevId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
 
-  [TYPES.REFERRER]: { category: 'recording_attributes', label: 'Referrer', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.DURATION]: { category: 'recording_attributes', label: 'Duration', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.USER_COUNTRY]: { category: 'recording_attributes', label: 'User Country', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.REFERRER]: { key: TYPES.REFERRER, type: 'multiple', category: 'recording_attributes', label: 'Referrer', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.DURATION]: { key: TYPES.DURATION, type: 'number', category: 'recording_attributes', label: 'Duration', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.USER_COUNTRY]: { key: TYPES.USER_COUNTRY, type: 'multiple', category: 'recording_attributes', label: 'User Country', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
 
-  [TYPES.CONSOLE]: { category: 'javascript', label: 'Console', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.ERROR]: { category: 'javascript', label: 'Error', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.FETCH]: { category: 'javascript', label: 'Fetch', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.GRAPHQL]: { category: 'javascript', label: 'GraphQL', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.STATEACTION]: { category: 'javascript', label: 'StateAction', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.CONSOLE]: { key: TYPES.CONSOLE, type: 'multiple', category: 'javascript', label: 'Console', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.ERROR]: { key: TYPES.ERROR, type: 'multiple', category: 'javascript', label: 'Error', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.FETCH]: { key: TYPES.FETCH, type: 'multiple', category: 'javascript', label: 'Fetch', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.GRAPHQL]: { key: TYPES.GRAPHQL, type: 'multiple', category: 'javascript', label: 'GraphQL', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.STATEACTION]: { key: TYPES.STATEACTION, type: 'multiple', category: 'javascript', label: 'StateAction', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
 
-  [TYPES.USERID]: { category: 'user', label: 'UserId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.USERANONYMOUSID]: { category: 'user', label: 'UserAnonymousId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.USERID]: { key: TYPES.USERID, type: 'multiple', category: 'user', label: 'UserId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.USERANONYMOUSID]: { key: TYPES.USERANONYMOUSID, type: 'multiple', category: 'user', label: 'UserAnonymousId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
   
-  [TYPES.DOM_COMPLETE]: { category: 'new', label: 'DOM Complete', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.LARGEST_CONTENTFUL_PAINT_TIME]: { category: 'new', label: 'Largest Contentful Paint Time', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.TIME_BETWEEN_EVENTS]: { category: 'new', label: 'Time Between Events', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.TTFB]: { category: 'new', label: 'TTFB', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.AVG_CPU_LOAD]: { category: 'new', label: 'Avg CPU Load', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.AVG_MEMORY_USAGE]: { category: 'new', label: 'Avg Memory Usage', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  [TYPES.SLOW_SESSION]: { category: 'new', label: 'Slow Session', operator: 'true', operatorOptions: [{ key: 'true', text: 'true', value: 'true' }], icon: 'filters/click' },
-  [TYPES.MISSING_RESOURCE]: { category: 'new', label: 'Missing Resource', operator: 'true', operatorOptions: [{ key: 'inImages', text: 'in images', value: 'true' }], icon: 'filters/click' },
-  [TYPES.CLICK_RAGE]: { category: 'new', label: 'Click Rage', operator: 'onAnything', operatorOptions: [{ key: 'onAnything', text: 'on anything', value: 'true' }], icon: 'filters/click' },
-  // [TYPES.URL]: { category: 'interactions', label: 'URL', operator: 'is', operatorOptions: stringFilterOptions },
-  // [TYPES.CUSTOM]: { category: 'interactions', label: 'Custom', operator: 'is', operatorOptions: stringFilterOptions },
-  // [TYPES.METADATA]: { category: 'interactions', label: 'Metadata', operator: 'is', operatorOptions: stringFilterOptions },
+  [TYPES.DOM_COMPLETE]: { key: TYPES.DOM_COMPLETE, type: 'multiple', category: 'new', label: 'DOM Complete', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.LARGEST_CONTENTFUL_PAINT_TIME]: { key: TYPES.LARGEST_CONTENTFUL_PAINT_TIME, type: 'number', category: 'new', label: 'Largest Contentful Paint Time', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.TIME_BETWEEN_EVENTS]: { key: TYPES.TIME_BETWEEN_EVENTS, type: 'number', category: 'new', label: 'Time Between Events', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.TTFB]: { key: TYPES.TTFB, type: 'time', category: 'new', label: 'TTFB', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.AVG_CPU_LOAD]: { key: TYPES.AVG_CPU_LOAD, type: 'number', category: 'new', label: 'Avg CPU Load', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.AVG_MEMORY_USAGE]: { key: TYPES.AVG_MEMORY_USAGE, type: 'number', category: 'new', label: 'Avg Memory Usage', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [TYPES.SLOW_SESSION]: { key: TYPES.SLOW_SESSION, type: 'boolean', category: 'new', label: 'Slow Session', operator: 'true', operatorOptions: [{ key: 'true', text: 'true', value: 'true' }], icon: 'filters/click' },
+  [TYPES.MISSING_RESOURCE]: { key: TYPES.MISSING_RESOURCE, type: 'boolean', category: 'new', label: 'Missing Resource', operator: 'true', operatorOptions: [{ key: 'inImages', text: 'in images', value: 'true' }], icon: 'filters/click' },
+  [TYPES.CLICK_RAGE]: { key: TYPES.CLICK_RAGE, type: 'boolean', category: 'new', label: 'Click Rage', operator: 'onAnything', operatorOptions: [{ key: 'onAnything', text: 'on anything', value: 'true' }], icon: 'filters/click' },
+  // [TYPES.URL]: { / [TYPES,TYPES. category: 'interactions', label: 'URL', operator: 'is', operatorOptions: stringFilterOptions },
+  // [TYPES.CUSTOM]: { / [TYPES,TYPES. category: 'interactions', label: 'Custom', operator: 'is', operatorOptions: stringFilterOptions },
+  // [TYPES.METADATA]: { / [TYPES,TYPES. category: 'interactions', label: 'Metadata', operator: 'is', operatorOptions: stringFilterOptions },
 }
 
 export default Record({
@@ -263,6 +263,7 @@ export default Record({
   icon: '',
   type: '',
   value: [""],
+  category: '',
   
   custom: '',
   // target: Target(),
@@ -274,10 +275,13 @@ export default Record({
   
   operator: 'is',
   operatorOptions: [],
+  isEvent: false,
+  index: 0,
 }, {
   keyKey: "_key",
   fromJS: ({ ...filter }) => ({
     ...filter,
+    key: filter.type,
     type: filter.type, // camelCased(filter.type.toLowerCase()),
     // key: filter.type === METADATA ? filter.label : filter.key || filter.type, // || camelCased(filter.type.toLowerCase()),
     // label: getLabel(filter),
@@ -300,9 +304,3 @@ export default Record({
 //     value: [""]
 //   }
 // }
-
-// export const newFiltersList = [
-//   NewFilterType(TYPES.CLICK, 'Click', 'filters/click', true),
-//   NewFilterType(TYPES.CLICK, 'Input', 'filters/click', true),
-//   NewFilterType(TYPES.CONSOLE, 'Console', 'filters/click', true),
-// ];

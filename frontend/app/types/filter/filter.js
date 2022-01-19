@@ -46,6 +46,7 @@ export default Record({
   suspicious: undefined,
   consoleLevel: undefined,
   strict: false,
+  eventsOrder: 'and',
 }, {
   idKey: 'searchId',
   methods: {
@@ -53,10 +54,12 @@ export default Record({
       const js = this.toJS();
       js.filters = js.filters.map(filter => {
         delete filter.operatorOptions
+        delete filter._key
         return filter;
       });
 
       delete js.createdAt;
+      delete js.key;
       return js;
     }
   },

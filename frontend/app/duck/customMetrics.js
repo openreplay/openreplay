@@ -48,6 +48,7 @@ function reducer(state = initialState, action = {}) {
     case EDIT:
       return state.mergeIn([ 'instance' ], CustomMetric(action.instance));
     case UPDATE_SERIES:
+      console.log('update series', action.series);
       return state.setIn(['instance', 'series', action.index], FilterSeries(action.series));
     case success(SAVE):
       return state.set([ 'instance' ], CustomMetric(action.data));
@@ -55,11 +56,7 @@ function reducer(state = initialState, action = {}) {
 			return state.set("instance", ErrorInfo(action.data)); 
 		case success(FETCH_LIST):
 			const { data } = action;
-			return state
-				.set("totalCount", data ? data.total : 0)
-				.set("list", List(data && data.errors).map(CustomMetric)
-					.filter(e => e.parentErrorId == null)
-					.map(e => e.update("chart", chartWrapper)));
+			return state.set("list", List(data.map(CustomMetric)));
 	}
 	return state;
 }
@@ -95,11 +92,9 @@ export function save(instance) {
   };
 }
 
-export function fetchList(params = {}, clear = false) {
+export function fetchList() {
   return {
     types: array(FETCH_LIST),
-    call: client => client.post('/errors/search', params),
-    clear,
-    params: cleanParams(params),
+    call: client => client.get(`/${name}s`),
   };
 }
