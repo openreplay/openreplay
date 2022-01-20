@@ -67,6 +67,8 @@ global:
 chalice:
   env:
     jwt_secret: "SetARandomStringHere"
+    # CAPTCHA_SERVER: ''
+    # CAPTCHA_KEY: ''
     # SAML2_MD_URL: ''
     # idp_entityId: ''
     # idp_sso_url: ''
