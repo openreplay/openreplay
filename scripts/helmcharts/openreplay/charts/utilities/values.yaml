@@ -36,11 +36,15 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
+#service:
+#  type: ClusterIP
+#  port: 9000
+
 service:
   type: ClusterIP
   ports:
-    - port: 9000
-    - port: 9001
+    peerjs: 9000
+    socketio: 9001
 
 ingress:
   enabled: false
