@@ -9,16 +9,18 @@ const PORT = 9000;
 
 var app = express();
 var wsapp = express();
-const request_logger = (req, res, next) => {
-    console.log(new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
-    res.on('finish', function () {
-        console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
-    })
+const request_logger = (identity) => {
+    return (req, res, next) => {
+        console.log(identity,new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
+        res.on('finish', function () {
+            console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
+        })
 
-    next();
+        next();
+    }
 };
-app.use(request_logger);
-wsapp.use(request_logger);
+app.use(request_logger("[app]"));
+wsapp.use(request_logger("[wsapp]"));
 
 app.use('/sourcemaps', sourcemapsReaderServer);
 app.use('/assist', peerRouter);
@@ -28,7 +30,7 @@ const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);
     console.log('Press Ctrl+C to quit.');
 });
-const wsserver = app.listen(PORT + 1, HOST, () => {
+const wsserver = wsapp.listen(PORT + 1, HOST, () => {
     console.log(`WS App listening on http://${HOST}:${PORT + 1}`);
     console.log('Press Ctrl+C to quit.');
 });

@@ -39,7 +39,7 @@ module.exports = {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            // path: '/socket'
+            path: '/socket'
         });
 
         io.on('connection', (socket) => {
