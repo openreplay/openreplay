@@ -2,22 +2,22 @@ const _io = require('socket.io');
 var express = require('express');
 var {extractPeerId} = require('./peerjs-server');
 var wsRouter = express.Router();
-const IDENTITIES = {assist: 'assist', session: 'session'};
-const NEW_ASSIST_MESSAGE = "NEW_ASSISTANT";
-const NO_ASSISTS = "NO_ASSISTANT";
-const NO_SESSIONS = "NO_SESSIONS";
+const IDENTITIES = {assist: 'agent', session: 'session'};
+const NEW_ASSIST_MESSAGE = "NEW_AGENT";
+const NO_ASSISTS = "NO_AGENT";
+const NO_SESSIONS = "SESSION_DISCONNECTED";
 const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
 
 let connectedSessions = {};
 
 
-wsRouter.get(`/${process.env.S3_KEY}/sockets`, function (req, res) {
+wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, function (req, res) {
     console.log("[WS]looking for all available sessions");
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": connectedSessions}));
 });
-wsRouter.get(`/${process.env.S3_KEY}/sockets/:projectKey`, function (req, res) {
+wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, function (req, res) {
     console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -37,9 +37,9 @@ module.exports = {
         const io = _io(server, {
             cors: {
                 origin: "*",
-                methods: ["GET", "POST", "PUT"]
+                // methods: ["GET", "POST", "PUT"]
             },
-            path: '/assist/socket.io'
+            path: '/assist/socket'
         });
 
         io.on('connection', (socket) => {
@@ -61,41 +61,46 @@ module.exports = {
                 console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, size:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
             }
 
-            socket.on('disconnect', () => {
-                console.log(`${socket.id} disconnected from ${socket.peerId}, waiting ${wsReconnectionTimeout / 1000}s before checking remaining`);
+            socket.on('disconnect', async () => {
+                // console.log(`${socket.id} disconnected from ${socket.peerId}, waiting ${wsReconnectionTimeout / 1000}s before checking remaining`);
+                console.log(`${socket.id} disconnected from ${socket.peerId}`);
                 // wait a little bit before notifying everyone
-                setTimeout(async () => {
-                    console.log("wait ended, checking for number of connected assistants and sessions");
-                    if (io.sockets.adapter.rooms.get(socket.peerId)) {
-                        const connected_sockets = await io.in(socket.peerId).fetchSockets();
-                        let c_sessions = 0, c_assistants = 0;
-                        for (let item of connected_sockets) {
-                            if (item.handshake.query.identity === IDENTITIES.session) {
-                                c_sessions++;
-                            } else {
-                                c_assistants++;
-                            }
+                // setTimeout(async () => {
+                console.log("wait ended, checking for number of connected assistants and sessions");
+                if (io.sockets.adapter.rooms.get(socket.peerId)) {
+                    const connected_sockets = await io.in(socket.peerId).fetchSockets();
+                    let c_sessions = 0, c_assistants = 0;
+                    for (let item of connected_sockets) {
+                        if (item.handshake.query.identity === IDENTITIES.session) {
+                            c_sessions++;
+                        } else {
+                            c_assistants++;
                         }
-                        if (c_sessions === 0) {
-                            console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
-                            socket.to(socket.peerId).emit(NO_SESSIONS);
-                            removeSession(socket.projectKey, socket.sessionId);
-                        }
-                        if (c_assistants === 0) {
-                            console.log(`notifying everyone in ${socket.peerId} about no ASSISNTANT`);
-                            socket.to(socket.peerId).emit(NO_ASSISTS);
-                        }
-                    } else {
-                        console.log(`room not found: ${socket.peerId}`);
+                    }
+                    if (c_sessions === 0) {
+                        console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
+                        socket.to(socket.peerId).emit(NO_SESSIONS);
                         removeSession(socket.projectKey, socket.sessionId);
                     }
-                }, wsReconnectionTimeout);
+                    if (c_assistants === 0) {
+                        console.log(`notifying everyone in ${socket.peerId} about no ASSISNTANT`);
+                        socket.to(socket.peerId).emit(NO_ASSISTS);
+                    }
+                } else {
+                    console.log(`room not found: ${socket.peerId}`);
+                    removeSession(socket.projectKey, socket.sessionId);
+                }
+                // }, wsReconnectionTimeout);
             });
 
             socket.onAny((eventName, ...args) => {
                 socket.lastMessageReceivedAt = Date.now();
                 console.log("received event:" + eventName + ", from:" + socket.identity + ", sending message to room:" + socket.peerId + ", size:" + io.sockets.adapter.rooms.get(socket.peerId).size);
-                socket.to(socket.peerId).emit(eventName, args[0]);
+                if(socket.identity===IDENTITIES.session){
+                    socket.to(socket.peerId).emit(eventName, args[0]);
+                }else{
+
+                }
             });
 
             if (socket.identity === IDENTITIES.assist) {
