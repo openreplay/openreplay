@@ -9,13 +9,17 @@ const PORT = 9000;
 
 var app = express();
 app.use((req, res, next) => {
-    console.log(new Date().toTimeString(), req.method, req.originalUrl);
+    console.log(new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
+    res.on('finish', function () {
+        console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
+    })
+
     next();
 });
 
 app.use('/sourcemaps', sourcemapsReaderServer);
-app.use('/assist', peerRouter);
-app.use('/assist', socket.wsRouter);
+// app.use('/assist', peerRouter);
+// app.use('/assist/', socket.wsRouter);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);
