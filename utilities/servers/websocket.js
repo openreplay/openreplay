@@ -37,9 +37,9 @@ module.exports = {
         const io = _io(server, {
             cors: {
                 origin: "*",
-                // methods: ["GET", "POST", "PUT"]
+                methods: ["GET", "POST", "PUT"]
             },
-            path: '/assist/socket'
+            path: '/socket'
         });
 
         io.on('connection', (socket) => {
