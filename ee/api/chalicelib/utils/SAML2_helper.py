@@ -86,12 +86,22 @@ async def prepare_request(request: Request):
         session = {}
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
     headers = request.headers
-    url_data = urlparse('%s://%s' % (headers.get('x-forwarded-proto', 'http'), headers['host']))
+    proto = headers.get('x-forwarded-proto', 'http')
+    url_data = urlparse('%s://%s' % (proto, headers['host']))
+    path = request.url.path
+    # remove / from the /acs/
+    if path.endswith("/"):
+        path = path[:-1]
+    # remove /{tenantKey} from /acs/{tenantKey}
+    if not path.endswith("/acs"):
+        parts = path.split("/")
+        if len(parts) > 2 and parts[-2] == "acs":
+            path = "/".join(parts[:-1])
     return {
-        'https': 'on' if request.headers.get('x-forwarded-proto', 'http') == 'https' else 'off',
+        'https': 'on' if proto == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': "/api" + request.url.path,
+        'script_name': "/api" + path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
