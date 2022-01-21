@@ -46,6 +46,7 @@ module.exports = {
     wsRouter,
     start: (server) => {
         const io = _io(server, {
+            maxHttpBufferSize: 7e6,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
