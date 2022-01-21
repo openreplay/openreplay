@@ -8,6 +8,13 @@ postgresql: &postgres
   postgresqlPort: "5432"
   postgresqlUser: "postgres"
   postgresqlDatabase: "postgres"
+  # resources:
+  #   requests:
+  #     memory: 256Mi
+  #     cpu: 250m
+  #   limits:
+  #     memory: 3000Mi
+  #     cpu: 2
 
 clickhouse: {}
   # For enterpriseEdition
@@ -91,6 +98,8 @@ chalice:
 ##  Changes to nginx
 #
 # nginx-ingress:
+#   sslKey: site.crt
+#   sslCert: site.crt
 #   customServerConfigs: |
 #      # Redirecting http to https
 #      return 301 https://$host$request_uri;
