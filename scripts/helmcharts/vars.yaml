@@ -43,8 +43,8 @@ global:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
     assetsBucket: "sessions-assets"
-    recordings_bucket: "mobs"
-    sourcemaps_bucket: "sourcemaps"
+    recordingsBucket: "mobs"
+    sourcemapsBucket: "sourcemaps"
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
