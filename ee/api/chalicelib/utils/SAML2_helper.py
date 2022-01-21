@@ -27,7 +27,7 @@ SAML2 = {
 }
 
 # in case tenantKey is included in the URL
-sp_acs = config("idp_sp_tk", default="")
+sp_acs = config("idp_tenantKey", default="")
 if sp_acs is not None and len(sp_acs) > 0:
     SAML2["sp"]["assertionConsumerService"]["url"] += sp_acs + "/"
 
