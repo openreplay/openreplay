@@ -16,6 +16,7 @@ from starlette import status
 
 
 @public_app.get("/sso/saml2", tags=["saml2"])
+@public_app.get("/sso/saml2/", tags=["saml2"])
 async def start_sso(request: Request):
     request.path = ''
     req = await prepare_request(request=request)
@@ -25,6 +26,7 @@ async def start_sso(request: Request):
 
 
 @public_app.post('/sso/saml2/acs', tags=["saml2"])
+@public_app.post('/sso/saml2/acs/', tags=["saml2"])
 async def process_sso_assertion(request: Request):
     req = await prepare_request(request=request)
     session = req["cookie"]["session"]
@@ -111,11 +113,9 @@ async def process_sso_assertion(request: Request):
 
 
 @public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])
+@public_app.post('/sso/saml2/acs/{tenantKey}/', tags=["saml2"])
 async def process_sso_assertion_tk(tenantKey: str, request: Request):
     req = await prepare_request(request=request)
-    print("------------")
-    print(req)
-    print("------------")
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
 
@@ -196,6 +196,7 @@ async def process_sso_assertion_tk(tenantKey: str, request: Request):
 
 
 @public_app.get('/sso/saml2/sls', tags=["saml2"])
+@public_app.get('/sso/saml2/sls/', tags=["saml2"])
 async def process_sls_assertion(request: Request):
     req = await prepare_request(request=request)
     session = req["cookie"]["session"]
@@ -230,8 +231,8 @@ async def process_sls_assertion(request: Request):
     return RedirectResponse(url=config("SITE_URL"))
 
 
-@public_app.get('/sso/saml2/metadata/', tags=["saml2"])
 @public_app.get('/sso/saml2/metadata', tags=["saml2"])
+@public_app.get('/sso/saml2/metadata/', tags=["saml2"])
 async def saml2_metadata(request: Request):
     req = await prepare_request(request=request)
     auth = init_saml_auth(req)

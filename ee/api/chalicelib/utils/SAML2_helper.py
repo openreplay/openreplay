@@ -12,11 +12,11 @@ SAML2 = {
     "sp": {
         "entityId": config("SITE_URL") + "/api/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": config("SITE_URL") + "/api/sso/saml2/acs",
+            "url": config("SITE_URL") + "/api/sso/saml2/acs/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": config("SITE_URL") + "/api/sso/saml2/sls",
+            "url": config("SITE_URL") + "/api/sso/saml2/sls/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -25,6 +25,12 @@ SAML2 = {
     },
     "idp": None
 }
+
+# in case tenantKey is included in the URL
+sp_acs = config("idp_sp_tk", default="")
+if sp_acs is not None and len(sp_acs) > 0:
+    SAML2["sp"]["assertionConsumerService"]["url"] += sp_acs + "/"
+
 idp = None
 # SAML2 config handler
 if config("SAML2_MD_URL", default=None) is not None and len(config("SAML2_MD_URL")) > 0:
@@ -60,12 +66,9 @@ else:
 
 def init_saml_auth(req):
     # auth = OneLogin_Saml2_Auth(req, custom_base_path=environ['SAML_PATH'])
-
     if idp is None:
         raise Exception("No SAML2 config provided")
-    auth = OneLogin_Saml2_Auth(req, old_settings=SAML2)
-
-    return auth
+    return OneLogin_Saml2_Auth(req, old_settings=SAML2)
 
 
 async def prepare_request(request: Request):
@@ -87,16 +90,14 @@ async def prepare_request(request: Request):
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
     headers = request.headers
     proto = headers.get('x-forwarded-proto', 'http')
+    if headers.get('x-forwarded-proto') is not None:
+        print(f"x-forwarded-proto: {proto}")
     url_data = urlparse('%s://%s' % (proto, headers['host']))
     path = request.url.path
-    # remove / from the /acs/
-    if path.endswith("/"):
-        path = path[:-1]
-    # remove /{tenantKey} from /acs/{tenantKey}
-    if not path.endswith("/acs"):
-        parts = path.split("/")
-        if len(parts) > 2 and parts[-2] == "acs":
-            path = "/".join(parts[:-1])
+    # add / to /acs
+    if not path.endswith("/"):
+        path = path + '/'
+
     return {
         'https': 'on' if proto == 'https' else 'off',
         'http_host': request.headers['host'],
