@@ -90,10 +90,14 @@ chalice:
 
 # For example:
 #
-# alerts:
+# http:
 #   resources:
 #     limits:
-#       cpu: 1
+#       cpu: 1024m
+#       memory: 4096Mi
+#     requests:
+#       cpu: 512m
+#       memory: 2056Mi
 
 ##  Changes to nginx
 #
