@@ -113,6 +113,9 @@ async def process_sso_assertion(request: Request):
 @public_app.post('/sso/saml2/acs/{tenantKey}', tags=["saml2"])
 async def process_sso_assertion_tk(tenantKey: str, request: Request):
     req = await prepare_request(request=request)
+    print("------------")
+    print(req)
+    print("------------")
     session = req["cookie"]["session"]
     auth = init_saml_auth(req)
 
