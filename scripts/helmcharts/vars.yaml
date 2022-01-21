@@ -100,20 +100,3 @@ chalice:
 #      # Redirecting http to https
 #      return 301 https://$host$request_uri;
 #
-### Change the ssl certificates
-### Public certificate ( content from site.crt, mind the indentation )
-#   ssl_certificate: |-
-#     -----BEGIN CERTIFICATE-----
-#     MIIFITCCAwmgAwIBAgIUQ8hQoDbW3Z4DxRVjIYlIlbEHp/8wDQYJKoZIhvcNAQEL
-#     BQAwIDEeMBwGA1UEAwwVb3BlbnJlcGxheS5sb2NhbC5ob3N0MB4XDTIxMTIyMjA3
-#     NDIxOVoXDTIyMTIyMjA3NDIxOVowIDEeMBwGA1UEAwwVb3BlbnJlcGxheS5sb2Nh
-#     -----END CERTIFICATE-----
-#   
-### Private certificate ( content from site.key, mind the indentation. )
-#   ssl_privatekey: |-
-#     -----BEGIN PRIVATE KEY-----
-#     TbXr+1+HXWQGs4Go63gpvhI/yzOScTTiuI88lbjM9QA/aDlZm2TlXdcB71PDtO5T
-#     e2Zw7SH2h7yLK6uP2FamVgUSe0rWf9zQmKTkFzJcgwelvuk7MHBMw4JSYeoB7dJP
-#     3+FMchvzM1exCC/kNxTqvAyYWzdNPBIPSekHn1I9eEgr14cwZ+1RV9SK16uxsMT9
-#     7qINKoGovqXB1oAdopIl1z64e7MWVE4=
-#     -----END PRIVATE KEY-----
