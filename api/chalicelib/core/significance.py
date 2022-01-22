@@ -2,7 +2,7 @@ __author__ = "AZNAUROV David"
 __maintainer__ = "KRAIEM Taha Yassine"
 
 import schemas
-from chalicelib.core import events, sessions_metas, metadata, sessions
+from chalicelib.core import events, metadata, sessions
 from chalicelib.utils import dev
 
 """
@@ -617,6 +617,15 @@ def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
     if len(rows) == 0:
+        # PS: not sure what to return if rows are empty
+        output["stages"] = [{
+            "type": stages[0]["type"],
+            "value": stages[0]["value"],
+            "sessionsCount": None,
+            "dropPercentage": None,
+            "usersCount": None
+        }]
+        output['criticalIssuesCount'] = 0
         return output
     # Obtain the first part of the output
     stages_list = get_stages(stages, rows)
