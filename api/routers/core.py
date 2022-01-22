@@ -621,6 +621,12 @@ def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_
     return {"data": alerts.get_all(projectId)}
 
 
+@app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
+def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": alerts.get_predefined_values() \
+                    + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
+
+
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get(alertId)}
@@ -1070,11 +1076,6 @@ def get_custom_metric_chart(projectId: int, data: schemas.CustomMetricChartPaylo
                             context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=data.metric_id,
                                               data=data)}
-
-
-@app.get('/{projectId}/custom_metrics/series', tags=["customMetrics"])
-def get_series_for_alert(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
