@@ -629,7 +629,8 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
+# class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
