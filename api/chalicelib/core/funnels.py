@@ -99,7 +99,8 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
                 # row["filter"]["events"] = filter_stages(row["filter"]["events"])
                 get_start_end_time(filter_d=row["filter"], range_value=range_value, start_date=start_date,
                                    end_date=end_date)
-                counts = sessions.search2_pg(data=row["filter"], project_id=project_id, user_id=None, count_only=True)
+                counts = sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(row["filter"]),
+                                             project_id=project_id, user_id=None, count_only=True)
                 row["sessionsCount"] = counts["countSessions"]
                 row["usersCount"] = counts["countUsers"]
                 overview = significance.get_overview(filter_d=row["filter"], project_id=project_id)
@@ -110,6 +111,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
                 row["criticalIssuesCount"] = overview["criticalIssuesCount"]
                 row["missedConversions"] = 0 if len(row["stages"]) < 2 \
                     else row["stages"][0]["sessionsCount"] - row["stages"][-1]["sessionsCount"]
+                row["filter"] = helper.old_search_payload_to_flat(row["filter"])
     return rows
 
 
@@ -147,11 +149,12 @@ def delete(project_id, funnel_id, user_id):
 
 
 def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
-    return sessions.search2_pg(data=f["filter"], project_id=project_id, user_id=user_id)
+    return sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(f["filter"]), project_id=project_id,
+                               user_id=user_id)
 
 
 def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
@@ -168,7 +171,7 @@ def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.Funnel
 
 
 def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
@@ -196,7 +199,7 @@ def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data):
 
 
 def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
@@ -224,7 +227,7 @@ def get_issues_on_the_fly(funnel_id, user_id, project_id, data):
                                          last_stage=last_stage))}
 
 
-def get(funnel_id, project_id, user_id):
+def get(funnel_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -246,6 +249,8 @@ def get(funnel_id, project_id, user_id):
 
     f["createdAt"] = TimeUTC.datetime_to_timestamp(f["createdAt"])
     # f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
+    if flatten:
+        f["filter"] = helper.old_search_payload_to_flat(f["filter"])
     return f
 
 

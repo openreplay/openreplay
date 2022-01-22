@@ -570,12 +570,14 @@ class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
         return values
 
 
-class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
+class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
+    # class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(default=None)
     order: Optional[str] = Field(default=None)
 
 
-class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
+class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
+    # class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
@@ -599,7 +601,8 @@ class UpdateFunnelSchema(FunnelSchema):
     is_public: Optional[bool] = Field(None)
 
 
-class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
+class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
+    # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
 
@@ -630,7 +633,7 @@ class MobileSignPayloadSchema(BaseModel):
 
 
 class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
-# class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+    # class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
