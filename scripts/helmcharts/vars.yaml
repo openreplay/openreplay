@@ -104,8 +104,6 @@ chalice:
 ##  Changes to nginx
 #
 # nginx-ingress:
-#   sslKey: site.crt
-#   sslCert: site.crt
 #   customServerConfigs: |
 #      # Redirecting http to https
 #      return 301 https://$host$request_uri;
