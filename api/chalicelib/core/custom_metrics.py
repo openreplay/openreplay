@@ -205,17 +205,18 @@ def get_series_for_alert(project_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT metric_id, 
-                        series_id, 
-                        metrics.name AS metric_name, 
-                        metric_series.name AS series_name, 
-                        index AS series_index
+                """SELECT series_id AS value,
+                       metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
+                       'count' AS unit,
+                       FALSE AS predefined,
+                       metric_id,
+                       series_id
                     FROM metric_series
                              INNER JOIN metrics USING (metric_id)
                     WHERE metrics.deleted_at ISNULL
                       AND metrics.project_id = %(project_id)s
                       AND (user_id = %(user_id)s OR is_public)
-                    ORDER BY metric_name, series_index, series_name;""",
+                    ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )

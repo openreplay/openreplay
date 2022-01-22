@@ -1,11 +1,12 @@
 import json
+import logging
 import time
 
 import schemas
 from chalicelib.core import notifications, slack, webhook
 from chalicelib.utils import pg_client, helper, email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import logging
+
 
 def get(id):
     with pg_client.PostgresClient() as cur:
@@ -157,3 +158,13 @@ def delete(project_id, alert_id):
                         {"alert_id": alert_id, "project_id": project_id})
         )
     return {"data": {"state": "success"}}
+
+
+def get_predefined_values():
+    values = [e.value for e in schemas.AlertColumn]
+    values = [{"name": v, "value": v,
+               "unit": "count" if v.endswith(".count") else "ms",
+               "predefined": True,
+               "metricId": None,
+               "seriesId": None} for v in values]
+    return values
