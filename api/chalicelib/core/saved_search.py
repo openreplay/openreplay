@@ -18,6 +18,7 @@ def create(project_id, user_id, data: schemas.SavedSearchSchema):
         )
         r = cur.fetchone()
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+        r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         r = helper.dict_to_camel_case(r)
         return {"data": r}
 
@@ -40,6 +41,7 @@ def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
         )
         r = cur.fetchone()
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+        r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         r = helper.dict_to_camel_case(r)
         # r["filter"]["startDate"], r["filter"]["endDate"] = TimeUTC.get_start_end_from_range(r["filter"]["rangeValue"])
         return r
@@ -74,6 +76,8 @@ def get_all(project_id, user_id, details=False):
         rows = helper.list_to_camel_case(rows)
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
+            if details:
+                row["filter"] = helper.old_search_payload_to_flat(row["filter"])
     return rows
 
 
@@ -112,4 +116,5 @@ def get(search_id, project_id, user_id):
         return None
 
     f["createdAt"] = TimeUTC.datetime_to_timestamp(f["createdAt"])
+    f["filter"] = helper.old_search_payload_to_flat(f["filter"])
     return f
