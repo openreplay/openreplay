@@ -103,6 +103,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
                                              project_id=project_id, user_id=None, count_only=True)
                 row["sessionsCount"] = counts["countSessions"]
                 row["usersCount"] = counts["countUsers"]
+                filter_clone = dict(row["filter"])
                 overview = significance.get_overview(filter_d=row["filter"], project_id=project_id)
                 row["stages"] = overview["stages"]
                 row.pop("filter")
@@ -111,7 +112,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
                 row["criticalIssuesCount"] = overview["criticalIssuesCount"]
                 row["missedConversions"] = 0 if len(row["stages"]) < 2 \
                     else row["stages"][0]["sessionsCount"] - row["stages"][-1]["sessionsCount"]
-                row["filter"] = helper.old_search_payload_to_flat(row["filter"])
+                row["filter"] = helper.old_search_payload_to_flat(filter_clone)
     return rows
 
 
