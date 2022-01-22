@@ -108,7 +108,7 @@ def events_search(projectId: int, q: str, type: Union[schemas.FilterType, schema
 
 
 @app.post('/{projectId}/sessions/search2', tags=["sessions"])
-def sessions_search2(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search2_pg(data, projectId, user_id=context.user_id)
     return {'data': data}
