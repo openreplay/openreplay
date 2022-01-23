@@ -84,7 +84,6 @@ chalice:
     # idp_name: ''
     # idp_tenantKey: ''
 
-
 # If you want to override something
 # chartname:
 #   filedFrom chart/Values.yaml:
@@ -110,4 +109,3 @@ chalice:
 #   customServerConfigs: |
 #      # Redirecting http to https
 #      return 301 https://$host$request_uri;
-#
