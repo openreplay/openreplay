@@ -50,7 +50,13 @@ export function getExceptionMessageFromEvent(e: ErrorEvent | PromiseRejectionEve
     if (e.reason instanceof Error) {
       return getExceptionMessage(e.reason, [])
     } else {
-      return new JSException('Unhandled Promise Rejection', String(e.reason), '[]');
+      let message: string;
+      try {
+        message = JSON.stringify(e.reason)
+      } catch(_) {
+        message = String(e.reason)
+      }
+      return new JSException('Unhandled Promise Rejection', message, '[]');
     }
   }
   return null;
