@@ -53,8 +53,8 @@ export default Record({
     toData() {
       const js = this.toJS();
       js.filters = js.filters.map(filter => {
-        delete filter.operatorOptions
-        delete filter._key
+        // delete filter.operatorOptions
+        // delete filter._key
         return filter;
       });
 
