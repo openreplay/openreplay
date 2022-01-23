@@ -4,13 +4,12 @@ import { Loader, NoContent, Icon } from 'UI';
 import { widgetHOC, Styles } from '../../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
-import CustomMetricWidgetHoc from '../../common/CustomMetricWidgetHoc';
-import stl from './CustomMetricWidget.css';
+import stl from './CustomMetricWidgetPreview.css';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
-import { remove, setAlertMetricId } from 'Duck/customMetrics';
+import { remove } from 'Duck/customMetrics';
 import { confirm } from 'UI/Confirmation';
+
 import APIClient from 'App/api_client';
-import { setShowAlerts } from 'Duck/dashboard';
 
 const customParams = rangeName => {
   const params = { density: 70 }
@@ -34,16 +33,13 @@ interface Props {
   showSync?: boolean;
   compare?: boolean;
   period?: Period;
-  onClickEdit: (e) => void;
+  onClickEdit?: (e) => void;
   remove: (id) => void;
-  setShowAlerts: (showAlerts) => void;
-  setAlertMetricId: (id) => void;
-  onAlertClick: (e) => void;
 }
 function CustomMetricWidget(props: Props) {
   const { metric, showSync, compare, period = { rangeName: LAST_24_HOURS} } = props;
   const [loading, setLoading] = useState(false)
-  const [data, setData] = useState<any>({ chart: [] })
+  const [data, setData] = useState<any>({ chart: [{}] })
 
   const colors = compare ? Styles.compareColors : Styles.colors;
   const params = customParams(period.rangeName)
@@ -51,55 +47,25 @@ function CustomMetricWidget(props: Props) {
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
 
   useEffect(() => {
-
-    // dataWrapper: (p, period) => SessionsImpactedBySlowRequests({ chart: p})
-		// 	.update("chart", getChartFormatter(period))
-    
-    new APIClient()['post']('/custom_metrics/chart', { ...metricParams, q: metric.name })
+    new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
       .then(response => response.json())
       .then(({ errors, data }) => {
         if (errors) {
           console.log('err', errors)
         } else {
-          // console.log('data', data);
-          // const _data = data[0].map(CustomMetric).update("chart", getChartFormatter(period)).toJS();
           const _data = getChartFormatter(period)(data[0]);
           console.log('__data', _data)
           setData({ chart: _data });
         }
       }).finally(() => setLoading(false));
-  }, [])
+  }, [metric])
 
-  const deleteHandler = async () => {
-    if (await confirm({
-      header: 'Custom Metric',
-      confirmButton: 'Delete',
-      confirmation: `Are you sure you want to delete ${metric.name}`
-    })) {
-      props.remove(metric.metricId)
-    }
-  }
-
-  // const onAlertClick = () => {
-  //   props.setShowAlerts(true)
-  //   props.setAlertMetricId(metric.metricId)
-  // }
+  
 
   return (
     <div className={stl.wrapper}>
       <div className="flex items-center mb-10 p-2">
-        <div className="font-medium">{metric.name + ' ' + metric.metricId}</div>
-        <div className="ml-auto flex items-center">
-        <div className="cursor-pointer mr-6" onClick={deleteHandler}>
-            <Icon name="trash" size="14" />
-          </div>
-          <div className="cursor-pointer mr-6">
-            <Icon name="pencil" size="14" />
-          </div>
-          <div className="cursor-pointer" onClick={props.onAlertClick}>
-            <Icon name="bell-plus" size="14" />
-          </div>
-        </div>
+        
       </div>
       <div>
         <Loader loading={ loading } size="small">
@@ -141,4 +107,4 @@ function CustomMetricWidget(props: Props) {
   );
 }
 
-export default connect(null, { remove, setShowAlerts, setAlertMetricId })(CustomMetricWidget);
+export default connect(null, { remove })(CustomMetricWidget);

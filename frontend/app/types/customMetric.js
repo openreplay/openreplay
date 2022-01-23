@@ -17,8 +17,6 @@ export const FilterSeries = Record({
   methods: {
     toData() {
       const js = this.toJS();
-      delete js.key;
-      // js.filter = js.filter.toData();
       return js;
     },
   },
@@ -41,20 +39,29 @@ export default Record({
       return validateName(this.name, { diacritics: true });
     },
 
-    toData() {
+    toSaveData() {
       const js = this.toJS();
       
       js.series = js.series.map(series => {
         series.filter.filters = series.filter.filters.map(filter => {
+          filter.type = filter.key
           delete filter.operatorOptions
           delete filter.icon
+          delete filter.key
+          delete filter._key
           return filter;
         });
+        delete series._key
         return series;
       });
 
       delete js.key;
 
+      return js;
+    },
+
+    toData() {
+      const js = this.toJS();
       return js;
     },
   },

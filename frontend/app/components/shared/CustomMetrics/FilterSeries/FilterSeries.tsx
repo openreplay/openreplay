@@ -4,6 +4,7 @@ import { edit, updateSeries } from 'Duck/customMetrics';
 import { connect } from 'react-redux';
 import { IconButton, Button, Icon, SegmentSelection } from 'UI';
 import FilterSelection from '../../Filters/FilterSelection';
+import SeriesName from './SeriesName';
 
 interface Props {
   seriesIndex: number;
@@ -14,7 +15,7 @@ interface Props {
 }
 
 function FilterSeries(props: Props) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
 
   const onAddFilter = (filter) => {
@@ -74,9 +75,15 @@ function FilterSeries(props: Props) {
   return (
     <div className="border rounded bg-white">
       <div className="border-b px-5 h-12 flex items-center relative">
-        <div className="font-medium">{ series.name }</div>
-        
-        <div className="flex items-center cursor-pointer ml-auto" >
+        {/* <div className="font-medium flex items-center">
+          { series.name }
+          <div className="ml-3 cursor-pointer"><Icon name="pencil" size="14" /></div>
+        </div> */}
+        <div className="mr-auto">
+          <SeriesName name={series.name} onUpdate={() => null } />
+        </div>    
+    
+        <div className="flex items-center cursor-pointer" >
           <div onClick={props.onRemoveSeries} className="ml-3">
             <Icon name="trash" size="16" />
           </div>

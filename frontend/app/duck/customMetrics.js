@@ -2,7 +2,7 @@ import { List, Map } from 'immutable';
 import { clean as cleanParams } from 'App/api_client';
 import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED } from 'Types/errorInfo';
 import CustomMetric, { FilterSeries } from 'Types/customMetric'
-import { createFetch, fetchListType, fetchType, saveType, editType, createEdit } from './funcTools/crud';
+import { createFetch, fetchListType, fetchType, saveType, removeType, editType, createRemove, createEdit } from './funcTools/crud';
 // import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
 import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
@@ -18,7 +18,9 @@ const FETCH_LIST = fetchListType(name);
 const FETCH = fetchType(name);
 const SAVE = saveType(name);
 const EDIT = editType(name);
+const REMOVE = removeType(name);
 const UPDATE_SERIES = `${name}/UPDATE_SERIES`;
+const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
 
 function chartWrapper(chart = []) {
   return chart.map(point => ({ ...point, count: Math.max(point.count, 0) }));
@@ -31,6 +33,8 @@ function chartWrapper(chart = []) {
 
 const initialState = Map({
 	list: List(),
+  alertMetricId: null,
+  // instance: null,
 	instance: CustomMetric({
     name: 'New',
     series: List([
@@ -46,14 +50,18 @@ const initialState = Map({
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case EDIT:
+      console.log('EDIT', action);
       return state.mergeIn([ 'instance' ], CustomMetric(action.instance));
     case UPDATE_SERIES:
       console.log('update series', action.series);
       return state.setIn(['instance', 'series', action.index], FilterSeries(action.series));
     case success(SAVE):
       return state.set([ 'instance' ], CustomMetric(action.data));
+    case success(REMOVE):
+      console.log('action', action)
+      return state.update('list', list => list.filter(item => item.metricId !== action.id));
 		case success(FETCH):
-			return state.set("instance", ErrorInfo(action.data)); 
+			return state.set("instance", ErrorInfo(action.data));
 		case success(FETCH_LIST):
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));
@@ -70,6 +78,7 @@ export default mergeReducers(
 );
 
 export const edit = createEdit(name);
+export const remove = createRemove(name);
 
 export const updateSeries = (index, series) => ({
   type: UPDATE_SERIES,
@@ -88,7 +97,7 @@ export function fetch(id) {
 export function save(instance) {
   return {
     types: SAVE.array,
-    call: client => client.post( `/${ name }s`, instance.toData()),
+    call: client => client.post( `/${ name }s`, instance.toSaveData()),
   };
 }
 
@@ -96,5 +105,12 @@ export function fetchList() {
   return {
     types: array(FETCH_LIST),
     call: client => client.get(`/${name}s`),
+  };
+}
+
+export function setAlertMetricId(id) {
+  return {
+    type: SET_ALERT_METRIC_ID,
+    id,
   };
 }

@@ -3,6 +3,7 @@ import { Form, SegmentSelection, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save } from 'Duck/customMetrics';
+import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
 
 interface Props {
   metric: any;
@@ -50,7 +51,7 @@ function CustomMetricForm(props: Props) {
       className="relative"
       onSubmit={() => props.save(metric)}
     >
-      <div className="p-5" style={{ height: 'calc(100vh - 60px)', overflowY: 'auto' }}>
+      <div className="p-5 pb-20" style={{ height: 'calc(100vh - 60px)', overflowY: 'auto' }}>
         <div className="form-group">
           <label className="font-medium">Metric Title</label>
           <input
@@ -103,9 +104,13 @@ function CustomMetricForm(props: Props) {
         <div className="flex justify-end">
           <IconButton onClick={addSeries} primaryText label="SERIES" icon="plus" />
         </div>
+
+        <div className="my-4" />
+
+        <CustomMetricWidgetPreview metric={metric} />
       </div>
 
-      <div className="absolute w-full bottom-0 px-5 py-2 bg-white">
+      <div className="fixed border-t w-full bottom-0 px-5 py-2 bg-white">
         <Button loading={loading} primary>
           Save
         </Button>
