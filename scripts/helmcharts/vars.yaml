@@ -89,9 +89,8 @@ chalice:
 # chartname:
 #   filedFrom chart/Values.yaml:
 #     key: value
-
-# For example:
 #
+# For example (http):
 # http:
 #   resources:
 #     limits:
@@ -104,6 +103,10 @@ chalice:
 ##  Changes to nginx
 #
 # nginx-ingress:
+#   # Key and certificate files must be named site.key and site.crt
+#   # and copied to ../openreplay/files/
+#   sslKey: site.key
+#   sslCert: site.crt
 #   customServerConfigs: |
 #      # Redirecting http to https
 #      return 301 https://$host$request_uri;
