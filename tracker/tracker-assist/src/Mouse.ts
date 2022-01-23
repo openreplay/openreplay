@@ -47,11 +47,12 @@ export default class Mouse {
     }
   }
 
-  private readonly pScrEl = document.scrollingElement || document.documentElement
+  private readonly pScrEl = document.scrollingElement || document.documentElement // Is it always correct
   private lastScrEl: Element | "window" | null = null
   private resetLastScrEl = () => { this.lastScrEl = null }
   private handleWScroll = e => {
-    if (e.target !== this.lastScrEl) {
+    if (e.target !== this.lastScrEl &&
+      this.lastScrEl !== "window") {
       this.resetLastScrEl()
     }
   }

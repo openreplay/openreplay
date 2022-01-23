@@ -6,12 +6,13 @@ interface Message {
 }
 
 // 16kb should be max according to specification
+// 64kb chrome
 const crOrFf: boolean = 
   typeof navigator !== "undefined" && 
   (navigator.userAgent.indexOf("Chrom") !== -1 ||  // Chrome && Chromium
   navigator.userAgent.indexOf("Firefox") !== -1);
 
-const MESSAGES_PER_SEND = crOrFf ? 500 : 100
+const MESSAGES_PER_SEND = crOrFf ? 200 : 50
 
 // Bffering required in case of webRTC
 export default class BufferingConnection {
@@ -34,7 +35,10 @@ export default class BufferingConnection {
   send(messages: Message[]) {
     if (!this.conn.open) { return; }
     let i = 0;
+    //@ts-ignore
+    messages=messages.filter(m => m._id !== 39)
     while (i < messages.length) {
+
       this.buffer.push(messages.slice(i, i+=this.msgsPerSend))
     }
     if (!this.buffering) { 

@@ -27,7 +27,7 @@ enum CallingState {
 };
 
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
-//Peer = Peer.default || Peer;
+Peer = Peer.default || Peer;
 
 // type IncomeMessages =
 //   "call_end" |
@@ -86,7 +86,7 @@ export default function(opts?: Partial<Options>)  {
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
-        //debug: // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
+        debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
       }
       if (options.config) {
         _opt['config'] = options.config
