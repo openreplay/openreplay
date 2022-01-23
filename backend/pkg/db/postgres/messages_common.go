@@ -47,7 +47,8 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			rev_id, 
 			tracker_version, issue_score,
 			platform,
-			user_agent, user_browser, user_browser_version, user_device_memory_size, user_device_heap_size
+			user_agent, user_browser, user_browser_version, user_device_memory_size, user_device_heap_size,
+			user_id
 		) VALUES (
 			$1, $2, $3,
 			$4, $5, $6, $7, 
@@ -55,7 +56,8 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			NULLIF($10, ''), 
 			$11, $12,
 			$13,
-			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint)
+			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
+			NULLIF($19, '')
 		)`,
 		sessionID, s.ProjectID, s.Timestamp, 
 		s.UserUUID, s.UserDevice, s.UserDeviceType, s.UserCountry,
@@ -64,6 +66,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 		s.TrackerVersion, s.Timestamp/1000,
 		s.Platform,
 		s.UserAgent, s.UserBrowser, s.UserBrowserVersion, s.UserDeviceMemorySize, s.UserDeviceHeapSize,
+		s.UserID,
 	); err != nil {
 		return err;
 	}

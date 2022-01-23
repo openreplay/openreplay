@@ -366,3 +366,14 @@ def has_smtp():
 
 def get_edition():
     return "ee" if "ee" in config("ENTERPRISE_BUILD", default="").lower() else "foss"
+
+
+def old_search_payload_to_flat(values):
+    # in case the old search body was passed
+    if values.get("events") is not None:
+        for v in values["events"]:
+            v["isEvent"] = True
+        for v in values.get("filters", []):
+            v["isEvent"] = False
+        values["filters"] = values.pop("events") + values.get("filters", [])
+    return values

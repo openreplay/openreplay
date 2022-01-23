@@ -253,7 +253,7 @@ Pipfile
 /db_changes.sql
 /Dockerfile.bundle
 /entrypoint.bundle.sh
-/entrypoint.sh
+#/entrypoint.sh
 /chalicelib/core/heatmaps.py
 /routers/subs/insights.py
 /schemas.py

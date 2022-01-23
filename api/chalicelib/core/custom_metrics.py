@@ -26,7 +26,9 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
 
 
 def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
     metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     return try_live(project_id=project_id, data=metric)
 
@@ -113,10 +115,10 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             u AS (UPDATE metric_series
                     SET name=series.name,
                         filter=series.filter,
-                        index=series.filter.index
+                        index=series.index
                     FROM (VALUES {",".join([f"(%(u_series_id_{s['i']})s,%(u_index_{s['i']})s,%(u_name_{s['i']})s,%(u_filter_{s['i']})s::jsonb)"
-                                            for s in n_series])}) AS series(series_id, index, name, filter)
-                    WHERE metric_id =%(metric_id)s AND series_id=series.series_id
+                                            for s in u_series])}) AS series(series_id, index, name, filter)
+                    WHERE metric_series.metric_id =%(metric_id)s AND metric_series.series_id=series.series_id
                  RETURNING 1)""")
         if len(d_series_ids) > 0:
             sub_queries.append("""\
@@ -133,7 +135,6 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
         cur.execute(
             query
         )
-        r = cur.fetchone()
     return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
@@ -158,6 +159,8 @@ def get_all(project_id, user_id):
         rows = cur.fetchall()
         for r in rows:
             r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+            for s in r["series"]:
+                s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         rows = helper.list_to_camel_case(rows)
     return rows
 
@@ -177,7 +180,7 @@ def delete(project_id, metric_id, user_id):
     return {"state": "success"}
 
 
-def get(metric_id, project_id, user_id):
+def get(metric_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -197,7 +200,12 @@ def get(metric_id, project_id, user_id):
             )
         )
         row = cur.fetchone()
+        if row is None:
+            return None
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+        if flatten:
+            for s in row["series"]:
+                s["filter"] = helper.old_search_payload_to_flat(s["filter"])
     return helper.dict_to_camel_case(row)
 
 
@@ -205,17 +213,18 @@ def get_series_for_alert(project_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                """SELECT metric_id, 
-                        series_id, 
-                        metrics.name AS metric_name, 
-                        metric_series.name AS series_name, 
-                        index AS series_index
+                """SELECT series_id AS value,
+                       metrics.name || '.' || (COALESCE(metric_series.name, 'series ' || index)) || '.count' AS name,
+                       'count' AS unit,
+                       FALSE AS predefined,
+                       metric_id,
+                       series_id
                     FROM metric_series
                              INNER JOIN metrics USING (metric_id)
                     WHERE metrics.deleted_at ISNULL
                       AND metrics.project_id = %(project_id)s
                       AND (user_id = %(user_id)s OR is_public)
-                    ORDER BY metric_name, series_index, series_name;""",
+                    ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )

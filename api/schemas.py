@@ -458,7 +458,15 @@ class IssueType(str, Enum):
     js_exception = 'js_exception'
 
 
-class _SessionSearchEventRaw(BaseModel):
+class __MixedSearchFilter(BaseModel):
+    is_event: bool = Field(...)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class _SessionSearchEventRaw(__MixedSearchFilter):
+    is_event: bool = Field(True, const=True)
     custom: Optional[List[Union[int, str]]] = Field(None, min_items=1)
     customOperator: Optional[MathOperator] = Field(None)
     key: Optional[str] = Field(None)
@@ -491,7 +499,8 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
     value: Union[List[_SessionSearchEventRaw], str, List[str]] = Field(...)
 
 
-class _SessionSearchFilterSchema(BaseModel):
+class _SessionSearchFilterSchema(__MixedSearchFilter):
+    is_event: bool = Field(False, const=False)
     custom: Optional[List[str]] = Field(None)
     key: Optional[str] = Field(None)
     value: Union[Optional[Union[IssueType, PlatformType, int, str]],
@@ -536,12 +545,39 @@ class SessionsSearchPayloadSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
+class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
+    events: Optional[List[_SessionSearchEventSchema]] = Field([])
+    filters: List[Union[_SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
+
+    @root_validator(pre=True)
+    def flat_to_original(cls, values):
+        # in case the old search body was passed
+        if len(values.get("events", [])) > 0:
+            for v in values["events"]:
+                v["isEvent"] = True
+            for v in values.get("filters", []):
+                v["isEvent"] = False
+        else:
+            n_filters = []
+            n_events = []
+            for v in values.get("filters", []):
+                if v["isEvent"]:
+                    n_events.append(v)
+                else:
+                    n_filters.append(v)
+            values["events"] = n_events
+            values["filters"] = n_filters
+        return values
+
+
+class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
+    # class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(default=None)
     order: Optional[str] = Field(default=None)
 
 
-class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
+class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
+    # class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
@@ -565,7 +601,8 @@ class UpdateFunnelSchema(FunnelSchema):
     is_public: Optional[bool] = Field(None)
 
 
-class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
+class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
+    # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
 
@@ -595,7 +632,8 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
+    # class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)

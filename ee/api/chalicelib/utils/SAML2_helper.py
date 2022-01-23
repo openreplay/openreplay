@@ -12,11 +12,11 @@ SAML2 = {
     "sp": {
         "entityId": config("SITE_URL") + "/api/sso/saml2/metadata/",
         "assertionConsumerService": {
-            "url": config("SITE_URL") + "/api/sso/saml2/acs",
+            "url": config("SITE_URL") + "/api/sso/saml2/acs/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
         "singleLogoutService": {
-            "url": config("SITE_URL") + "/api/sso/saml2/sls",
+            "url": config("SITE_URL") + "/api/sso/saml2/sls/",
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         "NameIDFormat": "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress",
@@ -25,6 +25,12 @@ SAML2 = {
     },
     "idp": None
 }
+
+# in case tenantKey is included in the URL
+sp_acs = config("idp_tenantKey", default="")
+if sp_acs is not None and len(sp_acs) > 0:
+    SAML2["sp"]["assertionConsumerService"]["url"] += sp_acs + "/"
+
 idp = None
 # SAML2 config handler
 if config("SAML2_MD_URL", default=None) is not None and len(config("SAML2_MD_URL")) > 0:
@@ -60,12 +66,9 @@ else:
 
 def init_saml_auth(req):
     # auth = OneLogin_Saml2_Auth(req, custom_base_path=environ['SAML_PATH'])
-
     if idp is None:
         raise Exception("No SAML2 config provided")
-    auth = OneLogin_Saml2_Auth(req, old_settings=SAML2)
-
-    return auth
+    return OneLogin_Saml2_Auth(req, old_settings=SAML2)
 
 
 async def prepare_request(request: Request):
@@ -86,12 +89,20 @@ async def prepare_request(request: Request):
         session = {}
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
     headers = request.headers
-    url_data = urlparse('%s://%s' % (headers.get('x-forwarded-proto', 'http'), headers['host']))
+    proto = headers.get('x-forwarded-proto', 'http')
+    if headers.get('x-forwarded-proto') is not None:
+        print(f"x-forwarded-proto: {proto}")
+    url_data = urlparse('%s://%s' % (proto, headers['host']))
+    path = request.url.path
+    # add / to /acs
+    if not path.endswith("/"):
+        path = path + '/'
+
     return {
-        'https': 'on' if request.headers.get('x-forwarded-proto', 'http') == 'https' else 'off',
+        'https': 'on' if proto == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': "/api" + request.url.path,
+        'script_name': "/api" + path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
