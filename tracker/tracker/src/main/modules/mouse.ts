@@ -92,7 +92,7 @@ export default function (app: App): void {
         (target as HTMLElement).onclick != null ||
         target.getAttribute('role') === 'button'
       ) {
-      const label: string = app.observer.getInnerTextSecure(target as HTMLElement);
+      const label: string = app.sanitizer.getInnerTextSecure(target as HTMLElement);
       return normSpaces(label).slice(0, 100);
     }
     return '';

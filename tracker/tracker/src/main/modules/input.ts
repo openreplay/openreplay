@@ -2,7 +2,12 @@ import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } fro
 import App from "../app/index.js";
 import { SetInputTarget, SetInputValue, SetInputChecked } from "../../messages/index.js";
 
-function isInput(node: any): node is HTMLInputElement {
+// TODO: take into consideration "contenteditable" attribute
+type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
+function isTextEditable(node: any): node is TextEditableElement {
+  if (node instanceof HTMLTextAreaElement) { 
+    return true;
+  }
   if (!(node instanceof HTMLInputElement)) {
     return false;
   }
@@ -16,6 +21,7 @@ function isInput(node: any): node is HTMLInputElement {
     type === 'range'
   );
 }
+
 function isCheckable(node: any): node is HTMLInputElement {
   if (!(node instanceof HTMLInputElement)) {
     return false;
@@ -25,7 +31,7 @@ function isCheckable(node: any): node is HTMLInputElement {
 }
 
 const labelElementFor: (
-  node: HTMLInputElement,
+  node: TextEditableElement,
 ) => HTMLLabelElement | undefined =
   IN_BROWSER && 'labels' in HTMLInputElement.prototype
     ? (node): HTMLLabelElement | undefined => {
@@ -56,7 +62,7 @@ const labelElementFor: (
         }
       };
 
-export function getInputLabel(node: HTMLInputElement): string {
+export function getInputLabel(node: TextEditableElement): string {
   let label = getLabelAttribute(node);
   if (label === null) {
     const labelElement = labelElementFor(node);
@@ -89,13 +95,13 @@ export default function (app: App, opts: Partial<Options>): void {
     },
     opts,
   );
-  function sendInputTarget(id: number, node: HTMLInputElement): void {
+  function sendInputTarget(id: number, node: TextEditableElement): void {
     const label = getInputLabel(node);
     if (label !== '') {
       app.send(new SetInputTarget(id, label));
     }
   }
-  function sendInputValue(id: number, node: HTMLInputElement): void {
+  function sendInputValue(id: number, node: TextEditableElement): void {
     let value = node.value;
     let inputMode: InputMode = options.defaultInputMode;
     if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
@@ -136,7 +142,7 @@ export default function (app: App, opts: Partial<Options>): void {
   app.ticker.attach((): void => {
     inputValues.forEach((value, id) => {
       const node = app.nodes.getNode(id);
-      if (!isInput(node)) {
+      if (!isTextEditable(node)) {
         inputValues.delete(id);
         return;
       }
@@ -169,7 +175,7 @@ export default function (app: App, opts: Partial<Options>): void {
       if (id === undefined) {
         return;
       }
-      if (isInput(node)) {
+      if (isTextEditable(node)) {
         inputValues.set(id, node.value);
         sendInputValue(id, node);
         return;

@@ -47,6 +47,7 @@ function sendBatch(batch: Uint8Array):void {
         return; // happens simultaneously with onerror TODO: clear codeflow
       }
       if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
+        busy = false;
         reset();
         sendQueue.length = 0;
         if (this.status === 401) { // Unauthorised (Token expired)
