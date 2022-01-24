@@ -144,7 +144,7 @@ export default class Login extends React.Component {
               <div className={cn(stl.sso, "py-2 flex flex-col items-center")}>
                 <div className="mb-4">or</div>
                 <a href="/api/sso/saml2" rel="noopener noreferrer">
-                  <Button type="button" outline type="submit" primary >{ 'Login with SSO (Okta)' }</Button>
+                  <Button type="button" outline type="submit" primary >{ `Login with SSO (${authDetails.ssoProvider})` }</Button>
                 </a>
               </div>
             )}
