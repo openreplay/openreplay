@@ -29,6 +29,7 @@ import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
 import SessionSearchField from 'Shared/SessionSearchField'
 import SavedSearch from 'Shared/SavedSearch'
 import LiveSessionList from './LiveSessionList'
+import SessionSearch from 'Shared/SessionSearch';
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -176,7 +177,8 @@ export default class BugFinder extends React.PureComponent {
                 <div style={{ width: "70%", marginRight: "10px"}}><SessionSearchField /></div>
                 <SavedSearch />
               </div>
-              <EventFilter />
+              <SessionSearch />
+              {/* <EventFilter /> */}
             </div>
             { activeFlow && activeFlow.type === 'flows' && <FunnelList /> }
             { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }
