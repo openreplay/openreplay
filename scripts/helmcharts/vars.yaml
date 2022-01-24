@@ -16,7 +16,7 @@ postgresql: &postgres
   #     memory: 3000Mi
   #     cpu: 2
 
-clickhouse: {}
+clickhouse: &clickhouse
   # For enterpriseEdition
   # enabled: true
 
@@ -106,6 +106,6 @@ chalice:
 #   # and copied to ../openreplay/files/
 #   sslKey: site.key
 #   sslCert: site.crt
+#   # Redirecting http to https
 #   customServerConfigs: |
-#      # Redirecting http to https
 #      return 301 https://$host$request_uri;
