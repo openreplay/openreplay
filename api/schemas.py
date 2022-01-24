@@ -561,7 +561,7 @@ class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
             n_filters = []
             n_events = []
             for v in values.get("filters", []):
-                if v["isEvent"]:
+                if v.get("isEvent"):
                     n_events.append(v)
                 else:
                     n_filters.append(v)
