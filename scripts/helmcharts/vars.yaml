@@ -16,9 +16,9 @@ postgresql: &postgres
   #     memory: 3000Mi
   #     cpu: 2
 
-clickhouse: &clickhouse
+clickhouse:
   # For enterpriseEdition
-  # enabled: true
+  enabled: false
 
 kafka: &kafka
   # For enterpriseEdition
