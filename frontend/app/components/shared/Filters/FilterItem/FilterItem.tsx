@@ -37,9 +37,8 @@ function FitlerItem(props: Props) {
   //   onUpdate({ ...filter, value: newValues })
   // }
 
-  console.log('filter', filter);
-
   const onOperatorChange = (e, { name, value }) => {
+    console.log('onOperatorChange', name, value)
     onUpdate({ ...filter, operator: value })
   }
 
@@ -49,23 +48,7 @@ function FitlerItem(props: Props) {
         <div className="mt-1 w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div>
         <FilterSelection filter={filter} onFilterClick={replaceFilter} />
         <FilterOperator filter={filter} onChange={onOperatorChange} className="mx-2 flex-shrink-0"/>
-        {/* <div className="grid grid-cols-3 gap-3"> */}
-          {/* {filter.value && filter.value.map((value, valueIndex) => ( */}
-            <FilterValue
-              // showCloseButton={filter.value.length > 1}
-              // showOrButton={valueIndex === filter.value.length - 1}
-              filter={filter}
-              onUpdate={onUpdate}
-              // key={valueIndex}
-              // value={value}
-              // key={filter.key}
-              // index={valueIndex}
-              // onAddValue={onAddValue}
-              // onRemoveValue={(valueIndex) => onRemoveValue(valueIndex)}
-              // onSelect={(e, item, valueIndex) => onSelect(e, item, valueIndex)}
-            />
-          {/* ))} */}
-        {/* </div> */}
+        <FilterValue filter={filter} onUpdate={onUpdate} />
       </div>
       <div className="flex self-start mt-2">
         <div

@@ -11,6 +11,8 @@ interface Props {
 function FilterOperator(props: Props) {
   const { filter, onChange, className = '' } = props;
 
+  console.log('FilterOperator', filter.operator);
+
   return (
     <Dropdown
       className={ cn(stl.operatorDropdown, className) }      

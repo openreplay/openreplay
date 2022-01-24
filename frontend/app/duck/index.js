@@ -35,6 +35,7 @@ import funnels from './funnels';
 import config from './config';
 import roles from './roles';
 import customMetrics from './customMetrics';
+import search from './search';
 
 export default combineReducers({
   jwt,
@@ -70,6 +71,7 @@ export default combineReducers({
   config,
   roles,
   customMetrics,
+  search,
   ...integrations,
   ...sources,
 });

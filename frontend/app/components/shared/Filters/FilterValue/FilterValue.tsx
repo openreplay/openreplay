@@ -34,6 +34,7 @@ function FilterValue(props: Props) {
   const renderValueFiled = (value, valueIndex) => {
     switch(filter.type) {
       case FilterType.ISSUE:
+      case FilterType.DROPDOWN:
         return (
           <FilterValueDropdown
             value={value}

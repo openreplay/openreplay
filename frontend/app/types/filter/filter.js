@@ -34,10 +34,9 @@ export default Record({
   rangeValue,
   startDate,
   endDate,
-  condition: 'then',
 
-  sort: undefined,
-  order: undefined,
+  sort: '',
+  order: '',
 
   viewed: undefined,
   consoleLogCount: undefined,
@@ -109,8 +108,8 @@ export const defaultFilters = [
       { label: 'OS', key: KEYS.USER_OS, type: KEYS.USER_OS, filterKey: KEYS.USER_OS, icon: 'os', isFilter: true },
 			{ label: 'Browser', key: KEYS.USER_BROWSER, type: KEYS.USER_BROWSER, filterKey: KEYS.USER_BROWSER, icon: 'window', isFilter: true },
       { label: 'Device', key: KEYS.USER_DEVICE, type: KEYS.USER_DEVICE, filterKey: KEYS.USER_DEVICE, icon: 'device', isFilter: true },
-      { label: 'Rev ID', key: KEYS.REVID, type: KEYS.REVID, filterKey: KEYS.REVID, icon: 'filters/border-outer', isFilter: true },
-      { label: 'Platform', key: KEYS.PLATFORM, type: KEYS.PLATFORM, filterKey: KEYS.PLATFORM, icon: 'filters/phone-laptop', isFilter: true }
+      { label: 'Rev ID', key: KEYS.REVID, type: KEYS.REVID, filterKey: KEYS.REVID, icon: 'filters/rev-id', isFilter: true },
+      { label: 'Platform', key: KEYS.PLATFORM, type: KEYS.PLATFORM, filterKey: KEYS.PLATFORM, icon: 'filters/platform', isFilter: true },
 		]
   },
   {

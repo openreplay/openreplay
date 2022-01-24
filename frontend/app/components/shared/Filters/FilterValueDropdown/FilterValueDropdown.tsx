@@ -10,13 +10,15 @@ interface Props {
   onChange: (e, { name, value }) => void;
   className?: string;
   options: any[];
+  search?: boolean;
 }
 function FilterValueDropdown(props: Props) {
-  const { options, onChange, value, className = '' } = props;
+  const { search = false, options, onChange, value, className = '' } = props;
   // const options = []
 
   return (
     <Dropdown
+      search={search}
       className={ cn(stl.operatorDropdown, className) }      
       options={ options }
       name="issue_type"

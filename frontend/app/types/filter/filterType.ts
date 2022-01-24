@@ -5,6 +5,7 @@ export enum FilterType {
   DURATION = "DURATION",
   MULTIPLE = "MULTIPLE",
   COUNTRY = "COUNTRY",
+  DROPDOWN = "DROPDOWN",
 };
 
 export enum FilterKey {
