@@ -84,6 +84,8 @@ data:
     location / {
       index /index.html;
       rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /frontend/index.html break;
+      proxy_http_version 1.1;
+      proxy_set_header Connection "";
       include /etc/nginx/conf.d/compression.conf;
       proxy_set_header Host $http_host;
       proxy_pass http://minio.db.svc.cluster.local:9000/frontend/;
