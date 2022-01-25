@@ -10,6 +10,7 @@ export { default as alertConditions } from './alertConditions';
 export { default as alertMetrics } from './alertMetrics';
 export { default as regions } from './regions';
 export { default as links } from './links';
+export { default as platformOptions } from './platformOptions';
 export { 
   DAYS as SCHEDULE_DAYS, 
   HOURS as SCHEDULE_HOURS, 

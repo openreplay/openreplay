@@ -1,6 +1,6 @@
 import Record from 'Types/Record';
 import { FilterType, FilterKey } from './filterType'
-import { countries } from 'App/constants';
+import { countries, platformOptions } from 'App/constants';
 
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 
@@ -194,11 +194,11 @@ export const filtersMap = {
   [FilterKey.USER_OS]: { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: 'gear', label: 'User OS', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/os' },
   [FilterKey.USER_BROWSER]: { key: FilterKey.USER_BROWSER, type: FilterType.MULTIPLE, category: 'gear', label: 'User Browser', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/browser' },
   [FilterKey.USER_DEVICE]: { key: FilterKey.USER_DEVICE, type: FilterType.MULTIPLE, category: 'gear', label: 'User Device', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/device' },
-  [FilterKey.PLATFORM]: { key: FilterKey.PLATFORM, type: FilterType.MULTIPLE, category: 'gear', label: 'Platform', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/platform' },
+  [FilterKey.PLATFORM]: { key: FilterKey.PLATFORM, type: FilterType.MULTIPLE_DROPDOWN, category: 'gear', label: 'Platform', operator: 'is', operatorOptions: filterOptions, icon: 'filters/platform', options: platformOptions },
   [FilterKey.REVID]: { key: FilterKey.REVID, type: FilterType.MULTIPLE, category: 'gear', label: 'RevId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/rev-id' },
 
   [FilterKey.REFERRER]: { key: FilterKey.REFERRER, type: FilterType.MULTIPLE, category: 'recording_attributes', label: 'Referrer', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/referrer' },
-  [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.NUMBER, category: 'recording_attributes', label: 'Duration', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/duration' },
+  [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: 'recording_attributes', label: 'Duration', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/duration' },
   [FilterKey.USER_COUNTRY]: { key: FilterKey.USER_COUNTRY, type: FilterType.DROPDOWN, category: 'recording_attributes', label: 'User Country', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/country', options: countryOptions },
 
   [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: 'javascript', label: 'Console', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/console' },

@@ -99,9 +99,11 @@ function FilterSeries(props: Props) {
           <div className="p-5">
             { series.filter.filters.size > 0 ? (
               <FilterList
-                filters={series.filter.filters.toJS()}
+                // filters={series.filter.filters.toJS()}
+                filter={series.filter}
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}
+                onChangeEventsOrder={onChangeEventsOrder}
               />
             ): (
               <div className="color-gray-medium">Add user event or filter to build the series.</div>

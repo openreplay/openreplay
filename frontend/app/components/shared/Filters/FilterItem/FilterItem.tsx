@@ -9,9 +9,10 @@ interface Props {
   filter: any; // event/filter
   onUpdate: (filter) => void;
   onRemoveFilter: () => void;
+  isFilter?: boolean;
 }
 function FitlerItem(props: Props) {
-  const { filterIndex, filter, onUpdate } = props;
+  const { isFilter = false, filterIndex, filter, onUpdate } = props;
 
   const replaceFilter = (filter) => {
     onUpdate(filter);
@@ -45,17 +46,17 @@ function FitlerItem(props: Props) {
   return (
     <div className="flex items-center mb-4">
       <div className="flex items-start mr-auto">
-        <div className="mt-1 w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div>
+        { !isFilter && <div className="mt-1 w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div> }
         <FilterSelection filter={filter} onFilterClick={replaceFilter} />
         <FilterOperator filter={filter} onChange={onOperatorChange} className="mx-2 flex-shrink-0"/>
         <FilterValue filter={filter} onUpdate={onUpdate} />
       </div>
       <div className="flex self-start mt-2">
         <div
-          className="cursor-pointer"
+          className="cursor-pointer p-1"
           onClick={props.onRemoveFilter}
         > 
-          <Icon name="close" size="18" />
+          <Icon name="trash" size="16" />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import FilterAutoComplete from '../FilterAutoComplete';
 import { FilterType } from 'Types/filter/filterType';
 import FilterValueDropdown from '../FilterValueDropdown';
@@ -10,6 +10,7 @@ interface Props {
 }
 function FilterValue(props: Props) {
   const { filter } = props;
+  const [durationValues, setDurationValues] = useState({ minDuration: 0, maxDuration: 0 });
 
   const onAddValue = () => {
     const newValues = filter.value.concat("")
@@ -31,6 +32,25 @@ function FilterValue(props: Props) {
     props.onUpdate({ ...filter, value: newValues })
   }
 
+  const onDurationChange = (newValues) => {
+    console.log('durationValues', durationValues)
+    // setDurationValues({ ...durationValues });
+    setDurationValues({ ...durationValues, ...newValues });
+  } 
+
+  const handleBlur = (e) => {
+    // const { filter, onChange } = props;
+    if (filter.type === FilterType.DURATION) {
+      const { maxDuration, minDuration, key } = filter;
+      if (maxDuration || minDuration) return;
+      if (maxDuration !== durationValues.maxDuration || 
+          minDuration !== durationValues.minDuration) {
+        // onChange(e, { name: 'value', value: [this.state.minDuration, this.state.maxDuration] });
+        props.onUpdate({ ...filter, value: [durationValues.minDuration, durationValues.maxDuration] });
+      }
+    }
+  }
+
   const renderValueFiled = (value, valueIndex) => {
     switch(filter.type) {
       case FilterType.ISSUE:
@@ -43,12 +63,22 @@ function FilterValue(props: Props) {
             onChange={(e, { name, value }) => onSelect(e, { value }, valueIndex)}
           />
         )
+      case FilterType.MULTIPLE_DROPDOWN:
+        return (
+          <FilterValueDropdown
+            multiple={true}
+            value={value}
+            filter={filter}
+            options={filter.options}
+            onChange={(e, { name, value }) => onSelect(e, { value }, valueIndex)}
+          />
+        )
       case FilterType.DURATION:
         return (
           <FilterDuration
-            // onChange={ this.onDurationChange }
+            onChange={ onDurationChange }
             // onEnterPress={ this.handleClose }
-            // onBlur={this.handleClose}
+            onBlur={handleBlur}
             minDuration={ filter.value[0] }
             maxDuration={ filter.value[1] }
           />
@@ -81,12 +111,17 @@ function FilterValue(props: Props) {
         )
     }
   }
+  console.log('durationValues', durationValues)
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      {filter.value && filter.value.map((value, valueIndex) => (
-        renderValueFiled(value, valueIndex)
-      ))}
+      { filter.type === FilterType.DURATION ? (
+          renderValueFiled(filter.value, 0)
+      ) : (
+        filter.value && filter.value.map((value, valueIndex) => (
+          renderValueFiled(value, valueIndex)
+        ))
+      )}
     </div>
   );
 }

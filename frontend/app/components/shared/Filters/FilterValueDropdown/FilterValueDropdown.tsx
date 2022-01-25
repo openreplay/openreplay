@@ -11,9 +11,10 @@ interface Props {
   className?: string;
   options: any[];
   search?: boolean;
+  multiple?: boolean;
 }
 function FilterValueDropdown(props: Props) {
-  const { search = false, options, onChange, value, className = '' } = props;
+  const { multiple = false, search = false, options, onChange, value, className = '' } = props;
   // const options = []
 
   return (

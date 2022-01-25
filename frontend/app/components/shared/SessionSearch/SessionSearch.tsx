@@ -57,17 +57,40 @@ function SessionSearch(props) {
     });
   }
 
+  const onChangeEventsOrder = (e, { name, value }) => {
+    props.edit({
+      ...appliedFilter.toData(),
+      filter: {
+        ...appliedFilter.filter.toData(),
+        eventsOrder: value,
+      }
+    });
+  }
+
+  const clearSearch = () => {
+    props.edit({
+      ...appliedFilter.toData(),
+      filter: {
+        ...appliedFilter.filter.toData(),
+        filters: [],
+      }
+    });
+  }
+  
+
   return (
     <div className="border bg-white rounded mt-4">
-      <div className="p-3">
+      <div className="p-5">
         <FilterList
-          filters={appliedFilter.filter.filters.toJS()}
+          // filters={appliedFilter.filter.filters.toJS()}
+          filter={appliedFilter.filter}
           onUpdateFilter={onUpdateFilter}
           onRemoveFilter={onRemoveFilter}
+          onChangeEventsOrder={onChangeEventsOrder}
         />
       </div>
 
-      <div className="border-t px-3 py-2 flex items-center">
+      <div className="border-t px-5 py-1 flex items-center -mx-2">
         <div>
           <FilterSelection
             filter={undefined}
@@ -78,7 +101,7 @@ function SessionSearch(props) {
         </div>
         <div className="ml-auto flex items-center">
           <SaveFilterButton />
-          <Button>CLEAR STEPS</Button>
+          <Button onClick={clearSearch}>CLEAR STEPS</Button>
           <Button plain>SAVE FUNNEL</Button>
         </div>
       </div>
