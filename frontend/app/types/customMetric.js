@@ -1,11 +1,6 @@
 import Record from 'Types/Record';
 import { List } from 'immutable';
-// import { DateTime } from 'luxon';
-// import { validateEmail, validateName } from 'App/validate';
 import Filter from 'Types/filter';
-import NewFilter from 'Types/filter';
-// import { Event } from 'Types/filter';
-// import CustomFilter from 'Types/filter/customFilter';
 
 export const FilterSeries = Record({
   seriesId: undefined,
