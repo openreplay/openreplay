@@ -77,6 +77,8 @@ def get_all(project_id, user_id, details=False):
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
             if details:
+                if isinstance(row["filter"], list) and len(row["filter"]) == 0:
+                    row["filter"] = {}
                 row["filter"] = helper.old_search_payload_to_flat(row["filter"])
     return rows
 
