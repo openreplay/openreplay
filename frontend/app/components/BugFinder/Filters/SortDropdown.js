@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { Dropdown } from 'semantic-ui-react';
 import { Icon } from 'UI';
 import { sort } from 'Duck/sessions';
-import { applyFilter } from 'Duck/filters';
+import { applyFilter } from 'Duck/search';
 import stl from './sortDropdown.css';
 
 @connect(null, { sort, applyFilter })

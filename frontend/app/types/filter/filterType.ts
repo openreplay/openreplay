@@ -6,6 +6,7 @@ export enum FilterType {
   MULTIPLE = "MULTIPLE",
   COUNTRY = "COUNTRY",
   DROPDOWN = "DROPDOWN",
+  MULTIPLE_DROPDOWN = "MULTIPLE_DROPDOWN",
 };
 
 export enum FilterKey {

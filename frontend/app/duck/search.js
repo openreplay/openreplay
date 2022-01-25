@@ -26,6 +26,7 @@ const SAVE = saveType(name);
 const EDIT = editType(name);
 const REMOVE = removeType(name);
 const UPDATE = `${name}/UPDATE`;
+const APPLY = `${name}/APPLY`;
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
 
 function chartWrapper(chart = []) {
@@ -49,6 +50,13 @@ function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case EDIT:
       return state.set('instance', FilterSeries(action.instance));
+    case APPLY:
+      return action.fromUrl 
+        ? state.set('instance', 
+            Filter(action.filter)
+            // .set('events', state.getIn([ 'instance', 'events' ]))
+          )
+        : state.mergeIn([ 'instance', 'filter' ], action.filter);
     case success(SAVE):
       return state.set([ 'instance' ], CustomMetric(action.data));
     case success(REMOVE):
@@ -85,13 +93,7 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance', 'filter' ]).toData();
   filter.filters = filter.filters.map(filterMap);
-  // console.log('filter', filter)
-  
-  // let filter = appliedFilter
-  //   .update('filters', list => list.map(f => f.set('value', f.value || '*'))
-  //   .map(filterMap));
-
-  // const filter.filters = getState().getIn([ 'instance', 'filter' ]).get('filters').map(filterMap).toJS();
+  filter.isNew = true  // TODO remove this line
 
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))
@@ -105,11 +107,11 @@ export const edit = reduceThenFetchResource((instance) => ({
 
 export const remove = createRemove(name);
 
-// export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
-//   type: APPLY,
-//   filter,
-//   fromUrl,
-// }));
+export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
+  type: APPLY,
+  filter,
+  fromUrl,
+}));
 
 export const updateSeries = (index, series) => ({
   type: UPDATE,
