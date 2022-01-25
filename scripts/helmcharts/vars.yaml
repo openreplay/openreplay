@@ -71,6 +71,17 @@ global:
   enterpriseEditionLicense: ""
   domainName: ""
 
+# If there is multiple nodes in the kubernetes cluster,
+# we'll have to create a NFS share PVC for both the containers to share data.
+# If it's the single node, we'll use hostVolume, which is default for community installation.
+# Note: Both PVC name should be same.
+# sink:
+#   pvc:
+#     name: mysharedpersistence
+# storage:
+#   pvc:
+#     name: mysharedpersistence
+
 chalice:
   env:
     jwt_secret: "SetARandomStringHere"
