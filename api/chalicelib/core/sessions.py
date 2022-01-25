@@ -297,6 +297,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             op = __get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.events_count] else f.operator
             is_any = _isAny_opreator(f.operator)
+            if not is_any and len(f.value) == 0:
+                continue
             is_not = False
             if __is_negation_operator(f.operator):
                 is_not = True
@@ -445,6 +447,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
+            if not is_any and len(event.value) == 0:
+                continue
             op = __get_sql_operator(event.operator)
             is_not = False
             if __is_negation_operator(event.operator):

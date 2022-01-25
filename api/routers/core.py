@@ -1124,7 +1124,7 @@ def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...)
 
 @app.get('/{projectId}/saved_search', tags=["savedSearch"])
 def get_saved_searches(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": saved_search.get_all(project_id=projectId, user_id=context.user_id)}
+    return {"data": saved_search.get_all(project_id=projectId, user_id=context.user_id, details=True)}
 
 
 @app.get('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])

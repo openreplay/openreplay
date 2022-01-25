@@ -536,7 +536,7 @@ class SessionsSearchPayloadSchema(BaseModel):
     # rangeValue:str=Field(...)
     startDate: int = Field(None)
     endDate: int = Field(None)
-    sort: str = Field(...)
+    sort: str = Field(default="startTs")
     order: str = Field(default="DESC")
     # platform: Optional[PlatformType] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)

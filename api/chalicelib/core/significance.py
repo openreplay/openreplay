@@ -130,6 +130,8 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         if not isinstance(s["value"], list):
             s["value"] = [s["value"]]
         is_any = sessions._isAny_opreator(s["operator"])
+        if not is_any and isinstance(s["value"], list) and len(s["value"]) == 0:
+            continue
         op = sessions.__get_sql_operator(s["operator"])
         event_type = s["type"].upper()
         if event_type == events.event_type.CLICK.ui_type:
