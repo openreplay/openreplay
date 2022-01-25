@@ -61,19 +61,19 @@ spec:
               value: '{{ .Values.global.s3.endpoint }}'
               {{- end}}
             - name: S3_KEY
-              value: '{{ .Values.global.s3.accessKey }}'
+              value: {{ .Values.global.s3.accessKey }}
             - name: S3_SECRET
-              value: '{{ .Values.global.s3.secretKey }}'
+              value: {{ .Values.global.s3.secretKey }}
             - name: AWS_DEFAULT_REGION
               value: '{{ .Values.global.s3.region }}'
             - name: sessions_region
               value: '{{ .Values.global.s3.region }}' 
             - name: sessions_bucket
-              value: '{{ .Values.global.s3.recordingsBucket }}'
+              value: {{ .Values.global.s3.recordingsBucket }}
             - name: sourcemaps_bucket
-              value: '{{ .Values.global.s3.sourcemapsBucket }}' 
+              value: {{ .Values.global.s3.sourcemapsBucket }} 
             - name: js_cache_bucket
-              value: '{{ .Values.global.s3.assetsBucket }}' 
+              value: {{ .Values.global.s3.assetsBucket }} 
             - name: EMAIL_HOST
               value: '{{ .Values.global.email.emailHost }}'
             - name: EMAIL_PORT

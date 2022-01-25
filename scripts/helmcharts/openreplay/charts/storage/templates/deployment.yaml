@@ -39,9 +39,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: AWS_ACCESS_KEY_ID
-              value: '{{ .Values.global.s3.accessKey }}'
+              value: {{ .Values.global.s3.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY
-              value: '{{ .Values.global.s3.secretKey }}'
+              value: {{ .Values.global.s3.secretKey }}
             - name: AWS_ENDPOINT
               value: '{{ .Values.global.s3.endpoint }}'
             - name: AWS_REGION_WEB
@@ -49,9 +49,9 @@ spec:
             - name: AWS_REGION_IOS
               value: '{{ .Values.global.s3.region }}'
             - name: S3_BUCKET_WEB
-              value: '{{ .Values.global.s3.recordingsBucket }}'
+              value: {{ .Values.global.s3.recordingsBucket }}
             - name: S3_BUCKET_IOS
-              value: '{{ .Values.global.s3.recordingsBucket }}'
+              value: {{ .Values.global.s3.recordingsBucket }}
             - name: REDIS_STRING
               value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
             - name: LICENSE_KEY
