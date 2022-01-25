@@ -467,22 +467,20 @@ class __MixedSearchFilter(BaseModel):
 
 class _SessionSearchEventRaw(__MixedSearchFilter):
     is_event: bool = Field(True, const=True)
-    custom: Optional[List[Union[int, str]]] = Field(None, min_items=1)
-    customOperator: Optional[MathOperator] = Field(None)
-    key: Optional[str] = Field(None)
     value: Union[str, List[str]] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: SearchEventOperator = Field(...)
-    source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
+    source: Optional[Union[ErrorSource,List[Union[int, str]]]] = Field(default=ErrorSource.js_exception)
+    sourceOperator: Optional[MathOperator] = Field(None)
 
     @root_validator
     def event_validator(cls, values):
         if isinstance(values.get("type"), PerformanceEventType):
             if values.get("type") == PerformanceEventType.fetch_failed:
                 return values
-            assert values.get("custom") is not None, "custom should not be null for PerformanceEventType"
-            assert values.get("customOperator") is not None \
-                , "customOperator should not be null for PerformanceEventType"
+            assert values.get("source") is not None, "source should not be null for PerformanceEventType"
+            assert values.get("sourceOperator") is not None \
+                , "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
@@ -490,8 +488,8 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
                        and isinstance(values["value"][1], _SessionSearchEventRaw) \
                     , f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
             else:
-                for c in values["custom"]:
-                    assert isinstance(c, int), f"custom value should be of type int for {values.get('type')}"
+                for c in values["source"]:
+                    assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
         return values
 
 
@@ -501,7 +499,6 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
 
 class _SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
-    custom: Optional[List[str]] = Field(None)
     value: Union[Optional[Union[IssueType, PlatformType, int, str]],
                  Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
     type: FilterType = Field(...)
@@ -534,13 +531,10 @@ class _SessionSearchFilterSchema(__MixedSearchFilter):
 class SessionsSearchPayloadSchema(BaseModel):
     events: List[_SessionSearchEventSchema] = Field([])
     filters: List[_SessionSearchFilterSchema] = Field([])
-    # custom:dict=Field(...)
-    # rangeValue:str=Field(...)
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
     order: str = Field(default="DESC")
-    # platform: Optional[PlatformType] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
 
     class Config:

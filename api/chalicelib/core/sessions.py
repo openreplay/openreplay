@@ -488,10 +488,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.INPUT.column} {op} %({e_k})s", event.value,
                                              value_key=e_k))
-                if event.custom is not None and len(event.custom) > 0:
-                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.custom,
+                if event.source is not None and len(event.source) > 0:
+                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
                                                             value_key=f"custom{i}"))
-                    full_args = {**full_args, **_multiple_values(event.custom, value_key=f"custom{i}")}
+                    full_args = {**full_args, **_multiple_values(event.source, value_key=f"custom{i}")}
 
             elif event_type == events.event_type.LOCATION.ui_type:
                 event_from = event_from % f"{events.event_type.LOCATION.table} AS main "
@@ -551,10 +551,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     event_where.append(
                         _multiple_conditions(f"main.{events.event_type.INPUT_IOS.column} {op} %({e_k})s",
                                              event.value, value_key=e_k))
-                if event.custom is not None and len(event.custom) > 0:
-                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.custom,
+                if event.source is not None and len(event.source) > 0:
+                    event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
                                                             value_key="custom{i}"))
-                    full_args = {**full_args, **_multiple_values(event.custom, f"custom{i}")}
+                    full_args = {**full_args, **_multiple_values(event.source, f"custom{i}")}
             elif event_type == events.event_type.VIEW_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "
                 if not is_any:
@@ -598,10 +598,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             #     colname = col["column"]
             #     tname = "main"
             #     e_k += "_custom"
-            #     full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+            #     full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
             #     event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-            #                        _multiple_conditions(f"{tname}.{colname} {event.customOperator} %({e_k})s",
-            #                                             event.custom, value_key=e_k))
+            #                        _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+            #                                             event.source, value_key=e_k))
             elif event_type in [schemas.PerformanceEventType.location_dom_complete,
                                 schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                 schemas.PerformanceEventType.location_ttfb,
@@ -622,11 +622,11 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         _multiple_conditions(f"main.{events.event_type.LOCATION.column} {op} %({e_k})s",
                                              event.value, value_key=e_k))
                 e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
 
                 event_where.append(f"{tname}.{colname} IS NOT NULL AND {tname}.{colname}>0 AND " +
-                                   _multiple_conditions(f"{tname}.{colname} {event.customOperator} %({e_k})s",
-                                                        event.custom, value_key=e_k))
+                                   _multiple_conditions(f"{tname}.{colname} {event.sourceOperator} %({e_k})s",
+                                                        event.source, value_key=e_k))
             elif event_type == schemas.PerformanceEventType.time_between_events:
                 event_from = event_from % f"{getattr(events.event_type, event.value[0].type).table} AS main INNER JOIN {getattr(events.event_type, event.value[1].type).table} AS main2 USING(session_id) "
                 if not isinstance(event.value[0].value, list):
@@ -657,10 +657,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         event.value[1].value, value_key=e_k2))
 
                 e_k += "_custom"
-                full_args = {**full_args, **_multiple_values(event.custom, value_key=e_k)}
+                full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
                 event_where.append(
-                    _multiple_conditions(f"main2.timestamp - main.timestamp {event.customOperator} %({e_k})s",
-                                         event.custom, value_key=e_k))
+                    _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
+                                         event.source, value_key=e_k))
 
 
             else:
