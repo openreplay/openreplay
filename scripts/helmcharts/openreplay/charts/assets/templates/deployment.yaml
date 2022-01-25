@@ -39,9 +39,9 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: AWS_ACCESS_KEY_ID
-              value: '{{ .Values.global.s3.accessKey }}'
+              value: {{ .Values.global.s3.accessKey }}
             - name: AWS_SECRET_ACCESS_KEY
-              value: '{{ .Values.global.s3.secretKey }}'
+              value: {{ .Values.global.s3.secretKey }}
             - name: S3_BUCKET_ASSETS
               value: '{{ .Values.global.s3.assetsBucket }}'
             - name: LICENSE_KEY
