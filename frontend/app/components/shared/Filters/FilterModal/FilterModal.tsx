@@ -10,9 +10,9 @@ function FilterModal(props: Props) {
   const { filters, onFilterClick = () => null } = props;
   return (
     <div className="border p-3" style={{ width: '490px', height: '400px', overflowY: 'auto'}}>
-      <div className="grid grid-flow-row-dense grid-cols-2">
+      <div className="" style={{ columns: "100px 2" }}>
         {filters && Object.keys(filters).map((key) => (
-          <div className="p-3">
+          <div className="p-3 aspect-w-1">
             <div className="uppercase font-medium mb-1">{key}</div>
             <div>
               {filters[key].map((filter: any) => (

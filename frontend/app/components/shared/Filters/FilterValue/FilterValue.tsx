@@ -53,7 +53,6 @@ function FilterValue(props: Props) {
 
   const renderValueFiled = (value, valueIndex) => {
     switch(filter.type) {
-      case FilterType.ISSUE:
       case FilterType.DROPDOWN:
         return (
           <FilterValueDropdown
@@ -63,6 +62,7 @@ function FilterValue(props: Props) {
             onChange={(e, { name, value }) => onSelect(e, { value }, valueIndex)}
           />
         )
+      case FilterType.ISSUE:
       case FilterType.MULTIPLE_DROPDOWN:
         return (
           <FilterValueDropdown
@@ -111,7 +111,6 @@ function FilterValue(props: Props) {
         )
     }
   }
-  console.log('durationValues', durationValues)
 
   return (
     <div className="grid grid-cols-3 gap-3">

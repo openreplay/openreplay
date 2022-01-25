@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { edit, save } from 'Duck/filters';
+import { edit, save } from 'Duck/search';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
 import stl from './SaveSearchModal.css';
 
@@ -72,7 +72,7 @@ function SaveSearchModal(props: Props) {
 }
 
 export default connect(state => ({
-  filter: state.getIn(['filters', 'instance']),
+  filter: state.getIn(['search', 'instance']),
   loading: state.getIn([ 'filters', 'saveRequest', 'loading' ]) || 
     state.getIn([ 'filters', 'updateRequest', 'loading' ]),
 }), { edit, save })(SaveSearchModal);

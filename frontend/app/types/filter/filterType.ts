@@ -1,3 +1,13 @@
+export enum FilterCategory {
+  INTERACTIONS = "Interactions",
+  GEAR = "Gear",
+  RECORDING_ATTRIBUTES = "Recording Attributes",
+  JAVASCRIPT = "Javascript",
+  USER = "User",
+  METADATA = "Metadata",
+  PERFORMANCE = "Performance",
+};
+
 export enum FilterType {
   ISSUE = "ISSUE",
   BOOLEAN = "BOOLEAN",
@@ -48,4 +58,5 @@ export enum FilterKey {
   TTFB = "TTFB",
   AVG_CPU_LOAD = "AVG_CPU_LOAD",
   AVG_MEMORY_USAGE = "AVG_MEMORY_USAGE",
+  FETCH_FAILED = "FETCH_FAILED",
 }

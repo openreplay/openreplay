@@ -15,18 +15,15 @@ function SessionSearch(props) {
 
   const onAddFilter = (filter) => {
     filter.value = [""]
-    const newFilters = appliedFilter.filter.filters.concat(filter);
+    const newFilters = appliedFilter.filters.concat(filter);
     props.edit({
-      ...appliedFilter,
-      filter: {
         ...appliedFilter.filter,
         filters: newFilters,
-      }
     });
   }
 
   const onUpdateFilter = (filterIndex, filter) => {
-    const newFilters = appliedFilter.filter.filters.map((_filter, i) => {
+    const newFilters = appliedFilter.filters.map((_filter, i) => {
       if (i === filterIndex) {
         return filter;
       } else {
@@ -35,45 +32,30 @@ function SessionSearch(props) {
     });
 
     props.edit({
-      ...appliedFilter.toData(),
-      filter: {
         ...appliedFilter.filter,
         filters: newFilters,
-      }
     });
   }
 
   const onRemoveFilter = (filterIndex) => {
-    const newFilters = appliedFilter.filter.filters.filter((_filter, i) => {
+    const newFilters = appliedFilter.filters.filter((_filter, i) => {
       return i !== filterIndex;
     });
 
     props.edit({
-      ...appliedFilter,
-      filter: {
-        ...appliedFilter.filter,
-        filters: newFilters,
-      }
+      filters: newFilters,
     });
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
     props.edit({
-      ...appliedFilter.toData(),
-      filter: {
-        ...appliedFilter.filter.toData(),
-        eventsOrder: value,
-      }
+      eventsOrder: value,
     });
   }
 
   const clearSearch = () => {
     props.edit({
-      ...appliedFilter.toData(),
-      filter: {
-        ...appliedFilter.filter.toData(),
         filters: [],
-      }
     });
   }
   
@@ -83,7 +65,7 @@ function SessionSearch(props) {
       <div className="p-5">
         <FilterList
           // filters={appliedFilter.filter.filters.toJS()}
-          filter={appliedFilter.filter}
+          filter={appliedFilter}
           onUpdateFilter={onUpdateFilter}
           onRemoveFilter={onRemoveFilter}
           onChangeEventsOrder={onChangeEventsOrder}

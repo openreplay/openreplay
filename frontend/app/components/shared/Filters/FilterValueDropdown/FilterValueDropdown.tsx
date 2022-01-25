@@ -12,22 +12,35 @@ interface Props {
   options: any[];
   search?: boolean;
   multiple?: boolean;
+  showCloseButton?: boolean;
+  showOrButton?: boolean;
+  onRemoveValue?: () => void;
+  onAddValue?: () => void;
 }
 function FilterValueDropdown(props: Props) {
-  const { multiple = false, search = false, options, onChange, value, className = '' } = props;
+  const { multiple = false, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
   // const options = []
 
   return (
-    <Dropdown
-      search={search}
-      className={ cn(stl.operatorDropdown, className) }      
-      options={ options }
-      name="issue_type"
-      value={ value }
-      onChange={ onChange }
-      placeholder="Select"
-      icon={ <Icon className="ml-5" name="chevron-down" size="12" /> }
-    />
+    <div className={stl.wrapper}>
+      <Dropdown
+        search={search}
+        className={ cn(stl.operatorDropdown, className) }      
+        options={ options }
+        name="issue_type"
+        value={ value }
+        onChange={ onChange }
+        placeholder="Select"
+        icon={ <Icon className="ml-5" name="chevron-down" size="12" /> }
+      />
+      <div
+        className={stl.right}
+        // onClick={showOrButton ? onRemoveValue : onAddValue}
+      >
+        { showCloseButton && <div onClick={props.onRemoveValue}><Icon name="close" size="18" /></div> }
+        { showOrButton && <div onClick={props.onAddValue} className="color-teal"><span className="px-1">or</span></div> }
+      </div>
+    </div>
   );
 }
 

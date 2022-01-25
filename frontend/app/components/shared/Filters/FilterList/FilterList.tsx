@@ -11,7 +11,7 @@ interface Props {
 }
 function FilterList(props: Props) {
   const { filter } = props;
-  const filters = filter.filters.toJS()
+  const filters = filter.filters;
   const hasEvents = filter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = filter.filters.filter(i => !i.isEvent).size > 0;
 

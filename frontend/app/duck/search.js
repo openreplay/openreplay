@@ -1,16 +1,11 @@
 import { List, Map } from 'immutable'; 
-// import { clean as cleanParams } from 'App/api_client';
 import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED } from 'Types/errorInfo';
 import CustomMetric, { FilterSeries } from 'Types/customMetric'
 import { createFetch, fetchListType, fetchType, saveType, removeType, editType, createRemove, createEdit } from './funcTools/crud';
-// import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
 import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
-// import filter from 'core-js/fn/array/filter';
-// import NewFilter from 'Types/filter/newFilter';
-// import Event from 'Types/filter/event';
-// import CustomFilter from 'Types/filter/customFilter';
+import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
@@ -41,26 +36,25 @@ function chartWrapper(chart = []) {
 const initialState = Map({
 	list: List(),
   alertMetricId: null,
-  // instance: null,
-	instance: FilterSeries({ filter: new Filter({ filters: [] }) }),
+	instance: new Filter({ filters: [] }),
+  savedFilter: new SavedFilter({ filters: [] }),
 });
 
 // Metric - Series - [] - filters
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case EDIT:
-      return state.set('instance', FilterSeries(action.instance));
+      return state.mergeIn(['instance'], action.instance);
     case APPLY:
       return action.fromUrl 
         ? state.set('instance', 
             Filter(action.filter)
             // .set('events', state.getIn([ 'instance', 'events' ]))
           )
-        : state.mergeIn([ 'instance', 'filter' ], action.filter);
+        : state.mergeIn(['instance'], action.filter);
     case success(SAVE):
-      return state.set([ 'instance' ], CustomMetric(action.data));
+      return state.mergeIn([ 'instance' ], action.data);
     case success(REMOVE):
-      console.log('action', action)
       return state.update('list', list => list.filter(item => item.metricId !== action.id));
 		case success(FETCH):
 			return state.set("instance", ErrorInfo(action.data));
@@ -79,9 +73,9 @@ export default mergeReducers(
 	}),
 );
 
-
 const filterMap = ({value, type, key, operator, source, custom, isEvent }) => ({
-  value: Array.isArray(value) ? value: [value],
+  // value: Array.isArray(value) ? value: [value],
+  value: value.filter(i => i !== '' && i !== null),
   custom,
   type: key,
   key, operator,
@@ -91,7 +85,7 @@ const filterMap = ({value, type, key, operator, source, custom, isEvent }) => ({
 
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));
-  const filter = getState().getIn([ 'search', 'instance', 'filter' ]).toData();
+  const filter = getState().getIn([ 'search', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
   filter.isNew = true  // TODO remove this line
 
@@ -130,7 +124,11 @@ export function fetch(id) {
 export function save(instance) {
   return {
     types: SAVE.array,
-    call: client => client.post( `/${ name }s`, instance.toSaveData()),
+    call: client => client.post('/saved_search', {
+      name: instance.name,
+      filter: instance.filter.toSaveData(),
+    }),
+    instance,
   };
 }
 

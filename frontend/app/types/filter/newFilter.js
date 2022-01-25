@@ -1,58 +1,27 @@
 import Record from 'Types/Record';
-import { FilterType, FilterKey } from './filterType'
+import { FilterType, FilterKey, FilterCategory } from './filterType'
 import { countries, platformOptions } from 'App/constants';
 
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 
-export const CLICK = 'CLICK';
-export const INPUT = 'INPUT';
-export const LOCATION = 'LOCATION';
-export const VIEW = 'VIEW_IOS';
-export const CONSOLE = 'ERROR';
-export const METADATA = 'METADATA';
-export const CUSTOM = 'CUSTOM';
-export const URL = 'URL';
-export const CLICK_RAGE = 'CLICKRAGE';
-export const USER_BROWSER  = 'USERBROWSER';
-export const USER_OS = 'USEROS';
-export const USER_COUNTRY  = 'USERCOUNTRY';
-export const USER_DEVICE = 'USERDEVICE';
-export const PLATFORM = 'PLATFORM';
-export const DURATION  = 'DURATION';
-export const REFERRER  = 'REFERRER';
-export const ERROR = 'ERROR';
-export const MISSING_RESOURCE = 'MISSINGRESOURCE';
-export const SLOW_SESSION = 'SLOWSESSION';
-export const JOURNEY = 'JOUNRNEY';
-export const FETCH = 'REQUEST';
-export const GRAPHQL = 'GRAPHQL';
-export const STATEACTION = 'STATEACTION';
-export const REVID = 'REVID';
-export const USERANONYMOUSID = 'USERANONYMOUSID';
-export const USERID = 'USERID';
-
-export const ISSUE = 'ISSUE';
-export const EVENTS_COUNT = 'EVENTS_COUNT';
-export const UTM_SOURCE = 'UTM_SOURCE';
-export const UTM_MEDIUM = 'UTM_MEDIUM';
-export const UTM_CAMPAIGN = 'UTM_CAMPAIGN';
-
-
-export const DOM_COMPLETE = 'DOM_COMPLETE';
-export const LARGEST_CONTENTFUL_PAINT_TIME = 'LARGEST_CONTENTFUL_PAINT_TIME';
-export const TIME_BETWEEN_EVENTS = 'TIME_BETWEEN_EVENTS';
-export const TTFB = 'TTFB';
-export const AVG_CPU_LOAD = 'AVG_CPU_LOAD';
-export const AVG_MEMORY_USAGE = 'AVG_MEMORY_USAGE';
-
 const ISSUE_OPTIONS = [
   { text: 'Click Range', value: 'click_rage' },
   { text: 'Dead Click', value: 'dead_click' },
+  { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
+  { text: 'Bad Request', value: 'bad_request' },
+  { text: 'Missing Resource', value: 'missing_resource' },
+  { text: 'Memory', value: 'memory' },
+  { text: 'CPU', value: 'cpu' },
+  { text: 'Slow Resource', value: 'slow_resource' },
+  { text: 'Slow Page Load', value: 'slow_page_load' },
+  { text: 'Crash', value: 'crash' },
+  { text: 'Custom', value: 'custom' },
+  { text: 'JS Exception', value: 'js_exception' },
 ]
 
 const filterKeys = ['is', 'isNot'];
-const stringFilterKeys = ['is', 'isNot', 'contains', 'startsWith', 'endsWith'];
-const targetFilterKeys = ['on', 'notOn'];
+const stringFilterKeys = ['is', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
+const targetFilterKeys = ['on', 'notOn', 'onAny'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
 
@@ -78,9 +47,9 @@ const options = [
     text: 'contains',
     value: 'contains'
   }, {
-    key: 'doesNotContain',
-    text: 'does not contain',
-    value: 'doesNotContain'
+    key: 'notContains',
+    text: 'not contains',
+    value: 'notContains'
   }, {
     key: 'hasAnyValue',
     text: 'has any value',
@@ -172,9 +141,9 @@ const options = [
 
 
   {
-    key: 'onAnything',
-    text: 'on anything',
-    value: 'onAnything'
+    key: 'onAny',
+    text: 'on any',
+    value: 'onAny'
   }
 ];
 
@@ -186,41 +155,59 @@ export const booleanOptions = [
   { key: 'false', text: 'false', value: 'false' },
 ]
 
+export const customOperators = [
+  { key: '=', text: '=', value: '=' },
+  { key: '<', text: '<', value: '<' },
+  { key: '>', text: '>', value: '>' },
+  { key: '<=', text: '<=', value: '<=' },
+  { key: '>=', text: '>=', value: '>=' },
+]
+
 export const filtersMap = {
-  [FilterKey.CLICK]: { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: 'interactions', label: 'Click', operator: 'on', operatorOptions: targetFilterOptions, icon: 'filters/click', isEvent: true },
-  [FilterKey.INPUT]: { key: FilterKey.INPUT, type: FilterType.MULTIPLE, category: 'interactions', label: 'Input', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/input', isEvent: true },
-  [FilterKey.LOCATION]: { key: FilterKey.LOCATION, type: FilterType.MULTIPLE, category: 'interactions', label: 'Page', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/location', isEvent: true },
+  [FilterKey.CLICK]: { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: targetFilterOptions, icon: 'filters/click', isEvent: true },
+  [FilterKey.INPUT]: { key: FilterKey.INPUT, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Input', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/input', isEvent: true },
+  [FilterKey.LOCATION]: { key: FilterKey.LOCATION, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Page', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/location', isEvent: true },
+  [FilterKey.CUSTOM]: { key: FilterKey.CUSTOM, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Custom Events', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/custom', isEvent: true },
+  [FilterKey.FETCH]: { key: FilterKey.FETCH, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Fetch', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/fetch', isEvent: true },
+  [FilterKey.GRAPHQL]: { key: FilterKey.GRAPHQL, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'GraphQL', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/graphql', isEvent: true },
+  [FilterKey.STATEACTION]: { key: FilterKey.STATEACTION, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'StateAction', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/state-action', isEvent: true },
+  [FilterKey.ERROR]: { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Error', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/error', isEvent: true },
+  // [FilterKey.METADATA]: { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/metadata', isEvent: true },
 
-  [FilterKey.USER_OS]: { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: 'gear', label: 'User OS', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/os' },
-  [FilterKey.USER_BROWSER]: { key: FilterKey.USER_BROWSER, type: FilterType.MULTIPLE, category: 'gear', label: 'User Browser', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/browser' },
-  [FilterKey.USER_DEVICE]: { key: FilterKey.USER_DEVICE, type: FilterType.MULTIPLE, category: 'gear', label: 'User Device', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/device' },
-  [FilterKey.PLATFORM]: { key: FilterKey.PLATFORM, type: FilterType.MULTIPLE_DROPDOWN, category: 'gear', label: 'Platform', operator: 'is', operatorOptions: filterOptions, icon: 'filters/platform', options: platformOptions },
-  [FilterKey.REVID]: { key: FilterKey.REVID, type: FilterType.MULTIPLE, category: 'gear', label: 'RevId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/rev-id' },
+  [FilterKey.USER_OS]: { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User OS', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/os' },
+  [FilterKey.USER_BROWSER]: { key: FilterKey.USER_BROWSER, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User Browser', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/browser' },
+  [FilterKey.USER_DEVICE]: { key: FilterKey.USER_DEVICE, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User Device', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/device' },
+  [FilterKey.PLATFORM]: { key: FilterKey.PLATFORM, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.GEAR, label: 'Platform', operator: 'is', operatorOptions: filterOptions, icon: 'filters/platform', options: platformOptions },
+  [FilterKey.REVID]: { key: FilterKey.REVID, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'RevId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/rev-id' },
 
-  [FilterKey.REFERRER]: { key: FilterKey.REFERRER, type: FilterType.MULTIPLE, category: 'recording_attributes', label: 'Referrer', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/referrer' },
-  [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: 'recording_attributes', label: 'Duration', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/duration' },
-  [FilterKey.USER_COUNTRY]: { key: FilterKey.USER_COUNTRY, type: FilterType.DROPDOWN, category: 'recording_attributes', label: 'User Country', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/country', options: countryOptions },
+  [FilterKey.REFERRER]: { key: FilterKey.REFERRER, type: FilterType.MULTIPLE, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Referrer', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/referrer' },
+  [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Duration', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/duration' },
+  [FilterKey.USER_COUNTRY]: { key: FilterKey.USER_COUNTRY, type: FilterType.DROPDOWN, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'User Country', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/country', options: countryOptions },
 
-  [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: 'javascript', label: 'Console', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/console' },
-  [FilterKey.ERROR]: { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: 'javascript', label: 'Error', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/error' },
-  [FilterKey.FETCH]: { key: FilterKey.FETCH, type: FilterType.MULTIPLE, category: 'javascript', label: 'Fetch', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/fetch' },
-  [FilterKey.GRAPHQL]: { key: FilterKey.GRAPHQL, type: FilterType.MULTIPLE, category: 'javascript', label: 'GraphQL', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/graphql' },
-  [FilterKey.STATEACTION]: { key: FilterKey.STATEACTION, type: FilterType.MULTIPLE, category: 'javascript', label: 'StateAction', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/state-action' },
-
-  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: 'user', label: 'UserId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/userid' },
-  [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: 'user', label: 'UserAnonymousId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/userid' },
+  [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/console' },
   
-  // [FilterKey.DOM_COMPLETE]: { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: 'new', label: 'DOM Complete', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  // [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.NUMBER, category: 'new', label: 'Largest Contentful Paint Time', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  // [FilterKey.TIME_BETWEEN_EVENTS]: { key: FilterKey.TIME_BETWEEN_EVENTS, type: FilterType.NUMBER, category: 'new', label: 'Time Between Events', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
-  // [FilterKey.TTFB]: { key: FilterKey.TTFB, type: 'time', category: 'new', label: 'TTFB', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  
+  
+
+  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'UserId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/userid' },
+  [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'UserAnonymousId', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/userid' },
+  
+  [FilterKey.DOM_COMPLETE]: { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'is', operatorOptions: stringFilterOptions, sourcesourceOperatorOptions: customOperators, source: [], icon: 'filters/click', isEvent: true },
+  [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint Time', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click', isEvent: true },
+  // [FilterKey.TIME_BETWEEN_EVENTS]: { key: FilterKey.TIME_BETWEEN_EVENTS, type: FilterType.NUMBER, category: FilterCategory.PERFORMANCE, label: 'Time Between Events', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
+  [FilterKey.TTFB]: { key: FilterKey.TTFB, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Time to First Byte', operator: 'is', operatorOptions: stringFilterOptions, sourceOperatorOptions: customOperators, source: [], icon: 'filters/click', isEvent: true },
+  [FilterKey.AVG_CPU_LOAD]: { key: FilterKey.AVG_CPU_LOAD, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg CPU Load', operator: 'is', operatorOptions: stringFilterOptions, sourceOperatorOptions: customOperators, source: [], icon: 'filters/click', isEvent: true },
+  [FilterKey.AVG_MEMORY_USAGE]: { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg Memory Usage', operator: 'is', operatorOptions: stringFilterOptions, sourceOperatorOptions: customOperators, source: [], icon: 'filters/click', isEvent: true },
+  [FilterKey.FETCH_FAILED]: { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Fetch Failed', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click', isEvent: true },
+  
+  
   // [FilterKey.AVG_CPU_LOAD]: { key: FilterKey.AVG_CPU_LOAD, type: FilterType.NUMBER, category: 'new', label: 'Avg CPU Load', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
   // [FilterKey.AVG_MEMORY_USAGE]: { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.NUMBER, category: 'new', label: 'Avg Memory Usage', operator: 'is', operatorOptions: stringFilterOptions, icon: 'filters/click' },
   // [FilterKey.SLOW_SESSION]: { key: FilterKey.SLOW_SESSION, type: FilterType.BOOLEAN, category: 'new', label: 'Slow Session', operator: 'true', operatorOptions: [{ key: 'true', text: 'true', value: 'true' }], icon: 'filters/click' },
   // [FilterKey.MISSING_RESOURCE]: { key: FilterKey.MISSING_RESOURCE, type: FilterType.BOOLEAN, category: 'new', label: 'Missing Resource', operator: 'true', operatorOptions: [{ key: 'inImages', text: 'in images', value: 'true' }], icon: 'filters/click' },
   // [FilterKey.CLICK_RAGE]: { key: FilterKey.CLICK_RAGE, type: FilterType.BOOLEAN, category: 'new', label: 'Click Rage', operator: 'onAnything', operatorOptions: [{ key: 'onAnything', text: 'on anything', value: 'true' }], icon: 'filters/click' },
   
-  [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: 'javascript', label: 'Issue', operator: 'onAnything', operatorOptions: filterOptions, icon: 'filters/click', options: ISSUE_OPTIONS },
+  [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions, icon: 'filters/click', options: ISSUE_OPTIONS },
   // [FilterKey.URL]: { / [TYPES,TYPES. category: 'interactions', label: 'URL', operator: 'is', operatorOptions: stringFilterOptions },
   // [FilterKey.CUSTOM]: { / [TYPES,TYPES. category: 'interactions', label: 'Custom', operator: 'is', operatorOptions: stringFilterOptions },
   // [FilterKey.METADATA]: { / [TYPES,TYPES. category: 'interactions', label: 'Metadata', operator: 'is', operatorOptions: stringFilterOptions },
@@ -233,6 +220,7 @@ export default Record({
   icon: '',
   type: '',
   value: [""],
+  source: [""],
   category: '',
   
   custom: '',
@@ -243,8 +231,10 @@ export default Record({
   isFilter: false,
   actualValue: '',
   
-  operator: 'notOn',
+  operator: '',
+  sourceOperator: '=',
   operatorOptions: [],
+  sourceOptions: [],
   isEvent: false,
   index: 0,
   options: [],

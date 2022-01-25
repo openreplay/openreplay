@@ -35,8 +35,8 @@ export default Record({
   startDate,
   endDate,
 
-  sort: '',
-  order: '',
+  sort: 'startTs',
+  order: 'desc',
 
   viewed: undefined,
   consoleLogCount: undefined,
@@ -49,6 +49,24 @@ export default Record({
 }, {
   idKey: 'searchId',
   methods: {
+    toSaveData() {
+      const js = this.toJS();
+      js.filters = js.filters.map(filter => {
+        filter.type = filter.key
+        
+        delete filter.category
+        delete filter.icon
+        delete filter.operatorOptions
+        delete filter._key
+        delete filter.key
+        return filter;
+      });
+
+      delete js.createdAt;
+      delete js.key;
+      delete js._key;
+      return js;
+    },
     toData() {
       const js = this.toJS();
       js.filters = js.filters.map(filter => {
