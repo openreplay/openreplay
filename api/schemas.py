@@ -502,16 +502,18 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
 class _SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
     custom: Optional[List[str]] = Field(None)
-    key: Optional[str] = Field(None)
     value: Union[Optional[Union[IssueType, PlatformType, int, str]],
                  Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
-    source: Optional[ErrorSource] = Field(default=ErrorSource.js_exception)
+    source: Optional[Union[ErrorSource, str]] = Field(default=ErrorSource.js_exception)
 
     @root_validator
     def filter_validator(cls, values):
-        if values.get("type") == FilterType.issue:
+        if values.get("type") == FilterType.metadata:
+            assert values.get("source") is not None and len(values["source"]) > 0, \
+                "must specify a valid 'source' for metadata filter"
+        elif values.get("type") == FilterType.issue:
             for v in values.get("value"):
                 assert isinstance(v, IssueType), f"value should be of type IssueType for {values.get('type')} filter"
         elif values.get("type") == FilterType.platform:

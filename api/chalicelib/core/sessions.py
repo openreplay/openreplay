@@ -384,12 +384,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
                 # op = __get_sql_operator(f.operator)
-                if f.key in meta_keys.keys():
+                if f.source in meta_keys.keys():
                     extra_constraints.append(
-                        _multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.key])} {op} %({f_k})s",
+                        _multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s",
                                              f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.{metadata.index_to_colname(meta_keys[f.key])} {op} %({f_k})s",
+                        _multiple_conditions(f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s",
                                              f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 # op = __get_sql_operator(f.operator)
@@ -682,7 +682,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                         AND start_ts >= %(startDate)s
                                         AND start_ts <= %(endDate)s
                                         AND duration IS NOT NULL
-                                    ) {"" if or_events else ("AS event_{event_index}" + ("ON(TRUE)" if event_index > 0 else ""))}\
+                                    ) {"" if or_events else (f"AS event_{event_index}" + ("ON(TRUE)" if event_index > 0 else ""))}\
                                     """)
                 else:
                     events_query_from.append(f"""\
