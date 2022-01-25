@@ -55,7 +55,7 @@ spec:
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             - name: ASSETS_ORIGIN
-              value: '{{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}'
+              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

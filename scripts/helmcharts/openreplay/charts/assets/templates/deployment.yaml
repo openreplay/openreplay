@@ -43,7 +43,7 @@ spec:
             - name: AWS_SECRET_ACCESS_KEY
               value: {{ .Values.global.s3.secretKey }}
             - name: S3_BUCKET_ASSETS
-              value: '{{ .Values.global.s3.assetsBucket }}'
+              value: {{ .Values.global.s3.assetsBucket }}
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: AWS_ENDPOINT
@@ -59,7 +59,7 @@ spec:
             # Ref: https://stackoverflow.com/questions/53634583/go-template-split-string-by-delimiter
             # We need https://bucketname.s3endpoint
             - name: ASSETS_ORIGIN
-              value: '{{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}'
+              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'
