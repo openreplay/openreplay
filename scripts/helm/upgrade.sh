@@ -81,6 +81,7 @@ patch
 installation_type=1
 if [[ ${ENTERPRISE} -eq 1 ]]; then
     cp -rf ../../ee/scripts/* ../../scripts/
+    sed 's/\(image_tag.*[0-9]\)\(-pr\)\?"$/\1\2-ee"/' vars.yaml
     echo -e "Migrating clickhouse"
     migration clickhouse
 fi

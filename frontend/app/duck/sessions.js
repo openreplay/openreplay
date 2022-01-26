@@ -8,7 +8,6 @@ import { getRE } from 'App/utils';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
 
-
 const INIT = 'sessions/INIT';
 
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
@@ -25,6 +24,8 @@ const SET_EVENT_QUERY = 'sessions/SET_EVENT_QUERY';
 const SET_AUTOPLAY_VALUES = 'sessions/SET_AUTOPLAY_VALUES';
 const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
+const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
+const SET_SESSION_PATH = 'sessions/SET_SESSION_PATH';
 
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
@@ -57,6 +58,8 @@ const initialState = Map({
   insightFilters: defaultDateFilters,
   host: '',
   funnelPage: Map(),
+  timelinePointer: null,
+  sessionPath: '',
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -242,13 +245,18 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('insights', List(action.data).sort((a, b) => b.count - a.count));
     case SET_FUNNEL_PAGE_FLAG:
       return state.set('funnelPage', action.funnelPage ? Map(action.funnelPage) : false);
+    case SET_TIMELINE_POINTER:
+      return state.set('timelinePointer', action.pointer);
+    case SET_SESSION_PATH:
+      return state.set('sessionPath', action.path);
     default:
       return state;
   }
 };
 
 export default withRequestState({
-  _: [ FETCH, FETCH_LIST, FETCH_LIVE_LIST ],
+  _: [ FETCH, FETCH_LIST ],
+  fetchLiveListRequest: FETCH_LIVE_LIST,
   fetchFavoriteListRequest: FETCH_FAVORITE_LIST,
   toggleFavoriteRequest: TOGGLE_FAVORITE,
   fetchErrorStackList: FETCH_ERROR_STACK,
@@ -262,10 +270,10 @@ function init(session) {
   }
 }
 
-export const fetchList = (params = {}, clear = false) => (dispatch, getState) => {
+export const fetchList = (params = {}, clear = false, live = false) => (dispatch, getState) => {
   const activeTab = getState().getIn([ 'sessions', 'activeTab' ]);  
 
-  return dispatch(activeTab && activeTab.type === 'live' ? {
+  return dispatch((activeTab && activeTab.type === 'live' || live )? {
     types: FETCH_LIVE_LIST.toArray(),
     call: client => client.post('/assist/sessions', params),
   } : {
@@ -376,3 +384,16 @@ export function setFunnelPage(funnelPage) {
   }
 }
 
+export function setTimelinePointer(pointer) {
+  return {
+    type: SET_TIMELINE_POINTER,
+    pointer
+  }
+}
+
+export function setSessionPath(path) {
+  return {
+    type: SET_SESSION_PATH,
+    path
+  }
+}

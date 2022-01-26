@@ -31,17 +31,19 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request }) {
+function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise, hasSessionsPath }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, jwt, assistCredendials);
+      initPlayer(session, jwt, assistCredendials, !hasSessionsPath && session.live);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
 
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => {
-    request();
+    if (isEnterprise) {
+      request();
+    }
     return () => {
       toggleFullscreen(false);
       closeBottomBlock();
@@ -60,7 +62,7 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
       </InitLoader>
     </PlayerProvider>
   );
-}
+};
 
 export default withRequest({
   initialData: null,
@@ -69,11 +71,17 @@ export default withRequest({
 	dataName: 'assistCredendials',
   loadingName: 'loadingCredentials',
 })(withPermissions(['SESSION_REPLAY', 'ASSIST_LIVE'], '', true)(connect(
-  state => ({
-    session: state.getIn([ 'sessions', 'current' ]),
-    showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
-    jwt: state.get('jwt'),
-    fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-  }),
+  state => {
+    const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
+    const hasSessioPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
+    return {
+      session: state.getIn([ 'sessions', 'current' ]),
+      showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
+      jwt: state.get('jwt'),
+      fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+      hasSessionsPath: hasSessioPath && !isAssist,
+      isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    }
+  },
   { toggleFullscreen, closeBottomBlock },
 )(WebPlayer)));

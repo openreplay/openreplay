@@ -27,6 +27,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		JsHeapSizeLimit uint64  `json:"jsHeapSizeLimit"`
 		ProjectKey      *string `json:"projectKey"`
 		Reset           bool    `json:"reset"`
+		UserID          string  `json:"userID"`
 	}
 	type response struct {
 		Timestamp int64  			`json:"timestamp"`
@@ -101,6 +102,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			UserCountry:          country,
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
+			UserID:								req.UserID,
 		}))
 	}
 

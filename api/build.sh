@@ -22,7 +22,6 @@ function build_api(){
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/api/* ./
-        cp -rf ../ee/api/.chalice/* ./.chalice/
         envarg="default-ee"
         tag="ee-"
     }
@@ -31,8 +30,9 @@ function build_api(){
         docker push ${DOCKER_REPO:-'local'}/chalice:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/chalice:${git_sha1} ${DOCKER_REPO:-'local'}/chalice:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/chalice:${tag}latest
-    }
+}
 }
 
 check_prereq
 build_api $1
+IMAGE_TAG=$IMAGE_TAG PUSH_IMAGE=$PUSH_IMAGE DOCKER_REPO=$DOCKER_REPO bash build_alerts.sh $1

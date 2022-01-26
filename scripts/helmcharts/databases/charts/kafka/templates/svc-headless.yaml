@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kafka.fullname" . }}-headless
+  labels: {{- include "kafka.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka
+    {{- if .Values.commonLabels }}
+    {{- include "kafka.tplValue" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "kafka.tplValue" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: tcp-client
+      port: {{ .Values.service.port }}
+      protocol: TCP
+      targetPort: kafka-client
+    - name: tcp-internal
+      port: {{ .Values.service.internalPort }}
+      protocol: TCP
+      targetPort: kafka-internal
+  selector: {{- include "kafka.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: kafka

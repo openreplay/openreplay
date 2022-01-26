@@ -1,0 +1,45 @@
+{{- if .Values.metrics.kafka.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "kafka.fullname" . }}-metrics
+  labels: {{- include "kafka.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+    {{- if .Values.commonLabels }}
+    {{- include "kafka.tplValue" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.metrics.kafka.service.annotations .Values.commonAnnotations }}
+  annotations:
+    {{- if .Values.metrics.kafka.service.annotations }}
+    {{ include "kafka.tplValue" ( dict "value" .Values.metrics.kafka.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "kafka.tplValue" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.metrics.kafka.service.type }}
+  {{- if eq .Values.metrics.kafka.service.type "LoadBalancer" }}
+  {{- if .Values.metrics.kafka.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.metrics.kafka.service.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.metrics.kafka.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges: {{- toYaml .Values.metrics.kafka.service.loadBalancerSourceRanges | nindent 4 }}
+  {{- end }}
+  {{- end }}
+  {{- if and (eq .Values.metrics.kafka.service.type "ClusterIP") .Values.metrics.kafka.service.clusterIP }}
+  clusterIP: {{ .Values.metrics.kafka.service.clusterIP }}
+  {{- end }}
+  ports:
+    - name: http-metrics
+      port: {{ .Values.metrics.kafka.service.port }}
+      protocol: TCP
+      targetPort: metrics
+      {{- if and (or (eq .Values.metrics.kafka.service.type "NodePort") (eq .Values.metrics.kafka.service.type "LoadBalancer")) (not (empty .Values.metrics.kafka.service.nodePort)) }}
+      nodePort: {{ .Values.metrics.kafka.service.nodePort }}
+      {{- else if eq .Values.metrics.kafka.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+  selector: {{- include "kafka.matchLabels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+{{- end }}

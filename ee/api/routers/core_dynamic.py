@@ -8,7 +8,7 @@ import schemas
 import schemas_ee
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
-from chalicelib.core import tenants, users, metadata, projects, license, alerts, assist
+from chalicelib.core import tenants, users, metadata, projects, license, assist
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import captcha, SAML2_helper
@@ -52,7 +52,7 @@ def login(data: schemas.UserLoginSchema = Body(...)):
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
     c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True, version=True)
+                                          stack_integrations=True, version=True, user_id=r["id"])
     c["smtp"] = helper.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     r["smtp"] = c["smtp"]
@@ -195,7 +195,8 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
     if key is None or value is None or len(value) == 0 and len(key) == 0:
         return {"errors": ["please provide a key&value for search"]}
 
-    if projectId is not None and not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id):
+    if projectId is not None and not projects.is_authorized(project_id=projectId, tenant_id=context.tenant_id,
+                                                            user_id=context.user_id):
         return {"errors": ["unauthorized project"]}
     if len(value) == 0:
         return {"errors": ["please provide a value for search"]}
@@ -213,13 +214,25 @@ def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
     }
 
 
-@public_app.post('/alerts/notifications', tags=["alerts"])
-@public_app.put('/alerts/notifications', tags=["alerts"])
-def send_alerts_notifications(background_tasks: BackgroundTasks, data: schemas.AlertNotificationSchema = Body(...)):
-    # TODO: validate token
-    return {"data": alerts.process_notifications(data.notifications, background_tasks=background_tasks)}
-
-
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
 def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
+
+
+@app.get('/client', tags=['projects'])
+def get_client(context: schemas.CurrentContext = Depends(OR_context)):
+    r = tenants.get_by_tenant_id(context.tenant_id)
+    if r is not None:
+        r.pop("createdAt")
+        r["projects"] = projects.get_projects(tenant_id=context.tenant_id, recording_state=True, recorded=True,
+                                              stack_integrations=True, version=True, user_id=context.user_id)
+    return {
+        'data': r
+    }
+
+
+@app.get('/projects', tags=['projects'])
+def get_projects(last_tracker_version: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
+                                          stack_integrations=True, version=True,
+                                          last_tracker_version=last_tracker_version, user_id=context.user_id)}

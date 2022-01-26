@@ -1,0 +1,430 @@
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry and imagePullSecrets
+##
+# global:
+#   imageRegistry: myRegistryName
+#   imagePullSecrets:
+#     - myRegistryKeySecretName
+#   storageClass: myStorageClass
+
+## Bitnami Zookeeper image version
+## ref: https://hub.docker.com/r/bitnami/zookeeper/tags/
+##
+image:
+  registry: docker.io
+  repository: bitnami/zookeeper
+  tag: 3.6.2-debian-10-r10
+
+  ## Specify a imagePullPolicy
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  ##
+  pullPolicy: IfNotPresent
+  ## Optionally specify an array of imagePullSecrets.
+  ## Secrets must be manually created in the namespace.
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  # pullSecrets:
+  #   - myRegistryKeySecretName
+  ## Set to true if you would like to see extra information on logs
+  ## It turns BASH and NAMI debugging in minideb
+  ## ref:  https://github.com/bitnami/minideb-extras/#turn-on-bash-debugging
+  ##
+  debug: false
+
+## String to partially override zookeeper.fullname template (will maintain the release name)
+# nameOverride:
+
+## String to fully override zookeeper.fullname template
+# fullnameOverride:
+
+## Kubernetes Cluster Domain
+##
+clusterDomain: cluster.local
+
+## Add labels to all the deployed resources
+##
+commonLabels: {}
+
+## Add annotations to all the deployed resources
+##
+commonAnnotations: {}
+
+## Init containers parameters:
+## volumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.
+##
+volumePermissions:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: bitnami/minideb
+    tag: buster
+    pullPolicy: Always
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
+  resources: {}
+
+## extraVolumes and extraVolumeMounts allows you to mount other volumes
+## Example Use Cases:
+##  mount certificates to enable tls
+# extraVolumes:
+# - name: zookeeper-keystore
+#   secret:
+#     defaultMode: 288
+#     secretName: zookeeper-keystore
+# - name: zookeeper-trustsore
+#   secret:
+#     defaultMode: 288
+#     secretName: zookeeper-truststore
+# extraVolumeMounts:
+# - name: zookeeper-keystore
+#   mountPath: /certs/keystore
+#   readOnly: true
+# - name: zookeeper-truststore
+#   mountPath: /certs/truststore
+#   readOnly: true
+
+
+## StatefulSet controller supports automated updates. There are two valid update strategies: RollingUpdate and OnDelete
+## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#updating-statefulsets
+##
+updateStrategy: RollingUpdate
+
+## Limits the number of pods of the replicated application that are down simultaneously from voluntary disruptions
+## The PDB will only be created if replicaCount is greater than 1
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions
+##
+podDisruptionBudget:
+  maxUnavailable: 1
+
+## Partition update strategy
+## https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#partitions
+##
+# rollingUpdatePartition:
+
+## StatefulSet controller supports relax its ordering guarantees while preserving its uniqueness and identity guarantees. There are two valid pod management policies: OrderedReady and Parallel
+## ref: https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/#pod-management-policy
+##
+podManagementPolicy: Parallel
+
+## Number of ZooKeeper nodes
+##
+replicaCount: 3
+
+## Basic time unit in milliseconds used by ZooKeeper for heartbeats
+##
+tickTime: 2000
+
+## ZooKeeper uses to limit the length of time the ZooKeeper servers in quorum have to connect to a leader
+##
+initLimit: 10
+
+## How far out of date a server can be from a leader
+##
+syncLimit: 5
+
+## Limits the number of concurrent connections that a single client may make to a single member of the ZooKeeper ensemble
+##
+maxClientCnxns: 60
+
+## Maximum session timeout in milliseconds that the server will allow the client to negotiate. Defaults to 20 times the tickTime.
+##
+maxSessionTimeout: 40000
+
+## A list of comma separated Four Letter Words commands to use
+##
+fourlwCommandsWhitelist: srvr, mntr, ruok
+
+## Allow zookeeper to listen for peers on all IPs
+##
+listenOnAllIPs: false
+
+## Allow to accept connections from unauthenticated users
+##
+allowAnonymousLogin: true
+
+autopurge:
+  ## Retains the snapRetainCount most recent snapshots and the corresponding transaction logs and deletes the rest
+  ##
+  snapRetainCount: 3
+  ## The time interval in hours for which the purge task has to be triggered. Set to a positive integer (1 and above) to enable the auto purging.
+  ##
+  purgeInterval: 0
+
+auth:
+  ## Use existing secret (ignores previous password)
+  ##
+  # existingSecret:
+  ## Enable Zookeeper auth. It uses SASL/Digest-MD5
+  ##
+  enabled: false
+  ## User that will use Zookeeper clients to auth
+  ##
+  clientUser:
+  ## Password that will use Zookeeper clients to auth
+  ##
+  clientPassword:
+  ## Comma, semicolon or whitespace separated list of user to be created. Specify them as a string, for example: "user1,user2,admin"
+  ##
+  serverUsers:
+  ## Comma, semicolon or whitespace separated list of passwords to assign to users when created. Specify them as a string, for example: "pass4user1, pass4user2, pass4admin"
+  ##
+  serverPasswords:
+
+## Size in MB for the Java Heap options (Xmx and XMs). This env var is ignored if Xmx an Xms are configured via JVMFLAGS
+##
+heapSize: 1024
+
+## Log level for the Zookeeper server. ERROR by default. Have in mind if you set it to INFO or WARN the ReadinessProve will produce a lot of logs.
+##
+logLevel: ERROR
+
+## Data log directory. Specifying this option will direct zookeeper to write the transaction log to the dataLogDir rather than the dataDir.
+## This allows a dedicated log device to be used, and helps avoid competition between logging and snaphots.
+## Example:
+## dataLogDir: /bitnami/zookeeper/dataLog
+##
+dataLogDir: ""
+
+## Default JVMFLAGS for the ZooKeeper process
+##
+# jvmFlags:
+
+## Configure ZooKeeper with a custom zoo.cfg file
+##
+# config:
+
+## Kubernetes configuration
+## For minikube, set this to NodePort, elsewhere use LoadBalancer
+##
+service:
+  type: ClusterIP
+  port: 2181
+  followerPort: 2888
+  electionPort: 3888
+  publishNotReadyAddresses: true
+  tls:
+    client_enable: true
+    quorum_enable: true
+    disable_base_client_port: true
+
+    client_port: 3181
+
+    client_keystore_path: /tls_key_store/key_store_file
+    client_keystore_password: ""
+    client_truststore_path: /tls_trust_store/trust_store_file
+    client_truststore_password: ""
+
+    quorum_keystore_path: /tls_key_store/key_store_file
+    quorum_keystore_password: ""
+    quorum_truststore_path: /tls_trust_store/trust_store_file
+    quorum_truststore_password: ""
+  annotations: {}
+  headless:
+    annotations: {}
+
+## Service account for Zookeeper to use.
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+##
+serviceAccount:
+  ## Specifies whether a ServiceAccount should be created
+  ##
+  create: false
+  ## The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the zookeeper.fullname template
+  # name:
+
+## Zookeeper Pod Security Context
+securityContext:
+  enabled: true
+  fsGroup: 1001
+  runAsUser: 1001
+
+## Zookeeper data Persistent Volume Storage Class
+## If defined, storageClassName: <storageClass>
+## If set to "-", storageClassName: "", which disables dynamic provisioning
+## If undefined (the default) or set to null, no storageClassName spec is
+##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+##   GKE, AWS & OpenStack)
+##
+persistence:
+  enabled: true
+  ## A manually managed Persistent Volume and Claim
+  ## If defined, PVC must be created manually before volume will be bound
+  ## The value is evaluated as a template
+  ##
+  # existingClaim:
+
+  # storageClass: "-"
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  annotations: {}
+  dataLogDir:
+    size: 8Gi
+    ## A manually managed Persistent Volume and Claim
+    ## If defined, PVC must be created manually before volume will be bound
+    ## The value is evaluated as a template
+    ##
+    # existingClaim:
+
+## Node labels for pod assignment
+## Ref: https://kubernetes.io/docs/user-guide/node-selection/
+##
+nodeSelector: {}
+
+## Tolerations for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+##
+tolerations: []
+
+## Labels
+## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+podLabels: {}
+
+## Annotations
+## Ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+podAnnotations: {}
+
+## Name of the priority class to be used by zookeeper pods, priority class needs to be created beforehand
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+priorityClassName: ""
+
+## Affinity for pod assignment
+## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+##
+affinity: {}
+
+## Scheduler name
+## https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+##
+# schedulerName: stork
+
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+
+## Configure extra options for liveness and readiness probes
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes)
+##
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+  probeCommandTimeout: 2
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+  probeCommandTimeout: 2
+
+## Network policies
+## Ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+##
+networkPolicy:
+  ## Specifies whether a NetworkPolicy should be created
+  ##
+  enabled: true
+
+  ## The Policy model to apply. When set to false, only pods with the correct
+  ## client label will have network access to the port Redis is listening
+  ## on. When true, zookeeper accept connections from any source
+  ## (with the correct destination port).
+  ##
+  allowExternal: true
+
+## Zookeeper Prometheus Exporter configuration
+##
+metrics:
+  enabled: false
+
+  ## Zookeeper Prometheus Exporter container port
+  ##
+  containerPort: 9141
+
+  ## Service configuration
+  ##
+  service:
+    ## Zookeeper Prometheus Exporter service type
+    ##
+    type: ClusterIP
+    ## Zookeeper Prometheus Exporter service port
+    ##
+    port: 9141
+    ## Annotations for the Zookeeper Prometheus Exporter metrics service
+    ##
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "{{ .Values.metrics.service.port }}"
+      prometheus.io/path: "/metrics"
+
+  ## Prometheus Operator ServiceMonitor configuration
+  ##
+  serviceMonitor:
+    enabled: false
+    ## Namespace for the ServiceMonitor Resource (defaults to the Release Namespace)
+    ##
+    namespace:
+
+    ## Interval at which metrics should be scraped.
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ##
+    # interval: 10s
+
+    ## Timeout after which the scrape is ended
+    ## ref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint
+    ##
+    # scrapeTimeout: 10s
+
+    ## ServiceMonitor selector labels
+    ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+    ##
+    # selector:
+    #   prometheus: my-prometheus
+
+  ## Prometheus Operator PrometheusRule configuration
+  ##
+  prometheusRule:
+    enabled: false
+    ## Namespace for the PrometheusRule Resource (defaults to the Release Namespace)
+    ##
+    namespace:
+
+    ## PrometheusRule selector labels
+    ## ref: https://github.com/bitnami/charts/tree/master/bitnami/prometheus-operator#prometheus-configuration
+    ##
+    # selector:
+    #   prometheus: my-prometheus
+
+    ## Some example rules.
+    rules: []
+    #  - alert: ZookeeperSyncedFollowers
+    #    annotations:
+    #      message: The number of synced followers for the leader node in Zookeeper deployment my-release is less than 2. This usually means that some of the Zookeeper nodes aren't communicating properly. If it doesn't resolve itself you can try killing the pods (one by one).
+    #    expr: max(synced_followers{service="my-release-metrics"}) < 2
+    #    for: 5m
+    #    labels:
+    #      severity: critical
+    #  - alert: ZookeeperOutstandingRequests
+    #    annotations:
+    #      message: The number of outstanding requests for Zookeeper pod {{ $labels.pod }} is greater than 10. This can indicate a performance issue with the Pod or cluster a whole.
+    #    expr: outstanding_requests{service="my-release-metrics"} > 10
+    #    for: 5m
+    #    labels:
+    #      severity: critical

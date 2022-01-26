@@ -2,7 +2,7 @@ import cn from 'classnames';
 import { connect } from 'react-redux';
 import { Set, List as ImmutableList } from "immutable";
 import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain } from 'UI';
-import { merge, resolve,unresolve,ignore } from "Duck/errors";
+import { merge, resolve, unresolve, ignore, updateCurrentPage } from "Duck/errors";
 import { applyFilter } from 'Duck/filters';
 import { IGNORED, RESOLVED, UNRESOLVED } from 'Types/errorInfo';
 import SortDropdown from 'Components/BugFinder/Filters/SortDropdown';
@@ -30,18 +30,19 @@ const sortOptions = Object.entries(sortOptionsMap)
 		state.getIn(["errors", "unresolve", "loading"]),
 	ignoreLoading: state.getIn([ "errors", "ignore", "loading" ]),
 	mergeLoading: state.getIn([ "errors", "merge", "loading" ]),
+  currentPage: state.getIn(["errors", "currentPage"]),
 }), {
 	merge,
 	resolve,
 	unresolve,
 	ignore,
-	applyFilter
+	applyFilter,
+  updateCurrentPage,
 })
 export default class List extends React.PureComponent {
 	state = {
 		checkedAll: false,
 		checkedIds: Set(),
-		showPages: 1,
 		sort: {}
 	}
 
@@ -106,7 +107,7 @@ export default class List extends React.PureComponent {
 		this.applyToAllChecked(this.props.ignore);
 	}
 
-	addPage = () => this.setState({ showPages: this.state.showPages + 1 })
+	addPage = () => this.props.updateCurrentPage(this.props.currentPage + 1)
 
 	writeOption = (e, { name, value }) => {
 		const [ sort, order ] = value.split('-');
@@ -123,16 +124,16 @@ export default class List extends React.PureComponent {
 			resolveToggleLoading,
 			mergeLoading,
 			onFilterChange,
+      currentPage,
 		} = this.props;
 		const {
 			checkedAll,
 			checkedIds,
-			showPages,
 			sort
 		} = this.state;
 		const someLoading = loading || ignoreLoading || resolveToggleLoading || mergeLoading;
 		const currentCheckedIds = this.currentCheckedIds();
-		const displayedCount = Math.min(showPages * PER_PAGE, list.size);
+		const displayedCount = Math.min(currentPage * PER_PAGE, list.size);
 		let _list = sort.sort ? list.sortBy(i => i[sort.sort]) : list;
 		_list = sort.order === 'desc' ? _list.reverse() : _list;
 

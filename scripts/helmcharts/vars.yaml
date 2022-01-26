@@ -1,0 +1,122 @@
+fromVersion: "v1.4.0"
+# Databases specific variables
+postgresql: &postgres
+  # For generating passwords
+  # `openssl rand -hex 20`
+  postgresqlPassword: "changeMePassword"
+  postgresqlHost: "postgresql.db.svc.cluster.local"
+  postgresqlPort: "5432"
+  postgresqlUser: "postgres"
+  postgresqlDatabase: "postgres"
+  # resources:
+  #   requests:
+  #     memory: 256Mi
+  #     cpu: 250m
+  #   limits:
+  #     memory: 3000Mi
+  #     cpu: 2
+
+clickhouse: &clickhouse
+  # For enterpriseEdition
+  # enabled: true
+
+kafka: &kafka
+  # For enterpriseEdition
+  # enabled: true
+  kafkaHost: "kafka.db.svc.cluster.local"
+  kafkaPort: "9092"
+  kafkaUseSsl: "false"
+
+redis: &redis
+  # For enterpriseEdition
+  # enabled: false
+  redisHost: "redis-master.db.svc.cluster.local"
+  redisPort: "6379"
+
+minio:
+  global:
+    minio:
+      # For generating passwords
+      # `openssl rand -hex 20`
+      accessKey: "changeMeMinioAccessKey"
+      secretKey: "changeMeMinioPassword"
+
+# Application specific variables
+global:
+  postgresql: *postgres
+  kafka: *kafka
+  redis: *redis
+  s3:
+    region: "us-east-1"
+    endpoint: "http://minio.db.svc.cluster.local:9000"
+    assetsBucket: "sessions-assets"
+    recordingsBucket: "mobs"
+    sourcemapsBucket: "sourcemaps"
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
+    accessKey: "changeMeMinioAccessKey"
+    secretKey: "changeMeMinioPassword"
+  email:
+    emailHost: ''
+    emailPort: '587'
+    emailUser: ''
+    emailPassword: ''
+    emailUseTls: 'true'
+    emailUseSsl: 'false'
+    emailSslKey: ''
+    emailSslCert: ''
+    emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
+
+  enterpriseEditionLicense: ""
+  domainName: ""
+
+# If there is multiple nodes in the kubernetes cluster,
+# we'll have to create a NFS share PVC for both the containers to share data.
+# If it's the single node, we'll use hostVolume, which is default for community installation.
+# Note: Both PVC name should be same.
+# sink:
+#   pvc:
+#     name: mysharedpersistence
+# storage:
+#   pvc:
+#     name: mysharedpersistence
+
+chalice:
+  env:
+    jwt_secret: "SetARandomStringHere"
+    # captcha_server: ''
+    # captcha_key: ''
+    # SAML2_MD_URL: ''
+    # idp_entityId: ''
+    # idp_sso_url: ''
+    # idp_x509cert: ''
+    # idp_sls_url: ''
+    # idp_name: ''
+    # idp_tenantKey: ''
+
+# If you want to override something
+# chartname:
+#   filedFrom chart/Values.yaml:
+#     key: value
+#
+# For example (http):
+# http:
+#   resources:
+#     limits:
+#       cpu: 1024m
+#       memory: 4096Mi
+#     requests:
+#       cpu: 512m
+#       memory: 2056Mi
+
+##  Changes to nginx
+#
+# nginx-ingress:
+#   # Key and certificate files must be named site.key and site.crt
+#   # and copied to ../openreplay/files/
+#   sslKey: site.key
+#   sslCert: site.crt
+#   # Redirecting http to https
+#   customServerConfigs: |
+#      return 301 https://$host$request_uri;

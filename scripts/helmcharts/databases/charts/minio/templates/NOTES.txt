@@ -1,0 +1,71 @@
+** Please be patient while the chart is being deployed **
+
+MinIO can be accessed via port {{ .Values.service.port }} on the following DNS name from within your cluster:
+
+   {{ include "minio.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
+
+To get your credentials run:
+
+   export MINIO_ACCESS_KEY=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "minio.fullname" . }} -o jsonpath="{.data.access-key}" | base64 --decode)
+   export MINIO_SECRET_KEY=$(kubectl get secret --namespace {{ .Release.Namespace }} {{ include "minio.fullname" . }} -o jsonpath="{.data.secret-key}" | base64 --decode)
+
+To connect to your MinIO server using a client:
+
+- Run a MinIO Client pod and append the desired command (e.g. 'admin info server'):
+
+   kubectl run --namespace {{ .Release.Namespace }} {{ include "minio.fullname" . }}-client \
+     --rm --tty -i --restart='Never' \
+     --env MINIO_SERVER_ACCESS_KEY=$MINIO_ACCESS_KEY \
+     --env MINIO_SERVER_SECRET_KEY=$MINIO_SECRET_KEY \
+     --env MINIO_SERVER_HOST={{ include "minio.fullname" . }} \
+     {{- if and (.Values.networkPolicy.enabled) (not .Values.networkPolicy.allowExternal) }}
+     --labels="{{ template "minio.name" . }}-client=true" \
+     {{- end }}
+     --image {{ template "minio.clientImage" . }} -- admin info server minio
+
+{{- if and (.Values.networkPolicy.enabled) (not .Values.networkPolicy.allowExternal) }}
+
+   NOTE: Since NetworkPolicy is enabled, only pods with label
+   "{{ template "minio.fullname" . }}-client=true" will be able to connect to MinIO.
+{{- end }}
+{{- if not .Values.disableWebUI }}
+
+To access the MinIO web UI:
+
+- Get the MinIO URL:
+
+{{- if .Values.ingress.enabled }}
+
+   You should be able to access your new MinIO web UI through
+
+   {{- range .Values.ingress.hosts }}
+   {{ if .tls }}https{{ else }}http{{ end }}://{{ .name }}/minio/
+   {{- end }}
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+         Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ include "minio.fullname" . }}'
+
+   {{- $port:=.Values.service.port | toString }}
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "minio.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "MinIO web URL: http://$SERVICE_IP{{- if ne $port "80" }}:{{ .Values.service.port }}{{ end }}/minio"
+
+{{- else if contains "ClusterIP"  .Values.service.type }}
+
+   echo "MinIO web URL: http://127.0.0.1:9000/minio"
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "minio.fullname" . }} 9000:{{ .Values.service.port }}
+
+{{- else if contains "NodePort" .Values.service.type }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "minio.fullname" . }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "MinIO web URL: http://$NODE_IP:$NODE_PORT/minio"
+
+{{- end }}
+{{- else }}
+
+   WARN: MinIO Web UI is disabled.
+{{- end }}
+
+{{ include "minio.validateValues" . }}
+{{ include "minio.checkRollingTags" . }}

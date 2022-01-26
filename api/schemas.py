@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Optional, List, Literal, Union
+from typing import Optional, List, Union, Literal
 
-from pydantic import BaseModel, Field, EmailStr, HttpUrl
+from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -86,16 +86,6 @@ class SearchErrorsSchema(BaseModel):
     density: Optional[int] = Field(7)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
-
-
-class EmailNotificationSchema(BaseModel):
-    notification: str = Field(...)
-    destination: str = Field(...)
-
-
-class AlertNotificationSchema(BaseModel):
-    auth: str = Field(...)
-    notifications: List[EmailNotificationSchema] = Field(...)
 
 
 class CreateNotificationSchema(BaseModel):
@@ -276,12 +266,18 @@ class _AlertMessageSchema(BaseModel):
     value: str = Field(...)
 
 
+class AlertDetectionChangeType(str, Enum):
+    percent = "percent"
+    change = "change"
+
+
 class _AlertOptionSchema(BaseModel):
     message: List[_AlertMessageSchema] = Field([])
-    currentPeriod: int = Field(...)
-    previousPeriod: int = Field(...)
+    currentPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(...)
+    previousPeriod: Literal[15, 30, 60, 120, 240, 1440] = Field(15)
     lastNotification: Optional[int] = Field(None)
     renotifyInterval: Optional[int] = Field(720)
+    change: Optional[AlertDetectionChangeType] = Field(None)
 
 
 class AlertColumn(str, Enum):
@@ -304,24 +300,122 @@ class AlertColumn(str, Enum):
     performance__crashes__count = "performance.crashes.count"
     errors__javascript__count = "errors.javascript.count"
     errors__backend__count = "errors.backend.count"
+    custom = "CUSTOM"
+
+
+class MathOperator(str, Enum):
+    _equal = "="
+    _less = "<"
+    _greater = ">"
+    _less_eq = "<="
+    _greater_eq = ">="
 
 
 class _AlertQuerySchema(BaseModel):
     left: AlertColumn = Field(...)
     right: float = Field(...)
-    operator: Literal["<", ">", "<=", ">="] = Field(...)
+    # operator: Literal["<", ">", "<=", ">="] = Field(...)
+    operator: MathOperator = Field(...)
+
+
+class AlertDetectionMethod(str, Enum):
+    threshold = "threshold"
+    change = "change"
 
 
 class AlertSchema(BaseModel):
     name: str = Field(...)
-    detectionMethod: str = Field(...)
+    detection_method: AlertDetectionMethod = Field(...)
     description: Optional[str] = Field(None)
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
+    series_id: Optional[int] = Field(None)
+
+    @root_validator
+    def alert_validator(cls, values):
+        if values.get("query") is not None and values["query"].left == AlertColumn.custom:
+            assert values.get("series_id") is not None, "series_id should not be null for CUSTOM alert"
+        if values.get("detectionMethod") is not None \
+                and values["detectionMethod"] == AlertDetectionMethod.change \
+                and values.get("options") is not None:
+            assert values["options"].change is not None, \
+                "options.change should not be null for detection method 'change'"
+        return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class SourcemapUploadPayloadSchema(BaseModel):
     urls: List[str] = Field(..., alias="URL")
+
+
+class ErrorSource(str, Enum):
+    js_exception = "js_exception"
+    bugsnag = "bugsnag"
+    cloudwatch = "cloudwatch"
+    datadog = "datadog"
+    newrelic = "newrelic"
+    rollbar = "rollbar"
+    sentry = "sentry"
+    stackdriver = "stackdriver"
+    sumologic = "sumologic"
+
+
+class EventType(str, Enum):
+    click = "CLICK"
+    input = "INPUT"
+    location = "LOCATION"
+    custom = "CUSTOM"
+    request = "REQUEST"
+    graphql = "GRAPHQL"
+    state_action = "STATEACTION"
+    error = "ERROR"
+    metadata = "METADATA"
+    click_ios = "CLICK_IOS"
+    input_ios = "INPUT_IOS"
+    view_ios = "VIEW_IOS"
+    custom_ios = "CUSTOM_IOS"
+    request_ios = "REQUEST_IOS"
+    error_ios = "ERROR_IOS"
+
+
+class PerformanceEventType(str, Enum):
+    location_dom_complete = "DOM_COMPLETE"
+    location_largest_contentful_paint_time = "LARGEST_CONTENTFUL_PAINT_TIME"
+    time_between_events = "TIME_BETWEEN_EVENTS"
+    location_ttfb = "TTFB"
+    location_avg_cpu_load = "AVG_CPU_LOAD"
+    location_avg_memory_usage = "AVG_MEMORY_USAGE"
+    fetch_failed = "FETCH_FAILED"
+    # fetch_duration = "FETCH_DURATION"
+
+
+class FilterType(str, Enum):
+    user_os = "USEROS"
+    user_browser = "USERBROWSER"
+    user_device = "USERDEVICE"
+    user_country = "USERCOUNTRY"
+    user_id = "USERID"
+    user_anonymous_id = "USERANONYMOUSID"
+    referrer = "REFERRER"
+    rev_id = "REVID"
+    # IOS
+    user_os_ios = "USEROS_IOS"
+    user_device_ios = "USERDEVICE_IOS"
+    user_country_ios = "USERCOUNTRY_IOS"
+    user_id_ios = "USERID_IOS"
+    user_anonymous_id_ios = "USERANONYMOUSID_IOS"
+    rev_id_ios = "REVID_IOS"
+    #
+    duration = "DURATION"
+    platform = "PLATFORM"
+    metadata = "METADATA"
+    issue = "ISSUE"
+    events_count = "EVENTS_COUNT"
+    utm_source = "UTM_SOURCE"
+    utm_medium = "UTM_MEDIUM"
+    utm_campaign = "UTM_CAMPAIGN"
 
 
 class SearchEventOperator(str, Enum):
@@ -329,10 +423,10 @@ class SearchEventOperator(str, Enum):
     _is_any = "isAny"
     _on = "on"
     _on_any = "onAny"
-    _isnot = "isNot"
-    _noton = "notOn"
+    _is_not = "isNot"
+    _not_on = "notOn"
     _contains = "contains"
-    _notcontains = "notContains"
+    _not_contains = "notContains"
     _starts_with = "startsWith"
     _ends_with = "endsWith"
 
@@ -340,34 +434,146 @@ class SearchEventOperator(str, Enum):
 class PlatformType(str, Enum):
     mobile = "mobile"
     desktop = "desktop"
+    tablet = "tablet"
 
 
-class _SessionSearchEventSchema(BaseModel):
-    custom: Optional[str] = Field(None)
-    key: Optional[str] = Field(None)
-    value: Union[Optional[str], Optional[List[str]]] = Field(...)
-    type: str = Field(...)
+class SearchEventOrder(str, Enum):
+    _then = "then"
+    _or = "or"
+    _and = "and"
+
+
+class IssueType(str, Enum):
+    click_rage = 'click_rage'
+    dead_click = 'dead_click'
+    excessive_scrolling = 'excessive_scrolling'
+    bad_request = 'bad_request'
+    missing_resource = 'missing_resource'
+    memory = 'memory'
+    cpu = 'cpu'
+    slow_resource = 'slow_resource'
+    slow_page_load = 'slow_page_load'
+    crash = 'crash'
+    custom = 'custom'
+    js_exception = 'js_exception'
+
+
+class __MixedSearchFilter(BaseModel):
+    is_event: bool = Field(...)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class _SessionSearchEventRaw(__MixedSearchFilter):
+    is_event: bool = Field(True, const=True)
+    value: Union[str, List[str]] = Field(...)
+    type: Union[EventType, PerformanceEventType] = Field(...)
     operator: SearchEventOperator = Field(...)
-    source: Optional[str] = Field(...)
+    source: Optional[Union[ErrorSource,List[Union[int, str]]]] = Field(default=ErrorSource.js_exception)
+    sourceOperator: Optional[MathOperator] = Field(None)
+
+    @root_validator
+    def event_validator(cls, values):
+        if isinstance(values.get("type"), PerformanceEventType):
+            if values.get("type") == PerformanceEventType.fetch_failed:
+                return values
+            assert values.get("source") is not None, "source should not be null for PerformanceEventType"
+            assert values.get("sourceOperator") is not None \
+                , "sourceOperator should not be null for PerformanceEventType"
+            if values["type"] == PerformanceEventType.time_between_events:
+                assert len(values.get("value", [])) == 2, \
+                    f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
+                assert isinstance(values["value"][0], _SessionSearchEventRaw) \
+                       and isinstance(values["value"][1], _SessionSearchEventRaw) \
+                    , f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
+            else:
+                for c in values["source"]:
+                    assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
+        return values
 
 
-class _SessionSearchFilterSchema(_SessionSearchEventSchema):
-    value: List[str] = Field(...)
+class _SessionSearchEventSchema(_SessionSearchEventRaw):
+    value: Union[List[_SessionSearchEventRaw], str, List[str]] = Field(...)
+
+
+class _SessionSearchFilterSchema(__MixedSearchFilter):
+    is_event: bool = Field(False, const=False)
+    value: Union[Optional[Union[IssueType, PlatformType, int, str]],
+                 Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
+    type: FilterType = Field(...)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
+    source: Optional[Union[ErrorSource, str]] = Field(default=ErrorSource.js_exception)
+
+    @root_validator
+    def filter_validator(cls, values):
+        if values.get("type") == FilterType.metadata:
+            assert values.get("source") is not None and len(values["source"]) > 0, \
+                "must specify a valid 'source' for metadata filter"
+        elif values.get("type") == FilterType.issue:
+            for v in values.get("value"):
+                assert isinstance(v, IssueType), f"value should be of type IssueType for {values.get('type')} filter"
+        elif values.get("type") == FilterType.platform:
+            for v in values.get("value"):
+                assert isinstance(v, PlatformType), \
+                    f"value should be of type PlatformType for {values.get('type')} filter"
+        elif values.get("type") == FilterType.events_count:
+            assert isinstance(values.get("operator"), MathOperator), \
+                f"operator should be of type MathOperator for {values.get('type')} filter"
+            for v in values.get("value"):
+                assert isinstance(v, int), f"value should be of type int for {values.get('type')} filter"
+        else:
+            assert isinstance(values.get("operator"), SearchEventOperator), \
+                f"operator should be of type SearchEventOperator for {values.get('type')} filter"
+        return values
 
 
 class SessionsSearchPayloadSchema(BaseModel):
     events: List[_SessionSearchEventSchema] = Field([])
     filters: List[_SessionSearchFilterSchema] = Field([])
-    # custom:dict=Field(...)
-    # rangeValue:str=Field(...)
     startDate: int = Field(None)
     endDate: int = Field(None)
-    sort: str = Field(...)
+    sort: str = Field(default="startTs")
     order: str = Field(default="DESC")
-    platform: Optional[PlatformType] = Field(None)
+    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
-class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
+class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
+    events: Optional[List[_SessionSearchEventSchema]] = Field([])
+    filters: List[Union[_SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
+
+    @root_validator(pre=True)
+    def flat_to_original(cls, values):
+        # in case the old search body was passed
+        if len(values.get("events", [])) > 0:
+            for v in values["events"]:
+                v["isEvent"] = True
+            for v in values.get("filters", []):
+                v["isEvent"] = False
+        else:
+            n_filters = []
+            n_events = []
+            for v in values.get("filters", []):
+                if v.get("isEvent"):
+                    n_events.append(v)
+                else:
+                    n_filters.append(v)
+            values["events"] = n_events
+            values["filters"] = n_filters
+        return values
+
+
+class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
+    # class SessionsSearchCountSchema(SessionsSearchPayloadSchema):
+    sort: Optional[str] = Field(default=None)
+    order: Optional[str] = Field(default=None)
+
+
+class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
+    # class FunnelSearchPayloadSchema(SessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
@@ -391,7 +597,8 @@ class UpdateFunnelSchema(FunnelSchema):
     is_public: Optional[bool] = Field(None)
 
 
-class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
+class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
+    # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
 
@@ -419,3 +626,64 @@ class SentrySchema(BaseModel):
 
 class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
+
+
+class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
+    # class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+    startDate: Optional[int] = Field(None)
+    endDate: Optional[int] = Field(None)
+    sort: Optional[str] = Field(None)
+    order: Optional[str] = Field(None)
+
+
+class CustomMetricCreateSeriesSchema(BaseModel):
+    name: Optional[str] = Field(None)
+    index: Optional[int] = Field(None)
+    filter: Optional[CustomMetricSeriesFilterSchema] = Field([])
+
+
+class CreateCustomMetricsSchema(BaseModel):
+    name: str = Field(...)
+    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
+    is_public: Optional[bool] = Field(False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class MetricViewType(str, Enum):
+    line_chart = "lineChart"
+    progress = "progress"
+
+
+class CustomMetricChartPayloadSchema(BaseModel):
+    startDate: int = Field(TimeUTC.now(-7))
+    endDate: int = Field(TimeUTC.now())
+    density: int = Field(7)
+    viewType: MetricViewType = Field(MetricViewType.line_chart)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):
+    metric_id: int = Field(...)
+
+
+class TryCustomMetricsSchema(CreateCustomMetricsSchema, CustomMetricChartPayloadSchema):
+    name: Optional[str] = Field(None)
+
+
+class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
+    series_id: Optional[int] = Field(None)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
+    series: List[CustomMetricUpdateSeriesSchema] = Field(..., min_items=1)
+
+
+class SavedSearchSchema(FunnelSchema):
+    pass

@@ -64,5 +64,6 @@ env:
   idp_x509cert: ''
   idp_sls_url: ''
   idp_name: ''
+  idp_tenantKey: ''
   assist_secret: ''
   iceServers: ''

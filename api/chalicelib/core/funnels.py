@@ -1,7 +1,8 @@
 import json
 
 import chalicelib.utils.helper
-from chalicelib.core import events, significance, sessions
+import schemas
+from chalicelib.core import significance, sessions
 from chalicelib.utils import dev
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -11,23 +12,24 @@ REMOVE_KEYS = ["key", "_key", "startDate", "endDate"]
 ALLOW_UPDATE_FOR = ["name", "filter"]
 
 
-def filter_stages(stages):
-    ALLOW_TYPES = [events.event_type.CLICK.ui_type, events.event_type.INPUT.ui_type,
-                   events.event_type.LOCATION.ui_type, events.event_type.CUSTOM.ui_type,
-                   events.event_type.CLICK_IOS.ui_type, events.event_type.INPUT_IOS.ui_type,
-                   events.event_type.VIEW_IOS.ui_type, events.event_type.CUSTOM_IOS.ui_type, ]
-    return [s for s in stages if s["type"] in ALLOW_TYPES and s.get("value") is not None]
+# def filter_stages(stages):
+#     ALLOW_TYPES = [events.event_type.CLICK.ui_type, events.event_type.INPUT.ui_type,
+#                    events.event_type.LOCATION.ui_type, events.event_type.CUSTOM.ui_type,
+#                    events.event_type.CLICK_IOS.ui_type, events.event_type.INPUT_IOS.ui_type,
+#                    events.event_type.VIEW_IOS.ui_type, events.event_type.CUSTOM_IOS.ui_type, ]
+#     return [s for s in stages if s["type"] in ALLOW_TYPES and s.get("value") is not None]
 
 
-def create(project_id, user_id, name, filter, is_public):
+def create(project_id, user_id, name, filter: schemas.FunnelSearchPayloadSchema, is_public):
     helper.delete_keys_from_dict(filter, REMOVE_KEYS)
-    filter["events"] = filter_stages(stages=filter.get("events", []))
+    # filter.events = filter_stages(stages=filter.events)
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
             INSERT INTO public.funnels (project_id, user_id, name, filter,is_public) 
             VALUES (%(project_id)s, %(user_id)s, %(name)s, %(filter)s::jsonb,%(is_public)s)
             RETURNING *;""",
-                            {"user_id": user_id, "project_id": project_id, "name": name, "filter": json.dumps(filter),
+                            {"user_id": user_id, "project_id": project_id, "name": name,
+                             "filter": json.dumps(filter.dict()),
                              "is_public": is_public})
 
         cur.execute(
@@ -40,7 +42,7 @@ def create(project_id, user_id, name, filter, is_public):
         return {"data": r}
 
 
-def update(funnel_id, user_id, name=None, filter=None, is_public=None):
+def update(funnel_id, user_id, project_id, name=None, filter=None, is_public=None):
     s_query = []
     if filter is not None:
         helper.delete_keys_from_dict(filter, REMOVE_KEYS)
@@ -56,9 +58,11 @@ def update(funnel_id, user_id, name=None, filter=None, is_public=None):
             UPDATE public.funnels 
             SET {" , ".join(s_query)}
             WHERE funnel_id=%(funnel_id)s
-            RETURNING *;""",
-                            {"user_id": user_id, "funnel_id": funnel_id, "name": name,
-                             "filter": json.dumps(filter) if filter is not None else None, "is_public": is_public})
+                AND project_id = %(project_id)s
+                AND (user_id = %(user_id)s OR is_public)
+            RETURNING *;""", {"user_id": user_id, "funnel_id": funnel_id, "name": name,
+                              "filter": json.dumps(filter) if filter is not None else None, "is_public": is_public,
+                              "project_id": project_id})
         # print("--------------------")
         # print(query)
         # print("--------------------")
@@ -74,13 +78,12 @@ def update(funnel_id, user_id, name=None, filter=None, is_public=None):
 
 def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date=None, details=False):
     with pg_client.PostgresClient() as cur:
-        team_query = ""
         cur.execute(
             cur.mogrify(
                 f"""\
-                SELECT DISTINCT ON (funnels.funnel_id) funnel_id,project_id, user_id, name, created_at, deleted_at, is_public
+                SELECT funnel_id, project_id, user_id, name, created_at, deleted_at, is_public
                     {",filter" if details else ""}
-                FROM public.funnels {team_query}
+                FROM public.funnels
                 WHERE project_id = %(project_id)s
                   AND funnels.deleted_at IS NULL
                   AND (funnels.user_id = %(user_id)s OR funnels.is_public);""",
@@ -93,12 +96,14 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
             if details:
-                row["filter"]["events"] = filter_stages(row["filter"]["events"])
+                # row["filter"]["events"] = filter_stages(row["filter"]["events"])
                 get_start_end_time(filter_d=row["filter"], range_value=range_value, start_date=start_date,
                                    end_date=end_date)
-                counts = sessions.search2_pg(data=row["filter"], project_id=project_id, user_id=None, count_only=True)
+                counts = sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(row["filter"]),
+                                             project_id=project_id, user_id=None, count_only=True)
                 row["sessionsCount"] = counts["countSessions"]
                 row["usersCount"] = counts["countUsers"]
+                filter_clone = dict(row["filter"])
                 overview = significance.get_overview(filter_d=row["filter"], project_id=project_id)
                 row["stages"] = overview["stages"]
                 row.pop("filter")
@@ -107,6 +112,7 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
                 row["criticalIssuesCount"] = overview["criticalIssuesCount"]
                 row["missedConversions"] = 0 if len(row["stages"]) < 2 \
                     else row["stages"][0]["sessionsCount"] - row["stages"][-1]["sessionsCount"]
+                row["filter"] = helper.old_search_payload_to_flat(filter_clone)
     return rows
 
 
@@ -135,7 +141,8 @@ def delete(project_id, funnel_id, user_id):
             UPDATE public.funnels 
             SET deleted_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
-              AND funnel_id = %(funnel_id)s;""",
+              AND funnel_id = %(funnel_id)s
+              AND (user_id = %(user_id)s OR is_public);""",
                         {"funnel_id": funnel_id, "project_id": project_id, "user_id": user_id})
         )
 
@@ -143,28 +150,29 @@ def delete(project_id, funnel_id, user_id):
 
 
 def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id)
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
-    return sessions.search2_pg(data=f["filter"], project_id=project_id, user_id=user_id)
+    return sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(f["filter"]), project_id=project_id,
+                               user_id=user_id)
 
 
-def get_sessions_on_the_fly(funnel_id, project_id, user_id, data):
-    data["events"] = filter_stages(data.get("events", []))
-    if len(data["events"]) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
+    # data.events = filter_stages(data.events)
+    if len(data.events) == 0:
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
-        get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
-                           start_date=data.get('startDate', None),
-                           end_date=data.get('endDate', None))
-        data = f["filter"]
-    return sessions.search2_pg(data=data, project_id=project_id, user_id=user_id)
+        get_start_end_time(filter_d=f["filter"], range_value=data.range_value,
+                           start_date=data.startDate, end_date=data.endDate)
+        data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
+    return sessions.search2_pg(data=data, project_id=project_id,
+                               user_id=user_id)
 
 
-def get_top_insights(project_id, funnel_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id)
+def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
@@ -174,10 +182,10 @@ def get_top_insights(project_id, funnel_id, range_value=None, start_date=None, e
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
-def get_top_insights_on_the_fly(funnel_id, project_id, data):
-    data["events"] = filter_stages(data.get("events", []))
+def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data):
+    # data["events"] = filter_stages(data.get("events", []))
     if len(data["events"]) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
@@ -191,8 +199,8 @@ def get_top_insights_on_the_fly(funnel_id, project_id, data):
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
-def get_issues(project_id, funnel_id, range_value=None, start_date=None, end_date=None):
-    f = get(funnel_id=funnel_id, project_id=project_id)
+def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
+    f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
@@ -202,12 +210,12 @@ def get_issues(project_id, funnel_id, range_value=None, start_date=None, end_dat
 
 
 @dev.timed
-def get_issues_on_the_fly(funnel_id, project_id, data):
+def get_issues_on_the_fly(funnel_id, user_id, project_id, data):
     first_stage = data.get("firstStage")
     last_stage = data.get("lastStage")
-    data["events"] = filter_stages(data.get("events", []))
+    # data["events"] = filter_stages(data.get("events", []))
     if len(data["events"]) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
@@ -220,7 +228,7 @@ def get_issues_on_the_fly(funnel_id, project_id, data):
                                          last_stage=last_stage))}
 
 
-def get(funnel_id, project_id):
+def get(funnel_id, project_id, user_id, flatten=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -230,8 +238,9 @@ def get(funnel_id, project_id):
                 FROM public.funnels
                 WHERE project_id = %(project_id)s
                   AND deleted_at IS NULL
-                  AND funnel_id = %(funnel_id)s;""",
-                {"funnel_id": funnel_id, "project_id": project_id}
+                  AND funnel_id = %(funnel_id)s
+                  AND (user_id = %(user_id)s OR is_public);""",
+                {"funnel_id": funnel_id, "project_id": project_id, "user_id": user_id}
             )
         )
 
@@ -240,22 +249,27 @@ def get(funnel_id, project_id):
         return None
 
     f["createdAt"] = TimeUTC.datetime_to_timestamp(f["createdAt"])
-    f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
+    # f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
+    if flatten:
+        f["filter"] = helper.old_search_payload_to_flat(f["filter"])
     return f
 
 
 @dev.timed
-def search_by_issue(user_id, project_id, funnel_id, issue_id, data, range_value=None, start_date=None, end_date=None):
-    if len(data.get("events", [])) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id)
+def search_by_issue(user_id, project_id, funnel_id, issue_id, data: schemas.FunnelSearchPayloadSchema, range_value=None,
+                    start_date=None, end_date=None):
+    if len(data.events) == 0:
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
-        get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=data.get('startDate', start_date),
-                           end_date=data.get('endDate', end_date))
-        data = f["filter"]
+        data.startDate = data.startDate if data.startDate is not None else start_date
+        data.endDate = data.endDate if data.endDate is not None else end_date
+        get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=data.startDate,
+                           end_date=data.endDate)
+        data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
 
-    # insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data, project_id=project_id)
-    issues = get_issues_on_the_fly(funnel_id=funnel_id, project_id=project_id, data=data).get("issues", {})
+    issues = get_issues_on_the_fly(funnel_id=funnel_id, user_id=user_id, project_id=project_id, data=data.dict()) \
+        .get("issues", {})
     issues = issues.get("significant", []) + issues.get("insignificant", [])
     issue = None
     for i in issues:
