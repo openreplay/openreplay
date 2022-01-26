@@ -127,7 +127,7 @@ export function save(instance) {
     types: SAVE.array,
     call: client => client.post('/saved_search', {
       name: instance.name,
-      filter: instance.filter.toSaveData(),
+      filter: instance.toSaveData(),
     }),
     instance,
   };
