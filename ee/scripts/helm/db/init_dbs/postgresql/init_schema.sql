@@ -1,5 +1,4 @@
 BEGIN;
-
 CREATE SCHEMA IF NOT EXISTS events_common;
 CREATE SCHEMA IF NOT EXISTS events;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
@@ -337,13 +336,11 @@ $$
             CREATE INDEX IF NOT EXISTS roles_projects_project_id_idx ON roles_projects (project_id);
 
 
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'webhook_type') THEN
-                    create type webhook_type as enum ('webhook','slack','email');
-                END IF;
-            END;
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'webhook_type') THEN
+                create type webhook_type as enum ('webhook','slack','email');
+            END IF;
 
 
             create table IF NOT EXISTS webhooks
@@ -408,13 +405,11 @@ $$
             CREATE INDEX IF NOT EXISTS funnels_user_id_is_public_idx ON public.funnels (user_id, is_public);
             CREATE INDEX IF NOT EXISTS funnels_project_id_idx ON public.funnels (project_id);
 
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'announcement_type') THEN
-                    create type announcement_type as enum ('notification','alert');
-                END IF;
-            END;
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'announcement_type') THEN
+                create type announcement_type as enum ('notification','alert');
+            END IF;
 
             create table IF NOT EXISTS announcements
             (
@@ -430,13 +425,11 @@ $$
                 type            announcement_type default 'notification'::announcement_type not null
             );
 
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'integration_provider') THEN
-                    CREATE TYPE integration_provider AS ENUM ('bugsnag','cloudwatch','datadog','newrelic','rollbar','sentry','stackdriver','sumologic','elasticsearch'); --,'jira','github');
-                END IF;
-            END;
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'integration_provider') THEN
+                CREATE TYPE integration_provider AS ENUM ('bugsnag','cloudwatch','datadog','newrelic','rollbar','sentry','stackdriver','sumologic','elasticsearch'); --,'jira','github');
+            END IF;
 
             CREATE TABLE IF NOT EXISTS integrations
             (
@@ -469,33 +462,31 @@ $$
                 url      text
             );
 
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'issue_type') THEN
-                    CREATE TYPE issue_type AS ENUM (
-                        'click_rage',
-                        'dead_click',
-                        'excessive_scrolling',
-                        'bad_request',
-                        'missing_resource',
-                        'memory',
-                        'cpu',
-                        'slow_resource',
-                        'slow_page_load',
-                        'crash',
-                        'ml_cpu',
-                        'ml_memory',
-                        'ml_dead_click',
-                        'ml_click_rage',
-                        'ml_mouse_thrashing',
-                        'ml_excessive_scrolling',
-                        'ml_slow_resources',
-                        'custom',
-                        'js_exception'
-                        );
-                END IF;
-            END;
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'issue_type') THEN
+                CREATE TYPE issue_type AS ENUM (
+                    'click_rage',
+                    'dead_click',
+                    'excessive_scrolling',
+                    'bad_request',
+                    'missing_resource',
+                    'memory',
+                    'cpu',
+                    'slow_resource',
+                    'slow_page_load',
+                    'crash',
+                    'ml_cpu',
+                    'ml_memory',
+                    'ml_dead_click',
+                    'ml_click_rage',
+                    'ml_mouse_thrashing',
+                    'ml_excessive_scrolling',
+                    'ml_slow_resources',
+                    'custom',
+                    'js_exception'
+                    );
+            END IF;
 
             CREATE TABLE IF NOT EXISTS issues
             (
@@ -510,20 +501,18 @@ $$
             CREATE INDEX IF NOT EXISTS issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
             CREATE INDEX IF NOT EXISTS issues_project_id_idx ON issues (project_id);
 
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'error_source') THEN
-                    CREATE TYPE error_source AS ENUM ('js_exception','bugsnag','cloudwatch','datadog','newrelic','rollbar','sentry','stackdriver','sumologic');
-                END IF;
-            END;
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'error_status') THEN
-                    CREATE TYPE error_status AS ENUM ('unresolved','resolved','ignored');
-                END IF;
-            END;
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'error_source') THEN
+                CREATE TYPE error_source AS ENUM ('js_exception','bugsnag','cloudwatch','datadog','newrelic','rollbar','sentry','stackdriver','sumologic');
+            END IF;
+
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'error_status') THEN
+                CREATE TYPE error_status AS ENUM ('unresolved','resolved','ignored');
+            END IF;
+
             CREATE TABLE IF NOT EXISTS errors
             (
                 error_id             text         NOT NULL PRIMARY KEY,
@@ -563,27 +552,26 @@ $$
             );
             CREATE INDEX IF NOT EXISTS user_viewed_errors_user_id_idx ON public.user_viewed_errors (user_id);
             CREATE INDEX IF NOT EXISTS user_viewed_errors_error_id_idx ON public.user_viewed_errors (error_id);
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'platform') THEN
-                    CREATE TYPE platform AS ENUM ('web','ios','android');
-                END IF;
-            END;
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'device_type') THEN
-                    CREATE TYPE device_type AS ENUM ('desktop','tablet','mobile','other');
-                END IF;
-            END;
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'country') THEN
-                    CREATE TYPE country AS ENUM ('UN','RW','SO','YE','IQ','SA','IR','CY','TZ','SY','AM','KE','CD','DJ','UG','CF','SC','JO','LB','KW','OM','QA','BH','AE','IL','TR','ET','ER','EG','SD','GR','BI','EE','LV','AZ','LT','SJ','GE','MD','BY','FI','AX','UA','MK','HU','BG','AL','PL','RO','XK','ZW','ZM','KM','MW','LS','BW','MU','SZ','RE','ZA','YT','MZ','MG','AF','PK','BD','TM','TJ','LK','BT','IN','MV','IO','NP','MM','UZ','KZ','KG','TF','HM','CC','PW','VN','TH','ID','LA','TW','PH','MY','CN','HK','BN','MO','KH','KR','JP','KP','SG','CK','TL','RU','MN','AU','CX','MH','FM','PG','SB','TV','NR','VU','NC','NF','NZ','FJ','LY','CM','SN','CG','PT','LR','CI','GH','GQ','NG','BF','TG','GW','MR','BJ','GA','SL','ST','GI','GM','GN','TD','NE','ML','EH','TN','ES','MA','MT','DZ','FO','DK','IS','GB','CH','SE','NL','AT','BE','DE','LU','IE','MC','FR','AD','LI','JE','IM','GG','SK','CZ','NO','VA','SM','IT','SI','ME','HR','BA','AO','NA','SH','BV','BB','CV','GY','GF','SR','PM','GL','PY','UY','BR','FK','GS','JM','DO','CU','MQ','BS','BM','AI','TT','KN','DM','AG','LC','TC','AW','VG','VC','MS','MF','BL','GP','GD','KY','BZ','SV','GT','HN','NI','CR','VE','EC','CO','PA','HT','AR','CL','BO','PE','MX','PF','PN','KI','TK','TO','WF','WS','NU','MP','GU','PR','VI','UM','AS','CA','US','PS','RS','AQ','SX','CW','BQ','SS');
-                END IF;
-            END;
+
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'platform') THEN
+                CREATE TYPE platform AS ENUM ('web','ios','android');
+            END IF;
+
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'device_type') THEN
+                CREATE TYPE device_type AS ENUM ('desktop','tablet','mobile','other');
+            END IF;
+
+
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'country') THEN
+                CREATE TYPE country AS ENUM ('UN','RW','SO','YE','IQ','SA','IR','CY','TZ','SY','AM','KE','CD','DJ','UG','CF','SC','JO','LB','KW','OM','QA','BH','AE','IL','TR','ET','ER','EG','SD','GR','BI','EE','LV','AZ','LT','SJ','GE','MD','BY','FI','AX','UA','MK','HU','BG','AL','PL','RO','XK','ZW','ZM','KM','MW','LS','BW','MU','SZ','RE','ZA','YT','MZ','MG','AF','PK','BD','TM','TJ','LK','BT','IN','MV','IO','NP','MM','UZ','KZ','KG','TF','HM','CC','PW','VN','TH','ID','LA','TW','PH','MY','CN','HK','BN','MO','KH','KR','JP','KP','SG','CK','TL','RU','MN','AU','CX','MH','FM','PG','SB','TV','NR','VU','NC','NF','NZ','FJ','LY','CM','SN','CG','PT','LR','CI','GH','GQ','NG','BF','TG','GW','MR','BJ','GA','SL','ST','GI','GM','GN','TD','NE','ML','EH','TN','ES','MA','MT','DZ','FO','DK','IS','GB','CH','SE','NL','AT','BE','DE','LU','IE','MC','FR','AD','LI','JE','IM','GG','SK','CZ','NO','VA','SM','IT','SI','ME','HR','BA','AO','NA','SH','BV','BB','CV','GY','GF','SR','PM','GL','PY','UY','BR','FK','GS','JM','DO','CU','MQ','BS','BM','AI','TT','KN','DM','AG','LC','TC','AW','VG','VC','MS','MF','BL','GP','GD','KY','BZ','SV','GT','HN','NI','CR','VE','EC','CO','PA','HT','AR','CL','BO','PE','MX','PF','PN','KI','TK','TO','WF','WS','NU','MP','GU','PR','VI','UM','AS','CA','US','PS','RS','AQ','SX','CW','BQ','SS');
+            END IF;
+
             CREATE TABLE IF NOT EXISTS sessions
             (
                 session_id              bigint PRIMARY KEY,
@@ -741,13 +729,12 @@ $$
                     CREATE TYPE job_status AS ENUM ('scheduled','running','cancelled','failed','completed');
                 END IF;
             END;
-            BEGIN
-                IF NOT EXISTS(SELECT *
-                              FROM pg_type typ
-                              WHERE typ.typname = 'job_action') THEN
-                    CREATE TYPE job_action AS ENUM ('delete_user_data');
-                END IF;
-            END;
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'job_action') THEN
+                CREATE TYPE job_action AS ENUM ('delete_user_data');
+            END IF;
+
             CREATE TABLE IF NOT EXISTS jobs
             (
                 job_id       integer generated BY DEFAULT AS IDENTITY PRIMARY KEY,
