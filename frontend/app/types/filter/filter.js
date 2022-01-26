@@ -9,7 +9,8 @@ import {
   getDateRangeFromValue
 } from 'App/dateRange';
 import Event from './event';
-import CustomFilter from './customFilter';
+// import CustomFilter from './customFilter';
+import NewFilter from './newFilter';
 
 const rangeValue = DATE_RANGE_VALUES.LAST_7_DAYS;
 const range = getDateRangeFromValue(rangeValue);
@@ -17,8 +18,8 @@ const startDate = range.start.unix() * 1000;
 const endDate = range.end.unix() * 1000;
 
 export default Record({
-  name: undefined,
-  id: undefined,
+  name: '',
+  searchId: undefined,
   referrer: undefined,
   userBrowser: undefined,
   userOs: undefined,
@@ -44,7 +45,41 @@ export default Record({
   suspicious: undefined,
   consoleLevel: undefined,
   strict: false,
+  eventsOrder: 'and',
 }, {
+  idKey: 'searchId',
+  methods: {
+    toSaveData() {
+      const js = this.toJS();
+      js.filters = js.filters.map(filter => {
+        filter.type = filter.key
+        
+        delete filter.category
+        delete filter.icon
+        delete filter.operatorOptions
+        delete filter._key
+        delete filter.key
+        return filter;
+      });
+
+      delete js.createdAt;
+      delete js.key;
+      delete js._key;
+      return js;
+    },
+    toData() {
+      const js = this.toJS();
+      js.filters = js.filters.map(filter => {
+        // delete filter.operatorOptions
+        // delete filter._key
+        return filter;
+      });
+
+      delete js.createdAt;
+      delete js.key;
+      return js;
+    }
+  },
   fromJS({ filters, events, custom, ...filter }) {
     let startDate;
     let endDate;
@@ -59,7 +94,7 @@ export default Record({
       startDate,
       endDate,
       events: List(events).map(Event),
-      filters: List(filters).map(CustomFilter),
+      filters: List(filters).map(NewFilter),
       custom: Map(custom),
     }
   }
@@ -73,6 +108,12 @@ export const defaultFilters = [
 		type: 'default',
 		keys: [
       { label: 'Click', key: KEYS.CLICK, type: KEYS.CLICK, filterKey: KEYS.CLICK, icon: 'filters/click', isFilter: false },
+      { label: 'DOM Complete', key: KEYS.DOM_COMPLETE, type: KEYS.DOM_COMPLETE, filterKey: KEYS.DOM_COMPLETE, icon: 'filters/click', isFilter: false },
+      { label: 'Largest Contentful Paint Time', key: KEYS.LARGEST_CONTENTFUL_PAINT_TIME, type: KEYS.LARGEST_CONTENTFUL_PAINT_TIME, filterKey: KEYS.LARGEST_CONTENTFUL_PAINT_TIME, icon: 'filters/click', isFilter: false },
+      { label: 'Time Between Events', key: KEYS.TIME_BETWEEN_EVENTS, type: KEYS.TIME_BETWEEN_EVENTS, filterKey: KEYS.TIME_BETWEEN_EVENTS, icon: 'filters/click', isFilter: false },
+      { label: 'Avg CPU Load', key: KEYS.AVG_CPU_LOAD, type: KEYS.AVG_CPU_LOAD, filterKey: KEYS.AVG_CPU_LOAD, icon: 'filters/click', isFilter: false },
+      { label: 'Memory Usage', key: KEYS.AVG_MEMORY_USAGE, type: KEYS.AVG_MEMORY_USAGE, filterKey: KEYS.AVG_MEMORY_USAGE, icon: 'filters/click', isFilter: false },
+
       { label: 'Input', key: KEYS.INPUT, type: KEYS.INPUT, filterKey: KEYS.INPUT, icon: 'event/input', isFilter: false },
       { label: 'Page', key: KEYS.LOCATION, type: KEYS.LOCATION, filterKey: KEYS.LOCATION, icon: 'event/link', isFilter: false },
       // { label: 'View', key: KEYS.VIEW, type: KEYS.VIEW, filterKey: KEYS.VIEW, icon: 'event/view', isFilter: false }
@@ -85,8 +126,8 @@ export const defaultFilters = [
       { label: 'OS', key: KEYS.USER_OS, type: KEYS.USER_OS, filterKey: KEYS.USER_OS, icon: 'os', isFilter: true },
 			{ label: 'Browser', key: KEYS.USER_BROWSER, type: KEYS.USER_BROWSER, filterKey: KEYS.USER_BROWSER, icon: 'window', isFilter: true },
       { label: 'Device', key: KEYS.USER_DEVICE, type: KEYS.USER_DEVICE, filterKey: KEYS.USER_DEVICE, icon: 'device', isFilter: true },
-      { label: 'Rev ID', key: KEYS.REVID, type: KEYS.REVID, filterKey: KEYS.REVID, icon: 'filters/border-outer', isFilter: true },
-      { label: 'Platform', key: KEYS.PLATFORM, type: KEYS.PLATFORM, filterKey: KEYS.PLATFORM, icon: 'filters/phone-laptop', isFilter: true }
+      { label: 'Rev ID', key: KEYS.REVID, type: KEYS.REVID, filterKey: KEYS.REVID, icon: 'filters/rev-id', isFilter: true },
+      { label: 'Platform', key: KEYS.PLATFORM, type: KEYS.PLATFORM, filterKey: KEYS.PLATFORM, icon: 'filters/platform', isFilter: true },
 		]
   },
   {
@@ -103,6 +144,11 @@ export const defaultFilters = [
 		type: 'default',
 		keys: [
       { label: 'Errors', key: KEYS.ERROR, type: KEYS.ERROR, filterKey: KEYS.ERROR, icon: 'exclamation-circle', isFilter: false },
+      { label: 'Issues', key: KEYS.ISSUES, type: KEYS.ISSUES, filterKey: KEYS.ISSUES, icon: 'exclamation-circle', isFilter: true },
+      { label: 'UTM Source', key: KEYS.UTM_SOURCE, type: KEYS.UTM_SOURCE, filterKey: KEYS.UTM_SOURCE, icon: 'exclamation-circle', isFilter: true },
+      { label: 'UTM Medium', key: KEYS.UTM_MEDIUM, type: KEYS.UTM_MEDIUM, filterKey: KEYS.UTM_MEDIUM, icon: 'exclamation-circle', isFilter: true },
+      { label: 'UTM Campaign', key: KEYS.UTM_CAMPAIGN, type: KEYS.UTM_CAMPAIGN, filterKey: KEYS.UTM_CAMPAIGN, icon: 'exclamation-circle', isFilter: true },
+      
       { label: 'Fetch Requests', key: KEYS.FETCH, type: KEYS.FETCH, filterKey: KEYS.FETCH, icon: 'fetch', isFilter: false },
       { label: 'GraphQL Queries', key: KEYS.GRAPHQL, type: KEYS.GRAPHQL, filterKey: KEYS.GRAPHQL, icon: 'vendors/graphql', isFilter: false },
       { label: 'Store Actions', key: KEYS.STATEACTION, type: KEYS.STATEACTION, filterKey: KEYS.STATEACTION, icon: 'store', isFilter: false },
@@ -126,6 +172,13 @@ export const getEventIcon = (filter) => {
   if (type === KEYS.USER_BROWSER) return 'window';
   if (type === KEYS.USERBROWSER) return 'window';
   if (type === KEYS.PLATFORM) return 'window';
+
+  if (type === TYPES.DOM_COMPLETE) return 'filters/click';
+  if (type === TYPES.LARGEST_CONTENTFUL_PAINT_TIME) return 'filters/click';
+  if (type === TYPES.TIME_BETWEEN_EVENTS) return 'filters/click';
+  if (type === TYPES.TTFB) return 'filters/click';
+  if (type === TYPES.AVG_CPU_LOAD) return 'filters/click';
+  if (type === TYPES.AVG_MEMORY_USAGE) return 'filters/click';
 
   if (type === TYPES.CLICK) return 'filters/click';
   if (type === TYPES.LOCATION) return 'map-marker-alt';

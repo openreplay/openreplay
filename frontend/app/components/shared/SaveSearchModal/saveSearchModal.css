@@ -1,0 +1,15 @@
+@import 'mixins.css';
+
+.modalHeader {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cancelButton {
+    @mixin plainButton;
+}
+
+.applyButton {
+    @mixin basicButton;
+}

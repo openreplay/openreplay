@@ -19,6 +19,13 @@
     color: $gray-darkest !important;
     font-size: 14px !important;
     background-color: rgba(255, 255, 255, 0.8) !important;
+
+    & .label {
+      padding: 0px !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   }
   height: 28px !important;
   width: 280px;
@@ -27,4 +34,31 @@
 
 .fullWidth {
   width: 100% !important;
+}
+
+.inputWrapper {
+  border: solid thin $gray-light !important;
+  border-radius: 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  & input {
+    height: 28px;
+    font-size: 13px !important;
+    padding: 0 5px !important;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+  }
+
+  & .right {
+    height: 28px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+    background-color: $gray-lightest;
+    border-left: solid thin $gray-light !important;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    cursor: pointer;
+  }
 }

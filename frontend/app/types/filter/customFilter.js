@@ -30,6 +30,20 @@ const REVID = 'REVID';
 const USERANONYMOUSID = 'USERANONYMOUSID';
 const USERID = 'USERID';
 
+const ISSUE = 'ISSUE';
+const EVENTS_COUNT = 'EVENTS_COUNT';
+const UTM_SOURCE = 'UTM_SOURCE';
+const UTM_MEDIUM = 'UTM_MEDIUM';
+const UTM_CAMPAIGN = 'UTM_CAMPAIGN';
+
+
+const DOM_COMPLETE = 'DOM_COMPLETE';
+const LARGEST_CONTENTFUL_PAINT_TIME = 'LARGEST_CONTENTFUL_PAINT_TIME';
+const TIME_BETWEEN_EVENTS = 'TIME_BETWEEN_EVENTS';
+const TTFB = 'TTFB';
+const AVG_CPU_LOAD = 'AVG_CPU_LOAD';
+const AVG_MEMORY_USAGE = 'AVG_MEMORY_USAGE';
+
 export const KEYS = {
   ERROR,
   MISSING_RESOURCE,
@@ -56,7 +70,19 @@ export const KEYS = {
   STATEACTION,
   REVID,
   USERANONYMOUSID,
-  USERID
+  USERID,
+  ISSUE,
+  EVENTS_COUNT,
+  UTM_SOURCE,
+  UTM_MEDIUM,
+  UTM_CAMPAIGN,
+  
+  DOM_COMPLETE,
+  LARGEST_CONTENTFUL_PAINT_TIME,
+  TIME_BETWEEN_EVENTS,
+  TTFB,
+  AVG_CPU_LOAD,
+  AVG_MEMORY_USAGE,
 };
 
 const getOperatorDefault = (type) => {
@@ -85,7 +111,7 @@ export default Record({
   label: '',
   icon: '',
   type: '',
-  value: '',
+  value: [""],
   custom: '',
   target: Target(),
   level: '',
