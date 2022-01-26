@@ -183,10 +183,24 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             main_query = cur.mogrify(f"""SELECT COUNT(DISTINCT s.session_id) AS count_sessions, 
                                                 COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""", full_args)
+        elif data.group_by_user:
+            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, jsonb_agg(users_sessions) FILTER ( WHERE rn <= 200 ) AS sessions
+                                        FROM (SELECT user_id,
+                                                 count(full_sessions)                                   AS user_sessions_count,
+                                                 jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
+                                                 ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            {query_part}
+                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                            ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions
+                                            GROUP BY user_id
+                                            ORDER BY user_sessions_count DESC) AS users_sessions;""",
+                                     full_args)
         else:
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn FROM
-                                            (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
@@ -199,11 +213,11 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             #                             ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
             #                          full_args)
 
-        # print("--------------------")
-        # print(main_query)
+        print("--------------------")
+        print(main_query)
 
         cur.execute(main_query)
-        # print("--------------------")
+        print("--------------------")
         if count_only:
             return helper.dict_to_camel_case(cur.fetchone())
         sessions = cur.fetchone()
@@ -221,7 +235,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
     if errors_only:
         return sessions
-    if data.sort is not None and data.sort != "session_id":
+    if not data.group_by_user and data.sort is not None and data.sort != "session_id":
         sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
                           reverse=data.order.upper() == "DESC")
     return {
