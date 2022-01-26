@@ -1,0 +1,144 @@
+import React, { useEffect, useState } from 'react';
+import { connect } from 'react-redux';
+import { Loader, NoContent, Icon } from 'UI';
+import { widgetHOC, Styles } from '../../common';
+import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
+import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
+import CustomMetricWidgetHoc from '../../common/CustomMetricWidgetHoc';
+import stl from './CustomMetricWidget.css';
+import { getChartFormatter } from 'Types/dashboard/helper'; 
+import { remove, setAlertMetricId } from 'Duck/customMetrics';
+import { confirm } from 'UI/Confirmation';
+import APIClient from 'App/api_client';
+import { setShowAlerts } from 'Duck/dashboard';
+
+const customParams = rangeName => {
+  const params = { density: 70 }
+
+  if (rangeName === LAST_24_HOURS) params.density = 70
+  if (rangeName === LAST_30_MINUTES) params.density = 70
+  if (rangeName === YESTERDAY) params.density = 70
+  if (rangeName === LAST_7_DAYS) params.density = 70
+  
+  return params
+}
+
+interface Period {
+  rangeName: string;
+}
+
+interface Props {
+  metric: any;
+  // loading?: boolean;
+  data?: any;
+  showSync?: boolean;
+  compare?: boolean;
+  period?: Period;
+  onClickEdit: (e) => void;
+  remove: (id) => void;
+  setShowAlerts: (showAlerts) => void;
+  setAlertMetricId: (id) => void;
+  onAlertClick: (e) => void;
+}
+function CustomMetricWidget(props: Props) {
+  const { metric, showSync, compare, period = { rangeName: LAST_24_HOURS} } = props;
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<any>({ chart: [] })
+
+  const colors = compare ? Styles.compareColors : Styles.colors;
+  const params = customParams(period.rangeName)
+  const gradientDef = Styles.gradientDef();
+  const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
+
+  useEffect(() => {
+
+    // dataWrapper: (p, period) => SessionsImpactedBySlowRequests({ chart: p})
+		// 	.update("chart", getChartFormatter(period))
+    
+    new APIClient()['post']('/custom_metrics/chart', { ...metricParams, q: metric.name })
+      .then(response => response.json())
+      .then(({ errors, data }) => {
+        if (errors) {
+          console.log('err', errors)
+        } else {
+          // console.log('data', data);
+          // const _data = data[0].map(CustomMetric).update("chart", getChartFormatter(period)).toJS();
+          const _data = getChartFormatter(period)(data[0]);
+          console.log('__data', _data)
+          setData({ chart: _data });
+        }
+      }).finally(() => setLoading(false));
+  }, [])
+
+  const deleteHandler = async () => {
+    if (await confirm({
+      header: 'Custom Metric',
+      confirmButton: 'Delete',
+      confirmation: `Are you sure you want to delete ${metric.name}`
+    })) {
+      props.remove(metric.metricId)
+    }
+  }
+
+  // const onAlertClick = () => {
+  //   props.setShowAlerts(true)
+  //   props.setAlertMetricId(metric.metricId)
+  // }
+
+  return (
+    <div className={stl.wrapper}>
+      <div className="flex items-center mb-10 p-2">
+        <div className="font-medium">{metric.name + ' ' + metric.metricId}</div>
+        <div className="ml-auto flex items-center">
+        <div className="cursor-pointer mr-6" onClick={deleteHandler}>
+            <Icon name="trash" size="14" />
+          </div>
+          <div className="cursor-pointer mr-6">
+            <Icon name="pencil" size="14" />
+          </div>
+          <div className="cursor-pointer" onClick={props.onAlertClick}>
+            <Icon name="bell-plus" size="14" />
+          </div>
+        </div>
+      </div>
+      <div>
+        <Loader loading={ loading } size="small">
+          <NoContent
+            size="small"
+            show={ data.chart.length === 0 }
+          >
+            <ResponsiveContainer height={ 240 } width="100%">
+              <AreaChart
+                data={ data.chart }
+                margin={Styles.chartMargins}
+                syncId={ showSync ? "impactedSessionsBySlowPages" : undefined }
+              >
+                {gradientDef}
+                <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
+                <XAxis {...Styles.xaxis} dataKey="time" interval={params.density/7} />
+                <YAxis
+                  {...Styles.yaxis}
+                  label={{ ...Styles.axisLabelLeft, value: "Number of Requests" }}
+                  allowDecimals={false}
+                />
+                <Tooltip {...Styles.tooltip} />
+                <Area
+                  name="Sessions"
+                  type="monotone"
+                  dataKey="count"
+                  stroke={colors[0]}
+                  fillOpacity={ 1 }
+                  strokeWidth={ 2 }
+                  strokeOpacity={ 0.8 }
+                  fill={compare ? 'url(#colorCountCompare)' : 'url(#colorCount)'}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </NoContent>
+        </Loader>
+      </div>
+    </div>
+  );
+}
+
+export default connect(null, { remove, setShowAlerts, setAlertMetricId })(CustomMetricWidget);

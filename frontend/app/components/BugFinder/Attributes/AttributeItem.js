@@ -27,9 +27,9 @@ class AttributeItem extends React.PureComponent {
   applyFilter = debounce(this.props.applyFilter, 1000)
   fetchFilterOptionsDebounce = debounce(this.props.fetchFilterOptions, 500)
 
-  onFilterChange = (e, { name, value }) => {
+  onFilterChange = (name, value, valueIndex) => {
     const { index } = this.props;
-    this.props.editAttribute(index, name, value);
+    this.props.editAttribute(index, name, value, valueIndex);
     this.applyFilter();
   }
 
@@ -69,13 +69,14 @@ class AttributeItem extends React.PureComponent {
           />
         }
         {
-          !filter.hasNoValue &&
+          // !filter.hasNoValue &&
           <AttributeValueField
             filter={ filter }
             options={ options }            
             onChange={ this.onFilterChange }
             handleSearchChange={this.handleSearchChange}
             loading={loadingFilterOptions}
+            index={index}
           />
         }
         

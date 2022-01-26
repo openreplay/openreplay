@@ -117,7 +117,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('issueTypesMap', tmpMap);
     case FETCH_INSIGHTS_SUCCESS:
       let stages = [];
-      if (action.isRefresh) {        
+      if (action.isRefresh) {
         const activeStages = state.get('activeStages');
         const oldInsights = state.get('insights');
         const lastStage = action.data.stages[action.data.stages.length - 1]

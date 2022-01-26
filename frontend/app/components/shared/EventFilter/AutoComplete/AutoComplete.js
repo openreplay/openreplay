@@ -77,7 +77,7 @@ class AutoComplete extends React.PureComponent {
     noResultsMessage: SOME_ERROR_MSG,
   })
 
-  onInputChange = (e, { name, value }) => {    
+  onInputChange = ({ target: { value } }) => {    
     changed = true;
     this.setState({ query: value, updated: true })
     const _value = value.trim();
@@ -118,7 +118,8 @@ class AutoComplete extends React.PureComponent {
       valueToText = defaultValueToText,
       placeholder = 'Type to search...',
       headerText = '',
-      fullWidth = false
+      fullWidth = false,
+      onAddOrRemove = () => null,
     } = this.props;
 
     const options = optionMapping(values, valueToText)
@@ -128,7 +129,7 @@ class AutoComplete extends React.PureComponent {
         className={ cn("relative", { "flex-1" : fullWidth }) } 
         onClickOutside={this.onClickOutside}
       >
-        <Input
+        {/* <Input
           className={ cn(stl.searchInput, { [ stl.fullWidth] : fullWidth }) }
           onChange={ this.onInputChange }
           onBlur={ this.onBlur }
@@ -144,7 +145,30 @@ class AutoComplete extends React.PureComponent {
             this.hiddenInput.value = text;
             pasted = true; // to use only the hidden input
           } }
-        />
+        /> */}
+        <div className={stl.inputWrapper}>
+          <input
+            name="query"
+            // className={cn(stl.input)}
+            onFocus={ () => this.setState({ddOpen: true})}
+            onChange={ this.onInputChange }
+            onBlur={ this.onBlur }
+            onFocus={ () => this.setState({ddOpen: true})}
+            value={ query }
+            autoFocus={ true }
+            type="text"
+            placeholder={ placeholder }
+            onPaste={(e) => {
+              const text = e.clipboardData.getData('Text');
+              this.hiddenInput.value = text;
+              pasted = true; // to use only the hidden input
+            } }
+          />
+          <div className={cn(stl.right, 'cursor-pointer')} onLick={onAddOrRemove}>
+            {/* <Icon name="close" size="18" /> */}
+            <span className="px-1">or</span>
+          </div>
+        </div>
         <textarea style={hiddenStyle} ref={(ref) => this.hiddenInput = ref }></textarea>
         { ddOpen && options.length > 0 &&
           <div className={ stl.menu }>

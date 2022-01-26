@@ -17,6 +17,13 @@ const USERANONYMOUSID = 'USERANONYMOUSID';
 const USERID = 'USERID';
 const ERROR = 'ERROR';
 
+const DOM_COMPLETE = 'DOM_COMPLETE';
+const LARGEST_CONTENTFUL_PAINT_TIME = 'LARGEST_CONTENTFUL_PAINT_TIME';
+const TIME_BETWEEN_EVENTS = 'TIME_BETWEEN_EVENTS';
+const TTFB = 'TTFB';
+const AVG_CPU_LOAD = 'AVG_CPU_LOAD';
+const AVG_MEMORY_USAGE = 'AVG_MEMORY_USAGE';
+
 export const TYPES = {
   CONSOLE,
   GRAPHQL,
@@ -31,7 +38,14 @@ export const TYPES = {
   METADATA,
   USERANONYMOUSID,
   USERID,
-  ERROR
+  ERROR,
+  
+  DOM_COMPLETE,
+  LARGEST_CONTENTFUL_PAINT_TIME,
+  TIME_BETWEEN_EVENTS,
+  TTFB,
+  AVG_CPU_LOAD,
+  AVG_MEMORY_USAGE,
 };
 
 function getLabelText(type, source) {
@@ -49,11 +63,19 @@ function getLabelText(type, source) {
   if (type === TYPES.USERID) return 'User Id';
   if (type === TYPES.USERANONYMOUSID) return 'User Anonymous Id';
   if (type === TYPES.REVID) return 'Rev ID';
+
+  if (type === TYPES.DOM_COMPLETE) return 'DOM Complete';
+  if (type === TYPES.LARGEST_CONTENTFUL_PAINT_TIME) return 'Largest Contentful Paint Time';
+  if (type === TYPES.TIME_BETWEEN_EVENTS) return 'Time Between Events';
+  if (type === TYPES.TTFB) return 'TTFB';
+  if (type === TYPES.AVG_CPU_LOAD) return 'Avg CPU Load';
+  if (type === TYPES.AVG_MEMORY_USAGE) return 'Avg Memory Usage';
+
   if (type === TYPES.CUSTOM) {
     if (!source) return 'Custom';
 		return source;
   }
-  return '?';
+  return type;
 }
 
 export default Record({
@@ -63,7 +85,7 @@ export default Record({
   operator: 'on',
   type: '',
   searchType: '',
-  value: '',
+  value: [],
   custom: '',
   inputValue: '',
   target: Target(),
@@ -73,16 +95,16 @@ export default Record({
 }, {
   keyKey: "_key",
   fromJS: ({ target, type = "" , ...event }) => {
-    const viewType = type.split('_')[0];
+    // const viewType = type.split('_')[0];
     return {
       ...event,
-      type: viewType,
+      type: type,
       searchType: event.searchType || type,
-      label: getLabelText(viewType, event.source),
+      label: getLabelText(type, event.source),
       target: Target(target),
       operator: event.operator || defaultOperator(event),
       // value: target ? target.label : event.value,
-      icon: event.icon || getEventIcon({...event, type: viewType })
+      icon: event.icon || getEventIcon({...event, type: type })
     };
   }
 })

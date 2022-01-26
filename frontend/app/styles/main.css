@@ -106,4 +106,10 @@
   opacity: .5;
 }
 
-
+.form-group {
+  margin-bottom: 25px;
+  & label {
+    display: inline-block;
+    margin-bottom: 5px;
+  }
+}
