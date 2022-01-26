@@ -470,7 +470,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     value: Union[str, List[str]] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: SearchEventOperator = Field(...)
-    source: Optional[Union[ErrorSource,List[Union[int, str]]]] = Field(default=ErrorSource.js_exception)
+    source: Optional[Union[ErrorSource, List[Union[int, str]]]] = Field(default=ErrorSource.js_exception)
     sourceOperator: Optional[MathOperator] = Field(None)
 
     @root_validator
@@ -536,6 +536,7 @@ class SessionsSearchPayloadSchema(BaseModel):
     sort: str = Field(default="startTs")
     order: str = Field(default="DESC")
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
+    group_by_user: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -577,6 +578,7 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
+    group_by_user: Optional[bool] = Field(default=False, const=True)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -601,6 +603,7 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
+    group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
 class MetricPayloadSchema(BaseModel):
@@ -634,6 +637,7 @@ class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
+    group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
 class CustomMetricCreateSeriesSchema(BaseModel):
