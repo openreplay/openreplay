@@ -24,14 +24,14 @@ kafka: &kafka
   # For enterpriseEdition
   # enabled: true
   
-  kafkaHost: "{{ kafka_endpoint }}"
+  kafkaHost: "{{ kafka_endpoint.split(':')[0] }}"
   kafkaPort: "{{ kafka_endpoint.split(':')[-1] }}"
   kafkaUseSsl: "{{ kafka_ssl }}"
 
 redis: &redis
   # For enterpriseEdition
   # enabled: false
-  redisHost: "{{ redis_endpoint }}"
+  redisHost: "{{ redis_endpoint.split(':')[0] }}"
   redisPort: "{{ redis_endpoint.split(':')[-1] }}"
 
 minio:
