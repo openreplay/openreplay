@@ -73,6 +73,6 @@ function SaveSearchModal(props: Props) {
 
 export default connect(state => ({
   filter: state.getIn(['search', 'instance']),
-  loading: state.getIn([ 'filters', 'saveRequest', 'loading' ]) || 
-    state.getIn([ 'filters', 'updateRequest', 'loading' ]),
+  loading: state.getIn([ 'search', 'saveRequest', 'loading' ]) || 
+    state.getIn([ 'search', 'updateRequest', 'loading' ]),
 }), { edit, save })(SaveSearchModal);
