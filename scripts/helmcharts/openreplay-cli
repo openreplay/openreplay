@@ -1,1 +1,144 @@
-../helm/openreplay-cli
+#!/bin/bash
+
+## This script is a helper for managing your OpenReplay instance
+
+set -eE -o pipefail  # same as: `set -o errexit -o errtrace`
+# Trapping the error
+trap err EXIT
+
+err() {
+    case "$?" in
+        0)
+            ;;
+        *)
+            ;;
+    esac
+}
+
+# make all stderr red
+color()(set -o pipefail;"$@" 2>&1>&3|sed $'s,.*,\e[31m&\e[m,'>&2)3>&1
+
+# color schemes
+# Ansi color code variables
+red="\e[0;91m"
+blue="\e[0;94m"
+expand_bg="\e[K"
+blue_bg="\e[0;104m${expand_bg}"
+red_bg="\e[0;101m${expand_bg}"
+green_bg="\e[0;102m${expand_bg}"
+green="\e[0;92m"
+white="\e[0;97m"
+bold="\e[1m"
+uline="\e[4m"
+reset="\e[0m"
+
+CWD=$pwd
+
+usage()
+{
+clear
+cat <<"EOF"
+  ___                   ____            _
+ / _ \ _ __   ___ _ __ |  _ \ ___ _ __ | | __ _ _   _
+| | | | '_ \ / _ \ '_ \| |_) / _ \ '_ \| |/ _` | | | |
+| |_| | |_) |  __/ | | |  _ <  __/ |_) | | (_| | |_| |
+ \___/| .__/ \___|_| |_|_| \_\___| .__/|_|\__,_|\__, |
+      |_|                        |_|            |___/
+
+EOF
+
+  echo -e "${green}Usage: openreplay-cli [ -h | --help ]
+                  [ -d | --status ]
+                  [ -v | --verbose ]
+                  [ -l | --logs SERVICE ] 
+                  [ -I | --helm-install SERVICE ]
+                  [ -s | --stop SERVICE|all ] 
+                  [ -S | --start SERVICE|all ]
+                  [ -r | --restart SERVICE|all ]"
+  echo -e "${reset}${blue}services: ${services[*]}${reset}"
+  exit 0
+}
+services=( alerts assets chalice clickhouse ender sink storage http integrations ios-proxy db pg redis postgresql )
+
+check() {
+    if ! command -v kubectl &> /dev/null
+    then
+        >&2 echo "Kubectl not found. Please refer https://kubernetes.io/docs/tasks/tools/install-kubectl/ "
+        exit 2
+    fi
+    kubectl cluster-info &> /dev/null
+    if [[ $? -ne 0 ]]; then
+        echo -e "${red}Kubernetes cluster is not accessible.\nPlease check ${bold}KUBECONFIG${reset}${red} env variable is set or ${bold}~/.kube/config exists.${reset}"
+        exit 1
+    fi
+}
+
+stop() {
+    if [[ $1 == "all" ]]; then
+        kubectl scale deployment -n app --replicas=0 --all
+        return
+    fi
+    kubectl scale -n app deployment --replicas=0 $1-openreplay
+}
+
+start() {
+    helm upgrade --install openreplay -n app openreplay -f vars.yaml
+}
+
+ 
+restart() {
+    if [[ $1 == "all" ]]; then
+        kubectl rollout restart deployment -n app
+        return
+    fi
+    kubectl rollout restart -n app deployment $1-openreplay
+}
+
+
+helmInstall() {
+    helm upgrade --install openreplay -n app openreplay -f vars.yaml
+}
+
+upgrade() {
+    sed -i "s/tag:.*/  tag: 'latest'/g" ./app/$1.yaml
+}
+
+logs() {
+    check
+    kubectl logs --timestamps -n app -l app.kubernetes.io/name=$1 -f
+}
+
+status() {
+    kubectl get deployment.apps -n app
+}
+
+[[ $# -eq 0 ]] && usage && exit 1
+
+PARSED_ARGUMENTS=$(color getopt -a -n openreplay-cli -o vhds:S:l:r:I --long verbose,help,status,start:,stop:,logs:,restart:,helm-install -- "$@")
+VALID_ARGUMENTS=$?
+if [[ "$VALID_ARGUMENTS" != "0" ]]; then
+  usage
+fi
+
+eval set -- "$PARSED_ARGUMENTS"
+while :
+do
+  case "$1" in
+    -v | --verbose) VERBOSE=1    ; shift   ;;
+    -h | --help)    usage        ; shift   ;;
+    -d | --status)  status       ; shift   ;;
+    -I | --helm-install) helmInstall; shift ;;
+    -s | --stop)    stop $2      ; shift 2 ;;
+    -S | --start)   start $2     ; shift 2 ;;
+    -l | --logs)    logs "$2"    ; shift 2 ;;
+    -r | --restart) restart "$2" ; shift 2 ;;
+    # -- means the end of the arguments; drop this, and break out of the while loop
+    --) shift; break ;;
+    # If invalid options were passed, then getopt should have reported an error,
+    # which we checked as VALID_ARGUMENTS when getopt was called...
+    *) echo "Unexpected option: $1 - this should not happen."
+       usage ;;
+  esac
+done
+
+[[ $VERBOSE -eq 1 ]] && set -x
