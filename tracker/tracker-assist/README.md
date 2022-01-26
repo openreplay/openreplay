@@ -72,7 +72,7 @@ onAgentConnect: () => {
 Warning: it is possible for the same agent to be connected/disconnected several times during one session due to a bad network. Several agents may connect simultaneously.
 
 
-A callback `onCallStart` will be fired when the end-user accepts the call. It can return another callback that will be called on call end.
+A callback `onCallStart` will be fired when the end-user accepts the call. It can return another callback that will be called on the call end.
 ```ts
 onCallStart: () => {
   console.log("Allo!")

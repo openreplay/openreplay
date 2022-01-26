@@ -1,4 +1,4 @@
-## Licenses (as of October 28, 2021)
+## Licenses (as of January 21, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -28,8 +28,16 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | pyjwt | MIT | Python |
 | jsbeautifier | MIT | Python |
 | psycopg2-binary | LGPL | Python |
-| pytz | MIT | Python |
+| fastapi | MIT | Python |
+| uvicorn | BSD | Python |
+| python-decouple | MIT | Python |
+| pydantic | MIT | Python |
+| apscheduler | MIT | Python |
+| python-multipart | Apache | Python |
+| elasticsearch-py | Apache2 | Python |
+| jira | BSD2 | Python |
 | clickhouse-driver | MIT | Python |
+| python3-saml | MIT | Python |
 | kubernetes | Apache2 | Python |
 | chalice | Apache2 | Python |
 | pandas | BSD3 | Python |
@@ -76,15 +84,9 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | redux-immutable | BSD3 | JavaScript |
 | redux-thunk | MIT | JavaScript |
 | semantic-ui-react | MIT | JavaScript |
-| socket.io-client | MIT | JavaScript |
+| socketio | MIT | JavaScript |
 | source-map | BSD3 | JavaScript |
 | aws-sdk | Apache2 | JavaScript |
 | serverless | MIT | JavaScript |
-| schedule | MIT | Python |
-| croniter | MIT | Python |
 | lib/pq | MIT | Go |
 | peerjs | MIT | JavaScript |
-| antonmedv/finder | MIT | JavaScript |
-| elasticsearch-py | Apache2 | Python |
-| sentry-python | BSD2 | Python |
-| jira | BSD2 | Python |

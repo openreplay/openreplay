@@ -1,0 +1,42 @@
+apiVersion: v2
+name: databases
+description: A Helm chart for Kubernetes
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "1.16.0"
+
+dependencies:
+  - name: kafka
+    repository: file://charts/kafka
+    version: 11.8.6
+    condition: kafka.enabled
+  - name: clickhouse
+    repository: file://charts/clickhouse
+    version: 1.16.0
+    condition: clickhouse.enabled
+  - name: postgresql
+    repository: file://charts/postgresql
+    version: 9.8.2
+    condition: postgresql.enabled
+  - name: redis
+    repository: file://charts/redis
+    version: 12.10.1
+    condition: redis.enabled

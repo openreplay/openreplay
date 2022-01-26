@@ -19,14 +19,15 @@ import Longtasks from "./modules/longtasks.js";
 import CSSRules from "./modules/cssrules.js";
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from "./utils.js";
 
-import { Options as AppOptions } from "./app/index.js";
-import { Options as ConsoleOptions } from "./modules/console.js";
-import { Options as ExceptionOptions } from "./modules/exception.js";
-import { Options as InputOptions } from "./modules/input.js";
-import { Options as PerformanceOptions } from "./modules/performance.js";
-import { Options as TimingOptions } from "./modules/timing.js";
-
-export type { OnStartInfo } from './app/index.js';
+import type { Options as AppOptions } from "./app/index.js";
+import type { Options as ConsoleOptions } from "./modules/console.js";
+import type { Options as ExceptionOptions } from "./modules/exception.js";
+import type { Options as InputOptions } from "./modules/input.js";
+import type { Options as PerformanceOptions } from "./modules/performance.js";
+import type { Options as TimingOptions } from "./modules/timing.js";
+import type { StartOptions } from './app/index.js'
+//TODO: unique options init
+import type { OnStartInfo } from './app/index.js';
 
 export type Options = Partial<
   AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & PerformanceOptions & TimingOptions
@@ -35,6 +36,7 @@ export type Options = Partial<
   projectKey: string;
   sessionToken?: string;
   respectDoNotTrack?: boolean;
+  autoResetOnWindowOpen?: boolean;
   // dev only
   __DISABLE_SECURE_MODE?: boolean;
 };
@@ -84,7 +86,7 @@ export default class API {
       (navigator.doNotTrack == '1' 
         // @ts-ignore
         || window.doNotTrack == '1');
-    this.app = doNotTrack ||
+    const app = this.app = doNotTrack ||
       !('Map' in window) ||
       !('Set' in window) ||
       !('MutationObserver' in window) ||
@@ -95,20 +97,35 @@ export default class API {
       !('Worker' in window)
         ? null
         : new App(options.projectKey, options.sessionToken, options);
-    if (this.app !== null) {
-      Viewport(this.app);
-      CSSRules(this.app);
-      Connection(this.app);
-      Console(this.app, options);
-      Exception(this.app, options);
-      Img(this.app);
-      Input(this.app, options);
-      Mouse(this.app);
-      Timing(this.app, options);
-      Performance(this.app, options);
-      Scroll(this.app);
-      Longtasks(this.app);
+    if (app !== null) {
+      Viewport(app);
+      CSSRules(app);
+      Connection(app);
+      Console(app, options);
+      Exception(app, options);
+      Img(app);
+      Input(app, options);
+      Mouse(app);
+      Timing(app, options);
+      Performance(app, options);
+      Scroll(app);
+      Longtasks(app);
       (window as any).__OPENREPLAY__ = this;
+
+      if (options.autoResetOnWindowOpen) {
+        const wOpen = window.open;
+        app.attachStartCallback(() => {
+          // @ts-ignore ?
+          window.open = function(...args) {
+            app.resetNextPageSession(true)
+            wOpen.call(window, ...args)
+            app.resetNextPageSession(false)
+          }
+        })
+        app.attachStopCallback(() => {
+          window.open = wOpen;
+        })
+      }
     } else {
       console.log("OpenReplay: browser doesn't support API required for tracking or doNotTrack is set to 1.")
       const req = new XMLHttpRequest();
@@ -140,7 +157,7 @@ export default class API {
     return this.isActive();
   }
 
-  start() /*: Promise<OnStartInfo>*/ {
+  start(startOpts?: StartOptions) : Promise<OnStartInfo> {
     if (!IN_BROWSER) {
       console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
       return Promise.reject("Trying to start not in browser.");
@@ -148,7 +165,7 @@ export default class API {
     if (this.app === null) {
       return Promise.reject("Browser doesn't support required api, or doNotTrack is active.");
     }
-    return this.app.start();
+    return this.app.start(startOpts);
   }
   stop(): void {
     if (this.app === null) {

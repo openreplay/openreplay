@@ -42,6 +42,7 @@ if msg.UserDeviceType, err = ReadString(reader); err != nil { return nil, err }
 if msg.UserDeviceMemorySize, err = ReadUint(reader); err != nil { return nil, err }
 if msg.UserDeviceHeapSize, err = ReadUint(reader); err != nil { return nil, err }
 if msg.UserCountry, err = ReadString(reader); err != nil { return nil, err }
+if msg.UserID, err = ReadString(reader); err != nil { return nil, err }
       return msg, nil
   
     case 2:

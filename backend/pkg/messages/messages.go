@@ -63,9 +63,10 @@ UserDeviceType string
 UserDeviceMemorySize uint64
 UserDeviceHeapSize uint64
 UserCountry string
+UserID string
 }
 func (msg *SessionStart) Encode() []byte{
-  buf := make([]byte, 151 + len(msg.TrackerVersion)+ len(msg.RevID)+ len(msg.UserUUID)+ len(msg.UserAgent)+ len(msg.UserOS)+ len(msg.UserOSVersion)+ len(msg.UserBrowser)+ len(msg.UserBrowserVersion)+ len(msg.UserDevice)+ len(msg.UserDeviceType)+ len(msg.UserCountry))
+  buf := make([]byte, 161 + len(msg.TrackerVersion)+ len(msg.RevID)+ len(msg.UserUUID)+ len(msg.UserAgent)+ len(msg.UserOS)+ len(msg.UserOSVersion)+ len(msg.UserBrowser)+ len(msg.UserBrowserVersion)+ len(msg.UserDevice)+ len(msg.UserDeviceType)+ len(msg.UserCountry)+ len(msg.UserID))
   buf[0] = 1
   p := 1
   p = WriteUint(msg.Timestamp, buf, p)
@@ -83,6 +84,7 @@ p = WriteString(msg.UserDeviceType, buf, p)
 p = WriteUint(msg.UserDeviceMemorySize, buf, p)
 p = WriteUint(msg.UserDeviceHeapSize, buf, p)
 p = WriteString(msg.UserCountry, buf, p)
+p = WriteString(msg.UserID, buf, p)
   return buf[:p]
 }
 

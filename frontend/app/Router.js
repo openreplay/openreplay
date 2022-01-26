@@ -24,6 +24,7 @@ import * as routes from './routes';
 import { OB_DEFAULT_TAB } from 'App/routes';
 import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
+import { setSessionPath } from 'Duck/sessions';
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
@@ -73,9 +74,12 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
-  fetchUserInfo, fetchTenants
+  fetchUserInfo, fetchTenants, setSessionPath
 })
 class Router extends React.Component {
+  state = {
+    destinationPath: null
+  }
   constructor(props) {
     super(props);
     if (props.isLoggedIn) {
@@ -85,9 +89,22 @@ class Router extends React.Component {
     props.fetchTenants();
   }
 
-  componentDidUpdate(prevProps) {
+  componentDidMount() {
+    const { isLoggedIn, location } = this.props;
+    if (!isLoggedIn) {
+      this.setState({ destinationPath: location.pathname });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    this.props.setSessionPath(prevProps.location.pathname)
     if (prevProps.email !== this.props.email && !this.props.email) {
       this.props.fetchTenants();
+    }
+
+    if (!prevProps.isLoggedIn && this.props.isLoggedIn && this.state.destinationPath !== routes.login() && this.state.destinationPath !== '/') {
+      this.props.history.push(this.state.destinationPath);
+      this.setState({ destinationPath: null });
     }
   }
 

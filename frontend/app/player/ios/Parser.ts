@@ -1,12 +1,11 @@
-import readMessage from '../MessageDistributor/messages';
-import PrimitiveReader from '../MessageDistributor/PrimitiveReader';
+import RawMessageReader from '../MessageDistributor/messages/RawMessageReader';
 
 
 export default class Parser {
-	private reader: PrimitiveReader
+	private reader: RawMessageReader
 	private error: boolean = false
 	constructor(byteArray) {
-		this.reader = new PrimitiveReader(byteArray)
+		this.reader = new RawMessageReader(byteArray)
 	}
 
 	parseEach(cb) {
@@ -19,12 +18,12 @@ export default class Parser {
 	}
 
 	hasNext() {
-		return !this.error && this.reader.hasNext();
+		return !this.error && this.reader.hasNextByte();
 	}
 
 	next() {
 		try {
-			return readMessage(this.reader)
+			return this.reader.readMessage()
 		} catch(e) {
 			console.warn(e)
 			this.error = true

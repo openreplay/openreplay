@@ -1,24 +1,22 @@
 import type StatedScreen from '../StatedScreen';
 import type { Message, SetNodeScroll, CreateElementNode } from '../messages';
-import type { TimedMessage } from '../Timed';
 
 import logger from 'App/logger';
 import StylesManager, { rewriteNodeStyleSheet } from './StylesManager';
 import ListWalker from './ListWalker';
-import type { Timed }from '../Timed';
 
 const IGNORED_ATTRS = [ "autocomplete", "name" ];
 
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 
-export default class DOMManager extends ListWalker<TimedMessage> {
+export default class DOMManager extends ListWalker<Message> {
   private isMobile: boolean;
   private screen: StatedScreen;
   private nl: Array<Node> = [];
   private isLink: Array<boolean> = []; // Optimisations
   private bodyId: number = -1;
   private postponedBodyMessage: CreateElementNode | null = null;
-  private nodeScrollManagers: Array<ListWalker<Timed & SetNodeScroll>> = [];
+  private nodeScrollManagers: Array<ListWalker<SetNodeScroll>> = [];
 
   private stylesManager: StylesManager;
 
@@ -36,7 +34,7 @@ export default class DOMManager extends ListWalker<TimedMessage> {
     return this.startTime;
   }
 
-  add(m: TimedMessage): void {
+  add(m: Message): void {
     switch (m.tp) {
     case "set_node_scroll":
       if (!this.nodeScrollManagers[ m.id ]) {
@@ -104,8 +102,9 @@ export default class DOMManager extends ListWalker<TimedMessage> {
     if ((el instanceof HTMLStyleElement) &&  // TODO: correct ordering OR filter in tracker
         el.sheet && 
         el.sheet.cssRules &&
-        el.sheet.cssRules.length > 0) {
-      logger.log("Trying to insert child to style tag with virtual rules: ", this.nl[ parentID ], this.nl[ id ]);
+        el.sheet.cssRules.length > 0 &&
+        el.innerText.trim().length === 0) {
+      logger.log("Trying to insert child to a style tag with virtual rules: ", this.nl[ parentID ], this.nl[ id ]);
       return;
     }
 
@@ -182,6 +181,9 @@ export default class DOMManager extends ListWalker<TimedMessage> {
             value = value.replace("?", "%3F");
           }
           this.stylesManager.setStyleHandlers(node, value);
+        }
+        if (node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
+          value = "url(#" + (value.split("#")[1] ||")")
         }
         try {
           node.setAttribute(name, value);

@@ -1,6 +1,7 @@
-from chalicelib.utils import pg_client, helper
-from chalicelib.core import sessions_metas, metadata
+import schemas
 from chalicelib.core import issues
+from chalicelib.core import sessions_metas, metadata
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.event_filter_definition import SupportedFilter, Event
 
@@ -235,23 +236,23 @@ def __generic_autocomplete(event: Event):
 
 
 class event_type:
-    CLICK = Event(ui_type="CLICK", table="events.clicks", column="label")
-    INPUT = Event(ui_type="INPUT", table="events.inputs", column="label")
-    LOCATION = Event(ui_type="LOCATION", table="events.pages", column="base_path")
-    CUSTOM = Event(ui_type="CUSTOM", table="events_common.customs", column="name")
-    REQUEST = Event(ui_type="REQUEST", table="events_common.requests", column="url")
-    GRAPHQL = Event(ui_type="GRAPHQL", table="events.graphql", column="name")
-    STATEACTION = Event(ui_type="STATEACTION", table="events.state_actions", column="name")
-    ERROR = Event(ui_type="ERROR", table="events.errors",
+    CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
+    INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
+    LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="base_path")
+    CUSTOM = Event(ui_type=schemas.EventType.custom, table="events_common.customs", column="name")
+    REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="url")
+    GRAPHQL = Event(ui_type=schemas.EventType.graphql, table="events.graphql", column="name")
+    STATEACTION = Event(ui_type=schemas.EventType.state_action, table="events.state_actions", column="name")
+    ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",
                   column=None)  # column=None because errors are searched by name or message
-    METADATA = Event(ui_type="METADATA", table="public.sessions", column=None)
+    METADATA = Event(ui_type=schemas.EventType.metadata, table="public.sessions", column=None)
     #     IOS
-    CLICK_IOS = Event(ui_type="CLICK_IOS", table="events_ios.clicks", column="label")
-    INPUT_IOS = Event(ui_type="INPUT_IOS", table="events_ios.inputs", column="label")
-    VIEW_IOS = Event(ui_type="VIEW_IOS", table="events_ios.views", column="name")
-    CUSTOM_IOS = Event(ui_type="CUSTOM_IOS", table="events_common.customs", column="name")
-    REQUEST_IOS = Event(ui_type="REQUEST_IOS", table="events_common.requests", column="url")
-    ERROR_IOS = Event(ui_type="ERROR_IOS", table="events_ios.crashes",
+    CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.clicks", column="label")
+    INPUT_IOS = Event(ui_type=schemas.EventType.input_ios, table="events_ios.inputs", column="label")
+    VIEW_IOS = Event(ui_type=schemas.EventType.view_ios, table="events_ios.views", column="name")
+    CUSTOM_IOS = Event(ui_type=schemas.EventType.custom_ios, table="events_common.customs", column="name")
+    REQUEST_IOS = Event(ui_type=schemas.EventType.request_ios, table="events_common.requests", column="url")
+    ERROR_IOS = Event(ui_type=schemas.EventType.error_ios, table="events_ios.crashes",
                       column=None)  # column=None because errors are searched by name or message
 
 
@@ -389,18 +390,18 @@ def search_pg2(text, event_type, project_id, source, key):
     if not event_type:
         return {"data": __get_autocomplete_table(text, project_id)}
 
-    if event_type.upper() in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type.upper()].get(project_id=project_id, value=text, key=key, source=source)
-        if event_type.upper() + "_IOS" in SUPPORTED_TYPES.keys():
-            rows += SUPPORTED_TYPES[event_type.upper() + "_IOS"].get(project_id=project_id, value=text, key=key,
-                                                                     source=source)
-    elif event_type.upper() + "_IOS" in SUPPORTED_TYPES.keys():
-        rows = SUPPORTED_TYPES[event_type.upper() + "_IOS"].get(project_id=project_id, value=text, key=key,
-                                                                source=source)
-    elif event_type.upper() in sessions_metas.SUPPORTED_TYPES.keys():
+    if event_type in SUPPORTED_TYPES.keys():
+        rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
+        if event_type + "_IOS" in SUPPORTED_TYPES.keys():
+            rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
+                                                             source=source)
+    elif event_type + "_IOS" in SUPPORTED_TYPES.keys():
+        rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
+                                                        source=source)
+    elif event_type in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
-    elif event_type.upper().endswith("_IOS") \
-            and event_type.upper()[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
+    elif event_type.endswith("_IOS") \
+            and event_type[:-len("_IOS")] in sessions_metas.SUPPORTED_TYPES.keys():
         return sessions_metas.search(text, event_type, project_id)
     else:
         return {"errors": ["unsupported event"]}

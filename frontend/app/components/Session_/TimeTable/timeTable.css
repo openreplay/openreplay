@@ -99,8 +99,6 @@ $offset: 10px;
   }
 }
 
-
-
 .activeRow {
-  background-color: $teal;
+  background-color: rgba(54, 108, 217, 0.1);
 }

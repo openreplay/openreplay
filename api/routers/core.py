@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union
 
 from decouple import config
 from fastapi import Depends, Body
@@ -10,7 +10,8 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     log_tool_stackdriver, reset_password, sessions_favorite_viewed, \
     log_tool_cloudwatch, log_tool_sentry, log_tool_sumologic, log_tools, errors, sessions, \
     log_tool_newrelic, announcements, log_tool_bugsnag, weekly_report, integration_jira_cloud, integration_github, \
-    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, slack, users
+    assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
+    custom_metrics, saved_search
 from chalicelib.core.collaboration_slack import Slack
 from chalicelib.utils import email_helper
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -98,17 +99,16 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str, type: str = None, key: str = None, source: str = None,
-                  context: schemas.CurrentContext = Depends(OR_context)):
+def events_search(projectId: int, q: str, type: Union[schemas.FilterType, schemas.EventType] = None, key: str = None,
+                  source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
-    result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source,
-                               key=key)
+    result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
 
 
 @app.post('/{projectId}/sessions/search2', tags=["sessions"])
-def sessions_search2(projectId: int, data: schemas.SessionsSearchPayloadSchema = Body(...),
+def sessions_search2(projectId: int, data: schemas.FlatSessionsSearchPayloadSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions.search2_pg(data, projectId, user_id=context.user_id)
     return {'data': data}
@@ -613,12 +613,18 @@ def errors_merge(context: schemas.CurrentContext = Depends(OR_context)):
 @app.put('/{projectId}/alerts', tags=["alerts"])
 def create_alert(projectId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.create(projectId, data.dict())
+    return alerts.create(projectId, data)
 
 
 @app.get('/{projectId}/alerts', tags=["alerts"])
 def get_all_alerts(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": alerts.get_all(projectId)}
+
+
+@app.get('/{projectId}/alerts/triggers', tags=["alerts", "customMetrics"])
+def get_alerts_triggers(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": alerts.get_predefined_values() \
+                    + custom_metrics.get_series_for_alert(project_id=projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/alerts/{alertId}', tags=["alerts"])
@@ -630,7 +636,7 @@ def get_alert(projectId: int, alertId: int, context: schemas.CurrentContext = De
 @app.put('/{projectId}/alerts/{alertId}', tags=["alerts"])
 def update_alert(projectId: int, alertId: int, data: schemas.AlertSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return alerts.update(alertId, data.dict())
+    return alerts.update(alertId, data)
 
 
 @app.delete('/{projectId}/alerts/{alertId}', tags=["alerts"])
@@ -645,7 +651,7 @@ def add_funnel(projectId: int, data: schemas.FunnelSchema = Body(...),
     return funnels.create(project_id=projectId,
                           user_id=context.user_id,
                           name=data.name,
-                          filter=data.filter.dict(),
+                          filter=data.filter,
                           is_public=data.is_public)
 
 
@@ -678,32 +684,31 @@ def get_possible_issue_types(projectId: int, context: schemas.CurrentContext = D
 @app.get('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 def get_funnel_insights(projectId: int, funnelId: int, rangeValue: str = None, startDate: int = None,
                         endDate: int = None, context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_top_insights(funnel_id=funnelId, project_id=projectId,
-                                    range_value=rangeValue,
-                                    start_date=startDate,
-                                    end_date=endDate)
+    return funnels.get_top_insights(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                    range_value=rangeValue, start_date=startDate, end_date=endDate)
 
 
 @app.post('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/insights', tags=["funnels"])
 def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelInsightsPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())
+    return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                               data=data.dict())
 
 
 @app.get('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDate: int = None, endDate: int = None,
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return funnels.get_issues(funnel_id=funnelId, project_id=projectId,
-                              range_value=rangeValue,
-                              start_date=startDate, end_date=endDate)
+    return funnels.get_issues(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                              range_value=rangeValue, start_date=startDate, end_date=endDate)
 
 
 @app.post('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 @app.put('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
 def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, project_id=projectId, data=data.dict())}
+    return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
+                                                  data=data.dict())}
 
 
 @app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
@@ -720,7 +725,7 @@ def get_funnel_sessions(projectId: int, funnelId: int, rangeValue: str = None, s
 def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_sessions_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                                    data=data.dict())}
+                                                    data=data)}
 
 
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
@@ -740,7 +745,7 @@ def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
                               data: schemas.FunnelSearchPayloadSchema = Body(...),
                               context: schemas.CurrentContext = Depends(OR_context)):
     data = funnels.search_by_issue(project_id=projectId, user_id=context.user_id, issue_id=issueId,
-                                   funnel_id=funnelId, data=data.dict())
+                                   funnel_id=funnelId, data=data)
     if "errors" in data:
         return data
     if data.get("issue") is None:
@@ -752,7 +757,7 @@ def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
 
 @app.get('/{projectId}/funnels/{funnelId}', tags=["funnels"])
 def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = funnels.get(funnel_id=funnelId, project_id=projectId)
+    data = funnels.get(funnel_id=funnelId, project_id=projectId, user_id=context.user_id)
     if data is None:
         return {"errors": ["funnel not found"]}
     return {"data": data}
@@ -766,7 +771,8 @@ def edit_funnel(projectId: int, funnelId: int, data: schemas.UpdateFunnelSchema 
                           user_id=context.user_id,
                           name=data.name,
                           filter=data.filter.dict(),
-                          is_public=data.is_public)
+                          is_public=data.is_public,
+                          project_id=projectId)
 
 
 @app.delete('/{projectId}/funnels/{funnelId}', tags=["funnels"])
@@ -838,13 +844,6 @@ def signup_handler(data: schemas.UserSignupSchema = Body(...)):
     return signup.create_step1(data)
 
 
-@app.get('/projects', tags=['projects'])
-def get_projects(last_tracker_version: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True, version=True,
-                                          last_tracker_version=last_tracker_version)}
-
-
 @app.post('/projects', tags=['projects'])
 @app.put('/projects', tags=['projects'])
 def create_project(data: schemas.CreateProjectSchema = Body(...),
@@ -862,18 +861,6 @@ def edit_project(projectId: int, data: schemas.CreateProjectSchema = Body(...),
 @app.delete('/projects/{projectId}', tags=['projects'])
 def delete_project(projectId, context: schemas.CurrentContext = Depends(OR_context)):
     return projects.delete(tenant_id=context.tenant_id, user_id=context.user_id, project_id=projectId)
-
-
-@app.get('/client', tags=['projects'])
-def get_client(context: schemas.CurrentContext = Depends(OR_context)):
-    r = tenants.get_by_tenant_id(context.tenant_id)
-    if r is not None:
-        r.pop("createdAt")
-        r["projects"] = projects.get_projects(tenant_id=context.tenant_id, recording_state=True, recorded=True,
-                                              stack_integrations=True, version=True)
-    return {
-        'data': r
-    }
 
 
 @app.get('/client/new_api_key', tags=['client'])
@@ -951,19 +938,6 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
         return errors.change_state(project_id=projectId, user_id=context.user_id, error_id=errorId, action=action)
     else:
         return {"errors": ["undefined action"]}
-
-
-@public_app.post('/async/alerts/notifications/{step}', tags=["async", "alerts"])
-@public_app.put('/async/alerts/notifications/{step}', tags=["async", "alerts"])
-def send_alerts_notification_async(step: str, data: schemas.AlertNotificationSchema = Body(...)):
-    if data.auth != config("async_Token"):
-        return {"errors": ["missing auth"]}
-    if step == "slack":
-        slack.send_batch(notifications_list=data.notifications)
-    elif step == "email":
-        alerts.send_by_email_batch(notifications_list=data.notifications)
-    elif step == "webhook":
-        webhook.trigger_batch(data_list=data.notifications)
 
 
 @app.get('/notifications', tags=['notifications'])
@@ -1087,3 +1061,84 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
     return users.change_password(email=context.email, old_password=data.old_password,
                                  new_password=data.new_password, tenant_id=context.tenant_id,
                                  user_id=context.user_id)
+
+
+@app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
+def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.try_live(project_id=projectId, data=data)}
+
+
+@app.post('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
+def get_custom_metric_chart(projectId: int, data: schemas.CustomMetricChartPayloadSchema2 = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=data.metric_id,
+                                              data=data)}
+
+
+@app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
+def add_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
+
+
+@app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
+def get_custom_metrics(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
+
+
+@app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+
+
+@app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
+def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                              data=data)}
+
+
+@app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),
+                         context: schemas.CurrentContext = Depends(OR_context)):
+    return {
+        "data": custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)}
+
+
+@app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
+def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+
+
+@app.post('/{projectId}/saved_search', tags=["savedSearch"])
+@app.put('/{projectId}/saved_search', tags=["savedSearch"])
+def add_saved_search(projectId: int, data: schemas.SavedSearchSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    return saved_search.create(project_id=projectId, user_id=context.user_id, data=data)
+
+
+@app.get('/{projectId}/saved_search', tags=["savedSearch"])
+def get_saved_searches(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.get_all(project_id=projectId, user_id=context.user_id, details=True)}
+
+
+@app.get('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+def get_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.get(project_id=projectId, search_id=search_id, user_id=context.user_id)}
+
+
+@app.post('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+@app.put('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+def update_saved_search(projectId: int, search_id: int, data: schemas.SavedSearchSchema = Body(...),
+                        context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.update(user_id=context.user_id, search_id=search_id, data=data, project_id=projectId)}
+
+
+@app.delete('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
+def delete_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}

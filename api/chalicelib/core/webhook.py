@@ -1,6 +1,9 @@
+import logging
+
+import requests
+
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
-import requests
 
 
 def get_by_id(webhook_id):
@@ -76,12 +79,6 @@ def update(tenant_id, webhook_id, changes, replace_none=False):
     allow_update = ["name", "index", "authHeader", "endpoint"]
     with pg_client.PostgresClient() as cur:
         sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys() if k in allow_update]
-        print(cur.mogrify(f"""\
-                    UPDATE public.webhooks
-                    SET {','.join(sub_query)}
-                    WHERE webhook_id =%(id)s AND deleted_at ISNULL
-                    RETURNING webhook_id AS integration_id, webhook_id AS id,*;""",
-                        {"id": webhook_id, **changes}))
         cur.execute(
             cur.mogrify(f"""\
                     UPDATE public.webhooks
@@ -150,28 +147,24 @@ def trigger_batch(data_list):
     for w in data_list:
         if w["destination"] not in webhooks_map:
             webhooks_map[w["destination"]] = get_by_id(webhook_id=w["destination"])
-        __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
+        if webhooks_map[w["destination"]] is None:
+            logging.error(f"!!Error webhook not found: webhook_id={w['destination']}")
+        else:
+            __trigger(hook=webhooks_map[w["destination"]], data=w["data"])
 
 
 def __trigger(hook, data):
-    if hook["type"] == 'webhook':
+    if hook is not None and hook["type"] == 'webhook':
         headers = {}
         if hook["authHeader"] is not None and len(hook["authHeader"]) > 0:
             headers = {"Authorization": hook["authHeader"]}
 
-        # body = {
-        #     "webhookId": hook["id"],
-        #     "createdAt": TimeUTC.now(),
-        #     "event": event,
-        #     "data": data
-        # }
-
         r = requests.post(url=hook["endpoint"], json=data, headers=headers)
         if r.status_code != 200:
-            print("=======> webhook: something went wrong")
-            print(r)
-            print(r.status_code)
-            print(r.text)
+            logging.error("=======> webhook: something went wrong")
+            logging.error(r)
+            logging.error(r.status_code)
+            logging.error(r.text)
             return
         response = None
         try:
@@ -180,5 +173,5 @@ def __trigger(hook, data):
             try:
                 response = r.text
             except:
-                print("no response found")
+                logging.info("no response found")
         return response

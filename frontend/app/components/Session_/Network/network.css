@@ -22,7 +22,7 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  max-width: 100%;
+  max-width: 80%;
   width: fit-content;
 }
 .popupNameContent {

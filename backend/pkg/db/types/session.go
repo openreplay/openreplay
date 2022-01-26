@@ -16,7 +16,7 @@ type Session struct {
 	PagesCount int
 	EventsCount int
 	ErrorsCount int
-	UserID *string
+	UserID string // pointer??
 	UserAnonymousID *string
 	Metadata1          *string 
 	Metadata2          *string 

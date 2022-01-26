@@ -11,13 +11,13 @@ import ConfirmWindow from './ConfirmWindow.js';
 import RequestLocalStream from './LocalStream.js';
 
 export interface Options {
-  onAgentConnect: () => (()=>{} | void),
-  onCallStart: () => (()=>{} | void),
+  onAgentConnect: () => ((()=>{}) | void),
+  onCallStart: () => ((()=>{}) | void),
   confirmText: string,
   confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
   config: RTCConfiguration,
-  __messages_per_send?: number,
+  // __messages_per_send?: number,
 }
 
 enum CallingState {
@@ -86,7 +86,7 @@ export default function(opts?: Partial<Options>)  {
         host: app.getHost(),
         path: '/assist',
         port: location.protocol === 'http:' && appOptions.__DISABLE_SECURE_MODE ? 80 : 443,
-        //debug: // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
+        debug: appOptions.__debug_log ? 2 : 0, // 0 Print nothing //1 Prints only errors. / 2 Prints errors and warnings. / 3 Prints all logs.
       }
       if (options.config) {
         _opt['config'] = options.config
@@ -102,11 +102,11 @@ export default function(opts?: Partial<Options>)  {
           log('Connection opened.')
           assistDemandedRestart = true;
           app.stop();
-          openDataConnections[conn.peer] = new BufferingConnection(conn, options.__messages_per_send)
+          openDataConnections[conn.peer] = new BufferingConnection(conn)
           
           const onAgentDisconnect = options.onAgentConnect();
           conn.on('close', () => {
-            onAgentDisconnect?.();
+            onAgentDisconnect && onAgentDisconnect();
             log("Connection close: ", conn.peer)
             delete openDataConnections[conn.peer] // TODO: check if works properly
           })
@@ -174,7 +174,7 @@ export default function(opts?: Partial<Options>)  {
           let callUI = new CallWindow()
 
           const handleCallEnd = () => {
-            onCallEnd?.()
+            onCallEnd && onCallEnd()
             mouse.remove();
             callUI.remove();
             setCallingState(CallingState.False);
@@ -212,46 +212,22 @@ export default function(opts?: Partial<Options>)  {
               document.addEventListener("click", onInteraction)
             });
             dataConn.on('data', (data: any) => {
+              log("Income data: ", data)
               if (!data) { return }
               if (data === "call_end") {
-                log('"call_end" received')
-                handleCallEnd();
-                return;
+                return handleCallEnd();
               }
               if (data.name === 'string') {
-                log("Name received: ", data)
-                callUI.setAssistentName(data.name);
+                return callUI.setAssistentName(data.name);
               }
               if (data.type === "scroll" && Array.isArray(data.delta)) {
-                const scrEl = document.scrollingElement || document.documentElement
-                const [mouseX, mouseY] = mouse.getPosition()
-                const [dX, dY] = data.delta;
-                const el = document.elementFromPoint(mouseX-scrEl.scrollLeft, mouseY-scrEl.scrollTop)
-                let scrolled = false // what would be the browser-like logic?
-                if (el) {
-                  if(el.scrollWidth > el.clientWidth) {
-                    el.scrollLeft += data.delta[0]
-                    scrolled = true
-                  }
-                  if (el && el.scrollHeight > el.clientHeight) {
-                    el.scrollTop += data.delta[1]
-                    scrolled = true
-                  }
-                }
-                if (!scrolled) {
-                  window.scroll(scrEl.scrollLeft + data.delta[0], scrEl.scrollTop + data.delta[1])
-                }
+                return mouse.scroll(data.delta)
               }
               if (data.type === "click" && typeof data.x === 'number' && typeof data.y === 'number') {
-                const el = document.elementFromPoint(data.x, data.y)
-                if (el instanceof HTMLElement) {
-                  el.click()
-                  el.focus()
-                }
-                return
+                return mouse.click([ data.x, data.y ])
               }
               if (typeof data.x === 'number' && typeof data.y === 'number') {
-                mouse.move(data);
+                return mouse.move([ data.x, data.y ])
               }
             });
 
