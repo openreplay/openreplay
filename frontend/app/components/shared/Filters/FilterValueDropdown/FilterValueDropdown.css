@@ -4,10 +4,10 @@
   background-color: white !important;
   display: flex;
   align-items: center;
-  height: 30px;
+  height: 26px;
 
   & .right {
-    height: 28px;
+    height: 26px;
     display: flex;
     align-items: stretch;
     padding: 0;
