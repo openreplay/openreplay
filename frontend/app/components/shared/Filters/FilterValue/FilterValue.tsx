@@ -52,6 +52,8 @@ function FilterValue(props: Props) {
   }
 
   const renderValueFiled = (value, valueIndex) => {
+    const showCloseButton = filter.value.length > 1;
+    const showOrButton = valueIndex === filter.value.length - 1;
     switch(filter.type) {
       case FilterType.DROPDOWN:
         return (
@@ -71,6 +73,10 @@ function FilterValue(props: Props) {
             filter={filter}
             options={filter.options}
             onChange={(e, { name, value }) => onSelect(e, { value }, valueIndex)}
+            onAddValue={onAddValue}
+            onRemoveValue={() => onRemoveValue(valueIndex)}
+            showCloseButton={showCloseButton}
+            showOrButton={showOrButton}
           />
         )
       case FilterType.DURATION:
@@ -97,8 +103,8 @@ function FilterValue(props: Props) {
         return (
           <FilterAutoComplete
             value={value}
-            showCloseButton={filter.value.length > 1}
-            showOrButton={valueIndex === filter.value.length - 1}
+            showCloseButton={showCloseButton}
+            showOrButton={showOrButton}
             onAddValue={onAddValue}
             onRemoveValue={() => onRemoveValue(valueIndex)}
             method={'GET'}
@@ -113,7 +119,7 @@ function FilterValue(props: Props) {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-3 gap-3 w-full">
       { filter.type === FilterType.DURATION ? (
           renderValueFiled(filter.value, 0)
       ) : (

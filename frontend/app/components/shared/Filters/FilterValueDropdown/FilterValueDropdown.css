@@ -1,7 +1,7 @@
 .wrapper {
   border: solid thin $gray-light !important;
   border-radius: 3px;
-  background-color: $gray-lightest !important;
+  background-color: white !important;
   display: flex;
   align-items: center;
   height: 30px;
@@ -14,6 +14,7 @@
     background-color: $gray-lightest;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
+    margin-left: auto;
 
     & div {
       /* background-color: red; */

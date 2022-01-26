@@ -4,8 +4,9 @@
   border-radius: 3px;
   display: flex;
   align-items: center;
+  background-color: white;
   & input {
-    height: 28px;
+    height: 24px;
     font-size: 13px !important;
     padding: 0 5px !important;
     border-top-left-radius: 3px;
@@ -14,7 +15,7 @@
   }
 
   & .right {
-    height: 28px;
+    height: 24px;
     display: flex;
     align-items: stretch;
     padding: 0;

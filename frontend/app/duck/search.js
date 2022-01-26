@@ -12,7 +12,7 @@ import { fetchList as fetchErrorsList } from './errors';
 
 const ERRORS_ROUTE = errorsRoute();
 
-const name = "custom_metric";
+const name = "search";
 const idKey = "metricId";
 
 const FETCH_LIST = fetchListType(name);
@@ -84,6 +84,7 @@ const filterMap = ({value, type, key, operator, source, custom, isEvent }) => ({
 });
 
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
+  console.log('reduceThenFetchResource', args);
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
@@ -135,7 +136,7 @@ export function save(instance) {
 export function fetchList() {
   return {
     types: array(FETCH_LIST),
-    call: client => client.get(`/${name}s`),
+    call: client => client.get(`/saved_search`),
   };
 }
 

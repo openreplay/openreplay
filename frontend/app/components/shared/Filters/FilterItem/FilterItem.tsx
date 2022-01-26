@@ -1,5 +1,5 @@
 import React from 'react';
-import FilterOperator from '../FilterOperator/FilterOperator';
+import FilterOperator from '../FilterOperator';
 import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
 import { Icon } from 'UI';
@@ -12,51 +12,30 @@ interface Props {
   isFilter?: boolean;
 }
 function FitlerItem(props: Props) {
-  const { isFilter = false, filterIndex, filter, onUpdate } = props;
+  const { isFilter = false, filterIndex, filter } = props;
 
   const replaceFilter = (filter) => {
-    onUpdate(filter);
+    props.onUpdate({ ...filter, value: [""]});
   };
 
-  // const onAddValue = () => {
-  //   const newValues = filter.value.concat("")
-  //   onUpdate({ ...filter, value: newValues })
-  // }
-
-  // const onRemoveValue = (valueIndex) => {
-  //   const newValues = filter.value.filter((_, _index) => _index !== valueIndex)
-  //   onUpdate({ ...filter, value: newValues })
-  // }
-
-  // const onSelect = (e, item, valueIndex) => {
-  //   const newValues = filter.value.map((_, _index) => {
-  //     if (_index === valueIndex) {
-  //       return item.value;
-  //     }
-  //     return _;
-  //   })
-  //   onUpdate({ ...filter, value: newValues })
-  // }
-
   const onOperatorChange = (e, { name, value }) => {
-    console.log('onOperatorChange', name, value)
-    onUpdate({ ...filter, operator: value })
+    props.onUpdate({ ...filter, operator: value })
   }
 
   return (
-    <div className="flex items-center mb-4">
-      <div className="flex items-start mr-auto">
-        { !isFilter && <div className="mt-1 w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div> }
+    <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
+      <div className="flex items-start w-full">
+        { !isFilter && <div className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div> }
         <FilterSelection filter={filter} onFilterClick={replaceFilter} />
         <FilterOperator filter={filter} onChange={onOperatorChange} className="mx-2 flex-shrink-0"/>
-        <FilterValue filter={filter} onUpdate={onUpdate} />
+        <FilterValue filter={filter} onUpdate={props.onUpdate} />
       </div>
-      <div className="flex self-start mt-2">
+      <div className="flex self-start mt-2 ml-auto">
         <div
           className="cursor-pointer p-1"
           onClick={props.onRemoveFilter}
         > 
-          <Icon name="trash" size="16" />
+          <Icon name="trash" size="14" />
         </div>
       </div>
     </div>

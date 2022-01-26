@@ -62,7 +62,7 @@ function FilterList(props: Props) {
 
       {hasFilters && (
         <>
-          <div className='border-t -mx-5 mb-2' />
+          {hasEvents && <div className='border-t -mx-5 mb-2' />}
           <div className="mb-2 text-sm color-gray-medium mr-auto">FILTERS</div>
           {filters.map((filter, filterIndex) => !filter.isEvent ? (
             <FilterItem

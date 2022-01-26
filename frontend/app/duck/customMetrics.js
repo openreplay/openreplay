@@ -1,15 +1,10 @@
 import { List, Map } from 'immutable'; 
-import { clean as cleanParams } from 'App/api_client';
-import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED } from 'Types/errorInfo';
+// import { clean as cleanParams } from 'App/api_client';
 import CustomMetric, { FilterSeries } from 'Types/customMetric'
 import { createFetch, fetchListType, fetchType, saveType, removeType, editType, createRemove, createEdit } from './funcTools/crud';
-// import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
 import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
-import NewFilter from 'Types/filter/newFilter';
-import Event from 'Types/filter/event';
-// import CustomFilter from 'Types/filter/customFilter';
 
 const name = "custom_metric";
 const idKey = "metricId";
@@ -50,18 +45,15 @@ const initialState = Map({
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case EDIT:
-      console.log('EDIT', action);
-      return state.mergeIn([ 'instance' ], CustomMetric(action.instance));
-    case UPDATE_SERIES:
-      console.log('update series', action.series);
-      return state.setIn(['instance', 'series', action.index], FilterSeries(action.series));
+      return state.mergeIn([ 'instance' ], action.instance);
+    case UPDATE_SERIES: 
+      return state.mergeIn(['instance', 'series', action.index], action.series);
     case success(SAVE):
-      return state.set([ 'instance' ], CustomMetric(action.data));
+      return state.mergeIn([ 'instance' ], action.data);
     case success(REMOVE):
-      console.log('action', action)
       return state.update('list', list => list.filter(item => item.metricId !== action.id));
 		case success(FETCH):
-			return state.set("instance", ErrorInfo(action.data));
+			return state.set("instance", CustomMetric(action.data));
 		case success(FETCH_LIST):
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));

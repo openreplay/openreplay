@@ -40,7 +40,7 @@ function FilterSeries(props: Props) {
     });
 
     props.updateSeries(seriesIndex, {
-      ...series.toData(),
+      ...series,
       filter: {
         ...series.filter,
         filters: newFilters,

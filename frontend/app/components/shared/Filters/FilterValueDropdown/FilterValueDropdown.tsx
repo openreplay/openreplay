@@ -31,6 +31,7 @@ function FilterValueDropdown(props: Props) {
         value={ value }
         onChange={ onChange }
         placeholder="Select"
+        fluid
         icon={ <Icon className="ml-5" name="chevron-down" size="12" /> }
       />
       <div
