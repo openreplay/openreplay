@@ -27,7 +27,7 @@ function SaveSearchModal(props: Props) {
       closeHandler();
     });
   }
-  console.log('filter', filter);
+
   return (
     <Modal size="tiny" open={ show }>
       <Modal.Header className={ stl.modalHeader }>

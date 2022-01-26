@@ -22,8 +22,8 @@ function FilterSelection(props: Props) {
       >
         { children ? React.cloneElement(children, { onClick: () => setShowModal(true)}) : (
           <div
-            className="rounded py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis"
-            style={{ width: '140px', height: '30px', border: 'solid thin rgba(34, 36, 38, 0.15)'}}
+            className="rounded py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade"
+            style={{ width: '140px', height: '26px', border: 'solid thin #e9e9e9' }}
             onClick={() => setShowModal(true)}
           >
             <span className="mr-auto truncate">{filter.label}</span>

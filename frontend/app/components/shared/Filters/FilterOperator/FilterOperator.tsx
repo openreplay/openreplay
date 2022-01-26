@@ -15,7 +15,7 @@ function FilterOperator(props: Props) {
 
   return (
     <Dropdown
-      className={ cn(stl.operatorDropdown, className) }      
+      className={ cn(stl.operatorDropdown, className, 'hover:bg-gray-light-shade') }      
       options={ filter.operatorOptions }
       name="operator"
       value={ filter.operator }

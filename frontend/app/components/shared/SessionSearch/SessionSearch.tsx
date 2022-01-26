@@ -32,7 +32,7 @@ function SessionSearch(props) {
     });
 
     props.edit({
-        ...appliedFilter.filter,
+        ...appliedFilter,
         filters: newFilters,
     });
   }
