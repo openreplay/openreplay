@@ -18,11 +18,6 @@ check_prereq() {
 }
 
 function build(){
-    # Copy enterprise code
-    [[ $1 == "ee" ]] && {
-        cp ../ee/frontend/* ./
-        ee="true"
-    }
     # Run docker as the same user, else we'll run in to permission issues.
     docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "npm install && npm run build:oss"
 }
