@@ -1,5 +1,6 @@
 import cn from 'classnames';
 import { connect } from 'react-redux';
+import { List } from 'immutable';
 import withPageTitle from 'HOCs/withPageTitle';
 import {
   fetchFavoriteList as fetchFavoriteSessionList
@@ -30,6 +31,8 @@ import SessionSearchField from 'Shared/SessionSearchField'
 import SavedSearch from 'Shared/SavedSearch'
 import LiveSessionList from './LiveSessionList'
 import SessionSearch from 'Shared/SessionSearch';
+import { edit as editSearch } from 'Duck/search';
+import { Button } from 'UI';
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -78,7 +81,8 @@ const allowedQueryKeys = [
   fetchFunnelsList,
   resetFunnel,
   resetFunnelFilters,
-  setFunnelPage
+  setFunnelPage,
+  editSearch,
 })
 @withPageTitle("Sessions - OpenReplay")
 export default class BugFinder extends React.PureComponent {
@@ -174,8 +178,13 @@ export default class BugFinder extends React.PureComponent {
               className="mb-5"
             >
               <div className="flex items-center">
-                <div style={{ width: "70%", marginRight: "10px"}}><SessionSearchField /></div>
-                <SavedSearch />
+                <div style={{ width: "65%", marginRight: "10px"}}><SessionSearchField /></div>
+                <div className="flex items-center" style={{ width: "35%"}}>
+                  <SavedSearch />
+                  <Button plain className="ml-auto" onClick={() => this.props.editSearch({ filters: List() })}>
+                    <span className="font-medium">Clear</span>
+                  </Button>
+                </div>
               </div>
               <SessionSearch />
               {/* <EventFilter /> */}

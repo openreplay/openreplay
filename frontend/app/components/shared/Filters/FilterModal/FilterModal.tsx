@@ -14,8 +14,8 @@ function FilterModal(props: Props) {
     <div className={stl.wrapper} style={{ width: '490px', height: '400px', overflowY: 'auto'}}>
       <div className="" style={{ columns: "100px 2" }}>
         {filters && Object.keys(filters).map((key) => (
-          <div className="mb-4">
-            <div className="uppercase font-medium mb-1 color-gray-medium">{key}</div>
+          <div className="mb-6">
+            <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
             <div>
               {filters[key].map((filter: any) => (
                 <div className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick(filter)}>

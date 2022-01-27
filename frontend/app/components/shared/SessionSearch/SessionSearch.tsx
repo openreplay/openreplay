@@ -84,7 +84,6 @@ function SessionSearch(props) {
         </div>
         <div className="ml-auto flex items-center">
           <SaveFilterButton />
-          <Button onClick={clearSearch}>CLEAR STEPS</Button>
           <Button plain>SAVE FUNNEL</Button>
         </div>
       </div>

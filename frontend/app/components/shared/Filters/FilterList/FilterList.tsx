@@ -1,6 +1,6 @@
 import React, { useState} from 'react';
 import FilterItem from '../FilterItem';
-import { SegmentSelection } from 'UI';
+import { SegmentSelection, Popup } from 'UI';
 
 interface Props {
   // filters: any[]; // event/filter
@@ -29,9 +29,17 @@ function FilterList(props: Props) {
       { hasEvents && (
         <>
           <div className="flex items-center mb-2">
-            <div className="mb-2 text-sm color-gray-medium mr-auto">EVENTS</div>
+            <div className="text-sm color-gray-medium mr-auto">EVENTS</div>
             <div className="flex items-center">
-              <div className="mr-2 color-gray-medium text-sm">Events Order</div>
+              <div className="mr-2 color-gray-medium text-sm" style={{ textDecoration: 'underline dotted'}}>
+                <Popup
+                  trigger={<div>Events Order</div>}
+                  content={ `Events Order` }
+                  size="tiny"
+                  inverted
+                  position="top center"
+                />
+              </div>
               <SegmentSelection
                 primary
                 name="eventsOrder"
@@ -63,7 +71,7 @@ function FilterList(props: Props) {
 
       {hasFilters && (
         <>
-          {hasEvents && <div className='border-t -mx-5 mb-2' />}
+          {hasEvents && <div className='border-t -mx-5 mb-4' />}
           <div className="mb-2 text-sm color-gray-medium mr-auto">FILTERS</div>
           {filters.map((filter, filterIndex) => !filter.isEvent ? (
             <FilterItem
