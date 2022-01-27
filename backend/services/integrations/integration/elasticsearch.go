@@ -108,6 +108,8 @@ func (es *elasticsearch) Request(c *client) error {
 	}
 	log.Print("looking for logs in index:")
 	log.Print(es.Indexes)
+	log.Print("QUERY:")
+	log.Print(query)
 	res, err := esC.Search(
 		esC.Search.WithContext(context.Background()),
 		esC.Search.WithIndex(es.Indexes),
