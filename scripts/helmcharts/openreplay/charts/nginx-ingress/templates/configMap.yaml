@@ -140,14 +140,15 @@ data:
     }
     server {
       listen 80 default_server;
-      listen [::]:80 default_server;
-      # server_name _;
+      listen [::]:80;
+      server_name {{ .Values.global.domainName }};
       {{ .Values.customServerConfigs }}
       include /etc/nginx/conf.d/location.list;
       client_max_body_size 10M;
     }
     server {
       listen                443 ssl;
+      server_name {{ .Values.global.domainName }};
       ssl_certificate       /etc/secrets/site.crt;
       ssl_certificate_key   /etc/secrets/site.key;
       ssl_protocols TLSv1.2 TLSv1.3;
