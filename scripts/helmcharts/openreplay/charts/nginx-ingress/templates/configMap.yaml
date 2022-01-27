@@ -138,8 +138,16 @@ data:
       default $http_x_forwarded_proto;
       '' $scheme;
     }
+    # Default server for helath check
     server {
       listen 80 default_server;
+      listen [::]:80;
+      location /healthz {
+        return 200 'OK';
+      }
+    }
+    server {
+      listen 80;
       listen [::]:80;
       server_name {{ .Values.global.domainName }};
       {{ .Values.customServerConfigs }}
