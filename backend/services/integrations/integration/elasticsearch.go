@@ -150,6 +150,8 @@ func (es *elasticsearch) Request(c *client) error {
 			}
 			token, err := GetToken(esLog.Message)
 			if err != nil {
+				log.Println("match not found for:")
+				log.Println(esLog.Message)
 				c.errChan <- err
 				continue
 			}
@@ -158,6 +160,8 @@ func (es *elasticsearch) Request(c *client) error {
 			//	c.errChan <- err
 			//	continue
 			//}
+			log.Println("found match using")
+			log.Println(esLog.Message)
 			timestamp := uint64(utime.ToMilliseconds(esLog.Time))
 			c.setLastMessageTimestamp(timestamp)
 			c.evChan <- &SessionErrorEvent{
