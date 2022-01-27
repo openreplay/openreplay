@@ -74,13 +74,14 @@ export default mergeReducers(
 	}),
 );
 
-const filterMap = ({value, type, key, operator, source, custom, isEvent }) => ({
-  // value: Array.isArray(value) ? value: [value],
+const filterMap = ({value, key, operator, sourceOperator, source, custom, isEvent }) => ({
   value: value.filter(i => i !== '' && i !== null),
   custom,
   type: key,
-  key, operator,
+  // key,
+  operator,
   source,
+  sourceOperator,
   isEvent
 });
 

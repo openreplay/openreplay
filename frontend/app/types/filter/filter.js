@@ -46,6 +46,7 @@ export default Record({
   consoleLevel: undefined,
   strict: false,
   eventsOrder: 'and',
+  sourceOperator: '',
 }, {
   idKey: 'searchId',
   methods: {

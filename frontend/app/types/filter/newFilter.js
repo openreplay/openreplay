@@ -179,7 +179,9 @@ export const filtersMap = {
   [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
   [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'UserId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
   [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'UserAnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
-  [FilterKey.DOM_COMPLETE]: { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'is', operatorOptions: filterOptions.stringOperators, sourcesourceOperatorOptions: filterOptions.customOperators, source: [], icon: 'filters/click', isEvent: true },
+
+  // PERFORMANCE
+  [FilterKey.DOM_COMPLETE]: { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'is', operatorOptions: filterOptions.stringOperators, sourceOperatorOptions: filterOptions.customOperators, source: [], icon: 'filters/click', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER },
   [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint Time', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/click', isEvent: true },
   // [FilterKey.TIME_BETWEEN_EVENTS]: { key: FilterKey.TIME_BETWEEN_EVENTS, type: FilterType.NUMBER, category: FilterCategory.PERFORMANCE, label: 'Time Between Events', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/click' },
   [FilterKey.TTFB]: { key: FilterKey.TTFB, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Time to First Byte', operator: 'is', operatorOptions: filterOptions.stringOperators, sourceOperatorOptions: filterOptions.customOperators, source: [], icon: 'filters/click', isEvent: true },
@@ -202,15 +204,19 @@ export default Record({
   custom: '',
   // target: Target(),
   level: '',
-  source: null,
+  
   hasNoValue: false,
   isFilter: false,
   actualValue: '',
   
-  operator: '',
+  hasSource: false,
+  source: [""],
+  sourceType: '',
   sourceOperator: '=',
-  operatorOptions: [],
-  sourceOptions: [],
+  sourceOperatorOptions: [],
+
+  operator: '',
+  operatorOptions: [],  
   isEvent: false,
   index: 0,
   options: [],
