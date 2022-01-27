@@ -106,7 +106,8 @@ func (es *elasticsearch) Request(c *client) error {
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		return fmt.Errorf("Error encoding the query: %s", err)
 	}
-	log.Print("looking for logs")
+	log.Print("looking for logs in index:")
+	log.Print(es.Indexes)
 	res, err := esC.Search(
 		esC.Search.WithContext(context.Background()),
 		esC.Search.WithIndex(es.Indexes),
