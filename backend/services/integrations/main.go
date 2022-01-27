@@ -18,8 +18,7 @@ import (
 )
 
 func main() {
-	//log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	log.SetFlags(0)
+	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	TOPIC_RAW_WEB := env.String("TOPIC_RAW_WEB")
 	POSTGRES_STRING := env.String("POSTGRES_STRING")
 
@@ -70,22 +69,16 @@ func main() {
 			log.Printf("Requesting all...\n")
 			manager.RequestAll()
 		case event := <-manager.Events:
-			log.Printf("New integration event: %v\n", *event.RawErrorEvent)
+			// log.Printf("New integration event: %v\n", *event.RawErrorEvent)
 			sessionID := event.SessionID
-			log.Print("sessionId:")
-			log.Println(sessionID)
 			if sessionID == 0 {
-				log.Println("sessionID != 0")
 				sessData, err := tokenizer.Parse(event.Token)
 				if err != nil && err != token.EXPIRED {
 					log.Printf("Error on token parsing: %v; Token: %v", err, event.Token)
 					continue
 				}
 				sessionID = sessData.ID
-			} else {
-				log.Println("sessionID != 0")
 			}
-			log.Println("sending to producer")
 			// TODO: send to ready-events topic. Otherwise it have to go through the events worker. 
 			producer.Produce(TOPIC_RAW_WEB, sessionID, messages.Encode(event.RawErrorEvent))
 		case err := <-manager.Errors:
