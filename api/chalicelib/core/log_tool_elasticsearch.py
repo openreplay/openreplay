@@ -53,7 +53,7 @@ def add_edit(tenant_id, project_id, data):
     else:
         return add(tenant_id=tenant_id,
                    project_id=project_id,
-                   host=data["host"], api_key=data["apiKeyId"], api_key_id=data["apiKey"], indexes=data["indexes"],
+                   host=data["host"], api_key=data["apiKey"], api_key_id=data["apiKeyId"], indexes=data["indexes"],
                    port=data["port"])
 
 
