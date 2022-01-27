@@ -24,8 +24,6 @@ Object.keys(filtersMap).forEach(key => {
     filterOptions[filter.category] = [filter];
   }
 })
-
-console.log('filterOptions', filterOptions)
    
 
 // for (var i = 0; i < newFiltersList.length; i++) {
