@@ -43,14 +43,14 @@ type elasticResponce struct {
 
 func (es *elasticsearch) Request(c *client) error {
 	address := es.Host + ":" + es.Port.String()
-	api_key:=b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey))
+	apiKey := b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey))
 	cfg := elasticlib.Config{
 		Addresses: []string{
 			address,
 		},
-		Username: es.ApiKeyId,
-		Password: es.ApiKey,
-		//APIKey: b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey)),
+		//Username: es.ApiKeyId,
+		//Password: es.ApiKey,
+		APIKey: apiKey,
 	}
 	log.Print("creating new ES client\n")
 	esC, err := elasticlib.NewClient(cfg)
@@ -59,7 +59,7 @@ func (es *elasticsearch) Request(c *client) error {
 		return err
 	}
 	log.Printf("ES client created using User name and password")
-	log.Printf(api_key)
+	log.Printf(apiKey)
 	// TODO: ping/versions/ client host check
 	//  res0, err := esC.Info()
 	// if err != nil {
