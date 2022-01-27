@@ -57,7 +57,7 @@ def add_edit(tenant_id, project_id, data):
                    port=data["port"])
 
 
-def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=29):
+def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
     host = host.replace("http://", "").replace("https://", "")
     try:
         args = {
