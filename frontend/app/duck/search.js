@@ -5,6 +5,7 @@ import { createFetch, fetchListType, fetchType, saveType, removeType, editType, 
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
 import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
+import NewFilter from 'Types/filter/newFilter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
@@ -60,7 +61,7 @@ function reducer(state = initialState, action = {}) {
 			return state.set("instance", ErrorInfo(action.data));
 		case success(FETCH_LIST):
 			const { data } = action;
-			return state.set("list", List(data.map(CustomMetric)));
+			return state.set("list", List(data.map(NewFilter)));
 	}
 	return state;
 }
