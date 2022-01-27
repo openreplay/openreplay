@@ -8,11 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/token"
 	"openreplay/backend/services/integrations/clientManager"
 )
@@ -42,7 +42,7 @@ func main() {
 		}
 	})
 
-	producer:= queue.NewProducer()
+	producer := queue.NewProducer()
 	defer producer.Close(15000)
 
 	listener, err := postgres.NewIntegrationsListener(POSTGRES_STRING)
@@ -54,7 +54,7 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(intervals.INTEGRATIONS_REQUEST_INTERVAL * time.Millisecond)
+	tick := time.Tick(intervals.INTEGRATIONS_REQUEST_INTERVAL)
 
 	log.Printf("Integration service started\n")
 	manager.RequestAll()
@@ -89,7 +89,7 @@ func main() {
 				log.Printf("Postgres Update request_data error: %v\n", err)
 			}
 		case err := <-listener.Errors:
-		  log.Printf("Postgres listen error: %v\n", err)
+			log.Printf("Postgres listen error: %v\n", err)
 		case iPointer := <-listener.Integrations:
 			log.Printf("Integration update: %v\n", *iPointer)
 			err := manager.Update(iPointer)
