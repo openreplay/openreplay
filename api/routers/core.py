@@ -99,10 +99,21 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 
 
 @app.get('/{projectId}/events/search', tags=["events"])
-def events_search(projectId: int, q: str, type: Union[schemas.FilterType, schemas.EventType] = None, key: str = None,
+def events_search(projectId: int, q: str,
+                  type: Union[schemas.FilterType, schemas.EventType, schemas.PerformanceEventType] = None,
+                  key: str = None,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
+    if isinstance(type, schemas.PerformanceEventType) \
+            and type in [schemas.PerformanceEventType.location_dom_complete,
+                         schemas.PerformanceEventType.location_largest_contentful_paint_time,
+                         schemas.PerformanceEventType.location_ttfb,
+                         schemas.PerformanceEventType.location_avg_cpu_load,
+                         schemas.PerformanceEventType.location_avg_memory_usage
+                         ]:
+        type = schemas.EventType.location
+
     result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
 
