@@ -8,7 +8,7 @@ import (
 	"fmt"
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
 	"log"
-	"strconv"
+	"strings"
 	"time"
 
 	"openreplay/backend/pkg/messages"
@@ -75,35 +75,39 @@ func (es *elasticsearch) Request(c *client) error {
 	gteTs := c.getLastMessageTimestamp() + 1000 // Sec or millisec to add ?
 	log.Printf("gteTs: %v ", gteTs)
 	var buf bytes.Buffer
-	query := map[string]interface{}{
-		"query": map[string]interface{}{
-			"bool": map[string]interface{}{
-				"filter": []map[string]interface{}{
-					map[string]interface{}{
-						"match": map[string]interface{}{
-							"message": map[string]interface{}{
-								"query": "openReplaySessionToken=", // asayer_session_id=
-							},
-						},
-					},
-					map[string]interface{}{
-						"range": map[string]interface{}{
-							"utc_time": map[string]interface{}{
-								"gte": strconv.FormatUint(gteTs, 10),
-								"lte": "now",
-							},
-						},
-					},
-					map[string]interface{}{
-						"term": map[string]interface{}{
-							"tags": "error",
-						},
-					},
-				},
-			},
-		},
-	}
-	if err := json.NewEncoder(&buf).Encode(query); err != nil {
+	//query := map[string]interface{}{
+	//	"query": map[string]interface{}{
+	//		"bool": map[string]interface{}{
+	//			"filter": []map[string]interface{}{
+	//				map[string]interface{}{
+	//					"match": map[string]interface{}{
+	//						"message": map[string]interface{}{
+	//							"query": "openReplaySessionToken=", // asayer_session_id=
+	//						},
+	//					},
+	//				},
+	//				map[string]interface{}{
+	//					"range": map[string]interface{}{
+	//						"utc_time": map[string]interface{}{
+	//							"gte": strconv.FormatUint(gteTs, 10),
+	//							"lte": "now",
+	//						},
+	//					},
+	//				},
+	//				map[string]interface{}{
+	//					"term": map[string]interface{}{
+	//						"tags": "error",
+	//					},
+	//				},
+	//			},
+	//		},
+	//	},
+	//}
+	query := `{ "query": { "bool": { "filter": [ { "match": { "message": { "query": "openReplaySessionToken=" } } }, { "range": { "utc_time": { "gte": 1643231522874, "lte": "now" } } }, { "term": { "tags": "error" } } ] } } }`
+	var b strings.Builder
+	b.WriteString(query)
+	read := strings.NewReader(b.String())
+	if err := json.NewEncoder(&buf).Encode(read); err != nil {
 		return fmt.Errorf("Error encoding the query: %s", err)
 	}
 	log.Print("looking for logs in index:")
@@ -115,7 +119,7 @@ func (es *elasticsearch) Request(c *client) error {
 		esC.Search.WithIndex(es.Indexes),
 		esC.Search.WithSize(1000),
 		esC.Search.WithScroll(time.Minute*2),
-		esC.Search.WithBody(&buf),
+		esC.Search.WithBody(read),
 		esC.Search.WithSort("timestamp:asc"),
 	)
 	log.Print("after looking for logs")
