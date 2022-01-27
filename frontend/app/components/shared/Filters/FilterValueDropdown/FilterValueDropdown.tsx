@@ -22,8 +22,7 @@ function FilterValueDropdown(props: Props) {
   // const options = []
 
   return (
-    <div className={stl.wrapper}>
-      { filter.sourceOperatorOptions && <div>test</div> }
+    <div className={stl.wrapper}>      
       <Dropdown
         search={search}
         className={ cn(stl.operatorDropdown, className) }      

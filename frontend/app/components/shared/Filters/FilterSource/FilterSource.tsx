@@ -9,14 +9,24 @@ interface Props {
 function FilterSource(props: Props) {
   const { filter } = props;
 
+  console.log('FilterSource', filter.source);
+
   const onChange = ({ target: { value, name } }) => {
-    props.onUpdate({ ...filter, source: [value] })
+    props.onUpdate({ ...filter, [name]: [value] })
   }
 
   const renderFiled = () => {
     switch(filter.sourceType) {
       case FilterType.NUMBER:
-        return <input className={stl.inputField} value={filter.source[0]} onBlur={onChange} type="number" />
+        return (
+          <input
+            name="source"
+            className={stl.inputField}
+            value={filter.source[0]}
+            onBlur={onChange}
+            type="number"
+          />
+        )
     }
   }
 
