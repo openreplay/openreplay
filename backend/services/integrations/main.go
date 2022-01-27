@@ -18,7 +18,8 @@ import (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+	//log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+	log.SetFlags(0)
 	TOPIC_RAW_WEB := env.String("TOPIC_RAW_WEB")
 	POSTGRES_STRING := env.String("POSTGRES_STRING")
 
