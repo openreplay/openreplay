@@ -135,19 +135,25 @@ func (es *elasticsearch) Request(c *client) error {
 	log.Print("no errors while looking for logs")
 	for {
 		var esResp elasticResponce
+		log.Println(">1")
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
+			log.Println("error parsing the response body")
 			return fmt.Errorf("Error parsing the response body: %s", err)
 		}
 		if len(esResp.Hits.Hits) == 0 {
+			log.Println("0 hits")
 			break
 		}
+		log.Println(">2")
 
 		for _, hit := range esResp.Hits.Hits {
+			log.Println("marshalling")
 			var esLog elasticsearchLog
 			if err = json.Unmarshal(hit.Source, &esLog); err != nil {
 				c.errChan <- err
 				continue
 			}
+			log.Println(">marshal done")
 			token, err := GetToken(esLog.Message)
 			if err != nil {
 				log.Println("match not found for:")
@@ -175,17 +181,19 @@ func (es *elasticsearch) Request(c *client) error {
 				},
 			}
 		}
-
+		log.Println(">scrolling")
 		res, err = esC.Scroll(
 			esC.Scroll.WithContext(context.Background()),
 			esC.Scroll.WithScrollID(esResp.ScrollId),
 			esC.Scroll.WithScroll(time.Minute*2),
 		)
 		if err != nil {
+			log.Println("error scrolling")
 			return fmt.Errorf("Error getting scroll response: %s", err)
 		}
 		defer res.Body.Close()
 		if res.IsError() {
+			log.Println("error map")
 			var e map[string]interface{}
 			if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
 				return fmt.Errorf("Error parsing the response body: %v", err)
