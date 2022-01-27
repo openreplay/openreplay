@@ -3,9 +3,11 @@ package integration
 import (
 	"bytes"
 	"context"
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
+	"log"
 	"strconv"
 	"time"
 
@@ -41,6 +43,7 @@ type elasticResponce struct {
 
 func (es *elasticsearch) Request(c *client) error {
 	address := es.Host + ":" + es.Port.String()
+	api_key:=b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey))
 	cfg := elasticlib.Config{
 		Addresses: []string{
 			address,
@@ -49,12 +52,14 @@ func (es *elasticsearch) Request(c *client) error {
 		Password: es.ApiKey,
 		//APIKey: b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey)),
 	}
+	log.Print("creating new ES client\n")
 	esC, err := elasticlib.NewClient(cfg)
 
 	if err != nil {
 		return err
 	}
-
+	log.Printf("ES client created using User name and password")
+	log.Printf(api_key)
 	// TODO: ping/versions/ client host check
 	//  res0, err := esC.Info()
 	// if err != nil {
@@ -68,7 +73,7 @@ func (es *elasticsearch) Request(c *client) error {
 	//  log.Printf("ELASTIC  Info: %v ", res0.String())
 
 	gteTs := c.getLastMessageTimestamp() + 1000 // Sec or millisec to add ?
-
+	log.Printf("gteTs: %v ", gteTs)
 	var buf bytes.Buffer
 	query := map[string]interface{}{
 		"query": map[string]interface{}{
