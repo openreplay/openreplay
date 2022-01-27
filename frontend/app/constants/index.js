@@ -19,3 +19,4 @@ export {
   SLACK as CHANNEL_SLACK,
   WEBHOOK as CHANNEL_WEBHOOK
 } from './schedule';
+export { default } from './filterOptions';

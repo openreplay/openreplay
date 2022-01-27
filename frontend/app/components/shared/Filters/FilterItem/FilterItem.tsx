@@ -30,7 +30,7 @@ function FitlerItem(props: Props) {
         <FilterOperator filter={filter} onChange={onOperatorChange} className="mx-2 flex-shrink-0"/>
         <FilterValue filter={filter} onUpdate={props.onUpdate} />
       </div>
-      <div className="flex self-start mt-2 ml-auto">
+      <div className="flex self-start mt-1 ml-auto px-2">
         <div
           className="cursor-pointer p-1"
           onClick={props.onRemoveFilter}

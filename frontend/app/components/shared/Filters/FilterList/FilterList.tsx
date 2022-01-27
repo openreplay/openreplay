@@ -14,6 +14,7 @@ function FilterList(props: Props) {
   const filters = filter.filters;
   const hasEvents = filter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = filter.filters.filter(i => !i.isEvent).size > 0;
+  let rowIndex = 0;
 
   const onRemoveFilter = (filterIndex) => {
     const newFilters = filters.filter((_filter, i) => {
@@ -50,7 +51,7 @@ function FilterList(props: Props) {
           </div>
           {filters.map((filter, filterIndex) => filter.isEvent ? (
             <FilterItem
-              filterIndex={filterIndex}
+              filterIndex={rowIndex++}
               filter={filter}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
               onRemoveFilter={() => onRemoveFilter(filterIndex) }
