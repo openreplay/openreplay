@@ -106,7 +106,7 @@ func (es *elasticsearch) Request(c *client) error {
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		return fmt.Errorf("Error encoding the query: %s", err)
 	}
-
+	log.Print("looking for logs")
 	res, err := esC.Search(
 		esC.Search.WithContext(context.Background()),
 		esC.Search.WithIndex(es.Indexes),
@@ -115,6 +115,7 @@ func (es *elasticsearch) Request(c *client) error {
 		esC.Search.WithBody(&buf),
 		esC.Search.WithSort("timestamp:asc"),
 	)
+	log.Print("after looking for logs")
 	if err != nil {
 		return fmt.Errorf("Error getting response: %s", err)
 	}
@@ -131,7 +132,7 @@ func (es *elasticsearch) Request(c *client) error {
 			)
 		}
 	}
-
+	log.Print("no errors while looking for logs")
 	for {
 		var esResp elasticResponce
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
