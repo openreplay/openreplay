@@ -54,7 +54,7 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(intervals.INTEGRATIONS_REQUEST_INTERVAL)
+	tick := time.Tick(intervals.INTEGRATIONS_REQUEST_INTERVAL * time.Millisecond)
 
 	log.Printf("Integration service started\n")
 	manager.RequestAll()
@@ -66,7 +66,7 @@ func main() {
 			pg.Close()
 			os.Exit(0)
 		case <-tick:
-			// log.Printf("Requesting all...\n")
+			log.Printf("Requesting all...\n")
 			manager.RequestAll()
 		case event := <-manager.Events:
 			// log.Printf("New integration event: %v\n", *event.RawErrorEvent)
