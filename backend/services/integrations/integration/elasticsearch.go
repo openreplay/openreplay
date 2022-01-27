@@ -8,6 +8,7 @@ import (
 	"fmt"
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -40,7 +41,7 @@ type elasticResponce struct {
 	}
 	ScrollId string `json:"_scroll_id"`
 }
-
+var mapResp map[string]interface{}
 func (es *elasticsearch) Request(c *client) error {
 	address := es.Host + ":" + es.Port.String()
 	apiKey := b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey))
@@ -127,20 +128,31 @@ func (es *elasticsearch) Request(c *client) error {
 		return fmt.Errorf("Error getting response: %s", err)
 	}
 	defer res.Body.Close()
-	if res.IsError() {
-		var e map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			return fmt.Errorf("Error parsing the response body: %v", err)
-		} else {
-			return fmt.Errorf("Elasticsearch [%s] %s: %s",
-				res.Status(),
-				e["error"], //.(map[string]interface{})["type"],
-				e["error"], //.(map[string]interface{})["reason"],
-			)
-		}
-	}
+	//if res.IsError() {
+	//	var e map[string]interface{}
+	//	if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
+	//		return fmt.Errorf("Error parsing the response body: %v", err)
+	//	} else {
+	//		return fmt.Errorf("Elasticsearch [%s] %s: %s",
+	//			res.Status(),
+	//			e["error"], //.(map[string]interface{})["type"],
+	//			e["error"], //.(map[string]interface{})["reason"],
+	//		)
+	//	}
+	//}
 	log.Print("no errors while looking for logs")
 	for {
+		if err := json.NewDecoder(res.Body).Decode(&mapResp); err != nil {
+			log.Fatalf("Error parsing the response body: %s", err)
+
+			// If no error, then convert response to a map[string]interface
+		} else {
+			log.Println("mapResp TYPE:", reflect.TypeOf(mapResp), "\n")
+			log.Println(mapResp)
+		}
+
+		log.Println("end---")
+
 		var esResp elasticResponce
 		log.Println(">1")
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
