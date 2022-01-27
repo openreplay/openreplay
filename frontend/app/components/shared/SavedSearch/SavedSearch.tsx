@@ -22,19 +22,28 @@ function SavedSearch(props) {
       onClickOutside={() => setShowMenu(false)}
     >
       <div className="relative">
-        <Button prime outline size="small"
-          className="flex items-center"
-          onClick={() => setShowMenu(true)}
-        >
-          <span className="mr-2">Search Saved</span>
-          <Icon name="ellipsis-v" color="teal" size="14" />
-        </Button>
+        <div className="flex items-center">
+          <Button prime outline size="small"
+            className="flex items-center"
+            onClick={() => setShowMenu(true)}
+          >
+            <span className="mr-2">Search Saved</span>
+            <Icon name="ellipsis-v" color="teal" size="14" />
+          </Button>
+
+          <div className="flex items-center ml-2">
+            <Icon name="search" size="14" />
+            <span className="color-gray-medium px-1">Viewing:</span>
+            <span className="font-medium">Login ...</span>
+          </div>
+        </div>
+
         { showMenu && (
           <div
-            className="absolute right-0 bg-white border rounded z-50"
+            className="absolute left-0 bg-white border rounded z-50"
             style={{ top: '33px', width: '200px' }}
           >
-            <SavedSearchDropdown list={props.list}/>
+            <SavedSearchDropdown list={props.list} onClose={() => setShowMenu(false)} />
           </div>
         )}
       </div>
