@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	b64 "encoding/base64"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/utime"
 )
@@ -46,9 +45,9 @@ func (es *elasticsearch) Request(c *client) error {
 		Addresses: []string{
 			address,
 		},
-		//Username: es.ApiKeyId,
-		//Password: es.ApiKey,
-		APIKey: b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey)),
+		Username: es.ApiKeyId,
+		Password: es.ApiKey,
+		//APIKey: b64.StdEncoding.EncodeToString([]byte(es.ApiKeyId + ":" + es.ApiKey)),
 	}
 	esC, err := elasticlib.NewClient(cfg)
 
