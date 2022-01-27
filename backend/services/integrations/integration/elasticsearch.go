@@ -121,7 +121,7 @@ func (es *elasticsearch) Request(c *client) error {
 		esC.Search.WithSize(1000),
 		esC.Search.WithScroll(time.Minute*2),
 		esC.Search.WithBody(read),
-		esC.Search.WithSort("timestamp:asc"),
+		esC.Search.WithSort("utc_time:asc"),
 	)
 	log.Print("after looking for logs")
 	if err != nil {
