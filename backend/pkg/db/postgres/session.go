@@ -1,7 +1,10 @@
 package postgres
 
 //import 	. "openreplay/backend/pkg/messages"
-import 	. "openreplay/backend/pkg/db/types"
+import (
+	"log"
+	. "openreplay/backend/pkg/db/types"
+)
 //import "log"
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
@@ -28,6 +31,9 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 			&s.UserID, &s.UserAnonymousID, 
 			&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
 			&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
+		log.Println(">>error DB scan for sessionId:")
+		log.Println(sessionID)
+		log.Println(err)
 		return nil, err
 	}
 	if userOSVersion != nil { // TODO: choose format, make f
