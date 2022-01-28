@@ -41,6 +41,9 @@ spec:
             - name: http
               containerPort: 80
               protocol: TCP
+            - name: metrics
+              containerPort: 9145
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /healthz
