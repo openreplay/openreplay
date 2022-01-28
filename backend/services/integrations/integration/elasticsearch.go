@@ -8,6 +8,7 @@ import (
 	"fmt"
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
 	"log"
+	"reflect"
 	"time"
 
 	"openreplay/backend/pkg/messages"
@@ -137,11 +138,22 @@ func (es *elasticsearch) Request(c *client) error {
 	}
 
 	for {
+		var mapResp map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&mapResp); err != nil {
+			log.Fatalf("Error parsing raw response body: %s", err)
+
+			// If no error, then convert response to a map[string]interface
+		} else {
+			log.Println("mapResp TYPE:", reflect.TypeOf(mapResp), "\n")
+			log.Println(mapResp)
+		}
+
 		var esResp elasticResponce
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
 			log.Printf("Error parsing the response body: %s\n", err)
 			return fmt.Errorf("Error parsing the response body: %s", err)
 		}
+
 		log.Printf("parsed response: %v\n", esResp)
 		if len(esResp.Hits.Hits) == 0 {
 			break
