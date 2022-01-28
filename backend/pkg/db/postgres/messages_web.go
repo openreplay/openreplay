@@ -175,11 +175,14 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 	errorID := hashid.WebErrorID(projectID, e)
 	log.Println(">>errorID")
 	log.Println(errorID)
+	log.Println(">>payload")
+	log.Println(e.Payload)
+
 	if err = tx.exec(`
 		INSERT INTO errors
 			(error_id, project_id, source, name, message, payload)
 		VALUES
-			($1, $2, $3, $4, $5, $6)
+			($1, $2, $3, $4, $5, $6::jsonb)
 		ON CONFLICT DO NOTHING`,
 		errorID, projectID, e.Source, e.Name, e.Message, e.Payload,
 	); err != nil {

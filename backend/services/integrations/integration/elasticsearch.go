@@ -130,7 +130,7 @@ func (es *elasticsearch) Request(c *client) error {
 			log.Println("No hits found")
 			break
 		}
-		log.Printf("received %d hits",len(hits))
+		log.Printf("received %d hits", len(hits))
 		for _, hit := range hits {
 
 			// Parse the attributes/fields of the document
@@ -173,6 +173,11 @@ func (es *elasticsearch) Request(c *client) error {
 				log.Printf("Error converting token to uint46: %s\n", err)
 				sessionID = 0
 			}
+			payload, err := json.Marshal(source)
+			if err != nil {
+				log.Printf("Error converting source to json: %v\n", source)
+				continue
+			}
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
 				SessionID: sessionID,
@@ -181,7 +186,7 @@ func (es *elasticsearch) Request(c *client) error {
 					Source:    "elasticsearch",
 					Timestamp: timestamp,
 					Name:      fmt.Sprintf("%v", docID),
-					Payload:   fmt.Sprintf("%v", source),
+					Payload:   string(payload),
 				},
 			}
 		}
