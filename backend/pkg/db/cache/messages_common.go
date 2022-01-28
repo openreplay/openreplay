@@ -1,6 +1,7 @@
 package cache
 
 import  (
+	"database/sql"
 	. "openreplay/backend/pkg/messages"
 //	. "openreplay/backend/pkg/db/types"
 )
@@ -50,7 +51,7 @@ func (c *PGCache) InsertUserAnonymousID(sessionID uint64, userAnonymousID *IOSUs
 	if err != nil {
 		return err
 	}
-	session.UserAnonymousID = userAnonymousID.Value
+	session.UserAnonymousID = sql.NullString{userAnonymousID.Value,true}
 	return nil
 }
 
