@@ -17,6 +17,7 @@ const name = "search";
 const idKey = "metricId";
 
 const FETCH_LIST = fetchListType(name);
+const FETCH_FILTER_SEARCH = fetchListType(`${name}/FILTER_SEARCH`);
 const FETCH = fetchType(name);
 const SAVE = saveType(name);
 const EDIT = editType(name);
@@ -39,6 +40,7 @@ const initialState = Map({
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
   savedFilter: new SavedFilter({ filters: [] }),
+  filterSearchList: List(),
 });
 
 // Metric - Series - [] - filters
@@ -62,6 +64,8 @@ function reducer(state = initialState, action = {}) {
 		case success(FETCH_LIST):
 			const { data } = action;
 			return state.set("list", List(data.map(NewFilter)));
+    case success(FETCH_FILTER_SEARCH):
+      return state.set("filterSearchList", action.data.map(NewFilter));
 	}
 	return state;
 }
@@ -146,5 +150,13 @@ export function setAlertMetricId(id) {
   return {
     type: SET_ALERT_METRIC_ID,
     id,
+  };
+}
+
+export function fetchFilterSearch(params) {
+  return {
+    types: FETCH_FILTER_SEARCH.array,
+    call: client => client.get('/events/search', params),
+    params,
   };
 }
