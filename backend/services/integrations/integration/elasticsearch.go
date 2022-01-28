@@ -136,13 +136,13 @@ func (es *elasticsearch) Request(c *client) error {
 			doc := hit.(map[string]interface{})
 			source := doc["_source"].(map[string]interface{})
 
-			if _, ok := esResp["message"]; !ok {
+			if _, ok := source["message"]; !ok {
 				log.Printf("message not found in doc \n%v\n", doc)
 				c.errChan <- fmt.Errorf("message not found in doc '%v' ", doc)
 				continue
 			}
 
-			if _, ok := esResp["utc_time"]; !ok {
+			if _, ok := source["utc_time"]; !ok {
 				log.Printf("utc_time not found in doc \n%v\n", doc)
 				c.errChan <- fmt.Errorf("utc_time not found in doc '%v' ", doc)
 				continue
