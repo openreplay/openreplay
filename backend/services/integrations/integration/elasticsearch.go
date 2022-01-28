@@ -39,6 +39,7 @@ type elasticResponce struct {
 		}
 	}
 	ScrollId string `json:"_scroll_id"`
+	Error    map[string]interface{}
 }
 
 func (es *elasticsearch) Request(c *client) error {
@@ -52,14 +53,11 @@ func (es *elasticsearch) Request(c *client) error {
 		//Password: es.ApiKey,
 		APIKey: apiKey,
 	}
-	log.Print("creating new ES client\n")
 	esC, err := elasticlib.NewClient(cfg)
 
 	if err != nil {
 		return err
 	}
-	log.Printf("ES client created using User name and password")
-	log.Printf(apiKey)
 	// TODO: ping/versions/ client host check
 	//  res0, err := esC.Info()
 	// if err != nil {
@@ -122,9 +120,15 @@ func (es *elasticsearch) Request(c *client) error {
 	if res.IsError() {
 		var e map[string]interface{}
 		if err := json.NewDecoder(res.Body).Decode(&e); err != nil {
-			return fmt.Errorf("Error parsing the response body: %v", err)
+			log.Printf("Error parsing the Error response body: %v\n", err)
+			return fmt.Errorf("Error parsing the Error response body: %v", err)
 		} else {
-			return fmt.Errorf("Elasticsearch [%s] %s: %s",
+			log.Printf("Elasticsearch Error [%s] %s: %s\n",
+				res.Status(),
+				e["error"], //.(map[string]interface{})["type"],
+				e["error"], //.(map[string]interface{})["reason"],
+			)
+			return fmt.Errorf("Elasticsearch Error [%s] %s: %s",
 				res.Status(),
 				e["error"], //.(map[string]interface{})["type"],
 				e["error"], //.(map[string]interface{})["reason"],
@@ -135,6 +139,7 @@ func (es *elasticsearch) Request(c *client) error {
 	for {
 		var esResp elasticResponce
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
+			log.Printf("Error parsing the response body: %s\n", err)
 			return fmt.Errorf("Error parsing the response body: %s", err)
 		}
 		if len(esResp.Hits.Hits) == 0 {
@@ -144,11 +149,13 @@ func (es *elasticsearch) Request(c *client) error {
 		for _, hit := range esResp.Hits.Hits {
 			var esLog elasticsearchLog
 			if err = json.Unmarshal(hit.Source, &esLog); err != nil {
+				log.Printf("Error unmarshalling the response source: %s\n", err)
 				c.errChan <- err
 				continue
 			}
 			token, err := GetToken(esLog.Message)
 			if err != nil {
+				log.Printf("Error generating token: %s\n", err)
 				c.errChan <- err
 				continue
 			}
