@@ -1,9 +1,10 @@
 package cache
 
-import  (
+import (
 	"errors"
-	. "openreplay/backend/pkg/messages"
+	"log"
 	. "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/messages"
 )
 
 
@@ -44,10 +45,14 @@ func (c *PGCache) InsertWebSessionEnd(sessionID uint64, e *SessionEnd) error {
 }
 
 func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
+	log.Println(">>InsertWebErrorEvent")
 	session, err := c.GetSession(sessionID)
 	if err != nil {
+		log.Println("session not found")
+		log.Println(err)
 		return err
 	}
+	log.Println(">>InsertWebErrorEvent to DB")
 	if err := c.Conn.InsertWebErrorEvent(sessionID, session.ProjectID, e); err != nil {
 		return err
 	}

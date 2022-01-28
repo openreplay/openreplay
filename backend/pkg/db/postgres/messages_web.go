@@ -1,11 +1,12 @@
 package postgres
 
 import (
-  "math"
+	"log"
+	"math"
 
 	"openreplay/backend/pkg/hashid"
-	"openreplay/backend/pkg/url"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/url"
 )
 
 // TODO: change messages and replace everywhere to e.Index
@@ -172,6 +173,8 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 	}
 	defer tx.rollback()
 	errorID := hashid.WebErrorID(projectID, e)
+	log.Println(">>errorID")
+	log.Println(errorID)
 	if err = tx.exec(`
 		INSERT INTO errors
 			(error_id, project_id, source, name, message, payload)
@@ -180,6 +183,8 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		ON CONFLICT DO NOTHING`,
 		errorID, projectID, e.Source, e.Name, e.Message, e.Payload,
 	); err != nil {
+		log.Println(">>error LVL1")
+		log.Println(err)
 		return err
 	}
 	if err = tx.exec(`
@@ -190,6 +195,8 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		`,
 		sessionID, e.MessageID, e.Timestamp, errorID,
 	); err != nil {
+		log.Println(">>error LVL2")
+		log.Println(err)
 		return err
 	}
 	if err = tx.exec(`
@@ -197,6 +204,8 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		WHERE session_id = $1`,
 		sessionID,
 	); err != nil {
+		log.Println(">>error LVL3")
+		log.Println(err)
 		return err
 	}
 	return tx.commit()
