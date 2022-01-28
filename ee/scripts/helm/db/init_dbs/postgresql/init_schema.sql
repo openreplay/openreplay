@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.4.0-ee'
+SELECT 'v1.5.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -504,7 +504,7 @@ $$
             IF NOT EXISTS(SELECT *
                           FROM pg_type typ
                           WHERE typ.typname = 'error_source') THEN
-                CREATE TYPE error_source AS ENUM ('js_exception','bugsnag','cloudwatch','datadog','newrelic','rollbar','sentry','stackdriver','sumologic');
+                CREATE TYPE error_source AS ENUM ('js_exception','bugsnag','cloudwatch','datadog','newrelic','rollbar','sentry','stackdriver','sumologic', 'elasticsearch');
             END IF;
 
             IF NOT EXISTS(SELECT *
