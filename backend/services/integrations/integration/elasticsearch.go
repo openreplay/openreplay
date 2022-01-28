@@ -158,7 +158,7 @@ func (es *elasticsearch) Request(c *client) error {
 		//}
 
 		log.Printf("parsed response: %v\n", esResp)
-		if _, ok := esResp["hits"]; ok {
+		if _, ok := esResp["hits"]; !ok {
 			log.Println("Hits not found")
 			break
 		}
@@ -217,7 +217,7 @@ func (es *elasticsearch) Request(c *client) error {
 				},
 			}
 		}
-		if _, ok := esResp["_scroll_id"]; ok {
+		if _, ok := esResp["_scroll_id"]; !ok {
 			log.Println("_scroll_id not found")
 			break
 		}
