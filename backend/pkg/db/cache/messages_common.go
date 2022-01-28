@@ -39,7 +39,7 @@ func (c *PGCache) InsertUserID(sessionID uint64, userID *IOSUserID) error {
 	if err != nil {
 		return err
 	}
-	session.UserID = userID.Value
+	session.UserID = sql.NullString{userID.Value,true}
 	return nil
 }
 
