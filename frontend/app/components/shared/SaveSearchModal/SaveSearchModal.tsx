@@ -1,34 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { edit, save } from 'Duck/search';
+import { edit, save, remove } from 'Duck/search';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
+import { confirm } from 'UI/Confirmation';
 import stl from './SaveSearchModal.css';
 
 interface Props {
   filter: any;
   loading: boolean;
   edit: (filter: any) => void;
-  save: (filter: any) => Promise<void>;
+  save: (searchId, name, filter: any) => Promise<void>;
   show: boolean;
   closeHandler: () => void;
+  savedSearch: any;
+  remove: (filterId: number) => Promise<void>;
 }
 function SaveSearchModal(props: Props) {
-  const { filter, loading, show, closeHandler } = props;
+  const [name, setName] = useState(props.savedSearch ? props.savedSearch.name : '');
+  const { savedSearch, filter, loading, show, closeHandler } = props;
   
   const onNameChange = ({ target: { value } }) => {
-    props.edit({ name: value });
+    // props.edit({ name: value });
+    setName(value);
   };
 
   const onSave = () => {
     const { filter, closeHandler } = props;
-    if (filter.name.trim() === '') return;
-    props.save(filter).then(function() {
+    if (name.trim() === '') return;
+    props.save(savedSearch ? savedSearch.searchId : null, name, filter).then(function() {
       // this.props.fetchFunnelsList();
       closeHandler();
     });
   }
 
-  console.log('filter', filter)
+  const onDelete = async () => {
+    if (await confirm({
+      header: 'Confirm',
+      confirmButton: 'Yes, Delete',
+      confirmation: `Are you sure you want to permanently delete this alert?`
+    })) {
+      props.remove(savedSearch.searchId).then(() => {
+        closeHandler();
+      });
+    }
+  }
+    
 
   return (
     <Modal size="tiny" open={ show }>
@@ -52,29 +68,33 @@ function SaveSearchModal(props: Props) {
               autoFocus={ true }
               // className={ stl.name }
               name="name"
-              value={ filter.name }
+              value={ name }
               onChange={ onNameChange }
               placeholder="Title"
             />
           </Form.Field>
         </Form>
       </Modal.Content>
-      <Modal.Actions className="">
-        <Button
-          primary
-          onClick={ onSave }
-          loading={ loading }
-        >
-          { filter.exists() ? 'Modify' : 'Save' }
-        </Button>
-        <Button className={ stl.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+      <Modal.Actions className="flex items-center">
+        <div className="mr-auto">
+          <Button
+              primary
+              onClick={ onSave }
+              loading={ loading }
+            >
+              { savedSearch ? 'Update' : 'Create' }
+            </Button>
+            <Button className={ stl.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+        </div>
+        { savedSearch && <Button className={ stl.cancelButton } marginRight onClick={ onDelete }>{ 'Delete' }</Button> }
       </Modal.Actions>
     </Modal>
   );
 }
 
 export default connect(state => ({
+  savedSearch: state.getIn([ 'search', 'savedSearch' ]),
   filter: state.getIn(['search', 'instance']),
   loading: state.getIn([ 'search', 'saveRequest', 'loading' ]) || 
     state.getIn([ 'search', 'updateRequest', 'loading' ]),
-}), { edit, save })(SaveSearchModal);
+}), { edit, save, remove })(SaveSearchModal);

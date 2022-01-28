@@ -1,27 +1,29 @@
 import React from 'react';
 import stl from './SavedSearchDropdown.css';
+import cn from 'classnames';
 import { Icon } from 'UI';
-import { applyFilter, remove } from 'Duck/search'
+import { applySavedSearch, remove, edit } from 'Duck/search'
 import { connect } from 'react-redux';
 import { confirm } from 'UI/Confirmation';
 
 interface Props {
   list: Array<any>
-  applyFilter: (filter: any) => void
+  applySavedSearch: (filter: any) => void
   remove: (id: string) => Promise<void>
-  onClose: () => void
+  onClose: () => void,
+  edit: (filter: any) => void,
 }
 
 function Row ({ name, onClick, onClickEdit, onDelete }) {
   return (
     <div
       onClick={onClick}
-      className="flex items-center cursor-pointer hover:bg-active-blue"
+      className={cn(stl.rowItem, "flex items-center cursor-pointer hover:bg-active-blue")}
     >
       <div className="px-3 py-2">{name}</div>
       <div className="ml-auto flex items-center">
         <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onClickEdit}><Icon name="pencil" size="14" /></div>
-        <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onDelete}><Icon name="trash" size="14" /></div>
+        {/* <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onDelete}><Icon name="trash" size="14" /></div> */}
       </div>
     </div>
   )
@@ -29,7 +31,8 @@ function Row ({ name, onClick, onClickEdit, onDelete }) {
 
 function SavedSearchDropdown(props: Props) {
   const onClick = (item) => {
-    props.applyFilter(item.filter)
+    props.applySavedSearch(item)
+    props.edit(item.filter)
     props.onClose()
   }
 
@@ -64,4 +67,4 @@ function SavedSearchDropdown(props: Props) {
   );
 }
 
-export default connect(null, { applyFilter, remove })(SavedSearchDropdown);
+export default connect(null, { applySavedSearch, remove, edit })(SavedSearchDropdown);
