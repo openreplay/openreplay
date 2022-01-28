@@ -14,7 +14,7 @@ import { fetchList as fetchErrorsList } from './errors';
 const ERRORS_ROUTE = errorsRoute();
 
 const name = "search";
-const idKey = "metricId";
+const idKey = "searchId";
 
 const FETCH_LIST = fetchListType(name);
 const FETCH_FILTER_SEARCH = fetchListType(`${name}/FILTER_SEARCH`);
@@ -22,6 +22,8 @@ const FETCH = fetchType(name);
 const SAVE = saveType(name);
 const EDIT = editType(name);
 const REMOVE = removeType(name);
+const APPLY_SAVED_SEARCH = `${name}/APPLY_SAVED_SEARCH`;
+const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const UPDATE = `${name}/UPDATE`;
 const APPLY = `${name}/APPLY`;
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
@@ -30,16 +32,17 @@ function chartWrapper(chart = []) {
   return chart.map(point => ({ ...point, count: Math.max(point.count, 0) }));
 }
 
-// const updateItemInList = createListUpdater(idKey);
-// const updateInstance = (state, instance) => state.getIn([ "instance", idKey ]) === instance[ idKey ]
-// 	? state.mergeIn([ "instance" ], instance)
-// 	: state;
+const savedSearchIdKey = 'searchId'
+const updateItemInList = createListUpdater(savedSearchIdKey);
+const updateInstance = (state, instance) => state.getIn([ "savedSearch", savedSearchIdKey ]) === instance[savedSearchIdKey]
+	? state.mergeIn([ "savedSearch" ], instance)
+	: state;
 
 const initialState = Map({
 	list: List(),
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
-  savedFilter: new SavedFilter({ filters: [] }),
+  savedSearch: null,
   filterSearchList: List(),
 });
 
@@ -56,16 +59,19 @@ function reducer(state = initialState, action = {}) {
           )
         : state.mergeIn(['instance'], action.filter);
     case success(SAVE):
-      return state.mergeIn([ 'instance' ], action.data);
+      return updateItemInList(updateInstance(state, action.data), action.data);
+      // return state.mergeIn([ 'instance' ], action.data);
     case success(REMOVE):
-      return state.update('list', list => list.filter(item => item.metricId !== action.id));
+      return state.update('list', list => list.filter(item => item.searchId !== action.id));
 		case success(FETCH):
 			return state.set("instance", ErrorInfo(action.data));
 		case success(FETCH_LIST):
 			const { data } = action;
-			return state.set("list", List(data.map(NewFilter)));
+			return state.set("list", List(data.map(SavedFilter)));
     case success(FETCH_FILTER_SEARCH):
       return state.set("filterSearchList", action.data.map(NewFilter));
+    case APPLY_SAVED_SEARCH:
+      return state.set('savedSearch', action.filter);
 	}
 	return state;
 }
@@ -106,13 +112,23 @@ export const edit = reduceThenFetchResource((instance) => ({
     instance,
 }));
 
-export const remove = createRemove(name);
+export const remove = createRemove(name, (id) => `/saved_search/${id}`);
 
 export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
   type: APPLY,
   filter,
   fromUrl,
 }));
+
+export const applySavedSearch = (filter) => (dispatch, getState) => {
+  // console.log('applySavedSearch', filter);
+// export const applySavedSearch = (filter) => ({
+  dispatch(edit(filter ? filter.filter : new Filter({ fitlers: []})));
+  return dispatch({
+    type: APPLY_SAVED_SEARCH,
+    filter,
+  })
+};
 
 export const updateSeries = (index, series) => ({
   type: UPDATE,
@@ -128,11 +144,12 @@ export function fetch(id) {
 	}
 }
 
-export function save(instance) {
+export function save(id, name, instance) {
+  instance = instance instanceof SavedFilter ? instance : new SavedFilter(instance);
   return {
     types: SAVE.array,
-    call: client => client.post('/saved_search', {
-      name: instance.name,
+    call: client => client.post(!id ? '/saved_search' : `/saved_search/${id}`, {
+      name: name,
       filter: instance.toSaveData(),
     }),
     instance,
@@ -159,4 +176,12 @@ export function fetchFilterSearch(params) {
     call: client => client.get('/events/search', params),
     params,
   };
+}
+
+export const clearSearch = () => (dispatch, getState) => {
+  dispatch(applySavedSearch(null));
+  dispatch(edit(new Filter({ filters: [] })));
+  return dispatch({
+    type: CLEAR_SEARCH,
+  });
 }

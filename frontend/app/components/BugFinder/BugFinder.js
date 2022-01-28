@@ -31,7 +31,7 @@ import SessionSearchField from 'Shared/SessionSearchField'
 import SavedSearch from 'Shared/SavedSearch'
 import LiveSessionList from './LiveSessionList'
 import SessionSearch from 'Shared/SessionSearch';
-import { edit as editSearch } from 'Duck/search';
+import { clearSearch } from 'Duck/search';
 import { Button } from 'UI';
 
 const weakEqual = (val1, val2) => {
@@ -82,7 +82,7 @@ const allowedQueryKeys = [
   resetFunnel,
   resetFunnelFilters,
   setFunnelPage,
-  editSearch,
+  clearSearch,
 })
 @withPageTitle("Sessions - OpenReplay")
 export default class BugFinder extends React.PureComponent {
@@ -181,7 +181,7 @@ export default class BugFinder extends React.PureComponent {
                 <div style={{ width: "65%", marginRight: "10px"}}><SessionSearchField /></div>
                 <div className="flex items-center" style={{ width: "35%"}}>
                   <SavedSearch />
-                  <Button plain className="ml-auto" onClick={() => this.props.editSearch({ filters: List() })}>
+                  <Button plain className="ml-auto" onClick={() => this.props.clearSearch()}>
                     <span className="font-medium">Clear</span>
                   </Button>
                 </div>
