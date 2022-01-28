@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.4.0'
+SELECT 'v1.5.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 -- --- accounts.sql ---
@@ -419,7 +419,7 @@ $$
 
 -- --- errors.sql ---
 
-            CREATE TYPE error_source AS ENUM ('js_exception', 'bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic');
+            CREATE TYPE error_source AS ENUM ('js_exception', 'bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic', 'elasticsearch');
             CREATE TYPE error_status AS ENUM ('unresolved', 'resolved', 'ignored');
             CREATE TABLE errors
             (
