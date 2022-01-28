@@ -27,19 +27,29 @@ type elasticsearchLog struct {
 	Message string
 	Time    time.Time `json:"utc_time"` // Should be parsed automatically from RFC3339
 }
-
-type elasticResponce struct {
-	Hits struct {
-		//Total struct {
-		//	Value int
-		//}
-		Hits []struct {
-			Id     string          `json:"_id"`
-			Source json.RawMessage `json:"_source"`
-		} `json:"hits"`
-	} `json:"hits"`
+//map[string]interface{}
+// SearchResult represents the result of the search operation
+type elasticResponse struct {
+	Hits         ResultHits      `json:"hits"`
 	ScrollId string `json:"_scroll_id"`
 }
+
+// ResultHits represents the result of the search hits
+type ResultHits struct {
+	Hits     []struct {
+		Id        string              `json:"_id"`
+		Source    json.RawMessage     `json:"_source"`
+	} `json:"hits"`
+}
+//type elasticResponse struct {
+//	Hits struct {
+//		Hits []struct {
+//			Id     string          `json:"_id"`
+//			Source json.RawMessage `json:"_source"`
+//		} `json:"hits"`
+//	} `json:"hits"`
+//	ScrollId string `json:"_scroll_id"`
+//}
 
 func (es *elasticsearch) Request(c *client) error {
 	address := es.Host + ":" + es.Port.String()
@@ -150,7 +160,7 @@ func (es *elasticsearch) Request(c *client) error {
 		//	log.Println(mapResp)
 		//}
 
-		var esResp elasticResponce
+		var esResp elasticResponse
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
 			log.Printf("Error parsing the response body: %s\n", err)
 			return fmt.Errorf("Error parsing the response body: %s", err)
