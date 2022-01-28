@@ -9,7 +9,7 @@ import (
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	s := &Session{ SessionID: sessionID }
-	var revID, userOSVersion *string
+	//var revID, userOSVersion *string
 	if err := conn.queryRow(`
 		SELECT platform,
 			duration, project_id, start_ts,
@@ -25,9 +25,9 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 		sessionID,
 	).Scan(&s.Platform,
 			&s.Duration, &s.ProjectID, &s.Timestamp,
-			&s.UserUUID, &s.UserOS, &userOSVersion,
+			&s.UserUUID, &s.UserOS, &s.UserOSVersion,
 			&s.UserDevice, &s.UserDeviceType, &s.UserCountry,
-			&revID, &s.TrackerVersion,
+			&s.RevID, &s.TrackerVersion,
 			&s.UserID, &s.UserAnonymousID, 
 			&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
 			&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
@@ -36,12 +36,12 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 		log.Println(err)
 		return nil, err
 	}
-	if userOSVersion != nil { // TODO: choose format, make f
-		s.UserOSVersion = *userOSVersion
-	}
-	if revID != nil {
-		s.RevID = *revID
-	} 
+	//if userOSVersion != nil { // TODO: choose format, make f
+	//	s.UserOSVersion = *userOSVersion
+	//}
+	//if revID != nil {
+	//	s.RevID = *revID
+	//}
 	return s, nil
 }
 
