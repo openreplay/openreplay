@@ -165,14 +165,22 @@ func (es *elasticsearch) Request(c *client) error {
 			}
 			timestamp := uint64(utime.ToMilliseconds(esLog.Time))
 			c.setLastMessageTimestamp(timestamp)
+
+			var sessionID uint64
+			sessionID, err = strconv.ParseUint(token, 10, 64)
+			if err != nil {
+				log.Printf("Error converting token to uint46: %s\n", err)
+				sessionID = 0
+			}
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
-				Token: token,
+				SessionID: sessionID,
+				Token:     token,
 				RawErrorEvent: &messages.RawErrorEvent{
 					Source:    "elasticsearch",
 					Timestamp: timestamp,
-					Name: fmt.Sprintf("%v", docID),
-					Payload: fmt.Sprintf("%v", source),
+					Name:      fmt.Sprintf("%v", docID),
+					Payload:   fmt.Sprintf("%v", source),
 				},
 			}
 		}
