@@ -130,6 +130,7 @@ func (es *elasticsearch) Request(c *client) error {
 			log.Println("No hits found")
 			break
 		}
+		log.Printf("received %d hits",len(hits))
 		for _, hit := range hits {
 
 			// Parse the attributes/fields of the document
