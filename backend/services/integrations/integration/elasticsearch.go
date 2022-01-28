@@ -9,6 +9,7 @@ import (
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
 	"log"
 	"reflect"
+	"strconv"
 	"time"
 
 	"openreplay/backend/pkg/messages"
@@ -87,8 +88,8 @@ func (es *elasticsearch) Request(c *client) error {
 					map[string]interface{}{
 						"range": map[string]interface{}{
 							"utc_time": map[string]interface{}{
-								//"gte": strconv.FormatUint(gteTs, 10),
-								"gte": gteTs,
+								"gte": strconv.FormatUint(gteTs, 10),
+								//"gte": gteTs,
 								"lte": "now",
 							},
 						},
@@ -102,6 +103,7 @@ func (es *elasticsearch) Request(c *client) error {
 			},
 		},
 	}
+
 	if err := json.NewEncoder(&buf).Encode(query); err != nil {
 		return fmt.Errorf("Error encoding the query: %s", err)
 	}
