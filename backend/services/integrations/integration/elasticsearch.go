@@ -194,7 +194,7 @@ func (es *elasticsearch) Request(c *client) error {
 			log.Println("_scroll_id not found")
 			break
 		}
-		log.Println("Scrolling")
+		log.Println("Scrolling...")
 		scrollId := esResp["_scroll_id"]
 		res, err = esC.Scroll(
 			esC.Scroll.WithContext(context.Background()),

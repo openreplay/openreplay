@@ -50,7 +50,7 @@ func (c *PGCache) InsertUserAnonymousID(sessionID uint64, userAnonymousID *IOSUs
 	if err != nil {
 		return err
 	}
-	session.UserAnonymousID = &userAnonymousID.Value
+	session.UserAnonymousID = userAnonymousID.Value
 	return nil
 }
 
