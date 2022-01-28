@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"reflect"
 	"time"
 
 	"os"
@@ -36,11 +35,7 @@ func main() {
 			env.String("TOPIC_TRIGGER"),
 		},
 		func(sessionID uint64, msg messages.Message, _ *types.Meta) {
-			log.Println(">>Insert message")
-			log.Println(reflect.TypeOf(msg))
 			if err := insertMessage(sessionID, msg); err != nil {
-				log.Println(">>Error")
-				log.Println(err)
 				if !postgres.IsPkeyViolation(err) {
 					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 				}
