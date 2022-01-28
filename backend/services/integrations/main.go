@@ -69,7 +69,7 @@ func main() {
 			log.Printf("Requesting all...\n")
 			manager.RequestAll()
 		case event := <-manager.Events:
-			// log.Printf("New integration event: %v\n", *event.RawErrorEvent)
+			log.Printf("New integration event: %v\n", *event.RawErrorEvent)
 			sessionID := event.SessionID
 			if sessionID == 0 {
 				sessData, err := tokenizer.Parse(event.Token)
