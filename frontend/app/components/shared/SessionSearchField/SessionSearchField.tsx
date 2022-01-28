@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import stl from './SessionSearchField.css';
 import { Input } from 'UI';
 import FilterModal from 'Shared/Filters/FilterModal';
-import { fetchList as fetchEventList } from 'Duck/events';
+// import { fetchList as fetchFilterSearch } from 'Duck/events';
+import { fetchFilterSearch } from 'Duck/search';
 import { debounce } from 'App/utils';
 import { edit as editFilter } from 'Duck/search';
 import {
@@ -13,19 +14,19 @@ import {
 
 interface Props {
   setSearchQuery: (query: string) => void;
-  fetchEventList: (query: any) => void;
+  fetchFilterSearch: (query: any) => void;
   searchQuery: string;
   appliedFilter: any;
   editFilter: typeof editFilter;
 }
 function SessionSearchField(props: Props) {
   const { appliedFilter } = props;
-  const debounceFetchEventList = debounce(props.fetchEventList, 1000)
+  const debounceFetchFilterSearch = debounce(props.fetchFilterSearch, 1000)
   const [showModal, setShowModal] = useState(false)
 
   const onSearchChange = (e, { value }) => {
     // props.setSearchQuery(value)
-    debounceFetchEventList({ q: value });
+    debounceFetchFilterSearch({ q: value });
   }
 
   const onAddFilter = (filter) => {
@@ -87,4 +88,4 @@ export default connect(state => ({
   strict: state.getIn([ 'filters', 'appliedFilter', 'strict' ]),
   blink: state.getIn([ 'funnels', 'blink' ]),
   appliedFilter: state.getIn(['search', 'instance']),
-}), { setSearchQuery, fetchEventList, editFilter })(SessionSearchField);
+}), { setSearchQuery, fetchFilterSearch, editFilter })(SessionSearchField);
