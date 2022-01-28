@@ -8,7 +8,6 @@ import (
 	"fmt"
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
 	"log"
-	"strconv"
 	"time"
 
 	"openreplay/backend/pkg/messages"
@@ -87,7 +86,8 @@ func (es *elasticsearch) Request(c *client) error {
 					map[string]interface{}{
 						"range": map[string]interface{}{
 							"utc_time": map[string]interface{}{
-								"gte": strconv.FormatUint(gteTs, 10),
+								//"gte": strconv.FormatUint(gteTs, 10),
+								"gte": gteTs,
 								"lte": "now",
 							},
 						},
@@ -142,6 +142,7 @@ func (es *elasticsearch) Request(c *client) error {
 			log.Printf("Error parsing the response body: %s\n", err)
 			return fmt.Errorf("Error parsing the response body: %s", err)
 		}
+		log.Printf("parsed response: %v\n", esResp)
 		if len(esResp.Hits.Hits) == 0 {
 			break
 		}
