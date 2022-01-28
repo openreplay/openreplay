@@ -8,7 +8,6 @@ import (
 	"fmt"
 	elasticlib "github.com/elastic/go-elasticsearch/v7"
 	"log"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -37,10 +36,9 @@ type elasticResponce struct {
 		Hits []struct {
 			Id     string          `json:"_id"`
 			Source json.RawMessage `json:"_source"`
-		}
-	}
+		} `json:"hits"`
+	} `json:"hits"`
 	ScrollId string `json:"_scroll_id"`
-	Error    map[string]interface{}
 }
 
 func (es *elasticsearch) Request(c *client) error {
@@ -57,6 +55,8 @@ func (es *elasticsearch) Request(c *client) error {
 	esC, err := elasticlib.NewClient(cfg)
 
 	if err != nil {
+		log.Println("Error while creating new ES client")
+		log.Println(err)
 		return err
 	}
 	// TODO: ping/versions/ client host check
@@ -140,15 +140,15 @@ func (es *elasticsearch) Request(c *client) error {
 	}
 
 	for {
-		var mapResp map[string]interface{}
-		if err := json.NewDecoder(res.Body).Decode(&mapResp); err != nil {
-			log.Fatalf("Error parsing raw response body: %s", err)
-
-			// If no error, then convert response to a map[string]interface
-		} else {
-			log.Println("mapResp TYPE:", reflect.TypeOf(mapResp), "\n")
-			log.Println(mapResp)
-		}
+		//var mapResp map[string]interface{}
+		//if err := json.NewDecoder(res.Body).Decode(&mapResp); err != nil {
+		//	log.Fatalf("Error parsing raw response body: %s", err)
+		//
+		//	// If no error, then convert response to a map[string]interface
+		//} else {
+		//	log.Println("mapResp TYPE:", reflect.TypeOf(mapResp), "\n")
+		//	log.Println(mapResp)
+		//}
 
 		var esResp elasticResponce
 		if err := json.NewDecoder(res.Body).Decode(&esResp); err != nil {
