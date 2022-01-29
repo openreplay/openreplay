@@ -23,7 +23,7 @@
     "deep-diff": "^1.0.2",
     "immutable": "^4.0.0-rc.12",
     "jsbi": "^4.1.0",
-    "jshint": "^2.11.1",
+    "jshint": "^2.13.4",
     "luxon": "^1.24.1",
     "mobx": "^6.3.8",
     "mobx-react-lite": "^3.1.6",
