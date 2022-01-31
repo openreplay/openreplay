@@ -66,5 +66,6 @@ module.exports = {
     peerRouter,
     peerConnection,
     peerDisconnect,
-    peerError
+    peerError,
+    extractPeerId
 };
