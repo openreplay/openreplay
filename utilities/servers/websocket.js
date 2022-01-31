@@ -7,7 +7,7 @@ const NEW_AGENT_MESSAGE = "NEW_AGENT";
 const NO_AGENTS = "NO_AGENT";
 const NO_SESSIONS = "SESSION_DISCONNECTED";
 const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
-const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
+// const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
 
 let connectedSessions = {};
 
@@ -42,6 +42,25 @@ const findSessionSocketId = async (io, peerId) => {
     return null;
 };
 
+async function sessions_agents_count(io, socket) {
+    let c_sessions = 0, c_agents = 0;
+    if (io.sockets.adapter.rooms.get(socket.peerId)) {
+        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+
+        for (let item of connected_sockets) {
+            if (item.handshake.query.identity === IDENTITIES.session) {
+                c_sessions++;
+            } else {
+                c_agents++;
+            }
+        }
+    } else {
+        c_agents = -1;
+        c_sessions = -1;
+    }
+    return {c_sessions, c_agents};
+}
+
 module.exports = {
     wsRouter,
     start: (server) => {
@@ -62,17 +81,25 @@ module.exports = {
             socket.sessionId = sessionId;
             socket.projectKey = projectKey;
             socket.lastMessageReceivedAt = Date.now();
+            let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 connectedSessions[socket.projectKey] = connectedSessions[socket.projectKey] || [];
                 if (!connectedSessions[socket.projectKey].includes(socket.sessionId)) {
                     connectedSessions[socket.projectKey].push(socket.sessionId);
                 }
-                let sessionSocketId = await findSessionSocketId(io, socket.peerId);
-                if (sessionSocketId !== null) {
+                if (c_sessions > 0) {
                     console.log(`session already connected, refusing new connexion`);
                     io.to(socket.id).emit(SESSION_ALREADY_CONNECTED);
                     return socket.disconnect();
                 }
+                if (c_agents > 0) {
+                    console.log(`notifying new session about agent-existance`);
+                    io.to(socket.id).emit(NEW_AGENT_MESSAGE);
+                }
+
+            } else if (c_sessions <= 0) {
+                console.log(`notifying new agent about no SESSIONS`);
+                io.to(socket.id).emit(NO_SESSIONS);
             }
             socket.join(socket.peerId);
             if (io.sockets.adapter.rooms.get(socket.peerId)) {
@@ -84,30 +111,23 @@ module.exports = {
                 console.log(`${socket.id} disconnected from ${socket.peerId}`);
                 // wait a little bit before notifying everyone
                 // setTimeout(async () => {
-                console.log("wait ended, checking for number of connected agentants and sessions");
-                if (io.sockets.adapter.rooms.get(socket.peerId)) {
-                    const connected_sockets = await io.in(socket.peerId).fetchSockets();
-                    let c_sessions = 0, c_agentants = 0;
-                    for (let item of connected_sockets) {
-                        if (item.handshake.query.identity === IDENTITIES.session) {
-                            c_sessions++;
-                        } else {
-                            c_agentants++;
-                        }
-                    }
-                    if (c_sessions === 0) {
-                        console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
-                        socket.to(socket.peerId).emit(NO_SESSIONS);
-                        removeSession(socket.projectKey, socket.sessionId);
-                    }
-                    if (c_agentants === 0) {
-                        console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
-                        socket.to(socket.peerId).emit(NO_AGENTS);
-                    }
-                } else {
+                console.log("checking for number of connected agents and sessions");
+                let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
+                if (c_sessions === -1 && c_agents === -1) {
                     console.log(`room not found: ${socket.peerId}`);
+                    return removeSession(socket.projectKey, socket.sessionId);
+                }
+                if (c_sessions === 0) {
+                    console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
+                    socket.to(socket.peerId).emit(NO_SESSIONS);
                     removeSession(socket.projectKey, socket.sessionId);
                 }
+                if (c_agents === 0) {
+                    console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
+                    socket.to(socket.peerId).emit(NO_AGENTS);
+                }
+
+
                 // }, wsReconnectionTimeout);
             });
 
