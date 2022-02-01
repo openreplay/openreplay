@@ -44,7 +44,7 @@ spec:
             name: data
           volumeMounts:
           - name: ch-volume
-            mountPath: /var/lib/mydata
+            mountPath: /var/lib/clickhouse
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
