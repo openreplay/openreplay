@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"log"
 	"math"
 
 	"openreplay/backend/pkg/hashid"
@@ -173,10 +172,6 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 	}
 	defer tx.rollback()
 	errorID := hashid.WebErrorID(projectID, e)
-	log.Println(">>errorID")
-	log.Println(errorID)
-	log.Println(">>payload")
-	log.Println(e.Payload)
 
 	if err = tx.exec(`
 		INSERT INTO errors
@@ -186,8 +181,6 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		ON CONFLICT DO NOTHING`,
 		errorID, projectID, e.Source, e.Name, e.Message, e.Payload,
 	); err != nil {
-		log.Println(">>error LVL1")
-		log.Println(err)
 		return err
 	}
 	if err = tx.exec(`
@@ -198,8 +191,6 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		`,
 		sessionID, e.MessageID, e.Timestamp, errorID,
 	); err != nil {
-		log.Println(">>error LVL2")
-		log.Println(err)
 		return err
 	}
 	if err = tx.exec(`
@@ -207,8 +198,6 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		WHERE session_id = $1`,
 		sessionID,
 	); err != nil {
-		log.Println(">>error LVL3")
-		log.Println(err)
 		return err
 	}
 	return tx.commit()
