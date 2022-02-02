@@ -1,46 +1,47 @@
 package types
 
 type Session struct {
-	SessionID uint64
-	Timestamp uint64
-	ProjectID uint32
+	SessionID      uint64
+	Timestamp      uint64
+	ProjectID      uint32
 	TrackerVersion string
-	RevID string
-	UserUUID string
-	UserOS string
-	UserOSVersion string
-	UserDevice string
-	UserCountry string
+	RevID          string
+	UserUUID       string
+	UserOS         string
+	UserOSVersion  string
+	UserDevice     string
+	UserCountry    string
 
-	Duration *uint64
-	PagesCount int
-	EventsCount int
-	ErrorsCount int
-	UserID string // pointer??
+	Duration        *uint64
+	PagesCount      int
+	EventsCount     int
+	ErrorsCount     int
+
+	UserID          *string // pointer??
 	UserAnonymousID *string
-	Metadata1          *string 
-	Metadata2          *string 
-	Metadata3          *string 
-	Metadata4          *string 
-	Metadata5          *string 
-	Metadata6          *string 
-	Metadata7          *string 
-	Metadata8          *string 
-	Metadata9          *string 
-	Metadata10         *string
+	Metadata1       *string
+	Metadata2       *string
+	Metadata3       *string
+	Metadata4       *string
+	Metadata5       *string
+	Metadata6       *string
+	Metadata7       *string
+	Metadata8       *string
+	Metadata9       *string
+	Metadata10      *string
 
 	Platform string
 	// Only-web properties
-	UserAgent string
-	UserBrowser string
-	UserBrowserVersion string
-	UserDeviceType string
+	UserAgent            string
+	UserBrowser          string
+	UserBrowserVersion   string
+	UserDeviceType       string
 	UserDeviceMemorySize uint64
-	UserDeviceHeapSize uint64
+	UserDeviceHeapSize   uint64
 }
 
 func (s *Session) SetMetadata(keyNo uint, value string) {
-	switch (keyNo) {
+	switch keyNo {
 	case 1:
 		s.Metadata1 = &value
 	case 2:

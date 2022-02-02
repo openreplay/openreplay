@@ -1,11 +1,12 @@
 package postgres
 
 //import 	. "openreplay/backend/pkg/messages"
-import 	. "openreplay/backend/pkg/db/types"
+import . "openreplay/backend/pkg/db/types"
+
 //import "log"
 
 func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
-	s := &Session{ SessionID: sessionID }
+	s := &Session{SessionID: sessionID}
 	var revID, userOSVersion *string
 	if err := conn.queryRow(`
 		SELECT platform,
@@ -21,13 +22,13 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	`,
 		sessionID,
 	).Scan(&s.Platform,
-			&s.Duration, &s.ProjectID, &s.Timestamp,
-			&s.UserUUID, &s.UserOS, &userOSVersion,
-			&s.UserDevice, &s.UserDeviceType, &s.UserCountry,
-			&revID, &s.TrackerVersion,
-			&s.UserID, &s.UserAnonymousID, 
-			&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
-			&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
+		&s.Duration, &s.ProjectID, &s.Timestamp,
+		&s.UserUUID, &s.UserOS, &userOSVersion,
+		&s.UserDevice, &s.UserDeviceType, &s.UserCountry,
+		&revID, &s.TrackerVersion,
+		&s.UserID, &s.UserAnonymousID,
+		&s.Metadata1, &s.Metadata2, &s.Metadata3, &s.Metadata4, &s.Metadata5,
+		&s.Metadata6, &s.Metadata7, &s.Metadata8, &s.Metadata9, &s.Metadata10); err != nil {
 		return nil, err
 	}
 	if userOSVersion != nil { // TODO: choose format, make f
@@ -35,7 +36,7 @@ func (conn *Conn) GetSession(sessionID uint64) (*Session, error) {
 	}
 	if revID != nil {
 		s.RevID = *revID
-	} 
+	}
 	return s, nil
 }
 

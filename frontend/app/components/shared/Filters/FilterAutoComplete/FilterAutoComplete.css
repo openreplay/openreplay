@@ -5,6 +5,7 @@
   display: flex;
   align-items: center;
   background-color: white;
+  width: 100%;
   & input {
     height: 24px;
     font-size: 13px !important;
@@ -12,6 +13,7 @@
     border-top-left-radius: 3px;
     border-bottom-left-radius: 3px;
     border: solid thin transparent !important;
+    width: 100%;
   }
 
   & .right {

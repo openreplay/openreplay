@@ -69,7 +69,7 @@ resources: {}
   #   memory: 128Mi
 
 autoscaling:
-  enabled: true
+  enabled: false
   minReplicas: 1
   maxReplicas: 5
   targetCPUUtilizationPercentage: 80
@@ -78,7 +78,7 @@ autoscaling:
 env:
   TOKEN_SECRET: secret_token_string # TODO: generate on buld
   S3_BUCKET_IOS_IMAGES: sessions-mobile-assets
-  CACHE_ASSETS: false
+  CACHE_ASSETS: true
   HTTP_PORT: 80
 
 

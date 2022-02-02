@@ -8,11 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/token"
 	"openreplay/backend/services/integrations/clientManager"
 )
@@ -42,7 +42,7 @@ func main() {
 		}
 	})
 
-	producer:= queue.NewProducer()
+	producer := queue.NewProducer()
 	defer producer.Close(15000)
 
 	listener, err := postgres.NewIntegrationsListener(POSTGRES_STRING)
@@ -66,10 +66,10 @@ func main() {
 			pg.Close()
 			os.Exit(0)
 		case <-tick:
-			// log.Printf("Requesting all...\n")
+			log.Printf("Requesting all...\n")
 			manager.RequestAll()
 		case event := <-manager.Events:
-			// log.Printf("New integration event: %v\n", *event.RawErrorEvent)
+			log.Printf("New integration event: %+v\n", *event.RawErrorEvent)
 			sessionID := event.SessionID
 			if sessionID == 0 {
 				sessData, err := tokenizer.Parse(event.Token)
@@ -89,7 +89,7 @@ func main() {
 				log.Printf("Postgres Update request_data error: %v\n", err)
 			}
 		case err := <-listener.Errors:
-		  log.Printf("Postgres listen error: %v\n", err)
+			log.Printf("Postgres listen error: %v\n", err)
 		case iPointer := <-listener.Integrations:
 			log.Printf("Integration update: %v\n", *iPointer)
 			err := manager.Update(iPointer)

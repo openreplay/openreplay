@@ -22,7 +22,7 @@ function FilterValue(props: Props) {
     props.onUpdate({ ...filter, value: newValues })
   }
 
-  const onSelect = (e, item, valueIndex) => {
+  const onChange = (e, item, valueIndex) => {
     const newValues = filter.value.map((_, _index) => {
       if (_index === valueIndex) {
         return item.value;
@@ -61,7 +61,7 @@ function FilterValue(props: Props) {
             value={value}
             filter={filter}
             options={filter.options}
-            onChange={(e, { name, value }) => onSelect(e, { value }, valueIndex)}
+            onChange={(e, { name, value }) => onChange(e, { value }, valueIndex)}
           />
         )
       case FilterType.ISSUE:
@@ -72,7 +72,7 @@ function FilterValue(props: Props) {
             value={value}
             filter={filter}
             options={filter.options}
-            onChange={(e, { name, value }) => onSelect(e, { value }, valueIndex)}
+            onChange={(e, { name, value }) => onChange(e, { value }, valueIndex)}
             onAddValue={onAddValue}
             onRemoveValue={() => onRemoveValue(valueIndex)}
             showCloseButton={showCloseButton}
@@ -96,7 +96,7 @@ function FilterValue(props: Props) {
             type="number"
             name={`${filter.key}-${valueIndex}`}
             value={value}
-            onChange={(e) => onSelect(e, { value: e.target.value }, valueIndex)}
+            onChange={(e) => onChange(e, { value: e.target.value }, valueIndex)}
           />
         )
       case FilterType.MULTIPLE:
@@ -112,7 +112,7 @@ function FilterValue(props: Props) {
             params={{ type: filter.key  }}
             headerText={''}
             // placeholder={''}
-            onSelect={(e, item) => onSelect(e, item, valueIndex)}
+            onSelect={(e, item) => onChange(e, item, valueIndex)}
           />
         )
     }

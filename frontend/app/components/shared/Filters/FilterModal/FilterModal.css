@@ -1,0 +1,17 @@
+.wrapper {
+  border-radius: 3px;
+  border: solid thin $gray-light;
+  padding: 20px;
+}
+.optionItem {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  &:hover {
+    background-color: $active-blue;
+    color: $teal !important;
+    & svg {
+      fill: $teal !important;
+    }
+  }
+}

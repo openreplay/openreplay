@@ -3,16 +3,16 @@ import Filter from './filter';
 import { List } from 'immutable';
 
 export default Record({
-  filterId: undefined,
+  searchId: undefined,
   projectId: undefined,
   userId: undefined,
-  name: undefined,
+  name: '',
   filter: Filter(),
   createdAt: undefined,
   count: 0,
   watchdogs: List()
 }, {
-  idKey: 'filterId',
+  idKey: 'searchId',
   methods: {
     toData() {
       const js = this.toJS();

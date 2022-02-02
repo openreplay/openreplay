@@ -2,14 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Button, Icon } from 'UI';
 import SavedSearchDropdown from './components/SavedSearchDropdown';
 import { connect } from 'react-redux';
-import { fetchList as fetchListSavedSearch } from 'Duck/filters';
+import { fetchList as fetchListSavedSearch } from 'Duck/search';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import cn from 'classnames';
+import { list } from 'App/components/BugFinder/CustomFilters/filterModal.css';
+import stl from './SavedSearch.css';
 
 interface Props {
   fetchListSavedSearch: () => void;
   list: any;
+  savedSearch: any;
 }
 function SavedSearch(props) {
+  const { list } = props;
+  const { savedSearch }  = props;
   const [showMenu, setShowMenu] = useState(false)
 
   useEffect(() => {
@@ -22,19 +28,29 @@ function SavedSearch(props) {
       onClickOutside={() => setShowMenu(false)}
     >
       <div className="relative">
-        <Button prime outline size="small"
-          className="flex items-center"
-          onClick={() => setShowMenu(true)}
-        >
-          <span className="mr-2">Search Saved</span>
-          <Icon name="ellipsis-v" color="teal" size="14" />
-        </Button>
+        <div className={cn("flex items-center", { [stl.disabled] : list.size === 0})}>
+          <Button prime outline size="small"
+            className="flex items-center"
+            onClick={() => setShowMenu(true)}
+          >
+            <span className="mr-2">Search Saved</span>
+            <Icon name="ellipsis-v" color="teal" size="14" />
+          </Button>
+          { savedSearch && (
+            <div className="flex items-center ml-2">
+              <Icon name="search" size="14" />
+              <span className="color-gray-medium px-1">Viewing:</span>
+              <span className="font-medium">{savedSearch.name}</span>
+            </div>
+          )}
+        </div>
+
         { showMenu && (
           <div
-            className="absolute right-0 bg-white border rounded z-50"
+            className="absolute left-0 bg-white border rounded z-50"
             style={{ top: '33px', width: '200px' }}
           >
-            <SavedSearchDropdown list={props.list}/>
+            <SavedSearchDropdown list={props.list} onClose={() => setShowMenu(false)} />
           </div>
         )}
       </div>
@@ -43,5 +59,6 @@ function SavedSearch(props) {
 }
 
 export default connect(state => ({
-  list: state.getIn([ 'filters', 'list' ]),
+  list: state.getIn([ 'search', 'list' ]),
+  savedSearch: state.getIn([ 'search', 'savedSearch' ])
 }), { fetchListSavedSearch })(SavedSearch);
