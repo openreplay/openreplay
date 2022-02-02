@@ -101,7 +101,7 @@ function FilterAutoComplete(props: Props) {
         <input
           name="query"
           onChange={ onInputChange }
-          onBlur={ () => setTimeout(() => { setShowModal(false) }, 50) }
+          onBlur={ () => setTimeout(() => { setShowModal(false) }, 150) }
           onFocus={ () => setShowModal(true)}
           value={ query }
           autoFocus={ true }
