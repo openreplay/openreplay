@@ -12,6 +12,7 @@ export interface Options {
   ignoreHeaders: Array<string> | boolean;
 }
 
+// TODO: test webpack 5 for axios imports
 
 function isAxiosResponse(r: any): r is AxiosResponse {
   return typeof r === "object" &&
@@ -40,6 +41,8 @@ export default function(opts: Partial<Options> = {}) {
       : () => ihOpt
 
     const sendFetchMessage = (res: AxiosResponse) => {
+      // ?? TODO: why config is undeined sometimes?
+      if (!isAxiosResponse(res)) { return }
     	// @ts-ignore
     	const startTime: number = res.config.__openreplayStartTs;
     	const duration = performance.now() - startTime;
@@ -107,9 +110,10 @@ export default function(opts: Partial<Options> = {}) {
       );
     }
 
-    // TODO: why app.safe doesn't work here?
     options.instance.interceptors.request.use(function (config) {
-    	if (options.sessionTokenHeader) {
+      if (typeof config !== "object") { return config } // ??
+
+      if (options.sessionTokenHeader) {
         const sessionToken = app.getSessionToken();
         if (sessionToken) {
           if (config.headers === undefined) {
@@ -152,7 +156,7 @@ export default function(opts: Partial<Options> = {}) {
 	  		app.send(getExceptionMessage(error, []));
 	  	}
 
-      // TODO: common case (selector)
+      // TODO: common case (selector option) for modified responses
       if (isAxiosResponse(error)) {
         sendFetchMessage(error)
       }
