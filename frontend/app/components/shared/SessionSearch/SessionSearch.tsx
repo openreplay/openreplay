@@ -1,4 +1,5 @@
 import React from 'react';
+import { List } from 'immutable';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
@@ -12,6 +13,8 @@ interface Props {
 }
 function SessionSearch(props) {
   const { appliedFilter } = props;
+  const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
+  const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
 
   const onAddFilter = (filter) => {
     filter.value = [""]
@@ -55,16 +58,14 @@ function SessionSearch(props) {
 
   const clearSearch = () => {
     props.edit({
-        filters: [],
+        filters: List(),
     });
   }
-  
 
-  return (
+  return (hasEvents || hasFilters) ? (
     <div className="border bg-white rounded mt-4">
       <div className="p-5">
         <FilterList
-          // filters={appliedFilter.filter.filters.toJS()}
           filter={appliedFilter}
           onUpdateFilter={onUpdateFilter}
           onRemoveFilter={onRemoveFilter}
@@ -83,16 +84,13 @@ function SessionSearch(props) {
         </div>
         <div className="ml-auto flex items-center">
           <SaveFilterButton />
-          <Button onClick={clearSearch}>CLEAR STEPS</Button>
-          <Button plain>SAVE FUNNEL</Button>
+          <IconButton primaryText label="SAVE FUNNEL" icon="filter" />
         </div>
       </div>
     </div>
-  );
+  ) : <></>;
 }
 
 export default connect(state => ({
   appliedFilter: state.getIn([ 'search', 'instance' ]),
 }), { edit })(SessionSearch);
-
-// appliedFilter: state.getIn([ 'filters', 'appliedFilter' ]),

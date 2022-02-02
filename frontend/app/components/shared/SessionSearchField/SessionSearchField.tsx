@@ -2,9 +2,11 @@ import React, { useRef, useState } from 'react';
 import { connect } from 'react-redux';
 import stl from './SessionSearchField.css';
 import { Input } from 'UI';
-import FilterModal from 'Shared/EventFilter/FilterModal';
-import { fetchList as fetchEventList } from 'Duck/events';
+import FilterModal from 'Shared/Filters/FilterModal';
+// import { fetchList as fetchFilterSearch } from 'Duck/events';
+import { fetchFilterSearch } from 'Duck/search';
 import { debounce } from 'App/utils';
+import { edit as editFilter } from 'Duck/search';
 import {
   addEvent, applyFilter, moveEvent, clearEvents,
   addCustomFilter, addAttribute, setSearchQuery, setActiveFlow, setFilterOption
@@ -12,16 +14,28 @@ import {
 
 interface Props {
   setSearchQuery: (query: string) => void;
-  fetchEventList: (query: any) => void;
-  searchQuery: string
+  fetchFilterSearch: (query: any) => void;
+  searchQuery: string;
+  appliedFilter: any;
+  editFilter: typeof editFilter;
 }
 function SessionSearchField(props: Props) {
-  const debounceFetchEventList = debounce(props.fetchEventList, 1000)
+  const { appliedFilter } = props;
+  const debounceFetchFilterSearch = debounce(props.fetchFilterSearch, 1000)
   const [showModal, setShowModal] = useState(false)
 
   const onSearchChange = (e, { value }) => {
     // props.setSearchQuery(value)
-    debounceFetchEventList({ q: value });
+    debounceFetchFilterSearch({ q: value });
+  }
+
+  const onAddFilter = (filter) => {
+    filter.value = [""]
+    const newFilters = appliedFilter.filters.concat(filter);
+    props.editFilter({
+        ...appliedFilter.filter,
+        filters: newFilters,
+    });
   }
 
   return (
@@ -30,7 +44,7 @@ function SessionSearchField(props: Props) {
         inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
         className={stl.searchField}
         onFocus={ () => setShowModal(true) }
-        onBlur={ () => setTimeout(setShowModal, 100, false) }
+        onBlur={ () => setTimeout(setShowModal, 50, false) }
         // ref={ this.inputRef }
         onChange={ onSearchChange }
         // onKeyUp={this.onKeyUp}
@@ -44,21 +58,28 @@ function SessionSearchField(props: Props) {
         autocomplete="off"
       />
 
-      <FilterModal
+      {/* <FilterModal
         close={ () => setShowModal(false) }
         displayed={ showModal }
         // displayed={ true }
         // loading={ loading }
         // searchedEvents={ searchedEvents }
         searchQuery={ props.searchQuery }
-      />
+      /> */}
+      { showModal && (
+        <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
+          <FilterModal
+            onFilterClick={onAddFilter}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 export default connect(state => ({
   events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
-  appliedFilter: state.getIn([ 'filters', 'appliedFilter' ]),
+  // appliedFilter: state.getIn([ 'filters', 'appliedFilter' ]),
   searchQuery: state.getIn([ 'filters', 'searchQuery' ]),
   appliedFilterKeys: state.getIn([ 'filters', 'appliedFilter', 'filters' ])
     .map(({type}) => type).toJS(),
@@ -66,4 +87,5 @@ export default connect(state => ({
   loading: state.getIn([ 'events', 'loading' ]),
   strict: state.getIn([ 'filters', 'appliedFilter', 'strict' ]),
   blink: state.getIn([ 'funnels', 'blink' ]),
-}), { setSearchQuery, fetchEventList })(SessionSearchField);
+  appliedFilter: state.getIn(['search', 'instance']),
+}), { setSearchQuery, fetchFilterSearch, editFilter })(SessionSearchField);

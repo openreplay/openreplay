@@ -479,14 +479,16 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             if values.get("type") == PerformanceEventType.fetch_failed:
                 return values
             assert values.get("source") is not None, "source should not be null for PerformanceEventType"
-            assert values.get("sourceOperator") is not None \
-                , "sourceOperator should not be null for PerformanceEventType"
+            assert isinstance(values["source"], list) and len(values["source"]) > 0, \
+                "source should not be empty for PerformanceEventType"
+            assert values.get("sourceOperator") is not None, \
+                "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
                 assert len(values.get("value", [])) == 2, \
                     f"must provide 2 Events as value for {PerformanceEventType.time_between_events}"
                 assert isinstance(values["value"][0], _SessionSearchEventRaw) \
-                       and isinstance(values["value"][1], _SessionSearchEventRaw) \
-                    , f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
+                       and isinstance(values["value"][1], _SessionSearchEventRaw), \
+                    f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
             else:
                 for c in values["source"]:
                     assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
@@ -578,7 +580,13 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     range_value: Optional[str] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
+    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+
+    @root_validator(pre=True)
+    def enforce_default_values(cls, values):
+        values["eventsOrder"] = SearchEventOrder._then
+        return values
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -690,4 +698,4 @@ class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
 
 
 class SavedSearchSchema(FunnelSchema):
-    pass
+    filter: FlatSessionsSearchPayloadSchema = Field([])

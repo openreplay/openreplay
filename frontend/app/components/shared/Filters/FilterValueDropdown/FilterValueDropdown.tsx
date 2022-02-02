@@ -18,11 +18,11 @@ interface Props {
   onAddValue?: () => void;
 }
 function FilterValueDropdown(props: Props) {
-  const { multiple = false, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
+  const { filter, multiple = false, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
   // const options = []
 
   return (
-    <div className={stl.wrapper}>
+    <div className={stl.wrapper}>      
       <Dropdown
         search={search}
         className={ cn(stl.operatorDropdown, className) }      

@@ -1,15 +1,23 @@
-@import 'mixins.css';
-
 .modalHeader {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .cancelButton {
-    @mixin plainButton;
+  background-color: transparent !important;
+  border: solid thin transparent !important;
+  color: $teal !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
 }
 
 .applyButton {
-    @mixin basicButton;
+  background-color: white !important;
+  border: solid thin $active-blue-border !important;
+  color: $teal !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
 }
