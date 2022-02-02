@@ -44,7 +44,7 @@ function SessionSearchField(props: Props) {
         inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
         className={stl.searchField}
         onFocus={ () => setShowModal(true) }
-        onBlur={ () => setTimeout(setShowModal, 50, false) }
+        onBlur={ () => setTimeout(setShowModal, 200, false) }
         // ref={ this.inputRef }
         onChange={ onSearchChange }
         // onKeyUp={this.onKeyUp}
