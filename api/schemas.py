@@ -466,11 +466,11 @@ class __MixedSearchFilter(BaseModel):
 
 
 class _SessionSearchEventRaw(__MixedSearchFilter):
-    is_event: bool = Field(True, const=True)
-    value: Union[str, List[str]] = Field(...)
+    is_event: bool = Field(default=True, const=True)
+    value: List[str] = Field(...)
     type: Union[EventType, PerformanceEventType] = Field(...)
     operator: SearchEventOperator = Field(...)
-    source: Optional[Union[ErrorSource, List[Union[int, str]]]] = Field(default=ErrorSource.js_exception)
+    source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
     sourceOperator: Optional[MathOperator] = Field(None)
 
     @root_validator
@@ -492,6 +492,9 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             else:
                 for c in values["source"]:
                     assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
+        elif values.get("type") == EventType.error and values.get("source") is None:
+            values["source"] = [ErrorSource.js_exception]
+
         return values
 
 
@@ -586,6 +589,7 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     @root_validator(pre=True)
     def enforce_default_values(cls, values):
         values["eventsOrder"] = SearchEventOrder._then
+        values["groupByUser"] = False
         return values
 
     class Config:
@@ -611,6 +615,7 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     # class FunnelInsightsPayloadSchema(SessionsSearchPayloadSchema):
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
+    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
@@ -645,6 +650,7 @@ class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
+    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
