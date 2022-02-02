@@ -2,6 +2,8 @@
   border-radius: 3px;
   border: solid thin $gray-light;
   padding: 20px;
+  overflow: hidden;
+  overflow-y: auto;
 }
 .optionItem {
   white-space: nowrap;
@@ -13,5 +15,22 @@
     & svg {
       fill: $teal !important;
     }
+  }
+}
+
+.filterSearchItem {
+  &:hover {
+    background-color: $active-blue;
+    color: $teal;
+
+    & svg {
+      fill: $teal;
+    }
+  }
+
+  & div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

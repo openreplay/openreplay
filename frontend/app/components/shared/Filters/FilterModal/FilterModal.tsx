@@ -3,15 +3,53 @@ import { Icon } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './FilterModal.css';
+import { filtersMap } from 'Types/filter/newFilter'
 
 interface Props {
   filters: any,
-  onFilterClick?: (filter) => void
+  onFilterClick?: (filter) => void,
+  filterSearchList: any,
 }
 function FilterModal(props: Props) {
-  const { filters, onFilterClick = () => null } = props;
+  const { filters, onFilterClick = () => null, filterSearchList } = props;
+  const hasFilerSearchList = filterSearchList && Object.keys(filterSearchList).length > 0;
+
+  const onFilterSearchClick = (filter) => {
+    const _filter = filtersMap[filter.type];
+    _filter.value = [filter.value];
+    onFilterClick(_filter);
+  }
   return (
     <div className={stl.wrapper} style={{ width: '490px', height: '400px', overflowY: 'auto'}}>
+      { hasFilerSearchList && (
+        <div className="border-b -mx-6 px-6 mb-3">
+          { filterSearchList && Object.keys(filterSearchList).map((key, index) => {
+            const filter = filterSearchList[key];
+            const option = filtersMap[key];
+            return (
+              <div
+                key={index}
+                className={cn('mb-3')}
+              >
+                <div className="font-medium uppercase color-gray-medium text-sm mb-2">{option.label}</div>
+                <div>
+                  {filter.map((f, i) => (
+                    <div
+                      key={i}
+                      className={cn(stl.filterSearchItem, "cursor-pointer px-3 py-1 text-sm flex items-center")}
+                      onClick={() => onFilterSearchClick({ type: key, value: f.value })}
+                    >
+                      <Icon className="mr-2" name={option.icon} size="16" />
+                      <div className="whitespace-nowrap text-ellipsis overflow-hidden">{f.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      
       <div className="" style={{ columns: "100px 2" }}>
         {filters && Object.keys(filters).map((key) => (
           <div className="mb-6">
@@ -32,5 +70,6 @@ function FilterModal(props: Props) {
 }
 
 export default connect(state => ({
-  filters: state.getIn([ 'filters', 'filterList' ])
+  filters: state.getIn([ 'filters', 'filterList' ]),
+  filterSearchList: state.getIn([ 'search', 'filterSearchList' ])
 }))(FilterModal);
