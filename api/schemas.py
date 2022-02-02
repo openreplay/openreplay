@@ -371,7 +371,6 @@ class EventType(str, Enum):
     graphql = "GRAPHQL"
     state_action = "STATEACTION"
     error = "ERROR"
-    metadata = "METADATA"
     click_ios = "CLICK_IOS"
     input_ios = "INPUT_IOS"
     view_ios = "VIEW_IOS"
@@ -566,6 +565,7 @@ class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
                 if v.get("isEvent"):
                     n_events.append(v)
                 else:
+                    v["isEvent"] = False
                     n_filters.append(v)
             values["events"] = n_events
             values["filters"] = n_filters
