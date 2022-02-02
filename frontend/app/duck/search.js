@@ -43,7 +43,7 @@ const initialState = Map({
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
   savedSearch: null,
-  filterSearchList: List(),
+  filterSearchList: {},
 });
 
 // Metric - Series - [] - filters
@@ -69,7 +69,17 @@ function reducer(state = initialState, action = {}) {
 			const { data } = action;
 			return state.set("list", List(data.map(SavedFilter)));
     case success(FETCH_FILTER_SEARCH):
-      return state.set("filterSearchList", action.data.map(NewFilter));
+      const groupedList = action.data.reduce((acc, item) => {
+        const { projectId, type, value } = item;
+        const key = type;
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push({ projectId, value });
+        return acc;
+      }, {});
+      console.log('groupedList', groupedList);
+      return state.set('filterSearchList', groupedList);
     case APPLY_SAVED_SEARCH:
       return state.set('savedSearch', action.filter);
 	}

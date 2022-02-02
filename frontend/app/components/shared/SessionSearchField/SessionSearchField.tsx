@@ -30,7 +30,7 @@ function SessionSearchField(props: Props) {
   }
 
   const onAddFilter = (filter) => {
-    filter.value = [""]
+    filter.value = filter.value ? filter.value : [""]
     const newFilters = appliedFilter.filters.concat(filter);
     props.editFilter({
         ...appliedFilter.filter,
