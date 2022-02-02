@@ -105,14 +105,18 @@ def events_search(projectId: int, q: str,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
-    if isinstance(type, schemas.PerformanceEventType) \
-            and type in [schemas.PerformanceEventType.location_dom_complete,
-                         schemas.PerformanceEventType.location_largest_contentful_paint_time,
-                         schemas.PerformanceEventType.location_ttfb,
-                         schemas.PerformanceEventType.location_avg_cpu_load,
-                         schemas.PerformanceEventType.location_avg_memory_usage
-                         ]:
-        type = schemas.EventType.location
+    if isinstance(type, schemas.PerformanceEventType):
+        if type in [schemas.PerformanceEventType.location_dom_complete,
+                    schemas.PerformanceEventType.location_largest_contentful_paint_time,
+                    schemas.PerformanceEventType.location_ttfb,
+                    schemas.PerformanceEventType.location_avg_cpu_load,
+                    schemas.PerformanceEventType.location_avg_memory_usage
+                    ]:
+            type = schemas.EventType.location
+        elif type in [schemas.PerformanceEventType.fetch_failed]:
+            type = schemas.EventType.request
+        else:
+            return {"data": []}
 
     result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
