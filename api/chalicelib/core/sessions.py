@@ -150,9 +150,10 @@ def _multiple_conditions(condition, values, value_key="value", is_not=False):
 
 def _multiple_values(values, value_key="value"):
     query_values = {}
-    for i in range(len(values)):
-        k = f"{value_key}_{i}"
-        query_values[k] = values[i]
+    if values is not None and isinstance(values, list):
+        for i in range(len(values)):
+            k = f"{value_key}_{i}"
+            query_values[k] = values[i]
     return query_values
 
 
@@ -480,9 +481,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if data.events_order == schemas.SearchEventOrder._then:
                     event_where.append(f"event_{event_index - 1}.timestamp <= main.timestamp")
             e_k = f"e_value{i}"
+            s_k = e_k + "_source"
             if event.type != schemas.PerformanceEventType.time_between_events:
                 event.value = helper.values_for_operator(value=event.value, op=event.operator)
-                full_args = {**full_args, **_multiple_values(event.value, value_key=e_k)}
+                full_args = {**full_args,
+                             **_multiple_values(event.value, value_key=e_k),
+                             **_multiple_values(event.source, value_key=s_k)}
 
             # if event_type not in list(events.SUPPORTED_TYPES.keys()) \
             #         or event.value in [None, "", "*"] \
@@ -538,18 +542,15 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         _multiple_conditions(f"main.{events.event_type.STATEACTION.column} {op} %({e_k})s",
                                              event.value, value_key=e_k))
             elif event_type == events.event_type.ERROR.ui_type:
-                # if event.source in [None, "*", ""]:
-                #     event.source = "js_exception"
                 event_from = event_from % f"{events.event_type.ERROR.table} AS main INNER JOIN public.errors AS main1 USING(error_id)"
-                if event.value not in [None, "*", ""]:
-                    if not is_any:
-                        event_where.append(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)")
-                    if event.source not in [None, "*", ""]:
-                        event_where.append(f"main1.source = %(source)s")
-                        full_args["source"] = event.source
-                elif event.source not in [None, "*", ""]:
-                    event_where.append(f"main1.source = %(source)s")
-                    full_args["source"] = event.source
+                event.source = tuple(event.source)
+                if not is_any and event.value not in [None, "*", ""]:
+                    event_where.append(
+                        _multiple_conditions(f"(main1.message {op} %({e_k})s OR main1.name {op} %({e_k})s)",
+                                             event.value, value_key=e_k))
+                if event.source[0] not in [None, "*", ""]:
+                    event_where.append(_multiple_conditions(f"main1.source = %({s_k})s", event.value, value_key=s_k))
+
 
             # ----- IOS
             elif event_type == events.event_type.CLICK_IOS.ui_type:
