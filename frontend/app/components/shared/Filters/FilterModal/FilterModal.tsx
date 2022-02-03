@@ -3,16 +3,33 @@ import { Icon } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './FilterModal.css';
-import { filtersMap } from 'Types/filter/newFilter'
+import { filtersMap } from 'Types/filter/newFilter';
+import { FilterKey, FilterType } from 'Types/filter/filterType';
 
 interface Props {
   filters: any,
   onFilterClick?: (filter) => void,
   filterSearchList: any,
+  metaOptions: any,
 }
 function FilterModal(props: Props) {
-  const { filters, onFilterClick = () => null, filterSearchList } = props;
+  const { filters, metaOptions, onFilterClick = () => null, filterSearchList } = props;
   const hasFilerSearchList = filterSearchList && Object.keys(filterSearchList).length > 0;
+  
+  const allFilters = Object.assign({}, filtersMap);
+  if (metaOptions.size > 0) {
+    metaOptions.forEach((option) => {
+      if (option.key) {
+        allFilters[option.key] = {
+          category: FilterKey.METADATA,
+          key: option.key,
+          name: option.key,
+          label: option.key,
+        };
+      }
+    });
+  }
+  console.log('allFilters', allFilters);
 
   const onFilterSearchClick = (filter) => {
     const _filter = filtersMap[filter.type];
@@ -71,5 +88,6 @@ function FilterModal(props: Props) {
 
 export default connect(state => ({
   filters: state.getIn([ 'filters', 'filterList' ]),
-  filterSearchList: state.getIn([ 'search', 'filterSearchList' ])
+  filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
+  metaOptions: state.getIn([ 'customFields', 'list' ]),
 }))(FilterModal);

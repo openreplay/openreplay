@@ -12,7 +12,7 @@ interface Props {
   onRemoveFilter: () => void;
   isFilter?: boolean;
 }
-function FitlerItem(props: Props) {
+function FilterItem(props: Props) {
   const { isFilter = false, filterIndex, filter } = props;
 
   const replaceFilter = (filter) => {
@@ -53,7 +53,10 @@ function FitlerItem(props: Props) {
           className="mx-2 flex-shrink-0"
           value={filter.operator}
         />
-        <FilterValue filter={filter} onUpdate={props.onUpdate} />
+        { !(filter.operator === "isAny" || filter.operator === "onAny") && (
+          <FilterValue filter={filter} onUpdate={props.onUpdate} />
+        )}
+        
       </div>
       <div className="flex flex-shrink-0 self-start mt-1 ml-auto px-2">
         <div
@@ -67,4 +70,4 @@ function FitlerItem(props: Props) {
   );
 }
 
-export default FitlerItem;
+export default FilterItem;

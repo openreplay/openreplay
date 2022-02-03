@@ -32,7 +32,7 @@ function Row ({ name, onClick, onClickEdit, onDelete }) {
 function SavedSearchDropdown(props: Props) {
   const onClick = (item) => {
     props.applySavedSearch(item)
-    props.edit(item.filter)
+    // props.edit(item.filter)
     props.onClose()
   }
 

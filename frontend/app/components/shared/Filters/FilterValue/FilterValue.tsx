@@ -58,6 +58,7 @@ function FilterValue(props: Props) {
       case FilterType.DROPDOWN:
         return (
           <FilterValueDropdown
+            search={true}
             value={value}
             filter={filter}
             options={filter.options}

@@ -266,13 +266,14 @@ export const fetchIssueTypes = () => {
 }
 
 export const save = (instance) => {
-  const url = instance.exists() 
-    ? `/funnels/${ instance[idKey] }`
+  const _instance = instance instanceof Funnel ? instance : Funnel(instance);
+  const url = _instance.exists() 
+    ? `/funnels/${ _instance[idKey] }`
     : `/funnels`;
 
   return {
-    types: array(instance.exists() ? SAVE : UPDATE),
-    call: client => client.post(url, instance.toData()),
+    types: array(_instance.exists() ? SAVE : UPDATE),
+    call: client => client.post(url, _instance.toData()),
   }
 }
 

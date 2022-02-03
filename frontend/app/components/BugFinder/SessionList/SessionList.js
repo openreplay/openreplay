@@ -1,6 +1,7 @@
 import { connect } from 'react-redux';
 import { Loader, NoContent, Message, Icon, Button, LoadMoreButton } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
+import { fetchSessions } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { KEYS } from 'Types/filter/customFilter';
@@ -21,7 +22,8 @@ var timeoutId;
 }), {
   applyFilter,
   addAttribute,
-  addEvent
+  addEvent,
+  fetchSessions,
 })
 export default class SessionList extends React.PureComponent {
   state = {
@@ -53,7 +55,8 @@ export default class SessionList extends React.PureComponent {
   timeout = () => {
     timeoutId = setTimeout(function () {
       if (this.props.shouldAutorefresh) {
-        this.props.applyFilter();
+        // this.props.applyFilter();
+        this.props.fetchSessions();
       }
       this.timeout();
     }.bind(this), AUTOREFRESH_INTERVAL);

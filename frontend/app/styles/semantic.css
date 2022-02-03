@@ -314,3 +314,7 @@ a:hover {
 .ui.toggle.checkbox {
   min-height: 20px !important;
 }
+
+.ui.search.dropdown>input.search {
+  bottom: 0 !important;
+}

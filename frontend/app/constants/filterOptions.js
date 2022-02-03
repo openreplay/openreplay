@@ -3,6 +3,11 @@ export const options = [
     key: 'is',
     text: 'is',
     value: 'is'
+  },
+  {
+    key: 'isAny',
+    text: 'is any',
+    value: 'isAny'
   }, {
     key: 'isNot',
     text: 'is not',
@@ -112,7 +117,7 @@ export const options = [
 ];
 
 const filterKeys = ['is', 'isNot'];
-const stringFilterKeys = ['is', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
+const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const targetFilterKeys = ['on', 'notOn', 'onAny'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
