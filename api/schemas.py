@@ -477,9 +477,9 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
         if isinstance(values.get("type"), PerformanceEventType):
             if values.get("type") == PerformanceEventType.fetch_failed:
                 return values
-            assert values.get("source") is not None, "source should not be null for PerformanceEventType"
-            assert isinstance(values["source"], list) and len(values["source"]) > 0, \
-                "source should not be empty for PerformanceEventType"
+            # assert values.get("source") is not None, "source should not be null for PerformanceEventType"
+            # assert isinstance(values["source"], list) and len(values["source"]) > 0, \
+            #     "source should not be empty for PerformanceEventType"
             assert values.get("sourceOperator") is not None, \
                 "sourceOperator should not be null for PerformanceEventType"
             if values["type"] == PerformanceEventType.time_between_events:
