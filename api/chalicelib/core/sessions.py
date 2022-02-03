@@ -404,8 +404,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         _multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                                              f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
-                                             f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(
+                            f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
+                            f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 # op = __get_sql_operator(f.operator)
                 extra_constraints.append(
@@ -462,7 +463,13 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
-            if not is_any and len(event.value) == 0:
+            if not is_any and len(event.value) == 0 \
+                    or event_type in [schemas.PerformanceEventType.location_dom_complete,
+                                      schemas.PerformanceEventType.location_largest_contentful_paint_time,
+                                      schemas.PerformanceEventType.location_ttfb,
+                                      schemas.PerformanceEventType.location_avg_cpu_load,
+                                      schemas.PerformanceEventType.location_avg_memory_usage
+                                      ] and (event.source is None or len(event.source) == 0):
                 continue
             op = __get_sql_operator(event.operator)
             is_not = False
