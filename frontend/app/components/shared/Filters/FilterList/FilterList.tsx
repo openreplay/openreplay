@@ -44,11 +44,8 @@ function FilterList(props: Props) {
                 primary
                 name="eventsOrder"
                 extraSmall={true}
-                // className="my-3"
                 onSelect={props.onChangeEventsOrder}
-                // onSelect={() => null }
                 value={{ value: filter.eventsOrder }}
-                // value={{ value: 'and' }}
                 list={ [
                   { name: 'AND', value: 'and' },
                   { name: 'OR', value: 'or' },
