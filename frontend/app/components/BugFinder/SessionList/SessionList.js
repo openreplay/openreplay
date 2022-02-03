@@ -4,7 +4,10 @@ import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import { fetchSessions } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
-import { KEYS } from 'Types/filter/customFilter';
+// import { KEYS } from 'Types/filter/customFilter';
+import { addFilter } from 'Duck/search';
+import { filtersMap } from 'Types/filter/newFilter';
+import { FilterKey } from 'Types/filter/filterType';
 
 const ALL = 'all';
 const PER_PAGE = 10;
@@ -18,12 +21,13 @@ var timeoutId;
   activeTab: state.getIn([ 'sessions', 'activeTab' ]),
   allList: state.getIn([ 'sessions', 'list' ]),
   total: state.getIn([ 'sessions', 'total' ]),
-  filters: state.getIn([ 'filters', 'appliedFilter', 'filters' ]),  
+  filters: state.getIn([ 'search', 'instance', 'filters' ]),
 }), {
   applyFilter,
   addAttribute,
   addEvent,
   fetchSessions,
+  addFilter,
 })
 export default class SessionList extends React.PureComponent {
   state = {
@@ -43,13 +47,20 @@ export default class SessionList extends React.PureComponent {
   addPage = () => this.setState({ showPages: this.state.showPages + 1 })
 
   onUserClick = (userId, userAnonymousId) => {
+    let userFilter = filtersMap[FilterKey.USERID];
     if (userId) {
-      this.props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId })
+      userFilter = filtersMap[FilterKey.USERID];
+      userFilter.value = [userId];
+      // userFilter = { label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId }
+      // this.props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId })
     } else {
-      this.props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
+      userFilter = filtersMap[FilterKey.USERANONYMOUSID];
+      userFilter.value = [userAnonymousId];
+      // this.props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
     }
-    
-    this.props.applyFilter()
+
+    this.props.addFilter(userFilter);
+    // this.props.applyFilter()
   }
 
   timeout = () => {
@@ -84,8 +95,8 @@ export default class SessionList extends React.PureComponent {
       allList,
       activeTab
     } = this.props;
-
-    const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
+    const _filterKeys = filters.map(i => i.key);
+    const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
     const { showPages } = this.state;
     const displayedCount = Math.min(showPages * PER_PAGE, list.size);
 

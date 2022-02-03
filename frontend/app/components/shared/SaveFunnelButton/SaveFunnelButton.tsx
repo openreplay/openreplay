@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IconButton } from 'UI';
-import FunnelSaveModal from 'Components/Funnels/FunnelSaveModal';
+import FunnelSaveModal from 'App/components/Funnels/FunnelSaveModal';
 
 export default function SaveFunnelButton() {
   const [showModal, setshowModal] = useState(false)

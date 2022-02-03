@@ -65,7 +65,7 @@
 	padding: 8px 10px;
 	cursor: pointer;
 	border-radius: 3px;
-	transition: all 0.4s;
+	/* transition: all 0.4s; */
 	margin-bottom: 5px;
 	max-width: 100%;	
 	& .label {		
@@ -76,6 +76,6 @@
 
 	&:hover {
 		background-color: $gray-lightest;
-		transition: all 0.2s;
+		/* transition: all 0.2s; */
 	}
 }

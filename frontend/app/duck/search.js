@@ -19,6 +19,7 @@ const FETCH = fetchType(name);
 const SAVE = saveType(name);
 const EDIT = editType(name);
 const REMOVE = removeType(name);
+const ADD_FILTER = `${name}/ADD_FILTER`;
 const APPLY_SAVED_SEARCH = `${name}/APPLY_SAVED_SEARCH`;
 const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const UPDATE = `${name}/UPDATE`;
@@ -189,4 +190,10 @@ export const clearSearch = () => (dispatch, getState) => {
   return dispatch({
     type: CLEAR_SEARCH,
   });
+}
+
+export const addFilter = (filter) => (dispatch, getState) => {
+  const instance = getState().getIn([ 'search', 'instance']);
+  const filters = instance.filters.push(filter);
+  return dispatch(edit(instance.set('filters', filters)));
 }
