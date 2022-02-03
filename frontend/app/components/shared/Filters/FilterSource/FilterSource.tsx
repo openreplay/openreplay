@@ -9,8 +9,6 @@ interface Props {
 function FilterSource(props: Props) {
   const { filter } = props;
 
-  console.log('FilterSource', filter.source);
-
   const onChange = ({ target: { value, name } }) => {
     props.onUpdate({ ...filter, [name]: [value] })
   }
@@ -24,6 +22,7 @@ function FilterSource(props: Props) {
             className={stl.inputField}
             value={filter.source[0]}
             onBlur={onChange}
+            onChange={onChange}
             type="number"
           />
         )

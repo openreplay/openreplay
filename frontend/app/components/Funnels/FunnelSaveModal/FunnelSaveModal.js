@@ -4,6 +4,7 @@ import styles from './funnelSaveModal.css';
 import { edit, save, fetchList as fetchFunnelsList } from 'Duck/funnels';
 
 @connect(state => ({
+  filter: state.getIn(['search', 'instance']),
   funnel: state.getIn(['funnels', 'instance']),
   loading: state.getIn([ 'funnels', 'saveRequest', 'loading' ]) || 
     state.getIn([ 'funnels', 'updateRequest', 'loading' ]),
@@ -29,7 +30,7 @@ export default class FunnelSaveModal extends React.PureComponent {
   onSave = () => {
     const { funnel, closeHandler } = this.props;
     if (funnel.name.trim() === '') return;
-    this.props.save(funnel).then(function() {
+    this.props.save({ ...funnel, filter: filter }).then(function() {
       this.props.fetchFunnelsList();
       this.props.closeHandler();
     }.bind(this));
@@ -38,7 +39,6 @@ export default class FunnelSaveModal extends React.PureComponent {
   render() {
     const {
       show,
-      appliedFilter,
       closeHandler,
       loading,
       funnel

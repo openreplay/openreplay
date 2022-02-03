@@ -1,11 +1,8 @@
 import { List, Map } from 'immutable'; 
-import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED } from 'Types/errorInfo';
-import CustomMetric, { FilterSeries } from 'Types/customMetric'
-import { createFetch, fetchListType, fetchType, saveType, removeType, editType, createRemove, createEdit } from './funcTools/crud';
+import { fetchListType, fetchType, saveType, removeType, editType, createRemove } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
 import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
-import NewFilter from 'Types/filter/newFilter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
@@ -53,18 +50,14 @@ function reducer(state = initialState, action = {}) {
       return state.mergeIn(['instance'], action.instance);
     case APPLY:
       return action.fromUrl 
-        ? state.set('instance', 
-            Filter(action.filter)
-            // .set('events', state.getIn([ 'instance', 'events' ]))
-          )
+        ? state.set('instance', Filter(action.filter))
         : state.mergeIn(['instance'], action.filter);
     case success(SAVE):
       return updateItemInList(updateInstance(state, action.data), action.data);
-      // return state.mergeIn([ 'instance' ], action.data);
     case success(REMOVE):
       return state.update('list', list => list.filter(item => item.searchId !== action.id));
 		case success(FETCH):
-			return state.set("instance", ErrorInfo(action.data));
+			return state.set("instance", action.data);
 		case success(FETCH_LIST):
 			const { data } = action;
 			return state.set("list", List(data.map(SavedFilter)));
@@ -106,7 +99,6 @@ const filterMap = ({value, key, operator, sourceOperator, source, custom, isEven
 });
 
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
-  console.log('reduceThenFetchResource', args);
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
@@ -131,13 +123,16 @@ export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
 }));
 
 export const applySavedSearch = (filter) => (dispatch, getState) => {
-  // console.log('applySavedSearch', filter);
-// export const applySavedSearch = (filter) => ({
-  dispatch(edit(filter ? filter.filter : new Filter({ fitlers: []})));
+  dispatch(edit(filter ? filter.filter : new Filter({ filters: []})));
   return dispatch({
     type: APPLY_SAVED_SEARCH,
     filter,
   })
+};
+
+export const fetchSessions = (filter) => (dispatch, getState) => {
+  const _filter = filter ? filter : getState().getIn([ 'search', 'instance']);
+  return dispatch(applyFilter(_filter));
 };
 
 export const updateSeries = (index, series) => ({

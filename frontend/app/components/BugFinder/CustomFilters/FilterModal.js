@@ -68,7 +68,7 @@ export default class FilterModal extends React.PureComponent {
       this.props.addAttribute(filter, _in >= 0 ? _in : _index);
     } else {
       logger.log('Adding Event', filter)
-      const _index = filterType === 'event' ? index : undefined; // should add new one if coming from fitlers
+      const _index = filterType === 'event' ? index : undefined; // should add new one if coming from filters
       this.props.addEvent(filter, false, _index);
     }
 
