@@ -5,12 +5,13 @@ import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { IconButton, Button } from 'UI';
-import { edit } from 'Duck/search';
+import { edit, addFilter } from 'Duck/search';
 import SaveFunnelButton from '../SaveFunnelButton';
 
 interface Props {
   appliedFilter: any;
   edit: typeof edit;
+  addFilter: typeof addFilter;
 }
 function SessionSearch(props) {
   const { appliedFilter } = props;
@@ -18,12 +19,13 @@ function SessionSearch(props) {
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
 
   const onAddFilter = (filter) => {
-    filter.value = [""]
-    const newFilters = appliedFilter.filters.concat(filter);
-    props.edit({
-        ...appliedFilter.filter,
-        filters: newFilters,
-    });
+    props.addFilter(filter);
+    // filter.value = [""]
+    // const newFilters = appliedFilter.filters.concat(filter);
+    // props.edit({
+    //     ...appliedFilter.filter,
+    //     filters: newFilters,
+    // });
   }
 
   const onUpdateFilter = (filterIndex, filter) => {
