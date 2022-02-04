@@ -29,7 +29,6 @@ function FilterModal(props: Props) {
       }
     });
   }
-  console.log('allFilters', allFilters);
 
   const onFilterSearchClick = (filter) => {
     const _filter = filtersMap[filter.type];

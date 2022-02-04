@@ -97,4 +97,4 @@ function SessionSearch(props) {
 
 export default connect(state => ({
   appliedFilter: state.getIn([ 'search', 'instance' ]),
-}), { edit })(SessionSearch);
+}), { edit, addFilter })(SessionSearch);
