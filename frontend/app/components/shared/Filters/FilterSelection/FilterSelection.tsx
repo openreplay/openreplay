@@ -18,7 +18,7 @@ function FilterSelection(props: Props) {
         className="relative"
         onClickOutside={ () => setTimeout(function() {
           setShowModal(false)
-        }, 50)}
+        }, 200)}
       >
         { children ? React.cloneElement(children, { onClick: () => setShowModal(true)}) : (
           <div
