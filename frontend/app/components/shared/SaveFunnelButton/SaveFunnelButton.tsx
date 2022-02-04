@@ -8,7 +8,7 @@ export default function SaveFunnelButton() {
     <div>
         <IconButton
             className="mr-2"
-            onClick={() => setshowModal(true)} primaryText label="SAVE FUNNEL" icon="zoom-in"
+            onClick={() => setshowModal(true)} primaryText label="SAVE FUNNEL" icon="funnel"
         />
 
         <FunnelSaveModal

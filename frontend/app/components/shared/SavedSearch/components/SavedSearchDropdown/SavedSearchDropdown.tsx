@@ -22,7 +22,7 @@ function Row ({ name, onClick, onClickEdit, onDelete }) {
     >
       <div className="px-3 py-2">{name}</div>
       <div className="ml-auto flex items-center">
-        <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onClickEdit}><Icon name="pencil" size="14" /></div>
+        {/* <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onClickEdit}><Icon name="pencil" size="14" /></div> */}
         {/* <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onDelete}><Icon name="trash" size="14" /></div> */}
       </div>
     </div>
@@ -53,7 +53,7 @@ function SavedSearchDropdown(props: Props) {
   }
 
   return (
-    <div className={stl.wrapper}>
+    <div className={cn(stl.wrapper, 'shadow')}>
       {props.list.map(item => (
         <Row
           key={item.searchId}

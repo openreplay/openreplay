@@ -24,7 +24,7 @@ const MainSearchBar = (props: Props) => {
                     <span className="font-medium">Clear</span>
                 </Button>
             }
-            content={'Clear all filters and search'}
+            content={'Clear Steps'}
             size="tiny"
             inverted
             position="top right"

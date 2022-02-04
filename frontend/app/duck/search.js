@@ -72,7 +72,6 @@ function reducer(state = initialState, action = {}) {
         acc[key].push({ projectId, value });
         return acc;
       }, {});
-      console.log('groupedList', groupedList);
       return state.set('filterSearchList', groupedList);
     case APPLY_SAVED_SEARCH:
       return state.set('savedSearch', action.filter);
@@ -85,6 +84,7 @@ export default mergeReducers(
 	createRequestReducer({
 		[ ROOT_KEY ]: FETCH_LIST,
 		fetch: FETCH,
+    fetchFilterSearch: FETCH_FILTER_SEARCH
 	}),
 );
 

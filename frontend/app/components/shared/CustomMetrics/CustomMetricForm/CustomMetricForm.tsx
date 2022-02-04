@@ -11,6 +11,7 @@ interface Props {
   save: (metric) => void;
   loading: boolean;
 }
+
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
 
@@ -18,15 +19,16 @@ function CustomMetricForm(props: Props) {
     const newSeries = {
       name: `Series ${metric.series.size + 1}`,
       type: '',
-      series: [],
+      // series: [],
       filter: {
         type: '',
         value: '',
+        filters: [],
       },
     };
     props.editMetric({
       ...metric,
-      series: [...metric.series, newSeries],
+      series: metric.series.concat(newSeries),
     });
   }
 
@@ -40,10 +42,10 @@ function CustomMetricForm(props: Props) {
     });
   }
 
-  const write = ({ target: { value, name } }) => props.editMetric({ ...metric.toData(), [ name ]: value })
+  const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value })
 
   const changeConditionTab = (e, { name, value }) => {
-    props.editMetric({ ...metric.toData(), [ 'type' ]: value })
+    props.editMetric({ ...metric, [ 'type' ]: value })
   };
 
   return (

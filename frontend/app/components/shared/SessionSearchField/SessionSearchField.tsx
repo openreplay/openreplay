@@ -9,13 +9,13 @@ import { debounce } from 'App/utils';
 import { edit as editFilter } from 'Duck/search';
 import {
   addEvent, applyFilter, moveEvent, clearEvents,
-  addCustomFilter, addAttribute, setSearchQuery, setActiveFlow, setFilterOption
+  addCustomFilter, addAttribute, setActiveFlow, setFilterOption
 } from 'Duck/filters';
 
 interface Props {
-  setSearchQuery: (query: string) => void;
+  // setSearchQuery: (query: string) => void;
   fetchFilterSearch: (query: any) => void;
-  searchQuery: string;
+  // searchQuery: string;
   appliedFilter: any;
   editFilter: typeof editFilter;
 }
@@ -23,9 +23,10 @@ function SessionSearchField(props: Props) {
   const { appliedFilter } = props;
   const debounceFetchFilterSearch = debounce(props.fetchFilterSearch, 1000)
   const [showModal, setShowModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const onSearchChange = (e, { value }) => {
-    // props.setSearchQuery(value)
+    setSearchQuery(value)
     debounceFetchFilterSearch({ q: value });
   }
 
@@ -58,17 +59,11 @@ function SessionSearchField(props: Props) {
         autocomplete="off"
       />
 
-      {/* <FilterModal
-        close={ () => setShowModal(false) }
-        displayed={ showModal }
-        // displayed={ true }
-        // loading={ loading }
-        // searchedEvents={ searchedEvents }
-        searchQuery={ props.searchQuery }
-      /> */}
       { showModal && (
         <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
           <FilterModal
+            searchQuery={searchQuery}
+            isMainSearch={true}
             onFilterClick={onAddFilter}
           />
         </div>
@@ -79,8 +74,7 @@ function SessionSearchField(props: Props) {
 
 export default connect(state => ({
   events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
-  // appliedFilter: state.getIn([ 'filters', 'appliedFilter' ]),
-  searchQuery: state.getIn([ 'filters', 'searchQuery' ]),
+  // searchQuery: state.getIn([ 'filters', 'searchQuery' ]),
   appliedFilterKeys: state.getIn([ 'filters', 'appliedFilter', 'filters' ])
     .map(({type}) => type).toJS(),
   searchedEvents: state.getIn([ 'events', 'list' ]),
@@ -88,4 +82,4 @@ export default connect(state => ({
   strict: state.getIn([ 'filters', 'appliedFilter', 'strict' ]),
   blink: state.getIn([ 'funnels', 'blink' ]),
   appliedFilter: state.getIn(['search', 'instance']),
-}), { setSearchQuery, fetchFilterSearch, editFilter })(SessionSearchField);
+}), { fetchFilterSearch, editFilter })(SessionSearchField);
