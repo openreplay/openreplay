@@ -14,7 +14,11 @@ function FilterValue(props: Props) {
 
   const onAddValue = () => {
     const newValues = filter.value.concat("")
-    props.onUpdate({ ...filter, value: newValues })
+    try {
+      props.onUpdate({ ...filter.toData(), value: newValues })
+    } catch (e) {
+      props.onUpdate({ ...filter, value: newValues })
+    }
   }
 
   const onRemoveValue = (valueIndex) => {
@@ -69,6 +73,7 @@ function FilterValue(props: Props) {
       case FilterType.MULTIPLE_DROPDOWN:
         return (
           <FilterValueDropdown
+            search={true}
             multiple={true}
             value={value}
             filter={filter}

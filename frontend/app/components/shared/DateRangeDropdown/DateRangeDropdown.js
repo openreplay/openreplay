@@ -88,7 +88,7 @@ export default class DateRangeDropdown extends React.PureComponent {
               <Icon name="chevron-down" color="gray-dark" size="14" className={styles.dropdownIcon} />
             </div> : null
           }
-          selection={!button}
+          // selection={!button}
           name="sessionDateRange"
           direction={ direction }
           className={ button ? "" : "customDropdown" }
@@ -97,8 +97,9 @@ export default class DateRangeDropdown extends React.PureComponent {
           icon={ null }
         >
           <Dropdown.Menu>
-            { options.map(props => 
+            { options.map((props, i) => 
               <Dropdown.Item 
+                key={i}
                 {...props}
                 onClick={this.onItemClick}
                 active={props.value === value }
