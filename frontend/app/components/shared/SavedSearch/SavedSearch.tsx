@@ -33,7 +33,7 @@ function SavedSearch(props) {
             className="flex items-center"
             onClick={() => setShowMenu(true)}
           >
-            <span className="mr-2">Search Saved</span>
+            <span className="mr-2">{`Search Saved (${list.size})`}</span>
             <Icon name="ellipsis-v" color="teal" size="14" />
           </Button>
           { savedSearch && (
@@ -50,7 +50,7 @@ function SavedSearch(props) {
             className="absolute left-0 bg-white border rounded z-50"
             style={{ top: '33px', width: '200px' }}
           >
-            <SavedSearchDropdown list={props.list} onClose={() => setShowMenu(false)} />
+            <SavedSearchDropdown list={list} onClose={() => setShowMenu(false)} />
           </div>
         )}
       </div>

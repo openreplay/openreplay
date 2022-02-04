@@ -1,6 +1,5 @@
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { List } from 'immutable';
 import withPageTitle from 'HOCs/withPageTitle';
 import {
   fetchFavoriteList as fetchFavoriteSessionList
@@ -10,7 +9,6 @@ import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { defaultFilters, preloadedFilters } from 'Types/filter';
 import { KEYS } from 'Types/filter/customFilter';
-import EventFilter from './EventFilter';
 import SessionList from './SessionList';
 import FunnelList from 'Components/Funnels/FunnelList';
 import stl from './bugFinder.css';
@@ -21,18 +19,15 @@ import { fetchList as fetchIntegrationVariables, fetchSources } from 'Duck/custo
 import { RehydrateSlidePanel } from './WatchDogs/components';
 import { setActiveTab, setFunnelPage } from 'Duck/sessions';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
-import SessionFlowList from './SessionFlowList/SessionFlowList';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
-import SessionSearchField from 'Shared/SessionSearchField'
-import SavedSearch from 'Shared/SavedSearch'
 import LiveSessionList from './LiveSessionList'
 import SessionSearch from 'Shared/SessionSearch';
+import MainSearchBar from 'Shared/MainSearchBar';
 import { clearSearch } from 'Duck/search';
-import { Button } from 'UI';
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -177,17 +172,8 @@ export default class BugFinder extends React.PureComponent {
               data-hidden={ activeTab === 'live' || activeTab === 'favorite' }
               className="mb-5"
             >
-              <div className="flex items-center">
-                <div style={{ width: "65%", marginRight: "10px"}}><SessionSearchField /></div>
-                <div className="flex items-center" style={{ width: "35%"}}>
-                  <SavedSearch />
-                  <Button plain className="ml-auto" onClick={() => this.props.clearSearch()}>
-                    <span className="font-medium">Clear</span>
-                  </Button>
-                </div>
-              </div>
+              <MainSearchBar />
               <SessionSearch />
-              {/* <EventFilter /> */}
             </div>
             { activeFlow && activeFlow.type === 'flows' && <FunnelList /> }
             { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }

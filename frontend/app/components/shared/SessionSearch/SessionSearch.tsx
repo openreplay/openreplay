@@ -59,12 +59,6 @@ function SessionSearch(props) {
     });
   }
 
-  const clearSearch = () => {
-    props.edit({
-        filters: List(),
-    });
-  }
-
   return (hasEvents || hasFilters) ? (
     <div className="border bg-white rounded mt-4">
       <div className="p-5">
