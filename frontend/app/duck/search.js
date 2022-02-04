@@ -103,7 +103,6 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
-  filter.isNew = true  // TODO remove this line
 
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))
@@ -124,7 +123,8 @@ export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
 }));
 
 export const applySavedSearch = (filter) => (dispatch, getState) => {
-  dispatch(edit(filter ? filter.filter : new Filter({ filters: []})));
+  console.log('applySavedSearch', filter);
+  dispatch(edit({ filters: filter ? filter.filter.filters : [] }));
   return dispatch({
     type: APPLY_SAVED_SEARCH,
     filter,

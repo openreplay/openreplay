@@ -56,6 +56,7 @@ function FilterList(props: Props) {
           </div>
           {filters.map((filter, filterIndex) => filter.isEvent ? (
             <FilterItem
+              key={filterIndex}
               filterIndex={rowIndex++}
               filter={filter}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
@@ -72,6 +73,7 @@ function FilterList(props: Props) {
           <div className="mb-2 text-sm color-gray-medium mr-auto">FILTERS</div>
           {filters.map((filter, filterIndex) => !filter.isEvent ? (
             <FilterItem
+              key={filterIndex}
               isFilter={true}
               filterIndex={filterIndex}
               filter={filter}
