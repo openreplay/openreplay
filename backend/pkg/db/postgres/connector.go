@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
