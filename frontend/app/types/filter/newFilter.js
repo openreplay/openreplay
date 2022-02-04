@@ -1,6 +1,7 @@
 import Record from 'Types/Record';
 import { FilterType, FilterKey, FilterCategory } from './filterType'
 import filterOptions, { countries, platformOptions } from 'App/constants';
+import { capitalize } from 'App/utils';
 
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 
@@ -53,6 +54,12 @@ export const filtersMap = {
   [FilterKey.AVG_MEMORY_USAGE]: { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg Memory Usage', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/memory-load', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.FETCH_FAILED]: { key: FilterKey.FETCH_FAILED, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Fetch Failed', operator: 'isAny', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch-failed', isEvent: true },
   [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/click', options: ISSUE_OPTIONS },
+}
+
+
+export const getMetaDataFilter = (key) => {
+  const METADATA_FILTER = { key: key, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: capitalize(key), operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' }
+  return METADATA_FILTER;
 }
 
 export default Record({

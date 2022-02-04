@@ -47,6 +47,7 @@ export default Record({
           return filter;
         });
         delete series._key
+        delete series.key
         return series;
       });
 

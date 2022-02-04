@@ -20,7 +20,11 @@ function FilterSelection(props: Props) {
           setShowModal(false)
         }, 200)}
       >
-        { children ? React.cloneElement(children, { onClick: () => setShowModal(true)}) : (
+        { children ? React.cloneElement(children, { onClick: (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setShowModal(true);
+        }}) : (
           <div
             className="rounded py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade"
             style={{ width: '140px', height: '26px', border: 'solid thin #e9e9e9' }}

@@ -74,8 +74,9 @@ function SaveSearchModal(props: Props) {
             />
           </Form.Field>
         </Form>
+        { savedSearch && <div className="mt-2">Changes in filters will be updated.</div> }
       </Modal.Content>
-      <Modal.Actions className="flex items-center">
+      <Modal.Actions className="flex items-center px-6">
         <div className="mr-auto">
           <Button
               primary
@@ -86,7 +87,9 @@ function SaveSearchModal(props: Props) {
             </Button>
             <Button className={ stl.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
         </div>
-        { savedSearch && <Button className={ stl.cancelButton } marginRight onClick={ onDelete }>{ 'Delete' }</Button> }
+        { savedSearch && <Button className={ stl.cancelButton } marginRight onClick={ onDelete }>
+          <Icon name="trash" size="18" />
+        </Button> }
       </Modal.Actions>
     </Modal>
   );

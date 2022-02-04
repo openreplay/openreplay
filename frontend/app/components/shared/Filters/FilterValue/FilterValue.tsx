@@ -130,7 +130,9 @@ function FilterValue(props: Props) {
           renderValueFiled(filter.value, 0)
       ) : (
         filter.value && filter.value.map((value, valueIndex) => (
-          renderValueFiled(value, valueIndex)
+          <div key={valueIndex}>
+            {renderValueFiled(value, valueIndex)}
+          </div>
         ))
       )}
     </div>

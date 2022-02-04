@@ -54,7 +54,7 @@ function CustomMetricWidget(props: Props) {
           console.log('err', errors)
         } else {
           const _data = getChartFormatter(period)(data[0]);
-          console.log('__data', _data)
+          // console.log('__data', _data)
           setData({ chart: _data });
         }
       }).finally(() => setLoading(false));
