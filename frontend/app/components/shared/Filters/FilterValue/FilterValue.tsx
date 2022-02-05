@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import FilterAutoComplete from '../FilterAutoComplete';
-import { FilterType } from 'Types/filter/filterType';
+import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
 import FilterValueDropdown from '../FilterValueDropdown';
 import FilterDuration from '../FilterDuration';
 
@@ -52,6 +52,15 @@ function FilterValue(props: Props) {
         // onChange(e, { name: 'value', value: [this.state.minDuration, this.state.maxDuration] });
         props.onUpdate({ ...filter, value: [durationValues.minDuration, durationValues.maxDuration] });
       }
+    }
+  }
+
+  const getParms = (key) => {
+    switch (filter.category) {
+      case FilterCategory.METADATA:
+        return { type: FilterKey.METADATA, key: key };
+      default:
+        return { type: filter.key };
     }
   }
 
@@ -115,10 +124,11 @@ function FilterValue(props: Props) {
             onRemoveValue={() => onRemoveValue(valueIndex)}
             method={'GET'}
             endpoint='/events/search'
-            params={{ type: filter.key  }}
+            params={getParms(filter.key)}
             headerText={''}
             // placeholder={''}
             onSelect={(e, item) => onChange(e, item, valueIndex)}
+            icon={filter.icon}
           />
         )
     }

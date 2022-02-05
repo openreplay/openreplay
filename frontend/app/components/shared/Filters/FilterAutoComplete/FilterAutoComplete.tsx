@@ -22,6 +22,7 @@ interface Props {
   placeholder?: string;
   onSelect: (e, item) => void;
   value: any;
+  icon?: string;
 }
 
 function FilterAutoComplete(props: Props) {
@@ -36,6 +37,7 @@ function FilterAutoComplete(props: Props) {
       params = {},
       headerText = '',
       value = '',
+      icon = null,
   } = props;
   const [showModal, setShowModal] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -136,7 +138,7 @@ function FilterAutoComplete(props: Props) {
                   className={ cn(stl.filterItem) }
                   id="filter-item" onClick={ (e) => onItemClick(e, item) }
                 >
-                  { item.icon && <Icon name={ item.icon } size="16" marginRight="8" /> }
+                  { icon && <Icon name={ icon } size="16" marginRight="8" /> }
                   <span className={ stl.label }>{ item.value }</span>
                 </div>             
               ))

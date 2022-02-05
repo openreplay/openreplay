@@ -4,6 +4,7 @@
   padding: 20px;
   overflow: hidden;
   overflow-y: auto;
+  box-shadow: 0 2px 2px 0 $gray-light;
 }
 .optionItem {
   white-space: nowrap;
