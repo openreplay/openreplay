@@ -45,6 +45,7 @@ function FilterModal(props: Props) {
     _filter.value = [filter.value];
     onFilterClick(_filter);
   }
+  
   return (
     <div className={stl.wrapper} style={{ width: '490px', maxHeight: '400px', overflowY: 'auto'}}>
       { showSearchList && (
