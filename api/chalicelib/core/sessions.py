@@ -399,11 +399,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append("ms.duration <= %(maxDuration)s")
                     full_args["maxDuration"] = f.value[1]
             elif filter_type == schemas.FilterType.referrer:
-                # events_query_part = events_query_part + f"INNER JOIN events.pages AS p USING(session_id)"
                 extra_from += f"INNER JOIN {events.event_type.LOCATION.table} AS p USING(session_id)"
-                # op = __get_sql_operator_multiple(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('p.base_referrer IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f"p.base_referrer {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == events.event_type.METADATA.ui_type:
                 # get metadata list only if you need it
                 if meta_keys is None:
