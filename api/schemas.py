@@ -673,14 +673,23 @@ class MetricViewType(str, Enum):
     progress = "progress"
 
 
-class CustomMetricChartPayloadSchema(BaseModel):
+class CustomMetricRawPayloadSchema(BaseModel):
+    startDate: int = Field(TimeUTC.now(-7))
+    endDate: int = Field(TimeUTC.now())
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class CustomMetricRawPayloadSchema2(CustomMetricRawPayloadSchema):
+    metric_id: int = Field(...)
+
+
+class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
     density: int = Field(7)
     viewType: MetricViewType = Field(MetricViewType.line_chart)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
 
 
 class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):

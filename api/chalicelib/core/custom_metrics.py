@@ -33,6 +33,20 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     return try_live(project_id=project_id, data=metric)
 
 
+def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricRawPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
+    results = []
+    for s in metric.series:
+        s.filter.startDate = data.startDate
+        s.filter.endDate = data.endDate
+        results.append(sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id))
+
+    return results
+
+
 def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
     with pg_client.PostgresClient() as cur:
         _data = {}
