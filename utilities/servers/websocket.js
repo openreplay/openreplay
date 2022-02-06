@@ -218,7 +218,7 @@ module.exports = {
                         io.to(socket.id).emit(NO_SESSIONS);
                     } else {
                         console.log("message sent");
-                        io.to(socketId).emit(eventName, args[0]);
+                        io.to(socketId).emit(eventName, socket.id, args[0]);
                     }
                 }
             });
