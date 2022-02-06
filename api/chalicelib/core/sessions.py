@@ -317,34 +317,45 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             is_not = False
             if __is_negation_operator(f.operator):
                 is_not = True
-                # op = __reverse_sql_operator(op)
             if filter_type == schemas.FilterType.user_browser:
-                # op = __get_sql_operator_multiple(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.user_browser IS NOT NULL')
+                    ss_constraints.append('ms.user_browser IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f's.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f'ms.user_browser {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_os, schemas.FilterType.user_os_ios]:
-                # op = __get_sql_operator_multiple(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.user_os IS NOT NULL')
+                    ss_constraints.append('ms.user_os IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f's.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f'ms.user_os {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_device, schemas.FilterType.user_device_ios]:
-                # op = __get_sql_operator_multiple(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.user_device IS NOT NULL')
+                    ss_constraints.append('ms.user_device IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f's.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f'ms.user_device {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.user_country, schemas.FilterType.user_country_ios]:
-                # op = __get_sql_operator_multiple(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.user_country IS NOT NULL')
+                    ss_constraints.append('ms.user_country IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f's.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f'ms.user_country {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
 
             elif filter_type in [schemas.FilterType.utm_source]:
                 if is_any:
