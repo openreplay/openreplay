@@ -181,6 +181,9 @@ module.exports = {
             if (io.sockets.adapter.rooms.get(socket.peerId)) {
                 console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, size:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
             }
+            if (socket.identity === IDENTITIES.agent) {
+                socket.to(socket.peerId).emit(socket.id, NEW_AGENT_MESSAGE);
+            }
 
             socket.on('disconnect', async () => {
                 // console.log(`${socket.id} disconnected from ${socket.peerId}, waiting ${wsReconnectionTimeout / 1000}s before checking remaining`);
@@ -223,9 +226,6 @@ module.exports = {
                 }
             });
 
-            if (socket.identity === IDENTITIES.agent) {
-                socket.to(socket.peerId).emit(NEW_AGENT_MESSAGE);
-            }
         });
         console.log("WS server started")
     }
