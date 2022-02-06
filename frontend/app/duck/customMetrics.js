@@ -73,9 +73,9 @@ function reducer(state = initialState, action = {}) {
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));
     case success(FETCH_SESSION_LIST):
-      return state.set("sessionList", List(action.data[0].sessions).map(Session));
+      return state.set("sessionList", List(action.data.map(item => ({ ...item, sessions: item.sessions.map(Session) }))));
     case SET_ACTIVE_WIDGET:
-      return state.set("activeWidget", action.widget);
+      return state.set("activeWidget", action.widget).set('sessionList', List());
 	}
 	return state;
 }

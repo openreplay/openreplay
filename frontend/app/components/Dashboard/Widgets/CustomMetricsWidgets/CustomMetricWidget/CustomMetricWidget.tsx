@@ -140,7 +140,7 @@ function CustomMetricWidget(props: Props) {
                   allowDecimals={false}
                   label={{  
                     ...Styles.axisLabelLeft,
-                    value: "Number of Errors"
+                    value: "Number of Sessions"
                   }}
                 />
                 <Legend />
