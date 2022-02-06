@@ -318,3 +318,10 @@ a:hover {
 .ui.search.dropdown>input.search {
   bottom: 0 !important;
 }
+
+.ui.search.dropdown.active>input.search,
+.ui.search.dropdown.visible>input.search {
+  border: solid thin $teal !important;
+  border-radius: 3px;
+  height: 26px;
+}
