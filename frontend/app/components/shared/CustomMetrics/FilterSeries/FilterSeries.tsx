@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import { edit, updateSeries } from 'Duck/customMetrics';
 import { connect } from 'react-redux';
-import { IconButton, Button, Icon, SegmentSelection } from 'UI';
+import { IconButton, Icon } from 'UI';
 import FilterSelection from '../../Filters/FilterSelection';
 import SeriesName from './SeriesName';
 
@@ -75,10 +75,6 @@ function FilterSeries(props: Props) {
   return (
     <div className="border rounded bg-white">
       <div className="border-b px-5 h-12 flex items-center relative">
-        {/* <div className="font-medium flex items-center">
-          { series.name }
-          <div className="ml-3 cursor-pointer"><Icon name="pencil" size="14" /></div>
-        </div> */}
         <div className="mr-auto">
           <SeriesName name={series.name} onUpdate={() => null } />
         </div>    
@@ -99,7 +95,6 @@ function FilterSeries(props: Props) {
           <div className="p-5">
             { series.filter.filters.size > 0 ? (
               <FilterList
-                // filters={series.filter.filters.toJS()}
                 filter={series.filter}
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}

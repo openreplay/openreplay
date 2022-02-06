@@ -4,7 +4,6 @@ import { Loader, NoContent, Icon } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
-// import CustomMetricWidgetHoc from '../../common/CustomMetricWidgetHoc';
 import stl from './CustomMetricWidget.css';
 import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
 import { edit, remove, setAlertMetricId, setActiveWidget } from 'Duck/customMetrics';
@@ -49,23 +48,17 @@ function CustomMetricWidget(props: Props) {
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
 
   useEffect(() => {
-    // dataWrapper: (p, period) => SessionsImpactedBySlowRequests({ chart: p})
-		// 	.update("chart", getChartFormatter(period))
-    
     new APIClient()['post']('/custom_metrics/chart', { ...metricParams, q: metric.name })
       .then(response => response.json())
       .then(({ errors, data }) => {
         if (errors) {
           console.log('err', errors)
         } else {
-          // console.log('data', data);
-          // const _data = data[0].map(CustomMetric).update("chart", getChartFormatter(period)).toJS();
           const _data = getChartFormatter(period)(data[0]);
-          // console.log('__data', _data)
           setData({ chart: _data });
         }
       }).finally(() => setLoading(false));
-  }, [])
+  }, [period])
 
   const deleteHandler = async () => {
     if (await confirm({
@@ -135,7 +128,6 @@ function CustomMetricWidget(props: Props) {
                   strokeWidth={ 2 }
                   strokeOpacity={ 0.8 }
                   fill={compare ? 'url(#colorCountCompare)' : 'url(#colorCount)'}
-                  // onClick={clickHandler}
                 />
               </AreaChart>
             </ResponsiveContainer>
