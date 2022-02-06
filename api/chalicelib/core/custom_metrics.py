@@ -25,12 +25,28 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
     return results
 
 
+def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
+    series_charts = try_live(project_id=project_id, data=data)
+    results = [{}] * len(series_charts[0])
+    for i in range(len(results)):
+        for j, series_chart in enumerate(series_charts):
+            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+                          data.series[j].name if data.series[j].name else j: series_chart[i]["count"]}
+    return results
+
+
 def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
-    return try_live(project_id=project_id, data=metric)
+    series_charts = try_live(project_id=project_id, data=metric)
+    results = [{}] * len(series_charts[0])
+    for i in range(len(results)):
+        for j, series_chart in enumerate(series_charts):
+            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+                          metric.series[j].name: series_chart[i]["count"]}
+    return results
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricRawPayloadSchema):
@@ -42,7 +58,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricRawPa
     for s in metric.series:
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
-        results.append(sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id))
+        results.append({"seriesId": s.series_id, "seriesName": s.name,
+                        **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
