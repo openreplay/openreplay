@@ -29,7 +29,7 @@ const reducer = (state = initialState, action = {}) => {
     //       })
     //   );
     case FETCH_TRIGGER_OPTIONS.SUCCESS:
-      return state.set('triggerOptions', action.data);
+      return state.set('triggerOptions', action.data.map(({ name, value}) => ({ text: name, value })));
   }
   return state;
 };

@@ -6,6 +6,7 @@ import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
 import { NoContent } from 'UI';
 import { WIDGET_KEYS } from 'Types/dashboard';
 import CustomMetrics from 'Shared/CustomMetrics';
+import SessionListModal from 'Shared/CustomMetrics/SessionListModal';
 
 import { 
   MissingResources,
@@ -188,6 +189,7 @@ export default class Dashboard extends React.PureComponent {
             <div className={ cn(styles.header, "flex items-center w-full") }>            
               <MetricsFilters />
               <CustomMetrics />
+              <SessionListModal />
             </div>
             <div className="">
               <NoContent

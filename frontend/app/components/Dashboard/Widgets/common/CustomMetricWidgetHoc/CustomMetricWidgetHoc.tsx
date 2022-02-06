@@ -5,8 +5,6 @@ import { Icon } from 'UI';
 interface Props {
 }
 const CustomMetricWidgetHoc = ({ ...rest }: Props) => BaseComponent => {
-
-  console.log('CustomMetricWidgetHoc', rest);
   return (
     <div className={stl.wrapper}>
       <div className="flex items-center mb-10 p-2">
