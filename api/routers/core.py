@@ -1085,6 +1085,13 @@ def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsSchema = Bod
     return {"data": custom_metrics.try_live(project_id=projectId, data=data)}
 
 
+@app.post('/{projectId}/custom_metrics/sessions', tags=["customMetrics"])
+def get_custom_metric_sessions(projectId: int, data: schemas.CustomMetricRawPayloadSchema2 = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=data.metric_id,
+                                                data=data)}
+
+
 @app.post('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
 def get_custom_metric_chart(projectId: int, data: schemas.CustomMetricChartPayloadSchema2 = Body(...),
@@ -1108,6 +1115,13 @@ def get_custom_metrics(projectId: int, context: schemas.CurrentContext = Depends
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+
+
+@app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
+def get_custom_metric_sessions(projectId: int, metric_id: int, data: schemas.CustomMetricRawPayloadSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                                data=data)}
 
 
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
