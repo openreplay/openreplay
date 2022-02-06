@@ -63,47 +63,50 @@ function CustomMetricWidget(props: Props) {
   
 
   return (
-    <div className={stl.wrapper}>
-      <div className="flex items-center mb-10 p-2">
-        
+    <>
+      <div className="flex items-center mb-4">
+        <div className="mr-auto font-medium">Preview</div>
+        <div></div>
       </div>
-      <div>
-        <Loader loading={ loading } size="small">
-          <NoContent
-            size="small"
-            show={ data.chart.length === 0 }
-          >
-            <ResponsiveContainer height={ 240 } width="100%">
-              <AreaChart
-                data={ data.chart }
-                margin={Styles.chartMargins}
-                syncId={ showSync ? "impactedSessionsBySlowPages" : undefined }
-              >
-                {gradientDef}
-                <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
-                <XAxis {...Styles.xaxis} dataKey="time" interval={params.density/7} />
-                <YAxis
-                  {...Styles.yaxis}
-                  label={{ ...Styles.axisLabelLeft, value: "Number of Requests" }}
-                  allowDecimals={false}
-                />
-                <Tooltip {...Styles.tooltip} />
-                <Area
-                  name="Sessions"
-                  type="monotone"
-                  dataKey="count"
-                  stroke={colors[0]}
-                  fillOpacity={ 1 }
-                  strokeWidth={ 2 }
-                  strokeOpacity={ 0.8 }
-                  fill={compare ? 'url(#colorCountCompare)' : 'url(#colorCount)'}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </NoContent>
-        </Loader>
+      <div className={stl.wrapper}>
+        <div>
+          <Loader loading={ loading } size="small">
+            <NoContent
+              size="small"
+              show={ data.chart.length === 0 }
+            >
+              <ResponsiveContainer height={ 240 } width="100%">
+                <AreaChart
+                  data={ data.chart }
+                  margin={Styles.chartMargins}
+                  syncId={ showSync ? "impactedSessionsBySlowPages" : undefined }
+                >
+                  {gradientDef}
+                  <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
+                  <XAxis {...Styles.xaxis} dataKey="time" interval={params.density/7} />
+                  <YAxis
+                    {...Styles.yaxis}
+                    label={{ ...Styles.axisLabelLeft, value: "Number of Requests" }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip {...Styles.tooltip} />
+                  <Area
+                    name="Sessions"
+                    type="monotone"
+                    dataKey="count"
+                    stroke={colors[0]}
+                    fillOpacity={ 1 }
+                    strokeWidth={ 2 }
+                    strokeOpacity={ 0.8 }
+                    fill={compare ? 'url(#colorCountCompare)' : 'url(#colorCount)'}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </NoContent>
+          </Loader>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
