@@ -8,7 +8,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 def try_live(project_id, data: schemas.TryCustomMetricsSchema):
     results = []
-    for s in data.series:
+    for i, s in enumerate(data.series):
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
@@ -21,12 +21,16 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.viewType)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            r["seriesName"] = s.name if s.name else i
+            r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
     return results
 
 
 def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
     series_charts = try_live(project_id=project_id, data=data)
+    if data.viewType == schemas.MetricViewType.progress:
+        return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
@@ -41,6 +45,8 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
         return None
     metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     series_charts = try_live(project_id=project_id, data=metric)
+    if data.viewType == schemas.MetricViewType.progress:
+        return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
