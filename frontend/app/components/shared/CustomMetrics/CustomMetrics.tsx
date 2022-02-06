@@ -1,4 +1,3 @@
-// import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
 import React, { useState } from 'react';
 import { IconButton, SlideModal } from 'UI';
 import CustomMetricForm from './CustomMetricForm';
@@ -13,7 +12,6 @@ interface Props {
 }
 function CustomMetrics(props: Props) {
   const { metric } = props;
-  // const [showModal, setShowModal] = useState(false);
 
   return (
     <div className="self-start">
@@ -27,7 +25,6 @@ function CustomMetrics(props: Props) {
         }
         isDisplayed={ !!metric }
         onClose={ () => props.init(null, false)}
-        // size="medium"
         content={ (!!metric) && (
           <div style={{ backgroundColor: '#f6f6f6' }}>
             <CustomMetricForm metric={metric} onClose={() => props.init(null, false)} />

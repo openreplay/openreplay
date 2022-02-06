@@ -57,14 +57,14 @@ function AlertFormModal(props) {
         title={
           <div className="flex items-center">
             <span className="mr-3">{ 'Create Alert' }</span>
-            <IconButton 
+            {/* <IconButton 
               circle
               size="small"
               icon="plus" 
               outline
               id="add-button"
               onClick={ () => toggleForm({}, true) }
-            />
+            /> */}
           </div>
         }
         isDisplayed={ showModal }
