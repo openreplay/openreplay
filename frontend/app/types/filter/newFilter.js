@@ -100,7 +100,7 @@ export default Record({
       ..._filter,
       key: _filter.key,
       type: _filter.type, // camelCased(filter.type.toLowerCase()),
-      value: value
+      value: value.length === 0 ? [""] : value,
     }
   },
 })
