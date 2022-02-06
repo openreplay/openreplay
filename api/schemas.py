@@ -654,9 +654,13 @@ class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
 
 
 class CustomMetricCreateSeriesSchema(BaseModel):
+    series_id: Optional[int] = Field(None)
     name: Optional[str] = Field(None)
     index: Optional[int] = Field(None)
     filter: Optional[CustomMetricSeriesFilterSchema] = Field([])
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class CreateCustomMetricsSchema(BaseModel):
