@@ -650,7 +650,6 @@ class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
     order: Optional[str] = Field(None)
-    events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
 
 
