@@ -420,26 +420,35 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                             f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
                             f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
-                # op = __get_sql_operator(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f"s.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f"ms.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.user_id IS NOT NULL')
+                    ss_constraints.append('ms.user_id IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f"s.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"ms.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
                                  schemas.FilterType.user_anonymous_id_ios]:
-                # op = __get_sql_operator(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
-                                         value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.user_anonymous_id IS NOT NULL')
+                    ss_constraints.append('ms.user_anonymous_id IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
-                # op = __get_sql_operator(f.operator)
-                extra_constraints.append(
-                    _multiple_conditions(f"s.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f"ms.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                if is_any:
+                    extra_constraints.append('s.rev_id IS NOT NULL')
+                    ss_constraints.append('ms.rev_id IS NOT NULL')
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f"s.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"ms.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == schemas.FilterType.platform:
                 # op = __get_sql_operator(f.operator)
                 extra_constraints.append(
