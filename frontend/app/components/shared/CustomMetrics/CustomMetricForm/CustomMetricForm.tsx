@@ -2,20 +2,23 @@ import React from 'react';
 import { Form, SegmentSelection, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
-import { edit as editMetric, save } from 'Duck/customMetrics';
+import { edit as editMetric, save, addSeries } from 'Duck/customMetrics';
 import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
 
 interface Props {
   metric: any;
   editMetric: (metric) => void;
-  save: (metric) => void;
+  save: (metric) => Promise<void>;
   loading: boolean;
+  addSeries: (series?) => void;
+  onClose: () => void;
 }
 
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
 
   const addSeries = () => {
+    props.addSeries();
     const newSeries = {
       name: `Series ${metric.series.size + 1}`,
       type: '',
@@ -45,13 +48,17 @@ function CustomMetricForm(props: Props) {
   const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value })
 
   const changeConditionTab = (e, { name, value }) => {
-    props.editMetric({ ...metric, [ 'type' ]: value })
+    props.editMetric({[ 'type' ]: value });
   };
+
+  const save = () => {
+    props.save(metric).then(props.onClose);
+  }
 
   return (
     <Form
       className="relative"
-      onSubmit={() => props.save(metric)}
+      onSubmit={save}
     >
       <div className="p-5 pb-20" style={{ height: 'calc(100vh - 60px)', overflowY: 'auto' }}>
         <div className="form-group">
@@ -61,7 +68,7 @@ function CustomMetricForm(props: Props) {
             className="text-lg"
             name="name"
             style={{ fontSize: '18px', padding: '10px', fontWeight: '600'}}
-            // value={ instance && instance.name }
+            value={ metric.name }
             onChange={ write }
             placeholder="Metric Title"
             id="name-field"
@@ -104,7 +111,7 @@ function CustomMetricForm(props: Props) {
         </div>
 
         <div className="flex justify-end">
-          <IconButton onClick={addSeries} primaryText label="SERIES" icon="plus" />
+          <IconButton type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
         </div>
 
         <div className="my-4" />
@@ -113,8 +120,8 @@ function CustomMetricForm(props: Props) {
       </div>
 
       <div className="fixed border-t w-full bottom-0 px-5 py-2 bg-white">
-        <Button loading={loading} primary>
-          Save
+        <Button loading={loading} primary disabled={!metric.validate()}>
+          { `${metric.exists() ? 'Update' : 'Create'}` }
         </Button>
       </div>
     </Form>
@@ -124,4 +131,4 @@ function CustomMetricForm(props: Props) {
 export default connect(state => ({
   metric: state.getIn(['customMetrics', 'instance']),
   loading: state.getIn(['customMetrics', 'saveRequest', 'loading']),
-}), { editMetric, save })(CustomMetricForm);
+}), { editMetric, save, addSeries })(CustomMetricForm);

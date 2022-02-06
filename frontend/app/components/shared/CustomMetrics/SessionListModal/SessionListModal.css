@@ -1,0 +1,5 @@
+.wrapper {
+    padding: 0 20px;
+    background-color: #f6f6f6;
+    min-height: calc(100vh - 59px);
+  }

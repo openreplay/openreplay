@@ -1,6 +1,7 @@
 import Record from 'Types/Record';
 import { List } from 'immutable';
 import Filter from 'Types/filter';
+import { validateName } from 'App/validate';
 
 export const FilterSeries = Record({
   seriesId: undefined,
@@ -31,7 +32,7 @@ export default Record({
   idKey: 'metricId',
   methods: {
     validate() {
-      return validateName(this.name, { diacritics: true });
+      return validateName(this.name, { empty: false });
     },
 
     toSaveData() {

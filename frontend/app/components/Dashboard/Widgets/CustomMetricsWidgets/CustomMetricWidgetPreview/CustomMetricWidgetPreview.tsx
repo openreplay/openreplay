@@ -47,17 +47,17 @@ function CustomMetricWidget(props: Props) {
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
 
   useEffect(() => {
-    new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
-      .then(response => response.json())
-      .then(({ errors, data }) => {
-        if (errors) {
-          console.log('err', errors)
-        } else {
-          const _data = getChartFormatter(period)(data[0]);
-          // console.log('__data', _data)
-          setData({ chart: _data });
-        }
-      }).finally(() => setLoading(false));
+    // new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
+    //   .then(response => response.json())
+    //   .then(({ errors, data }) => {
+    //     if (errors) {
+    //       console.log('err', errors)
+    //     } else {
+    //       const _data = getChartFormatter(period)(data[0]);
+    //       // console.log('__data', _data)
+    //       setData({ chart: _data });
+    //     }
+    //   }).finally(() => setLoading(false));
   }, [metric])
 
   

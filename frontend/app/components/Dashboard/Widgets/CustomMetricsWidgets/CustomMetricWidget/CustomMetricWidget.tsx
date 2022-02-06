@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Loader, NoContent, Icon } from 'UI';
-import { widgetHOC, Styles } from '../../common';
+import { Styles } from '../../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
-import CustomMetricWidgetHoc from '../../common/CustomMetricWidgetHoc';
+// import CustomMetricWidgetHoc from '../../common/CustomMetricWidgetHoc';
 import stl from './CustomMetricWidget.css';
-import { getChartFormatter } from 'Types/dashboard/helper'; 
-import { remove, setAlertMetricId } from 'Duck/customMetrics';
+import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
+import { edit, remove, setAlertMetricId, setActiveWidget } from 'Duck/customMetrics';
 import { confirm } from 'UI/Confirmation';
 import APIClient from 'App/api_client';
 import { setShowAlerts } from 'Duck/dashboard';
@@ -23,25 +23,23 @@ const customParams = rangeName => {
   return params
 }
 
-interface Period {
-  rangeName: string;
-}
-
 interface Props {
   metric: any;
   // loading?: boolean;
   data?: any;
   showSync?: boolean;
   compare?: boolean;
-  period?: Period;
+  period?: any;
   onClickEdit: (e) => void;
   remove: (id) => void;
   setShowAlerts: (showAlerts) => void;
   setAlertMetricId: (id) => void;
   onAlertClick: (e) => void;
+  edit: (setDefault?) => void;
+  setActiveWidget: (widget) => void;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync, compare, period = { rangeName: LAST_24_HOURS} } = props;
+  const { metric, showSync, compare, period } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>({ chart: [] })
 
@@ -51,7 +49,6 @@ function CustomMetricWidget(props: Props) {
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
 
   useEffect(() => {
-
     // dataWrapper: (p, period) => SessionsImpactedBySlowRequests({ chart: p})
 		// 	.update("chart", getChartFormatter(period))
     
@@ -64,7 +61,7 @@ function CustomMetricWidget(props: Props) {
           // console.log('data', data);
           // const _data = data[0].map(CustomMetric).update("chart", getChartFormatter(period)).toJS();
           const _data = getChartFormatter(period)(data[0]);
-          console.log('__data', _data)
+          // console.log('__data', _data)
           setData({ chart: _data });
         }
       }).finally(() => setLoading(false));
@@ -80,6 +77,12 @@ function CustomMetricWidget(props: Props) {
     }
   }
 
+  const clickHandler = (event, index) => {
+    const timestamp = event.activePayload[0].payload.timestamp;
+    const { startTimestamp, endTimestamp } = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
+    props.setActiveWidget({ widget: metric, startTimestamp, endTimestamp, timestamp: event.activePayload[0].payload.timestamp, index })
+  }
+
   // const onAlertClick = () => {
   //   props.setShowAlerts(true)
   //   props.setAlertMetricId(metric.metricId)
@@ -90,10 +93,10 @@ function CustomMetricWidget(props: Props) {
       <div className="flex items-center mb-10 p-2">
         <div className="font-medium">{metric.name + ' ' + metric.metricId}</div>
         <div className="ml-auto flex items-center">
-        <div className="cursor-pointer mr-6" onClick={deleteHandler}>
+          <div className="cursor-pointer mr-6" onClick={deleteHandler}>
             <Icon name="trash" size="14" />
           </div>
-          <div className="cursor-pointer mr-6">
+          <div className="cursor-pointer mr-6" onClick={() => props.edit(metric)}>
             <Icon name="pencil" size="14" />
           </div>
           <div className="cursor-pointer" onClick={props.onAlertClick}>
@@ -112,6 +115,7 @@ function CustomMetricWidget(props: Props) {
                 data={ data.chart }
                 margin={Styles.chartMargins}
                 syncId={ showSync ? "impactedSessionsBySlowPages" : undefined }
+                onClick={clickHandler}
               >
                 {gradientDef}
                 <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
@@ -131,6 +135,7 @@ function CustomMetricWidget(props: Props) {
                   strokeWidth={ 2 }
                   strokeOpacity={ 0.8 }
                   fill={compare ? 'url(#colorCountCompare)' : 'url(#colorCount)'}
+                  // onClick={clickHandler}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -141,4 +146,6 @@ function CustomMetricWidget(props: Props) {
   );
 }
 
-export default connect(null, { remove, setShowAlerts, setAlertMetricId })(CustomMetricWidget);
+export default connect(state => ({
+  period: state.getIn(['dashboard', 'period']),
+}), { remove, setShowAlerts, setAlertMetricId, edit, setActiveWidget })(CustomMetricWidget);
