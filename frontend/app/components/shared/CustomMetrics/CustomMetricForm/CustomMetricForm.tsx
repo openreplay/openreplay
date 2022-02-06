@@ -105,6 +105,7 @@ function CustomMetricForm(props: Props) {
                 seriesIndex={index}
                 series={series}
                 onRemoveSeries={() => removeSeries(index)}
+                canDelete={metric.series.size > 1}
               />
             </div>
           ))}
