@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { IconButton, Icon } from 'UI';
 import FilterSelection from '../../Filters/FilterSelection';
 import SeriesName from './SeriesName';
+import cn from 'classnames';
 
 interface Props {
   seriesIndex: number;
@@ -12,9 +13,11 @@ interface Props {
   edit: typeof edit;
   updateSeries: typeof updateSeries;
   onRemoveSeries: (seriesIndex) => void;
+  canDelete?: boolean; 
 }
 
 function FilterSeries(props: Props) {
+  const { canDelete } = props;
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
 
@@ -80,7 +83,7 @@ function FilterSeries(props: Props) {
         </div>    
     
         <div className="flex items-center cursor-pointer" >
-          <div onClick={props.onRemoveSeries} className="ml-3">
+          <div onClick={props.onRemoveSeries} className={cn("ml-3", {'disabled': !canDelete})}>
             <Icon name="trash" size="16" />
           </div>
 
