@@ -60,6 +60,7 @@ function reducer(state = initialState, action = {}) {
     case INIT:
       return state.set('instance', action.instance);
     case UPDATE_SERIES:
+      console.log('update series', action.series);
       return state.mergeIn(['instance', 'series', action.index], action.series);
     case success(SAVE):
       return updateItemInList(updateInstance(state, action.data), action.data);
@@ -72,7 +73,7 @@ function reducer(state = initialState, action = {}) {
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));
     case success(FETCH_SESSION_LIST):
-      return state.set("sessionList", List(action.data).map(Session));
+      return state.set("sessionList", List(action.data[0].sessions).map(Session));
     case SET_ACTIVE_WIDGET:
       return state.set("activeWidget", action.widget);
 	}
@@ -151,7 +152,7 @@ export const init = (instnace = null, setDefault = true) => (dispatch, getState)
 export const fetchSessionList = (params) => (dispatch, getState) => {
   dispatch({
     types: array(FETCH_SESSION_LIST),
-    call: client => client.post(`/sessions/search2`, { ...params }),
+    call: client => client.post(`/custom_metrics/sessions`, { ...params }),
   });
 }
 

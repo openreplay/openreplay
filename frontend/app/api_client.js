@@ -24,6 +24,7 @@ const siteIdRequiredPaths = [
   '/assist',
   '/heatmaps',
   '/custom_metrics',
+  // '/custom_metrics/sessions',
 ];
 
 const noStoringFetchPathStarts = [

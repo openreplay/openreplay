@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Loader, NoContent, Icon } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
+import { LineChart, Line, Legend } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidget.css';
 import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
@@ -40,7 +41,8 @@ interface Props {
 function CustomMetricWidget(props: Props) {
   const { metric, showSync, compare, period } = props;
   const [loading, setLoading] = useState(false)
-  const [data, setData] = useState<any>({ chart: [] })
+  const [data, setData] = useState<any>([]);
+  const [seriesMap, setSeriesMap] = useState<any>([]);
 
   const colors = compare ? Styles.compareColors : Styles.colors;
   const params = customParams(period.rangeName)
@@ -54,8 +56,19 @@ function CustomMetricWidget(props: Props) {
         if (errors) {
           console.log('err', errors)
         } else {
-          const _data = getChartFormatter(period)(data[0]);
-          setData({ chart: _data });
+          const namesMap = data
+            .map(i => Object.keys(i))
+            .flat()
+            .filter(i => i !== 'time' && i !== 'timestamp')
+            .reduce((unique: any, item: any) => {
+              if (!unique.includes(item)) {
+                unique.push(item);
+              }
+              return unique;
+            }, []);
+
+          setSeriesMap(namesMap);
+          setData(getChartFormatter(period)(data));
         }
       }).finally(() => setLoading(false));
   }, [period])
@@ -101,35 +114,52 @@ function CustomMetricWidget(props: Props) {
         <Loader loading={ loading } size="small">
           <NoContent
             size="small"
-            show={ data.chart.length === 0 }
+            show={ data.length === 0 }
           >
             <ResponsiveContainer height={ 240 } width="100%">
-              <AreaChart
-                data={ data.chart }
+              <LineChart
+                data={ data }
                 margin={Styles.chartMargins}
-                syncId={ showSync ? "impactedSessionsBySlowPages" : undefined }
+                syncId={ showSync ? "domainsErrors_4xx" : undefined }
                 onClick={clickHandler}
               >
-                {gradientDef}
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={colors[4]} stopOpacity={ 0.9 } />
+                    <stop offset="95%" stopColor={colors[4]} stopOpacity={ 0.2 } />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
-                <XAxis {...Styles.xaxis} dataKey="time" interval={params.density/7} />
-                <YAxis
+                <XAxis
+                  {...Styles.xaxis}
+                  dataKey="time"
+                  interval={params.density/7}
+                />
+                <YAxis 
                   {...Styles.yaxis}
-                  label={{ ...Styles.axisLabelLeft, value: "Number of Requests" }}
                   allowDecimals={false}
+                  label={{  
+                    ...Styles.axisLabelLeft,
+                    value: "Number of Errors"
+                  }}
                 />
+                <Legend />
                 <Tooltip {...Styles.tooltip} />
-                <Area
-                  name="Sessions"
-                  type="monotone"
-                  dataKey="count"
-                  stroke={colors[0]}
-                  fillOpacity={ 1 }
-                  strokeWidth={ 2 }
-                  strokeOpacity={ 0.8 }
-                  fill={compare ? 'url(#colorCountCompare)' : 'url(#colorCount)'}
-                />
-              </AreaChart>
+                { seriesMap.map((key, index) => (
+                  <Line
+                    key={key}
+                    name={key}
+                    type="monotone"
+                    dataKey={key}
+                    stroke={colors[index]}
+                    fillOpacity={ 1 }
+                    strokeWidth={ 2 }
+                    strokeOpacity={ 0.8 }
+                    fill="url(#colorCount)"
+                    dot={false}
+                  />
+                ))}
+              </LineChart>
             </ResponsiveContainer>
           </NoContent>
         </Loader>
