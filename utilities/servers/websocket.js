@@ -227,5 +227,6 @@ module.exports = {
                 socket.to(socket.peerId).emit(NEW_AGENT_MESSAGE);
             }
         });
+        console.log("WS server started")
     }
 };
