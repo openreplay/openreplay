@@ -1,5 +1,7 @@
 const _io = require('socket.io');
-var express = require('express');
+const express = require('express');
+const uaParser = require('ua-parser-js');
+const geoip2Reader = require('@maxmind/geoip2-node').Reader;
 var {extractPeerId} = require('./peerjs-server');
 var wsRouter = express.Router();
 const IDENTITIES = {agent: 'agent', session: 'session'};
@@ -50,7 +52,7 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     liveSessions[projectKey] = liveSessions[projectKey] || [];
-                    liveSessions[projectKey].push(item.handshake.query);
+                    liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                 }
             }
         }
@@ -70,7 +72,7 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, async function (
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     liveSessions[projectKey] = liveSessions[projectKey] || [];
-                    liveSessions[projectKey].push(item.handshake.query);
+                    liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                 }
             }
         }
@@ -109,22 +111,33 @@ async function sessions_agents_count(io, socket) {
     return {c_sessions, c_agents};
 }
 
-async function extract_live(io, socket) {
-    if (io.sockets.adapter.rooms.get(socket.peerId)) {
-        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+function extractSessionInfo(socket) {
+    if (socket.handshake.query.sessionInfo !== undefined) {
+        socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
+        console.log();
+        let ua = uaParser(socket.handshake.headers['user-agent']);
+        socket.handshake.query.sessionInfo.userOs = ua.os.name;
+        socket.handshake.query.sessionInfo.userBrowser = ua.browser.name;
+        socket.handshake.query.sessionInfo.userDevice = ua.device.model;
+        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type;
+        socket.handshake.query.sessionInfo.userCountry = undefined;
 
-        for (let item of connected_sockets) {
-            if (item.handshake.query.identity === IDENTITIES.session) {
-                c_sessions++;
-            } else {
-                c_agents++;
-            }
-        }
-    } else {
-        c_agents = -1;
-        c_sessions = -1;
+        const options = {
+            // you can use options like `cache` or `watchForUpdates`
+        };
+        console.log("Looking for MMDB file in " + process.env.MAXMINDDB_FILE);
+        geoip2Reader.open(process.env.MAXMINDDB_FILE, options)
+            .then(reader => {
+                console.log("looking for location of ");
+                console.log(socket.handshake.headers['x-real-ip'] || socket.handshake.address);
+                let country = reader.country(socket.handshake.headers['x-real-ip'] || socket.handshake.address);
+                socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
+            })
+            .catch(error => {
+                console.error(error);
+            });
+
     }
-    return {c_sessions, c_agents};
 }
 
 module.exports = {
@@ -154,6 +167,7 @@ module.exports = {
                     io.to(socket.id).emit(SESSION_ALREADY_CONNECTED);
                     return socket.disconnect();
                 }
+                extractSessionInfo(socket);
                 if (c_agents > 0) {
                     console.log(`notifying new session about agent-existance`);
                     io.to(socket.id).emit(NEW_AGENT_MESSAGE);
@@ -177,12 +191,10 @@ module.exports = {
                 let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
                 if (c_sessions === -1 && c_agents === -1) {
                     console.log(`room not found: ${socket.peerId}`);
-                    return removeSession(socket.projectKey, socket.sessionId);
                 }
                 if (c_sessions === 0) {
                     console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
                     socket.to(socket.peerId).emit(NO_SESSIONS);
-                    removeSession(socket.projectKey, socket.sessionId);
                 }
                 if (c_agents === 0) {
                     console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
