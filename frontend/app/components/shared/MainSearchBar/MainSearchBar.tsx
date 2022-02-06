@@ -11,8 +11,8 @@ interface Props {
 const MainSearchBar = (props: Props) => {
   return (
     <div className="flex items-center">
-        <div style={{ width: "65%", marginRight: "10px"}}><SessionSearchField /></div>
-        <div className="flex items-center" style={{ width: "35%"}}>
+        <div style={{ width: "60%", marginRight: "10px"}}><SessionSearchField /></div>
+        <div className="flex items-center" style={{ width: "40%"}}>
         <SavedSearch />
         <Popup
             trigger={

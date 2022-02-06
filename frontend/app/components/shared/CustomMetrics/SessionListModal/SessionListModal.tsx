@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SlideModal, NoContent, Dropdown, Icon } from 'UI';
+import { SlideModal, NoContent, Dropdown, Icon, TimezoneDropdown } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import stl from './SessionListModal.css';
 import { connect } from 'react-redux';
@@ -59,18 +59,25 @@ function SessionListModal(props: Props) {
                     <div className="mb-6 flex items-center">
                         <div className="mr-auto">Showing all sessions between <span className="font-medium">{startTime}</span> and <span className="font-medium">{endTime}</span> </div>
                         <div className="flex items-center ml-6">
-                            <span className="mr-2 color-gray-medium">Series: </span>
-                            <Dropdown
-                                className={stl.dropdown}
-                                direction="left"
-                                options={ seriesOptions }
-                                name="change"
-                                value={ activeSeries }
-                                onChange={ writeOption }
-                                id="change-dropdown"
-                                // icon={null}
-                                icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
-                            />
+                            <div className="flex items-center">
+                                <span className="mr-2 color-gray-medium">Timezone</span>
+                                <TimezoneDropdown />
+                            </div>
+                            <div className="flex items-center ml-6">
+                                <span className="mr-2 color-gray-medium">Sort By</span>
+                                <Dropdown
+                                    className={stl.dropdown}
+                                    direction="left"
+                                    options={ seriesOptions }
+                                    name="change"
+                                    value={ activeSeries }
+                                    onChange={ writeOption }
+                                    id="change-dropdown"
+                                    // icon={null}
+                                    icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
+                                />
+                            </div>
+                            {/* <span className="mr-2 color-gray-medium">Series</span> */}
                         </div>
                     </div>
                     <NoContent 

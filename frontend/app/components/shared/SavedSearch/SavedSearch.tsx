@@ -40,7 +40,7 @@ function SavedSearch(props) {
             <div className="flex items-center ml-2">
               <Icon name="search" size="14" />
               <span className="color-gray-medium px-1">Viewing:</span>
-              <span className="font-medium">{savedSearch.name}</span>
+              <span className="font-medium" style={{ whiteSpace: 'nowrap', width: '30%'}}>{savedSearch.name}</span>
             </div>
           )}
         </div>
