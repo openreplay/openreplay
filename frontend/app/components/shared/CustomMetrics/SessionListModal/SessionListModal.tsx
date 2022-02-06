@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { SlideModal, NoContent } from 'UI';
+import React, { useEffect, useState } from 'react';
+import { SlideModal, NoContent, Dropdown } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import stl from './SessionListModal.css';
 import { connect } from 'react-redux';
@@ -14,6 +14,10 @@ interface Props {
 }
 function SessionListModal(props: Props) {
     const { activeWidget, loading, list } = props;
+    const [seriesOptions, setSeriesOptions] = useState([
+        { text: 'All', value: 'all' },
+    ]);
+    const [activeSeries, setActiveSeries] = useState('all');
     useEffect(() => {
         if (!activeWidget || !activeWidget.widget) return;
         props.fetchSessionList({ 
@@ -23,25 +27,50 @@ function SessionListModal(props: Props) {
         });
     }, [activeWidget]);
 
-    console.log('SessionListModal', activeWidget);
+    useEffect(() => {
+        if (!list) return;
+        const seriesOptions = list.map(item => ({
+            text: item.seriesName,
+            value: item.seriesId,
+        }));
+        setSeriesOptions([
+            { text: 'All', value: 'all' },
+            ...seriesOptions,
+        ]);
+    }, [list]);
+
+    const writeOption = (e, { name, value }) => setActiveSeries(value);
+
+    const filteredSessions = activeSeries === 'all' ? list.reduce((a, b) => a.concat(b.sessions), []) : list.filter(item => item.seriesId === activeSeries).reduce((a, b) => a.concat(b.sessions), []);
     return (
         <SlideModal
             title={ activeWidget && (
                 <div className="flex items-center">
-                    <span className="mr-3">{ 'Custom Metric: ' + activeWidget.widget.name } </span>
+                    <div className="mr-auto">{ 'Custom Metric: ' + activeWidget.widget.name } </div>
+                    <div className="text-base">
+                        <Dropdown
+                            className="w-4/6"
+                            placeholder="change"
+                            selection
+                            options={ seriesOptions }
+                            name="change"
+                            value={ activeSeries }
+                            onChange={ writeOption }
+                            id="change-dropdown"
+                        />
+                    </div>
                 </div>
             )}
             isDisplayed={ !!activeWidget }
             onClose={ () => props.setActiveWidget(null)}
-            // size="medium"
             content={ activeWidget && (
                 <div className="">
                     <NoContent 
-                        show={ !loading && (list.length === 0 || list.size === 0 )}
+                        show={ !loading && (filteredSessions.length === 0 || filteredSessions.size === 0 )}
                         title="No recordings found."
                     >
                         <div className={ stl.wrapper }>
-                            { list && list.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
+                            { filteredSessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
                         </div>
                     </NoContent> 
                 </div>
