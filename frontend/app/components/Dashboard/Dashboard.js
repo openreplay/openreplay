@@ -114,6 +114,7 @@ function isInViewport(el) {
   comparing: state.getIn([ 'dashboard', 'comparing' ]),
   platform: state.getIn([ 'dashboard', 'platform' ]),
   dashboardAppearance: state.getIn([ 'user', 'account', 'appearance', 'dashboard' ]),
+  activeWidget: state.getIn(['customMetrics', 'activeWidget']),
 }), { setPeriod, setPlatform, fetchMetadataOptions })
 @withPageTitle('Metrics - OpenReplay')
 @withRouter
@@ -168,7 +169,7 @@ export default class Dashboard extends React.PureComponent {
   }
 
   render() {
-    const { dashboardAppearance, comparing } = this.props;
+    const { dashboardAppearance, comparing, activeWidget } = this.props;
     const { pageSection } = this.state;
 
     const noWidgets = WIDGET_KEYS
@@ -189,7 +190,7 @@ export default class Dashboard extends React.PureComponent {
             <div className={ cn(styles.header, "flex items-center w-full") }>            
               <MetricsFilters />
               <CustomMetrics />
-              <SessionListModal />
+              { activeWidget && <SessionListModal activeWidget={activeWidget} /> }
             </div>
             <div className="">
               <NoContent

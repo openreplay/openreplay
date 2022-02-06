@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { fetchList } from 'Duck/customMetrics';
-import { list } from 'App/components/BugFinder/CustomFilters/filterModal.css';
 import CustomMetricWidget from './CustomMetricWidget';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 
@@ -17,6 +16,8 @@ function CustomMetricsWidgets(props: Props) {
   useEffect(() => {
     props.fetchList()
   }, [])
+
+  console.log('activeMetricId', activeMetricId)
 
   return (
     <>
