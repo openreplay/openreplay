@@ -460,6 +460,12 @@ class IssueType(str, Enum):
 class __MixedSearchFilter(BaseModel):
     is_event: bool = Field(...)
 
+    @root_validator(pre=True)
+    def remove_duplicate_values(cls, values):
+        if values.get("value") is not None:
+            values["value"] = list(set(values["value"]))
+        return values
+
     class Config:
         alias_generator = attribute_to_camel_case
 
