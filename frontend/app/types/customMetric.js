@@ -28,6 +28,8 @@ export default Record({
   type: 'session_count',
   series: List(),
   isPublic: false,
+  startDate: '',
+  endDate: '',
 }, {
   idKey: 'metricId',
   methods: {

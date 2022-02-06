@@ -53,7 +53,7 @@ function FilterSeries(props: Props) {
 
   const onChangeEventsOrder = (e, { name, value }) => {
     props.updateSeries(seriesIndex, {
-      ...series.toData(),
+      ...series,
       filter: {
         ...series.filter,
         eventsOrder: value,
@@ -79,7 +79,7 @@ function FilterSeries(props: Props) {
     <div className="border rounded bg-white">
       <div className="border-b px-5 h-12 flex items-center relative">
         <div className="mr-auto">
-          <SeriesName name={series.name} onUpdate={() => null } />
+          <SeriesName name={series.name} onUpdate={(name) => props.updateSeries(seriesIndex, { name }) } />
         </div>    
     
         <div className="flex items-center cursor-pointer" >

@@ -35,7 +35,7 @@ function SessionListModal(props: Props) {
             onClose={ () => props.setActiveWidget(null)}
             // size="medium"
             content={ activeWidget && (
-                <div className="p-5">
+                <div className="">
                     <NoContent 
                         show={ !loading && (list.length === 0 || list.size === 0 )}
                         title="No recordings found."

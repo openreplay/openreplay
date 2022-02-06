@@ -17,7 +17,7 @@ function SeriesName(props: Props) {
 
   const onBlur = () => {
     setEditing(false)
-    // props.onUpdate(name)
+    props.onUpdate(name)
   }
 
   useEffect(() => {

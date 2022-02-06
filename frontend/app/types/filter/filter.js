@@ -80,7 +80,7 @@ export default Record({
       return js;
     }
   },
-  fromJS({ filters, events, custom, ...filter }) {
+  fromJS({ eventsOrder, filters, events, custom, ...filter }) {
     let startDate;
     let endDate;
     const rValue = filter.rangeValue || rangeValue;
@@ -91,6 +91,7 @@ export default Record({
     }
     return {
       ...filter,
+      eventsOrder,
       startDate,
       endDate,
       events: List(events).map(Event),
