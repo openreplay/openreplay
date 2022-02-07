@@ -777,6 +777,7 @@ $$
                 user_id    integer REFERENCES users (user_id) ON DELETE SET NULL,
                 name       text    NOT NULL,
                 is_public  boolean NOT NULL DEFAULT FALSE,
+                active     boolean NOT NULL DEFAULT TRUE,
                 created_at timestamp        default timezone('utc'::text, now()) not null,
                 deleted_at timestamp
             );

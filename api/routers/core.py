@@ -1140,6 +1140,16 @@ def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCus
         "data": custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)}
 
 
+@app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
+@app.put('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
+def update_custom_metric_state(projectId: int, metric_id: int,
+                               data: schemas.UpdateCustomMetricsStatusSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    return {
+        "data": custom_metrics.change_state(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                            status=data.active)}
+
+
 @app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}

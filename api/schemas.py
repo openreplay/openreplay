@@ -721,5 +721,9 @@ class UpdateCustomMetricsSchema(CreateCustomMetricsSchema):
     series: List[CustomMetricUpdateSeriesSchema] = Field(..., min_items=1)
 
 
+class UpdateCustomMetricsStatusSchema(BaseModel):
+    active: bool = Field(...)
+
+
 class SavedSearchSchema(FunnelSchema):
     filter: FlatSessionsSearchPayloadSchema = Field([])
