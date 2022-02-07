@@ -216,7 +216,7 @@ def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator
             return value + '%'
         elif op == schemas.SearchEventOperator._ends_with:
             return '%' + value
-        elif op == schemas.SearchEventOperator._contains:
+        elif op == schemas.SearchEventOperator._contains or op == schemas.SearchEventOperator._not_contains:
             return '%' + value + '%'
     return value
 
