@@ -194,7 +194,7 @@ module.exports = {
             }
             socket.join(socket.peerId);
             if (io.sockets.adapter.rooms.get(socket.peerId)) {
-                console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, size:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
             }
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
@@ -232,10 +232,10 @@ module.exports = {
             socket.onAny(async (eventName, ...args) => {
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
-                    console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, size: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
                 } else {
-                    console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}, size:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
                     let socketId = await findSessionSocketId(io, socket.peerId);
                     if (socketId === null) {
                         console.log(`session not found for:${socket.peerId}`);
