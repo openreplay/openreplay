@@ -97,7 +97,7 @@ function CustomMetricWidget(props: Props) {
   return (
     <div className={stl.wrapper}>
       <div className="flex items-center mb-10 p-2">
-        <div className="font-medium">{metric.name + ' ' + metric.metricId}</div>
+        <div className="font-medium">{metric.name}</div>
         <div className="ml-auto flex items-center">
           <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} />
           <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.edit(metric)} />
