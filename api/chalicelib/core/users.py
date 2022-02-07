@@ -315,6 +315,11 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
     return {"data": user}
 
 
+def edit_appearance(user_id, tenant_id, changes):
+    updated_user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
+    return {"data": updated_user}
+
+
 def get_by_email_only(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(

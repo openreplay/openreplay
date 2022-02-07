@@ -1069,6 +1069,13 @@ def edit_account(data: schemas.EditUserSchema = Body(...),
                       editor_id=context.user_id)
 
 
+@app.post('/account/appearance', tags=["account"])
+@app.put('/account/appearance', tags=["account"])
+def edit_account_appearance(data: schemas.EditUserAppearanceSchema = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    return users.edit_appearance(tenant_id=context.tenant_id, user_id=context.user_id, changes=data.dict())
+
+
 @app.post('/account/password', tags=["account"])
 @app.put('/account/password', tags=["account"])
 def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
