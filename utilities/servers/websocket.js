@@ -5,8 +5,9 @@ const geoip2Reader = require('@maxmind/geoip2-node').Reader;
 var {extractPeerId} = require('./peerjs-server');
 var wsRouter = express.Router();
 const IDENTITIES = {agent: 'agent', session: 'session'};
-const NEW_AGENT_MESSAGE = "NEW_AGENT";
+const NEW_AGENT = "NEW_AGENT";
 const NO_AGENTS = "NO_AGENT";
+const AGENT_DISCONNECT = "AGENT_DISCONNECTED";
 const NO_SESSIONS = "SESSION_DISCONNECTED";
 const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
 // const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
@@ -114,7 +115,6 @@ async function sessions_agents_count(io, socket) {
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
-        console.log();
         let ua = uaParser(socket.handshake.headers['user-agent']);
         socket.handshake.query.sessionInfo.userOs = ua.os.name;
         socket.handshake.query.sessionInfo.userBrowser = ua.browser.name;
@@ -170,7 +170,7 @@ module.exports = {
                 extractSessionInfo(socket);
                 if (c_agents > 0) {
                     console.log(`notifying new session about agent-existance`);
-                    io.to(socket.id).emit(NEW_AGENT_MESSAGE);
+                    io.to(socket.id).emit(NEW_AGENT);
                 }
 
             } else if (c_sessions <= 0) {
@@ -182,12 +182,18 @@ module.exports = {
                 console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, size:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
             }
             if (socket.identity === IDENTITIES.agent) {
-                socket.to(socket.peerId).emit(socket.id, NEW_AGENT_MESSAGE);
+                if (socket.handshake.query.agentInfo !== undefined) {
+                    socket.handshake.query.agentInfo = JSON.parse(socket.handshake.query.agentInfo);
+                }
+                socket.to(socket.peerId).emit(NEW_AGENT, socket.id, socket.handshake.query.agentInfo);
             }
 
             socket.on('disconnect', async () => {
                 // console.log(`${socket.id} disconnected from ${socket.peerId}, waiting ${wsReconnectionTimeout / 1000}s before checking remaining`);
                 console.log(`${socket.id} disconnected from ${socket.peerId}`);
+                if (socket.identity === IDENTITIES.agent) {
+                    socket.to(socket.peerId).emit(AGENT_DISCONNECT, socket.id);
+                }
                 // wait a little bit before notifying everyone
                 // setTimeout(async () => {
                 console.log("checking for number of connected agents and sessions");
