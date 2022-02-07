@@ -830,14 +830,14 @@ def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
 def sessions_live(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_sessions(projectId)
+    data = assist.get_live_sessions_ws(projectId)
     return {'data': data}
 
 
 @app.post('/{projectId}/assist/sessions', tags=["assist"])
 def sessions_live_search(projectId: int, data: schemas.AssistSearchPayloadSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_sessions(projectId, filters=data.filters)
+    data = assist.get_live_sessions_ws(projectId)
     return {'data': data}
 
 
