@@ -36,6 +36,10 @@ class EditUserSchema(BaseModel):
     appearance: Optional[dict] = Field({})
 
 
+class EditUserAppearanceSchema(BaseModel):
+    appearance: dict = Field(...)
+
+
 class ForgetPasswordPayloadSchema(_Grecaptcha):
     email: str = Field(...)
 
