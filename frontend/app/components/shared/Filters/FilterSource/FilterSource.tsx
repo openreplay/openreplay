@@ -1,5 +1,5 @@
 import { FilterType } from 'App/types/filter/filterType';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import stl from './FilterSource.css';
 
 interface Props {
@@ -8,10 +8,21 @@ interface Props {
 }
 function FilterSource(props: Props) {
   const { filter } = props;
+  const [value, setValue] = useState(filter.source[0] || '');
 
   const onChange = ({ target: { value, name } }) => {
     props.onUpdate({ ...filter, [name]: [value] })
   }
+
+  useEffect(() => {
+   setValue(filter.source[0] || '');
+  }, [filter])
+
+  useEffect(() => {
+    props.onUpdate({ ...filter, source: [value] })
+  }, [value])
+
+  const write = ({ target: { value, name } }) => setValue(value)
 
   const renderFiled = () => {
     switch(filter.sourceType) {
@@ -20,9 +31,9 @@ function FilterSource(props: Props) {
           <input
             name="source"
             className={stl.inputField}
-            value={filter.source[0]}
-            onBlur={onChange}
-            onChange={onChange}
+            value={value}
+            onBlur={write}
+            onChange={write}
             type="number"
           />
         )

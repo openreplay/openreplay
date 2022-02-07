@@ -28,9 +28,9 @@ export default class FunnelSaveModal extends React.PureComponent {
   onChangeOption = (e, { checked, name }) => this.props.edit({ [ name ]: checked })
 
   onSave = () => {
-    const { funnel, closeHandler } = this.props;
+    const { funnel, filter } = this.props;
     if (funnel.name.trim() === '') return;
-    this.props.save({ ...funnel, filter: filter }).then(function() {
+    this.props.save(funnel).then(function() {
       this.props.fetchFunnelsList();
       this.props.closeHandler();
     }.bind(this));

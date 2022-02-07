@@ -7,6 +7,7 @@ import { createItemInListUpdater, mergeReducers, success, array } from './funcTo
 import { createRequestReducer } from './funcTools/request';
 import { getDateRangeFromValue } from 'App/dateRange';
 import { LAST_7_DAYS } from 'Types/app/period';
+import { filterMap as searchFilterMap } from './search';
 
 const name = 'funnel';
 const idKey = 'funnelId';
@@ -265,16 +266,20 @@ export const fetchIssueTypes = () => {
   }
 }
 
-export const save = (instance) => {
+export const save = (instance) => (dispatch, getState) => {
+// export const save = (instance) => {
+  const filter = getState().getIn([ 'search', 'instance']).toData();
+  filter.filters = filter.filters.map(searchFilterMap);
+
   const _instance = instance instanceof Funnel ? instance : Funnel(instance);
   const url = _instance.exists() 
     ? `/funnels/${ _instance[idKey] }`
     : `/funnels`;
 
-  return {
+  return dispatch({
     types: array(_instance.exists() ? SAVE : UPDATE),
-    call: client => client.post(url, _instance.toData()),
-  }
+    call: client => client.post(url, { ..._instance.toData(), filter }),
+  });
 }
 
 export const updateFunnelFilters = (funnelId, filter) => {  
