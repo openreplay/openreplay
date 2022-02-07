@@ -772,7 +772,7 @@ def get_funnel_issue_sessions(projectId: int, funnelId: int, issueId: str,
 
 @app.get('/{projectId}/funnels/{funnelId}', tags=["funnels"])
 def get_funnel(projectId: int, funnelId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = funnels.get(funnel_id=funnelId, project_id=projectId, user_id=context.user_id)
+    data = funnels.get(funnel_id=funnelId, project_id=projectId, user_id=context.user_id, flatten=False)
     if data is None:
         return {"errors": ["funnel not found"]}
     return {"data": data}
