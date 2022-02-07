@@ -2,8 +2,11 @@ import React from 'react';
 import { Form, SegmentSelection, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
-import { edit as editMetric, save, addSeries } from 'Duck/customMetrics';
+import { edit as editMetric, save, addSeries, remove } from 'Duck/customMetrics';
 import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
+import { confirm } from 'UI/Confirmation';
+import { toast } from 'react-toastify';
+import cn from 'classnames';
 
 interface Props {
   metric: any;
@@ -12,6 +15,7 @@ interface Props {
   loading: boolean;
   addSeries: (series?) => void;
   onClose: () => void;
+  remove: (id) => Promise<void>;
 }
 
 function CustomMetricForm(props: Props) {
@@ -52,7 +56,23 @@ function CustomMetricForm(props: Props) {
   };
 
   const save = () => {
-    props.save(metric).then(props.onClose);
+    props.save(metric).then(() => {
+      toast.success(metric.exists() ? 'Updated succesfully.' : 'Created succesfully.');
+      props.onClose()
+    });
+  }
+
+  const deleteHandler = async () => {
+    if (await confirm({
+      header: 'Custom Metric',
+      confirmButton: 'Delete',
+      confirmation: `Are you sure you want to delete ${metric.name}`
+    })) {
+      props.remove(metric.metricId).then(() => {
+        toast.success('Deleted succesfully.');
+        props.onClose();
+      });
+    }
   }
 
   return (
@@ -78,7 +98,7 @@ function CustomMetricForm(props: Props) {
         <div className="form-group">
           <label className="font-medium">Metric Type</label>
           <div className="flex items-center">
-            <span className="bg-white p-1 px-2 border rounded">Timeseries</span>
+            <span className="bg-white p-1 px-2 border rounded" style={{ height: '30px'}}>Timeseries</span>
             <span className="mx-2 color-gray-medium">of</span>
             <div>
               <SegmentSelection
@@ -89,7 +109,7 @@ function CustomMetricForm(props: Props) {
                 onSelect={ changeConditionTab }
                 value={{ value: metric.type }}
                 list={ [
-                  { name: 'Session Count', value: 'session_count' },
+                  { name: 'Series 1', value: 'session_count' },
                   { name: 'Session Percentage', value: 'session_percentage' },
                 ]}
               />
@@ -98,7 +118,7 @@ function CustomMetricForm(props: Props) {
         </div>
 
         <div className="form-group">
-          <label className="font-medium">Series</label>
+          <label className="font-medium">Chart Series</label>
           {metric.series && metric.series.size > 0 && metric.series.map((series: any, index: number) => (
             <div className="mb-2">
               <FilterSeries
@@ -111,19 +131,26 @@ function CustomMetricForm(props: Props) {
           ))}
         </div>
 
-        <div className="flex justify-end">
-          <IconButton type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
+        <div className={cn("flex justify-end -my-4", {'disabled' : metric.series.size > 2})}>
+          <IconButton hover type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
         </div>
 
-        <div className="my-4" />
+        <div className="my-8" />
 
         <CustomMetricWidgetPreview metric={metric} />
       </div>
 
-      <div className="fixed border-t w-full bottom-0 px-5 py-2 bg-white">
-        <Button loading={loading} primary disabled={!metric.validate()}>
-          { `${metric.exists() ? 'Update' : 'Create'}` }
-        </Button>
+      <div className="flex items-center fixed border-t w-full bottom-0 px-5 py-2 bg-white">
+        <div className="mr-auto">
+          <Button loading={loading} primary disabled={!metric.validate()}>
+            { `${metric.exists() ? 'Update' : 'Create'}` }
+          </Button>
+
+          <Button type="button" className="ml-3" outline hover plain onClick={props.onClose}>Cancel</Button>
+        </div>
+        <div>
+          <Button type="button" className="ml-3" outline hover plain onClick={deleteHandler}>Delete</Button>
+        </div>
       </div>
     </Form>
   );
@@ -132,4 +159,4 @@ function CustomMetricForm(props: Props) {
 export default connect(state => ({
   metric: state.getIn(['customMetrics', 'instance']),
   loading: state.getIn(['customMetrics', 'saveRequest', 'loading']),
-}), { editMetric, save, addSeries })(CustomMetricForm);
+}), { editMetric, save, addSeries, remove })(CustomMetricForm);

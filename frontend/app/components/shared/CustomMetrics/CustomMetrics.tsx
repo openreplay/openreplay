@@ -15,12 +15,12 @@ function CustomMetrics(props: Props) {
 
   return (
     <div className="self-start">
-      <IconButton outline icon="plus" label="CREATE METRIC" onClick={() => props.init()} />
+      <IconButton plain outline icon="plus" label="CREATE METRIC" onClick={() => props.init()} />
 
       <SlideModal
         title={
           <div className="flex items-center">
-            <span className="mr-3">{ 'Custom Metric' }</span>
+            <span className="mr-3">{ metric && metric.exists() ? 'Update Custom Metric' : 'Create Custom Metric' }</span>
           </div>
         }
         isDisplayed={ !!metric }

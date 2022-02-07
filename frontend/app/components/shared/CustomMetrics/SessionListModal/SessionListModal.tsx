@@ -49,7 +49,7 @@ function SessionListModal(props: Props) {
         <SlideModal
             title={ activeWidget && (
                 <div className="flex items-center">
-                    <div className="mr-auto">{ 'Custom Metric: ' + activeWidget.widget.name } </div>
+                    <div className="mr-auto">{ activeWidget.widget.name } </div>
                 </div>
             )}
             isDisplayed={ !!activeWidget }
@@ -64,7 +64,7 @@ function SessionListModal(props: Props) {
                                 <TimezoneDropdown />
                             </div>
                             <div className="flex items-center ml-6">
-                                <span className="mr-2 color-gray-medium">Sort By</span>
+                                <span className="mr-2 color-gray-medium">Series</span>
                                 <Dropdown
                                     className={stl.dropdown}
                                     direction="left"
@@ -82,7 +82,8 @@ function SessionListModal(props: Props) {
                     </div>
                     <NoContent 
                         show={ !loading && (filteredSessions.length === 0 || filteredSessions.size === 0 )}
-                        title="No recordings found."
+                        title="No recordings found!"
+                        icon="exclamation-circle"
                     >
                         { filteredSessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
                     </NoContent> 

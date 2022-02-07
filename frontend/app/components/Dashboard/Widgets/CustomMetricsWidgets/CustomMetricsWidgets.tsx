@@ -3,11 +3,13 @@ import { connect } from 'react-redux';
 import { fetchList } from 'Duck/customMetrics';
 import CustomMetricWidget from './CustomMetricWidget';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
+import { init as initAlert } from 'Duck/alerts';
 
 interface Props {
   fetchList: Function;
   list: any;
   onClickEdit: (e) => void;
+  initAlert: Function;
 }
 function CustomMetricsWidgets(props: Props) {
   const { list } = props;
@@ -25,7 +27,10 @@ function CustomMetricsWidgets(props: Props) {
         <CustomMetricWidget
           metric={item}
           onClickEdit={props.onClickEdit}
-          onAlertClick={(e) => setActiveMetricId(item.metricId)}
+          onAlertClick={(e) => {
+            setActiveMetricId(item.metricId)
+            props.initAlert({ left: item.series.first().seriesId })
+          }}
         />
       ))}
 
@@ -40,4 +45,4 @@ function CustomMetricsWidgets(props: Props) {
 
 export default connect(state => ({
   list: state.getIn(['customMetrics', 'list']),
-}), { fetchList })(CustomMetricsWidgets);
+}), { fetchList, initAlert })(CustomMetricsWidgets);

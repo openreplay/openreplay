@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, Icon } from 'UI';
+import { Loader, NoContent, Icon, Popup } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
 import { LineChart, Line, Legend } from 'recharts';
@@ -89,25 +89,14 @@ function CustomMetricWidget(props: Props) {
     props.setActiveWidget({ widget: metric, startTimestamp, endTimestamp, timestamp: event.activePayload[0].payload.timestamp, index })
   }
 
-  // const onAlertClick = () => {
-  //   props.setShowAlerts(true)
-  //   props.setAlertMetricId(metric.metricId)
-  // }
-
   return (
     <div className={stl.wrapper}>
       <div className="flex items-center mb-10 p-2">
         <div className="font-medium">{metric.name + ' ' + metric.metricId}</div>
         <div className="ml-auto flex items-center">
-          <div className="cursor-pointer mr-6" onClick={deleteHandler}>
-            <Icon name="trash" size="14" />
-          </div>
-          <div className="cursor-pointer mr-6" onClick={() => props.edit(metric)}>
-            <Icon name="pencil" size="14" />
-          </div>
-          <div className="cursor-pointer" onClick={props.onAlertClick}>
-            <Icon name="bell-plus" size="14" />
-          </div>
+          <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} />
+          <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.edit(metric)} />
+          <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={deleteHandler} />
         </div>
       </div>
       <div>
@@ -171,3 +160,18 @@ function CustomMetricWidget(props: Props) {
 export default connect(state => ({
   period: state.getIn(['dashboard', 'period']),
 }), { remove, setShowAlerts, setAlertMetricId, edit, setActiveWidget })(CustomMetricWidget);
+
+
+const WidgetIcon = ({ className = '', tooltip = '', icon, onClick }) => (
+  <Popup
+    size="small"
+    trigger={
+      <div className={className} onClick={onClick}>
+        <Icon name={icon} size="14" />
+      </div>
+    }
+    content={tooltip}
+    position="top center"
+    inverted
+  />
+)

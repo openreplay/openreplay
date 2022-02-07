@@ -3,7 +3,7 @@ import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions'
 import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
-import { NoContent } from 'UI';
+import { NoContent, Icon } from 'UI';
 import { WIDGET_KEYS } from 'Types/dashboard';
 import CustomMetrics from 'Shared/CustomMetrics';
 import SessionListModal from 'Shared/CustomMetrics/SessionListModal';
@@ -58,6 +58,13 @@ const menuList = [
     icon: "info-square",
     label: getStatusLabel(OVERVIEW),
     active: status === OVERVIEW,
+  },
+  {
+    key: OVERVIEW,
+    section: 'metrics',
+    icon: "sliders",
+    label: getStatusLabel(CUSTOM_METRICS),
+    active: status === CUSTOM_METRICS,
   },  
   {
     key: ERRORS_N_CRASHES,
@@ -87,6 +94,8 @@ function getStatusLabel(status) {
 	switch(status) {
 		case OVERVIEW:
 			return "Overview";
+		case CUSTOM_METRICS:
+			return "Custom Metrics";
 		case PERFORMANCE:
 			return "Performance";
     case ERRORS_N_CRASHES:
@@ -189,7 +198,7 @@ export default class Dashboard extends React.PureComponent {
           <div>
             <div className={ cn(styles.header, "flex items-center w-full") }>            
               <MetricsFilters />
-              <CustomMetrics />
+              
               { activeWidget && <SessionListModal activeWidget={activeWidget} /> }
             </div>
             <div className="">
@@ -206,8 +215,21 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Custom Metrics" type="customMetrics" className="mb-4">
-                  <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[CUSTOM_METRICS]}>
+                <WidgetSection 
+                  title="Custom Metrics"
+                  type="customMetrics"
+                  className="mb-4"
+                  description={
+                    <div className="flex items-center">
+                      <div className="mr-4 text-sm flex items-center font-normal">
+                        <Icon name="info" size="12" className="mr-2" />
+                        Custom Metrics are not supported for comparison.
+                      </div>
+                      <CustomMetrics />
+                    </div>
+                  }
+                >
+                  <div className={cn("gap-4 grid grid-cols-2")} ref={this.list[CUSTOM_METRICS]}>
                     <CustomMetricsWidgets onClickEdit={(e) => null}/>
                   </div>
                 </WidgetSection>
