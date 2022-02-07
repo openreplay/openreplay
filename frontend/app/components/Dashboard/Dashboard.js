@@ -221,10 +221,12 @@ export default class Dashboard extends React.PureComponent {
                   className="mb-4"
                   description={
                     <div className="flex items-center">
-                      <div className="mr-4 text-sm flex items-center font-normal">
-                        <Icon name="info" size="12" className="mr-2" />
-                        Custom Metrics are not supported for comparison.
-                      </div>
+                      {comparing && (
+                        <div className="mr-4 text-sm flex items-center font-normal">
+                          <Icon name="info" size="12" className="mr-2" />
+                          Custom Metrics are not supported for comparison.
+                        </div>
+                      )}
                       <CustomMetrics />
                     </div>
                   }

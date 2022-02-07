@@ -14,6 +14,7 @@ export default ({
   success = false,
   error = false,
   minWidth,
+  disabled = false,
   ...props
 }) => (
   <Button
@@ -22,6 +23,7 @@ export default ({
     className={ classnames(
       className,
       size,
+      { 'disabled' : disabled },
       styles[ plain ? 'plain' : '' ],
       styles[ hover ? 'hover' : '' ],
       styles.button,

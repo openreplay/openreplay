@@ -25,20 +25,20 @@ function FilterValueDropdown(props: Props) {
     <div className={stl.wrapper}>      
       <Dropdown
         search={search}
-        className={ cn(stl.operatorDropdown, className) }      
+        className={ cn(stl.operatorDropdown, className, "filterDropdown") }
         options={ options }
         name="issue_type"
         value={ value }
         onChange={ onChange }
         placeholder="Select"
         fluid
-        icon={ <Icon className="ml-5" name="chevron-down" size="12" /> }
+        icon={ <Icon className="absolute right-0 mr-2" name="chevron-down" size="12" /> }
       />
       <div
         className={stl.right}
         // onClick={showOrButton ? onRemoveValue : onAddValue}
       >
-        { showCloseButton && <div onClick={props.onRemoveValue}><Icon name="close" size="18" /></div> }
+        { showCloseButton && <div onClick={props.onRemoveValue}><Icon name="close" size="12" /></div> }
         { showOrButton && <div onClick={props.onAddValue} className="color-teal"><span className="px-1">or</span></div> }
       </div>
     </div>

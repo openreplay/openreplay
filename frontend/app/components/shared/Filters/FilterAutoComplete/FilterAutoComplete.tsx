@@ -119,7 +119,7 @@ function FilterAutoComplete(props: Props) {
           className={stl.right}
           // onClick={showOrButton ? onRemoveValue : onAddValue}
         >
-          { showCloseButton && <div onClick={onRemoveValue}><Icon name="close" size="18" /></div> }
+          { showCloseButton && <div onClick={onRemoveValue}><Icon name="close" size="12" /></div> }
           { showOrButton && <div onClick={onAddValue} className="color-teal"><span className="px-1">or</span></div> }
         </div>
       </div>

@@ -53,8 +53,8 @@
   &.ui.basic.button {
     box-shadow: 0 0 0 1px rgba(62, 170, 175,36,38,.35) inset, 0 0 0 0 rgba(62, 170, 175,.15) inset !important;
   }
-
+/* 
   & input {
     padding: 0 8px !important;
-  }
+  } */
 }
