@@ -1,8 +1,10 @@
 .wrapper {  
   display: flex;
   justify-content: space-between;
+  align-items: center;
 
   & input {
+    height: 26px;
     max-width: 85px !important;
     font-size: 13px !important;
     font-weight: 400 !important;
@@ -10,9 +12,11 @@
   }
   
   & > div {
-    &:first-child {
+    /* &:first-child { */
       margin-right: 10px;
-    }
+      height: 26px;
+      /* padding: 5px !important; */
+    /* } */
   }
 }
 
@@ -20,5 +24,11 @@
   font-size: 13px !important;
   font-weight: 400 !important;
   color: $gray-medium !important;
+  padding: 0px 5px !important;
+  line-height: 1.9 !important;
+  /* height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center; */
 }
 
