@@ -302,10 +302,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
         for i, f in enumerate(data.filters):
             if not isinstance(f.value, list):
                 f.value = [f.value]
-            if len(f.value) == 0 or f.value[0] is None:
-                continue
             filter_type = f.type
-            # f.value = __get_sql_value_multiple(f.value)
             f.value = helper.values_for_operator(value=f.value, op=f.operator)
             f_k = f"f_value{i}"
             full_args = {**full_args, **_multiple_values(f.value, value_key=f_k)}
@@ -363,7 +360,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_source  IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f'ms.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
                                              value_key=f_k))
@@ -373,7 +371,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_medium IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
+                                             value_key=f_k))
                     ss_constraints.append(
                         _multiple_conditions(f'ms.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
                                              value_key=f_k))
@@ -410,15 +409,19 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if meta_keys is None:
                     meta_keys = metadata.get(project_id=project_id)
                     meta_keys = {m["key"]: m["index"] for m in meta_keys}
-                # op = __get_sql_operator(f.operator)
                 if f.source in meta_keys.keys():
-                    extra_constraints.append(
-                        _multiple_conditions(f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
-                                             f.value, is_not=is_not, value_key=f_k))
-                    ss_constraints.append(
-                        _multiple_conditions(
-                            f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
-                            f.value, is_not=is_not, value_key=f_k))
+                    if is_any:
+                        extra_constraints.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
+                        ss_constraints.append(f"ms.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
+                    else:
+                        extra_constraints.append(
+                            _multiple_conditions(
+                                f"s.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
+                                f.value, is_not=is_not, value_key=f_k))
+                        ss_constraints.append(
+                            _multiple_conditions(
+                                f"ms.{metadata.index_to_colname(meta_keys[f.source])} {op} %({f_k})s::text",
+                                f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
                 if is_any:
                     extra_constraints.append('s.user_id IS NOT NULL')
