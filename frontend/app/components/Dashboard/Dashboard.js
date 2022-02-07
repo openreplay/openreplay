@@ -47,7 +47,7 @@ import { withRouter } from 'react-router';
 
 const OVERVIEW = 'overview';
 const PERFORMANCE = 'performance';
-const ERRORS_N_CRASHES = 'errors_n_crashes';
+const ERRORS_N_CRASHES = 'errors';
 const RESOURCES = 'resources';
 const CUSTOM_METRICS = 'custom_metrics';
 
