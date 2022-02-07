@@ -363,9 +363,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_source  IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_source {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_source {op} %({f_k})s', f.value, is_not=is_not,
+                        _multiple_conditions(f'ms.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type in [schemas.FilterType.utm_medium]:
                 if is_any:
@@ -373,9 +373,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_medium IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_medium {op} %({f_k})s', f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_medium {op} %({f_k})s', f.value, is_not=is_not,
+                        _multiple_conditions(f'ms.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type in [schemas.FilterType.utm_campaign]:
                 if is_any:
@@ -383,10 +383,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.utm_campaign IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f's.utm_campaign {op} %({f_k})s', f.value, is_not=is_not,
+                        _multiple_conditions(f's.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
                                              value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f'ms.utm_campaign {op} %({f_k})s', f.value, is_not=is_not,
+                        _multiple_conditions(f'ms.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
                                              value_key=f_k))
 
             elif filter_type == schemas.FilterType.duration:
@@ -425,9 +425,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_id IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.user_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f"ms.user_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
             elif filter_type in [schemas.FilterType.user_anonymous_id,
                                  schemas.FilterType.user_anonymous_id_ios]:
                 if is_any:
@@ -435,10 +435,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.user_anonymous_id IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
+                        _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                              value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s", f.value, is_not=is_not,
+                        _multiple_conditions(f"ms.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
                                              value_key=f_k))
             elif filter_type in [schemas.FilterType.rev_id, schemas.FilterType.rev_id_ios]:
                 if is_any:
@@ -446,9 +446,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     ss_constraints.append('ms.rev_id IS NOT NULL')
                 else:
                     extra_constraints.append(
-                        _multiple_conditions(f"s.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f"s.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
                     ss_constraints.append(
-                        _multiple_conditions(f"ms.rev_id {op} %({f_k})s", f.value, is_not=is_not, value_key=f_k))
+                        _multiple_conditions(f"ms.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
             elif filter_type == schemas.FilterType.platform:
                 # op = __get_sql_operator(f.operator)
                 extra_constraints.append(
