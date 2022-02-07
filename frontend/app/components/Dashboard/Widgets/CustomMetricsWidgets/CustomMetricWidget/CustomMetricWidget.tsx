@@ -7,7 +7,7 @@ import { LineChart, Line, Legend } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidget.css';
 import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
-import { edit, remove, setAlertMetricId, setActiveWidget } from 'Duck/customMetrics';
+import { edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
 import { confirm } from 'UI/Confirmation';
 import APIClient from 'App/api_client';
 import { setShowAlerts } from 'Duck/dashboard';
@@ -37,6 +37,7 @@ interface Props {
   onAlertClick: (e) => void;
   edit: (setDefault?) => void;
   setActiveWidget: (widget) => void;
+  updateActiveState: (metricId, state) => void;
 }
 function CustomMetricWidget(props: Props) {
   const { metric, showSync, compare, period } = props;
@@ -89,6 +90,10 @@ function CustomMetricWidget(props: Props) {
     props.setActiveWidget({ widget: metric, startTimestamp, endTimestamp, timestamp: event.activePayload[0].payload.timestamp, index })
   }
 
+  const updateActiveState = (metricId, state) => {
+    props.updateActiveState(metricId, state);
+  }
+
   return (
     <div className={stl.wrapper}>
       <div className="flex items-center mb-10 p-2">
@@ -96,7 +101,7 @@ function CustomMetricWidget(props: Props) {
         <div className="ml-auto flex items-center">
           <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} />
           <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.edit(metric)} />
-          <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={deleteHandler} />
+          <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={() => updateActiveState(metric.metricId, false)} />
         </div>
       </div>
       <div>
@@ -159,7 +164,7 @@ function CustomMetricWidget(props: Props) {
 
 export default connect(state => ({
   period: state.getIn(['dashboard', 'period']),
-}), { remove, setShowAlerts, setAlertMetricId, edit, setActiveWidget })(CustomMetricWidget);
+}), { remove, setShowAlerts, setAlertMetricId, edit, setActiveWidget, updateActiveState })(CustomMetricWidget);
 
 
 const WidgetIcon = ({ className = '', tooltip = '', icon, onClick }) => (

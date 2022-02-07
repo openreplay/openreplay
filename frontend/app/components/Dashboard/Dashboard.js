@@ -4,7 +4,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions'
 import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
 import { NoContent, Icon } from 'UI';
-import { WIDGET_KEYS } from 'Types/dashboard';
+import { WIDGET_KEYS, WIDGET_LIST } from 'Types/dashboard';
 import CustomMetrics from 'Shared/CustomMetrics';
 import SessionListModal from 'Shared/CustomMetrics/SessionListModal';
 
@@ -124,6 +124,7 @@ function isInViewport(el) {
   platform: state.getIn([ 'dashboard', 'platform' ]),
   dashboardAppearance: state.getIn([ 'user', 'account', 'appearance', 'dashboard' ]),
   activeWidget: state.getIn(['customMetrics', 'activeWidget']),
+  appearance: state.getIn([ 'user', 'account', 'appearance' ]),
 }), { setPeriod, setPlatform, fetchMetadataOptions })
 @withPageTitle('Metrics - OpenReplay')
 @withRouter
@@ -143,6 +144,10 @@ export default class Dashboard extends React.PureComponent {
     endDate: null,
     pageSection: 'metrics',
   };
+
+  getWidgetsByKey = (widgetType) => {
+    return WIDGET_LIST.filter(({ key, type }) => !this.props.appearance.dashboard[ key ] && type === widgetType);
+  }
 
   componentDidMount() {
     const { history, location } = this.props;        
@@ -209,7 +214,13 @@ export default class Dashboard extends React.PureComponent {
                 icon
                 empty
               >
-                <WidgetSection title="Overview" type="overview" className="mb-4" description="(Average Values)">
+                <WidgetSection
+                  title="Overview"
+                  type="overview"
+                  className="mb-4"
+                  description="(Average Values)"
+                  widgets={this.getWidgetsByKey(OVERVIEW)}
+                >
                   <div className="grid grid-cols-4 gap-4" ref={this.list[OVERVIEW]}>
                     <OverviewWidgets isOverview />
                   </div>
@@ -217,8 +228,9 @@ export default class Dashboard extends React.PureComponent {
 
                 <WidgetSection 
                   title="Custom Metrics"
-                  type="customMetrics"
+                  type={CUSTOM_METRICS}
                   className="mb-4"
+                  widgets={[]}
                   description={
                     <div className="flex items-center">
                       {comparing && (
@@ -236,7 +248,7 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Errors" className="mb-4" type="errors">
+                <WidgetSection title="Errors" className="mb-4" type="errors" widgets={this.getWidgetsByKey(ERRORS_N_CRASHES)}>
                   <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[ERRORS_N_CRASHES]}>
                     { dashboardAppearance.impactedSessionsByJsErrors && <WidgetHolder Component={SessionsAffectedByJSErrors} /> }
                     { dashboardAppearance.errorsPerDomains && <WidgetHolder Component={ErrorsPerDomain} /> }
@@ -250,7 +262,7 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Performance" type="performance" className="mb-4">
+                <WidgetSection title="Performance" type="performance" className="mb-4" widgets={this.getWidgetsByKey(PERFORMANCE)}>
                   <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[PERFORMANCE]}>
                     { dashboardAppearance.speedLocation && <WidgetHolder Component={SpeedIndexLocation} /> }
                     { dashboardAppearance.crashes && <WidgetHolder Component={Crashes} /> }
@@ -270,7 +282,7 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Resources" type="resources" className="mb-4">
+                <WidgetSection title="Resources" type="resources" className="mb-4" widgets={this.getWidgetsByKey(RESOURCES)}>
                   <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[RESOURCES]}>
                     { dashboardAppearance.resourcesCountByType && <WidgetHolder Component={BreakdownOfLoadedResources} /> }
                     { dashboardAppearance.resourcesLoadingTime && <WidgetHolder Component={ResourceLoadingTime} /> }
