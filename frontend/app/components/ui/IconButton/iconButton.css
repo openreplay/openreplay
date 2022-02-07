@@ -89,7 +89,10 @@
   }
   
   &.plain {
-    background-color: transparent;
+    background-color: transparent !important;
+    color: $teal !important;
+    box-shadow: none !important;
+    padding: 0 10px !important;
     &:hover {
       background-color: $active-blue;
     }

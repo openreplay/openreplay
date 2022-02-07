@@ -6,7 +6,7 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 
 const ISSUE_OPTIONS = [
-  { text: 'Click Range', value: 'click_rage' },
+  { text: 'Click Rage', value: 'click_rage' },
   { text: 'Dead Click', value: 'dead_click' },
   { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
   { text: 'Bad Request', value: 'bad_request' },
@@ -40,7 +40,7 @@ export const filtersMap = {
   [FilterKey.PLATFORM]: { key: FilterKey.PLATFORM, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.GEAR, label: 'Platform', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/platform', options: platformOptions },
   [FilterKey.REVID]: { key: FilterKey.REVID, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'RevId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/rev-id' },
   [FilterKey.REFERRER]: { key: FilterKey.REFERRER, type: FilterType.MULTIPLE, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Referrer', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/referrer' },
-  [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Duration', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/duration' },
+  [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Duration', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/duration' },
   [FilterKey.USER_COUNTRY]: { key: FilterKey.USER_COUNTRY, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'User Country', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/country', options: countryOptions },
   // [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
   [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },

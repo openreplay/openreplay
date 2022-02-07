@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withToggle from 'HOCs/withToggle';
-import { IconButton, SlideModal, NoContent } from 'UI';
+import { IconButton, SlideModal, NoContent, Popup } from 'UI';
 import { updateAppearance } from 'Duck/user';
 import { WIDGET_LIST } from 'Types/dashboard';
 import stl from './addWidgets.css';
@@ -76,13 +76,21 @@ export default class AddWidgets extends React.PureComponent {
 	        }
 	        onClose={ this.props.switchOpen }
 	      />
-				<IconButton 
-					circle
-					size="small"
-					icon="plus" 
-					outline 
-					onClick={ this.props.switchOpen } 
-					disabled={ disabled || avaliableWidgets.length === 0 } //TODO disabled after Custom fields filtering 
+		  		<Popup
+					trigger={
+						<IconButton 
+							circle
+							size="small"
+							icon="plus" 
+							outline 
+							onClick={ this.props.switchOpen } 
+							disabled={ disabled || avaliableWidgets.length === 0 } //TODO disabled after Custom fields filtering 
+						/>
+					}
+					content={ `Add a metric to this section.` }
+					size="tiny"
+					inverted
+					position="top center"
 				/>
 			</div>
 		);

@@ -33,7 +33,7 @@ const defaultInstance = CustomMetric({
   name: 'New',
   series: List([
     {
-      name: 'Session Count',
+      name: 'Series 1',
       filter: new Filter({ filters: [], eventsOrder: 'and' }),
     },
   ])

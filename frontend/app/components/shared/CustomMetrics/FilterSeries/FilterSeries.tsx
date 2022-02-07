@@ -104,7 +104,7 @@ function FilterSeries(props: Props) {
                 onChangeEventsOrder={onChangeEventsOrder}
               />
             ): (
-              <div className="color-gray-medium">Add user event or filter to build the series.</div>
+              <div className="color-gray-medium">Add user event or filter to define the series by clicking Add Step.</div>
             )}
           </div>
           <div className="px-5 border-t h-12 flex items-center">

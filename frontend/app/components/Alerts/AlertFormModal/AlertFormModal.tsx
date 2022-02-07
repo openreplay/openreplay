@@ -72,7 +72,7 @@ function AlertFormModal(props) {
         size="medium"
         content={ showModal &&
           <AlertForm
-            metricId={ props.metricId }
+            metricId={ metricId }
             edit={props.edit}
             slackChannels={slackChannels}
             webhooks={hooks}

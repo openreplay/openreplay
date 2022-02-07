@@ -28,16 +28,22 @@ function SeriesName(props: Props) {
   
   // const { name } = props;
   return (
-    <div className="font-medium flex items-center">
-      <input
-        ref={ ref }
-        name="name"
-        className="fluid border-0 -mx-2 px-2"
-        value={name} readOnly={!editing} 
-        onChange={write}
-        onBlur={onBlur}
-        onFocus={() => setEditing(true)}
-      />
+    <div className="flex items-center">
+      { editing ? (
+        <input
+          ref={ ref }
+          name="name"
+          className="fluid border-0 -mx-2 px-2"
+          value={name}
+          // readOnly={!editing} 
+          onChange={write}
+          onBlur={onBlur}
+          onFocus={() => setEditing(true)}
+        />
+      ) : (
+        <div className="text-base">{name}</div>
+      )}
+      
       <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div>
     </div>
   );
