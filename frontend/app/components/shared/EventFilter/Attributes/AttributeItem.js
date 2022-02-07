@@ -81,7 +81,7 @@ class AttributeItem extends React.PureComponent {
         
         <div className={ stl.actions }>
           <button className={ stl.button } onClick={ this.removeFilter }>
-            <Icon name="close" size="16" />
+            <Icon name="close" size="14" />
           </button>
         </div>
       </div>

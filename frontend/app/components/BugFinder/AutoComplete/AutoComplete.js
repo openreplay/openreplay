@@ -152,7 +152,7 @@ class AutoComplete extends React.PureComponent {
             } }
           />
           <div className={stl.right} onClick={showCloseButton ? onRemoveValue : onAddValue}>
-            { showCloseButton ? <Icon name="close" size="18" /> : <span className="px-1">or</span>}
+            { showCloseButton ? <Icon name="close" size="14" /> : <span className="px-1">or</span>}
           </div>
         </div>
 
