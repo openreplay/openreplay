@@ -10,7 +10,7 @@ interface Props {
 }
 function FilterValue(props: Props) {
   const { filter } = props;
-  const [durationValues, setDurationValues] = useState({ minDuration: 0, maxDuration: 0 });
+  const [durationValues, setDurationValues] = useState({ minDuration: filter.value[0], maxDuration: filter.value[1] });
 
   const onAddValue = () => {
     const newValues = filter.value.concat("")
@@ -100,8 +100,8 @@ function FilterValue(props: Props) {
             onChange={ onDurationChange }
             // onEnterPress={ this.handleClose }
             onBlur={handleBlur}
-            minDuration={ filter.value[0] }
-            maxDuration={ filter.value[1] }
+            minDuration={ durationValues.minDuration }
+            maxDuration={ durationValues.maxDuration }
           />
         )
       case FilterType.NUMBER:

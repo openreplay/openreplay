@@ -37,7 +37,7 @@ export default class FilterDuration extends React.PureComponent {
           name="minDuration"
           value={ fromMs(minDuration) }
           onChange={ this.onChange }
-          className="customInput"
+          // className="customInput"
           onKeyPress={ this.onKeyPress }
           onFocus={() => this.setState({ focused: true })}
           onBlur={this.props.onBlur}
@@ -52,7 +52,7 @@ export default class FilterDuration extends React.PureComponent {
           name="maxDuration"
           value={ fromMs(maxDuration) }
           onChange={ this.onChange }
-          className="customInput"
+          // className="customInput"
           onKeyPress={ this.onKeyPress }
           onFocus={() => this.setState({ focused: true })}
           onBlur={this.props.onBlur}
