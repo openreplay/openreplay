@@ -7,8 +7,11 @@ import { connect } from 'react-redux';
 
 interface Props {
     clearSearch: () => void;
+    appliedFilter: any;
 }
 const MainSearchBar = (props: Props) => {
+  const { appliedFilter } = props;
+  const hasFilters = appliedFilter && appliedFilter.filters && appliedFilter.filters.size > 0;
   return (
     <div className="flex items-center">
         <div style={{ width: "60%", marginRight: "10px"}}><SessionSearchField /></div>
@@ -18,6 +21,7 @@ const MainSearchBar = (props: Props) => {
             trigger={
                 <Button
                     plain
+                    disabled={!hasFilters}
                     className="ml-auto"
                     onClick={() => props.clearSearch()}
                 >
@@ -33,4 +37,6 @@ const MainSearchBar = (props: Props) => {
     </div>
   )
 }
-export default connect(null, { clearSearch })(MainSearchBar);
+export default connect(state => ({
+    appliedFilter: state.getIn(['search', 'instance']),
+}), { clearSearch })(MainSearchBar);
