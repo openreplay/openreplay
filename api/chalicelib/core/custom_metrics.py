@@ -21,7 +21,7 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.viewType)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
-            r["seriesName"] = s.name if s.name else i
+            r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
     return results
@@ -35,7 +35,7 @@ def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
     for i in range(len(results)):
         for j, series_chart in enumerate(series_charts):
             results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-                          data.series[j].name if data.series[j].name else j: series_chart[i]["count"]}
+                          data.series[j].name if data.series[j].name else j + 1: series_chart[i]["count"]}
     return results
 
 
