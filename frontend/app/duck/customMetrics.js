@@ -13,6 +13,7 @@ const FETCH_LIST = fetchListType(name);
 const FETCH_SESSION_LIST = fetchListType(`${name}/FETCH_SESSION_LIST`);
 const FETCH = fetchType(name);
 const SAVE = saveType(name);
+const UPDATE_ACTIVE_STATE = saveType(`${name}/UPDATE_ACTIVE_STATE`);
 const EDIT = editType(name);
 const INIT = `${name}/INIT`;
 const SET_ACTIVE_WIDGET = `${name}/SET_ACTIVE_WIDGET`;
@@ -72,6 +73,8 @@ function reducer(state = initialState, action = {}) {
 		case success(FETCH_LIST):
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));
+    // case success(UPDATE_ACTIVE_STATE):
+    //   return updateItemInList(updateInstance(state, action.data), action.data);
     case success(FETCH_SESSION_LIST):
       return state.set("sessionList", List(action.data.map(item => ({ ...item, sessions: item.sessions.map(Session) }))));
     case SET_ACTIVE_WIDGET:
@@ -160,5 +163,15 @@ export const setActiveWidget = (widget) => (dispatch, getState) => {
   dispatch({
     type: SET_ACTIVE_WIDGET,
     widget,
+  });
+}
+
+export const updateActiveState = (metricId, state) => (dispatch, getState) => {
+  return dispatch({
+    types: UPDATE_ACTIVE_STATE.array,
+    call: client => client.post(`/custom_metrics/${metricId}/status`, { active: state }),
+    metricId
+  }).then(() => {
+    dispatch(fetchList());
   });
 }

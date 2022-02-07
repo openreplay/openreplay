@@ -21,7 +21,7 @@ function CustomMetricsWidgets(props: Props) {
 
   return (
     <>
-      {list.map((item: any) => (
+      {list.filter(item => item.active).map((item: any) => (
         <CustomMetricWidget
           metric={item}
           onClickEdit={props.onClickEdit}
