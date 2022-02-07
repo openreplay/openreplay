@@ -458,12 +458,16 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     _multiple_conditions(f"ms.user_device_type {op} %({f_k})s", f.value, is_not=is_not,
                                          value_key=f_k))
             elif filter_type == schemas.FilterType.issue:
-                extra_constraints.append(
-                    _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
-                                         value_key=f_k))
-                ss_constraints.append(
-                    _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
-                                         value_key=f_k))
+                if is_any:
+                    extra_constraints.append("array_length(s.issue_types, 1) > 0")
+                    ss_constraints.append("array_length(ms.issue_types, 1) > 0")
+                else:
+                    extra_constraints.append(
+                        _multiple_conditions(f"%({f_k})s {op} ANY (s.issue_types)", f.value, is_not=is_not,
+                                             value_key=f_k))
+                    ss_constraints.append(
+                        _multiple_conditions(f"%({f_k})s {op} ANY (ms.issue_types)", f.value, is_not=is_not,
+                                             value_key=f_k))
             elif filter_type == schemas.FilterType.events_count:
                 extra_constraints.append(
                     _multiple_conditions(f"s.events_count {op} %({f_k})s", f.value, is_not=is_not,
