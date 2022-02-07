@@ -11,6 +11,8 @@ interface Props {
 function FilterValue(props: Props) {
   const { filter } = props;
   const [durationValues, setDurationValues] = useState({ minDuration: filter.value[0], maxDuration: filter.value[1] });
+  const showCloseButton = filter.value.length > 1;
+  const lastIndex = filter.value.length - 1;
 
   const onAddValue = () => {
     const newValues = filter.value.concat("")
@@ -65,8 +67,7 @@ function FilterValue(props: Props) {
   }
 
   const renderValueFiled = (value, valueIndex) => {
-    const showCloseButton = filter.value.length > 1;
-    const showOrButton = valueIndex === filter.value.length - 1;
+    const showOrButton = valueIndex === lastIndex;
     switch(filter.type) {
       case FilterType.DROPDOWN:
         return (

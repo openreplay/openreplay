@@ -122,6 +122,10 @@ const targetFilterKeys = ['on', 'notOn', 'onAny'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
 
+const getOperatorsByKeys = (keys) => {
+  return options.filter(option => keys.includes(option.key));
+};
+
 export const baseOperators = options.filter(({key}) => filterKeys.includes(key));
 export const stringOperators = options.filter(({key}) => stringFilterKeys.includes(key));
 export const targetOperators = options.filter(({key}) => targetFilterKeys.includes(key));
@@ -145,4 +149,5 @@ export default {
   targetOperators,
   booleanOperators,
   customOperators,
+  getOperatorsByKeys,
 }

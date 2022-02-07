@@ -7,6 +7,7 @@ import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
+import { FilterCategory, FilterKey } from '../types/filter/filterType';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -88,13 +89,12 @@ export default mergeReducers(
 	}),
 );
 
-const filterMap = ({value, key, operator, sourceOperator, source, custom, isEvent }) => ({
+export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent }) => ({
   value: value.filter(i => i !== '' && i !== null),
   custom,
-  type: key,
-  // key,
+  type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
   operator,
-  source,
+  source: category === FilterCategory.METADATA ? key : source,
   sourceOperator,
   isEvent
 });

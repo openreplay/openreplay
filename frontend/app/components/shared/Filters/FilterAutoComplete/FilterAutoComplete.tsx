@@ -45,8 +45,7 @@ function FilterAutoComplete(props: Props) {
   const [query, setQuery] = useState(value);
   
 
-  const requestValues = (q) => {
-    // const { params, method } = props;
+  const requestValues = (q) => {    
     setLoading(true);
 
     return new APIClient()[method?.toLowerCase()](endpoint, { ...params, q })
@@ -55,13 +54,7 @@ function FilterAutoComplete(props: Props) {
       if (errors) {
         // this.setError();
       } else {
-        setOptions(data);
-        // this.setState({
-        //   ddOpen: true,
-        //   values: data,
-        //   loading: false,
-        //   noResultsMessage: NO_RESULTS_MSG,
-        // });
+        setOptions(data);       
       }
     }).finally(() => setLoading(false));
     // .catch(this.setError);
@@ -80,6 +73,17 @@ function FilterAutoComplete(props: Props) {
 
     debouncedRequestValues(query)
   }, [query])
+
+  useEffect(() => {
+    if(value === '') {
+      setQuery(value);
+    }
+  }, [value])
+
+  const onBlur = (e) => {
+    setTimeout(() => { setShowModal(false) }, 200)
+    props.onSelect(e, { value: query })
+  }
 
   const onItemClick = (e, item) => {
     e.stopPropagation();
@@ -103,7 +107,7 @@ function FilterAutoComplete(props: Props) {
         <input
           name="query"
           onChange={ onInputChange }
-          onBlur={ () => setTimeout(() => { setShowModal(false) }, 200) }
+          onBlur={ onBlur }
           onFocus={ () => setShowModal(true)}
           value={ query }
           autoFocus={ true }

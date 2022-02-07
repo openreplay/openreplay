@@ -14,6 +14,7 @@ interface Props {
 }
 function FilterItem(props: Props) {
   const { isFilter = false, filterIndex, filter } = props;
+  const canShowValues = !(filter.operator === "isAny" || filter.operator === "onAny");
 
   const replaceFilter = (filter) => {
     props.onUpdate({ ...filter, value: [""]});
@@ -53,9 +54,7 @@ function FilterItem(props: Props) {
           className="mx-2 flex-shrink-0"
           value={filter.operator}
         />
-        { !(filter.operator === "isAny" || filter.operator === "onAny") && (
-          <FilterValue filter={filter} onUpdate={props.onUpdate} />
-        )}
+        { canShowValues && (<FilterValue filter={filter} onUpdate={props.onUpdate} />) }
         
       </div>
       <div className="flex flex-shrink-0 self-start mt-1 ml-auto px-2">
