@@ -1,9 +1,8 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withToggle from 'HOCs/withToggle';
-import { IconButton, SlideModal, NoContent, Popup } from 'UI';
+import { IconButton, Popup } from 'UI';
 import { updateAppearance } from 'Duck/user';
-import { WIDGET_LIST } from 'Types/dashboard';
 import stl from './addWidgets.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { updateActiveState } from 'Duck/customMetrics';
@@ -35,12 +34,11 @@ export default class AddWidgets extends React.PureComponent {
 			type: CUSTOM_METRICS,
 			key: item.metricId,
 			name: item.name,
-		}))
+		})).toJS();
 	}
 
 	render() {
 		const { disabled, widgets, type  } = this.props;
-		// const widgets = WIDGET_LIST.filter(({ key, type }) => !appearance.dashboard[ key ] && type === this.props.type );
 		const filteredWidgets = type === CUSTOM_METRICS ? this.getCustomMetricWidgets() : widgets;
 
 		return (
@@ -53,7 +51,7 @@ export default class AddWidgets extends React.PureComponent {
 							icon="plus" 
 							outline 
 							onClick={ this.props.switchOpen } 
-							disabled={ filteredWidgets.length === 0 } //TODO disabled after Custom fields filtering 
+							disabled={ filteredWidgets.length === 0 }
 						/>
 					}
 					content={ `Add a metric to this section.` }
