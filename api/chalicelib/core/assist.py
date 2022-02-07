@@ -72,7 +72,7 @@ def get_live_sessions_ws(project_id):
         print(connected_peers.text)
         return []
     live_peers = connected_peers.json().get("data", [])
-    return {"data": live_peers}
+    return live_peers
 
 
 def is_live(project_id, session_id, project_key=None):
