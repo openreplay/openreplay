@@ -8,6 +8,7 @@ const IDENTITIES = {agent: 'agent', session: 'session'};
 const NEW_AGENT = "NEW_AGENT";
 const NO_AGENTS = "NO_AGENT";
 const AGENT_DISCONNECT = "AGENT_DISCONNECTED";
+const AGENTS_CONNECTED = "AGENTS_CONNECTED";
 const NO_SESSIONS = "SESSION_DISCONNECTED";
 const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
 // const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
@@ -112,6 +113,19 @@ async function sessions_agents_count(io, socket) {
     return {c_sessions, c_agents};
 }
 
+async function get_all_agents_ids(io, socket) {
+    let agents = [];
+    if (io.sockets.adapter.rooms.get(socket.peerId)) {
+        const connected_sockets = await io.in(socket.peerId).fetchSockets();
+        for (let item of connected_sockets) {
+            if (item.handshake.query.identity === IDENTITIES.agent) {
+                agents.push(item.id);
+            }
+        }
+    }
+    return agents;
+}
+
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
@@ -169,8 +183,9 @@ module.exports = {
                 }
                 extractSessionInfo(socket);
                 if (c_agents > 0) {
-                    console.log(`notifying new session about agent-existance`);
-                    io.to(socket.id).emit(NEW_AGENT);
+                    console.log(`notifying new session about agent-existence`);
+                    let agents_ids = await get_all_agents_ids(io, socket);
+                    io.to(socket.id).emit(AGENTS_CONNECTED, agents_ids);
                 }
 
             } else if (c_sessions <= 0) {
