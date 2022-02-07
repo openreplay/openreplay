@@ -72,13 +72,15 @@ def get_live_sessions_ws(project_id):
         print(connected_peers.text)
         return []
     live_peers = connected_peers.json().get("data", [])
+    for s in live_peers:
+        s["live"] = True
     return live_peers
 
 
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(config("peers") % config("S3_KEY") + f"/{project_key}")
+    connected_peers = requests.get(config("peersList") % config("S3_KEY") + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
