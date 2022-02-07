@@ -30,6 +30,7 @@ export default Record({
   isPublic: false,
   startDate: '',
   endDate: '',
+  active: true,
 }, {
   idKey: 'metricId',
   methods: {

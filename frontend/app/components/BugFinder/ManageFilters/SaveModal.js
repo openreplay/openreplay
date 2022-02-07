@@ -46,7 +46,7 @@ export default class SaveModal extends React.PureComponent {
             role="button"
             tabIndex="-1"
             color="gray-dark"
-            size="18"
+            size="14"
             name="close"
             onClick={ () => toggleFilterModal(false) }
           />

@@ -19,8 +19,6 @@ function CustomMetricsWidgets(props: Props) {
     props.fetchList()
   }, [])
 
-  console.log('activeMetricId', activeMetricId)
-
   return (
     <>
       {list.map((item: any) => (
@@ -29,7 +27,7 @@ function CustomMetricsWidgets(props: Props) {
           onClickEdit={props.onClickEdit}
           onAlertClick={(e) => {
             setActiveMetricId(item.metricId)
-            props.initAlert({ left: item.series.first().seriesId })
+            props.initAlert({ query: { left: item.series.first().seriesId }})
           }}
         />
       ))}

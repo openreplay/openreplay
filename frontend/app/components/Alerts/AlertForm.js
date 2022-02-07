@@ -70,8 +70,6 @@ const AlertForm = props => {
   const unit = metric ? metric.unit : '';
   const isThreshold = instance.detectionMethod === 'threshold';
 
-  console.log('AlertForm', instance.query);
-
   return (
     <Form className={ cn("p-6", stl.wrapper)} style={{ width: '580px' }} onSubmit={() => props.onSubmit(instance)} id="alert-form">
        <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>

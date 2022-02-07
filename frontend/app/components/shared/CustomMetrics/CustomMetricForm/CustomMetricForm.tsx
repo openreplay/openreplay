@@ -109,7 +109,7 @@ function CustomMetricForm(props: Props) {
                 onSelect={ changeConditionTab }
                 value={{ value: metric.type }}
                 list={ [
-                  { name: 'Series 1', value: 'session_count' },
+                  { name: 'Session Count', value: 'session_count' },
                   { name: 'Session Percentage', value: 'session_percentage' },
                 ]}
               />
@@ -149,7 +149,7 @@ function CustomMetricForm(props: Props) {
           <Button type="button" className="ml-3" outline hover plain onClick={props.onClose}>Cancel</Button>
         </div>
         <div>
-          <Button type="button" className="ml-3" outline hover plain onClick={deleteHandler}>Delete</Button>
+          { metric.exists() && <Button type="button" className="ml-3" outline hover plain onClick={deleteHandler}>Delete</Button> }
         </div>
       </div>
     </Form>

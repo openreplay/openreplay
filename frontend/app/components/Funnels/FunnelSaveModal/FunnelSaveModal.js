@@ -52,7 +52,7 @@ export default class FunnelSaveModal extends React.PureComponent {
             role="button"
             tabIndex="-1"
             color="gray-dark"
-            size="18"
+            size="14"
             name="close"
             onClick={ closeHandler }
           />

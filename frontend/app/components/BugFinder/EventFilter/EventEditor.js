@@ -100,7 +100,7 @@ export default class EventEditor extends React.PureComponent {
         <div className={ stl.actions }>
           { dndBtn }
           <button className={ stl.button } onClick={ this.remove }>
-            <Icon name="close" size="16" />
+            <Icon name="close" size="14" />
           </button>
         </div>
       </div>
