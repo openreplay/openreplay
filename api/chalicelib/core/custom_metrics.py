@@ -267,3 +267,16 @@ def get_series_for_alert(project_id, user_id):
         )
         rows = cur.fetchall()
     return helper.list_to_camel_case(rows)
+
+
+def change_state(project_id, metric_id, user_id, status):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+            UPDATE public.metrics 
+            SET active = %(status)s 
+            WHERE metric_id = %(metric_id)s
+              AND (user_id = %(user_id)s OR is_public);""",
+                        {"metric_id": metric_id, "status": status, "user_id": user_id})
+        )
+    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
