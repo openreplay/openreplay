@@ -1,4 +1,4 @@
-## Licenses (as of January 21, 2022)
+## Licenses (as of February 8, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -84,9 +84,12 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | redux-immutable | BSD3 | JavaScript |
 | redux-thunk | MIT | JavaScript |
 | semantic-ui-react | MIT | JavaScript |
-| socketio | MIT | JavaScript |
+| socket.io | MIT | JavaScript |
+| socket.io-client | MIT | JavaScript |
 | source-map | BSD3 | JavaScript |
 | aws-sdk | Apache2 | JavaScript |
 | serverless | MIT | JavaScript |
 | lib/pq | MIT | Go |
 | peerjs | MIT | JavaScript |
+| geoip-lite | Apache2 | JavaScript |
+| ua-parser-js | MIT | JavaScript |
