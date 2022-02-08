@@ -131,12 +131,14 @@ export function fetch(id) {
 	}
 }
 
-export function save(instance) {
-  return {
+export const save = (instance) => (dispatch, getState) => {
+  return dispatch({
     types: SAVE.array,
     call: client => client.post( `/${ instance.exists() ? name + 's/' + instance[idKey] : name + 's'}`, instance.toSaveData()),
-  };
-}
+  }).then(() => {
+    dispatch(fetchList());
+  });
+};
 
 export function fetchList() {
   return {
