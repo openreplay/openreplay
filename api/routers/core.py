@@ -1189,3 +1189,11 @@ def update_saved_search(projectId: int, search_id: int, data: schemas.SavedSearc
 @app.delete('/{projectId}/saved_search/{search_id}', tags=["savedSearch"])
 def delete_saved_search(projectId: int, search_id: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}
+
+
+@public_app.get('/', tags=["health"])
+@public_app.post('/', tags=["health"])
+@public_app.put('/', tags=["health"])
+@public_app.delete('/', tags=["health"])
+def health_check():
+    return {"data": f"live {config('version_number', default='')}"}
