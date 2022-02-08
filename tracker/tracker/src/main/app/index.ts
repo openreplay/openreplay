@@ -1,15 +1,17 @@
-import { timestamp, log, warn } from "../utils.js";
-import { Timestamp, PageClose } from "../../messages/index.js";
+import { timestamp, deprecationWarn } from "../utils.js";
+import { Timestamp, Metadata } from "../../messages/index.js";
 import Message from "../../messages/message.js";
 import Nodes from "./nodes.js";
 import Observer from "./observer/top_observer.js";
 import Sanitizer from "./sanitizer.js";
 import Ticker from "./ticker.js";
+import Logger, { LogLevel } from "./logger.js";
 
 import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 
 import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
+import type { Options as LoggerOptions } from "./logger.js"
 
 
 import type { Options as WebworkerOptions, WorkerMessageData } from "../../messages/webworker.js";
@@ -22,6 +24,7 @@ export interface OnStartInfo {
 
 export interface StartOptions {
   userID?: string,
+  metadata?: Record<string, string>,
   forceNew: boolean,
 }
 
@@ -35,9 +38,12 @@ type AppOptions = {
   ingestPoint: string;
   resourceBaseHref: string | null, // resourceHref?
   //resourceURLRewriter: (url: string) => string | boolean,
+  verbose: boolean;
   __is_snippet: boolean;
   __debug_report_edp: string | null;
-  __debug_log: boolean;
+  __debug__?: LoggerOptions;
+
+  // @deprecated
   onStart?: (info: OnStartInfo) => void;
 } &  WebworkerOptions;
 
@@ -45,7 +51,13 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
 type Callback = () => void;
 type CommitCallback = (messages: Array<Message>) => void;
+enum ActivityState {
+  NotActive,
+  Starting,
+  Active,
+}
 
+export const CANCELED = "canceled"
 
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
@@ -55,6 +67,8 @@ export default class App {
   readonly ticker: Ticker;
   readonly projectKey: string;
   readonly sanitizer: Sanitizer;
+  readonly debug: Logger;
+  readonly notify: Logger;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
   private readonly startCallbacks: Array<Callback> = [];
@@ -62,16 +76,22 @@ export default class App {
   private readonly commitCallbacks: Array<CommitCallback> = [];
   private readonly options: AppOptions;
   private readonly revID: string;
-  private  _sessionID: string | null = null;
-  private _userID: string | undefined;
-  private isActive = false;
-  private version = 'TRACKER_VERSION';
+  private _sessionID: string | null = null;
+  private _userID: string | null = null;
+  private _metadata: Record<string, string> = {};
+  private activityState: ActivityState = ActivityState.NotActive;
+  private version = 'TRACKER_VERSION'; // TODO: version compatability check inside each plugin.
   private readonly worker?: Worker;
   constructor(
     projectKey: string,
     sessionToken: string | null | undefined,
     options: Partial<Options>,
   ) {
+
+    // if (options.onStart !== undefined) {
+    //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
+    // } ?? maybe onStart is good
+
     this.projectKey = projectKey;
     this.options = Object.assign(
       {
@@ -83,9 +103,9 @@ export default class App {
         local_uuid_key: '__openreplay_uuid',
         ingestPoint: DEFAULT_INGEST_POINT,
         resourceBaseHref: null,
+        verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
-        __debug_log: false,
       },
       options,
     );
@@ -98,6 +118,8 @@ export default class App {
     this.observer = new Observer(this, options);
     this.ticker = new Ticker(this);
     this.ticker.attach(() => this.commit());
+    this.debug = new Logger(this.options.__debug__);
+    this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent);
     try {
       this.worker = new Worker(
         URL.createObjectURL(
@@ -116,7 +138,8 @@ export default class App {
           this.stop();
           this.start({ 
             forceNew: true,
-            userID: this._userID,
+            userID: this._userID || undefined,
+            metadata: this._metadata || undefined,
           });
         }
       };
@@ -145,13 +168,11 @@ export default class App {
         })
       });
     }
-    if(this.options.__debug_log) {
-      warn("OpenReplay error: ", context, e)
-    }
+    this.debug.error("OpenReplay error: ", context, e)
   }
 
   send(message: Message, urgent = false): void {
-    if (!this.isActive) {
+    if (this.activityState !== ActivityState.Active) {
       return;
     }
     this.messages.push(message);
@@ -171,11 +192,6 @@ export default class App {
   attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
   }
-  // @Depricated (TODO: remove in 3.5.*)
-  addCommitCallback(cb: CommitCallback): void {
-    this.attachCommitCallback(cb)
-  }
-
 
   safe<T extends (...args: any[]) => void>(fn: T): T {
     const app = this;
@@ -216,6 +232,36 @@ export default class App {
     );
   }
 
+  checkRequiredVersion(version: string): boolean {
+    const reqVer = version.split('.')
+    const ver = this.version.split('.')
+    for (let i = 0; i < ver.length; i++) {
+      if (Number(ver[i]) < Number(reqVer[i]) || isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private getStartInfo() {
+    return {
+      userUUID: localStorage.getItem(this.options.local_uuid_key),
+      projectKey: this.projectKey,
+      revID: this.revID,
+      timestamp: timestamp(),
+      trackerVersion: this.version,
+      userID: this._userID,
+      isSnippet: this.options.__is_snippet,
+    }
+
+  }
+  getSessionInfo() {
+    return {
+      sessionID: this._sessionID,
+      metadata: this._metadata,
+      ...this.getStartInfo()
+    }
+  }
   getSessionToken(): string | undefined {
     const token = sessionStorage.getItem(this.options.session_token_key);
     if (token !== null) {
@@ -257,7 +303,7 @@ export default class App {
   }
 
   active(): boolean {
-    return this.isActive;
+    return this.activityState === ActivityState.Active
   }
 
   resetNextPageSession(flag: boolean) {
@@ -271,10 +317,10 @@ export default class App {
     if (!this.worker) {
       return Promise.reject("No worker found: perhaps, CSP is not set.");
     }
-    if (this.isActive) { 
+    if (this.activityState !== ActivityState.NotActive) { 
       return Promise.reject("OpenReplay: trying to call `start()` on the instance that has been started already.") 
     }
-    this.isActive = true;
+    this.activityState = ActivityState.Starting;
 
     let pageNo: number = 0;
     const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
@@ -283,96 +329,89 @@ export default class App {
       pageNo++;
     }
     sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
-    const startTimestamp = timestamp();
+
+    this._userID = startOpts.userID || null
+    this._metadata = startOpts.metadata || {} // TODO: update both dynamically on corresponding messages
+    const startInfo = this.getStartInfo()
 
     const messageData: WorkerMessageData = {
       ingestPoint: this.options.ingestPoint,
       pageNo,
-      startTimestamp,
+      startTimestamp: startInfo.timestamp,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
     }
     this.worker.postMessage(messageData); // brings delay of 10th ms?
 
-
-    // let token = sessionStorage.getItem(this.options.session_token_key)
-    // const tokenIsActive = localStorage.getItem("__or_at_" + token)
-    // if (tokenIsActive) {
-    //   token = null
-    // }
-
     const sReset = sessionStorage.getItem(this.options.session_reset_key);
     sessionStorage.removeItem(this.options.session_reset_key);
 
-    this._userID = startOpts.userID || undefined
     return window.fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        ...startInfo,
         token: sessionStorage.getItem(this.options.session_token_key),
-        userUUID: localStorage.getItem(this.options.local_uuid_key),
-        projectKey: this.projectKey,
-        revID: this.revID,
-        timestamp: startTimestamp,
-        trackerVersion: this.version,
-        isSnippet: this.options.__is_snippet,
         deviceMemory,
         jsHeapSizeLimit,
         reset: startOpts.forceNew || sReset !== null,
-        userID: this._userID,
       }),
     })
     .then(r => {
       if (r.status === 200) {
         return r.json()
-      } else { // TODO: handle canceling && 403
-        return r.text().then(text => {
-          throw new Error(`Server error: ${r.status}. ${text}`);
-        });
+      } else {
+        return r.text().then(text => text === CANCELED 
+          ? Promise.reject(CANCELED) // TODO: return {error: CANCELED} instead
+          : Promise.reject(`Server error: ${r.status}. ${text}`)
+        );
       }
     })
     .then(r => {
+      if (!this.worker) {
+        return Promise.reject("no worker found after start request (this might not happen)");
+      }
       const { token, userUUID, sessionID, beaconSizeLimit } = r;
       if (typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
-        throw new Error(`Incorrect server response: ${ JSON.stringify(r) }`);
+        return Promise.reject(`Incorrect server response: ${ JSON.stringify(r) }`);
       }
       sessionStorage.setItem(this.options.session_token_key, token);
       localStorage.setItem(this.options.local_uuid_key, userUUID);
-      // localStorage.setItem("__or_at_" + token, "true")
-      // this.attachEventListener(window, 'beforeunload', ()=>{
-      //   localStorage.removeItem("__or_at_" + token)
-      // }, false);
-      // this.attachEventListener(window, 'pagehide', ()=>{
-      //   localStorage.removeItem("__or_at_" + token)
-      // }, false);
       if (typeof sessionID === 'string') {
         this._sessionID = sessionID;
       }
-      if (!this.worker) {
-        throw new Error("no worker found after start request (this might not happen)");
-      }
+
+      this.activityState = ActivityState.Active
       this.worker.postMessage({ token, beaconSizeLimit });
       this.startCallbacks.forEach((cb) => cb());
       this.observer.observe();
       this.ticker.start();
 
-      log("OpenReplay tracking started.");
+      Object.entries(this._metadata).forEach(([key, value]) => 
+        this.send(new Metadata(key, value)))
+
+      this.notify.log("OpenReplay tracking started.");
+      // TODO: get rid of onStart
       const onStartInfo = { sessionToken: token, userUUID, sessionID };
       if (typeof this.options.onStart === 'function') {
         this.options.onStart(onStartInfo);
       }
       return onStartInfo;
     })
-    .catch(e => {
+    .catch(reason => {        
       sessionStorage.removeItem(this.options.session_token_key)
       this.stop()
-      warn("OpenReplay was unable to start. ", e)
-      this._debug("session_start", e);
-      throw e
+      //if (reason === CANCELED) { return Promise.resolve(CANCELED) } // TODO: what to return ????? Throwing is baad
+
+      if (reason !== CANCELED) {
+        this.notify.log("OpenReplay was unable to start. ", reason)
+        this._debug("session_start", reason)
+      }
+      return Promise.reject(reason)
     })
   }
 
@@ -392,19 +431,19 @@ export default class App {
     }
   }
   stop(): void {
-    if (this.isActive) {
+    if (this.activityState !== ActivityState.NotActive) {
       try {
         if (this.worker) {
-          this.worker.postMessage("stop");
+          this.worker.postMessage("stop")
         }
-        this.sanitizer.clear();
-        this.observer.disconnect();
-        this.nodes.clear();
-        this.ticker.stop();
-        this.stopCallbacks.forEach((cb) => cb());
-        log("OpenReplay tracking stopped.")
+        this.sanitizer.clear()
+        this.observer.disconnect()
+        this.nodes.clear()
+        this.ticker.stop()
+        this.stopCallbacks.forEach((cb) => cb())
+        this.notify.log("OpenReplay tracking stopped.")
       } finally {
-        this.isActive = false;
+        this.activityState = ActivityState.NotActive
       }
     }
   }
