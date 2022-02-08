@@ -199,7 +199,7 @@ export default class AssistManager {
 
   private onMouseClick = (e: MouseEvent): void => {
     if (!this.socket) { return; }
-    const data = this.md.getInternalCoordinates(e);
+    const data = this.md.getInternalViewportCoordinates(e);
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
     if (el instanceof HTMLElement) {
