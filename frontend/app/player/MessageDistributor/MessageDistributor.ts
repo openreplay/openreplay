@@ -181,7 +181,6 @@ export default class MessageDistributor extends StatedScreen {
       while (r.hasNext()) {
         const next = r.next();
         if (next != null) {
-          this.lastMessageTime = next[0].time;
           this.distributeMessage(next[0], next[1]);
           msgs.push(next[0]);
         }
@@ -326,6 +325,8 @@ export default class MessageDistributor extends StatedScreen {
 
   /* Binded */
   distributeMessage = (msg: Message, index: number): void => {
+    this.lastMessageTime = msg.time;
+    
     if ([ 
       "mouse_move",
       "mouse_click",
