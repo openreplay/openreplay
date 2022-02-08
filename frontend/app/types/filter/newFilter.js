@@ -93,8 +93,9 @@ export default Record({
   options: [],
 }, {
   keyKey: "_key",
-  fromJS: ({ value, type, ...filter }) => {
-    const _filter = filtersMap[type]
+  fromJS: ({ value, key, type, ...filter }) => {
+    // const _filter = filtersMap[key] || filtersMap[type] || {};
+    const _filter = filtersMap[type];
     return {
       ...filter,
       ..._filter,

@@ -2,6 +2,8 @@ import Record from 'Types/Record';
 import { List } from 'immutable';
 import Filter from 'Types/filter';
 import { validateName } from 'App/validate';
+import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
+import { filterMap } from 'Duck/search';
 
 export const FilterSeries = Record({
   seriesId: undefined,
@@ -31,6 +33,7 @@ export default Record({
   startDate: '',
   endDate: '',
   active: true,
+  rangeName: LAST_7_DAYS,
 }, {
   idKey: 'metricId',
   methods: {
@@ -42,16 +45,9 @@ export default Record({
       const js = this.toJS();
       
       js.series = js.series.map(series => {
-        series.filter.filters = series.filter.filters.map(filter => {
-          filter.type = filter.key
-          delete filter.operatorOptions
-          delete filter.icon
-          delete filter.key
-          delete filter._key
-          return filter;
-        });
-        delete series._key
-        delete series.key
+        series.filter.filters = series.filter.filters.map(filterMap);
+        // delete series._key
+        // delete series.key
         return series;
       });
 

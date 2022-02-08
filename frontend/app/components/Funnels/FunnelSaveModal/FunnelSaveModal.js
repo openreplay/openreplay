@@ -72,7 +72,7 @@ export default class FunnelSaveModal extends React.PureComponent {
               />
             </Form.Field>
 
-            <Form.Field>              
+            <Form.Field>
               <div className="flex items-center">
                 <Checkbox
                   name="isPublic"
@@ -86,7 +86,7 @@ export default class FunnelSaveModal extends React.PureComponent {
                   <Icon name="user-friends" size="16" />
                   <span className="ml-2"> Team Funnel</span>
                 </div>
-              </div>              
+              </div>
             </Form.Field>
           </Form>
         </Modal.Content>

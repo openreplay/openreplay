@@ -14,16 +14,12 @@ function SaveFilterButton(props: Props) {
   const [showModal, setshowModal] = useState(false)
   return (
     <div>
-      { savedSearch ? (
+      { savedSearch.exists() ? (
         <IconButton className="mr-2" onClick={() => setshowModal(true)} primaryText label="UPDATE SEARCH" icon="zoom-in" />
       ) : (
         <IconButton className="mr-2" onClick={() => setshowModal(true)} primaryText label="SAVE SEARCH" icon="zoom-in" />
       )}
-      
-      <SaveSearchModal
-        show={showModal}
-        closeHandler={() => setshowModal(false)}
-      />
+      { showModal && ( <SaveSearchModal show={showModal} closeHandler={() => setshowModal(false)} /> )}
     </div>
   );
 }

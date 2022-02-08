@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import { edit, save, remove } from 'Duck/search';
+import { editSavedSearch as edit, save, remove } from 'Duck/search';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
 import { confirm } from 'UI/Confirmation';
 import stl from './SaveSearchModal.css';
@@ -9,25 +9,25 @@ interface Props {
   filter: any;
   loading: boolean;
   edit: (filter: any) => void;
-  save: (searchId, name, filter: any) => Promise<void>;
+  save: (searchId) => Promise<void>;
   show: boolean;
   closeHandler: () => void;
   savedSearch: any;
   remove: (filterId: number) => Promise<void>;
 }
 function SaveSearchModal(props: Props) {
-  const [name, setName] = useState(props.savedSearch ? props.savedSearch.name : '');
   const { savedSearch, filter, loading, show, closeHandler } = props;
+  const [name, setName] = useState(savedSearch ? savedSearch.name : '');
   
   const onNameChange = ({ target: { value } }) => {
-    // props.edit({ name: value });
-    setName(value);
+    props.edit({ name: value });
+    // setName(value);
   };
 
   const onSave = () => {
     const { filter, closeHandler } = props;
-    if (name.trim() === '') return;
-    props.save(savedSearch ? savedSearch.searchId : null, name, filter).then(function() {
+    // if (name.trim() === '') return;
+    props.save(savedSearch.exists() ? savedSearch.searchId : null).then(function() {
       // this.props.fetchFunnelsList();
       closeHandler();
     });
@@ -37,13 +37,15 @@ function SaveSearchModal(props: Props) {
     if (await confirm({
       header: 'Confirm',
       confirmButton: 'Yes, Delete',
-      confirmation: `Are you sure you want to permanently delete this alert?`
+      confirmation: `Are you sure you want to permanently delete this Saved serch?`,
     })) {
       props.remove(savedSearch.searchId).then(() => {
         closeHandler();
       });
     }
   }
+
+  const onChangeOption = (e, { checked, name }) => props.edit({ [ name ]: checked })
     
 
   return (
@@ -68,13 +70,29 @@ function SaveSearchModal(props: Props) {
               autoFocus={ true }
               // className={ stl.name }
               name="name"
-              value={ name }
+              value={ savedSearch.name }
               onChange={ onNameChange }
               placeholder="Title"
             />
           </Form.Field>
+
+          <Form.Field>              
+            <div className="flex items-center">
+              <Checkbox
+                name="isPublic"
+                className="font-medium mr-3"
+                type="checkbox"
+                checked={ savedSearch.isPublic }
+                onClick={ onChangeOption }
+              />
+              <div className="flex items-center cursor-pointer" onClick={ () => props.edit({ 'isPublic' : !savedSearch.isPublic }) }>
+                <Icon name="user-friends" size="16" />
+                <span className="ml-2"> Team Search</span>
+              </div>
+            </div>              
+          </Form.Field>
         </Form>
-        { savedSearch && <div className="mt-2">Changes in filters will be updated.</div> }
+        { savedSearch.exists() && <div className="mt-2">Changes in filters will be updated.</div> }
       </Modal.Content>
       <Modal.Actions className="flex items-center px-6">
         <div className="mr-auto">
@@ -82,8 +100,9 @@ function SaveSearchModal(props: Props) {
               primary
               onClick={ onSave }
               loading={ loading }
+              disabled={!savedSearch.validate()}
             >
-              { savedSearch ? 'Update' : 'Create' }
+              { savedSearch.exists() ? 'Update' : 'Create' }
             </Button>
             <Button className={ stl.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
         </div>
