@@ -316,7 +316,7 @@ class MathOperator(str, Enum):
 
 
 class _AlertQuerySchema(BaseModel):
-    left: AlertColumn = Field(...)
+    left: Union[AlertColumn, int] = Field(...)
     right: float = Field(...)
     # operator: Literal["<", ">", "<=", ">="] = Field(...)
     operator: MathOperator = Field(...)
@@ -334,6 +334,14 @@ class AlertSchema(BaseModel):
     options: _AlertOptionSchema = Field(...)
     query: _AlertQuerySchema = Field(...)
     series_id: Optional[int] = Field(None)
+
+    @root_validator(pre=True)
+    def transform_alert(cls, values):
+        if values.get("seriesId") is None and isinstance(values["query"]["left"], int):
+            values["seriesId"] = values["query"]["left"]
+            values["query"]["left"] = AlertColumn.custom
+
+        return values
 
     @root_validator
     def alert_validator(cls, values):
