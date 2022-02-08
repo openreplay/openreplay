@@ -126,6 +126,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
         if s.series_id is None:
             n_series.append({"i": i, "s": s})
             prefix = "n_"
+            s.index = i
         else:
             u_series.append({"i": i, "s": s})
             u_series_ids.append(s.series_id)
