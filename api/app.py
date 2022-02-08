@@ -60,11 +60,11 @@ app.include_router(v1_api.app_apikey)
 Schedule = AsyncIOScheduler()
 Schedule.start()
 
-# for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
-#     Schedule.add_job(id=job["func"].__name__, **job)
-#
-# for job in Schedule.get_jobs():
-#     print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
+for job in core_crons.cron_jobs + core_dynamic_crons.cron_jobs:
+    Schedule.add_job(id=job["func"].__name__, **job)
+
+for job in Schedule.get_jobs():
+    print({"Name": str(job.id), "Run Frequency": str(job.trigger), "Next Run": str(job.next_run_time)})
 
 logging.basicConfig(level=config("LOGLEVEL", default=logging.INFO))
 logging.getLogger('apscheduler').setLevel(config("LOGLEVEL", default=logging.INFO))
