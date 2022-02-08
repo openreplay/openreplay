@@ -18,7 +18,14 @@ import Tracker from '@openreplay/tracker';
 const tracker = new Tracker({
   projectKey: YOUR_PROJECT_KEY,
 });
-tracker.start();
+tracker.start({
+  userID: "Mr.Smith",
+  metadata: {
+    version: "3.5.0",
+    balance: "10M",
+    role: "admin",
+  }
+});
 ```
 
 Then you can use OpenReplay JavaScript API anywhere in your code.

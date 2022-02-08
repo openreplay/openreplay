@@ -60,6 +60,7 @@ function _getTarget(target: Element): Element | null {
       tag === 'BUTTON' ||
       tag === 'A' ||
       tag === 'LI' ||
+      tag === 'SELECT' ||
       (element as HTMLElement).onclick != null ||
       element.getAttribute('role') === 'button' ||
       getLabelAttribute(element) !== null
@@ -89,6 +90,7 @@ export default function (app: App): void {
     if (tag === 'BUTTON' ||
         tag === 'A' ||
         tag === 'LI' ||
+        tag === 'SELECT' ||
         (target as HTMLElement).onclick != null ||
         target.getAttribute('role') === 'button'
       ) {

@@ -18,8 +18,8 @@ export function isURL(s: string): boolean {
 
 export const IN_BROWSER = !(typeof window === "undefined");
 
-export const log = console.log
-export const warn = console.warn
+
+// TODO: JOIN IT WITH LOGGER somehow (use logging decorators?); Don't forget about index.js loggin when there is no logger instance.
 
 export const DOCS_HOST = 'https://docs.openreplay.com';
 
@@ -28,7 +28,7 @@ export function deprecationWarn(nameOfFeature: string, useInstead: string, docsP
 	if (warnedFeatures[ nameOfFeature ]) {
 		return;
 	}
-	warn(`OpenReplay: ${ nameOfFeature } is deprecated. ${ useInstead ? `Please, use ${ useInstead } instead.` : "" } Visit ${DOCS_HOST}${docsPath} for more information.`)
+	console.warn(`OpenReplay: ${ nameOfFeature } is deprecated. ${ useInstead ? `Please, use ${ useInstead } instead.` : "" } Visit ${DOCS_HOST}${docsPath} for more information.`)
 	warnedFeatures[ nameOfFeature ] = true;
 }
 
