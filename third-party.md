@@ -93,3 +93,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | peerjs | MIT | JavaScript |
 | geoip-lite | Apache2 | JavaScript |
 | ua-parser-js | MIT | JavaScript |
+| express | MIT | JavaScript |
