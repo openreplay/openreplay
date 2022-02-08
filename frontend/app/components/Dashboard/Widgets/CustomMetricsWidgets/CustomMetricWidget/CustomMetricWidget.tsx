@@ -75,9 +75,12 @@ function CustomMetricWidget(props: Props) {
   }, [period])
 
   const clickHandler = (event, index) => {
-    const timestamp = event.activePayload[0].payload.timestamp;
-    const { startTimestamp, endTimestamp } = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
-    props.setActiveWidget({ widget: metric, startTimestamp, endTimestamp, timestamp: event.activePayload[0].payload.timestamp, index })
+    if (event) {
+      const payload = event.activePayload[0].payload;
+      const timestamp = payload.timestamp;
+      const { startTimestamp, endTimestamp } = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
+      props.setActiveWidget({ widget: metric, startTimestamp, endTimestamp, timestamp: payload.timestamp, index })
+    }
   }
 
   const updateActiveState = (metricId, state) => {

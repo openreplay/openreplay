@@ -1,4 +1,3 @@
-import { edit } from 'App/components/ui/ItemMenu/itemMenu.css';
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from 'UI';
 
