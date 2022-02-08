@@ -48,7 +48,7 @@ function CustomMetricWidget(props: Props) {
   const colors = compare ? Styles.compareColors : Styles.colors;
   const params = customParams(period.rangeName)
   const gradientDef = Styles.gradientDef();
-  const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
+  const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
 
   useEffect(() => {
     new APIClient()['post']('/custom_metrics/chart', { ...metricParams, q: metric.name })
