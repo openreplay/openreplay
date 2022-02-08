@@ -74,6 +74,7 @@ def get_live_sessions_ws(project_id):
     live_peers = connected_peers.json().get("data", [])
     for s in live_peers:
         s["live"] = True
+        s["projectId"] = project_id
     return live_peers
 
 
@@ -81,7 +82,6 @@ def get_live_session_by_id(project_id, session_id):
     all_live = get_live_sessions_ws(project_id)
     for l in all_live:
         if l.get("sessionID") == session_id:
-            l["live"] = True
             return l
     return None
 
