@@ -101,7 +101,8 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                                               project_key=data["projectKey"])
 
             return data
-    return None
+        else:
+            return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
 
 
 def __get_sql_operator(op: schemas.SearchEventOperator):
