@@ -75,9 +75,7 @@ function FilterAutoComplete(props: Props) {
   }, [query])
 
   useEffect(() => {
-    if(value === '') {
-      setQuery(value);
-    }
+    setQuery(value);
   }, [value])
 
   const onBlur = (e) => {
