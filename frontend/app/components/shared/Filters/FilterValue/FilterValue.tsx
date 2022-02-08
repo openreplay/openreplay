@@ -15,17 +15,20 @@ function FilterValue(props: Props) {
   const lastIndex = filter.value.length - 1;
 
   const onAddValue = () => {
-    const newValues = filter.value.concat("")
-    try {
-      props.onUpdate({ ...filter.toData(), value: newValues })
-    } catch (e) {
-      props.onUpdate({ ...filter, value: newValues })
-    }
+    const newValue = filter.value.concat('');
+    props.onUpdate({ ...filter, value: newValue });
+
+    // const newValues = filter.value.concat("")
+    // try {
+    //   props.onUpdate({ ...filter.toData(), value: newValues })
+    // } catch (e) {
+    //   props.onUpdate({ ...filter, value: newValues })
+    // }
   }
 
   const onRemoveValue = (valueIndex) => {
-    const newValues = filter.value.filter((_, _index) => _index !== valueIndex)
-    props.onUpdate({ ...filter, value: newValues })
+    const newValue = filter.value.filter((_, index) => index !== valueIndex);
+    props.onUpdate({ ...filter, value: newValue });
   }
 
   const onChange = (e, item, valueIndex) => {
@@ -45,13 +48,11 @@ function FilterValue(props: Props) {
   } 
 
   const handleBlur = (e) => {
-    // const { filter, onChange } = props;
     if (filter.type === FilterType.DURATION) {
       const { maxDuration, minDuration, key } = filter;
       if (maxDuration || minDuration) return;
       if (maxDuration !== durationValues.maxDuration || 
           minDuration !== durationValues.minDuration) {
-        // onChange(e, { name: 'value', value: [this.state.minDuration, this.state.maxDuration] });
         props.onUpdate({ ...filter, value: [durationValues.minDuration, durationValues.maxDuration] });
       }
     }

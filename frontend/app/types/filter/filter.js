@@ -95,7 +95,7 @@ export default Record({
       startDate,
       endDate,
       events: List(events).map(Event),
-      filters: List(filters).map(NewFilter),
+      filters: List(filters).map(i => NewFilter(i).toData()),
       custom: Map(custom),
     }
   }
