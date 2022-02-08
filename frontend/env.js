@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-// TODO: derive version from the tracker package on build
+// TODO: (the problem is during the build time the frontend is isolated, as far as I remember)
 //const trackerInfo = require('../tracker/tracker/package.json');
 
 const oss = {
@@ -21,7 +21,7 @@ const oss = {
 	MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
 	MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
 	ICE_SERVERS: process.env.ICE_SERVERS,
-	TRACKER_VERSION: '3.4.17', // trackerInfo.version,
+	TRACKER_VERSION: '3.5.0' // trackerInfo.version,
 }
 
 module.exports = {
