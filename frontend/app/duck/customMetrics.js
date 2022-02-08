@@ -44,7 +44,7 @@ const defaultInstance = CustomMetric({
   series: List([
     {
       name: 'Series 1',
-      filter: new Filter({ filters: List(), eventsOrder: 'and' }),
+      filter: new Filter({ filters: List(), eventsOrder: 'then' }),
     },
   ])
 })
@@ -159,7 +159,7 @@ export const addSeries = (series = null) => (dispatch, getState) => {
   const seriesIndex = instance.series.size;
   const newSeries = series || {
     name: `Series ${seriesIndex + 1}`,
-    filter: new Filter({ filters: [], eventsOrder: 'and' }),
+    filter: new Filter({ filters: [], eventsOrder: 'then' }),
   };
 
   dispatch({
