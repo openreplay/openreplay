@@ -18,7 +18,7 @@ postgresql: &postgres
 
 clickhouse: &clickhouse
   # For enterpriseEdition
-  # enabled: true
+  enabled: false
 
 kafka: &kafka
   # For enterpriseEdition
