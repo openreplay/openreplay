@@ -84,7 +84,7 @@ export default class FunnelSaveModal extends React.PureComponent {
                 />
                 <div className="flex items-center cursor-pointer" onClick={ () => this.props.edit({ 'isPublic' : !funnel.isPublic }) }>
                   <Icon name="user-friends" size="16" />
-                  <span className="ml-2"> Team Funnel</span>
+                  <span className="ml-2"> Team Visible</span>
                 </div>
               </div>
             </Form.Field>
