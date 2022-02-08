@@ -34,8 +34,8 @@ def get_session2(projectId: int, sessionId: int, context: schemas.CurrentContext
                                   include_fav_viewed=True, group_metadata=True)
     if data is None:
         return {"errors": ["session not found"]}
-
-    sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
+    if not data.get("live"):
+        sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
     return {
         'data': data
     }
