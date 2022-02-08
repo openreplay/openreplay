@@ -45,7 +45,7 @@ function CustomMetricWidget(props: Props) {
   const [data, setData] = useState<any>([]);
   const [seriesMap, setSeriesMap] = useState<any>([]);
 
-  const colors = compare ? Styles.compareColors : Styles.colors;
+  const colors = Styles.customMetricColors;
   const params = customParams(period.rangeName)
   const gradientDef = Styles.gradientDef();
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }

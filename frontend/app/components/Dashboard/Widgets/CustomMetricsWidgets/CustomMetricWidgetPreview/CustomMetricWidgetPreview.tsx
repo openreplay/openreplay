@@ -134,7 +134,7 @@ function CustomMetricWidget(props: Props) {
                       stroke={colors[index]}
                       fillOpacity={ 1 }
                       strokeWidth={ 2 }
-                      strokeOpacity={ 1 }
+                      strokeOpacity={ 0.6 }
                       // fill="url(#colorCount)"
                       dot={false}
                     />
