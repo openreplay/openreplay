@@ -24,6 +24,10 @@ function SeriesName(props: Props) {
       ref.current.focus()
     }
   }, [editing])
+
+  useEffect(() => {
+    setName(props.name)
+  }, [props.name])
   
   // const { name } = props;
   return (

@@ -2,7 +2,7 @@ import Record from 'Types/Record';
 import { List } from 'immutable';
 import Filter from 'Types/filter';
 import { validateName } from 'App/validate';
-import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
+import { LAST_7_DAYS } from 'Types/app/period';
 import { filterMap } from 'Duck/search';
 
 export const FilterSeries = Record({
