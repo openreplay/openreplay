@@ -475,6 +475,8 @@ class __MixedSearchFilter(BaseModel):
     @root_validator(pre=True)
     def remove_duplicate_values(cls, values):
         if values.get("value") is not None:
+            if len(values["value"]) > 0 and isinstance(values["value"][0], int):
+                return values
             values["value"] = list(set(values["value"]))
         return values
 
