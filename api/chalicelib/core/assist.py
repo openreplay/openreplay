@@ -77,6 +77,15 @@ def get_live_sessions_ws(project_id):
     return live_peers
 
 
+def get_live_session_by_id(project_id, session_id):
+    all_live = get_live_sessions_ws(project_id)
+    for l in all_live:
+        if l.get("sessionID") == session_id:
+            l["live"] = True
+            return l
+    return None
+
+
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
