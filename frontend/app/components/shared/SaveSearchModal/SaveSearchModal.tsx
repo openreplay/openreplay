@@ -4,6 +4,7 @@ import { editSavedSearch as edit, save, remove } from 'Duck/search';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
 import { confirm } from 'UI/Confirmation';
 import stl from './SaveSearchModal.css';
+import cn from 'classnames';
 
 interface Props {
   filter: any;
@@ -14,6 +15,7 @@ interface Props {
   closeHandler: () => void;
   savedSearch: any;
   remove: (filterId: number) => Promise<void>;
+  userId: number;
 }
 function SaveSearchModal(props: Props) {
   const { savedSearch, filter, loading, show, closeHandler } = props;
@@ -77,7 +79,7 @@ function SaveSearchModal(props: Props) {
           </Form.Field>
 
           <Form.Field>              
-            <div className="flex items-center">
+            <div className={cn("flex items-center", { 'disabled': savedSearch.exists() && savedSearch.userId !== props.userId })}>
               <Checkbox
                 name="isPublic"
                 className="font-medium mr-3"
@@ -85,11 +87,14 @@ function SaveSearchModal(props: Props) {
                 checked={ savedSearch.isPublic }
                 onClick={ onChangeOption }
               />
-              <div className="flex items-center cursor-pointer" onClick={ () => props.edit({ 'isPublic' : !savedSearch.isPublic }) }>
+              <div
+                className="flex items-center cursor-pointer"
+                onClick={ () => props.edit({ 'isPublic' : !savedSearch.isPublic }) }
+              >
                 <Icon name="user-friends" size="16" />
                 <span className="ml-2"> Team Visible</span>
               </div>
-            </div>              
+            </div>
           </Form.Field>
         </Form>
         { savedSearch.exists() && <div className="mt-4">Changes in filters will be updated.</div> }
@@ -115,6 +120,7 @@ function SaveSearchModal(props: Props) {
 }
 
 export default connect(state => ({
+  userId: state.getIn([ 'user', 'account', 'id' ]),
   savedSearch: state.getIn([ 'search', 'savedSearch' ]),
   filter: state.getIn(['search', 'instance']),
   loading: state.getIn([ 'search', 'saveRequest', 'loading' ]) || 

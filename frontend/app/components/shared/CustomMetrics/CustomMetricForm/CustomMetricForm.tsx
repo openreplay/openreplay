@@ -33,7 +33,7 @@ function CustomMetricForm(props: Props) {
   const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value }, false);
 
   const changeConditionTab = (e, { name, value }) => {
-    props.editMetric({[ 'type' ]: value });
+    props.editMetric({[ 'viewType' ]: value });
   };
 
   const save = () => {
@@ -84,14 +84,14 @@ function CustomMetricForm(props: Props) {
             <div>
               <SegmentSelection
                 primary
-                name="condition"
+                name="viewType"
                 small={true}
                 // className="my-3"
                 onSelect={ changeConditionTab }
-                value={{ value: metric.type }}
+                value={{ value: metric.viewType }}
                 list={ [
-                  { name: 'Session Count', value: 'session_count' },
-                  { name: 'Session Percentage', value: 'session_percentage' },
+                  { name: 'Session Count', value: 'lineChart' },
+                  { name: 'Session Percentage', value: 'progress', disabled: true },
                 ]}
               />
             </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, Popup } from 'UI';
 import cn from 'classnames';
 import styles from './segmentSelection.css';
 
@@ -19,15 +19,24 @@ class SegmentSelection extends React.Component {
         }, className) }
       >
         { list.map(item => (
-          <div
-            key={ item.name }
-            className={ styles.item }
-            data-active={ this.props.value && this.props.value.value === item.value }
-            onClick={ () => this.setActiveItem(item) }
-          >
-            { item.icon && <Icon name={ item.icon } size="20" marginRight="10" /> }
-            <div>{ item.name }</div>
-          </div>
+          <Popup
+            trigger={
+              <div
+                key={ item.name }
+                className={ cn(styles.item, { 'opacity-25 cursor-default' : item.disabled }) }
+                data-active={ this.props.value && this.props.value.value === item.value }
+                onClick={ () => !item.disabled && this.setActiveItem(item) }
+              >
+                { item.icon && <Icon name={ item.icon } size="20" marginRight="10" /> }
+                <div>{ item.name }</div>
+              </div>
+            }
+            disabled={!item.disabled}
+            content={ `Coming soon` }
+            size="tiny"
+            inverted
+            position="top center"
+          />
         ))
         }
       </div>
