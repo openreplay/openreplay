@@ -92,8 +92,16 @@ export default mergeReducers(
 	}),
 );
 
+const checkValues = (key, value) => {
+  if (key === FilterKey.DURATION) {
+    return value[0] === '' || value[0] === null ? [0, value[1]] : value;
+  }
+  return value.filter(i => i !== '' && i !== null);
+}
+
 export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent }) => ({
-  value: value.filter(i => i !== '' && i !== null),
+  // value: value.filter(i => i !== '' && i !== null),
+  value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
   operator,
@@ -197,7 +205,7 @@ export const clearSearch = () => (dispatch, getState) => {
 }
 
 export const addFilter = (filter) => (dispatch, getState) => {
-  // filter.value = filter.value && filter.value.length === 0 ? filter.value : [''];
+  filter.value = filter.value && filter.value.length === 0 ? filter.value : [''];
   const instance = getState().getIn([ 'search', 'instance']);
   const filters = instance.filters.push(filter);
   return dispatch(edit(instance.set('filters', filters)));
