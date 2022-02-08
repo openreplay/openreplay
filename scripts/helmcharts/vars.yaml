@@ -1,4 +1,4 @@
-fromVersion: "v1.4.0"
+fromVersion: "v1.5.0"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords

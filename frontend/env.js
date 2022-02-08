@@ -13,7 +13,7 @@ const oss = {
 	ORIGIN: () => 'window.location.origin',
 	API_EDP: "https://foss.openreplay.com/api",
 	ASSETS_HOST: () => 'window.location.origin + "/assets"',
-	VERSION: '1.4.0',
+	VERSION: '1.5.0',
 	SOURCEMAP: true,
 	MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
 	MINIO_PORT: process.env.MINIO_PORT,
