@@ -87,12 +87,12 @@ function SaveSearchModal(props: Props) {
               />
               <div className="flex items-center cursor-pointer" onClick={ () => props.edit({ 'isPublic' : !savedSearch.isPublic }) }>
                 <Icon name="user-friends" size="16" />
-                <span className="ml-2"> Team Search</span>
+                <span className="ml-2"> Team Visible</span>
               </div>
             </div>              
           </Form.Field>
         </Form>
-        { savedSearch.exists() && <div className="mt-2">Changes in filters will be updated.</div> }
+        { savedSearch.exists() && <div className="mt-4">Changes in filters will be updated.</div> }
       </Modal.Content>
       <Modal.Actions className="flex items-center px-6">
         <div className="mr-auto">
