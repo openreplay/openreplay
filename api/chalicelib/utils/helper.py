@@ -377,3 +377,10 @@ def old_search_payload_to_flat(values):
             v["isEvent"] = False
         values["filters"] = values.pop("events") + values.get("filters", [])
     return values
+
+
+def custom_alert_to_front(values):
+    # to support frontend format for payload
+    if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.custom:
+        values["query"]["left"] = values["seriesId"]
+    return values
