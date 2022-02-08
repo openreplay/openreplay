@@ -10,7 +10,7 @@ import cn from 'classnames';
 
 interface Props {
   metric: any;
-  editMetric: (metric) => void;
+  editMetric: (metric, shouldFetch?) => void;
   save: (metric) => Promise<void>;
   loading: boolean;
   addSeries: (series?) => void;
@@ -30,7 +30,7 @@ function CustomMetricForm(props: Props) {
     props.removeSeries(index);
   }
 
-  const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value })
+  const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value }, false);
 
   const changeConditionTab = (e, { name, value }) => {
     props.editMetric({[ 'type' ]: value });

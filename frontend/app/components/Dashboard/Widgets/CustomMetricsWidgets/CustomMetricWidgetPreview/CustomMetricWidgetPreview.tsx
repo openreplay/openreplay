@@ -8,7 +8,6 @@ import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from '
 import stl from './CustomMetricWidgetPreview.css';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
 import { remove } from 'Duck/customMetrics';
-import { confirm } from 'UI/Confirmation';
 import DateRange from 'Shared/DateRange';
 import { edit } from 'Duck/customMetrics';
 
@@ -27,23 +26,21 @@ const customParams = rangeName => {
 
 interface Props {
   metric: any;
-  // loading?: boolean;
   data?: any;
   showSync?: boolean;
-  compare?: boolean;
-  // period?: any;
+  // compare?: boolean;
   onClickEdit?: (e) => void;
   remove: (id) => void;
   edit: (metric) => void;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync, compare } = props;
+  const { metric, showSync } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>({ chart: [{}] })
   const [seriesMap, setSeriesMap] = useState<any>([]);
   const [period, setPeriod] = useState(Period({ rangeName: metric.rangeName, startDate: metric.startDate, endDate: metric.endDate }));
 
-  const colors = compare ? Styles.compareColors : Styles.colors;
+  const colors = Styles.customMetricColors;
   const params = customParams(period.rangeName)
   const gradientDef = Styles.gradientDef();
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
@@ -67,7 +64,6 @@ function CustomMetricWidget(props: Props) {
             }, []);
 
           setSeriesMap(namesMap);
-          
           setData(getChartFormatter(period)(data));
         }
       }).finally(() => setLoading(false));
@@ -105,14 +101,14 @@ function CustomMetricWidget(props: Props) {
                   data={ data }
                   margin={Styles.chartMargins}
                   syncId={ showSync ? "domainsErrors_4xx" : undefined }
-                  // onClick={clickHandler}
                 >
-                  <defs>
+                  {/* <defs>
                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={colors[4]} stopOpacity={ 0.9 } />
-                      <stop offset="95%" stopColor={colors[4]} stopOpacity={ 0.2 } />
+                      <stop offset="5%" stopColor={colors[1]} stopOpacity={ 1} />
+                      <stop offset="95%" stopColor={colors[2]} stopOpacity={ 1 } />
+                      <stop offset="95%" stopColor={colors[3]} stopOpacity={ 1 } />
                     </linearGradient>
-                  </defs>
+                  </defs> */}
                   <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
                   <XAxis
                     {...Styles.xaxis}
@@ -138,8 +134,8 @@ function CustomMetricWidget(props: Props) {
                       stroke={colors[index]}
                       fillOpacity={ 1 }
                       strokeWidth={ 2 }
-                      strokeOpacity={ 0.8 }
-                      fill="url(#colorCount)"
+                      strokeOpacity={ 1 }
+                      // fill="url(#colorCount)"
                       dot={false}
                     />
                   ))}
@@ -153,6 +149,4 @@ function CustomMetricWidget(props: Props) {
   );
 }
 
-export default connect(state => ({
-  // period: state.getIn(['dashboard', 'period']),
-}), { remove, edit })(CustomMetricWidget);
+export default connect(null, { remove, edit })(CustomMetricWidget);
