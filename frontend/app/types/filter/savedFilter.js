@@ -12,7 +12,7 @@ export default Record({
   createdAt: undefined,
   count: 0,
   watchdogs: List(),
-  isPublic: true,
+  isPublic: false,
 }, {
   idKey: 'searchId',
   methods: {

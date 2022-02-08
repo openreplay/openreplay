@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { connect } from 'react-redux';
 import { Loader, NoContent, Icon } from 'UI';
-import { widgetHOC, Styles } from '../../common';
-import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
-import { LineChart, Line, Legend } from 'recharts';
+import { Styles } from '../../common';
+import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
 import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidgetPreview.css';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
@@ -45,7 +44,17 @@ function CustomMetricWidget(props: Props) {
   const gradientDef = Styles.gradientDef();
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
 
+  const prevMetricRef = useRef<any>();
+
   useEffect(() => {
+    // Check for title change
+    if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
+      prevMetricRef.current = metric;
+      return
+    };
+    prevMetricRef.current = metric;
+    
+    // fetch new data for the widget preview
     new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
       .then(response => response.json())
       .then(({ errors, data }) => {
@@ -102,13 +111,6 @@ function CustomMetricWidget(props: Props) {
                   margin={Styles.chartMargins}
                   syncId={ showSync ? "domainsErrors_4xx" : undefined }
                 >
-                  {/* <defs>
-                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={colors[1]} stopOpacity={ 1} />
-                      <stop offset="95%" stopColor={colors[2]} stopOpacity={ 1 } />
-                      <stop offset="95%" stopColor={colors[3]} stopOpacity={ 1 } />
-                    </linearGradient>
-                  </defs> */}
                   <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
                   <XAxis
                     {...Styles.xaxis}
