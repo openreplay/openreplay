@@ -686,7 +686,7 @@ class CustomMetricCreateSeriesSchema(BaseModel):
 class CreateCustomMetricsSchema(BaseModel):
     name: str = Field(...)
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    is_public: Optional[bool] = Field(False)
+    is_public: Optional[bool] = Field(True)
 
     class Config:
         alias_generator = attribute_to_camel_case
