@@ -4,7 +4,7 @@ import { Loader, NoContent, Icon } from 'UI';
 import { widgetHOC, Styles } from '../../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
 import { LineChart, Line, Legend } from 'recharts';
-import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidgetPreview.css';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
 import { remove } from 'Duck/customMetrics';
@@ -25,26 +25,23 @@ const customParams = rangeName => {
   return params
 }
 
-interface Period {
-  rangeName: string;
-}
-
 interface Props {
   metric: any;
   // loading?: boolean;
   data?: any;
   showSync?: boolean;
   compare?: boolean;
-  period?: Period;
+  // period?: any;
   onClickEdit?: (e) => void;
   remove: (id) => void;
   edit: (metric) => void;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync, compare, period = { rangeName: LAST_24_HOURS} } = props;
+  const { metric, showSync, compare } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>({ chart: [{}] })
   const [seriesMap, setSeriesMap] = useState<any>([]);
+  const [period, setPeriod] = useState(Period({ rangeName: metric.rangeName, startDate: metric.startDate, endDate: metric.endDate }));
 
   const colors = compare ? Styles.compareColors : Styles.colors;
   const params = customParams(period.rangeName)
@@ -70,13 +67,15 @@ function CustomMetricWidget(props: Props) {
             }, []);
 
           setSeriesMap(namesMap);
+          
           setData(getChartFormatter(period)(data));
         }
       }).finally(() => setLoading(false));
   }, [metric])
 
   const onDateChange = (changedDates) => {
-    props.edit({ ...changedDates });
+    setPeriod({  ...changedDates, rangeName: changedDates.rangeValue })
+    props.edit({  ...changedDates, rangeName: changedDates.rangeValue });
   }
 
   return (
@@ -85,7 +84,7 @@ function CustomMetricWidget(props: Props) {
         <div className="mr-auto font-medium">Preview</div>
         <div>
           <DateRange
-            rangeValue={metric.rangeValue}
+            rangeValue={metric.rangeName}
             startDate={metric.startDate}
             endDate={metric.endDate}
             onDateChange={onDateChange}
@@ -154,4 +153,6 @@ function CustomMetricWidget(props: Props) {
   );
 }
 
-export default connect(null, { remove, edit })(CustomMetricWidget);
+export default connect(state => ({
+  // period: state.getIn(['dashboard', 'period']),
+}), { remove, edit })(CustomMetricWidget);

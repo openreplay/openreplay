@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
-import { edit, updateSeries } from 'Duck/customMetrics';
+import { 
+  edit,
+  updateSeries,
+  addSeriesFilterFilter,
+  removeSeriesFilterFilter,
+  editSeriesFilterFilter,
+  editSeriesFilter,
+} from 'Duck/customMetrics';
 import { connect } from 'react-redux';
 import { IconButton, Icon } from 'UI';
 import FilterSelection from '../../Filters/FilterSelection';
@@ -14,6 +21,10 @@ interface Props {
   updateSeries: typeof updateSeries;
   onRemoveSeries: (seriesIndex) => void;
   canDelete?: boolean; 
+  addSeriesFilterFilter: typeof addSeriesFilterFilter;
+  editSeriesFilterFilter: typeof editSeriesFilterFilter;
+  editSeriesFilter: typeof editSeriesFilter;
+  removeSeriesFilterFilter: typeof removeSeriesFilterFilter;
 }
 
 function FilterSeries(props: Props) {
@@ -23,56 +34,20 @@ function FilterSeries(props: Props) {
 
   const onAddFilter = (filter) => {
     filter.value = [""]
-    const newFilters = series.filter.filters.concat(filter);
-    props.updateSeries(seriesIndex, {
-      ...series,
-      filter: {
-        ...series.filter,
-        filters: newFilters,
-      }
-    });
+    props.addSeriesFilterFilter(seriesIndex, filter);
   }
 
   const onUpdateFilter = (filterIndex, filter) => {
-    const newFilters = series.filter.filters.map((_filter, i) => {
-      if (i === filterIndex) {
-        return filter;
-      } else {
-        return _filter;
-      }
-    });
-
-    props.updateSeries(seriesIndex, {
-      ...series,
-      filter: {
-        ...series.filter,
-        filters: newFilters,
-      }
-    });
+    props.editSeriesFilterFilter(seriesIndex, filterIndex, filter);
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
-    props.updateSeries(seriesIndex, {
-      ...series,
-      filter: {
-        ...series.filter,
-        eventsOrder: value,
-      }
-    });
+    
+    props.editSeriesFilter(seriesIndex, { eventsOrder: value });
   }
 
   const onRemoveFilter = (filterIndex) => {
-    const newFilters = series.filter.filters.filter((_filter, i) => {
-      return i !== filterIndex;
-    });
-
-    props.updateSeries(seriesIndex, {
-      ...series,
-      filter: {
-        ...series.filter,
-        filters: newFilters,
-      }
-    });
+    props.removeSeriesFilterFilter(seriesIndex, filterIndex);
   }
 
   return (
@@ -121,4 +96,11 @@ function FilterSeries(props: Props) {
   );
 }
 
-export default connect(null, { edit, updateSeries })(FilterSeries);
+export default connect(null, { 
+  edit,
+  updateSeries,
+  addSeriesFilterFilter,
+  editSeriesFilterFilter,
+  editSeriesFilter,
+  removeSeriesFilterFilter,
+})(FilterSeries);

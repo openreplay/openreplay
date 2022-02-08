@@ -7,8 +7,7 @@ import { LineChart, Line, Legend } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidget.css';
 import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
-import { edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
-import { confirm } from 'UI/Confirmation';
+import { init, edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
 import APIClient from 'App/api_client';
 import { setShowAlerts } from 'Duck/dashboard';
 
@@ -35,6 +34,7 @@ interface Props {
   setShowAlerts: (showAlerts) => void;
   setAlertMetricId: (id) => void;
   onAlertClick: (e) => void;
+  init: (metric) => void;
   edit: (setDefault?) => void;
   setActiveWidget: (widget) => void;
   updateActiveState: (metricId, state) => void;
@@ -74,16 +74,6 @@ function CustomMetricWidget(props: Props) {
       }).finally(() => setLoading(false));
   }, [period])
 
-  const deleteHandler = async () => {
-    if (await confirm({
-      header: 'Custom Metric',
-      confirmButton: 'Delete',
-      confirmation: `Are you sure you want to delete ${metric.name}`
-    })) {
-      props.remove(metric.metricId)
-    }
-  }
-
   const clickHandler = (event, index) => {
     const timestamp = event.activePayload[0].payload.timestamp;
     const { startTimestamp, endTimestamp } = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
@@ -100,7 +90,7 @@ function CustomMetricWidget(props: Props) {
         <div className="font-medium">{metric.name}</div>
         <div className="ml-auto flex items-center">
           <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} />
-          <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.edit(metric)} />
+          <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.init(metric)} />
           <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={() => updateActiveState(metric.metricId, false)} />
         </div>
       </div>
@@ -164,7 +154,15 @@ function CustomMetricWidget(props: Props) {
 
 export default connect(state => ({
   period: state.getIn(['dashboard', 'period']),
-}), { remove, setShowAlerts, setAlertMetricId, edit, setActiveWidget, updateActiveState })(CustomMetricWidget);
+}), {
+  remove,
+  setShowAlerts,
+  setAlertMetricId,
+  edit,
+  setActiveWidget,
+  updateActiveState,
+  init,
+})(CustomMetricWidget);
 
 
 const WidgetIcon = ({ className = '', tooltip = '', icon, onClick }) => (

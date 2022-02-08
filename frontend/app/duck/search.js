@@ -19,6 +19,7 @@ const FETCH_FILTER_SEARCH = fetchListType(`${name}/FILTER_SEARCH`);
 const FETCH = fetchType(name);
 const SAVE = saveType(name);
 const EDIT = editType(name);
+const EDIT_SAVED_SEARCH = editType(`${name}/SAVED_SEARCH`);
 const REMOVE = removeType(name);
 const ADD_FILTER = `${name}/ADD_FILTER`;
 const APPLY_SAVED_SEARCH = `${name}/APPLY_SAVED_SEARCH`;
@@ -41,7 +42,7 @@ const initialState = Map({
 	list: List(),
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
-  savedSearch: null,
+  savedSearch: new SavedFilter({}),
   filterSearchList: {},
 });
 
@@ -76,6 +77,8 @@ function reducer(state = initialState, action = {}) {
       return state.set('filterSearchList', groupedList);
     case APPLY_SAVED_SEARCH:
       return state.set('savedSearch', action.filter);
+    case EDIT_SAVED_SEARCH:
+      return state.mergeIn([ 'savedSearch' ], action.instance);
 	}
 	return state;
 }
@@ -150,16 +153,17 @@ export function fetch(id) {
 	}
 }
 
-export function save(id, name, instance) {
-  instance = instance instanceof SavedFilter ? instance : new SavedFilter(instance);
-  return {
+export const save = (id) => (dispatch, getState) => {
+// export function save(id) {
+  const filter = getState().getIn([ 'search', 'instance']).toData();
+  filter.filters = filter.filters.map(filterMap);
+
+  const instance = getState().getIn([ 'search', 'savedSearch']).toData();
+  // instance = instance instanceof SavedFilter ? instance : new SavedFilter(instance);
+  return dispatch({
     types: SAVE.array,
-    call: client => client.post(!id ? '/saved_search' : `/saved_search/${id}`, {
-      name: name,
-      filter: instance.toSaveData(),
-    }),
-    instance,
-  };
+    call: client => client.post(!id ? '/saved_search' : `/saved_search/${id}`, { ...instance, filter })
+  });
 }
 
 export function fetchList() {
@@ -185,7 +189,7 @@ export function fetchFilterSearch(params) {
 }
 
 export const clearSearch = () => (dispatch, getState) => {
-  dispatch(applySavedSearch(null));
+  dispatch(applySavedSearch(new SavedFilter({})));
   dispatch(edit(new Filter({ filters: [] })));
   return dispatch({
     type: CLEAR_SEARCH,
@@ -198,3 +202,10 @@ export const addFilter = (filter) => (dispatch, getState) => {
   const filters = instance.filters.push(filter);
   return dispatch(edit(instance.set('filters', filters)));
 }
+
+export const editSavedSearch = instance => {
+  return {
+    type: EDIT_SAVED_SEARCH,
+    instance,
+  }
+};

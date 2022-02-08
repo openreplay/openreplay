@@ -36,7 +36,7 @@ function SavedSearch(props) {
             <span className="mr-2">{`Search Saved (${list.size})`}</span>
             <Icon name="ellipsis-v" color="teal" size="14" />
           </Button>
-          { savedSearch && (
+          { savedSearch.exists() && (
             <div className="flex items-center ml-2">
               <Icon name="search" size="14" />
               <span className="color-gray-medium px-1">Viewing:</span>

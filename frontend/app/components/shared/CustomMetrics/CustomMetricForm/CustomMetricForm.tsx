@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, SegmentSelection, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
-import { edit as editMetric, save, addSeries, remove } from 'Duck/customMetrics';
+import { edit as editMetric, save, addSeries, removeSeries, remove } from 'Duck/customMetrics';
 import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
@@ -16,6 +16,7 @@ interface Props {
   addSeries: (series?) => void;
   onClose: () => void;
   remove: (id) => Promise<void>;
+  removeSeries: (seriesIndex) => void;
 }
 
 function CustomMetricForm(props: Props) {
@@ -23,30 +24,10 @@ function CustomMetricForm(props: Props) {
 
   const addSeries = () => {
     props.addSeries();
-    const newSeries = {
-      name: `Series ${metric.series.size + 1}`,
-      type: '',
-      // series: [],
-      filter: {
-        type: '',
-        value: '',
-        filters: [],
-      },
-    };
-    props.editMetric({
-      ...metric,
-      series: metric.series.concat(newSeries),
-    });
   }
 
   const removeSeries = (index) => {
-    const newSeries = metric.series.filter((_series, i) => {
-      return i !== index;
-    });
-    props.editMetric({
-      ...metric,
-      series: newSeries,
-    });
+    props.removeSeries(index);
   }
 
   const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value })
@@ -159,4 +140,4 @@ function CustomMetricForm(props: Props) {
 export default connect(state => ({
   metric: state.getIn(['customMetrics', 'instance']),
   loading: state.getIn(['customMetrics', 'saveRequest', 'loading']),
-}), { editMetric, save, addSeries, remove })(CustomMetricForm);
+}), { editMetric, save, addSeries, remove, removeSeries })(CustomMetricForm);

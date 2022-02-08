@@ -24,10 +24,10 @@ function CustomMetrics(props: Props) {
           </div>
         }
         isDisplayed={ !!metric }
-        onClose={ () => props.init(null, false)}
+        onClose={ () => props.init(null, true)}
         content={ (!!metric) && (
           <div style={{ backgroundColor: '#f6f6f6' }}>
-            <CustomMetricForm metric={metric} onClose={() => props.init(null, false)} />
+            <CustomMetricForm metric={metric} onClose={() => props.init(null, true)} />
           </div>
         )}
       />

@@ -13,6 +13,15 @@ const FETCH_LIST = fetchListType(name);
 const FETCH_SESSION_LIST = fetchListType(`${name}/FETCH_SESSION_LIST`);
 const FETCH = fetchType(name);
 const SAVE = saveType(name);
+
+const ADD_SERIES = `${name}/ADD_SERIES`;
+const REMOVE_SERIES = `${name}/REMOVE_SERIES`;
+
+const ADD_SERIES_FILTER_FILTER = `${name}/ADD_SERIES_FILTER_FILTER`;
+const REMOVE_SERIES_FILTER_FILTER = `${name}/REMOVE_SERIES_FILTER_FILTER`;
+
+const EDIT_SERIES_FILTER = `${name}/EDIT_SERIES_FILTER`;
+const EDIT_SERIES_FILTER_FILTER = `${name}/EDIT_SERIES_FILTER_FILTER`;
 const UPDATE_ACTIVE_STATE = saveType(`${name}/UPDATE_ACTIVE_STATE`);
 const EDIT = editType(name);
 const INIT = `${name}/INIT`;
@@ -51,21 +60,35 @@ const initialState = Map({
 // Metric - Series - [] - filters
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
-    case EDIT:
-      const instance = state.get('instance')
-      if (instance) {
-        return state.mergeIn([ 'instance' ], action.instance);
-      } else {
-        return state.set('instance', action.instance);
-      }
+    // Custom Metric
     case INIT:
       return state.set('instance', action.instance);
+    case EDIT:
+      return state.mergeIn([ 'instance' ], action.instance);
+    case ADD_SERIES:
+      const series = new FilterSeries(action.series);
+      return state.updateIn([ 'instance', 'series' ], list => list.push(series));
+    case REMOVE_SERIES:
+      return state.updateIn([ 'instance', 'series' ], list => list.delete(action.index));
     case UPDATE_SERIES:
-      console.log('update series', action.series);
       return state.mergeIn(['instance', 'series', action.index], action.series);
+
+    // Custom Metric - Series - Filters
+    case EDIT_SERIES_FILTER:
+      return state.mergeIn(['instance', 'series', action.seriesIndex, 'filter'], action.filter);
+
+    // Custom Metric - Series - Filter - Filters
+    case EDIT_SERIES_FILTER_FILTER:
+      return state.updateIn([ 'instance', 'series', action.seriesIndex, 'filter', 'filters' ], filters => filters.set(action.filterIndex, action.filter));
+    case ADD_SERIES_FILTER_FILTER:
+      return state.updateIn([ 'instance', 'series', action.seriesIndex, 'filter', 'filters' ], filters => filters.push(action.filter));
+    case REMOVE_SERIES_FILTER_FILTER:
+      return state.updateIn([ 'instance', 'series', action.seriesIndex, 'filter', 'filters' ], filters => filters.delete(action.index));
+
+    
+    
     case success(SAVE):
-      return updateItemInList(updateInstance(state, action.data), action.data);
-      // return state.mergeIn([ 'instance' ], action.data);
+      return updateItemInList(updateInstance(state, action.data), action.data);      
     case success(REMOVE):
       return state.update('list', list => list.filter(item => item.metricId !== action.id));
 		case success(FETCH):
@@ -73,8 +96,6 @@ function reducer(state = initialState, action = {}) {
 		case success(FETCH_LIST):
 			const { data } = action;
 			return state.set("list", List(data.map(CustomMetric)));
-    // case success(UPDATE_ACTIVE_STATE):
-    //   return updateItemInList(updateInstance(state, action.data), action.data);
     case success(FETCH_SESSION_LIST):
       return state.set("sessionList", List(action.data.map(item => ({ ...item, sessions: item.sessions.map(Session) }))));
     case SET_ACTIVE_WIDGET:
@@ -131,26 +152,35 @@ export function setAlertMetricId(id) {
   };
 }
 
-export const addSeries = (series) => (dispatch, getState) => {
-  const instance = getState().getIn([ 'customMetrics', 'instance' ])
-  const _series = series || new FilterSeries({
-    name: 'New',
+export const addSeries = (series = null) => (dispatch, getState) => {
+  const instance = getState().getIn([ 'customMetrics', 'instance' ]);
+  const seriesIndex = instance.series.size;
+  const newSeries = series || {
+    name: `Series ${seriesIndex + 1}`,
     filter: new Filter({ filters: [], eventsOrder: 'and' }),
-  });
-  return dispatch({
-    type: EDIT,
-    instance: {
-      series: instance.series.push(_series)
-    },
+  };
+
+  dispatch({
+    type: ADD_SERIES,
+    series: newSeries,
   });
 }
 
-export const init = (instnace = null, setDefault = true) => (dispatch, getState) => {
+export const removeSeries = (index) => (dispatch, getState) => {
   dispatch({
-    type: INIT,
-    instance: instnace ? instnace : (setDefault ? defaultInstance : null),
+    type: REMOVE_SERIES,
+    index,
   });
 }
+
+export const init = (instance = null, forceNull = false) => (dispatch, getState) => {
+  dispatch({
+    type: INIT,
+    instance: forceNull ? null : (instance || defaultInstance),
+  });
+}
+
+
 
 export const fetchSessionList = (params) => (dispatch, getState) => {
   dispatch({
@@ -160,7 +190,7 @@ export const fetchSessionList = (params) => (dispatch, getState) => {
 }
 
 export const setActiveWidget = (widget) => (dispatch, getState) => {
-  dispatch({
+  return dispatch({
     type: SET_ACTIVE_WIDGET,
     widget,
   });
@@ -173,5 +203,38 @@ export const updateActiveState = (metricId, state) => (dispatch, getState) => {
     metricId
   }).then(() => {
     dispatch(fetchList());
+  });
+}
+
+export const editSeriesFilter = (seriesIndex, filter) => (dispatch, getState) => {
+  return dispatch({
+    type: EDIT_SERIES_FILTER,
+    seriesIndex,
+    filter,
+  });
+}
+
+export const addSeriesFilterFilter = (seriesIndex, filter) => (dispatch, getState) => {
+  return dispatch({
+    type: ADD_SERIES_FILTER_FILTER,
+    seriesIndex,
+    filter,
+  });
+}
+
+export const removeSeriesFilterFilter = (seriesIndex, filterIndex) => (dispatch, getState) => {
+  return dispatch({
+    type: REMOVE_SERIES_FILTER_FILTER,
+    seriesIndex,
+    index: filterIndex,
+  });
+}
+
+export const editSeriesFilterFilter = (seriesIndex, filterIndex, filter) => (dispatch, getState) => {
+  return dispatch({
+    type: EDIT_SERIES_FILTER_FILTER,
+    seriesIndex,
+    filterIndex,
+    filter,
   });
 }
