@@ -128,8 +128,10 @@ async function get_all_agents_ids(io, socket) {
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
-        console.log("socket.handshake");
-        console.log(socket.handshake);
+        console.log("socket.conn.remoteAddress");
+        console.log(socket.conn.remoteAddress);
+        console.log("socket.handshake.address");
+        console.log(socket.handshake.address);
         console.log("received headers");
         console.log(socket.handshake.headers);
         console.log("received sessionInfo");
