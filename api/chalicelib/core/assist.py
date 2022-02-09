@@ -75,6 +75,7 @@ def get_live_sessions_ws(project_id):
     for s in live_peers:
         s["live"] = True
         s["projectId"] = project_id
+    live_peers = sorted(live_peers, key=lambda l: l.get("timestamp", 0), reverse=True)
     return live_peers
 
 
