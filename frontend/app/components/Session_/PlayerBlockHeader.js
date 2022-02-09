@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { sessions as sessionsRoute, funnel as funnelRoute, funnelIssue as funnelIssueRoute, withSiteId } from 'App/routes';
+import { sessions as sessionsRoute, withSiteId } from 'App/routes';
 import { Icon, CountryFlag, IconButton, BackLink } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
@@ -41,7 +41,6 @@ function capitalise(str) {
     local: state.getIn(['sessions', 'timezone']),
     funnelRef: state.getIn(['funnels', 'navRef']),
     siteId: state.getIn([ 'user', 'siteId' ]),
-    funnelPage: state.getIn(['sessions', 'funnelPage']),
     hasSessionsPath: hasSessioPath && !isAssist,
   }
 }, {
@@ -61,22 +60,12 @@ export default class PlayerBlockHeader extends React.PureComponent {
   );
 
   backHandler = () => {
-    const { history, siteId, funnelPage, sessionPath } = this.props;
-    // alert(sessionPath)
-    if (sessionPath === history.location.pathname) {
+    const { history, siteId, sessionPath } = this.props;
+    if (sessionPath === history.location.pathname || sessionPath.includes("/session/")) {
       history.push(withSiteId(SESSIONS_ROUTE), siteId);
     } else {
       history.push(sessionPath ? sessionPath : withSiteId(SESSIONS_ROUTE, siteId));
     }
-    // const funnelId = funnelPage && funnelPage.get('funnelId');
-    // const issueId = funnelPage && funnelPage.get('issueId');
-    // if (funnelId || issueId) {
-    //   if (issueId) {
-    //     history.push(withSiteId(funnelIssueRoute(funnelId, issueId), siteId))
-    //   } else
-    //     history.push(withSiteId(funnelRoute(funnelId), siteId));
-    // } else 
-    //   history.push(withSiteId(SESSIONS_ROUTE), siteId);
   }
 
   toggleFavorite = () => {
@@ -106,9 +95,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
       disabled,
       jiraConfig,
       fullscreen,
-      hasSessionsPath
+      hasSessionsPath,
+      sessionPath,
     } = this.props;
-    // const { history, siteId } = this.props;
     const _live = live && !hasSessionsPath;
 
     return (
