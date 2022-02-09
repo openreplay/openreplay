@@ -134,6 +134,8 @@ function extractSessionInfo(socket) {
         console.log(socket.handshake.query.sessionInfo);
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
         let ua = uaParser(socket.handshake.headers['user-agent']);
+        console.log("parsed user agent");
+        console.log(ua);
         socket.handshake.query.sessionInfo.userOs = ua.os.name;
         socket.handshake.query.sessionInfo.userBrowser = ua.browser.name;
         socket.handshake.query.sessionInfo.userDevice = ua.device.model;
