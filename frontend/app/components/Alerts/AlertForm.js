@@ -47,7 +47,7 @@ const Section = ({ index, title, description, content }) => (
 const integrationsRoute = client(CLIENT_TABS.INTEGRATIONS);
 
 const AlertForm = props => {
-  const { instance, slackChannels, webhooks, loading, onDelete, deleting, triggerOptions, metricId } = props;  
+  const { instance, slackChannels, webhooks, loading, onDelete, deleting, triggerOptions, metricId, style={ width: '580px', height: '100vh' } } = props;
   const write = ({ target: { value, name } }) => props.edit({ [ name ]: value })
   const writeOption = (e, { name, value }) => props.edit({ [ name ]: value });
   const onChangeOption = (e, { checked, name }) => props.edit({ [ name ]: checked })
@@ -71,7 +71,7 @@ const AlertForm = props => {
   const isThreshold = instance.detectionMethod === 'threshold';
 
   return (
-    <Form className={ cn("p-6", stl.wrapper)} style={{ width: '580px' }} onSubmit={() => props.onSubmit(instance)} id="alert-form">
+    <Form className={ cn("p-6", stl.wrapper)} style={style} onSubmit={() => props.onSubmit(instance)} id="alert-form">
        <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>
         <input
           autoFocus={ true }

@@ -11,10 +11,16 @@ import { confirm } from 'UI/Confirmation';
 interface Props {
   showModal?: boolean;
   metricId?: number;
-  onClose: () => void;
+  onClose?: () => void;
+  webhooks: any;
+  fetchWebhooks: Function;
+  save: Function;
+  remove: Function;
+  init: Function;
+  edit: Function;
 }
-function AlertFormModal(props) {
-  const { metricId = null, showModal = false, webhooks, setShowAlerts } = props;
+function AlertFormModal(props: Props) {
+  const { metricId = null, showModal = false, webhooks } = props;
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
@@ -29,6 +35,9 @@ function AlertFormModal(props) {
     props.save(instance).then(() => {
       if (!wasUpdating) {
         toggleForm(null, false);
+      }
+      if (props.onClose) {
+        props.onClose();
       }
     })
   }
@@ -79,6 +88,7 @@ function AlertFormModal(props) {
             onSubmit={saveAlert}
             onClose={props.onClose}
             onDelete={onDelete}
+            style={{ width: '580px', height: '100vh - 200px' }}
           />
       }
       />
