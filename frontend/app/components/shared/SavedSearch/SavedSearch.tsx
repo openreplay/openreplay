@@ -29,7 +29,7 @@ function SavedSearch(props) {
     >
       <div className="relative">
         <div className={cn("flex items-center", { [stl.disabled] : list.size === 0})}>
-          <Button prime outline size="small"
+          <Button outline size="small"
             className="flex items-center"
             onClick={() => setShowMenu(true)}
           >

@@ -60,7 +60,7 @@ const menuList = [
     active: status === OVERVIEW,
   },
   {
-    key: OVERVIEW,
+    key: CUSTOM_METRICS,
     section: 'metrics',
     icon: "sliders",
     label: getStatusLabel(CUSTOM_METRICS),

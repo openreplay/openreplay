@@ -53,7 +53,7 @@ export default class SessionItem extends React.PureComponent {
         live        
       },
       timezone,
-      onUserClick,
+      onUserClick = () => null,
       hasUserFilter = false,
       disableUser = false
     } = this.props;

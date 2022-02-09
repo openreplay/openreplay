@@ -17,13 +17,6 @@ function FilterValue(props: Props) {
   const onAddValue = () => {
     const newValue = filter.value.concat('');
     props.onUpdate({ ...filter, value: newValue });
-
-    // const newValues = filter.value.concat("")
-    // try {
-    //   props.onUpdate({ ...filter.toData(), value: newValues })
-    // } catch (e) {
-    //   props.onUpdate({ ...filter, value: newValues })
-    // }
   }
 
   const onRemoveValue = (valueIndex) => {
