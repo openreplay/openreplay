@@ -93,6 +93,9 @@ func main() {
 			}
 		case err := <-listener.Errors:
 			log.Printf("Postgres listen error: %v\n", err)
+			listener.Close()
+			pg.Close()
+			os.Exit(0)
 		case iPointer := <-listener.Integrations:
 			log.Printf("Integration update: %v\n", *iPointer)
 			err := manager.Update(iPointer)
