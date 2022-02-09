@@ -839,6 +839,7 @@ $$
             CREATE INDEX resources_session_id_timestamp_url_host_firstparty_idx ON events.resources (session_id, timestamp, url_host) WHERE type IN ('fetch', 'script');
             CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id, timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
             CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id);
+            CREATE INDEX resources_timestamp_duration_durationgt0NN_idx ON events.resources (timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL;
 
             CREATE TABLE events.performance
             (
