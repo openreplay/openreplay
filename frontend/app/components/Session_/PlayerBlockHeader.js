@@ -134,6 +134,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 <IconButton
                   className="mr-2"
                   tooltip="Bookmark"
+                  tooltipPosition="top right"
                   onClick={ this.toggleFavorite }
                   loading={ loading }
                   icon={ favorite ? 'star-solid' : 'star' }                  
@@ -146,8 +147,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
                     <IconButton
                       className="mr-2"
                       tooltip="Share Session"
+                      tooltipPosition="top right"
                       disabled={ disabled }
-                      icon={ 'share-alt' }                      
+                      icon={ 'share-alt' }
                       plain
                     />
                   }

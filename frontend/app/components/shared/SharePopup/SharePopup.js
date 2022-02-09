@@ -103,7 +103,7 @@ export default class SharePopup extends React.PureComponent {
           </div>
         }
         on="click"
-        position="top center"
+        position="top right"
         className={ styles.popup }
         hideOnScroll
       />
