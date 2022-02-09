@@ -128,6 +128,10 @@ async function get_all_agents_ids(io, socket) {
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
+        console.log("received headers");
+        console.log(socket.handshake.headers);
+        console.log("received sessionInfo");
+        console.log(socket.handshake.query.sessionInfo);
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
         let ua = uaParser(socket.handshake.headers['user-agent']);
         socket.handshake.query.sessionInfo.userOs = ua.os.name;
@@ -150,7 +154,8 @@ function extractSessionInfo(socket) {
             .catch(error => {
                 console.error(error);
             });
-
+        console.log("edited sessionInfo");
+        console.log(socket.handshake.query.sessionInfo);
     }
 }
 
