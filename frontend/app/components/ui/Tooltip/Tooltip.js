@@ -22,7 +22,7 @@ export default class Tooltip extends React.PureComponent {
 	}
 
 	render() {
-		const { trigger, tooltip } = this.props;
+		const { trigger, tooltip, position } = this.props;
 		const { open } = this.state;
 		return (
 			<Popup
@@ -30,6 +30,7 @@ export default class Tooltip extends React.PureComponent {
 				content={ tooltip }
 				inverted
 				disabled={ !tooltip }
+				position={position}
 				trigger={
 					<span //TODO: no wrap component around
 						onMouseEnter={ this.onMouseEnter }

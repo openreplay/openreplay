@@ -24,11 +24,13 @@ const IconButton = React.forwardRef(({
   name,
   disabled = false,
   tooltip = false,
+  tooltipPosition = 'top',
   compact = false,
   ...rest
 }, ref) => (
   <Tooltip
     tooltip={tooltip}
+    position={tooltipPosition}
     trigger={ 
       <button
         ref={ ref }
