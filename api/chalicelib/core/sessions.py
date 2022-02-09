@@ -215,11 +215,11 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             #                             ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
             #                          full_args)
 
-        print("--------------------")
-        print(main_query)
+        # print("--------------------")
+        # print(main_query)
 
         cur.execute(main_query)
-        print("--------------------")
+        # print("--------------------")
         if count_only:
             return helper.dict_to_camel_case(cur.fetchone())
         sessions = cur.fetchone()
@@ -272,10 +272,10 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
                                         {query_part};""", full_args)
 
-        print("--------------------")
-        print(main_query)
+        # print("--------------------")
+        # print(main_query)
         cur.execute(main_query)
-        print("--------------------")
+        # print("--------------------")
         if view_type == schemas.MetricViewType.line_chart:
             sessions = cur.fetchall()
         else:
