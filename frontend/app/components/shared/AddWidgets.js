@@ -67,6 +67,7 @@ export default class AddWidgets extends React.PureComponent {
 						>
 							{filteredWidgets.map(w => (
 								<div
+									key={w.key}
 									className={cn(stl.menuItem, 'whitespace-pre cursor-pointer')}
 									onClick={this.makeAddHandler(w.key)}
 								>

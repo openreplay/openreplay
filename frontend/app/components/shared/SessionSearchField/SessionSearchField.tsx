@@ -29,7 +29,7 @@ function SessionSearchField(props: Props) {
   return (
     <div className="relative">
       <Input
-        inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
+        // inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
         className={stl.searchField}
         onFocus={ () => setShowModal(true) }
         onBlur={ () => setTimeout(setShowModal, 200, false) }
@@ -40,7 +40,7 @@ function SessionSearchField(props: Props) {
         fluid
         id="search"
         type="search"
-        autocomplete="off"
+        autoComplete="off"
       />
 
       { showModal && (

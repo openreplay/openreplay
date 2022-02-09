@@ -135,8 +135,9 @@ function FilterAutoComplete(props: Props) {
           { headerText && headerText }
           <Loader loading={loading} size="small">
             {
-              options.map(item => (
+              options.map((item, i) => (
                 <div
+                  key={item.value + '_'  + i}
                   className={ cn(stl.filterItem) }
                   id="filter-item" onClick={ (e) => onItemClick(e, item) }
                 >

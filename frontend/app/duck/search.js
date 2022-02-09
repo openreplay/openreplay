@@ -135,7 +135,6 @@ export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
 }));
 
 export const applySavedSearch = (filter) => (dispatch, getState) => {
-  console.log('applySavedSearch', filter);
   dispatch(edit({ filters: filter ? filter.filter.filters : [] }));
   return dispatch({
     type: APPLY_SAVED_SEARCH,
