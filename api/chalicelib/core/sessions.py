@@ -249,8 +249,8 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 @dev.timed
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricViewType):
-    step_size = metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
-                                               density=density, factor=1)
+    step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
+                                               density=density, factor=1, decimal=True))
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
                                                      user_id=None)
@@ -272,10 +272,10 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
                                         {query_part};""", full_args)
 
-        # print("--------------------")
-        # print(main_query)
+        print("--------------------")
+        print(main_query)
         cur.execute(main_query)
-        # print("--------------------")
+        print("--------------------")
         if view_type == schemas.MetricViewType.line_chart:
             sessions = cur.fetchall()
         else:
