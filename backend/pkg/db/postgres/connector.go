@@ -21,7 +21,8 @@ type Conn struct {
 func NewConn(url string) *Conn {
 	c, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		log.Fatalln("pgxpool.Connect Error")
 	}
 	return &Conn{c}
 }

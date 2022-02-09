@@ -47,7 +47,8 @@ func main() {
 
 	listener, err := postgres.NewIntegrationsListener(POSTGRES_STRING)
 	if err != nil {
-		log.Fatalf("Postgres listener error: %v\n", err)
+		log.Printf("Postgres listener error: %v\n", err)
+		log.Fatalf("Postgres listener error")
 	}
 	defer listener.Close()
 
