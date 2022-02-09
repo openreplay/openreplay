@@ -83,6 +83,9 @@ func main() {
 			producer.Produce(TOPIC_RAW_WEB, sessionID, messages.Encode(event.RawErrorEvent))
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
+			listener.Close()
+			pg.Close()
+			os.Exit(0)
 		case i := <-manager.RequestDataUpdates:
 			// log.Printf("Last request integration update: %v || %v\n", i, string(i.RequestData))
 			if err := pg.UpdateIntegrationRequestData(&i); err != nil {
