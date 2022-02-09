@@ -265,7 +265,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                  LEFT JOIN LATERAL ( SELECT 1 AS s
                                                                      FROM full_sessions
                                                                      WHERE start_ts >= generated_timestamp
-                                                                       AND start_ts < generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                                                       AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
                                         GROUP BY generated_timestamp
                                         ORDER BY generated_timestamp;""", full_args)
         else:
