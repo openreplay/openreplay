@@ -137,7 +137,7 @@ export default Record({
       isMobile,
       startedAt,
       duration,
-      userNumericHash: hashString(session.userId || session.userAnonymousId || session.userUuid || ""),
+      userNumericHash: hashString(session.userId || session.userAnonymousId || session.userUuid || session.userID || session.userUUID || ""),
       userDisplayName: session.userId || session.userAnonymousId || 'Anonymous User',
       firstResourceTime,
       issues: issuesList,
