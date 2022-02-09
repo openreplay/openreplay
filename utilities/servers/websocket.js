@@ -147,8 +147,8 @@ function extractSessionInfo(socket) {
         geoip2Reader.open(process.env.MAXMINDDB_FILE, options)
             .then(reader => {
                 console.log("looking for location of ");
-                console.log(socket.handshake.headers['x-real-ip'] || socket.handshake.address);
-                let country = reader.country(socket.handshake.headers['x-real-ip'] || socket.handshake.address);
+                console.log(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+                let country = reader.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
                 socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
             })
             .catch(error => {
