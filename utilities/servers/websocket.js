@@ -140,11 +140,12 @@ function extractSessionInfo(socket) {
         let ua = uaParser(socket.handshake.headers['user-agent']);
         console.log("parsed user agent");
         console.log(ua);
-        socket.handshake.query.sessionInfo.userOs = ua.os.name;
-        socket.handshake.query.sessionInfo.userBrowser = ua.browser.name;
-        socket.handshake.query.sessionInfo.userDevice = ua.device.model;
-        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type;
-        socket.handshake.query.sessionInfo.userCountry = undefined;
+        socket.handshake.query.sessionInfo.userOs = ua.os.name || null;
+        socket.handshake.query.sessionInfo.userBrowser = ua.browser.name || null;
+        socket.handshake.query.sessionInfo.userBrowserVersion = ua.browser.version || null;
+        socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
+        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || null;
+        socket.handshake.query.sessionInfo.userCountry = null;
 
         const options = {
             // you can use options like `cache` or `watchForUpdates`
