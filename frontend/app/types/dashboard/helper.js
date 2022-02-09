@@ -43,7 +43,7 @@ export const getChartFormatter = period => (data = []) =>
 
 export const getStartAndEndTimestampsByDensity = (current, start, end, density) => {
   const diff = end - start;
-  const step = diff / density;
+  const step = Math.floor(diff / density);
   const currentIndex = Math.floor((current - start) / step);
   const startTimestamp = parseInt(start + currentIndex * step);
   const endTimestamp = parseInt(startTimestamp + step);

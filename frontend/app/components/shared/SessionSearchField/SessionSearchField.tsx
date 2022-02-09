@@ -1,26 +1,18 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import stl from './SessionSearchField.css';
 import { Input } from 'UI';
 import FilterModal from 'Shared/Filters/FilterModal';
-// import { fetchList as fetchFilterSearch } from 'Duck/events';
 import { fetchFilterSearch } from 'Duck/search';
 import { debounce } from 'App/utils';
-import { edit as editFilter } from 'Duck/search';
-import {
-  addEvent, applyFilter, moveEvent, clearEvents,
-  addCustomFilter, addAttribute, setActiveFlow, setFilterOption
-} from 'Duck/filters';
+import { edit as editFilter, addFilterByKeyAndValue } from 'Duck/search';
 
 interface Props {
-  // setSearchQuery: (query: string) => void;
   fetchFilterSearch: (query: any) => void;
-  // searchQuery: string;
-  appliedFilter: any;
   editFilter: typeof editFilter;
+  addFilterByKeyAndValue: (key: string, value: string) => void;
 }
 function SessionSearchField(props: Props) {
-  const { appliedFilter } = props;
   const debounceFetchFilterSearch = debounce(props.fetchFilterSearch, 1000)
   const [showModal, setShowModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -31,12 +23,7 @@ function SessionSearchField(props: Props) {
   }
 
   const onAddFilter = (filter) => {
-    filter.value = filter.value ? filter.value : [""]
-    const newFilters = appliedFilter.filters.concat(filter);
-    props.editFilter({
-        ...appliedFilter.filter,
-        filters: newFilters,
-    });
+    props.addFilterByKeyAndValue(filter.key, filter.value)
   }
 
   return (
@@ -46,10 +33,7 @@ function SessionSearchField(props: Props) {
         className={stl.searchField}
         onFocus={ () => setShowModal(true) }
         onBlur={ () => setTimeout(setShowModal, 200, false) }
-        // ref={ this.inputRef }
         onChange={ onSearchChange }
-        // onKeyUp={this.onKeyUp}
-        // value={props.searchQuery}
         icon="search"
         iconPosition="left"
         placeholder={ 'Search sessions using any captured event (click, input, page, error...)'}
@@ -72,14 +56,4 @@ function SessionSearchField(props: Props) {
   );
 }
 
-export default connect(state => ({
-  events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
-  // searchQuery: state.getIn([ 'filters', 'searchQuery' ]),
-  appliedFilterKeys: state.getIn([ 'filters', 'appliedFilter', 'filters' ])
-    .map(({type}) => type).toJS(),
-  searchedEvents: state.getIn([ 'events', 'list' ]),
-  loading: state.getIn([ 'events', 'loading' ]),
-  strict: state.getIn([ 'filters', 'appliedFilter', 'strict' ]),
-  blink: state.getIn([ 'funnels', 'blink' ]),
-  appliedFilter: state.getIn(['search', 'instance']),
-}), { fetchFilterSearch, editFilter })(SessionSearchField);
+export default connect(null, { fetchFilterSearch, editFilter, addFilterByKeyAndValue })(SessionSearchField);
