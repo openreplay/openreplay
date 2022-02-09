@@ -8,6 +8,7 @@ import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from '../types/filter/filterType';
+import { filtersMap } from 'Types/filter/newFilter';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -204,11 +205,21 @@ export const clearSearch = () => (dispatch, getState) => {
   });
 }
 
+const checkFilterValue = (value) => {
+  return Array.isArray(value) ? (value.length === 0 ? [""] : value) : [value];
+}
+
 export const addFilter = (filter) => (dispatch, getState) => {
-  filter.value = Array.isArray(filter.value) ? (filter.value.length === 0 ? [""] : filter.value) : [filter.value];
+  filter.value = checkFilterValue(filter.value);
   const instance = getState().getIn([ 'search', 'instance']);
   const filters = instance.filters.push(filter);
   return dispatch(edit(instance.set('filters', filters)));
+}
+
+export const addFilterByKeyAndValue = (key, value) => (dispatch, getState) => {
+  let defaultFilter = filtersMap[key];
+  defaultFilter.value = value;
+  dispatch(addFilter(defaultFilter));
 }
 
 export const editSavedSearch = instance => {
@@ -217,3 +228,4 @@ export const editSavedSearch = instance => {
     instance,
   }
 };
+
