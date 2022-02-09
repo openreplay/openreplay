@@ -22,7 +22,7 @@ function Row ({ name, isPublic, onClick, onClickEdit, onDelete }) {
     >
       <div className="px-3 py-2">{name}</div>
       <div className="ml-auto flex items-center">
-        { isPublic && <div className="cursor-pointer px-2 hover:bg-active-blue"><Icon name="user-friends" size="14" /></div> }.
+        { isPublic && <div className="cursor-pointer px-2 hover:bg-active-blue"><Icon name="user-friends" size="14" /></div> }
         {/* <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onClickEdit}><Icon name="pencil" size="14" /></div> */}
         {/* <div className="cursor-pointer px-2 hover:bg-active-blue" onClick={onDelete}><Icon name="trash" size="14" /></div> */}
       </div>

@@ -23,6 +23,7 @@ function CustomMetricsWidgets(props: Props) {
     <>
       {list.filter(item => item.active).map((item: any) => (
         <CustomMetricWidget
+          key={item.metricId}
           metric={item}
           onClickEdit={props.onClickEdit}
           onAlertClick={(e) => {
