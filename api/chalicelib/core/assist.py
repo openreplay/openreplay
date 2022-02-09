@@ -82,7 +82,7 @@ def get_live_sessions_ws(project_id):
 def get_live_session_by_id(project_id, session_id):
     all_live = get_live_sessions_ws(project_id)
     for l in all_live:
-        if l.get("sessionID") == session_id:
+        if str(l.get("sessionID")) == str(session_id):
             return l
     return None
 
