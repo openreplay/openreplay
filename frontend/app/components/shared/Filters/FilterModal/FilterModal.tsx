@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './FilterModal.css';
 import { filtersMap, getMetaDataFilter } from 'Types/filter/newFilter';
-import { FilterKey, FilterType } from 'Types/filter/filterType';
+// import { FilterKey, FilterType } from 'Types/filter/filterType';
 
 interface Props {
   filters: any,
@@ -25,7 +25,7 @@ function FilterModal(props: Props) {
     fetchingFilterSearchList,
     searchQuery = '',
   } = props;
-  const hasFilerSearchList = filterSearchList && Object.keys(filterSearchList).length > 0;
+  // const hasFilerSearchList = filterSearchList && Object.keys(filterSearchList).length > 0;
   const hasSearchQuery = searchQuery && searchQuery.length > 0;
   const showSearchList = isMainSearch && searchQuery.length > 0;
   

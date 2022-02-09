@@ -10,7 +10,6 @@ import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { defaultFilters, preloadedFilters } from 'Types/filter';
 import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
-import FunnelList from 'Components/Funnels/FunnelList';
 import stl from './bugFinder.css';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import withLocationHandlers from "HOCs/withLocationHandlers";
@@ -84,21 +83,22 @@ export default class BugFinder extends React.PureComponent {
   state = {showRehydratePanel: false}
   constructor(props) {
     super(props);
-    // props.fetchFavoriteSessionList();    
+    // props.fetchFavoriteSessionList();
+
     // TODO should cache the response
-    props.fetchSources().then(() => {
-      defaultFilters[6] = {
-        category: 'Collaboration',
-        type: 'CUSTOM',
-        keys: this.props.sources.filter(({type}) => type === 'collaborationTool').map(({ label, key }) => ({ type: 'CUSTOM', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
-      };
-      defaultFilters[7] = {
-        category: 'Logging Tools',
-        type: 'ERROR',
-        keys: this.props.sources.filter(({type}) => type === 'logTool').map(({ label, key }) => ({ type: 'ERROR', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
-      };
-    });
-    // TODO should cache the response
+    // props.fetchSources().then(() => {
+    //   defaultFilters[6] = {
+    //     category: 'Collaboration',
+    //     type: 'CUSTOM',
+    //     keys: this.props.sources.filter(({type}) => type === 'collaborationTool').map(({ label, key }) => ({ type: 'CUSTOM', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
+    //   };
+    //   defaultFilters[7] = {
+    //     category: 'Logging Tools',
+    //     type: 'ERROR',
+    //     keys: this.props.sources.filter(({type}) => type === 'logTool').map(({ label, key }) => ({ type: 'ERROR', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
+    //   };
+    // });
+    // // TODO should cache the response
     props.fetchIntegrationVariables().then(() => {
       defaultFilters[5] = {
         category: 'Metadata',
@@ -125,28 +125,28 @@ export default class BugFinder extends React.PureComponent {
     this.setState({ showRehydratePanel: !this.state.showRehydratePanel })
   }
 
-  fetchPreloadedFilters = () => {
-    this.props.fetchFilterVariables('filterValues').then(function() {
-      const { filterValues } = this.props;
-      const keys = [
-        {key: KEYS.USER_OS, label: 'OS'},
-        {key: KEYS.USER_BROWSER, label: 'Browser'},
-        {key: KEYS.USER_DEVICE, label: 'Device'},
-        {key: KEYS.REFERRER, label: 'Referrer'},
-        {key: KEYS.USER_COUNTRY, label: 'Country'},        
-      ]
-      if (filterValues && filterValues.size != 0) {
-        keys.forEach(({key, label}) => {
-          const _keyFilters = filterValues.get(key)
-          if (key === KEYS.USER_COUNTRY) {
-            preloadedFilters.push(_keyFilters.map(item => ({label, type: key, key, value: item, actualValue: countries[item], isFilter: true})));
-          } else {
-            preloadedFilters.push(_keyFilters.map(item => ({label, type: key, key, value: item, isFilter: true})));
-          }
-        })
-      }
-    }.bind(this));
-  }
+  // fetchPreloadedFilters = () => {
+  //   this.props.fetchFilterVariables('filterValues').then(function() {
+  //     const { filterValues } = this.props;
+  //     const keys = [
+  //       {key: KEYS.USER_OS, label: 'OS'},
+  //       {key: KEYS.USER_BROWSER, label: 'Browser'},
+  //       {key: KEYS.USER_DEVICE, label: 'Device'},
+  //       {key: KEYS.REFERRER, label: 'Referrer'},
+  //       {key: KEYS.USER_COUNTRY, label: 'Country'},        
+  //     ]
+  //     if (filterValues && filterValues.size != 0) {
+  //       keys.forEach(({key, label}) => {
+  //         const _keyFilters = filterValues.get(key)
+  //         if (key === KEYS.USER_COUNTRY) {
+  //           preloadedFilters.push(_keyFilters.map(item => ({label, type: key, key, value: item, actualValue: countries[item], isFilter: true})));
+  //         } else {
+  //           preloadedFilters.push(_keyFilters.map(item => ({label, type: key, key, value: item, isFilter: true})));
+  //         }
+  //       })
+  //     }
+  //   }.bind(this));
+  // }
 
   setActiveTab = tab => {
     this.props.setActiveTab(tab);
@@ -175,7 +175,6 @@ export default class BugFinder extends React.PureComponent {
               <MainSearchBar />
               <SessionSearch />
             </div>
-            { activeFlow && activeFlow.type === 'flows' && <FunnelList /> }
             { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }
             { activeTab.type === 'live' && <LiveSessionList /> }
           </div>

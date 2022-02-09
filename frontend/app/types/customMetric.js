@@ -29,7 +29,7 @@ export default Record({
   name: 'Series',
   viewType: 'lineChart',
   series: List(),
-  isPublic: false,
+  isPublic: true,
   startDate: '',
   endDate: '',
   active: true,

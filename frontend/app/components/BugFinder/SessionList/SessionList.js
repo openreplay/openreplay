@@ -1,12 +1,10 @@
 import { connect } from 'react-redux';
-import { Loader, NoContent, Message, Icon, Button, LoadMoreButton } from 'UI';
+import { Loader, NoContent, Button, LoadMoreButton } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import { fetchSessions } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
-// import { KEYS } from 'Types/filter/customFilter';
-import { addFilter } from 'Duck/search';
-import { filtersMap } from 'Types/filter/newFilter';
+import { addFilterByKeyAndValue } from 'Duck/search';
 import { FilterKey } from 'Types/filter/filterType';
 
 const ALL = 'all';
@@ -27,7 +25,7 @@ var timeoutId;
   addAttribute,
   addEvent,
   fetchSessions,
-  addFilter,
+  addFilterByKeyAndValue,
 })
 export default class SessionList extends React.PureComponent {
   state = {
@@ -47,20 +45,11 @@ export default class SessionList extends React.PureComponent {
   addPage = () => this.setState({ showPages: this.state.showPages + 1 })
 
   onUserClick = (userId, userAnonymousId) => {
-    let userFilter = filtersMap[FilterKey.USERID];
     if (userId) {
-      userFilter = filtersMap[FilterKey.USERID];
-      userFilter.value = [userId];
-      // userFilter = { label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId }
-      // this.props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId })
+      this.props.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
-      userFilter = filtersMap[FilterKey.USERANONYMOUSID];
-      userFilter.value = [userAnonymousId];
-      // this.props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
+      this.props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
     }
-
-    this.props.addFilter(userFilter);
-    // this.props.applyFilter()
   }
 
   timeout = () => {
