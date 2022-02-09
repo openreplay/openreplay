@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SlideModal, NoContent, Dropdown, Icon, TimezoneDropdown } from 'UI';
+import { SlideModal, NoContent, Dropdown, Icon, TimezoneDropdown, Loader } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 import stl from './SessionListModal.css';
 import { connect } from 'react-redux';
@@ -40,11 +40,26 @@ function SessionListModal(props: Props) {
         ]);
     }, [list]);
 
-    const writeOption = (e, { name, value }) => setActiveSeries(value);
+    const getListSessionsBySeries = (seriesId) => {
+        const arr: any = []
+        list.forEach(element => {
+            if (seriesId === 'all') {
+                const sessionIds = arr.map(i => i.sessionId);
+                arr.push(...element.sessions.filter(i => !sessionIds.includes(i.sessionId)));
+            } else {
+                if (element.seriesId === seriesId) {
+                    arr.push(...element.sessions)
+                }
+            }
+        });
+        return arr;
+    }
 
-    const filteredSessions = activeSeries === 'all' ? list.reduce((a, b) => a.concat(b.sessions), []) : list.filter(item => item.seriesId === activeSeries).reduce((a, b) => a.concat(b.sessions), []);
-    const startTime = new DateTime(activeWidget.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
-    const endTime = new DateTime(activeWidget.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+    const writeOption = (e, { name, value }) => setActiveSeries(value);
+    const filteredSessions = getListSessionsBySeries(activeSeries);
+    
+    const startTime = DateTime.fromMillis(activeWidget.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+    const endTime = DateTime.fromMillis(activeWidget.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
     return (
         <SlideModal
             title={ activeWidget && (
@@ -80,13 +95,15 @@ function SessionListModal(props: Props) {
                             {/* <span className="mr-2 color-gray-medium">Series</span> */}
                         </div>
                     </div>
-                    <NoContent 
-                        show={ !loading && (filteredSessions.length === 0 || filteredSessions.size === 0 )}
-                        title="No recordings found!"
-                        icon="exclamation-circle"
-                    >
-                        { filteredSessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
-                    </NoContent> 
+                    <Loader loading={loading}>
+                        <NoContent 
+                            show={ !loading && (filteredSessions.length === 0 )}
+                            title="No recordings found!"
+                            icon="exclamation-circle"
+                        >
+                            { filteredSessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
+                        </NoContent> 
+                    </Loader>
                 </div>
             )}
         />
@@ -94,7 +111,7 @@ function SessionListModal(props: Props) {
 }
 
 export default connect(state => ({
-    loading: state.getIn(['customMetrics', 'sessionListRequest', 'loading']),
+    loading: state.getIn(['customMetrics', 'fetchSessionList', 'loading']),
     list: state.getIn(['customMetrics', 'sessionList']),
     // activeWidget: state.getIn(['customMetrics', 'activeWidget']),
 }), { fetchSessionList, setActiveWidget })(SessionListModal);

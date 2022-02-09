@@ -20,9 +20,9 @@ class SegmentSelection extends React.Component {
       >
         { list.map(item => (
           <Popup
+            key={ item.name }
             trigger={
               <div
-                key={ item.name }
                 className={ cn(styles.item, { 'opacity-25 cursor-default' : item.disabled }) }
                 data-active={ this.props.value && this.props.value.value === item.value }
                 onClick={ () => !item.disabled && this.setActiveItem(item) }

@@ -26,6 +26,7 @@ import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
 import LiveSessionList from './LiveSessionList'
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
+import LiveSearchBar from 'Shared/LiveSearchBar';
 import { clearSearch } from 'Duck/search';
 
 const weakEqual = (val1, val2) => {
@@ -168,15 +169,28 @@ export default class BugFinder extends React.PureComponent {
           <div className={cn("side-menu-margined", stl.searchWrapper) }>
             <TrackerUpdateMessage />
             <NoSessionsMessage />
-            <div 
-              data-hidden={ activeTab === 'live' || activeTab === 'favorite' }
-              className="mb-5"
-            >
-              <MainSearchBar />
-              <SessionSearch />
-            </div>
-            { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }
-            { activeTab.type === 'live' && <LiveSessionList /> }
+
+            {/* Recorde Sessions */}
+            { activeTab.type !== 'live' && (
+              <>
+                <div className="mb-5">
+                  <MainSearchBar />
+                  <SessionSearch />
+                </div>
+                { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }  
+              </>
+            )}
+            
+            {/* Live Sessions */}
+            { activeTab.type === 'live' && (
+              <>
+                <div className="mb-5">
+                  <LiveSearchBar />
+                  <SessionSearch />
+                </div>
+                { activeTab.type === 'live' && <LiveSessionList /> }
+              </>
+            )}
           </div>
         </div>
         <RehydrateSlidePanel
