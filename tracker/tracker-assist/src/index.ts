@@ -5,18 +5,7 @@ import type { Options } from './Assist.js'
 import Assist from './Assist.js'
 
 
-export default function(opts?: Partial<Options>)  {
-  const options: Options = Object.assign(
-    { 
-      confirmText: "You have an incoming call. Do you want to answer?",
-      confirmStyle: {},
-      session_calling_peer_key: "__openreplay_calling_peer",
-      config: null,
-      onCallStart: ()=>{},
-      onAgentConnect: ()=>{},
-    },
-    opts,
-  );
+export default function(opts?: Partial<Options>) {
   return function(app: App | null, appOptions: { __DISABLE_SECURE_MODE?: boolean } = {}) {
     // @ts-ignore
     if (app === null || !navigator?.mediaDevices?.getUserMedia) { // 93.04% browsers
@@ -27,7 +16,7 @@ export default function(opts?: Partial<Options>)  {
       return
     }
     app.notify.log("OpenReplay Assist initializing.")
-    const assist = new Assist(app, options, appOptions.__DISABLE_SECURE_MODE)
+    const assist = new Assist(app, opts, appOptions.__DISABLE_SECURE_MODE)
     app.debug.log(assist)
     return assist
 
