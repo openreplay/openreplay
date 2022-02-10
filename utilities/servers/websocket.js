@@ -137,7 +137,7 @@ function extractSessionInfo(socket) {
         socket.handshake.query.sessionInfo.userBrowser = ua.browser.name || null;
         socket.handshake.query.sessionInfo.userBrowserVersion = ua.browser.version || null;
         socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
-        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || (ua.device.model ? null : 'desktop');
+        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || 'desktop';
         socket.handshake.query.sessionInfo.userCountry = null;
 
         const options = {
