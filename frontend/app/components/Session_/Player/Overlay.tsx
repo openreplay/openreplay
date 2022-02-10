@@ -2,6 +2,7 @@ import React, {useEffect} from 'react';
 import { connectPlayer, markTargets } from 'Player';
 import { getStatusText } from 'Player/MessageDistributor/managers/AssistManager';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
+import { ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
 
 import AutoplayTimer from './Overlay/AutoplayTimer';
 import PlayIconLayer from './Overlay/PlayIconLayer';
@@ -17,6 +18,7 @@ interface Props {
   loading: boolean,
   live: boolean,
   liveStatusText: string,
+  concetionStatus: ConnectionStatus,
   autoplay: boolean,
   markedTargets: MarkedTarget[] | null,
   activeTargetIndex: number,
@@ -33,6 +35,7 @@ function Overlay({
   loading,
   live,
   liveStatusText,
+  concetionStatus,
   autoplay,
   markedTargets,
   activeTargetIndex,
@@ -53,7 +56,7 @@ function Overlay({
     <>
       { showAutoplayTimer && <AutoplayTimer /> }
       { showLiveStatusText && 
-        <LiveStatusText text={liveStatusText} />
+        <LiveStatusText text={liveStatusText} concetionStatus={concetionStatus} />
       }
       { messagesLoading && <Loader/> }
       { showPlayIconLayer && 
@@ -74,6 +77,7 @@ export default connectPlayer(state => ({
   autoplay: state.autoplay,
   live: state.live,
   liveStatusText: getStatusText(state.peerConnectionStatus),
+  concetionStatus: state.peerConnectionStatus,
   markedTargets: state.markedTargets,
   activeTargetIndex: state.activeTargetIndex,
 }))(Overlay);

@@ -38,7 +38,7 @@ function LiveFilterModal(props: Props) {
       { showSearchList && (
         <Loader size="small" loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">
-            { filterSearchList && Object.keys(filterSearchList).map((key, index) => {
+            { filterSearchList && Object.keys(filterSearchList).filter(i => filtersMap[i].isLive).map((key, index) => {
               const filter = filterSearchList[key];
               const option = filtersMap[key];
               return (
