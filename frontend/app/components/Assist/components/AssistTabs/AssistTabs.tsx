@@ -13,17 +13,21 @@ const AssistTabs = (props: Props) => {
   return (
     <div className="relative mr-4">
       <div className="flex items-center">
-        <div
-          className={stl.btnLink}
-          onClick={() => setShowMenu(!showMenu)}
-        >
-          More Live Sessions
-        </div>
-        <span className="mx-3 color-gray-medium">by</span>
-        <div className="flex items-center">
-          <Icon name="user-alt" color="gray-darkest" />
-          <div className="ml-2">{props.userId}</div>
-        </div>
+        {props.userId && (
+          <>
+            <div
+              className={stl.btnLink}
+              onClick={() => setShowMenu(!showMenu)}
+            >
+              More Live Sessions
+            </div>
+            <span className="mx-3 color-gray-medium">by</span>
+            <div className="flex items-center">
+              <Icon name="user-alt" color="gray-darkest" />
+              <div className="ml-2">{props.userId}</div>
+            </div>
+          </>
+        )}
       </div>
       <SlideModal
         title={ <div>Live Sessions by {props.userId}</div> }
