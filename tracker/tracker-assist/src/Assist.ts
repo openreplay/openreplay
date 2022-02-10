@@ -1,12 +1,14 @@
 import type { Socket } from 'socket.io-client';
 import io from 'socket.io-client';
 import Peer from 'peerjs';
+import type { Properties } from 'csstype';
 import { App } from '@openreplay/tracker';
 
+import RequestLocalStream from './LocalStream.js';
 import Mouse from './Mouse.js';
 import CallWindow from './CallWindow.js';
-import ConfirmWindow from './ConfirmWindow.js';
-import RequestLocalStream from './LocalStream.js';
+import ConfirmWindow, { callConfirmDefault, controlConfirmDefault } from './ConfirmWindow.js';
+import type { Options as ConfirmOptions } from './ConfirmWindow.js';
 
 
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
@@ -15,9 +17,13 @@ Peer = Peer.default || Peer;
 export interface Options {
   onAgentConnect: () => ((()=>{}) | void),
   onCallStart: () => ((()=>{}) | void),
-  confirmText: string,
-  confirmStyle: Object, // Styles object
   session_calling_peer_key: string,
+  callConfirm: ConfirmOptions,
+  controlConfirm: ConfirmOptions,
+
+  confirmText?: string, // @depricated
+  confirmStyle?: Properties, // @depricated
+
   config: RTCConfiguration,
 }
 
@@ -44,10 +50,22 @@ export default class Assist {
   private callingState: CallingState = CallingState.False
 
   private agents: Record<string, Agent> = {}
+  private readonly options: Options
   constructor(
     private readonly app: App, 
-    private readonly options: Options, 
-    private readonly noSecureMode: boolean = false) {
+    options?: Partial<Options>, 
+    private readonly noSecureMode: boolean = false,
+  ) {
+    this.options = Object.assign({ 
+        session_calling_peer_key: "__openreplay_calling_peer",
+        config: null,
+        onCallStart: ()=>{},
+        onAgentConnect: ()=>{},
+        callConfirm: {},
+        controlConfirm: {}, // TODO: clear options passing/merging/overriting
+      },
+      options,
+    );
     app.attachStartCallback(() => { 
       if (this.assistDemandedRestart) { return; } 
       this.onStart()
@@ -123,7 +141,7 @@ export default class Assist {
         return
       }
       controllingAgent = id
-      confirmRC = new ConfirmWindow("Allow remote control?")
+      confirmRC = new ConfirmWindow(controlConfirmDefault(this.options.controlConfirm))
       confirmRC.mount().then(allowed => {
         if (allowed) { // TODO: per agent id
           mouse.mount()
@@ -206,7 +224,10 @@ export default class Assist {
         confirmAnswer = Promise.resolve(true)
       } else {
         setCallingState(CallingState.Requesting)
-        confirmCall = new ConfirmWindow(this.options.confirmText, this.options.confirmStyle)
+        confirmCall = new ConfirmWindow(callConfirmDefault(this.options.callConfirm || { 
+          text: this.options.confirmText,
+          style: this.options.confirmStyle,
+        }))
         confirmAnswer = confirmCall.mount()
         this.onRemoteCallEnd = () => { // if call cancelled by a caller before confirmation
           app.debug.log("Received call_end during confirm window opened")

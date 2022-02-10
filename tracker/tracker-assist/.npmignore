@@ -1,4 +1,6 @@
 src
+npm-debug.log
+yarn-error.log
 tsconfig-cjs.json
 tsconfig.json
 .prettierrc.json
