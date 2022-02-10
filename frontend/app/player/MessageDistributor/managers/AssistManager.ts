@@ -133,6 +133,9 @@ export default class AssistManager {
         waitingForMessages = true
         this.setStatus(ConnectionStatus.WaitingMessages)
       })
+      socket.on("disconnect", () => {
+        this.toggleRemoteControl(false)
+      })
       socket.on('messages', messages => {
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout);
         jmr.append(messages) // as RawMessage[]
@@ -165,6 +168,10 @@ export default class AssistManager {
           this.setStatus(ConnectionStatus.Disconnected)
         }, 12000)
 
+        if (getState().remoteControl === RemoteControlStatus.Requesting) {
+          this.toggleRemoteControl(false)
+        }
+
         // Call State
         if (getState().calling === CallingState.OnCall) {
           update({ calling: CallingState.Reconnecting })
@@ -173,6 +180,7 @@ export default class AssistManager {
       socket.on('error', e => {
         console.warn("Socket error: ", e )
         this.setStatus(ConnectionStatus.Error);
+        this.toggleRemoteControl(false)
       })
       socket.on('call_end', this.onRemoteCallEnd)
 
