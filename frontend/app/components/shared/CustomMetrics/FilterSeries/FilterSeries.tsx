@@ -42,7 +42,6 @@ function FilterSeries(props: Props) {
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
-    
     props.editSeriesFilter(seriesIndex, { eventsOrder: value });
   }
 

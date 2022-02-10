@@ -33,7 +33,7 @@ function SavedSearch(props) {
             className="flex items-center"
             onClick={() => setShowMenu(true)}
           >
-            <span className="mr-2">{`Search Saved (${list.size})`}</span>
+            <span className="mr-2">{`Saved Search (${list.size})`}</span>
             <Icon name="ellipsis-v" color="teal" size="14" />
           </Button>
           { savedSearch.exists() && (

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { fetchList } from 'Duck/sessions';
+import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
 import { NoContent, Loader } from 'UI';
 import { List, Map } from 'immutable';
@@ -7,26 +7,56 @@ import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
-import Filter from 'Types/filter';
+import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
+import { addFilterByKeyAndValue } from 'Duck/liveSearch';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
 
 interface Props {
   loading: Boolean,
-  list?: List<any>,  
-  fetchList: (params) => void,
+  list: List<any>,  
+  fetchLiveList: () => Promise<void>,
   applyFilter: () => void,
-  filters: Filter
+  filters: any,
   addAttribute: (obj) => void,
+  addFilterByKeyAndValue: (key: FilterKey, value: string) => void,
 }
 
 function LiveSessionList(props: Props) {
-  const { loading, list, filters } = props;  
+  const { loading, filters, list } = props;
   var timeoutId;
-  const hasUserFilter = filters && filters.filters.map(i => i.key).includes(KEYS.USERID);
+  const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
+  const [sessions, setSessions] = React.useState(list);
+
+  useEffect(() => {
+    if (filters.size === 0) {
+      props.addFilterByKeyAndValue(FilterKey.USERID, '');
+    }
+  }, []);
+
+  useEffect(() => {
+    const filteredSessions = filters.size > 0 ? props.list.filter(session => {
+      let hasValidFilter = true;
+      filters.forEach(filter => {
+        if (!hasValidFilter) return;
+
+        const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
+        if (filter.key === FilterKey.USERID) {
+          const _userId = session.userId ? session.userId.toLowerCase() : '';
+          hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
+        } 
+        if (filter.category === FilterCategory.METADATA) {
+          const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
+          hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
+        }
+      })
+      return hasValidFilter;
+    }) : props.list;
+    setSessions(filteredSessions);
+  }, [filters, list]);
 
   useEffect(() => {     
-    props.fetchList(filters.toJS());
+    props.fetchLiveList();
     timeout();
     return () => {
       clearTimeout(timeoutId)
@@ -35,17 +65,15 @@ function LiveSessionList(props: Props) {
 
   const onUserClick = (userId, userAnonymousId) => {
     if (userId) {
-      props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId })
+      props.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
-      props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
+      props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
     }
-
-    props.applyFilter()
   }
 
   const timeout = () => {
     timeoutId = setTimeout(() => {
-      props.fetchList(filters.toJS());
+      props.fetchLiveList();
       timeout();
     }, AUTOREFRESH_INTERVAL);
   }
@@ -59,11 +87,12 @@ function LiveSessionList(props: Props) {
             See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> if you haven't yet done so.
           </span>
         }
-        image={<img src="/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }}/>}
-        show={ !loading && list && list.size === 0}
+        image={<img src="/img/live-sessions.png"
+        style={{ width: '70%', marginBottom: '30px' }}/>}
+        show={ !loading && sessions && sessions.size === 0}
       >
         <Loader loading={ loading }>
-          {list && list.map(session => (
+          {sessions && sessions.map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -82,8 +111,7 @@ export default withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(connect(
   (state) => ({
     list: state.getIn(['sessions', 'liveSessions']),
     loading: state.getIn([ 'sessions', 'loading' ]),
-    filters: state.getIn([ 'filters', 'appliedFilter' ]),
+    filters: state.getIn([ 'liveSearch', 'instance', 'filters' ]),
   }),
-  {
-    fetchList, applyFilter, addAttribute }
+  { fetchLiveList, applyFilter, addAttribute, addFilterByKeyAndValue }
 )(LiveSessionList));

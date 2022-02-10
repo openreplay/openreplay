@@ -2,7 +2,8 @@ import React from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import { connect } from 'react-redux';
 import { edit, addFilter } from 'Duck/liveSearch';
-import LiveFilterModal from 'Shared/Filters/LiveFilterModal';
+import FilterSelection from 'Shared/Filters/FilterSelection';
+import { IconButton } from 'UI';
 
 interface Props {
   appliedFilter: any;
@@ -13,6 +14,10 @@ function LiveSessionSearch(props: Props) {
   const { appliedFilter } = props;
   const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
+
+  const onAddFilter = (filter) => {
+    props.addFilter(filter);
+  }
 
   const onUpdateFilter = (filterIndex, filter) => {
     const newFilters = appliedFilter.filters.map((_filter, i) => {
@@ -54,6 +59,17 @@ function LiveSessionSearch(props: Props) {
           onRemoveFilter={onRemoveFilter}
           onChangeEventsOrder={onChangeEventsOrder}
         />
+      </div>
+
+      <div className="border-t px-5 py-1 flex items-center -mx-2">
+        <div>
+          <FilterSelection
+            filter={undefined}
+            onFilterClick={onAddFilter}
+          >
+            <IconButton primaryText label="ADD FILTER" icon="plus" />
+          </FilterSelection>
+        </div>
       </div>
     </div>
   ) : <></>;

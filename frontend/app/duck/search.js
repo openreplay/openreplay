@@ -8,7 +8,7 @@ import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from '../types/filter/filterType';
-import { filtersMap, generateFilterOptions } from 'Types/filter/newFilter';
+import { filtersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -43,6 +43,7 @@ const updateInstance = (state, instance) => state.getIn([ "savedSearch", savedSe
 
 const initialState = Map({
   filterList: generateFilterOptions(filtersMap),
+  filterListLive: generateLiveFilterOptions(filtersMap),
 	list: List(),
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
@@ -54,7 +55,8 @@ const initialState = Map({
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case REFRESH_FILTER_OPTIONS:
-      return state.set('filterList', generateFilterOptions(filtersMap));
+      return state.set('filterList', generateFilterOptions(filtersMap))
+                  .set('filterListLive', generateLiveFilterOptions(filtersMap));
     case EDIT:
       return state.mergeIn(['instance'], action.instance);
     case APPLY:
@@ -212,11 +214,20 @@ export const clearSearch = () => (dispatch, getState) => {
   });
 }
 
+export const hasFilterApplied = (filters, filter) => {
+  return !filter.isEvent && filters.some(f => f.key === filter.key);
+}
+
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
   const instance = getState().getIn([ 'search', 'instance']);
-  const filters = instance.filters.push(filter);
-  return dispatch(edit(instance.set('filters', filters)));
+
+  if (hasFilterApplied(instance.filters, filter)) {
+    
+  } else {
+    const filters = instance.filters.push(filter);
+    return dispatch(edit(instance.set('filters', filters)));
+  }
 }
 
 export const addFilterByKeyAndValue = (key, value) => (dispatch, getState) => {
