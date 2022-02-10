@@ -92,7 +92,9 @@ function FilterAutoComplete(props: Props) {
 
   const onBlur = (e) => {
     setTimeout(() => { setShowModal(false) }, 200)
-    props.onSelect(e, { value: query })
+    if (query !== value) {
+      props.onSelect(e, { value: query })
+    }
   }
 
   const onItemClick = (e, item) => {
