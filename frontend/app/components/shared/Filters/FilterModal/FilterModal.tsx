@@ -34,7 +34,7 @@ function FilterModal(props: Props) {
   }
   
   return (
-    <div className={stl.wrapper} style={{ width: '490px', maxHeight: '400px', overflowY: 'auto'}}>
+    <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
       { showSearchList && (
         <Loader size="small" loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">
@@ -67,7 +67,7 @@ function FilterModal(props: Props) {
       )}
       
       { !hasSearchQuery && (
-        <div className="" style={{ columns: "100px 2" }}>
+        <div className="" style={{ columns: "auto 200px" }}>
           {filters && Object.keys(filters).map((key) => (
             <div className="mb-6" key={key}>
               <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
