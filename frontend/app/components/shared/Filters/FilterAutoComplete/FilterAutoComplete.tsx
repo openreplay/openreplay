@@ -10,6 +10,8 @@ const hiddenStyle = {
   opacity: 0, position: 'fixed', left: '-3000px'
 };
 
+let debouncedRequestValues = (value) => null;
+
 interface Props {
   showOrButton?: boolean;
   showCloseButton?: boolean;
@@ -45,22 +47,24 @@ function FilterAutoComplete(props: Props) {
   const [query, setQuery] = useState(value);
   
 
-  const requestValues = (q) => {    
-    setLoading(true);
-
-    return new APIClient()[method?.toLowerCase()](endpoint, { ...params, q })
-    .then(response => response.json())
-    .then(({ errors, data }) => {
-      if (errors) {
-        // this.setError();
-      } else {
-        setOptions(data);       
-      }
-    }).finally(() => setLoading(false));
-    // .catch(this.setError);
-  }
-
-  const debouncedRequestValues = debounce(requestValues, 1000)
+  useEffect(() => {
+    const requestValues = (q) => {    
+      setLoading(true);
+  
+      return new APIClient()[method?.toLowerCase()](endpoint, { ...params, q })
+      .then(response => response.json())
+      .then(({ errors, data }) => {
+        if (errors) {
+          // this.setError();
+        } else {
+          setOptions(data);       
+        }
+      }).finally(() => setLoading(false));
+    
+    }
+  
+    debouncedRequestValues = debounce(requestValues, 1000)
+  }, [])
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
@@ -136,11 +140,8 @@ function FilterAutoComplete(props: Props) {
 
       { !showOrButton && <div className="ml-3">or</div> }
 
-      {/* <textarea style={hiddenStyle} ref={(ref) => this.hiddenInput = ref }></textarea> */}
-
-      { showModal &&
+      { (showModal && (options.length > 0) || loading) &&  (
         <div className={ stl.menu }>
-          { headerText && headerText }
           <Loader loading={loading} size="small">
             {
               options.map((item, i) => (
@@ -156,7 +157,7 @@ function FilterAutoComplete(props: Props) {
             }
           </Loader>
         </div>
-      }
+      )}
     </div>
   );
 }
