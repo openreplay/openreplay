@@ -9,6 +9,7 @@ export enum FilterCategory {
 };
 
 export enum FilterType {
+  STRING = "STRING",
   ISSUE = "ISSUE",
   BOOLEAN = "BOOLEAN",
   NUMBER = "NUMBER",
@@ -17,6 +18,7 @@ export enum FilterType {
   COUNTRY = "COUNTRY",
   DROPDOWN = "DROPDOWN",
   MULTIPLE_DROPDOWN = "MULTIPLE_DROPDOWN",
+  AUTOCOMPLETE_LOCAL = "AUTOCOMPLETE_LOCAL",
 };
 
 export enum FilterKey {

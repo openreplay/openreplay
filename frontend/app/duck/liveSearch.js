@@ -6,7 +6,7 @@ import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { fetchList as fetchSessionList } from './sessions';
 import { filtersMap } from 'Types/filter/newFilter';
-import { filterMap, checkFilterValue } from './search';
+import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 
 const name = "liveSearch";
 const idKey = "searchId";
@@ -73,8 +73,16 @@ export const clearSearch = () => (dispatch, getState) => {
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
   const instance = getState().getIn([ 'liveSearch', 'instance']);
-  const filters = instance.filters.push(filter);
-  return dispatch(edit(instance.set('filters', filters)));
+
+  if (hasFilterApplied(instance.filters, filter)) {
+    // const index = instance.filters.findIndex(f => f.key === filter.key);
+    // const oldFilter = instance.filters.get(index);
+    // oldFilter.value = oldFilter.value.concat(filter.value);
+    // return dispatch(edit(instance.setIn(['filters', index], oldFilter)));
+  } else {
+    const filters = instance.filters.push(filter);
+    return dispatch(edit(instance.set('filters', filters)));
+  }
 }
 
 export const addFilterByKeyAndValue = (key, value) => (dispatch, getState) => {

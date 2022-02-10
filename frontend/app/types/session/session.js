@@ -142,6 +142,7 @@ export default Record({
       firstResourceTime,
       issues: issuesList,
       sessionId: sessionId || sessionID,
+      userId: session.userId || session.userID,
     };
   },
   idKey: "sessionId",

@@ -23,7 +23,6 @@ function LiveSessionSearchField(props: Props) {
   }
 
   const onAddFilter = (filter) => {
-    console.log('onAddFilter', filter)
     props.addFilterByKeyAndValue(filter.key, filter.value)
   }
 

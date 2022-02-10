@@ -43,7 +43,7 @@ export const filtersMap = {
   [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Duration', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is']), icon: 'filters/duration' },
   [FilterKey.USER_COUNTRY]: { key: FilterKey.USER_COUNTRY, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'User Country', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/country', options: countryOptions },
   // [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
-  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
+  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid', isLive: true },
   [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
 
   // PERFORMANCE
@@ -56,6 +56,15 @@ export const filtersMap = {
   [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/click', options: ISSUE_OPTIONS },
 }
 
+/**
+ * Add a new filter to the filter list
+ * @param {*} category 
+ * @param {*} key 
+ * @param {*} type 
+ * @param {*} operator 
+ * @param {*} operatorOptions 
+ * @param {*} icon 
+ */
 export const addElementToFiltersMap = (
   category = FilterCategory.METADATA,
   key,
@@ -64,14 +73,7 @@ export const addElementToFiltersMap = (
   operatorOptions = filterOptions.stringOperators,
   icon = 'filters/metadata'
 ) => {
-  console.log('addElementToFiltersMap', category, key, type, operator, operatorOptions, icon)
-  filtersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon }
-}
-
-
-export const getMetaDataFilter = (key) => {
-  const METADATA_FILTER = { key: key, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: capitalize(key), operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' }
-  return METADATA_FILTER;
+  filtersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon, isLive: true }
 }
 
 export default Record({
@@ -113,15 +115,40 @@ export default Record({
       ..._filter,
       key: _filter.key,
       type: _filter.type, // camelCased(filter.type.toLowerCase()),
-      value: value.length === 0 ? [""] : value,
+      value: value.length === 0 ? [""] : value, // make sure there an empty value
     }
   },
 })
 
+/**
+ * Group filters by category
+ * @param {*} filtersMap 
+ * @returns 
+ */
 export const generateFilterOptions = (filtersMap) => {
   const _options = {};
   Object.keys(filtersMap).forEach(key => {
     const filter = filtersMap[key];
+    if (_options.hasOwnProperty(filter.category)) {
+      _options[filter.category].push(filter);
+    } else {
+      _options[filter.category] = [filter];
+    }
+  });
+  return _options;
+}
+
+export const generateLiveFilterOptions = (filtersMap) => {
+  const _options = {};
+  Object.keys(filtersMap).filter(i => filtersMap[i].isLive).forEach(key => {
+    const filter = filtersMap[key];
+    filter.operator = 'contains';
+    filter.type = FilterType.STRING;
+    // filter.type = FilterType.AUTOCOMPLETE_LOCAL;
+    // filter.options = countryOptions;
+    filter.operatorOptions = [
+      { key: 'contains', text: 'contains', value: 'contains' },
+    ]
     if (_options.hasOwnProperty(filter.category)) {
       _options[filter.category].push(filter);
     } else {

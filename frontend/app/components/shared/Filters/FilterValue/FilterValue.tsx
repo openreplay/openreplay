@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import FilterAutoComplete from '../FilterAutoComplete';
+import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
 import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
 import FilterValueDropdown from '../FilterValueDropdown';
 import FilterDuration from '../FilterDuration';
@@ -63,6 +64,18 @@ function FilterValue(props: Props) {
   const renderValueFiled = (value, valueIndex) => {
     const showOrButton = valueIndex === lastIndex;
     switch(filter.type) {
+      case FilterType.STRING:
+        return (
+          <FilterAutoCompleteLocal
+            value={value}
+            showCloseButton={showCloseButton}
+            showOrButton={showOrButton}
+            onAddValue={onAddValue}
+            onRemoveValue={() => onRemoveValue(valueIndex)}
+            onSelect={(e, item) => onChange(e, item, valueIndex)}
+            icon={filter.icon}
+          />
+        )
       case FilterType.DROPDOWN:
         return (
           <FilterValueDropdown

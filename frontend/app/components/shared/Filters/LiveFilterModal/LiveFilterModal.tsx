@@ -3,8 +3,7 @@ import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import stl from './LiveFilterModal.css';
-import { filtersMap, getMetaDataFilter } from 'Types/filter/newFilter';
-import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
+import { filtersMap } from 'Types/filter/newFilter';
 
 interface Props {
   filters: any,
@@ -69,11 +68,11 @@ function LiveFilterModal(props: Props) {
       
       { !hasSearchQuery && (
         <div className="">
-          {filters && Object.keys(filters).filter(i => i === 'User' || i === 'Metadata').map((key) =>  (
+          {filters && Object.keys(filters).map((key) =>  (
             <div className="mb-6" key={key}>
               <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
               <div>
-                {filters[key].filter((i: any) => i.key === FilterKey.USERID || i.key === FilterKey.USERANONYMOUSID || i.category === FilterCategory.METADATA).map((filter: any) => (
+                {filters[key].map((filter: any) => (
                   <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick(filter)}>
                     <Icon name={filter.icon} size="16"/>
                     <span className="ml-2">{filter.label}</span>
@@ -89,7 +88,7 @@ function LiveFilterModal(props: Props) {
 }
 
 export default connect(state => ({
-  filters: state.getIn([ 'search', 'filterList' ]),
+  filters: state.getIn([ 'search', 'filterListLive' ]),
   filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
   metaOptions: state.getIn([ 'customFields', 'list' ]),
   fetchingFilterSearchList: state.getIn([ 'search', 'fetchFilterSearch', 'loading' ]),
