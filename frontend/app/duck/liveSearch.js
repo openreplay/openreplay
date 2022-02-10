@@ -7,6 +7,7 @@ import SavedFilter from 'Types/filter/savedFilter';
 import { fetchList as fetchSessionList } from './sessions';
 import { liveFiltersMap } from 'Types/filter/newFilter';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
+import { FilterKey } from '../types/filter/filterType';
 
 const name = "liveSearch";
 const idKey = "searchId";
@@ -63,7 +64,6 @@ export const fetchSessions = (filter) => (dispatch, getState) => {
 };
 
 export const clearSearch = () => (dispatch, getState) => {
-  // dispatch(applySavedSearch(new SavedFilter({})));
   dispatch(edit(new Filter({ filters: [] })));
   return dispatch({
     type: CLEAR_SEARCH,

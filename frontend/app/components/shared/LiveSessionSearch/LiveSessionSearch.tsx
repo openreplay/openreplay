@@ -1,14 +1,16 @@
 import React from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import { connect } from 'react-redux';
-import { edit, addFilter } from 'Duck/liveSearch';
+import { edit, addFilter, addFilterByKeyAndValue } from 'Duck/liveSearch';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import { IconButton } from 'UI';
+import { FilterKey } from 'App/types/filter/filterType';
 
 interface Props {
   appliedFilter: any;
   edit: typeof edit;
   addFilter: typeof addFilter;
+  addFilterByKeyAndValue: typeof addFilterByKeyAndValue;
 }
 function LiveSessionSearch(props: Props) {
   const { appliedFilter } = props;
@@ -39,9 +41,10 @@ function LiveSessionSearch(props: Props) {
       return i !== filterIndex;
     });
 
-    props.edit({
-      filters: newFilters,
-    });
+    props.edit({ filters: newFilters, });
+    if (newFilters.size === 0) {
+      props.addFilterByKeyAndValue(FilterKey.USERID, '');
+    }
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
@@ -77,4 +80,4 @@ function LiveSessionSearch(props: Props) {
 
 export default connect(state => ({
   appliedFilter: state.getIn([ 'liveSearch', 'instance' ]),
-}), { edit, addFilter })(LiveSessionSearch);
+}), { edit, addFilter, addFilterByKeyAndValue })(LiveSessionSearch);
