@@ -1,8 +1,7 @@
 import React from 'react';
-import SessionSearchField from 'Shared/SessionSearchField';
-import SavedSearch from 'Shared/SavedSearch';
+import LiveSessionSearchField from 'Shared/LiveSessionSearchField';
 import { Button, Popup } from 'UI';
-import { clearSearch } from 'Duck/search';
+import { clearSearch } from 'Duck/liveSearch';
 import { connect } from 'react-redux';
 
 interface Props {
@@ -15,7 +14,7 @@ const LiveSearchBar = (props: Props) => {
   return (
     <div className="flex items-center">
         <div style={{ width: "80%", marginRight: "10px"}}>
-            <SessionSearchField />
+            <LiveSessionSearchField />
         </div>
         <div className="flex items-center" style={{ width: "20%"}}>
             <Popup
@@ -39,5 +38,5 @@ const LiveSearchBar = (props: Props) => {
   )
 }
 export default connect(state => ({
-    appliedFilter: state.getIn(['search', 'instance']),
+    appliedFilter: state.getIn(['liveSearch', 'instance']),
 }), { clearSearch })(LiveSearchBar);

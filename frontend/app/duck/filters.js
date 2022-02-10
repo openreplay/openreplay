@@ -12,17 +12,6 @@ import logger from 'App/logger';
 
 import { newFiltersList } from 'Types/filter'
 import NewFilter, { filtersMap } from 'Types/filter/newFilter';
-
-const filterOptions = {}
-
-Object.keys(filtersMap).forEach(key => {
-  const filter = filtersMap[key];
-  if (filterOptions.hasOwnProperty(filter.category)) {
-    filterOptions[filter.category].push(filter);
-  } else {
-    filterOptions[filter.category] = [filter];
-  }
-})
    
 
 // for (var i = 0; i < newFiltersList.length; i++) {
@@ -58,8 +47,9 @@ const SET_ACTIVE_FLOW = 'filters/SET_ACTIVE_FLOW';
 
 const UPDATE_VALUE = 'filters/UPDATE_VALUE';
 
+const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
+
 const initialState = Map({
-  filterList: filterOptions,
   instance: Filter(),
   activeFilter: null,
   list: List(),

@@ -8,7 +8,7 @@ import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from '../types/filter/filterType';
-import { filtersMap } from 'Types/filter/newFilter';
+import { filtersMap, generateFilterOptions } from 'Types/filter/newFilter';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -29,6 +29,8 @@ const UPDATE = `${name}/UPDATE`;
 const APPLY = `${name}/APPLY`;
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
 
+const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
+
 function chartWrapper(chart = []) {
   return chart.map(point => ({ ...point, count: Math.max(point.count, 0) }));
 }
@@ -40,6 +42,7 @@ const updateInstance = (state, instance) => state.getIn([ "savedSearch", savedSe
 	: state;
 
 const initialState = Map({
+  filterList: generateFilterOptions(filtersMap),
 	list: List(),
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
@@ -50,6 +53,8 @@ const initialState = Map({
 // Metric - Series - [] - filters
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
+    case REFRESH_FILTER_OPTIONS:
+      return state.set('filterList', generateFilterOptions(filtersMap));
     case EDIT:
       return state.mergeIn(['instance'], action.instance);
     case APPLY:
@@ -100,8 +105,11 @@ const checkValues = (key, value) => {
   return value.filter(i => i !== '' && i !== null);
 }
 
+export const checkFilterValue = (value) => {
+  return Array.isArray(value) ? (value.length === 0 ? [""] : value) : [value];
+}
+
 export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent }) => ({
-  // value: value.filter(i => i !== '' && i !== null),
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
@@ -204,10 +212,6 @@ export const clearSearch = () => (dispatch, getState) => {
   });
 }
 
-const checkFilterValue = (value) => {
-  return Array.isArray(value) ? (value.length === 0 ? [""] : value) : [value];
-}
-
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
   const instance = getState().getIn([ 'search', 'instance']);
@@ -228,3 +232,8 @@ export const editSavedSearch = instance => {
   }
 };
 
+export const refreshFilterOptions = () => {
+  return {
+    type: REFRESH_FILTER_OPTIONS
+  }
+}

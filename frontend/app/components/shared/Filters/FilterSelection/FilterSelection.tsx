@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import FilterModal from '../FilterModal';
+import LiveFilterModal from '../LiveFilterModal';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { Icon } from 'UI';
+import { connect } from 'react-redux';
 
 interface Props {
   filter: any; // event/filter
   onFilterClick: (filter) => void;
   children?: any;
+  isLive?: boolean;
 }
 function FilterSelection(props: Props) {
-  const { filter, onFilterClick, children } = props;
+  const { filter, onFilterClick, children, isLive = true } = props;
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -37,11 +40,13 @@ function FilterSelection(props: Props) {
       </OutsideClickDetectingDiv>
       {showModal && (
         <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
-          <FilterModal onFilterClick={onFilterClick} />
+          { isLive ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> }
         </div>
       )}
     </div>
   );
 }
 
-export default FilterSelection;
+export default connect(state => ({
+  isLive: state.getIn([ 'sessions', 'activeTab' ]).type === 'live',
+}), { })(FilterSelection);

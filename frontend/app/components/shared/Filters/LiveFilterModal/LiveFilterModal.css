@@ -1,0 +1,37 @@
+.wrapper {
+  border-radius: 3px;
+  border: solid thin $gray-light;
+  padding: 20px;
+  overflow: hidden;
+  overflow-y: auto;
+  box-shadow: 0 2px 2px 0 $gray-light;
+}
+.optionItem {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  &:hover {
+    background-color: $active-blue;
+    color: $teal !important;
+    & svg {
+      fill: $teal !important;
+    }
+  }
+}
+
+.filterSearchItem {
+  &:hover {
+    background-color: $active-blue;
+    color: $teal;
+
+    & svg {
+      fill: $teal;
+    }
+  }
+
+  & div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

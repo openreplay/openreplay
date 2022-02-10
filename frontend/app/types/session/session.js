@@ -138,7 +138,7 @@ export default Record({
       startedAt,
       duration,
       userNumericHash: hashString(session.userId || session.userAnonymousId || session.userUuid || session.userID || session.userUUID || ""),
-      userDisplayName: session.userId || session.userAnonymousId || 'Anonymous User',
+      userDisplayName: session.userId || session.userAnonymousId || session.userID || 'Anonymous User',
       firstResourceTime,
       issues: issuesList,
       sessionId: sessionId || sessionID,
