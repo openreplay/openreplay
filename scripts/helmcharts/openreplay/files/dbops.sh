@@ -2,6 +2,8 @@
 
 cd $(dirname $0)
 
+is_migrate=$1
+
 function migration() {
     ls -la /opt/openreplay/openreplay
     db=$1
@@ -12,7 +14,9 @@ function migration() {
         exit 100
     fi
 
-    if [[ $PREVIOUS_APP_VERSION == $CHART_APP_VERSION ]]; then
+    if [[ $FORCE_MIGRRATION == "true" ]]; then
+        echo "Forcing db migration from $PREVIOUS_APP_VERSION to $CHART_APP_VERSION"
+    elif [[ $PREVIOUS_APP_VERSION == $CHART_APP_VERSION ]]; then
         echo "No application version change. Not upgrading."
         exit 0
     fi
@@ -66,9 +70,12 @@ function init(){
     esac
 }
 
+if [[ $FORCE_MIGRRATION == "true" ]]; then
+    is_migrate=true
+fi
 
 # dbops.sh true(upgrade) clickhouse
-case "$1" in
+case "$is_migrate" in
     "false")
         init $2
         ;;
