@@ -128,32 +128,22 @@ async function get_all_agents_ids(io, socket) {
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
-        console.log("socket");
-        console.log(socket);
-        console.log("socket.conn.remoteAddress");
-        console.log(socket.conn.remoteAddress);
-        console.log("socket.handshake.address");
-        console.log(socket.handshake.address);
         console.log("received headers");
         console.log(socket.handshake.headers);
-        console.log("received sessionInfo");
-        console.log(socket.handshake.query.sessionInfo);
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
 
         let ua = uaParser(socket.handshake.headers['user-agent']);
-        console.log("parsed user agent");
-        console.log(ua);
         socket.handshake.query.sessionInfo.userOs = ua.os.name || null;
         socket.handshake.query.sessionInfo.userBrowser = ua.browser.name || null;
         socket.handshake.query.sessionInfo.userBrowserVersion = ua.browser.version || null;
         socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
-        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || null;
+        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || (ua.device.model ? null : 'desktop');
         socket.handshake.query.sessionInfo.userCountry = null;
 
         const options = {
             // you can use options like `cache` or `watchForUpdates`
         };
-        console.log("Looking for MMDB file in " + process.env.MAXMINDDB_FILE);
+        // console.log("Looking for MMDB file in " + process.env.MAXMINDDB_FILE);
         geoip2Reader.open(process.env.MAXMINDDB_FILE, options)
             .then(reader => {
                 console.log("looking for location of ");
@@ -164,8 +154,6 @@ function extractSessionInfo(socket) {
             .catch(error => {
                 console.error(error);
             });
-        console.log("edited sessionInfo");
-        console.log(socket.handshake.query.sessionInfo);
     }
 }
 
@@ -245,9 +233,6 @@ module.exports = {
             });
 
             socket.onAny(async (eventName, ...args) => {
-                let ua = uaParser(socket.handshake.headers['user-agent']);
-                console.log("onAny instance:");
-                console.log(ua);
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
                     console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
