@@ -39,7 +39,7 @@ function FilterAutoComplete(props: Props) {
       value = '',
       icon = null,
   } = props;
-  const [showModal, setShowModal] = useState(true)
+  const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [options, setOptions] = useState<any>([]);
   const [query, setQuery] = useState(value);
@@ -64,15 +64,23 @@ function FilterAutoComplete(props: Props) {
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
-  }
-
-  useEffect(() => {
-    if (query === '' || query === ' ') {
-      return 
+    if (!showModal) {
+      setShowModal(true);
     }
 
-    debouncedRequestValues(query)
-  }, [query])
+    if (value === '' || value === ' ') {
+      return
+    }
+    debouncedRequestValues(value);
+  }
+
+  // useEffect(() => {
+  //   if (query === '' || query === ' ') {
+  //     return 
+  //   }
+
+  //   debouncedRequestValues(query)
+  // }, [query])
 
   useEffect(() => {
     setQuery(value);
@@ -106,7 +114,7 @@ function FilterAutoComplete(props: Props) {
           name="query"
           onChange={ onInputChange }
           onBlur={ onBlur }
-          onFocus={ () => setShowModal(true)}
+          // onFocus={ () => setShowModal(true)}
           value={ query }
           autoFocus={ true }
           type="text"
@@ -130,7 +138,7 @@ function FilterAutoComplete(props: Props) {
 
       {/* <textarea style={hiddenStyle} ref={(ref) => this.hiddenInput = ref }></textarea> */}
 
-      { showModal && (options.length > 0 || loading) &&
+      { showModal &&
         <div className={ stl.menu }>
           { headerText && headerText }
           <Loader loading={loading} size="small">

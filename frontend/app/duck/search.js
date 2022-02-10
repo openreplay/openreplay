@@ -8,7 +8,7 @@ import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey } from '../types/filter/filterType';
-import { filtersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
+import { filtersMap, liveFiltersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -43,7 +43,7 @@ const updateInstance = (state, instance) => state.getIn([ "savedSearch", savedSe
 
 const initialState = Map({
   filterList: generateFilterOptions(filtersMap),
-  filterListLive: generateLiveFilterOptions(filtersMap),
+  filterListLive: generateLiveFilterOptions(liveFiltersMap),
 	list: List(),
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
@@ -56,7 +56,7 @@ function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case REFRESH_FILTER_OPTIONS:
       return state.set('filterList', generateFilterOptions(filtersMap))
-                  .set('filterListLive', generateLiveFilterOptions(filtersMap));
+                  .set('filterListLive', generateLiveFilterOptions(liveFiltersMap));
     case EDIT:
       return state.mergeIn(['instance'], action.instance);
     case APPLY:

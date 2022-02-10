@@ -5,6 +5,7 @@ import { Popup, Dropdown, Icon, IconButton } from 'UI';
 import { pause } from 'Player';
 import styles from './sharePopup.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
+import SessionCopyLink from './SessionCopyLink';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
@@ -62,9 +63,14 @@ export default class SharePopup extends React.PureComponent {
               <div className={ styles.title }>{ 'Comment' }</div>
             </div>
             { options.length === 0 ?
-              <div className={ styles.body }>
-                <IntegrateSlackButton />
-              </div>
+              <>
+                <div className={ styles.body }>
+                  <IntegrateSlackButton />
+                </div>
+                <div className={styles.footer}>
+                  <SessionCopyLink /> 
+                </div>
+              </>
             :
               <div>
                 <div className={ styles.body }>
@@ -97,7 +103,10 @@ export default class SharePopup extends React.PureComponent {
                       { loading ? 'Sharing...' : 'Share' }
                     </button>
                   </div>
+
+                  <SessionCopyLink /> 
                 </div>
+               
               </div>
             }
           </div>
