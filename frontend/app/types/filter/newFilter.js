@@ -43,7 +43,7 @@ export const filtersMap = {
   [FilterKey.DURATION]: { key: FilterKey.DURATION, type: FilterType.DURATION, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'Duration', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is']), icon: 'filters/duration' },
   [FilterKey.USER_COUNTRY]: { key: FilterKey.USER_COUNTRY, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.RECORDING_ATTRIBUTES, label: 'User Country', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/country', options: countryOptions },
   // [FilterKey.CONSOLE]: { key: FilterKey.CONSOLE, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Console', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/console' },
-  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid', isLive: true },
+  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User Id', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
   [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
 
   // PERFORMANCE
@@ -54,6 +54,10 @@ export const filtersMap = {
   [FilterKey.AVG_MEMORY_USAGE]: { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg Memory Usage', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/memory-load', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.FETCH_FAILED]: { key: FilterKey.FETCH_FAILED, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Failed Request', operator: 'isAny', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch-failed', isEvent: true },
   [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/click', options: ISSUE_OPTIONS },
+}
+
+export const liveFiltersMap = {
+  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.STRING, category: FilterCategory.USER, label: 'User Id', operator: 'contains', operatorOptions: [{ key: 'contains', text: 'contains', value: 'contains' }], icon: 'filters/userid', isLive: true },
 }
 
 /**
@@ -138,17 +142,16 @@ export const generateFilterOptions = (filtersMap) => {
   return _options;
 }
 
-export const generateLiveFilterOptions = (filtersMap) => {
+export const generateLiveFilterOptions = (map) => {
   const _options = {};
-  Object.keys(filtersMap).filter(i => filtersMap[i].isLive).forEach(key => {
-    const filter = filtersMap[key];
+
+  Object.keys(map).filter(i => map[i].isLive).forEach(key => {
+    const filter = map[key];
     filter.operator = 'contains';
-    filter.type = FilterType.STRING;
+    // filter.type = FilterType.STRING;
     // filter.type = FilterType.AUTOCOMPLETE_LOCAL;
     // filter.options = countryOptions;
-    filter.operatorOptions = [
-      { key: 'contains', text: 'contains', value: 'contains' },
-    ]
+    // filter.operatorOptions = [{ key: 'contains', text: 'contains', value: 'contains' }]
     if (_options.hasOwnProperty(filter.category)) {
       _options[filter.category].push(filter);
     } else {

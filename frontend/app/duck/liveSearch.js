@@ -5,7 +5,7 @@ import { mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
 import { fetchList as fetchSessionList } from './sessions';
-import { filtersMap } from 'Types/filter/newFilter';
+import { liveFiltersMap } from 'Types/filter/newFilter';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 
 const name = "liveSearch";
@@ -86,7 +86,7 @@ export const addFilter = (filter) => (dispatch, getState) => {
 }
 
 export const addFilterByKeyAndValue = (key, value) => (dispatch, getState) => {
-  let defaultFilter = filtersMap[key];
+  let defaultFilter = liveFiltersMap[key];
   defaultFilter.value = value;
   dispatch(addFilter(defaultFilter));
 }

@@ -5,7 +5,8 @@ import withPermissions from 'HOCs/withPermissions'
 import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
 import { NoContent, Icon } from 'UI';
 import { WIDGET_KEYS, WIDGET_LIST } from 'Types/dashboard';
-import CustomMetrics from 'Shared/CustomMetrics';
+// import CustomMetrics from 'Shared/CustomMetrics';
+import CustomMetricsModal from 'Shared/CustomMetrics/CustomMetricsModal';
 import SessionListModal from 'Shared/CustomMetrics/SessionListModal';
 
 import { 
@@ -234,12 +235,12 @@ export default class Dashboard extends React.PureComponent {
                   description={
                     <div className="flex items-center">
                       {comparing && (
-                        <div className="mr-4 text-sm flex items-center font-normal">
+                        <div className="text-sm flex items-center font-normal">
                           <Icon name="info" size="12" className="mr-2" />
                           Custom Metrics are not supported for comparison.
                         </div>
                       )}
-                      <CustomMetrics />
+                      {/* <CustomMetrics /> */}
                     </div>
                   }
                 >
@@ -297,6 +298,8 @@ export default class Dashboard extends React.PureComponent {
             </div>
           </div>
         </div>
+
+        <CustomMetricsModal />
       </div>
     );
   }

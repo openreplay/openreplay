@@ -36,7 +36,6 @@ const initialState = Map({
 const reducer = (state = initialState, action = {}) => {
 	switch(action.type) {
 		case FETCH_SUCCESS:
-      console.log('FETCH_SUCCESS', action.data);
       action.data.forEach(item => {
         addElementToFiltersMap(FilterCategory.METADATA, item.key);
       });
