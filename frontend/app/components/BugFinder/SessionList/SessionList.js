@@ -1,10 +1,9 @@
 import { connect } from 'react-redux';
 import { Loader, NoContent, Button, LoadMoreButton } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
-import { fetchSessions } from 'Duck/search';
+import { fetchSessions, addFilterByKeyAndValue } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
-import { addFilterByKeyAndValue } from 'Duck/search';
 import { FilterKey } from 'Types/filter/filterType';
 
 const ALL = 'all';

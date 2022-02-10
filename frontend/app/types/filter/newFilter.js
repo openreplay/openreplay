@@ -56,6 +56,18 @@ export const filtersMap = {
   [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/click', options: ISSUE_OPTIONS },
 }
 
+export const addElementToFiltersMap = (
+  category = FilterCategory.METADATA,
+  key,
+  type = FilterType.MULTIPLE,
+  operator = 'is',
+  operatorOptions = filterOptions.stringOperators,
+  icon = 'filters/metadata'
+) => {
+  console.log('addElementToFiltersMap', category, key, type, operator, operatorOptions, icon)
+  filtersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon }
+}
+
 
 export const getMetaDataFilter = (key) => {
   const METADATA_FILTER = { key: key, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: capitalize(key), operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' }
@@ -106,11 +118,15 @@ export default Record({
   },
 })
 
-// const getOperatorDefault = (type) => {
-//   if (type === MISSING_RESOURCE) return 'true';
-//   if (type === SLOW_SESSION) return 'true';
-//   if (type === CLICK_RAGE) return 'true';
-//   if (type === CLICK) return 'on';
-  
-//   return 'is';
-// }
+export const generateFilterOptions = (filtersMap) => {
+  const _options = {};
+  Object.keys(filtersMap).forEach(key => {
+    const filter = filtersMap[key];
+    if (_options.hasOwnProperty(filter.category)) {
+      _options[filter.category].push(filter);
+    } else {
+      _options[filter.category] = [filter];
+    }
+  });
+  return _options;
+}

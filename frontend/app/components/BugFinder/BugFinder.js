@@ -27,6 +27,7 @@ import LiveSessionList from './LiveSessionList'
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
 import LiveSearchBar from 'Shared/LiveSearchBar';
+import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import { clearSearch } from 'Duck/search';
 
 const weakEqual = (val1, val2) => {
@@ -186,7 +187,7 @@ export default class BugFinder extends React.PureComponent {
               <>
                 <div className="mb-5">
                   <LiveSearchBar />
-                  <SessionSearch />
+                  <LiveSessionSearch />
                 </div>
                 { activeTab.type === 'live' && <LiveSessionList /> }
               </>

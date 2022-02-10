@@ -2,8 +2,9 @@ import React from 'react';
 import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import stl from './FilterModal.css';
-import { filtersMap } from 'Types/filter/newFilter';
+import stl from './LiveFilterModal.css';
+import { filtersMap, getMetaDataFilter } from 'Types/filter/newFilter';
+import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
 
 interface Props {
   filters: any,
@@ -14,7 +15,7 @@ interface Props {
   fetchingFilterSearchList: boolean,
   searchQuery?: string,
 }
-function FilterModal(props: Props) {
+function LiveFilterModal(props: Props) {
   const { 
     filters,
     metaOptions,
@@ -67,12 +68,12 @@ function FilterModal(props: Props) {
       )}
       
       { !hasSearchQuery && (
-        <div className="" style={{ columns: "100px 2" }}>
-          {filters && Object.keys(filters).map((key) => (
+        <div className="">
+          {filters && Object.keys(filters).filter(i => i === 'User' || i === 'Metadata').map((key) =>  (
             <div className="mb-6" key={key}>
               <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
               <div>
-                {filters[key].map((filter: any) => (
+                {filters[key].filter((i: any) => i.key === FilterKey.USERID || i.key === FilterKey.USERANONYMOUSID || i.category === FilterCategory.METADATA).map((filter: any) => (
                   <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick(filter)}>
                     <Icon name={filter.icon} size="16"/>
                     <span className="ml-2">{filter.label}</span>
@@ -92,4 +93,4 @@ export default connect(state => ({
   filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
   metaOptions: state.getIn([ 'customFields', 'list' ]),
   fetchingFilterSearchList: state.getIn([ 'search', 'fetchFilterSearch', 'loading' ]),
-}))(FilterModal);
+}))(LiveFilterModal);
