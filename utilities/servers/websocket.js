@@ -128,6 +128,8 @@ async function get_all_agents_ids(io, socket) {
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
+        console.log("socket");
+        console.log(socket);
         console.log("socket.conn.remoteAddress");
         console.log(socket.conn.remoteAddress);
         console.log("socket.handshake.address");
@@ -137,6 +139,12 @@ function extractSessionInfo(socket) {
         console.log("received sessionInfo");
         console.log(socket.handshake.query.sessionInfo);
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
+        let uai=new UAParser(socket.handshake.headers['user-agent']);
+        console.log("instance; ");
+        console.log(uai);
+        console.log(uai.getDevice());
+
+
         let ua = uaParser(socket.handshake.headers['user-agent']);
         console.log("parsed user agent");
         console.log(ua);
@@ -242,6 +250,9 @@ module.exports = {
             });
 
             socket.onAny(async (eventName, ...args) => {
+                let uai=new UAParser(socket.handshake.headers['user-agent']);
+                console.log("onAny instance:");
+                console.log(uai.getDevice());
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
                     console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
