@@ -186,7 +186,7 @@ export default class BugFinder extends React.PureComponent {
             { activeTab.type === 'live' && (
               <>
                 <div className="mb-5">
-                  <LiveSearchBar />
+                  {/* <LiveSearchBar /> */}
                   <LiveSessionSearch />
                 </div>
                 { activeTab.type === 'live' && <LiveSessionList /> }
