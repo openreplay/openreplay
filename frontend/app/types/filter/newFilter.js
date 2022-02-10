@@ -4,6 +4,7 @@ import filterOptions, { countries, platformOptions } from 'App/constants';
 import { capitalize } from 'App/utils';
 
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
+const containsFilters = [{ key: 'contains', text: 'contains', value: 'contains' }]
 
 const ISSUE_OPTIONS = [
   { text: 'Click Rage', value: 'click_rage' },
@@ -57,7 +58,7 @@ export const filtersMap = {
 }
 
 export const liveFiltersMap = {
-  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.STRING, category: FilterCategory.USER, label: 'User Id', operator: 'contains', operatorOptions: [{ key: 'contains', text: 'contains', value: 'contains' }], icon: 'filters/userid', isLive: true },
+  [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.STRING, category: FilterCategory.USER, label: 'User Id', operator: 'contains', operatorOptions: containsFilters, icon: 'filters/userid', isLive: true },
 }
 
 /**
@@ -78,6 +79,17 @@ export const addElementToFiltersMap = (
   icon = 'filters/metadata'
 ) => {
   filtersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon, isLive: true }
+}
+
+export const addElementToLiveFiltersMap = (
+  category = FilterCategory.METADATA,
+  key,
+  type = FilterType.STRING,
+  operator = 'contains',
+  operatorOptions = containsFilters,
+  icon = 'filters/metadata'
+) => {
+  liveFiltersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon, isLive: true }
 }
 
 export default Record({
@@ -129,10 +141,10 @@ export default Record({
  * @param {*} filtersMap 
  * @returns 
  */
-export const generateFilterOptions = (filtersMap) => {
+export const generateFilterOptions = (map) => {
   const _options = {};
-  Object.keys(filtersMap).forEach(key => {
-    const filter = filtersMap[key];
+  Object.keys(map).forEach(key => {
+    const filter = map[key];
     if (_options.hasOwnProperty(filter.category)) {
       _options[filter.category].push(filter);
     } else {

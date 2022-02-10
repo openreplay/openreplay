@@ -4,7 +4,7 @@ import { fetchListType, saveType, editType, initType, removeType } from './funcT
 import { createItemInListUpdater, mergeReducers, success, array } from './funcTools/tools';
 import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
-import { addElementToFiltersMap } from 'Types/filter/newFilter';
+import { addElementToFiltersMap, addElementToLiveFiltersMap } from 'Types/filter/newFilter';
 import { FilterCategory } from '../types/filter/filterType';
 import { refreshFilterOptions } from './search'
 
@@ -38,6 +38,7 @@ const reducer = (state = initialState, action = {}) => {
 		case FETCH_SUCCESS:
       action.data.forEach(item => {
         addElementToFiltersMap(FilterCategory.METADATA, item.key);
+        addElementToLiveFiltersMap(FilterCategory.METADATA, item.key);
       });
       return state.set('list', List(action.data).map(CustomField)) //.concat(defaultMeta))
     case FETCH_SOURCES_SUCCESS:
