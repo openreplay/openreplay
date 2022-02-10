@@ -4,6 +4,9 @@ cd $(dirname $0)
 
 is_migrate=$1
 
+# Converting alphaneumeric to number.
+PREVIOUS_APP_VERSION=`echo $PREVIOUS_APP_VERSION | cut -d "v" -f2`
+
 function migration() {
     ls -la /opt/openreplay/openreplay
     db=$1
