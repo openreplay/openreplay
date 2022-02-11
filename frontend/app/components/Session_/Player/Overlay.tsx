@@ -75,6 +75,7 @@ export default connectPlayer(state => ({
   loading: state.messagesLoading || state.cssLoading,
   completed: state.completed,
   autoplay: state.autoplay,
+  inspectorMode: state.inspectorMode,
   live: state.live,
   liveStatusText: getStatusText(state.peerConnectionStatus),
   concetionStatus: state.peerConnectionStatus,
