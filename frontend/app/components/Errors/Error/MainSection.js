@@ -5,13 +5,14 @@ import { ErrorDetails, IconButton, Icon, Loader } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
 import { TYPES as EV_FILER_TYPES } from 'Types/filter/event';
 import { UNRESOLVED, RESOLVED, IGNORED } from "Types/errorInfo";
-import { addEvent } from 'Duck/filters';
+import { addFilterByKeyAndValue } from 'Duck/search';
 import { resolve,unresolve,ignore, toggleFavorite } from "Duck/errors";
 import { resentOrDate } from 'App/date';
 import Divider from 'Components/Errors/ui/Divider';
 import ErrorName from 'Components/Errors/ui/ErrorName';
 import Label from 'Components/Errors/ui/Label';
 import SharePopup from 'Shared/SharePopup'
+import { FilterKey } from 'Types/filter/filterType';
 
 import SessionBar from './SessionBar';
 
@@ -30,7 +31,7 @@ import SessionBar from './SessionBar';
 	unresolve,
 	ignore,
 	toggleFavorite,
-	addEvent,
+	addFilterByKeyAndValue,
 })
 export default class MainSection extends React.PureComponent {
 	resolve = () => {
@@ -53,11 +54,8 @@ export default class MainSection extends React.PureComponent {
 	}
 
 	findSessions = () => {
-		this.props.addEvent({
-      type: EV_FILER_TYPES.CONSOLE,
-      value: this.props.error.message,
-    }, true);
-    this.props.history.push(sessionsRoute());
+		this.props.addFilterByKeyAndValue(FilterKey.ERROR, this.props.error.message);
+		this.props.history.push(sessionsRoute());
 	}
 
 	render() {
