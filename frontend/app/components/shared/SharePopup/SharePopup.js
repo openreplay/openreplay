@@ -5,6 +5,7 @@ import { Popup, Dropdown, Icon, IconButton } from 'UI';
 import { pause } from 'Player';
 import styles from './sharePopup.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
+import SessionCopyLink from './SessionCopyLink';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
@@ -46,7 +47,7 @@ export default class SharePopup extends React.PureComponent {
   changeChannel = (e, { value }) => this.setState({ channelId: value })
 
   render() {
-    const { trigger, loading, channels } = this.props;
+    const { trigger, loading, channels, showCopyLink = false } = this.props;
     const { comment, isOpen, channelId } = this.state;
 
     const options = channels.map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
@@ -62,9 +63,16 @@ export default class SharePopup extends React.PureComponent {
               <div className={ styles.title }>{ 'Comment' }</div>
             </div>
             { options.length === 0 ?
-              <div className={ styles.body }>
-                <IntegrateSlackButton />
-              </div>
+              <>
+                <div className={ styles.body }>
+                  <IntegrateSlackButton />
+                </div>
+                { showCopyLink && (
+                  <div className={styles.footer}>
+                    <SessionCopyLink /> 
+                  </div>
+                )}
+              </>
             :
               <div>
                 <div className={ styles.body }>
@@ -72,38 +80,43 @@ export default class SharePopup extends React.PureComponent {
                     name="message"
                     id="message"
                     cols="30"
-                    rows="6"
+                    rows="4"
                     resize="none"
                     onChange={ this.editMessage }
                     value={ comment }
                     placeholder="Type here..."
                     className="p-4"
                   />
-                </div>
-                <div className={ styles.footer }>
-                  <Dropdown
-                    selection
-                    options={ options } 
-                    value={ channelId } 
-                    onChange={ this.changeChannel }
-                    className="mr-4"
-                  />
-                  <div>
-                    <button
-                      className={ styles.shareButton }
-                      onClick={ this.share }
-                    >
-                      <Icon name="integrations/slack" size="18" marginRight="10" />
-                      { loading ? 'Sharing...' : 'Share' }
-                    </button>
+
+                  <div className="flex items-center justify-between">
+                    <Dropdown
+                      selection
+                      options={ options } 
+                      value={ channelId } 
+                      onChange={ this.changeChannel }
+                      className="mr-4"
+                    />
+                    <div>
+                      <button
+                        className={ styles.shareButton }
+                        onClick={ this.share }
+                      >
+                        <Icon name="integrations/slack" size="18" marginRight="10" />
+                        { loading ? 'Sharing...' : 'Share' }
+                      </button>
+                    </div>
                   </div>
                 </div>
+                <div className={ styles.footer }>
+                  <SessionCopyLink /> 
+                </div>
+               
               </div>
             }
           </div>
         }
         on="click"
-        position="top center"
+        position="top right"
         className={ styles.popup }
         hideOnScroll
       />

@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { Input } from 'semantic-ui-react';
 import { DNDContext } from 'Components/hocs/dnd';
 import {
-  addEvent, applyFilter, moveEvent, clearEvents,
+  addEvent, applyFilter, moveEvent, clearEvents, edit,
   addCustomFilter, addAttribute, setSearchQuery, setActiveFlow, setFilterOption
 } from 'Duck/filters';
 import { fetchList as fetchEventList } from 'Duck/events';
@@ -11,7 +11,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import EventEditor from './EventEditor';
 import ListHeader from '../ListHeader';
 import FilterModal from '../CustomFilters/FilterModal';
-import { IconButton } from 'UI';
+import { IconButton, SegmentSelection } from 'UI';
 import stl from './eventFilter.css';
 import Attributes from '../Attributes/Attributes';
 import RandomPlaceholder from './RandomPlaceholder';
@@ -19,6 +19,7 @@ import CustomFilters from '../CustomFilters';
 import ManageFilters from '../ManageFilters';
 import { blink as setBlink }  from 'Duck/funnels';
 import cn from 'classnames';
+import SaveFilterButton from 'Shared/SaveFilterButton';
 
 @connect(state => ({
   events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
@@ -41,7 +42,8 @@ import cn from 'classnames';
   setSearchQuery,
   setActiveFlow,
   setFilterOption,
-  setBlink
+  setBlink,
+  edit,
 })
 @DNDContext
 export default class EventFilter extends React.PureComponent {
@@ -109,6 +111,10 @@ export default class EventFilter extends React.PureComponent {
     this.props.setActiveFlow(null)
   }
 
+  changeConditionTab = (e, { name, value }) => {
+    this.props.edit({ [ 'condition' ]: value })
+  };
+
   render() {
     const {
       events,
@@ -124,34 +130,6 @@ export default class EventFilter extends React.PureComponent {
 
     return (
       <OutsideClickDetectingDiv className={ stl.wrapper } onClickOutside={ this.closeModal } >
-        { showPlacehoder && !hasFilters &&
-          <div
-            className={ stl.randomElement }
-            onClick={ this.onPlaceholderClick }
-          >
-            { !searchQuery && 
-              <div className={ stl.placeholder }>Search for users, clicks, page visits, requests, errors and more</div>
-              // <RandomPlaceholder onClick={ this.onPlaceholderItemClick } appliedFilterKeys={ appliedFilterKeys } />
-            }
-          </div>
-        }
-        <Input
-          inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
-          className={stl.searchField}
-          ref={ this.inputRef }
-          onChange={ this.onSearchChange }
-          onKeyUp={this.onKeyUp}
-          value={searchQuery}
-          icon="search"
-          iconPosition="left"
-          placeholder={ hasFilters ? 'Search sessions using any captured event (click, input, page, error...)' : ''}
-          fluid
-          onFocus={ this.onFocus }
-          onBlur={ this.onBlur }
-          id="search"
-          autocomplete="off"
-        />
-
         <FilterModal
           close={ this.closeModal }
           displayed={ showFilterModal }
@@ -161,7 +139,24 @@ export default class EventFilter extends React.PureComponent {
         />
         
         { hasFilters &&
-          <div className={cn("bg-white rounded border-gray-light mt-2 relative", { 'blink-border' : blink })}>            
+            <div className={cn("bg-white rounded border-gray-light mt-2 relative", { 'blink-border' : blink })}>            
+              <div className="absolute right-0 top-0 m-3 z-10 flex items-center">
+                <div className="mr-2">Operator</div>
+                <SegmentSelection
+                  primary
+                  name="condition"
+                  extraSmall={true}
+                  // className="my-3"
+                  onSelect={ this.changeConditionTab }
+                  value={{ value: appliedFilter.condition }}
+                  list={ [
+                    { name: 'AND', value: 'and' },
+                    { name: 'OR', value: 'or' },
+                    { name: 'THEN', value: 'then' },
+                  ]}
+                />
+              </div>
+            
             { events.size > 0 &&
               <>
                 <div className="py-1"><ListHeader title="Events" /></div>
@@ -189,6 +184,7 @@ export default class EventFilter extends React.PureComponent {
                   showFilters={ true }
                 />
               </div>
+              <SaveFilterButton />
               <div className="flex items-center">
                 <div>
                   <IconButton plain label="CLEAR STEPS" onClick={ this.clearEvents } />

@@ -7,9 +7,11 @@ import {
   connectPlayer,
   init as initPlayer,
   clean as cleanPlayer,
+  Controls,
 } from 'Player';
 import cn from 'classnames'
 import RightBlock from './RightBlock'
+import withLocationHandlers from "HOCs/withLocationHandlers";
 
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
@@ -35,9 +37,17 @@ function PlayerContent({ live, fullscreen, showEvents }) {
   )
 }
 
-function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config }) {
+function WebPlayer (props) {
+  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config } = props;
+
   useEffect(() => {
     initPlayer(session, jwt, config);
+
+    const jumptTime = props.query.get('jumpto');
+    if (jumptTime) {
+      Controls.jump(parseInt(jumptTime));
+    }
+
     return () => cleanPlayer()
   }, [ session.sessionId ]);
 
@@ -56,7 +66,6 @@ function WebPlayer ({ session, toggleFullscreen, closeBottomBlock, live, fullscr
   );
 }
 
-
 export default connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
   jwt: state.get('jwt'),
@@ -65,5 +74,4 @@ export default connect(state => ({
 }), {
   toggleFullscreen,
   closeBottomBlock,
-})(WebPlayer)
-
+})(withLocationHandlers()(WebPlayer));

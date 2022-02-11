@@ -1,4 +1,4 @@
-name: S3 Deploy
+name: Frontend FOSS Deployment 
 on:
   push:
     branches:
@@ -27,8 +27,8 @@ jobs:
         method: kubeconfig
         kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
-    - name: Install
-      run: npm install
+#    - name: Install
+#      run: npm install
 
     - name: Build and deploy
       run: |

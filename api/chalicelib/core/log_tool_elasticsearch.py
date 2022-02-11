@@ -53,11 +53,11 @@ def add_edit(tenant_id, project_id, data):
     else:
         return add(tenant_id=tenant_id,
                    project_id=project_id,
-                   host=data["host"], api_key=data["apiKeyId"], api_key_id=data["apiKey"], indexes=data["indexes"],
+                   host=data["host"], api_key=data["apiKey"], api_key_id=data["apiKeyId"], indexes=data["indexes"],
                    port=data["port"])
 
 
-def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=29):
+def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
     host = host.replace("http://", "").replace("https://", "")
     try:
         args = {

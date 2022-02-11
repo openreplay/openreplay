@@ -509,7 +509,8 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
                           FROM errors
                           WHERE {" AND ".join(ch_sub_query)}
                           GROUP BY error_id, name, message
-                          ORDER BY {sort} {order}) AS details INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
+                          ORDER BY {sort} {order}
+                          LIMIT 1001) AS details INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
                          FROM errors
                          GROUP BY error_id) AS time_details
                     ON details.error_id=time_details.error_id

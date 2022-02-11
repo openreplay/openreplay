@@ -4,6 +4,9 @@ import { fetchListType, saveType, editType, initType, removeType } from './funcT
 import { createItemInListUpdater, mergeReducers, success, array } from './funcTools/tools';
 import { createEdit, createInit } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
+import { addElementToFiltersMap, addElementToLiveFiltersMap } from 'Types/filter/newFilter';
+import { FilterCategory } from '../types/filter/filterType';
+import { refreshFilterOptions } from './search'
 
 const name = "integration/variable";
 const idKey = 'index';
@@ -25,7 +28,7 @@ const FETCH_SOURCES_SUCCESS = success(FETCH_SOURCES);
 
 // const defaultMeta = [{key: 'user_id', index: 0}, {key: 'user_anonymous_id', index: 0}];
 const initialState = Map({
-  list: List([{key: 'user_id'}, {key: 'user_anonymous_id'}]),
+  list: List(),
   instance: CustomField(),
   sources: List(),
 });
@@ -33,6 +36,10 @@ const initialState = Map({
 const reducer = (state = initialState, action = {}) => {
 	switch(action.type) {
 		case FETCH_SUCCESS:
+      action.data.forEach(item => {
+        addElementToFiltersMap(FilterCategory.METADATA, item.key);
+        addElementToLiveFiltersMap(FilterCategory.METADATA, item.key);
+      });
       return state.set('list', List(action.data).map(CustomField)) //.concat(defaultMeta))
     case FETCH_SOURCES_SUCCESS:
       return state.set('sources', List(action.data.map(({ value, ...item}) => ({label: value, key: value, ...item}))).map(CustomField))
@@ -53,13 +60,14 @@ const reducer = (state = initialState, action = {}) => {
 export const edit = createEdit(name);
 export const init = createInit(name);
 
-export const fetchList = (siteId) => {
-  return {
+export const fetchList = (siteId) => (dispatch, getState) => {
+  return dispatch({
     types: array(FETCH_LIST),
     call: client => client.get(siteId ? `/${siteId}/metadata` : '/metadata'),
-  }
+  }).then(() => {
+    dispatch(refreshFilterOptions());
+  });
 }
-
 export const fetchSources = () => {
   return {
     types: array(FETCH_SOURCES),

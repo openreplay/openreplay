@@ -31,7 +31,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     :param filter_d: dict contains events&filters&...
     :return:
     """
-    stages: [dict] = filter_d["events"]
+    stages: [dict] = filter_d.get("events", [])
     filters: [dict] = filter_d.get("filters", [])
     filter_issues = filter_d.get("issueTypes")
     if filter_issues is None or len(filter_issues) == 0:
@@ -130,6 +130,8 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         if not isinstance(s["value"], list):
             s["value"] = [s["value"]]
         is_any = sessions._isAny_opreator(s["operator"])
+        if not is_any and isinstance(s["value"], list) and len(s["value"]) == 0:
+            continue
         op = sessions.__get_sql_operator(s["operator"])
         event_type = s["type"].upper()
         if event_type == events.event_type.CLICK.ui_type:
@@ -581,7 +583,7 @@ def get_top_insights(filter_d, project_id):
 @dev.timed
 def get_issues_list(filter_d, project_id, first_stage=None, last_stage=None):
     output = dict({'critical_issues_count': 0})
-    stages = filter_d["events"]
+    stages = filter_d.get("events", [])
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
     # print(json.dumps(rows[0],indent=4))

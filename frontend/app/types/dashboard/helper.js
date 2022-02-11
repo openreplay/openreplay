@@ -1,3 +1,8 @@
+export const getDayStartAndEndTimestamps = (date) => {
+  const start = moment(date).startOf('day').valueOf();
+  const end = moment(date).endOf('day').valueOf();
+  return { start, end };
+};
 
 // const getPerformanceDensity = (period) => {
 //   switch (period) {
@@ -34,4 +39,13 @@ export const getTimeString = (ts, period) => {
 };
 
 export const getChartFormatter = period => (data = []) =>
-  data.map(({ timestamp, ...rest }) => ({ time: getTimeString(timestamp, period), ...rest }));
+  data.map(({ timestamp, ...rest }) => ({ time: getTimeString(timestamp, period), ...rest, timestamp }));
+
+export const getStartAndEndTimestampsByDensity = (current, start, end, density) => {
+  const diff = end - start;
+  const step = Math.floor(diff / density);
+  const currentIndex = Math.floor((current - start) / step);
+  const startTimestamp = parseInt(start + currentIndex * step);
+  const endTimestamp = parseInt(startTimestamp + step);
+  return { startTimestamp, endTimestamp };
+};

@@ -3,8 +3,11 @@ import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions'
 import { setPeriod, setPlatform, fetchMetadataOptions } from 'Duck/dashboard';
-import { NoContent } from 'UI';
-import { WIDGET_KEYS } from 'Types/dashboard';
+import { NoContent, Icon } from 'UI';
+import { WIDGET_KEYS, WIDGET_LIST } from 'Types/dashboard';
+// import CustomMetrics from 'Shared/CustomMetrics';
+import CustomMetricsModal from 'Shared/CustomMetrics/CustomMetricsModal';
+import SessionListModal from 'Shared/CustomMetrics/SessionListModal';
 
 import { 
   MissingResources,
@@ -38,14 +41,16 @@ import SideMenuSection from './SideMenu/SideMenuSection';
 import styles from './dashboard.css';
 import WidgetSection from 'Shared/WidgetSection/WidgetSection';
 import OverviewWidgets from './Widgets/OverviewWidgets/OverviewWidgets';
+import CustomMetricsWidgets from './Widgets/CustomMetricsWidgets/CustomMetricsWidgets';
 import WidgetHolder from './WidgetHolder/WidgetHolder';
 import MetricsFilters from 'Shared/MetricsFilters/MetricsFilters';
 import { withRouter } from 'react-router';
 
 const OVERVIEW = 'overview';
 const PERFORMANCE = 'performance';
-const ERRORS_N_CRASHES = 'errors_n_crashes';
+const ERRORS_N_CRASHES = 'errors';
 const RESOURCES = 'resources';
+const CUSTOM_METRICS = 'custom_metrics';
 
 const menuList = [
   {
@@ -54,6 +59,13 @@ const menuList = [
     icon: "info-square",
     label: getStatusLabel(OVERVIEW),
     active: status === OVERVIEW,
+  },
+  {
+    key: CUSTOM_METRICS,
+    section: 'metrics',
+    icon: "sliders",
+    label: getStatusLabel(CUSTOM_METRICS),
+    active: status === CUSTOM_METRICS,
   },  
   {
     key: ERRORS_N_CRASHES,
@@ -83,6 +95,8 @@ function getStatusLabel(status) {
 	switch(status) {
 		case OVERVIEW:
 			return "Overview";
+		case CUSTOM_METRICS:
+			return "Custom Metrics";
 		case PERFORMANCE:
 			return "Performance";
     case ERRORS_N_CRASHES:
@@ -110,6 +124,8 @@ function isInViewport(el) {
   comparing: state.getIn([ 'dashboard', 'comparing' ]),
   platform: state.getIn([ 'dashboard', 'platform' ]),
   dashboardAppearance: state.getIn([ 'user', 'account', 'appearance', 'dashboard' ]),
+  activeWidget: state.getIn(['customMetrics', 'activeWidget']),
+  appearance: state.getIn([ 'user', 'account', 'appearance' ]),
 }), { setPeriod, setPlatform, fetchMetadataOptions })
 @withPageTitle('Metrics - OpenReplay')
 @withRouter
@@ -129,6 +145,10 @@ export default class Dashboard extends React.PureComponent {
     endDate: null,
     pageSection: 'metrics',
   };
+
+  getWidgetsByKey = (widgetType) => {
+    return WIDGET_LIST.filter(({ key, type }) => !this.props.appearance.dashboard[ key ] && type === widgetType);
+  }
 
   componentDidMount() {
     const { history, location } = this.props;        
@@ -164,7 +184,7 @@ export default class Dashboard extends React.PureComponent {
   }
 
   render() {
-    const { dashboardAppearance, comparing } = this.props;
+    const { dashboardAppearance, comparing, activeWidget } = this.props;
     const { pageSection } = this.state;
 
     const noWidgets = WIDGET_KEYS
@@ -184,6 +204,8 @@ export default class Dashboard extends React.PureComponent {
           <div>
             <div className={ cn(styles.header, "flex items-center w-full") }>            
               <MetricsFilters />
+              
+              { activeWidget && <SessionListModal activeWidget={activeWidget} /> }
             </div>
             <div className="">
               <NoContent
@@ -193,13 +215,41 @@ export default class Dashboard extends React.PureComponent {
                 icon
                 empty
               >
-                <WidgetSection title="Overview" type="overview" className="mb-4" description="(Average Values)">
+                <WidgetSection
+                  title="Overview"
+                  type="overview"
+                  className="mb-4"
+                  description="(Average Values)"
+                  widgets={this.getWidgetsByKey(OVERVIEW)}
+                >
                   <div className="grid grid-cols-4 gap-4" ref={this.list[OVERVIEW]}>
                     <OverviewWidgets isOverview />
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Errors" className="mb-4" type="errors">
+                <WidgetSection 
+                  title="Custom Metrics"
+                  type={CUSTOM_METRICS}
+                  className="mb-4"
+                  widgets={[]}
+                  description={
+                    <div className="flex items-center">
+                      {comparing && (
+                        <div className="text-sm flex items-center font-normal">
+                          <Icon name="info" size="12" className="mr-2" />
+                          Custom Metrics are not supported for comparison.
+                        </div>
+                      )}
+                      {/* <CustomMetrics /> */}
+                    </div>
+                  }
+                >
+                  <div className={cn("gap-4 grid grid-cols-2")} ref={this.list[CUSTOM_METRICS]}>
+                    <CustomMetricsWidgets onClickEdit={(e) => null}/>
+                  </div>
+                </WidgetSection>
+
+                <WidgetSection title="Errors" className="mb-4" type="errors" widgets={this.getWidgetsByKey(ERRORS_N_CRASHES)}>
                   <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[ERRORS_N_CRASHES]}>
                     { dashboardAppearance.impactedSessionsByJsErrors && <WidgetHolder Component={SessionsAffectedByJSErrors} /> }
                     { dashboardAppearance.errorsPerDomains && <WidgetHolder Component={ErrorsPerDomain} /> }
@@ -213,7 +263,7 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Performance" type="performance" className="mb-4">
+                <WidgetSection title="Performance" type="performance" className="mb-4" widgets={this.getWidgetsByKey(PERFORMANCE)}>
                   <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[PERFORMANCE]}>
                     { dashboardAppearance.speedLocation && <WidgetHolder Component={SpeedIndexLocation} /> }
                     { dashboardAppearance.crashes && <WidgetHolder Component={Crashes} /> }
@@ -233,7 +283,7 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection title="Resources" type="resources" className="mb-4">
+                <WidgetSection title="Resources" type="resources" className="mb-4" widgets={this.getWidgetsByKey(RESOURCES)}>
                   <div className={ cn("gap-4", { 'grid grid-cols-2' : !comparing })} ref={this.list[RESOURCES]}>
                     { dashboardAppearance.resourcesCountByType && <WidgetHolder Component={BreakdownOfLoadedResources} /> }
                     { dashboardAppearance.resourcesLoadingTime && <WidgetHolder Component={ResourceLoadingTime} /> }
@@ -248,6 +298,8 @@ export default class Dashboard extends React.PureComponent {
             </div>
           </div>
         </div>
+
+        <CustomMetricsModal />
       </div>
     );
   }

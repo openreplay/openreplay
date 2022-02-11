@@ -9,6 +9,7 @@ import { init } from 'Duck/site';
 import styles from './siteDropdown.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
+import { clearSearch } from 'Duck/search';
 
 @withRouter
 @connect(state => ({  
@@ -18,7 +19,8 @@ import NewSiteForm from '../Client/Sites/NewSiteForm';
 }), {
   setSiteId,
   pushNewSite,
-  init
+  init,
+  clearSearch,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
@@ -30,6 +32,11 @@ export default class SiteDropdown extends React.PureComponent {
   newSite = () => {
     this.props.init({})
     this.setState({showProductModal: true})
+  }
+
+  switchSite = (siteId) => {
+    this.props.setSiteId(siteId);
+    this.props.clearSearch();
   }
 
   render() {
@@ -54,7 +61,7 @@ export default class SiteDropdown extends React.PureComponent {
             { !showCurrent && <li>{ 'Does not require domain selection.' }</li>}
             {
               sites.map(site => (
-                <li key={ site.id } onClick={ () => this.props.setSiteId(site.id) }>
+                <li key={ site.id } onClick={() => this.switchSite(site.id)}>
                   <Icon 
                     name="circle"
                     size="8"

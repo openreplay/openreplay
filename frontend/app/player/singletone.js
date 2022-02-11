@@ -69,6 +69,7 @@ export const markElement = initCheck((...args) => instance.marker && instance.ma
 export const scale = initCheck(() => instance.scale());
 export const toggleInspectorMode = initCheck((...args) => instance.toggleInspectorMode(...args));
 export const callPeer = initCheck((...args) => instance.assistManager.call(...args))
+export const requestReleaseRemoteControl = initCheck((...args) => instance.assistManager.requestReleaseRemoteControl(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
 

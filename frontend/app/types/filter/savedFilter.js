@@ -1,19 +1,24 @@
 import Record from 'Types/Record';
 import Filter from './filter';
 import { List } from 'immutable';
+import { notEmptyString, validateName } from 'App/validate';
 
 export default Record({
-  filterId: undefined,
+  searchId: undefined,
   projectId: undefined,
   userId: undefined,
-  name: undefined,
+  name: '',
   filter: Filter(),
   createdAt: undefined,
   count: 0,
-  watchdogs: List()
+  watchdogs: List(),
+  isPublic: false,
 }, {
-  idKey: 'filterId',
+  idKey: 'searchId',
   methods: {
+    validate() {
+      return notEmptyString(this.name);
+    },
     toData() {
       const js = this.toJS();
       js.filter.filters = js.filter.filters.map(f => ({...f, value: Array.isArray(f.value) ? f.value : [f.value]}))

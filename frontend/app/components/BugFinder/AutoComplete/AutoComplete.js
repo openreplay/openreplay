@@ -1,9 +1,10 @@
 import React from 'react';
 import APIClient from 'App/api_client';
 import cn from 'classnames';
-import { Input } from 'UI';
+import { Input, Icon } from 'UI';
 import { debounce } from 'App/utils';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import EventSearchInput from 'Shared/EventSearchInput';
 import stl from './autoComplete.css';
 import FilterItem from '../CustomFilters/FilterItem';
 
@@ -78,7 +79,7 @@ class AutoComplete extends React.PureComponent {
   })
 
 
-  onInputChange = (e, { name, value }) => {
+  onInputChange = ({ target: { value } }) => {
     changed = true;
     this.setState({ query: value, updated: true })
     const _value = value.trim();
@@ -118,23 +119,53 @@ class AutoComplete extends React.PureComponent {
       valueToText = defaultValueToText,
       placeholder = 'Type to search...',
       headerText = '',
-      fullWidth = false
+      fullWidth = false,
+      onRemoveValue = () => {},
+      onAddValue = () => {},
+      showCloseButton = false,
     } = this.props;
 
     const options = optionMapping(values, valueToText)
     
     return (
       <OutsideClickDetectingDiv 
-        className={ cn("relative", { "flex-1" : fullWidth }) } 
+        className={ cn("relative flex items-center", { "flex-1" : fullWidth }) } 
         onClickOutside={this.onClickOutside}
       >
-        <Input
+        {/* <EventSearchInput /> */}
+        <div className={stl.inputWrapper}>
+          <input
+            name="query"
+            // className={cn(stl.input)}
+            onFocus={ () => this.setState({ddOpen: true})}
+            onChange={ this.onInputChange }
+            onBlur={ this.onBlur }
+            onFocus={ () => this.setState({ddOpen: true})}
+            value={ query }
+            autoFocus={ true }
+            type="text"
+            placeholder={ placeholder }
+            onPaste={(e) => {
+              const text = e.clipboardData.getData('Text');
+              this.hiddenInput.value = text;
+              pasted = true; // to use only the hidden input
+            } }
+          />
+          <div className={stl.right} onClick={showCloseButton ? onRemoveValue : onAddValue}>
+            { showCloseButton ? <Icon name="close" size="14" /> : <span className="px-1">or</span>}
+          </div>
+        </div>
+
+        {showCloseButton && <div className='ml-2'>or</div>}
+        {/* <Input
           className={ cn(stl.searchInput, { [ stl.fullWidth] : fullWidth }) }
           onChange={ this.onInputChange }
           onBlur={ this.onBlur }
           onFocus={ () => this.setState({ddOpen: true})}
           value={ query }
-          icon="search"
+          // icon="search"
+          label={{ basic: true, content: <div>test</div> }}
+          labelPosition='right'
           loading={ loading }
           autoFocus={ true }
           type="search"
@@ -144,7 +175,7 @@ class AutoComplete extends React.PureComponent {
             this.hiddenInput.value = text;
             pasted = true; // to use only the hidden input
           } }
-        />
+        /> */}
         <textarea style={hiddenStyle} ref={(ref) => this.hiddenInput = ref }></textarea>
         { ddOpen && options.length > 0 &&
           <div className={ stl.menu }>

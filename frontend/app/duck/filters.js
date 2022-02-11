@@ -7,7 +7,16 @@ import CustomFilter, { KEYS } from 'Types/filter/customFilter';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
+import { fetchListType, fetchType, saveType, editType, initType, removeType } from './funcTools/crud/types';
 import logger from 'App/logger';
+
+import { newFiltersList } from 'Types/filter'
+import NewFilter, { filtersMap } from 'Types/filter/newFilter';
+   
+
+// for (var i = 0; i < newFiltersList.length; i++) {
+//   filterOptions[newFiltersList[i].category] = newFiltersList.filter(filter => filter.category === newFiltersList[i].category)
+// }
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -16,6 +25,7 @@ const FETCH_FILTER_OPTIONS = new RequestTypes('filters/FETCH_FILTER_OPTIONS');
 const SET_FILTER_OPTIONS = 'filters/SET_FILTER_OPTIONS';
 const SAVE = new RequestTypes('filters/SAVE');
 const REMOVE = new RequestTypes('filters/REMOVE');
+const EDIT = editType('funnel/EDIT');
 
 const SET_SEARCH_QUERY = 'filters/SET_SEARCH_QUERY';
 const SET_ACTIVE = 'filters/SET_ACTIVE';
@@ -35,7 +45,12 @@ const EDIT_ATTRIBUTE = 'filters/EDIT_ATTRIBUTE';
 const REMOVE_ATTRIBUTE = 'filters/REMOVE_ATTRIBUTE';
 const SET_ACTIVE_FLOW = 'filters/SET_ACTIVE_FLOW';
 
+const UPDATE_VALUE = 'filters/UPDATE_VALUE';
+
+const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
+
 const initialState = Map({
+  instance: Filter(),
   activeFilter: null,
   list: List(),
   appliedFilter: Filter(),
@@ -71,6 +86,8 @@ const updateList = (state, instance) => state.update('list', (list) => {
 const reducer = (state = initialState, action = {}) => {
   let optionsMap = null;
   switch (action.type) {
+    case EDIT:
+      return state.mergeIn([ 'appliedFilter' ], action.instance);
     case FETCH_FILTER_OPTIONS.SUCCESS:
       optionsMap = state.getIn(['filterOptions', action.key]).map(i => i.value).toJS();
       return state.mergeIn(['filterOptions', action.key], Set(action.data.filter(i => !optionsMap.includes(i.value))));
@@ -177,6 +194,8 @@ const reducer = (state = initialState, action = {}) => {
       return state.removeIn([ 'appliedFilter', 'filters', action.index ]);
     case SET_SEARCH_QUERY:
       return state.set('searchQuery', action.query);
+    case UPDATE_VALUE:
+      return state.setIn([ 'appliedFilter', action.filterType, action.index, 'value' ], action.value);
     default:
       return state;
   }
@@ -234,7 +253,7 @@ export function removeAttribute(index) {
 export function fetchList(range) {
   return {
     types: FETCH_LIST.toArray(),
-    call: client => client.get(`/flows${range ? '?range_value=' + range : ''}`),
+    call: client => client.get(`/saved_search`),
   };
 }
 
@@ -257,7 +276,7 @@ export function setFilterOption(key, filterOption) {
 export function save(instance) {
   return {
     types: SAVE.toArray(),
-    call: client => client.post('/filters', instance.toData()),
+    call: client => client.post('/saved_search', instance.toData()),
     instance,
   };
 }
@@ -366,5 +385,22 @@ export function setSearchQuery(query) {
   return {
     type: SET_SEARCH_QUERY,
     query
+  }
+}
+
+export const edit = instance => {
+  return {
+    type: EDIT,
+    instance,
+  }
+};
+
+// filterType: 'events' or 'filters'
+export const updateValue  = (filterType, index, value) => {
+  return {
+    type: UPDATE_VALUE,
+    filterType, 
+    index,
+    value
   }
 }

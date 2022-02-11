@@ -8,7 +8,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 
 def try_live(project_id, data: schemas.TryCustomMetricsSchema):
     results = []
-    for s in data.series:
+    for i, s in enumerate(data.series):
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
@@ -21,7 +21,21 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.viewType)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            r["seriesName"] = s.name if s.name else i + 1
+            r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
+    return results
+
+
+def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
+    series_charts = try_live(project_id=project_id, data=data)
+    if data.viewType == schemas.MetricViewType.progress:
+        return series_charts
+    results = [{}] * len(series_charts[0])
+    for i in range(len(results)):
+        for j, series_chart in enumerate(series_charts):
+            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+                          data.series[j].name if data.series[j].name else j + 1: series_chart[i]["count"]}
     return results
 
 
@@ -30,7 +44,30 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     if metric is None:
         return None
     metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
-    return try_live(project_id=project_id, data=metric)
+    series_charts = try_live(project_id=project_id, data=metric)
+    if data.viewType == schemas.MetricViewType.progress:
+        return series_charts
+    results = [{}] * len(series_charts[0])
+    for i in range(len(results)):
+        for j, series_chart in enumerate(series_charts):
+            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+                          metric.series[j].name: series_chart[i]["count"]}
+    return results
+
+
+def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricRawPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
+    results = []
+    for s in metric.series:
+        s.filter.startDate = data.startDate
+        s.filter.endDate = data.endDate
+        results.append({"seriesId": s.series_id, "seriesName": s.name,
+                        **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
+
+    return results
 
 
 def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
@@ -89,6 +126,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
         if s.series_id is None:
             n_series.append({"i": i, "s": s})
             prefix = "n_"
+            s.index = i
         else:
             u_series.append({"i": i, "s": s})
             u_series_ids.append(s.series_id)
@@ -230,3 +268,16 @@ def get_series_for_alert(project_id, user_id):
         )
         rows = cur.fetchall()
     return helper.list_to_camel_case(rows)
+
+
+def change_state(project_id, metric_id, user_id, status):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify("""\
+            UPDATE public.metrics 
+            SET active = %(status)s 
+            WHERE metric_id = %(metric_id)s
+              AND (user_id = %(user_id)s OR is_public);""",
+                        {"metric_id": metric_id, "status": status, "user_id": user_id})
+        )
+    return get(metric_id=metric_id, project_id=project_id, user_id=user_id)

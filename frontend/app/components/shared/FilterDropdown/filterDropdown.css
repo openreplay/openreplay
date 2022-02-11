@@ -3,6 +3,10 @@
   padding: 0 10px;
   &:hover {
     background-color: $gray-light;
+    color: white;
+    & svg {
+      fill: white;
+    }
   }
 }
 

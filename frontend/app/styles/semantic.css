@@ -314,3 +314,26 @@ a:hover {
 .ui.toggle.checkbox {
   min-height: 20px !important;
 }
+
+.ui.search.dropdown>input.search {
+  bottom: 0 !important;
+}
+
+.filterDropdown.ui.search.dropdown.active>input.search,
+.filterDropdown.ui.search.dropdown.visible>input.search {
+  border: solid thin $teal !important;
+  border-radius: 3px;
+  height: 26px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  whitespace: nowrap;
+}
+
+.filterDropdown.ui.search.dropdown>.text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 15px;
+}

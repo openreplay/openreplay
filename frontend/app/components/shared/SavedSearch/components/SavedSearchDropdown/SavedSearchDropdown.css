@@ -1,0 +1,15 @@
+.wrapper {
+  position: relative;
+  display: inline-block;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.rowItem {
+  &:hover {
+    color: $teal;
+  }
+}

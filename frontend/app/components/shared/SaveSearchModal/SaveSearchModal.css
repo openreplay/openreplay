@@ -1,0 +1,23 @@
+.modalHeader {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cancelButton {
+  background-color: transparent !important;
+  border: solid thin transparent !important;
+  color: $teal !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
+}
+
+.applyButton {
+  background-color: white !important;
+  border: solid thin $active-blue-border !important;
+  color: $teal !important;
+  &:hover {
+    background-color: $active-blue !important;
+  }
+}

@@ -20,7 +20,7 @@ function printString(arg: any): string {
   if (Array.isArray(arg)) {
     return `Array(${arg.length})`;
   }
-  return arg.toString();
+  return String(arg);
 }
 
 function printFloat(arg: any): string {

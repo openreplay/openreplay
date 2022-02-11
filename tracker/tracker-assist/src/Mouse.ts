@@ -15,9 +15,10 @@ export default class Mouse {
       zIndex: "999998",
       background: "radial-gradient(red, transparent)",
     });
-    document.body.appendChild(this.mouse);
+  }
 
-
+  mount() {
+    document.body.appendChild(this.mouse)
     window.addEventListener("scroll", this.handleWScroll)
     window.addEventListener("resize", this.resetLastScrEl)
   }

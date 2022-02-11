@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Button, Dropdown, Form, Input, SegmentSelection, Checkbox, Message, Link, Icon } from 'UI';
 import { alertMetrics as metrics } from 'App/constants';
 import { alertConditions as conditions } from 'App/constants';
@@ -8,6 +8,7 @@ import stl from './alertForm.css';
 import DropdownChips from './DropdownChips';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
+import { fetchTriggerOptions } from 'Duck/alerts';
 
 const thresholdOptions = [
   { text: '15 minutes', value: 15 },
@@ -46,10 +47,14 @@ const Section = ({ index, title, description, content }) => (
 const integrationsRoute = client(CLIENT_TABS.INTEGRATIONS);
 
 const AlertForm = props => {
-  const { instance, slackChannels, webhooks, loading, onDelete, deleting } = props;  
+  const { instance, slackChannels, webhooks, loading, onDelete, deleting, triggerOptions, metricId, style={ width: '580px', height: '100vh' } } = props;
   const write = ({ target: { value, name } }) => props.edit({ [ name ]: value })
   const writeOption = (e, { name, value }) => props.edit({ [ name ]: value });
   const onChangeOption = (e, { checked, name }) => props.edit({ [ name ]: checked })
+
+  useEffect(() => {
+    props.fetchTriggerOptions();
+  }, [])
 
   const writeQueryOption = (e, { name, value }) => {
     const { query } = instance;
@@ -61,13 +66,12 @@ const AlertForm = props => {
     props.edit({ query: { ...query, [name] : value } });
   }
 
-  const metric = (instance && instance.query.left) ? metrics.find(i => i.value === instance.query.left) : null;
+  const metric = (instance && instance.query.left) ? triggerOptions.find(i => i.value === instance.query.left) : null;
   const unit = metric ? metric.unit : '';
   const isThreshold = instance.detectionMethod === 'threshold';
 
-
   return (
-    <Form className={ cn("p-6", stl.wrapper)} style={{ width: '580px' }} onSubmit={() => props.onSubmit(instance)} id="alert-form">
+    <Form className={ cn("p-6", stl.wrapper)} style={style} onSubmit={() => props.onSubmit(instance)} id="alert-form">
        <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>
         <input
           autoFocus={ true }
@@ -135,7 +139,7 @@ const AlertForm = props => {
                   placeholder="Select Metric"
                   selection
                   search
-                  options={ metrics }
+                  options={ triggerOptions }
                   name="left"
                   value={ instance.query.left }
                   onChange={ writeQueryOption }
@@ -327,6 +331,7 @@ const AlertForm = props => {
 
 export default connect(state => ({
   instance: state.getIn(['alerts', 'instance']),
+  triggerOptions: state.getIn(['alerts', 'triggerOptions']),
   loading: state.getIn(['alerts', 'saveRequest', 'loading']),
   deleting: state.getIn(['alerts', 'removeRequest', 'loading'])
-}))(AlertForm)
+}), { fetchTriggerOptions })(AlertForm)

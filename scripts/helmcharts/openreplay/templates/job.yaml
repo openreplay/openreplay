@@ -48,6 +48,8 @@ spec:
       containers:
       - name: postgres
         env:
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
@@ -76,6 +78,8 @@ spec:
       - name: minio
         image: bitnami/minio:2020.10.9-debian-10-r6
         env:
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
@@ -99,6 +103,8 @@ spec:
       - name: clickhouse
         image: yandex/clickhouse-client:21.9.4.35
         env:
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION
@@ -122,6 +128,8 @@ spec:
             value: "{{ .Values.global.kafka.kafkaPort }}"
           - name: KAFKA_SSL
             value: "{{ .Values.global.kafka.kafkaUseSsl }}"
+          - name: FORCE_MIGRATION
+            value: "{{ .Values.forceMigration }}"
           - name: PREVIOUS_APP_VERSION
             value: "{{ .Values.fromVersion }}"
           - name: CHART_APP_VERSION

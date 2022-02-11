@@ -1,40 +1,73 @@
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withToggle from 'HOCs/withToggle';
-import { IconButton, SlideModal, NoContent } from 'UI';
+import { IconButton, Popup } from 'UI';
 import { updateAppearance } from 'Duck/user';
-import { WIDGET_LIST } from 'Types/dashboard';
 import stl from './addWidgets.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import { updateActiveState } from 'Duck/customMetrics';
+
+const CUSTOM_METRICS = 'custom_metrics';
 
 @connect(state => ({
 	appearance: state.getIn([ 'user', 'account', 'appearance' ]),
+	customMetrics: state.getIn(['customMetrics', 'list']),
 }), {
-  updateAppearance,
+  updateAppearance, updateActiveState,
 })
 @withToggle()
 export default class AddWidgets extends React.PureComponent {
 	makeAddHandler = widgetKey => () => {
-		const { appearance } = this.props;
-		const newAppearance = appearance.setIn([ 'dashboard', widgetKey ], true);
+		if (this.props.type === CUSTOM_METRICS) {
+			this.props.updateActiveState(widgetKey, true);
+		} else {
+			const { appearance } = this.props;
+			const newAppearance = appearance.setIn([ 'dashboard', widgetKey ], true);
+			this.props.updateAppearance(newAppearance)
+		}
+
 		this.props.switchOpen(false);
-		this.props.updateAppearance(newAppearance)
+	}
+
+	getCustomMetricWidgets = () => {
+		return this.props.customMetrics.filter(i => !i.active).map(item => ({
+			type: CUSTOM_METRICS,
+			key: item.metricId,
+			name: item.name,
+		})).toJS();
 	}
 
 	render() {
-		const { appearance, disabled } = this.props;
-		const avaliableWidgets = WIDGET_LIST.filter(({ key, type }) => !appearance.dashboard[ key ] && type === this.props.type );
+		const { disabled, widgets, type  } = this.props;
+		const filteredWidgets = type === CUSTOM_METRICS ? this.getCustomMetricWidgets() : widgets;
 
 		return (
 			<div className="relative">
+				<Popup
+					trigger={
+						<IconButton 
+							circle
+							size="small"
+							icon="plus" 
+							outline 
+							onClick={ this.props.switchOpen } 
+							disabled={ filteredWidgets.length === 0 }
+						/>
+					}
+					content={ `Add a metric to this section.` }
+					size="tiny"
+					inverted
+					position="top center"
+				/>
 				<OutsideClickDetectingDiv onClickOutside={() => this.props.switchOpen(false)}>
 					{this.props.open && 
 						<div
 							className={cn(stl.menuWrapper, 'absolute border rounded z-10 bg-white w-auto')}
 							style={{ minWidth: '200px', top: '30px'}}
 						>
-							{avaliableWidgets.map(w => (
+							{filteredWidgets.map(w => (
 								<div
+									key={w.key}
 									className={cn(stl.menuItem, 'whitespace-pre cursor-pointer')}
 									onClick={this.makeAddHandler(w.key)}
 								>
@@ -44,46 +77,6 @@ export default class AddWidgets extends React.PureComponent {
 						</div>
 					}
 				</OutsideClickDetectingDiv>
-
-				<SlideModal
-	        title="Add Widget"
-	        size="middle"
-	        isDisplayed={ false }
-	        content={ this.props.open &&
-	        	<NoContent
-	        	  title="No Widgets Left"
-	        	  size="small"
-	        	 	show={ avaliableWidgets.length === 0}
-	        	>
-	       	   	{ avaliableWidgets.map(({ key, name, description, thumb }) => (
-		       			<div className={ cn(stl.widgetCard) } key={ key } >
-									<div className="flex justify-between items-center flex-1">
-										<div className="mr-10">
-											<h4>{ name }</h4>
-										</div>
-										<IconButton
-											className="flex-shrink-0"
-											onClick={ this.makeAddHandler(key) }
-											circle
-											outline
-											icon="plus"
-											style={{ width: '24px', height: '24px'}}
-										/>
-									</div>
-		       			</div>
-		       		))}
-		       	</NoContent>
-	        }
-	        onClose={ this.props.switchOpen }
-	      />
-				<IconButton 
-					circle
-					size="small"
-					icon="plus" 
-					outline 
-					onClick={ this.props.switchOpen } 
-					disabled={ disabled || avaliableWidgets.length === 0 } //TODO disabled after Custom fields filtering 
-				/>
 			</div>
 		);
 	}

@@ -1,0 +1,81 @@
+.wrapper {
+  border: solid thin $gray-light !important;
+  border-radius: 3px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  width: 100%;
+  & input {
+    height: 24px;
+    font-size: 13px !important;
+    padding: 0 5px !important;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    border: solid thin transparent !important;
+    width: 100%;
+  }
+
+  & .right {
+    height: 24px;
+    display: flex;
+    align-items: stretch;
+    padding: 0;
+    background-color: $gray-lightest;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+
+    & div {
+      /* background-color: red; */
+      border-left: solid thin $gray-light !important;
+      width: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      &:last-child {
+        border-top-right-radius: 3px;
+        border-bottom-right-radius: 3px;
+      }
+      &:hover {
+        background-color: $gray-light;
+      }
+    }
+  }
+}
+
+.menu {
+  border-radius: 0 0 3px 3px;
+  border: solid thin $gray-light !important;
+  box-shadow: 0 2px 2px 0 $gray-light;
+  /* padding: 20px; */
+  background-color: white;
+  max-height: 350px;
+  overflow-y: auto;
+  position: absolute;
+  top: 28px;
+  left: 0;  
+  width: 500px;
+  z-index: 99;
+}
+
+.filterItem {
+	display: flex;
+	align-items: center;
+	padding: 8px 10px;
+	cursor: pointer;
+	border-radius: 3px;
+	/* transition: all 0.4s; */
+	margin-bottom: 5px;
+	max-width: 100%;	
+	& .label {		
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&:hover {
+		background-color: $gray-lightest;
+		/* transition: all 0.2s; */
+	}
+}

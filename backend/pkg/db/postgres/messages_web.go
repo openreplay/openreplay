@@ -1,11 +1,11 @@
 package postgres
 
 import (
-  "math"
+	"math"
 
 	"openreplay/backend/pkg/hashid"
-	"openreplay/backend/pkg/url"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/url"
 )
 
 // TODO: change messages and replace everywhere to e.Index
@@ -172,11 +172,12 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 	}
 	defer tx.rollback()
 	errorID := hashid.WebErrorID(projectID, e)
+
 	if err = tx.exec(`
 		INSERT INTO errors
 			(error_id, project_id, source, name, message, payload)
 		VALUES
-			($1, $2, $3, $4, $5, $6)
+			($1, $2, $3, $4, $5, $6::jsonb)
 		ON CONFLICT DO NOTHING`,
 		errorID, projectID, e.Source, e.Name, e.Message, e.Payload,
 	); err != nil {

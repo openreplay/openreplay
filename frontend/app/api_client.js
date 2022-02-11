@@ -16,13 +16,15 @@ const siteIdRequiredPaths = [
   '/integration/sources',
   '/issue_types',
   '/sample_rate',
-  '/flows',
+  '/saved_search',
   '/rehydrations',
   '/sourcemaps',
   '/errors',
   '/funnels',
   '/assist',
-  '/heatmaps'
+  '/heatmaps',
+  '/custom_metrics',
+  // '/custom_metrics/sessions',
 ];
 
 const noStoringFetchPathStarts = [

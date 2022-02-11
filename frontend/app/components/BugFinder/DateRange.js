@@ -1,12 +1,10 @@
 import { connect } from 'react-redux';
-import { applyFilter } from 'Duck/filters';
+import { applyFilter } from 'Duck/search';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import DateRangeDropdown from 'Shared/DateRangeDropdown';
 
 @connect(state => ({
-  rangeValue: state.getIn([ 'filters', 'appliedFilter', 'rangeValue' ]),
-  startDate: state.getIn([ 'filters', 'appliedFilter', 'startDate' ]),
-  endDate: state.getIn([ 'filters', 'appliedFilter', 'endDate' ]),
+  filter: state.getIn([ 'search', 'instance' ]),
 }), {
   applyFilter, fetchFunnelsList
 })
@@ -16,7 +14,8 @@ export default class DateRange extends React.PureComponent {
     this.props.applyFilter(e)
   }
   render() {
-    const { startDate, endDate, rangeValue, className } = this.props;
+    const { filter: { rangeValue, startDate, endDate }, className } = this.props;
+    
     return (
       <DateRangeDropdown
         button

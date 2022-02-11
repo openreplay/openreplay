@@ -27,7 +27,7 @@ const locationOptions = Object.keys(regionLabels).map(k => ({ key: LOCATION, tex
 const _filterKeys = [
   { key: 'userId', name: 'User ID', icon: 'user-alt', placeholder: 'Search for User ID' },
   { key: 'userAnonymousId', name: 'User Anonymous ID', icon: 'filters/userid', placeholder: 'Search for User Anonymous ID' },
-  { key: 'revId', name: 'Rev ID', icon: 'filters/border-outer', placeholder: 'Search for Rev ID' },
+  { key: 'revId', name: 'Rev ID', icon: 'filters/rev-id', placeholder: 'Search for Rev ID' },
   { key: COUNTRY, name: 'Country', icon: 'map-marker-alt', placeholder: 'Search for Country' },
   { key: 'device', name: 'Device', icon: 'device', placeholder: 'Search for Device' },
   { key: 'os', name: 'OS', icon: 'os', placeholder: 'Search for OS' },
