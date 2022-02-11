@@ -27,22 +27,24 @@ function migration() {
     # Checking migration versions
     cd /opt/openreplay/openreplay/scripts/helm
     migration_versions=(`ls -l db/init_dbs/$db | grep -E ^d | awk -v number=${PREVIOUS_APP_VERSION} '$NF > number {print $NF}' | grep -v create`)
-    echo "Migration version: $migration_versions"
+    echo "Migration version: ${migration_versions[*]}"
+    # Can't pass the space seperated array to ansible for migration. So joining them with ,
+    joined_migration_versions=$(IFS=, ; echo "${migration_versions[*]}")
     
     cd -
 
     case "$1" in
         postgresql)
-            /bin/bash postgresql.sh migrate $migration_versions
+            /bin/bash postgresql.sh migrate $joined_migration_versions
             ;;
         minio)
-            /bin/bash minio.sh migrate $migration_versions
+            /bin/bash minio.sh migrate $joined_migration_versions
             ;;
         clickhouse)
-            /bin/bash clickhouse.sh migrate $migration_versions
+            /bin/bash clickhouse.sh migrate $joined_migration_versions
             ;;
         kafka)
-            /bin/bash kafka.sh migrate $migration_versions
+            /bin/bash kafka.sh migrate $joined_migration_versions
             ;;
         *)
             echo "Unknown operation for db migration; exiting."
