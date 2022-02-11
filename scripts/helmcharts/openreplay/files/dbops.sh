@@ -17,7 +17,7 @@ function migration() {
         exit 100
     fi
 
-    if [[ $FORCE_MIGRRATION == "true" ]]; then
+    if [[ $FORCE_MIGRATION == "true" ]]; then
         echo "Forcing db migration from $PREVIOUS_APP_VERSION to $CHART_APP_VERSION"
     elif [[ $PREVIOUS_APP_VERSION == $CHART_APP_VERSION ]]; then
         echo "No application version change. Not upgrading."
@@ -73,7 +73,7 @@ function init(){
     esac
 }
 
-if [[ $FORCE_MIGRRATION == "true" ]]; then
+if [[ $FORCE_MIGRATION == "true" ]]; then
     is_migrate=true
 fi
 
