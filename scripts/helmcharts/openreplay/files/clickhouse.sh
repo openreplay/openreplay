@@ -1,13 +1,13 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 clickhousedir=/opt/openreplay/openreplay/scripts/helm/db/init_dbs/clickhouse
 
 function migrate() {
     echo "Starting clickhouse migration"
-    migration_versions=$1
-    for version in $migration_versions; do
+    IFS=',' read -r -a migration_versions <<< "$1"
+    for version in ${migration_versions[*]}; do
         echo "Migrating clickhouse version $version"
         # For now, we can ignore the clickhouse db inject errors.
         # TODO: Better error handling in script

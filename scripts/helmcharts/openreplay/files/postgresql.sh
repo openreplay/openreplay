@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -ex
 
 pgdir=/opt/openreplay/openreplay/scripts/helm/db/init_dbs/postgresql
 
@@ -14,8 +14,8 @@ pgdir=/opt/openreplay/openreplay/scripts/helm/db/init_dbs/postgresql
 
 function migrate() {
     echo "Starting postgresql migration"
-    migration_versions=$1
-    for version in $migration_versions; do
+    IFS=',' read -r -a migration_versions <<< "$1"
+    for version in ${migration_versions[*]}; do
         echo "Migrating postgresql version $version"
         psql -f ${pgdir}/${version}/${version}.sql
     done
