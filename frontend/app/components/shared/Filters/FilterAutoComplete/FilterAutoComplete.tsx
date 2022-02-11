@@ -10,8 +10,6 @@ const hiddenStyle = {
   opacity: 0, position: 'fixed', left: '-3000px'
 };
 
-let debouncedRequestValues = (value) => null;
-
 interface Props {
   showOrButton?: boolean;
   showCloseButton?: boolean;
@@ -41,30 +39,26 @@ function FilterAutoComplete(props: Props) {
       value = '',
       icon = null,
   } = props;
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false)
   const [options, setOptions] = useState<any>([]);
   const [query, setQuery] = useState(value);
   
+  const requestValues = (q) => {    
+    setLoading(true);
 
-  useEffect(() => {
-    const requestValues = (q) => {    
-      setLoading(true);
-  
-      return new APIClient()[method?.toLowerCase()](endpoint, { ...params, q })
-      .then(response => response.json())
-      .then(({ errors, data }) => {
-        if (errors) {
-          // this.setError();
-        } else {
-          setOptions(data);       
-        }
-      }).finally(() => setLoading(false));
-    
-    }
-  
-    debouncedRequestValues = debounce(requestValues, 1000)
-  }, [])
+    return new APIClient()[method?.toLowerCase()](endpoint, { ...params, q })
+    .then(response => response.json())
+    .then(({ errors, data }) => {
+      if (errors) {
+        // this.setError();
+      } else {
+        setOptions(data);       
+      }
+    }).finally(() => setLoading(false));
+  }
+
+  const debouncedRequestValues = React.useCallback(debounce(requestValues, 500), []);
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
@@ -77,14 +71,6 @@ function FilterAutoComplete(props: Props) {
     }
     debouncedRequestValues(value);
   }
-
-  // useEffect(() => {
-  //   if (query === '' || query === ' ') {
-  //     return 
-  //   }
-
-  //   debouncedRequestValues(query)
-  // }, [query])
 
   useEffect(() => {
     setQuery(value);
