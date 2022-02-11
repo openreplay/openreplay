@@ -1,5 +1,5 @@
-from chalicelib.utils import pg_client
 from chalicelib.core import sessions
+from chalicelib.utils import pg_client
 
 
 def add_favorite_session(project_id, user_id, session_id):
@@ -37,7 +37,8 @@ def add_viewed_session(project_id, user_id, session_id):
                 INSERT INTO public.user_viewed_sessions 
                     (user_id, session_id) 
                 VALUES 
-                    (%(userId)s,%(sessionId)s);""",
+                    (%(userId)s,%(sessionId)s)
+                ON CONFLICT DO NOTHING;""",
                         {"userId": user_id, "sessionId": session_id})
         )
 
@@ -50,8 +51,6 @@ def favorite_session(project_id, user_id, session_id):
 
 
 def view_session(project_id, user_id, session_id):
-    if viewed_session_exists(user_id=user_id, session_id=session_id):
-        return None
     return add_viewed_session(project_id=project_id, user_id=user_id, session_id=session_id)
 
 
@@ -69,21 +68,3 @@ def favorite_session_exists(user_id, session_id):
         )
         r = cur.fetchone()
         return r is not None
-
-
-def viewed_session_exists(user_id, session_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT 
-                        session_id                                                
-                    FROM public.user_viewed_sessions 
-                    WHERE
-                     user_id = %(userId)s
-                     AND session_id = %(sessionId)s""",
-                {"userId": user_id, "sessionId": session_id})
-        )
-        r = cur.fetchone()
-        if r:
-            return True
-    return False
