@@ -28,7 +28,7 @@ import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
 import LiveSearchBar from 'Shared/LiveSearchBar';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
-import { clearSearch } from 'Duck/search';
+import { clearSearch, fetchSessions } from 'Duck/search';
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -79,6 +79,7 @@ const allowedQueryKeys = [
   resetFunnelFilters,
   setFunnelPage,
   clearSearch,
+  fetchSessions,
 })
 @withPageTitle("Sessions - OpenReplay")
 export default class BugFinder extends React.PureComponent {
@@ -109,6 +110,7 @@ export default class BugFinder extends React.PureComponent {
       };
     });    
 
+    props.fetchSessions();
     props.resetFunnel();
     props.resetFunnelFilters();
     props.fetchFunnelsList(LAST_7_DAYS)
