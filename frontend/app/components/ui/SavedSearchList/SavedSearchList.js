@@ -5,7 +5,7 @@ import cn from 'classnames';
 import { Icon, IconButton, Loader, Button } from 'UI';
 import { confirm } from 'UI/Confirmation';
 import { withRouter } from 'react-router-dom';
-import { addEvent } from 'Duck/filters';
+import { addFilterByKeyAndValue } from 'Duck/search';
 import {
     fetchList as fetchFunnelsList,
     applySavedFilter,
@@ -20,6 +20,7 @@ import Event, { TYPES } from 'Types/filter/event';
 import FunnelMenuItem from 'Components/Funnels/FunnelMenuItem';
 import FunnelSaveModal from 'Components/Funnels/FunnelSaveModal';
 import { blink as setBlink } from 'Duck/funnels';
+import { FilterKey } from 'Types/filter/filterType';
 
 const DEFAULT_VISIBLE = 3;
 @withRouter
@@ -56,11 +57,11 @@ class SavedSearchList extends React.Component {
     }
 
     createHandler = () => {
-        const { events } = this.props;
-        if (events.size === 0) {
-            this.props.addEvent(Event({ type: TYPES.LOCATION, key: TYPES.LOCATION } ))
-            this.props.addEvent(Event({ type: TYPES.LOCATION, key: TYPES.LOCATION } ))
-            this.props.addEvent(Event({ type: TYPES.CLICK, key: TYPES.CLICK } ))
+        const { filters } = this.props;
+        if (filters.size === 0) {
+            this.props.addFilterByKeyAndValue(FilterKey.LOCATION, '');
+            this.props.addFilterByKeyAndValue(FilterKey.LOCATION, '');
+            this.props.addFilterByKeyAndValue(FilterKey.CLICK, '')
         } else {
             this.props.setBlink()
         }
@@ -146,11 +147,12 @@ export default connect(state => ({
     activeTab: state.getIn([ 'sessions', 'activeTab' ]),
     siteId: state.getIn([ 'user', 'siteId' ]),
     events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
+    filters: state.getIn([ 'search', 'instance', 'filters' ]),
 }), { 
     applySavedFilter,
     deleteSearch, setActiveTab,
     setActiveFlow, clearEvents,
-    addEvent,
+    addFilterByKeyAndValue,
     init,
     fetchFunnelsList,
     setBlink
