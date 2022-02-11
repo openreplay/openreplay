@@ -16,11 +16,13 @@ const FETCH = fetchType(name);
 const EDIT = editType(name);
 const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const APPLY = `${name}/APPLY`;
+const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
 
 const initialState = Map({
 	list: List(),
 	instance: new Filter({ filters: [] }),
   filterSearchList: {},
+  currentPage: 1,
 });
 
 
@@ -28,6 +30,8 @@ function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case EDIT:
       return state.mergeIn(['instance'], action.instance);
+    case UPDATE_CURRENT_PAGE:
+      return state.set('currentPage', action.page);
 	}
 	return state;
 }
@@ -89,4 +93,11 @@ export const addFilterByKeyAndValue = (key, value) => (dispatch, getState) => {
   let defaultFilter = liveFiltersMap[key];
   defaultFilter.value = value;
   dispatch(addFilter(defaultFilter));
+}
+
+export function updateCurrentPage(page) {
+  return {
+    type: UPDATE_CURRENT_PAGE,
+    page,
+  };
 }
