@@ -430,7 +430,7 @@ export default class Controls extends React.Component {
                 <ControlButton
                   disabled={ disabled && !inspectorMode }
                   active={ bottomBlock === INSPECTOR }
-                  onClick={ () => toggleBottomBlock(INSPECTOR) }
+                  onClick={ toggleInspectorMode }
                   icon={ inspectorMode ? 'close' : 'inspect' }
                   label="Inspect"
                 />
