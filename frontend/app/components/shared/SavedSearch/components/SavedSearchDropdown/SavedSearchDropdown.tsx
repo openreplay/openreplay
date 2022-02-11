@@ -31,6 +31,8 @@ function Row ({ name, isPublic, onClick, onClickEdit, onDelete }) {
 }
 
 function SavedSearchDropdown(props: Props) {
+  const [query, setQuery] = React.useState('');
+  const filteredList = query ? props.list.filter(item => item.name.toLowerCase().includes(query.toLowerCase())) : props.list;
   const onClick = (item) => {
     props.applySavedSearch(item)
     // props.edit(item.filter)
@@ -55,7 +57,16 @@ function SavedSearchDropdown(props: Props) {
 
   return (
     <div className={cn(stl.wrapper, 'shadow')}>
-      {props.list.map(item => (
+      <div className="w-full border p-1">
+        <input
+          placeholder='Search'
+          autoFocus
+          className="border p-1 w-full rounded"
+          style={{ border: 'solid thin #ddd'}}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+      {filteredList.map(item => (
         <Row
           key={item.searchId}
           name={item.name}
