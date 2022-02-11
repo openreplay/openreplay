@@ -24,7 +24,7 @@ function SessionListHeader({
   applyFilter,
   ...props
 }) {
-  useEffect(() => { applyFilter({ sort: DEFAULT_SORT, order: DEFAULT_ORDER }) }, [])
+  // useEffect(() => { applyFilter({ sort: DEFAULT_SORT, order: DEFAULT_ORDER }) }, [])
   return (
     <div className="flex mb-6 justify-between items-end">
       <div className="flex items-baseline">

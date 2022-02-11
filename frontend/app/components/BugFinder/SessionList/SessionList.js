@@ -154,8 +154,6 @@ export default class SessionList extends React.PureComponent {
     
     return (
       <div className="">
-        <div className="flex justify-around">
-        </div>
         <SessionListHeader activeTab={activeTab} count={_total}/>
         { this.renderActiveTabContent(filteredList) }
       </div>
