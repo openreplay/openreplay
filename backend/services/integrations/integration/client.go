@@ -1,12 +1,13 @@
 package integration
 
 import (
-	"sync"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"log"
+	"sync"
 
-	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/db/postgres"
+	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/utime"
 )
 
@@ -135,6 +136,8 @@ func (c *client) Request() {
 	c.requestData.LastAttemptTimestamp = utime.CurrentTimestamp()
 	err := c.requester.Request(c)
 	if err != nil {
+		log.Println("ERRROR L139")
+		log.Println(err)
 		c.handleError(err)
 		c.requestData.UnsuccessfullAttemptsCount++;
 	} else {

@@ -1,36 +1,83 @@
+import type { Properties } from 'csstype';
 
-const declineIcon = `<svg xmlns="http://www.w3.org/2000/svg" height="22" width="22" viewBox="0 0 128 128" ><g id="Circle_Grid" data-name="Circle Grid"><circle cx="64" cy="64" fill="#ef5261" r="64"/></g><g id="icon"><path d="m57.831 70.1c8.79 8.79 17.405 12.356 20.508 9.253l4.261-4.26a7.516 7.516 0 0 1 10.629 0l9.566 9.566a7.516 7.516 0 0 1 0 10.629l-7.453 7.453c-7.042 7.042-27.87-2.358-47.832-22.319-9.976-9.981-16.519-19.382-20.748-28.222s-5.086-16.091-1.567-19.61l7.453-7.453a7.516 7.516 0 0 1 10.629 0l9.566 9.563a7.516 7.516 0 0 1 0 10.629l-4.264 4.271c-3.103 3.1.462 11.714 9.252 20.5z" fill="#eeefee"/></g></svg>`;
+import { declineCall, acceptCall, cross, remoteControl } from './icons.js'
+
+type ButtonOptions =  HTMLButtonElement | string | {
+  innerHTML: string,
+  style?: Properties,
+}
+
+
+// TODO: common strategy for InputOptions/defaultOptions merging
+interface ConfirmWindowOptions {
+  text: string,
+  style?: Properties,
+  confirmBtn: ButtonOptions,
+  declineBtn: ButtonOptions,
+}
+
+export type Options = string | Partial<ConfirmWindowOptions>
+
+function confirmDefault(
+  opts: Options,
+  confirmBtn: ButtonOptions,
+  declineBtn: ButtonOptions,
+  text: string,
+): ConfirmWindowOptions {
+  const isStr = typeof opts === "string"
+  return Object.assign({
+    text: isStr ? opts : text,
+    confirmBtn,
+    declineBtn,
+  }, isStr ? undefined : opts)
+}
+
+export const callConfirmDefault = (opts: Options) => 
+  confirmDefault(opts, acceptCall, declineCall, "You have an incoming call. Do you want to answer?")
+export const controlConfirmDefault = (opts: Options) => 
+  confirmDefault(opts, remoteControl, cross, "Allow remote control?")
+
+function makeButton(options: ButtonOptions): HTMLButtonElement {
+  if (options instanceof HTMLButtonElement) {
+    return options
+  }
+  const btn = document.createElement('button')
+  Object.assign(btn.style, {
+    background: "transparent",
+    padding: 0,
+    margin: 0,
+    border: 0,
+    cursor: "pointer",
+    borderRadius: "50%",
+    width: "22px",
+    height: "22px",
+    color: "white", // TODO: nice text button in case when only text is passed
+  })
+  if (typeof options === "string") {
+    btn.innerHTML = options
+  } else {
+    btn.innerHTML = options.innerHTML
+    Object.assign(btn.style, options.style) 
+  }
+  return btn
+}
 
 export default class ConfirmWindow {
   private wrapper: HTMLDivElement;
 
-  constructor(text: string, styles?: Object) {
+  constructor(options: ConfirmWindowOptions) {
     const wrapper = document.createElement('div');
     const popup = document.createElement('div');
     const p = document.createElement('p');
-    p.innerText = text;
+    p.innerText = options.text;
     const buttons = document.createElement('div');
-    const answerBtn = document.createElement('button');
-    answerBtn.innerHTML = declineIcon.replace('fill="#ef5261"', 'fill="green"');
-    const declineBtn = document.createElement('button');
-    declineBtn.innerHTML = declineIcon;
-    buttons.appendChild(answerBtn);
+    const confirmBtn = makeButton(options.confirmBtn);
+    const declineBtn = makeButton(options.declineBtn);
+    buttons.appendChild(confirmBtn);
     buttons.appendChild(declineBtn);
     popup.appendChild(p);
     popup.appendChild(buttons);
 
-    const btnStyles = {
-      borderRadius: "50%",
-      width: "22px",
-      height: "22px",
-      background: "transparent",
-      padding: 0,
-      margin: 0,
-      border: 0,
-      cursor: "pointer",
-    }
-    Object.assign(answerBtn.style, btnStyles);
-    Object.assign(declineBtn.style, btnStyles);
     Object.assign(buttons.style, {
       marginTop: "10px",
       display: "flex",
@@ -51,7 +98,7 @@ export default class ConfirmWindow {
       textAlign: "center",
       borderRadius: ".25em .25em .4em .4em",
       boxShadow: "0 0 20px rgb(0 0 0 / 20%)", 
-    }, styles);
+    }, options.style);
 
     Object.assign(wrapper.style, {
       position: "fixed",
@@ -66,7 +113,7 @@ export default class ConfirmWindow {
     wrapper.appendChild(popup);
     this.wrapper = wrapper;
 
-    answerBtn.onclick = () => {
+    confirmBtn.onclick = () => {
       this._remove();
       this.resolve(true);
     }

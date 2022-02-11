@@ -87,7 +87,7 @@ export default class Player extends MessageDistributor {
 
       const diffTime = messagesLoading || cssLoading || disconnected
         ? 0
-        : Math.max(animationCurrentTime - animationPrevTime, 0) * speed;
+        : Math.max(animationCurrentTime - animationPrevTime, 0) * (live ? 1 : speed);
 
       let time = prevTime + diffTime;
 

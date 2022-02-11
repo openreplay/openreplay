@@ -46,7 +46,7 @@ export default class SaveModal extends React.PureComponent {
             role="button"
             tabIndex="-1"
             color="gray-dark"
-            size="18"
+            size="14"
             name="close"
             onClick={ () => toggleFilterModal(false) }
           />
@@ -78,7 +78,7 @@ export default class SaveModal extends React.PureComponent {
                 />
                 <div className="flex items-center cursor-pointer" onClick={ () => this.setState({ 'isPublic' : !isPublic }) }>
                   <Icon name="user-friends" size="16" />
-                  <span className="ml-2"> Team Funnel</span>
+                  <span className="ml-2"> Team Visible</span>
                 </div>
               </div>              
             </Form.Field>          

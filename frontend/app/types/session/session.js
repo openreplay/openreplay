@@ -75,21 +75,23 @@ export default Record({
   crashes: [],
   socket: null,
   isIOS: false,
-  revId: ''
+  revId: '',
 }, {
   fromJS:({ 
-    startTs=0, 
+    startTs=0,
+    timestamp = 0,
     backendErrors=0,
     consoleErrors=0,
     projectId,
     errors,
     stackEvents = [],
     issues = [],
-    ...session 
+    sessionId, sessionID,
+    ...session
   }) => {
     const duration = Duration.fromMillis(session.duration < 1000 ? 1000 : session.duration);
     const durationSeconds = duration.valueOf();
-    const startedAt = +startTs;
+    const startedAt = +startTs || +timestamp;
 
     const userDevice = session.userDevice || session.userDeviceType || 'Other';
     const userDeviceType = session.userDeviceType || 'other';
@@ -135,10 +137,12 @@ export default Record({
       isMobile,
       startedAt,
       duration,
-      userNumericHash: hashString(session.userId || session.userAnonymousId || session.userUuid || ""),
-      userDisplayName: session.userId || session.userAnonymousId || 'Anonymous User',
+      userNumericHash: hashString(session.userId || session.userAnonymousId || session.userUuid || session.userID || session.userUUID || ""),
+      userDisplayName: session.userId || session.userAnonymousId || session.userID || 'Anonymous User',
       firstResourceTime,
       issues: issuesList,
+      sessionId: sessionId || sessionID,
+      userId: session.userId || session.userID,
     };
   },
   idKey: "sessionId",

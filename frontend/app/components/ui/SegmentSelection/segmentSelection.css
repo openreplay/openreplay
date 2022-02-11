@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: space-around;
   border: solid thin $gray-light;
-  border-radius: 5px;
+  border-radius: 3px;
   overflow: hidden;
 
   & .item {
@@ -12,12 +12,13 @@
     padding: 10px;
     flex: 1;
     text-align: center;
-    border-right: solid thin $gray-light;
+    border-right: solid thin $teal;
     cursor: pointer;
     background-color: $gray-lightest;
     display: flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
 
     & span svg {
       fill: $gray-medium;
@@ -61,4 +62,9 @@
 
 .small .item {
   padding: 4px 8px;
+}
+
+.extraSmall .item {
+  padding: 0 4px;
+  font-size: 12px;
 }

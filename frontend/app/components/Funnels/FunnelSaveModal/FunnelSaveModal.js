@@ -4,6 +4,7 @@ import styles from './funnelSaveModal.css';
 import { edit, save, fetchList as fetchFunnelsList } from 'Duck/funnels';
 
 @connect(state => ({
+  filter: state.getIn(['search', 'instance']),
   funnel: state.getIn(['funnels', 'instance']),
   loading: state.getIn([ 'funnels', 'saveRequest', 'loading' ]) || 
     state.getIn([ 'funnels', 'updateRequest', 'loading' ]),
@@ -27,7 +28,7 @@ export default class FunnelSaveModal extends React.PureComponent {
   onChangeOption = (e, { checked, name }) => this.props.edit({ [ name ]: checked })
 
   onSave = () => {
-    const { funnel, closeHandler } = this.props;
+    const { funnel, filter } = this.props;
     if (funnel.name.trim() === '') return;
     this.props.save(funnel).then(function() {
       this.props.fetchFunnelsList();
@@ -38,7 +39,6 @@ export default class FunnelSaveModal extends React.PureComponent {
   render() {
     const {
       show,
-      appliedFilter,
       closeHandler,
       loading,
       funnel
@@ -52,7 +52,7 @@ export default class FunnelSaveModal extends React.PureComponent {
             role="button"
             tabIndex="-1"
             color="gray-dark"
-            size="18"
+            size="14"
             name="close"
             onClick={ closeHandler }
           />
@@ -72,7 +72,7 @@ export default class FunnelSaveModal extends React.PureComponent {
               />
             </Form.Field>
 
-            <Form.Field>              
+            <Form.Field>
               <div className="flex items-center">
                 <Checkbox
                   name="isPublic"
@@ -84,9 +84,9 @@ export default class FunnelSaveModal extends React.PureComponent {
                 />
                 <div className="flex items-center cursor-pointer" onClick={ () => this.props.edit({ 'isPublic' : !funnel.isPublic }) }>
                   <Icon name="user-friends" size="16" />
-                  <span className="ml-2"> Team Funnel</span>
+                  <span className="ml-2"> Team Visible</span>
                 </div>
-              </div>              
+              </div>
             </Form.Field>
           </Form>
         </Modal.Content>

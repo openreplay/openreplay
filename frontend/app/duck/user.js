@@ -178,7 +178,7 @@ export function resendEmailVerification(email) {
 export function updateAppearance(appearance) {
   return {
     types: UPDATE_APPEARANCE.toArray(),
-    call: client => client.post('/account', { 
+    call: client => client.post('/account/appearance', { 
       appearance: Record.isRecord(appearance) ? appearance.toData() : appearance
     }),
     appearance,

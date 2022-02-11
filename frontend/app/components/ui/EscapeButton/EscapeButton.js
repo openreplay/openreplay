@@ -5,7 +5,7 @@ import stl from './escapeButton.css'
 function EscapeButton({ onClose = null}) {
   return (
     <div className={ stl.closeWrapper } onClick={ onClose }>
-      <Icon name="close" size="20" />
+      <Icon name="close" size="16" />
       <div>{ 'ESC' }</div>
     </div>
   )

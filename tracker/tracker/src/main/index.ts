@@ -152,10 +152,6 @@ export default class API {
     }
     return this.app.active();
   }
-  active(): boolean {
-    deprecationWarn("'active' method", "'isActive' method", "/")
-    return this.isActive();
-  }
 
   start(startOpts?: StartOptions) : Promise<OnStartInfo> {
     if (!IN_BROWSER) {
@@ -165,6 +161,7 @@ export default class API {
     if (this.app === null) {
       return Promise.reject("Browser doesn't support required api, or doNotTrack is active.");
     }
+    // TODO: check argument typing
     return this.app.start(startOpts);
   }
   stop(): void {

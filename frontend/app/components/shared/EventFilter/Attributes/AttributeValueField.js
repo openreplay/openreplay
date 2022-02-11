@@ -137,12 +137,13 @@ class AttributeValueField extends React.PureComponent {
     const { filter, onChange } = this.props;
     const _showAutoComplete = this.isAutoComplete(filter.type);
     const _params = _showAutoComplete ? this.getParams(filter) : {};    
-    let _optionsEndpoint= '/events/search';    
+    let _optionsEndpoint= '/events/search';
+    console.log('value', filter.value)
 
     return (
       <React.Fragment>
         { _showAutoComplete ? 
-          <AutoComplete            
+          <AutoComplete
             name={ 'value' }
             endpoint={ _optionsEndpoint }
             value={ filter.value }
@@ -151,6 +152,7 @@ class AttributeValueField extends React.PureComponent {
             onSelect={ onChange }
             headerText={ <h5 className={ stl.header }>{ getHeader(filter.type) }</h5> }
             fullWidth={ (filter.type === TYPES.CONSOLE || filter.type === TYPES.LOCATION || filter.type === TYPES.CUSTOM) && filter.value }
+            // onAddOrRemove={}
           />
         : this.renderField()
         }

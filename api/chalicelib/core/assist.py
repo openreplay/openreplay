@@ -1,10 +1,8 @@
-import schemas
-from chalicelib.utils import pg_client, helper
-from chalicelib.core import projects, sessions, sessions_metas
 import requests
 from decouple import config
 
-from chalicelib.core import projects, sessions, sessions_metas
+import schemas
+from chalicelib.core import projects, sessions
 from chalicelib.utils import pg_client, helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -66,10 +64,33 @@ def get_live_sessions(project_id, filters=None):
     return helper.list_to_camel_case(results)
 
 
+def get_live_sessions_ws(project_id):
+    project_key = projects.get_project_key(project_id)
+    connected_peers = requests.get(config("peers") % config("S3_KEY") + f"/{project_key}")
+    if connected_peers.status_code != 200:
+        print("!! issue with the peer-server")
+        print(connected_peers.text)
+        return []
+    live_peers = connected_peers.json().get("data", [])
+    for s in live_peers:
+        s["live"] = True
+        s["projectId"] = project_id
+    live_peers = sorted(live_peers, key=lambda l: l.get("timestamp", 0), reverse=True)
+    return live_peers
+
+
+def get_live_session_by_id(project_id, session_id):
+    all_live = get_live_sessions_ws(project_id)
+    for l in all_live:
+        if str(l.get("sessionID")) == str(session_id):
+            return l
+    return None
+
+
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(config("peers") % config("S3_KEY") + f"/{project_key}")
+    connected_peers = requests.get(config("peersList") % config("S3_KEY") + f"/{project_key}")
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)

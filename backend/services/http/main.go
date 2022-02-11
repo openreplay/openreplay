@@ -142,7 +142,8 @@ func main() {
 	http2.ConfigureServer(server, nil)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			log.Fatalf("Server error: %v\n", err)
+			log.Printf("Server error: %v\n", err)
+			log.Fatal("Server error")
 		}
 	}()
 	log.Printf("Server successfully started on port %v\n", HTTP_PORT)

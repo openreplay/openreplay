@@ -29,14 +29,6 @@ const Label = ({ label = '', color = 'color-gray-medium'}) => (
 }), { toggleFavorite, setSessionPath })
 @withRouter
 export default class SessionItem extends React.PureComponent {
-
-  replaySession = () => {
-    const { history, session: { sessionId }, siteId, isAssist } = this.props;
-    if (!isAssist) {
-      this.props.setSessionPath(history.location.pathname)
-    }
-    history.push(withSiteId(sessionRoute(sessionId), siteId))
-  }
   // eslint-disable-next-line complexity
   render() {
     const {
@@ -61,7 +53,7 @@ export default class SessionItem extends React.PureComponent {
         live        
       },
       timezone,
-      onUserClick,
+      onUserClick = () => null,
       hasUserFilter = false,
       disableUser = false
     } = this.props;
@@ -122,9 +114,9 @@ export default class SessionItem extends React.PureComponent {
           </div>
           
           <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
-            <div onClick={this.replaySession}>
+            <Link to={ sessionRoute(sessionId) }>
               <Icon name={ viewed ? 'play-fill' : 'play-circle-light' } size="30" color="teal" />
-            </div>
+            </Link>
           </div>
         </div>
       </div>

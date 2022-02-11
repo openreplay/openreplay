@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.4.0'
+SELECT 'v1.5.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 -- --- accounts.sql ---
@@ -419,7 +419,7 @@ $$
 
 -- --- errors.sql ---
 
-            CREATE TYPE error_source AS ENUM ('js_exception', 'bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic');
+            CREATE TYPE error_source AS ENUM ('js_exception', 'bugsnag', 'cloudwatch', 'datadog', 'newrelic', 'rollbar', 'sentry', 'stackdriver', 'sumologic', 'elasticsearch');
             CREATE TYPE error_status AS ENUM ('unresolved', 'resolved', 'ignored');
             CREATE TABLE errors
             (
@@ -839,6 +839,7 @@ $$
             CREATE INDEX resources_session_id_timestamp_url_host_firstparty_idx ON events.resources (session_id, timestamp, url_host) WHERE type IN ('fetch', 'script');
             CREATE INDEX resources_session_id_timestamp_duration_durationgt0NN_img_idx ON events.resources (session_id, timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL AND type = 'img';
             CREATE INDEX resources_timestamp_session_id_idx ON events.resources (timestamp, session_id);
+            CREATE INDEX resources_timestamp_duration_durationgt0NN_idx ON events.resources (timestamp, duration) WHERE duration > 0 AND duration IS NOT NULL;
 
             CREATE TABLE events.performance
             (
@@ -907,6 +908,7 @@ $$
                 user_id    integer REFERENCES users (user_id) ON DELETE SET NULL,
                 name       text    NOT NULL,
                 is_public  boolean NOT NULL DEFAULT FALSE,
+                active     boolean NOT NULL DEFAULT TRUE,
                 created_at timestamp        default timezone('utc'::text, now()) not null,
                 deleted_at timestamp
             );

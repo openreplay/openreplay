@@ -6,7 +6,7 @@ export * from './filter';
 
 
 const filterKeys = ['is', 'isNot'];
-const stringFilterKeys = ['is', 'isNot', 'contains'];
+const stringFilterKeys = ['is', 'isNot', 'contains', 'startsWith', 'endsWith'];
 const targetFilterKeys = ['on', 'notOn'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
@@ -209,6 +209,12 @@ export const operatorOptions = (filter) => {
     case TYPES.REVID:
     case 'metadata':
     case KEYS.ERROR:
+    case TYPES.DOM_COMPLETE:
+    case TYPES.LARGEST_CONTENTFUL_PAINT_TIME:
+    case TYPES.TIME_BETWEEN_EVENTS:
+    case TYPES.TTFB:
+    case TYPES.AVG_CPU_LOAD:
+    case TYPES.AVG_MEMORY_USAGE:
       return stringFilterOptions;
     
     case TYPES.INPUT:
@@ -231,3 +237,21 @@ export const operatorOptions = (filter) => {
       return [{ key: 'onAnything', text: 'on anything', value: 'true' }]
   }
 }
+
+const NewFilterType = (key, category, label, icon, isEvent = false) => {
+  return {
+    key: key,
+    category: category,
+    label: label,
+    icon: icon,
+    isEvent: isEvent,
+    operators: operatorOptions({ key }),
+    value: [""]
+  }
+}
+
+export const newFiltersList = [
+  NewFilterType(TYPES.CLICK, 'Gear', 'Click', 'filters/click', true),
+  NewFilterType(TYPES.CLICK, 'Gear', 'Input', 'filters/click', true),
+  NewFilterType(TYPES.CONSOLE, 'Other', 'Console', 'filters/click', true),
+];

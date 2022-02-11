@@ -7,6 +7,7 @@ import { createItemInListUpdater, mergeReducers, success, array } from './funcTo
 import { createRequestReducer } from './funcTools/request';
 import { getDateRangeFromValue } from 'App/dateRange';
 import { LAST_7_DAYS } from 'Types/app/period';
+import { filterMap as searchFilterMap } from './search';
 
 const name = 'funnel';
 const idKey = 'funnelId';
@@ -117,7 +118,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('issueTypesMap', tmpMap);
     case FETCH_INSIGHTS_SUCCESS:
       let stages = [];
-      if (action.isRefresh) {        
+      if (action.isRefresh) {
         const activeStages = state.get('activeStages');
         const oldInsights = state.get('insights');
         const lastStage = action.data.stages[action.data.stages.length - 1]
@@ -265,15 +266,20 @@ export const fetchIssueTypes = () => {
   }
 }
 
-export const save = (instance) => {
-  const url = instance.exists() 
-    ? `/funnels/${ instance[idKey] }`
+export const save = (instance) => (dispatch, getState) => {
+// export const save = (instance) => {
+  const filter = getState().getIn([ 'search', 'instance']).toData();
+  filter.filters = filter.filters.map(searchFilterMap);
+
+  const _instance = instance instanceof Funnel ? instance : Funnel(instance);
+  const url = _instance.exists() 
+    ? `/funnels/${ _instance[idKey] }`
     : `/funnels`;
 
-  return {
-    types: array(instance.exists() ? SAVE : UPDATE),
-    call: client => client.post(url, instance.toData()),
-  }
+  return dispatch({
+    types: array(_instance.exists() ? SAVE : UPDATE),
+    call: client => client.post(url, { ..._instance.toData(), filter }),
+  });
 }
 
 export const updateFunnelFilters = (funnelId, filter) => {  

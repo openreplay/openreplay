@@ -1,5 +1,6 @@
+import type { Socket } from 'socket.io-client';
 import type Peer from 'peerjs';
-import type { DataConnection, MediaConnection } from 'peerjs';
+import type { MediaConnection } from 'peerjs';
 import type MessageDistributor from '../MessageDistributor';
 import type { Message } from '../messages'
 import store from 'App/store';
@@ -11,11 +12,12 @@ import MStreamReader from '../messages/MStreamReader';;
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
 
 export enum CallingState {
-  Reconnecting,
+  NoCall,
+  Connecting,
   Requesting,
-  True,
-  False,
-};
+  Reconnecting,
+  OnCall,
+}
 
 export enum ConnectionStatus {
   Connecting,
@@ -24,7 +26,13 @@ export enum ConnectionStatus {
   Inactive,
   Disconnected,
   Error,
-};
+}
+
+export enum RemoteControlStatus {
+  Disabled = 0,
+  Requesting,
+  Enabled,
+}
 
 
 export function getStatusText(status: ConnectionStatus): string {
@@ -47,13 +55,13 @@ export function getStatusText(status: ConnectionStatus): string {
 export interface State {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
-  remoteControl: boolean,
+  remoteControl: RemoteControlStatus,
 }
 
 export const INITIAL_STATE: State = {
-  calling: CallingState.False,
+  calling: CallingState.NoCall,
   peerConnectionStatus: ConnectionStatus.Connecting,
-  remoteControl: false,
+  remoteControl: RemoteControlStatus.Disabled,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -85,201 +93,121 @@ export default class AssistManager {
     return `${this.session.projectKey}-${this.session.sessionId}`
   }
 
-  private peer: Peer | null = null;
-  connectionAttempts: number = 0;
-  private peeropened: boolean = false;
-  connect() {
-    if (this.peer != null) {
-      console.error("AssistManager: trying to connect more than once");
-      return;
+  private onVisChange = () => {
+    let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+    if (document.hidden) {
+      inactiveTimeout = setTimeout(() => {
+        if (document.hidden && getState().calling === CallingState.NoCall) {
+          this.socket?.close()
+        }
+      }, 15000)
+    } else {
+      inactiveTimeout && clearTimeout(inactiveTimeout)
+      this.socket?.open()
     }
-    this.setStatus(ConnectionStatus.Connecting)
-    // @ts-ignore
-    const urlObject = new URL(window.ENV.API_EDP)
-    import('peerjs').then(({ default: Peer }) => {
-      if (this.closed) {return}
-      const _config = {
-        host: urlObject.hostname,
-        path: '/assist',
-        port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),
-      }
-
-      if (this.config) {
-        _config['config'] = {
-          iceServers: this.config,
-          sdpSemantics: 'unified-plan',
-          iceTransportPolicy: 'relay',
-        };
-      }
-
-      const peer = new Peer(_config);
-      this.peer = peer;
-      peer.on('error', e => {
-        if (e.type !== 'peer-unavailable') {
-          console.warn("AssistManager PeerJS peer error: ", e.type, e)
-        }
-        if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
-          if (this.peer) {
-            this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT 
-              ? ConnectionStatus.Connecting
-              : ConnectionStatus.Disconnected);
-            this.connectToPeer();
-          }
-        } else {
-          console.error(`PeerJS error (on peer). Type ${e.type}`, e);
-          this.setStatus(ConnectionStatus.Error)
-        }
-      })
-      peer.on("open", () => {
-        if (this.peeropened) { return; }
-        this.peeropened = true;
-        this.connectToPeer();        
-      });
-    });
   }
 
-  private connectToPeer() {
-    if (!this.peer) { return; }
-    this.setStatus(ConnectionStatus.Connecting);
-    const id = this.peerID;
-    const conn = this.peer.connect(id, { serialization: "json", reliable: true});
-    conn.on('open', () => {
-      window.addEventListener("beforeunload", ()=>conn.open &&conn.send("unload"));
+  private socket: Socket | null = null
+  connect() {
+    const jmr = new JSONRawMessageReader()
+    const reader = new MStreamReader(jmr)
+    let waitingForMessages = true
+    let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    import('socket.io-client').then(({ default: io }) => {
+      if (this.cleaned) { return }
+      if (this.socket) { this.socket.close() } // TODO: single socket connection
+      // @ts-ignore
+      const urlObject = new URL(window.ENV.API_EDP) // does it handle ssl automatically?
 
-      //console.log("peer connected")
+      // @ts-ignore WTF, socket.io ???
+      const socket: Socket = this.socket = io(urlObject.origin, {
+        path: '/ws-assist/socket',
+        query: {
+          peerId: this.peerID,
+          identity: "agent",
+          //agentInfo: JSON.stringify({})
+        }
+      })
+      //socket.onAny((...args) => console.log(...args))
+      socket.on("connect", () => {
+        waitingForMessages = true
+        this.setStatus(ConnectionStatus.WaitingMessages)
+      })
+      socket.on("disconnect", () => {
+        this.toggleRemoteControl(false)
+      })
+      socket.on('messages', messages => {
+        showDisconnectTimeout && clearTimeout(showDisconnectTimeout);
+        jmr.append(messages) // as RawMessage[]
 
-
-      if (getState().calling === CallingState.Reconnecting) {
-        this._call()
-      }
-      
-      let firstMessage = true;
-
-      this.setStatus(ConnectionStatus.WaitingMessages)
-
-      const jmr = new JSONRawMessageReader()
-      const reader = new MStreamReader(jmr)
-
-      conn.on('data', (data) => {
-        this.disconnectTimeout && clearTimeout(this.disconnectTimeout);
-
-
-        if (Array.isArray(data)) {
-          jmr.append(data) // as RawMessage[]
-        } else if (data instanceof ArrayBuffer) {
-          //rawMessageReader.append(new Uint8Array(data))
-        } else { return this.handleCommand(data); }
-        
-        if (firstMessage) {
-          firstMessage = false;
+        if (waitingForMessages) {
+          waitingForMessages = false // TODO: more explicit
           this.setStatus(ConnectionStatus.Connected)
+
+          // Call State
+          if (getState().calling === CallingState.Reconnecting) {
+            this._call()  // reconnecting call (todo improve code separation)
+          }
         }
 
         for (let msg = reader.readNext();msg !== null;msg = reader.readNext()) {
           //@ts-ignore
-          this.md.distributeMessage(msg, msg._index);
+          this.md.distributeMessage(msg, msg._index)
         }
-      });
-    });
+      })
+      socket.on("control_granted", id => {
+        this.toggleRemoteControl(id === socket.id)
+      })
+      socket.on("control_rejected", id => {
+        id === socket.id && this.toggleRemoteControl(false)
+      })
+      socket.on('SESSION_DISCONNECTED', e => {
+        waitingForMessages = true
+        showDisconnectTimeout = setTimeout(() => {
+          if (this.cleaned) { return }
+          this.setStatus(ConnectionStatus.Disconnected)
+        }, 12000)
 
+        if (getState().remoteControl === RemoteControlStatus.Requesting) {
+          this.toggleRemoteControl(false)
+        }
 
-    const onDataClose = () => {
-      this.onCallDisconnect()
-      this.connectToPeer();
-    }
+        // Call State
+        if (getState().calling === CallingState.OnCall) {
+          update({ calling: CallingState.Reconnecting })
+        }
+      })
+      socket.on('error', e => {
+        console.warn("Socket error: ", e )
+        this.setStatus(ConnectionStatus.Error);
+        this.toggleRemoteControl(false)
+      })
+      socket.on('call_end', this.onRemoteCallEnd)
 
-    conn.on('close', onDataClose);// What case does it work ?
-    conn.on("error", (e) => {
-      this.setStatus(ConnectionStatus.Error);
+      document.addEventListener('visibilitychange', this.onVisChange)        
+
     })
   }
 
-
-  private get dataConnection(): DataConnection | undefined {
-    return this.peer?.connections[this.peerID]?.find(c => c.type === 'data' && c.open);
-  }
-  private get callConnection(): MediaConnection | undefined {
-    return this.peer?.connections[this.peerID]?.find(c => c.type === 'media' && c.open);
-  } 
-  private send(data: any) {
-    this.dataConnection?.send(data);
-  }
-
-
-  private forceCallEnd() {
-    this.callConnection?.close();
-  }
-  private notifyCallEnd() {
-    const dataConn = this.dataConnection;
-    if (dataConn) {
-      dataConn.send("call_end");
-    }
-  }
-  private initiateCallEnd = () => {
-    this.forceCallEnd();
-    this.notifyCallEnd();
-    this.localCallData && this.localCallData.onCallEnd();
-  }
-
-  private onTrackerCallEnd = () => {
-    console.log('onTrackerCallEnd')
-    this.forceCallEnd();
-    if (getState().calling === CallingState.Requesting) {
-      this.localCallData && this.localCallData.onReject();
-    }
-    this.localCallData && this.localCallData.onCallEnd();
-  }
-
-  private onCallDisconnect = () => {
-    if (getState().calling === CallingState.True) {
-      update({ calling: CallingState.Reconnecting });
-    }
-  }
-
-
-  private disconnectTimeout: ReturnType<typeof setTimeout> | undefined;
-  private closeDataConnectionTimeout:  ReturnType<typeof setTimeout> | undefined;
-  private handleCommand(command: string) {
-    console.log("Data command", command)
-    switch (command) {
-      case "unload":
-        //this.onTrackerCallEnd();
-        this.closeDataConnectionTimeout = setTimeout(() => {
-          this.onCallDisconnect()
-          this.dataConnection?.close();
-        }, 1500);
-        this.disconnectTimeout = setTimeout(() => {
-          this.onTrackerCallEnd();
-          this.setStatus(ConnectionStatus.Disconnected);
-        }, 15000); // TODO: more convenient way
-        return;
-      case "call_end":
-        this.onTrackerCallEnd();
-        return;
-      case "call_error":
-        this.onTrackerCallEnd();
-        this.setStatus(ConnectionStatus.Error);
-        return;
-    }
-  }
+  /* ==== Remote Control ==== */
 
   private onMouseMove = (e: MouseEvent): void => {
-    const data = this.md.getInternalCoordinates(e);
-    this.send({ x: Math.round(data.x), y: Math.round(data.y) });
+    if (!this.socket) { return }
+    const data = this.md.getInternalCoordinates(e)
+    this.socket.emit("move", [ Math.round(data.x), Math.round(data.y) ])
   }
-
 
   private onWheel = (e: WheelEvent): void => {
     e.preventDefault()
+    if (!this.socket) { return }
     //throttling makes movements less smooth, so it is omitted
     //this.onMouseMove(e)
-    this.send({ type: "scroll",  delta: [ e.deltaX, e.deltaY ]})
+    this.socket.emit("scroll", [ e.deltaX, e.deltaY ])
   }
 
   private onMouseClick = (e: MouseEvent): void => {
-    const conn = this.dataConnection;
-    if (!conn) { return; }
-    const data = this.md.getInternalCoordinates(e);
+    if (!this.socket) { return; }
+    const data = this.md.getInternalViewportCoordinates(e);
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
     if (el instanceof HTMLElement) {
@@ -287,25 +215,114 @@ export default class AssistManager {
       el.oninput = e => e.preventDefault();
       el.onkeydown = e => e.preventDefault();
     }
-    conn.send({ type: "click",  x: Math.round(data.x), y: Math.round(data.y) });
+    this.socket.emit("click",  [ Math.round(data.x), Math.round(data.y) ]);
   }
 
-  private toggleRemoteControl = (flag?: boolean) => {
-    const state = getState().remoteControl;
-    const newState = typeof flag === 'boolean' ? flag : !state;
-    if (state === newState) { return }
+  private toggleRemoteControl(newState: boolean){
     if (newState) {
-      this.md.overlay.addEventListener("click", this.onMouseClick);
+      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
+      this.md.overlay.addEventListener("click", this.onMouseClick)
       this.md.overlay.addEventListener("wheel", this.onWheel)
-      update({ remoteControl: true })
+      update({ remoteControl: RemoteControlStatus.Enabled })
     } else {
-      this.md.overlay.removeEventListener("click", this.onMouseClick);
-      this.md.overlay.removeEventListener("wheel", this.onWheel);
-      update({ remoteControl: false })
+      this.md.overlay.removeEventListener("mousemove", this.onMouseMove)
+      this.md.overlay.removeEventListener("click", this.onMouseClick)
+      this.md.overlay.removeEventListener("wheel", this.onWheel)
+      update({ remoteControl: RemoteControlStatus.Disabled })
     }
   }
 
-  private localCallData: {
+  requestReleaseRemoteControl = () => {
+    if (!this.socket) { return }
+    const remoteControl = getState().remoteControl
+    if (remoteControl === RemoteControlStatus.Requesting) { return }
+    if (remoteControl === RemoteControlStatus.Disabled) {
+      update({ remoteControl: RemoteControlStatus.Requesting })
+      this.socket.emit("request_control")
+      // setTimeout(() => {
+      //   if (getState().remoteControl !== RemoteControlStatus.Requesting) { return }
+      //   this.socket?.emit("release_control")
+      //   update({ remoteControl: RemoteControlStatus.Disabled })
+      // }, 8000)
+    } else {
+      this.socket.emit("release_control")
+      this.toggleRemoteControl(false)
+    }
+  }
+
+
+  /* ==== PeerJS Call ==== */
+
+  private _peer: Peer | null = null
+  private connectionAttempts: number = 0
+  private callConnection: MediaConnection | null = null
+  private getPeer(): Promise<Peer> {
+    if (this._peer && !this._peer.disconnected) { return Promise.resolve(this._peer) }
+
+    // @ts-ignore
+    const urlObject = new URL(window.ENV.API_EDP)
+    return import('peerjs').then(({ default: Peer }) => {
+      if (this.cleaned) {return Promise.reject("Already cleaned")}
+      const peerOpts = {
+        host: urlObject.hostname,
+        path: '/assist',
+        port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),
+      }
+      if (this.config) {
+        peerOpts['config'] = {
+          iceServers: this.config,
+          sdpSemantics: 'unified-plan',
+          iceTransportPolicy: 'relay',
+        };
+      }
+      const peer = this._peer = new Peer(peerOpts)
+      peer.on('error', e => {
+        if (e.type === 'disconnected') {
+          return peer.reconnect()
+        } else if (e.type !== 'peer-unavailable') {
+          console.error(`PeerJS error (on peer). Type ${e.type}`, e);
+        }
+
+        //call-reconnection connected
+ //       if (['peer-unavailable', 'network', 'webrtc'].includes(e.type)) {
+          // this.setStatus(this.connectionAttempts++ < MAX_RECONNECTION_COUNT 
+          //   ? ConnectionStatus.Connecting
+          //   : ConnectionStatus.Disconnected);
+          // Reconnect...
+      })
+
+      return new Promise(resolve => {
+        peer.on("open", () => resolve(peer))
+      })
+    });
+
+  }
+
+
+  private handleCallEnd() {
+    this.callArgs && this.callArgs.onCallEnd()
+    this.callConnection && this.callConnection.close()
+    update({ calling: CallingState.NoCall })
+    this.callArgs = null
+  }
+
+  private initiateCallEnd = () => {
+    this.socket?.emit("call_end")
+    this.handleCallEnd()
+  }
+
+  private onRemoteCallEnd = () => {
+    if (getState().calling === CallingState.Requesting) {
+      this.callArgs && this.callArgs.onReject()
+      this.callConnection && this.callConnection.close()
+      update({ calling: CallingState.NoCall })
+      this.callArgs = null
+    } else {
+      this.handleCallEnd()
+    }
+  }
+
+  private callArgs: {
     localStream: LocalStream,
     onStream: (s: MediaStream)=>void,
     onCallEnd: () => void,
@@ -313,78 +330,78 @@ export default class AssistManager {
     onError?: ()=> void
   } | null = null
 
-  call(localStream: LocalStream, onStream: (s: MediaStream)=>void, onCallEnd: () => void, onReject: () => void, onError?: ()=> void): { end: Function, toggleRemoteControl: Function } {
-    this.localCallData = {
+  call(
+    localStream: LocalStream, 
+    onStream: (s: MediaStream)=>void, 
+    onCallEnd: () => void, 
+    onReject: () => void, 
+    onError?: ()=> void): { end: Function } {
+    this.callArgs = {
       localStream,
       onStream,
-      onCallEnd: () => {
-        onCallEnd();
-        this.toggleRemoteControl(false);
-        this.md.overlay.removeEventListener("mousemove",  this.onMouseMove);
-        this.md.overlay.removeEventListener("click",  this.onMouseClick);
-        update({ calling: CallingState.False });
-        this.localCallData = null;
-      },
+      onCallEnd,
       onReject,
       onError,
     }
     this._call()
     return {
       end: this.initiateCallEnd,
-      toggleRemoteControl: this.toggleRemoteControl,
     }
   }
 
   private _call() {
-    if (!this.peer || !this.localCallData || ![CallingState.False, CallingState.Reconnecting].includes(getState().calling)) { return null; }
-    
-    update({ calling: CallingState.Requesting });
+    if (![CallingState.NoCall, CallingState.Reconnecting].includes(getState().calling)) { return }
+    update({ calling: CallingState.Connecting })
+    this.getPeer().then(peer => {
+      if (!this.callArgs) { return console.log("No call Args. Must not happen.") }
+      update({ calling: CallingState.Requesting })
 
-    //console.log('calling...', this.localCallData.localStream)
-    
-    const call =  this.peer.call(this.peerID, this.localCallData.localStream.stream);
-    this.localCallData.localStream.onVideoTrack(vTrack => {
-      const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
-      if (!sender) {
-        //logger.warn("No video sender found")
-        return
-      }
-      //logger.log("sender found:", sender)
-      sender.replaceTrack(vTrack)
-    })
+      // TODO: in a proper way
+      this.socket && this.socket.emit("_agent_name", store.getState().getIn([ 'user', 'account', 'name']))
+      
+      const call = this.callConnection = peer.call(this.peerID, this.callArgs.localStream.stream)
+      this.callArgs.localStream.onVideoTrack(vTrack => {
+        const sender = call.peerConnection.getSenders().find(s => s.track?.kind === "video")
+        if (!sender) {
+          console.warn("No video sender found")
+          return
+        }
+        //logger.log("sender found:", sender)
+        sender.replaceTrack(vTrack)
+      })
 
-    call.on('stream', stream => {
-      update({ calling: CallingState.True });
-      this.localCallData && this.localCallData.onStream(stream);
-      this.send({ 
-        name: store.getState().getIn([ 'user', 'account', 'name']),
+      call.on('stream', stream => {
+        update({ calling: CallingState.OnCall })
+        this.callArgs && this.callArgs.onStream(stream)
+      });
+      //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
+
+      call.on("close", this.onRemoteCallEnd)
+      call.on("error", (e) => {
+        console.error("PeerJS error (on call):", e)
+        this.initiateCallEnd();
+        this.callArgs && this.callArgs.onError && this.callArgs.onError();
       });
 
-      this.md.overlay.addEventListener("mousemove", this.onMouseMove)
-      this.md.overlay.addEventListener("click", this.onMouseClick)
-    });
-    //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
-
-    call.on("close", this.localCallData.onCallEnd);
-    call.on("error", (e) => {
-      console.error("PeerJS error (on call):", e)
-      this.initiateCallEnd();
-      this.localCallData && this.localCallData.onError && this.localCallData.onError();
-    });
-
-    window.addEventListener("beforeunload", this.initiateCallEnd)
+    })
   }
 
-  closed = false
+
+  /* ==== Cleaning ==== */
+  private cleaned: boolean = false
   clear() {
-    this.closed =true
+    this.cleaned = true // sometimes cleaned before modules loaded
     this.initiateCallEnd();
-    if (this.peer) {
+    if (this._peer) {
       console.log("destroying peer...")
-      const peer = this.peer; // otherwise it calls reconnection on data chan close
-      this.peer = null;
+      const peer = this._peer; // otherwise it calls reconnection on data chan close
+      this._peer = null;
       peer.disconnect();
       peer.destroy();
+    }
+    if (this.socket) {
+      this.socket.close()
+      document.removeEventListener('visibilitychange', this.onVisChange)
     }
   }
 }

@@ -245,7 +245,7 @@ class event_type:
     STATEACTION = Event(ui_type=schemas.EventType.state_action, table="events.state_actions", column="name")
     ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",
                   column=None)  # column=None because errors are searched by name or message
-    METADATA = Event(ui_type=schemas.EventType.metadata, table="public.sessions", column=None)
+    METADATA = Event(ui_type=schemas.FilterType.metadata, table="public.sessions", column=None)
     #     IOS
     CLICK_IOS = Event(ui_type=schemas.EventType.click_ios, table="events_ios.clicks", column="label")
     INPUT_IOS = Event(ui_type=schemas.EventType.input_ios, table="events_ios.inputs", column="label")

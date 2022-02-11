@@ -4,6 +4,7 @@ const colors = ['#3EAAAF', '#5FBABF', '#7BCBCF', '#96DCDF', '#ADDCDF'];
 const colorsx = ['#256669', '#38999e', '#3eaaaf', '#51b3b7', '#78c4c7', '#9fd5d7', '#c5e6e7'].reverse();
 const compareColors = ['#394EFF', '#4D5FFF', '#808DFF', '#B3BBFF', '#E5E8FF'];
 const compareColorsx = ["#222F99", "#2E3ECC", "#394EFF", "#6171FF", "#8895FF", "#B0B8FF", "#D7DCFF"].reverse();
+const customMetricColors = ['#3EAAAF', '#394EFF', '#666666'];
 
 const countView = count => {
   const isMoreThanK = count >= 1000;
@@ -11,6 +12,7 @@ const countView = count => {
 }
 
 export default {
+  customMetricColors,
   colors,
   colorsx,
   compareColors,

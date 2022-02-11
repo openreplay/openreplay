@@ -55,7 +55,7 @@ const FilterItem = props => {
           <div className="bg-white rounded-full p-1 px-3 mr-2">
             <div className="flex items-center">
               <span className="mr-2 color-gray-darkest">{f.text || f.value}</span>
-              <Icon className="cursor-pointer" size="18" name="close" onClick={() => props.removeFilter(f)} />
+              <Icon className="cursor-pointer" size="12" name="close" onClick={() => props.removeFilter(f)} />
             </div>
           </div>
         ))}

@@ -25,7 +25,7 @@ const loadChart = (data, loading, unit, syncId, compare, tooltipLael) => {
             <YAxis hide interval={ 0 } />
             <Area
               name={tooltipLael}
-              unit={unit && ' ' + unit}
+              // unit={unit && ' ' + unit}
               type="monotone"
               dataKey="value"
               stroke={compare? Styles.compareColors[0] : Styles.colors[0]}

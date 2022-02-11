@@ -55,6 +55,11 @@ spec:
             - name: POSTGRES_STRING
               value: 'postgres://{{ .Values.global.postgresql.postgresqlUser }}:{{ .Values.global.postgresql.postgresqlPassword }}@{{ .Values.global.postgresql.postgresqlHost }}:{{ .Values.global.postgresql.postgresqlPort }}/{{ .Values.global.postgresql.postgresqlDatabase }}'
             - name: ASSETS_ORIGIN
+            {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+              value: 'https://{{ .Values.global.domainName }}/{{.Values.global.s3.assetsBucket}}'
+            {{- else }}
+              value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
+            {{- end }}
               value: {{ (split "://" .Values.global.s3.endpoint)._0 }}://{{.Values.global.s3.assetsBucket}}.{{ (split "://" .Values.global.s3.endpoint)._1 }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}

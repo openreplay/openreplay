@@ -18,7 +18,7 @@ def get(id):
                         {"id": id})
         )
         a = helper.dict_to_camel_case(cur.fetchone())
-    return __process_circular(a)
+    return helper.custom_alert_to_front(__process_circular(a))
 
 
 def get_all(project_id):
@@ -31,8 +31,8 @@ def get_all(project_id):
                             {"project_id": project_id})
         cur.execute(query=query)
         all = helper.list_to_camel_case(cur.fetchall())
-    for a in all:
-        a = __process_circular(a)
+    for i in range(len(all)):
+        all[i] = helper.custom_alert_to_front(__process_circular(all[i]))
     return all
 
 
@@ -58,7 +58,7 @@ def create(project_id, data: schemas.AlertSchema):
                         {"project_id": project_id, **data})
         )
         a = helper.dict_to_camel_case(cur.fetchone())
-    return {"data": helper.dict_to_camel_case(__process_circular(a))}
+    return {"data": helper.custom_alert_to_front(helper.dict_to_camel_case(__process_circular(a)))}
 
 
 def update(id, data: schemas.AlertSchema):
@@ -81,7 +81,7 @@ def update(id, data: schemas.AlertSchema):
                             {"id": id, **data})
         cur.execute(query=query)
         a = helper.dict_to_camel_case(cur.fetchone())
-    return {"data": __process_circular(a)}
+    return {"data": helper.custom_alert_to_front(__process_circular(a))}
 
 
 def process_notifications(data):
@@ -166,5 +166,5 @@ def get_predefined_values():
                "unit": "count" if v.endswith(".count") else "ms",
                "predefined": True,
                "metricId": None,
-               "seriesId": None} for v in values]
+               "seriesId": None} for v in values if v != schemas.AlertColumn.custom]
     return values

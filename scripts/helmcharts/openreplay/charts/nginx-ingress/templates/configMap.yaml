@@ -38,7 +38,7 @@ data:
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "Upgrade";
-      proxy_set_header X-Forwarded-For $real_ip;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_set_header X-Forwarded-Host $real_ip;
       proxy_set_header X-Real-IP $real_ip;
       proxy_set_header Host $host;
@@ -71,7 +71,18 @@ data:
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "Upgrade";
       proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
       proxy_pass http://utilities-openreplay.app.svc.cluster.local:9000;
+    }
+    location /ws-assist/ {
+      rewrite ^/ws-assist/(.*) /$1 break;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "Upgrade";
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Real-IP $real_ip;
+      proxy_pass http://utilities-openreplay.app.svc.cluster.local:9001;
     }
     location /assets/ {
       rewrite ^/assets/(.*) /sessions-assets/$1 break;
@@ -84,6 +95,8 @@ data:
     location / {
       index /index.html;
       rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /frontend/index.html break;
+      proxy_http_version 1.1;
+      proxy_set_header Connection "";
       include /etc/nginx/conf.d/compression.conf;
       proxy_set_header Host $http_host;
       proxy_pass http://minio.db.svc.cluster.local:9000/frontend/;

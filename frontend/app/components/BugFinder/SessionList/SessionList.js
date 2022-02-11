@@ -1,9 +1,10 @@
 import { connect } from 'react-redux';
-import { Loader, NoContent, Message, Icon, Button, LoadMoreButton } from 'UI';
+import { Loader, NoContent, Button, LoadMoreButton } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
+import { fetchSessions, addFilterByKeyAndValue } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
-import { KEYS } from 'Types/filter/customFilter';
+import { FilterKey } from 'Types/filter/filterType';
 
 const ALL = 'all';
 const PER_PAGE = 10;
@@ -17,11 +18,13 @@ var timeoutId;
   activeTab: state.getIn([ 'sessions', 'activeTab' ]),
   allList: state.getIn([ 'sessions', 'list' ]),
   total: state.getIn([ 'sessions', 'total' ]),
-  filters: state.getIn([ 'filters', 'appliedFilter', 'filters' ]),  
+  filters: state.getIn([ 'search', 'instance', 'filters' ]),
 }), {
   applyFilter,
   addAttribute,
-  addEvent
+  addEvent,
+  fetchSessions,
+  addFilterByKeyAndValue,
 })
 export default class SessionList extends React.PureComponent {
   state = {
@@ -42,18 +45,17 @@ export default class SessionList extends React.PureComponent {
 
   onUserClick = (userId, userAnonymousId) => {
     if (userId) {
-      this.props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: userId })
+      this.props.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
-      this.props.addAttribute({ label: 'Anonymous ID', key: 'USERANONYMOUSID', type: "USERANONYMOUSID", operator: 'is', value: userAnonymousId  })
+      this.props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
     }
-    
-    this.props.applyFilter()
   }
 
   timeout = () => {
     timeoutId = setTimeout(function () {
       if (this.props.shouldAutorefresh) {
-        this.props.applyFilter();
+        // this.props.applyFilter();
+        this.props.fetchSessions();
       }
       this.timeout();
     }.bind(this), AUTOREFRESH_INTERVAL);
@@ -81,8 +83,8 @@ export default class SessionList extends React.PureComponent {
       allList,
       activeTab
     } = this.props;
-
-    const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
+    const _filterKeys = filters.map(i => i.key);
+    const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
     const { showPages } = this.state;
     const displayedCount = Math.min(showPages * PER_PAGE, list.size);
 

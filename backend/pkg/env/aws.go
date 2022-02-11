@@ -23,7 +23,8 @@ func AWSSessionOnRegion(region string) *_session.Session {
 	}
 	aws_session, err := _session.NewSession(config)
 	if err != nil {
-		log.Fatalf("AWS session error: %v\n", err)
+		log.Printf("AWS session error: %v\n", err)
+		log.Fatal("AWS session error")
 	}
 	return aws_session
 }

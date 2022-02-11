@@ -5,6 +5,7 @@ import stl from './sideMenuSection.css';
 import { connect } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
+import CustomMetrics from 'Shared/CustomMetrics';
 
 function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 	return (
@@ -28,6 +29,13 @@ function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 					iconName="bell-plus"
 					onClick={() => setShowAlerts(true)}
 				/>				
+			</div>
+			<div className={stl.divider} />
+			<div className="my-3">		
+				<CustomMetrics />
+				<div className="color-gray-medium mt-2">
+					Be proactive by monitoring the metrics you care about the most.
+				</div>
 			</div>
 		</>
 	);
