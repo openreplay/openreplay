@@ -7,7 +7,7 @@ import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
-import { FilterCategory, FilterKey } from '../types/filter/filterType';
+import { FilterCategory, FilterKey } from 'Types/filter/filterType';
 import { filtersMap, liveFiltersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
 
 const ERRORS_ROUTE = errorsRoute();
