@@ -143,6 +143,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 <SharePopup
                   entity="sessions"
                   id={ sessionId }
+                  showCopyLink={true}
                   trigger={
                     <IconButton
                       className="mr-2"

@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
 import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
-import { NoContent, Loader } from 'UI';
+import { NoContent, Loader, LoadMoreButton } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
-import { addFilterByKeyAndValue } from 'Duck/liveSearch';
+import { addFilterByKeyAndValue, updateCurrentPage } from 'Duck/liveSearch';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
+const PER_PAGE = 20;
 
 interface Props {
   loading: Boolean,
@@ -20,13 +21,19 @@ interface Props {
   filters: any,
   addAttribute: (obj) => void,
   addFilterByKeyAndValue: (key: FilterKey, value: string) => void,
+  updateCurrentPage: (page: number) => void,
+  currentPage: number, 
 }
 
 function LiveSessionList(props: Props) {
-  const { loading, filters, list } = props;
+  const { loading, filters, list, currentPage } = props;
   var timeoutId;
   const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
   const [sessions, setSessions] = React.useState(list);
+
+  const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
+
+  const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
   useEffect(() => {
     if (filters.size === 0) {
@@ -92,7 +99,7 @@ function LiveSessionList(props: Props) {
         show={ !loading && sessions && sessions.size === 0}
       >
         <Loader loading={ loading }>
-          {sessions && sessions.map(session => (
+          {sessions && sessions.take(displayedCount).map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -101,6 +108,13 @@ function LiveSessionList(props: Props) {
               onUserClick={onUserClick}
             />
           ))}
+
+            <LoadMoreButton
+		          className="mt-3"
+		          displayedCount={displayedCount}
+		          totalCount={sessions.size}
+		          onClick={addPage}
+		        />
         </Loader>
       </NoContent>
     </div>
@@ -112,6 +126,7 @@ export default withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(connect(
     list: state.getIn(['sessions', 'liveSessions']),
     loading: state.getIn([ 'sessions', 'loading' ]),
     filters: state.getIn([ 'liveSearch', 'instance', 'filters' ]),
+    currentPage: state.getIn(["liveSearch", "currentPage"]),
   }),
-  { fetchLiveList, applyFilter, addAttribute, addFilterByKeyAndValue }
+  { fetchLiveList, applyFilter, addAttribute, addFilterByKeyAndValue, updateCurrentPage }
 )(LiveSessionList));
