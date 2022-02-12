@@ -13,7 +13,7 @@ interface Props {
   addFilterByKeyAndValue: (key: string, value: string) => void;
 }
 function SessionSearchField(props: Props) {
-  const debounceFetchFilterSearch = debounce(props.fetchFilterSearch, 1000)
+  const debounceFetchFilterSearch = React.useCallback(debounce(props.fetchFilterSearch, 1000), []);
   const [showModal, setShowModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
