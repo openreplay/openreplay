@@ -26,10 +26,12 @@ function FilterAutoCompleteLocal(props: Props) {
       icon = null,
   } = props;
   const [showModal, setShowModal] = useState(true)
-  const [query, setQuery] = useState(value);  
+  const [query, setQuery] = useState(value);
+  const debounceOnSelect = React.useCallback(debounce(props.onSelect, 500), []);
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
+    debounceOnSelect(null, { value });
   }
 
   useEffect(() => {
@@ -53,7 +55,7 @@ function FilterAutoCompleteLocal(props: Props) {
         <input
           name="query"
           onChange={ onInputChange }
-          onBlur={ onBlur }
+          // onBlur={ onBlur }
           onFocus={ () => setShowModal(true)}
           value={ query }
           autoFocus={ true }

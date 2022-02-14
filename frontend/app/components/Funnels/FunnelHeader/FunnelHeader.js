@@ -80,7 +80,7 @@ const FunnelHeader = (props) => {
             selectOnBlur={false}
             icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
           />
-          <Info label="Events" value={funnel.filter.events.size} />
+          <Info label="Events" value={funnel.filter.filters.size} />
           <span>-</span>
           <Button plain onClick={props.toggleFilters}>{ showFilters ? 'HIDE' : 'EDIT FUNNEL' }</Button>
           <Info label="Sessions" value={insights.sessionsCount} />          
@@ -117,5 +117,5 @@ const FunnelHeader = (props) => {
 }
 
 export default connect(state => ({
-  funnelFilters: state.getIn([ 'funnelFilters', 'appliedFilter']),
+  funnelFilters: state.getIn([ 'funnels', 'instance', 'filter' ]),
 }), { applyFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered })(FunnelHeader)

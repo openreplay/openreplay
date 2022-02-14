@@ -8,9 +8,10 @@ interface Props {
   onUpdateFilter: (filterIndex, filter) => void;
   onRemoveFilter: (filterIndex) => void;
   onChangeEventsOrder: (e, { name, value }) => void;
+  hideEventsOrder?: boolean;
 }
 function FilterList(props: Props) {
-  const { filter } = props;
+  const { filter, hideEventsOrder = false } = props;
   const filters = filter.filters;
   const hasEvents = filter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = filter.filters.filter(i => !i.isEvent).size > 0;
@@ -30,29 +31,32 @@ function FilterList(props: Props) {
         <>
           <div className="flex items-center mb-2">
             <div className="text-sm color-gray-medium mr-auto">EVENTS</div>
-            <div className="flex items-center">
-              <div className="mr-2 color-gray-medium text-sm" style={{ textDecoration: 'underline dotted'}}>
-                <Popup
-                  trigger={<div>Events Order</div>}
-                  content={ `Events Order` }
-                  size="tiny"
-                  inverted
-                  position="top center"
+            { !hideEventsOrder && (
+              <div className="flex items-center">
+                <div className="mr-2 color-gray-medium text-sm" style={{ textDecoration: 'underline dotted'}}>
+                  <Popup
+                    trigger={<div>Events Order</div>}
+                    content={ `Events Order` }
+                    size="tiny"
+                    inverted
+                    position="top center"
+                  />
+                </div>
+              
+                <SegmentSelection
+                  primary
+                  name="eventsOrder"
+                  extraSmall={true}
+                  onSelect={props.onChangeEventsOrder}
+                  value={{ value: filter.eventsOrder }}
+                  list={ [
+                    { name: 'THEN', value: 'then' },
+                    { name: 'AND', value: 'and' },
+                    { name: 'OR', value: 'or' },
+                  ]}
                 />
               </div>
-              <SegmentSelection
-                primary
-                name="eventsOrder"
-                extraSmall={true}
-                onSelect={props.onChangeEventsOrder}
-                value={{ value: filter.eventsOrder }}
-                list={ [
-                  { name: 'THEN', value: 'then' },
-                  { name: 'AND', value: 'and' },
-                  { name: 'OR', value: 'or' },
-                ]}
-              />
-            </div>
+            )}
           </div>
           {filters.map((filter, filterIndex) => filter.isEvent ? (
             <FilterItem
