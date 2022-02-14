@@ -1,5 +1,4 @@
 import React from 'react';
-import { List } from 'immutable';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
@@ -13,7 +12,7 @@ interface Props {
   edit: typeof edit;
   addFilter: typeof addFilter;
 }
-function SessionSearch(props) {
+function SessionSearch(props: Props) {
   const { appliedFilter } = props;
   const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
@@ -82,7 +81,6 @@ function SessionSearch(props) {
         <div className="ml-auto flex items-center">
           <SaveFilterButton />
           <SaveFunnelButton />
-          {/* <IconButton primaryText label="SAVE FUNNEL" icon="filter" /> */}
         </div>
       </div>
     </div>
