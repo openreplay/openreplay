@@ -20,11 +20,11 @@ function build_api(){
     [[ $1 == "ee" ]] && {
         cp -rf ../ee/utilities/* ./
     }
-    docker build -f ./Dockerfile -t ${DOCKER_REPO:-'local'}/utilities:${git_sha1} .
+    docker build -f ./Dockerfile -t ${DOCKER_REPO:-'local'}/utilities:1.5.0 .
     [[ $PUSH_IMAGE -eq 1 ]] && {
-        docker push ${DOCKER_REPO:-'local'}/utilities:${git_sha1}
-        docker tag ${DOCKER_REPO:-'local'}/utilities:${git_sha1} ${DOCKER_REPO:-'local'}/utilities:latest
-        docker push ${DOCKER_REPO:-'local'}/utilities:latest
+        docker push ${DOCKER_REPO:-'local'}/utilities:1.5.0
+        docker build -f ./Dockerfile -t ${DOCKER_REPO:-'local'}/utilities:1.5.0-ee .
+        docker push ${DOCKER_REPO:-'local'}/utilities:1.5.0-ee
     }
 }
 
