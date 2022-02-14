@@ -39,7 +39,7 @@ function SaveSearchModal(props: Props) {
     if (await confirm({
       header: 'Confirm',
       confirmButton: 'Yes, Delete',
-      confirmation: `Are you sure you want to permanently delete this Saved serch?`,
+      confirmation: `Are you sure you want to permanently delete this Saved search?`,
     })) {
       props.remove(savedSearch.searchId).then(() => {
         closeHandler();
