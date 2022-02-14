@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -x
 cd $(dirname $0)
 
 is_migrate=$1
