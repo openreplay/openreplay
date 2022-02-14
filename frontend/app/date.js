@@ -111,3 +111,6 @@ export const checkRecentTime = (date, format) => {
 
 export const formatMs = (ms: number): string => ms < 1000 ? `${ Math.trunc(ms) }ms` : `${ Math.trunc(ms/100) / 10 }s`;
 
+export const convertTimestampToUtcTimestamp = (timestamp: number): number => {
+  return DateTime.fromMillis(timestamp).toUTC().toMillis();
+}

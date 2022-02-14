@@ -38,7 +38,7 @@ function chartWrapper(chart = []) {
 const savedSearchIdKey = 'searchId'
 const updateItemInList = createListUpdater(savedSearchIdKey);
 const updateInstance = (state, instance) => state.getIn([ "savedSearch", savedSearchIdKey ]) === instance[savedSearchIdKey]
-	? state.mergeIn([ "savedSearch" ], instance)
+	? state.mergeIn([ "savedSearch" ], SavedFilter(instance))
 	: state;
 
 const initialState = Map({
@@ -63,10 +63,6 @@ function reducer(state = initialState, action = {}) {
       return action.fromUrl 
         ? state.set('instance', Filter(action.filter))
         : state.mergeIn(['instance'], action.filter);
-    case success(SAVE):
-      return updateItemInList(updateInstance(state, action.data), action.data);
-    case success(REMOVE):
-      return state.update('list', list => list.filter(item => item.searchId !== action.id));
 		case success(FETCH):
 			return state.set("instance", action.data);
 		case success(FETCH_LIST):
@@ -136,7 +132,18 @@ export const edit = reduceThenFetchResource((instance) => ({
     instance,
 }));
 
-export const remove = createRemove(name, (id) => `/saved_search/${id}`);
+export const remove = (id) => (dispatch, getState) => {
+  return dispatch({
+    types: REMOVE.array,
+    call: client => client.delete(`/saved_search/${id}`),
+    id,
+  }).then(() => {
+    dispatch(applySavedSearch(new SavedFilter({})));
+    dispatch(fetchList());
+  });
+};
+
+// export const remove = createRemove(name, (id) => `/saved_search/${id}`);
 
 export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
   type: APPLY,
@@ -172,15 +179,21 @@ export function fetch(id) {
 }
 
 export const save = (id) => (dispatch, getState) => {
-// export function save(id) {
   const filter = getState().getIn([ 'search', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
+  const isNew = !id;
 
   const instance = getState().getIn([ 'search', 'savedSearch']).toData();
-  // instance = instance instanceof SavedFilter ? instance : new SavedFilter(instance);
   return dispatch({
     types: SAVE.array,
-    call: client => client.post(!id ? '/saved_search' : `/saved_search/${id}`, { ...instance, filter })
+    call: client => client.post(isNew ? '/saved_search' : `/saved_search/${id}`, { ...instance, filter })
+  }).then(() => {
+    dispatch(fetchList()).then(() => {
+      if (isNew) {
+        const lastSavedSearch = getState().getIn([ 'search', 'list']).last();
+        dispatch(applySavedSearch(lastSavedSearch));
+      }
+    });
   });
 }
 
