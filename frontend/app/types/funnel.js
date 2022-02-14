@@ -80,7 +80,7 @@ export default Record({
       conversionImpact,
       firstStage: firstStage && firstStage.label + ' ' + truncate(firstStage.value || '', 10) || '',
       lastStage: lastStage && lastStage.label + ' ' + truncate(lastStage.value || '', 10) || '',
-      filter: Filter(filter),      
+      filter: Filter(filter),
       sessionsCount: lastStage && lastStage.sessionsCount,
       stepsCount: stages ? stages.length : 0,
       conversions: 100 - conversionImpact
