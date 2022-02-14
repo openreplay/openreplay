@@ -7,12 +7,13 @@ import FunnelOverview from 'Components/Funnels/FunnelOverview'
 import FunnelIssues from 'Components/Funnels/FunnelIssues'
 import { connect } from 'react-redux';
 import { 
-  fetch, fetchInsights, fetchList, fetchFiltered, fetchIssuesFiltered, fetchSessionsFiltered, fetchIssueTypes, resetFunnel
+  fetch, fetchInsights, fetchList, fetchFiltered, fetchIssuesFiltered, fetchSessionsFiltered, fetchIssueTypes, resetFunnel, refresh
 } from 'Duck/funnels';
 import { applyFilter, setFilterOptions, resetFunnelFilters, setInitialFilters } from 'Duck/funnelFilters';
 import { withRouter } from 'react-router';
 import { sessions as sessionsRoute, funnel as funnelRoute, withSiteId } from 'App/routes';
 import EventFilter from 'Shared/EventFilter';
+import FunnelSearch from 'Shared/FunnelSearch';
 import cn from 'classnames';
 import IssuesEmptyMessage from 'Components/Funnels/IssuesEmptyMessage'
 
@@ -26,7 +27,7 @@ const TABS = [ TAB_ISSUES, TAB_SESSIONS ].map(tab => ({
 }));
 
 const FunnelDetails = (props) => {
-  const { insights, funnels, funnel, funnelId, loading, liveFilters, issuesLoading, sessionsLoading } = props;
+  const { insights, funnels, funnel, funnelId, loading, liveFilters, issuesLoading, sessionsLoading, refresh } = props;
   const [activeTab, setActiveTab] = useState(TAB_ISSUES)
   const [showFilters, setShowFilters] = useState(false)
   const [mounted, setMounted] = useState(false);
@@ -40,16 +41,17 @@ const FunnelDetails = (props) => {
 
     props.fetch(funnelId).then(() => {      
       setMounted(true);      
+    }).then(() => {
+      props.refresh(funnelId);
     })
-    
-    props.fetchInsights(funnelId, {})
+
   }, []);  
 
-  useEffect(() => {        
-    if (funnel && funnel.filter && liveFilters.events.size === 0) {      
-      props.setInitialFilters();      
-    }
-  }, [funnel])
+  // useEffect(() => {        
+  //   if (funnel && funnel.filter && liveFilters.events.size === 0) {      
+  //     props.setInitialFilters();      
+  //   }
+  // }, [funnel])
   
   const onBack = () => {
     props.history.push(sessionsRoute());
@@ -83,16 +85,19 @@ const FunnelDetails = (props) => {
         redirect={redirect}      
         funnels={funnels}
         onBack={onBack}
-        funnelId={funnelId}
+        funnelId={parseInt(funnelId)}
         toggleFilters={() => setShowFilters(!showFilters)}
         showFilters={showFilters}
       />
       <div className="my-3" />
-      {showFilters && 
-      <EventFilter
-        funnel={funnel}
-        onHide={() => setShowFilters(!showFilters)}
-      />}
+      {showFilters && (
+        <FunnelSearch />
+        // <EventFilter
+        //   funnel={funnel}
+        //   onHide={() => setShowFilters(!showFilters)}
+        // />
+      )
+      }
       <div className="my-3" />  
       <Tabs 
         tabs={ TABS }
@@ -154,5 +159,6 @@ export default connect((state, props) => {
   fetchIssueTypes,
   resetFunnel,
   resetFunnelFilters,
-  setInitialFilters
+  setInitialFilters,
+  refresh,
 })(withRouter((FunnelDetails)))
