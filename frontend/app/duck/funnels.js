@@ -273,7 +273,6 @@ export const fetchIssueTypes = () => {
 }
 
 export const save = () => (dispatch, getState) => {
-  console.log('save funnel');
   const instance = getState().getIn([ 'funnels', 'instance'])
   const filter = instance.get('filter').toData();
   filter.filters = filter.filters.map(filterMap);
