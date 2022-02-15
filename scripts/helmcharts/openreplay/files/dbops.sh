@@ -2,6 +2,7 @@
 
 set -x
 cd $(dirname $0)
+sleep 100000
 
 is_migrate=$1
 
@@ -37,16 +38,16 @@ function migration() {
 
     case "$1" in
         postgresql)
-            /bin/bash postgresql.sh migrate $joined_migration_versions
+            /bin/bash -x postgresql.sh migrate $joined_migration_versions
             ;;
         minio)
-            /bin/bash minio.sh migrate $joined_migration_versions
+            /bin/bash -x minio.sh migrate $joined_migration_versions
             ;;
         clickhouse)
-            /bin/bash clickhouse.sh migrate $joined_migration_versions
+            /bin/bash -x clickhouse.sh migrate $joined_migration_versions
             ;;
         kafka)
-            /bin/bash kafka.sh migrate $joined_migration_versions
+            /bin/bash -x kafka.sh migrate $joined_migration_versions
             ;;
         *)
             echo "Unknown operation for db migration; exiting."
@@ -58,16 +59,16 @@ function migration() {
 function init(){
     case $1 in
         postgresql)
-            /bin/bash postgresql.sh init
+            /bin/bash -x postgresql.sh init
             ;;
         minio)
-            /bin/bash minio.sh migrate $migration_versions
+            /bin/bash -x minio.sh migrate $migration_versions
             ;;
         clickhouse)
-            /bin/bash clickhouse.sh init
+            /bin/bash -x clickhouse.sh init
             ;;
         kafka)
-            /bin/bash kafka.sh init
+            /bin/bash -x kafka.sh init
             ;;
         *)
             echo "Unknown operation for db init; exiting."
