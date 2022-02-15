@@ -244,6 +244,29 @@ module.exports = {
         });
         console.log("WS server started");
         debug ? console.log("Debugging enabled.") : console.log("Debugging disabled, set debug=\"1\" to enable debugging.");
+
+        setInterval((io) => {
+            try {
+                let count = 0;
+                console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
+                const arr = Array.from(io.sockets.adapter.rooms)
+                const filtered = arr.filter(room => !room[1].has(room[0]))
+                for (let i of filtered) {
+                    let {projectKey, sessionId} = extractPeerId(i[0]);
+                    if (projectKey !== null && sessionId !== null) {
+                        count++;
+                    }
+                }
+                console.log(` ====== Valid Rooms: ${count} ====== `);
+                if (debug) {
+                    for (let item of filtered) {
+                        console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }, 20000, io);
     },
     handlers: {
         socketsList,
