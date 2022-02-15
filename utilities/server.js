@@ -9,11 +9,14 @@ const PORT = 9000;
 
 var app = express();
 var wsapp = express();
+let debug = process.env.debug === "1" || false;
 const request_logger = (identity) => {
     return (req, res, next) => {
-        console.log(identity,new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
+        debug && console.log(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
         res.on('finish', function () {
-            console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
+            if (this.statusCode !== 200 || debug) {
+                console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
+            }
         })
 
         next();

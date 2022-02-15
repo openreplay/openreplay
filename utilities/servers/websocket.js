@@ -14,9 +14,9 @@ const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
 // const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
 
 let io;
-
+let debug = process.env.debug === "1" || false;
 wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, function (req, res) {
-    console.log("[WS]looking for all available sessions");
+    debug && console.log("[WS]looking for all available sessions");
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
@@ -30,7 +30,7 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, function (req, res) {
     res.end(JSON.stringify({"data": liveSessions}));
 });
 wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, function (req, res) {
-    console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
+    debug && console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
@@ -45,7 +45,7 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, function (req, r
 });
 
 wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
-    console.log("[WS]looking for all available LIVE sessions");
+    debug && console.log("[WS]looking for all available LIVE sessions");
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
@@ -65,7 +65,7 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
     res.end(JSON.stringify({"data": liveSessions}));
 });
 wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, async function (req, res) {
-    console.log(`[WS]looking for available LIVE sessions for ${req.params.projectKey}`);
+    debug && console.log(`[WS]looking for available LIVE sessions for ${req.params.projectKey}`);
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
@@ -128,8 +128,8 @@ async function get_all_agents_ids(io, socket) {
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
-        console.log("received headers");
-        console.log(socket.handshake.headers);
+        debug && console.log("received headers");
+        debug && console.log(socket.handshake.headers);
         socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
 
         let ua = uaParser(socket.handshake.headers['user-agent']);
@@ -146,8 +146,8 @@ function extractSessionInfo(socket) {
         // console.log("Looking for MMDB file in " + process.env.MAXMINDDB_FILE);
         geoip2Reader.open(process.env.MAXMINDDB_FILE, options)
             .then(reader => {
-                console.log("looking for location of ");
-                console.log(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+                debug && console.log("looking for location of ");
+                debug && console.log(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
                 let country = reader.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
                 socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
             })
@@ -170,7 +170,7 @@ module.exports = {
         });
 
         io.on('connection', async (socket) => {
-            console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
+            debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
             const {projectKey, sessionId} = extractPeerId(socket.peerId);
@@ -180,24 +180,24 @@ module.exports = {
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 if (c_sessions > 0) {
-                    console.log(`session already connected, refusing new connexion`);
+                    debug && console.log(`session already connected, refusing new connexion`);
                     io.to(socket.id).emit(SESSION_ALREADY_CONNECTED);
                     return socket.disconnect();
                 }
                 extractSessionInfo(socket);
                 if (c_agents > 0) {
-                    console.log(`notifying new session about agent-existence`);
+                    debug && console.log(`notifying new session about agent-existence`);
                     let agents_ids = await get_all_agents_ids(io, socket);
                     io.to(socket.id).emit(AGENTS_CONNECTED, agents_ids);
                 }
 
             } else if (c_sessions <= 0) {
-                console.log(`notifying new agent about no SESSIONS`);
+                debug && console.log(`notifying new agent about no SESSIONS`);
                 io.to(socket.id).emit(NO_SESSIONS);
             }
             socket.join(socket.peerId);
             if (io.sockets.adapter.rooms.get(socket.peerId)) {
-                console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                debug && console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
             }
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
@@ -207,44 +207,38 @@ module.exports = {
             }
 
             socket.on('disconnect', async () => {
-                // console.log(`${socket.id} disconnected from ${socket.peerId}, waiting ${wsReconnectionTimeout / 1000}s before checking remaining`);
-                console.log(`${socket.id} disconnected from ${socket.peerId}`);
+                debug && console.log(`${socket.id} disconnected from ${socket.peerId}`);
                 if (socket.identity === IDENTITIES.agent) {
                     socket.to(socket.peerId).emit(AGENT_DISCONNECT, socket.id);
                 }
-                // wait a little bit before notifying everyone
-                // setTimeout(async () => {
-                console.log("checking for number of connected agents and sessions");
+                debug && console.log("checking for number of connected agents and sessions");
                 let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
                 if (c_sessions === -1 && c_agents === -1) {
-                    console.log(`room not found: ${socket.peerId}`);
+                    debug && console.log(`room not found: ${socket.peerId}`);
                 }
                 if (c_sessions === 0) {
-                    console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
+                    debug && console.log(`notifying everyone in ${socket.peerId} about no SESSIONS`);
                     socket.to(socket.peerId).emit(NO_SESSIONS);
                 }
                 if (c_agents === 0) {
-                    console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
+                    debug && console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
                     socket.to(socket.peerId).emit(NO_AGENTS);
                 }
-
-
-                // }, wsReconnectionTimeout);
             });
 
             socket.onAny(async (eventName, ...args) => {
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
-                    console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
                 } else {
-                    console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
                     let socketId = await findSessionSocketId(io, socket.peerId);
                     if (socketId === null) {
-                        console.log(`session not found for:${socket.peerId}`);
+                        debug && console.log(`session not found for:${socket.peerId}`);
                         io.to(socket.id).emit(NO_SESSIONS);
                     } else {
-                        console.log("message sent");
+                        debug && console.log("message sent");
                         io.to(socketId).emit(eventName, socket.id, args[0]);
                     }
                 }
@@ -265,12 +259,14 @@ module.exports = {
                     }
                 }
                 console.log(` ====== Valid Rooms: ${count} ====== `);
-                for (let item of filtered) {
-                    console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                if (debug) {
+                    for (let item of filtered) {
+                        console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                    }
                 }
             } catch (e) {
                 console.error(e);
             }
-        }, 30000, io);
+        }, 20000, io);
     }
 };
