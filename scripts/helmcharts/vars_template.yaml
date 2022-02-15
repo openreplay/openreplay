@@ -48,11 +48,11 @@ global:
   kafka: *kafka
   redis: *redis
   s3:
-    region: "us-east-1"
-    endpoint: "http://minio.db.svc.cluster.local:9000"
-    assetsBucket: "sessions-assets"
-    recordingsBucket: "mobs"
-    sourcemapsBucket: "sourcemaps"
+    region: "{{ aws_region }}"
+    endpoint: "{{ s3_endpoint }}"
+    assetsBucket: "{{ assets_bucket }}"
+    recordingsBucket: "{{ recordings_bucket }}"
+    sourcemapsBucket: "{{ sourcemaps_bucket }}"
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
