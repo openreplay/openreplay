@@ -35,7 +35,7 @@ mc policy set download minio/frontend
 mc policy set download minio/sessions-assets
 mc policy set download minio/static
 
-curl -L https://github.com/openreplay/openreplay/releases/download/${CHART_APP_VERSION}/frontend.tar.gz -O
+curl -L https://github.com/openreplay/openreplay/releases/download/v${CHART_APP_VERSION}/frontend.tar.gz -O
 tar -xf frontend.tar.gz
 mc cp --recursive frontend/ minio/frontend/
 }
