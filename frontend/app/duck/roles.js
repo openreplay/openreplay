@@ -11,12 +11,12 @@ const RESET_ERRORS = 'roles/RESET_ERRORS';
 const initialState = Map({
   list: List(),
   permissions: List([
-    { name: 'Session Replay', value: 'SESSION_REPLAY' },
-    { name: 'Developer Tools', value: 'DEV_TOOLS' },
-    { name: 'Errors', value: 'ERRORS' },
-    { name: 'Metrics', value: 'METRICS' },
-    { name: 'Assist (Live)', value: 'ASSIST_LIVE' },
-    { name: 'Assist (Call)', value: 'ASSIST_CALL' },
+    { text: 'Session Replay', value: 'SESSION_REPLAY' },
+    { text: 'Developer Tools', value: 'DEV_TOOLS' },
+    { text: 'Errors', value: 'ERRORS' },
+    { text: 'Metrics', value: 'METRICS' },
+    { text: 'Assist (Live)', value: 'ASSIST_LIVE' },
+    { text: 'Assist (Call)', value: 'ASSIST_CALL' },
   ])
 });
 

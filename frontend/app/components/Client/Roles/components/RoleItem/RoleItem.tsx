@@ -3,9 +3,9 @@ import { Icon } from 'UI'
 import stl from './roleItem.css'
 import cn from 'classnames'
 
-function PermisionLabel({ permission }: any) {
+function PermisionLabel({ label }: any) {
   return (
-    <div className={cn(stl.label)}>{ permission }</div>
+    <div className={cn(stl.label, 'mb-2')}>{ label }</div>
   );
 }
 
@@ -14,23 +14,33 @@ interface Props {
   deleteHandler?: (role: any) => void,
   editHandler?: (role: any) => void,
   permissions: any,
-  isAdmin: boolean
+  isAdmin: boolean,
+  projects: any,
 }
-function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions }: Props) {
+function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, projects }: Props) {
   return (
-    <div className={cn(stl.wrapper)}>
-      <Icon name="user-alt" size="16" marginRight="10" />
-      <div className="flex items-center">
-        <div className="mr-4">{ role.name }</div>
-        <div className="grid grid-flow-col auto-cols-max">
-          {role.permissions.map((permission: any) => (
-            <PermisionLabel permission={permissions[permission]} key={permission.id} />
-            // <span key={permission.id} className={cn(stl.permission)}>{ permissions[permission].name }</span>
-          ))}
-        </div>
+    <div className={cn(stl.wrapper, 'flex items-start relative')}>
+      <div className="flex" style={{ width: '20%'}}>
+        <Icon name="user-alt" size="16" marginRight="10" />
+        { role.name }
       </div>
+      <div className="flex items-start flex-wrap" style={{ width: '30%'}}>
+        {role.allProjects ? (
+          <PermisionLabel label="All projects" />
+        ) : (
+          role.projects.map(p => (
+            <PermisionLabel label={projects[p]} />
+          ))
+        )}
+      </div>
+      <div className="flex items-start flex-wrap" style={{ width: '50%'}}>
+        {role.permissions.map((permission: any) => (
+          <PermisionLabel label={permissions[permission]} key={permission.id} />
+        ))}
+      </div>
+
       { isAdmin && (
-        <div className={ stl.actions }>
+        <div className={ cn(stl.actions, 'absolute right-0 top-0 bottom-0') }>
           { !!deleteHandler &&
             <div className={ cn(stl.button, {[stl.disabled] : role.protected }) } onClick={ () => deleteHandler(role) } id="trash">
               <Icon name="trash" size="16" color="teal"/>
@@ -43,7 +53,6 @@ function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions }: Pr
           }
         </div>
       )}
-
     </div>
   );
 }
