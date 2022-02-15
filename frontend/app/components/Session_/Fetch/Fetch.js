@@ -12,6 +12,7 @@ import { setTimelinePointer } from 'Duck/sessions';
 
 @connectPlayer(state => ({
   list: state.fetchList,
+  livePlay: state.livePlay,
 }))
 @connect(state => ({
   timelinePointer: state.getIn(['sessions', 'timelinePointer']),
@@ -36,13 +37,17 @@ export default class Fetch extends React.PureComponent {
   }
 
   setCurrent = (item, index) => {
-    pause()
-    jump(item.time)
+    if (!this.props.livePlay) {
+      pause();
+      jump(item.time)
+    }
     this.setState({ current: item, currentIndex: index });
   }
 
   onRowClick = (item, index) => {
-    pause()
+    if (!this.props.livePlay) {
+      pause();
+    }
     this.setState({ current: item, currentIndex: index, showFetchDetails: true });
     this.props.setTimelinePointer(null);
   }
