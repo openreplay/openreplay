@@ -171,9 +171,17 @@ export default class App {
     this.debug.error("OpenReplay error: ", context, e)
   }
 
+  private readonly preStartMessages: Message[] = []
   send(message: Message, urgent = false): void {
-    if (this.activityState !== ActivityState.Active) {
+    if (this.activityState === ActivityState.NotActive) {
       return;
+    }
+    if (this.activityState === ActivityState.Starting) {
+      this.preStartMessages.push(message);
+    }
+    if (this.preStartMessages.length) {
+      this.messages.push(...this.preStartMessages);
+      this.preStartMessages.length = 0
     }
     this.messages.push(message);
     if (urgent) {
