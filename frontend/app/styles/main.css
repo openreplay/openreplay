@@ -118,3 +118,9 @@
   opacity: 0.4;
   pointer-events: none;
 }
+
+.hover {
+  &:hover {
+    background-color: $active-blue;
+  }
+}

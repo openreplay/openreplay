@@ -9,6 +9,7 @@ import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import EventFilter from 'Components/BugFinder/EventFilter';
 import DateRange from 'Components/BugFinder/DateRange';
+import withPageTitle from 'HOCs/withPageTitle';
 
 import { SavedSearchList } from 'UI';
 
@@ -43,6 +44,7 @@ function getStatusLabel(status) {
 	applyFilter,
 	fetchSlackList,
 })
+@withPageTitle("Errors - OpenReplay")
 export default class Errors extends React.PureComponent {
 	state = {
 		status: UNRESOLVED,

@@ -5,6 +5,7 @@ import { Checkbox } from 'UI'
 import { connect } from 'react-redux'
 import { withRequest } from 'HOCs'
 import { fetch as fetchConfig, edit as editConfig, save as saveConfig } from 'Duck/config'
+import withPageTitle from 'HOCs/withPageTitle';
 
 function Notifications(props) {
   const { config } = props;
@@ -42,4 +43,4 @@ function Notifications(props) {
 
 export default connect(state => ({
   config: state.getIn(['config', 'options'])
-}), { fetchConfig, editConfig, saveConfig })(Notifications)
+}), { fetchConfig, editConfig, saveConfig })(withPageTitle('Notifications - OpenReplay Preferences')(Notifications));

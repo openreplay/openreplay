@@ -1,13 +1,5 @@
-.wrapper {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  border-bottom: solid thin #e6e6e6;
-  padding: 10px 0px;
-}
-
 .actions {
-  margin-left: auto;
+  /* margin-left: auto; */
   /* opacity: 0; */
   transition: all 0.4s;
   display: flex;
@@ -37,11 +29,11 @@
 }
 
 .label {
-  margin-left: 10px;
+  margin-right: 10px;
   padding: 0 5px;
   border-radius: 3px;
   background-color: $gray-lightest;
-  font-size: 10px;
+  font-size: 12px;
   border: solid thin $gray-light;
   width: fit-content;
 }

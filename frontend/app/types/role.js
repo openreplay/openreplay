@@ -1,18 +1,21 @@
 import Record from 'Types/Record';
-import { validateName } from 'App/validate';
+import { notEmptyString, validateName } from 'App/validate';
 import { List } from 'immutable';
 
 export default Record({
   roleId: undefined,
   name: '',
+  allProjects: true,
   permissions: List(),
+  projects: List(),
   protected: false,
-  description: ''
+  description: '',
+  permissionOptions: List(),
 }, {
   idKey: 'roleId',
   methods: {
     validate() {
-      return validateName(this.name, { diacritics: true });
+      return notEmptyString(this.name) && validateName(this.name, { diacritics: true }) && (this.allProjects || this.projects.size > 0);
     },
     toData() {
       const js = this.toJS();
@@ -21,10 +24,11 @@ export default Record({
       return js;
     },
   },
-  fromJS({ permissions, ...rest }) {
+  fromJS({ projects = [], permissions = [], ...rest }) {
     return {
       ...rest,
-      permissions: List(permissions)
+      permissions: List(permissions),
+      projects: List(projects),
     }
   },
 });
