@@ -5,7 +5,7 @@ import { List } from 'immutable';
 export default Record({
   roleId: undefined,
   name: '',
-  allProjects: false,
+  allProjects: true,
   permissions: List(),
   projects: List(),
   protected: false,
@@ -15,7 +15,7 @@ export default Record({
   idKey: 'roleId',
   methods: {
     validate() {
-      return notEmptyString(this.name) && validateName(this.name, { diacritics: true });
+      return notEmptyString(this.name) && validateName(this.name, { diacritics: true }) && (this.allProjects || this.projects.size > 0);
     },
     toData() {
       const js = this.toJS();
