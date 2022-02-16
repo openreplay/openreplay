@@ -73,7 +73,7 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
           <SideMenuitem
             active={ activeTab === CLIENT_TABS.MANAGE_ROLES }
             title="Roles & Access"
-            iconName="shield-lock"
+            iconName="diagram-3"
             onClick={() => setTab(CLIENT_TABS.MANAGE_ROLES) }
           />
         </div> 
