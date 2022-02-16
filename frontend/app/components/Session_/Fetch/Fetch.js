@@ -127,10 +127,6 @@ export default class Fetch extends React.PureComponent {
           <BottomBlock.Header>
             <h4 className="text-lg">Fetch</h4>
             <div className="flex items-center">
-              {/* <div className="flex items-center mr-3 text-sm uppercase">
-                <div className="p-2 cursor-pointer" onClick={this.goToPrevError}>Prev</div>
-                <div className="p-2 cursor-pointer" onClick={this.goToNextError}>Next</div>
-              </div> */}
               <Input
                 className="input-small"
                 placeholder="Filter"
