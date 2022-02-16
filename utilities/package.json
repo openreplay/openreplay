@@ -24,6 +24,7 @@
     "peer": "^0.6.1",
     "socket.io": "^4.4.1",
     "source-map": "^0.7.3",
-    "ua-parser-js": "^1.0.2"
+    "ua-parser-js": "^1.0.2",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.6.0"
   }
 }

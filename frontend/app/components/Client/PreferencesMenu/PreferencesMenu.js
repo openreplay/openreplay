@@ -68,25 +68,25 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
         />
       </div>
 
-      <div className="mb-4">
-        <SideMenuitem
-          active={ activeTab === CLIENT_TABS.MANAGE_USERS }
-          title="Users"
-          iconName="users"
-          onClick={() => setTab(CLIENT_TABS.MANAGE_USERS) }
-        />
-      </div>
-
       { isEnterprise && (
         <div className="mb-4">
           <SideMenuitem
             active={ activeTab === CLIENT_TABS.MANAGE_ROLES }
-            title="Roles"
-            iconName="shield-lock"
+            title="Roles & Access"
+            iconName="diagram-3"
             onClick={() => setTab(CLIENT_TABS.MANAGE_ROLES) }
           />
         </div> 
       )}
+      
+      <div className="mb-4">
+        <SideMenuitem
+          active={ activeTab === CLIENT_TABS.MANAGE_USERS }
+          title="Team"
+          iconName="users"
+          onClick={() => setTab(CLIENT_TABS.MANAGE_USERS) }
+        />
+      </div>
 
       <div className="mb-4">
         <SideMenuitem
