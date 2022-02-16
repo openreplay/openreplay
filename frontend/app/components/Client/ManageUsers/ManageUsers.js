@@ -33,7 +33,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   generateInviteLink,
   fetchRoles
 })
-@withPageTitle('Users - OpenReplay Preferences')
+@withPageTitle('Team - OpenReplay Preferences')
 class ManageUsers extends React.PureComponent {
   state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining, invited: false }
 
