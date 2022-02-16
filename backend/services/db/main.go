@@ -15,6 +15,7 @@ import (
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/services/db/heuristics"
+	logger "openreplay/backend/pkg/log"
 )
 
 var pg *cache.PGCache
@@ -28,13 +29,18 @@ func main() {
 
 	heurFinder := heuristics.NewHandler()
 
+
+	statsLogger := logger.NewQueueStats(env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"))
+
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_DB"),
 		[]string{
 			env.String("TOPIC_RAW_IOS"),
 			env.String("TOPIC_TRIGGER"),
 		},
-		func(sessionID uint64, msg messages.Message, _ *types.Meta) {
+		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
+			statsLogger.HandleAndLog(sessionID, meta)
+
 			if err := insertMessage(sessionID, msg); err != nil {
 				if !postgres.IsPkeyViolation(err) {
 					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
@@ -64,8 +70,7 @@ func main() {
 					return
 				}
 
-				err = insertStats(session, msg)
-				if err != nil {
+				if err := insertStats(session, msg); err != nil {
 					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 				}
 			})
