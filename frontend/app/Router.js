@@ -102,7 +102,7 @@ class Router extends React.Component {
       this.props.fetchTenants();
     }
 
-    if (!prevProps.isLoggedIn && this.props.isLoggedIn && this.state.destinationPath !== routes.login() && this.state.destinationPath !== '/') {
+    if (this.state.destinationPath && !prevProps.isLoggedIn && this.props.isLoggedIn && this.state.destinationPath !== routes.login() && this.state.destinationPath !== '/') {
       this.props.history.push(this.state.destinationPath);
       this.setState({ destinationPath: null });
     }
