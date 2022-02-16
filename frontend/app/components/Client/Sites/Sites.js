@@ -37,7 +37,7 @@ const GDPR_FORM = 'GDPR_FORM';
   remove,
   fetchGDPR
 })
-@withPageTitle('Sites - OpenReplay Preferences')
+@withPageTitle('Projects - OpenReplay Preferences')
 class Sites extends React.PureComponent {
   state = { 
     showTrackingCode: false, 

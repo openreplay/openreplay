@@ -1,9 +1,5 @@
 .form {
   padding: 0 20px;
-
-  & .formGroup {
-    margin-bottom: 15px;
-  }
   & label {
     display: block;
     margin-bottom: 5px;

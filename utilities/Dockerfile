@@ -1,4 +1,4 @@
-FROM node:12.22-stretch
+FROM node:17-stretch
 WORKDIR /work
 COPY . .
 RUN npm install
