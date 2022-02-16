@@ -22,7 +22,7 @@ function init() {
         echo "Creating topic: $topic"
         # TODO: Have to check an idempotent way of creating topics.
         kafka-topics.sh --create --bootstrap-server ${KAFKA_HOST}:${KAFKA_PORT} --replication-factor 2 --partitions 16 --topic ${topic} --command-config /tmp/config.txt || true
-        kafka-configs.sh --bootstrap-server ${KAFKA_HOST}:${KAFKA_PORT} --entity-type topics --alter --add-config retention.ms=3456000000 --entity-name=${topic} --command-config /tmp/config.txt || true
+        kafka-configs.sh --bootstrap-server ${KAFKA_HOST}:${KAFKA_PORT} --entity-type topics --alter --add-config retention.ms=345600000 --entity-name=${topic} --command-config /tmp/config.txt || true
     done
 }
 
