@@ -155,7 +155,7 @@ module.exports = {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            path: '/ws-assist/socket',
+            path: '/socket',
             transports: ['websocket'],
             // upgrade: false
         });
