@@ -13,6 +13,7 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/services/ender/builder"
 )
 
@@ -23,7 +24,8 @@ func main() {
 	TOPIC_TRIGGER := env.String("TOPIC_TRIGGER")
 
 	builderMap := builder.NewBuilderMap()
-	var lastTs int64 = 0
+
+	statsLogger := logger.NewQueueStats(env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"))
 
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
@@ -33,11 +35,8 @@ func main() {
 			env.String("TOPIC_RAW_IOS"),
 		}, 
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			lastTs = meta.Timestamp
+			statsLogger.HandleAndLog(sessionID, meta)
 			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
-			// builderMap.IterateSessionReadyMessages(sessionID, lastTs, func(readyMsg messages.Message) {
-			// 	producer.Produce(TOPIC_TRIGGER, sessionID, messages.Encode(readyMsg))
-			// })
 		},
 	)
 	consumer.DisableAutoCommit()
