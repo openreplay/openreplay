@@ -155,7 +155,9 @@ module.exports = {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            path: '/ws-assist/socket'
+            path: '/ws-assist/socket',
+            transports: ['websocket'],
+            // upgrade: false
         });
         io.attachApp(server);
 
