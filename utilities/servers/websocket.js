@@ -156,7 +156,7 @@ module.exports = {
                 methods: ["GET", "POST", "PUT"]
             },
             path: '/socket',
-            transports: ['websocket'],
+            // transports: ['websocket'],
             // upgrade: false
         });
         io.attachApp(server);
