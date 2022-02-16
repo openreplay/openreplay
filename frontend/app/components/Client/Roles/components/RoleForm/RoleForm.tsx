@@ -19,9 +19,11 @@ interface Props {
   projectOptions: Array<any>[],
   permissionsMap: any,
   projectsMap: any,
+  deleteHandler: (id: any) => Promise<void>,
 }
 
-const RoleForm = ({ role, closeModal, edit, save, saving, permissions, permissionsMap, projectsMap, projectOptions }: Props) => {
+const RoleForm = (props: Props) => {
+  const { role, edit, save, closeModal, saving, permissions, projectOptions, permissionsMap, projectsMap } = props
   let focusElement = useRef<any>(null)
   const _save = () => {
     save(role).then(() => {
@@ -167,6 +169,18 @@ const RoleForm = ({ role, closeModal, edit, save, saving, permissions, permissio
             { 'Cancel' }
           </Button>
         </div>
+        { role.exists() && (
+          <div>
+            <Button
+              data-hidden={ !role.exists() }
+              onClick={ () => props.deleteHandler(role) }
+              hover
+              noPadding
+            >
+              <Icon name="trash" size="18"/>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

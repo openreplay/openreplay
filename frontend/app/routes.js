@@ -59,8 +59,8 @@ export const forgotPassword = () => '/reset-password';
 export const CLIENT_TABS = {
   INTEGRATIONS: 'integrations',
   PROFILE: 'account',
-  MANAGE_USERS: 'manage-users',
-  MANAGE_ROLES: 'manage-roles',
+  MANAGE_USERS: 'team',
+  MANAGE_ROLES: 'roles',
   SITES: 'projects',  
   CUSTOM_FIELDS: 'metadata',
   WEBHOOKS: 'webhooks',
@@ -73,7 +73,7 @@ export const client = (tab = routerClientTabString) => `/client/${ tab }`;
 export const OB_TABS = {
   INSTALLING: 'installing',
   IDENTIFY_USERS: 'identify-users',
-  MANAGE_USERS: 'manage-users',
+  MANAGE_USERS: 'team',
   INTEGRATIONS: 'integrations',
 };
 export const OB_DEFAULT_TAB = OB_TABS.INSTALLING;
