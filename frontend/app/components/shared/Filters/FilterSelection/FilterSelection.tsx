@@ -4,9 +4,12 @@ import LiveFilterModal from '../LiveFilterModal';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { Icon } from 'UI';
 import { connect } from 'react-redux';
+import { dashboard as dashboardRoute, isRoute } from "App/routes";
+
+const DASHBOARD_ROUTE = dashboardRoute();
 
 interface Props {
-  filter: any; // event/filter
+  filter?: any; // event/filter
   onFilterClick: (filter) => void;
   children?: any;
   isLive?: boolean;
@@ -40,7 +43,7 @@ function FilterSelection(props: Props) {
       </OutsideClickDetectingDiv>
       {showModal && (
         <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
-          { isLive ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> }
+          { (isLive && !isRoute(DASHBOARD_ROUTE, window.location.pathname)) ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> }
         </div>
       )}
     </div>
