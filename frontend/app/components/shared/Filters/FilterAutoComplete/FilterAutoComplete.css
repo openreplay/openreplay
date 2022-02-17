@@ -48,14 +48,14 @@
   border-radius: 0 0 3px 3px;
   border: solid thin $gray-light !important;
   box-shadow: 0 2px 2px 0 $gray-light;
-  /* padding: 20px; */
+  min-height: 50px;
   background-color: white;
   max-height: 350px;
   overflow-y: auto;
   position: absolute;
   top: 28px;
   left: 0;  
-  width: 500px;
+  width: 400px;
   z-index: 99;
 }
 
