@@ -49,10 +49,10 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
   return dispatch(fetchSessionList(filter));
 };
 
-export const edit = reduceThenFetchResource((instance) => ({
+export const edit = (instance) => ({
     type: EDIT,
     instance,
-}));
+});
 
 export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
   type: APPLY,
