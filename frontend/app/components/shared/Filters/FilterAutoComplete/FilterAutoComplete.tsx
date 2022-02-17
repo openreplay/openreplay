@@ -58,7 +58,7 @@ function FilterAutoComplete(props: Props) {
     }).finally(() => setLoading(false));
   }
 
-  const debouncedRequestValues = React.useCallback(debounce(requestValues, 500), []);
+  const debouncedRequestValues = React.useCallback(debounce(requestValues, 300), []);
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
@@ -86,17 +86,12 @@ function FilterAutoComplete(props: Props) {
   const onItemClick = (e, item) => {
     e.stopPropagation();
     e.preventDefault();
-    // const { onSelect, name } = this.props;
 
-    
     if (query !== item.value) {
       setQuery(item.value); 
     }
-    // this.setState({ query: item.value, ddOpen: false})
+
     props.onSelect(e, item);
-    // setTimeout(() => {
-    //   setShowModal(false)
-    // }, 10)
   }
 
   return (
@@ -106,7 +101,6 @@ function FilterAutoComplete(props: Props) {
           name="query"
           onChange={ onInputChange }
           onBlur={ onBlur }
-          // onFocus={ () => setShowModal(true)}
           value={ query }
           autoFocus={ true }
           type="text"
@@ -119,7 +113,6 @@ function FilterAutoComplete(props: Props) {
         />
         <div
           className={stl.right}
-          // onClick={showOrButton ? onRemoveValue : onAddValue}
         >
           { showCloseButton && <div onClick={onRemoveValue}><Icon name="close" size="12" /></div> }
           { showOrButton && <div onClick={onAddValue} className="color-teal"><span className="px-1">or</span></div> }
@@ -128,21 +121,27 @@ function FilterAutoComplete(props: Props) {
 
       { !showOrButton && <div className="ml-3">or</div> }
 
-      { (showModal && (options.length > 0) || loading) &&  (
+      { showModal && (
         <div className={ stl.menu }>
           <Loader loading={loading} size="small">
-            {
-              options.map((item, i) => (
-                <div
-                  key={item.value + '_'  + i}
-                  className={ cn(stl.filterItem) }
-                  id="filter-item" onClick={ (e) => onItemClick(e, item) }
-                >
-                  { icon && <Icon name={ icon } size="16" marginRight="8" /> }
-                  <span className={ stl.label }>{ item.value }</span>
-                </div>             
-              ))
-            }
+            { options.length === 0 ? (
+              <div className="p-4 w-full">No results found!</div>
+            ) : (
+              <div>
+                {
+                  options.map((item, i) => (
+                    <div
+                      key={item.value + '_'  + i}
+                      className={ cn(stl.filterItem) }
+                      id="filter-item" onClick={ (e) => onItemClick(e, item) }
+                    >
+                      { icon && <Icon name={ icon } size="16" marginRight="8" /> }
+                      <span className={ stl.label }>{ item.value }</span>
+                    </div>             
+                  ))
+                }
+              </div>
+            )} 
           </Loader>
         </div>
       )}
