@@ -18,10 +18,6 @@ function FilterList(props: Props) {
   let rowIndex = 0;
 
   const onRemoveFilter = (filterIndex) => {
-    const newFilters = filters.filter((_filter, i) => {
-      return i !== filterIndex;
-    });
-
     props.onRemoveFilter(filterIndex);
   }
 

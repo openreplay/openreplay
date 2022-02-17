@@ -3,11 +3,9 @@ import { fetchType, editType } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { mergeReducers } from './funcTools/tools';
 import Filter from 'Types/filter';
-import SavedFilter from 'Types/filter/savedFilter';
 import { fetchList as fetchSessionList } from './sessions';
 import { liveFiltersMap } from 'Types/filter/newFilter';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
-import { FilterKey } from '../types/filter/filterType';
 
 const name = "liveSearch";
 const idKey = "searchId";
