@@ -4,6 +4,7 @@ import FilterAutoCompleteLocal from '../FilterAutoCompleteLocal';
 import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
 import FilterValueDropdown from '../FilterValueDropdown';
 import FilterDuration from '../FilterDuration';
+import { debounce } from 'App/utils';
 
 interface Props {
   filter: any;
@@ -35,9 +36,9 @@ function FilterValue(props: Props) {
     props.onUpdate({ ...filter, value: newValues })
   }
 
+  const debounceOnSelect = React.useCallback(debounce(onChange, 500), [onChange]);
+
   const onDurationChange = (newValues) => {
-    console.log('durationValues', durationValues)
-    // setDurationValues({ ...durationValues });
     setDurationValues({ ...durationValues, ...newValues });
   } 
 
@@ -72,7 +73,7 @@ function FilterValue(props: Props) {
             showOrButton={showOrButton}
             onAddValue={onAddValue}
             onRemoveValue={() => onRemoveValue(valueIndex)}
-            onSelect={(e, item) => onChange(e, item, valueIndex)}
+            onSelect={(e, item) => debounceOnSelect(e, item, valueIndex)}
             icon={filter.icon}
           />
         )

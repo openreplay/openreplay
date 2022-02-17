@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Icon, Loader } from 'UI';
-import { debounce } from 'App/utils';
+// import { debounce } from 'App/utils';
 import stl from './FilterAutoCompleteLocal.css';
-import cn from 'classnames';
+// import cn from 'classnames';
 
 interface Props {
   showOrButton?: boolean;
@@ -27,11 +27,11 @@ function FilterAutoCompleteLocal(props: Props) {
   } = props;
   const [showModal, setShowModal] = useState(true)
   const [query, setQuery] = useState(value);
-  const debounceOnSelect = React.useCallback(debounce(props.onSelect, 500), []);
+  // const debounceOnSelect = debounce(props.onSelect, 500);
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
-    debounceOnSelect(null, { value });
+    props.onSelect(null, { value });
   }
 
   useEffect(() => {
