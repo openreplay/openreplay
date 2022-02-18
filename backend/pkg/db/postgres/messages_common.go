@@ -1,13 +1,13 @@
 package postgres
 
 import (
+	"fmt"
 	"log"
 	"strings"
-	"fmt"
 
+	"openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/hashid"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/db/types"
 )
 
 func getAutocompleteType(baseType string, platform string) string {
@@ -22,7 +22,7 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, tp string, value str
 	if len(value) == 0 {
 		return
 	}
-	if err := conn.exec(`
+	if err := conn.batchQueue(sessionID, `
 		INSERT INTO autocomplete (
 			value,
 			type,
@@ -31,7 +31,7 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, tp string, value str
 			$1, $2, project_id
 			FROM sessions 
 			WHERE session_id = $3
-		) ON CONFLICT DO NOTHING`, 
+		) ON CONFLICT DO NOTHING`,
 		value, tp, sessionID,
 	); err != nil {
 		log.Printf("Insert autocomplete error: %v", err)
@@ -59,16 +59,16 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 			NULLIF($14, ''), NULLIF($15, ''), NULLIF($16, ''), NULLIF($17, 0), NULLIF($18, 0::bigint),
 			NULLIF($19, '')
 		)`,
-		sessionID, s.ProjectID, s.Timestamp, 
+		sessionID, s.ProjectID, s.Timestamp,
 		s.UserUUID, s.UserDevice, s.UserDeviceType, s.UserCountry,
 		s.UserOS, s.UserOSVersion,
-		s.RevID, 
+		s.RevID,
 		s.TrackerVersion, s.Timestamp/1000,
 		s.Platform,
 		s.UserAgent, s.UserBrowser, s.UserBrowserVersion, s.UserDeviceMemorySize, s.UserDeviceHeapSize,
 		s.UserID,
 	); err != nil {
-		return err;
+		return err
 	}
 	conn.insertAutocompleteValue(sessionID, getAutocompleteType("USEROS", s.Platform), s.UserOS)
 	conn.insertAutocompleteValue(sessionID, getAutocompleteType("USERDEVICE", s.Platform), s.UserDevice)
@@ -81,7 +81,7 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 
 func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
 	// Search acceleration
-	if err := conn.exec(`
+	if err := conn.batchQueue(sessionID, `
 		UPDATE sessions
 		SET issue_types=(SELECT 
 			CASE WHEN errors_count > 0 THEN
@@ -96,7 +96,7 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 		`,
 		sessionID,
 	); err != nil {
-		log.Printf("Error while updating issue_types %v", sessionID)
+		log.Printf("Error while updating issue_types: %v. SessionID: %v", err, sessionID)
 	}
 
 	var dur uint64
@@ -113,33 +113,33 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {
-	return conn.exec(`
+	return conn.batchQueue(sessionID, `
 		INSERT INTO events_common.requests (
 			session_id, timestamp, seq_index, url, duration, success
 		) VALUES (
 			$1, $2, $3, $4, $5, $6
 		)`,
-		sessionID, timestamp, 
+		sessionID, timestamp,
 		getSqIdx(index),
 		url, duration, success,
 	)
 }
 
 func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint64, name string, payload string) error {
-	return conn.exec(`
+	return conn.batchQueue(sessionID, `
 		INSERT INTO events_common.customs (
 			session_id, timestamp, seq_index, name, payload
 		) VALUES (
 			$1, $2, $3, $4, $5
 		)`,
-		sessionID, timestamp, 
-		getSqIdx(index), 
+		sessionID, timestamp,
+		getSqIdx(index),
 		name, payload,
 	)
 }
 
 func (conn *Conn) InsertUserID(sessionID uint64, userID string) error {
-	return conn.exec(`
+	return conn.batchQueue(sessionID, `
 		UPDATE sessions SET  user_id = $1
 		WHERE session_id = $2`,
 		userID, sessionID,
@@ -147,16 +147,15 @@ func (conn *Conn) InsertUserID(sessionID uint64, userID string) error {
 }
 
 func (conn *Conn) InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
-	return conn.exec(`
+	return conn.batchQueue(sessionID, `
 		UPDATE sessions SET  user_anonymous_id = $1
 		WHERE session_id = $2`,
 		userAnonymousID, sessionID,
 	)
 }
 
-
 func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
-	return conn.exec(fmt.Sprintf(`
+	return conn.batchQueue(sessionID, fmt.Sprintf(`
 		UPDATE sessions SET  metadata_%v = $1
 		WHERE session_id = $2`, keyNo),
 		value, sessionID,
@@ -173,11 +172,11 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	issueID := hashid.IssueID(projectID, e)
 
 	// TEMP. TODO: nullable & json message field type
-	payload := &e.Payload;
+	payload := &e.Payload
 	if *payload == "" || *payload == "{}" {
 		payload = nil
 	}
-	context := &e.Context;
+	context := &e.Context
 	if *context == "" || *context == "{}" {
 		context = nil
 	}
@@ -189,7 +188,7 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			project_id, $2, $3, $4, CAST($5 AS jsonb)
 			FROM sessions
 			WHERE session_id = $1
-		)ON CONFLICT DO NOTHING`, 
+		)ON CONFLICT DO NOTHING`,
 		sessionID, issueID, e.Type, e.ContextString, context,
 	); err != nil {
 		return err
@@ -199,8 +198,8 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			session_id, issue_id, timestamp, seq_index, payload
 		) VALUES (
 			$1, $2, $3, $4, CAST($5 AS jsonb)
-		)`, 
-		sessionID, issueID, e.Timestamp, 
+		)`,
+		sessionID, issueID, e.Timestamp,
 		getSqIdx(e.MessageID),
 		payload,
 	); err != nil {
@@ -228,5 +227,3 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 	}
 	return tx.commit()
 }
-
-
