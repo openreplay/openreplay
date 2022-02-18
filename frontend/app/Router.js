@@ -11,6 +11,7 @@ import UpdatePassword from 'Components/UpdatePassword/UpdatePassword';
 import ClientPure from 'Components/Client/Client';
 import OnboardingPure from 'Components/Onboarding/Onboarding';
 import SessionPure from 'Components/Session/Session';
+import AssistPure from 'Components/Assist';
 import BugFinderPure from 'Components/BugFinder/BugFinder';
 import DashboardPure from 'Components/Dashboard/Dashboard';
 import ErrorsPure from 'Components/Errors/Errors';
@@ -29,6 +30,7 @@ import { setSessionPath } from 'Duck/sessions';
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
 const Session = withSiteIdUpdater(SessionPure);
+const Assist = withSiteIdUpdater(AssistPure);
 const Client = withSiteIdUpdater(ClientPure);
 const Onboarding = withSiteIdUpdater(OnboardingPure);
 const Errors = withSiteIdUpdater(ErrorsPure);
@@ -39,6 +41,7 @@ const withObTab = routes.withObTab;
 
 const DASHBOARD_PATH = routes.dashboard();
 const SESSIONS_PATH = routes.sessions();
+const ASSIST_PATH = routes.assist();
 const ERRORS_PATH = routes.errors();
 const ERROR_PATH = routes.error();
 const FUNNEL_PATH = routes.funnel();
@@ -145,6 +148,7 @@ class Router extends React.Component {
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
           <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+          <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
           <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
           <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
           <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } />
