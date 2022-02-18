@@ -1,6 +1,6 @@
-from chalicelib.utils import pg_client, helper
-from chalicelib.core.integration_jira_cloud_issue import JIRACloudIntegrationIssue
 from chalicelib.core import integration_base
+from chalicelib.core.integration_jira_cloud_issue import JIRACloudIntegrationIssue
+from chalicelib.utils import pg_client, helper
 
 PROVIDER = "JIRA"
 
@@ -89,7 +89,9 @@ class JIRAIntegration(integration_base.BaseIntegration):
             return self.update(
                 changes={
                     "username": data["username"],
-                    "token": data["token"],
+                    "token": data["token"] \
+                        if data.get("token") and len(data["token"]) > 0 and data["token"].find("***") == -1 \
+                        else s["token"],
                     "url": data["url"]
                 }
             )
