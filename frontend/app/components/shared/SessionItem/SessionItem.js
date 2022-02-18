@@ -18,6 +18,8 @@ import LiveTag from 'Shared/LiveTag';
 import Bookmark from 'Shared/Bookmark';
 import Counter from './Counter'
 import { withRouter } from 'react-router-dom';
+import SessionMetaList from './SessionMetaList';
+import ErrorBars from './ErrorBars';
 
 const Label = ({ label = '', color = 'color-gray-medium'}) => (
   <div className={ cn('font-light text-sm', color)}>{label}</div>
@@ -61,64 +63,69 @@ export default class SessionItem extends React.PureComponent {
     const hasUserId = userId || userAnonymousId;
 
     return (
-      <div className={ stl.sessionItem } id="session-item" >
-        <div className={ cn('flex items-center mr-auto')}>
-          <div className="flex items-center mr-6" style={{ width: '200px' }}>
-            <Avatar seed={ userNumericHash } />
-            <div className="flex flex-col ml-3 overflow-hidden">
-              <div
-                className={cn({'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
-                onClick={() => (!disableUser && !hasUserFilter && hasUserId) && onUserClick(userId, userAnonymousId)}
-              >
-                <TextEllipsis text={ userDisplayName } noHint />
+      <div className={ cn(stl.sessionItem, "flex flex-col bg-white p-3 mb-3") } id="session-item" >
+        <div className="flex items-start">
+          <div className={ cn('flex items-center w-full')}>
+            <div className="flex items-center" style={{ width: "40%"}}>
+              <div><Avatar seed={ userNumericHash } /></div>
+              <div className="flex flex-col overflow-hidden color-gray-medium ml-3">
+                <div
+                  className={cn({'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
+                  onClick={() => (!disableUser && !hasUserFilter && hasUserId) && onUserClick(userId, userAnonymousId)}
+                >
+                  {userDisplayName}
+                </div>
+                <div className="color-gray-medium">30 Sessions</div>
               </div>
-              <Label label={ formatTimeOrDate(startedAt, timezone) } />
+            </div>
+            <div style={{ width: "20%"}}>
+              <div>{formatTimeOrDate(startedAt, timezone) }</div>
+              <div className="flex items-center color-gray-medium">
+                {!live && (
+                    <div className="color-gray-medium">
+                      <span className="mr-1">{ eventsCount }</span>
+                      <span>{ eventsCount === 0 || eventsCount > 1 ? 'Events' : 'Event' }</span>
+                    </div>
+                )}
+                <span className="mx-1">-</span>
+                <div>{ live ? <Counter startTime={startedAt} /> : formattedDuration }</div>
+              </div>
+            </div>
+            <div style={{ width: "20%"}}>
+              <div className="">
+                <CountryFlag country={ userCountry } className="mr-6" />
+                <div className="color-gray-medium">
+                  <span>{userBrowser}</span> -
+                  <span>{userOs}</span> -
+                  <span>{userDeviceType}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{ width: "10%"}} className="self-center">
+              <ErrorBars count={errorsCount} />
             </div>
           </div>
-          <div className={ cn(stl.iconStack, 'flex-1') }>
-            <div className={ stl.icons }>
-              <CountryFlag country={ userCountry } className="mr-6" />
-              <BrowserIcon browser={ userBrowser } size="16" className="mr-6" />
-              <OsIcon os={ userOs } size="16" className="mr-6" />
-              <Icon name={ deviceTypeIcon(userDeviceType) } size="16" className="mr-6" />
-            </div>
-          </div>
-          <div className="flex flex-col items-center px-4" style={{ width: '150px'}}>
-            <div className="text-xl">
-              { live ? <Counter startTime={startedAt} /> : formattedDuration }            
-            </div>
-            <Label label="Duration" />
-          </div>
 
-          {!live && (
-            <div className="flex flex-col items-center px-4">
-              <div className={ stl.count }>{ eventsCount }</div>
-              <Label label={ eventsCount === 0 || eventsCount > 1 ? 'Events' : 'Event' } />
+          <div className="flex items-center">
+            {/* { live && <LiveTag isLive={true} /> } */}
+            <div className={ cn(stl.iconDetails, stl.favorite, 'px-4') } data-favourite={favorite} >
+              <Bookmark sessionId={sessionId} favorite={favorite} />
             </div>
-          )}
-
-        </div>
-
-        <div className="flex items-center">
-          {!live && (
-            <div className="flex flex-col items-center px-4">
-              <div className={ cn(stl.count, { "color-gray-medium": errorsCount === 0 }) } >{ errorsCount }</div>
-              <Label label="Errors" color={errorsCount > 0 ? '' : 'color-gray-medium'} />
+            
+            <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
+              <Link to={ sessionRoute(sessionId) }>
+                <Icon name={ viewed ? 'play-fill' : 'play-circle-light' } size="30" color="teal" />
+              </Link>
             </div>
-          )}
-          
-          { live && <LiveTag isLive={true} /> }
-
-          <div className={ cn(stl.iconDetails, stl.favorite, 'px-4') } data-favourite={favorite} >
-            <Bookmark sessionId={sessionId} favorite={favorite} />
-          </div>
-          
-          <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
-            <Link to={ sessionRoute(sessionId) }>
-              <Icon name={ viewed ? 'play-fill' : 'play-circle-light' } size="30" color="teal" />
-            </Link>
           </div>
         </div>
+        <SessionMetaList className="pt-3" metaList={[
+          { label: 'Pages', value: pagesCount },
+          { label: 'Errors', value: errorsCount },
+          { label: 'Events', value: eventsCount },
+          { label: 'Events', value: eventsCount },
+          { label: 'Events', value: eventsCount },
+        ]} />
       </div>
     );
   }
