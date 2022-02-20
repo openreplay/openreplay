@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Optional, List, Union, Literal
 
-from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator
+from pydantic import BaseModel, Field, EmailStr, HttpUrl, root_validator, validator
 
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -107,7 +107,11 @@ class JiraGithubSchema(BaseModel):
     provider: str = Field(...)
     username: str = Field(...)
     token: str = Field(...)
-    url: str = Field(...)
+    url: HttpUrl = Field(...)
+
+    @validator('url')
+    def transform_url(cls, v: HttpUrl):
+        return HttpUrl.build(scheme=v.scheme, host=v.host)
 
 
 class CreateEditWebhookSchema(BaseModel):
