@@ -117,7 +117,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
               color={ onCall ? "red" : "gray-darkest" }
             />
             <span className={cn("ml-2", { 'color-red' : onCall })}>{ onCall ? 'End Call' : 'Call' }</span> */}
-            <IconButton size="small" primary={!onCall} red={onCall} label="Call" icon="headset" />
+            <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
           </div>
         }
         content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }

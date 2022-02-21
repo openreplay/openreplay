@@ -126,6 +126,11 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ osIcon(userOs) } label={ userOs } /> */}
 
           <div className='ml-auto flex items-center'>
+            { live && hasSessionsPath && (
+              <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
+                This Session is Now Continuing Live
+              </div>
+            )}
             <div className={ stl.divider } />
             <Popup
                 trigger={(
@@ -144,19 +149,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 hideOnScroll
             />
             <div className={ stl.divider } />
-
-            { live && hasSessionsPath && (
-              <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
-                This Session is Now Continuing Live
-              </div>
-            )}
             { _live && <AssistActions isLive userId={userId} /> }
             { !_live && (
               <>
                 <Autoplay />
                 <div className={ stl.divider } />
                 <IconButton
-                  className="mr-2"
+                  // className="mr-2"
                   tooltip="Bookmark"
                   tooltipPosition="top right"
                   onClick={ this.toggleFavorite }
@@ -164,13 +163,14 @@ export default class PlayerBlockHeader extends React.PureComponent {
                   icon={ favorite ? 'star-solid' : 'star' }                  
                   plain
                 />
+                <div className={ stl.divider } />
                 <SharePopup
                   entity="sessions"
                   id={ sessionId }
                   showCopyLink={true}
                   trigger={
                     <IconButton
-                      className="mr-2"
+                      // className="mr-2"
                       tooltip="Share Session"
                       tooltipPosition="top right"
                       disabled={ disabled }

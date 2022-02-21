@@ -20,7 +20,7 @@ export default function MetaMoreButton(props: Props) {
             content={ 
                 <div className="flex flex-col">
                 {list.slice(maxLength).map(({ label, value }, index) => (
-                    <MetaItem key={index} label={label} value={value} className="mb-2" />
+                    <MetaItem key={index} label={label} value={value} className="mb-3" />
                 ))}
                 </div>
             }
