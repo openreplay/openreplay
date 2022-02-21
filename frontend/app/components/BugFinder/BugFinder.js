@@ -102,13 +102,13 @@ export default class BugFinder extends React.PureComponent {
     //   };
     // });
     // // TODO should cache the response
-    props.fetchIntegrationVariables().then(() => {
-      defaultFilters[5] = {
-        category: 'Metadata',
-        type: 'custom',
-        keys: this.props.variables.map(({ key }) => ({ type: 'METADATA', key, label: key, icon: 'filters/metadata', isFilter: true })).toJS()
-      };
-    });    
+    // props.fetchIntegrationVariables().then(() => {
+    //   defaultFilters[5] = {
+    //     category: 'Metadata',
+    //     type: 'custom',
+    //     keys: this.props.variables.map(({ key }) => ({ type: 'METADATA', key, label: key, icon: 'filters/metadata', isFilter: true })).toJS()
+    //   };
+    // });    
 
     props.fetchSessions();
     props.resetFunnel();

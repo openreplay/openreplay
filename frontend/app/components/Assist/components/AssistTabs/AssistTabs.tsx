@@ -15,16 +15,15 @@ const AssistTabs = (props: Props) => {
       <div className="flex items-center">
         {props.userId && (
           <>
+            <div className="flex items-center mr-3">
+              <Icon name="user-alt" color="gray-darkest" />
+              <div className="ml-2">{props.userId}</div>
+            </div>
             <div
               className={stl.btnLink}
               onClick={() => setShowMenu(!showMenu)}
             >
-              More Live Sessions
-            </div>
-            <span className="mx-3 color-gray-medium">by</span>
-            <div className="flex items-center">
-              <Icon name="user-alt" color="gray-darkest" />
-              <div className="ml-2">{props.userId}</div>
+              All Active Sessions
             </div>
           </>
         )}
