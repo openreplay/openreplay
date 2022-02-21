@@ -3,19 +3,21 @@ import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
 import { sessions as sessionsRoute, withSiteId } from 'App/routes';
-import { Icon, CountryFlag, IconButton, BackLink } from 'UI';
+import { Icon, CountryFlag, IconButton, BackLink, Popup } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
 import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
+import { countries } from 'App/constants';
 
 import stl from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';
 import AssistTabs from '../Assist/components/AssistTabs';
+import SessionInfoItem from './SessionInfoItem'
 
 const SESSIONS_ROUTE = sessionsRoute();
 
@@ -53,11 +55,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
       this.props.fetchListIntegration('issues')
   }
 
-  getDimension = (width, height) => (
-    <div className="flex items-center">
-      { width || 'x' } <Icon name="close" size="12" className="mx-1" /> { height || 'x' }
-    </div>
-  );
+  getDimension = (width, height) => {
+    return width && height ? (
+      <div className="flex items-center">
+        { width || 'x' } <Icon name="close" size="12" className="mx-1" /> { height || 'x' }
+      </div>
+    ) : <span className="text-sm">Not Available</span>;
+  }
 
   backHandler = () => {
     const { history, siteId, sessionPath } = this.props;
@@ -85,6 +89,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
         startedAt,
         userBrowser,
         userOs,
+        userOsVersion,
         userDevice,
         userBrowserVersion,
         userDeviceType,
@@ -102,12 +107,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
-        <div className="flex w-full">
+        <div className="flex w-full items-center">
           <BackLink	onClick={this.backHandler} label="Back" />
           
           <div className={ stl.divider } />
+          { _live && <AssistTabs userId={userId} />}
           
-          <div className="mx-4 flex items-center">
+          {/* <div className="mx-4 flex items-center">
             <CountryFlag country={ userCountry } />
             <div className="ml-2 font-normal color-gray-dark mt-1 text-sm">
               { formatTimeOrDate(startedAt) } <span>{ this.props.local === 'UTC' ? 'UTC' : ''}</span>
@@ -117,15 +123,33 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <HeaderInfo icon={ browserIcon(userBrowser) } label={ `v${ userBrowserVersion }` } />
           <HeaderInfo icon={ deviceTypeIcon(userDeviceType) } label={ capitalise(userDevice) } />
           <HeaderInfo icon="expand-wide" label={ this.getDimension(width, height) } />
-          <HeaderInfo icon={ osIcon(userOs) } label={ userOs } />
+          <HeaderInfo icon={ osIcon(userOs) } label={ userOs } /> */}
 
           <div className='ml-auto flex items-center'>
+            <div className={ stl.divider } />
+            <Popup
+                trigger={(
+                  <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
+                )}
+                content={(
+                  <div className=''>
+                    <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={ formatTimeOrDate(startedAt) } />
+                    <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={ `v${ userBrowserVersion }` } />
+                    <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={ userOsVersion } />
+                    <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ this.getDimension(width, height) } isLast />
+                  </div>
+                )}
+                on="click"
+                position="top center"
+                hideOnScroll
+            />
+            <div className={ stl.divider } />
+
             { live && hasSessionsPath && (
               <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
                 This Session is Now Continuing Live
               </div>
             )}
-            { _live && <AssistTabs userId={userId} />}
             { _live && <AssistActions isLive userId={userId} /> }
             { !_live && (
               <>
@@ -164,3 +188,4 @@ export default class PlayerBlockHeader extends React.PureComponent {
     );
   }
 }
+

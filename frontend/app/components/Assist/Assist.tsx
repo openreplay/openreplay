@@ -2,8 +2,10 @@ import React from 'react';
 import LiveSessionList from 'Shared/LiveSessionList';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames'
+import withPageTitle from 'HOCs/withPageTitle';
 
-export default function Assist() {
+// @withPageTitle("Assist - OpenReplay")
+function Assist() {
   return (
     <div className="page-margin container-90 flex relative">
         <div className="flex-1 flex">
@@ -18,3 +20,5 @@ export default function Assist() {
     </div>
   )
 }
+
+export default withPageTitle("Assist - OpenReplay")(Assist);

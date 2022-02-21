@@ -10,6 +10,7 @@ import styles from './siteDropdown.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
+import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 
 @withRouter
 @connect(state => ({  
@@ -21,6 +22,7 @@ import { clearSearch } from 'Duck/search';
   pushNewSite,
   init,
   clearSearch,
+  fetchIntegrationVariables,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
@@ -37,6 +39,7 @@ export default class SiteDropdown extends React.PureComponent {
   switchSite = (siteId) => {
     this.props.setSiteId(siteId);
     this.props.clearSearch();
+    this.props.fetchIntegrationVariables();
   }
 
   render() {

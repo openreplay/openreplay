@@ -73,8 +73,38 @@
       fill: white;
     }
 
+    & svg {
+      fill: white;
+    }
+
+    & .label { 
+      color: white !important;
+    }
+
     &:hover {
       background-color: $teal-dark;
+    }
+  }
+
+  &.red {
+    background-color: $red;
+    box-shadow: 0 0 0 1px $red inset !important;
+  
+    & .icon {
+      fill: white;
+    }
+
+    & svg {
+      fill: white;
+    }
+
+    & .label { 
+      color: white !important;
+    }
+
+    &:hover {
+      background-color: $red;
+      filter: brightness(90%);
     }
   }
 
@@ -116,4 +146,14 @@
 
 .primaryText .label {
   color: $teal !important;
+}
+
+.redText {
+  & .label {
+    color: $red !important;
+  }
+
+  & svg {
+    fill: $red;
+  }
 }
