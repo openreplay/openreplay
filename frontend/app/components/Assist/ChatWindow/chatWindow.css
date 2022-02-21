@@ -1,9 +1,10 @@
 .wrapper {
   background-color: white;
-  border: solid thin #000;
+  border: solid thin $gray-light;
   border-radius: 3px;
   position: fixed;  
-  width: 300px;  
+  width: 300px;
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 .headerTitle {

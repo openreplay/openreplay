@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import { countries } from 'App/constants';
-import { Popup } from 'UI';
+import { Popup, Icon } from 'UI';
 import stl from './countryFlag.css';
 
 const CountryFlag = React.memo(({ country, className, style = {}, label = false }) => {
@@ -13,7 +13,8 @@ const CountryFlag = React.memo(({ country, className, style = {}, label = false 
 			<Popup
 				trigger={ knownCountry 
 				?  <div className={ cn(`flag flag-${ countryFlag }`, className, stl.default) } />
-				: <div className={ cn('text-sm', className) }>{ "N/A" }</div>
+				: <Icon name="flag-na" size="22" className="-mx-1" />
+				// : <div className={ cn('text-sm', className) }>{ "N/A" }</div>
 				}
 				content={ countryName }
 				inverted
