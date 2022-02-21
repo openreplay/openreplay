@@ -186,13 +186,15 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                 COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""", full_args)
         elif data.group_by_user:
+            meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, jsonb_agg(users_sessions) FILTER ( WHERE rn <= 200 ) AS sessions
                                         FROM (SELECT user_id,
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
-                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}, 
+                                                                {",".join([f'metadata_{m["index"]} AS {m["key"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions
@@ -237,6 +239,10 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
     if errors_only:
         return sessions
+    if data.group_by_user:
+        for i, s in enumerate(sessions):
+            sessions[i] = {**s.pop("last_session")[0], **s}
+            sessions[i].pop("rn")
     if not data.group_by_user and data.sort is not None and data.sort != "session_id":
         sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
                           reverse=data.order.upper() == "DESC")
@@ -250,7 +256,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricViewType):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
-                                               density=density, factor=1, decimal=True))
+                                                   density=density, factor=1, decimal=True))
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
                                                      user_id=None)
