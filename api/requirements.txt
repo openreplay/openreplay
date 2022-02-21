@@ -8,8 +8,8 @@ jira==2.0.0
 
 
 
-fastapi==0.70.1
-uvicorn[standard]==0.16.0
-python-decouple==3.5
+fastapi==0.74.1
+uvicorn[standard]==0.17.5
+python-decouple==3.6
 pydantic[email]==1.8.2
 apscheduler==3.8.1
