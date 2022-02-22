@@ -49,16 +49,6 @@ def update(search_id, project_id, user_id, data: schemas.SavedSearchSchema):
 
 def get_all(project_id, user_id, details=False):
     with pg_client.PostgresClient() as cur:
-        print(cur.mogrify(
-            f"""\
-                SELECT search_id, project_id, user_id, name, created_at, deleted_at, is_public
-                    {",filter" if details else ""}
-                FROM public.searches
-                WHERE project_id = %(project_id)s
-                  AND deleted_at IS NULL
-                  AND (user_id = %(user_id)s OR is_public);""",
-            {"project_id": project_id, "user_id": user_id}
-        ))
         cur.execute(
             cur.mogrify(
                 f"""\
