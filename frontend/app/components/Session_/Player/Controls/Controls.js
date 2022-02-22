@@ -297,7 +297,7 @@ export default class Controls extends React.Component {
                   >
                     <div>{ speed + 'x' }</div>
                   </button>
-                  <div className={ styles.divider } /> 
+                  
                   <button
                     className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip }) }
                     onClick={ this.props.toggleSkip }
@@ -308,7 +308,9 @@ export default class Controls extends React.Component {
                   </button>
                 </React.Fragment>
               }
-              <div className={ styles.divider } />
+
+              { !live && <div className={ styles.divider } /> }
+              
               { !live &&
                 <ControlButton
                   disabled={ disabled }
@@ -413,7 +415,7 @@ export default class Controls extends React.Component {
                   icon="business-time"
                 />
               } */}
-              <div className={ styles.divider } /> 
+              
               { !live && 
                 <React.Fragment>
                   <ControlButton

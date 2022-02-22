@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { SlideModal, Icon } from 'UI';
+import { SlideModal, Avatar, Icon } from 'UI';
 import SessionList from '../SessionList';
 import stl from './assistTabs.css'
 
 interface Props {
   userId: any,
+  userNumericHash: any,
 }
 
 const AssistTabs = (props: Props) => {
@@ -15,16 +16,16 @@ const AssistTabs = (props: Props) => {
       <div className="flex items-center">
         {props.userId && (
           <>
+            <div className="flex items-center mr-3">
+              {/* <Icon name="user-alt" color="gray-darkest" /> */}
+              <Avatar iconSize="20" width="30px" height="30px" seed={ props.userNumericHash } />
+              <div className="ml-2 font-medium">{props.userId}'s</div>
+            </div>
             <div
               className={stl.btnLink}
               onClick={() => setShowMenu(!showMenu)}
             >
-              More Live Sessions
-            </div>
-            <span className="mx-3 color-gray-medium">by</span>
-            <div className="flex items-center">
-              <Icon name="user-alt" color="gray-darkest" />
-              <div className="ml-2">{props.userId}</div>
+              Active Sessions
             </div>
           </>
         )}

@@ -337,3 +337,12 @@ a:hover {
   text-overflow: ellipsis;
   margin-right: 15px;
 }
+
+.ui.mini.modal>.header:not(.ui) {
+  padding: 10px 17px !important;
+  font-size: 16px !important;
+}
+
+.ui.modal>.content {
+  padding: 10px 17px !important; 
+}

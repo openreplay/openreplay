@@ -18,13 +18,18 @@ import LiveTag from 'Shared/LiveTag';
 import Bookmark from 'Shared/Bookmark';
 import Counter from './Counter'
 import { withRouter } from 'react-router-dom';
+import SessionMetaList from './SessionMetaList';
+import ErrorBars from './ErrorBars';
+import { assist as assistRoute, isRoute } from "App/routes";
+import { capitalize } from 'App/utils';
+
+const ASSIST_ROUTE = assistRoute();
 
 const Label = ({ label = '', color = 'color-gray-medium'}) => (
   <div className={ cn('font-light text-sm', color)}>{label}</div>
 )
 @connect(state => ({
   timezone: state.getIn(['sessions', 'timezone']),
-  isAssist: state.getIn(['sessions', 'activeTab']).type === 'live',
   siteId: state.getIn([ 'user', 'siteId' ]),
 }), { toggleFavorite, setSessionPath })
 @withRouter
@@ -50,75 +55,96 @@ export default class SessionItem extends React.PureComponent {
         userDeviceType,
         userUuid,
         userNumericHash,
-        live        
+        live,
+        metadata,
+        userSessionsCount,
       },
       timezone,
       onUserClick = () => null,
       hasUserFilter = false,
-      disableUser = false
+      disableUser = false,
+      metaList = [],
     } = this.props;
     const formattedDuration = durationFormatted(duration);
     const hasUserId = userId || userAnonymousId;
+    const isAssist = isRoute(ASSIST_ROUTE, this.props.location.pathname);
+
+    const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
+      const value = metadata[key];
+      return { label: key, value };
+    });
 
     return (
-      <div className={ stl.sessionItem } id="session-item" >
-        <div className={ cn('flex items-center mr-auto')}>
-          <div className="flex items-center mr-6" style={{ width: '200px' }}>
-            <Avatar seed={ userNumericHash } />
-            <div className="flex flex-col ml-3 overflow-hidden">
-              <div
-                className={cn({'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
-                onClick={() => (!disableUser && !hasUserFilter && hasUserId) && onUserClick(userId, userAnonymousId)}
-              >
-                <TextEllipsis text={ userDisplayName } noHint />
+      <div className={ cn(stl.sessionItem, "flex flex-col bg-white p-3 mb-3") } id="session-item" >
+        <div className="flex items-start">
+          <div className={ cn('flex items-center w-full')}>
+            <div className="flex items-center pr-2" style={{ width: "30%"}}>
+              <div><Avatar seed={ userNumericHash } isAssist={isAssist} /></div>
+              {/* <div className="flex flex-col overflow-hidden color-gray-medium ml-3"> */}
+              <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center">
+                <div
+                  className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
+                  onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
+                >
+                  {userDisplayName}
+                </div>
+                {/* <div
+                  className="color-gray-medium text-dotted-underline cursor-pointer"
+                  onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
+                >
+                  {userSessionsCount} Sessions
+                </div> */}
               </div>
-              <Label label={ formatTimeOrDate(startedAt, timezone) } />
             </div>
-          </div>
-          <div className={ cn(stl.iconStack, 'flex-1') }>
-            <div className={ stl.icons }>
-              <CountryFlag country={ userCountry } className="mr-6" />
-              <BrowserIcon browser={ userBrowser } size="16" className="mr-6" />
-              <OsIcon os={ userOs } size="16" className="mr-6" />
-              <Icon name={ deviceTypeIcon(userDeviceType) } size="16" className="mr-6" />
+            <div style={{ width: "20%", height: "38px" }} className="px-2 flex flex-col justify-between">
+              <div>{formatTimeOrDate(startedAt, timezone) }</div>
+              <div className="flex items-center color-gray-medium">
+                {!isAssist && (
+                    <>
+                      <div className="color-gray-medium">
+                        <span className="mr-1">{ eventsCount }</span>
+                        <span>{ eventsCount === 0 || eventsCount > 1 ? 'Events' : 'Event' }</span>
+                      </div>
+                      <div className="mx-2 text-4xl">·</div>
+                    </>
+                )}
+                <div>{ live ? <Counter startTime={startedAt} /> : formattedDuration }</div>
+              </div>
             </div>
-          </div>
-          <div className="flex flex-col items-center px-4" style={{ width: '150px'}}>
-            <div className="text-xl">
-              { live ? <Counter startTime={startedAt} /> : formattedDuration }            
+            <div style={{ width: "30%", height: "38px" }} className="px-2 flex flex-col justify-between">
+              <CountryFlag country={ userCountry } className="mr-2" label />
+              <div className="color-gray-medium flex items-center">
+                <span className="capitalize" style={{ maxWidth: '70px'}}>
+                  <TextEllipsis text={ capitalize(userBrowser) } popupProps={{ inverted: true, size: "tiny" }} />
+                </span> 
+                <div className="mx-2 text-4xl">·</div>
+                <span className="capitalize" style={{ maxWidth: '70px'}}>
+                  <TextEllipsis text={ capitalize(userOs) } popupProps={{ inverted: true, size: "tiny" }} />
+                </span>
+                <div className="mx-2 text-4xl">·</div>
+                <span className="capitalize" style={{ maxWidth: '70px'}}>
+                  <TextEllipsis text={ capitalize(userDeviceType) } popupProps={{ inverted: true, size: "tiny" }} />
+                </span>
+              </div>
             </div>
-            <Label label="Duration" />
+            { !isAssist && (
+              <div style={{ width: "10%"}} className="self-center px-2 flex items-center">
+                <ErrorBars count={errorsCount} />
+              </div>
+            )}
           </div>
 
-          {!live && (
-            <div className="flex flex-col items-center px-4">
-              <div className={ stl.count }>{ eventsCount }</div>
-              <Label label={ eventsCount === 0 || eventsCount > 1 ? 'Events' : 'Event' } />
+          <div className="flex items-center">
+            <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
+              <Link to={ sessionRoute(sessionId) }>
+                <Icon name={ !viewed && !isAssist ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
+              </Link>
             </div>
-          )}
-
+          </div>
         </div>
-
-        <div className="flex items-center">
-          {!live && (
-            <div className="flex flex-col items-center px-4">
-              <div className={ cn(stl.count, { "color-gray-medium": errorsCount === 0 }) } >{ errorsCount }</div>
-              <Label label="Errors" color={errorsCount > 0 ? '' : 'color-gray-medium'} />
-            </div>
-          )}
-          
-          { live && <LiveTag isLive={true} /> }
-
-          <div className={ cn(stl.iconDetails, stl.favorite, 'px-4') } data-favourite={favorite} >
-            <Bookmark sessionId={sessionId} favorite={favorite} />
-          </div>
-          
-          <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
-            <Link to={ sessionRoute(sessionId) }>
-              <Icon name={ viewed ? 'play-fill' : 'play-circle-light' } size="30" color="teal" />
-            </Link>
-          </div>
-        </div>
+        { _metaList.length > 0 && (
+          <SessionMetaList className="mt-4" metaList={_metaList} />
+        )}
       </div>
     );
   }

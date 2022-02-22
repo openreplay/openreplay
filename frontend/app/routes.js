@@ -82,6 +82,7 @@ const routerOBTabString = `:activeTab(${ Object.values(OB_TABS).join('|') })`;
 export const onboarding = (tab = routerOBTabString) => `/onboarding/${ tab }`;
 
 export const sessions = params => queried('/sessions', params);
+export const assist = params => queried('/assist', params);
 
 export const session = (sessionId = ':sessionId', hash) => hashed(`/session/${ sessionId }`, hash);
 export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/live/session/${ sessionId }`, hash);
@@ -105,7 +106,7 @@ export const METRICS_QUERY_KEY = 'metrics';
 export const SOURCE_QUERY_KEY = 'source';
 export const WIDGET_QUERY_KEY = 'widget';
 
-const REQUIRED_SITE_ID_ROUTES = [ liveSession(''), session(''), sessions(), dashboard(''), error(''), errors(), onboarding(''), funnel(''), funnelIssue(''), ];
+const REQUIRED_SITE_ID_ROUTES = [ liveSession(''), session(''), sessions(), assist(), dashboard(''), error(''), errors(), onboarding(''), funnel(''), funnelIssue(''), ];
 const routeNeedsSiteId = path => REQUIRED_SITE_ID_ROUTES.some(r => path.startsWith(r));
 const siteIdToUrl = (siteId = ':siteId') => {
   if (Array.isArray(siteId)) {
@@ -128,7 +129,7 @@ export function isRoute(route, path){
     routeParts.every((p, i) => p.startsWith(':') || p === pathParts[ i ]);
 }
 
-const SITE_CHANGE_AVALIABLE_ROUTES = [ sessions(),  dashboard(), errors(), onboarding('')];
+const SITE_CHANGE_AVALIABLE_ROUTES = [ sessions(),  assist(), dashboard(), errors(), onboarding('')];
 export const siteChangeAvaliable = path => SITE_CHANGE_AVALIABLE_ROUTES.some(r => isRoute(r, path));
 
 

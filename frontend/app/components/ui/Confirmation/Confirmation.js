@@ -22,7 +22,7 @@ const Confirmation = ({
       content={confirmation}
       header={header}
       className="confirmCustom"
-      confirmButton={<Button size="small" id="confirm-button" primary>{ confirmButton }</Button>}
+      confirmButton={<Button size="small" id="confirm-button" className="ml-0" primary>{ confirmButton }</Button>}
       cancelButton={<Button size="small" id="cancel-button" plain className={ stl.cancelButton }>{ cancelButton }</Button>}
       onCancel={() => proceed(false)}
       onConfirm={() => proceed(true)}
