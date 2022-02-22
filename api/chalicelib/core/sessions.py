@@ -162,6 +162,10 @@ def _isAny_opreator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
 
 
+def _isUndefined_operator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator._is_undefined]
+
+
 @dev.timed
 def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, favorite_only=False, errors_only=False,
                error_status="ALL", count_only=False, issue=None):
@@ -317,7 +321,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             op = __get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.events_count] else f.operator
             is_any = _isAny_opreator(f.operator)
-            if not is_any and len(f.value) == 0:
+            is_undefined = _isUndefined_operator(f.operator)
+            if not is_any and not is_undefined and len(f.value) == 0:
                 continue
             is_not = False
             if __is_negation_operator(f.operator):
@@ -366,6 +371,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.utm_source IS NOT NULL')
                     ss_constraints.append('ms.utm_source  IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.utm_source IS NULL')
+                    ss_constraints.append('ms.utm_source  IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
@@ -377,6 +385,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.utm_medium IS NOT NULL')
                     ss_constraints.append('ms.utm_medium IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.utm_medium IS NULL')
+                    ss_constraints.append('ms.utm_medium IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
@@ -388,6 +399,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.utm_campaign IS NOT NULL')
                     ss_constraints.append('ms.utm_campaign IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.utm_campaign IS NULL')
+                    ss_constraints.append('ms.utm_campaign IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f's.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
@@ -421,6 +435,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     if is_any:
                         extra_constraints.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
                         ss_constraints.append(f"ms.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
+                    elif is_undefined:
+                        extra_constraints.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NULL")
+                        ss_constraints.append(f"ms.{metadata.index_to_colname(meta_keys[f.source])} IS NULL")
                     else:
                         extra_constraints.append(
                             _multiple_conditions(
@@ -434,6 +451,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.user_id IS NOT NULL')
                     ss_constraints.append('ms.user_id IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.user_id IS NULL')
+                    ss_constraints.append('ms.user_id IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
@@ -444,6 +464,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.user_anonymous_id IS NOT NULL')
                     ss_constraints.append('ms.user_anonymous_id IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.user_anonymous_id IS NULL')
+                    ss_constraints.append('ms.user_anonymous_id IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
@@ -455,6 +478,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.rev_id IS NOT NULL')
                     ss_constraints.append('ms.rev_id IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.rev_id IS NULL')
+                    ss_constraints.append('ms.rev_id IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f"s.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))

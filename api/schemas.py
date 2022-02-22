@@ -439,6 +439,7 @@ class SearchEventOperator(str, Enum):
     _on = "on"
     _on_any = "onAny"
     _is_not = "isNot"
+    _is_undefined = "isUndefined"
     _not_on = "notOn"
     _contains = "contains"
     _not_contains = "notContains"
