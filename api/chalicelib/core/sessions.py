@@ -207,9 +207,11 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                             ORDER BY user_sessions_count DESC) AS users_sessions;""",
                                      full_args)
         else:
+            meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
                                             FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
-                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS},
+                                                                {",".join([f'metadata_{m["index"]} AS {m["key"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
@@ -248,6 +250,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
+            sessions[i]["metadata"] = {k["key"]: sessions[i][k["key"]] for k in meta_keys}
+    else:
+        for i, s in enumerate(sessions):
             sessions[i]["metadata"] = {k["key"]: sessions[i][k["key"]] for k in meta_keys}
     if not data.group_by_user and data.sort is not None and data.sort != "session_id":
         sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
