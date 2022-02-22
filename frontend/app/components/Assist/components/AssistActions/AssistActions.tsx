@@ -84,7 +84,8 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
       <div
         className={
           cn(
-            'cursor-pointer p-2 mr-2 flex items-center',
+            'cursor-pointer p-2 flex items-center',
+            {[stl.disabled]: cannotCall}
           )
         }
         onClick={ requestReleaseRemoteControl }
@@ -98,13 +99,13 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         <span className={cn("ml-2", { 'color-green' : remoteControlStatus === RemoteControlStatus.Enabled })}>{ 'Remote Control' }</span> */}
         <IconButton label={`${remoteActive ? 'Stop ' : ''} Remote Control`} icon="remote-control" primaryText redText={remoteActive} />
       </div>
-      <div className="divider" />
+      
       <Popup
         trigger={
           <div
             className={
               cn(
-                'cursor-pointer p-2 mr-2 flex items-center',
+                'cursor-pointer p-2 flex items-center',
                 {[stl.disabled]: cannotCall}
               )
             }

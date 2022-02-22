@@ -21,6 +21,7 @@ export default function DropdownPlain(props: Props) {
                 direction={direction}
                 options={ options }
                 onChange={ props.onChange }
+                scrolling
                 // defaultValue={ value }
                 icon={ icon ? <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> : null }
             />

@@ -62,7 +62,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       <div className="flex items-center">
         { width || 'x' } <Icon name="close" size="12" className="mx-1" /> { height || 'x' }
       </div>
-    ) : <span className="text-sm">Not Available</span>;
+    ) : <span className="">Resolution N/A</span>;
   }
 
   backHandler = () => {
@@ -87,6 +87,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
         sessionId,
         userCountry,
         userId,
+        userNumericHash,
         favorite,
         startedAt,
         userBrowser,
@@ -120,7 +121,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <BackLink	onClick={this.backHandler} label="Back" />
           
           <div className={ stl.divider } />
-          { _live && <AssistTabs userId={userId} />}
+          { _live && <AssistTabs userId={userId} userNumericHash={userNumericHash} />}
           
           {/* <div className="mx-4 flex items-center">
             <CountryFlag country={ userCountry } />
@@ -144,7 +145,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
               </>
             )}
             
-            { live && (
+            { _live && (
               <>
                 <SessionMetaList className="" metaList={_metaList} />
                 <div className={ stl.divider } />
