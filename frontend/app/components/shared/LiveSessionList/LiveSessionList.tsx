@@ -109,7 +109,12 @@ function LiveSessionList(props: Props) {
   return (
     <div>
       <div className="flex mb-6 justify-between items-end">
-        <div></div>
+        <div className="flex items-baseline">
+          <h3 className="text-2xl capitalize">
+            <span>Live Sessions</span>
+            <span className="ml-2 font-normal color-gray-medium">{sessions.size}</span>
+          </h3>
+        </div>
         <div className="flex items-center">
           <div className="flex items-center">
             <span className="mr-2 color-gray-medium">Timezone</span>

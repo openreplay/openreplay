@@ -131,7 +131,14 @@
 
 .divider {
   width: 1px;
-  height: 49px;
   margin: 0 15px;
+  background-color: $gray-light;
+}
+
+.divider-h {
+  height: 1px;
+  width: 100%;
+  
+  margin: 25px 0;
   background-color: $gray-light;
 }
