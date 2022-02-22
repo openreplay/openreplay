@@ -19,6 +19,7 @@ import Header from 'Components/Header/Header';
 // import ResultsModal from 'Shared/Results/ResultsModal';
 import FunnelDetails from 'Components/Funnels/FunnelDetails';
 import FunnelIssueDetails from 'Components/Funnels/FunnelIssueDetails';
+import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 
 import APIClient from './api_client';
 import * as routes from './routes';
@@ -77,7 +78,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
-  fetchUserInfo, fetchTenants, setSessionPath
+  fetchUserInfo, fetchTenants, setSessionPath, fetchIntegrationVariables
 })
 class Router extends React.Component {
   state = {
@@ -86,7 +87,11 @@ class Router extends React.Component {
   constructor(props) {
     super(props);
     if (props.isLoggedIn) {
-      Promise.all([props.fetchUserInfo()])
+      Promise.all([
+        props.fetchUserInfo().then(() => {
+          props.fetchIntegrationVariables() 
+        }),
+      ])
       // .then(() => this.onLoginLogout());
     }
     props.fetchTenants();

@@ -19,6 +19,7 @@ var timeoutId;
   allList: state.getIn([ 'sessions', 'list' ]),
   total: state.getIn([ 'sessions', 'total' ]),
   filters: state.getIn([ 'search', 'instance', 'filters' ]),
+  metaList: state.getIn(['customFields', 'list']).map(i => i.key),
 }), {
   applyFilter,
   addAttribute,
@@ -47,7 +48,7 @@ export default class SessionList extends React.PureComponent {
     if (userId) {
       this.props.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
-      this.props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
+      this.props.addFilterByKeyAndValue(FilterKey.USERID, '', 'isUndefined');
     }
   }
 
@@ -81,7 +82,8 @@ export default class SessionList extends React.PureComponent {
       filters,
       onMenuItemClick,
       allList,
-      activeTab
+      activeTab,
+      metaList,
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
@@ -118,6 +120,7 @@ export default class SessionList extends React.PureComponent {
               session={ session }
               hasUserFilter={hasUserFilter}
               onUserClick={this.onUserClick}
+              metaList={metaList}
             />
           ))}
         </Loader>

@@ -13,7 +13,7 @@ const CountryFlag = React.memo(({ country, className, style = {}, label = false 
 			<Popup
 				trigger={ knownCountry 
 				?  <div className={ cn(`flag flag-${ countryFlag }`, className, stl.default) } />
-				: <Icon name="flag-na" size="22" className="-mx-1" />
+				: <Icon name="flag-na" size="22" className="" />
 				// : <div className={ cn('text-sm', className) }>{ "N/A" }</div>
 				}
 				content={ countryName }
