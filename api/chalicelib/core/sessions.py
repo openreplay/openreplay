@@ -195,6 +195,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                         FROM (SELECT user_id,
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
+                                                 MIN(full_sessions.start_ts)                            AS first_session_ts,
                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}, 
