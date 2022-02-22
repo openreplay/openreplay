@@ -5,6 +5,7 @@ import SortDropdown from '../Filters/SortDropdown';
 import DateRange from '../DateRange';
 import { TimezoneDropdown } from 'UI';
 import { numberWithCommas } from 'App/utils';
+import DropdownPlain from 'Shared/DropdownPlain';
 
 const DEFAULT_SORT = 'startTs';
 const DEFAULT_ORDER = 'desc';
@@ -38,6 +39,17 @@ function SessionListHeader({
         </div>
       </div>
       <div className="flex items-center">
+        {/* <div className="flex items-center">
+          <span className="mr-2 color-gray-medium">Session View</span>
+          <DropdownPlain
+            options={[
+              { text: 'List', value: 'list' },
+              { text: 'Grouped', value: 'grouped' }
+            ]}
+            onChange={() => {}}
+            value='list'
+          />
+        </div> */}
         <div className="flex items-center">
           <span className="mr-2 color-gray-medium">Timezone</span>
           <TimezoneDropdown />
