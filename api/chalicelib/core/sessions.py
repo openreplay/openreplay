@@ -249,10 +249,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
-            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys}
+            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
+                                       if sessions[i][f'metadata_{k["index"]}'] is not None}
     else:
         for i, s in enumerate(sessions):
-            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys}
+            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
+                                       if sessions[i][f'metadata_{k["index"]}'] is not None}
     if not data.group_by_user and data.sort is not None and data.sort != "session_id":
         sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
                           reverse=data.order.upper() == "DESC")
