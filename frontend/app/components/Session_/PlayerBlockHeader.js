@@ -11,6 +11,7 @@ import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import { countries } from 'App/constants';
+import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 
 import stl from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
@@ -44,6 +45,7 @@ function capitalise(str) {
     funnelRef: state.getIn(['funnels', 'navRef']),
     siteId: state.getIn([ 'user', 'siteId' ]),
     hasSessionsPath: hasSessioPath && !isAssist,
+    metaList: state.getIn(['customFields', 'list']).map(i => i.key),
   }
 }, {
   toggleFavorite, fetchListIntegration, setSessionPath
@@ -94,6 +96,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
         userBrowserVersion,
         userDeviceType,
         live,
+        metadata,
       },
       loading,
       // live,
@@ -102,8 +105,14 @@ export default class PlayerBlockHeader extends React.PureComponent {
       fullscreen,
       hasSessionsPath,
       sessionPath,
+      metaList,
     } = this.props;
     const _live = live && !hasSessionsPath;
+    console.log('metaList', metaList);
+    const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
+      const value = metadata[key];
+      return { label: key, value };
+    });
 
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
@@ -127,10 +136,15 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
           <div className='ml-auto flex items-center'>
             { live && hasSessionsPath && (
-              <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
-                This Session is Now Continuing Live
-              </div>
+              <>
+                <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
+                  This Session is Now Continuing Live
+                </div>
+                <div className={ stl.divider } />
+              </>
             )}
+            
+            <SessionMetaList className="" metaList={_metaList} />
             <div className={ stl.divider } />
             <Popup
                 trigger={(

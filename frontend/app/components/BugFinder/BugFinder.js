@@ -14,7 +14,7 @@ import stl from './bugFinder.css';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
-import { fetchList as fetchIntegrationVariables, fetchSources } from 'Duck/customField';
+import { fetchSources } from 'Duck/customField';
 import { RehydrateSlidePanel } from './WatchDogs/components';
 import { setActiveTab, setFunnelPage } from 'Duck/sessions';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
@@ -23,11 +23,8 @@ import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
-import LiveSessionList from './LiveSessionList'
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
-import LiveSearchBar from 'Shared/LiveSearchBar';
-import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import { clearSearch, fetchSessions } from 'Duck/search';
 
 const weakEqual = (val1, val2) => {
@@ -54,7 +51,6 @@ const allowedQueryKeys = [
 @withLocationHandlers()
 @connect(state => ({
   filter: state.getIn([ 'filters', 'appliedFilter' ]),
-  showLive: state.getIn([ 'user', 'account', 'appearance', 'sessionsLive' ]),
   variables: state.getIn([ 'customFields', 'list' ]), 
   sources: state.getIn([ 'customFields', 'sources' ]),
   filterValues: state.get('filterValues'),
@@ -68,8 +64,7 @@ const allowedQueryKeys = [
   fetchFavoriteSessionList,
   applyFilter,
   addAttribute,
-  fetchFilterVariables,
-  fetchIntegrationVariables,
+  fetchFilterVariables, 
   fetchSources,
   clearEvents,
   setActiveTab,
@@ -101,15 +96,6 @@ export default class BugFinder extends React.PureComponent {
     //     keys: this.props.sources.filter(({type}) => type === 'logTool').map(({ label, key }) => ({ type: 'ERROR', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
     //   };
     // });
-    // // TODO should cache the response
-    // props.fetchIntegrationVariables().then(() => {
-    //   defaultFilters[5] = {
-    //     category: 'Metadata',
-    //     type: 'custom',
-    //     keys: this.props.variables.map(({ key }) => ({ type: 'METADATA', key, label: key, icon: 'filters/metadata', isFilter: true })).toJS()
-    //   };
-    // });    
-
     props.fetchSessions();
     props.resetFunnel();
     props.resetFunnelFilters();
@@ -172,28 +158,11 @@ export default class BugFinder extends React.PureComponent {
           <div className={cn("side-menu-margined", stl.searchWrapper) }>
             <TrackerUpdateMessage />
             <NoSessionsMessage />
-
-            {/* Recorde Sessions */}
-            { activeTab.type !== 'live' && (
-              <>
-                <div className="mb-5">
-                  <MainSearchBar />
-                  <SessionSearch />
-                </div>
-                { activeTab.type !== 'live' && <SessionList onMenuItemClick={this.setActiveTab} /> }  
-              </>
-            )}
-            
-            {/* Live Sessions */}
-            { activeTab.type === 'live' && (
-              <>
-                <div className="mb-5">
-                  {/* <LiveSearchBar /> */}
-                  <LiveSessionSearch />
-                </div>
-                { activeTab.type === 'live' && <LiveSessionList /> }
-              </>
-            )}
+            <div className="mb-5">
+              <MainSearchBar />
+              <SessionSearch />
+            </div>
+            <SessionList onMenuItemClick={this.setActiveTab} />
           </div>
         </div>
         <RehydrateSlidePanel

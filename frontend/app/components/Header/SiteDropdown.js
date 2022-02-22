@@ -27,6 +27,10 @@ import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
 
+  componentDidMount() {
+    this.props.fetchIntegrationVariables();
+  }
+
   closeModal = (e, newSite) => {
     this.setState({ showProductModal: false })    
   };
