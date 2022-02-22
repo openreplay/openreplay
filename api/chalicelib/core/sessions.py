@@ -190,7 +190,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                         {query_part};""", full_args)
         elif data.group_by_user:
             meta_keys = metadata.get(project_id=project_id)
-            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, jsonb_agg(users_sessions) FILTER ( WHERE rn <= 200 ) AS sessions
+            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS sessions
                                         FROM (SELECT user_id,
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
