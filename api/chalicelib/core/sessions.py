@@ -30,10 +30,10 @@ COALESCE((SELECT TRUE
 
 
 def __group_metadata(session, project_metadata):
-    meta = []
+    meta = {}
     for m in project_metadata.keys():
         if project_metadata[m] is not None and session.get(m) is not None:
-            meta.append({project_metadata[m]: session[m]})
+            meta[project_metadata[m]] = session[m]
         session.pop(m)
     return meta
 
