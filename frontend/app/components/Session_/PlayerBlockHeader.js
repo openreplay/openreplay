@@ -109,7 +109,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       metaList,
     } = this.props;
     const _live = live && !hasSessionsPath;
-    console.log('metaList', metaList);
+
     const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
       const value = metadata[key];
       return { label: key, value };
