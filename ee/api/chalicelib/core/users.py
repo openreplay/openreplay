@@ -21,7 +21,10 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
         query = cur.mogrify(f"""\
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
-                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(role_id)s)
+                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, 
+                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenantId)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenantId)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenantId)s AND name != 'Owner' LIMIT 1))))
                             RETURNING tenant_id,user_id,email,role,name,appearance, role_id
                     ),
                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
@@ -42,7 +45,7 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            roles.name AS role_name,
                            roles.permissions,
                            TRUE AS has_password
-                    FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id = %(role_id)s;""",
+                    FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id =  (SELECT u.role_id FROM u);""",
                             {"tenantId": tenant_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
@@ -716,7 +719,10 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         query = cur.mogrify(f"""\
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
-                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s, %(role_id)s)
+                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s, 
+                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenantId)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenantId)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenantId)s AND name != 'Owner' LIMIT 1))))
                             RETURNING *
                     ),
                     au AS (
