@@ -167,7 +167,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                error_status="ALL", count_only=False, issue=None):
     full_args, query_part, sort = search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id,
                                                      user_id)
-
+    meta_keys = []
     with pg_client.PostgresClient() as cur:
         if errors_only:
             main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
@@ -243,6 +243,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
             sessions[i].pop("rn")
+            sessions[i]["metadata"] = {k["key"]: sessions[i][k["key"]] for k in meta_keys}
     if not data.group_by_user and data.sort is not None and data.sort != "session_id":
         sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
                           reverse=data.order.upper() == "DESC")
