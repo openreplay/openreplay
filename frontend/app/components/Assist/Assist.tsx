@@ -3,6 +3,7 @@ import LiveSessionList from 'Shared/LiveSessionList';
 import LiveSessionSearch from 'Shared/LiveSessionSearch';
 import cn from 'classnames'
 import withPageTitle from 'HOCs/withPageTitle';
+import withPermissions from 'HOCs/withPermissions'
 
 // @withPageTitle("Assist - OpenReplay")
 function Assist() {
@@ -21,4 +22,4 @@ function Assist() {
   )
 }
 
-export default withPageTitle("Assist - OpenReplay")(Assist);
+export default withPageTitle("Assist - OpenReplay")(withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(Assist));

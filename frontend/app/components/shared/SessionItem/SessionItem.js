@@ -136,7 +136,7 @@ export default class SessionItem extends React.PureComponent {
           <div className="flex items-center">
             <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
               <Link to={ sessionRoute(sessionId) }>
-                <Icon name={ !viewed ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
+                <Icon name={ !viewed && !isAssist ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
               </Link>
             </div>
           </div>
