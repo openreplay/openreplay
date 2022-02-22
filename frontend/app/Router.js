@@ -11,6 +11,7 @@ import UpdatePassword from 'Components/UpdatePassword/UpdatePassword';
 import ClientPure from 'Components/Client/Client';
 import OnboardingPure from 'Components/Onboarding/Onboarding';
 import SessionPure from 'Components/Session/Session';
+import AssistPure from 'Components/Assist';
 import BugFinderPure from 'Components/BugFinder/BugFinder';
 import DashboardPure from 'Components/Dashboard/Dashboard';
 import ErrorsPure from 'Components/Errors/Errors';
@@ -18,6 +19,7 @@ import Header from 'Components/Header/Header';
 // import ResultsModal from 'Shared/Results/ResultsModal';
 import FunnelDetails from 'Components/Funnels/FunnelDetails';
 import FunnelIssueDetails from 'Components/Funnels/FunnelIssueDetails';
+import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 
 import APIClient from './api_client';
 import * as routes from './routes';
@@ -29,6 +31,7 @@ import { setSessionPath } from 'Duck/sessions';
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
 const Session = withSiteIdUpdater(SessionPure);
+const Assist = withSiteIdUpdater(AssistPure);
 const Client = withSiteIdUpdater(ClientPure);
 const Onboarding = withSiteIdUpdater(OnboardingPure);
 const Errors = withSiteIdUpdater(ErrorsPure);
@@ -39,6 +42,7 @@ const withObTab = routes.withObTab;
 
 const DASHBOARD_PATH = routes.dashboard();
 const SESSIONS_PATH = routes.sessions();
+const ASSIST_PATH = routes.assist();
 const ERRORS_PATH = routes.errors();
 const ERROR_PATH = routes.error();
 const FUNNEL_PATH = routes.funnel();
@@ -74,7 +78,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
-  fetchUserInfo, fetchTenants, setSessionPath
+  fetchUserInfo, fetchTenants, setSessionPath, fetchIntegrationVariables
 })
 class Router extends React.Component {
   state = {
@@ -83,7 +87,11 @@ class Router extends React.Component {
   constructor(props) {
     super(props);
     if (props.isLoggedIn) {
-      Promise.all([props.fetchUserInfo()])
+      Promise.all([
+        props.fetchUserInfo().then(() => {
+          props.fetchIntegrationVariables() 
+        }),
+      ])
       // .then(() => this.onLoginLogout());
     }
     props.fetchTenants();
@@ -145,6 +153,7 @@ class Router extends React.Component {
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
           <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+          <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
           <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
           <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
           <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } />

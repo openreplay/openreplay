@@ -12,12 +12,12 @@
   user-select: none;
   @mixin defaultHover;
   border-radius: 3px;
-  padding: 10px 10px;
-  padding-right: 15px;
-  margin-bottom: 15px;
-  background-color: white;
-  display: flex;
-  align-items: center;
+  /* padding: 10px 10px; */
+  /* padding-right: 15px; */
+  /* margin-bottom: 15px; */
+  /* background-color: white; */
+  /* display: flex; */
+  /* align-items: center; */
   border: solid thin #EEEEEE;
 
   & .favorite {

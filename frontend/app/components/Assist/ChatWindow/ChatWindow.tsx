@@ -20,7 +20,6 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localS
   const [localVideoEnabled, setLocalVideoEnabled] = useState(false)
   const [remoteVideoEnabled, setRemoteVideoEnabled] = useState(false)
 
-
   useEffect(() => {
     if (!incomeStream) { return }
     const iid = setInterval(() => {
@@ -42,9 +41,9 @@ const ChatWindow: FC<Props> = function ChatWindow({ userId, incomeStream, localS
         className={cn(stl.wrapper, "fixed radius bg-white shadow-xl mt-16")}
         style={{ width: '280px' }}
       >
-        <div className="handle flex items-center p-2 cursor-move select-none">
-          <div className={stl.headerTitle}><b>Meeting</b> {userId}</div>
-          <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />          
+        <div className="handle flex items-center p-2 cursor-move select-none border-b">
+          <div className={stl.headerTitle}><b>Talking to </b> {userId ? userId : 'Anonymous User'}</div>
+          <Counter startTime={new Date().getTime() } className="text-sm ml-auto" />
         </div>
         <div className={cn(stl.videoWrapper, {'hidden' : minimize}, 'relative')}>
           <VideoContainer stream={ incomeStream } />

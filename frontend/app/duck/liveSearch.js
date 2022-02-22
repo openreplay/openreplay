@@ -15,14 +15,15 @@ const EDIT = editType(name);
 const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const APPLY = `${name}/APPLY`;
 const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
+const TOGGLE_SORT_ORDER = `${name}/TOGGLE_SORT_ORDER`;
 
 const initialState = Map({
 	list: List(),
 	instance: new Filter({ filters: [] }),
   filterSearchList: {},
   currentPage: 1,
+  sortOrder: 'asc',
 });
-
 
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
@@ -30,6 +31,8 @@ function reducer(state = initialState, action = {}) {
       return state.mergeIn(['instance'], action.instance);
     case UPDATE_CURRENT_PAGE:
       return state.set('currentPage', action.page);
+    case TOGGLE_SORT_ORDER:
+      return state.set('sortOrder', action.order);
 	}
 	return state;
 }
@@ -97,5 +100,12 @@ export function updateCurrentPage(page) {
   return {
     type: UPDATE_CURRENT_PAGE,
     page,
+  };
+}
+
+export function toggleSortOrder (order) {
+  return {
+    type: TOGGLE_SORT_ORDER,
+    order,
   };
 }

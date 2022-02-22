@@ -243,9 +243,12 @@ export const addFilter = (filter) => (dispatch, getState) => {
   }
 }
 
-export const addFilterByKeyAndValue = (key, value) => (dispatch, getState) => {
+export const addFilterByKeyAndValue = (key, value, operator = undefined) => (dispatch, getState) => {
   let defaultFilter = filtersMap[key];
   defaultFilter.value = value;
+  if (operator) {
+    defaultFilter.operator = operator;
+  }
   dispatch(addFilter(defaultFilter));
 }
 
