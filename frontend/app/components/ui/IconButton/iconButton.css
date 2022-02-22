@@ -67,7 +67,7 @@
 
   &.primary {
     background-color: $teal;
-    box-shadow: 0 0 0 1px rgba(62, 170, 175, .8) inset !important;
+    box-shadow: 0 0 0 1px $teal inset !important;
   
     & .icon {
       fill: white;

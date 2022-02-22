@@ -14,13 +14,6 @@
 
 .liveSwitchButton {
   cursor: pointer;
-  padding: 3px 8px;
-  border: solid thin $green;
   color: $green;
-  border-radius: 3px;
-  margin-right: 10px;
-  &:hover {
-    background-color: $green;
-    color: white;
-  }
+  text-decoration: underline;
 }

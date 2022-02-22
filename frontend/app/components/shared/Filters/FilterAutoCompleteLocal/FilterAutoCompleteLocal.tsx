@@ -18,7 +18,7 @@ interface Props {
 function FilterAutoCompleteLocal(props: Props) {
   const {
       showCloseButton = false,
-      placeholder = 'Type to search',
+      placeholder = 'Enter',
       showOrButton = false,
       onRemoveValue = () => null,
       onAddValue = () => null,

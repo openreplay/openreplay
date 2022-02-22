@@ -21,6 +21,7 @@ import { withRouter } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, isRoute } from "App/routes";
+import { capitalize } from 'App/utils';
 
 const ASSIST_ROUTE = assistRoute();
 
@@ -114,15 +115,15 @@ export default class SessionItem extends React.PureComponent {
               <CountryFlag country={ userCountry } className="mr-2" label />
               <div className="color-gray-medium flex items-center">
                 <span className="capitalize" style={{ maxWidth: '70px'}}>
-                  <TextEllipsis text={ userBrowser } popupProps={{ inverted: true, size: "tiny" }} />
+                  <TextEllipsis text={ capitalize(userBrowser) } popupProps={{ inverted: true, size: "tiny" }} />
                 </span> 
                 <div className="mx-2 text-4xl">·</div>
                 <span className="capitalize" style={{ maxWidth: '70px'}}>
-                  <TextEllipsis text={ userOs } popupProps={{ inverted: true, size: "tiny" }} />
+                  <TextEllipsis text={ capitalize(userOs) } popupProps={{ inverted: true, size: "tiny" }} />
                 </span>
                 <div className="mx-2 text-4xl">·</div>
                 <span className="capitalize" style={{ maxWidth: '70px'}}>
-                  <TextEllipsis text={ userDeviceType } popupProps={{ inverted: true, size: "tiny" }} />
+                  <TextEllipsis text={ capitalize(userDeviceType) } popupProps={{ inverted: true, size: "tiny" }} />
                 </span>
               </div>
             </div>
