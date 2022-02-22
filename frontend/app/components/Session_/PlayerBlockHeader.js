@@ -144,8 +144,13 @@ export default class PlayerBlockHeader extends React.PureComponent {
               </>
             )}
             
-            <SessionMetaList className="" metaList={_metaList} />
-            <div className={ stl.divider } />
+            { live && (
+              <>
+                <SessionMetaList className="" metaList={_metaList} />
+                <div className={ stl.divider } />
+              </>
+            )}
+            
             <Popup
                 trigger={(
                   <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />

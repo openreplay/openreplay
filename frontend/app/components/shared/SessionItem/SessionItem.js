@@ -80,19 +80,19 @@ export default class SessionItem extends React.PureComponent {
             <div className="flex items-center pr-2" style={{ width: "30%"}}>
               <div><Avatar seed={ userNumericHash } isAssist={isAssist} /></div>
               {/* <div className="flex flex-col overflow-hidden color-gray-medium ml-3"> */}
-              <div style={{ height: "38px" }} className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between">
+              <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center">
                 <div
-                  className={cn({'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
+                  className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
                   onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
                 >
                   {userDisplayName}
                 </div>
-                <div
+                {/* <div
                   className="color-gray-medium text-dotted-underline cursor-pointer"
                   onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
                 >
                   {userSessionsCount} Sessions
-                </div>
+                </div> */}
               </div>
             </div>
             <div style={{ width: "20%", height: "38px" }} className="px-2 flex flex-col justify-between">
@@ -136,12 +136,14 @@ export default class SessionItem extends React.PureComponent {
           <div className="flex items-center">
             <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
               <Link to={ sessionRoute(sessionId) }>
-                <Icon name={ viewed ? 'play-fill' : 'play-circle-light' } size="36" color={isAssist ? "tealx" : "teal"} />
+                <Icon name={ !viewed ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
               </Link>
             </div>
           </div>
         </div>
-        <SessionMetaList className="mt-4" metaList={_metaList} />
+        { _metaList.length > 0 && (
+          <SessionMetaList className="mt-4" metaList={_metaList} />
+        )}
       </div>
     );
   }
