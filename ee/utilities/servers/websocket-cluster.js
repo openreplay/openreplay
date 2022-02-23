@@ -222,7 +222,7 @@ module.exports = {
                 debug && console.log(`notifying new agent about no SESSIONS`);
                 io.to(socket.id).emit(NO_SESSIONS);
             }
-            io.adapter.remoteJoin(socket.peerId);
+            await io.of('/').adapter.remoteJoin(socket.id, socket.peerId);
             let rooms = await io.of('/').adapter.allRooms();
             if (rooms.has(socket.peerId)) {
                 let connectedSockets = await io.in(socket.peerId).fetchSockets();
