@@ -2,12 +2,12 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { sessions as sessionsRoute, withSiteId } from 'App/routes';
+import { sessions as sessionsRoute, assist as assistRoute, withSiteId } from 'App/routes';
 import { Icon, CountryFlag, IconButton, BackLink, Popup } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
-import HeaderInfo from './HeaderInfo';
+// import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
 import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import { countries } from 'App/constants';
@@ -21,10 +21,7 @@ import AssistTabs from '../Assist/components/AssistTabs';
 import SessionInfoItem from './SessionInfoItem'
 
 const SESSIONS_ROUTE = sessionsRoute();
-
-function capitalise(str) {
-  return str[0].toUpperCase() + str.slice(1);
-}
+const ASSIST_ROUTE = assistRoute();
 @connectPlayer(state => ({
   width: state.width,
   height: state.height,
@@ -46,6 +43,7 @@ function capitalise(str) {
     siteId: state.getIn([ 'user', 'siteId' ]),
     hasSessionsPath: hasSessioPath && !isAssist,
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
+    closedLive: !!state.getIn([ 'sessions', 'errors' ]),
   }
 }, {
   toggleFavorite, fetchListIntegration, setSessionPath
@@ -67,8 +65,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
   backHandler = () => {
     const { history, siteId, sessionPath } = this.props;
-    if (sessionPath === history.location.pathname || sessionPath.includes("/session/")) {
-      history.push(withSiteId(SESSIONS_ROUTE), siteId);
+    const isLiveSession = sessionPath.includes("/assist");
+    if (sessionPath === history.location.pathname || sessionPath.includes("/session/") || isLiveSession) {
+      history.push(withSiteId(isLiveSession ? ASSIST_ROUTE: SESSIONS_ROUTE, siteId));
     } else {
       history.push(sessionPath ? sessionPath : withSiteId(SESSIONS_ROUTE, siteId));
     }
@@ -107,6 +106,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       hasSessionsPath,
       sessionPath,
       metaList,
+      closedLive = false,
     } = this.props;
     const _live = live && !hasSessionsPath;
 
@@ -122,20 +122,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
           
           <div className={ stl.divider } />
           { _live && <AssistTabs userId={userId} userNumericHash={userNumericHash} />}
-          
-          {/* <div className="mx-4 flex items-center">
-            <CountryFlag country={ userCountry } />
-            <div className="ml-2 font-normal color-gray-dark mt-1 text-sm">
-              { formatTimeOrDate(startedAt) } <span>{ this.props.local === 'UTC' ? 'UTC' : ''}</span>
-            </div>
-          </div>
 
-          <HeaderInfo icon={ browserIcon(userBrowser) } label={ `v${ userBrowserVersion }` } />
-          <HeaderInfo icon={ deviceTypeIcon(userDeviceType) } label={ capitalise(userDevice) } />
-          <HeaderInfo icon="expand-wide" label={ this.getDimension(width, height) } />
-          <HeaderInfo icon={ osIcon(userOs) } label={ userOs } /> */}
-
-          <div className='ml-auto flex items-center'>
+          <div className={cn("ml-auto flex items-center", { 'hidden' : closedLive })}>
             { live && hasSessionsPath && (
               <>
                 <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
