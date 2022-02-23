@@ -79,8 +79,8 @@ function SessionSearch(props: Props) {
           </FilterSelection>
         </div>
         <div className="ml-auto flex items-center">
-          <SaveFilterButton />
           <SaveFunnelButton />
+          <SaveFilterButton />
         </div>
       </div>
     </div>
