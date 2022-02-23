@@ -11,6 +11,7 @@ import UpdatePassword from 'Components/UpdatePassword/UpdatePassword';
 import ClientPure from 'Components/Client/Client';
 import OnboardingPure from 'Components/Onboarding/Onboarding';
 import SessionPure from 'Components/Session/Session';
+import LiveSessionPure from 'Components/Session/LiveSession';
 import AssistPure from 'Components/Assist';
 import BugFinderPure from 'Components/BugFinder/BugFinder';
 import DashboardPure from 'Components/Dashboard/Dashboard';
@@ -31,6 +32,7 @@ import { setSessionPath } from 'Duck/sessions';
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
 const Session = withSiteIdUpdater(SessionPure);
+const LiveSession = withSiteIdUpdater(LiveSessionPure);
 const Assist = withSiteIdUpdater(AssistPure);
 const Client = withSiteIdUpdater(ClientPure);
 const Onboarding = withSiteIdUpdater(OnboardingPure);
@@ -119,7 +121,7 @@ class Router extends React.Component {
   render() {    
     const { isLoggedIn, jwt, siteId, sites, loading, changePassword, location, existingTenant, onboarding } = this.props;
     const siteIdList = sites.map(({ id }) => id).toJS();
-    const hideHeader = location.pathname && location.pathname.includes('/session/');
+    const hideHeader = location.pathname && location.pathname.includes('/session/') || location.pathname.includes('/assist/');
 
     return isLoggedIn ?
       <Loader loading={ loading } className="flex-1" >
@@ -160,6 +162,7 @@ class Router extends React.Component {
           <Route exact strict path={ withSiteId(FUNNEL_ISSUE_PATH, siteIdList) } component={ FunnelIssue } />
           <Route exact strict path={ withSiteId(SESSIONS_PATH, siteIdList) } component={ BugFinder } />
           <Route exact strict path={ withSiteId(SESSION_PATH, siteIdList) } component={ Session } />
+          <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } component={ LiveSession } />
           <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } render={ (props) => <Session { ...props } live /> } />
           { routes.redirects.map(([ fr, to ]) => (
             <Redirect key={ fr } exact strict from={ fr } to={ to } />

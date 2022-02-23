@@ -25,6 +25,7 @@ interface Props {
 
   nextId: string,
   togglePlay: () => void,
+  closedLive?: boolean
 }
 
 function Overlay({
@@ -41,6 +42,7 @@ function Overlay({
   activeTargetIndex,
   nextId,
   togglePlay,
+  closedLive
 }: Props) {
 
   // useEffect(() =>{
@@ -56,7 +58,7 @@ function Overlay({
     <>
       { showAutoplayTimer && <AutoplayTimer /> }
       { showLiveStatusText && 
-        <LiveStatusText text={liveStatusText} concetionStatus={concetionStatus} />
+        <LiveStatusText text={liveStatusText} concetionStatus={closedLive ? ConnectionStatus.Closed : concetionStatus} />
       }
       { messagesLoading && <Loader/> }
       { showPlayIconLayer && 

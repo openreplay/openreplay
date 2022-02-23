@@ -85,7 +85,8 @@ export const sessions = params => queried('/sessions', params);
 export const assist = params => queried('/assist', params);
 
 export const session = (sessionId = ':sessionId', hash) => hashed(`/session/${ sessionId }`, hash);
-export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/live/session/${ sessionId }`, hash);
+export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/assist/${ sessionId }`, hash);
+// export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/live/session/${ sessionId }`, hash);
 
 export const errors = params => queried('/errors', params);
 export const error = (id = ':errorId', hash) => hashed(`/errors/${ id }`, hash);
@@ -131,7 +132,6 @@ export function isRoute(route, path){
 
 const SITE_CHANGE_AVALIABLE_ROUTES = [ sessions(),  assist(), dashboard(), errors(), onboarding('')];
 export const siteChangeAvaliable = path => SITE_CHANGE_AVALIABLE_ROUTES.some(r => isRoute(r, path));
-
 
 export const redirects = Object.entries({
   [ client('custom-fields') ]: client(CLIENT_TABS.CUSTOM_FIELDS),
