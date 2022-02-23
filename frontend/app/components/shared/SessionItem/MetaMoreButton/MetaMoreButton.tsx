@@ -17,16 +17,16 @@ export default function MetaMoreButton(props: Props) {
                 </span>
                 </div>
             ) }
+            className="p-0"
             content={ 
-                <div className="flex flex-col">
+                <div className="text-sm grid grid-col p-4 gap-3" style={{ maxHeight: '200px', overflowY: 'auto'}}>
                     {list.slice(maxLength).map(({ label, value }, index) => (
-                        <MetaItem key={index} label={label} value={value} className="mb-3" />
+                        <MetaItem key={index} label={label} value={value} />
                     ))}
                 </div>
             }
             on="click"
             position="center center"
-            hideOnScroll
         />
     )
 }
