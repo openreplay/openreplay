@@ -58,6 +58,7 @@ export default class SessionItem extends React.PureComponent {
         live,
         metadata,
         userSessionsCount,
+        issueTypes,
       },
       timezone,
       onUserClick = () => null,
@@ -129,7 +130,7 @@ export default class SessionItem extends React.PureComponent {
             </div>
             { !isAssist && (
               <div style={{ width: "10%"}} className="self-center px-2 flex items-center">
-                <ErrorBars count={errorsCount} />
+                <ErrorBars count={issueTypes.length} />
               </div>
             )}
           </div>

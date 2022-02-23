@@ -7,7 +7,7 @@ const LESS_CRITICAL = 'Few Issues'
 const CRITICAL = 'Many Issues'
 const getErrorState = (count: number) => {
     if (count === 0) { return GOOD }
-    if (count < 2) { return LESS_CRITICAL }
+    if (count < 3) { return LESS_CRITICAL }
     return CRITICAL
 }
 
