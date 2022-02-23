@@ -5,13 +5,10 @@ import cn from 'classnames'
 import withPageTitle from 'HOCs/withPageTitle';
 import withPermissions from 'HOCs/withPermissions'
 
-// @withPageTitle("Assist - OpenReplay")
 function Assist() {
   return (
     <div className="page-margin container-90 flex relative">
         <div className="flex-1 flex">
-          {/* <div className="side-menu">
-          </div> */}
           <div className={cn("w-full mx-auto")} style={{ maxWidth: '1300px'}}>
             <LiveSessionSearch />
             <div className="my-4" />
@@ -22,4 +19,4 @@ function Assist() {
   )
 }
 
-export default withPageTitle("Assist - OpenReplay")(withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(Assist));
+export default withPageTitle("Assist - OpenReplay")(withPermissions(['ASSIST_LIVE'])(Assist));

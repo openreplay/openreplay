@@ -22,7 +22,6 @@ import StackEvents from './StackEvents/StackEvents';
 import Storage from './Storage';
 import Profiler from './Profiler';
 import { ConnectedPerformance } from './Performance';
-import PlayerBlockHeader from './PlayerBlockHeader';
 import GraphQL from './GraphQL';
 import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
@@ -34,6 +33,7 @@ import styles from './playerBlock.css';
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
+  closedLive: !!state.getIn([ 'sessions', 'errors' ]),
 }))
 export default class PlayerBlock extends React.PureComponent {
   componentDidUpdate(prevProps) {
@@ -44,13 +44,14 @@ export default class PlayerBlock extends React.PureComponent {
   }
 
   render() {
-    const { fullscreen, bottomBlock } = this.props;
+    const { fullscreen, bottomBlock, closedLive } = this.props;
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
+          closedLive={closedLive}
         />
         { !fullscreen && !!bottomBlock &&
           <div className="">
