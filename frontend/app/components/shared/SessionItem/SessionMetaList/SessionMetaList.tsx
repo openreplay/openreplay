@@ -8,7 +8,7 @@ interface Props {
   className?: string,
   metaList: []
 }
-const MAX_LENGTH = 3;
+const MAX_LENGTH = 1;
 export default function SessionMetaList(props: Props) {
   const { className = '', metaList } = props
   return (
