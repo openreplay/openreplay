@@ -58,7 +58,7 @@ export default withRequest({
 	dataWrapper: data => data,
 	dataName: 'assistCredendials',
   loadingName: 'loadingCredentials',
-})(withPermissions(['SESSION_REPLAY', 'ASSIST_LIVE'], '', true)(connect(
+})(withPermissions(['ASSIST_LIVE'], '', true)(connect(
   state => {
     const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
     const hasSessioPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
