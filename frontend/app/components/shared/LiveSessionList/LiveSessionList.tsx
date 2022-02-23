@@ -8,7 +8,7 @@ import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
-import { addFilterByKeyAndValue, updateCurrentPage, toggleSortOrder } from 'Duck/liveSearch';
+import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/liveSearch';
 import DropdownPlain from 'Shared/DropdownPlain';
 import SortOrderButton from 'Shared/SortOrderButton';
 import { TimezoneDropdown } from 'UI';
@@ -28,12 +28,12 @@ interface Props {
   updateCurrentPage: (page: number) => void,
   currentPage: number, 
   metaList: any,
-  sortOrder: string,
-  toggleSortOrder: (sortOrder: string) => void,
+  updateSort: (sort: any) => void,
+  sort: any,
 }
 
 function LiveSessionList(props: Props) {
-  const { loading, filters, list, currentPage, metaList = [], sortOrder } = props;
+  const { loading, filters, list, currentPage, metaList = [], sort } = props;
   var timeoutId;
   const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
   const [sessions, setSessions] = React.useState(list);
@@ -41,7 +41,6 @@ function LiveSessionList(props: Props) {
     text: capitalize(i), value: i
   })).toJS();
   
-  const [sortBy, setSortBy] = React.useState('');
   const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
 
   const addPage = () => props.updateCurrentPage(props.currentPage + 1)
@@ -53,9 +52,11 @@ function LiveSessionList(props: Props) {
   }, []);
 
   useEffect(() => {
-    if (metaList.size === 0 || !!sortBy) return;
+    if (metaList.size === 0 || !!sort.field) return;
 
-    setSortBy(sortOptions[0] && sortOptions[0].value)
+    if ( sortOptions[0]) {
+      props.updateSort({ field: sortOptions[0].value });
+    }
   }, [metaList]);
 
   useEffect(() => {
@@ -96,7 +97,7 @@ function LiveSessionList(props: Props) {
   }
 
   const onSortChange = (e, { value }) => {
-    setSortBy(value);
+    props.updateSort({ field: value });
   }
 
   const timeout = () => {
@@ -105,6 +106,8 @@ function LiveSessionList(props: Props) {
       timeout();
     }, AUTOREFRESH_INTERVAL);
   }
+
+  console.log('srt', sort)
 
   return (
     <div>
@@ -125,10 +128,10 @@ function LiveSessionList(props: Props) {
             <DropdownPlain
               options={sortOptions}
               onChange={onSortChange}
-              value={sortBy}
+              value={sort.field}
             />
           </div>
-          <SortOrderButton onChange={props.toggleSortOrder} sortOrder={sortOrder} />
+          <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
         </div>
       </div>
       <NoContent
@@ -143,8 +146,8 @@ function LiveSessionList(props: Props) {
         show={ !loading && sessions && sessions.size === 0}
       >
         <Loader loading={ loading }>
-          {sessions && sessions.sortBy(i => i.metadata[sortBy]).update(list => {
-            return sortOrder === 'desc' ? list.reverse() : list;
+          {sessions && sessions.sortBy(i => i.metadata[sort.field]).update(list => {
+            return sort.order === 'desc' ? list.reverse() : list;
           }).take(displayedCount).map(session => (
             <SessionItem
               key={ session.sessionId }
@@ -168,14 +171,14 @@ function LiveSessionList(props: Props) {
   )
 }
 
-export default withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(connect(
+export default withPermissions(['ASSIST_LIVE'])(connect(
   (state) => ({
     list: state.getIn(['sessions', 'liveSessions']),
     loading: state.getIn([ 'sessions', 'loading' ]),
     filters: state.getIn([ 'liveSearch', 'instance', 'filters' ]),
     currentPage: state.getIn(["liveSearch", "currentPage"]),
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
-    sortOrder: state.getIn(['liveSearch', 'sortOrder']),
+    sort: state.getIn(['liveSearch', 'sort']),
   }),
   { 
     fetchLiveList,
@@ -183,6 +186,6 @@ export default withPermissions(['ASSIST_LIVE', 'SESSION_REPLAY'])(connect(
     addAttribute,
     addFilterByKeyAndValue,
     updateCurrentPage,
-    toggleSortOrder,
+    updateSort,
   }
 )(LiveSessionList));
