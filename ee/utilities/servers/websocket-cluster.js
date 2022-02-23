@@ -188,7 +188,7 @@ module.exports = {
     wsRouter,
     start: (server) => {
         io = _io(server, {
-            maxHttpBufferSize: 1e6,
+            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 1) * 1e6,
             cors: {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
