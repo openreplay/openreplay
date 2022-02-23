@@ -12,16 +12,8 @@ import {
 import withPermissions from 'HOCs/withPermissions';
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
-import EventsBlock from '../Session_/EventsBlock';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.css';
-
-
-
-const EventsBlockConnected = connectPlayer(state => ({
-  currentTimeEventIndex: state.eventListNow.length > 0 ? state.eventListNow.length - 1 : 0,
-  playing: state.playing,
-}))(EventsBlock)
 
 
 const InitLoader = connectPlayer(state => ({ 
@@ -29,10 +21,10 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 
-function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise, hasSessionsPath }) {
+function LivePlayer ({ session, toggleFullscreen, closeBottomBlock, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise, hasErrors }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, jwt, assistCredendials, !hasSessionsPath && session.live);
+      initPlayer(session, jwt, assistCredendials, true);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);
@@ -48,11 +40,10 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
     }
   }, [])
 
-
   return (
     <PlayerProvider>
       <InitLoader className="flex-1 p-3">
-        <PlayerBlockHeader fullscreen={fullscreen}/>
+        <PlayerBlockHeader fullscreen={fullscreen} />
         <div className={ styles.session } data-fullscreen={fullscreen}>
           <PlayerBlock />
         </div>
@@ -78,7 +69,8 @@ export default withRequest({
       fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
       hasSessionsPath: hasSessioPath && !isAssist,
       isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+      hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
     }
   },
   { toggleFullscreen, closeBottomBlock },
-)(WebPlayer)));
+)(LivePlayer)));

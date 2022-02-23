@@ -26,6 +26,7 @@ export enum ConnectionStatus {
   Inactive,
   Disconnected,
   Error,
+  Closed,
 }
 
 export enum RemoteControlStatus {
@@ -37,6 +38,8 @@ export enum RemoteControlStatus {
 
 export function getStatusText(status: ConnectionStatus): string {
   switch(status) {
+    case ConnectionStatus.Closed:
+      return 'Closed...';
     case ConnectionStatus.Connecting:
       return "Connecting...";
     case ConnectionStatus.Connected:

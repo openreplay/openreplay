@@ -11,7 +11,7 @@ import {
 } from 'UI';
 import { deviceTypeIcon } from 'App/iconNames';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
-import { session as sessionRoute, withSiteId } from 'App/routes';
+import { session as sessionRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
 import LiveTag from 'Shared/LiveTag';
@@ -58,6 +58,7 @@ export default class SessionItem extends React.PureComponent {
         live,
         metadata,
         userSessionsCount,
+        issueTypes,
       },
       timezone,
       onUserClick = () => null,
@@ -129,14 +130,14 @@ export default class SessionItem extends React.PureComponent {
             </div>
             { !isAssist && (
               <div style={{ width: "10%"}} className="self-center px-2 flex items-center">
-                <ErrorBars count={errorsCount} />
+                <ErrorBars count={issueTypes.length} />
               </div>
             )}
           </div>
 
           <div className="flex items-center">
             <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
-              <Link to={ sessionRoute(sessionId) }>
+              <Link to={ isAssist ? liveSessionRoute(sessionId) : sessionRoute(sessionId) }>
                 <Icon name={ !viewed && !isAssist ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
               </Link>
             </div>

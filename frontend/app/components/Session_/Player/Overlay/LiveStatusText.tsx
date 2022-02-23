@@ -12,6 +12,14 @@ interface Props {
 export default function LiveStatusText({ text, concetionStatus }: Props) {
   const renderView = () => {
     switch (concetionStatus) {
+      case ConnectionStatus.Closed:
+        return (
+          <div className="flex flex-col items-center text-center">
+            <div className="text-lg -mt-8">Session not found</div>
+            <div className="text-sm">The remote session doesn’t exist anymore. <br/> The user may have closed the tab/browser while you were trying to establish a connection.</div>
+          </div>
+        )
+
       case ConnectionStatus.Connecting:
         return (
           <div className="flex flex-col items-center">
