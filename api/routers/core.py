@@ -29,7 +29,9 @@ def get_favorite_sessions(projectId: int, context: schemas.CurrentContext = Depe
 
 
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
-def get_session2(projectId: int, sessionId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
+    if isinstance(sessionId, str):
+        return {"errors": ["session not found"]}
     data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context.user_id,
                                   include_fav_viewed=True, group_metadata=True)
     if data is None:

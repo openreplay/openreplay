@@ -7,7 +7,6 @@ SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
 s.user_uuid,
 s.user_id,
--- s.user_agent,
 s.user_os,
 s.user_browser,
 s.user_device,
@@ -30,10 +29,10 @@ COALESCE((SELECT TRUE
 
 
 def __group_metadata(session, project_metadata):
-    meta = []
+    meta = {}
     for m in project_metadata.keys():
         if project_metadata[m] is not None and session.get(m) is not None:
-            meta.append({project_metadata[m]: session[m]})
+            meta[project_metadata[m]] = session[m]
         session.pop(m)
     return meta
 
@@ -162,12 +161,16 @@ def _isAny_opreator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._on_any, schemas.SearchEventOperator._is_any]
 
 
+def _isUndefined_operator(op: schemas.SearchEventOperator):
+    return op in [schemas.SearchEventOperator._is_undefined]
+
+
 @dev.timed
 def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, favorite_only=False, errors_only=False,
                error_status="ALL", count_only=False, issue=None):
     full_args, query_part, sort = search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id,
                                                      user_id)
-
+    meta_keys = []
     with pg_client.PostgresClient() as cur:
         if errors_only:
             main_query = cur.mogrify(f"""SELECT DISTINCT er.error_id, ser.status, ser.parent_error_id, ser.payload,
@@ -186,13 +189,16 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                 COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""", full_args)
         elif data.group_by_user:
-            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, jsonb_agg(users_sessions) FILTER ( WHERE rn <= 200 ) AS sessions
+            meta_keys = metadata.get(project_id=project_id)
+            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS sessions
                                         FROM (SELECT user_id,
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
+                                                 MIN(full_sessions.start_ts)                            AS first_session_ts,
                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
-                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}, 
+                                                                {",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions
@@ -200,9 +206,11 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                             ORDER BY user_sessions_count DESC) AS users_sessions;""",
                                      full_args)
         else:
+            meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
                                             FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
-                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
+                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS},
+                                                                {",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
@@ -237,6 +245,16 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
     if errors_only:
         return sessions
+    if data.group_by_user:
+        for i, s in enumerate(sessions):
+            sessions[i] = {**s.pop("last_session")[0], **s}
+            sessions[i].pop("rn")
+            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
+                                       if sessions[i][f'metadata_{k["index"]}'] is not None}
+    else:
+        for i, s in enumerate(sessions):
+            sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
+                                       if sessions[i][f'metadata_{k["index"]}'] is not None}
     if not data.group_by_user and data.sort is not None and data.sort != "session_id":
         sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
                           reverse=data.order.upper() == "DESC")
@@ -250,7 +268,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
                    view_type: schemas.MetricViewType):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
-                                               density=density, factor=1, decimal=True))
+                                                   density=density, factor=1, decimal=True))
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
                                                      user_id=None)
@@ -310,7 +328,8 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             op = __get_sql_operator(f.operator) \
                 if filter_type not in [schemas.FilterType.events_count] else f.operator
             is_any = _isAny_opreator(f.operator)
-            if not is_any and len(f.value) == 0:
+            is_undefined = _isUndefined_operator(f.operator)
+            if not is_any and not is_undefined and len(f.value) == 0:
                 continue
             is_not = False
             if __is_negation_operator(f.operator):
@@ -359,6 +378,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.utm_source IS NOT NULL')
                     ss_constraints.append('ms.utm_source  IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.utm_source IS NULL')
+                    ss_constraints.append('ms.utm_source  IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f's.utm_source {op} %({f_k})s::text', f.value, is_not=is_not,
@@ -370,6 +392,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.utm_medium IS NOT NULL')
                     ss_constraints.append('ms.utm_medium IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.utm_medium IS NULL')
+                    ss_constraints.append('ms.utm_medium IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f's.utm_medium {op} %({f_k})s::text', f.value, is_not=is_not,
@@ -381,6 +406,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.utm_campaign IS NOT NULL')
                     ss_constraints.append('ms.utm_campaign IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.utm_campaign IS NULL')
+                    ss_constraints.append('ms.utm_campaign IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f's.utm_campaign {op} %({f_k})s::text', f.value, is_not=is_not,
@@ -414,6 +442,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     if is_any:
                         extra_constraints.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
                         ss_constraints.append(f"ms.{metadata.index_to_colname(meta_keys[f.source])} IS NOT NULL")
+                    elif is_undefined:
+                        extra_constraints.append(f"s.{metadata.index_to_colname(meta_keys[f.source])} IS NULL")
+                        ss_constraints.append(f"ms.{metadata.index_to_colname(meta_keys[f.source])} IS NULL")
                     else:
                         extra_constraints.append(
                             _multiple_conditions(
@@ -427,6 +458,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.user_id IS NOT NULL')
                     ss_constraints.append('ms.user_id IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.user_id IS NULL')
+                    ss_constraints.append('ms.user_id IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f"s.user_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
@@ -437,6 +471,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.user_anonymous_id IS NOT NULL')
                     ss_constraints.append('ms.user_anonymous_id IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.user_anonymous_id IS NULL')
+                    ss_constraints.append('ms.user_anonymous_id IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f"s.user_anonymous_id {op} %({f_k})s::text", f.value, is_not=is_not,
@@ -448,6 +485,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 if is_any:
                     extra_constraints.append('s.rev_id IS NOT NULL')
                     ss_constraints.append('ms.rev_id IS NOT NULL')
+                elif is_undefined:
+                    extra_constraints.append('s.rev_id IS NULL')
+                    ss_constraints.append('ms.rev_id IS NULL')
                 else:
                     extra_constraints.append(
                         _multiple_conditions(f"s.rev_id {op} %({f_k})s::text", f.value, is_not=is_not, value_key=f_k))
@@ -945,7 +985,6 @@ def get_favorite_sessions(project_id, user_id, include_viewed=False):
                            s.session_id::text AS session_id,
                            s.user_uuid,
                            s.user_id,
-                           -- s.user_agent,
                            s.user_os,
                            s.user_browser,
                            s.user_device,
@@ -982,7 +1021,6 @@ def get_user_sessions(project_id, user_id, start_date, end_date):
                            s.session_id::text AS session_id,
                            s.user_uuid,
                            s.user_id,
-                           -- s.user_agent,
                            s.user_os,
                            s.user_browser,
                            s.user_device,

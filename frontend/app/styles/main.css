@@ -124,3 +124,21 @@
     background-color: $active-blue;
   }
 }
+
+.text-dotted-underline {
+  text-decoration: underline dotted !important;
+}
+
+.divider {
+  width: 1px;
+  margin: 0 15px;
+  background-color: $gray-light;
+}
+
+.divider-h {
+  height: 1px;
+  width: 100%;
+  
+  margin: 25px 0;
+  background-color: $gray-light;
+}

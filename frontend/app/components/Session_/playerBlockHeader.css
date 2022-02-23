@@ -1,26 +1,19 @@
 .header {
   height: 50px;
   border-bottom: solid thin $gray-light;
-  padding: 10px 15px;
+  padding: 0px 15px;
   background-color: white;
 }
 
 .divider {
   width: 1px;
-  height: 100%;
+  height: 49px;
   margin: 0 15px;
   background-color: $gray-light;
 }
 
 .liveSwitchButton {
   cursor: pointer;
-  padding: 3px 8px;
-  border: solid thin $green;
   color: $green;
-  border-radius: 3px;
-  margin-right: 10px;
-  &:hover {
-    background-color: $green;
-    color: white;
-  }
+  text-decoration: underline;
 }

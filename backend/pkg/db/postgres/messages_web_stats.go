@@ -1,21 +1,18 @@
-package postgres 
+package postgres
 
 import (
-	"openreplay/backend/pkg/url"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/url"
 )
 
-
-
 func (conn *Conn) InsertWebStatsLongtask(sessionID uint64, l *LongTask) error {
-  return nil // Do we even use them?
-  // conn.exec(``);
+	return nil // Do we even use them?
+	// conn.exec(``);
 }
 
-
 func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrackAggr) error {
-	timestamp := (p.TimestampEnd + p.TimestampStart) /2
-	return conn.exec(`
+	timestamp := (p.TimestampEnd + p.TimestampStart) / 2
+	return conn.batchQueue(sessionID, `
 		INSERT INTO events.performance (
 			session_id, timestamp, message_id,
 			min_fps, avg_fps, max_fps,
@@ -34,7 +31,7 @@ func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrac
 		p.MinCPU, p.AvgCPU, p.MinCPU,
 		p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
 		p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
-	);
+	)
 }
 
 func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent) error {
@@ -42,7 +39,7 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 	if err != nil {
 		return err
 	}
-	return conn.exec(`
+	return conn.batchQueue(sessionID, `
 		INSERT INTO events.resources (
 			session_id, timestamp, message_id, 
 			type,
@@ -58,10 +55,10 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 			NULLIF($10, '')::events.resource_method,
 			NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0), NULLIF($15, 0)
 		)`,
-		sessionID, e.Timestamp, e.MessageID, 
+		sessionID, e.Timestamp, e.MessageID,
 		e.Type,
 		e.URL, host, url.DiscardURLQuery(e.URL),
-		e.Success, e.Status, 
+		e.Success, e.Status,
 		url.EnsureMethod(e.Method),
 		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
 	)

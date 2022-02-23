@@ -15,7 +15,7 @@
   &.disabled {
     /* background-color: red; */
     & svg {
-      fill: red;
+      fill: $red;
     }
   }
 }

@@ -34,6 +34,7 @@ export default Record({
   rangeValue,
   startDate,
   endDate,
+  groupByUser: true,
 
   sort: 'startTs',
   order: 'desc',
