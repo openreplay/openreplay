@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Popup, Icon } from 'UI'
+import { Popup, Icon, IconButton } from 'UI'
 import { connect } from 'react-redux'
 import cn from 'classnames'
 import { toggleChatWindow } from 'Duck/sessions';
@@ -77,27 +77,48 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
 
   const onCall = calling === CallingState.OnCall || calling === CallingState.Reconnecting
   const cannotCall = (peerConnectionStatus !== ConnectionStatus.Connected) || (isEnterprise && !hasPermission)
+  const remoteActive = remoteControlStatus === RemoteControlStatus.Enabled
 
   return (
     <div className="flex items-center">
+      <div
+        className={
+          cn(
+            'cursor-pointer p-2 flex items-center',
+            {[stl.disabled]: cannotCall}
+          )
+        }
+        onClick={ requestReleaseRemoteControl }
+        role="button"
+      >
+        {/* <Icon
+          name="remote-control"
+          size="20"
+          color={ remoteControlStatus === RemoteControlStatus.Enabled ? "green" : "gray-darkest"}
+        />
+        <span className={cn("ml-2", { 'color-green' : remoteControlStatus === RemoteControlStatus.Enabled })}>{ 'Remote Control' }</span> */}
+        <IconButton label={`${remoteActive ? 'Stop ' : ''} Remote Control`} icon="remote-control" primaryText redText={remoteActive} />
+      </div>
+      
       <Popup
         trigger={
           <div
             className={
               cn(
-                'cursor-pointer p-2 mr-2 flex items-center',
+                'cursor-pointer p-2 flex items-center',
                 {[stl.disabled]: cannotCall}
               )
             }
             onClick={ onCall ? callObject?.end : confirmCall}
             role="button"
           >
-            <Icon
+            {/* <Icon
               name="headset"
               size="20"
               color={ onCall ? "red" : "gray-darkest" }
             />
-            <span className={cn("ml-2", { 'color-red' : onCall })}>{ onCall ? 'End Call' : 'Call' }</span>
+            <span className={cn("ml-2", { 'color-red' : onCall })}>{ onCall ? 'End Call' : 'Call' }</span> */}
+            <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
           </div>
         }
         content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
@@ -105,22 +126,7 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         inverted
         position="top right"
       />
-      <div
-        className={
-          cn(
-            'cursor-pointer p-2 mr-2 flex items-center',
-          )
-        }
-        onClick={ requestReleaseRemoteControl }
-        role="button"
-      >
-        <Icon
-          name="remote-control"
-          size="20"
-          color={ remoteControlStatus === RemoteControlStatus.Enabled ? "green" : "gray-darkest"}
-        />
-        <span className={cn("ml-2", { 'color-green' : remoteControlStatus === RemoteControlStatus.Enabled })}>{ 'Remote Control' }</span>
-      </div>
+
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
         { onCall && callObject && <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
       </div>

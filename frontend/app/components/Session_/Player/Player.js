@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { findDOMNode } from 'react-dom';
 import cn from 'classnames';
-import { Loader, IconButton, EscapeButton } from 'UI';
+import { EscapeButton } from 'UI';
 import { hide as hideTargetDefiner } from 'Duck/components/targetDefiner';
 import { fullscreenOff } from 'Duck/components/player';
 import { attach as attachPlayer, Controls as PlayerControls, connectPlayer } from 'Player';
@@ -10,14 +10,13 @@ import Overlay from './Overlay';
 import stl from './player.css';
 import EventsToggleButton from '../../Session/EventsToggleButton';
 
-
 @connectPlayer(state => ({
   live: state.live,
 }))
 @connect(state => ({
-  //session: state.getIn([ 'sessions', 'current' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   nextId: state.getIn([ 'sessions', 'nextId' ]),
+  closedLive: !!state.getIn([ 'sessions', 'errors' ]),
 }), {
   hideTargetDefiner,
   fullscreenOff,
@@ -26,6 +25,8 @@ export default class Player extends React.PureComponent {
   screenWrapper = React.createRef();
 
   componentDidMount() {
+    if (this.props.closedLive) return;
+
     const parentElement = findDOMNode(this.screenWrapper.current);  //TODO: good architecture
     attachPlayer(parentElement);
   }
@@ -38,6 +39,7 @@ export default class Player extends React.PureComponent {
       fullscreenOff,
       nextId,
       live,
+      closedLive,
     } = this.props;
 
     return (
@@ -45,12 +47,10 @@ export default class Player extends React.PureComponent {
         className={ cn(className, stl.playerBody, "flex flex-col relative") }
         data-bottom-block={ bottomBlockIsActive }
       >
-        { fullscreen && 
-          <EscapeButton onClose={ fullscreenOff } />
-        }
+        {fullscreen && <EscapeButton onClose={ fullscreenOff } />}
         {!live && !fullscreen && <EventsToggleButton /> }
         <div className="relative flex-1 overflow-hidden">
-          <Overlay nextId={nextId} togglePlay={PlayerControls.togglePlay} />
+          <Overlay nextId={nextId} togglePlay={PlayerControls.togglePlay} closedLive={closedLive} />
           <div 
             className={ stl.screenWrapper }
             ref={ this.screenWrapper } 

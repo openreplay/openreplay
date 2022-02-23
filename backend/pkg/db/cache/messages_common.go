@@ -65,7 +65,8 @@ func (c *PGCache) InsertMetadata(sessionID uint64, metadata *Metadata) error {
 	keyNo := project.GetMetadataNo(metadata.Key)
 
 	if keyNo == 0 {
-		// insert project metadata
+		// TODO: insert project metadata
+		return nil
 	}
 	if err := c.Conn.InsertMetadata(sessionID, keyNo, metadata.Value); err != nil {
 		return err
