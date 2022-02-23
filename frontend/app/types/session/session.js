@@ -36,7 +36,7 @@ export default Record({
   stackEvents: List(),
   resources: List(),
   missedResources: List(),
-  metadata: List(),
+  metadata: Map(),
   favorite: false,
   filterId: '',
   messagesUrl: '',
@@ -76,6 +76,7 @@ export default Record({
   socket: null,
   isIOS: false,
   revId: '',
+  userSessionsCount: 0,
 }, {
   fromJS:({ 
     startTs=0,

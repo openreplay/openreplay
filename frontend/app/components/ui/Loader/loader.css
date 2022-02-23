@@ -1,7 +1,7 @@
 .loader {
   display: block;
   margin: auto;
-  background-image: svg-load(openreplay-preloader.svg, fill=#CCC);
+  background-image: svg-load(openreplay-preloader.svg, fill=#ffffff00);
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center center;

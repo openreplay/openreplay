@@ -9,9 +9,7 @@ import {
   init as initPlayer,
   clean as cleanPlayer,
 } from 'Player';
-import withPermissions from 'HOCs/withPermissions'
-import Assist from 'Components/Assist'
-
+import withPermissions from 'HOCs/withPermissions';
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import EventsBlock from '../Session_/EventsBlock';
@@ -54,7 +52,6 @@ function WebPlayer ({ showAssist, session, toggleFullscreen, closeBottomBlock, l
   return (
     <PlayerProvider>
       <InitLoader className="flex-1 p-3">
-        { showAssist && <Assist session={session} /> }
         <PlayerBlockHeader fullscreen={fullscreen}/>
         <div className={ styles.session } data-fullscreen={fullscreen}>
           <PlayerBlock />

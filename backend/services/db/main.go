@@ -11,11 +11,11 @@ import (
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/env"
+	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/services/db/heuristics"
-	logger "openreplay/backend/pkg/log"
 )
 
 var pg *cache.PGCache
@@ -28,7 +28,6 @@ func main() {
 	defer pg.Close()
 
 	heurFinder := heuristics.NewHandler()
-
 
 	statsLogger := logger.NewQueueStats(env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"))
 
@@ -91,6 +90,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
+			pg.CommitBatches()
 			if err := commitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
 			}

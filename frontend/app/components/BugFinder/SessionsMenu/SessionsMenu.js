@@ -73,7 +73,7 @@ function SessionsMenu(props) {
         />
       ))}
 
-      <div className={stl.divider} />
+      {/* <div className={stl.divider} />
       <div className="my-3">
         <SideMenuitem
           title={
@@ -94,7 +94,7 @@ function SessionsMenu(props) {
           onClick={() => onMenuItemClick({ name: 'Assist', type: 'live' })}
         />
 
-      </div>
+      </div> */}
 
       <div className={stl.divider} />
       <div className="my-3">

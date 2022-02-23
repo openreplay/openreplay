@@ -14,7 +14,7 @@ interface Props {
 }
 function FilterItem(props: Props) {
   const { isFilter = false, filterIndex, filter } = props;
-  const canShowValues = !(filter.operator === "isAny" || filter.operator === "onAny");
+  const canShowValues = !(filter.operator === "isAny" || filter.operator === "onAny" || filter.operator === "isUndefined");
 
   const replaceFilter = (filter) => {
     props.onUpdate({ ...filter, value: [""]});
