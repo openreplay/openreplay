@@ -2,8 +2,8 @@ import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
-import { sessions as sessionsRoute, assist as assistRoute, withSiteId } from 'App/routes';
-import { Icon, CountryFlag, IconButton, BackLink, Popup } from 'UI';
+import { sessions as sessionsRoute, assist as assistRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
+import { Icon, CountryFlag, IconButton, BackLink, Popup, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
@@ -107,6 +107,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       sessionPath,
       metaList,
       closedLive = false,
+      siteId,
     } = this.props;
     const _live = live && !hasSessionsPath;
 
@@ -126,8 +127,10 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <div className={cn("ml-auto flex items-center", { 'hidden' : closedLive })}>
             { live && hasSessionsPath && (
               <>
-                <div className={stl.liveSwitchButton} onClick={() => this.props.setSessionPath('')}>
-                  This Session is Now Continuing Live
+                <div className={stl.liveSwitchButton}>
+                  <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>
+                      This Session is Now Continuing Live
+                  </Link>
                 </div>
                 <div className={ stl.divider } />
               </>
