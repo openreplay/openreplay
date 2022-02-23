@@ -39,8 +39,8 @@ data:
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "Upgrade";
       proxy_set_header X-Forwarded-For $origin_forwarded_ip;
-      proxy_set_header X-Forwarded-Host $real_ip;
-      proxy_set_header X-Real-IP $real_ip;
+      proxy_set_header X-Forwarded-Host $origin_forwarded_ip;
+      proxy_set_header X-Real-IP $origin_forwarded_ip;
       proxy_set_header Host $host;
       proxy_pass http://http-openreplay.app.svc.cluster.local;
       proxy_read_timeout 300;
@@ -81,8 +81,8 @@ data:
       proxy_set_header Connection "Upgrade";
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $origin_forwarded_ip;
-      proxy_set_header X-Real-IP $real_ip;
-      proxy_pass http://utilities-openreplay.app.svc.cluster.local:9001;
+      proxy_set_header X-Real-IP $origin_forwarded_ip;
+      proxy_pass http://utilities-pool;
     }
     location /assets/ {
       rewrite ^/assets/(.*) /sessions-assets/$1 break;
@@ -139,7 +139,7 @@ data:
     # Need real ip address for flags in replay.
     # Some LBs will forward real ips as x-forwarded-for
     # So making that as priority
-    map $http_x_forwarded_for $real_ip {
+    map $http_x_forwarded_for $origin_forwarded_ip {
         ~^(\d+\.\d+\.\d+\.\d+) $1;
         default $remote_addr;
     }
@@ -151,10 +151,6 @@ data:
       default $http_x_forwarded_proto;
       '' $scheme;
     }
-    map $http_x_forwarded_for $origin_forwarded_ip {
-      default $http_x_forwarded_for;
-      '' $remote_addr;
-    }
     # Default server for helath check
     server {
       listen 80 default_server;
@@ -163,6 +159,13 @@ data:
         return 200 'OK';
       }
     }
+
+    upstream utilities-pool {
+      server utilities-openreplay-headless.app:9001;
+      # enable sticky session with either "hash" (uses the complete IP address)
+      hash $origin_forwarded_ip consistent;
+    }
+
     server {
       listen 80;
       listen [::]:80;
