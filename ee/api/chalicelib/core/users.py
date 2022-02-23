@@ -21,7 +21,10 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
         query = cur.mogrify(f"""\
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, role_id)
-                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(role_id)s)
+                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, 
+                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
                             RETURNING tenant_id,user_id,email,role,name,appearance, role_id
                     ),
                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
@@ -42,8 +45,8 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            roles.name AS role_name,
                            roles.permissions,
                            TRUE AS has_password
-                    FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id = %(role_id)s;""",
-                            {"tenantId": tenant_id, "email": email,
+                    FROM au,u LEFT JOIN roles USING(tenant_id) WHERE roles.role_id IS NULL OR roles.role_id =  (SELECT u.role_id FROM u);""",
+                            {"tenant_id": tenant_id, "email": email,
                              "role": "owner" if owner else "admin" if admin else "member", "name": name,
                              "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
                              "invitation_token": invitation_token, "role_id": role_id})
@@ -63,7 +66,9 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                         created_at = timezone('utc'::text, now()),
                         tenant_id= %(tenant_id)s,
                         api_key= generate_api_key(20),
-                        role_id= %(role_id)s
+                        role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))
                     WHERE user_id=%(user_id)s
                     RETURNING user_id                                           AS id,
                            email,
@@ -145,6 +150,10 @@ def update(tenant_id, user_id, changes):
             if key == "appearance":
                 sub_query_users.append(f"appearance = %(appearance)s::jsonb")
                 changes["appearance"] = json.dumps(changes[key])
+            elif helper.key_to_snake_case(key) == "role_id":
+                sub_query_users.append("""role_id=(SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))""")
             else:
                 sub_query_users.append(f"{helper.key_to_snake_case(key)} = %({key})s")
 
@@ -280,11 +289,11 @@ def get(user_id, tenant_id):
                         LEFT JOIN public.roles USING (role_id)
                     WHERE
                      users.user_id = %(userId)s
-                     AND users.tenant_id = %(tenantId)s
+                     AND users.tenant_id = %(tenant_id)s
                      AND users.deleted_at IS NULL
-                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenantId)s) 
+                     AND (roles.role_id IS NULL OR roles.deleted_at IS NULL AND roles.tenant_id = %(tenant_id)s) 
                     LIMIT 1;""",
-                {"userId": user_id, "tenantId": tenant_id})
+                {"userId": user_id, "tenant_id": tenant_id})
         )
         r = cur.fetchone()
         return helper.dict_to_camel_case(r, ignore_keys=["appearance"])
@@ -418,9 +427,9 @@ def get_members(tenant_id):
                     FROM public.users 
                         LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id
                         LEFT JOIN public.roles USING (role_id)
-                    WHERE users.tenant_id = %(tenantId)s AND users.deleted_at IS NULL
+                    WHERE users.tenant_id = %(tenant_id)s AND users.deleted_at IS NULL
                     ORDER BY name, id""",
-                {"tenantId": tenant_id})
+                {"tenant_id": tenant_id})
         )
         r = cur.fetchall()
         if len(r):
@@ -534,8 +543,8 @@ def count_members(tenant_id):
             cur.mogrify(
                 """SELECT 
                         COUNT(user_id) 
-                    FROM public.users WHERE tenant_id = %(tenantId)s AND deleted_at IS NULL;""",
-                {"tenantId": tenant_id})
+                    FROM public.users WHERE tenant_id = %(tenant_id)s AND deleted_at IS NULL;""",
+                {"tenant_id": tenant_id})
         )
         r = cur.fetchone()
     return r["count"]
@@ -598,8 +607,8 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
-                f"SELECT user_id AS id,jwt_iat, changed_at FROM public.users INNER JOIN public.basic_authentication USING(user_id) WHERE user_id = %(userId)s AND tenant_id = %(tenantId)s AND deleted_at IS NULL LIMIT 1;",
-                {"userId": user_id, "tenantId": tenant_id})
+                f"SELECT user_id AS id,jwt_iat, changed_at FROM public.users INNER JOIN public.basic_authentication USING(user_id) WHERE user_id = %(userId)s AND tenant_id = %(tenant_id)s AND deleted_at IS NULL LIMIT 1;",
+                {"userId": user_id, "tenant_id": tenant_id})
         )
         r = cur.fetchone()
         return r is not None \
@@ -716,7 +725,10 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
         query = cur.mogrify(f"""\
                     WITH u AS (
                         INSERT INTO public.users (tenant_id, email, role, name, data, origin, internal_id, role_id)
-                            VALUES (%(tenantId)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s, %(role_id)s)
+                            VALUES (%(tenant_id)s, %(email)s, %(role)s, %(name)s, %(data)s, %(origin)s, %(internal_id)s, 
+                                            (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
                             RETURNING *
                     ),
                     au AS (
@@ -734,7 +746,7 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
                            u.appearance,
                            origin
                     FROM u;""",
-                            {"tenantId": tenant_id, "email": email, "internal_id": internal_id,
+                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
                              "role": "admin" if admin else "member", "name": name, "origin": origin,
                              "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})})
         cur.execute(
@@ -748,13 +760,15 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
         query = cur.mogrify(f"""\
                     WITH u AS (
                         UPDATE public.users 
-                        SET tenant_id= %(tenantId)s,
+                        SET tenant_id= %(tenant_id)s,
                          role= %(role)s, 
                          name= %(name)s,
                          data= %(data)s, 
                          origin= %(origin)s, 
                          internal_id= %(internal_id)s, 
-                         role_id= %(role_id)s,
+                         role_id= (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
+                                                (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))),
                          deleted_at= NULL,
                          created_at= default,
                          api_key= default,
@@ -787,7 +801,7 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                            u.appearance,
                            origin
                     FROM u;""",
-                            {"tenantId": tenant_id, "email": email, "internal_id": internal_id,
+                            {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
                              "role": "admin" if admin else "member", "name": name, "origin": origin,
                              "role_id": role_id, "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
                              "user_id": user_id})

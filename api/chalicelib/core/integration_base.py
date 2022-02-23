@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from chalicelib.utils import pg_client, helper
 
 
@@ -37,7 +38,7 @@ class BaseIntegration(ABC):
         pass
 
     @abstractmethod
-    def update(self, changes):
+    def update(self, changes, obfuscate=False):
         pass
 
     @abstractmethod

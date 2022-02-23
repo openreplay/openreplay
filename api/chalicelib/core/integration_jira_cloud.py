@@ -1,8 +1,12 @@
-from chalicelib.utils import pg_client, helper
-from chalicelib.core.integration_jira_cloud_issue import JIRACloudIntegrationIssue
 from chalicelib.core import integration_base
+from chalicelib.core.integration_jira_cloud_issue import JIRACloudIntegrationIssue
+from chalicelib.utils import pg_client, helper
 
 PROVIDER = "JIRA"
+
+
+def obfuscate_string(string):
+    return "*" * (len(string) - 4) + string[-4:]
 
 
 class JIRAIntegration(integration_base.BaseIntegration):
@@ -36,11 +40,11 @@ class JIRAIntegration(integration_base.BaseIntegration):
         integration = self.get()
         if integration is None:
             return None
-        integration["token"] = "*" * (len(integration["token"]) - 4) + integration["token"][-4:]
+        integration["token"] = obfuscate_string(integration["token"])
         integration["provider"] = self.provider.lower()
         return integration
 
-    def update(self, changes):
+    def update(self, changes, obfuscate=False):
         with pg_client.PostgresClient() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
             cur.execute(
@@ -53,6 +57,8 @@ class JIRAIntegration(integration_base.BaseIntegration):
                              **changes})
             )
             w = helper.dict_to_camel_case(cur.fetchone())
+            if obfuscate:
+                w["token"] = obfuscate_string(w["token"])
             return w
 
     # TODO: make this generic for all issue tracking integrations
@@ -89,9 +95,12 @@ class JIRAIntegration(integration_base.BaseIntegration):
             return self.update(
                 changes={
                     "username": data["username"],
-                    "token": data["token"],
+                    "token": data["token"] \
+                        if data.get("token") and len(data["token"]) > 0 and data["token"].find("***") == -1 \
+                        else s["token"],
                     "url": data["url"]
-                }
+                },
+                obfuscate=True
             )
         else:
             return self.add(

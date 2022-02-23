@@ -1,8 +1,9 @@
-from jira import JIRA
-from jira.exceptions import JIRAError
 import time
 from datetime import datetime
+
 import requests
+from jira import JIRA
+from jira.exceptions import JIRAError
 from requests.auth import HTTPBasicAuth
 
 fields = "id, summary, description, creator, reporter, created, assignee, status, updated, comment, issuetype, labels"
@@ -15,7 +16,11 @@ class JiraManager:
     def __init__(self, url, username, password, project_id=None):
         self._config = {"JIRA_PROJECT_ID": project_id, "JIRA_URL": url, "JIRA_USERNAME": username,
                         "JIRA_PASSWORD": password}
-        self._jira = JIRA({'server': url}, basic_auth=(username, password), logging=True)
+        try:
+            self._jira = JIRA({'server': url}, basic_auth=(username, password), logging=True, max_retries=1)
+        except Exception as e:
+            print("!!! JIRA AUTH ERROR")
+            print(e)
 
     def set_jira_project_id(self, project_id):
         self._config["JIRA_PROJECT_ID"] = project_id

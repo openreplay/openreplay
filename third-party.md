@@ -1,4 +1,4 @@
-## Licenses (as of February 8, 2022)
+## Licenses (as of February 23, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -86,6 +86,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | semantic-ui-react | MIT | JavaScript |
 | socket.io | MIT | JavaScript |
 | socket.io-client | MIT | JavaScript |
+| uWebSockets.js | Apache2 | JavaScript |
 | source-map | BSD3 | JavaScript |
 | aws-sdk | Apache2 | JavaScript |
 | serverless | MIT | JavaScript |

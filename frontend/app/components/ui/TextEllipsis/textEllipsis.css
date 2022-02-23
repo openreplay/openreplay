@@ -1,7 +1,7 @@
 .textEllipsis {
   text-overflow: ellipsis;
   overflow: hidden;
-  display: inline-block; 
+  /* display: inline-block;  */
   white-space: nowrap;
   max-width: 100%;
 }

@@ -13,7 +13,7 @@ module.exports = {
 		//'appearance',
 		// 'backgroundAttachment',
 		'backgroundColor',
-		// 'backgroundOpacity',
+		'backgroundOpacity',
 		// 'backgroundPosition',
 		// 'backgroundRepeat',
 		// 'backgroundSize',

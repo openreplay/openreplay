@@ -106,6 +106,7 @@ function getStorageName(type) {
     bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
     showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
     showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
+    closedLive: !!state.getIn([ 'sessions', 'errors' ]),
   }
 }, {
   fullscreenOn,
@@ -253,7 +254,8 @@ export default class Controls extends React.Component {
       showExceptions,
       fullscreen,      
       skipToIssue,
-      inspectorMode
+      inspectorMode,
+      closedLive,
     } = this.props;
 
     // const inspectorMode = bottomBlock === INSPECTOR;
@@ -263,30 +265,35 @@ export default class Controls extends React.Component {
         { !live && <Timeline jump={ this.props.jump } /> }
         { !fullscreen &&
           <div className={ styles.buttons } data-is-live={ live }>
-            { !live ?
-              <div className={ styles.buttonsLeft }>
-                { this.renderPlayBtn() }
-                <ControlButton
-                  onClick={ this.backTenSeconds }
-                  disabled={ disabled }
-                  label="Back"
-                  icon="replay-10"
-                />
-                <ControlButton
-                  disabled={ disabled }
-                  onClick={ this.props.toggleSkipToIssue }
-                  active={ skipToIssue }
-                  label="Skip to Issue"
-                  icon={skipToIssue ? 'skip-forward-fill' : 'skip-forward'}
-                />
-              </div>
-              :
-              <div className={ styles.buttonsLeft }>
-                <LiveTag isLive={livePlay} />
-                {'Elapsed'}
-                <ReduxTime name="time" />
-              </div>
-            }
+            <div>
+              { !live && (
+                <div className={ styles.buttonsLeft }>
+                  { this.renderPlayBtn() }
+                  <ControlButton
+                    onClick={ this.backTenSeconds }
+                    disabled={ disabled }
+                    label="Back"
+                    icon="replay-10"
+                  />
+                  <ControlButton
+                    disabled={ disabled }
+                    onClick={ this.props.toggleSkipToIssue }
+                    active={ skipToIssue }
+                    label="Skip to Issue"
+                    icon={skipToIssue ? 'skip-forward-fill' : 'skip-forward'}
+                  />
+                </div>
+              )}
+
+              { live && !closedLive && (
+                <div className={ styles.buttonsLeft }>
+                  <LiveTag isLive={livePlay} />
+                  {'Elapsed'}
+                  <ReduxTime name="time" />
+                </div>
+              )}
+            </div>
+
             <div className={ styles.butonsRight }>
               {!live &&
                 <React.Fragment>
@@ -297,7 +304,7 @@ export default class Controls extends React.Component {
                   >
                     <div>{ speed + 'x' }</div>
                   </button>
-                  <div className={ styles.divider } /> 
+                  
                   <button
                     className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip }) }
                     onClick={ this.props.toggleSkip }
@@ -308,7 +315,9 @@ export default class Controls extends React.Component {
                   </button>
                 </React.Fragment>
               }
-              <div className={ styles.divider } />
+
+              { !live && <div className={ styles.divider } /> }
+              
               { !live &&
                 <ControlButton
                   disabled={ disabled }
@@ -413,7 +422,7 @@ export default class Controls extends React.Component {
                   icon="business-time"
                 />
               } */}
-              <div className={ styles.divider } /> 
+              
               { !live && 
                 <React.Fragment>
                   <ControlButton

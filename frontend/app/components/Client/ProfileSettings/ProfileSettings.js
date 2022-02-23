@@ -26,7 +26,7 @@ export default class ProfileSettings extends React.PureComponent {
           <div><Settings /></div>
         </div>
 
-        <div className="divider" />
+        <div className="divider-h" />
 
         <div className="flex items-center">
           <div className={ styles.left }>
@@ -36,7 +36,7 @@ export default class ProfileSettings extends React.PureComponent {
           <div><ChangePassword /></div>
         </div>
 
-        <div className="divider" />
+        <div className="divider-h" />
 
         <div className="flex items-center">
           <div className={ styles.left }>
@@ -46,7 +46,7 @@ export default class ProfileSettings extends React.PureComponent {
           <div><Api /></div>
         </div>
 
-        <div className="divider" />
+        <div className="divider-h" />
 
         <div className="flex items-center">
           <div className={ styles.left }>
@@ -58,7 +58,7 @@ export default class ProfileSettings extends React.PureComponent {
 
         { !isEnterprise && (
           <>
-            <div className="divider" />
+            <div className="divider-h" />
             <div className="flex items-center">
               <div className={ styles.left }>
                 <h4 className="text-lg mb-4">{ 'Data Collection' }</h4>
@@ -71,7 +71,7 @@ export default class ProfileSettings extends React.PureComponent {
 
         { account.license && (
           <>
-            <div className="divider" />
+            <div className="divider-h" />
 
             <div className="flex items-center">
               <div className={ styles.left }>

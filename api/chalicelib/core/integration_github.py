@@ -1,6 +1,6 @@
-from chalicelib.utils import pg_client, helper
-from chalicelib.core.integration_github_issue import GithubIntegrationIssue
 from chalicelib.core import integration_base
+from chalicelib.core.integration_github_issue import GithubIntegrationIssue
+from chalicelib.utils import pg_client, helper
 
 PROVIDER = "GITHUB"
 
@@ -15,8 +15,6 @@ class GitHubIntegration(integration_base.BaseIntegration):
     def provider(self):
         return PROVIDER
 
-
-
     def get_obfuscated(self):
         integration = self.get()
         if integration is None:
@@ -24,7 +22,7 @@ class GitHubIntegration(integration_base.BaseIntegration):
         token = "*" * (len(integration["token"]) - 4) + integration["token"][-4:]
         return {"token": token, "provider": self.provider.lower()}
 
-    def update(self, changes):
+    def update(self, changes, obfuscate=False):
         with pg_client.PostgresClient() as cur:
             sub_query = [f"{helper.key_to_snake_case(k)} = %({k})s" for k in changes.keys()]
             cur.execute(
@@ -71,8 +69,11 @@ class GitHubIntegration(integration_base.BaseIntegration):
         if s is not None:
             return self.update(
                 changes={
-                    "token": data["token"]
-                }
+                    "token": data["token"] \
+                        if data.get("token") and len(data["token"]) > 0 and data["token"].find("***") == -1 \
+                        else s["token"]
+                },
+                obfuscate=True
             )
         else:
             return self.add(token=data["token"])

@@ -29,7 +29,7 @@ func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error
 		UserDeviceType:       s.UserDeviceType,
 		UserDeviceMemorySize: s.UserDeviceMemorySize,
 		UserDeviceHeapSize:   s.UserDeviceHeapSize,
-		UserID: 							&s.UserID,
+		UserID:               &s.UserID,
 	}
 	if err := c.Conn.InsertSessionStart(sessionID, c.sessions[sessionID]); err != nil {
 		c.sessions[sessionID] = nil
