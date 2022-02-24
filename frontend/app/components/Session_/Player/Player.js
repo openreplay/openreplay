@@ -16,7 +16,7 @@ import EventsToggleButton from '../../Session/EventsToggleButton';
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   nextId: state.getIn([ 'sessions', 'nextId' ]),
-  closedLive: !!state.getIn([ 'sessions', 'errors' ]),
+  closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
 }), {
   hideTargetDefiner,
   fullscreenOff,
