@@ -44,7 +44,7 @@ const ASSIST_ROUTE = assistRoute();
     siteId: state.getIn([ 'user', 'siteId' ]),
     hasSessionsPath: hasSessioPath && !isAssist,
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
-    closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !session.live,
+    closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !session.live),
   }
 }, {
   toggleFavorite, fetchListIntegration, setSessionPath

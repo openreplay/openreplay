@@ -33,7 +33,6 @@ import styles from './playerBlock.css';
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
-  closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
 }))
 export default class PlayerBlock extends React.PureComponent {
   componentDidUpdate(prevProps) {
@@ -44,14 +43,13 @@ export default class PlayerBlock extends React.PureComponent {
   }
 
   render() {
-    const { fullscreen, bottomBlock, closedLive } = this.props;
+    const { fullscreen, bottomBlock } = this.props;
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
-          closedLive={closedLive}
         />
         { !fullscreen && !!bottomBlock &&
           <div className="">
