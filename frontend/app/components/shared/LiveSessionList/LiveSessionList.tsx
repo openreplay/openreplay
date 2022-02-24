@@ -13,6 +13,7 @@ import DropdownPlain from 'Shared/DropdownPlain';
 import SortOrderButton from 'Shared/SortOrderButton';
 import { TimezoneDropdown } from 'UI';
 import { capitalize } from 'App/utils';
+import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
 const PER_PAGE = 20;
@@ -107,8 +108,6 @@ function LiveSessionList(props: Props) {
     }, AUTOREFRESH_INTERVAL);
   }
 
-  console.log('srt', sort)
-
   return (
     <div>
       <div className="flex mb-6 justify-between items-end">
@@ -117,6 +116,8 @@ function LiveSessionList(props: Props) {
             <span>Live Sessions</span>
             <span className="ml-2 font-normal color-gray-medium">{sessions.size}</span>
           </h3>
+
+          <LiveSessionReloadButton />
         </div>
         <div className="flex items-center">
           <div className="flex items-center">

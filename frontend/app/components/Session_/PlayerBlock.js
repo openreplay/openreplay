@@ -33,7 +33,7 @@ import styles from './playerBlock.css';
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
-  closedLive: !!state.getIn([ 'sessions', 'errors' ]),
+  closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
 }))
 export default class PlayerBlock extends React.PureComponent {
   componentDidUpdate(prevProps) {
