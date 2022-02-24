@@ -91,12 +91,6 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         onClick={ requestReleaseRemoteControl }
         role="button"
       >
-        {/* <Icon
-          name="remote-control"
-          size="20"
-          color={ remoteControlStatus === RemoteControlStatus.Enabled ? "green" : "gray-darkest"}
-        />
-        <span className={cn("ml-2", { 'color-green' : remoteControlStatus === RemoteControlStatus.Enabled })}>{ 'Remote Control' }</span> */}
         <IconButton label={`${remoteActive ? 'Stop ' : ''} Remote Control`} icon="remote-control" primaryText redText={remoteActive} />
       </div>
       
@@ -112,12 +106,6 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
             onClick={ onCall ? callObject?.end : confirmCall}
             role="button"
           >
-            {/* <Icon
-              name="headset"
-              size="20"
-              color={ onCall ? "red" : "gray-darkest" }
-            />
-            <span className={cn("ml-2", { 'color-red' : onCall })}>{ onCall ? 'End Call' : 'Call' }</span> */}
             <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
           </div>
         }
