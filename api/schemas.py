@@ -702,6 +702,17 @@ class MetricViewType(str, Enum):
     progress = "progress"
 
 
+class MetricType(str, Enum):
+    timeseries = "timeseries"
+    table = "table"
+
+
+# class MetricTypeTableGroupField(str, Enum):
+#     users = "USERS"
+#     click_rage = IssueType.click_rage
+#     dead_click = IssueType.dead_click
+
+
 class CustomMetricRawPayloadSchema(BaseModel):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
@@ -719,6 +730,8 @@ class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
     endDate: int = Field(TimeUTC.now())
     density: int = Field(7)
     viewType: MetricViewType = Field(MetricViewType.line_chart)
+    metricType: MetricType = Field(MetricType.timeseries)
+    groupField: Optional[Union[FilterType]] = Field(None)
 
 
 class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):
