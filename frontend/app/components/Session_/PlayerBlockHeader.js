@@ -29,10 +29,11 @@ const ASSIST_ROUTE = assistRoute();
   loading: state.cssLoading || state.messagesLoading,
 }))
 @connect((state, props) => {
-  const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
+  const isAssist = window.location.pathname.includes('/assist/');
   const hasSessioPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
+  const session = state.getIn([ 'sessions', 'current' ]);
   return {
-    session: state.getIn([ 'sessions', 'current' ]),
+    session,
     sessionPath: state.getIn([ 'sessions', 'sessionPath' ]),
     loading: state.getIn([ 'sessions', 'toggleFavoriteRequest', 'loading' ]),
     disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]) || props.loading,
@@ -43,7 +44,7 @@ const ASSIST_ROUTE = assistRoute();
     siteId: state.getIn([ 'user', 'siteId' ]),
     hasSessionsPath: hasSessioPath && !isAssist,
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
-    closedLive: !!state.getIn([ 'sessions', 'errors' ]),
+    closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !session.live),
   }
 }, {
   toggleFavorite, fetchListIntegration, setSessionPath
