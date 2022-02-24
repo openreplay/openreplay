@@ -171,7 +171,8 @@ export default class AssistManager {
           this.setStatus(ConnectionStatus.Disconnected)
         }, 12000)
 
-        if (getState().remoteControl === RemoteControlStatus.Requesting) {
+        if (getState().remoteControl === RemoteControlStatus.Requesting ||
+        getState().remoteControl === RemoteControlStatus.Enabled) {
           this.toggleRemoteControl(false)
         }
 
