@@ -13,11 +13,14 @@ import EventsToggleButton from '../../Session/EventsToggleButton';
 @connectPlayer(state => ({
   live: state.live,
 }))
-@connect(state => ({
-  fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-  nextId: state.getIn([ 'sessions', 'nextId' ]),
-  closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
-}), {
+@connect(state => {
+  const isAssist = window.location.pathname.includes('/assist/');
+  return {
+    fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+    nextId: state.getIn([ 'sessions', 'nextId' ]),
+    closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !state.getIn([ 'sessions', 'current', 'live' ])),
+  }
+}, {
   hideTargetDefiner,
   fullscreenOff,
 })
