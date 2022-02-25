@@ -237,21 +237,3 @@ export const operatorOptions = (filter) => {
       return [{ key: 'onAnything', text: 'on anything', value: 'true' }]
   }
 }
-
-const NewFilterType = (key, category, label, icon, isEvent = false) => {
-  return {
-    key: key,
-    category: category,
-    label: label,
-    icon: icon,
-    isEvent: isEvent,
-    operators: operatorOptions({ key }),
-    value: [""]
-  }
-}
-
-export const newFiltersList = [
-  NewFilterType(TYPES.CLICK, 'Gear', 'Click', 'filters/click', true),
-  NewFilterType(TYPES.CLICK, 'Gear', 'Input', 'filters/click', true),
-  NewFilterType(TYPES.CONSOLE, 'Other', 'Console', 'filters/click', true),
-];

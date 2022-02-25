@@ -48,6 +48,11 @@ export const filtersMap = {
   [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
 
   // PERFORMANCE
+  [FilterKey.FETCH]: { key: FilterKey.FETCH, type: FilterType.SUB_FILTERS, category: FilterCategory.PERFORMANCE, label: 'Fetch Request', subFilters: [
+    { key: FilterKey.FETCH_URL, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with URL', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
+    { key: FilterKey.FETCH_STATUS, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with status code', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
+    { key: FilterKey.FETCH_METHOD, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
+  ], icon: 'filters/fetch-failed', isEvent: true },
   [FilterKey.DOM_COMPLETE]: { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/dom-complete', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/lcpt', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.TTFB]: { key: FilterKey.TTFB, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Time to First Byte', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/ttfb', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
@@ -121,17 +126,19 @@ export default Record({
   isEvent: false,
   index: 0,
   options: [],
+
+  subFilters: [],
 }, {
   keyKey: "_key",
   fromJS: ({ value, key, type, ...filter }) => {
-    // const _filter = filtersMap[key] || filtersMap[type] || {};
     const _filter = filtersMap[type];
     return {
       ...filter,
       ..._filter,
       key: _filter.key,
       type: _filter.type, // camelCased(filter.type.toLowerCase()),
-      value: value.length === 0 ? [""] : value, // make sure there an empty value
+      value: value.length === 0 ? [""] : value,
+      // subFilters: filter.subFilters.map(this),
     }
   },
 })
@@ -142,33 +149,29 @@ export default Record({
  * @returns 
  */
 export const generateFilterOptions = (map) => {
-  const _options = {};
+  const filterSection = {};
   Object.keys(map).forEach(key => {
     const filter = map[key];
-    if (_options.hasOwnProperty(filter.category)) {
-      _options[filter.category].push(filter);
+    if (filterSection.hasOwnProperty(filter.category)) {
+      filterSection[filter.category].push(filter);
     } else {
-      _options[filter.category] = [filter];
+      filterSection[filter.category] = [filter];
     }
   });
-  return _options;
+  return filterSection;
 }
 
 export const generateLiveFilterOptions = (map) => {
-  const _options = {};
+  const filterSection = {};
 
   Object.keys(map).filter(i => map[i].isLive).forEach(key => {
     const filter = map[key];
     filter.operator = 'contains';
-    // filter.type = FilterType.STRING;
-    // filter.type = FilterType.AUTOCOMPLETE_LOCAL;
-    // filter.options = countryOptions;
-    // filter.operatorOptions = [{ key: 'contains', text: 'contains', value: 'contains' }]
-    if (_options.hasOwnProperty(filter.category)) {
-      _options[filter.category].push(filter);
+    if (filterSection.hasOwnProperty(filter.category)) {
+      filterSection[filter.category].push(filter);
     } else {
-      _options[filter.category] = [filter];
+      filterSection[filter.category] = [filter];
     }
   });
-  return _options;
+  return filterSection;
 }
