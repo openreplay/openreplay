@@ -268,9 +268,12 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                    view_type: schemas.MetricViewType, metric_type: schemas.MetricType, metric_of: schemas.MetricOfType):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density, factor=1, decimal=True))
+    extra_event = None
+    if metric_of == schemas.MetricOfType.visited_url:
+        extra_event = "events.pages"
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
-                                                     user_id=None)
+                                                     user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
     sessions = []
     with pg_client.PostgresClient() as cur:
@@ -303,6 +306,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             if isinstance(metric_of, schemas.MetricOfType):
                 main_col = "user_id"
                 extra_col = ""
+                pre_query = ""
                 if metric_of == schemas.MetricOfType.user_country:
                     main_col = "user_country"
                 elif metric_of == schemas.MetricOfType.user_device:
@@ -312,7 +316,14 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.MetricOfType.issues:
                     main_col = "issue"
                     extra_col = f", UNNEST(s.issue_types) AS {main_col}"
-                main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                elif metric_of == schemas.MetricOfType.visited_url:
+                    main_col = "base_path"
+                    extra_col = ", base_path"
+                # elif metric_of == schemas.MetricOfType.initial_page_load_time:
+                #     main_col = "issue"
+                #     extra_col = f", UNNEST(s.issue_types) AS {main_col}"
+                main_query = cur.mogrify(f"""{pre_query}
+                                             SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,
                                                                  count(full_sessions)                                   AS session_count,
                                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
@@ -321,15 +332,17 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                                         s.user_id, s.user_os, 
                                                                         s.user_browser, s.user_device, 
                                                                         s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                                            -----------------
                                                             {query_part}
+                                                            -----------------
                                                             ORDER BY s.session_id desc) AS filtred_sessions
                                                             ) AS full_sessions
                                                             GROUP BY {main_col}
                                                             ORDER BY session_count DESC) AS users_sessions;""",
                                          full_args)
-            # print("--------------------")
-            # print(main_query)
-            # print("--------------------")
+            print("--------------------")
+            print(main_query)
+            print("--------------------")
             cur.execute(main_query)
             sessions = cur.fetchone()
             for s in sessions["values"]:
@@ -339,7 +352,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
         return sessions
 
 
-def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id):
+def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
@@ -894,6 +907,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
+    if extra_event:
+        extra_join += f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
+        extra_constraints.append("ev.timestamp>=%(startDate)s")
+        extra_constraints.append("ev.timestamp<=%(endDate)s")
     query_part = f"""\
                         FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else "public.sessions AS s"}
                         {extra_join}
