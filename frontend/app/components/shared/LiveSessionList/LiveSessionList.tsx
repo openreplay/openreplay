@@ -161,7 +161,7 @@ function LiveSessionList(props: Props) {
           ))}
 
           <LoadMoreButton
-            className="mt-3"
+            className="my-6"
             displayedCount={displayedCount}
             totalCount={sessions.size}
             onClick={addPage}
