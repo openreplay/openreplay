@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SlideModal, Avatar, Icon } from 'UI';
+import { SlideModal, Avatar, TextEllipsis, Icon } from 'UI';
 import SessionList from '../SessionList';
 import stl from './assistTabs.css'
 
@@ -19,7 +19,11 @@ const AssistTabs = (props: Props) => {
             <div className="flex items-center mr-3">
               {/* <Icon name="user-alt" color="gray-darkest" /> */}
               <Avatar iconSize="20" width="30px" height="30px" seed={ props.userNumericHash } />
-              <div className="ml-2 font-medium">{props.userId}'s</div>
+              <div className="ml-2 font-medium">
+                <TextEllipsis maxWidth={120} inverted popupProps={{ inverted: true, size: 'tiny' }}>
+                  {props.userId}'s asdasd asdasdasdasd
+                </TextEllipsis>
+              </div>
             </div>
             <div
               className={stl.btnLink}

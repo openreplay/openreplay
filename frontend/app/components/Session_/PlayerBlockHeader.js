@@ -139,7 +139,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
             
             { _live && (
               <>
-                <SessionMetaList className="" metaList={_metaList} />
+                <SessionMetaList className="" metaList={_metaList} maxLength={3} />
                 <div className={ stl.divider } />
               </>
             )}
