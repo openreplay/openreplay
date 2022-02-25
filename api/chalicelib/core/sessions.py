@@ -302,12 +302,16 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
         elif metric_type == schemas.MetricType.table:
             if isinstance(metric_of, schemas.MetricOfType):
                 main_col = "user_id"
+                extra_col = ""
                 if metric_of == schemas.MetricOfType.user_country:
                     main_col = "user_country"
                 elif metric_of == schemas.MetricOfType.user_device:
                     main_col = "user_device"
                 elif metric_of == schemas.MetricOfType.user_browser:
                     main_col = "user_browser"
+                elif metric_of == schemas.MetricOfType.issues:
+                    main_col = "issue"
+                    extra_col = f", UNNEST(s.issue_types) AS {main_col}"
                 main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,
                                                                  count(full_sessions)                                   AS session_count,
@@ -316,7 +320,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                             FROM (SELECT DISTINCT ON(s.session_id) s.session_id, s.user_uuid, 
                                                                         s.user_id, s.user_os, 
                                                                         s.user_browser, s.user_device, 
-                                                                        s.user_device_type, s.user_country
+                                                                        s.user_device_type, s.user_country, s.issue_types{extra_col}
                                                             {query_part}
                                                             ORDER BY s.session_id desc) AS filtred_sessions
                                                             ) AS full_sessions
