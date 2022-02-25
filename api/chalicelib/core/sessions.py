@@ -198,7 +198,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
-                                                                {"," if len(meta_keys)>0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions
@@ -210,7 +210,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
                                             FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
-                                                                {"," if len(meta_keys)>0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
@@ -264,40 +264,74 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
     }
 
 
-@dev.timed
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                   view_type: schemas.MetricViewType):
+                   view_type: schemas.MetricViewType, metric_type: schemas.MetricType, metric_of: schemas.MetricOfType):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density, factor=1, decimal=True))
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
                                                      user_id=None)
     full_args["step_size"] = step_size
+    sessions = []
     with pg_client.PostgresClient() as cur:
-        if view_type == schemas.MetricViewType.line_chart:
-            main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
-                                                            {query_part})
-                                        SELECT generated_timestamp AS timestamp,
-                                               COUNT(s)            AS count
-                                        FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                 LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                     FROM full_sessions
-                                                                     WHERE start_ts >= generated_timestamp
-                                                                       AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
-                                        GROUP BY generated_timestamp
-                                        ORDER BY generated_timestamp;""", full_args)
-        else:
-            main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
-                                        {query_part};""", full_args)
+        if metric_type == schemas.MetricType.timeseries:
+            if view_type == schemas.MetricViewType.line_chart:
+                main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
+                                                                {query_part})
+                                            SELECT generated_timestamp AS timestamp,
+                                                   COUNT(s)            AS count
+                                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                     LEFT JOIN LATERAL ( SELECT 1 AS s
+                                                                         FROM full_sessions
+                                                                         WHERE start_ts >= generated_timestamp
+                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                            GROUP BY generated_timestamp
+                                            ORDER BY generated_timestamp;""", full_args)
+            else:
+                main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
+                                            {query_part};""", full_args)
 
-        # print("--------------------")
-        # print(main_query)
-        cur.execute(main_query)
-        # print("--------------------")
-        if view_type == schemas.MetricViewType.line_chart:
-            sessions = cur.fetchall()
-        else:
-            sessions = cur.fetchone()["count"]
+            # print("--------------------")
+            # print(main_query)
+            cur.execute(main_query)
+            # print("--------------------")
+            if view_type == schemas.MetricViewType.line_chart:
+                sessions = cur.fetchall()
+            else:
+                sessions = cur.fetchone()["count"]
+        elif metric_type == schemas.MetricType.table:
+            if isinstance(metric_of, schemas.MetricOfType):
+                main_col = "user_id"
+                if metric_of == schemas.MetricOfType.user_country:
+                    main_col = "user_country"
+                elif metric_of == schemas.MetricOfType.user_device:
+                    main_col = "user_device"
+                elif metric_of == schemas.MetricOfType.user_browser:
+                    main_col = "user_browser"
+                main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                                        FROM (SELECT {main_col} AS name,
+                                                                 count(full_sessions)                                   AS session_count,
+                                                                 ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                                            FROM (SELECT *
+                                                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id, s.user_uuid, 
+                                                                        s.user_id, s.user_os, 
+                                                                        s.user_browser, s.user_device, 
+                                                                        s.user_device_type, s.user_country
+                                                            {query_part}
+                                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                                            ) AS full_sessions
+                                                            GROUP BY {main_col}
+                                                            ORDER BY session_count DESC) AS users_sessions;""",
+                                         full_args)
+            # print("--------------------")
+            # print(main_query)
+            # print("--------------------")
+            cur.execute(main_query)
+            sessions = cur.fetchone()
+            for s in sessions["values"]:
+                s.pop("rn")
+            sessions["values"] = helper.list_to_camel_case(sessions["values"])
+
         return sessions
 
 
