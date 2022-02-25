@@ -732,6 +732,8 @@ class MetricOfType(str, Enum):
     user_country = FilterType.user_country.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
+    initial_page_load_time = "INITIAL_PAGE_LOAD_TIME"
+    visited_url = "VISITED_URL"
 
 
 class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
@@ -741,6 +743,7 @@ class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
     viewType: MetricViewType = Field(MetricViewType.line_chart)
     metricType: MetricType = Field(MetricType.timeseries)
     metricOf: MetricOfType = Field(MetricOfType.user_id)
+    metricFraction: float = Field(None, gt=0, lt=1)
 
 
 class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):
