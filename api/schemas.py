@@ -725,13 +725,21 @@ class CustomMetricRawPayloadSchema2(CustomMetricRawPayloadSchema):
     metric_id: int = Field(...)
 
 
+class MetricOfType(str, Enum):
+    user_os = FilterType.user_os
+    user_browser = FilterType.user_browser
+    user_device = FilterType.user_device
+    user_country = FilterType.user_country
+    user_id = FilterType.user_id
+
+
 class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
     density: int = Field(7)
     viewType: MetricViewType = Field(MetricViewType.line_chart)
     metricType: MetricType = Field(MetricType.timeseries)
-    groupField: Optional[Union[FilterType]] = Field(None)
+    metricOf: MetricOfType = Field(MetricOfType.user_id)
 
 
 class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):

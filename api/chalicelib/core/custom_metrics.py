@@ -6,20 +6,22 @@ from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def try_live(project_id, data: schemas.TryCustomMetricsSchema):
+def __try_live(project_id, data: schemas.TryCustomMetricsSchema):
     results = []
     for i, s in enumerate(data.series):
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                               view_type=data.viewType))
+                                               view_type=data.viewType, metric_type=data.metricType,
+                                               metric_of=data.metricOf))
         if data.viewType == schemas.MetricViewType.progress:
             r = {"count": results[-1]}
             diff = s.filter.endDate - s.filter.startDate
             s.filter.startDate = data.endDate
             s.filter.endDate = data.endDate - diff
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                                         view_type=data.viewType)
+                                                         view_type=data.viewType, metric_type=data.metricType,
+                                                         metric_of=data.metricOf)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
             r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
@@ -28,8 +30,8 @@ def try_live(project_id, data: schemas.TryCustomMetricsSchema):
 
 
 def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
-    series_charts = try_live(project_id=project_id, data=data)
-    if data.viewType == schemas.MetricViewType.progress:
+    series_charts = __try_live(project_id=project_id, data=data)
+    if data.viewType == schemas.MetricViewType.progress or data.metricType == schemas.MetricType.table:
         return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
@@ -44,7 +46,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     if metric is None:
         return None
     metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
-    series_charts = try_live(project_id=project_id, data=metric)
+    series_charts = __try_live(project_id=project_id, data=metric)
     if data.viewType == schemas.MetricViewType.progress:
         return series_charts
     results = [{}] * len(series_charts[0])
