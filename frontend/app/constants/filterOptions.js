@@ -54,6 +54,20 @@ export const customOperators = [
   { key: '>=', text: '>=', value: '>=' },
 ]
 
+export const metricTypes = [
+  { text: 'Timeseries', value: 'timeseries' },
+  { text: 'Table', value: 'table' },
+];
+
+export const metricOf = [
+  { text: 'Session Count', value: 'sessionCount', key: 'timeseries' },
+  { text: 'Users', value: 'users', key: 'table' },
+  { text: 'Rage Click', value: 'rageClick', key: 'table' },
+  { text: 'Dead Click', value: 'deadClick', key: 'table' },
+  { text: 'Browser', value: 'browser', key: 'table' },
+  { text: 'Device', value: 'device', key: 'table' },
+]
+
 export default {
   options,
   baseOperators,
@@ -62,4 +76,6 @@ export default {
   booleanOperators,
   customOperators,
   getOperatorsByKeys,
+  metricTypes,
+  metricOf,
 }
