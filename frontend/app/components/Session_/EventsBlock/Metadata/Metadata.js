@@ -10,13 +10,15 @@ export default connect(state => ({
   metadata: state.getIn([ 'sessions', 'current', 'metadata' ]),
 }))(function Metadata ({ metadata }) {
   const [ visible, setVisible ] = useState(false);
-  const toggle = useCallback(() => metadata.length > 0 && setVisible(v => !v), []);
+  const metaLenth = Object.keys(metadata).length;
+  const toggle = useCallback(() => metaLenth > 0 && setVisible(v => !v), []);
+  
   return (
     <>
       <Popup
         trigger={
           <IconButton
-            className={cn("w-full", { 'opacity-25' : metadata.length === 0 })}
+            className={cn("w-full", { 'opacity-25' : metaLenth === 0 })}
             onClick={ toggle }
             icon="id-card"
             plain
@@ -33,17 +35,17 @@ export default connect(state => ({
           </div>
         }
         on="click"
-        disabled={metadata.length > 0}
+        disabled={metaLenth > 0}
         size="tiny"
         inverted
         position="top center"
       />
       { visible && 
         <div className={ stl.modal } >
-          <NoContent show={ metadata.size === 0 } size="small">
-            { metadata.map((i) => {
-              const key = Object.keys(i)[0]
-              const value = i[key]
+          <NoContent show={ metaLenth === 0 } size="small">
+            { Object.keys(metadata).map((key) => {
+              // const key = Object.keys(i)[0]
+              const value = metadata[key]
               return <MetadataItem item={ { value, key } } key={ key } />
             }) }
           </NoContent>
