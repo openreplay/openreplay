@@ -14,9 +14,12 @@ import type { Options as ConfirmOptions } from './ConfirmWindow.js';
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;
 
+type BehinEndCallback = () => ((()=>{}) | void)
+
 export interface Options {
-  onAgentConnect: () => ((()=>{}) | void),
-  onCallStart: () => ((()=>{}) | void),
+  onAgentConnect: BehinEndCallback,
+  onCallStart: BehinEndCallback,
+  onRemoteControlStart: BehinEndCallback,
   session_calling_peer_key: string,
   session_control_peer_key: string,
   callConfirm: ConfirmOptions,
@@ -63,6 +66,7 @@ export default class Assist {
         config: null,
         onCallStart: ()=>{},
         onAgentConnect: ()=>{},
+        onRemoteControlStart: ()=>{},
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overriting
       },
@@ -157,12 +161,16 @@ export default class Assist {
         }
       }).catch()
     }
+    let onRemoteControlStop: (()=>void) | null = null
     const grantControl = (id: string) => {
       controllingAgent = id
       mouse.mount()
+      onRemoteControlStop = this.options.onRemoteControlStart() || null
       sessionStorage.setItem(this.options.session_control_peer_key, id)
     }
     const releaseControl = () => {
+      typeof onRemoteControlStop === 'function' && onRemoteControlStop()
+      onRemoteControlStop = null
       confirmRC?.remove()
       mouse.remove()
       controllingAgent = null
