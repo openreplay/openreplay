@@ -7,6 +7,8 @@ import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMe
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
+import DropdownPlain from '../../DropdownPlain';
+import { metricTypes, metricOf } from 'App/constants/filterOptions';
 
 interface Props {
   metric: any;
@@ -21,6 +23,7 @@ interface Props {
 
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
+  const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
 
   const addSeries = () => {
     props.addSeries();
@@ -30,7 +33,8 @@ function CustomMetricForm(props: Props) {
     props.removeSeries(index);
   }
 
-  const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value }, false);
+  const write = ({ target: { value, name } }) => props.editMetric({ [ name ]: value }, false);
+  const writeOption = (e, { value, name }) => props.editMetric({ [ name ]: value }, false);
 
   const changeConditionTab = (e, { name, value }) => {
     props.editMetric({[ 'viewType' ]: value });
@@ -79,6 +83,30 @@ function CustomMetricForm(props: Props) {
         <div className="form-group">
           <label className="font-medium">Metric Type</label>
           <div className="flex items-center">
+            <DropdownPlain
+              name="metricType"
+              options={metricTypes}
+              value={ metric.metricType }
+              onChange={ writeOption }
+            />
+            <span className="mx-3">of</span>
+            <DropdownPlain
+              name="metricOf"
+              options={metricOfOptions}
+              value={ metric.metricOf }
+              onChange={ writeOption }
+            />
+            <span className="mx-3">showing</span>
+            <DropdownPlain
+              name="viewType"
+              options={[
+                { value: 'sessionCount', text: 'Session Count' },
+              ]}
+              value={ metric.metricType }
+              onChange={ writeOption }
+            />
+          </div>
+          {/* <div className="flex items-center">
             <span className="bg-white p-1 px-2 border rounded" style={{ height: '30px'}}>Timeseries</span>
             <span className="mx-2 color-gray-medium">of</span>
             <div>
@@ -95,7 +123,7 @@ function CustomMetricForm(props: Props) {
                 ]}
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="form-group">
