@@ -384,6 +384,7 @@ class EventType(str, Enum):
     location = "LOCATION"
     custom = "CUSTOM"
     request = "REQUEST"
+    request_details = "REQUEST_DETAILS"
     graphql = "GRAPHQL"
     state_action = "STATEACTION"
     error = "ERROR"
@@ -480,10 +481,41 @@ class __MixedSearchFilter(BaseModel):
     @root_validator(pre=True)
     def remove_duplicate_values(cls, values):
         if values.get("value") is not None:
-            if len(values["value"]) > 0 and isinstance(values["value"][0], int):
+            if len(values["value"]) > 0 \
+                    and (isinstance(values["value"][0], int) or isinstance(values["value"][0], dict)):
                 return values
             values["value"] = list(set(values["value"]))
         return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class HttpMethod(str, Enum):
+    _get = 'GET'
+    _head = 'HEAD'
+    _post = 'POST'
+    _put = 'PUT'
+    _delete = 'DELETE'
+    _connect = 'CONNECT'
+    _option = 'OPTIONS'
+    _trace = 'TRACE'
+    _patch = 'PATCH'
+
+
+class RequestDetailsSchema(BaseModel):
+    url_value: List[str] = Field([])
+    url_operator: SearchEventOperator = Field(SearchEventOperator._is_any)
+    status_code_value: List[int] = Field(None)
+    status_code_operator: MathOperator = Field(None)
+    method_value: List[HttpMethod] = Field([])
+    method_operator: SearchEventOperator = Field(None)
+    duration_value: List[int] = Field(None)
+    duration_operator: MathOperator = Field(None)
+    request_value: List[str] = Field([])
+    request_operator: SearchEventOperator = Field(None)
+    response_value: List[str] = Field([])
+    response_operator: SearchEventOperator = Field(None)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -513,17 +545,22 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
                 assert isinstance(values["value"][0], _SessionSearchEventRaw) \
                        and isinstance(values["value"][1], _SessionSearchEventRaw), \
                     f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
+                assert len(values["source"]) > 0 and isinstance(values["source"][0], int), \
+                    f"source of type int if required for {PerformanceEventType.time_between_events}"
             else:
                 for c in values["source"]:
                     assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
         elif values.get("type") == EventType.error and values.get("source") is None:
             values["source"] = [ErrorSource.js_exception]
+        elif values.get("type") == EventType.request_details:
+            assert len(values.get("value", [])) == 1 and isinstance(values["value"][0], RequestDetailsSchema), \
+                f"event should be of type RequestDetailsSchema for {EventType.request_details}"
 
         return values
 
 
 class _SessionSearchEventSchema(_SessionSearchEventRaw):
-    value: Union[List[_SessionSearchEventRaw], str, List[str]] = Field(...)
+    value: Union[List[Union[RequestDetailsSchema, _SessionSearchEventRaw, str]], str] = Field(...)
 
 
 class _SessionSearchFilterSchema(__MixedSearchFilter):
@@ -732,7 +769,6 @@ class MetricOfType(str, Enum):
     user_country = FilterType.user_country.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
-    initial_page_load_time = "INITIAL_PAGE_LOAD_TIME"
     visited_url = "VISITED_URL"
 
 
