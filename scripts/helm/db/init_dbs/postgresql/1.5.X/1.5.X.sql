@@ -7,6 +7,17 @@ $$
 SELECT 'v1.5.X'
 $$ LANGUAGE sql IMMUTABLE;
 
+CREATE TYPE events_common.http_method AS ENUM ('GET','HEAD','POST','PUT','DELETE','CONNECT','OPTIONS','TRACE','PATCH');
+
+ALTER TABLE events_common.requests
+    ADD COLUMN IF NOT EXISTS schema        text        NULL,
+    ADD COLUMN IF NOT EXISTS host          text        NULL,
+    ADD COLUMN IF NOT EXISTS base_path     text        NULL,
+    ADD COLUMN IF NOT EXISTS query_string  text        NULL,
+    ADD COLUMN IF NOT EXISTS request_body  text        NULL,
+    ADD COLUMN IF NOT EXISTS response_body text        NULL,
+    ADD COLUMN IF NOT EXISTS status_code   text        NULL,
+    ADD COLUMN IF NOT EXISTS method        http_method NULL;
 
 -- Split requests-URL:
 UPDATE events_common.requests
