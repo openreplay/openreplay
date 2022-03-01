@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, Icon } from 'UI';
+import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
 import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
@@ -9,6 +9,9 @@ import { getChartFormatter } from 'Types/dashboard/helper';
 import { remove } from 'Duck/customMetrics';
 import DateRange from 'Shared/DateRange';
 import { edit } from 'Duck/customMetrics';
+import CustomMetriLineChart from '../CustomMetriLineChart';
+import CustomMetriPercentage from '../CustomMetriPercentage';
+import CustomMetricTable from '../CustomMetricTable';
 
 import APIClient from 'App/api_client';
 
@@ -83,11 +86,28 @@ function CustomMetricWidget(props: Props) {
     props.edit({  ...changedDates, rangeName: changedDates.rangeValue });
   }
 
+  const chagneViewType = (e, { name, value }) => {
+    props.edit({ [ name ]: value });
+  }
+
   return (
     <div className="mb-10">
       <div className="flex items-center mb-4">
         <div className="mr-auto font-medium">Preview</div>
-        <div>
+        <div className="flex items-center">
+          <SegmentSelection
+            name="viewType"
+            className="my-3"
+            size="extraSmall"
+            onSelect={ chagneViewType }
+            value={{ value: metric.viewType }}
+            list={ [
+              { value: 'chart', icon: 'graph-up-arrow' },
+              { value: 'percent', icon: 'hash' },
+            ]}
+          />
+          <div className="mx-2" />
+          <span className="mr-1 color-gray-medium">Time Range</span>
           <DateRange
             rangeValue={metric.rangeName}
             startDate={metric.startDate}
@@ -105,44 +125,27 @@ function CustomMetricWidget(props: Props) {
               size="small"
               show={ data.length === 0 }
             >
-              <ResponsiveContainer height={ 240 } width="100%">
-                <LineChart
-                  data={ data }
-                  margin={Styles.chartMargins}
-                  syncId={ showSync ? "domainsErrors_4xx" : undefined }
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
-                  <XAxis
-                    {...Styles.xaxis}
-                    dataKey="time"
-                    interval={params.density/7}
-                  />
-                  <YAxis 
-                    {...Styles.yaxis}
-                    allowDecimals={false}
-                    label={{  
-                      ...Styles.axisLabelLeft,
-                      value: "Number of Sessions"
-                    }}
-                  />
-                  <Legend />
-                  <Tooltip {...Styles.tooltip} />
-                  { seriesMap.map((key, index) => (
-                    <Line
-                      key={key}
-                      name={key}
-                      type="monotone"
-                      dataKey={key}
-                      stroke={colors[index]}
-                      fillOpacity={ 1 }
-                      strokeWidth={ 2 }
-                      strokeOpacity={ 0.6 }
-                      // fill="url(#colorCount)"
-                      dot={false}
+              { metric.metricType === 'timeseries' && (
+                <>
+                  { metric.viewType === 'percent' && (
+                    <CustomMetriPercentage data={data} />
+                  )}
+                  { metric.viewType === 'chart' && (
+                    <CustomMetriLineChart
+                      data={data}
+                      seriesMap={seriesMap}
+                      colors={colors}
+                      params={params}
                     />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
+                  )}
+                </>
+              )}
+
+              { metric.metricType === 'table' && (
+                <div className="p-3">
+                  <CustomMetricTable data={data} />
+                </div>
+              )}
             </NoContent>
           </Loader>
         </div>
