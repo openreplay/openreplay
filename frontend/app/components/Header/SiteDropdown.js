@@ -11,6 +11,8 @@ import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchList as fetchAlerts } from 'Duck/alerts';
+import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 
 @withRouter
 @connect(state => ({  
@@ -23,13 +25,15 @@ import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
   init,
   clearSearch,
   fetchIntegrationVariables,
+  fetchAlerts,
+  fetchWatchdogStatus,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
 
-  componentDidMount() {
-    this.props.fetchIntegrationVariables();
-  }
+  // componentDidMount() {
+  //   this.props.fetchIntegrationVariables();
+  // }
 
   closeModal = (e, newSite) => {
     this.setState({ showProductModal: false })    
@@ -44,6 +48,8 @@ export default class SiteDropdown extends React.PureComponent {
     this.props.setSiteId(siteId);
     this.props.clearSearch();
     this.props.fetchIntegrationVariables();
+    this.props.fetchAlerts();
+    this.props.fetchWatchdogStatus();
   }
 
   render() {
