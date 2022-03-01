@@ -36,8 +36,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.Cu
                                   include_fav_viewed=True, group_metadata=True)
     if data is None:
         return {"errors": ["session not found"]}
-    if not data.get("live"):
-        sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
+    sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
     return {
         'data': data
     }
