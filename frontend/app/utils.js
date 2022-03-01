@@ -227,3 +227,9 @@ export const iceServerConfigFromString = (str) => {
     }
   })
 }
+
+export const isGreaterOrEqualVersion = (version, compareTo) => {
+  const [major, minor, patch] = version.split("-")[0].split('.');
+  const [majorC, minorC, patchC] = compareTo.split("-")[0].split('.');
+  return (major > majorC) || (major === majorC && minor > minorC) || (major === majorC && minor === minorC && patch >= patchC);
+}
