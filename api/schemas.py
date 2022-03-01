@@ -384,7 +384,7 @@ class EventType(str, Enum):
     location = "LOCATION"
     custom = "CUSTOM"
     request = "REQUEST"
-    request_details = "REQUEST_DETAILS"
+    request_details = "FETCH"
     graphql = "GRAPHQL"
     state_action = "STATEACTION"
     error = "ERROR"
@@ -503,22 +503,19 @@ class HttpMethod(str, Enum):
     _patch = 'PATCH'
 
 
-class RequestDetailsSchema(BaseModel):
-    url_value: List[str] = Field([])
-    url_operator: SearchEventOperator = Field(SearchEventOperator._is_any)
-    status_code_value: List[int] = Field(None)
-    status_code_operator: MathOperator = Field(None)
-    method_value: List[HttpMethod] = Field([])
-    method_operator: SearchEventOperator = Field(None)
-    duration_value: List[int] = Field(None)
-    duration_operator: MathOperator = Field(None)
-    request_value: List[str] = Field([])
-    request_operator: SearchEventOperator = Field(None)
-    response_value: List[str] = Field([])
-    response_operator: SearchEventOperator = Field(None)
+class FetchFilterType(str, Enum):
+    _url = "FETCH_URL"
+    _status_code = "FETCH_STATUS_CODE"
+    _method = "FETCH_METHOD"
+    _duration = "FETCH_DURATION"
+    _request_body = "FETCH_REQUEST_BODY"
+    _response_body = "FETCH_RESPONSE_BODY"
 
-    class Config:
-        alias_generator = attribute_to_camel_case
+
+class RequestFilterSchema(BaseModel):
+    type: FetchFilterType = Field(...)
+    value: List[Union[int, str]] = Field(...)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
 
 class _SessionSearchEventRaw(__MixedSearchFilter):
@@ -528,6 +525,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     operator: SearchEventOperator = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
     sourceOperator: Optional[MathOperator] = Field(None)
+    filters: Optional[List[RequestFilterSchema]] = Field(None)
 
     @root_validator
     def event_validator(cls, values):
@@ -553,14 +551,14 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
         elif values.get("type") == EventType.error and values.get("source") is None:
             values["source"] = [ErrorSource.js_exception]
         elif values.get("type") == EventType.request_details:
-            assert len(values.get("value", [])) == 1 and isinstance(values["value"][0], RequestDetailsSchema), \
-                f"event should be of type RequestDetailsSchema for {EventType.request_details}"
+            assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
+                f"filters should be defined for {EventType.request_details}"
 
         return values
 
 
 class _SessionSearchEventSchema(_SessionSearchEventRaw):
-    value: Union[List[Union[RequestDetailsSchema, _SessionSearchEventRaw, str]], str] = Field(...)
+    value: Union[List[Union[_SessionSearchEventRaw, str]], str] = Field(...)
 
 
 class _SessionSearchFilterSchema(__MixedSearchFilter):
