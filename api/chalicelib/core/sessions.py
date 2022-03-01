@@ -567,7 +567,6 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                          value_key=f_k))
     # ---------------------------------------------------------------------------
     if len(data.events) > 0:
-        # ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
         events_query_from = []
         event_index = 0
         or_events = data.events_order == schemas.SearchEventOrder._or
@@ -578,13 +577,15 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
-            if not is_any and len(event.value) == 0 \
+            if not is_any and len(event.value) == 0 and event_type not in [schemas.EventType.request_details] \
                     or event_type in [schemas.PerformanceEventType.location_dom_complete,
                                       schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                       schemas.PerformanceEventType.location_ttfb,
                                       schemas.PerformanceEventType.location_avg_cpu_load,
                                       schemas.PerformanceEventType.location_avg_memory_usage
-                                      ] and (event.source is None or len(event.source) == 0):
+                                      ] and (event.source is None or len(event.source) == 0) \
+                    or event_type in [schemas.EventType.request_details] and (
+                    event.filters is None or len(event.filters) == 0):
                 continue
             op = __get_sql_operator(event.operator)
             is_not = False
@@ -803,20 +804,36 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
                                          event.source, value_key=e_k))
 
-            elif event_type==schemas.EventType.request_details:
+            elif event_type == schemas.EventType.request_details:
                 event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
-                if len(event.value[0].url_value)>0 and not _isAny_opreator(event.value[0].url_operator):
-                    event_where.append(_multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value[0].url_value,value_key=e_k))
-                if len(event.value[0].status_code_value)>0 and not _isAny_opreator(event.value[0].status_code_operator):
-                    event_where.append(_multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value[0].status_code_value,value_key=e_k))
-                if len(event.value[0].method_value)>0 and not _isAny_opreator(event.value[0].method_operator):
-                    event_where.append(_multiple_conditions(f"main.method {op} %({e_k})s", event.value[0].method_value,value_key=e_k))
-                if len(event.value[0].duration_value)>0 and not _isAny_opreator(event.value[0].duration_operator):
-                    event_where.append(_multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value[0].duration_value,value_key=e_k))
-                if len(event.value[0].request_value)>0 and not _isAny_opreator(event.value[0].request_operator):
-                    event_where.append(_multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value[0].request_value,value_key=e_k))
-                if len(event.value[0].response_value)>0 and not _isAny_opreator(event.value[0].response_operator):
-                    event_where.append(_multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k})s", event.value[0].response_value,value_key=e_k))
+                for j, f in enumerate(event.filters):
+                    is_any = _isAny_opreator(f.operator)
+                    if is_any or len(f.value) == 0:
+                        continue
+                    op = __get_sql_operator(f.operator)
+                    e_k_f = e_k + f"_fetch{j}"
+                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    if f.type == schemas.FetchFilterType._url:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._status_code:
+                        event_where.append(
+                            _multiple_conditions(f"main.status_code {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._method:
+                        event_where.append(
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._duration:
+                        event_where.append(
+                            _multiple_conditions(f"main.duration {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._request_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._response_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    else:
+                        print(f"undefined fetch filter: {f.type}")
             else:
                 continue
             if event_index == 0 or or_events:
