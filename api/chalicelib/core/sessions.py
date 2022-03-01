@@ -265,11 +265,11 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                   view_type: schemas.MetricViewType, metric_type: schemas.MetricType, metric_of: schemas.MetricOfType):
+                   view_type: schemas.MetricViewType, metric_type: schemas.MetricType, metric_of: schemas.TableMetricOfType):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
-    if metric_of == schemas.MetricOfType.visited_url:
+    if metric_of == schemas.TableMetricOfType.visited_url:
         extra_event = "events.pages"
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
@@ -303,20 +303,20 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             else:
                 sessions = cur.fetchone()["count"]
         elif metric_type == schemas.MetricType.table:
-            if isinstance(metric_of, schemas.MetricOfType):
+            if isinstance(metric_of, schemas.TableMetricOfType):
                 main_col = "user_id"
                 extra_col = ""
                 pre_query = ""
-                if metric_of == schemas.MetricOfType.user_country:
+                if metric_of == schemas.TableMetricOfType.user_country:
                     main_col = "user_country"
-                elif metric_of == schemas.MetricOfType.user_device:
+                elif metric_of == schemas.TableMetricOfType.user_device:
                     main_col = "user_device"
-                elif metric_of == schemas.MetricOfType.user_browser:
+                elif metric_of == schemas.TableMetricOfType.user_browser:
                     main_col = "user_browser"
-                elif metric_of == schemas.MetricOfType.issues:
+                elif metric_of == schemas.TableMetricOfType.issues:
                     main_col = "issue"
                     extra_col = f", UNNEST(s.issue_types) AS {main_col}"
-                elif metric_of == schemas.MetricOfType.visited_url:
+                elif metric_of == schemas.TableMetricOfType.visited_url:
                     main_col = "base_path"
                     extra_col = ", base_path"
                 main_query = cur.mogrify(f"""{pre_query}
