@@ -24,6 +24,8 @@ interface Props {
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
   const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
+  const timeseriesOptions = metricOf.filter(i => i.key === 'timeseries');
+  const tableOptions = metricOf.filter(i => i.key === 'table');
 
   const addSeries = () => {
     props.addSeries();
@@ -34,7 +36,17 @@ function CustomMetricForm(props: Props) {
   }
 
   const write = ({ target: { value, name } }) => props.editMetric({ [ name ]: value }, false);
-  const writeOption = (e, { value, name }) => props.editMetric({ [ name ]: value }, false);
+  const writeOption = (e, { value, name }) => {
+    props.editMetric({ [ name ]: value }, false);
+
+    if (name === 'metricType') {
+      if (value === 'timeseries') {
+        props.editMetric({ metricOf: timeseriesOptions[0].value }, false);
+      } else if (value === 'table') {
+        props.editMetric({ metricOf: tableOptions[0].value }, false);
+      }
+    }
+  };
 
   const changeConditionTab = (e, { name, value }) => {
     props.editMetric({[ 'viewType' ]: value });
@@ -89,22 +101,44 @@ function CustomMetricForm(props: Props) {
               value={ metric.metricType }
               onChange={ writeOption }
             />
-            <span className="mx-3">of</span>
-            <DropdownPlain
-              name="metricOf"
-              options={metricOfOptions}
-              value={ metric.metricOf }
-              onChange={ writeOption }
-            />
-            <span className="mx-3">showing</span>
-            <DropdownPlain
-              name="viewType"
-              options={[
-                { value: 'sessionCount', text: 'Session Count' },
-              ]}
-              value={ metric.metricType }
-              onChange={ writeOption }
-            />
+
+            {metric.metricType === 'timeseries' && (
+             <>
+               <span className="mx-3">of</span>
+                <DropdownPlain
+                  name="metricOf"
+                  options={timeseriesOptions}
+                  value={ metric.metricOf }
+                  onChange={ writeOption }
+                />
+             </>
+            )}
+
+            {metric.metricType === 'table' && (
+             <>
+               <span className="mx-3">of</span>
+                <DropdownPlain
+                  name="metricOf"
+                  options={tableOptions}
+                  value={ metric.metricOf }
+                  onChange={ writeOption }
+                />
+             </>
+            )}
+
+            {metric.metricType === 'table' && (
+              <>
+                <span className="mx-3">showing</span>
+                <DropdownPlain
+                  name="viewType"
+                  options={[
+                    { value: 'sessionCount', text: 'Session Count' },
+                  ]}
+                  value={ metric.viewType }
+                  onChange={ writeOption }
+                />
+              </>
+            )}
           </div>
           {/* <div className="flex items-center">
             <span className="bg-white p-1 px-2 border rounded" style={{ height: '30px'}}>Timeseries</span>

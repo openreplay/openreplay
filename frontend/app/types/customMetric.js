@@ -27,9 +27,9 @@ export const FilterSeries = Record({
 export default Record({
   metricId: undefined,
   name: 'Series',
-  metricType: 'timeseries',
-  metricOf: 'sessionCount',
-  viewType: 'sessionCount',
+  metricType: 'table',
+  metricOf: 'USERID',
+  viewType: 'lineChart',
   series: List(),
   isPublic: true,
   startDate: '',

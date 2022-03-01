@@ -12,13 +12,13 @@
     padding: 10px;
     flex: 1;
     text-align: center;
-    border-right: solid thin $teal;
     cursor: pointer;
     background-color: $gray-lightest;
     display: flex;
     align-items: center;
     justify-content: center;
     white-space: nowrap;
+    border-right: solid thin $gray-light;
 
     & span svg {
       fill: $gray-medium;
@@ -53,6 +53,7 @@
   & .item {
     color: $teal;
     background-color: white;
+    border-right: solid thin $teal;
     &[data-active=true] {
       background-color: $teal;
       color: white;
@@ -65,6 +66,6 @@
 }
 
 .extraSmall .item {
-  padding: 0 4px;
+  padding: 6px !important;
   font-size: 12px;
 }

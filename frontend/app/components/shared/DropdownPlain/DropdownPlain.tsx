@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function DropdownPlain(props: Props) {
-    const { name = "sort", value, options, icon = "chevron-down", direction = "left" } = props;
+    const { name = "sort", value, options, icon = "chevron-down", direction = "right" } = props;
     return (
         <div>
             <Dropdown
@@ -22,7 +22,7 @@ export default function DropdownPlain(props: Props) {
                 direction={direction}
                 options={ options }
                 onChange={ props.onChange }
-                floating
+                // floating
                 scrolling
                 selectOnBlur={ false }
                 // defaultValue={ value }
