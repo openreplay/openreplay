@@ -10,7 +10,7 @@ import (
 )
 
 func getTimeoutContext() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(time.Second*10))
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(time.Second*30))
 	return ctx
 }
 

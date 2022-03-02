@@ -18,9 +18,9 @@ class Notifications extends React.Component {
 
   constructor(props) {
     super(props);
-    setTimeout(() => {
-      props.fetchList();
-    }, 1000);
+    // setTimeout(() => {
+    //   props.fetchList();
+    // }, 1000);
     
     setInterval(() => {
       props.fetchList();
