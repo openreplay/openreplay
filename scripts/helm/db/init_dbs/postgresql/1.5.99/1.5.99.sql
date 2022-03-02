@@ -40,10 +40,14 @@ LANGUAGE plpgsql;
 
 ALTER TABLE metrics
     ADD COLUMN IF NOT EXISTS
-        metric_type metric_type      NOT NULL DEFAULT 'timeseries',
+        metric_type   metric_type      NOT NULL DEFAULT 'timeseries',
     ADD COLUMN IF NOT EXISTS
-        view_type   metric_view_type NOT NULL DEFAULT 'lineChart',
+        view_type     metric_view_type NOT NULL DEFAULT 'lineChart',
     ADD COLUMN IF NOT EXISTS
-        metric_of   text             NOT NULL DEFAULT 'sessionCount';
+        metric_of     text             NOT NULL DEFAULT 'sessionCount',
+    ADD COLUMN IF NOT EXISTS
+        metric_value  text[]           NOT NULL DEFAULT '{}'::text[],
+    ADD COLUMN IF NOT EXISTS
+        metric_format text;
 
 COMMIT;
