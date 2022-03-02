@@ -1,3 +1,5 @@
+from typing import List
+
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event
@@ -265,12 +267,16 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
 
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                   view_type: schemas.MetricViewType, metric_type: schemas.MetricType, metric_of: schemas.TableMetricOfType):
+                   view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
+                   metric_of: schemas.TableMetricOfType, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density, factor=1, decimal=True))
     extra_event = None
     if metric_of == schemas.TableMetricOfType.visited_url:
         extra_event = "events.pages"
+    elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
+                                                              operator=schemas.SearchEventOperator._is))
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
                                                      user_id=None, extra_event=extra_event)
@@ -278,7 +284,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     sessions = []
     with pg_client.PostgresClient() as cur:
         if metric_type == schemas.MetricType.timeseries:
-            if view_type == schemas.MetricViewType.line_chart:
+            if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
                                                                 {query_part})
                                             SELECT generated_timestamp AS timestamp,
@@ -296,9 +302,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
 
             # print("--------------------")
             # print(main_query)
-            cur.execute(main_query)
             # print("--------------------")
-            if view_type == schemas.MetricViewType.line_chart:
+            cur.execute(main_query)
+            if view_type == schemas.MetricTimeseriesViewType.line_chart:
                 sessions = cur.fetchall()
             else:
                 sessions = cur.fetchone()["count"]
@@ -306,6 +312,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
             if isinstance(metric_of, schemas.TableMetricOfType):
                 main_col = "user_id"
                 extra_col = ""
+                extra_where = ""
                 pre_query = ""
                 if metric_of == schemas.TableMetricOfType.user_country:
                     main_col = "user_country"
@@ -316,6 +323,13 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                 elif metric_of == schemas.TableMetricOfType.issues:
                     main_col = "issue"
                     extra_col = f", UNNEST(s.issue_types) AS {main_col}"
+                    if len(metric_value) > 0:
+                        extra_where = []
+                        for i in range(len(metric_value)):
+                            arg_name = f"selected_issue_{i}"
+                            extra_where.append(f"{main_col} = %({arg_name})s")
+                            full_args[arg_name] = metric_value[i]
+                        extra_where = f"WHERE ({' OR '.join(extra_where)})"
                 elif metric_of == schemas.TableMetricOfType.visited_url:
                     main_col = "base_path"
                     extra_col = ", base_path"
@@ -332,6 +346,7 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                                                             {query_part}
                                                             ORDER BY s.session_id desc) AS filtred_sessions
                                                             ) AS full_sessions
+                                                            {extra_where}
                                                             GROUP BY {main_col}
                                                             ORDER BY session_count DESC) AS users_sessions;""",
                                          full_args)
