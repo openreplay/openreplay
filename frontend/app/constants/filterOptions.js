@@ -62,10 +62,11 @@ export const metricTypes = [
 export const metricOf = [
   { text: 'Session Count', value: 'sessionCount', key: 'timeseries' },
   { text: 'Users', value: 'USERID', key: 'table' },
-  { text: 'Rage Click', value: 'rageClick', key: 'table' },
-  { text: 'Dead Click', value: 'deadClick', key: 'table' },
-  { text: 'Browser', value: 'browser', key: 'table' },
-  { text: 'Device', value: 'device', key: 'table' },
+  { text: 'Issues', value: 'ISSUES', key: 'table' },
+  { text: 'Browser', value: 'USERBROWSER', key: 'table' },
+  { text: 'Device', value: 'USERDEVICE', key: 'table' },
+  { text: 'Country', value: 'USERCOUNTRY', key: 'table' },
+  { text: 'URL', value: 'VISITED_URL', key: 'table' },
 ]
 
 export default {

@@ -142,3 +142,9 @@
   margin: 25px 0;
   background-color: $gray-light;
 }
+
+.no-scroll { 
+  height: 100vh;
+  overflow-y: hidden;
+  padding-right: 15px;
+}
