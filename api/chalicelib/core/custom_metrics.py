@@ -85,9 +85,10 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
         data.series = None
         params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
         query = cur.mogrify(f"""\
-            WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public, view_type, metric_type, metric_of, metric_value)
+            WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
+                                    view_type, metric_type, metric_of, metric_value, metric_format)
                          VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s)
+                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, %(metric_format)s)
                          RETURNING *)
             INSERT
             INTO metric_series(metric_id, index, name, filter)
@@ -113,7 +114,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
     u_series_ids = []
     params = {"metric_id": metric_id, "is_public": data.is_public, "name": data.name,
               "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
-              "metric_type": data.metric_type, "metric_of": data.metric_of, "metric_value": data.metric_value}
+              "metric_type": data.metric_type, "metric_of": data.metric_of,
+              "metric_value": data.metric_value, "metric_format": data.metric_format}
     for i, s in enumerate(data.series):
         prefix = "u_"
         if s.series_id is None or s.series_id not in series_ids:
@@ -160,7 +162,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             UPDATE metrics
             SET name = %(name)s, is_public= %(is_public)s, 
                 view_type= %(view_type)s, metric_type= %(metric_type)s, 
-                metric_of= %(metric_of)s, metric_value= %(metric_value)s
+                metric_of= %(metric_of)s, metric_value= %(metric_value)s,
+                metric_format= %(metric_format)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
