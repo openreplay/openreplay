@@ -775,6 +775,7 @@ class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
     metric_type: MetricType = Field(MetricType.timeseries)
     metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
     metric_value: List[IssueType] = Field([])
+    metric_format: Optional[str] = Field(None)
 
     # metricFraction: float = Field(None, gt=0, lt=1)
     @root_validator
