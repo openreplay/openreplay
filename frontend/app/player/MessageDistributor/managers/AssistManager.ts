@@ -100,7 +100,9 @@ export default class AssistManager {
     let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
     if (document.hidden) {
       inactiveTimeout = setTimeout(() => {
-        if (document.hidden && getState().calling === CallingState.NoCall) {
+        const state = getState()
+        if (document.hidden && 
+          (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
           this.socket?.close()
         }
       }, 30000)
@@ -169,7 +171,7 @@ export default class AssistManager {
         showDisconnectTimeout = setTimeout(() => {
           if (this.cleaned) { return }
           this.setStatus(ConnectionStatus.Disconnected)
-        }, 12000)
+        }, 30000)
 
         if (getState().remoteControl === RemoteControlStatus.Requesting ||
         getState().remoteControl === RemoteControlStatus.Enabled) {
