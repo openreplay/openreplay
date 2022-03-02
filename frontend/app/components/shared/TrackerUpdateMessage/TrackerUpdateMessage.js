@@ -1,18 +1,25 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Icon } from 'UI'
 import { connect } from 'react-redux'
 import { withRouter } from 'react-router-dom';
 import { onboarding as onboardingRoute } from 'App/routes'
 import { withSiteId } from 'App/routes';
+import { isGreaterOrEqualVersion } from 'App/utils'
 
 const TrackerUpdateMessage= (props) => {
-  // const { site } = props;
-  const { site, sites, match: { params: { siteId } } } = props;
+  const [needUpdate, setNeedUpdate] = React.useState(false)
+  const { sites, match: { params: { siteId } } } = props;
   const activeSite = sites.find(s => s.id == siteId);
-  const hasSessions = !!activeSite && !activeSite.recorded;
-  const appVersionInt = parseInt(window.ENV.TRACKER_VERSION.split(".").join(""))
-  const trackerVersionInt = site.trackerVersion ? parseInt(site.trackerVersion.split(".").join("")) : 0
-  const needUpdate = !hasSessions && appVersionInt > trackerVersionInt;
+  
+  useEffect(() => {
+    if (!activeSite || !activeSite.trackerVersion) return;
+
+    const isLatest = isGreaterOrEqualVersion(activeSite.trackerVersion, window.ENV.TRACKER_VERSION);
+    if (!isLatest && activeSite.recorded) {
+      setNeedUpdate(true)
+    }
+  }, [activeSite])
+
   return needUpdate ? (
     <>
       {(
