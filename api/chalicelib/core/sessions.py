@@ -592,14 +592,15 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
-            if not is_any and len(event.value) == 0 and event_type not in [schemas.EventType.request_details] \
+            if not is_any and len(event.value) == 0 and event_type not in [schemas.EventType.request_details,
+                                                                           schemas.EventType.graphql_details] \
                     or event_type in [schemas.PerformanceEventType.location_dom_complete,
                                       schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                       schemas.PerformanceEventType.location_ttfb,
                                       schemas.PerformanceEventType.location_avg_cpu_load,
                                       schemas.PerformanceEventType.location_avg_memory_usage
                                       ] and (event.source is None or len(event.source) == 0) \
-                    or event_type in [schemas.EventType.request_details] and (
+                    or event_type in [schemas.EventType.request_details, schemas.EventType.graphql_details] and (
                     event.filters is None or len(event.filters) == 0):
                 continue
             op = __get_sql_operator(event.operator)
@@ -848,7 +849,37 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         event_where.append(
                             _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     else:
-                        print(f"undefined fetch filter: {f.type}")
+                        print(f"undefined FETCH filter: {f.type}")
+            elif event_type == schemas.EventType.graphql_details:
+                event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
+                for j, f in enumerate(event.filters):
+                    is_any = _isAny_opreator(f.operator)
+                    if is_any or len(f.value) == 0:
+                        continue
+                    op = __get_sql_operator(f.operator)
+                    e_k_f = e_k + f"_graphql{j}"
+                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    if f.type == schemas.GraphqlFilterType._name:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._status_code:
+                        event_where.append(
+                            _multiple_conditions(f"main.status_code {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._method:
+                        event_where.append(
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._duration:
+                        event_where.append(
+                            _multiple_conditions(f"main.duration {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._request_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._response_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    else:
+                        print(f"undefined GRAPHQL filter: {f.type}")
             else:
                 continue
             if event_index == 0 or or_events:
