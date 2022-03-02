@@ -561,7 +561,7 @@ class _SessionSearchEventSchema(_SessionSearchEventRaw):
     value: Union[List[Union[_SessionSearchEventRaw, str]], str] = Field(...)
 
 
-class _SessionSearchFilterSchema(__MixedSearchFilter):
+class SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
     value: Union[Optional[Union[IssueType, PlatformType, int, str]],
                  Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
@@ -594,7 +594,7 @@ class _SessionSearchFilterSchema(__MixedSearchFilter):
 
 class SessionsSearchPayloadSchema(BaseModel):
     events: List[_SessionSearchEventSchema] = Field([])
-    filters: List[_SessionSearchFilterSchema] = Field([])
+    filters: List[SessionSearchFilterSchema] = Field([])
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
@@ -608,7 +608,7 @@ class SessionsSearchPayloadSchema(BaseModel):
 
 class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
     events: Optional[List[_SessionSearchEventSchema]] = Field([])
-    filters: List[Union[_SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
+    filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
 
     @root_validator(pre=True)
     def flat_to_original(cls, values):
@@ -723,18 +723,14 @@ class CustomMetricCreateSeriesSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class CreateCustomMetricsSchema(BaseModel):
-    name: str = Field(...)
-    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    is_public: Optional[bool] = Field(True)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
-
-
-class MetricViewType(str, Enum):
+class MetricTimeseriesViewType(str, Enum):
     line_chart = "lineChart"
     progress = "progress"
+
+
+class MetricTableViewType(str, Enum):
+    table = "table"
+    pie_chart = "pieChart"
 
 
 class MetricType(str, Enum):
@@ -742,25 +738,7 @@ class MetricType(str, Enum):
     table = "table"
 
 
-# class MetricTypeTableGroupField(str, Enum):
-#     users = "USERS"
-#     click_rage = IssueType.click_rage
-#     dead_click = IssueType.dead_click
-
-
-class CustomMetricRawPayloadSchema(BaseModel):
-    startDate: int = Field(TimeUTC.now(-7))
-    endDate: int = Field(TimeUTC.now())
-
-    class Config:
-        alias_generator = attribute_to_camel_case
-
-
-class CustomMetricRawPayloadSchema2(CustomMetricRawPayloadSchema):
-    metric_id: int = Field(...)
-
-
-class MetricOfType(str, Enum):
+class TableMetricOfType(str, Enum):
     user_os = FilterType.user_os.value
     user_browser = FilterType.user_browser.value
     user_device = FilterType.user_device.value
@@ -770,22 +748,54 @@ class MetricOfType(str, Enum):
     visited_url = "VISITED_URL"
 
 
-class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
+class TimeseriesMetricOfType(str, Enum):
+    session_count = "sessionCount"
+
+
+class CustomMetricSessionsPayloadSchema(BaseModel):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema):
     density: int = Field(7)
-    viewType: MetricViewType = Field(MetricViewType.line_chart)
-    metricType: MetricType = Field(MetricType.timeseries)
-    metricOf: MetricOfType = Field(MetricOfType.user_id)
-    metricFraction: float = Field(None, gt=0, lt=1)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
-class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):
-    metric_id: int = Field(...)
+class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
+    name: str = Field(...)
+    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
+    is_public: bool = Field(default=True, const=True)
+    view_type: Union[MetricTimeseriesViewType, MetricTableViewType] = Field(MetricTimeseriesViewType.line_chart)
+    metric_type: MetricType = Field(MetricType.timeseries)
+    metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
+    metric_value: List[IssueType] = Field([])
 
+    # metricFraction: float = Field(None, gt=0, lt=1)
+    @root_validator
+    def validator(cls, values):
+        if values.get("metric_type") == MetricType.table:
+            assert isinstance(values.get("view_type"), MetricTableViewType), \
+                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table.value}"
+            assert isinstance(values.get("metric_of"), TableMetricOfType), \
+                f"metricOf must be of type {TableMetricOfType} for metricType:{MetricType.table.value}"
+            if values.get("metric_of") != TableMetricOfType.issues:
+                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
+                    f"metricValue is only available for metricOf:{TableMetricOfType.issues.value}"
+        elif values.get("metric_type") == MetricType.timeseries:
+            assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
+                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries.value}"
+            assert isinstance(values.get("metric_of"), TimeseriesMetricOfType), \
+                f"metricOf must be of type {TimeseriesMetricOfType} for metricType:{MetricType.timeseries.value}"
+        return values
 
-class TryCustomMetricsSchema(CreateCustomMetricsSchema, CustomMetricChartPayloadSchema):
-    name: Optional[str] = Field(None)
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
