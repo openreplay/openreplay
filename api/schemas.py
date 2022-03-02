@@ -778,6 +778,15 @@ class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
     metric_format: Optional[str] = Field(None)
 
     # metricFraction: float = Field(None, gt=0, lt=1)
+    # This is used to handle wrong values sent by the UI
+    @root_validator(pre=True)
+    def remove_metric_value(cls, values):
+        if values.get("metric_type") == MetricType.timeseries \
+                or values.get("metric_type") == MetricType.table \
+                and values.get("metric_of") != TableMetricOfType.issues:
+            values["metric_of"] = []
+        return values
+
     @root_validator
     def validator(cls, values):
         if values.get("metric_type") == MetricType.table:
