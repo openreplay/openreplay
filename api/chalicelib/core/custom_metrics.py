@@ -36,7 +36,7 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
                 results[i]["values"] = results[i]["values"][:PIE_CHART_GROUP] \
                                        + [{
                     "name": "Others", "group": True,
-                    "sessionCount": sum(r["sessionCount"] for r in results[i][PIE_CHART_GROUP:])
+                    "sessionCount": sum(r["sessionCount"] for r in results[i]["values"][PIE_CHART_GROUP:])
                 }]
 
     return results
