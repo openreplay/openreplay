@@ -67,7 +67,7 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     if metric is None:
         return None
     series_charts = __try_live(project_id=project_id, data=metric)
-    if metric.view_type == schemas.MetricTimeseriesViewType.progress:
+    if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
         return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
