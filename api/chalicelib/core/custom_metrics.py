@@ -22,9 +22,9 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.view_type, metric_type=data.metric_type,
                                                          metric_of=data.metric_of, metric_value=data.metric_value)
-            # r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
-            r["countProgress"] = ((r["count"] - r["previousCount"]) / r["previousCount"]) * 100 \
-                if r["previousCount"] > 0 else 0
+            r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            # r["countProgress"] = ((r["count"] - r["previousCount"]) / r["previousCount"]) * 100 \
+            #     if r["previousCount"] > 0 else 0
             r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
@@ -63,8 +63,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj(
-        {**data.dict(), **metric})
+    metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     results = []
     for s in metric.series:
         s.filter.startDate = data.startDate
