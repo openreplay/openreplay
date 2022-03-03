@@ -794,10 +794,10 @@ class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
     def remove_metric_value(cls, values):
-        if values.get("metric_type") == MetricType.timeseries \
-                or values.get("metric_type") == MetricType.table \
-                and values.get("metric_of") != TableMetricOfType.issues:
-            values["metric_of"] = []
+        if values.get("metricType") == MetricType.timeseries \
+                or values.get("metricType") == MetricType.table \
+                and values.get("metricOf") != TableMetricOfType.issues:
+            values["metricValue"] = []
         return values
 
     @root_validator
