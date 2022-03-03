@@ -1091,8 +1091,7 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 def try_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.merged_live
-    (project_id=projectId, data=data)}
+    return {"data": custom_metrics.merged_live(project_id=projectId, data=data)}
 
 
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
