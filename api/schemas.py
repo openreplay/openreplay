@@ -386,6 +386,7 @@ class EventType(str, Enum):
     request = "REQUEST"
     request_details = "FETCH"
     graphql = "GRAPHQL"
+    graphql_details = "GRAPHQL_DETAILS"
     state_action = "STATEACTION"
     error = "ERROR"
     click_ios = "CLICK_IOS"
@@ -512,8 +513,17 @@ class FetchFilterType(str, Enum):
     _response_body = "FETCH_RESPONSE_BODY"
 
 
-class RequestFilterSchema(BaseModel):
-    type: FetchFilterType = Field(...)
+class GraphqlFilterType(str, Enum):
+    _name = "GRAPHQL_NAME"
+    _status_code = "GRAPHQL_STATUS_CODE"
+    _method = "GRAPHQL_METHOD"
+    _duration = "GRAPHQL_DURATION"
+    _request_body = "GRAPHQL_REQUEST_BODY"
+    _response_body = "GRAPHQL_RESPONSE_BODY"
+
+
+class RequestGraphqlFilterSchema(BaseModel):
+    type: Union[FetchFilterType, GraphqlFilterType] = Field(...)
     value: List[Union[int, str]] = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
@@ -525,7 +535,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     operator: SearchEventOperator = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
     sourceOperator: Optional[MathOperator] = Field(None)
-    filters: Optional[List[RequestFilterSchema]] = Field(None)
+    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(None)
 
     @root_validator
     def event_validator(cls, values):
@@ -552,7 +562,10 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
             values["source"] = [ErrorSource.js_exception]
         elif values.get("type") == EventType.request_details:
             assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
-                f"filters should be defined for {EventType.request_details}"
+                f"filters should be defined for {EventType.request_details.value}"
+        elif values.get("type") == EventType.graphql_details:
+            assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
+                f"filters should be defined for {EventType.graphql_details.value}"
 
         return values
 
@@ -781,10 +794,10 @@ class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
     # This is used to handle wrong values sent by the UI
     @root_validator(pre=True)
     def remove_metric_value(cls, values):
-        if values.get("metric_type") == MetricType.timeseries \
-                or values.get("metric_type") == MetricType.table \
-                and values.get("metric_of") != TableMetricOfType.issues:
-            values["metric_of"] = []
+        if values.get("metricType") == MetricType.timeseries \
+                or values.get("metricType") == MetricType.table \
+                and values.get("metricOf") != TableMetricOfType.issues:
+            values["metricValue"] = []
         return values
 
     @root_validator
