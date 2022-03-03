@@ -428,7 +428,7 @@ class FilterType(str, Enum):
     duration = "DURATION"
     platform = "PLATFORM"
     metadata = "METADATA"
-    issue = "ISSUE"
+    issue = "ISSUES"
     events_count = "EVENTS_COUNT"
     utm_source = "UTM_SOURCE"
     utm_medium = "UTM_MEDIUM"
@@ -619,7 +619,7 @@ class SessionsSearchPayloadSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
+class FlatSessionsSearch(BaseModel):
     events: Optional[List[_SessionSearchEventSchema]] = Field([])
     filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
 
@@ -643,6 +643,10 @@ class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
             values["events"] = n_events
             values["filters"] = n_filters
         return values
+
+
+class FlatSessionsSearchPayloadSchema(FlatSessionsSearch, SessionsSearchPayloadSchema):
+    pass
 
 
 class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
@@ -765,7 +769,7 @@ class TimeseriesMetricOfType(str, Enum):
     session_count = "sessionCount"
 
 
-class CustomMetricSessionsPayloadSchema(BaseModel):
+class CustomMetricSessionsPayloadSchema(FlatSessionsSearch):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
 
