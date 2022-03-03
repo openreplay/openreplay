@@ -22,7 +22,9 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.view_type, metric_type=data.metric_type,
                                                          metric_of=data.metric_of, metric_value=data.metric_value)
-            r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            # r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            r["countProgress"] = ((r["count"] - r["previousCount"]) / r["previousCount"]) * 100 \
+                if r["previousCount"] > 0 else 0
             r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
