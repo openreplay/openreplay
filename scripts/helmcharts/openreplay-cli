@@ -96,7 +96,11 @@ restart() {
 
 
 helmInstall() {
-    helm upgrade --install openreplay -n app openreplay -f vars.yaml
+    [[ FORCE_UPGRADE_FRONTENT -eq 1 ]] && {
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml --set forceUpgradeFrontend=true
+    } || {
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml
+    }
 }
 
 upgrade() {
