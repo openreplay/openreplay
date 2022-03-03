@@ -6,21 +6,6 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', text: 'contains', value: 'contains' }]
 
-const ISSUE_OPTIONS = [
-  { text: 'Click Rage', value: 'click_rage' },
-  { text: 'Dead Click', value: 'dead_click' },
-  { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
-  { text: 'Bad Request', value: 'bad_request' },
-  { text: 'Missing Resource', value: 'missing_resource' },
-  { text: 'Memory', value: 'memory' },
-  { text: 'CPU', value: 'cpu' },
-  { text: 'Slow Resource', value: 'slow_resource' },
-  { text: 'Slow Page Load', value: 'slow_page_load' },
-  { text: 'Crash', value: 'crash' },
-  { text: 'Custom', value: 'custom' },
-  { text: 'JS Exception', value: 'js_exception' },
-]
-
 export const filtersMap = {
   // EVENTS 
   [FilterKey.CLICK]: { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
@@ -59,7 +44,7 @@ export const filtersMap = {
   [FilterKey.AVG_CPU_LOAD]: { key: FilterKey.AVG_CPU_LOAD, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg CPU Load', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/cpu-load', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.AVG_MEMORY_USAGE]: { key: FilterKey.AVG_MEMORY_USAGE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Avg Memory Usage', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/memory-load', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.FETCH_FAILED]: { key: FilterKey.FETCH_FAILED, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Failed Request', operator: 'isAny', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch-failed', isEvent: true },
-  [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/click', options: ISSUE_OPTIONS },
+  [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.baseOperators, icon: 'filters/click', options: filterOptions.issueOptions },
 }
 
 export const liveFiltersMap = {

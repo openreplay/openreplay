@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { connect } from 'react-redux';
 import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
 import { Styles } from '../../common';
-import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
+// import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
 import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidgetPreview.css';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
@@ -10,10 +10,11 @@ import { remove } from 'Duck/customMetrics';
 import DateRange from 'Shared/DateRange';
 import { edit } from 'Duck/customMetrics';
 import CustomMetriLineChart from '../CustomMetriLineChart';
-import CustomMetriPercentage from '../CustomMetriPercentage';
+import CustomMetricPercentage from '../CustomMetricPercentage';
 import CustomMetricTable from '../CustomMetricTable';
 
 import APIClient from 'App/api_client';
+import CustomMetricPieChart from '../CustomMetricPieChart';
 
 const customParams = rangeName => {
   const params = { density: 70 }
@@ -46,8 +47,9 @@ function CustomMetricWidget(props: Props) {
   const params = customParams(period.rangeName)
   const gradientDef = Styles.gradientDef();
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
-
   const prevMetricRef = useRef<any>();
+  const isTimeSeries = metric.metricType === 'timeseries';
+  const isTable = metric.metricType === 'table';
 
   useEffect(() => {
     // Check for title change
@@ -95,17 +97,35 @@ function CustomMetricWidget(props: Props) {
       <div className="flex items-center mb-4">
         <div className="mr-auto font-medium">Preview</div>
         <div className="flex items-center">
-          <SegmentSelection
-            name="viewType"
-            className="my-3"
-            size="extraSmall"
-            onSelect={ chagneViewType }
-            value={{ value: metric.viewType }}
-            list={ [
-              { value: 'chart', icon: 'graph-up-arrow' },
-              { value: 'percent', icon: 'hash' },
-            ]}
-          />
+          {isTimeSeries && (
+            <SegmentSelection
+              name="viewType"
+              className="my-3"
+              primary
+              icons={true}
+              onSelect={ chagneViewType }
+              value={{ value: metric.viewType }}
+              list={ [
+                { value: 'lineChart', icon: 'graph-up-arrow' },
+                { value: 'progress', icon: 'hash' },
+              ]}
+            />
+          )}
+
+          {isTable && (
+            <SegmentSelection
+              name="viewType"
+              className="my-3"
+              primary={true}
+              icons={true}
+              onSelect={ chagneViewType }
+              value={{ value: metric.viewType }}
+              list={[
+                { value: 'table', icon: 'table' },
+                { value: 'pieChart', icon: 'graph-up-arrow' },
+              ]}
+            />
+          )}
           <div className="mx-2" />
           <span className="mr-1 color-gray-medium">Time Range</span>
           <DateRange
@@ -125,12 +145,16 @@ function CustomMetricWidget(props: Props) {
               size="small"
               show={ data.length === 0 }
             >
-              { metric.metricType === 'timeseries' && (
+              { isTimeSeries && (
                 <>
-                  { metric.viewType === 'percent' && (
-                    <CustomMetriPercentage data={data} />
+                  { metric.viewType === 'progress' && (
+                    <CustomMetricPercentage
+                      data={data[0]}
+                      colors={colors}
+                      params={params}
+                    />
                   )}
-                  { metric.viewType === 'chart' && (
+                  { metric.viewType === 'lineChart' && (
                     <CustomMetriLineChart
                       data={data}
                       seriesMap={seriesMap}
@@ -141,9 +165,17 @@ function CustomMetricWidget(props: Props) {
                 </>
               )}
 
-              { metric.metricType === 'table' && (
+              { isTable && (
                 <div className="p-3">
-                  <CustomMetricTable data={data} />
+                  { metric.viewType === 'table' ? (
+                      <CustomMetricTable data={data} />
+                  ) : (
+                      <CustomMetricPieChart
+                        data={data}
+                        colors={colors}
+                        params={params}
+                      />
+                  )}
                 </div>
               )}
             </NoContent>

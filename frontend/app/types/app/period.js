@@ -103,5 +103,11 @@ export default Record({
 				endTimestamp: this.end,
 			};
 		},
+		toTimestampstwo() {
+			return {
+				startTimestamp: this.start / 1000,
+				endTimestamp: this.end / 1000,
+			};
+		},
 	}
 });

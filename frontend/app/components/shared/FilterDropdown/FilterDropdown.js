@@ -100,18 +100,20 @@ const FilterDropdown = props => {
           </div>
         )}
         {showDropdown && (
-          <div className="absolute mt-2 bg-white rounded border p-3 z-20" id="filter-dropdown" style={{ width: '200px'}}>
-            <div className="font-medium mb-2 tracking-widest color-gray-dark">SELECT FILTER</div>
-            {filterKeys.filter(f => !filterKeyMaps.includes(f.key)).map(f => (
-              <div
-                key={f.key}
-                onClick={() => onFilterKeySelect(f.key)}
-                className={cn(stl.filterItem, 'py-3 -mx-3 px-3 flex items-center cursor-pointer')}
-              >
-                <Icon name={f.icon} size="16" />
-                <span className="ml-3 capitalize">{f.name}</span>
-              </div>
-            ))}
+          <div className="absolute mt-2 bg-white rounded border z-20" id="filter-dropdown" style={{ width: '200px'}}>
+            <div className="font-medium mb-2 tracking-widest color-gray-dark p-3">SELECT FILTER</div>
+            <div className="px-3" style={{ maxHeight: '200px', overflowY: 'auto'}} >
+              {filterKeys.filter(f => !filterKeyMaps.includes(f.key)).map(f => (
+                <div
+                  key={f.key}
+                  onClick={() => onFilterKeySelect(f.key)}
+                  className={cn(stl.filterItem, 'py-3 -mx-3 px-3 flex items-center cursor-pointer')}
+                >
+                  <Icon name={f.icon} size="16" />
+                  <span className="ml-3 capitalize">{f.name}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         {filterKey && (

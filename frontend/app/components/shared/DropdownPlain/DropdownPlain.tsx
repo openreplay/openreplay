@@ -9,10 +9,11 @@ interface Props {
     icon?: string;
     direction?: string;
     value: any;
+    multiple?: boolean;
 }
 
 export default function DropdownPlain(props: Props) {
-    const { name = "sort", value, options, icon = "chevron-down", direction = "right" } = props;
+    const { name = "sort", value, options, icon = "chevron-down", direction = "right", multiple = false } = props;
     return (
         <div>
             <Dropdown
@@ -24,6 +25,7 @@ export default function DropdownPlain(props: Props) {
                 onChange={ props.onChange }
                 // floating
                 scrolling
+                multiple={ multiple }
                 selectOnBlur={ false }
                 // defaultValue={ value }
                 icon={ icon ? <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> : null }
