@@ -6,6 +6,8 @@ from chalicelib.core import sessions
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+PIE_CHART_GROUP = 5
+
 
 def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
     results = []
@@ -30,10 +32,12 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
         elif data.view_type == schemas.MetricTableViewType.pie_chart:
-            if len(results[i].get("values", [])) > 8:
-                results[i]["values"] = results[i]["values"][:8] \
-                                       + [{"name": "Others", "group": True,
-                                           "sessionCount": sum(r["sessionCount"] for r in results[i][8:])}]
+            if len(results[i].get("values", [])) > PIE_CHART_GROUP:
+                results[i]["values"] = results[i]["values"][:PIE_CHART_GROUP] \
+                                       + [{
+                    "name": "Others", "group": True,
+                    "sessionCount": sum(r["sessionCount"] for r in results[i][PIE_CHART_GROUP:])
+                }]
 
     return results
 
