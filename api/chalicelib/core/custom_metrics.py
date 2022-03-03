@@ -29,6 +29,12 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
             r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
+        elif data.view_type == schemas.MetricTableViewType.pie_chart:
+            if len(results[i].get("values", [])) > 8:
+                results[i]["values"] = results[i]["values"][:8] \
+                                       + [{"name": "Others", "group": True,
+                                           "sessionCount": sum(r["sessionCount"] for r in results[i][8:])}]
+
     return results
 
 
