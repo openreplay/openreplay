@@ -1,4 +1,5 @@
 import json
+from typing import Union
 
 import schemas
 from chalicelib.core import sessions
@@ -43,11 +44,28 @@ def merged_live(project_id, data: schemas.CreateCustomMetricsSchema):
     return results
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+def __get_merged_metric(project_id, user_id, metric_id,
+                        data: Union[schemas.CustomMetricChartPayloadSchema,
+                                    schemas.CustomMetricSessionsPayloadSchema]) \
+        -> Union[schemas.CreateCustomMetricsSchema, None]:
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
     metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
+    if len(data.filters) > 0 or len(data.events) > 0:
+        for s in metric.series:
+            if len(data.filters) > 0:
+                s.filter.filters += data.filters
+            if len(data.events) > 0:
+                s.filter.events += data.events
+    return metric
+
+
+def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
+                                                                    metric_id=metric_id, data=data)
+    if metric is None:
+        return None
     series_charts = __try_live(project_id=project_id, data=metric)
     if metric.view_type == schemas.MetricTimeseriesViewType.progress:
         return series_charts
@@ -60,10 +78,10 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
+                                                                    metric_id=metric_id, data=data)
     if metric is None:
         return None
-    metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     results = []
     for s in metric.series:
         s.filter.startDate = data.startDate
