@@ -225,9 +225,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             #                             ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
             #                          full_args)
 
-        print("--------------------")
-        print(main_query)
-        print("--------------------")
+        # print("--------------------")
+        # print(main_query)
+        # print("--------------------")
         cur.execute(main_query)
 
         if count_only:
