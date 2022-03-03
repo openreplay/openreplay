@@ -8,15 +8,17 @@ interface Props {
     params: any;
     seriesMap: any;
     colors: any;
+    onClick?: (event, index) => void;
 }
 function CustomMetriLineChart(props: Props) {
-    const { data, params, seriesMap, colors } = props;
+    const { data, params, seriesMap, colors, onClick = () => null } = props;
     return (
         <ResponsiveContainer height={ 240 } width="100%">
             <LineChart
                 data={ data }
                 margin={Styles.chartMargins}
                 // syncId={ showSync ? "domainsErrors_4xx" : undefined }
+                onClick={onClick}
             >
                 <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
                 <XAxis

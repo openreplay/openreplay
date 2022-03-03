@@ -5,6 +5,7 @@ import CustomMetricWidget from './CustomMetricWidget';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import { init as initAlert } from 'Duck/alerts';
 import LazyLoad from 'react-lazyload';
+import CustomMetrics from 'App/components/shared/CustomMetrics';
 
 interface Props {
   fetchList: Function;
@@ -22,7 +23,7 @@ function CustomMetricsWidgets(props: Props) {
 
   return (
     <>
-      {list.filter(item => item.active).map((item: any) => (
+      {list.map((item: any) => (
         <LazyLoad>
           <CustomMetricWidget
             key={item.metricId}
@@ -36,6 +37,13 @@ function CustomMetricsWidgets(props: Props) {
         </LazyLoad>
       ))}
 
+      {list.size === 0 && (
+        <div className="flex items-center py-2">
+          <div className="mr-2">Be proactive by monitoring the metrics you care about the most.</div>
+          <CustomMetrics />
+        </div>
+      )}
+
       <AlertFormModal
         showModal={!!activeMetricId}
         metricId={activeMetricId}
@@ -46,5 +54,5 @@ function CustomMetricsWidgets(props: Props) {
 }
 
 export default connect(state => ({
-  list: state.getIn(['customMetrics', 'list']),
+  list: state.getIn(['customMetrics', 'list']).filter(item => item.active),
 }), { fetchList, initAlert })(CustomMetricsWidgets);

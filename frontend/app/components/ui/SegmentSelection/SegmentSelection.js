@@ -9,13 +9,14 @@ class SegmentSelection extends React.Component {
   }
 
   render() {
-    const { className, list, small = false, extraSmall = false, primary = false, size = "normal" } = this.props;
+    const { className, list, small = false, extraSmall = false, primary = false, size = "normal", icons = false } = this.props;
 
     return (
       <div className={ cn(styles.wrapper, { 
           [styles.primary] : primary,
           [styles.small]  : size === 'small' || small,
           [styles.extraSmall]  : size === 'extraSmall' || extraSmall,
+          [styles.icons]  : icons === true,
         }, className) }
       >
         { list.map(item => (
@@ -27,7 +28,7 @@ class SegmentSelection extends React.Component {
                 data-active={ this.props.value && this.props.value.value === item.value }
                 onClick={ () => !item.disabled && this.setActiveItem(item) }
               >
-                { item.icon && <Icon name={ item.icon } size={size === "extraSmall" ? 12 : 20} marginRight={ item.name ? "10" : "" } /> }
+                { item.icon && <Icon name={ item.icon } size={(size === "extraSmall" || icons) ? 14 : 20} marginRight={ item.name ? "10" : "" } /> }
                 <div>{ item.name }</div>
               </div>
             }

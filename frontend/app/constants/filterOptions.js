@@ -69,6 +69,21 @@ export const metricOf = [
   { text: 'URL', value: 'VISITED_URL', key: 'table' },
 ]
 
+export const issueOptions = [
+  { text: 'Click Rage', value: 'click_rage' },
+  { text: 'Dead Click', value: 'dead_click' },
+  { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
+  { text: 'Bad Request', value: 'bad_request' },
+  { text: 'Missing Resource', value: 'missing_resource' },
+  { text: 'Memory', value: 'memory' },
+  { text: 'CPU', value: 'cpu' },
+  { text: 'Slow Resource', value: 'slow_resource' },
+  { text: 'Slow Page Load', value: 'slow_page_load' },
+  { text: 'Crash', value: 'crash' },
+  { text: 'Custom', value: 'custom' },
+  { text: 'JS Exception', value: 'js_exception' },
+]
+
 export default {
   options,
   baseOperators,
@@ -79,4 +94,5 @@ export default {
   getOperatorsByKeys,
   metricTypes,
   metricOf,
+  issueOptions,
 }

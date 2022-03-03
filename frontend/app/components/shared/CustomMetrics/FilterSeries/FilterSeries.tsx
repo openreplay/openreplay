@@ -81,7 +81,7 @@ function FilterSeries(props: Props) {
               <div className="color-gray-medium">Add user event or filter to define the series by clicking Add Step.</div>
             )}
           </div>
-          <div className="px-5 border-t h-12 flex items-center">
+          <div className="px-6 border-t h-12 flex items-center -mx-4">
             <FilterSelection
               filter={undefined}
               onFilterClick={onAddFilter}

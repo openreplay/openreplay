@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, SegmentSelection, Button, IconButton } from 'UI';
+import { Form, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save, addSeries, removeSeries, remove } from 'Duck/customMetrics';
@@ -8,8 +8,7 @@ import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
 import DropdownPlain from '../../DropdownPlain';
-import { metricTypes, metricOf } from 'App/constants/filterOptions';
-
+import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 interface Props {
   metric: any;
   editMetric: (metric, shouldFetch?) => void;
@@ -23,7 +22,7 @@ interface Props {
 
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
-  const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
+  // const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
   const timeseriesOptions = metricOf.filter(i => i.key === 'timeseries');
   const tableOptions = metricOf.filter(i => i.key === 'table');
 
@@ -39,18 +38,28 @@ function CustomMetricForm(props: Props) {
   const writeOption = (e, { value, name }) => {
     props.editMetric({ [ name ]: value }, false);
 
+    if (name === 'metricValue') {
+      props.editMetric({ metricValue: [value] }, false);
+    }
+
+    if (name === 'metricOf') {
+      if (value === 'ISSUES') {
+        props.editMetric({ metricValue: [issueOptions[0].value] }, false);
+      }
+    }
+
     if (name === 'metricType') {
       if (value === 'timeseries') {
-        props.editMetric({ metricOf: timeseriesOptions[0].value }, false);
+        props.editMetric({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' }, false);
       } else if (value === 'table') {
-        props.editMetric({ metricOf: tableOptions[0].value }, false);
+        props.editMetric({ metricOf: tableOptions[0].value, viewType: 'table' }, false);
       }
     }
   };
 
-  const changeConditionTab = (e, { name, value }) => {
-    props.editMetric({[ 'viewType' ]: value });
-  };
+  // const changeConditionTab = (e, { name, value }) => {
+  //   props.editMetric({[ 'viewType' ]: value });
+  // };
 
   const save = () => {
     props.save(metric).then(() => {
@@ -126,38 +135,32 @@ function CustomMetricForm(props: Props) {
              </>
             )}
 
+            {metric.metricOf === 'ISSUES' && (
+              <>
+                <span className="mx-3">issue type</span>
+                <DropdownPlain
+                  name="metricValue"
+                  options={issueOptions}
+                  value={ metric.metricValue[0] }
+                  onChange={ writeOption }
+                />
+              </>
+            )}
+
             {metric.metricType === 'table' && (
               <>
                 <span className="mx-3">showing</span>
                 <DropdownPlain
-                  name="viewType"
+                  name="metricFormat"
                   options={[
                     { value: 'sessionCount', text: 'Session Count' },
                   ]}
-                  value={ metric.viewType }
+                  value={ metric.metricFormat }
                   onChange={ writeOption }
                 />
               </>
             )}
           </div>
-          {/* <div className="flex items-center">
-            <span className="bg-white p-1 px-2 border rounded" style={{ height: '30px'}}>Timeseries</span>
-            <span className="mx-2 color-gray-medium">of</span>
-            <div>
-              <SegmentSelection
-                primary
-                name="viewType"
-                small={true}
-                // className="my-3"
-                onSelect={ changeConditionTab }
-                value={{ value: metric.viewType }}
-                list={ [
-                  { name: 'Session Count', value: 'lineChart' },
-                  { name: 'Session Percentage', value: 'progress', disabled: true },
-                ]}
-              />
-            </div>
-          </div> */}
         </div>
 
         <div className="form-group">
