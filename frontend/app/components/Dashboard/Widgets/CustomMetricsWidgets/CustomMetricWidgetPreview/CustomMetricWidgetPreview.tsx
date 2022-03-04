@@ -181,6 +181,7 @@ function CustomMetricWidget(props: Props) {
                         <CustomMetricTable data={data[0]} />
                     ) : (
                         <CustomMetricPieChart
+                          metric={metric}
                           data={data[0]}
                           colors={colors}
                           params={params}
