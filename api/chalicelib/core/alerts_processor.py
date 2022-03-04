@@ -119,12 +119,6 @@ def Build(a):
 
     q = f"""SELECT coalesce(value,0) AS value, coalesce(value,0) {a["query"]["operator"]} {a["query"]["right"]} AS valid"""
 
-    # if len(colDef.group) > 0 {
-    # subQ = subQ.Column(colDef.group + " AS group_value")
-    # subQ = subQ.GroupBy(colDef.group)
-    # q = q.Column("group_value")
-    # }
-
     if a["detectionMethod"] == schemas.AlertDetectionMethod.threshold:
         if a["seriesId"] is not None:
             q += f""" FROM ({subQ}) AS stat"""
@@ -134,16 +128,6 @@ def Build(a):
         params = {**params, **full_args, "startDate": TimeUTC.now() - a["options"]["currentPeriod"] * 60 * 1000}
     else:
         if a["options"]["change"] == schemas.AlertDetectionChangeType.change:
-            # if len(colDef.group) > 0:
-            # subq1 := subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod * 60))
-            # sub2, args2, _ := subQ.Where(
-            # sq.And{
-            # sq.Expr("timestamp<$3 ", time.Now().Unix()-a.Options.CurrentPeriod * 60),
-            # sq.Expr("timestamp>=$4 ", time.Now().Unix()-2 * a.Options.CurrentPeriod * 60),
-            # }).ToSql()
-            # sub1 := sq.Select("group_value", "(stat1.value-stat2.value) AS value").FromSelect(subq1, "stat1").JoinClause("INNER JOIN ("+sub2+") AS stat2 USING(group_value)", args2...)
-            # q = q.FromSelect(sub1, "stat")
-            # else:
             if a["seriesId"] is not None:
                 sub2 = subQ.replace("%(startDate)s", "%(timestamp_sub2)s").replace("%(endDate)s", "%(startDate)s")
                 sub1 = f"SELECT (({subQ})-({sub2})) AS value"
@@ -163,16 +147,6 @@ def Build(a):
                 q += f" FROM ( {sub1} ) AS stat"
 
         else:
-            # if len(colDef.group) >0 {
-            # subq1 := subQ.Where(sq.Expr("timestamp>=$2 ", time.Now().Unix()-a.Options.CurrentPeriod * 60))
-            # sub2, args2, _ := subQ.Where(
-            # sq.And{
-            # sq.Expr("timestamp<$3 ", time.Now().Unix()-a.Options.CurrentPeriod * 60),
-            # sq.Expr("timestamp>=$4 ", time.Now().Unix()-a.Options.PreviousPeriod * 60-a.Options.CurrentPeriod * 60),
-            # }).ToSql()
-            # sub1 := sq.Select("group_value", "(stat1.value/stat2.value-1)*100 AS value").FromSelect(subq1, "stat1").JoinClause("INNER JOIN ("+sub2+") AS stat2 USING(group_value)", args2...)
-            # q = q.FromSelect(sub1, "stat")
-            # } else {
             if a["seriesId"] is not None:
                 sub2 = subQ.replace("%(startDate)s", "%(timestamp_sub2)s").replace("%(endDate)s", "%(startDate)s")
                 sub1 = f"SELECT (({subQ})/NULLIF(({sub2}),0)-1)*100 AS value"
