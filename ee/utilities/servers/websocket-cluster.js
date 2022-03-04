@@ -7,6 +7,7 @@ const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 
 var wsRouter = express.Router();
+const UPDATE_EVENT = "UPDATE_SESSION";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const NEW_AGENT = "NEW_AGENT";
 const NO_AGENTS = "NO_AGENT";
@@ -34,7 +35,8 @@ const uniqueSessions = function (data) {
     }
     return resArr;
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, async function (req, res) {
+
+const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
     let liveSessions = {};
     let rooms = await io.of('/').adapter.allRooms();
@@ -48,8 +50,10 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, async function (req, res) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": liveSessions}));
-});
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, async function (req, res) {
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
+
+const socketsListByProject = async function (req, res) {
     debug && console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
     let liveSessions = {};
     let rooms = await io.of('/').adapter.allRooms();
@@ -63,9 +67,10 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, async function (
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": liveSessions[req.params.projectKey] || []}));
-});
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, socketsListByProject);
 
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
+const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
     let liveSessions = {};
     let rooms = await io.of('/').adapter.allRooms();
@@ -86,8 +91,10 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": liveSessions}));
-});
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, async function (req, res) {
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
+
+const socketsLiveByProject = async function (req, res) {
     debug && console.log(`[WS]looking for available LIVE sessions for ${req.params.projectKey}`);
     let liveSessions = {};
     let rooms = await io.of('/').adapter.allRooms();
@@ -107,7 +114,8 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, async function (
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": liveSessions[req.params.projectKey] || []}));
-});
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, socketsLiveByProject);
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
@@ -187,14 +195,28 @@ function extractSessionInfo(socket) {
 module.exports = {
     wsRouter,
     start: (server) => {
-        io = _io(server, {
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"]
-            },
-            path: '/socket'
-        });
+        if (process.env.uws !== "true") {
+            io = _io(server, {
+                maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+                cors: {
+                    origin: "*",
+                    methods: ["GET", "POST", "PUT"]
+                },
+                path: '/socket'
+            });
+        } else {
+            io = new _io.Server({
+                maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+                cors: {
+                    origin: "*",
+                    methods: ["GET", "POST", "PUT"]
+                },
+                path: '/socket',
+                // transports: ['websocket'],
+                // upgrade: false
+            });
+            io.attachApp(server);
+        }
 
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
@@ -255,6 +277,16 @@ module.exports = {
                 }
             });
 
+            socket.on(UPDATE_EVENT, async (...args) => {
+                debug && console.log(`${socket.id} sent update event.`);
+                if (socket.identity !== IDENTITIES.session) {
+                    debug && console.log('Ignoring update event.');
+                    return
+                }
+                socket.handshake.query.sessionInfo = {...socket.handshake.query.sessionInfo, ...args[0]};
+                socket.to(socket.peerId).emit(UPDATE_EVENT, args[0]);
+            });
+
             socket.onAny(async (eventName, ...args) => {
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
@@ -304,5 +336,11 @@ module.exports = {
             console.log("> redis connected.");
             // io.listen(3000);
         });
+    },
+    handlers: {
+        socketsList,
+        socketsListByProject,
+        socketsLive,
+        socketsLiveByProject
     }
 };
