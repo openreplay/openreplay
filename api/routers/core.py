@@ -36,8 +36,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.Cu
                                   include_fav_viewed=True, group_metadata=True)
     if data is None:
         return {"errors": ["session not found"]}
-    if not data.get("live"):
-        sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
+    sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
     return {
         'data': data
     }
@@ -102,12 +101,15 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
-                  type: Union[schemas.FilterType, schemas.EventType, schemas.PerformanceEventType] = None,
+                  type: Union[schemas.FilterType, schemas.EventType,
+                              schemas.PerformanceEventType, schemas.FetchFilterType] = None,
                   key: str = None,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
-    if isinstance(type, schemas.PerformanceEventType):
+    if type in [schemas.FetchFilterType._url]:
+        type = schemas.EventType.request
+    elif isinstance(type, schemas.PerformanceEventType):
         if type in [schemas.PerformanceEventType.location_dom_complete,
                     schemas.PerformanceEventType.location_largest_contentful_paint_time,
                     schemas.PerformanceEventType.location_ttfb,
@@ -1089,25 +1091,9 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
 
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsSchema = Body(...),
+def try_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.merged_live
-    (project_id=projectId, data=data)}
-
-
-@app.post('/{projectId}/custom_metrics/sessions', tags=["customMetrics"])
-def get_custom_metric_sessions(projectId: int, data: schemas.CustomMetricRawPayloadSchema2 = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=data.metric_id,
-                                                data=data)}
-
-
-@app.post('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
-@app.put('/{projectId}/custom_metrics/chart', tags=["customMetrics"])
-def get_custom_metric_chart(projectId: int, data: schemas.CustomMetricChartPayloadSchema2 = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=data.metric_id,
-                                              data=data)}
+    return {"data": custom_metrics.merged_live(project_id=projectId, data=data)}
 
 
 @app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
@@ -1124,29 +1110,40 @@ def get_custom_metrics(projectId: int, context: schemas.CurrentContext = Depends
 
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
+    data = custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
+    if data is None:
+        return {"errors": ["custom metric not found"]}
+    return {"data": data}
 
 
 @app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
-def get_custom_metric_sessions(projectId: int, metric_id: int, data: schemas.CustomMetricRawPayloadSchema = Body(...),
+def get_custom_metric_sessions(projectId: int, metric_id: int,
+                               data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                                data=data)}
+    data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+    if data is None:
+        return {"errors": ["custom metric not found"]}
+    return {"data": data}
 
 
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
 def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                              data=data)}
+    data = custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                     data=data)
+    if data is None:
+        return {"errors": ["custom metric not found"]}
+    return {"data": data}
 
 
 @app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
 def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),
                          context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)}
+    data = custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+    if data is None:
+        return {"errors": ["custom metric not found"]}
+    return {"data": data}
 
 
 @app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])

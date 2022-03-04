@@ -103,7 +103,7 @@ export default class AssistManager {
         if (document.hidden && getState().calling === CallingState.NoCall) {
           this.socket?.close()
         }
-      }, 15000)
+      }, 30000)
     } else {
       inactiveTimeout && clearTimeout(inactiveTimeout)
       this.socket?.open()
@@ -171,7 +171,8 @@ export default class AssistManager {
           this.setStatus(ConnectionStatus.Disconnected)
         }, 12000)
 
-        if (getState().remoteControl === RemoteControlStatus.Requesting) {
+        if (getState().remoteControl === RemoteControlStatus.Requesting ||
+        getState().remoteControl === RemoteControlStatus.Enabled) {
           this.toggleRemoteControl(false)
         }
 

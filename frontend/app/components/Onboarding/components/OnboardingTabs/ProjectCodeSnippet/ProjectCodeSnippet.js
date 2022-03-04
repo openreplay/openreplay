@@ -17,9 +17,11 @@ const inputModeOptions = [
 
 const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
 <script>
+var initOpts = { projectKey: "PROJECT_KEY", ingestPoint: "https://${window.location.hostname}/ingest"};
+var startOpts = { userID: "" };
 (function(A,s,a,y,e,r){
-  r=window.OpenReplay=[s,r,e,[y-1]];
-  s=document.createElement('script');s.src=a;s.async=!A;
+  r=window.OpenReplay=[e,r,y,[s-1, e]];
+  s=document.createElement('script');s.src=A;s.async=!a;
   document.getElementsByTagName('head')[0].appendChild(s);
   r.start=function(v){r.push([0])};
   r.stop=function(v){r.push([1])};
@@ -30,8 +32,7 @@ const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
   r.issue=function(k,p){r.push([6,k,p])};
   r.isActive=function(){return false};
   r.getSessionToken=function(){};
-  r.i="https://${window.location.hostname}/ingest";
-})(0, "PROJECT_KEY", "//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,XXX);
+})("//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",XXX,0,initOpts,startOpts);
 </script>`;
 
 

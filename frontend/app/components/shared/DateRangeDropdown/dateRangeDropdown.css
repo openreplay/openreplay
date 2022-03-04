@@ -1,5 +1,5 @@
 .button {
-  padding: 0 8px;
+  padding: 0 4px;
   border-radius: 3px;
   color: $teal;
   cursor: pointer;
@@ -12,7 +12,7 @@
 }
 
 .dropdownTrigger {
-  padding: 4px 6px;
+  padding: 4px;
   &:hover {
     background-color: $gray-light;
   }
@@ -42,7 +42,7 @@
 
 .dropdown {
   display: flex !important;
-  padding: 4px 6px;
+  padding: 4px 4px;
   border-radius: 3px;
   color: $gray-darkest;
   font-weight: 500;
@@ -52,7 +52,7 @@
 }
 
 .dropdownTrigger {
-  padding: 4px 8px;
+  padding: 4px 4px;
   border-radius: 3px;
   &:hover {
     background-color: $gray-light;

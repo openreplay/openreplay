@@ -4,6 +4,7 @@ const uaParser = require('ua-parser-js');
 const geoip2Reader = require('@maxmind/geoip2-node').Reader;
 var {extractPeerId} = require('./peerjs-server');
 var wsRouter = express.Router();
+const UPDATE_EVENT = "UPDATE_SESSION";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const NEW_AGENT = "NEW_AGENT";
 const NO_AGENTS = "NO_AGENT";
@@ -224,6 +225,16 @@ module.exports = {
                     debug && console.log(`notifying everyone in ${socket.peerId} about no AGENTS`);
                     socket.to(socket.peerId).emit(NO_AGENTS);
                 }
+            });
+
+            socket.on(UPDATE_EVENT, async (...args) => {
+                debug && console.log(`${socket.id} sent update event.`);
+                if (socket.identity !== IDENTITIES.session) {
+                    debug && console.log('Ignoring update event.');
+                    return
+                }
+                socket.handshake.query.sessionInfo = {...socket.handshake.query.sessionInfo, ...args[0]};
+                socket.to(socket.peerId).emit(UPDATE_EVENT, args[0]);
             });
 
             socket.onAny(async (eventName, ...args) => {

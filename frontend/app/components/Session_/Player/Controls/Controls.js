@@ -106,7 +106,7 @@ function getStorageName(type) {
     bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
     showStorage: props.showStorage || !state.getIn(['components', 'player', 'hiddenHints', 'storage']),
     showStack: props.showStack || !state.getIn(['components', 'player', 'hiddenHints', 'stack']),
-    closedLive: !!state.getIn([ 'sessions', 'errors' ]),
+    closedLive: !!state.getIn([ 'sessions', 'errors' ]) || !state.getIn([ 'sessions', 'current', 'live' ]),
   }
 }, {
   fullscreenOn,

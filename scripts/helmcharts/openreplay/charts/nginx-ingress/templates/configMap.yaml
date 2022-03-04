@@ -82,7 +82,7 @@ data:
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $origin_forwarded_ip;
       proxy_set_header X-Real-IP $origin_forwarded_ip;
-      proxy_pass http://utilities-pool;
+      proxy_pass http://utilities-openreplay.app.svc.cluster.local:9001;
     }
     location /assets/ {
       rewrite ^/assets/(.*) /sessions-assets/$1 break;

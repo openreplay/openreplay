@@ -5,7 +5,6 @@ import stl from './SessionListModal.css';
 import { connect } from 'react-redux';
 import { fetchSessionList, setActiveWidget } from 'Duck/customMetrics';
 import { DateTime } from 'luxon';
-
 interface Props {
     loading: boolean;
     list: any;
@@ -24,7 +23,8 @@ function SessionListModal(props: Props) {
         props.fetchSessionList({ 
             metricId: activeWidget.widget.metricId,
             startDate: activeWidget.startTimestamp,
-            endDate: activeWidget.endTimestamp
+            endDate: activeWidget.endTimestamp,
+            filters: activeWidget.filters || [],
         });
     }, [activeWidget]);
 
@@ -57,9 +57,9 @@ function SessionListModal(props: Props) {
 
     const writeOption = (e, { name, value }) => setActiveSeries(value);
     const filteredSessions = getListSessionsBySeries(activeSeries);
-    
     const startTime = DateTime.fromMillis(activeWidget.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
     const endTime = DateTime.fromMillis(activeWidget.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+
     return (
         <SlideModal
             title={ activeWidget && (

@@ -384,7 +384,9 @@ class EventType(str, Enum):
     location = "LOCATION"
     custom = "CUSTOM"
     request = "REQUEST"
+    request_details = "FETCH"
     graphql = "GRAPHQL"
+    graphql_details = "GRAPHQL_DETAILS"
     state_action = "STATEACTION"
     error = "ERROR"
     click_ios = "CLICK_IOS"
@@ -480,13 +482,50 @@ class __MixedSearchFilter(BaseModel):
     @root_validator(pre=True)
     def remove_duplicate_values(cls, values):
         if values.get("value") is not None:
-            if len(values["value"]) > 0 and isinstance(values["value"][0], int):
+            if len(values["value"]) > 0 \
+                    and (isinstance(values["value"][0], int) or isinstance(values["value"][0], dict)):
                 return values
             values["value"] = list(set(values["value"]))
         return values
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class HttpMethod(str, Enum):
+    _get = 'GET'
+    _head = 'HEAD'
+    _post = 'POST'
+    _put = 'PUT'
+    _delete = 'DELETE'
+    _connect = 'CONNECT'
+    _option = 'OPTIONS'
+    _trace = 'TRACE'
+    _patch = 'PATCH'
+
+
+class FetchFilterType(str, Enum):
+    _url = "FETCH_URL"
+    _status_code = "FETCH_STATUS_CODE"
+    _method = "FETCH_METHOD"
+    _duration = "FETCH_DURATION"
+    _request_body = "FETCH_REQUEST_BODY"
+    _response_body = "FETCH_RESPONSE_BODY"
+
+
+class GraphqlFilterType(str, Enum):
+    _name = "GRAPHQL_NAME"
+    _status_code = "GRAPHQL_STATUS_CODE"
+    _method = "GRAPHQL_METHOD"
+    _duration = "GRAPHQL_DURATION"
+    _request_body = "GRAPHQL_REQUEST_BODY"
+    _response_body = "GRAPHQL_RESPONSE_BODY"
+
+
+class RequestGraphqlFilterSchema(BaseModel):
+    type: Union[FetchFilterType, GraphqlFilterType] = Field(...)
+    value: List[Union[int, str]] = Field(...)
+    operator: Union[SearchEventOperator, MathOperator] = Field(...)
 
 
 class _SessionSearchEventRaw(__MixedSearchFilter):
@@ -496,6 +535,7 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
     operator: SearchEventOperator = Field(...)
     source: Optional[List[Union[ErrorSource, int, str]]] = Field(None)
     sourceOperator: Optional[MathOperator] = Field(None)
+    filters: Optional[List[RequestGraphqlFilterSchema]] = Field(None)
 
     @root_validator
     def event_validator(cls, values):
@@ -513,20 +553,28 @@ class _SessionSearchEventRaw(__MixedSearchFilter):
                 assert isinstance(values["value"][0], _SessionSearchEventRaw) \
                        and isinstance(values["value"][1], _SessionSearchEventRaw), \
                     f"event should be of type  _SessionSearchEventRaw for {PerformanceEventType.time_between_events}"
+                assert len(values["source"]) > 0 and isinstance(values["source"][0], int), \
+                    f"source of type int if required for {PerformanceEventType.time_between_events}"
             else:
                 for c in values["source"]:
                     assert isinstance(c, int), f"source value should be of type int for {values.get('type')}"
         elif values.get("type") == EventType.error and values.get("source") is None:
             values["source"] = [ErrorSource.js_exception]
+        elif values.get("type") == EventType.request_details:
+            assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
+                f"filters should be defined for {EventType.request_details.value}"
+        elif values.get("type") == EventType.graphql_details:
+            assert isinstance(values.get("filters"), List) and len(values.get("filters", [])) > 0, \
+                f"filters should be defined for {EventType.graphql_details.value}"
 
         return values
 
 
 class _SessionSearchEventSchema(_SessionSearchEventRaw):
-    value: Union[List[_SessionSearchEventRaw], str, List[str]] = Field(...)
+    value: Union[List[Union[_SessionSearchEventRaw, str]], str] = Field(...)
 
 
-class _SessionSearchFilterSchema(__MixedSearchFilter):
+class SessionSearchFilterSchema(__MixedSearchFilter):
     is_event: bool = Field(False, const=False)
     value: Union[Optional[Union[IssueType, PlatformType, int, str]],
                  Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
@@ -559,7 +607,7 @@ class _SessionSearchFilterSchema(__MixedSearchFilter):
 
 class SessionsSearchPayloadSchema(BaseModel):
     events: List[_SessionSearchEventSchema] = Field([])
-    filters: List[_SessionSearchFilterSchema] = Field([])
+    filters: List[SessionSearchFilterSchema] = Field([])
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
@@ -571,9 +619,9 @@ class SessionsSearchPayloadSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
+class FlatSessionsSearch(BaseModel):
     events: Optional[List[_SessionSearchEventSchema]] = Field([])
-    filters: List[Union[_SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
+    filters: List[Union[SessionSearchFilterSchema, _SessionSearchEventSchema]] = Field([])
 
     @root_validator(pre=True)
     def flat_to_original(cls, values):
@@ -595,6 +643,10 @@ class FlatSessionsSearchPayloadSchema(SessionsSearchPayloadSchema):
             values["events"] = n_events
             values["filters"] = n_filters
         return values
+
+
+class FlatSessionsSearchPayloadSchema(FlatSessionsSearch, SessionsSearchPayloadSchema):
+    pass
 
 
 class SessionsSearchCountSchema(FlatSessionsSearchPayloadSchema):
@@ -688,21 +740,36 @@ class CustomMetricCreateSeriesSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class CreateCustomMetricsSchema(BaseModel):
-    name: str = Field(...)
-    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    is_public: Optional[bool] = Field(True)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
-
-
-class MetricViewType(str, Enum):
+class MetricTimeseriesViewType(str, Enum):
     line_chart = "lineChart"
     progress = "progress"
 
 
-class CustomMetricRawPayloadSchema(BaseModel):
+class MetricTableViewType(str, Enum):
+    table = "table"
+    pie_chart = "pieChart"
+
+
+class MetricType(str, Enum):
+    timeseries = "timeseries"
+    table = "table"
+
+
+class TableMetricOfType(str, Enum):
+    user_os = FilterType.user_os.value
+    user_browser = FilterType.user_browser.value
+    user_device = FilterType.user_device.value
+    user_country = FilterType.user_country.value
+    user_id = FilterType.user_id.value
+    issues = FilterType.issue.value
+    visited_url = EventType.location.value
+
+
+class TimeseriesMetricOfType(str, Enum):
+    session_count = "sessionCount"
+
+
+class CustomMetricSessionsPayloadSchema(FlatSessionsSearch):
     startDate: int = Field(TimeUTC.now(-7))
     endDate: int = Field(TimeUTC.now())
 
@@ -710,23 +777,52 @@ class CustomMetricRawPayloadSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricRawPayloadSchema2(CustomMetricRawPayloadSchema):
-    metric_id: int = Field(...)
-
-
-class CustomMetricChartPayloadSchema(CustomMetricRawPayloadSchema):
-    startDate: int = Field(TimeUTC.now(-7))
-    endDate: int = Field(TimeUTC.now())
+class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema):
     density: int = Field(7)
-    viewType: MetricViewType = Field(MetricViewType.line_chart)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
-class CustomMetricChartPayloadSchema2(CustomMetricChartPayloadSchema):
-    metric_id: int = Field(...)
+class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
+    name: str = Field(...)
+    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
+    is_public: bool = Field(default=True, const=True)
+    view_type: Union[MetricTimeseriesViewType, MetricTableViewType] = Field(MetricTimeseriesViewType.line_chart)
+    metric_type: MetricType = Field(MetricType.timeseries)
+    metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
+    metric_value: List[IssueType] = Field([])
+    metric_format: Optional[str] = Field(None)
 
+    # metricFraction: float = Field(None, gt=0, lt=1)
+    # This is used to handle wrong values sent by the UI
+    @root_validator(pre=True)
+    def remove_metric_value(cls, values):
+        if values.get("metricType") == MetricType.timeseries \
+                or values.get("metricType") == MetricType.table \
+                and values.get("metricOf") != TableMetricOfType.issues:
+            values["metricValue"] = []
+        return values
 
-class TryCustomMetricsSchema(CreateCustomMetricsSchema, CustomMetricChartPayloadSchema):
-    name: Optional[str] = Field(None)
+    @root_validator
+    def validator(cls, values):
+        if values.get("metric_type") == MetricType.table:
+            assert isinstance(values.get("view_type"), MetricTableViewType), \
+                f"viewType must be of type {MetricTableViewType} for metricType:{MetricType.table.value}"
+            assert isinstance(values.get("metric_of"), TableMetricOfType), \
+                f"metricOf must be of type {TableMetricOfType} for metricType:{MetricType.table.value}"
+            if values.get("metric_of") != TableMetricOfType.issues:
+                assert values.get("metric_value") is None or len(values.get("metric_value")) == 0, \
+                    f"metricValue is only available for metricOf:{TableMetricOfType.issues.value}"
+        elif values.get("metric_type") == MetricType.timeseries:
+            assert isinstance(values.get("view_type"), MetricTimeseriesViewType), \
+                f"viewType must be of type {MetricTimeseriesViewType} for metricType:{MetricType.timeseries.value}"
+            assert isinstance(values.get("metric_of"), TimeseriesMetricOfType), \
+                f"metricOf must be of type {TimeseriesMetricOfType} for metricType:{MetricType.timeseries.value}"
+        return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
