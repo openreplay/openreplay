@@ -23,7 +23,8 @@ function SessionListModal(props: Props) {
         props.fetchSessionList({ 
             metricId: activeWidget.widget.metricId,
             startDate: activeWidget.startTimestamp,
-            endDate: activeWidget.endTimestamp
+            endDate: activeWidget.endTimestamp,
+            filters: activeWidget.filters || [],
         });
     }, [activeWidget]);
 

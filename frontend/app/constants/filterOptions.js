@@ -1,3 +1,5 @@
+import { FilterKey } from 'Types/filter/filterType';
+
 export const options = [
   { key: 'on', text: 'on', value: 'on' }, 
   { key: 'notOn', text: 'not on', value: 'notOn' },
@@ -60,13 +62,13 @@ export const metricTypes = [
 ];
 
 export const metricOf = [
-  { text: 'Session Count', value: 'sessionCount', key: 'timeseries' },
-  { text: 'Users', value: 'USERID', key: 'table' },
-  { text: 'Issues', value: 'ISSUES', key: 'table' },
-  { text: 'Browser', value: 'USERBROWSER', key: 'table' },
-  { text: 'Device', value: 'USERDEVICE', key: 'table' },
-  { text: 'Country', value: 'USERCOUNTRY', key: 'table' },
-  { text: 'URL', value: 'VISITED_URL', key: 'table' },
+  { text: 'Session Count', value: 'sessionCount', type: 'timeseries' },
+  { text: 'Users', value: FilterKey.USERID, type: 'table' },
+  { text: 'Issues', value: FilterKey.ISSUE, type: 'table' },
+  { text: 'Browser', value: FilterKey.USER_BROWSER, type: 'table' },
+  { text: 'Device', value: FilterKey.USER_DEVICE, type: 'table' },
+  { text: 'Country', value: FilterKey.USER_COUNTRY, type: 'table' },
+  { text: 'URL', value: FilterKey.LOCATION, type: 'table' },
 ]
 
 export const issueOptions = [

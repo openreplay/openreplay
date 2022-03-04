@@ -76,6 +76,19 @@ function CustomMetricWidget(props: Props) {
       }).finally(() => setLoading(false));
   }, [period])
 
+  const clickHandlerTable = (filters) => {
+    const activeWidget = {
+      widget: metric,
+      period: period,
+      ...period.toTimestamps(),
+      filters,
+      // timestamp: payload.timestamp,
+      // index,
+    }
+    props.setActiveWidget(activeWidget);
+    // props.updateActiveState(metric.metricId, data); 
+  }
+
   const clickHandler = (event, index) => {
     if (event) {
       const payload = event.activePayload[0].payload;
@@ -148,10 +161,11 @@ function CustomMetricWidget(props: Props) {
 
                 {metric.viewType === 'table' && (
                   <CustomMetricTable
+                    metric={ metric }
                     data={ data[0] }
                     // params={ params }
                     // colors={ colors }
-                    onClick={ clickHandler }
+                    onClick={ clickHandlerTable }
                   />
                 )}
               </>
