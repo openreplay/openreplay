@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, SegmentSelection, Button, IconButton } from 'UI';
+import { Form, Button, IconButton } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save, addSeries, removeSeries, remove } from 'Duck/customMetrics';
@@ -7,7 +7,8 @@ import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMe
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
-
+import DropdownPlain from '../../DropdownPlain';
+import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 interface Props {
   metric: any;
   editMetric: (metric, shouldFetch?) => void;
@@ -21,6 +22,13 @@ interface Props {
 
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
+  // const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
+  const timeseriesOptions = metricOf.filter(i => i.key === 'timeseries');
+  const tableOptions = metricOf.filter(i => i.key === 'table');
+  const isTable = metric.metricType === 'table';
+  const isTimeSeries = metric.metricType === 'timeseries';
+  const _issueOptions = [{ text: 'All', value: '' }].concat(issueOptions);
+
 
   const addSeries = () => {
     props.addSeries();
@@ -30,11 +38,32 @@ function CustomMetricForm(props: Props) {
     props.removeSeries(index);
   }
 
-  const write = ({ target: { value, name } }) => props.editMetric({ ...metric, [ name ]: value }, false);
+  const write = ({ target: { value, name } }) => props.editMetric({ [ name ]: value }, false);
+  const writeOption = (e, { value, name }) => {
+    props.editMetric({ [ name ]: value }, false);
 
-  const changeConditionTab = (e, { name, value }) => {
-    props.editMetric({[ 'viewType' ]: value });
+    if (name === 'metricValue') {
+      props.editMetric({ metricValue: [value] }, false);
+    }
+
+    if (name === 'metricOf') {
+      if (value === 'ISSUES') {
+        props.editMetric({ metricValue: [''] }, false);
+      }
+    }
+
+    if (name === 'metricType') {
+      if (value === 'timeseries') {
+        props.editMetric({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' }, false);
+      } else if (value === 'table') {
+        props.editMetric({ metricOf: tableOptions[0].value, viewType: 'table' }, false);
+      }
+    }
   };
+
+  // const changeConditionTab = (e, { name, value }) => {
+  //   props.editMetric({[ 'viewType' ]: value });
+  // };
 
   const save = () => {
     props.save(metric).then(() => {
@@ -79,30 +108,71 @@ function CustomMetricForm(props: Props) {
         <div className="form-group">
           <label className="font-medium">Metric Type</label>
           <div className="flex items-center">
-            <span className="bg-white p-1 px-2 border rounded" style={{ height: '30px'}}>Timeseries</span>
-            <span className="mx-2 color-gray-medium">of</span>
-            <div>
-              <SegmentSelection
-                primary
-                name="viewType"
-                small={true}
-                // className="my-3"
-                onSelect={ changeConditionTab }
-                value={{ value: metric.viewType }}
-                list={ [
-                  { name: 'Session Count', value: 'lineChart' },
-                  { name: 'Session Percentage', value: 'progress', disabled: true },
-                ]}
-              />
-            </div>
+            <DropdownPlain
+              name="metricType"
+              options={metricTypes}
+              value={ metric.metricType }
+              onChange={ writeOption }
+            />
+
+            {metric.metricType === 'timeseries' && (
+             <>
+               <span className="mx-3">of</span>
+                <DropdownPlain
+                  name="metricOf"
+                  options={timeseriesOptions}
+                  value={ metric.metricOf }
+                  onChange={ writeOption }
+                />
+             </>
+            )}
+
+            {metric.metricType === 'table' && (
+             <>
+               <span className="mx-3">of</span>
+                <DropdownPlain
+                  name="metricOf"
+                  options={tableOptions}
+                  value={ metric.metricOf }
+                  onChange={ writeOption }
+                />
+             </>
+            )}
+
+            {metric.metricOf === 'ISSUES' && (
+              <>
+                <span className="mx-3">issue type</span>
+                <DropdownPlain
+                  name="metricValue"
+                  options={_issueOptions}
+                  value={ metric.metricValue[0] }
+                  onChange={ writeOption }
+                />
+              </>
+            )}
+
+            {metric.metricType === 'table' && (
+              <>
+                <span className="mx-3">showing</span>
+                <DropdownPlain
+                  name="metricFormat"
+                  options={[
+                    { value: 'sessionCount', text: 'Session Count' },
+                  ]}
+                  value={ metric.metricFormat }
+                  onChange={ writeOption }
+                />
+              </>
+            )}
           </div>
         </div>
 
         <div className="form-group">
           <label className="font-medium">Chart Series</label>
-          {metric.series && metric.series.size > 0 && metric.series.map((series: any, index: number) => (
+          {metric.series && metric.series.size > 0 && metric.series.take(isTable ? 1 : metric.series.size).map((series: any, index: number) => (
             <div className="mb-2">
               <FilterSeries
+                hideHeader={ isTable }
                 seriesIndex={index}
                 series={series}
                 onRemoveSeries={() => removeSeries(index)}
@@ -112,9 +182,11 @@ function CustomMetricForm(props: Props) {
           ))}
         </div>
 
-        <div className={cn("flex justify-end -my-4", {'disabled' : metric.series.size > 2})}>
-          <IconButton hover type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
-        </div>
+        { isTimeSeries && (  
+          <div className={cn("flex justify-end -my-4", {'disabled' : metric.series.size > 2})}>
+            <IconButton hover type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
+          </div>
+        )}
 
         <div className="my-8" />
 

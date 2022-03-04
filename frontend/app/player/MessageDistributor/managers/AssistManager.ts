@@ -103,7 +103,7 @@ export default class AssistManager {
         if (document.hidden && getState().calling === CallingState.NoCall) {
           this.socket?.close()
         }
-      }, 15000)
+      }, 30000)
     } else {
       inactiveTimeout && clearTimeout(inactiveTimeout)
       this.socket?.open()

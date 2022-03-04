@@ -4,6 +4,8 @@
   border-radius: 3px;
   color: $gray-darkest;
   font-weight: 500;
+  background-color: white;
+  border: solid thin $gray-light;
   &:hover {
     background-color: $gray-light;
   }

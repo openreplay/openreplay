@@ -16,11 +16,11 @@ const SESSIONS_ROUTE = sessionsRoute();
 function Session({ 
 	sessionId,
 	loading,
-  hasErrors,
+  	hasErrors,
 	session, 
 	fetchSession,
-  fetchSlackList,
-  hasSessionsPath
+  	fetchSlackList,
+  	hasSessionsPath
  }) {
  	usePageTitle("OpenReplay Session Player");
  	useEffect(() => {
@@ -51,7 +51,7 @@ function Session({
     	<Loader className="flex-1" loading={ loading || sessionId !== session.sessionId }> 
     		{ session.isIOS 
     			? <IOSPlayer session={session} />
-    			: (session.live && !hasSessionsPath ? <LivePlayer /> : <WebPlayer />)
+    			: <WebPlayer />
       	}
     	</Loader>
     </NoContent>

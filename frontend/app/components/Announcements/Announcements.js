@@ -10,11 +10,7 @@ import { withRouter } from 'react-router-dom';
 @withToggle('visible', 'toggleVisisble')
 @withRouter
 class Announcements extends React.Component {
-  constructor(props) {
-    super(props);
-    props.fetchList();
-  }
-
+  
   navigateToUrl = url => {
     if (url) {
       if (url.startsWith(window.ENV.ORIGIN)) {

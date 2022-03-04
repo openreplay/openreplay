@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { IconButton } from 'UI';
 import { connect } from 'react-redux';
 import { edit, init } from 'Duck/customMetrics';
@@ -7,6 +7,9 @@ interface Props {
   init: (instance?, setDefault?) => void;
 }
 function CustomMetrics(props: Props) {
+  useEffect(() => { // TODO remove this block
+    props.init()
+  }, [])
   return (
     <div className="self-start">
       <IconButton plain outline icon="plus" label="CREATE METRIC" onClick={() => props.init()} />

@@ -12,13 +12,13 @@
     padding: 10px;
     flex: 1;
     text-align: center;
-    border-right: solid thin $teal;
     cursor: pointer;
     background-color: $gray-lightest;
     display: flex;
     align-items: center;
     justify-content: center;
     white-space: nowrap;
+    border-right: solid thin $gray-light;
 
     & span svg {
       fill: $gray-medium;
@@ -53,9 +53,16 @@
   & .item {
     color: $teal;
     background-color: white;
+    border-right: solid thin $teal;
+    & svg {
+      fill: $teal !important;
+    }
     &[data-active=true] {
       background-color: $teal;
       color: white;
+      & svg {
+        fill: white !important;
+      }
     }
   }
 }
@@ -65,6 +72,11 @@
 }
 
 .extraSmall .item {
-  padding: 0 4px;
+  padding: 2px 4px !important;
+  font-size: 12px;
+}
+
+.icons .item {
+  padding: 4px !important;
   font-size: 12px;
 }

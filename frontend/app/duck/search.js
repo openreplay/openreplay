@@ -161,7 +161,7 @@ export const applySavedSearch = (filter) => (dispatch, getState) => {
 
 export const fetchSessions = (filter) => (dispatch, getState) => {
   const _filter = filter ? filter : getState().getIn([ 'search', 'instance']);
-  return dispatch(applyFilter(_filter));
+  // return dispatch(applyFilter(_filter)); // TODO uncomment this line
 };
 
 export const updateSeries = (index, series) => ({
@@ -233,6 +233,10 @@ export const hasFilterApplied = (filters, filter) => {
 
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
+  filter.subFilters = filter.subFilters ? filter.subFilters.map(subFilter => ({
+    ...subFilter,
+    value: checkFilterValue(subFilter.value),
+  })) : null;
   const instance = getState().getIn([ 'search', 'instance']);
 
   if (hasFilterApplied(instance.filters, filter)) {

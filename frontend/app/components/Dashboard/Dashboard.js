@@ -240,7 +240,6 @@ export default class Dashboard extends React.PureComponent {
                           Custom Metrics are not supported for comparison.
                         </div>
                       )}
-                      {/* <CustomMetrics /> */}
                     </div>
                   }
                 >
