@@ -102,7 +102,7 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
-                              schemas.PerformanceEventType, schemas.FetchFilterType._url] = None,
+                              schemas.PerformanceEventType, schemas.FetchFilterType] = None,
                   key: str = None,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
