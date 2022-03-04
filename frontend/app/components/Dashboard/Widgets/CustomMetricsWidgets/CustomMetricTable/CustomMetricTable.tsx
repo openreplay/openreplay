@@ -46,7 +46,7 @@ function CustomMetriTable(props: Props) {
     }
     return (
         <div className="" style={{ height: '240px'}}>
-           <NoContent show={data.values.length === 0} size="small">
+           <NoContent show={data.values && data.values.length === 0} size="small">
                 <Table
                     small
                     cols={ cols }
