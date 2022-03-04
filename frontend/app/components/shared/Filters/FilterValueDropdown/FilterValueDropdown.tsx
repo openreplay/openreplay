@@ -16,31 +16,36 @@ interface Props {
   showOrButton?: boolean;
   onRemoveValue?: () => void;
   onAddValue?: () => void;
+  isMultilple?: boolean;
 }
 function FilterValueDropdown(props: Props) {
-  const { filter, multiple = false, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
+  const { filter, multiple = false, isMultilple = true, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
   // const options = []
 
   return (
-    <div className={stl.wrapper}>      
-      <Dropdown
-        search={search}
-        className={ cn(stl.operatorDropdown, className, "filterDropdown") }
-        options={ options }
-        name="issue_type"
-        value={ value }
-        onChange={ onChange }
-        placeholder="Select"
-        fluid
-        icon={ <Icon className="absolute right-0 mr-2" name="chevron-down" size="12" /> }
-      />
-      <div
-        className={stl.right}
-        // onClick={showOrButton ? onRemoveValue : onAddValue}
-      >
-        { showCloseButton && <div onClick={props.onRemoveValue}><Icon name="close" size="12" /></div> }
-        { showOrButton && <div onClick={props.onAddValue} className="color-teal"><span className="px-1">or</span></div> }
+    <div className="relative flex items-center w-full">
+      <div className={stl.wrapper}>      
+        <Dropdown
+          search={search}
+          className={ cn(stl.operatorDropdown, className, "filterDropdown") }
+          options={ options }
+          name="issue_type"
+          value={ value }
+          onChange={ onChange }
+          placeholder="Select"
+          fluid
+          icon={ <Icon className="absolute right-0 mr-2" name="chevron-down" size="12" /> }
+        />
+        <div
+          className={stl.right}
+          // onClick={showOrButton ? onRemoveValue : onAddValue}
+        >
+          { showCloseButton && <div onClick={props.onRemoveValue}><Icon name="close" size="12" /></div> }
+          { showOrButton && <div onClick={props.onAddValue} className="color-teal"><span className="px-1">or</span></div> }
+        </div>
       </div>
+
+      { !showOrButton && isMultilple && <div className="ml-3">or</div> }
     </div>
   );
 }

@@ -107,14 +107,15 @@ export const checkFilterValue = (value) => {
   return Array.isArray(value) ? (value.length === 0 ? [""] : value) : [value];
 }
 
-export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent }) => ({
+export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent, subFilters }) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
   operator,
   source: category === FilterCategory.METADATA ? key : source,
   sourceOperator,
-  isEvent
+  isEvent,
+  filters: subFilters ? subFilters.map(filterMap) : [],
 });
 
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {

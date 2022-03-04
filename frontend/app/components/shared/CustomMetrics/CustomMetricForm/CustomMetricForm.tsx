@@ -181,7 +181,7 @@ function CustomMetricForm(props: Props) {
                 onRemoveSeries={() => removeSeries(index)}
                 canDelete={metric.series.size > 1}
                 emptyMessage={isTable ?
-                    'Filter table data by user environment and metadata attributes. Use add step button below to filter.' :
+                    'Filter data using any event or attribute. Use Add Step button below to do so.' :
                     'Add user event or filter to define the series by clicking Add Step.'
                   }
               />

@@ -17,7 +17,7 @@ function CustomMetricPieChart(props: Props) {
     const { metric, data = { values: [] }, onClick = () => null } = props;
 
     const onClickHandler = (event) => {
-        if (event) {
+        if (event && !event.payload.group) {
             const filters = Array<any>();
             let filter = { ...filtersMap[metric.metricOf] }
             filter.value = [event.payload.name]
@@ -91,6 +91,8 @@ function CustomMetricPieChart(props: Props) {
                               let x = cx + radius * Math.cos(-midAngle * RADIAN);
                               let y = cy + radius * Math.sin(-midAngle * RADIAN);
                               const percentage = (value / data.values.reduce((a, b) => a + b.sessionCount, 0)) * 100;
+                              let name = data.values[index].name || 'Unidentified';
+                              name = name.length > 20 ? name.substring(0, 20) + '...' : name; 
                               if (percentage<3){
                                   return null;
                               }
@@ -105,7 +107,7 @@ function CustomMetricPieChart(props: Props) {
                                       dominantBaseline="central"
                                       fill='#666'
                                   >
-                                      {data.values[index].name} - ({value})
+                                      {name || 'Unidentified'} {value}
                                   </text>
                               );
                           }}

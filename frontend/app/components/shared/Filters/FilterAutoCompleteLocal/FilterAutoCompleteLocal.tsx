@@ -13,6 +13,8 @@ interface Props {
   onSelect: (e, item) => void;
   value: any;
   icon?: string;
+  type?: string;
+  isMultilple?: boolean;
 }
 
 function FilterAutoCompleteLocal(props: Props) {
@@ -24,6 +26,8 @@ function FilterAutoCompleteLocal(props: Props) {
       onAddValue = () => null,
       value = '',
       icon = null,
+      type = "text",
+      isMultilple = true,
   } = props;
   const [showModal, setShowModal] = useState(true)
   const [query, setQuery] = useState(value);
@@ -59,7 +63,7 @@ function FilterAutoCompleteLocal(props: Props) {
           onFocus={ () => setShowModal(true)}
           value={ query }
           autoFocus={ true }
-          type="text"
+          type={ type }
           placeholder={ placeholder }
           onKeyDown={handleKeyDown}
         />
@@ -71,7 +75,7 @@ function FilterAutoCompleteLocal(props: Props) {
         </div>
       </div>
 
-      { !showOrButton && <div className="ml-3">or</div> }
+      { !showOrButton && isMultilple && <div className="ml-3">or</div> }
     </div>
   );
 }

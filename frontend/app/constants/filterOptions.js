@@ -61,6 +61,15 @@ export const metricTypes = [
   { text: 'Table', value: 'table' },
 ];
 
+export const tableColumnName = {
+    [FilterKey.USERID]: 'User',
+    [FilterKey.ISSUE]: 'Issue',
+    [FilterKey.USER_BROWSER]: 'Browser',
+    [FilterKey.USER_DEVICE]: 'Device',
+    [FilterKey.USER_COUNTRY]: 'Country',
+    [FilterKey.LOCATION]: 'URL',
+}
+
 export const metricOf = [
   { text: 'Session Count', value: 'sessionCount', type: 'timeseries' },
   { text: 'Users', value: FilterKey.USERID, type: 'table' },
@@ -69,6 +78,18 @@ export const metricOf = [
   { text: 'Device', value: FilterKey.USER_DEVICE, type: 'table' },
   { text: 'Country', value: FilterKey.USER_COUNTRY, type: 'table' },
   { text: 'URL', value: FilterKey.LOCATION, type: 'table' },
+]
+
+export const methodOptions = [
+  { text: 'GET', value: 'GET' },
+  { text: 'POST', value: 'POST' },
+  { text: 'PUT', value: 'PUT' },
+  { text: 'DELETE', value: 'DELETE' },
+  { text: 'PATCH', value: 'PATCH' },
+  { text: 'HEAD', value: 'HEAD' },
+  { text: 'OPTIONS', value: 'OPTIONS' },
+  { text: 'TRACE', value: 'TRACE' },
+  { text: 'CONNECT', value: 'CONNECT' },  
 ]
 
 export const issueOptions = [
@@ -97,4 +118,5 @@ export default {
   metricTypes,
   metricOf,
   issueOptions,
+  methodOptions,
 }
