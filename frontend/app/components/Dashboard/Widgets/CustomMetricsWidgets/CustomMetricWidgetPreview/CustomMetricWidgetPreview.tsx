@@ -94,39 +94,45 @@ function CustomMetricWidget(props: Props) {
 
   return (
     <div className="mb-10">
-      <div className="flex items-center mb-4">
+      <div className="flex items-center">
         <div className="mr-auto font-medium">Preview</div>
         <div className="flex items-center">
           {isTimeSeries && (
-            <SegmentSelection
-              name="viewType"
-              className="my-3"
-              primary
-              icons={true}
-              onSelect={ chagneViewType }
-              value={{ value: metric.viewType }}
-              list={ [
-                { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
-                { value: 'progress', name: 'Progress', icon: 'hash' },
-              ]}
-            />
+            <>
+              <span className="mr-1 color-gray-medium">Visualization</span>
+              <SegmentSelection
+                name="viewType"
+                className="my-3"
+                primary
+                icons={true}
+                onSelect={ chagneViewType }
+                value={{ value: metric.viewType }}
+                list={ [
+                  { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
+                  { value: 'progress', name: 'Progress', icon: 'hash' },
+                ]}
+              />
+            </>
           )}
 
           {isTable && (
-            <SegmentSelection
-              name="viewType"
-              className="my-3"
-              primary={true}
-              icons={true}
-              onSelect={ chagneViewType }
-              value={{ value: metric.viewType }}
-              list={[
-                { value: 'table', name: 'Table', icon: 'table' },
-                { value: 'pieChart', name: 'Chart', icon: 'graph-up-arrow' },
-              ]}
-            />
+            <>
+              <span className="mr-1 color-gray-medium">Visualization</span>
+              <SegmentSelection
+                name="viewType"
+                className="my-3"
+                primary={true}
+                icons={true}
+                onSelect={ chagneViewType }
+                value={{ value: metric.viewType }}
+                list={[
+                  { value: 'table', name: 'Table', icon: 'table' },
+                  { value: 'pieChart', name: 'Chart', icon: 'pie-chart-fill' },
+                ]}
+              />
+            </>
           )}
-          <div className="mx-2" />
+          <div className="mx-4" />
           <span className="mr-1 color-gray-medium">Time Range</span>
           <DateRange
             rangeValue={metric.rangeName}

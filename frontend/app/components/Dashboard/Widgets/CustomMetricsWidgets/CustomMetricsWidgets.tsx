@@ -16,6 +16,7 @@ interface Props {
 function CustomMetricsWidgets(props: Props) {
   const { list } = props;
   const [activeMetricId, setActiveMetricId] = useState(null);
+  const activeList = list.filter(item => item.active);
 
   useEffect(() => {
     props.fetchList()
@@ -23,24 +24,32 @@ function CustomMetricsWidgets(props: Props) {
 
   return (
     <>
-      {list.map((item: any) => (
-        <LazyLoad>
-          <CustomMetricWidget
-            key={item.metricId}
-            metric={item}
-            onClickEdit={props.onClickEdit}
-            onAlertClick={(e) => {
-              setActiveMetricId(item.metricId)
-              props.initAlert({ query: { left: item.series.first().seriesId }})
-            }}
-          />
-        </LazyLoad>
-      ))}
+      <div className="gap-4 grid grid-cols-2">
+        {activeList.map((item: any) => (
+          <LazyLoad>
+            <CustomMetricWidget
+              key={item.metricId}
+              metric={item}
+              onClickEdit={props.onClickEdit}
+              onAlertClick={(e) => {
+                setActiveMetricId(item.metricId)
+                props.initAlert({ query: { left: item.series.first().seriesId }})
+              }}
+            />
+          </LazyLoad>
+        ))}
+      </div>
 
       {list.size === 0 && (
         <div className="flex items-center py-2">
-          <div className="mr-2">Be proactive by monitoring the metrics you care about the most.</div>
+          <div className="mr-2 color-gray-medium">Be proactive by monitoring the metrics you care about the most.</div>
           <CustomMetrics />
+        </div>
+      )}
+
+      {list.size > 0 && activeList && activeList.size === 0 && (
+        <div className="flex items-center py-2">
+          <div className="mr-2 color-gray-medium">It's blank here, add a metric to this section.</div>
         </div>
       )}
 
@@ -54,5 +63,5 @@ function CustomMetricsWidgets(props: Props) {
 }
 
 export default connect(state => ({
-  list: state.getIn(['customMetrics', 'list']).filter(item => item.active),
+  list: state.getIn(['customMetrics', 'list']),
 }), { fetchList, initAlert })(CustomMetricsWidgets);
