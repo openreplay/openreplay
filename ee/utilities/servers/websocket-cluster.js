@@ -47,9 +47,14 @@ const socketsList = async function (req, res) {
             liveSessions[projectKey].push(sessionId);
         }
     }
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions}));
+    let result = {"data": liveSessions};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
 }
 wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
 
@@ -64,9 +69,14 @@ const socketsListByProject = async function (req, res) {
             liveSessions[projectKey].push(sessionId);
         }
     }
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions[req.params.projectKey] || []}));
+    let result = {"data": liveSessions[req.params.projectKey] || []};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
 }
 wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, socketsListByProject);
 
@@ -87,10 +97,14 @@ const socketsLive = async function (req, res) {
             liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey]);
         }
     }
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions}));
+    let result = {"data": liveSessions};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
 }
 wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
 
@@ -111,9 +125,14 @@ const socketsLiveByProject = async function (req, res) {
             liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey]);
         }
     }
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions[req.params.projectKey] || []}));
+    let result = {"data": liveSessions[req.params.projectKey] || []};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
 }
 wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, socketsLiveByProject);
 
