@@ -2,11 +2,12 @@ BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.5.X'
+SELECT 'v1.5.3-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 UPDATE metrics
 SET is_public= TRUE;
+
 
 DO
 $$
@@ -49,6 +50,7 @@ ALTER TABLE metrics
         metric_value  text[]           NOT NULL DEFAULT '{}'::text[],
     ADD COLUMN IF NOT EXISTS
         metric_format text;
+
 
 DO
 $$
