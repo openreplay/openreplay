@@ -59,7 +59,7 @@ const socketsList = async function (req, res) {
 wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
 
 const socketsListByProject = async function (req, res) {
-    if (process.env.uws !== "true") {
+    if (process.env.uws === "true") {
         req.params = {projectKey: req.getParameter(0)};
     }
     debug && console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
@@ -112,7 +112,7 @@ const socketsLive = async function (req, res) {
 wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
 
 const socketsLiveByProject = async function (req, res) {
-    if (process.env.uws !== "true") {
+    if (process.env.uws === "true") {
         req.params = {projectKey: req.getParameter(0)};
     }
     debug && console.log(`[WS]looking for available LIVE sessions for ${req.params.projectKey}`);
