@@ -3,16 +3,36 @@ import { ResponsiveContainer, Tooltip } from 'recharts';
 import { PieChart, Pie, Cell } from 'recharts';
 import { Styles } from '../../common';
 import { NoContent } from 'UI';
+import { filtersMap } from 'Types/filter/newFilter';
 interface Props {
+    metric: any,
     data: any;
     params: any;
     // seriesMap: any;
     colors: any;
-    onClick?: (event, index) => void;
+    onClick?: (filters) => void;
 }
 
 function CustomMetricPieChart(props: Props) {
-    const { data = { values: [] }, params, colors, onClick = () => null } = props;
+    const { metric, data = { values: [] }, onClick = () => null } = props;
+
+    const onClickHandler = (event) => {
+        if (event) {
+            const filters = Array<any>();
+            let filter = { ...filtersMap[metric.metricOf] }
+            filter.value = [event.payload.name]
+            filter.type = filter.key
+            delete filter.key
+            delete filter.operatorOptions
+            delete filter.category
+            delete filter.icon
+            delete filter.label
+            delete filter.options
+
+            filters.push(filter);
+            onClick(filters);
+        }
+    }
     return (
         <div>
           <NoContent size="small" show={data.values.length === 0} >
@@ -29,6 +49,7 @@ function CustomMetricPieChart(props: Props) {
                         outerRadius={70}
                         // fill={colors[0]}
                         activeIndex={1}
+                        onClick={onClickHandler}
                         labelLine={({
                           cx,
                           cy,

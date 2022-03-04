@@ -82,11 +82,8 @@ function CustomMetricWidget(props: Props) {
       period: period,
       ...period.toTimestamps(),
       filters,
-      // timestamp: payload.timestamp,
-      // index,
     }
     props.setActiveWidget(activeWidget);
-    // props.updateActiveState(metric.metricId, data); 
   }
 
   const clickHandler = (event, index) => {
@@ -143,10 +140,11 @@ function CustomMetricWidget(props: Props) {
 
                 {metric.viewType === 'pieChart' && (
                   <CustomMetricPieChart
+                    metric={metric}
                     data={ data[0] }
                     params={ params }
                     colors={ colors }
-                    onClick={ clickHandler }
+                    onClick={ clickHandlerTable }
                   />
                 )}
 
