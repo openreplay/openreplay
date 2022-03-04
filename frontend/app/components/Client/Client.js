@@ -3,7 +3,6 @@ import { withRouter } from 'react-router-dom';
 import { Switch, Route, Redirect } from 'react-router';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { fetchList as fetchMemberList } from 'Duck/member';
-import { fetchList as fetchSiteList } from 'Duck/site';
 
 import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
@@ -21,7 +20,6 @@ import Roles from './Roles';
   appearance: state.getIn([ 'user', 'account', 'appearance' ]),
 }), {
   fetchMemberList,
-  fetchSiteList,
 })
 @withRouter
 export default class Client extends React.PureComponent {

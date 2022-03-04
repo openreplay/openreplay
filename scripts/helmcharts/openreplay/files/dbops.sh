@@ -21,6 +21,11 @@ function migration() {
 
     if [[ $FORCE_MIGRATION == "true" ]]; then
         echo "Forcing db migration from $PREVIOUS_APP_VERSION to $CHART_APP_VERSION"
+    # This is a special case where we force upgrade frontend
+    elif [[ $UPGRADE_FRONTENT == "true" ]]; then
+        echo "[WARN] Skipping regular upgrdades. Forcing frontend upgrade."
+        /bin/bash minio.sh migrate
+        exit 0
     elif [[ $PREVIOUS_APP_VERSION == $CHART_APP_VERSION ]]; then
         echo "No application version change. Not upgrading."
         exit 0

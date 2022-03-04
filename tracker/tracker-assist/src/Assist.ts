@@ -14,10 +14,14 @@ import type { Options as ConfirmOptions } from './ConfirmWindow.js';
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;
 
+type BehinEndCallback = () => ((()=>{}) | void)
+
 export interface Options {
-  onAgentConnect: () => ((()=>{}) | void),
-  onCallStart: () => ((()=>{}) | void),
+  onAgentConnect: BehinEndCallback,
+  onCallStart: BehinEndCallback,
+  onRemoteControlStart: BehinEndCallback,
   session_calling_peer_key: string,
+  session_control_peer_key: string,
   callConfirm: ConfirmOptions,
   controlConfirm: ConfirmOptions,
 
@@ -58,9 +62,11 @@ export default class Assist {
   ) {
     this.options = Object.assign({ 
         session_calling_peer_key: "__openreplay_calling_peer",
+        session_control_peer_key: "__openreplay_control_peer",
         config: null,
         onCallStart: ()=>{},
         onAgentConnect: ()=>{},
+        onRemoteControlStart: ()=>{},
         callConfirm: {},
         controlConfirm: {}, // TODO: clear options passing/merging/overriting
       },
@@ -103,7 +109,8 @@ export default class Assist {
         "peerId": peerID,
         "identity": "session",
         "sessionInfo": JSON.stringify(this.app.getSessionInfo()),
-      }
+      },
+      transports: ["websocket"],
     })
     socket.onAny((...args) => app.debug.log("Socket:", ...args))
 
@@ -125,37 +132,57 @@ export default class Assist {
       this.assistDemandedRestart = true
       this.app.stop();
       this.app.start().then(() => { this.assistDemandedRestart = false })
+      const storedControllingAgent = sessionStorage.getItem(this.options.session_control_peer_key)
+      if (storedControllingAgent !== null && ids.includes(storedControllingAgent)) {
+        grantControl(storedControllingAgent)
+        socket.emit("control_granted", storedControllingAgent)
+      } else {
+        sessionStorage.removeItem(this.options.session_control_peer_key)
+      }
     })
 
     let confirmRC: ConfirmWindow | null = null
     const mouse = new Mouse()     // TODO: lazy init
     let controllingAgent: string | null = null
-    function releaseControl() {
-      confirmRC?.remove()
-      mouse.remove()
-      controllingAgent = null
-    }
-    socket.on("request_control", (id: string) => {
+    const requestControl = (id: string) => {
       if (controllingAgent !== null) { 
         socket.emit("control_rejected", id)
         return
       }
-      controllingAgent = id
+      controllingAgent = id // TODO: more explicit pending state
       confirmRC = new ConfirmWindow(controlConfirmDefault(this.options.controlConfirm))
       confirmRC.mount().then(allowed => {
-        if (allowed) { // TODO: per agent id
-          mouse.mount()
+        if (allowed) {
+          grantControl(id)
           socket.emit("control_granted", id)
         } else {
           releaseControl()
           socket.emit("control_rejected", id)
         }
       }).catch()
-    })
+    }
+    let onRemoteControlStop: (()=>void) | null = null
+    const grantControl = (id: string) => {
+      controllingAgent = id
+      mouse.mount()
+      onRemoteControlStop = this.options.onRemoteControlStart() || null
+      sessionStorage.setItem(this.options.session_control_peer_key, id)
+    }
+    const releaseControl = () => {
+      typeof onRemoteControlStop === 'function' && onRemoteControlStop()
+      onRemoteControlStop = null
+      confirmRC?.remove()
+      mouse.remove()
+      controllingAgent = null
+      sessionStorage.removeItem(this.options.session_control_peer_key)
+    }
+    socket.on("request_control", requestControl)
     socket.on("release_control", (id: string) => {
       if (controllingAgent !== id) { return }
       releaseControl()
     })
+
+
     socket.on("scroll", (id, d) => { id === controllingAgent && mouse.scroll(d) })
     socket.on("click", (id, xy) => { id === controllingAgent && mouse.click(xy) })
     socket.on("move", (id, xy) => { id === controllingAgent && mouse.move(xy) })

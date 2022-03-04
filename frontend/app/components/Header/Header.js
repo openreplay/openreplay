@@ -66,10 +66,6 @@ const Header = (props) => {
     }
   }, [showTrackingModal])
 
-  useEffect(() => {
-    fetchSiteList()
-  }, [])
-
   return (
     <div className={ cn(styles.header, showTrackingModal ? styles.placeOnTop : '') }>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>

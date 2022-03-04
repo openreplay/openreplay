@@ -1,4 +1,4 @@
-import { fromJS, List, Map, Set } from 'immutable';
+import { List, Map, Set } from 'immutable';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import Filter from 'Types/filter';
 import SavedFilter from 'Types/filter/savedFilter';
@@ -8,15 +8,6 @@ import withRequestState, { RequestTypes } from './requestStateCreator';
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { fetchListType, fetchType, saveType, editType, initType, removeType } from './funcTools/crud/types';
-import logger from 'App/logger';
-
-import { newFiltersList } from 'Types/filter'
-import NewFilter, { filtersMap } from 'Types/filter/newFilter';
-   
-
-// for (var i = 0; i < newFiltersList.length; i++) {
-//   filterOptions[newFiltersList[i].category] = newFiltersList.filter(filter => filter.category === newFiltersList[i].category)
-// }
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -44,10 +35,7 @@ const ADD_ATTRIBUTE = 'filters/ADD_ATTRIBUTE';
 const EDIT_ATTRIBUTE = 'filters/EDIT_ATTRIBUTE';
 const REMOVE_ATTRIBUTE = 'filters/REMOVE_ATTRIBUTE';
 const SET_ACTIVE_FLOW = 'filters/SET_ACTIVE_FLOW';
-
 const UPDATE_VALUE = 'filters/UPDATE_VALUE';
-
-const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
 
 const initialState = Map({
   instance: Filter(),

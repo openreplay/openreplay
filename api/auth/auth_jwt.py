@@ -23,9 +23,26 @@ class JWTAuth(HTTPBearer):
                     or jwt_payload.get("iat") is None or jwt_payload.get("aud") is None \
                     or not users.auth_exists(user_id=jwt_payload["userId"], tenant_id=jwt_payload["tenantId"],
                                              jwt_iat=jwt_payload["iat"], jwt_aud=jwt_payload["aud"]):
+                print("JWTAuth: Token issue")
+                if jwt_payload is not None:
+                    print(jwt_payload)
+                    print(f"JWTAuth: user_id={jwt_payload.get('userId')} tenant_id={jwt_payload.get('tenantId')}")
+                if jwt_payload is None:
+                    print("JWTAuth: jwt_payload is None")
+                    print(credentials.scheme + " " + credentials.credentials)
+                if jwt_payload is not None and jwt_payload.get("iat") is None:
+                    print("JWTAuth: iat is None")
+                if jwt_payload is not None and jwt_payload.get("aud") is None:
+                    print("JWTAuth: aud is None")
+                if jwt_payload is not None and \
+                        not users.auth_exists(user_id=jwt_payload["userId"], tenant_id=jwt_payload["tenantId"],
+                                              jwt_iat=jwt_payload["iat"], jwt_aud=jwt_payload["aud"]):
+                    print("JWTAuth: not users.auth_exists")
+
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token or expired token.")
             user = users.get(user_id=jwt_payload["userId"], tenant_id=jwt_payload["tenantId"])
             if user is None:
+                print("JWTAuth: User not found.")
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found.")
             jwt_payload["authorizer_identity"] = "jwt"
             print(jwt_payload)
@@ -36,4 +53,5 @@ class JWTAuth(HTTPBearer):
             return request.state.currentContext
 
         else:
+            print("JWTAuth: Invalid authorization code.")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid authorization code.")

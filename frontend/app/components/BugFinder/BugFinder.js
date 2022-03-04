@@ -4,14 +4,11 @@ import withPageTitle from 'HOCs/withPageTitle';
 import {
   fetchFavoriteList as fetchFavoriteSessionList
 } from 'Duck/sessions';
-import { countries } from 'App/constants';
 import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
-import { defaultFilters, preloadedFilters } from 'Types/filter';
 import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
 import stl from './bugFinder.css';
-import { fetchList as fetchSiteList } from 'Duck/site';
 import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchSources } from 'Duck/customField';
@@ -68,7 +65,6 @@ const allowedQueryKeys = [
   fetchSources,
   clearEvents,
   setActiveTab,
-  fetchSiteList,
   fetchFunnelsList,
   resetFunnel,
   resetFunnelFilters,
@@ -81,7 +77,6 @@ export default class BugFinder extends React.PureComponent {
   state = {showRehydratePanel: false}
   constructor(props) {
     super(props);
-    // props.fetchFavoriteSessionList();
 
     // TODO should cache the response
     // props.fetchSources().then(() => {
@@ -114,29 +109,6 @@ export default class BugFinder extends React.PureComponent {
   toggleRehydratePanel = () => {
     this.setState({ showRehydratePanel: !this.state.showRehydratePanel })
   }
-
-  // fetchPreloadedFilters = () => {
-  //   this.props.fetchFilterVariables('filterValues').then(function() {
-  //     const { filterValues } = this.props;
-  //     const keys = [
-  //       {key: KEYS.USER_OS, label: 'OS'},
-  //       {key: KEYS.USER_BROWSER, label: 'Browser'},
-  //       {key: KEYS.USER_DEVICE, label: 'Device'},
-  //       {key: KEYS.REFERRER, label: 'Referrer'},
-  //       {key: KEYS.USER_COUNTRY, label: 'Country'},        
-  //     ]
-  //     if (filterValues && filterValues.size != 0) {
-  //       keys.forEach(({key, label}) => {
-  //         const _keyFilters = filterValues.get(key)
-  //         if (key === KEYS.USER_COUNTRY) {
-  //           preloadedFilters.push(_keyFilters.map(item => ({label, type: key, key, value: item, actualValue: countries[item], isFilter: true})));
-  //         } else {
-  //           preloadedFilters.push(_keyFilters.map(item => ({label, type: key, key, value: item, isFilter: true})));
-  //         }
-  //       })
-  //     }
-  //   }.bind(this));
-  // }
 
   setActiveTab = tab => {
     this.props.setActiveTab(tab);

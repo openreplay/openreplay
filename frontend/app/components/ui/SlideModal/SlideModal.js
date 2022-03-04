@@ -1,12 +1,24 @@
 import styles from './slideModal.css';
 import cn from 'classnames';
 export default class SlideModal extends React.PureComponent {
-  componentDidMount() {
-    document.addEventListener('keydown', this.keyPressHandler);
-  }
+  // componentDidMount() {
+  //   document.addEventListener('keydown', this.keyPressHandler);
+  // }
 
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.keyPressHandler);
+  // componentWillUnmount() {
+  //   document.removeEventListener('keydown', this.keyPressHandler);
+  // }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.isDisplayed !== this.props.isDisplayed) {
+      if (this.props.isDisplayed) {
+        document.addEventListener('keydown', this.keyPressHandler);
+        document.body.classList.add('no-scroll');
+      } else {
+        document.removeEventListener('keydown', this.keyPressHandler);
+        document.body.classList.remove('no-scroll');
+      }
+    }
   }
 
   keyPressHandler = (e) => {

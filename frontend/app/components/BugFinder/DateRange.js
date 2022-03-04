@@ -10,7 +10,7 @@ import DateRangeDropdown from 'Shared/DateRangeDropdown';
 })
 export default class DateRange extends React.PureComponent {
   onDateChange = (e) => {
-    this.props.fetchFunnelsList(e.rangeValue)
+    // this.props.fetchFunnelsList(e.rangeValue)
     this.props.applyFilter(e)
   }
   render() {

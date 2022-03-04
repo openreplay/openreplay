@@ -49,7 +49,7 @@ export default class extends React.PureComponent {
 					content={ open && <SessionList similarSessions={ similarSessions } loading={ loading } /> }
           onClose={ open ? this.switchOpen : () => null }
         />
-				<div className={ cn("flex justify-between items-center p-3", stl.field) } >
+				<div className={ cn("flex justify-between items-center p-3 capitalize", stl.field) } >
 	        <div>
 						<div className={ stl.key }>{ item.key }</div>
 						<TextEllipsis
