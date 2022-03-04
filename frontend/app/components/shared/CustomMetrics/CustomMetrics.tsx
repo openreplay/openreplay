@@ -7,9 +7,6 @@ interface Props {
   init: (instance?, setDefault?) => void;
 }
 function CustomMetrics(props: Props) {
-  useEffect(() => { // TODO remove this block
-    props.init()
-  }, [])
   return (
     <div className="self-start">
       <IconButton plain outline icon="plus" label="CREATE METRIC" onClick={() => props.init()} />

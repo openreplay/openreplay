@@ -18,7 +18,7 @@ export default class Table extends React.PureComponent {
       small = false,
       compare = false,
       maxHeight = 200,
-      onRowClick = () => {},
+      onRowClick = null,
     } = this.props;
     const { showAll } = this.state;
     
@@ -35,9 +35,9 @@ export default class Table extends React.PureComponent {
         <div className={ cn(stl.content, "thin-scrollbar") } style={{ maxHeight: maxHeight + 'px'}}>
           { rows.take(showAll ? 10 : (small ? 3 : 5)).map(row => (
             <div
-              className={ cn(rowClass, stl.row, { [stl.small]: small}) }
+              className={ cn(rowClass, stl.row, { [stl.small]: small, 'cursor-pointer' : !!onRowClick}) }
               key={ row.key }
-              onClick={(e) => onRowClick(e, row)}
+              onClick={onRowClick ? (e) => onRowClick(e, row) : () => null}
             >
               { cols.map(({ cellClass = '', className = '', Component, key, toText = t => t, width }) => (
                 <div className={ cn(stl.cell, cellClass) } style={{ width }} key={ key }> { Component
