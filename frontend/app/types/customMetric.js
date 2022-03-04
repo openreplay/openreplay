@@ -27,7 +27,11 @@ export const FilterSeries = Record({
 export default Record({
   metricId: undefined,
   name: 'Series',
-  viewType: 'lineChart',
+  metricType: 'table',
+  metricOf: 'USERID',
+  metricValue: ['sessionCount'],
+  metricFormat: 'sessionCount',
+  viewType: 'pieChart',
   series: List(),
   isPublic: true,
   startDate: '',

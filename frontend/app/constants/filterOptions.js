@@ -54,6 +54,36 @@ export const customOperators = [
   { key: '>=', text: '>=', value: '>=' },
 ]
 
+export const metricTypes = [
+  { text: 'Timeseries', value: 'timeseries' },
+  { text: 'Table', value: 'table' },
+];
+
+export const metricOf = [
+  { text: 'Session Count', value: 'sessionCount', key: 'timeseries' },
+  { text: 'Users', value: 'USERID', key: 'table' },
+  { text: 'Issues', value: 'ISSUES', key: 'table' },
+  { text: 'Browser', value: 'USERBROWSER', key: 'table' },
+  { text: 'Device', value: 'USERDEVICE', key: 'table' },
+  { text: 'Country', value: 'USERCOUNTRY', key: 'table' },
+  { text: 'URL', value: 'VISITED_URL', key: 'table' },
+]
+
+export const issueOptions = [
+  { text: 'Click Rage', value: 'click_rage' },
+  { text: 'Dead Click', value: 'dead_click' },
+  { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
+  { text: 'Bad Request', value: 'bad_request' },
+  { text: 'Missing Resource', value: 'missing_resource' },
+  { text: 'Memory', value: 'memory' },
+  { text: 'CPU', value: 'cpu' },
+  { text: 'Slow Resource', value: 'slow_resource' },
+  { text: 'Slow Page Load', value: 'slow_page_load' },
+  { text: 'Crash', value: 'crash' },
+  { text: 'Custom', value: 'custom' },
+  { text: 'JS Exception', value: 'js_exception' },
+]
+
 export default {
   options,
   baseOperators,
@@ -62,4 +92,7 @@ export default {
   booleanOperators,
   customOperators,
   getOperatorsByKeys,
+  metricTypes,
+  metricOf,
+  issueOptions,
 }

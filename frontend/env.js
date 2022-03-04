@@ -13,7 +13,7 @@ const oss = {
 	ORIGIN: () => 'window.location.origin',
 	API_EDP: () => 'window.location.origin + "/api"',
 	ASSETS_HOST: () => 'window.location.origin + "/assets"',
-	VERSION: '1.5.1',
+	VERSION: '1.5.2',
 	SOURCEMAP: true,
 	MINIO_ENDPOINT: process.env.MINIO_ENDPOINT,
 	MINIO_PORT: process.env.MINIO_PORT,

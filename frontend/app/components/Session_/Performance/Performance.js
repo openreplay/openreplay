@@ -115,7 +115,7 @@ const HeapTooltip = ({ active, payload}) => {
 }
 
 const NodesCountTooltip = ({ active, payload} ) => {
-  if (!active || payload.length === 0) return null;
+  if (!active || !payload || payload.length === 0) return null;
   return (
     <div className={ stl.tooltipWrapper } >
       <p>

@@ -21,6 +21,10 @@ import Header from 'Components/Header/Header';
 import FunnelDetails from 'Components/Funnels/FunnelDetails';
 import FunnelIssueDetails from 'Components/Funnels/FunnelIssueDetails';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchList as fetchSiteList } from 'Duck/site';
+import { fetchList as fetchAnnouncements } from 'Duck/announcements';
+import { fetchList as fetchAlerts } from 'Duck/alerts';
+import { fetchWatchdogStatus } from 'Duck/watchdogs';
 
 import APIClient from './api_client';
 import * as routes from './routes';
@@ -80,7 +84,14 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     onboarding: state.getIn([ 'user', 'onboarding' ])
   };
 }, {
-  fetchUserInfo, fetchTenants, setSessionPath, fetchIntegrationVariables
+  fetchUserInfo,
+  fetchTenants,
+  setSessionPath,
+  fetchIntegrationVariables,
+  fetchSiteList,
+  fetchAnnouncements,
+  fetchAlerts,
+  fetchWatchdogStatus,
 })
 class Router extends React.Component {
   state = {
@@ -93,6 +104,14 @@ class Router extends React.Component {
         props.fetchUserInfo().then(() => {
           props.fetchIntegrationVariables() 
         }),
+        props.fetchSiteList().then(() => {
+          setTimeout(() => {
+            props.fetchAnnouncements();
+            props.fetchAlerts();
+            props.fetchWatchdogStatus();
+          }, 100);
+        }),
+        // props.fetchAnnouncements(),
       ])
       // .then(() => this.onLoginLogout());
     }

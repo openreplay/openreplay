@@ -22,9 +22,9 @@ function SessionsMenu(props) {
     }
   }
   
-  useEffect(() => {
-    fetchWatchdogStatus()
-  }, [])
+  // useEffect(() => {
+  //   fetchWatchdogStatus()
+  // }, [])
   
   const capturingAll = props.captureRate && props.captureRate.get('captureAll');
 

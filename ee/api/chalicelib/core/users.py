@@ -156,7 +156,7 @@ def update(tenant_id, user_id, changes):
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))""")
             else:
                 sub_query_users.append(f"{helper.key_to_snake_case(key)} = %({key})s")
-
+    changes["role_id"] = changes.get("roleId", changes.get("role_id"))
     with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
             cur.execute(
