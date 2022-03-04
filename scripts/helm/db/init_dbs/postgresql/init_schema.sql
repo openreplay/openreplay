@@ -631,14 +631,23 @@ $$
             CREATE INDEX issues_timestamp_idx ON events_common.issues (timestamp);
             CREATE INDEX issues_project_id_issue_id_idx ON public.issues (project_id, issue_id);
 
+            CREATE TYPE http_method AS ENUM ('GET','HEAD','POST','PUT','DELETE','CONNECT','OPTIONS','TRACE','PATCH');
             CREATE TABLE events_common.requests
             (
-                session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-                timestamp  bigint  NOT NULL,
-                seq_index  integer NOT NULL,
-                url        text    NOT NULL,
-                duration   integer NOT NULL,
-                success    boolean NOT NULL,
+                session_id    bigint      NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+                timestamp     bigint      NOT NULL,
+                seq_index     integer     NOT NULL,
+                url           text        NOT NULL,
+                duration      integer     NOT NULL,
+                success       boolean     NOT NULL,
+                request_body  text        NULL,
+                response_body text        NULL,
+                status_code   smallint    NULL,
+                method        http_method NULL,
+                schema        text        NULL,
+                host          text        NULL,
+                base_path     text        NULL,
+                query_string  text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX requests_url_idx ON events_common.requests (url);
@@ -653,6 +662,18 @@ $$
                                                                                                                   ELSE 0 END))
                                                                                     gin_trgm_ops);
             CREATE INDEX requests_timestamp_session_id_failed_idx ON events_common.requests (timestamp, session_id) WHERE success = FALSE;
+            CREATE INDEX requests_request_body_nn_idx ON events_common.requests (request_body) WHERE request_body IS NOT NULL;
+            CREATE INDEX requests_request_body_nn_gin_idx ON events_common.requests USING GIN (request_body gin_trgm_ops) WHERE request_body IS NOT NULL;
+            CREATE INDEX requests_response_body_nn_idx ON events_common.requests (response_body) WHERE response_body IS NOT NULL;
+            CREATE INDEX requests_response_body_nn_gin_idx ON events_common.requests USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
+            CREATE INDEX requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
+            CREATE INDEX requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
+            CREATE INDEX requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
+            CREATE INDEX requests_base_path_nn_idx ON events_common.requests (base_path) WHERE base_path IS NOT NULL;
+            CREATE INDEX requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
+            CREATE INDEX requests_query_string_nn_idx ON events_common.requests (query_string) WHERE query_string IS NOT NULL;
+            CREATE INDEX requests_query_string_nn_gin_idx ON events_common.requests USING GIN (query_string gin_trgm_ops) WHERE query_string IS NOT NULL;
+
 -- --- events.sql ---
             CREATE SCHEMA IF NOT EXISTS events;
 

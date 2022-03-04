@@ -994,7 +994,11 @@ $$
             CREATE INDEX IF NOT EXISTS errors_error_id_timestamp_session_id_idx ON events.errors (error_id, timestamp, session_id);
             CREATE INDEX IF NOT EXISTS errors_error_id_idx ON events.errors (error_id);
 
-
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'http_method') THEN
+                CREATE TYPE http_method AS ENUM ('GET','HEAD','POST','PUT','DELETE','CONNECT','OPTIONS','TRACE','PATCH');
+            END IF;
             CREATE TABLE IF NOT EXISTS events.graphql
             (
                 session_id bigint NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
@@ -1006,6 +1010,12 @@ $$
             CREATE INDEX IF NOT EXISTS graphql_name_idx ON events.graphql (name);
             CREATE INDEX IF NOT EXISTS graphql_name_gin_idx ON events.graphql USING GIN (name gin_trgm_ops);
             CREATE INDEX IF NOT EXISTS graphql_timestamp_idx ON events.graphql (timestamp);
+            CREATE INDEX IF NOT EXISTS graphql_request_body_nn_idx ON events.graphql (request_body) WHERE request_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS graphql_request_body_nn_gin_idx ON events.graphql USING GIN (request_body gin_trgm_ops) WHERE request_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS graphql_response_body_nn_idx ON events.graphql (response_body) WHERE response_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS graphql_response_body_nn_gin_idx ON events.graphql USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS graphql_status_code_nn_idx ON events.graphql (status_code) WHERE status_code IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS graphql_duration_nn_gt0_idx ON events.graphql (duration) WHERE duration IS NOT NULL AND duration > 0;
 
             CREATE TABLE IF NOT EXISTS events.state_actions
             (
@@ -1147,15 +1157,27 @@ $$
             CREATE INDEX IF NOT EXISTS issues_issue_id_timestamp_idx ON events_common.issues (issue_id, timestamp);
             CREATE INDEX IF NOT EXISTS issues_timestamp_idx ON events_common.issues (timestamp);
 
-
+            IF NOT EXISTS(SELECT *
+                          FROM pg_type typ
+                          WHERE typ.typname = 'http_method') THEN
+                CREATE TYPE http_method AS ENUM ('GET','HEAD','POST','PUT','DELETE','CONNECT','OPTIONS','TRACE','PATCH');
+            END IF;
             CREATE TABLE IF NOT EXISTS events_common.requests
             (
-                session_id bigint  NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
-                timestamp  bigint  NOT NULL,
-                seq_index  integer NOT NULL,
-                url        text    NOT NULL,
-                duration   integer NOT NULL,
-                success    boolean NOT NULL,
+                session_id    bigint      NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,
+                timestamp     bigint      NOT NULL,
+                seq_index     integer     NOT NULL,
+                url           text        NOT NULL,
+                duration      integer     NOT NULL,
+                success       boolean     NOT NULL,
+                request_body  text        NULL,
+                response_body text        NULL,
+                status_code   smallint    NULL,
+                method        http_method NULL,
+                schema        text        NULL,
+                host          text        NULL,
+                base_path     text        NULL,
+                query_string  text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX IF NOT EXISTS requests_url_idx ON events_common.requests (url);
@@ -1172,6 +1194,20 @@ $$
                                                                                                              ELSE 0 END))
                                                                                                   gin_trgm_ops);
             CREATE INDEX IF NOT EXISTS requests_timestamp_session_id_failed_idx ON events_common.requests (timestamp, session_id) WHERE success = FALSE;
+            CREATE INDEX IF NOT EXISTS requests_request_body_nn_idx ON events_common.requests (request_body) WHERE request_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_request_body_nn_gin_idx ON events_common.requests USING GIN (request_body gin_trgm_ops) WHERE request_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_response_body_nn_idx ON events_common.requests (response_body) WHERE response_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_response_body_nn_gin_idx ON events_common.requests USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
+
+            CREATE INDEX IF NOT EXISTS requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_base_path_nn_idx ON events_common.requests (base_path) WHERE base_path IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_query_string_nn_idx ON events_common.requests (query_string) WHERE query_string IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_query_string_nn_gin_idx ON events_common.requests USING GIN (query_string gin_trgm_ops) WHERE query_string IS NOT NULL;
+
+
         END IF;
     END;
 $$
