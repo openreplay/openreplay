@@ -1,24 +1,26 @@
 import React from 'react'
 import { Table } from '../../common';
 import { List } from 'immutable';
-import { FilterKey } from 'Types/filter/filterType';
 import { filtersMap } from 'Types/filter/newFilter';
 import { NoContent } from 'UI';
+import { tableColumnName } from 'App/constants/filterOptions';
 
-const cols = [
-    {
-      key: 'name',
-      title: 'Resource',
-      toText: name => name || 'Unidentified',
-      width: '70%',
-    },
-    {
-      key: 'sessionCount',
-      title: 'Sessions',
-      toText: sessions => sessions,
-      width: '30%',
-    },
-];
+const getColumns = (metric) => {
+    return [
+        {
+          key: 'name',
+          title: tableColumnName[metric.metricOf],
+          toText: name => name || 'Unidentified',
+          width: '70%',
+        },
+        {
+          key: 'sessionCount',
+          title: 'Sessions',
+          toText: sessions => sessions,
+          width: '30%',
+        },
+    ]
+}
 
 interface Props {
     metric?: any,
@@ -49,7 +51,7 @@ function CustomMetriTable(props: Props) {
            <NoContent show={data.values && data.values.length === 0} size="small">
                 <Table
                     small
-                    cols={ cols }
+                    cols={ getColumns(metric) }
                     rows={ rows }
                     rowClass="group"
                     onRowClick={ onClickHandler }

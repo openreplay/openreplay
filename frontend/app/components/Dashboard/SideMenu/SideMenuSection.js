@@ -33,9 +33,6 @@ function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 			<div className={stl.divider} />
 			<div className="my-3">		
 				<CustomMetrics />
-				<div className="color-gray-medium mt-2">
-					Be proactive by monitoring the metrics you care about the most.
-				</div>
 			</div>
 		</>
 	);
