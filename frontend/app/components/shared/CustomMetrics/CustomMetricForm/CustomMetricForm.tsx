@@ -168,7 +168,9 @@ function CustomMetricForm(props: Props) {
         </div>
 
         <div className="form-group">
-          <label className="font-medium">Chart Series</label>
+          <label className="font-medium">
+            {`${isTable ? 'Filter by' : 'Chart Series'}`}
+          </label>
           {metric.series && metric.series.size > 0 && metric.series.take(isTable ? 1 : metric.series.size).map((series: any, index: number) => (
             <div className="mb-2">
               <FilterSeries

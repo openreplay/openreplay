@@ -243,7 +243,7 @@ export default class Dashboard extends React.PureComponent {
                     </div>
                   }
                 >
-                  <div className={cn("gap-4 grid grid-cols-2")} ref={this.list[CUSTOM_METRICS]}>
+                  <div className={cn("")} ref={this.list[CUSTOM_METRICS]}>
                     <CustomMetricsWidgets onClickEdit={(e) => null}/>
                   </div>
                 </WidgetSection>
