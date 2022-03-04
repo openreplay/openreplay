@@ -19,6 +19,7 @@ function CustomMetriLineChart(props: Props) {
                 margin={Styles.chartMargins}
                 // syncId={ showSync ? "domainsErrors_4xx" : undefined }
                 onClick={onClick}
+                isAnimationActive={ false }
             >
                 <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
                 <XAxis

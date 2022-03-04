@@ -25,6 +25,10 @@ function CustomMetricForm(props: Props) {
   // const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
   const timeseriesOptions = metricOf.filter(i => i.key === 'timeseries');
   const tableOptions = metricOf.filter(i => i.key === 'table');
+  const isTable = metric.metricType === 'table';
+  const isTimeSeries = metric.metricType === 'timeseries';
+  const _issueOptions = [{ text: 'All', value: '' }].concat(issueOptions);
+
 
   const addSeries = () => {
     props.addSeries();
@@ -44,7 +48,7 @@ function CustomMetricForm(props: Props) {
 
     if (name === 'metricOf') {
       if (value === 'ISSUES') {
-        props.editMetric({ metricValue: [issueOptions[0].value] }, false);
+        props.editMetric({ metricValue: [''] }, false);
       }
     }
 
@@ -140,7 +144,7 @@ function CustomMetricForm(props: Props) {
                 <span className="mx-3">issue type</span>
                 <DropdownPlain
                   name="metricValue"
-                  options={issueOptions}
+                  options={_issueOptions}
                   value={ metric.metricValue[0] }
                   onChange={ writeOption }
                 />
@@ -165,9 +169,10 @@ function CustomMetricForm(props: Props) {
 
         <div className="form-group">
           <label className="font-medium">Chart Series</label>
-          {metric.series && metric.series.size > 0 && metric.series.map((series: any, index: number) => (
+          {metric.series && metric.series.size > 0 && metric.series.take(isTable ? 1 : metric.series.size).map((series: any, index: number) => (
             <div className="mb-2">
               <FilterSeries
+                hideHeader={ isTable }
                 seriesIndex={index}
                 series={series}
                 onRemoveSeries={() => removeSeries(index)}
@@ -177,9 +182,11 @@ function CustomMetricForm(props: Props) {
           ))}
         </div>
 
-        <div className={cn("flex justify-end -my-4", {'disabled' : metric.series.size > 2})}>
-          <IconButton hover type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
-        </div>
+        { isTimeSeries && (  
+          <div className={cn("flex justify-end -my-4", {'disabled' : metric.series.size > 2})}>
+            <IconButton hover type="button" onClick={addSeries} primaryText label="SERIES" icon="plus" />
+          </div>
+        )}
 
         <div className="my-8" />
 

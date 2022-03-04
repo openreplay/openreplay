@@ -12,6 +12,7 @@ import { setShowAlerts } from 'Duck/dashboard';
 import CustomMetriLineChart from '../CustomMetriLineChart';
 import CustomMetricPieChart from '../CustomMetricPieChart';
 import CustomMetricPercentage from '../CustomMetricPercentage';
+import CustomMetricTable from '../CustomMetricTable';
 
 const customParams = rangeName => {
   const params = { density: 70 }
@@ -101,7 +102,7 @@ function CustomMetricWidget(props: Props) {
 
   return (
     <div className={stl.wrapper}>
-      <div className="flex items-center mb-10 p-2">
+      <div className="flex items-center p-2">
         <div className="font-medium">{metric.name}</div>
         <div className="ml-auto flex items-center">
           <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} />
@@ -109,7 +110,7 @@ function CustomMetricWidget(props: Props) {
           <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={() => updateActiveState(metric.metricId, false)} />
         </div>
       </div>
-      <div>
+      <div className="px-3">
         <Loader loading={ loading } size="small">
           <NoContent
             size="small"
@@ -129,7 +130,7 @@ function CustomMetricWidget(props: Props) {
 
                 {metric.viewType === 'pieChart' && (
                   <CustomMetricPieChart
-                    data={ data }
+                    data={ data[0] }
                     params={ params }
                     colors={ colors }
                     onClick={ clickHandler }
@@ -138,9 +139,18 @@ function CustomMetricWidget(props: Props) {
 
                 {metric.viewType === 'progress' && (
                   <CustomMetricPercentage
-                    data={ data }
+                    data={ data[0] }
                     params={ params }
                     colors={ colors }
+                    onClick={ clickHandler }
+                  />
+                )}
+
+                {metric.viewType === 'table' && (
+                  <CustomMetricTable
+                    data={ data[0] }
+                    // params={ params }
+                    // colors={ colors }
                     onClick={ clickHandler }
                   />
                 )}

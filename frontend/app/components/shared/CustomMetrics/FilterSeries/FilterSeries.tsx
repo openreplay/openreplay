@@ -25,10 +25,12 @@ interface Props {
   editSeriesFilterFilter: typeof editSeriesFilterFilter;
   editSeriesFilter: typeof editSeriesFilter;
   removeSeriesFilterFilter: typeof removeSeriesFilterFilter;
+  hideHeader?: boolean;
+  emptyMessage?: any;
 }
 
 function FilterSeries(props: Props) {
-  const { canDelete } = props;
+  const { canDelete, hideHeader = false, emptyMessage = 'Add user event or filter to define the series by clicking Add Step.' } = props;
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
 
@@ -51,7 +53,7 @@ function FilterSeries(props: Props) {
 
   return (
     <div className="border rounded bg-white">
-      <div className="border-b px-5 h-12 flex items-center relative">
+      <div className={cn("border-b px-5 h-12 flex items-center relative", { 'hidden': hideHeader })}>
         <div className="mr-auto">
           <SeriesName name={series.name} onUpdate={(name) => props.updateSeries(seriesIndex, { name }) } />
         </div>    
@@ -78,7 +80,7 @@ function FilterSeries(props: Props) {
                 onChangeEventsOrder={onChangeEventsOrder}
               />
             ): (
-              <div className="color-gray-medium">Add user event or filter to define the series by clicking Add Step.</div>
+              <div className="color-gray-medium">{emptyMessage}</div>
             )}
           </div>
           <div className="px-6 border-t h-12 flex items-center -mx-4">

@@ -106,8 +106,8 @@ function CustomMetricWidget(props: Props) {
               onSelect={ chagneViewType }
               value={{ value: metric.viewType }}
               list={ [
-                { value: 'lineChart', icon: 'graph-up-arrow' },
-                { value: 'progress', icon: 'hash' },
+                { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
+                { value: 'progress', name: 'Progress', icon: 'hash' },
               ]}
             />
           )}
@@ -121,8 +121,8 @@ function CustomMetricWidget(props: Props) {
               onSelect={ chagneViewType }
               value={{ value: metric.viewType }}
               list={[
-                { value: 'table', icon: 'table' },
-                { value: 'pieChart', icon: 'graph-up-arrow' },
+                { value: 'table', name: 'Table', icon: 'table' },
+                { value: 'pieChart', name: 'Chart', icon: 'graph-up-arrow' },
               ]}
             />
           )}
@@ -139,45 +139,50 @@ function CustomMetricWidget(props: Props) {
         </div>
       </div>
       <div className={stl.wrapper}>
-        <div>
+        <div className={stl.innerWapper}>
           <Loader loading={ loading } size="small">
             <NoContent
               size="small"
               show={ data.length === 0 }
             >
+              <div className="p-4 font-medium">
+                {metric.name}
+              </div>
+             <div className="px-4 pb-4">
               { isTimeSeries && (
-                <>
-                  { metric.viewType === 'progress' && (
-                    <CustomMetricPercentage
-                      data={data[0]}
-                      colors={colors}
-                      params={params}
-                    />
-                  )}
-                  { metric.viewType === 'lineChart' && (
-                    <CustomMetriLineChart
-                      data={data}
-                      seriesMap={seriesMap}
-                      colors={colors}
-                      params={params}
-                    />
-                  )}
-                </>
-              )}
-
-              { isTable && (
-                <div className="p-3">
-                  { metric.viewType === 'table' ? (
-                      <CustomMetricTable data={data} />
-                  ) : (
-                      <CustomMetricPieChart
-                        data={data}
+                  <>
+                    { metric.viewType === 'progress' && (
+                      <CustomMetricPercentage
+                        data={data[0]}
                         colors={colors}
                         params={params}
                       />
-                  )}
-                </div>
-              )}
+                    )}
+                    { metric.viewType === 'lineChart' && (
+                      <CustomMetriLineChart
+                        data={data}
+                        seriesMap={seriesMap}
+                        colors={colors}
+                        params={params}
+                      />
+                    )}
+                  </>
+                )}
+
+                { isTable && (
+                  <>
+                    { metric.viewType === 'table' ? (
+                        <CustomMetricTable data={data[0]} />
+                    ) : (
+                        <CustomMetricPieChart
+                          data={data[0]}
+                          colors={colors}
+                          params={params}
+                        />
+                    )}
+                  </>
+                )}
+             </div>
             </NoContent>
           </Loader>
         </div>

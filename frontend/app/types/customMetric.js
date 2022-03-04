@@ -31,7 +31,7 @@ export default Record({
   metricOf: 'USERID',
   metricValue: ['sessionCount'],
   metricFormat: 'sessionCount',
-  viewType: 'table',
+  viewType: 'pieChart',
   series: List(),
   isPublic: true,
   startDate: '',
