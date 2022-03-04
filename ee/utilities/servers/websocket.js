@@ -168,15 +168,28 @@ function extractSessionInfo(socket) {
 module.exports = {
     wsRouter,
     start: (server) => {
-        io = _io(server, {
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"]
-            },
-            path: '/socket'
-        });
-
+        if (process.env.uws !== "true") {
+            io = _io(server, {
+                maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+                cors: {
+                    origin: "*",
+                    methods: ["GET", "POST", "PUT"]
+                },
+                path: '/socket'
+            });
+        } else {
+            io = new _io.Server({
+                maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+                cors: {
+                    origin: "*",
+                    methods: ["GET", "POST", "PUT"]
+                },
+                path: '/socket',
+                // transports: ['websocket'],
+                // upgrade: false
+            });
+            io.attachApp(server);
+        }
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;

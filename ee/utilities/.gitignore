@@ -10,4 +10,4 @@ build.sh
 servers/peerjs-server.js
 servers/sourcemaps-handler.js
 servers/sourcemaps-server.js
-servers/websocket.js
+#servers/websocket.js
