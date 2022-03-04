@@ -45,14 +45,14 @@ export default class Table extends React.PureComponent {
           )) }          
         </div>
         { rows.size > (small ? 3 : 5) && !showAll &&
-            <div className="w-full flex justify-center mt-3">
+            <div className="w-full flex justify-center">
               <Button
                 onClick={ this.onLoadMoreClick }
                 plain
                 small
                 className="text-center"
               >
-                { 'Load More' }
+                { rows.size + ' More' }
               </Button>
             </div>
           }

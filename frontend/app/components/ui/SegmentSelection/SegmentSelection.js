@@ -28,8 +28,8 @@ class SegmentSelection extends React.Component {
                 data-active={ this.props.value && this.props.value.value === item.value }
                 onClick={ () => !item.disabled && this.setActiveItem(item) }
               >
-                { item.icon && <Icon name={ item.icon } size={(size === "extraSmall" || icons) ? 14 : 20} marginRight={ item.name ? "10" : "" } /> }
-                <div>{ item.name }</div>
+                { item.icon && <Icon name={ item.icon } size={(size === "extraSmall" || icons) ? 14 : 20} marginRight={ item.name ? "6" : "" } /> }
+                <div className="leading-none">{ item.name }</div>
               </div>
             }
             disabled={!item.disabled}
