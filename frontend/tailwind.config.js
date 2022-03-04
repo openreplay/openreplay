@@ -19,7 +19,7 @@ module.exports = {
 		// 'backgroundSize',
 		// 'borderCollapse',
 		'borderColor',
-		// 'borderOpacity',
+		'borderOpacity',
 		'borderRadius',
 		// 'borderStyle',
 		'borderWidth',
