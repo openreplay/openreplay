@@ -101,7 +101,8 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
-                  type: Union[schemas.FilterType, schemas.EventType, schemas.PerformanceEventType] = None,
+                  type: Union[schemas.FilterType, schemas.EventType,
+                              schemas.PerformanceEventType, schemas.FetchFilterType._url] = None,
                   key: str = None,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
@@ -114,7 +115,7 @@ def events_search(projectId: int, q: str,
                     schemas.PerformanceEventType.location_avg_memory_usage
                     ]:
             type = schemas.EventType.location
-        elif type in [schemas.PerformanceEventType.fetch_failed]:
+        elif type in [schemas.PerformanceEventType.fetch_failed, schemas.FetchFilterType._url]:
             type = schemas.EventType.request
         else:
             return {"data": []}
