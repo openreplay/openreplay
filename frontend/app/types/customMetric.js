@@ -3,6 +3,7 @@ import { List } from 'immutable';
 import Filter from 'Types/filter';
 import { validateName } from 'App/validate';
 import { LAST_7_DAYS } from 'Types/app/period';
+import { FilterKey } from 'Types/filter/filterType';
 import { filterMap } from 'Duck/search';
 
 export const FilterSeries = Record({
@@ -47,11 +48,13 @@ export default Record({
 
     toSaveData() {
       const js = this.toJS();
+
+      js.metricValue = js.metricValue.map(value => value === 'all' ? '' : value);
       
       js.series = js.series.map(series => {
         series.filter.filters = series.filter.filters.map(filterMap);
         // delete series._key
-        // delete series.key
+        delete series.key
         return series;
       });
 
@@ -65,8 +68,10 @@ export default Record({
       return js;
     },
   },
-  fromJS: ({ series, ...rest }) => ({
+  fromJS: ({ metricOf, metricValue, series, ...rest }) => ({
     ...rest,
     series: List(series).map(FilterSeries),
+    metricOf,
+    metricValue: metricOf === FilterKey.ISSUE && metricValue.length === 0 ? ['all'] : metricValue,
   }),
 });

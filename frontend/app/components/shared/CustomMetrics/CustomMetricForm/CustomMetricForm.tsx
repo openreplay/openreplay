@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import cn from 'classnames';
 import DropdownPlain from '../../DropdownPlain';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
+import { FilterKey } from 'Types/filter/filterType';
 interface Props {
   metric: any;
   editMetric: (metric, shouldFetch?) => void;
@@ -23,11 +24,11 @@ interface Props {
 function CustomMetricForm(props: Props) {
   const { metric, loading } = props;
   // const metricOfOptions = metricOf.filter(i => i.key === metric.metricType);
-  const timeseriesOptions = metricOf.filter(i => i.key === 'timeseries');
-  const tableOptions = metricOf.filter(i => i.key === 'table');
+  const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
+  const tableOptions = metricOf.filter(i => i.type === 'table');
   const isTable = metric.metricType === 'table';
   const isTimeSeries = metric.metricType === 'timeseries';
-  const _issueOptions = [{ text: 'All', value: '' }].concat(issueOptions);
+  const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
 
 
   const addSeries = () => {
@@ -47,8 +48,8 @@ function CustomMetricForm(props: Props) {
     }
 
     if (name === 'metricOf') {
-      if (value === 'ISSUES') {
-        props.editMetric({ metricValue: [''] }, false);
+      if (value === FilterKey.ISSUE) {
+        props.editMetric({ metricValue: ['all'] }, false);
       }
     }
 
@@ -139,7 +140,7 @@ function CustomMetricForm(props: Props) {
              </>
             )}
 
-            {metric.metricOf === 'ISSUES' && (
+            {metric.metricOf === FilterKey.ISSUE && (
               <>
                 <span className="mx-3">issue type</span>
                 <DropdownPlain
@@ -179,6 +180,10 @@ function CustomMetricForm(props: Props) {
                 series={series}
                 onRemoveSeries={() => removeSeries(index)}
                 canDelete={metric.series.size > 1}
+                emptyMessage={isTable ?
+                    'Filter table data by user environment and metadata attributes. Use add step button below to filter.' :
+                    'Add user event or filter to define the series by clicking Add Step.'
+                  }
               />
             </div>
           ))}
