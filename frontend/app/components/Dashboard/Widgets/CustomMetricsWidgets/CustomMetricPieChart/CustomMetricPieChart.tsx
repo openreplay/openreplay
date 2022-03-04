@@ -35,7 +35,7 @@ function CustomMetricPieChart(props: Props) {
     }
     return (
         <div>
-          <NoContent size="small" show={data.values.length === 0} >
+          <NoContent size="small" show={data.values && data.values.length === 0} >
             <ResponsiveContainer height={ 220 } width="100%">
                 <PieChart>
                     <Pie

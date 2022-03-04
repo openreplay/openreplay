@@ -114,6 +114,7 @@ function FilterValue(props: Props) {
           />
         )
       case FilterType.NUMBER:
+      case FilterType.NUMBER_MULTIPLE:
         return (
           <input
             className="w-full px-2 py-1 text-sm leading-tight text-gray-700 rounded-lg"
