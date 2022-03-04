@@ -762,7 +762,7 @@ class TableMetricOfType(str, Enum):
     user_country = FilterType.user_country.value
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
-    visited_url = "VISITED_URL"
+    visited_url = EventType.location.value
 
 
 class TimeseriesMetricOfType(str, Enum):
