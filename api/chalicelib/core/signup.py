@@ -63,13 +63,12 @@ def create_step1(data: schemas.UserSignupSchema):
         "fullname": fullname,
         "projectName": project_name,
         "data": json.dumps({"lastAnnouncementView": TimeUTC.now()}),
-        "organizationName": company_name,
-        "versionNumber": config("version_number")
+        "organizationName": company_name
     }
     query = f"""\
                 WITH t AS (
                     INSERT INTO public.tenants (name, version_number, edition)
-                        VALUES (%(organizationName)s, %(versionNumber)s, 'fos')
+                        VALUES (%(organizationName)s, (SELECT openreplay_version()), 'fos')
                     RETURNING api_key
                 ),
                  u AS (
