@@ -288,6 +288,7 @@ def get_series_for_alert(project_id, user_id):
                              INNER JOIN metrics USING (metric_id)
                     WHERE metrics.deleted_at ISNULL
                       AND metrics.project_id = %(project_id)s
+                      AND metrics.metric_type = 'timeseries'
                       AND (user_id = %(user_id)s OR is_public)
                     ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}
