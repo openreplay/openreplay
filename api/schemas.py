@@ -428,7 +428,7 @@ class FilterType(str, Enum):
     duration = "DURATION"
     platform = "PLATFORM"
     metadata = "METADATA"
-    issue = "ISSUES"
+    issue = "ISSUE"
     events_count = "EVENTS_COUNT"
     utm_source = "UTM_SOURCE"
     utm_medium = "UTM_MEDIUM"
