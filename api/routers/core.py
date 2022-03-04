@@ -107,7 +107,9 @@ def events_search(projectId: int, q: str,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
-    if isinstance(type, schemas.PerformanceEventType):
+    if type in [schemas.FetchFilterType._url]:
+        type = schemas.EventType.request
+    elif isinstance(type, schemas.PerformanceEventType):
         if type in [schemas.PerformanceEventType.location_dom_complete,
                     schemas.PerformanceEventType.location_largest_contentful_paint_time,
                     schemas.PerformanceEventType.location_ttfb,
@@ -115,7 +117,7 @@ def events_search(projectId: int, q: str,
                     schemas.PerformanceEventType.location_avg_memory_usage
                     ]:
             type = schemas.EventType.location
-        elif type in [schemas.PerformanceEventType.fetch_failed, schemas.FetchFilterType._url]:
+        elif type in [schemas.PerformanceEventType.fetch_failed]:
             type = schemas.EventType.request
         else:
             return {"data": []}
