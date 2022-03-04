@@ -1,7 +1,5 @@
 import json
 
-from decouple import config
-
 import schemas
 from chalicelib.core import users, telemetry, tenants
 from chalicelib.utils import captcha
@@ -63,12 +61,11 @@ def create_step1(data: schemas.UserSignupSchema):
     params = {"email": email, "password": password,
               "fullname": fullname, "companyName": company_name,
               "projectName": project_name,
-              "versionNumber": config("version_number"),
               "data": json.dumps({"lastAnnouncementView": TimeUTC.now()})}
     query = """\
             WITH t AS (
                 INSERT INTO public.tenants (name, version_number, edition)
-                    VALUES (%(companyName)s, %(versionNumber)s, 'ee')
+                    VALUES (%(companyName)s, (SELECT openreplay_version()), 'ee')
                     RETURNING tenant_id, api_key
             ),
                  r AS (
