@@ -14,7 +14,7 @@ type TenantNotification struct {
 	Title       string                 `db:"title" json:"title"`
 	Description string                 `db:"description" json:"description"`
 	ButtonText  string                 `db:"button_text" json:"buttonText"`
-	ButtonUrl   string                `db:"button_url" json:"buttonUrl"`
+	ButtonUrl   string                 `db:"button_url" json:"buttonUrl"`
 	ImageUrl    *string                `db:"image_url" json:"imageUrl"`
 	Options     map[string]interface{} `db:"options" json:"options"`
 }
