@@ -219,8 +219,8 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 		) VALUES (
 			$1, $2, 
 			$3, $4, $5, $6,
-			$7, $8, $9, NULLIF($10, '')
-		)`,
+			$7, $8, $9, NULLIF($10, '')::events_common.http_method
+		) ON CONFLICT DO NOTHING`,
 		sessionID, e.Timestamp,
 		getSqIdx(e.MessageID), e.URL, e.Duration, e.Status < 400,
 		request, response, e.Status, url.EnsureMethod(e.Method),
@@ -236,7 +236,7 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *G
 	}
 	conn.insertAutocompleteValue(sessionID, "GRAPHQL", e.OperationName)
 	return conn.batchQueue(sessionID, `
-		INSERT INTO events_common.requests (
+		INSERT INTO events.graphql (
 			session_id, timestamp, message_id, 
 			name,
 			request_body, response_body
@@ -244,7 +244,7 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *G
 			$1, $2, $3, 
 			$4,
 			$5, $6
-		)`,
+		) ON CONFLICT DO NOTHING`,
 		sessionID, e.Timestamp, e.MessageID,
 		e.OperationName,
 		request, response,
