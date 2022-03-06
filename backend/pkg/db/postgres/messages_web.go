@@ -13,9 +13,8 @@ func getSqIdx(messageID uint64) uint {
 	return uint(messageID % math.MaxInt32)
 }
 
-
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
-	err := conn.InsertCustomEvent(sessionID, e.Timestamp, 
+	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
 		e.MessageID,
 		e.Name, e.Payload)
 	if err == nil {
@@ -44,12 +43,12 @@ func (conn *Conn) InsertWebResourceEvent(sessionID uint64, e *ResourceEvent) err
 	if e.Type != "fetch" {
 		return nil
 	}
-	err := conn.InsertRequest(sessionID, e.Timestamp, 
+	err := conn.InsertRequest(sessionID, e.Timestamp,
 		e.MessageID,
 		e.URL, e.Duration, e.Success,
 	)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))	
+		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
 	}
 	return err
 }
@@ -62,7 +61,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 	}
 	tx, err := conn.begin()
 	if err != nil {
-		return err  
+		return err
 	}
 	defer tx.rollback()
 	if err := tx.exec(`
@@ -79,7 +78,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 		)
 		`,
 		sessionID, e.MessageID, e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer), host, path, url.DiscardURLQuery(path),
-		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint, 
+		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive,
 		calcResponseTime(e), calcDomBuildingTime(e),
 	); err != nil {
@@ -132,7 +131,6 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 	conn.insertAutocompleteValue(sessionID, "CLICK", e.Label)
 	return nil
 }
-
 
 func (conn *Conn) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
 	tx, err := conn.begin()

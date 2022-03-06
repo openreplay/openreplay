@@ -1,8 +1,8 @@
 package cache
 
-import  (
-	"time"
+import (
 	. "openreplay/backend/pkg/db/types"
+	"time"
 )
 
 func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
@@ -24,19 +24,16 @@ func (c *PGCache) GetProjectByKey(projectKey string) (*Project, error) {
 	return p, nil
 }
 
-
-
 func (c *PGCache) GetProject(projectID uint32) (*Project, error) {
-	if c.projects[ projectID ] != nil && 
-		time.Now().Before(c.projects[ projectID ].expirationTime) {
-		return c.projects[ projectID ].Project, nil
+	if c.projects[projectID] != nil &&
+		time.Now().Before(c.projects[projectID].expirationTime) {
+		return c.projects[projectID].Project, nil
 	}
 	p, err := c.Conn.GetProject(projectID)
 	if err != nil {
 		return nil, err
 	}
-	c.projects[ projectID ] = &ProjectMeta{ p, time.Now().Add(c.projectExpirationTimeout) }
+	c.projects[projectID] = &ProjectMeta{p, time.Now().Add(c.projectExpirationTimeout)}
 	//c.projectsByKeys.Store(p.ProjectKey, c.projects[ projectID ])
 	return p, nil
 }
-

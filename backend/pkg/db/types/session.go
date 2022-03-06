@@ -12,10 +12,10 @@ type Session struct {
 	UserDevice     string
 	UserCountry    string
 
-	Duration        *uint64
-	PagesCount      int
-	EventsCount     int
-	ErrorsCount     int
+	Duration    *uint64
+	PagesCount  int
+	EventsCount int
+	ErrorsCount int
 
 	UserID          *string // pointer??
 	UserAnonymousID *string

@@ -1,40 +1,39 @@
 package cache
 
-import  (
+import (
 	"errors"
-	. "openreplay/backend/pkg/messages"
 	. "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/messages"
 )
 
 func (c *PGCache) InsertIOSSessionStart(sessionID uint64, s *IOSSessionStart) error {
-	if c.sessions[ sessionID ] != nil {
+	if c.sessions[sessionID] != nil {
 		return errors.New("This session already in cache!")
 	}
-	c.sessions[ sessionID ] = &Session{
-		SessionID: sessionID,
-		Platform: "ios",
-		Timestamp: s.Timestamp,
-		ProjectID: uint32(s.ProjectID),
+	c.sessions[sessionID] = &Session{
+		SessionID:      sessionID,
+		Platform:       "ios",
+		Timestamp:      s.Timestamp,
+		ProjectID:      uint32(s.ProjectID),
 		TrackerVersion: s.TrackerVersion,
-		RevID: s.RevID,
-		UserUUID: s.UserUUID,
-		UserOS: s.UserOS,
-		UserOSVersion: s.UserOSVersion,
-		UserDevice: s.UserDevice,
-		UserCountry: s.UserCountry,
+		RevID:          s.RevID,
+		UserUUID:       s.UserUUID,
+		UserOS:         s.UserOS,
+		UserOSVersion:  s.UserOSVersion,
+		UserDevice:     s.UserDevice,
+		UserCountry:    s.UserCountry,
 		UserDeviceType: s.UserDeviceType,
 	}
-	if err := c.Conn.InsertSessionStart(sessionID, c.sessions[ sessionID ]); err != nil { 
-		c.sessions[ sessionID ] = nil
+	if err := c.Conn.InsertSessionStart(sessionID, c.sessions[sessionID]); err != nil {
+		c.sessions[sessionID] = nil
 		return err
 	}
-	return nil;
+	return nil
 }
 
 func (c *PGCache) InsertIOSSessionEnd(sessionID uint64, e *IOSSessionEnd) error {
 	return c.insertSessionEnd(sessionID, e.Timestamp)
 }
-
 
 func (c *PGCache) InsertIOSScreenEnter(sessionID uint64, screenEnter *IOSScreenEnter) error {
 	if err := c.Conn.InsertIOSScreenEnter(sessionID, screenEnter); err != nil {
@@ -95,4 +94,3 @@ func (c *PGCache) InsertIOSIssueEvent(sessionID uint64, issueEvent *IOSIssueEven
 	// }
 	return nil
 }
-
