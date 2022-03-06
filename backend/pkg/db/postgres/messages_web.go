@@ -219,7 +219,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 		) VALUES (
 			$1, $2, 
 			$3, $4, $5, $6,
-			$7, $8, $9, NULLIF($10, '')::events_common.http_method
+			$7, $8, $9::smallint, NULLIF($10, '')::events_common.http_method
 		) ON CONFLICT DO NOTHING`,
 		sessionID, e.Timestamp,
 		getSqIdx(e.MessageID), e.URL, e.Duration, e.Status < 400,
