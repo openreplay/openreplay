@@ -244,27 +244,30 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Payload:       msg.Payload,
 		})
 	case *Fetch:
-		b.appendReadyMessage(&ResourceEvent{
+		b.appendReadyMessage(&FetchEvent{
 			MessageID: messageID,
 			Timestamp: msg.Timestamp,
-			Duration:  msg.Duration,
-			URL:       msg.URL,
-			Type:      "fetch",
-			Success:   msg.Status < 300,
 			Method:    msg.Method,
+			URL:       msg.URL,
+			Request:   msg.Request,
+			Response:  msg.Response,
 			Status:    msg.Status,
+			Duration:  msg.Duration,
+		})
+	case *GraphQL:
+		b.appendReadyMessage(&GraphQLEvent{
+			MessageID:     messageID,
+			Timestamp:     b.timestamp,
+			OperationKind: msg.OperationKind,
+			OperationName: msg.OperationName,
+			Variables:     msg.Variables,
+			Response:      msg.Response,
 		})
 	case *StateAction:
 		b.appendReadyMessage(&StateActionEvent{
 			MessageID: messageID,
 			Timestamp: b.timestamp,
 			Type:      msg.Type,
-		})
-	case *GraphQL:
-		b.appendReadyMessage(&GraphQLEvent{
-			MessageID: messageID,
-			Timestamp: b.timestamp,
-			Name:      msg.OperationName,
 		})
 	case *CreateElementNode,
 		*CreateTextNode:

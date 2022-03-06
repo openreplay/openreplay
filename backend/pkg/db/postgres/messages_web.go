@@ -39,19 +39,19 @@ func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *Us
 	return err
 }
 
-func (conn *Conn) InsertWebResourceEvent(sessionID uint64, e *ResourceEvent) error {
-	if e.Type != "fetch" {
-		return nil
-	}
-	err := conn.InsertRequest(sessionID, e.Timestamp,
-		e.MessageID,
-		e.URL, e.Duration, e.Success,
-	)
-	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
-	}
-	return err
-}
+// func (conn *Conn) InsertWebResourceEvent(sessionID uint64, e *ResourceEvent) error {
+// 	if e.Type != "fetch" {
+// 		return nil
+// 	}
+// 	err := conn.InsertRequest(sessionID, e.Timestamp,
+// 		e.MessageID,
+// 		e.URL, e.Duration, e.Success,
+// 	)
+// 	if err == nil {
+// 		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
+// 	}
+// 	return err
+// }
 
 // TODO: fix column "dom_content_loaded_event_end" of relation "pages"
 func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
@@ -202,4 +202,51 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		return err
 	}
 	return tx.commit()
+}
+
+func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *FetchEvent) error {
+	var request, response *string
+	if savePayload {
+		request = &e.Request
+		response = &e.Response
+	}
+	conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
+	return conn.batchQueue(sessionID, `
+		INSERT INTO events_common.requests (
+			session_id, timestamp, 
+			seq_index, url, duration, success,
+			request_body, response_body, status_code, method
+		) VALUES (
+			$1, $2, 
+			$3, $4, $5, $6,
+			$7, $8, $9, NULLIF($10, '')
+		)`,
+		sessionID, e.Timestamp,
+		getSqIdx(e.MessageID), e.URL, e.Duration, e.Status < 400,
+		request, response, e.Status, url.EnsureMethod(e.Method),
+	)
+
+}
+
+func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *GraphQLEvent) error {
+	var request, response *string
+	if savePayload {
+		request = &e.Variables
+		response = &e.Response
+	}
+	conn.insertAutocompleteValue(sessionID, "GRAPHQL", e.OperationName)
+	return conn.batchQueue(sessionID, `
+		INSERT INTO events_common.requests (
+			session_id, timestamp, message_id, 
+			name,
+			request_body, response_body
+		) VALUES (
+			$1, $2, $3, 
+			$4,
+			$5, $6
+		)`,
+		sessionID, e.Timestamp, e.MessageID,
+		e.OperationName,
+		request, response,
+	)
 }
