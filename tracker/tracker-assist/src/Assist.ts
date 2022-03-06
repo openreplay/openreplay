@@ -72,21 +72,43 @@ export default class Assist {
       },
       options,
     );
-    app.attachStartCallback(() => { 
-      if (this.assistDemandedRestart) { return; } 
-      this.onStart()
+
+    if (document.hidden !== undefined) {
+      const sendActivityState = () => this.emit("UPDATE_SESSION", { active: !document.hidden })
+      app.attachEventListener(
+        document,
+        'visibilitychange',
+        sendActivityState,
+        false,
+        false,
+      )
+    }
+    const titleNode = document.querySelector('title')
+    const observer = titleNode && new MutationObserver(() => {
+      this.emit("UPDATE_SESSION", { pageTitle: document.title })
     })
-    app.attachCommitCallback((messages) => {
-      if (this.socket && this.agentsConnected) {
-        // @ts-ignore No need in statistics messages. TODO proper filter
-        if (messages.length === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
-        this.socket.emit("messages", messages)
-      }
+    app.attachStartCallback(() => { 
+      if (this.assistDemandedRestart) { return; }
+      this.onStart()
+      observer && observer.observe(titleNode, { subtree: true, characterData: true, childList: true })
     })
     app.attachStopCallback(() => { 
       if (this.assistDemandedRestart) { return; } 
       this.clean()
+      observer && observer.disconnect()
     })
+    app.attachCommitCallback((messages) => {
+      if (this.agentsConnected) {
+        // @ts-ignore No need in statistics messages. TODO proper filter
+        if (messages.length === 2 && messages[0]._id === 0 &&  messages[1]._id === 49) { return }
+        this.emit("messages", messages)
+      }
+    })
+    app.session.attachUpdateCallback(sessInfo => this.emit("UPDATE_SESSION", sessInfo))
+  }
+
+  private emit(ev: string, ...args) {
+    this.socket && this.socket.emit(ev, ...args)
   }
 
   private get agentsConnected(): boolean {
@@ -94,7 +116,7 @@ export default class Assist {
   }
 
   private notifyCallEnd() {
-    this.socket && this.socket.emit("call_end");
+    this.emit("call_end");
   }
   private onRemoteCallEnd = () => {}
 
@@ -108,7 +130,10 @@ export default class Assist {
       query: {
         "peerId": peerID,
         "identity": "session",
-        "sessionInfo": JSON.stringify(this.app.getSessionInfo()),
+        "sessionInfo": JSON.stringify({ 
+          pageTitle: document.title, 
+          ...this.app.getSessionInfo() 
+        }),
       },
       transports: ["websocket"],
     })
