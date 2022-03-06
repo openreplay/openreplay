@@ -15,7 +15,6 @@ import Timing from "./modules/timing.js";
 import Performance from "./modules/performance.js";
 import Scroll from "./modules/scroll.js";
 import Viewport from "./modules/viewport.js";
-import Longtasks from "./modules/longtasks.js";
 import CSSRules from "./modules/cssrules.js";
 import { IN_BROWSER, deprecationWarn, DOCS_HOST } from "./utils.js";
 
@@ -109,7 +108,6 @@ export default class API {
       Timing(app, options);
       Performance(app, options);
       Scroll(app);
-      Longtasks(app);
       (window as any).__OPENREPLAY__ = this;
 
       if (options.autoResetOnWindowOpen) {
@@ -190,7 +188,7 @@ export default class API {
 
   setUserID(id: string): void {
     if (typeof id === 'string' && this.app !== null) {
-      this.app.send(new UserID(id));
+      this.app.session.setUserID(id);
     }
   }
   userID(id: string): void {
@@ -214,7 +212,7 @@ export default class API {
       typeof value === 'string' &&
       this.app !== null
     ) {
-      this.app.send(new Metadata(key, value));
+      this.app.session.setMetadata(key, value);
     }
   }
   metadata(key: string, value: string): void {

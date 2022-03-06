@@ -1,11 +1,9 @@
 
-
-
 export const LogLevel = {
-  Verbose: 4,
-  Errors: 4,
+  Verbose: 5,
+  Log: 4,
   Warnings: 3,
-  Log: 2,
+  Errors: 2,
   Silent: 0,
 } as const;
 type LogLevel = typeof LogLevel[keyof typeof LogLevel]
@@ -31,30 +29,30 @@ interface _Options {
 export type Options = true | _Options | LogLevel
 
 export default class Logger {
-  private readonly opts: _Options;
-  constructor(private readonly options: Options = LogLevel.Silent) {
-    this.opts = options === true 
+  private readonly options: _Options;
+  constructor(options: Options = LogLevel.Silent) {
+    this.options = options === true 
       ? { level: LogLevel.Verbose } 
       : typeof options === "number" ? { level: options } : options;
   }
   log(...args: any) {
-    if (IsCustomLevel(this.opts.level) 
-      ? this.opts.level.log
-      : this.opts.level >= LogLevel.Log) {
+    if (IsCustomLevel(this.options.level) 
+      ? this.options.level.log
+      : this.options.level >= LogLevel.Log) {
       console.log(...args)
     }
   }
   warn(...args: any) {
-    if (IsCustomLevel(this.opts.level) 
-      ? this.opts.level.warn
-      : this.opts.level >= LogLevel.Warnings) {
+    if (IsCustomLevel(this.options.level) 
+      ? this.options.level.warn
+      : this.options.level >= LogLevel.Warnings) {
       console.warn(...args)
     }
   }
   error(...args: any) {
-    if (IsCustomLevel(this.opts.level) 
-      ? this.opts.level.error
-      : this.opts.level >= LogLevel.Errors) {
+    if (IsCustomLevel(this.options.level) 
+      ? this.options.level.error
+      : this.options.level >= LogLevel.Errors) {
       console.error(...args)
     }
   }
