@@ -6,6 +6,7 @@ import Observer from "./observer/top_observer.js";
 import Sanitizer from "./sanitizer.js";
 import Ticker from "./ticker.js";
 import Logger, { LogLevel } from "./logger.js";
+import Session from "./session.js";
 
 import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 
@@ -69,6 +70,7 @@ export default class App {
   readonly sanitizer: Sanitizer;
   readonly debug: Logger;
   readonly notify: Logger;
+  readonly session: Session;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
   private readonly startCallbacks: Array<Callback> = [];
@@ -76,9 +78,6 @@ export default class App {
   private readonly commitCallbacks: Array<CommitCallback> = [];
   private readonly options: AppOptions;
   private readonly revID: string;
-  private _sessionID: string | null = null;
-  private _userID: string | null = null;
-  private _metadata: Record<string, string> = {};
   private activityState: ActivityState = ActivityState.NotActive;
   private version = 'TRACKER_VERSION'; // TODO: version compatability check inside each plugin.
   private readonly worker?: Worker;
@@ -120,6 +119,7 @@ export default class App {
     this.ticker.attach(() => this.commit());
     this.debug = new Logger(this.options.__debug__);
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent);
+    this.session = new Session(this);
     try {
       this.worker = new Worker(
         URL.createObjectURL(
@@ -129,18 +129,12 @@ export default class App {
       this.worker.onerror = e => {
         this._debug("webworker_error", e)
       }
-      let lastTs = timestamp();
-      let fileno = 0;
       this.worker.onmessage = ({ data }: MessageEvent) => {
         if (data === null) {
           this.stop();
         } else if (data === "restart") {
           this.stop();
-          this.start({ 
-            forceNew: true,
-            userID: this._userID || undefined,
-            metadata: this._metadata || undefined,
-          });
+          this.start({ forceNew: true });
         }
       };
       const alertWorker = () => {
@@ -197,10 +191,6 @@ export default class App {
     }
   }
 
-  attachCommitCallback(cb: CommitCallback): void {
-    this.commitCallbacks.push(cb)
-  }
-
   safe<T extends (...args: any[]) => void>(fn: T): T {
     const app = this;
     return function (this: any, ...args: any) {
@@ -214,6 +204,10 @@ export default class App {
         // stack: e.stack
       }
     } as any // TODO: correct typing
+  }
+
+  attachCommitCallback(cb: CommitCallback): void {
+    this.commitCallbacks.push(cb)
   }
 
   attachStartCallback(cb: Callback): void {
@@ -258,15 +252,12 @@ export default class App {
       revID: this.revID,
       timestamp: timestamp(),
       trackerVersion: this.version,
-      userID: this._userID,
       isSnippet: this.options.__is_snippet,
     }
-
   }
   getSessionInfo() {
     return {
-      sessionID: this._sessionID,
-      metadata: this._metadata,
+      ...this.session.getInfo(),
       ...this.getStartInfo()
     }
   }
@@ -277,7 +268,7 @@ export default class App {
     }
   }
   getSessionID(): string | undefined {
-    return this._sessionID || undefined;
+    return this.session.getInfo().sessionID || undefined;
   }
   getHost(): string {
     return new URL(this.options.ingestPoint).hostname
@@ -338,10 +329,7 @@ export default class App {
     }
     sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
 
-    this._userID = startOpts.userID || null
-    this._metadata = startOpts.metadata || {} // TODO: update both dynamically on corresponding messages
     const startInfo = this.getStartInfo()
-
     const messageData: WorkerMessageData = {
       ingestPoint: this.options.ingestPoint,
       pageNo,
@@ -361,6 +349,7 @@ export default class App {
       },
       body: JSON.stringify({
         ...startInfo,
+        userID: startOpts.userID || this.session.getInfo().userID,
         token: sessionStorage.getItem(this.options.session_token_key),
         deviceMemory,
         jsHeapSizeLimit,
@@ -389,18 +378,16 @@ export default class App {
       }
       sessionStorage.setItem(this.options.session_token_key, token);
       localStorage.setItem(this.options.local_uuid_key, userUUID);
-      if (typeof sessionID === 'string') {
-        this._sessionID = sessionID;
-      }
+      this.session.update({
+        sessionID, // any. TODO check
+        ...startOpts
+      });
 
       this.activityState = ActivityState.Active
       this.worker.postMessage({ token, beaconSizeLimit });
       this.startCallbacks.forEach((cb) => cb());
       this.observer.observe();
       this.ticker.start();
-
-      Object.entries(this._metadata).forEach(([key, value]) => 
-        this.send(new Metadata(key, value)))
 
       this.notify.log("OpenReplay tracking started.");
       // TODO: get rid of onStart
