@@ -7,12 +7,12 @@ import (
 func (conn *Conn) GetProjectByKey(projectKey string) (*Project, error) {
 	p := &Project{ProjectKey: projectKey}
 	if err := conn.queryRow(`
-		SELECT max_session_duration, sample_rate, project_id
+		SELECT max_session_duration, sample_rate, project_id, save_request_payloads
 		FROM projects
 		WHERE project_key=$1 AND active = true
 	`,
 		projectKey,
-	).Scan(&p.MaxSessionDuration, &p.SampleRate, &p.ProjectID); err != nil {
+	).Scan(&p.MaxSessionDuration, &p.SampleRate, &p.ProjectID, &p.SaveRequestPayloads); err != nil {
 		return nil, err
 	}
 	return p, nil

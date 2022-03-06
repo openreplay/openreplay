@@ -30,12 +30,16 @@ func insertMessage(sessionID uint64, msg Message) error {
 	case *InputEvent:
 		return pg.InsertWebInputEvent(sessionID, m)
 		// Unique Web messages
-	case *ResourceEvent:
-		return pg.InsertWebResourceEvent(sessionID, m)
+	// case *ResourceEvent:
+	// 	return pg.InsertWebResourceEvent(sessionID, m)
 	case *PageEvent:
 		return pg.InsertWebPageEvent(sessionID, m)
 	case *ErrorEvent:
 		return pg.InsertWebErrorEvent(sessionID, m)
+	case *FetchEvent:
+		return pg.InsertWebFetchEvent(sessionID, m)
+	case *GraphQLEvent:
+		return pg.InsertWebGraphQLEvent(sessionID, m)
 
 		// IOS
 	case *IOSSessionStart:

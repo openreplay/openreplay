@@ -53,3 +53,27 @@ func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {
 	session.ErrorsCount += 1
 	return nil
 }
+
+func (c *PGCache) InsertWebFetchEvent(sessionID uint64, e *FetchEvent) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	project, err := c.GetProject(session.ProjectID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebFetchEvent(sessionID, project.SaveRequestPayloads, e)
+}
+
+func (c *PGCache) InsertWebGraphQLEvent(sessionID uint64, e *GraphQLEvent) error {
+	session, err := c.GetSession(sessionID)
+	if err != nil {
+		return err
+	}
+	project, err := c.GetProject(session.ProjectID)
+	if err != nil {
+		return err
+	}
+	return c.Conn.InsertWebGraphQLEvent(sessionID, project.SaveRequestPayloads, e)
+}
