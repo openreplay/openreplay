@@ -40,7 +40,7 @@ export const filtersMap = {
     { key: FilterKey.FETCH_DURATION, type: FilterType.NUMBER, category: FilterCategory.PERFORMANCE, label: 'with duration', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_REQUEST_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with request body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_RESPONSE_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with response body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
-  ], icon: 'filters/fetch-failed', isEvent: true },
+  ], icon: 'filters/perfromance-network-request', isEvent: true },
   [FilterKey.DOM_COMPLETE]: { key: FilterKey.DOM_COMPLETE, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'DOM Complete', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/dom-complete', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.LARGEST_CONTENTFUL_PAINT_TIME]: { key: FilterKey.LARGEST_CONTENTFUL_PAINT_TIME, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Largest Contentful Paint', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/lcpt', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
   [FilterKey.TTFB]: { key: FilterKey.TTFB, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Time to First Byte', operator: 'isAny', operatorOptions: filterOptions.stringOperators, source: [], icon: 'filters/ttfb', isEvent: true, hasSource: true, sourceOperator: '=', sourceType: FilterType.NUMBER, sourceOperatorOptions: filterOptions.customOperators },
@@ -118,8 +118,18 @@ export default Record({
   filters: [],
 }, {
   keyKey: "_key",
-  fromJS: ({ value, type, ...filter }) => {
-    const _filter = filtersMap[type];
+  fromJS: ({ value, type, subFilter = false, ...filter }) => {
+    let _filter = {};
+    if (subFilter) {
+      const mainFilter = filtersMap[subFilter];
+      const subFilterMap = {}
+      mainFilter.filters.forEach(option => {
+        subFilterMap[option.key] = option
+      })
+      _filter = subFilterMap[type]
+    } else {
+      _filter = filtersMap[type];
+    }
     return {
       ...filter,
       ..._filter,

@@ -99,16 +99,11 @@ export default Record({
       filters: List(filters)
         .map(i => {
           const filter = NewFilter(i).toData();
-          if (filter.hasOwnProperty('filters')) {
-            filter.filters = filter.filters.map(f => ({ ...f, value: [""]}));
-            // filter.filters = filter.filters.map(f => ({ ...f, value: [""]}));
+          if (i.hasOwnProperty('filters')) {
+            filter.filters = i.filters.map(f => NewFilter({...f, subFilter: i.type}).toData());
           }
-          
-          console.log('filter', filter);
           return filter;
         }),
-        // .concat(List(events).map(i => NewFilter(i).toData())),
-      // custom: Map(custom),
     }
   }
 });
