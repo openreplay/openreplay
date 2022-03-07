@@ -55,7 +55,7 @@ function FilterSeries(props: Props) {
     <div className="border rounded bg-white">
       <div className={cn("border-b px-5 h-12 flex items-center relative", { 'hidden': hideHeader })}>
         <div className="mr-auto">
-          <SeriesName name={series.name} onUpdate={(name) => props.updateSeries(seriesIndex, { name }) } />
+          <SeriesName seriesIndex={seriesIndex} name={series.name} onUpdate={(name) => props.updateSeries(seriesIndex, { name }) } />
         </div>    
     
         <div className="flex items-center cursor-pointer" >
