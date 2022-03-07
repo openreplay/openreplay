@@ -863,15 +863,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         event_where.append(
                             _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
-                    elif f.type == schemas.GraphqlFilterType._status_code:
-                        event_where.append(
-                            _multiple_conditions(f"main.status_code {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     elif f.type == schemas.GraphqlFilterType._method:
                         event_where.append(
                             _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
-                    elif f.type == schemas.GraphqlFilterType._duration:
-                        event_where.append(
-                            _multiple_conditions(f"main.duration {op} %({e_k_f})s", f.value, value_key=e_k_f))
                     elif f.type == schemas.GraphqlFilterType._request_body:
                         event_where.append(
                             _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
