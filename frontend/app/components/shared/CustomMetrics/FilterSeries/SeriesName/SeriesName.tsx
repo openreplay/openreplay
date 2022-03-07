@@ -7,7 +7,7 @@ interface Props {
   seriesIndex?: number;
 }
 function SeriesName(props: Props) {
-  const { seriesIndex } = props;
+  const { seriesIndex = 1 } = props;
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(props.name)
   const ref = useRef<any>(null)

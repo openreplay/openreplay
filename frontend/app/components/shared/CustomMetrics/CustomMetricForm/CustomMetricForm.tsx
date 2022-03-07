@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Button, IconButton } from 'UI';
+import { Form, Button, IconButton, HelpText } from 'UI';
 import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save, addSeries, removeSeries, remove } from 'Duck/customMetrics';
@@ -169,8 +169,9 @@ function CustomMetricForm(props: Props) {
         </div>
 
         <div className="form-group">
-          <label className="font-medium">
+          <label className="font-medium flex items-center">
             {`${isTable ? 'Filter by' : 'Chart Series'}`}
+            {!isTable && <HelpText position="top left" text="Defines a series of data for the line in chart." className="pl-3" />}
           </label>
           {metric.series && metric.series.size > 0 && metric.series.take(isTable ? 1 : metric.series.size).map((series: any, index: number) => (
             <div className="mb-2">
