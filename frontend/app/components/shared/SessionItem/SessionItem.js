@@ -81,20 +81,13 @@ export default class SessionItem extends React.PureComponent {
           <div className={ cn('flex items-center w-full')}>
             <div className="flex items-center pr-2" style={{ width: "30%"}}>
               <div><Avatar seed={ userNumericHash } isAssist={isAssist} /></div>
-              {/* <div className="flex flex-col overflow-hidden color-gray-medium ml-3"> */}
               <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center">
                 <div
                   className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
                   onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
                 >
-                  {userDisplayName}
+                  <TextEllipsis text={userDisplayName} maxWidth={200} popupProps={{ inverted: true, size: 'tiny' }} />
                 </div>
-                {/* <div
-                  className="color-gray-medium text-dotted-underline cursor-pointer"
-                  onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
-                >
-                  {userSessionsCount} Sessions
-                </div> */}
               </div>
             </div>
             <div style={{ width: "20%", height: "38px" }} className="px-2 flex flex-col justify-between">

@@ -100,22 +100,24 @@ class Router extends React.Component {
   constructor(props) {
     super(props);
     if (props.isLoggedIn) {
-      Promise.all([
-        props.fetchUserInfo().then(() => {
-          props.fetchIntegrationVariables() 
-        }),
-        props.fetchSiteList().then(() => {
-          setTimeout(() => {
-            props.fetchAnnouncements();
-            props.fetchAlerts();
-            props.fetchWatchdogStatus();
-          }, 100);
-        }),
-        // props.fetchAnnouncements(),
-      ])
-      // .then(() => this.onLoginLogout());
+      this.fetchInitialData();
     }
     props.fetchTenants();
+  }
+
+  fetchInitialData = () => {
+    Promise.all([
+      this.props.fetchUserInfo().then(() => {
+        this.props.fetchIntegrationVariables() 
+      }),
+      this.props.fetchSiteList().then(() => {
+        setTimeout(() => {
+          this.props.fetchAnnouncements();
+          this.props.fetchAlerts();
+          this.props.fetchWatchdogStatus();
+        }, 100);
+      }),
+    ])
   }
 
   componentDidMount() {
@@ -134,6 +136,10 @@ class Router extends React.Component {
     if (this.state.destinationPath && !prevProps.isLoggedIn && this.props.isLoggedIn && this.state.destinationPath !== routes.login() && this.state.destinationPath !== '/') {
       this.props.history.push(this.state.destinationPath);
       this.setState({ destinationPath: null });
+    }
+
+    if (!prevProps.isLoggedIn && this.props.isLoggedIn) {
+      this.fetchInitialData();
     }
   }
 
