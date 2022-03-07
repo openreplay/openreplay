@@ -77,7 +77,10 @@ if (process.env.uws !== "true") {
     uapp.get(`${PREFIX}/`, healthFn);
 
     const uWrapper = function (fn) {
-        return (res, req) => fn(req, res);
+        return async (res, req) => {
+            let response = await fn(req, res);
+            return response;
+        }
     }
     uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
     uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list/:projectKey`, uWrapper(socket.handlers.socketsListByProject));
