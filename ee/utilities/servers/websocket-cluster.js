@@ -2,8 +2,12 @@ const _io = require('socket.io');
 const express = require('express');
 const uaParser = require('ua-parser-js');
 const geoip2Reader = require('@maxmind/geoip2-node').Reader;
-var {extractPeerId} = require('./peerjs-server');
+const {extractPeerId} = require('./peerjs-server');
+const {createAdapter} = require("@socket.io/redis-adapter");
+const {createClient} = require("redis");
+
 var wsRouter = express.Router();
+const UPDATE_EVENT = "UPDATE_SESSION";
 const IDENTITIES = {agent: 'agent', session: 'session'};
 const NEW_AGENT = "NEW_AGENT";
 const NO_AGENTS = "NO_AGENT";
@@ -14,40 +18,76 @@ const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
 // const wsReconnectionTimeout = process.env.wsReconnectionTimeout | 10 * 1000;
 
 let io;
-let debug = process.env.debug === "1" || false;
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, function (req, res) {
+const debug = process.env.debug === "1" || false;
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+
+const pubClient = createClient({url: REDIS_URL});
+const subClient = pubClient.duplicate();
+
+const uniqueSessions = function (data) {
+    let resArr = [];
+    let resArrIDS = [];
+    for (let item of data) {
+        if (resArrIDS.indexOf(item.sessionID) < 0) {
+            resArr.push(item);
+            resArrIDS.push(item.sessionID);
+        }
+    }
+    return resArr;
+}
+
+const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
     let liveSessions = {};
-    for (let peerId of io.sockets.adapter.rooms.keys()) {
+    let rooms = await io.of('/').adapter.allRooms();
+    for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             liveSessions[projectKey] = liveSessions[projectKey] || [];
             liveSessions[projectKey].push(sessionId);
         }
     }
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions}));
-});
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, function (req, res) {
+    let result = {"data": liveSessions};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
+
+const socketsListByProject = async function (req, res) {
+    if (process.env.uws === "true") {
+        req.params = {projectKey: req.getParameter(0)};
+    }
     debug && console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
     let liveSessions = {};
-    for (let peerId of io.sockets.adapter.rooms.keys()) {
+    let rooms = await io.of('/').adapter.allRooms();
+    for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === req.params.projectKey) {
             liveSessions[projectKey] = liveSessions[projectKey] || [];
             liveSessions[projectKey].push(sessionId);
         }
     }
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions[req.params.projectKey] || []}));
-});
+    let result = {"data": liveSessions[req.params.projectKey] || []};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, socketsListByProject);
 
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
+const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
     let liveSessions = {};
-    for (let peerId of io.sockets.adapter.rooms.keys()) {
+    let rooms = await io.of('/').adapter.allRooms();
+    for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             let connected_sockets = await io.in(peerId).fetchSockets();
@@ -57,17 +97,28 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, async function (req, res) {
                     liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                 }
             }
+            liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey]);
         }
     }
+    let result = {"data": liveSessions};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
 
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions}));
-});
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, async function (req, res) {
+const socketsLiveByProject = async function (req, res) {
+    if (process.env.uws === "true") {
+        req.params = {projectKey: req.getParameter(0)};
+    }
     debug && console.log(`[WS]looking for available LIVE sessions for ${req.params.projectKey}`);
     let liveSessions = {};
-    for (let peerId of io.sockets.adapter.rooms.keys()) {
+    let rooms = await io.of('/').adapter.allRooms();
+    for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === req.params.projectKey) {
             let connected_sockets = await io.in(peerId).fetchSockets();
@@ -77,12 +128,19 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, async function (
                     liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                 }
             }
+            liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey]);
         }
     }
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({"data": liveSessions[req.params.projectKey] || []}));
-});
+    let result = {"data": liveSessions[req.params.projectKey] || []};
+    if (process.env.uws !== "true") {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(result));
+    } else {
+        res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
+    }
+}
+wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, socketsLiveByProject);
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
@@ -96,7 +154,8 @@ const findSessionSocketId = async (io, peerId) => {
 
 async function sessions_agents_count(io, socket) {
     let c_sessions = 0, c_agents = 0;
-    if (io.sockets.adapter.rooms.get(socket.peerId)) {
+    let rooms = await io.of('/').adapter.allRooms();
+    if (rooms.has(socket.peerId)) {
         const connected_sockets = await io.in(socket.peerId).fetchSockets();
 
         for (let item of connected_sockets) {
@@ -115,7 +174,8 @@ async function sessions_agents_count(io, socket) {
 
 async function get_all_agents_ids(io, socket) {
     let agents = [];
-    if (io.sockets.adapter.rooms.get(socket.peerId)) {
+    let rooms = await io.of('/').adapter.allRooms();
+    if (rooms.has(socket.peerId)) {
         const connected_sockets = await io.in(socket.peerId).fetchSockets();
         for (let item of connected_sockets) {
             if (item.handshake.query.identity === IDENTITIES.agent) {
@@ -160,20 +220,34 @@ function extractSessionInfo(socket) {
 module.exports = {
     wsRouter,
     start: (server) => {
-        io = _io(server, {
-            maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 1) * 1e6,
-            cors: {
-                origin: "*",
-                methods: ["GET", "POST", "PUT"]
-            },
-            path: '/socket'
-        });
+        if (process.env.uws !== "true") {
+            io = _io(server, {
+                maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+                cors: {
+                    origin: "*",
+                    methods: ["GET", "POST", "PUT"]
+                },
+                path: '/socket'
+            });
+        } else {
+            io = new _io.Server({
+                maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
+                cors: {
+                    origin: "*",
+                    methods: ["GET", "POST", "PUT"]
+                },
+                path: '/socket',
+                // transports: ['websocket'],
+                // upgrade: false
+            });
+            io.attachApp(server);
+        }
 
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
-            const {projectKey, sessionId} = extractPeerId(socket.peerId);
+            let {projectKey, sessionId} = extractPeerId(socket.peerId);
             socket.sessionId = sessionId;
             socket.projectKey = projectKey;
             socket.lastMessageReceivedAt = Date.now();
@@ -195,9 +269,11 @@ module.exports = {
                 debug && console.log(`notifying new agent about no SESSIONS`);
                 io.to(socket.id).emit(NO_SESSIONS);
             }
-            socket.join(socket.peerId);
-            if (io.sockets.adapter.rooms.get(socket.peerId)) {
-                debug && console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+            await io.of('/').adapter.remoteJoin(socket.id, socket.peerId);
+            let rooms = await io.of('/').adapter.allRooms();
+            if (rooms.has(socket.peerId)) {
+                let connectedSockets = await io.in(socket.peerId).fetchSockets();
+                debug && console.log(`${socket.id} joined room:${socket.peerId}, as:${socket.identity}, members:${connectedSockets.length}`);
             }
             if (socket.identity === IDENTITIES.agent) {
                 if (socket.handshake.query.agentInfo !== undefined) {
@@ -226,13 +302,23 @@ module.exports = {
                 }
             });
 
+            socket.on(UPDATE_EVENT, async (...args) => {
+                debug && console.log(`${socket.id} sent update event.`);
+                if (socket.identity !== IDENTITIES.session) {
+                    debug && console.log('Ignoring update event.');
+                    return
+                }
+                socket.handshake.query.sessionInfo = {...socket.handshake.query.sessionInfo, ...args[0]};
+                socket.to(socket.peerId).emit(UPDATE_EVENT, args[0]);
+            });
+
             socket.onAny(async (eventName, ...args) => {
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
-                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
                 } else {
-                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}`);
                     let socketId = await findSessionSocketId(io, socket.peerId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.peerId}`);
@@ -246,27 +332,40 @@ module.exports = {
 
         });
         console.log("WS server started")
-        setInterval((io) => {
+        setInterval(async (io) => {
             try {
-                let count = 0;
-                console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
-                const arr = Array.from(io.sockets.adapter.rooms)
-                const filtered = arr.filter(room => !room[1].has(room[0]))
-                for (let i of filtered) {
-                    let {projectKey, sessionId} = extractPeerId(i[0]);
-                    if (projectKey !== null && sessionId !== null) {
-                        count++;
+                let rooms = await io.of('/').adapter.allRooms();
+                let validRooms = [];
+                console.log(` ====== Rooms: ${rooms.size} ====== `);
+                const arr = Array.from(rooms)
+                // const filtered = arr.filter(room => !room[1].has(room[0]))
+                for (let i of rooms) {
+                    let {projectKey, sessionId} = extractPeerId(i);
+                    if (projectKey !== undefined && sessionId !== undefined) {
+                        validRooms.push(i);
                     }
                 }
-                console.log(` ====== Valid Rooms: ${count} ====== `);
+                console.log(` ====== Valid Rooms: ${validRooms.length} ====== `);
                 if (debug) {
-                    for (let item of filtered) {
-                        console.log(`Room: ${item[0]} connected: ${item[1].size}`)
+                    for (let item of validRooms) {
+                        let connectedSockets = await io.in(item).fetchSockets();
+                        console.log(`Room: ${item} connected: ${connectedSockets.length}`)
                     }
                 }
             } catch (e) {
                 console.error(e);
             }
         }, 20000, io);
+        Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
+            io.adapter(createAdapter(pubClient, subClient));
+            console.log("> redis connected.");
+            // io.listen(3000);
+        });
+    },
+    handlers: {
+        socketsList,
+        socketsListByProject,
+        socketsLive,
+        socketsLiveByProject
     }
 };

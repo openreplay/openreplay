@@ -81,7 +81,8 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
 
-env: {}
+env:
+  REDIS_URL: "redis://redis-master.db.svc.cluster.local:6379"
 
 
 nodeSelector: {}
