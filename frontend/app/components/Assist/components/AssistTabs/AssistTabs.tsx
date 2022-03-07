@@ -21,7 +21,7 @@ const AssistTabs = (props: Props) => {
               <Avatar iconSize="20" width="30px" height="30px" seed={ props.userNumericHash } />
               <div className="ml-2 font-medium">
                 <TextEllipsis maxWidth={120} inverted popupProps={{ inverted: true, size: 'tiny' }}>
-                  {props.userId}'s asdasd asdasdasdasd
+                  {props.userId}'s
                 </TextEllipsis>
               </div>
             </div>
@@ -35,7 +35,7 @@ const AssistTabs = (props: Props) => {
         )}
       </div>
       <SlideModal
-        title={ <div>Live Sessions by {props.userId}</div> }
+        title={ <div>{props.userId}'s <span className="color-gray-medium">Live Sessions</span> </div> }
         isDisplayed={ showMenu }
         content={ showMenu && <SessionList /> }
         onClose={ () => setShowMenu(false) }
