@@ -30,9 +30,9 @@ const ASSIST_ROUTE = assistRoute();
 }))
 @connect((state, props) => {
   const isAssist = window.location.pathname.includes('/assist/');
-  const hasSessioPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
   const session = state.getIn([ 'sessions', 'current' ]);
   return {
+    isAssist,
     session,
     sessionPath: state.getIn([ 'sessions', 'sessionPath' ]),
     loading: state.getIn([ 'sessions', 'toggleFavoriteRequest', 'loading' ]),
@@ -42,7 +42,6 @@ const ASSIST_ROUTE = assistRoute();
     local: state.getIn(['sessions', 'timezone']),
     funnelRef: state.getIn(['funnels', 'navRef']),
     siteId: state.getIn([ 'user', 'siteId' ]),
-    hasSessionsPath: hasSessioPath && !isAssist,
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !session.live),
   }
@@ -65,10 +64,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
   }
 
   backHandler = () => {
-    const { history, siteId, sessionPath } = this.props;
-    const isLiveSession = sessionPath.includes("/assist");
-    if (sessionPath === history.location.pathname || sessionPath.includes("/session/") || isLiveSession) {
-      history.push(withSiteId(isLiveSession ? ASSIST_ROUTE: SESSIONS_ROUTE, siteId));
+    const { history, siteId, sessionPath, isAssist } = this.props;
+    if (sessionPath === history.location.pathname || sessionPath.includes("/session/") || isAssist) {
+      history.push(withSiteId(isAssist ? ASSIST_ROUTE: SESSIONS_ROUTE, siteId));
     } else {
       history.push(sessionPath ? sessionPath : withSiteId(SESSIONS_ROUTE, siteId));
     }
@@ -100,17 +98,15 @@ export default class PlayerBlockHeader extends React.PureComponent {
         metadata,
       },
       loading,
-      // live,
       disabled,
       jiraConfig,
       fullscreen,
-      hasSessionsPath,
-      sessionPath,
       metaList,
       closedLive = false,
       siteId,
+      isAssist,
     } = this.props;
-    const _live = live && !hasSessionsPath;
+    // const _live = isAssist;
 
     const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
       const value = metadata[key];
@@ -123,10 +119,10 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <BackLink	onClick={this.backHandler} label="Back" />
           
           <div className={ stl.divider } />
-          { _live && <AssistTabs userId={userId} userNumericHash={userNumericHash} />}
+          { isAssist && <AssistTabs userId={userId} userNumericHash={userNumericHash} />}
 
           <div className={cn("ml-auto flex items-center", { 'hidden' : closedLive })}>
-            { live && hasSessionsPath && (
+            { live && !isAssist && (
               <>
                 <div className={stl.liveSwitchButton}>
                   <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>
@@ -137,9 +133,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
               </>
             )}
             
-            { _live && (
+            { isAssist && (
               <>
-                <SessionMetaList className="" metaList={_metaList} maxLength={3} />
+                <SessionMetaList className="" metaList={_metaList} maxLength={2} />
                 <div className={ stl.divider } />
               </>
             )}
@@ -161,8 +157,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 hideOnScroll
             />
             <div className={ stl.divider } />
-            { _live && <AssistActions isLive userId={userId} /> }
-            { !_live && (
+            { isAssist && <AssistActions userId={userId} /> }
+            { !isAssist && (
               <>
                 <Autoplay />
                 <div className={ stl.divider } />
@@ -193,7 +189,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 />
               </>
             )}
-            { !_live && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
+            { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>
       </div>
