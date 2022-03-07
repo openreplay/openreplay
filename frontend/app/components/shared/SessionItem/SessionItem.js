@@ -7,7 +7,8 @@ import {
   BrowserIcon,
   CountryFlag,
   Avatar,
-  TextEllipsis
+  TextEllipsis,
+  Label,
 } from 'UI';
 import { deviceTypeIcon } from 'App/iconNames';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
@@ -20,14 +21,15 @@ import Counter from './Counter'
 import { withRouter } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
 import ErrorBars from './ErrorBars';
-import { assist as assistRoute, isRoute } from "App/routes";
+import { assist as assistRoute, liveSession, isRoute } from "App/routes";
 import { capitalize } from 'App/utils';
 
 const ASSIST_ROUTE = assistRoute();
+const ASSIST_LIVE_SESSION = liveSession()
 
-const Label = ({ label = '', color = 'color-gray-medium'}) => (
-  <div className={ cn('font-light text-sm', color)}>{label}</div>
-)
+// const Label = ({ label = '', color = 'color-gray-medium'}) => (
+//   <div className={ cn('font-light text-sm', color)}>{label}</div>
+// )
 @connect(state => ({
   timezone: state.getIn(['sessions', 'timezone']),
   siteId: state.getIn([ 'user', 'siteId' ]),
@@ -59,16 +61,18 @@ export default class SessionItem extends React.PureComponent {
         metadata,
         userSessionsCount,
         issueTypes,
+        active,
       },
       timezone,
       onUserClick = () => null,
       hasUserFilter = false,
       disableUser = false,
       metaList = [],
+      showActive = false,
     } = this.props;
     const formattedDuration = durationFormatted(duration);
     const hasUserId = userId || userAnonymousId;
-    const isAssist = isRoute(ASSIST_ROUTE, this.props.location.pathname);
+    const isAssist = isRoute(ASSIST_ROUTE, this.props.location.pathname) || isRoute(ASSIST_LIVE_SESSION, this.props.location.pathname);
 
     const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
       const value = metadata[key];
@@ -129,6 +133,11 @@ export default class SessionItem extends React.PureComponent {
           </div>
 
           <div className="flex items-center">
+            { isAssist && showActive && (
+              <Label success className={cn("bg-green color-white text-right mr-4", { 'opacity-0' : !active})}>
+                <span className="color-white">ACTIVE</span>
+              </Label>
+            )}
             <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
               <Link to={ isAssist ? liveSessionRoute(sessionId) : sessionRoute(sessionId) }>
                 <Icon name={ !viewed && !isAssist ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />

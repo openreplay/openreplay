@@ -18,12 +18,6 @@ function FunnelSearch(props: Props) {
 
   const onAddFilter = (filter) => {
     props.addFilter(filter);
-    // filter.value = [""]
-    // const newFilters = appliedFilter.filters.concat(filter);
-    // props.edit({
-    //     ...appliedFilter.filter,
-    //     filters: newFilters,
-    // });
   }
 
   const onUpdateFilter = (filterIndex, filter) => {

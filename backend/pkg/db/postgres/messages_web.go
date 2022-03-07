@@ -13,9 +13,8 @@ func getSqIdx(messageID uint64) uint {
 	return uint(messageID % math.MaxInt32)
 }
 
-
 func (conn *Conn) InsertWebCustomEvent(sessionID uint64, e *CustomEvent) error {
-	err := conn.InsertCustomEvent(sessionID, e.Timestamp, 
+	err := conn.InsertCustomEvent(sessionID, e.Timestamp,
 		e.MessageID,
 		e.Name, e.Payload)
 	if err == nil {
@@ -40,19 +39,19 @@ func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *Us
 	return err
 }
 
-func (conn *Conn) InsertWebResourceEvent(sessionID uint64, e *ResourceEvent) error {
-	if e.Type != "fetch" {
-		return nil
-	}
-	err := conn.InsertRequest(sessionID, e.Timestamp, 
-		e.MessageID,
-		e.URL, e.Duration, e.Success,
-	)
-	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))	
-	}
-	return err
-}
+// func (conn *Conn) InsertWebResourceEvent(sessionID uint64, e *ResourceEvent) error {
+// 	if e.Type != "fetch" {
+// 		return nil
+// 	}
+// 	err := conn.InsertRequest(sessionID, e.Timestamp,
+// 		e.MessageID,
+// 		e.URL, e.Duration, e.Success,
+// 	)
+// 	if err == nil {
+// 		conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
+// 	}
+// 	return err
+// }
 
 // TODO: fix column "dom_content_loaded_event_end" of relation "pages"
 func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
@@ -62,7 +61,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 	}
 	tx, err := conn.begin()
 	if err != nil {
-		return err  
+		return err
 	}
 	defer tx.rollback()
 	if err := tx.exec(`
@@ -79,7 +78,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 		)
 		`,
 		sessionID, e.MessageID, e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer), host, path, url.DiscardURLQuery(path),
-		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint, 
+		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive,
 		calcResponseTime(e), calcDomBuildingTime(e),
 	); err != nil {
@@ -132,7 +131,6 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 	conn.insertAutocompleteValue(sessionID, "CLICK", e.Label)
 	return nil
 }
-
 
 func (conn *Conn) InsertWebInputEvent(sessionID uint64, e *InputEvent) error {
 	tx, err := conn.begin()
@@ -204,4 +202,51 @@ func (conn *Conn) InsertWebErrorEvent(sessionID uint64, projectID uint32, e *Err
 		return err
 	}
 	return tx.commit()
+}
+
+func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *FetchEvent) error {
+	var request, response *string
+	if savePayload {
+		request = &e.Request
+		response = &e.Response
+	}
+	conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
+	return conn.batchQueue(sessionID, `
+		INSERT INTO events_common.requests (
+			session_id, timestamp, 
+			seq_index, url, duration, success,
+			request_body, response_body, status_code, method
+		) VALUES (
+			$1, $2, 
+			$3, $4, $5, $6,
+			$7, $8, $9::smallint, NULLIF($10, '')::events_common.http_method
+		) ON CONFLICT DO NOTHING`,
+		sessionID, e.Timestamp,
+		getSqIdx(e.MessageID), e.URL, e.Duration, e.Status < 400,
+		request, response, e.Status, url.EnsureMethod(e.Method),
+	)
+
+}
+
+func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *GraphQLEvent) error {
+	var request, response *string
+	if savePayload {
+		request = &e.Variables
+		response = &e.Response
+	}
+	conn.insertAutocompleteValue(sessionID, "GRAPHQL", e.OperationName)
+	return conn.batchQueue(sessionID, `
+		INSERT INTO events.graphql (
+			session_id, timestamp, message_id, 
+			name,
+			request_body, response_body
+		) VALUES (
+			$1, $2, $3, 
+			$4,
+			$5, $6
+		) ON CONFLICT DO NOTHING`,
+		sessionID, e.Timestamp, e.MessageID,
+		e.OperationName,
+		request, response,
+	)
 }

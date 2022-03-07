@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/hashid"
+	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
 
@@ -33,7 +33,7 @@ func (conn *Conn) InsertIOSUserAnonymousID(sessionID uint64, userAnonymousID *me
 func (conn *Conn) InsertIOSNetworkCall(sessionID uint64, e *messages.IOSNetworkCall) error {
 	err := conn.InsertRequest(sessionID, e.Timestamp, e.Index, e.URL, e.Duration, e.Success)
 	if err == nil {
-		conn.insertAutocompleteValue(sessionID, "REQUEST_IOS", url.DiscardURLQuery(e.URL))	
+		conn.insertAutocompleteValue(sessionID, "REQUEST_IOS", url.DiscardURLQuery(e.URL))
 	}
 	return err
 }
@@ -65,7 +65,7 @@ func (conn *Conn) InsertIOSScreenEnter(sessionID uint64, screenEnter *messages.I
 	if err = tx.commit(); err != nil {
 		return err
 	}
-  conn.insertAutocompleteValue(sessionID, "VIEW_IOS", screenEnter.ViewName)
+	conn.insertAutocompleteValue(sessionID, "VIEW_IOS", screenEnter.ViewName)
 	return nil
 }
 
@@ -81,7 +81,7 @@ func (conn *Conn) InsertIOSClickEvent(sessionID uint64, clickEvent *messages.IOS
 			session_id, timestamp, seq_index, label
 		) VALUES (
 			$1, $2, $3, $4
-		)`, 
+		)`,
 		sessionID, clickEvent.Timestamp, clickEvent.Index, clickEvent.Label,
 	); err != nil {
 		return err
@@ -153,7 +153,7 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 			project_id, $2, $3, $4, $5
 			FROM sessions
 			WHERE session_id = $1
-		)ON CONFLICT DO NOTHING`, 
+		)ON CONFLICT DO NOTHING`,
 		sessionID, crashID, crash.Name, crash.Reason, crash.Stacktrace,
 	); err != nil {
 		return err
@@ -163,7 +163,7 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 			session_id, timestamp, seq_index, crash_id
 		) VALUES (
 			$1, $2, $3, $4
-		)`, 
+		)`,
 		sessionID, crash.Timestamp, crash.Index, crashID,
 	); err != nil {
 		return err
@@ -177,5 +177,3 @@ func (conn *Conn) InsertIOSCrash(sessionID uint64, projectID uint32, crash *mess
 	}
 	return tx.commit()
 }
-
-

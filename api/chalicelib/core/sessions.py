@@ -1,3 +1,5 @@
+from typing import List
+
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event
@@ -198,7 +200,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                  ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
                                             FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
-                                                                {"," if len(meta_keys)>0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions
@@ -210,7 +212,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
                                             FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
-                                                                {"," if len(meta_keys)>0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
@@ -225,9 +227,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
 
         # print("--------------------")
         # print(main_query)
-
-        cur.execute(main_query)
         # print("--------------------")
+        cur.execute(main_query)
+
         if count_only:
             return helper.dict_to_camel_case(cur.fetchone())
         sessions = cur.fetchone()
@@ -264,44 +266,103 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
     }
 
 
-@dev.timed
 def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, density: int,
-                   view_type: schemas.MetricViewType):
+                   view_type: schemas.MetricTimeseriesViewType, metric_type: schemas.MetricType,
+                   metric_of: schemas.TableMetricOfType, metric_value: List):
     step_size = int(metrics_helper.__get_step_size(endTimestamp=data.endDate, startTimestamp=data.startDate,
                                                    density=density, factor=1, decimal=True))
+    extra_event = None
+    if metric_of == schemas.TableMetricOfType.visited_url:
+        extra_event = "events.pages"
+    elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
+        data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
+                                                              operator=schemas.SearchEventOperator._is))
     full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
                                                      favorite_only=False, issue=None, project_id=project_id,
-                                                     user_id=None)
+                                                     user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
+    sessions = []
     with pg_client.PostgresClient() as cur:
-        if view_type == schemas.MetricViewType.line_chart:
-            main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
-                                                            {query_part})
-                                        SELECT generated_timestamp AS timestamp,
-                                               COUNT(s)            AS count
-                                        FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
-                                                 LEFT JOIN LATERAL ( SELECT 1 AS s
-                                                                     FROM full_sessions
-                                                                     WHERE start_ts >= generated_timestamp
-                                                                       AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
-                                        GROUP BY generated_timestamp
-                                        ORDER BY generated_timestamp;""", full_args)
-        else:
-            main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
-                                        {query_part};""", full_args)
+        if metric_type == schemas.MetricType.timeseries:
+            if view_type == schemas.MetricTimeseriesViewType.line_chart:
+                main_query = cur.mogrify(f"""WITH full_sessions AS (SELECT DISTINCT ON(s.session_id) s.session_id, s.start_ts
+                                                                {query_part})
+                                            SELECT generated_timestamp AS timestamp,
+                                                   COUNT(s)            AS count
+                                            FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                     LEFT JOIN LATERAL ( SELECT 1 AS s
+                                                                         FROM full_sessions
+                                                                         WHERE start_ts >= generated_timestamp
+                                                                           AND start_ts <= generated_timestamp + %(step_size)s) AS sessions ON (TRUE)
+                                            GROUP BY generated_timestamp
+                                            ORDER BY generated_timestamp;""", full_args)
+            else:
+                main_query = cur.mogrify(f"""SELECT count(DISTINCT s.session_id) AS count
+                                            {query_part};""", full_args)
 
-        # print("--------------------")
-        # print(main_query)
-        cur.execute(main_query)
-        # print("--------------------")
-        if view_type == schemas.MetricViewType.line_chart:
-            sessions = cur.fetchall()
-        else:
-            sessions = cur.fetchone()["count"]
+            # print("--------------------")
+            # print(main_query)
+            # print("--------------------")
+            cur.execute(main_query)
+            if view_type == schemas.MetricTimeseriesViewType.line_chart:
+                sessions = cur.fetchall()
+            else:
+                sessions = cur.fetchone()["count"]
+        elif metric_type == schemas.MetricType.table:
+            if isinstance(metric_of, schemas.TableMetricOfType):
+                main_col = "user_id"
+                extra_col = ""
+                extra_where = ""
+                pre_query = ""
+                if metric_of == schemas.TableMetricOfType.user_country:
+                    main_col = "user_country"
+                elif metric_of == schemas.TableMetricOfType.user_device:
+                    main_col = "user_device"
+                elif metric_of == schemas.TableMetricOfType.user_browser:
+                    main_col = "user_browser"
+                elif metric_of == schemas.TableMetricOfType.issues:
+                    main_col = "issue"
+                    extra_col = f", UNNEST(s.issue_types) AS {main_col}"
+                    if len(metric_value) > 0:
+                        extra_where = []
+                        for i in range(len(metric_value)):
+                            arg_name = f"selected_issue_{i}"
+                            extra_where.append(f"{main_col} = %({arg_name})s")
+                            full_args[arg_name] = metric_value[i]
+                        extra_where = f"WHERE ({' OR '.join(extra_where)})"
+                elif metric_of == schemas.TableMetricOfType.visited_url:
+                    main_col = "base_path"
+                    extra_col = ", base_path"
+                main_query = cur.mogrify(f"""{pre_query}
+                                             SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
+                                                        FROM (SELECT {main_col} AS name,
+                                                                 count(full_sessions)                                   AS session_count,
+                                                                 ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
+                                                            FROM (SELECT *
+                                                            FROM (SELECT DISTINCT ON(s.session_id) s.session_id, s.user_uuid, 
+                                                                        s.user_id, s.user_os, 
+                                                                        s.user_browser, s.user_device, 
+                                                                        s.user_device_type, s.user_country, s.issue_types{extra_col}
+                                                            {query_part}
+                                                            ORDER BY s.session_id desc) AS filtred_sessions
+                                                            ) AS full_sessions
+                                                            {extra_where}
+                                                            GROUP BY {main_col}
+                                                            ORDER BY session_count DESC) AS users_sessions;""",
+                                         full_args)
+            # print("--------------------")
+            # print(main_query)
+            # print("--------------------")
+            cur.execute(main_query)
+            sessions = cur.fetchone()
+            for s in sessions["values"]:
+                s.pop("rn")
+            sessions["values"] = helper.list_to_camel_case(sessions["values"])
+
         return sessions
 
 
-def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id):
+def search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id, user_id, extra_event=None):
     ss_constraints = []
     full_args = {"project_id": project_id, "startDate": data.startDate, "endDate": data.endDate,
                  "projectId": project_id, "userId": user_id}
@@ -521,7 +582,6 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                          value_key=f_k))
     # ---------------------------------------------------------------------------
     if len(data.events) > 0:
-        # ss_constraints = [s.decode('UTF-8') for s in ss_constraints]
         events_query_from = []
         event_index = 0
         or_events = data.events_order == schemas.SearchEventOrder._or
@@ -532,13 +592,16 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             is_any = _isAny_opreator(event.operator)
             if not isinstance(event.value, list):
                 event.value = [event.value]
-            if not is_any and len(event.value) == 0 \
+            if not is_any and len(event.value) == 0 and event_type not in [schemas.EventType.request_details,
+                                                                           schemas.EventType.graphql_details] \
                     or event_type in [schemas.PerformanceEventType.location_dom_complete,
                                       schemas.PerformanceEventType.location_largest_contentful_paint_time,
                                       schemas.PerformanceEventType.location_ttfb,
                                       schemas.PerformanceEventType.location_avg_cpu_load,
                                       schemas.PerformanceEventType.location_avg_memory_usage
-                                      ] and (event.source is None or len(event.source) == 0):
+                                      ] and (event.source is None or len(event.source) == 0) \
+                    or event_type in [schemas.EventType.request_details, schemas.EventType.graphql_details] and (
+                    event.filters is None or len(event.filters) == 0):
                 continue
             op = __get_sql_operator(event.operator)
             is_not = False
@@ -737,15 +800,19 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 event_where += ["main2.timestamp >= %(startDate)s", "main2.timestamp <= %(endDate)s"]
                 if event_index > 0 and not or_events:
                     event_where.append("main2.session_id=event_0.session_id")
-                event_where.append(
-                    _multiple_conditions(
-                        f"main.{getattr(events.event_type, event.value[0].type).column} {s_op} %({e_k1})s",
-                        event.value[0].value, value_key=e_k1))
+                is_any = _isAny_opreator(event.value[0].operator)
+                if not is_any:
+                    event_where.append(
+                        _multiple_conditions(
+                            f"main.{getattr(events.event_type, event.value[0].type).column} {s_op} %({e_k1})s",
+                            event.value[0].value, value_key=e_k1))
                 s_op = __get_sql_operator(event.value[1].operator)
-                event_where.append(
-                    _multiple_conditions(
-                        f"main2.{getattr(events.event_type, event.value[1].type).column} {s_op} %({e_k2})s",
-                        event.value[1].value, value_key=e_k2))
+                is_any = _isAny_opreator(event.value[1].operator)
+                if not is_any:
+                    event_where.append(
+                        _multiple_conditions(
+                            f"main2.{getattr(events.event_type, event.value[1].type).column} {s_op} %({e_k2})s",
+                            event.value[1].value, value_key=e_k2))
 
                 e_k += "_custom"
                 full_args = {**full_args, **_multiple_values(event.source, value_key=e_k)}
@@ -753,7 +820,66 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                     _multiple_conditions(f"main2.timestamp - main.timestamp {event.sourceOperator} %({e_k})s",
                                          event.source, value_key=e_k))
 
-
+            elif event_type == schemas.EventType.request_details:
+                event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                for j, f in enumerate(event.filters):
+                    is_any = _isAny_opreator(f.operator)
+                    if is_any or len(f.value) == 0:
+                        continue
+                    op = __get_sql_operator(f.operator)
+                    e_k_f = e_k + f"_fetch{j}"
+                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    if f.type == schemas.FetchFilterType._url:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._status_code:
+                        event_where.append(
+                            _multiple_conditions(f"main.status_code {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._method:
+                        event_where.append(
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._duration:
+                        event_where.append(
+                            _multiple_conditions(f"main.duration {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._request_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.FetchFilterType._response_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    else:
+                        print(f"undefined FETCH filter: {f.type}")
+            elif event_type == schemas.EventType.graphql_details:
+                event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
+                for j, f in enumerate(event.filters):
+                    is_any = _isAny_opreator(f.operator)
+                    if is_any or len(f.value) == 0:
+                        continue
+                    op = __get_sql_operator(f.operator)
+                    e_k_f = e_k + f"_graphql{j}"
+                    full_args = {**full_args, **_multiple_values(f.value, value_key=e_k_f)}
+                    if f.type == schemas.GraphqlFilterType._name:
+                        event_where.append(
+                            _multiple_conditions(f"main.{events.event_type.GRAPHQL.column} {op} %({e_k_f})s", f.value,
+                                                 value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._status_code:
+                        event_where.append(
+                            _multiple_conditions(f"main.status_code {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._method:
+                        event_where.append(
+                            _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._duration:
+                        event_where.append(
+                            _multiple_conditions(f"main.duration {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._request_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    elif f.type == schemas.GraphqlFilterType._response_body:
+                        event_where.append(
+                            _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                    else:
+                        print(f"undefined GRAPHQL filter: {f.type}")
             else:
                 continue
             if event_index == 0 or or_events:
@@ -856,6 +982,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 """
         full_args["issue_contextString"] = issue["contextString"]
         full_args["issue_type"] = issue["type"]
+    if extra_event:
+        extra_join += f"""INNER JOIN {extra_event} AS ev USING(session_id)"""
+        extra_constraints.append("ev.timestamp>=%(startDate)s")
+        extra_constraints.append("ev.timestamp<=%(endDate)s")
     query_part = f"""\
                         FROM {f"({events_query_part}) AS f" if len(events_query_part) > 0 else "public.sessions AS s"}
                         {extra_join}

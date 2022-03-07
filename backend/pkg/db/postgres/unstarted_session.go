@@ -1,18 +1,18 @@
 package postgres
 
 type UnstartedSession struct {
-	ProjectKey string 
-	TrackerVersion string
-	DoNotTrack bool
-	Platform string
-	UserAgent string
-	UserOS string
-	UserOSVersion string
-	UserBrowser string
+	ProjectKey         string
+	TrackerVersion     string
+	DoNotTrack         bool
+	Platform           string
+	UserAgent          string
+	UserOS             string
+	UserOSVersion      string
+	UserBrowser        string
 	UserBrowserVersion string
-	UserDevice string
-	UserDeviceType string
-	UserCountry string
+	UserDevice         string
+	UserDeviceType     string
+	UserCountry        string
 }
 
 func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
@@ -34,12 +34,12 @@ func (conn *Conn) InsertUnstartedSession(s UnstartedSession) error {
 			$10, $11,
 			$12
 		)`,
-		s.ProjectKey, 
+		s.ProjectKey,
 		s.TrackerVersion, s.DoNotTrack,
 		s.Platform, s.UserAgent,
 		s.UserOS, s.UserOSVersion,
 		s.UserBrowser, s.UserBrowserVersion,
-		s.UserDevice, s.UserDeviceType, 
+		s.UserDevice, s.UserDeviceType,
 		s.UserCountry,
 	)
 }

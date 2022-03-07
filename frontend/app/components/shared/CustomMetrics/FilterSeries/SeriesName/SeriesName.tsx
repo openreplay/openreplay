@@ -4,8 +4,10 @@ import { Icon } from 'UI';
 interface Props {
   name: string;
   onUpdate: (name) => void;
+  seriesIndex?: number;
 }
 function SeriesName(props: Props) {
+  const { seriesIndex = 1 } = props;
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(props.name)
   const ref = useRef<any>(null)
@@ -36,7 +38,7 @@ function SeriesName(props: Props) {
         <input
           ref={ ref }
           name="name"
-          className="fluid border-0 -mx-2 px-2"
+          className="fluid border-0 -mx-2 px-2 h-8"
           value={name}
           // readOnly={!editing} 
           onChange={write}
@@ -44,7 +46,7 @@ function SeriesName(props: Props) {
           onFocus={() => setEditing(true)}
         />
       ) : (
-        <div className="text-base">{name}</div>
+        <div className="text-base h-8 flex items-center border-transparent">{name.trim() === '' ? 'Seriess ' + (seriesIndex + 1) : name }</div>
       )}
       
       <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div>

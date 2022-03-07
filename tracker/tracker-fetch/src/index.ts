@@ -1,10 +1,25 @@
 import { App, Messages } from '@openreplay/tracker';
 
+interface Request {
+  url: string,
+  body: string | Object,
+  headers: Record<string, string>,
+}
+
+interface Response {
+  url: string,
+  status: number,
+  body: string,
+  headers: Record<string, string>,
+}
+
 export interface Options {
   sessionTokenHeader?: string;
   replaceDefault: boolean; // overrideDefault ?
   failuresOnly: boolean;
   ignoreHeaders: Array<string> | boolean;
+  requestSanitizer: ((Request) => Request | null) | null;
+  responseSanitizer: ((Response) => Response | null) | null;
 }
 
 export default function(opts: Partial<Options> = {}) {
@@ -13,10 +28,11 @@ export default function(opts: Partial<Options> = {}) {
       replaceDefault: false,
       failuresOnly: false,
       ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
+      requestSanitizer: null,
+      responseSanitizer: null,
     },
     opts,
   );
-
   return (app: App | null) => {
     if (app === null) {
       return window.fetch;
@@ -55,6 +71,7 @@ export default function(opts: Partial<Options> = {}) {
       const r = response.clone();
 
       r.text().then(text => {
+        // Headers prepearing
         const reqHs: Record<string, string> = {}
         const resHs: Record<string, string> = {}
         if (ihOpt !== true) {
@@ -71,20 +88,57 @@ export default function(opts: Partial<Options> = {}) {
 
           r.headers.forEach((v, n) => { if (!isHIgnoring(n)) resHs[n] = v })
         }
-        const req = JSON.stringify({
+
+        // Request forming
+        let reqBody = ''
+        if (typeof init.body === 'string') {
+          reqBody = init.body
+        } else if (typeof init.body === 'object') {
+          try {
+            reqBody = JSON.stringify(init.body)
+          } catch {}
+        }
+        let req: Request | null = {
+          url: input,
           headers: reqHs,
-          body: typeof init.body === 'string' ? init.body : '',
-        })
-        const res = JSON.stringify({
+          body: reqBody,
+        }
+        if (options.requestSanitizer !== null) {
+          req = options.requestSanitizer(req)
+          if (!req) {
+            return
+          }
+        }
+
+        // Response forming
+        let res: Response | null = {
+          url: input,
+          status: r.status,
           headers: resHs,
           body: text,
+        }
+        if (options.responseSanitizer !== null) {
+          res = options.responseSanitizer(res)
+          if (!res) {
+            return
+          }
+        }
+
+        const reqStr = JSON.stringify({
+          headers: req.headers,
+          body: req.body,
         })
+        const resStr = JSON.stringify({
+          headers: res.headers,
+          body: res.body,
+        })
+
         app.send(
           Messages.Fetch(
             typeof init.method === 'string' ? init.method.toUpperCase() : 'GET',
             input,
-            req,
-            res,
+            reqStr,
+            resStr,
             r.status,
             startTime + performance.timing.navigationStart,
             duration,

@@ -107,14 +107,15 @@ export const checkFilterValue = (value) => {
   return Array.isArray(value) ? (value.length === 0 ? [""] : value) : [value];
 }
 
-export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent }) => ({
+export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent, filters }) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,
   operator,
   source: category === FilterCategory.METADATA ? key : source,
   sourceOperator,
-  isEvent
+  isEvent,
+  filters: filters ? filters.map(filterMap) : [],
 });
 
 const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
@@ -233,6 +234,10 @@ export const hasFilterApplied = (filters, filter) => {
 
 export const addFilter = (filter) => (dispatch, getState) => {
   filter.value = checkFilterValue(filter.value);
+  filter.filters = filter.filters ? filter.filters.map(subFilter => ({
+    ...subFilter,
+    value: checkFilterValue(subFilter.value),
+  })) : null;
   const instance = getState().getIn([ 'search', 'instance']);
 
   if (hasFilterApplied(instance.filters, filter)) {

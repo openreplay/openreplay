@@ -81,20 +81,25 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         )
         rows = cur.fetchall()
         if recording_state:
+            project_ids = [f'({r["project_id"]})' for r in rows]
+            query = f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
+                        FROM (VALUES {",".join(project_ids)}) AS projects(project_id)
+                                 LEFT JOIN sessions USING (project_id)
+                        GROUP BY project_id;"""
+            cur.execute(
+                query=query
+            )
+            status = cur.fetchall()
             for r in rows:
-                query = cur.mogrify(
-                    "select COALESCE(MAX(start_ts),0) AS last from public.sessions where project_id=%(project_id)s;",
-                    {"project_id": r["project_id"]})
-                cur.execute(
-                    query=query
-                )
-                status = cur.fetchone()
-                if status["last"] < TimeUTC.now(-2):
-                    r["status"] = "red"
-                elif status["last"] < TimeUTC.now(-1):
-                    r["status"] = "yellow"
-                else:
-                    r["status"] = "green"
+                for s in status:
+                    if s["project_id"] == r["project_id"]:
+                        if s["last"] < TimeUTC.now(-2):
+                            r["status"] = "red"
+                        elif s["last"] < TimeUTC.now(-1):
+                            r["status"] = "yellow"
+                        else:
+                            r["status"] = "green"
+                        break
 
         return helper.list_to_camel_case(rows)
 
