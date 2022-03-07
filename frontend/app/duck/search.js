@@ -162,7 +162,7 @@ export const applySavedSearch = (filter) => (dispatch, getState) => {
 
 export const fetchSessions = (filter) => (dispatch, getState) => {
   const _filter = filter ? filter : getState().getIn([ 'search', 'instance']);
-  // return dispatch(applyFilter(_filter)); // TODO uncomment this line
+  return dispatch(applyFilter(_filter));
 };
 
 export const updateSeries = (index, series) => ({
