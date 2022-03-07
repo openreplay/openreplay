@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v4"
-
-
 )
 
 type Listener struct {

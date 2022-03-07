@@ -1,7 +1,7 @@
 {
   "name": "@openreplay/tracker-assist",
   "description": "Tracker plugin for screen assistance through the WebRTC",
-  "version": "3.5.0",
+  "version": "3.5.5",
   "keywords": [
     "WebRTC",
     "assistance",
@@ -20,10 +20,11 @@
     "replace-paths": "replace-in-files cjs/* --string='@openreplay/tracker' --replacement='@openreplay/tracker/cjs' && replace-in-files cjs/* --string='/lib/' --replacement='/'",
     "replace-versions": "npm run replace-pkg-version && npm run replace-req-version",
     "replace-pkg-version": "replace-in-files lib/* cjs/* --string='PACKAGE_VERSION' --replacement=$npm_package_version",
-    "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='3.5.0'",
+    "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='3.5.3'",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "csstype": "^3.0.10",
     "npm-dragndrop": "^1.2.0",
     "peerjs": "^1.3.2",
     "socket.io-client": "^4.4.1"

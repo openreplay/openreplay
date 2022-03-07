@@ -96,8 +96,14 @@ export default Record({
       startDate,
       endDate,
       events: List(events).map(Event),
-      filters: List(filters).map(i => NewFilter(i).toData()).concat(List(events).map(i => NewFilter(i).toData())),
-      custom: Map(custom),
+      filters: List(filters)
+        .map(i => {
+          const filter = NewFilter(i).toData();
+          if (i.hasOwnProperty('filters')) {
+            filter.filters = i.filters.map(f => NewFilter({...f, subFilter: i.type}).toData());
+          }
+          return filter;
+        }),
     }
   }
 });

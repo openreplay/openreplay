@@ -82,7 +82,7 @@ data:
       proxy_set_header Host $host;
       proxy_set_header X-Forwarded-For $origin_forwarded_ip;
       proxy_set_header X-Real-IP $origin_forwarded_ip;
-      proxy_pass http://utilities-openreplay.app.svc.cluster.local:9001;
+      proxy_pass http://utilities-pool;
     }
     location /assets/ {
       rewrite ^/assets/(.*) /sessions-assets/$1 break;
@@ -161,8 +161,11 @@ data:
     }
 
     upstream utilities-pool {
+      # comment this line if you have multiple pods
       server utilities-openreplay-headless.app:9001;
-      # enable sticky session with either "hash" (uses the complete IP address)
+      # uncomment and change these lines if you have multiple pods
+      # server POD1_IP:9001;
+      # server POD2_IP:9001;
       hash $origin_forwarded_ip consistent;
     }
 

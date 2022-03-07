@@ -1,35 +1,50 @@
 import json
+from typing import Union
 
 import schemas
 from chalicelib.core import sessions
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+PIE_CHART_GROUP = 5
 
-def try_live(project_id, data: schemas.TryCustomMetricsSchema):
+
+def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
     results = []
     for i, s in enumerate(data.series):
         s.filter.startDate = data.startDate
         s.filter.endDate = data.endDate
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                               view_type=data.viewType))
-        if data.viewType == schemas.MetricViewType.progress:
+                                               view_type=data.view_type, metric_type=data.metric_type,
+                                               metric_of=data.metric_of, metric_value=data.metric_value))
+        if data.view_type == schemas.MetricTimeseriesViewType.progress:
             r = {"count": results[-1]}
             diff = s.filter.endDate - s.filter.startDate
             s.filter.startDate = data.endDate
             s.filter.endDate = data.endDate - diff
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
-                                                         view_type=data.viewType)
+                                                         view_type=data.view_type, metric_type=data.metric_type,
+                                                         metric_of=data.metric_of, metric_value=data.metric_value)
             r["countProgress"] = helper.__progress(old_val=r["previousCount"], new_val=r["count"])
+            # r["countProgress"] = ((r["count"] - r["previousCount"]) / r["previousCount"]) * 100 \
+            #     if r["previousCount"] > 0 else 0
             r["seriesName"] = s.name if s.name else i + 1
             r["seriesId"] = s.series_id if s.series_id else None
             results[-1] = r
+        elif data.view_type == schemas.MetricTableViewType.pie_chart:
+            if len(results[i].get("values", [])) > PIE_CHART_GROUP:
+                results[i]["values"] = results[i]["values"][:PIE_CHART_GROUP] \
+                                       + [{
+                    "name": "Others", "group": True,
+                    "sessionCount": sum(r["sessionCount"] for r in results[i]["values"][PIE_CHART_GROUP:])
+                }]
+
     return results
 
 
-def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
-    series_charts = try_live(project_id=project_id, data=data)
-    if data.viewType == schemas.MetricViewType.progress:
+def merged_live(project_id, data: schemas.CreateCustomMetricsSchema):
+    series_charts = __try_live(project_id=project_id, data=data)
+    if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
@@ -39,13 +54,30 @@ def merged_live(project_id, data: schemas.TryCustomMetricsSchema):
     return results
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+def __get_merged_metric(project_id, user_id, metric_id,
+                        data: Union[schemas.CustomMetricChartPayloadSchema,
+                                    schemas.CustomMetricSessionsPayloadSchema]) \
+        -> Union[schemas.CreateCustomMetricsSchema, None]:
     metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
-    metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
-    series_charts = try_live(project_id=project_id, data=metric)
-    if data.viewType == schemas.MetricViewType.progress:
+    metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
+    if len(data.filters) > 0 or len(data.events) > 0:
+        for s in metric.series:
+            if len(data.filters) > 0:
+                s.filter.filters += data.filters
+            if len(data.events) > 0:
+                s.filter.events += data.events
+    return metric
+
+
+def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
+                                                                    metric_id=metric_id, data=data)
+    if metric is None:
+        return None
+    series_charts = __try_live(project_id=project_id, data=metric)
+    if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
         return series_charts
     results = [{}] * len(series_charts[0])
     for i in range(len(results)):
@@ -55,11 +87,11 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     return results
 
 
-def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricRawPayloadSchema):
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
+                                                                    metric_id=metric_id, data=data)
     if metric is None:
         return None
-    metric: schemas.TryCustomMetricsSchema = schemas.TryCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     results = []
     for s in metric.series:
         s.filter.startDate = data.startDate
@@ -82,8 +114,10 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
         data.series = None
         params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
         query = cur.mogrify(f"""\
-            WITH m AS (INSERT INTO metrics (project_id, user_id, name)
-                         VALUES (%(project_id)s, %(user_id)s, %(name)s)
+            WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
+                                    view_type, metric_type, metric_of, metric_value, metric_format)
+                         VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
+                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, %(metric_format)s)
                          RETURNING *)
             INSERT
             INTO metric_series(metric_id, index, name, filter)
@@ -98,32 +132,22 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
     return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
-def __get_series_id(metric_id):
-    with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT series_id
-                    FROM metric_series
-                    WHERE metric_series.metric_id = %(metric_id)s
-                      AND metric_series.deleted_at ISNULL;""",
-                {"metric_id": metric_id}
-            )
-        )
-        rows = cur.fetchall()
-    return [r["series_id"] for r in rows]
-
-
 def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSchema):
-    series_ids = __get_series_id(metric_id)
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    series_ids = [r["seriesId"] for r in metric["series"]]
     n_series = []
     d_series_ids = []
     u_series = []
     u_series_ids = []
     params = {"metric_id": metric_id, "is_public": data.is_public, "name": data.name,
-              "user_id": user_id, "project_id": project_id}
+              "user_id": user_id, "project_id": project_id, "view_type": data.view_type,
+              "metric_type": data.metric_type, "metric_of": data.metric_of,
+              "metric_value": data.metric_value, "metric_format": data.metric_format}
     for i, s in enumerate(data.series):
         prefix = "u_"
-        if s.series_id is None:
+        if s.series_id is None or s.series_id not in series_ids:
             n_series.append({"i": i, "s": s})
             prefix = "n_"
             s.index = i
@@ -165,7 +189,10 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
         query = cur.mogrify(f"""\
             {"WITH " if len(sub_queries) > 0 else ""}{",".join(sub_queries)}
             UPDATE metrics
-            SET name = %(name)s, is_public= %(is_public)s 
+            SET name = %(name)s, is_public= %(is_public)s, 
+                view_type= %(view_type)s, metric_type= %(metric_type)s, 
+                metric_of= %(metric_of)s, metric_value= %(metric_value)s,
+                metric_format= %(metric_format)s
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -224,7 +251,7 @@ def get(metric_id, project_id, user_id, flatten=True):
             cur.mogrify(
                 """SELECT *
                     FROM metrics
-                             LEFT JOIN LATERAL (SELECT jsonb_agg(metric_series.* ORDER BY index) AS series
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
@@ -261,6 +288,7 @@ def get_series_for_alert(project_id, user_id):
                              INNER JOIN metrics USING (metric_id)
                     WHERE metrics.deleted_at ISNULL
                       AND metrics.project_id = %(project_id)s
+                      AND metrics.metric_type = 'timeseries'
                       AND (user_id = %(user_id)s OR is_public)
                     ORDER BY name;""",
                 {"project_id": project_id, "user_id": user_id}

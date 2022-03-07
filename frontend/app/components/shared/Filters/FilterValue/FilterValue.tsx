@@ -63,7 +63,7 @@ function FilterValue(props: Props) {
   }
 
   const renderValueFiled = (value, valueIndex) => {
-    const showOrButton = valueIndex === lastIndex;
+    const showOrButton = valueIndex === lastIndex && filter.type !== FilterType.NUMBER;
     switch(filter.type) {
       case FilterType.STRING:
         return (
@@ -113,15 +113,40 @@ function FilterValue(props: Props) {
             maxDuration={ durationValues.maxDuration }
           />
         )
+      case FilterType.NUMBER_MULTIPLE:
+        return (
+          <FilterAutoCompleteLocal
+            value={value}
+            showCloseButton={showCloseButton}
+            showOrButton={showOrButton}
+            onAddValue={onAddValue}
+            onRemoveValue={() => onRemoveValue(valueIndex)}
+            onSelect={(e, item) => debounceOnSelect(e, item, valueIndex)}
+            icon={filter.icon}
+            type="number"
+          />
+        )
       case FilterType.NUMBER:
         return (
-          <input
-            className="w-full px-2 py-1 text-sm leading-tight text-gray-700 rounded-lg"
-            type="number"
-            name={`${filter.key}-${valueIndex}`}
+          <FilterAutoCompleteLocal
             value={value}
-            onChange={(e) => onChange(e, { value: e.target.value }, valueIndex)}
+            showCloseButton={showCloseButton}
+            showOrButton={showOrButton}
+            onAddValue={onAddValue}
+            onRemoveValue={() => onRemoveValue(valueIndex)}
+            onSelect={(e, item) => debounceOnSelect(e, item, valueIndex)}
+            icon={filter.icon}
+            type="number"
+            isMultilple={false}
           />
+          // <input
+          //   className="w-full px-2 py-1 text-sm leading-tight text-gray-700 rounded bg-white border"
+          //   type="number"
+          //   name={`${filter.key}-${valueIndex}`}
+          //   value={value}
+          //   placeholder="Enter"
+          //   onChange={(e) => onChange(e, { value: e.target.value }, valueIndex)}
+          // />
         )
       case FilterType.MULTIPLE:
         return (

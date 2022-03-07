@@ -3,22 +3,22 @@ package types
 import "log"
 
 type Project struct {
-	ProjectID          uint32
-	ProjectKey         string
-	MaxSessionDuration int64
-	SampleRate        byte
-	Metadata1          *string 
-	Metadata2          *string 
-	Metadata3          *string 
-	Metadata4          *string 
-	Metadata5          *string 
-	Metadata6          *string 
-	Metadata7          *string 
-	Metadata8          *string 
-	Metadata9          *string 
-	Metadata10         *string
+	ProjectID           uint32
+	ProjectKey          string
+	MaxSessionDuration  int64
+	SampleRate          byte
+	SaveRequestPayloads bool
+	Metadata1           *string
+	Metadata2           *string
+	Metadata3           *string
+	Metadata4           *string
+	Metadata5           *string
+	Metadata6           *string
+	Metadata7           *string
+	Metadata8           *string
+	Metadata9           *string
+	Metadata10          *string
 }
-
 
 func (p *Project) GetMetadataNo(key string) uint {
 	if p == nil {

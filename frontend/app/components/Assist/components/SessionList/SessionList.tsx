@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { fetchLiveList } from 'Duck/sessions';
-import { Loader, NoContent } from 'UI';
+import { Loader, NoContent, Label } from 'UI';
 import SessionItem from 'Shared/SessionItem';
 
 interface Props {
@@ -22,7 +22,17 @@ function SessionList(props: Props) {
         title="No live sessions."
       >
         <div className="p-4">
-          { props.list.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
+          { props.list.map(session => (
+            <div className="mb-6">
+              {session.pageTitle && session.pageTitle !== '' && (
+                <div className="flex items-center mb-2">
+                  <Label size="small" className="p-1"><span className="color-gray-medium">TAB</span></Label>
+                  <span className="ml-2 font-medium">{session.pageTitle}</span>
+                </div>
+              )}
+              <SessionItem key={ session.sessionId } session={ session } showActive={true} />
+            </div>
+          )) }
         </div>
       </NoContent>
     </Loader>

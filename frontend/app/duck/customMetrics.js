@@ -187,7 +187,7 @@ export const init = (instance = null, forceNull = false) => (dispatch, getState)
 export const fetchSessionList = (params) => (dispatch, getState) => {
   dispatch({
     types: array(FETCH_SESSION_LIST),
-    call: client => client.post(`/custom_metrics/sessions`, { ...params }),
+    call: client => client.post(`/custom_metrics/${params.metricId}/sessions`, { ...params }),
   });
 }
 

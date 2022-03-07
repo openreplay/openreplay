@@ -47,15 +47,17 @@ function FilterAutoComplete(props: Props) {
   const requestValues = (q) => {    
     setLoading(true);
 
-    return new APIClient()[method?.toLowerCase()](endpoint, { ...params, q })
-    .then(response => response.json())
-    .then(({ errors, data }) => {
-      if (errors) {
-        // this.setError();
-      } else {
-        setOptions(data);       
-      }
-    }).finally(() => setLoading(false));
+    return new APIClient()[method?.toLocaleLowerCase()](endpoint, { ...params, q })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error(response.statusText);
+      })
+      .then(({ data }) => {
+        setOptions(data);
+      })
+      .finally(() => setLoading(false));
   }
 
   const debouncedRequestValues = React.useCallback(debounce(requestValues, 300), []);

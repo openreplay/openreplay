@@ -11,7 +11,7 @@ func insertMessage(sessionID uint64, msg Message) error {
 		return pg.InsertMetadata(sessionID, m)
 	case *IssueEvent:
 		return pg.InsertIssueEvent(sessionID, m)
-  //TODO: message adapter (transformer) (at the level of pkg/message) for types:
+		//TODO: message adapter (transformer) (at the level of pkg/message) for types:
 	// case *IOSMetadata, *IOSIssueEvent and others
 
 	// Web
@@ -30,14 +30,18 @@ func insertMessage(sessionID uint64, msg Message) error {
 	case *InputEvent:
 		return pg.InsertWebInputEvent(sessionID, m)
 		// Unique Web messages
-	case *ResourceEvent:
-		return pg.InsertWebResourceEvent(sessionID, m)
+	// case *ResourceEvent:
+	// 	return pg.InsertWebResourceEvent(sessionID, m)
 	case *PageEvent:
 		return pg.InsertWebPageEvent(sessionID, m)
-	case *ErrorEvent:	
+	case *ErrorEvent:
 		return pg.InsertWebErrorEvent(sessionID, m)
+	case *FetchEvent:
+		return pg.InsertWebFetchEvent(sessionID, m)
+	case *GraphQLEvent:
+		return pg.InsertWebGraphQLEvent(sessionID, m)
 
-  // IOS 
+		// IOS
 	case *IOSSessionStart:
 		return pg.InsertIOSSessionStart(sessionID, m)
 	case *IOSSessionEnd:
@@ -57,8 +61,8 @@ func insertMessage(sessionID uint64, msg Message) error {
 		return pg.InsertIOSNetworkCall(sessionID, m)
 	case *IOSScreenEnter:
 		return pg.InsertIOSScreenEnter(sessionID, m)
-	case *IOSCrash:	
+	case *IOSCrash:
 		return pg.InsertIOSCrash(sessionID, m)
 	}
-	return nil  // "Not implemented"
+	return nil // "Not implemented"
 }

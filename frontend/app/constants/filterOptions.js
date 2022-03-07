@@ -1,3 +1,5 @@
+import { FilterKey } from 'Types/filter/filterType';
+
 export const options = [
   { key: 'on', text: 'on', value: 'on' }, 
   { key: 'notOn', text: 'not on', value: 'notOn' },
@@ -54,6 +56,57 @@ export const customOperators = [
   { key: '>=', text: '>=', value: '>=' },
 ]
 
+export const metricTypes = [
+  { text: 'Timeseries', value: 'timeseries' },
+  { text: 'Table', value: 'table' },
+];
+
+export const tableColumnName = {
+    [FilterKey.USERID]: 'User',
+    [FilterKey.ISSUE]: 'Issue',
+    [FilterKey.USER_BROWSER]: 'Browser',
+    [FilterKey.USER_DEVICE]: 'Device',
+    [FilterKey.USER_COUNTRY]: 'Country',
+    [FilterKey.LOCATION]: 'URL',
+}
+
+export const metricOf = [
+  { text: 'Session Count', value: 'sessionCount', type: 'timeseries' },
+  { text: 'Users', value: FilterKey.USERID, type: 'table' },
+  { text: 'Issues', value: FilterKey.ISSUE, type: 'table' },
+  { text: 'Browser', value: FilterKey.USER_BROWSER, type: 'table' },
+  { text: 'Device', value: FilterKey.USER_DEVICE, type: 'table' },
+  { text: 'Country', value: FilterKey.USER_COUNTRY, type: 'table' },
+  { text: 'URL', value: FilterKey.LOCATION, type: 'table' },
+]
+
+export const methodOptions = [
+  { text: 'GET', value: 'GET' },
+  { text: 'POST', value: 'POST' },
+  { text: 'PUT', value: 'PUT' },
+  { text: 'DELETE', value: 'DELETE' },
+  { text: 'PATCH', value: 'PATCH' },
+  { text: 'HEAD', value: 'HEAD' },
+  { text: 'OPTIONS', value: 'OPTIONS' },
+  { text: 'TRACE', value: 'TRACE' },
+  { text: 'CONNECT', value: 'CONNECT' },  
+]
+
+export const issueOptions = [
+  { text: 'Click Rage', value: 'click_rage' },
+  { text: 'Dead Click', value: 'dead_click' },
+  { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
+  { text: 'Bad Request', value: 'bad_request' },
+  { text: 'Missing Resource', value: 'missing_resource' },
+  { text: 'Memory', value: 'memory' },
+  { text: 'CPU', value: 'cpu' },
+  { text: 'Slow Resource', value: 'slow_resource' },
+  { text: 'Slow Page Load', value: 'slow_page_load' },
+  { text: 'Crash', value: 'crash' },
+  { text: 'Custom', value: 'custom' },
+  { text: 'JS Exception', value: 'js_exception' },
+]
+
 export default {
   options,
   baseOperators,
@@ -62,4 +115,8 @@ export default {
   booleanOperators,
   customOperators,
   getOperatorsByKeys,
+  metricTypes,
+  metricOf,
+  issueOptions,
+  methodOptions,
 }

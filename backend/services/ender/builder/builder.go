@@ -41,33 +41,32 @@ func getResourceType(initiator string, URL string) string {
 }
 
 type builder struct {
-	readyMsgs                         []Message
-	timestamp                         uint64
-	lastProcessedTimestamp						int64
-	peBuilder 												*pageEventBuilder
-	ptaBuilder       									*performanceTrackAggrBuilder
-	ieBuilder													*inputEventBuilder
-	ciFinder													*cpuIssueFinder
-	miFinder													*memoryIssueFinder
-	ddDetector												*domDropDetector
-	crDetector												*clickRageDetector
-	dcDetector												*deadClickDetector
-	integrationsWaiting 	   					bool
-
+	readyMsgs              []Message
+	timestamp              uint64
+	lastProcessedTimestamp int64
+	peBuilder              *pageEventBuilder
+	ptaBuilder             *performanceTrackAggrBuilder
+	ieBuilder              *inputEventBuilder
+	ciFinder               *cpuIssueFinder
+	miFinder               *memoryIssueFinder
+	ddDetector             *domDropDetector
+	crDetector             *clickRageDetector
+	dcDetector             *deadClickDetector
+	integrationsWaiting    bool
 
 	sid uint64
 }
 
 func NewBuilder() *builder {
 	return &builder{
-		peBuilder: &pageEventBuilder{},
-		ptaBuilder: &performanceTrackAggrBuilder{},
-		ieBuilder: NewInputEventBuilder(),
-		ciFinder: &cpuIssueFinder{},
-		miFinder: &memoryIssueFinder{},
-		ddDetector: &domDropDetector{},
-		crDetector: &clickRageDetector{},
-		dcDetector: &deadClickDetector{},
+		peBuilder:           &pageEventBuilder{},
+		ptaBuilder:          &performanceTrackAggrBuilder{},
+		ieBuilder:           NewInputEventBuilder(),
+		ciFinder:            &cpuIssueFinder{},
+		miFinder:            &memoryIssueFinder{},
+		ddDetector:          &domDropDetector{},
+		crDetector:          &clickRageDetector{},
+		dcDetector:          &deadClickDetector{},
 		integrationsWaiting: true,
 	}
 }
@@ -115,15 +114,14 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		b.timestamp = timestamp
 	}
 
-	b.lastProcessedTimestamp = time.Now().UnixNano()/1e6
-
+	b.lastProcessedTimestamp = time.Now().UnixNano() / 1e6
 
 	// Might happen before  the first timestamp.
 	switch msg := message.(type) {
 	case *SessionStart,
-			*Metadata,
-			*UserID,
-	  	*UserAnonymousID:
+		*Metadata,
+		*UserID,
+		*UserAnonymousID:
 		b.appendReadyMessage(msg)
 	case *RawErrorEvent:
 		b.appendReadyMessage(&ErrorEvent{
@@ -220,14 +218,14 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Type:            tp,
 			Success:         success,
 		})
-	  if !success && tp == "fetch" {
-		  b.appendReadyMessage(&IssueEvent{
-		  	Type: "bad_request",
-				MessageID: messageID,
-				Timestamp: msg.Timestamp,
+		if !success && tp == "fetch" {
+			b.appendReadyMessage(&IssueEvent{
+				Type:          "bad_request",
+				MessageID:     messageID,
+				Timestamp:     msg.Timestamp,
 				ContextString: msg.URL,
-				Context: "",
-				Payload: "",
+				Context:       "",
+				Payload:       "",
 			})
 		}
 	case *RawCustomEvent:
@@ -239,34 +237,37 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		})
 	case *CustomIssue:
 		b.appendReadyMessage(&IssueEvent{
-			Type: "custom",
-			Timestamp: b.timestamp,
-			MessageID: messageID,
+			Type:          "custom",
+			Timestamp:     b.timestamp,
+			MessageID:     messageID,
 			ContextString: msg.Name,
-			Payload: msg.Payload,
+			Payload:       msg.Payload,
 		})
 	case *Fetch:
-		b.appendReadyMessage(&ResourceEvent{
+		b.appendReadyMessage(&FetchEvent{
 			MessageID: messageID,
 			Timestamp: msg.Timestamp,
-			Duration:  msg.Duration,
-			URL:       msg.URL,
-			Type:      "fetch",
-			Success:   msg.Status < 300,
 			Method:    msg.Method,
+			URL:       msg.URL,
+			Request:   msg.Request,
+			Response:  msg.Response,
 			Status:    msg.Status,
+			Duration:  msg.Duration,
+		})
+	case *GraphQL:
+		b.appendReadyMessage(&GraphQLEvent{
+			MessageID:     messageID,
+			Timestamp:     b.timestamp,
+			OperationKind: msg.OperationKind,
+			OperationName: msg.OperationName,
+			Variables:     msg.Variables,
+			Response:      msg.Response,
 		})
 	case *StateAction:
 		b.appendReadyMessage(&StateActionEvent{
 			MessageID: messageID,
 			Timestamp: b.timestamp,
 			Type:      msg.Type,
-		})
-	case *GraphQL:
-		b.appendReadyMessage(&GraphQLEvent{
-			MessageID: messageID,
-			Timestamp: b.timestamp,
-			Name:      msg.OperationName,
 		})
 	case *CreateElementNode,
 		*CreateTextNode:
@@ -283,11 +284,10 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	}
 }
 
-
 func (b *builder) checkTimeouts(ts int64) bool {
-	if b.timestamp == 0 { 
+	if b.timestamp == 0 {
 		return false // There was no timestamp events yet
-	} 
+	}
 
 	if b.peBuilder.HasInstance() && int64(b.peBuilder.GetTimestamp())+intervals.EVENTS_PAGE_EVENT_TIMEOUT < ts {
 		b.buildPageEvent()

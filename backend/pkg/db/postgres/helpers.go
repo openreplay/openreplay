@@ -8,7 +8,7 @@ func getIssueScore(issueEvent *messages.IssueEvent) int {
 	switch issueEvent.Type {
 	case "crash", "dead_click", "memory", "cpu":
 		return 1000
-	case "bad_request", "excessive_scrolling", "click_rage", "missing_resource" :
+	case "bad_request", "excessive_scrolling", "click_rage", "missing_resource":
 		return 500
 	case "slow_resource", "slow_page_load":
 		return 100
