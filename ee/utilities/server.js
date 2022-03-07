@@ -78,12 +78,12 @@ if (process.env.uws !== "true") {
 
 
     /* Either onAborted or simply finished request */
-    function onAbortedOrFinishedResponse(res, readStream) {
+    const onAbortedOrFinishedResponse = function (res, readStream) {
 
         if (res.id === -1) {
-            console.log("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
+            debug && console.log("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
         } else {
-            console.log('Stream was closed, openStreams: ' + --openStreams);
+            debug && console.log('Stream was closed');
             console.timeEnd(res.id);
             readStream.destroy();
         }
