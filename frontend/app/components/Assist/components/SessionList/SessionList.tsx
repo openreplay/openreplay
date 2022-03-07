@@ -24,10 +24,12 @@ function SessionList(props: Props) {
         <div className="p-4">
           { props.list.map(session => (
             <div className="mb-6">
-              <div className="flex items-center mb-2">
-                <Label size="small" className="p-1"><span className="color-gray-medium">TAB</span></Label>
-                <span className="ml-2 font-medium">{session.pageTitle}</span>
-              </div>
+              {session.pageTitle && session.pageTitle !== '' && (
+                <div className="flex items-center mb-2">
+                  <Label size="small" className="p-1"><span className="color-gray-medium">TAB</span></Label>
+                  <span className="ml-2 font-medium">{session.pageTitle}</span>
+                </div>
+              )}
               <SessionItem key={ session.sessionId } session={ session } showActive={true} />
             </div>
           )) }
