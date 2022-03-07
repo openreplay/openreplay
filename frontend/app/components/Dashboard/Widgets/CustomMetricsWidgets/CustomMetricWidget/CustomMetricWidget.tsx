@@ -51,6 +51,10 @@ function CustomMetricWidget(props: Props) {
   const colors = Styles.customMetricColors;
   const params = customParams(period.rangeName)
   const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
+  const isLineChart = metric.viewType === 'lineChart';
+  const isProgress = metric.viewType === 'progress';
+  const isTable = metric.viewType === 'table';
+  const isPieChart = metric.viewType === 'pieChart';
 
   useEffect(() => {
     new APIClient()['post'](`/custom_metrics/${metricParams.metricId}/chart`, { ...metricParams, q: metric.name })
@@ -115,7 +119,7 @@ function CustomMetricWidget(props: Props) {
       <div className="flex items-center p-2">
         <div className="font-medium">{metric.name}</div>
         <div className="ml-auto flex items-center">
-          <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} />
+          {!isTable && !isPieChart && <WidgetIcon className="cursor-pointer mr-6" icon="bell-plus" tooltip="Set Alert" onClick={props.onAlertClick} /> }
           <WidgetIcon className="cursor-pointer mr-6" icon="pencil" tooltip="Edit Metric" onClick={() => props.init(metric)} />
           <WidgetIcon className="cursor-pointer" icon="close" tooltip="Hide Metric" onClick={() => updateActiveState(metric.metricId, false)} />
         </div>
@@ -128,7 +132,7 @@ function CustomMetricWidget(props: Props) {
           >
             <ResponsiveContainer height={ 240 } width="100%">
               <>
-                {metric.viewType === 'lineChart' && (
+                {isLineChart && (
                   <CustomMetriLineChart
                       data={ data }
                       params={ params }
@@ -138,7 +142,7 @@ function CustomMetricWidget(props: Props) {
                   />
                 )}
 
-                {metric.viewType === 'pieChart' && (
+                {isPieChart && (
                   <CustomMetricPieChart
                     metric={metric}
                     data={ data[0] }
@@ -148,7 +152,7 @@ function CustomMetricWidget(props: Props) {
                   />
                 )}
 
-                {metric.viewType === 'progress' && (
+                {isProgress && (
                   <CustomMetricPercentage
                     data={ data[0] }
                     params={ params }
@@ -157,12 +161,10 @@ function CustomMetricWidget(props: Props) {
                   />
                 )}
 
-                {metric.viewType === 'table' && (
+                {isTable && (
                   <CustomMetricTable
                     metric={ metric }
                     data={ data[0] }
-                    // params={ params }
-                    // colors={ colors }
                     onClick={ clickHandlerTable }
                   />
                 )}
