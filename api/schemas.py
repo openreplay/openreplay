@@ -515,9 +515,7 @@ class FetchFilterType(str, Enum):
 
 class GraphqlFilterType(str, Enum):
     _name = "GRAPHQL_NAME"
-    _status_code = "GRAPHQL_STATUS_CODE"
     _method = "GRAPHQL_METHOD"
-    _duration = "GRAPHQL_DURATION"
     _request_body = "GRAPHQL_REQUEST_BODY"
     _response_body = "GRAPHQL_RESPONSE_BODY"
 

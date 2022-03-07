@@ -62,12 +62,12 @@ export const metricTypes = [
 ];
 
 export const tableColumnName = {
-    [FilterKey.USERID]: 'User',
-    [FilterKey.ISSUE]: 'Issue',
-    [FilterKey.USER_BROWSER]: 'Browser',
-    [FilterKey.USER_DEVICE]: 'Device',
-    [FilterKey.USER_COUNTRY]: 'Country',
-    [FilterKey.LOCATION]: 'URL',
+    [FilterKey.USERID]: 'Users',
+    [FilterKey.ISSUE]: 'Issues',
+    [FilterKey.USER_BROWSER]: 'Browsers',
+    [FilterKey.USER_DEVICE]: 'Devices',
+    [FilterKey.USER_COUNTRY]: 'Countries',
+    [FilterKey.LOCATION]: 'URLs',
 }
 
 export const metricOf = [
