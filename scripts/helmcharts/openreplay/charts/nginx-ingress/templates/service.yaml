@@ -4,6 +4,10 @@ metadata:
   name: {{ include "nginx-ingress.fullname" . }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
+  annotations:
+  {{- with .Values.service.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   type: {{ .Values.service.type }}
   {{- if or (eq .Values.service.type "LoadBalancer") (eq .Values.service.type "NodePort")}}
