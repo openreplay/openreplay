@@ -36,6 +36,9 @@ function FilterSeries(props: Props) {
 
   const onAddFilter = (filter) => {
     filter.value = [""]
+    if (filter.hasOwnProperty('filters')) {
+      filter.filters = filter.filters.map(i => ({ ...i, value: [""] }))
+    }
     props.addSeriesFilterFilter(seriesIndex, filter);
   }
 

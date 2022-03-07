@@ -23,7 +23,7 @@ function FilterItem(props: Props) {
     props.onUpdate({ 
       ...filter,
       value: [""],
-      subFilters: filter.subFilters ? filter.subFilters.map(i => ({ ...i, value: [""] })) : []
+      filters: filter.filters ? filter.filters.map(i => ({ ...i, value: [""] })) : []
     });
   };
 
@@ -38,7 +38,7 @@ function FilterItem(props: Props) {
   const onUpdateSubFilter = (subFilter, subFilterIndex) => {
     props.onUpdate({
       ...filter,
-      subFilters: filter.subFilters.map((i, index) => {
+      filters: filter.filters.map((i, index) => {
         if (index === subFilterIndex) {
           return subFilter;
         }
@@ -80,10 +80,10 @@ function FilterItem(props: Props) {
           </>
         )}
 
-        {/* SubFilters */}
+        {/* filters */}
         {isSubFilter && (
           <div className="grid grid-col ml-3 w-full">
-            {filter.subFilters.map((subFilter, subFilterIndex) => (
+            {filter.filters.map((subFilter, subFilterIndex) => (
               <SubFilterItem
                 filterIndex={subFilterIndex}
                 filter={subFilter}

@@ -178,7 +178,7 @@ function CustomMetricWidget(props: Props) {
                 { isTable && (
                   <>
                     { metric.viewType === 'table' ? (
-                        <CustomMetricTable data={data[0]} />
+                        <CustomMetricTable metric={metric} data={data[0]} />
                     ) : (
                         <CustomMetricPieChart
                           metric={metric}
