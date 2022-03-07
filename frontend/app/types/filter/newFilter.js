@@ -33,7 +33,7 @@ export const filtersMap = {
   [FilterKey.USERANONYMOUSID]: { key: FilterKey.USERANONYMOUSID, type: FilterType.MULTIPLE, category: FilterCategory.USER, label: 'User AnonymousId', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/userid' },
 
   // PERFORMANCE
-  [FilterKey.FETCH]: { key: FilterKey.FETCH, type: FilterType.SUB_FILTERS, category: FilterCategory.PERFORMANCE, operator: 'is', label: 'Network Request', subFilters: [
+  [FilterKey.FETCH]: { key: FilterKey.FETCH, type: FilterType.SUB_FILTERS, category: FilterCategory.PERFORMANCE, operator: 'is', label: 'Network Request', filters: [
     { key: FilterKey.FETCH_URL, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with URL', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_STATUS_CODE, type: FilterType.NUMBER_MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with status code', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_METHOD, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', options: filterOptions.methodOptions },
@@ -115,18 +115,17 @@ export default Record({
   index: 0,
   options: [],
 
-  subFilters: [],
+  filters: [],
 }, {
   keyKey: "_key",
-  fromJS: ({ value, key, type, ...filter }) => {
+  fromJS: ({ value, type, ...filter }) => {
     const _filter = filtersMap[type];
     return {
       ...filter,
       ..._filter,
       key: _filter.key,
       type: _filter.type, // camelCased(filter.type.toLowerCase()),
-      value: value.length === 0 ? [""] : value,
-      // subFilters: filter.subFilters.map(this),
+      value: value.length === 0 || !value ? [""] : value,
     }
   },
 })
