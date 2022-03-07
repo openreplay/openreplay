@@ -76,10 +76,29 @@ if (process.env.uws !== "true") {
     uapp.get(PREFIX, healthFn);
     uapp.get(`${PREFIX}/`, healthFn);
 
+
+    /* Either onAborted or simply finished request */
+    function onAbortedOrFinishedResponse(res, readStream) {
+
+        if (res.id === -1) {
+            console.log("ERROR! onAbortedOrFinishedResponse called twice for the same res!");
+        } else {
+            console.log('Stream was closed, openStreams: ' + --openStreams);
+            console.timeEnd(res.id);
+            readStream.destroy();
+        }
+
+        /* Mark this response already accounted for */
+        res.id = -1;
+    }
+
     const uWrapper = function (fn) {
-        return async (res, req) => {
-            let response = await fn(req, res);
-            return response;
+        return (res, req) => {
+            res.id = 1;
+            res.onAborted(() => {
+                onAbortedOrFinishedResponse(res, readStream);
+            });
+            return fn(req, res);
         }
     }
     uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-list`, uWrapper(socket.handlers.socketsList));
