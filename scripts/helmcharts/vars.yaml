@@ -95,6 +95,13 @@ chalice:
     # idp_name: ''
     # idp_tenantKey: ''
 
+utilities:
+  replicaCount: 1
+  env:
+    debug: 0
+    uws: false
+    cluster: false
+
 # If you want to override something
 # chartname:
 #   filedFrom chart/Values.yaml:
