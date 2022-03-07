@@ -37,6 +37,7 @@ securityContext: {}
   # runAsUser: 1000
 
 service:
+  annotations: {}
   type: LoadBalancer
   ports:
     - port: 80
