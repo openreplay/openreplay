@@ -20,8 +20,8 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
         if data.view_type == schemas.MetricTimeseriesViewType.progress:
             r = {"count": results[-1]}
             diff = s.filter.endDate - s.filter.startDate
-            s.filter.startDate = data.endDate
-            s.filter.endDate = data.endDate - diff
+            s.filter.endDate = s.filter.startDate
+            s.filter.startDate = s.filter.endDate - diff
             r["previousCount"] = sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                          view_type=data.view_type, metric_type=data.metric_type,
                                                          metric_of=data.metric_of, metric_value=data.metric_value)
