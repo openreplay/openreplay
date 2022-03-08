@@ -80,7 +80,7 @@ UPDATE tenants
 SET version_number= openreplay_version();
 
 ALTER TABLE projects
-    ADD COLUMN save_request_payloads boolean NOT NULL DEFAULT FALSE;
+    ADD COLUMN IF NOT EXISTS save_request_payloads boolean NOT NULL DEFAULT FALSE;
 
 COMMIT;
 
