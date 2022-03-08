@@ -545,7 +545,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
 @dev.timed
 def get_top_insights(filter_d, project_id):
     output = []
-    stages = filter_d["events"]
+    stages = filter_d.get("events", [])
     # TODO: handle 1 stage alone
     if len(stages) == 0:
         print("no stages found")
