@@ -33,7 +33,7 @@ export default class Table extends React.PureComponent {
           }
         </div>
         <div className={ cn(stl.content, "thin-scrollbar") } style={{ maxHeight: maxHeight + 'px'}}>
-          { rows.take(showAll ? 10 : (small ? 3 : 5)).map(row => (
+          { rows.take(showAll ? rows.size : (small ? 3 : 5)).map(row => (
             <div
               className={ cn(rowClass, stl.row, { [stl.small]: small, 'cursor-pointer' : !!onRowClick}) }
               key={ row.key }
