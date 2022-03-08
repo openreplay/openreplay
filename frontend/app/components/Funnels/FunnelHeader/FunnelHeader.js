@@ -48,12 +48,12 @@ const FunnelHeader = (props) => {
     } else {}
   }
   
-  const onDateChange = (e) => {    
+  const onDateChange = (e) => {
     props.applyFilter(e, funnel.funnelId)
   }
 
   const options = funnels.map(({ funnelId, name }) => ({ text: name, value: funnelId })).toJS();
-  const selectedFunnel = funnels.filter(i => i.funnelId === parseInt(funnelId)).first() || {};  
+  const selectedFunnel = funnels.filter(i => i.funnelId === parseInt(funnelId)).first() || {};
 
   return (
     <div>
@@ -117,5 +117,5 @@ const FunnelHeader = (props) => {
 }
 
 export default connect(state => ({
-  funnelFilters: state.getIn([ 'funnels', 'instance', 'filter' ]),
+  funnelFilters: state.getIn([ 'funnels', 'instance' ]),
 }), { applyFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered })(FunnelHeader)

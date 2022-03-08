@@ -43,10 +43,11 @@ const reducer = (state = initialState, action = {}) => {
 			return state.mergeIn([ 'instance', 'gdpr' ], action.data);
 		case SAVE_GDPR_SUCCESS:
 			const gdpr = GDPR(action.data);
-			return state.update('list', itemInListUpdater({
-		  	[ idKey ] : state.getIn([ 'instance', idKey ]),
-		  	gdpr,
-		  })).setIn([ 'instance', 'gdpr' ], gdpr);
+			return state.setIn([ 'instance', 'gdpr' ], gdpr);
+			// return state.update('list', itemInListUpdater({
+		  	// 	[ idKey ] : state.getIn([ 'instance', idKey ]),
+		  	// 	gdpr,
+		  	// })).setIn([ 'instance', 'gdpr' ], gdpr);
 	}
 	return state;
 };
