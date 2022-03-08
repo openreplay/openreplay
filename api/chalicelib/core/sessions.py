@@ -100,7 +100,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                 data['live'] = assist.is_live(project_id=project_id,
                                               session_id=session_id,
                                               project_key=data["projectKey"])
-
+            data["inDB"] = True
             return data
         else:
             return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
@@ -822,6 +822,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
 
             elif event_type == schemas.EventType.request_details:
                 event_from = event_from % f"{events.event_type.REQUEST.table} AS main "
+                apply = False
                 for j, f in enumerate(event.filters):
                     is_any = _isAny_opreator(f.operator)
                     if is_any or len(f.value) == 0:
@@ -833,23 +834,31 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         event_where.append(
                             _multiple_conditions(f"main.{events.event_type.REQUEST.column} {op} %({e_k_f})s", f.value,
                                                  value_key=e_k_f))
+                        apply = True
                     elif f.type == schemas.FetchFilterType._status_code:
                         event_where.append(
                             _multiple_conditions(f"main.status_code {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                        apply = True
                     elif f.type == schemas.FetchFilterType._method:
                         event_where.append(
                             _multiple_conditions(f"main.method {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                        apply = True
                     elif f.type == schemas.FetchFilterType._duration:
                         event_where.append(
                             _multiple_conditions(f"main.duration {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                        apply = True
                     elif f.type == schemas.FetchFilterType._request_body:
                         event_where.append(
                             _multiple_conditions(f"main.request_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                        apply = True
                     elif f.type == schemas.FetchFilterType._response_body:
                         event_where.append(
                             _multiple_conditions(f"main.response_body {op} %({e_k_f})s", f.value, value_key=e_k_f))
+                        apply = True
                     else:
                         print(f"undefined FETCH filter: {f.type}")
+                if not apply:
+                    continue
             elif event_type == schemas.EventType.graphql_details:
                 event_from = event_from % f"{events.event_type.GRAPHQL.table} AS main "
                 for j, f in enumerate(event.filters):
