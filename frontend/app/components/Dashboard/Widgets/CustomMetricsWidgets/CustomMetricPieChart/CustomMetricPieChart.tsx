@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell } from 'recharts';
 import { Styles } from '../../common';
 import { NoContent } from 'UI';
 import { filtersMap } from 'Types/filter/newFilter';
+import { numberWithCommas } from 'App/utils';
 interface Props {
     metric: any,
     data: any;
@@ -107,7 +108,7 @@ function CustomMetricPieChart(props: Props) {
                                       dominantBaseline="central"
                                       fill='#666'
                                   >
-                                      {name || 'Unidentified'} {value}
+                                      {name || 'Unidentified'} {numberWithCommas(value)}
                                   </text>
                               );
                           }}
