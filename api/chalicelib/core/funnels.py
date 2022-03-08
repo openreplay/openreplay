@@ -19,6 +19,12 @@ ALLOW_UPDATE_FOR = ["name", "filter"]
 #                    events.event_type.VIEW_IOS.ui_type, events.event_type.CUSTOM_IOS.ui_type, ]
 #     return [s for s in stages if s["type"] in ALLOW_TYPES and s.get("value") is not None]
 
+def __transform_old_funnels(events):
+    for e in events:
+        if not isinstance(e.get("value"), list):
+            e["value"] = [e["value"]]
+    return events
+
 
 def create(project_id, user_id, name, filter: schemas.FunnelSearchPayloadSchema, is_public):
     helper.delete_keys_from_dict(filter, REMOVE_KEYS)
@@ -97,6 +103,9 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
             if details:
                 # row["filter"]["events"] = filter_stages(row["filter"]["events"])
+                if row.get("filter") is not None and row["filter"].get("events") is not None:
+                    row["filter"]["events"] = __transform_old_funnels(row["filter"]["events"])
+
                 get_start_end_time(filter_d=row["filter"], range_value=range_value, start_date=start_date,
                                    end_date=end_date)
                 counts = sessions.search2_pg(data=schemas.SessionsSearchPayloadSchema.parse_obj(row["filter"]),
@@ -248,7 +257,8 @@ def get(funnel_id, project_id, user_id, flatten=True):
         f = helper.dict_to_camel_case(cur.fetchone())
     if f is None:
         return None
-
+    if f.get("filter") is not None and f["filter"].get("events") is not None:
+        f["filter"]["events"] = __transform_old_funnels(f["filter"]["events"])
     f["createdAt"] = TimeUTC.datetime_to_timestamp(f["createdAt"])
     # f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
     if flatten:
