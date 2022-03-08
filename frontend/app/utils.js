@@ -33,7 +33,7 @@ export const getUniqueFilter = keys =>
     !list.some((item2, j) => j < i &&
       keys.every(key => item[ key ] === item2[ key ] && item[ key ] !== undefined));
 
-export const numberWithCommas = (x) => x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+export const numberWithCommas = (x) => x ? x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : 0;
 
 export const numberCompact = (x) =>  x >= 1000 ? x / 1000 + 'k': x;
 

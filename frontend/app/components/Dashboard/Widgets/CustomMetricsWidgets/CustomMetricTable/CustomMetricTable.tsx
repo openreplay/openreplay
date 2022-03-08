@@ -4,6 +4,7 @@ import { List } from 'immutable';
 import { filtersMap } from 'Types/filter/newFilter';
 import { NoContent } from 'UI';
 import { tableColumnName } from 'App/constants/filterOptions';
+import { numberWithCommas } from 'App/utils';
 
 const getColumns = (metric) => {
     return [
@@ -16,7 +17,7 @@ const getColumns = (metric) => {
         {
           key: 'sessionCount',
           title: 'Sessions',
-          toText: sessions => sessions,
+          toText: sessions => numberWithCommas(sessions),
           width: '30%',
         },
     ]
