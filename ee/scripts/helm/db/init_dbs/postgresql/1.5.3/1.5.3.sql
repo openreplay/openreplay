@@ -83,7 +83,7 @@ SET version_number= openreplay_version();
 
 
 ALTER TABLE projects
-    ADD COLUMN save_request_payloads boolean NOT NULL DEFAULT FALSE;
+    ADD COLUMN IF NOT EXISTS save_request_payloads boolean NOT NULL DEFAULT FALSE;
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_request_body_nn_idx ON events_common.requests (request_body) WHERE request_body IS NOT NULL;
