@@ -60,6 +60,7 @@ function reducer(state = initialState, action = {}) {
     case EDIT:
       return state.mergeIn(['instance'], action.instance);
     case APPLY:
+      console.log('APPLY', action.filter);
       return action.fromUrl 
         ? state.set('instance', Filter(action.filter))
         : state.mergeIn(['instance'], action.filter);
