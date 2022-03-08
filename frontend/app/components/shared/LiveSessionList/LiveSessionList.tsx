@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
-import { NoContent, Loader, LoadMoreButton } from 'UI';
+import { NoContent, Loader, LoadMoreButton, Pagination } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions'
@@ -135,6 +135,13 @@ function LiveSessionList(props: Props) {
           <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
         </div>
       </div>
+      <div className="w-full flex items-center justify-center py-6">
+        <Pagination
+          page={currentPage}
+          totalPages={30}
+          onChange={(page) => null}
+        />
+      </div>
       <NoContent
         title={"No live sessions."}
         subtext={
@@ -160,11 +167,16 @@ function LiveSessionList(props: Props) {
             />
           ))}
 
-          <LoadMoreButton
+          {/* <LoadMoreButton
             className="my-6"
             displayedCount={displayedCount}
             totalCount={sessions.size}
             onClick={addPage}
+          /> */}
+          <Pagination
+            currentPage={1}
+            totalCount={30}
+            onChange={(page) => null}
           />
         </Loader>
       </NoContent>
