@@ -58,6 +58,7 @@ function CustomMetricWidget(props: Props) {
       return
     };
     prevMetricRef.current = metric;
+    setLoading(true);
     
     // fetch new data for the widget preview
     new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
