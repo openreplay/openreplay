@@ -112,9 +112,9 @@ const reducer = (state = initialState, action = {}) => {
       return action.fromUrl 
         ? state.set('appliedFilter', 
             Filter(action.filter)
-            .set('events', state.getIn([ 'appliedFilter', 'events' ]))
+            // .set('events', state.getIn([ 'appliedFilter', 'events' ]))
           )
-          : state.mergeIn(['instance'], action.filter);
+          : state.mergeIn(['instance', 'filter'], action.filter);
     case ADD_CUSTOM_FILTER:
       return state.update('customFilters', vars => vars.set(action.filter, action.value));
     case REMOVE_CUSTOM_FILTER:
