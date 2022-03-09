@@ -612,7 +612,7 @@ class SessionsSearchPayloadSchema(BaseModel):
     order: str = Field(default="DESC")
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
-    limit: int = Field(default=20, gt=0, le=200)
+    limit: int = Field(default=200, gt=0, le=200)
     page: int = Field(default=1, gt=0)
 
     class Config:
