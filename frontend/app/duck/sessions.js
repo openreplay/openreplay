@@ -60,6 +60,7 @@ const initialState = Map({
   funnelPage: Map(),
   timelinePointer: null,
   sessionPath: '',
+  total: 0,
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -129,6 +130,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('favoriteList', list.filter(({ favorite }) => favorite))
         .set('total', total)
         .set('keyMap', keyMap)
+        .set('total', total)
         .set('wdTypeCount', wdTypeCount);
     case SET_AUTOPLAY_VALUES: {
       const sessionIds = state.get('sessionIds')
