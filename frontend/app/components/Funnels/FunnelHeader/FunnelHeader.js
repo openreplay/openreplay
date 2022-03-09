@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Icon, BackLink, IconButton, Dropdown, Popup, TextEllipsis, Button } from 'UI';
 import { remove as deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered } from 'Duck/funnels';
-import { applyFilter } from 'Duck/funnelFilters';
+import { editFilter, addFilter } from 'Duck/funnels';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
 import { confirm } from 'UI/Confirmation';
@@ -18,22 +18,17 @@ const Info = ({ label = '', value = '', className = 'mx-4' }) => {
 }
 
 const FunnelHeader = (props) => {
-  const { funnelFilters, funnel, insights, funnels, onBack, funnelId, showFilters = false, renameHandler } = props;
+  const { funnel, insights, funnels, onBack, funnelId, showFilters = false, renameHandler } = props;
 
   const [showSaveModal, setShowSaveModal] = useState(false)
 
-  const writeOption = (e, { name, value }) => {    
+  const writeOption = (e, { name, value }) => {
     props.fetch(value)
+    props.fetchInsights(value, {})
+    props.fetchIssuesFiltered(value, {})
+    props.fetchSessionsFiltered(value, {})
     props.redirect(value)
   }
-
-  useEffect(() => {
-    if (funnel.funnelId && funnel.funnelId !== funnelId) {
-      props.fetchInsights(funnel.funnelId, {})
-      props.fetchIssuesFiltered(funnel.funnelId, {})
-      props.fetchSessionsFiltered(funnel.funnelId, {})
-    }
-  }, [funnel])
 
   const deleteFunnel = async (e, funnel) => {
     e.preventDefault();
@@ -49,7 +44,7 @@ const FunnelHeader = (props) => {
   }
   
   const onDateChange = (e) => {
-    props.applyFilter(e, funnel.funnelId)
+    props.editFilter(e, funnel.funnelId);
   }
 
   const options = funnels.map(({ funnelId, name }) => ({ text: name, value: funnelId })).toJS();
@@ -75,7 +70,7 @@ const FunnelHeader = (props) => {
             className={ stl.dropdown }
             name="funnel"
             value={ parseInt(funnelId) }
-            icon={null}
+            // icon={null}
             onChange={ writeOption }
             selectOnBlur={false}
             icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
@@ -104,9 +99,9 @@ const FunnelHeader = (props) => {
             />            
           </div>
           <DateRange
-            rangeValue={funnelFilters.rangeValue}
-            startDate={funnelFilters.startDate}
-            endDate={funnelFilters.endDate}
+            rangeValue={funnel.filter.rangeValue}
+            startDate={funnel.filter.startDate}
+            endDate={funnel.filter.endDate}
             onDateChange={onDateChange}
             customRangeRight
           />
@@ -117,5 +112,5 @@ const FunnelHeader = (props) => {
 }
 
 export default connect(state => ({
-  funnelFilters: state.getIn([ 'funnels', 'instance' ]),
-}), { applyFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered })(FunnelHeader)
+  funnel: state.getIn([ 'funnels', 'instance' ]),
+}), { editFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered })(FunnelHeader)
