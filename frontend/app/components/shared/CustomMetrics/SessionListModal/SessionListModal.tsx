@@ -78,20 +78,22 @@ function SessionListModal(props: Props) {
                                 <span className="mr-2 color-gray-medium">Timezone</span>
                                 <TimezoneDropdown />
                             </div>
-                            <div className="flex items-center ml-6">
-                                <span className="mr-2 color-gray-medium">Series</span>
-                                <Dropdown
-                                    className={stl.dropdown}
-                                    direction="left"
-                                    options={ seriesOptions }
-                                    name="change"
-                                    value={ activeSeries }
-                                    onChange={ writeOption }
-                                    id="change-dropdown"
-                                    // icon={null}
-                                    icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
-                                />
-                            </div>
+                            { activeWidget.widget.metricType !== 'table' && (
+                                <div className="flex items-center ml-6">
+                                    <span className="mr-2 color-gray-medium">Series</span>
+                                    <Dropdown
+                                        className={stl.dropdown}
+                                        direction="left"
+                                        options={ seriesOptions }
+                                        name="change"
+                                        value={ activeSeries }
+                                        onChange={ writeOption }
+                                        id="change-dropdown"
+                                        // icon={null}
+                                        icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
+                                    />
+                                </div>
+                            )}
                             {/* <span className="mr-2 color-gray-medium">Series</span> */}
                         </div>
                     </div>
