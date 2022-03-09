@@ -172,6 +172,13 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                error_status="ALL", count_only=False, issue=None):
     full_args, query_part, sort = search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id,
                                                      user_id)
+    if data.limit is not None and data.page is not None:
+        full_args["sessions_limit_s"] = (data.page - 1) * data.limit
+        full_args["sessions_limit_e"] = data.page * data.limit
+    else:
+        full_args["sessions_limit_s"] = 1
+        full_args["sessions_limit_e"] = 200
+
     meta_keys = []
     with pg_client.PostgresClient() as cur:
         if errors_only:
@@ -192,7 +199,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                         {query_part};""", full_args)
         elif data.group_by_user:
             meta_keys = metadata.get(project_id=project_id)
-            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS sessions
+            main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
+                                                COALESCE(JSONB_AGG(users_sessions) 
+                                                    FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
                                         FROM (SELECT user_id,
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
@@ -209,7 +218,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                      full_args)
         else:
             meta_keys = metadata.get(project_id=project_id)
-            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, COALESCE(JSONB_AGG(full_sessions) FILTER (WHERE rn <= 200), '[]'::JSONB) AS sessions
+            main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
+                                                COALESCE(JSONB_AGG(full_sessions) 
+                                                    FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
                                             FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
@@ -217,13 +228,6 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                             ORDER BY s.session_id desc) AS filtred_sessions
                                             ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
                                      full_args)
-
-            # main_query = cur.mogrify(f"""SELECT * FROM
-            #                             (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
-            #                             {query_part}
-            #                             ORDER BY s.session_id desc) AS filtred_sessions
-            #                             ORDER BY favorite DESC, issue_score DESC, {sort} {order};""",
-            #                          full_args)
 
         # print("--------------------")
         # print(main_query)
