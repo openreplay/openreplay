@@ -19,6 +19,7 @@ def get_customs_by_sessionId2_pg(session_id, project_id):
                                 {"project_id": project_id, "session_id": session_id})
                     )
         rows = cur.fetchall()
+        rows = cur.fetchall()
     return helper.dict_to_camel_case(rows)
 
 
@@ -106,6 +107,7 @@ def __pg_errors_query(source=None):
                 WHERE
                   s.project_id = %(project_id)s
                   AND lg.message ILIKE %(svalue)s
+                  AND lg.project_id = %(project_id)s
                   {"AND source = %(source)s" if source is not None else ""}
                 LIMIT 5)
                 UNION ALL
@@ -117,6 +119,7 @@ def __pg_errors_query(source=None):
                 WHERE
                   s.project_id = %(project_id)s
                   AND lg.name ILIKE %(svalue)s
+                  AND lg.project_id = %(project_id)s
                   {"AND source = %(source)s" if source is not None else ""}
                 LIMIT 5)
                 UNION
@@ -128,6 +131,7 @@ def __pg_errors_query(source=None):
                 WHERE
                   s.project_id = %(project_id)s
                   AND lg.message ILIKE %(value)s
+                  AND lg.project_id = %(project_id)s
                   {"AND source = %(source)s" if source is not None else ""}
                 LIMIT 5)
                 UNION ALL
@@ -139,6 +143,7 @@ def __pg_errors_query(source=None):
                 WHERE
                   s.project_id = %(project_id)s
                   AND lg.name ILIKE %(value)s
+                  AND lg.project_id = %(project_id)s
                   {"AND source = %(source)s" if source is not None else ""}
                 LIMIT 5));"""
 
