@@ -42,9 +42,8 @@ function LiveSessionList(props: Props) {
     text: capitalize(i), value: i
   })).toJS();
   
-  const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
-
-  const addPage = () => props.updateCurrentPage(props.currentPage + 1)
+  // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
+  // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
   useEffect(() => {
     if (filters.size === 0) {
@@ -108,6 +107,12 @@ function LiveSessionList(props: Props) {
     }, AUTOREFRESH_INTERVAL);
   }
 
+  const sliceListPerPage = (list, page) => {
+    const start = page * PER_PAGE;
+    const end = start + PER_PAGE;
+    return list.slice(start, end);
+  }
+
   return (
     <div>
       <div className="flex mb-6 justify-between items-end">
@@ -138,8 +143,8 @@ function LiveSessionList(props: Props) {
       <div className="w-full flex items-center justify-center py-6">
         <Pagination
           page={currentPage}
-          totalPages={30}
-          onChange={(page) => null}
+          totalPages={Math.ceil(sessions.size / PER_PAGE)}
+          onPageChange={(page) => props.updateCurrentPage(page)}
         />
       </div>
       <NoContent
@@ -154,9 +159,9 @@ function LiveSessionList(props: Props) {
         show={ !loading && sessions && sessions.size === 0}
       >
         <Loader loading={ loading }>
-          {sessions && sessions.sortBy(i => i.metadata[sort.field]).update(list => {
+          {sessions && sliceListPerPage(sessions.sortBy(i => i.metadata[sort.field]).update(list => {
             return sort.order === 'desc' ? list.reverse() : list;
-          }).take(displayedCount).map(session => (
+          }), currentPage - 1).map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -173,11 +178,11 @@ function LiveSessionList(props: Props) {
             totalCount={sessions.size}
             onClick={addPage}
           /> */}
-          <Pagination
+          {/* <Pagination
             currentPage={1}
             totalCount={30}
             onChange={(page) => null}
-          />
+          /> */}
         </Loader>
       </NoContent>
     </div>
