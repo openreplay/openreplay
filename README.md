@@ -88,4 +88,4 @@ Check out our [roadmap](https://www.notion.so/openreplay/Roadmap-889d2c3d968b478
 
 ## License
 
-This repo is entirely MIT licensed, with the exception of the `ee` directory.
+This repo is under the Elastic License 2.0 (ELv2), with the exception of the `ee` directory.
