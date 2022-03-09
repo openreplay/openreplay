@@ -103,13 +103,16 @@ def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schem
 @app.get('/{projectId}/events/search', tags=["events"])
 def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
-                              schemas.PerformanceEventType, schemas.FetchFilterType] = None,
+                              schemas.PerformanceEventType, schemas.FetchFilterType,
+                              schemas.GraphqlFilterType] = None,
                   key: str = None,
                   source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
     if type in [schemas.FetchFilterType._url]:
         type = schemas.EventType.request
+    elif type in [schemas.GraphqlFilterType._name]:
+        type = schemas.EventType.graphql
     elif isinstance(type, schemas.PerformanceEventType):
         if type in [schemas.PerformanceEventType.location_dom_complete,
                     schemas.PerformanceEventType.location_largest_contentful_paint_time,

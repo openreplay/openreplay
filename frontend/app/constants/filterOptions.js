@@ -74,10 +74,10 @@ export const metricOf = [
   { text: 'Session Count', value: 'sessionCount', type: 'timeseries' },
   { text: 'Users', value: FilterKey.USERID, type: 'table' },
   { text: 'Issues', value: FilterKey.ISSUE, type: 'table' },
-  { text: 'Browser', value: FilterKey.USER_BROWSER, type: 'table' },
-  { text: 'Device', value: FilterKey.USER_DEVICE, type: 'table' },
-  { text: 'Country', value: FilterKey.USER_COUNTRY, type: 'table' },
-  { text: 'URL', value: FilterKey.LOCATION, type: 'table' },
+  { text: 'Browsers', value: FilterKey.USER_BROWSER, type: 'table' },
+  { text: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
+  { text: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
+  { text: 'URLs', value: FilterKey.LOCATION, type: 'table' },
 ]
 
 export const methodOptions = [

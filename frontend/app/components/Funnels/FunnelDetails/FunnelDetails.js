@@ -78,7 +78,7 @@ const FunnelDetails = (props) => {
   const showEmptyMessage = hasNoStages && activeTab === TAB_ISSUES && !loading;
 
   return (
-    <div className="page-margin container-70" >				
+    <div className="page-margin container-70">
       <FunnelHeader
         funnel={funnel}
         insights={insights}
