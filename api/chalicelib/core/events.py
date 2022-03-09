@@ -19,7 +19,6 @@ def get_customs_by_sessionId2_pg(session_id, project_id):
                                 {"project_id": project_id, "session_id": session_id})
                     )
         rows = cur.fetchall()
-        rows = cur.fetchall()
     return helper.dict_to_camel_case(rows)
 
 
