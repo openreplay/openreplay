@@ -1,13 +1,14 @@
 import { connect } from 'react-redux';
-import { Loader, NoContent, Button, LoadMoreButton } from 'UI';
+import { Loader, NoContent, Button, LoadMoreButton, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
-import { fetchSessions, addFilterByKeyAndValue } from 'Duck/search';
+import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
+import { sliceListPerPage } from 'App/utils';
 
 const ALL = 'all';
-const PER_PAGE = 10;
+const PER_PAGE = 5;
 const AUTOREFRESH_INTERVAL = 3 * 60 * 1000;
 var timeoutId;
 
@@ -20,12 +21,14 @@ var timeoutId;
   total: state.getIn([ 'sessions', 'total' ]),
   filters: state.getIn([ 'search', 'instance', 'filters' ]),
   metaList: state.getIn(['customFields', 'list']).map(i => i.key),
+  currentPage: state.getIn([ 'search', 'currentPage' ]),
 }), {
   applyFilter,
   addAttribute,
   addEvent,
   fetchSessions,
   addFilterByKeyAndValue,
+  updateCurrentPage,
 })
 export default class SessionList extends React.PureComponent {
   state = {
@@ -76,6 +79,8 @@ export default class SessionList extends React.PureComponent {
     clearTimeout(timeoutId)
   }
 
+  
+
   renderActiveTabContent(list) {
     const {
       loading,
@@ -84,6 +89,7 @@ export default class SessionList extends React.PureComponent {
       allList,
       activeTab,
       metaList,
+      currentPage,
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
@@ -93,28 +99,28 @@ export default class SessionList extends React.PureComponent {
     return (
       <NoContent
         title={this.getNoContentMessage(activeTab)}
-        subtext="Please try changing your search parameters."
+        // subtext="Please try changing your search parameters."
         icon="exclamation-circle"
         show={ !loading && list.size === 0}
         subtext={
-        <div>
-          <div>Please try changing your search parameters.</div>
-          {allList.size > 0 && (
-            <div className="pt-2">
-              However, we found other sessions based on your search parameters. 
-              <div>
-                <Button
-                  plain
-                  onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
-                >See All</Button>
+          <div>
+            <div>Please try changing your search parameters.</div>
+            {allList.size > 0 && (
+              <div className="pt-2">
+                However, we found other sessions based on your search parameters. 
+                <div>
+                  <Button
+                    plain
+                    onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
+                  >See All</Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         }
       >
         <Loader loading={ loading }>
-          { list.take(displayedCount).map(session => (
+          { sliceListPerPage(list, currentPage, PER_PAGE).map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -124,7 +130,12 @@ export default class SessionList extends React.PureComponent {
             />
           ))}
         </Loader>
-        <LoadMoreButton
+        <Pagination
+          page={currentPage}
+          totalPages={Math.ceil(list.size / PER_PAGE)}
+          onPageChange={(page) => this.props.updateCurrentPage(page)}
+        />
+        {/* <LoadMoreButton
           className="mt-12 mb-12"
           displayedCount={displayedCount}
           totalCount={list.size}
@@ -135,7 +146,7 @@ export default class SessionList extends React.PureComponent {
               Haven't found the session in the above list? <br/>Try being a bit more specific by setting a specific time frame or simply use different filters
             </div>
           }
-        />
+        /> */}
       </NoContent>
     );
   }

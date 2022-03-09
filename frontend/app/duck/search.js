@@ -28,6 +28,7 @@ const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const UPDATE = `${name}/UPDATE`;
 const APPLY = `${name}/APPLY`;
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
+const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
 
 const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
 
@@ -49,6 +50,7 @@ const initialState = Map({
 	instance: new Filter({ filters: [] }),
   savedSearch: new SavedFilter({}),
   filterSearchList: {},
+  currentPage: 1,
 });
 
 // Metric - Series - [] - filters
@@ -83,6 +85,8 @@ function reducer(state = initialState, action = {}) {
       return state.set('savedSearch', action.filter);
     case EDIT_SAVED_SEARCH:
       return state.mergeIn([ 'savedSearch' ], action.instance);
+    case UPDATE_CURRENT_PAGE:
+      return state.set('currentPage', action.page);
 	}
 	return state;
 }
@@ -122,6 +126,8 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
+  filter.limit = 5;
+  filter.page = getState().getIn([ 'search', 'currentPage']);
 
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))
@@ -268,4 +274,11 @@ export const refreshFilterOptions = () => {
   return {
     type: REFRESH_FILTER_OPTIONS
   }
+}
+
+export function updateCurrentPage(page) {
+  return {
+    type: UPDATE_CURRENT_PAGE,
+    page,
+  };
 }

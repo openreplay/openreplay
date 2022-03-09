@@ -12,7 +12,7 @@ import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/live
 import DropdownPlain from 'Shared/DropdownPlain';
 import SortOrderButton from 'Shared/SortOrderButton';
 import { TimezoneDropdown } from 'UI';
-import { capitalize } from 'App/utils';
+import { capitalize, sliceListPerPage } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
@@ -107,12 +107,6 @@ function LiveSessionList(props: Props) {
     }, AUTOREFRESH_INTERVAL);
   }
 
-  const sliceListPerPage = (list, page) => {
-    const start = page * PER_PAGE;
-    const end = start + PER_PAGE;
-    return list.slice(start, end);
-  }
-
   return (
     <div>
       <div className="flex mb-6 justify-between items-end">
@@ -140,13 +134,7 @@ function LiveSessionList(props: Props) {
           <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
         </div>
       </div>
-      <div className="w-full flex items-center justify-center py-6">
-        <Pagination
-          page={currentPage}
-          totalPages={Math.ceil(sessions.size / PER_PAGE)}
-          onPageChange={(page) => props.updateCurrentPage(page)}
-        />
-      </div>
+
       <NoContent
         title={"No live sessions."}
         subtext={
@@ -172,17 +160,13 @@ function LiveSessionList(props: Props) {
             />
           ))}
 
-          {/* <LoadMoreButton
-            className="my-6"
-            displayedCount={displayedCount}
-            totalCount={sessions.size}
-            onClick={addPage}
-          /> */}
-          {/* <Pagination
-            currentPage={1}
-            totalCount={30}
-            onChange={(page) => null}
-          /> */}
+        <div className="w-full flex items-center justify-center py-6">
+          <Pagination
+            page={currentPage}
+            totalPages={Math.ceil(sessions.size / PER_PAGE)}
+            onPageChange={(page) => props.updateCurrentPage(page)}
+          />
+        </div>
         </Loader>
       </NoContent>
     </div>
