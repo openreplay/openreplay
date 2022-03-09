@@ -766,22 +766,20 @@ def format_first_stack_frame(error):
 def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTimestamp=TimeUTC.now()):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """
-                SELECT COUNT(errors.*) AS unresolved_and_unviewed
-                FROM public.errors
-                         INNER JOIN (SELECT root_error.error_id
-                                     FROM events.errors
-                                              INNER JOIN public.errors AS root_error USING (error_id)
-                                     WHERE project_id =  %(project_id)s
-                                       AND timestamp >= %(startTimestamp)s
-                                       AND timestamp <= %(endTimestamp)s
-                                       AND source = 'js_exception') AS timed_errors USING (error_id)
-                         LEFT JOIN (SELECT error_id FROM public.user_viewed_errors WHERE user_id = %(user_id)s) AS user_viewed
-                                   USING (error_id)
-                WHERE user_viewed.error_id ISNULL
-                  AND errors.project_id =  %(project_id)s
-                  AND errors.status = 'unresolved'
-                  AND errors.source = 'js_exception';""",
+            """WITH user_viewed AS (SELECT error_id FROM public.user_viewed_errors WHERE user_id = %(user_id)s)
+                SELECT COUNT(timed_errors.*) AS unresolved_and_unviewed
+                FROM (SELECT root_error.error_id
+                      FROM events.errors
+                               INNER JOIN public.errors AS root_error USING (error_id)
+                               LEFT JOIN user_viewed USING (error_id)
+                      WHERE project_id = %(project_id)s
+                        AND timestamp >= %(startTimestamp)s
+                        AND timestamp <= %(endTimestamp)s
+                        AND source = 'js_exception'
+                        AND root_error.status = 'unresolved'
+                        AND user_viewed.error_id ISNULL
+                      LIMIT 1
+                     ) AS timed_errors;""",
             {"project_id": project_id, "user_id": user_id, "startTimestamp": startTimestamp,
              "endTimestamp": endTimestamp})
         cur.execute(query=query)

@@ -14,31 +14,40 @@ const inputModeOptions = [
   { text: 'Obscure all inputs', value: 'hidden' },
 ];
 
-const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
-<script>
-var initOpts = { projectKey: "PROJECT_KEY", ingestPoint: "https://${window.location.hostname}/ingest"};
-var startOpts = { userID: "" };
-(function(A,s,a,y,e,r){
-  r=window.OpenReplay=[e,r,y,[s-1, e]];
-  s=document.createElement('script');s.src=A;s.async=!a;
-  document.getElementsByTagName('head')[0].appendChild(s);
-  r.start=function(v){r.push([0])};
-  r.stop=function(v){r.push([1])};
-  r.setUserID=function(id){r.push([2,id])};
-  r.setUserAnonymousID=function(id){r.push([3,id])};
-  r.setMetadata=function(k,v){r.push([4,k,v])};
-  r.event=function(k,p,i){r.push([5,k,p,i])};
-  r.issue=function(k,p){r.push([6,k,p])};
-  r.isActive=function(){return false};
-  r.getSessionToken=function(){};
-})("//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",XXX,0,initOpts,startOpts);
-</script>`;
+const inputModeOptionsMap = {}
+inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 
 
 const ProjectCodeSnippet = props  => {
   const { site, gdpr, saving } = props;
   const [changed, setChanged] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
+<script>
+  var initOpts = {
+    projectKey: "PROJECT_KEY",
+    ingestPoint: "https://${window.location.hostname}/ingest",
+    defaultInputMode: ${inputModeOptionsMap[gdpr.defaultInputMode]},
+    obscureTextNumbers: ${gdpr.maskNumbers},
+    obscureTextEmails: ${gdpr.maskEmails},
+  };
+  var startOpts = { userID: "" };
+  (function(A,s,a,y,e,r){
+    r=window.OpenReplay=[e,r,y,[s-1, e]];
+    s=document.createElement('script');s.src=A;s.async=!a;
+    document.getElementsByTagName('head')[0].appendChild(s);
+    r.start=function(v){r.push([0])};
+    r.stop=function(v){r.push([1])};
+    r.setUserID=function(id){r.push([2,id])};
+    r.setUserAnonymousID=function(id){r.push([3,id])};
+    r.setMetadata=function(k,v){r.push([4,k,v])};
+    r.event=function(k,p,i){r.push([5,k,p,i])};
+    r.issue=function(k,p){r.push([6,k,p])};
+    r.isActive=function(){return false};
+    r.getSessionToken=function(){};
+  })("//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
+</script>`;
 
   const saveGDPR = (value) => {
     setChanged(true)
@@ -47,11 +56,11 @@ const ProjectCodeSnippet = props  => {
 
   const onChangeSelect = (event, { name, value }) => {
     const { gdpr } = site;
-    const _gdpr = { ...gdpr.toData() };
+    // const _gdpr = { ...gdpr.toData() };
+    // props.editGDPR({ [ name ]: value });
+    // _gdpr[name] = value;
     props.editGDPR({ [ name ]: value });
-    _gdpr[name] = value;
-    props.editGDPR({ [ name ]: value });
-    saveGDPR(_gdpr)
+    saveGDPR({ ...gdpr, [ name ]: value });
   };
 
   const onChangeOption = (event, { name, checked }) => {
@@ -74,8 +83,8 @@ const ProjectCodeSnippet = props  => {
       snippet = snippet.replace('PROJECT_KEY', site.projectKey);
     }
     return snippet
-      .replace('XXX', getOptionValues())
-      .replace('HOST', site && site.host);   
+      //.replace('XXX', getOptionValues())
+      //.replace('HOST', site && site.host);   
   }   
 
   const copyHandler = (code) => {
