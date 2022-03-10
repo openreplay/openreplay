@@ -1,37 +1,40 @@
 import React from 'react'
 import { Icon } from 'UI'
 import cn from 'classnames'
-
+import { debounce } from 'App/utils';
 interface Props {
     page: number
     totalPages: number
     onPageChange: (page: number) => void
-    limit?: number 
+    limit?: number
 }
 export default function Pagination(props: Props) {
     const { page, totalPages, onPageChange, limit = 5 } = props;
-    
     const [currentPage, setCurrentPage] = React.useState(page);
     React.useMemo(
         () => setCurrentPage(page), 
         [page],
     );
 
+    const debounceChange = React.useCallback(debounce(onPageChange, 1000), []);
+
     const changePage = (page: number) => {
         if (page > 0 && page <= totalPages) {
-            onPageChange(page);
             setCurrentPage(page);
+            debounceChange(page);
         }
     }
-
+    
+    const isFirstPage = currentPage === 1;
+    const isLastPage = currentPage === totalPages;
     return (
         <div className="flex items-center">
             <button
-                className={cn("py-2 px-3", { "opacity-50 cursor-default": page === 1 })}
-                disabled={page === 1}
-                onClick={() => changePage(page - 1)}
+                className={cn("py-2 px-3", { "opacity-50 cursor-default": isFirstPage })}
+                disabled={isFirstPage}
+                onClick={() => changePage(currentPage - 1)}
             >
-                <Icon name="chevron-left" size="18" color={page === 1 ? 'gray-medium' : 'teal'} />
+                <Icon name="chevron-left" size="18" color={isFirstPage ? 'gray-medium' : 'teal'} />
             </button>
             <span className="mr-2 color-gray-medium">Page</span>
             <input
@@ -45,11 +48,11 @@ export default function Pagination(props: Props) {
             <span className="mx-3 color-gray-medium">of</span>
             <span >{totalPages}</span>
             <button
-                className={cn("py-2 px-3", { "opacity-50 cursor-default": page === totalPages })}
-                disabled={page === totalPages}
-                onClick={() => changePage(page + 1)}
+                className={cn("py-2 px-3", { "opacity-50 cursor-default": isLastPage })}
+                disabled={isLastPage}
+                onClick={() => changePage(currentPage + 1)}
             >
-                <Icon name="chevron-right" size="18" color={page === totalPages ? 'gray-medium' : 'teal'} />
+                <Icon name="chevron-right" size="18" color={isLastPage ? 'gray-medium' : 'teal'} />
             </button>
         </div>
     )
