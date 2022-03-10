@@ -6,6 +6,7 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', text: 'contains', value: 'contains' }]
 
+export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true };
 export const filtersMap = {
   // EVENTS 
   [FilterKey.CLICK]: { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
@@ -30,7 +31,6 @@ export const filtersMap = {
   [FilterKey.STATEACTION]: { key: FilterKey.STATEACTION, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'StateAction', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/state-action', isEvent: true },
   [FilterKey.ERROR]: { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Error', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/error', isEvent: true },
   // [FilterKey.METADATA]: { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
-
 
   // FILTERS
   [FilterKey.USER_OS]: { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User OS', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/os' },
@@ -133,7 +133,7 @@ export default Record({
       })
       _filter = subFilterMap[type]
     } else {
-      _filter = filtersMap[type];
+      _filter = (type === FilterKey.METADATA) ? metaFilter : filtersMap[type];
     }
     return {
       ...filter,
