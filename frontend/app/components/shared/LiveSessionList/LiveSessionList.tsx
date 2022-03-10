@@ -16,7 +16,7 @@ import { capitalize, sliceListPerPage } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
-const PER_PAGE = 20;
+const PER_PAGE = 10;
 
 interface Props {
   loading: Boolean,
@@ -165,6 +165,7 @@ function LiveSessionList(props: Props) {
             page={currentPage}
             totalPages={Math.ceil(sessions.size / PER_PAGE)}
             onPageChange={(page) => props.updateCurrentPage(page)}
+            limit={PER_PAGE}
           />
         </div>
         </Loader>
