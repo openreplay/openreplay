@@ -439,7 +439,7 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
         data["endDate"] = TimeUTC.now(1)
     if len(data.get("events", [])) > 0 or len(data.get("filters", [])) > 0 or status != "ALL" or favorite_only:
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                       error_status=status, favorite_only=favorite_only)
+                                       error_status=status)
         if len(statuses) == 0:
             return {"data": {
                 'total': 0,

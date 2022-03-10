@@ -614,6 +614,7 @@ class SessionsSearchPayloadSchema(BaseModel):
     group_by_user: bool = Field(default=False)
     limit: int = Field(default=200, gt=0, le=200)
     page: int = Field(default=1, gt=0)
+    bookmarked: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
