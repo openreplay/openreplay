@@ -31,6 +31,7 @@ const initialState = Map({
   list: List(),
   instance: CustomField(),
   sources: List(),
+  optionsReady: false
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -40,7 +41,8 @@ const reducer = (state = initialState, action = {}) => {
         addElementToFiltersMap(FilterCategory.METADATA, item.key);
         addElementToLiveFiltersMap(FilterCategory.METADATA, item.key);
       });
-      return state.set('list', List(action.data).map(CustomField)) //.concat(defaultMeta))
+      return state.set('list', List(action.data).map(CustomField))
+        .set('optionsReady', true) //.concat(defaultMeta))
     case FETCH_SOURCES_SUCCESS:
       return state.set('sources', List(action.data.map(({ value, ...item}) => ({label: value, key: value, ...item}))).map(CustomField))
     case SAVE_SUCCESS:
