@@ -62,7 +62,7 @@
 .color-white { color: $white }
 .color-borderColor { color: $borderColor }
 
-/* color */
+/* hover color */
 .hover-main:hover { color: $main }
 .hover-gray-light-shade:hover { color: $gray-light-shade }
 .hover-gray-lightest:hover { color: $gray-lightest }
@@ -92,3 +92,33 @@
 .hover-pink:hover { color: $pink }
 .hover-white:hover { color: $white }
 .hover-borderColor:hover { color: $borderColor }
+
+.border-main { border-color: $main }
+.border-gray-light-shade { border-color: $gray-light-shade }
+.border-gray-lightest { border-color: $gray-lightest }
+.border-gray-light { border-color: $gray-light }
+.border-gray-medium { border-color: $gray-medium }
+.border-gray-dark { border-color: $gray-dark }
+.border-gray-darkest { border-color: $gray-darkest }
+.border-teal { border-color: $teal }
+.border-teal-dark { border-color: $teal-dark }
+.border-teal-light { border-color: $teal-light }
+.border-tealx { border-color: $tealx }
+.border-tealx-light { border-color: $tealx-light }
+.border-tealx-light-border { border-color: $tealx-light-border }
+.border-orange { border-color: $orange }
+.border-yellow { border-color: $yellow }
+.border-yellow2 { border-color: $yellow2 }
+.border-orange-dark { border-color: $orange-dark }
+.border-green { border-color: $green }
+.border-green2 { border-color: $green2 }
+.border-green-dark { border-color: $green-dark }
+.border-red { border-color: $red }
+.border-red2 { border-color: $red2 }
+.border-blue { border-color: $blue }
+.border-blue2 { border-color: $blue2 }
+.border-active-blue { border-color: $active-blue }
+.border-active-blue-border { border-color: $active-blue-border }
+.border-pink { border-color: $pink }
+.border-white { border-color: $white }
+.border-borderColor { border-color: $borderColor }

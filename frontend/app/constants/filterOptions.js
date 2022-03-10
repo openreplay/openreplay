@@ -1,4 +1,4 @@
-import { FilterKey } from 'Types/filter/filterType';
+import { FilterKey, IssueType } from 'Types/filter/filterType';
 
 export const options = [
   { key: 'on', text: 'on', value: 'on' }, 
@@ -93,18 +93,18 @@ export const methodOptions = [
 ]
 
 export const issueOptions = [
-  { text: 'Click Rage', value: 'click_rage' },
-  { text: 'Dead Click', value: 'dead_click' },
-  { text: 'Excessive Scrolling', value: 'excessive_scrolling' },
-  { text: 'Bad Request', value: 'bad_request' },
-  { text: 'Missing Resource', value: 'missing_resource' },
-  { text: 'Memory', value: 'memory' },
-  { text: 'CPU', value: 'cpu' },
-  { text: 'Slow Resource', value: 'slow_resource' },
-  { text: 'Slow Page Load', value: 'slow_page_load' },
-  { text: 'Crash', value: 'crash' },
-  { text: 'Custom', value: 'custom' },
-  { text: 'JS Exception', value: 'js_exception' },
+  { text: 'Click Rage', value: IssueType.CLICK_RAGE },
+  { text: 'Dead Click', value: IssueType.DEAD_CLICK },
+  { text: 'Excessive Scrolling', value: IssueType.EXCESSIVE_SCROLLING },
+  { text: 'Bad Request', value: IssueType.BAD_REQUEST },
+  { text: 'Missing Resource', value: IssueType.MISSING_RESOURCE },
+  { text: 'Memory', value: IssueType.MEMORY },
+  { text: 'CPU', value: IssueType.CPU },
+  { text: 'Slow Resource', value: IssueType.SLOW_RESOURCE },
+  { text: 'Slow Page Load', value: IssueType.SLOW_PAGE_LOAD },
+  { text: 'Crash', value: IssueType.CRASH },
+  { text: 'Custom', value: IssueType.CUSTOM },
+  { text: 'Error', value: IssueType.JS_EXCEPTION },
 ]
 
 export default {
