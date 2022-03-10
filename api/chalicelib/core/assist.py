@@ -71,7 +71,18 @@ def get_live_sessions_ws(project_id):
         print("!! issue with the peer-server")
         print(connected_peers.text)
         return []
-    live_peers = connected_peers.json().get("data", [])
+    try:
+        live_peers = connected_peers.json().get("data", [])
+    except Exception as e:
+        print("issue getting Live-Assist response")
+        print(str(e))
+        print("expected JSON, received:")
+        try:
+            print(connected_peers.text)
+        except:
+            print("couldn't get response")
+        live_peers = []
+
     for s in live_peers:
         s["live"] = True
         s["projectId"] = project_id
@@ -95,7 +106,17 @@ def is_live(project_id, session_id, project_key=None):
         print("!! issue with the peer-server")
         print(connected_peers.text)
         return False
-    connected_peers = connected_peers.json().get("data", [])
+    try:
+        connected_peers = connected_peers.json().get("data", [])
+    except Exception as e:
+        print("issue getting Assist response")
+        print(str(e))
+        print("expected JSON, received:")
+        try:
+            print(connected_peers.text)
+        except:
+            print("couldn't get response")
+        return False
     return str(session_id) in connected_peers
 
 
