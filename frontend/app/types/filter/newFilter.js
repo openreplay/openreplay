@@ -6,7 +6,7 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', text: 'contains', value: 'contains' }]
 
-export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true };
+export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' };
 export const filtersMap = {
   // EVENTS 
   [FilterKey.CLICK]: { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
@@ -133,7 +133,11 @@ export default Record({
       })
       _filter = subFilterMap[type]
     } else {
-      _filter = (type === FilterKey.METADATA) ? metaFilter : filtersMap[type];
+      if (type === FilterKey.METADATA) {
+        _filter = filtersMap[filter.source];
+      } else {
+        _filter = filtersMap[type];
+      }
     }
     return {
       ...filter,
