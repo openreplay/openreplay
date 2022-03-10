@@ -55,7 +55,7 @@ const socketsListByProject = function (req, res) {
     if (process.env.uws !== "true") {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify());
+        res.end(JSON.stringify(result));
     } else {
         res.writeStatus('200 OK').writeHeader('Content-Type', 'application/json').end(JSON.stringify(result));
     }
