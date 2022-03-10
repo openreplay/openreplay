@@ -13,7 +13,8 @@ import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchSources } from 'Duck/customField';
 import { RehydrateSlidePanel } from './WatchDogs/components';
-import { setActiveTab, setFunnelPage } from 'Duck/sessions';
+import { setFunnelPage } from 'Duck/sessions';
+import { setActiveTab } from 'Duck/search';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
@@ -51,12 +52,12 @@ const allowedQueryKeys = [
   variables: state.getIn([ 'customFields', 'list' ]), 
   sources: state.getIn([ 'customFields', 'sources' ]),
   filterValues: state.get('filterValues'),
-  activeTab: state.getIn([ 'sessions', 'activeTab' ]),
   favoriteList: state.getIn([ 'sessions', 'favoriteList' ]),
   currentProjectId: state.getIn([ 'user', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ]),
   watchdogs: state.getIn(['watchdogs', 'list']),
   activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
+  sessions: state.getIn([ 'sessions', 'list' ]),
 }), {
   fetchFavoriteSessionList,
   applyFilter,
@@ -91,7 +92,9 @@ export default class BugFinder extends React.PureComponent {
     //     keys: this.props.sources.filter(({type}) => type === 'logTool').map(({ label, key }) => ({ type: 'ERROR', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
     //   };
     // });
-    props.fetchSessions();
+    if (props.sessions.size === 0) {
+      props.fetchSessions();
+    }
     props.resetFunnel();
     props.resetFunnelFilters();
     props.fetchFunnelsList(LAST_7_DAYS)
@@ -115,7 +118,6 @@ export default class BugFinder extends React.PureComponent {
   }
 
   render() {
-    const { activeFlow, activeTab } = this.props;    
     const { showRehydratePanel } = this.state;
 
     return (

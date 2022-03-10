@@ -10,8 +10,12 @@ interface Props {
 }
 export default function Pagination(props: Props) {
     const { page, totalPages, onPageChange, limit = 5 } = props;
+    
     const [currentPage, setCurrentPage] = React.useState(page);
-    // const []
+    React.useMemo(
+        () => setCurrentPage(page), 
+        [page],
+    );
 
     const changePage = (page: number) => {
         if (page > 0 && page <= totalPages) {
@@ -19,6 +23,7 @@ export default function Pagination(props: Props) {
             setCurrentPage(page);
         }
     }
+
     return (
         <div className="flex items-center">
             <button
@@ -31,7 +36,7 @@ export default function Pagination(props: Props) {
             <span className="mr-2 color-gray-medium">Page</span>
             <input
                 type="number"
-                className={cn("py-1 px-2 bg-white border rounded w-16", { "opacity-50 cursor-default": totalPages === 1 })}
+                className={cn("py-1 px-2 bg-white border border-gray-light rounded w-16", { "opacity-50 cursor-default": totalPages === 1 })}
                 value={currentPage}
                 min={1}
                 max={totalPages}

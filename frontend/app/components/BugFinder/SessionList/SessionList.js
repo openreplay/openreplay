@@ -5,7 +5,6 @@ import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage } from 'Duck/s
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
-import { sliceListPerPage } from 'App/utils';
 
 const ALL = 'all';
 const PER_PAGE = 5;
@@ -16,7 +15,7 @@ var timeoutId;
   shouldAutorefresh: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size === 0,
   savedFilters: state.getIn([ 'filters', 'list' ]),
   loading: state.getIn([ 'sessions', 'loading' ]),
-  activeTab: state.getIn([ 'sessions', 'activeTab' ]),
+  activeTab: state.getIn([ 'search', 'activeTab' ]),
   allList: state.getIn([ 'sessions', 'list' ]),
   total: state.getIn([ 'sessions', 'total' ]),
   filters: state.getIn([ 'search', 'instance', 'filters' ]),
@@ -90,6 +89,7 @@ export default class SessionList extends React.PureComponent {
       activeTab,
       metaList,
       currentPage,
+      total,
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
@@ -120,7 +120,7 @@ export default class SessionList extends React.PureComponent {
         }
       >
         <Loader loading={ loading }>
-          { sliceListPerPage(list, currentPage, PER_PAGE).map(session => (
+          { list.map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -130,11 +130,13 @@ export default class SessionList extends React.PureComponent {
             />
           ))}
         </Loader>
-        <Pagination
-          page={currentPage}
-          totalPages={Math.ceil(list.size / PER_PAGE)}
-          onPageChange={(page) => this.props.updateCurrentPage(page)}
-        />
+        <div className="w-full flex items-center justify-center py-6">
+          <Pagination
+            page={currentPage}
+            totalPages={Math.ceil(total / PER_PAGE)}
+            onPageChange={(page) => this.props.updateCurrentPage(page)}
+          />
+        </div>
         {/* <LoadMoreButton
           className="mt-12 mb-12"
           displayedCount={displayedCount}
