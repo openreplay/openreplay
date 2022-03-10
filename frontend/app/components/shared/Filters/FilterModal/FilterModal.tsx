@@ -41,7 +41,7 @@ function FilterModal(props: Props) {
             { filterSearchList && Object.keys(filterSearchList).map((key, index) => {
               const filter = filterSearchList[key];
               const option = filtersMap[key];
-              return (
+              return option ? (
                 <div
                   key={index}
                   className={cn('mb-3')}
@@ -60,7 +60,7 @@ function FilterModal(props: Props) {
                     ))}
                   </div>
                 </div>
-              );
+              ) : <></>;
             })}
           </div>
         </Loader>
