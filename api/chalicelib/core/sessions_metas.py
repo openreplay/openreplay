@@ -82,7 +82,7 @@ def get_top_key_values(project_id):
 
 def __generic_query(typename, value_length=None):
     if value_length is None or value_length > 2:
-        return f""" (SELECT value, type  
+        return f""" (SELECT DISTINCT value, type  
                             FROM public.autocomplete
                             WHERE
                               project_id = %(project_id)s
@@ -91,7 +91,7 @@ def __generic_query(typename, value_length=None):
                             ORDER BY value
                             LIMIT 5)
                       UNION
-                      (SELECT value, type  
+                      (SELECT DISTINCT value, type  
                         FROM public.autocomplete
                         WHERE
                           project_id = %(project_id)s
@@ -99,7 +99,7 @@ def __generic_query(typename, value_length=None):
                           AND value ILIKE %(value)s
                         ORDER BY value
                         LIMIT 5);"""
-    return f""" SELECT value, type  
+    return f""" SELECT DISTINCT value, type  
                 FROM public.autocomplete
                 WHERE
                   project_id = %(project_id)s
