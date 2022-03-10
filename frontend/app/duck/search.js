@@ -142,7 +142,7 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
   }
 
   filter.filters = filter.filters.map(filterMap);
-  filter.limit = 5;
+  filter.limit = 10;
   filter.page = getState().getIn([ 'search', 'currentPage']);
 
   return isRoute(ERRORS_ROUTE, window.location.pathname)

@@ -7,7 +7,7 @@ import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
 
 const ALL = 'all';
-const PER_PAGE = 5;
+const PER_PAGE = 10;
 const AUTOREFRESH_INTERVAL = 3 * 60 * 1000;
 var timeoutId;
 
@@ -136,6 +136,7 @@ export default class SessionList extends React.PureComponent {
             totalPages={Math.ceil(total / PER_PAGE)}
             onPageChange={(page) => this.props.updateCurrentPage(page)}
             limit={PER_PAGE}
+            debounceRequest={1000}
           />
         </div>
         {/* <LoadMoreButton
