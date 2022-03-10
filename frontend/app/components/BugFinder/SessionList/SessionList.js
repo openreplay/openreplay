@@ -135,6 +135,7 @@ export default class SessionList extends React.PureComponent {
             page={currentPage}
             totalPages={Math.ceil(total / PER_PAGE)}
             onPageChange={(page) => this.props.updateCurrentPage(page)}
+            limit={PER_PAGE}
           />
         </div>
         {/* <LoadMoreButton
