@@ -126,7 +126,7 @@ def events_search(projectId: int, q: str,
         else:
             return {"data": []}
 
-    result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source, key=key)
+    result = events.search(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
 
 
