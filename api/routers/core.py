@@ -21,13 +21,6 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/{projectId}/sessions2/favorite', tags=["sessions"])
-def get_favorite_sessions(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': sessions.get_favorite_sessions(project_id=projectId, user_id=context.user_id, include_viewed=True)
-    }
-
-
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
