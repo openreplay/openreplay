@@ -418,21 +418,21 @@ def __get_autocomplete_table(value, project_id):
     autocomplete_events.sort()
     sub_queries = []
     for e in autocomplete_events:
-        sub_queries.append(f"""(SELECT DISTINCT type, value
+        sub_queries.append(f"""(SELECT type, value
                                 FROM public.autocomplete
                                 WHERE project_id = %(project_id)s
                                     AND type= '{e}' 
                                     AND value ILIKE %(svalue)s
                                 LIMIT 5)""")
         if len(value) > 2:
-            sub_queries.append(f"""(SELECT DISTINCT type, value
+            sub_queries.append(f"""(SELECT type, value
                                     FROM public.autocomplete
                                     WHERE project_id = %(project_id)s
                                         AND type= '{e}' 
                                         AND value ILIKE %(value)s
                                     LIMIT 5)""")
     with pg_client.PostgresClient() as cur:
-        query = cur.mogrify("UNION".join(sub_queries) + ";",
+        query = cur.mogrify("UNION ALL".join(sub_queries) + ";",
                             {"project_id": project_id, "value": helper.string_to_sql_like(value),
                              "svalue": helper.string_to_sql_like("^" + value)})
         cur.execute(query)
