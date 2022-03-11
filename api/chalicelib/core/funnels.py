@@ -198,6 +198,7 @@ def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=No
 
 def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
     data.events = filter_stages(data.events)
+    data.events = __fix_stages(data.events)
     if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
@@ -252,6 +253,7 @@ def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None
 @dev.timed
 def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSearchPayloadSchema):
     data.events = filter_stages(data.events)
+    data.events = __fix_stages(data.events)
     if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
