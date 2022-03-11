@@ -323,14 +323,6 @@ def __generic_query(typename, value_length=None):
 def __generic_autocomplete(event: Event):
     def f(project_id, value, key=None, source=None):
         with pg_client.PostgresClient() as cur:
-            print(
-                cur.mogrify(
-                    __generic_query(event.ui_type,
-                                    value_length=len(value) \
-                                        if SUPPORTED_TYPES[event.ui_type].change_by_length \
-                                        else None),
-                    {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                     "svalue": helper.string_to_sql_like("^" + value)}))
             cur.execute(
                 cur.mogrify(
                     __generic_query(event.ui_type,
@@ -412,48 +404,37 @@ SUPPORTED_TYPES = {
 }
 
 
-def __get_merged_queries(queries, value, project_id):
-    if len(queries) == 0:
-        return []
-    now = TimeUTC.now()
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("(" + ")UNION ALL(".join(queries) + ")",
-                                {"project_id": project_id, "value": helper.string_to_sql_like(value)}))
-        results = helper.list_to_camel_case(cur.fetchall())
-        print(f"{TimeUTC.now() - now} : merged-queries for len: {len(queries)}")
-        return results
-
-
 def __get_autocomplete_table(value, project_id):
-    with pg_client.PostgresClient() as cur:
+    autocomplete_events = [schemas.FilterType.rev_id,
+                           schemas.EventType.click,
+                           schemas.FilterType.user_device,
+                           schemas.FilterType.user_id,
+                           schemas.FilterType.user_browser,
+                           schemas.FilterType.user_os,
+                           schemas.EventType.custom,
+                           schemas.FilterType.user_country,
+                           schemas.EventType.location,
+                           schemas.EventType.input]
+    autocomplete_events.sort()
+    sub_queries = []
+    for e in autocomplete_events:
+        sub_queries.append(f"""(SELECT DISTINCT type, value
+                                FROM public.autocomplete
+                                WHERE project_id = %(project_id)s
+                                    AND type= '{e}' 
+                                    AND value ILIKE %(svalue)s
+                                LIMIT 5)""")
         if len(value) > 2:
-            query = """SELECT DISTINCT value, type
-                    FROM (SELECT type, value
-                        FROM (SELECT type, value,
-                                ROW_NUMBER() OVER (PARTITION BY type ORDER BY value) AS Row_ID
-                            FROM public.autocomplete
-                            WHERE project_id = %(project_id)s 
-                                AND value ILIKE %(svalue)s
-                        UNION
-                            SELECT type, value,
-                                ROW_NUMBER() OVER (PARTITION BY type ORDER BY value) AS Row_ID
-                            FROM public.autocomplete
-                            WHERE project_id = %(project_id)s 
-                                AND value ILIKE %(value)s) AS u
-                        WHERE Row_ID <= 5) AS sfa
-                    ORDER BY sfa.type;"""
-        else:
-            query = """SELECT DISTINCT value, type
-                    FROM (SELECT type, value
-                        FROM (SELECT type, value,
-                                ROW_NUMBER() OVER (PARTITION BY type ORDER BY value) AS Row_ID
-                            FROM public.autocomplete
-                            WHERE project_id = %(project_id)s 
-                                AND value ILIKE %(svalue)s) AS u
-                        WHERE Row_ID <= 5) AS sfa
-                    ORDER BY sfa.type;"""
-        query = cur.mogrify(query, {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                    "svalue": helper.string_to_sql_like("^" + value)})
+            sub_queries.append(f"""(SELECT DISTINCT type, value
+                                    FROM public.autocomplete
+                                    WHERE project_id = %(project_id)s
+                                        AND type= '{e}' 
+                                        AND value ILIKE %(value)s
+                                    LIMIT 5)""")
+    with pg_client.PostgresClient() as cur:
+        query = cur.mogrify("UNION".join(sub_queries) + ";",
+                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                             "svalue": helper.string_to_sql_like("^" + value)})
         cur.execute(query)
         results = helper.list_to_camel_case(cur.fetchall())
         return results

@@ -147,17 +147,6 @@ def session_top_filter_values(projectId: int, context: schemas.CurrentContext = 
     return {'data': sessions_metas.get_top_key_values(projectId)}
 
 
-@app.get('/{projectId}/sessions/filters/search', tags=["sessions"])
-def get_session_filters_meta(projectId: int, q: str, type: str,
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    meta_type = type
-    if len(meta_type) == 0:
-        return {"data": []}
-    if len(q) == 0:
-        return {"data": []}
-    return sessions_metas.search(project_id=projectId, meta_type=meta_type, text=q)
-
-
 @app.post('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])
 @app.put('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])
 def integration_notify(projectId: int, integration: str, integrationId: int, source: str, sourceId: str,
