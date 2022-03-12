@@ -23,11 +23,12 @@ const FunnelHeader = (props) => {
   const [showSaveModal, setShowSaveModal] = useState(false)
 
   const writeOption = (e, { name, value }) => {
-    props.fetch(value)
-    props.fetchInsights(value, {})
-    props.fetchIssuesFiltered(value, {})
-    props.fetchSessionsFiltered(value, {})
-    props.redirect(value)
+    props.fetch(value).then(() => {
+      props.fetchInsights(value, {})
+      props.fetchIssuesFiltered(value, {})
+      props.fetchSessionsFiltered(value, {})
+      props.redirect(value)
+    })
   }
 
   const deleteFunnel = async (e, funnel) => {

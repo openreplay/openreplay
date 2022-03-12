@@ -211,9 +211,9 @@ function FunnelGraph(props) {
             strokeWidth={0}
             interval={0}
             tick ={{ fill: '#666', fontSize: 12 }}
-            xAxisId={0}         
+            xAxisId={0}
           />
-          <XAxis
+          {/* <XAxis
             stroke={0}
             xAxisId={1} 
             dataKey="value"
@@ -222,7 +222,7 @@ function FunnelGraph(props) {
             dy={-15} dx={0}
             tick ={{ fill: '#666', fontSize: 12 }}
             tickFormatter={val => '"' + val + '"'}
-          />
+          /> */}
           <YAxis interval={ 0 } strokeWidth={0} tick ={{ fill: '#999999', fontSize: 11 }} tickFormatter={val => Styles.tickFormatter(val)} />
         </BarChart>        
       </div>
