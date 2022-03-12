@@ -662,6 +662,7 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+    rangeValue: Optional[str] = Field(None)
 
     @root_validator(pre=True)
     def enforce_default_values(cls, values):
@@ -694,6 +695,7 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+    rangeValue: Optional[str] = Field(None)
 
 
 class MetricPayloadSchema(BaseModel):
