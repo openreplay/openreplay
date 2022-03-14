@@ -60,7 +60,7 @@ function FilterAutoComplete(props: Props) {
       .finally(() => setLoading(false));
   }
 
-  const debouncedRequestValues = React.useCallback(debounce(requestValues, 300), []);
+  const debouncedRequestValues = React.useCallback(debounce(requestValues, 1000), []);
 
   const onInputChange = ({ target: { value } }) => {
     setQuery(value);
