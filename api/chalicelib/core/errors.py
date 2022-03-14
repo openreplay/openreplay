@@ -1,5 +1,6 @@
 import json
 
+import schemas
 from chalicelib.core import sourcemaps, sessions
 from chalicelib.utils import pg_client, helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -405,9 +406,9 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     if chart:
         ch_sub_query += [f"timestamp >=  generated_timestamp",
                          f"timestamp <  generated_timestamp + %({step_size_name})s"]
-    if platform == 'mobile':
+    if platform == schemas.PlatformType.mobile:
         ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == 'desktop':
+    elif platform == schemas.PlatformType.desktop:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
@@ -421,23 +422,28 @@ def __get_sort_key(key):
 
 
 @dev.timed
-def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
     status = status.upper()
     if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
         return {"errors": ["invalid error status"]}
-    pg_sub_query = __get_basic_constraints(data.get('platform'), project_key="sessions.project_id")
+    platform = None
+    for f in data.filters:
+        if f.type == schemas.FilterType.platform and len(f.value) > 0:
+            platform = f.value[0]
+    pg_sub_query = __get_basic_constraints(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
                      "pe.project_id=%(project_id)s"]
-    pg_sub_query_chart = __get_basic_constraints(data.get('platform'), time_constraint=False, chart=True)
+    pg_sub_query_chart = __get_basic_constraints(platform, time_constraint=False, chart=True)
     pg_sub_query_chart.append("source ='js_exception'")
     pg_sub_query_chart.append("errors.error_id =details.error_id")
     statuses = []
     error_ids = None
-    if data.get("startDate") is None:
-        data["startDate"] = TimeUTC.now(-30)
-    if data.get("endDate") is None:
-        data["endDate"] = TimeUTC.now(1)
-    if len(data.get("events", [])) > 0 or len(data.get("filters", [])) > 0 or status != "ALL" or favorite_only:
+    if data.startDate is None:
+        data.startDate = TimeUTC.now(-30)
+    if data.endDate is None:
+        data.endDate = TimeUTC.now(1)
+    if len(data.events) > 0 or len(data.filters) > 0 or status != "ALL":
+        # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                        error_status=status, favorite_only=favorite_only)
         if len(statuses) == 0:
@@ -447,28 +453,30 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
             }}
         error_ids = [e["error_id"] for e in statuses]
     with pg_client.PostgresClient() as cur:
-        if data.get("startDate") is None:
-            data["startDate"] = TimeUTC.now(-7)
-        if data.get("endDate") is None:
-            data["endDate"] = TimeUTC.now()
-        density = data.get("density", 7)
-        step_size = __get_step_size(data["startDate"], data["endDate"], density, factor=1)
+        if data.startDate is None:
+            data.startDate = TimeUTC.now(-7)
+        if data.endDate is None:
+            data.endDate = TimeUTC.now()
+        step_size = __get_step_size(data.startDate, data.endDate, data.density, factor=1)
         sort = __get_sort_key('datetime')
-        if data.get("sort") is not None:
-            sort = __get_sort_key(data["sort"])
+        if data.sort is not None:
+            sort = __get_sort_key(data.sort)
         order = "DESC"
-        if data.get("order") is not None:
-            order = data["order"]
-
+        if data.order is not None:
+            order = data.order
+        extra_join = ""
         params = {
-            "startDate": data['startDate'],
-            "endDate": data['endDate'],
+            "startDate": data.startDate,
+            "endDate": data.endDate,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)
             pg_sub_query.append("error_id IN %(error_ids)s")
+        if favorite_only:
+            pg_sub_query.append("ufe.user_id = %(userId)s")
+            extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
         main_pg_query = f"""\
                             SELECT error_id,
                                    name,
@@ -488,6 +496,7 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
                                   FROM events.errors
                                            INNER JOIN public.errors AS pe USING (error_id)
                                            INNER JOIN public.sessions USING (session_id)
+                                           {extra_join}
                                   WHERE {" AND ".join(pg_sub_query)}
                                   GROUP BY error_id, name, message
                                   ORDER BY {sort} {order}) AS details
@@ -581,7 +590,7 @@ def __save_stacktrace(error_id, data):
 
 
 def get_trace(project_id, error_id):
-    error = get(error_id=error_id)
+    error = get(error_id=error_id, family=False)
     if error is None:
         return {"errors": ["error not found"]}
     if error.get("source", "") != "js_exception":

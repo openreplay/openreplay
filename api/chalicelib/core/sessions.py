@@ -232,11 +232,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
-        cur.execute(main_query)
 
-        if count_only:
-            return helper.dict_to_camel_case(cur.fetchone())
+        cur.execute(main_query)
         sessions = cur.fetchone()
+        if count_only:
+            return helper.dict_to_camel_case(sessions)
+
         total = sessions["count"]
         sessions = sessions["sessions"]
         # sessions = []
@@ -973,7 +974,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             full_args["status"] = error_status.lower()
         if favorite_only:
             extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
-            extra_constraints.append("ufe.user_id = %(user_id)s")
+            extra_constraints.append("ufe.user_id = %(userId)s")
     # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
     if not favorite_only and not errors_only and user_id is not None:
         extra_from += """LEFT JOIN (SELECT user_id, session_id
@@ -1196,11 +1197,11 @@ def get_session_user(project_id, user_id):
                 "public".sessions
             WHERE
                 project_id = %(project_id)s
-                AND user_id = %(user_id)s
+                AND user_id = %(userId)s
                 AND duration is not null
             GROUP BY user_id;
             """,
-            {"project_id": project_id, "user_id": user_id}
+            {"project_id": project_id, "userId": user_id}
         )
         cur.execute(query=query)
         data = cur.fetchone()
@@ -1213,8 +1214,8 @@ def get_session_ids_by_user_ids(project_id, user_ids):
             """\
             SELECT session_id FROM public.sessions
             WHERE
-                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
-            {"project_id": project_id, "user_id": tuple(user_ids)}
+                project_id = %(project_id)s AND user_id IN %(userId)s;""",
+            {"project_id": project_id, "userId": tuple(user_ids)}
         )
         ids = cur.execute(query=query)
     return ids
@@ -1240,8 +1241,8 @@ def delete_sessions_by_user_ids(project_id, user_ids):
             """\
             DELETE FROM public.sessions
             WHERE
-                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
-            {"project_id": project_id, "user_id": tuple(user_ids)}
+                project_id = %(project_id)s AND user_id IN %(userId)s;""",
+            {"project_id": project_id, "userId": tuple(user_ids)}
         )
         cur.execute(query=query)
 

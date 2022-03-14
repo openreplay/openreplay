@@ -907,8 +907,7 @@ def errors_search(projectId: int, status: str = "ALL", favorite: Union[str, bool
                   context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(favorite, str):
         favorite = True if len(favorite) == 0 else False
-    return errors.search(data.dict(), projectId, user_id=context.user_id, status=status,
-                         favorite_only=favorite)
+    return errors.search(data, projectId, user_id=context.user_id, status=status, favorite_only=favorite)
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
