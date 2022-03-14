@@ -423,6 +423,10 @@ def __get_sort_key(key):
 
 @dev.timed
 def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+    empty_response = {"data": {
+        'total': 0,
+        'errors': []
+    }}
     status = status.upper()
     if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
         return {"errors": ["invalid error status"]}
@@ -445,12 +449,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
     if len(data.events) > 0 or len(data.filters) > 0 or status != "ALL":
         # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                       error_status=status, favorite_only=favorite_only)
+                                       error_status=status)
         if len(statuses) == 0:
-            return {"data": {
-                'total': 0,
-                'errors': []
-            }}
+            return empty_response
         error_ids = [e["error_id"] for e in statuses]
     with pg_client.PostgresClient() as cur:
         if data.startDate is None:
@@ -465,12 +466,20 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
         if data.order is not None:
             order = data.order
         extra_join = ""
+
         params = {
             "startDate": data.startDate,
             "endDate": data.endDate,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
+        if data.limit is not None and data.page is not None:
+            params["errors_offset"] = (data.page - 1) * data.limit
+            params["errors_limit"] = data.limit
+        else:
+            params["errors_offset"] = 0
+            params["errors_limit"] = 200
+
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)
             pg_sub_query.append("error_id IN %(error_ids)s")
@@ -478,7 +487,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
             pg_sub_query.append("ufe.user_id = %(userId)s")
             extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
         main_pg_query = f"""\
-                            SELECT error_id,
+                            SELECT full_count,
+                                   error_id,
                                    name,
                                    message,
                                    users,
@@ -486,20 +496,23 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
                                    last_occurrence,
                                    first_occurrence,
                                    chart
-                            FROM (SELECT error_id,
-                                         name,
-                                         message,
-                                         COUNT(DISTINCT user_uuid)  AS users,
-                                         COUNT(DISTINCT session_id) AS sessions,
-                                         MAX(timestamp)             AS max_datetime,
-                                         MIN(timestamp)             AS min_datetime
-                                  FROM events.errors
-                                           INNER JOIN public.errors AS pe USING (error_id)
-                                           INNER JOIN public.sessions USING (session_id)
-                                           {extra_join}
-                                  WHERE {" AND ".join(pg_sub_query)}
-                                  GROUP BY error_id, name, message
-                                  ORDER BY {sort} {order}) AS details
+                            FROM (SELECT COUNT(details) OVER () AS full_count, details.*
+                                    FROM (SELECT error_id,
+                                             name,
+                                             message,
+                                             COUNT(DISTINCT user_uuid)  AS users,
+                                             COUNT(DISTINCT session_id) AS sessions,
+                                             MAX(timestamp)             AS max_datetime,
+                                             MIN(timestamp)             AS min_datetime
+                                          FROM events.errors
+                                                   INNER JOIN public.errors AS pe USING (error_id)
+                                                   INNER JOIN public.sessions USING (session_id)
+                                                   {extra_join}
+                                          WHERE {" AND ".join(pg_sub_query)}
+                                          GROUP BY error_id, name, message
+                                          ORDER BY {sort} {order}) AS details
+                                    LIMIT %(errors_limit)s OFFSET %(errors_offset)s
+                                  ) AS details
                                      INNER JOIN LATERAL (SELECT MAX(timestamp) AS last_occurrence,
                                                                 MIN(timestamp) AS first_occurrence
                                                          FROM events.errors
@@ -517,16 +530,14 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
 
         # print("--------------------")
         # print(cur.mogrify(main_pg_query, params))
+        # print("--------------------")
+
         cur.execute(cur.mogrify(main_pg_query, params))
-        total = cur.rowcount
+        rows = cur.fetchall()
+        total = 0 if len(rows) == 0 else rows[0]["full_count"]
         if flows:
             return {"data": {"count": total}}
-        row = cur.fetchone()
-        rows = []
-        limit = 200
-        while row is not None and len(rows) < limit:
-            rows.append(row)
-            row = cur.fetchone()
+
         if total == 0:
             rows = []
         else:
@@ -552,6 +563,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
     }
 
     for r in rows:
+        r.pop("full_count")
         if r["error_id"] in statuses:
             r["status"] = statuses[r["error_id"]]["status"]
             r["parent_error_id"] = statuses[r["error_id"]]["parent_error_id"]
