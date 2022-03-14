@@ -168,10 +168,11 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 
 @dev.timed
-def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, favorite_only=False, errors_only=False,
+def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                error_status="ALL", count_only=False, issue=None):
-    full_args, query_part, sort = search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id,
-                                                     user_id)
+    full_args, query_part, sort = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
+                                                     favorite_only=data.bookmarked, issue=issue, project_id=project_id,
+                                                     user_id=user_id)
     if data.limit is not None and data.page is not None:
         full_args["sessions_limit_s"] = (data.page - 1) * data.limit
         full_args["sessions_limit_e"] = data.page * data.limit
@@ -379,8 +380,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
     fav_only_join = ""
     if favorite_only and not errors_only:
         fav_only_join = "LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id"
-        extra_constraints.append("fs.user_id = %(userId)s")
-        full_args["userId"] = user_id
+        # extra_constraints.append("fs.user_id = %(userId)s")
     events_query_part = ""
     if len(data.filters) > 0:
         meta_keys = None
@@ -976,7 +976,12 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
             extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
             extra_constraints.append("ufe.user_id = %(userId)s")
     # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
-    if not favorite_only and not errors_only and user_id is not None:
+    if favorite_only and not errors_only and user_id is not None:
+        extra_from += """INNER JOIN (SELECT user_id, session_id
+                                    FROM public.user_favorite_sessions
+                                    WHERE user_id = %(userId)s) AS favorite_sessions
+                                    USING (session_id)"""
+    elif not favorite_only and not errors_only and user_id is not None:
         extra_from += """LEFT JOIN (SELECT user_id, session_id
                                     FROM public.user_favorite_sessions
                                     WHERE user_id = %(userId)s) AS favorite_sessions
