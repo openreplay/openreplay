@@ -423,6 +423,10 @@ def __get_sort_key(key):
 
 @dev.timed
 def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+    empty_response = {"data": {
+        'total': 0,
+        'errors': []
+    }}
     status = status.upper()
     if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
         return {"errors": ["invalid error status"]}
@@ -447,10 +451,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                        error_status=status)
         if len(statuses) == 0:
-            return {"data": {
-                'total': 0,
-                'errors': []
-            }}
+            return empty_response
         error_ids = [e["error_id"] for e in statuses]
     with pg_client.PostgresClient() as cur:
         if data.startDate is None:
