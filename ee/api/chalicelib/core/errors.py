@@ -483,13 +483,18 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
         order = "DESC"
         if data.order is not None:
             order = data.order
-        extra_join = ""
         params = {
             "startDate": data.startDate,
             "endDate": data.endDate,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
+        if data.limit is not None and data.page is not None:
+            params["errors_offset"] = (data.page - 1) * data.limit
+            params["errors_limit"] = data.limit
+        else:
+            params["errors_offset"] = 0
+            params["errors_limit"] = 200
         if favorite_only:
             cur.execute(cur.mogrify(f"""SELECT error_id 
                                        FROM public.user_favorite_errors
@@ -531,9 +536,10 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
                           WHERE {" AND ".join(ch_sub_query)}
                           GROUP BY error_id, name, message
                           ORDER BY {sort} {order}
-                          LIMIT 200) AS details INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
-                         FROM errors
-                         GROUP BY error_id) AS time_details
+                          LIMIT %(errors_limit)s OFFSET %(errors_offset)s) AS details 
+                            INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
+                                         FROM errors
+                                         GROUP BY error_id) AS time_details
                     ON details.error_id=time_details.error_id
                         INNER JOIN (SELECT error_id, groupArray([timestamp, count]) AS chart
                         FROM (SELECT error_id, toUnixTimestamp(toStartOfInterval(datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
@@ -544,8 +550,10 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
                                 ORDER BY timestamp) AS sub_table
                                 GROUP BY error_id) AS chart_details ON details.error_id=chart_details.error_id;"""
 
-            # print("--------------------")
-            # print(main_ch_query % params)
+            # print("------------")
+            # print(ch.client().substitute_params(main_ch_query, params))
+            # print("------------")
+
             rows = ch.execute(query=main_ch_query, params=params)
             if len(statuses) == 0:
                 query = cur.mogrify(
