@@ -1,5 +1,6 @@
 import json
 
+import schemas
 from chalicelib.core import dashboard
 from chalicelib.core import sourcemaps, sessions
 from chalicelib.utils import ch_client
@@ -265,7 +266,7 @@ def get_details(project_id, error_id, user_id, **data):
                                     COALESCE((SELECT TRUE
                                      FROM public.user_favorite_errors AS fe
                                      WHERE pe.error_id = fe.error_id
-                                       AND fe.user_id = %(user_id)s), FALSE) AS favorite,
+                                       AND fe.user_id = %(userId)s), FALSE) AS favorite,
                                        True AS viewed
                                 FROM public.errors AS pe
                                          INNER JOIN events.errors AS ee USING (error_id)
@@ -274,7 +275,7 @@ def get_details(project_id, error_id, user_id, **data):
                                   AND error_id = %(error_id)s
                                 ORDER BY start_ts DESC
                                 LIMIT 1;""",
-            {"project_id": project_id, "error_id": error_id, "user_id": user_id})
+            {"project_id": project_id, "error_id": error_id, "userId": user_id})
         cur.execute(query=query)
         status = cur.fetchone()
 
@@ -443,54 +444,74 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+    empty_response = {"data": {
+        'total': 0,
+        'errors': []
+    }}
     status = status.upper()
     if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
         return {"errors": ["invalid error status"]}
-    ch_sub_query = __get_basic_constraints(data.get('platform'))
+    platform = None
+    for f in data.filters:
+        if f.type == schemas.FilterType.platform and len(f.value) > 0:
+            platform = f.value[0]
+    ch_sub_query = __get_basic_constraints(platform)
     ch_sub_query.append("source ='js_exception'")
     statuses = []
     error_ids = None
-    if data.get("startDate") is None:
-        data["startDate"] = TimeUTC.now(-30)
-    if data.get("endDate") is None:
-        data["endDate"] = TimeUTC.now(1)
-    if len(data.get("events", [])) > 0 or len(data.get("filters", [])) > 0 or status != "ALL" or favorite_only:
+    if data.startDate is None:
+        data.startDate = TimeUTC.now(-30)
+    if data.endDate is None:
+        data.endDate = TimeUTC.now(1)
+    if len(data.events) > 0 or len(data.filters) > 0 or status != "ALL":
+        # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
                                        error_status=status, favorite_only=favorite_only)
-        error_ids = [e["error_id"] for e in statuses]
         if len(statuses) == 0:
-            return {"data": {
-                'total': 0,
-                'errors': []
-            }}
-    with ch_client.ClickHouseClient() as ch:
-        if data.get("startDate") is None:
-            data["startDate"] = TimeUTC.now(-7)
-        if data.get("endDate") is None:
-            data["endDate"] = TimeUTC.now()
-        density = data.get("density", 7)
-        step_size = __get_step_size(data["startDate"], data["endDate"], density)
+            return empty_response
+        error_ids = [e["error_id"] for e in statuses]
+    with ch_client.ClickHouseClient() as ch, pg_client.PostgresClient() as cur:
+        if data.startDate is None:
+            data.startDate = TimeUTC.now(-7)
+        if data.endDate is None:
+            data.endDate = TimeUTC.now()
+        step_size = __get_step_size(data.startDate, data.endDate, data.density)
         sort = __get_sort_key('datetime')
-        if data.get("sort") is not None:
-            sort = __get_sort_key(data["sort"])
+        if data.sort is not None:
+            sort = __get_sort_key(data.sort)
         order = "DESC"
-        if data.get("order") is not None:
-            order = data["order"]
-
+        if data.order is not None:
+            order = data.order
+        extra_join = ""
         params = {
-            "startDate": data['startDate'],
-            "endDate": data['endDate'],
+            "startDate": data.startDate,
+            "endDate": data.endDate,
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
+        if favorite_only:
+            cur.execute(cur.mogrify(f"""SELECT error_id 
+                                       FROM public.user_favorite_errors
+                                       WHERE user_id = %(userId)s
+                                       {"" if error_ids is None else "AND error_id IN %(error_ids)s"}""",
+                                    {"userId": user_id, "error_ids": tuple(error_ids or [])}))
+            error_ids = cur.fetchall()
+            if len(error_ids) == 0:
+                return empty_response
+            error_ids = [e["error_id"] for e in error_ids]
+
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)
             ch_sub_query.append("error_id IN %(error_ids)s")
+
         main_ch_query = f"""\
                 SELECT COUNT(DISTINCT error_id)  AS count
                   FROM errors
                   WHERE {" AND ".join(ch_sub_query)};"""
+        # print("------------")
+        # print(ch.client().substitute_params(main_ch_query, params))
+        # print("------------")
         total = ch.execute(query=main_ch_query, params=params)[0]["count"]
         if flows:
             return {"data": {"count": total}}
@@ -510,7 +531,7 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
                           WHERE {" AND ".join(ch_sub_query)}
                           GROUP BY error_id, name, message
                           ORDER BY {sort} {order}
-                          LIMIT 1001) AS details INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
+                          LIMIT 200) AS details INNER JOIN (SELECT error_id AS error_id, toUnixTimestamp(MAX(datetime))*1000 AS last_occurrence, toUnixTimestamp(MIN(datetime))*1000 AS first_occurrence
                          FROM errors
                          GROUP BY error_id) AS time_details
                     ON details.error_id=time_details.error_id
@@ -527,23 +548,22 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
             # print(main_ch_query % params)
             rows = ch.execute(query=main_ch_query, params=params)
             if len(statuses) == 0:
-                with pg_client.PostgresClient() as cur:
-                    query = cur.mogrify(
-                        """SELECT error_id, status, parent_error_id, payload,
-                                COALESCE((SELECT TRUE
-                                             FROM public.user_favorite_errors AS fe
-                                             WHERE errors.error_id = fe.error_id
-                                               AND fe.user_id = %(user_id)s LIMIT 1), FALSE) AS favorite,
-                                COALESCE((SELECT TRUE
-                                             FROM public.user_viewed_errors AS ve
-                                             WHERE errors.error_id = ve.error_id
-                                               AND ve.user_id = %(user_id)s LIMIT 1), FALSE) AS viewed
-                            FROM public.errors 
-                            WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
-                        {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
-                         "user_id": user_id})
-                    cur.execute(query=query)
-                    statuses = cur.fetchall()
+                query = cur.mogrify(
+                    """SELECT error_id, status, parent_error_id, payload,
+                            COALESCE((SELECT TRUE
+                                         FROM public.user_favorite_errors AS fe
+                                         WHERE errors.error_id = fe.error_id
+                                           AND fe.user_id = %(userId)s LIMIT 1), FALSE) AS favorite,
+                            COALESCE((SELECT TRUE
+                                         FROM public.user_viewed_errors AS ve
+                                         WHERE errors.error_id = ve.error_id
+                                           AND ve.user_id = %(userId)s LIMIT 1), FALSE) AS viewed
+                        FROM public.errors 
+                        WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
+                    {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
+                     "userId": user_id})
+                cur.execute(query=query)
+                statuses = cur.fetchall()
     statuses = {
         s["error_id"]: s for s in statuses
     }
@@ -565,9 +585,9 @@ def search(data, project_id, user_id, flows=False, status="ALL", favorite_only=F
         r["chart"] = list(r["chart"])
         for i in range(len(r["chart"])):
             r["chart"][i] = {"timestamp": r["chart"][i][0], "count": r["chart"][i][1]}
-        r["chart"] = dashboard.__complete_missing_steps(rows=r["chart"], start_time=data["startDate"],
-                                                        end_time=data["endDate"],
-                                                        density=density, neutral={"count": 0})
+        r["chart"] = dashboard.__complete_missing_steps(rows=r["chart"], start_time=data.startDate,
+                                                        end_time=data.endDate,
+                                                        density=data.density, neutral={"count": 0})
     offset = len(rows)
     rows = [r for r in rows if r["stack"] is None
             or (len(r["stack"]) == 0 or len(r["stack"]) > 1
@@ -593,7 +613,7 @@ def __save_stacktrace(error_id, data):
 
 
 def get_trace(project_id, error_id):
-    error = get(error_id=error_id)
+    error = get(error_id=error_id, family=False)
     if error is None:
         return {"errors": ["error not found"]}
     if error.get("source", "") != "js_exception":
@@ -766,7 +786,7 @@ def format_first_stack_frame(error):
 def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTimestamp=TimeUTC.now()):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
-            """WITH user_viewed AS (SELECT error_id FROM public.user_viewed_errors WHERE user_id = %(user_id)s)
+            """WITH user_viewed AS (SELECT error_id FROM public.user_viewed_errors WHERE user_id = %(userId)s)
                 SELECT COUNT(timed_errors.*) AS unresolved_and_unviewed
                 FROM (SELECT root_error.error_id
                       FROM events.errors
@@ -780,7 +800,7 @@ def stats(project_id, user_id, startTimestamp=TimeUTC.now(delta_days=-7), endTim
                         AND user_viewed.error_id ISNULL
                       LIMIT 1
                      ) AS timed_errors;""",
-            {"project_id": project_id, "user_id": user_id, "startTimestamp": startTimestamp,
+            {"project_id": project_id, "userId": user_id, "startTimestamp": startTimestamp,
              "endTimestamp": endTimestamp})
         cur.execute(query=query)
         row = cur.fetchone()

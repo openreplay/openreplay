@@ -716,7 +716,7 @@ def get_funnel_insights(projectId: int, funnelId: int, rangeValue: str = None, s
 def get_funnel_insights_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelInsightsPayloadSchema = Body(...),
                                    context: schemas.CurrentContext = Depends(OR_context)):
     return funnels.get_top_insights_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                               data=data.dict())
+                                               data=data)
 
 
 @app.get('/{projectId}/funnels/{funnelId}/issues', tags=["funnels"])
@@ -731,7 +731,7 @@ def get_funnel_issues(projectId: int, funnelId, rangeValue: str = None, startDat
 def get_funnel_issues_on_the_fly(projectId: int, funnelId: int, data: schemas.FunnelSearchPayloadSchema = Body(...),
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": funnels.get_issues_on_the_fly(funnel_id=funnelId, user_id=context.user_id, project_id=projectId,
-                                                  data=data.dict())}
+                                                  data=data)}
 
 
 @app.get('/{projectId}/funnels/{funnelId}/sessions', tags=["funnels"])
@@ -755,10 +755,11 @@ def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.
 def get_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
                        context: schemas.CurrentContext = Depends(OR_context)):
     issue = issues.get(project_id=projectId, issue_id=issueId)
+    if issue is None:
+        return {"errors": ["issue not found"]}
     return {
         "data": {"sessions": sessions.search_by_issue(user_id=context.user_id, project_id=projectId, issue=issue,
-                                                      start_date=startDate,
-                                                      end_date=endDate),
+                                                      start_date=startDate, end_date=endDate),
                  "issue": issue}}
 
 
@@ -906,8 +907,7 @@ def errors_search(projectId: int, status: str = "ALL", favorite: Union[str, bool
                   context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(favorite, str):
         favorite = True if len(favorite) == 0 else False
-    return errors.search(data.dict(), projectId, user_id=context.user_id, status=status,
-                         favorite_only=favorite)
+    return errors.search(data, projectId, user_id=context.user_id, status=status, favorite_only=favorite)
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
