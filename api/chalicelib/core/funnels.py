@@ -1,4 +1,5 @@
 import json
+from typing import List
 
 import chalicelib.utils.helper
 import schemas
@@ -12,12 +13,38 @@ REMOVE_KEYS = ["key", "_key", "startDate", "endDate"]
 ALLOW_UPDATE_FOR = ["name", "filter"]
 
 
-# def filter_stages(stages):
-#     ALLOW_TYPES = [events.event_type.CLICK.ui_type, events.event_type.INPUT.ui_type,
-#                    events.event_type.LOCATION.ui_type, events.event_type.CUSTOM.ui_type,
-#                    events.event_type.CLICK_IOS.ui_type, events.event_type.INPUT_IOS.ui_type,
-#                    events.event_type.VIEW_IOS.ui_type, events.event_type.CUSTOM_IOS.ui_type, ]
-#     return [s for s in stages if s["type"] in ALLOW_TYPES and s.get("value") is not None]
+def filter_stages(stages: List[schemas._SessionSearchEventSchema]):
+    ALLOW_TYPES = [schemas.EventType.click, schemas.EventType.input,
+                   schemas.EventType.location, schemas.EventType.custom,
+                   schemas.EventType.click_ios, schemas.EventType.input_ios,
+                   schemas.EventType.view_ios, schemas.EventType.custom_ios, ]
+    return [s for s in stages if s.type in ALLOW_TYPES and s.value is not None]
+
+
+def __parse_events(f_events: List[dict]):
+    return [schemas._SessionSearchEventSchema.parse_obj(e) for e in f_events]
+
+
+def __unparse_events(f_events: List[schemas._SessionSearchEventSchema]):
+    return [e.dict() for e in f_events]
+
+
+def __fix_stages(f_events: List[schemas._SessionSearchEventSchema]):
+    if f_events is None:
+        return
+    events = []
+    for e in f_events:
+        if e.operator is None:
+            e.operator = schemas.SearchEventOperator._is
+
+        if not isinstance(e.value, list):
+            e.value = [e.value]
+        is_any = sessions._isAny_opreator(e.operator)
+        if not is_any and isinstance(e.value, list) and len(e.value) == 0:
+            continue
+        events.append(e)
+    return events
+
 
 def __transform_old_funnels(events):
     for e in events:
@@ -28,7 +55,7 @@ def __transform_old_funnels(events):
 
 def create(project_id, user_id, name, filter: schemas.FunnelSearchPayloadSchema, is_public):
     helper.delete_keys_from_dict(filter, REMOVE_KEYS)
-    # filter.events = filter_stages(stages=filter.events)
+    filter.events = filter_stages(stages=filter.events)
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify("""\
             INSERT INTO public.funnels (project_id, user_id, name, filter,is_public) 
@@ -76,6 +103,8 @@ def update(funnel_id, user_id, project_id, name=None, filter=None, is_public=Non
             query
         )
         r = cur.fetchone()
+        if r is None:
+            return {"errors": ["funnel not found"]}
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         r = helper.dict_to_camel_case(r)
         r["filter"]["startDate"], r["filter"]["endDate"] = TimeUTC.get_start_end_from_range(r["filter"]["rangeValue"])
@@ -102,9 +131,9 @@ def get_by_user(project_id, user_id, range_value=None, start_date=None, end_date
         for row in rows:
             row["createdAt"] = TimeUTC.datetime_to_timestamp(row["createdAt"])
             if details:
-                # row["filter"]["events"] = filter_stages(row["filter"]["events"])
+                row["filter"]["events"] = filter_stages(__parse_events(row["filter"]["events"]))
                 if row.get("filter") is not None and row["filter"].get("events") is not None:
-                    row["filter"]["events"] = __transform_old_funnels(row["filter"]["events"])
+                    row["filter"]["events"] = __transform_old_funnels(__unparse_events(row["filter"]["events"]))
 
                 get_start_end_time(filter_d=row["filter"], range_value=range_value, start_date=start_date,
                                    end_date=end_date)
@@ -168,7 +197,8 @@ def get_sessions(project_id, funnel_id, user_id, range_value=None, start_date=No
 
 
 def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.FunnelSearchPayloadSchema):
-    # data.events = filter_stages(data.events)
+    data.events = filter_stages(data.events)
+    data.events = __fix_stages(data.events)
     if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
@@ -192,17 +222,18 @@ def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_dat
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
-def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data):
-    # data["events"] = filter_stages(data.get("events", []))
-    if len(data["events"]) == 0:
+def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelInsightsPayloadSchema):
+    data.events = filter_stages(__parse_events(data.events))
+    if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
-        get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
-                           start_date=data.get('startDate', None),
-                           end_date=data.get('endDate', None))
-        data = f["filter"]
-    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data, project_id=project_id)
+        get_start_end_time(filter_d=f["filter"], range_value=data.rangeValue,
+                           start_date=data.startDate,
+                           end_date=data.endDate)
+        data = schemas.FunnelInsightsPayloadSchema.parse_obj(f["filter"])
+    data.events = __fix_stages(data.events)
+    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data.dict(), project_id=project_id)
     if len(insights) > 0:
         insights[-1]["dropDueToIssues"] = total_drop_due_to_issues
     return {"data": {"stages": helper.list_to_camel_case(insights),
@@ -220,25 +251,26 @@ def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None
 
 
 @dev.timed
-def get_issues_on_the_fly(funnel_id, user_id, project_id, data):
-    first_stage = data.get("firstStage")
-    last_stage = data.get("lastStage")
-    # data["events"] = filter_stages(data.get("events", []))
-    if len(data["events"]) == 0:
+def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSearchPayloadSchema):
+    data.events = filter_stages(data.events)
+    data.events = __fix_stages(data.events)
+    if len(data.events) == 0:
         f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
         if f is None:
             return {"errors": ["funnel not found"]}
-        get_start_end_time(filter_d=f["filter"], range_value=data.get("rangeValue", None),
-                           start_date=data.get('startDate', None),
-                           end_date=data.get('endDate', None))
-        data = f["filter"]
+        get_start_end_time(filter_d=f["filter"], range_value=data.rangeValue,
+                           start_date=data.startDate,
+                           end_date=data.endDate)
+        data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
+    if len(data.events) < 2:
+        return {"issues": []}
     return {
         "issues": helper.dict_to_camel_case(
-            significance.get_issues_list(filter_d=data, project_id=project_id, first_stage=first_stage,
-                                         last_stage=last_stage))}
+            significance.get_issues_list(filter_d=data.dict(), project_id=project_id, first_stage=1,
+                                         last_stage=len(data.events)))}
 
 
-def get(funnel_id, project_id, user_id, flatten=True):
+def get(funnel_id, project_id, user_id, flatten=True, fix_stages=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(
@@ -260,7 +292,11 @@ def get(funnel_id, project_id, user_id, flatten=True):
     if f.get("filter") is not None and f["filter"].get("events") is not None:
         f["filter"]["events"] = __transform_old_funnels(f["filter"]["events"])
     f["createdAt"] = TimeUTC.datetime_to_timestamp(f["createdAt"])
-    # f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
+    f["filter"]["events"] = __parse_events(f["filter"]["events"])
+    f["filter"]["events"] = filter_stages(stages=f["filter"]["events"])
+    if fix_stages:
+        f["filter"]["events"] = __fix_stages(f["filter"]["events"])
+    f["filter"]["events"] = [e.dict() for e in f["filter"]["events"]]
     if flatten:
         f["filter"] = helper.old_search_payload_to_flat(f["filter"])
     return f
@@ -279,7 +315,7 @@ def search_by_issue(user_id, project_id, funnel_id, issue_id, data: schemas.Funn
                            end_date=data.endDate)
         data = schemas.FunnelSearchPayloadSchema.parse_obj(f["filter"])
 
-    issues = get_issues_on_the_fly(funnel_id=funnel_id, user_id=user_id, project_id=project_id, data=data.dict()) \
+    issues = get_issues_on_the_fly(funnel_id=funnel_id, user_id=user_id, project_id=project_id, data=data) \
         .get("issues", {})
     issues = issues.get("significant", []) + issues.get("insignificant", [])
     issue = None
