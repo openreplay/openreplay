@@ -51,8 +51,9 @@ export default Record({
     }
   },
   fromJS: ({ stages = [], filter,  activeStages = null, ...rest }) => {
-    let _stages  = stages.map(stage => {
-      stage.label = getRedableName(stage.type, stage.value);
+    let _stages  = stages.map((stage, index) => {
+      // stage.label = getRedableName(stage.type, stage.value);
+      stage.label = `Step ${index + 1}`;
       return stage;
     });
     
@@ -70,16 +71,19 @@ export default Record({
 
     return {
       ...rest,
-      stages: _stages.length > 0 ? _stages.map(stage => {
+      stages: _stages.length > 0 ? _stages.map((stage, index) => {
         if (!stage) return;
-        stage.label = getRedableName(stage);        
+        // stage.label = getRedableName(stage);
+        stage.label = `Step ${index + 1}`;
         return stage;
       }) : [],
       affectedUsers,
       lostConversions,
       conversionImpact,
-      firstStage: firstStage && firstStage.label + ' ' + truncate(firstStage.value || '', 10) || '',
-      lastStage: lastStage && lastStage.label + ' ' + truncate(lastStage.value || '', 10) || '',
+      // firstStage: firstStage && firstStage.label + ' ' + truncate(firstStage.value || '', 10) || '',
+      // lastStage: lastStage && lastStage.label + ' ' + truncate(lastStage.value || '', 10) || '',
+      firstStage: firstStage && firstStage.label || '',
+      lastStage: lastStage && lastStage.label || '',
       filter: Filter(filter),
       sessionsCount: lastStage && lastStage.sessionsCount,
       stepsCount: stages ? stages.length : 0,
