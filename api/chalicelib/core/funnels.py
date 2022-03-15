@@ -108,6 +108,7 @@ def update(funnel_id, user_id, project_id, name=None, filter=None, is_public=Non
         r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
         r = helper.dict_to_camel_case(r)
         r["filter"]["startDate"], r["filter"]["endDate"] = TimeUTC.get_start_end_from_range(r["filter"]["rangeValue"])
+        r["filter"] = helper.old_search_payload_to_flat(r["filter"])
         return {"data": r}
 
 
