@@ -3,7 +3,7 @@ import json
 import schemas
 from chalicelib.core import dashboard
 from chalicelib.core import sourcemaps, sessions
-from chalicelib.utils import ch_client
+from chalicelib.utils import ch_client, metrics_helper
 from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -424,9 +424,9 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
     if time_constraint:
         ch_sub_query += [f"datetime >= toDateTime(%({startTime_arg_name})s/1000)",
                          f"datetime < toDateTime(%({endTime_arg_name})s/1000)"]
-    if platform == 'mobile':
+    if platform == schemas.PlatformType.mobile:
         ch_sub_query.append("user_device_type = 'mobile'")
-    elif platform == 'desktop':
+    elif platform == schemas.PlatformType.desktop:
         ch_sub_query.append("user_device_type = 'desktop'")
     return ch_sub_query
 
@@ -444,7 +444,199 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
+def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_arg_name="startDate",
+                               endTime_arg_name="endDate", chart=False, step_size_name="step_size",
+                               project_key="project_id"):
+    if project_key is None:
+        ch_sub_query = []
+    else:
+        ch_sub_query = [f"{project_key} =%(project_id)s"]
+    if time_constraint:
+        ch_sub_query += [f"timestamp >= %({startTime_arg_name})s",
+                         f"timestamp < %({endTime_arg_name})s"]
+    if chart:
+        ch_sub_query += [f"timestamp >=  generated_timestamp",
+                         f"timestamp <  generated_timestamp + %({step_size_name})s"]
+    if platform == schemas.PlatformType.mobile:
+        ch_sub_query.append("user_device_type = 'mobile'")
+    elif platform == schemas.PlatformType.desktop:
+        ch_sub_query.append("user_device_type = 'desktop'")
+    return ch_sub_query
+
+
 def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
+    empty_response = {"data": {
+        'total': 0,
+        'errors': []
+    }}
+
+    platform = None
+    for f in data.filters:
+        if f.type == schemas.FilterType.platform and len(f.value) > 0:
+            platform = f.value[0]
+    pg_sub_query = __get_basic_constraints_pg(platform, project_key="sessions.project_id")
+    pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
+                     "pe.project_id=%(project_id)s"]
+    pg_sub_query_chart = __get_basic_constraints_pg(platform, time_constraint=False, chart=True, project_key=None)
+    # pg_sub_query_chart.append("source ='js_exception'")
+    pg_sub_query_chart.append("errors.error_id =details.error_id")
+    statuses = []
+    error_ids = None
+    if data.startDate is None:
+        data.startDate = TimeUTC.now(-30)
+    if data.endDate is None:
+        data.endDate = TimeUTC.now(1)
+    if len(data.events) > 0 or len(data.filters) > 0:
+        print("-- searching for sessions before errors")
+        # if favorite_only=True search for sessions associated with favorite_error
+        statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
+                                       error_status=data.status)
+        if len(statuses) == 0:
+            return empty_response
+        error_ids = [e["errorId"] for e in statuses]
+    with pg_client.PostgresClient() as cur:
+        if data.startDate is None:
+            data.startDate = TimeUTC.now(-7)
+        if data.endDate is None:
+            data.endDate = TimeUTC.now()
+        step_size = metrics_helper.__get_step_size(data.startDate, data.endDate, data.density, factor=1)
+        sort = __get_sort_key('datetime')
+        if data.sort is not None:
+            sort = __get_sort_key(data.sort)
+        order = "DESC"
+        if data.order is not None:
+            order = data.order
+        extra_join = ""
+
+        params = {
+            "startDate": data.startDate,
+            "endDate": data.endDate,
+            "project_id": project_id,
+            "userId": user_id,
+            "step_size": step_size}
+        if data.status != schemas.ErrorStatus.all:
+            pg_sub_query.append("status = %(error_status)s")
+            params["error_status"] = data.status
+        if data.limit is not None and data.page is not None:
+            params["errors_offset"] = (data.page - 1) * data.limit
+            params["errors_limit"] = data.limit
+        else:
+            params["errors_offset"] = 0
+            params["errors_limit"] = 200
+
+        if error_ids is not None:
+            params["error_ids"] = tuple(error_ids)
+            pg_sub_query.append("error_id IN %(error_ids)s")
+        if data.bookmarked:
+            pg_sub_query.append("ufe.user_id = %(userId)s")
+            extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
+        main_pg_query = f"""\
+                            SELECT full_count,
+                                   error_id,
+                                   name,
+                                   message,
+                                   users,
+                                   sessions,
+                                   last_occurrence,
+                                   first_occurrence,
+                                   chart
+                            FROM (SELECT COUNT(details) OVER () AS full_count, details.*
+                                    FROM (SELECT error_id,
+                                             name,
+                                             message,
+                                             COUNT(DISTINCT user_uuid)  AS users,
+                                             COUNT(DISTINCT session_id) AS sessions,
+                                             MAX(timestamp)             AS max_datetime,
+                                             MIN(timestamp)             AS min_datetime
+                                          FROM events.errors
+                                                   INNER JOIN public.errors AS pe USING (error_id)
+                                                   INNER JOIN public.sessions USING (session_id)
+                                                   {extra_join}
+                                          WHERE {" AND ".join(pg_sub_query)}
+                                          GROUP BY error_id, name, message
+                                          ORDER BY {sort} {order}) AS details
+                                    LIMIT %(errors_limit)s OFFSET %(errors_offset)s
+                                  ) AS details
+                                     INNER JOIN LATERAL (SELECT MAX(timestamp) AS last_occurrence,
+                                                                MIN(timestamp) AS first_occurrence
+                                                         FROM events.errors
+                                                         WHERE errors.error_id = details.error_id) AS time_details ON (TRUE)
+                                     INNER JOIN LATERAL (SELECT jsonb_agg(chart_details) AS chart
+                                                         FROM (SELECT generated_timestamp AS timestamp,
+                                                                      COUNT(session_id)   AS count
+                                                               FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
+                                                                        LEFT JOIN LATERAL (SELECT DISTINCT session_id
+                                                                                           FROM events.errors
+                                                                                           WHERE {" AND ".join(pg_sub_query_chart)}
+                                                                            ) AS sessions ON (TRUE)
+                                                               GROUP BY timestamp
+                                                               ORDER BY timestamp) AS chart_details) AS chart_details ON (TRUE);"""
+
+        # print("--------------------")
+        # print(cur.mogrify(main_pg_query, params))
+        # print("--------------------")
+
+        cur.execute(cur.mogrify(main_pg_query, params))
+        rows = cur.fetchall()
+        total = 0 if len(rows) == 0 else rows[0]["full_count"]
+        if flows:
+            return {"data": {"count": total}}
+
+        if total == 0:
+            rows = []
+        else:
+            if len(statuses) == 0:
+                query = cur.mogrify(
+                    """SELECT error_id, status, parent_error_id, payload,
+                            COALESCE((SELECT TRUE
+                                         FROM public.user_favorite_errors AS fe
+                                         WHERE errors.error_id = fe.error_id
+                                           AND fe.user_id = %(user_id)s LIMIT 1), FALSE) AS favorite,
+                            COALESCE((SELECT TRUE
+                                         FROM public.user_viewed_errors AS ve
+                                         WHERE errors.error_id = ve.error_id
+                                           AND ve.user_id = %(user_id)s LIMIT 1), FALSE) AS viewed
+                        FROM public.errors 
+                        WHERE project_id = %(project_id)s AND error_id IN %(error_ids)s;""",
+                    {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
+                     "user_id": user_id})
+                cur.execute(query=query)
+                statuses = helper.list_to_camel_case(cur.fetchall())
+    statuses = {
+        s["errorId"]: s for s in statuses
+    }
+
+    for r in rows:
+        r.pop("full_count")
+        if r["error_id"] in statuses:
+            r["status"] = statuses[r["error_id"]]["status"]
+            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
+            r["favorite"] = statuses[r["error_id"]]["favorite"]
+            r["viewed"] = statuses[r["error_id"]]["viewed"]
+            r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]
+        else:
+            r["status"] = "untracked"
+            r["parent_error_id"] = None
+            r["favorite"] = False
+            r["viewed"] = False
+            r["stack"] = None
+
+    offset = len(rows)
+    rows = [r for r in rows if r["stack"] is None
+            or (len(r["stack"]) == 0 or len(r["stack"]) > 1
+                or len(r["stack"]) > 0
+                and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
+    offset -= len(rows)
+    return {
+        "data": {
+            'total': total - offset,
+            'errors': helper.list_to_camel_case(rows)
+        }
+    }
+
+
+# refactor this function after clickhouse structure changes
+def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     empty_response = {"data": {
         'total': 0,
         'errors': []
