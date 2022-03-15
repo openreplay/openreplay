@@ -1,13 +1,18 @@
 import { List, Map } from 'immutable'; 
 import { clean as cleanParams } from 'App/api_client';
-import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED } from 'Types/errorInfo';
+import ErrorInfo, { RESOLVED, UNRESOLVED, IGNORED, BOOKMARK } from 'Types/errorInfo';
 import { createFetch, fetchListType, fetchType } from './funcTools/crud';
 import { createRequestReducer, ROOT_KEY } from './funcTools/request';
 import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
+import { reduceThenFetchResource } from './search'
 
 const name = "error";
 const idKey = "errorId";
+const PER_PAGE = 5;
+const DEFAULT_SORT = 'lastOccurrence';
+const DEFAULT_ORDER = 'desc';
 
+const EDIT_OPTIONS = `${name}/EDIT_OPTIONS`;
 const FETCH_LIST = fetchListType(name);
 const FETCH = fetchType(name);
 const FETCH_NEW_ERRORS_COUNT = fetchType('errors/FETCH_NEW_ERRORS_COUNT');
@@ -18,6 +23,7 @@ const MERGE = "errors/MERGE";
 const TOGGLE_FAVORITE = "errors/TOGGLE_FAVORITE";
 const FETCH_TRACE = "errors/FETCH_TRACE";
 const UPDATE_CURRENT_PAGE = "errors/UPDATE_CURRENT_PAGE";
+const UPDATE_KEY = `${name}/UPDATE_KEY`;
 
 function chartWrapper(chart = []) {
   return chart.map(point => ({ ...point, count: Math.max(point.count, 0) }));
@@ -35,13 +41,23 @@ const initialState = Map({
 	instanceTrace: List(),
 	stats: Map(),
 	sourcemapUploaded: true,
-  currentPage: 1,
+  	currentPage: 1,
+	options: Map({
+		sort: DEFAULT_SORT,
+		order: DEFAULT_ORDER,
+		status: UNRESOLVED,
+		query: '',
+	}),
+	// sort: DEFAULT_SORT,
+	// order: DEFAULT_ORDER,
 });
 
 
 function reducer(state = initialState, action = {}) {
 	let updError;
 	switch (action.type) {
+		case EDIT_OPTIONS:
+			return state.mergeIn(["options"], action.instance);
 		case success(FETCH):
 			return state.set("instance", ErrorInfo(action.data));
 		case success(FETCH_TRACE):
@@ -69,8 +85,10 @@ function reducer(state = initialState, action = {}) {
 			return state.update("list", list => list.filter(e => !ids.includes(e.errorId)));
 		case success(FETCH_NEW_ERRORS_COUNT):
 			return state.set('stats', action.data);
-    case UPDATE_CURRENT_PAGE:
-      return state.set('currentPage', action.page);
+		case UPDATE_KEY:
+			return state.set(action.key, action.value);
+		case UPDATE_CURRENT_PAGE:
+			return state.set('currentPage', action.page);
 	}
 	return state;
 }
@@ -106,14 +124,31 @@ export function fetchTrace(id) {
 	}
 }
 
-export function fetchList(params = {}, clear = false) {
-  return {
-    types: array(FETCH_LIST),
-    call: client => client.post('/errors/search', params),
-    clear,
-    params: cleanParams(params),
-  };
-}
+export const fetchList = (params = {}, clear = false) => (dispatch, getState) => {
+	params.page = getState().getIn(['errors', 'currentPage']);
+	params.limit = PER_PAGE;
+
+	const options = getState().getIn(['errors', 'options']);
+	if (options.get("status") === BOOKMARK) {
+		options.bookmarked = true;
+	}
+
+	return dispatch({
+		types: array(FETCH_LIST),
+		call: client => client.post('/errors/search', { ...params, ...options }),
+		clear,
+		params: cleanParams(params),
+	});
+};
+
+// export function fetchList(params = {}, clear = false) {
+//   return {
+//     types: array(FETCH_LIST),
+//     call: client => client.post('/errors/search', params),
+//     clear,
+//     params: cleanParams(params),
+//   };
+// }
 
 export function fetchBookmarks() {
 	return {
@@ -169,9 +204,12 @@ export function fetchNewErrorsCount(params = {}) {
 	}
 }
 
-export function updateCurrentPage(page) {
-  return {
-    type: 'errors/UPDATE_CURRENT_PAGE',
+export const updateCurrentPage = reduceThenFetchResource((page) => ({
+    type: UPDATE_CURRENT_PAGE,
     page,
-  };
-}
+}));
+
+export const editOptions = reduceThenFetchResource((instance) => ({ 
+	type: EDIT_OPTIONS,
+	instance
+}));
