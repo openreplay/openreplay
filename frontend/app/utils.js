@@ -237,6 +237,5 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
 export const sliceListPerPage = (list, page, perPage = 10) => {
   const start = page * perPage;
   const end = start + perPage;
-  console.log(start, end)
   return list.slice(start, end);
 }

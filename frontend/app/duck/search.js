@@ -126,7 +126,7 @@ export const filterMap = ({category, value, key, operator, sourceOperator, sourc
   filters: filters ? filters.map(filterMap) : [],
 });
 
-const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
+export const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance']).toData();
   
