@@ -561,16 +561,16 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                     {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
                      "user_id": user_id})
                 cur.execute(query=query)
-                statuses = cur.fetchall()
+                statuses = helper.list_to_camel_case(cur.fetchall())
     statuses = {
-        s["error_id"]: s for s in statuses
+        s["errorId"]: s for s in statuses
     }
 
     for r in rows:
         r.pop("full_count")
         if r["error_id"] in statuses:
             r["status"] = statuses[r["error_id"]]["status"]
-            r["parent_error_id"] = statuses[r["error_id"]]["parent_error_id"]
+            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
             r["favorite"] = statuses[r["error_id"]]["favorite"]
             r["viewed"] = statuses[r["error_id"]]["viewed"]
             r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]

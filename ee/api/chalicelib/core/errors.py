@@ -578,7 +578,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     for r in rows:
         if r["error_id"] in statuses:
             r["status"] = statuses[r["error_id"]]["status"]
-            r["parent_error_id"] = statuses[r["error_id"]]["parent_error_id"]
+            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
             r["favorite"] = statuses[r["error_id"]]["favorite"]
             r["viewed"] = statuses[r["error_id"]]["viewed"]
             r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]
