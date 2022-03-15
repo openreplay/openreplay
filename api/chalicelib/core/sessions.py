@@ -169,7 +169,7 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 @dev.timed
 def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
-               error_status="ALL", count_only=False, issue=None):
+               error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part, sort = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
                                                      favorite_only=data.bookmarked, issue=issue, project_id=project_id,
                                                      user_id=user_id)
@@ -962,9 +962,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
         extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
         extra_constraints.append("ser.source = 'js_exception'")
         extra_constraints.append("ser.project_id = %(project_id)s")
-        if error_status != "ALL":
+        if error_status != schemas.ErrorStatus.all:
             extra_constraints.append("ser.status = %(error_status)s")
-            full_args["error_status"] = error_status.lower()
+            full_args["error_status"] = error_status
         if favorite_only:
             extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
             extra_constraints.append("ufe.user_id = %(userId)s")
