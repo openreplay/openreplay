@@ -600,7 +600,7 @@ class SessionsSearchPayloadSchema(BaseModel):
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
-    order: str = Field(default="DESC")
+    order: Literal["asc", "desc"] = Field(default="desc")
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
     limit: int = Field(default=200, gt=0, le=200)
@@ -690,8 +690,24 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     rangeValue: Optional[str] = Field(None)
 
 
+class ErrorStatus(str, Enum):
+    all = 'all'
+    unresolved = 'unresolved'
+    resolved = 'resolved'
+    ignored = 'ignored'
+
+
+class ErrorSort(str, Enum):
+    occurrence = 'occurrence'
+    users_count = 'users'
+    sessions_count = 'sessions'
+
+
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
+    sort: ErrorSort = Field(default=ErrorSort.occurrence)
     density: Optional[int] = Field(7)
+    status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
+    query: Optional[str] = Field(default=None)
 
 
 class MetricPayloadSchema(BaseModel):

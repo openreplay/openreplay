@@ -2,7 +2,7 @@ import json
 
 import schemas
 from chalicelib.core import sourcemaps, sessions
-from chalicelib.utils import pg_client, helper, dev
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
 
@@ -399,7 +399,10 @@ def get_details_chart(project_id, error_id, user_id, **data):
 def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_name="startDate",
                             endTime_arg_name="endDate", chart=False, step_size_name="step_size",
                             project_key="project_id"):
-    ch_sub_query = [f"{project_key} =%(project_id)s"]
+    if project_key is None:
+        ch_sub_query = []
+    else:
+        ch_sub_query = [f"{project_key} =%(project_id)s"]
     if time_constraint:
         ch_sub_query += [f"timestamp >= %({startTime_arg_name})s",
                          f"timestamp < %({endTime_arg_name})s"]
@@ -415,21 +418,18 @@ def __get_basic_constraints(platform=None, time_constraint=True, startTime_arg_n
 
 def __get_sort_key(key):
     return {
-        "datetime": "max_datetime",
-        "lastOccurrence": "max_datetime",
-        "firstOccurrence": "min_datetime"
+        schemas.ErrorSort.occurrence: "max_datetime",
+        schemas.ErrorSort.users_count: "users",
+        schemas.ErrorSort.sessions_count: "sessions"
     }.get(key, 'max_datetime')
 
 
-@dev.timed
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     empty_response = {"data": {
         'total': 0,
         'errors': []
     }}
-    status = status.upper()
-    if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
-        return {"errors": ["invalid error status"]}
+
     platform = None
     for f in data.filters:
         if f.type == schemas.FilterType.platform and len(f.value) > 0:
@@ -437,8 +437,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
     pg_sub_query = __get_basic_constraints(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
                      "pe.project_id=%(project_id)s"]
-    pg_sub_query_chart = __get_basic_constraints(platform, time_constraint=False, chart=True)
-    pg_sub_query_chart.append("source ='js_exception'")
+    pg_sub_query_chart = __get_basic_constraints(platform, time_constraint=False, chart=True, project_key=None)
+    # pg_sub_query_chart.append("source ='js_exception'")
     pg_sub_query_chart.append("errors.error_id =details.error_id")
     statuses = []
     error_ids = None
@@ -446,13 +446,14 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
         data.startDate = TimeUTC.now(-30)
     if data.endDate is None:
         data.endDate = TimeUTC.now(1)
-    if len(data.events) > 0 or len(data.filters) > 0 or status != "ALL":
+    if len(data.events) > 0 or len(data.filters) > 0:
+        print("-- searching for sessions before errors")
         # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                       error_status=status)
+                                       error_status=data.status)
         if len(statuses) == 0:
             return empty_response
-        error_ids = [e["error_id"] for e in statuses]
+        error_ids = [e["errorId"] for e in statuses]
     with pg_client.PostgresClient() as cur:
         if data.startDate is None:
             data.startDate = TimeUTC.now(-7)
@@ -473,6 +474,9 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
             "project_id": project_id,
             "userId": user_id,
             "step_size": step_size}
+        if data.status != schemas.ErrorStatus.all:
+            pg_sub_query.append("status = %(error_status)s")
+            params["error_status"] = data.status
         if data.limit is not None and data.page is not None:
             params["errors_offset"] = (data.page - 1) * data.limit
             params["errors_limit"] = data.limit
@@ -483,11 +487,15 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
         if error_ids is not None:
             params["error_ids"] = tuple(error_ids)
             pg_sub_query.append("error_id IN %(error_ids)s")
-        if favorite_only:
+        if data.bookmarked:
             pg_sub_query.append("ufe.user_id = %(userId)s")
             extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
-        main_pg_query = f"""\
-                            SELECT full_count,
+        if data.query is not None and len(data.query) > 0:
+            pg_sub_query.append("(pe.name ILIKE %(error_query)s OR pe.message ILIKE %(error_query)s)")
+            params["error_query"] = helper.values_for_operator(value=data.query,
+                                                               op=schemas.SearchEventOperator._contains)
+
+        main_pg_query = f"""SELECT full_count,
                                    error_id,
                                    name,
                                    message,
@@ -522,7 +530,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
                                                                       COUNT(session_id)   AS count
                                                                FROM generate_series(%(startDate)s, %(endDate)s, %(step_size)s) AS generated_timestamp
                                                                         LEFT JOIN LATERAL (SELECT DISTINCT session_id
-                                                                                           FROM events.errors INNER JOIN public.errors AS m_errors USING (error_id)
+                                                                                           FROM events.errors
                                                                                            WHERE {" AND ".join(pg_sub_query_chart)}
                                                                             ) AS sessions ON (TRUE)
                                                                GROUP BY timestamp
@@ -557,16 +565,16 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
                     {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
                      "user_id": user_id})
                 cur.execute(query=query)
-                statuses = cur.fetchall()
+                statuses = helper.list_to_camel_case(cur.fetchall())
     statuses = {
-        s["error_id"]: s for s in statuses
+        s["errorId"]: s for s in statuses
     }
 
     for r in rows:
         r.pop("full_count")
         if r["error_id"] in statuses:
             r["status"] = statuses[r["error_id"]]["status"]
-            r["parent_error_id"] = statuses[r["error_id"]]["parent_error_id"]
+            r["parent_error_id"] = statuses[r["error_id"]]["parentErrorId"]
             r["favorite"] = statuses[r["error_id"]]["favorite"]
             r["viewed"] = statuses[r["error_id"]]["viewed"]
             r["stack"] = format_first_stack_frame(statuses[r["error_id"]])["stack"]
