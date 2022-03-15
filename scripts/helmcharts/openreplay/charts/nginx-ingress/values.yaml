@@ -42,8 +42,10 @@ service:
   ports:
     - port: 80
       targetPort: http
+      name: http
     - port: 443
       targetPort: https
+      name: https
 
 ingress:
   enabled: false
