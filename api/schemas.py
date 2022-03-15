@@ -704,8 +704,7 @@ class ErrorSort(str, Enum):
 
 
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
-    # sort: ErrorSort = Field(default=ErrorSort.occurrence)
-    sort: str = Field(default=ErrorSort.occurrence.value)
+    sort: ErrorSort = Field(default=ErrorSort.occurrence)
     density: Optional[int] = Field(7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
     query: Optional[str] = Field(default=None)
