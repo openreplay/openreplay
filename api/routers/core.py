@@ -884,12 +884,9 @@ def edit_client(data: schemas.UpdateTenantSchema = Body(...),
 
 
 @app.post('/{projectId}/errors/search', tags=['errors'])
-def errors_search(projectId: int, status: str = "ALL", favorite: Union[str, bool] = False,
-                  data: schemas.SearchErrorsSchema = Body(...),
+def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(favorite, str):
-        favorite = True if len(favorite) == 0 else False
-    return errors.search(data, projectId, user_id=context.user_id, status=status, favorite_only=favorite)
+    return errors.search(data, projectId, user_id=context.user_id)
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
