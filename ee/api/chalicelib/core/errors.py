@@ -462,7 +462,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         data.startDate = TimeUTC.now(-30)
     if data.endDate is None:
         data.endDate = TimeUTC.now(1)
-    if len(data.events) > 0 or len(data.filters) > 0 or data.status != "ALL":
+    if len(data.events) > 0 or len(data.filters) > 0 or data.status != schemas.ErrorStatus.all:
         print("-- searching for sessions before errors")
         # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
