@@ -8,6 +8,7 @@ import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import DateRange from 'Components/BugFinder/DateRange';
 import withPageTitle from 'HOCs/withPageTitle';
+import cn from 'classnames';
 
 import List from './List/List';
 import ErrorInfo from './Error/ErrorInfo';
@@ -78,11 +79,12 @@ export default class Errors extends React.PureComponent {
 			},
 			status,
 			list,
+			history,
 		} = this.props;
 
 		return (
 			<div className="page-margin container-90" >
-				<div className="side-menu">
+				<div className={cn("side-menu", {'disabled' : !isRoute(ERRORS_ROUTE, history.location.pathname)})}>
 					<SideMenuSection
 						title="Errors"
 						onItemClick={this.onStatusItemClick}
