@@ -9,7 +9,7 @@ import { reduceThenFetchResource } from './search'
 const name = "error";
 const idKey = "errorId";
 const PER_PAGE = 10;
-const DEFAULT_SORT = 'lastOccurrence';
+const DEFAULT_SORT = 'occurrence';
 const DEFAULT_ORDER = 'desc';
 
 const EDIT_OPTIONS = `${name}/EDIT_OPTIONS`;

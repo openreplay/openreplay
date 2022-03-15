@@ -12,8 +12,8 @@ import { debounce } from 'App/utils';
 
 const PER_PAGE = 10;
 const sortOptionsMap = {
-	'lastOccurrence-desc': 'Last Occurrence',
-	'firstOccurrence-desc': 'First Occurrence',
+	'occurrence-desc': 'Last Occurrence',
+	'occurrence-desc': 'First Occurrence',
 	'sessions-asc': 'Sessions Ascending',
 	'sessions-desc': 'Sessions Descending',
 	'users-asc': 'Users Ascending',
