@@ -128,14 +128,15 @@ export const fetchList = (params = {}, clear = false) => (dispatch, getState) =>
 	params.page = getState().getIn(['errors', 'currentPage']);
 	params.limit = PER_PAGE;
 
-	const options = getState().getIn(['errors', 'options']);
-	if (options.get("status") === BOOKMARK) {
+	const options = getState().getIn(['errors', 'options']).toJS();
+	if (options.status === BOOKMARK) {
 		options.bookmarked = true;
+		options.status = 'all';
 	}
 
 	return dispatch({
 		types: array(FETCH_LIST),
-		call: client => client.post('/errors/search', { ...params, ...options.toJS() }),
+		call: client => client.post('/errors/search', { ...params, ...options }),
 		clear,
 		params: cleanParams(params),
 	});
