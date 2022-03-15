@@ -135,7 +135,7 @@ export const fetchList = (params = {}, clear = false) => (dispatch, getState) =>
 
 	return dispatch({
 		types: array(FETCH_LIST),
-		call: client => client.post('/errors/search', { ...params, ...options }),
+		call: client => client.post('/errors/search', { ...params, ...options.toJS() }),
 		clear,
 		params: cleanParams(params),
 	});
