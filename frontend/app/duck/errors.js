@@ -8,7 +8,7 @@ import { reduceThenFetchResource } from './search'
 
 const name = "error";
 const idKey = "errorId";
-const PER_PAGE = 5;
+const PER_PAGE = 10;
 const DEFAULT_SORT = 'lastOccurrence';
 const DEFAULT_ORDER = 'desc';
 

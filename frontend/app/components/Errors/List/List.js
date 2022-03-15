@@ -10,7 +10,7 @@ import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
 import { debounce } from 'App/utils';
 
-const PER_PAGE = 5;
+const PER_PAGE = 10;
 const sortOptionsMap = {
 	'lastOccurrence-desc': 'Last Occurrence',
 	'firstOccurrence-desc': 'First Occurrence',
