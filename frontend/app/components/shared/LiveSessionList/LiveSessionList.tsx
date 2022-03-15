@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
-import { NoContent, Loader, LoadMoreButton } from 'UI';
+import { NoContent, Loader, LoadMoreButton, Pagination } from 'UI';
 import { List, Map } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions'
@@ -12,11 +12,11 @@ import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/live
 import DropdownPlain from 'Shared/DropdownPlain';
 import SortOrderButton from 'Shared/SortOrderButton';
 import { TimezoneDropdown } from 'UI';
-import { capitalize } from 'App/utils';
+import { capitalize, sliceListPerPage } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
-const PER_PAGE = 20;
+const PER_PAGE = 10;
 
 interface Props {
   loading: Boolean,
@@ -42,9 +42,8 @@ function LiveSessionList(props: Props) {
     text: capitalize(i), value: i
   })).toJS();
   
-  const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
-
-  const addPage = () => props.updateCurrentPage(props.currentPage + 1)
+  // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
+  // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
   useEffect(() => {
     if (filters.size === 0) {
@@ -135,6 +134,7 @@ function LiveSessionList(props: Props) {
           <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
         </div>
       </div>
+
       <NoContent
         title={"No live sessions."}
         subtext={
@@ -147,9 +147,9 @@ function LiveSessionList(props: Props) {
         show={ !loading && sessions && sessions.size === 0}
       >
         <Loader loading={ loading }>
-          {sessions && sessions.sortBy(i => i.metadata[sort.field]).update(list => {
+          {sessions && sliceListPerPage(sessions.sortBy(i => i.metadata[sort.field]).update(list => {
             return sort.order === 'desc' ? list.reverse() : list;
-          }).take(displayedCount).map(session => (
+          }), currentPage - 1).map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -160,12 +160,14 @@ function LiveSessionList(props: Props) {
             />
           ))}
 
-          <LoadMoreButton
-            className="my-6"
-            displayedCount={displayedCount}
-            totalCount={sessions.size}
-            onClick={addPage}
+        <div className="w-full flex items-center justify-center py-6">
+          <Pagination
+            page={currentPage}
+            totalPages={Math.ceil(sessions.size / PER_PAGE)}
+            onPageChange={(page) => props.updateCurrentPage(page)}
+            limit={PER_PAGE}
           />
+        </div>
         </Loader>
       </NoContent>
     </div>
