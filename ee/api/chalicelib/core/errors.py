@@ -570,7 +570,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                     {"project_id": project_id, "error_ids": tuple([r["error_id"] for r in rows]),
                      "userId": user_id})
                 cur.execute(query=query)
-                statuses = cur.fetchall()
+                statuses = helper.list_to_camel_case(cur.fetchall())
     statuses = {
         s["errorId"]: s for s in statuses
     }
