@@ -444,14 +444,11 @@ def __get_sort_key(key):
     }.get(key, 'max_datetime')
 
 
-def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, status="ALL", favorite_only=False):
+def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     empty_response = {"data": {
         'total': 0,
         'errors': []
     }}
-    status = status.upper()
-    if status.lower() not in ['all', 'unresolved', 'resolved', 'ignored']:
-        return {"errors": ["invalid error status"]}
     platform = None
     for f in data.filters:
         if f.type == schemas.FilterType.platform and len(f.value) > 0:
@@ -460,17 +457,19 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
     ch_sub_query.append("source ='js_exception'")
     statuses = []
     error_ids = None
-    if data.startDate is None:
+    # Clickhouse keeps data for the past month only, so no need to search beyond that
+    if data.startDate is None or data.startDate < TimeUTC.now(delta_days=-31):
         data.startDate = TimeUTC.now(-30)
     if data.endDate is None:
         data.endDate = TimeUTC.now(1)
-    if len(data.events) > 0 or len(data.filters) > 0 or status != "ALL":
+    if len(data.events) > 0 or len(data.filters) > 0 or data.status != "ALL":
+        print("-- searching for sessions before errors")
         # if favorite_only=True search for sessions associated with favorite_error
         statuses = sessions.search2_pg(data=data, project_id=project_id, user_id=user_id, errors_only=True,
-                                       error_status=status, favorite_only=favorite_only)
+                                       error_status=data.status)
         if len(statuses) == 0:
             return empty_response
-        error_ids = [e["error_id"] for e in statuses]
+        error_ids = [e["errorId"] for e in statuses]
     with ch_client.ClickHouseClient() as ch, pg_client.PostgresClient() as cur:
         if data.startDate is None:
             data.startDate = TimeUTC.now(-7)
@@ -495,7 +494,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
         else:
             params["errors_offset"] = 0
             params["errors_limit"] = 200
-        if favorite_only:
+        if data.bookmarked:
             cur.execute(cur.mogrify(f"""SELECT error_id 
                                        FROM public.user_favorite_errors
                                        WHERE user_id = %(userId)s
@@ -573,7 +572,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False, s
                 cur.execute(query=query)
                 statuses = cur.fetchall()
     statuses = {
-        s["error_id"]: s for s in statuses
+        s["errorId"]: s for s in statuses
     }
 
     for r in rows:
