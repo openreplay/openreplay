@@ -490,8 +490,12 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         if data.bookmarked:
             pg_sub_query.append("ufe.user_id = %(userId)s")
             extra_join += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
-        main_pg_query = f"""\
-                            SELECT full_count,
+        if data.query is not None and len(data.query) > 0:
+            pg_sub_query.append("(pe.name ILIKE %(error_query)s OR pe.message ILIKE %(error_query)s)")
+            params["error_query"] = helper.values_for_operator(value=data.query,
+                                                               op=schemas.SearchEventOperator._contains)
+
+        main_pg_query = f"""SELECT full_count,
                                    error_id,
                                    name,
                                    message,

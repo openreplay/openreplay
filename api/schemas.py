@@ -700,6 +700,7 @@ class ErrorStatus(str, Enum):
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
     density: Optional[int] = Field(7)
     status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
+    query: Optional[str] = Field(default=None)
 
 
 class MetricPayloadSchema(BaseModel):
