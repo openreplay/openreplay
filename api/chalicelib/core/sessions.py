@@ -235,24 +235,16 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         # print("--------------------")
 
         cur.execute(main_query)
+        if errors_only:
+            return helper.list_to_camel_case(cur.fetchall())
+
         sessions = cur.fetchone()
         if count_only:
             return helper.dict_to_camel_case(sessions)
 
         total = sessions["count"]
         sessions = sessions["sessions"]
-        # sessions = []
-        # total = cur.rowcount
-        # row = cur.fetchone()
-        # limit = 200
-        # while row is not None and len(sessions) < limit:
-        #     if row.get("favorite"):
-        #         limit += 1
-        #     sessions.append(row)
-        #     row = cur.fetchone()
 
-    if errors_only:
-        return sessions
     if data.group_by_user:
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
@@ -969,9 +961,10 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
     if errors_only:
         extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
         extra_constraints.append("ser.source = 'js_exception'")
+        extra_constraints.append("ser.project_id = %(project_id)s")
         if error_status != "ALL":
             extra_constraints.append("ser.status = %(error_status)s")
-            full_args["status"] = error_status.lower()
+            full_args["error_status"] = error_status.lower()
         if favorite_only:
             extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
             extra_constraints.append("ufe.user_id = %(userId)s")

@@ -690,8 +690,16 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     rangeValue: Optional[str] = Field(None)
 
 
+class ErrorStatus(str, Enum):
+    all = 'all'
+    unresolved = 'unresolved'
+    resolved = 'resolved'
+    ignored = 'ignored'
+
+
 class SearchErrorsSchema(SessionsSearchPayloadSchema):
     density: Optional[int] = Field(7)
+    status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
 
 
 class MetricPayloadSchema(BaseModel):
