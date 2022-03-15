@@ -438,9 +438,9 @@ def __get_step_size(startTimestamp, endTimestamp, density):
 
 def __get_sort_key(key):
     return {
-        "datetime": "max_datetime",
-        "lastOccurrence": "max_datetime",
-        "firstOccurrence": "min_datetime"
+        schemas.ErrorSort.occurrence: "max_datetime",
+        schemas.ErrorSort.users_count: "users",
+        schemas.ErrorSort.sessions_count: "sessions"
     }.get(key, 'max_datetime')
 
 
