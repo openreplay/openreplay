@@ -21,6 +21,7 @@ var timeoutId;
   filters: state.getIn([ 'search', 'instance', 'filters' ]),
   metaList: state.getIn(['customFields', 'list']).map(i => i.key),
   currentPage: state.getIn([ 'search', 'currentPage' ]),
+  lastPlayedSessionId: state.getIn([ 'sessions', 'lastPlayedSessionId' ]),
 }), {
   applyFilter,
   addAttribute,
@@ -90,6 +91,7 @@ export default class SessionList extends React.PureComponent {
       metaList,
       currentPage,
       total,
+      lastPlayedSessionId,
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
@@ -127,6 +129,7 @@ export default class SessionList extends React.PureComponent {
               hasUserFilter={hasUserFilter}
               onUserClick={this.onUserClick}
               metaList={metaList}
+              lastPlayedSessionId={lastPlayedSessionId}
             />
           ))}
         </Loader>
@@ -139,18 +142,6 @@ export default class SessionList extends React.PureComponent {
             debounceRequest={1000}
           />
         </div>
-        {/* <LoadMoreButton
-          className="mt-12 mb-12"
-          displayedCount={displayedCount}
-          totalCount={list.size}
-          loading={loading}
-          onClick={this.addPage}
-          description={ displayedCount === list.size && 
-            <div className="color-gray-medium text-sm text-center my-3">
-              Haven't found the session in the above list? <br/>Try being a bit more specific by setting a specific time frame or simply use different filters
-            </div>
-          }
-        /> */}
       </NoContent>
     );
   }
