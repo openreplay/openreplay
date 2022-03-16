@@ -17,14 +17,29 @@ const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
 let io;
 let debug = process.env.debug === "1" || false;
 
-const socketsList = function (req, res) {
+const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
+    let userId;
+    if (req.query.userId) {
+        debug && console.log(`[WS]where userId=${req.query.userId}`);
+        userId = req.query.userId;
+    }
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey !== undefined) {
-            liveSessions[projectKey] = liveSessions[projectKey] || [];
-            liveSessions[projectKey].push(sessionId);
+            if (userId) {
+                const connected_sockets = await io.in(peerId).fetchSockets();
+                for (let item of connected_sockets) {
+                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                        liveSessions[projectKey] = liveSessions[projectKey] || [];
+                        liveSessions[projectKey].push(sessionId);
+                    }
+                }
+            } else {
+                liveSessions[projectKey] = liveSessions[projectKey] || [];
+                liveSessions[projectKey].push(sessionId);
+            }
         }
     }
     res.statusCode = 200;
@@ -33,14 +48,29 @@ const socketsList = function (req, res) {
 }
 wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
 
-const socketsListByProject = function (req, res) {
+const socketsListByProject = async function (req, res) {
     debug && console.log(`[WS]looking for available sessions for ${req.params.projectKey}`);
+    let userId;
+    if (req.query.userId) {
+        debug && console.log(`[WS]where userId=${req.query.userId}`);
+        userId = req.query.userId;
+    }
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === req.params.projectKey) {
-            liveSessions[projectKey] = liveSessions[projectKey] || [];
-            liveSessions[projectKey].push(sessionId);
+            if (userId) {
+                const connected_sockets = await io.in(peerId).fetchSockets();
+                for (let item of connected_sockets) {
+                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                        liveSessions[projectKey] = liveSessions[projectKey] || [];
+                        liveSessions[projectKey].push(sessionId);
+                    }
+                }
+            } else {
+                liveSessions[projectKey] = liveSessions[projectKey] || [];
+                liveSessions[projectKey].push(sessionId);
+            }
         }
     }
     res.statusCode = 200;
@@ -51,6 +81,11 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, socketsListByPro
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
+    let userId;
+    if (req.query.userId) {
+        debug && console.log(`[WS]where userId=${req.query.userId}`);
+        userId = req.query.userId;
+    }
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
@@ -58,8 +93,15 @@ const socketsLive = async function (req, res) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
-                    liveSessions[projectKey] = liveSessions[projectKey] || [];
-                    liveSessions[projectKey].push(item.handshake.query.sessionInfo);
+                    if (userId) {
+                        if (item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                            liveSessions[projectKey] = liveSessions[projectKey] || [];
+                            liveSessions[projectKey].push(item.handshake.query.sessionInfo);
+                        }
+                    } else {
+                        liveSessions[projectKey] = liveSessions[projectKey] || [];
+                        liveSessions[projectKey].push(item.handshake.query.sessionInfo);
+                    }
                 }
             }
         }
@@ -73,6 +115,11 @@ wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
 
 const socketsLiveByProject = async function (req, res) {
     debug && console.log(`[WS]looking for available LIVE sessions for ${req.params.projectKey}`);
+    let userId;
+    if (req.query.userId) {
+        debug && console.log(`[WS]where userId=${req.query.userId}`);
+        userId = req.query.userId;
+    }
     let liveSessions = {};
     for (let peerId of io.sockets.adapter.rooms.keys()) {
         let {projectKey, sessionId} = extractPeerId(peerId);
@@ -80,8 +127,15 @@ const socketsLiveByProject = async function (req, res) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
-                    liveSessions[projectKey] = liveSessions[projectKey] || [];
-                    liveSessions[projectKey].push(item.handshake.query.sessionInfo);
+                    if (userId) {
+                        if (item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                            liveSessions[projectKey] = liveSessions[projectKey] || [];
+                            liveSessions[projectKey].push(item.handshake.query.sessionInfo);
+                        }
+                    } else {
+                        liveSessions[projectKey] = liveSessions[projectKey] || [];
+                        liveSessions[projectKey].push(item.handshake.query.sessionInfo);
+                    }
                 }
             }
         }
