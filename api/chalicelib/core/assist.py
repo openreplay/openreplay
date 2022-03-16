@@ -64,9 +64,10 @@ def get_live_sessions(project_id, filters=None):
     return helper.list_to_camel_case(results)
 
 
-def get_live_sessions_ws(project_id):
+def get_live_sessions_ws(project_id, user_id=None):
     project_key = projects.get_project_key(project_id)
-    connected_peers = requests.get(config("peers") % config("S3_KEY") + f"/{project_key}")
+    connected_peers = requests.get(config("peers") % config("S3_KEY") \
+                                   + f"/{project_key}" + (f"?userId={user_id}" if user_id else ""))
     if connected_peers.status_code != 200:
         print("!! issue with the peer-server")
         print(connected_peers.text)
