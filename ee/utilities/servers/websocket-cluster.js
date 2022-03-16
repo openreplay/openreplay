@@ -21,7 +21,7 @@ const subClient = pubClient.duplicate();
 let io;
 const debug = process.env.debug === "1" || false;
 
-const createSocketIOServer = function (server) {
+const createSocketIOServer = function (server, prefix) {
     if (process.env.uws !== "true") {
         io = _io(server, {
             maxHttpBufferSize: (parseInt(process.env.maxHttpBufferSize) || 5) * 1e6,
@@ -29,7 +29,7 @@ const createSocketIOServer = function (server) {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            path: '/socket'
+            path: (prefix ? prefix : '') + '/socket'
         });
     } else {
         io = new _io.Server({
@@ -38,7 +38,7 @@ const createSocketIOServer = function (server) {
                 origin: "*",
                 methods: ["GET", "POST", "PUT"]
             },
-            path: '/socket',
+            path: (prefix ? prefix : '') + '/socket'
             // transports: ['websocket'],
             // upgrade: false
         });
@@ -287,8 +287,8 @@ function extractSessionInfo(socket) {
 
 module.exports = {
     wsRouter,
-    start: (server) => {
-        createSocketIOServer(server);
+    start: (server, prefix) => {
+        createSocketIOServer(server, prefix);
         io.on('connection', async (socket) => {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
