@@ -337,10 +337,10 @@ module.exports = {
             socket.onAny(async (eventName, ...args) => {
                 socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
-                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}, members: ${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
                 } else {
-                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}, members:${io.sockets.adapter.rooms.get(socket.peerId).size}`);
+                    debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to session of room:${socket.peerId}`);
                     let socketId = await findSessionSocketId(io, socket.peerId);
                     if (socketId === null) {
                         debug && console.log(`session not found for:${socket.peerId}`);
@@ -354,7 +354,7 @@ module.exports = {
 
         });
         console.log("WS server started")
-        setInterval((io) => {
+        setInterval(async (io) => {
             try {
                 let count = 0;
                 console.log(` ====== Rooms: ${io.sockets.adapter.rooms.size} ====== `);
