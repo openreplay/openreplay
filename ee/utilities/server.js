@@ -3,7 +3,7 @@ var {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers
 var express = require('express');
 const {ExpressPeerServer} = require('peer');
 var socket;
-if (process.env.cluster === "true") {
+if (process.env.redis === "true") {
     console.log("Using Redis");
     socket = require("./servers/websocket-cluster");
 } else {
