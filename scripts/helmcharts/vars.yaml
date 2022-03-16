@@ -100,7 +100,7 @@ utilities:
   env:
     debug: 0
     uws: false
-    cluster: false
+    redis: false
 
 # If you want to override something
 # chartname:
