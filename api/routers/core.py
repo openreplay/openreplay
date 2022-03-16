@@ -21,13 +21,6 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/{projectId}/sessions2/favorite', tags=["sessions"])
-def get_favorite_sessions(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': sessions.get_favorite_sessions(project_id=projectId, user_id=context.user_id, include_viewed=True)
-    }
-
-
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
@@ -126,7 +119,7 @@ def events_search(projectId: int, q: str,
         else:
             return {"data": []}
 
-    result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source, key=key)
+    result = events.search(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
 
 
@@ -145,17 +138,6 @@ def session_filter_values(projectId: int, context: schemas.CurrentContext = Depe
 @app.get('/{projectId}/sessions/filters/top', tags=["sessions"])
 def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_metas.get_top_key_values(projectId)}
-
-
-@app.get('/{projectId}/sessions/filters/search', tags=["sessions"])
-def get_session_filters_meta(projectId: int, q: str, type: str,
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    meta_type = type
-    if len(meta_type) == 0:
-        return {"data": []}
-    if len(q) == 0:
-        return {"data": []}
-    return sessions_metas.search(project_id=projectId, meta_type=meta_type, text=q)
 
 
 @app.post('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])

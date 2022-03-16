@@ -6,10 +6,7 @@ class Event:
 
 
 class SupportedFilter:
-    def __init__(self, get, query, value_limit, starts_with, starts_limit, ignore_if_starts_with):
+    def __init__(self, get, query, change_by_length):
         self.get = get
         self.query = query
-        self.valueLimit = value_limit
-        self.startsWith = starts_with
-        self.startsLimit = starts_limit
-        self.ignoreIfStartsWith = ignore_if_starts_with
+        self.change_by_length = change_by_length

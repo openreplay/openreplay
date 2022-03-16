@@ -1101,48 +1101,6 @@ def search_by_issue(user_id, issue, project_id, start_date, end_date):
     return helper.list_to_camel_case(rows)
 
 
-def get_favorite_sessions(project_id, user_id, include_viewed=False):
-    with pg_client.PostgresClient() as cur:
-        query_part = cur.mogrify(f"""\
-            FROM public.sessions AS s 
-                LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id
-            WHERE fs.user_id = %(userId)s""",
-                                 {"projectId": project_id, "userId": user_id}
-                                 )
-
-        extra_query = b""
-        if include_viewed:
-            extra_query = cur.mogrify(""",\
-            COALESCE((SELECT TRUE
-             FROM public.user_viewed_sessions AS fs
-             WHERE s.session_id = fs.session_id
-               AND fs.user_id = %(userId)s), FALSE) AS viewed""",
-                                      {"projectId": project_id, "userId": user_id})
-
-        cur.execute(f"""\
-                    SELECT s.project_id,
-                           s.session_id::text AS session_id,
-                           s.user_uuid,
-                           s.user_id,
-                           s.user_os,
-                           s.user_browser,
-                           s.user_device,
-                           s.user_country,
-                           s.start_ts,
-                           s.duration,
-                           s.events_count,
-                           s.pages_count,
-                           s.errors_count,
-                           TRUE AS favorite
-                           {extra_query.decode('UTF-8')}                            
-                    {query_part.decode('UTF-8')}
-                    ORDER BY s.session_id         
-                    LIMIT 50;""")
-
-        sessions = cur.fetchall()
-    return helper.list_to_camel_case(sessions)
-
-
 def get_user_sessions(project_id, user_id, start_date, end_date):
     with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]

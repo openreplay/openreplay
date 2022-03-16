@@ -97,7 +97,55 @@ def __get_data_for_extend(data):
         return data["data"]
 
 
-def __pg_errors_query(source=None):
+def __pg_errors_query(source=None, value_length=None):
+    if value_length is None or value_length > 2:
+        return f"""((SELECT DISTINCT ON(lg.message)
+                        lg.message AS value,
+                        source,
+                        '{event_type.ERROR.ui_type}' AS type
+                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.message ILIKE %(svalue)s
+                      AND lg.project_id = %(project_id)s
+                      {"AND source = %(source)s" if source is not None else ""}
+                    LIMIT 5)
+                    UNION ALL
+                    (SELECT DISTINCT ON(lg.name)
+                        lg.name AS value,
+                        source,
+                        '{event_type.ERROR.ui_type}' AS type
+                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.name ILIKE %(svalue)s
+                      AND lg.project_id = %(project_id)s
+                      {"AND source = %(source)s" if source is not None else ""}
+                    LIMIT 5)
+                    UNION
+                    (SELECT DISTINCT ON(lg.message)
+                        lg.message AS value,
+                        source,
+                        '{event_type.ERROR.ui_type}' AS type
+                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.message ILIKE %(value)s
+                      AND lg.project_id = %(project_id)s
+                      {"AND source = %(source)s" if source is not None else ""}
+                    LIMIT 5)
+                    UNION ALL
+                    (SELECT DISTINCT ON(lg.name)
+                        lg.name AS value,
+                        source,
+                        '{event_type.ERROR.ui_type}' AS type
+                    FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.name ILIKE %(value)s
+                      AND lg.project_id = %(project_id)s
+                      {"AND source = %(source)s" if source is not None else ""}
+                    LIMIT 5));"""
     return f"""((SELECT DISTINCT ON(lg.message)
                     lg.message AS value,
                     source,
@@ -120,30 +168,6 @@ def __pg_errors_query(source=None):
                   AND lg.name ILIKE %(svalue)s
                   AND lg.project_id = %(project_id)s
                   {"AND source = %(source)s" if source is not None else ""}
-                LIMIT 5)
-                UNION
-                (SELECT DISTINCT ON(lg.message)
-                    lg.message AS value,
-                    source,
-                    '{event_type.ERROR.ui_type}' AS type
-                FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                WHERE
-                  s.project_id = %(project_id)s
-                  AND lg.message ILIKE %(value)s
-                  AND lg.project_id = %(project_id)s
-                  {"AND source = %(source)s" if source is not None else ""}
-                LIMIT 5)
-                UNION ALL
-                (SELECT DISTINCT ON(lg.name)
-                    lg.name AS value,
-                    source,
-                    '{event_type.ERROR.ui_type}' AS type
-                FROM {event_type.ERROR.table} INNER JOIN public.errors AS lg USING (error_id) LEFT JOIN public.sessions AS s USING(session_id)
-                WHERE
-                  s.project_id = %(project_id)s
-                  AND lg.name ILIKE %(value)s
-                  AND lg.project_id = %(project_id)s
-                  {"AND source = %(source)s" if source is not None else ""}
                 LIMIT 5));"""
 
 
@@ -152,9 +176,12 @@ def __search_pg_errors(project_id, value, key=None, source=None):
 
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify(__pg_errors_query(source), {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                                    "svalue": helper.string_to_sql_like("^" + value),
-                                                    "source": source}))
+            cur.mogrify(__pg_errors_query(source,
+                                          value_length=len(value) \
+                                              if SUPPORTED_TYPES[event_type.ERROR.ui_type].change_by_length else None),
+                        {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                         "svalue": helper.string_to_sql_like("^" + value),
+                         "source": source}))
         results = helper.list_to_camel_case(cur.fetchall())
     print(f"{TimeUTC.now() - now} : errors")
     return results
@@ -162,26 +189,69 @@ def __search_pg_errors(project_id, value, key=None, source=None):
 
 def __search_pg_errors_ios(project_id, value, key=None, source=None):
     now = TimeUTC.now()
+    if SUPPORTED_TYPES[event_type.ERROR_IOS.ui_type].change_by_length is False or len(value) > 2:
+        query = f"""(SELECT DISTINCT ON(lg.reason)
+                        lg.reason AS value,
+                        '{event_type.ERROR_IOS.ui_type}' AS type
+                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.project_id = %(project_id)s
+                      AND lg.reason ILIKE %(svalue)s
+                    LIMIT 5)
+                    UNION ALL
+                    (SELECT DISTINCT ON(lg.name)
+                        lg.name AS value,
+                        '{event_type.ERROR_IOS.ui_type}' AS type
+                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.project_id = %(project_id)s
+                      AND lg.name ILIKE %(svalue)s
+                    LIMIT 5)
+                    UNION ALL
+                    (SELECT DISTINCT ON(lg.reason)
+                        lg.reason AS value,
+                        '{event_type.ERROR_IOS.ui_type}' AS type
+                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.project_id = %(project_id)s
+                      AND lg.reason ILIKE %(value)s
+                    LIMIT 5)
+                    UNION ALL
+                    (SELECT DISTINCT ON(lg.name)
+                        lg.name AS value,
+                        '{event_type.ERROR_IOS.ui_type}' AS type
+                    FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                    WHERE
+                      s.project_id = %(project_id)s
+                      AND lg.project_id = %(project_id)s
+                      AND lg.name ILIKE %(value)s
+                    LIMIT 5);"""
+    else:
+        query = f"""(SELECT DISTINCT ON(lg.reason)
+                            lg.reason AS value,
+                            '{event_type.ERROR_IOS.ui_type}' AS type
+                        FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        WHERE
+                          s.project_id = %(project_id)s
+                          AND lg.project_id = %(project_id)s
+                          AND lg.reason ILIKE %(svalue)s
+                        LIMIT 5)
+                        UNION ALL
+                        (SELECT DISTINCT ON(lg.name)
+                            lg.name AS value,
+                            '{event_type.ERROR_IOS.ui_type}' AS type
+                        FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
+                        WHERE
+                          s.project_id = %(project_id)s
+                          AND lg.project_id = %(project_id)s
+                          AND lg.name ILIKE %(svalue)s
+                        LIMIT 5);"""
     with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(f"""(SELECT DISTINCT ON(lg.reason)
-                                lg.reason AS value,
-                                '{event_type.ERROR_IOS.ui_type}' AS type
-                            FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                            WHERE
-                              s.project_id = %(project_id)s
-                              AND lg.reason ILIKE %(value)s
-                            LIMIT 5)
-                            UNION ALL
-                            (SELECT DISTINCT ON(lg.name)
-                                lg.name AS value,
-                                '{event_type.ERROR_IOS.ui_type}' AS type
-                            FROM {event_type.ERROR_IOS.table} INNER JOIN public.crashes_ios AS lg USING (crash_id) LEFT JOIN public.sessions AS s USING(session_id)
-                            WHERE
-                              s.project_id = %(project_id)s
-                              AND lg.name ILIKE %(value)s
-                            LIMIT 5);""",
-                        {"project_id": project_id, "value": helper.string_to_sql_like(value)}))
+        cur.execute(cur.mogrify(query, {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                                        "svalue": helper.string_to_sql_like("^" + value)}))
         results = helper.list_to_camel_case(cur.fetchall())
     print(f"{TimeUTC.now() - now} : errors")
     return results
@@ -198,42 +268,69 @@ def __search_pg_metadata(project_id, value, key=None, source=None):
 
     for k in meta_keys.keys():
         colname = metadata.index_to_colname(meta_keys[k])
-        sub_from.append(
-            f"(SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key FROM public.sessions WHERE project_id = %(project_id)s AND {colname} ILIKE %(value)s LIMIT 5)")
+        if SUPPORTED_TYPES[event_type.METADATA.ui_type].change_by_length is False or len(value) > 2:
+            sub_from.append(f"""((SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
+                                FROM public.sessions 
+                                WHERE project_id = %(project_id)s 
+                                AND {colname} ILIKE %(svalue)s LIMIT 5)
+                                UNION
+                                (SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
+                                FROM public.sessions 
+                                WHERE project_id = %(project_id)s 
+                                AND {colname} ILIKE %(value)s LIMIT 5))
+                                """)
+        else:
+            sub_from.append(f"""(SELECT DISTINCT ON ({colname}) {colname} AS value, '{k}' AS key 
+                                FROM public.sessions 
+                                WHERE project_id = %(project_id)s 
+                                AND {colname} ILIKE %(svalue)s LIMIT 5)""")
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
                     SELECT key, value, 'METADATA' AS TYPE
                     FROM({" UNION ALL ".join(sub_from)}) AS all_metas
-                    LIMIT 5;""", {"project_id": project_id, "value": helper.string_to_sql_like(value)}))
+                    LIMIT 5;""", {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                                  "svalue": helper.string_to_sql_like("^" + value)}))
         results = helper.list_to_camel_case(cur.fetchall())
     return results
 
 
-def __generic_query(typename):
-    return f"""\
-            (SELECT value, type
-            FROM public.autocomplete
-            WHERE
-              project_id = %(project_id)s
-              AND type='{typename}'
-              AND value ILIKE %(svalue)s
-            LIMIT 5)
-            UNION
-            (SELECT value, type
-            FROM public.autocomplete
-            WHERE
-              project_id = %(project_id)s
-              AND type='{typename}'
-              AND value ILIKE %(value)s
-            LIMIT 5)"""
+def __generic_query(typename, value_length=None):
+    if value_length is None or value_length > 2:
+        return f"""(SELECT DISTINCT value, type
+                    FROM public.autocomplete
+                    WHERE
+                      project_id = %(project_id)s
+                      AND type='{typename}'
+                      AND value ILIKE %(svalue)s
+                    LIMIT 5)
+                    UNION
+                    (SELECT DISTINCT value, type
+                    FROM public.autocomplete
+                    WHERE
+                      project_id = %(project_id)s
+                      AND type='{typename}'
+                      AND value ILIKE %(value)s
+                    LIMIT 5);"""
+    return f"""SELECT DISTINCT value, type
+                FROM public.autocomplete
+                WHERE
+                  project_id = %(project_id)s
+                  AND type='{typename}'
+                  AND value ILIKE %(svalue)s
+                LIMIT 10;"""
 
 
 def __generic_autocomplete(event: Event):
     def f(project_id, value, key=None, source=None):
         with pg_client.PostgresClient() as cur:
-            cur.execute(cur.mogrify(__generic_query(event.ui_type),
-                                    {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                     "svalue": helper.string_to_sql_like("^" + value)}))
+            cur.execute(
+                cur.mogrify(
+                    __generic_query(event.ui_type,
+                                    value_length=len(value) \
+                                        if SUPPORTED_TYPES[event.ui_type].change_by_length \
+                                        else None),
+                    {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                     "svalue": helper.string_to_sql_like("^" + value)}))
             return helper.list_to_camel_case(cur.fetchall())
 
     return f
@@ -263,142 +360,96 @@ class event_type:
 SUPPORTED_TYPES = {
     event_type.CLICK.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CLICK),
                                               query=__generic_query(typename=event_type.CLICK.ui_type),
-                                              value_limit=3,
-                                              starts_with="",
-                                              starts_limit=3,
-                                              ignore_if_starts_with=["/"]),
+                                              change_by_length=True),
     event_type.INPUT.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT),
                                               query=__generic_query(typename=event_type.INPUT.ui_type),
-                                              value_limit=3,
-                                              starts_with="",
-                                              starts_limit=3,
-                                              ignore_if_starts_with=["/"]),
+                                              change_by_length=True),
     event_type.LOCATION.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.LOCATION),
                                                  query=__generic_query(typename=event_type.LOCATION.ui_type),
-                                                 value_limit=3,
-                                                 starts_with="/",
-                                                 starts_limit=3,
-                                                 ignore_if_starts_with=[]),
+                                                 change_by_length=True),
     event_type.CUSTOM.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CUSTOM),
                                                query=__generic_query(typename=event_type.CUSTOM.ui_type),
-                                               value_limit=3,
-                                               starts_with="",
-                                               starts_limit=3,
-                                               ignore_if_starts_with=[""]),
+                                               change_by_length=True),
     event_type.REQUEST.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.REQUEST),
                                                 query=__generic_query(typename=event_type.REQUEST.ui_type),
-                                                value_limit=3,
-                                                starts_with="/",
-                                                starts_limit=3,
-                                                ignore_if_starts_with=[""]),
+                                                change_by_length=True),
     event_type.GRAPHQL.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.GRAPHQL),
                                                 query=__generic_query(typename=event_type.GRAPHQL.ui_type),
-                                                value_limit=3,
-                                                starts_with="/",
-                                                starts_limit=4,
-                                                ignore_if_starts_with=[]),
+                                                change_by_length=True),
     event_type.STATEACTION.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.STATEACTION),
                                                     query=__generic_query(typename=event_type.STATEACTION.ui_type),
-                                                    value_limit=3,
-                                                    starts_with="",
-                                                    starts_limit=3,
-                                                    ignore_if_starts_with=[]),
+                                                    change_by_length=True),
     event_type.ERROR.ui_type: SupportedFilter(get=__search_pg_errors,
-                                              query=None,
-                                              value_limit=4,
-                                              starts_with="",
-                                              starts_limit=4,
-                                              ignore_if_starts_with=["/"]),
+                                              query=None, change_by_length=True),
     event_type.METADATA.ui_type: SupportedFilter(get=__search_pg_metadata,
-                                                 query=None,
-                                                 value_limit=3,
-                                                 starts_with="",
-                                                 starts_limit=3,
-                                                 ignore_if_starts_with=["/"]),
+                                                 query=None, change_by_length=True),
     #     IOS
     event_type.CLICK_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CLICK_IOS),
                                                   query=__generic_query(typename=event_type.CLICK_IOS.ui_type),
-                                                  value_limit=3,
-                                                  starts_with="",
-                                                  starts_limit=3,
-                                                  ignore_if_starts_with=["/"]),
+                                                  change_by_length=True),
     event_type.INPUT_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.INPUT_IOS),
                                                   query=__generic_query(typename=event_type.INPUT_IOS.ui_type),
-                                                  value_limit=3,
-                                                  starts_with="",
-                                                  starts_limit=3,
-                                                  ignore_if_starts_with=["/"]),
+                                                  change_by_length=True),
     event_type.VIEW_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.VIEW_IOS),
                                                  query=__generic_query(typename=event_type.VIEW_IOS.ui_type),
-                                                 value_limit=3,
-                                                 starts_with="/",
-                                                 starts_limit=3,
-                                                 ignore_if_starts_with=[]),
+                                                 change_by_length=True),
     event_type.CUSTOM_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.CUSTOM_IOS),
                                                    query=__generic_query(typename=event_type.CUSTOM_IOS.ui_type),
-                                                   value_limit=3,
-                                                   starts_with="",
-                                                   starts_limit=3,
-                                                   ignore_if_starts_with=[""]),
+                                                   change_by_length=True),
     event_type.REQUEST_IOS.ui_type: SupportedFilter(get=__generic_autocomplete(event_type.REQUEST_IOS),
                                                     query=__generic_query(typename=event_type.REQUEST_IOS.ui_type),
-                                                    value_limit=3,
-                                                    starts_with="/",
-                                                    starts_limit=3,
-                                                    ignore_if_starts_with=[""]),
-    event_type.ERROR_IOS.ui_type: SupportedFilter(get=__search_pg_errors,
-                                                  query=None,
-                                                  value_limit=4,
-                                                  starts_with="",
-                                                  starts_limit=4,
-                                                  ignore_if_starts_with=["/"]),
+                                                    change_by_length=True),
+    event_type.ERROR_IOS.ui_type: SupportedFilter(get=__search_pg_errors_ios,
+                                                  query=None, change_by_length=True),
 }
 
 
-def __get_merged_queries(queries, value, project_id):
-    if len(queries) == 0:
-        return []
-    now = TimeUTC.now()
-    with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("(" + ")UNION ALL(".join(queries) + ")",
-                                {"project_id": project_id, "value": helper.string_to_sql_like(value)}))
-        results = helper.list_to_camel_case(cur.fetchall())
-        print(f"{TimeUTC.now() - now} : merged-queries for len: {len(queries)}")
-        return results
-
-
 def __get_autocomplete_table(value, project_id):
+    autocomplete_events = [schemas.FilterType.rev_id,
+                           schemas.EventType.click,
+                           schemas.FilterType.user_device,
+                           schemas.FilterType.user_id,
+                           schemas.FilterType.user_browser,
+                           schemas.FilterType.user_os,
+                           schemas.EventType.custom,
+                           schemas.FilterType.user_country,
+                           schemas.EventType.location,
+                           schemas.EventType.input]
+    autocomplete_events.sort()
+    sub_queries = []
+    for e in autocomplete_events:
+        sub_queries.append(f"""(SELECT type, value
+                                FROM public.autocomplete
+                                WHERE project_id = %(project_id)s
+                                    AND type= '{e}' 
+                                    AND value ILIKE %(svalue)s
+                                LIMIT 5)""")
+        if len(value) > 2:
+            sub_queries.append(f"""(SELECT type, value
+                                    FROM public.autocomplete
+                                    WHERE project_id = %(project_id)s
+                                        AND type= '{e}' 
+                                        AND value ILIKE %(value)s
+                                    LIMIT 5)""")
     with pg_client.PostgresClient() as cur:
-        cur.execute(cur.mogrify("""SELECT DISTINCT ON(value,type) project_id, value, type
-                                    FROM (SELECT project_id, type, value
-                                        FROM (SELECT *,
-                                                ROW_NUMBER() OVER (PARTITION BY type ORDER BY value) AS Row_ID
-                                            FROM public.autocomplete
-                                            WHERE project_id = %(project_id)s 
-                                                AND value ILIKE %(svalue)s
-                                        UNION
-                                            SELECT *,
-                                                ROW_NUMBER() OVER (PARTITION BY type ORDER BY value) AS Row_ID
-                                            FROM public.autocomplete
-                                            WHERE project_id = %(project_id)s 
-                                                AND value ILIKE %(value)s) AS u
-                                        WHERE Row_ID <= 5) AS sfa
-                                    ORDER BY sfa.type;""",
-                                {"project_id": project_id, "value": helper.string_to_sql_like(value),
-                                 "svalue": helper.string_to_sql_like("^" + value)}))
+        query = cur.mogrify("UNION ALL".join(sub_queries) + ";",
+                            {"project_id": project_id, "value": helper.string_to_sql_like(value),
+                             "svalue": helper.string_to_sql_like("^" + value)})
+        cur.execute(query)
         results = helper.list_to_camel_case(cur.fetchall())
         return results
 
 
-def search_pg2(text, event_type, project_id, source, key):
+def search(text, event_type, project_id, source, key):
     if not event_type:
         return {"data": __get_autocomplete_table(text, project_id)}
 
     if event_type in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type].get(project_id=project_id, value=text, key=key, source=source)
-        if event_type + "_IOS" in SUPPORTED_TYPES.keys():
-            rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
-                                                             source=source)
+        # for IOS events autocomplete
+        # if event_type + "_IOS" in SUPPORTED_TYPES.keys():
+        #     rows += SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
+        #                                                      source=source)
     elif event_type + "_IOS" in SUPPORTED_TYPES.keys():
         rows = SUPPORTED_TYPES[event_type + "_IOS"].get(project_id=project_id, value=text, key=key,
                                                         source=source)
