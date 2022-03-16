@@ -42,7 +42,12 @@ const createSocketIOServer = function (server) {
 }
 
 const extractUserIdFromRequest = function (req) {
-    if (req.query.userId) {
+    if (process.env.uws === "true") {
+        if (req.getQuery("userId")) {
+            debug && console.log(`[WS]where userId=${req.getQuery("userId")}`);
+            return req.getQuery("userId");
+        }
+    } else if (req.query.userId) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
         return req.query.userId;
     }
@@ -51,8 +56,10 @@ const extractUserIdFromRequest = function (req) {
 
 const extractProjectKeyFromRequest = function (req) {
     if (process.env.uws === "true") {
-        debug && console.log(`[WS]where projectKey=${req.getParameter(0)}`);
-        return req.getParameter(0);
+        if (req.getParameter(0)) {
+            debug && console.log(`[WS]where projectKey=${req.getParameter(0)}`);
+            return req.getParameter(0);
+        }
     } else if (req.params.projectKey) {
         debug && console.log(`[WS]where projectKey=${req.params.projectKey}`);
         return req.params.projectKey;
