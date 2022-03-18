@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import { Switch, Route, Redirect } from 'react-router';
 import withPageTitle from 'HOCs/withPageTitle';
-import { observer } from "mobx-react-lite";
+import { observer, useObserver } from "mobx-react-lite";
 import { withDashboardStore } from './store/store';
 import { withRouter } from 'react-router-dom';
 import DashboardView from './components/DashboardView';
 import { dashboardSelected, dashboardMetric, withSiteId } from 'App/routes';
+import DashboardSideMenu from './components/DashboardSideMenu';
 
 function NewDashboard(props) {
     const { store, match: { params: { siteId, dashboardId, metricId } } } = props;
@@ -20,10 +21,10 @@ function NewDashboard(props) {
         }
     }, [dashboardId]);
 
-    return (
+    return useObserver(() => (
         <div className="page-margin container-90">
             <div className="side-menu">
-                MENU
+                <DashboardSideMenu />
             </div>
             <div className="side-menu-margined">
                 <Switch>
@@ -37,9 +38,9 @@ function NewDashboard(props) {
                 </Switch>
             </div>
         </div>
-    );
+    ));
 }
 
 export default withPageTitle('New Dashboard')(
-    withRouter(withDashboardStore(observer(NewDashboard)))
+    withRouter(withDashboardStore(NewDashboard))
 );

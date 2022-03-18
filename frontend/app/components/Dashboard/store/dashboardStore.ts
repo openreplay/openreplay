@@ -5,7 +5,7 @@ import Widget from "./widget";
 
 export default class DashboardStore {
     dashboards: Dashboard[] = []
-    selectedDashboard: Dashboard | null = null
+    selectedDashboard: Dashboard | null = new Dashboard()
     isLoading: boolean = false
     siteId: any = null
 
@@ -194,10 +194,14 @@ export default class DashboardStore {
 
     selectDefaultDashboard = () => {
         const pinnedDashboard = this.dashboards.find(d => d.isPinned)
-        if (pinnedDashboard) {
-            this.selectedDashboard = pinnedDashboard
+        if (this.dashboards.length > 0) {
+            if (pinnedDashboard) {
+                this.selectedDashboard = pinnedDashboard
+            } else {
+                this.selectedDashboard = this.dashboards[0]
+            }
         } else {
-            this.selectedDashboard = this.dashboards[0]
+            this.selectedDashboard = new Dashboard()
         }
     }
 }
@@ -225,8 +229,6 @@ function getRandomDashboard(id: any = null) {
 
 const sampleDashboards = [
     getRandomDashboard(12),
-    getRandomDashboard(),
-    getRandomDashboard(),
     getRandomDashboard(),
     getRandomDashboard(),
     getRandomDashboard(),
