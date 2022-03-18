@@ -113,8 +113,15 @@ export default class DOMManager extends ListWalker<Message> {
       logger.error("Node has no childNodes", this.nl[ parentID ]);
       return;
     }
+
+    if (this.nl[ id ] instanceof HTMLHtmlElement) {
+      // What if some exotic cases?
+      this.nl[ parentID ].replaceChild(this.nl[ id ], childNodes[childNodes.length-1])
+      return
+    }
+
     this.nl[ parentID ]
-      .insertBefore(this.nl[ id ], childNodes[ index ]);
+      .insertBefore(this.nl[ id ], childNodes[ index ])
   }
 
   private applyMessage = (msg: Message): void => {
@@ -257,14 +264,14 @@ export default class DOMManager extends ListWalker<Message> {
       case "create_i_frame_document":
         node = this.nl[ msg.frameID ];
         // console.log('ifr', msg, node)
-
+        
         if (node instanceof HTMLIFrameElement) {
           doc = node.contentDocument;
           if (!doc) {
             logger.warn("No iframe doc", msg, node, node.contentDocument);
             return;
           }
-          this.nl[ msg.id ] = doc.documentElement
+          this.nl[ msg.id ] = doc
           return;
         } else if (node instanceof Element) { // shadow DOM
           try {

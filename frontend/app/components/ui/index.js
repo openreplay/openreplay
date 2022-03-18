@@ -55,5 +55,6 @@ export { default as HighlightCode } from './HighlightCode';
 export { default as NoPermission } from './NoPermission';
 export { default as NoSessionPermission } from './NoSessionPermission';
 export { default as HelpText } from './HelpText';
+export { default as Pagination } from './Pagination';
 
 export { Input, Modal, Form, Message, Card } from 'semantic-ui-react';

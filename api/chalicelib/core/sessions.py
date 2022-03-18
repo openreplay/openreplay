@@ -168,10 +168,11 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
 
 
 @dev.timed
-def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, favorite_only=False, errors_only=False,
-               error_status="ALL", count_only=False, issue=None):
-    full_args, query_part, sort = search_query_parts(data, error_status, errors_only, favorite_only, issue, project_id,
-                                                     user_id)
+def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
+               error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
+    full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
+                                               favorite_only=data.bookmarked, issue=issue, project_id=project_id,
+                                               user_id=user_id)
     if data.limit is not None and data.page is not None:
         full_args["sessions_limit_s"] = (data.page - 1) * data.limit
         full_args["sessions_limit_e"] = data.page * data.limit
@@ -198,6 +199,17 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                 COUNT(DISTINCT s.user_uuid) AS count_users
                                         {query_part};""", full_args)
         elif data.group_by_user:
+            g_sort = "count(full_sessions)"
+            if data.order is None:
+                data.order = "DESC"
+            else:
+                data.order = data.order.upper()
+            if data.sort is not None and data.sort != 'sessionsCount':
+                sort = helper.key_to_snake_case(data.sort)
+                g_sort = f"{'MIN' if data.order == 'DESC' else 'MAX'}({sort})"
+            else:
+                sort = 'start_ts'
+
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(*) AS count,
                                                 COALESCE(JSONB_AGG(users_sessions) 
@@ -206,51 +218,51 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, f
                                                  count(full_sessions)                                   AS user_sessions_count,
                                                  jsonb_agg(full_sessions) FILTER (WHERE rn <= 1)        AS last_session,
                                                  MIN(full_sessions.start_ts)                            AS first_session_ts,
-                                                 ROW_NUMBER() OVER (ORDER BY count(full_sessions) DESC) AS rn
-                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY start_ts DESC) AS rn 
-                                            FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
-                                                                {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
-                                            {query_part}
-                                            ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions
-                                            GROUP BY user_id
-                                            ORDER BY user_sessions_count DESC) AS users_sessions;""",
+                                                 ROW_NUMBER() OVER (ORDER BY {g_sort} {data.order}) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY {sort} {data.order}) AS rn 
+                                                FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS} 
+                                                                    {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
+                                                    {query_part}
+                                                    ) AS filtred_sessions
+                                                ) AS full_sessions
+                                                GROUP BY user_id
+                                            ) AS users_sessions;""",
                                      full_args)
         else:
+            if data.order is None:
+                data.order = "DESC"
+            sort = 'session_id'
+            if data.sort is not None and data.sort != "session_id":
+                sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
+            else:
+                sort = 'session_id'
+
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY favorite DESC, issue_score DESC, session_id desc, start_ts desc) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY issue_score DESC, {sort} {data.order}, session_id desc) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY favorite DESC, issue_score DESC, {sort} {data.order}) AS full_sessions;""",
+                                            ORDER BY issue_score DESC, {sort} {data.order}) AS full_sessions;""",
                                      full_args)
-
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
-        cur.execute(main_query)
 
-        if count_only:
-            return helper.dict_to_camel_case(cur.fetchone())
+        cur.execute(main_query)
+        if errors_only:
+            return helper.list_to_camel_case(cur.fetchall())
+
         sessions = cur.fetchone()
+        if count_only:
+            return helper.dict_to_camel_case(sessions)
+
         total = sessions["count"]
         sessions = sessions["sessions"]
-        # sessions = []
-        # total = cur.rowcount
-        # row = cur.fetchone()
-        # limit = 200
-        # while row is not None and len(sessions) < limit:
-        #     if row.get("favorite"):
-        #         limit += 1
-        #     sessions.append(row)
-        #     row = cur.fetchone()
 
-    if errors_only:
-        return sessions
     if data.group_by_user:
         for i, s in enumerate(sessions):
             sessions[i] = {**s.pop("last_session")[0], **s}
@@ -281,9 +293,9 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
     elif metric_of == schemas.TableMetricOfType.issues and len(metric_value) > 0:
         data.filters.append(schemas.SessionSearchFilterSchema(value=metric_value, type=schemas.FilterType.issue,
                                                               operator=schemas.SearchEventOperator._is))
-    full_args, query_part, sort = search_query_parts(data=data, error_status=None, errors_only=False,
-                                                     favorite_only=False, issue=None, project_id=project_id,
-                                                     user_id=None, extra_event=extra_event)
+    full_args, query_part = search_query_parts(data=data, error_status=None, errors_only=False,
+                                               favorite_only=False, issue=None, project_id=project_id,
+                                               user_id=None, extra_event=extra_event)
     full_args["step_size"] = step_size
     sessions = []
     with pg_client.PostgresClient() as cur:
@@ -378,8 +390,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
     fav_only_join = ""
     if favorite_only and not errors_only:
         fav_only_join = "LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id"
-        extra_constraints.append("fs.user_id = %(userId)s")
-        full_args["userId"] = user_id
+        # extra_constraints.append("fs.user_id = %(userId)s")
     events_query_part = ""
     if len(data.filters) > 0:
         meta_keys = None
@@ -958,24 +969,24 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
     #     elif data.platform == schemas.PlatformType.desktop:
     #         extra_constraints.append(
     #             b"s.user_os in ('Chrome OS','Fedora','Firefox OS','Linux','Mac OS X','Ubuntu','Windows')")
-    if data.order is None:
-        data.order = "DESC"
-    sort = 'session_id'
-    if data.sort is not None and data.sort != "session_id":
-        sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
-    else:
-        sort = 'session_id'
+
     if errors_only:
         extra_from += f" INNER JOIN {events.event_type.ERROR.table} AS er USING (session_id) INNER JOIN public.errors AS ser USING (error_id)"
         extra_constraints.append("ser.source = 'js_exception'")
-        if error_status != "ALL":
+        extra_constraints.append("ser.project_id = %(project_id)s")
+        if error_status != schemas.ErrorStatus.all:
             extra_constraints.append("ser.status = %(error_status)s")
-            full_args["status"] = error_status.lower()
+            full_args["error_status"] = error_status
         if favorite_only:
             extra_from += " INNER JOIN public.user_favorite_errors AS ufe USING (error_id)"
-            extra_constraints.append("ufe.user_id = %(user_id)s")
+            extra_constraints.append("ufe.user_id = %(userId)s")
     # extra_constraints = [extra.decode('UTF-8') + "\n" for extra in extra_constraints]
-    if not favorite_only and not errors_only and user_id is not None:
+    if favorite_only and not errors_only and user_id is not None:
+        extra_from += """INNER JOIN (SELECT user_id, session_id
+                                    FROM public.user_favorite_sessions
+                                    WHERE user_id = %(userId)s) AS favorite_sessions
+                                    USING (session_id)"""
+    elif not favorite_only and not errors_only and user_id is not None:
         extra_from += """LEFT JOIN (SELECT user_id, session_id
                                     FROM public.user_favorite_sessions
                                     WHERE user_id = %(userId)s) AS favorite_sessions
@@ -1003,7 +1014,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                         {extra_from}
                         WHERE 
                           {" AND ".join(extra_constraints)}"""
-    return full_args, query_part, sort
+    return full_args, query_part
 
 
 def search_by_metadata(tenant_id, user_id, m_key, m_value, project_id=None):
@@ -1102,48 +1113,6 @@ def search_by_issue(user_id, issue, project_id, start_date, end_date):
     return helper.list_to_camel_case(rows)
 
 
-def get_favorite_sessions(project_id, user_id, include_viewed=False):
-    with pg_client.PostgresClient() as cur:
-        query_part = cur.mogrify(f"""\
-            FROM public.sessions AS s 
-                LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id
-            WHERE fs.user_id = %(userId)s""",
-                                 {"projectId": project_id, "userId": user_id}
-                                 )
-
-        extra_query = b""
-        if include_viewed:
-            extra_query = cur.mogrify(""",\
-            COALESCE((SELECT TRUE
-             FROM public.user_viewed_sessions AS fs
-             WHERE s.session_id = fs.session_id
-               AND fs.user_id = %(userId)s), FALSE) AS viewed""",
-                                      {"projectId": project_id, "userId": user_id})
-
-        cur.execute(f"""\
-                    SELECT s.project_id,
-                           s.session_id::text AS session_id,
-                           s.user_uuid,
-                           s.user_id,
-                           s.user_os,
-                           s.user_browser,
-                           s.user_device,
-                           s.user_country,
-                           s.start_ts,
-                           s.duration,
-                           s.events_count,
-                           s.pages_count,
-                           s.errors_count,
-                           TRUE AS favorite
-                           {extra_query.decode('UTF-8')}                            
-                    {query_part.decode('UTF-8')}
-                    ORDER BY s.session_id         
-                    LIMIT 50;""")
-
-        sessions = cur.fetchall()
-    return helper.list_to_camel_case(sessions)
-
-
 def get_user_sessions(project_id, user_id, start_date, end_date):
     with pg_client.PostgresClient() as cur:
         constraints = ["s.project_id = %(projectId)s", "s.user_id = %(userId)s"]
@@ -1196,11 +1165,11 @@ def get_session_user(project_id, user_id):
                 "public".sessions
             WHERE
                 project_id = %(project_id)s
-                AND user_id = %(user_id)s
+                AND user_id = %(userId)s
                 AND duration is not null
             GROUP BY user_id;
             """,
-            {"project_id": project_id, "user_id": user_id}
+            {"project_id": project_id, "userId": user_id}
         )
         cur.execute(query=query)
         data = cur.fetchone()
@@ -1213,8 +1182,8 @@ def get_session_ids_by_user_ids(project_id, user_ids):
             """\
             SELECT session_id FROM public.sessions
             WHERE
-                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
-            {"project_id": project_id, "user_id": tuple(user_ids)}
+                project_id = %(project_id)s AND user_id IN %(userId)s;""",
+            {"project_id": project_id, "userId": tuple(user_ids)}
         )
         ids = cur.execute(query=query)
     return ids
@@ -1240,8 +1209,8 @@ def delete_sessions_by_user_ids(project_id, user_ids):
             """\
             DELETE FROM public.sessions
             WHERE
-                project_id = %(project_id)s AND user_id IN %(user_id)s;""",
-            {"project_id": project_id, "user_id": tuple(user_ids)}
+                project_id = %(project_id)s AND user_id IN %(userId)s;""",
+            {"project_id": project_id, "userId": tuple(user_ids)}
         )
         cur.execute(query=query)
 

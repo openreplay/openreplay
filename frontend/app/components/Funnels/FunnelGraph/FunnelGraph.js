@@ -6,8 +6,18 @@ import { connect } from 'react-redux';
 import { setActiveStages } from 'Duck/funnels';
 import { Styles } from '../../Dashboard/Widgets/common';
 import { numberWithCommas } from 'App/utils'
+import { truncate } from 'App/utils'
 
 const MIN_BAR_HEIGHT = 20;
+
+function CustomTick(props) {
+  const { x, y, payload } = props;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={0} dy={16} fontSize={12} textAnchor="middle" fill="#666">{payload.value}</text>
+    </g>
+  );
+}
 
 function FunnelGraph(props) {
   const { data, activeStages, funnelId, liveFilters } = props;  
@@ -118,13 +128,29 @@ function FunnelGraph(props) {
     )
   }
 
-  const CustomTooltip = ({ active, payload, msg = ''  }) => {    
+  const CustomTooltip = (props) => {
+    const { payload } = props;
+    if (payload.length === 0) return null;
+    const { value, headerText } = payload[0].payload;
+  
+    // const value = payload[0].payload.value;
+    if (!value) return null;
     return (
-      <div className="rounded border bg-white p-2">          
-        <p className="text-sm">{msg}</p>
+      <div className="rounded border bg-white p-2">
+        <div>{headerText}</div>
+        {value.map(i => (
+          <div className="text-sm ml-2">{truncate(i, 30)}</div>
+        ))}
       </div>
-    );
+    )
   };
+  // const CustomTooltip = ({ active, payload, msg = ''  }) => {    
+  //   return (
+  //     <div className="rounded border bg-white p-2">          
+  //       <p className="text-sm">{msg}</p>
+  //     </div>
+  //   );
+  // };
 
   const TEMP = {}
 
@@ -152,7 +178,9 @@ function FunnelGraph(props) {
         background={'transparent'}
       >
           <CartesianGrid strokeDasharray="1 3" stroke="#BBB" vertical={false} />
-          {activeStages.length < 2 && <Tooltip cursor={{ fill: 'transparent' }} content={<CustomTooltip msg={activeStages.length > 0 ? 'Select one more event.' : 'Select any two events to analyze in depth.'} />} />}
+          {/* {activeStages.length < 2 && <Tooltip cursor={{ fill: 'transparent' }} content={<CustomTooltip msg={activeStages.length > 0 ? 'Select one more event.' : 'Select any two events to analyze in depth.'} />} />} */}
+          <Tooltip cursor={{ fill: 'transparent' }} content={CustomTooltip} />
+
           <Bar
             dataKey="sessionsCount"
             onClick={handleClick}
@@ -210,7 +238,8 @@ function FunnelGraph(props) {
             dataKey="label"
             strokeWidth={0}
             interval={0}
-            tick ={{ fill: '#666', fontSize: 12 }}
+            // tick ={{ fill: '#666', fontSize: 12 }}
+            tick={<CustomTick />}
             xAxisId={0}
           />
           {/* <XAxis
