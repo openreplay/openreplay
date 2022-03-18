@@ -251,8 +251,15 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         # print("--------------------")
         # print(main_query)
         # print("--------------------")
-
-        cur.execute(main_query)
+        try:
+            cur.execute(main_query)
+        except Exception as err:
+            print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
+            print(main_query)
+            print("--------- PAYLOAD -----------")
+            print(data.dict())
+            print("--------------------")
+            raise err
         if errors_only:
             return helper.list_to_camel_case(cur.fetchall())
 
@@ -387,10 +394,6 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
         "s.duration IS NOT NULL"
     ]
     extra_from = ""
-    fav_only_join = ""
-    if favorite_only and not errors_only:
-        fav_only_join = "LEFT JOIN public.user_favorite_sessions AS fs ON fs.session_id = s.session_id"
-        # extra_constraints.append("fs.user_id = %(userId)s")
     events_query_part = ""
     if len(data.filters) > 0:
         meta_keys = None
@@ -628,6 +631,9 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                 event_where = ["ms.project_id = %(projectId)s", "main.timestamp >= %(startDate)s",
                                "main.timestamp <= %(endDate)s", "ms.start_ts >= %(startDate)s",
                                "ms.start_ts <= %(endDate)s", "ms.duration IS NOT NULL"]
+                if favorite_only and not errors_only:
+                    event_from += "INNER JOIN public.user_favorite_sessions AS fs USING(session_id)"
+                    event_where.append("fs.user_id = %(userId)s")
             else:
                 event_from = "%s"
                 event_where = ["main.timestamp >= %(startDate)s", "main.timestamp <= %(endDate)s",
@@ -946,16 +952,14 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                             MIN(timestamp) AS first_event_ts, 
                                             MAX(timestamp) AS last_event_ts
                                         FROM ({events_joiner.join(events_query_from)}) AS u
-                                        GROUP BY 1
-                                        {fav_only_join}"""
+                                        GROUP BY 1"""
             else:
                 events_query_part = f"""SELECT
                                         event_0.session_id,
                                         MIN(event_0.timestamp) AS first_event_ts,
                                         MAX(event_{event_index - 1}.timestamp) AS last_event_ts
                                     FROM {events_joiner.join(events_query_from)}
-                                    GROUP BY 1
-                                    {fav_only_join}"""
+                                    GROUP BY 1"""
     else:
         data.events = []
     # ---------------------------------------------------------------------------
