@@ -41,32 +41,57 @@ export function isInstance<T extends WindowConstructor>(node: Node, constr: Cons
     // @ts-ignore (for EI, Safary)
     doc.parentWindow || 
     doc.defaultView; // TODO: smart global typing for Window object
-  while(context.parent && context.parent !== context) {
+  while((context.parent || context.top) && context.parent !== context) {
     // @ts-ignore
     if (node instanceof context[constr.name]) {
       return true
     }
     // @ts-ignore
-    context = context.parent
+    context = context.parent || context.top
   }
   // @ts-ignore
   return node instanceof context[constr.name]
 }
 
-export function inDocument(node: Node): boolean {
+// TODO: ensure 1. it works in every cases (iframes/detached nodes) and 2. the most efficient
+export function inDocument(node: Node) {
   const doc = node.ownerDocument
-  if (!doc) { return false }
-  if (doc.contains(node)) { return true }
-  let context: Window = 
-    // @ts-ignore (for EI, Safary)
-    doc.parentWindow || 
-    doc.defaultView;
-  while(context.parent && context.parent !== context) {
-    if (context.document.contains(node)) {
+  if (!doc) { return true } // Document
+  let current: Node | null = node
+  while(current) {
+    if (current === doc) {
       return true
+    } else if(isInstance(current, ShadowRoot)) {
+      current = current.host
+    } else {
+      current = current.parentNode
     }
-    // @ts-ignore
-    context = context.parent
   }
-  return false;
+  return false
 }
+
+// export function inDocument(node: Node): boolean {
+//   // @ts-ignore compatability
+//   if (node.getRootNode) {
+//     let root: Node
+//     while ((root = node.getRootNode()) !== node) {
+//        ////
+//     }
+//   }
+
+//   const doc = node.ownerDocument
+//   if (!doc) { return false }
+//   if (doc.contains(node)) { return true }
+//   let context: Window = 
+//     // @ts-ignore (for EI, Safary)
+//     doc.parentWindow || 
+//     doc.defaultView;
+//   while(context.parent && context.parent !== context) {
+//     if (context.document.contains(node)) {
+//       return true
+//     }
+//     // @ts-ignore
+//     context = context.parent
+//   }
+//   return false;
+// }
