@@ -11,6 +11,10 @@ def attribute_to_camel_case(snake_str):
     return components[0] + ''.join(x.title() for x in components[1:])
 
 
+def transform_email(email: str) -> str:
+    return email.lower() if isinstance(email, str) else email
+
+
 class _Grecaptcha(BaseModel):
     g_recaptcha_response: Optional[str] = Field(None, alias='g-recaptcha-response')
 
@@ -18,6 +22,7 @@ class _Grecaptcha(BaseModel):
 class UserLoginSchema(_Grecaptcha):
     email: EmailStr = Field(...)
     password: str = Field(...)
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class UserSignupSchema(UserLoginSchema):
@@ -31,9 +36,11 @@ class UserSignupSchema(UserLoginSchema):
 
 class EditUserSchema(BaseModel):
     name: Optional[str] = Field(None)
-    email: Optional[str] = Field(None)
+    email: Optional[EmailStr] = Field(None)
     admin: Optional[bool] = Field(False)
     appearance: Optional[dict] = Field({})
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditUserAppearanceSchema(BaseModel):
@@ -41,7 +48,9 @@ class EditUserAppearanceSchema(BaseModel):
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):
-    email: str = Field(...)
+    email: EmailStr = Field(...)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditUserPasswordSchema(BaseModel):
@@ -70,7 +79,9 @@ class CurrentAPIContext(BaseModel):
 
 class CurrentContext(CurrentAPIContext):
     user_id: int = Field(...)
-    email: str = Field(...)
+    email: EmailStr = Field(...)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class AddSlackSchema(BaseModel):
@@ -115,14 +126,18 @@ class CreateEditWebhookSchema(BaseModel):
 class CreateMemberSchema(BaseModel):
     userId: Optional[int] = Field(None)
     name: str = Field(...)
-    email: str = Field(...)
+    email: EmailStr = Field(...)
     admin: bool = Field(False)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditMemberSchema(BaseModel):
     name: str = Field(...)
-    email: str = Field(...)
+    email: EmailStr = Field(...)
     admin: bool = Field(False)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -244,6 +259,8 @@ class EmailPayloadSchema(BaseModel):
     link: str = Field(...)
     message: str = Field(...)
 
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+
 
 class MemberInvitationPayloadSchema(BaseModel):
     auth: str = Field(...)
@@ -251,6 +268,8 @@ class MemberInvitationPayloadSchema(BaseModel):
     invitation_link: str = Field(...)
     client_id: str = Field(...)
     sender_name: str = Field(...)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
     class Config:
         alias_generator = attribute_to_camel_case

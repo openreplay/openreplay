@@ -6,6 +6,68 @@ SELECT 'v1.5.4'
 $$ LANGUAGE sql IMMUTABLE;
 
 
+-- to detect duplicate users and delete them if possible
+DO
+$$
+    DECLARE
+        duplicate RECORD;
+    BEGIN
+        IF EXISTS(SELECT user_id
+                  FROM users
+                  WHERE lower(email) =
+                        (SELECT LOWER(email)
+                         FROM users AS su
+                         WHERE LOWER(su.email) = LOWER(users.email)
+                           AND su.user_id != users.user_id
+                         LIMIT 1)
+                  ORDER BY LOWER(email)) THEN
+            raise notice 'duplicate users detected';
+            FOR duplicate IN SELECT user_id, email, deleted_at, verified_email, jwt_iat
+                             FROM users
+                             WHERE lower(email) =
+                                   (SELECT LOWER(email)
+                                    FROM users AS su
+                                    WHERE LOWER(su.email) = LOWER(users.email)
+                                      AND su.user_id != users.user_id
+                                    LIMIT 1)
+                             ORDER BY LOWER(email)
+                LOOP
+                    IF duplicate.deleted_at IS NOT NULL OR duplicate.jwt_iat IS NULL THEN
+                        raise notice 'deleting duplicate user: %  %',duplicate.user_id,duplicate.email;
+                        DELETE FROM users WHERE user_id = duplicate.user_id;
+                    END IF;
+                END LOOP;
+            IF EXISTS(SELECT user_id
+                      FROM users
+                      WHERE lower(email) =
+                            (SELECT LOWER(email)
+                             FROM users AS su
+                             WHERE LOWER(su.email) = LOWER(users.email)
+                               AND su.user_id != users.user_id
+                             LIMIT 1)
+                      ORDER BY LOWER(email)) THEN
+                raise notice 'remaining duplicates, please fix (delete) before finishing update';
+                FOR duplicate IN SELECT user_id, email
+                                 FROM users
+                                 WHERE lower(email) =
+                                       (SELECT LOWER(email)
+                                        FROM users AS su
+                                        WHERE LOWER(su.email) = LOWER(users.email)
+                                          AND su.user_id != users.user_id
+                                        LIMIT 1)
+                                 ORDER BY LOWER(email)
+                    LOOP
+                        raise notice 'user: %  %',duplicate.user_id,duplicate.email;
+                    END LOOP;
+                RAISE 'Duplicate users' USING ERRCODE = '42710';
+            END IF;
+        END IF;
+    END;
+$$
+LANGUAGE plpgsql;
+
+UPDATE users SET email=LOWER(email);
+
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_value_clickonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'CLICK';
