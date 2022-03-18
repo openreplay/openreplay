@@ -102,11 +102,9 @@ def Build(a):
         a["filter"]["order"] = "DESC"
         a["filter"]["startDate"] = -1
         a["filter"]["endDate"] = TimeUTC.now()
-        full_args, query_part, sort = sessions.search_query_parts(
-            data=schemas.SessionsSearchPayloadSchema.parse_obj(a["filter"]),
-            error_status=None, errors_only=False,
-            favorite_only=False, issue=None, project_id=a["projectId"],
-            user_id=None)
+        full_args, query_part= sessions.search_query_parts(
+            data=schemas.SessionsSearchPayloadSchema.parse_obj(a["filter"]), error_status=None, errors_only=False,
+            issue=None, project_id=a["projectId"], user_id=None, favorite_only=False)
         subQ = f"""SELECT COUNT(session_id) AS value 
                 {query_part}"""
     else:

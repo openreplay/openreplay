@@ -1,4 +1,3 @@
-import { hasOpenreplayAttribute } from "../../utils.js";
 import { 
   RemoveNodeAttribute, 
   SetNodeAttribute,
@@ -59,9 +58,7 @@ export default abstract class Observer {
   private readonly indexes: Array<number> = [];
   private readonly attributesList: Array<Set<string> | undefined> = [];
   private readonly textSet: Set<number> = new Set();
-  private readonly inUpperContext: boolean;
-  constructor(protected readonly app: App, protected readonly context: Window = window) {
-    this.inUpperContext = context.parent === context //TODO: get rid of context here
+  constructor(protected readonly app: App, protected readonly isTopContext = false) {
     this.observer = new MutationObserver(
       this.app.safe((mutations) => {
         for (const mutation of mutations) {
@@ -226,7 +223,7 @@ export default abstract class Observer {
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
     // TODO: Clean the logic (though now it workd fine) 
-    if (!isInstance(node, HTMLHtmlElement) || !this.inUpperContext) {
+    if (!isInstance(node, HTMLHtmlElement) || !this.isTopContext) {
       if (parent === null) {
         this.unbindNode(node);
         return false;
@@ -321,6 +318,8 @@ export default abstract class Observer {
     for (let id = 0; id < this.recents.length; id++) {
       // TODO: make things/logic nice here.
       // commit required in any case if recents[id] true or false (in case of unbinding) or undefined (in case of attr change).
+      // Possible solution: separate new node commit (recents) and new attribute/move node commit
+      // Otherwise commitNode is called on each node, which might be a lot
       if (!this.myNodes[id]) { continue }
       this.commitNode(id);
       if (this.recents[id] === true && (node = this.app.nodes.getNode(id))) {

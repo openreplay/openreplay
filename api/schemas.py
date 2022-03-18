@@ -83,15 +83,6 @@ class EditSlackSchema(BaseModel):
     url: HttpUrl = Field(...)
 
 
-class SearchErrorsSchema(BaseModel):
-    platform: Optional[str] = Field(None)
-    startDate: Optional[int] = Field(TimeUTC.now(-7))
-    endDate: Optional[int] = Field(TimeUTC.now())
-    density: Optional[int] = Field(7)
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
-
-
 class CreateNotificationSchema(BaseModel):
     token: str = Field(...)
     notifications: List = Field(...)
@@ -609,11 +600,12 @@ class SessionsSearchPayloadSchema(BaseModel):
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
-    order: str = Field(default="DESC")
+    order: Literal["asc", "desc"] = Field(default="desc")
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
     limit: int = Field(default=200, gt=0, le=200)
     page: int = Field(default=1, gt=0)
+    bookmarked: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -662,6 +654,7 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+    rangeValue: Optional[str] = Field(None)
 
     @root_validator(pre=True)
     def enforce_default_values(cls, values):
@@ -694,6 +687,27 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+    rangeValue: Optional[str] = Field(None)
+
+
+class ErrorStatus(str, Enum):
+    all = 'all'
+    unresolved = 'unresolved'
+    resolved = 'resolved'
+    ignored = 'ignored'
+
+
+class ErrorSort(str, Enum):
+    occurrence = 'occurrence'
+    users_count = 'users'
+    sessions_count = 'sessions'
+
+
+class SearchErrorsSchema(SessionsSearchPayloadSchema):
+    sort: ErrorSort = Field(default=ErrorSort.occurrence)
+    density: Optional[int] = Field(7)
+    status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
+    query: Optional[str] = Field(default=None)
 
 
 class MetricPayloadSchema(BaseModel):

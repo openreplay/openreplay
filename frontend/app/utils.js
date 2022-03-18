@@ -233,3 +233,9 @@ export const isGreaterOrEqualVersion = (version, compareTo) => {
   const [majorC, minorC, patchC] = compareTo.split("-")[0].split('.');
   return (major > majorC) || (major === majorC && minor > minorC) || (major === majorC && minor === minorC && patch >= patchC);
 }
+
+export const sliceListPerPage = (list, page, perPage = 10) => {
+  const start = page * perPage;
+  const end = start + perPage;
+  return list.slice(start, end);
+}

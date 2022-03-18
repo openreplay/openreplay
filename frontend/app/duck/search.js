@@ -7,7 +7,7 @@ import SavedFilter from 'Types/filter/savedFilter';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
-import { FilterCategory, FilterKey } from 'Types/filter/filterType';
+import { FilterCategory, FilterKey, IssueType } from 'Types/filter/filterType';
 import { filtersMap, liveFiltersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
 
 const ERRORS_ROUTE = errorsRoute();
@@ -28,6 +28,8 @@ const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const UPDATE = `${name}/UPDATE`;
 const APPLY = `${name}/APPLY`;
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
+const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
+const SET_ACTIVE_TAB = `${name}/SET_ACTIVE_TAB`;
 
 const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
 
@@ -49,6 +51,8 @@ const initialState = Map({
 	instance: new Filter({ filters: [] }),
   savedSearch: new SavedFilter({}),
   filterSearchList: {},
+  currentPage: 1,
+  activeTab: {name: 'All', type: 'all' },
 });
 
 // Metric - Series - [] - filters
@@ -62,7 +66,7 @@ function reducer(state = initialState, action = {}) {
     case APPLY:
       return action.fromUrl 
         ? state.set('instance', Filter(action.filter))
-        : state.mergeIn(['instance'], action.filter);
+        : state.mergeIn(['instance'], action.filter).set('currentPage', 1);
 		case success(FETCH):
 			return state.set("instance", action.data);
 		case success(FETCH_LIST):
@@ -83,6 +87,10 @@ function reducer(state = initialState, action = {}) {
       return state.set('savedSearch', action.filter);
     case EDIT_SAVED_SEARCH:
       return state.mergeIn([ 'savedSearch' ], action.instance);
+    case UPDATE_CURRENT_PAGE:
+      return state.set('currentPage', action.page);
+    case SET_ACTIVE_TAB:
+      return state.set('activeTab', action.tab).set('currentPage', 1);
 	}
 	return state;
 }
@@ -118,10 +126,24 @@ export const filterMap = ({category, value, key, operator, sourceOperator, sourc
   filters: filters ? filters.map(filterMap) : [],
 });
 
-const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
+export const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getState) => {
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'search', 'instance']).toData();
+  
+  const activeTab = getState().getIn([ 'search', 'activeTab']);
+  if (activeTab.type !== 'all' && activeTab.type !== 'bookmark') {
+    const tmpFilter = filtersMap[FilterKey.ISSUE];
+    tmpFilter.value = [activeTab.type]
+    filter.filters = filter.filters.concat(tmpFilter)
+  }
+
+  if (activeTab.type === 'bookmark') {
+    filter.bookmarked = true
+  }
+
   filter.filters = filter.filters.map(filterMap);
+  filter.limit = 10;
+  filter.page = getState().getIn([ 'search', 'currentPage']);
 
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))
@@ -131,6 +153,11 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
 export const edit = reduceThenFetchResource((instance) => ({
     type: EDIT,
     instance,
+}));
+
+export const setActiveTab = reduceThenFetchResource((tab) => ({
+  type: SET_ACTIVE_TAB,
+  tab
 }));
 
 export const remove = (id) => (dispatch, getState) => {
@@ -150,6 +177,11 @@ export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
   type: APPLY,
   filter,
   fromUrl,
+}));
+
+export const updateCurrentPage = reduceThenFetchResource((page) => ({
+    type: UPDATE_CURRENT_PAGE,
+    page,
 }));
 
 export const applySavedSearch = (filter) => (dispatch, getState) => {

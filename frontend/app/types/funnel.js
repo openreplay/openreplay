@@ -14,7 +14,10 @@ const getRedableName = ({ type, value, operator }) => {
       break;
     case "INPUT":
       str = 'Entered';
-      break;    
+      break;
+    case "CUSTOM":
+      str = 'Custom Event';
+      break;
   }
 
   return `${str} ${operator}`;
@@ -52,7 +55,7 @@ export default Record({
   },
   fromJS: ({ stages = [], filter,  activeStages = null, ...rest }) => {
     let _stages  = stages.map((stage, index) => {
-      // stage.label = getRedableName(stage.type, stage.value);
+      stage.headerText = getRedableName(stage.type, stage.value);
       stage.label = `Step ${index + 1}`;
       return stage;
     });
@@ -73,7 +76,7 @@ export default Record({
       ...rest,
       stages: _stages.length > 0 ? _stages.map((stage, index) => {
         if (!stage) return;
-        // stage.label = getRedableName(stage);
+        stage.headerText = getRedableName(stage);
         stage.label = `Step ${index + 1}`;
         return stage;
       }) : [],

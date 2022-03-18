@@ -19,7 +19,7 @@ spec:
     - port: {{ .port }}
       targetPort: {{ .targetPort }}
       protocol: TCP
-      name: {{ .targetPort }}
+      name: {{ .name }}
     {{- end }}
   selector:
     {{- include "nginx-ingress.selectorLabels" . | nindent 4 }}

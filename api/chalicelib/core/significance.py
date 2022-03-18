@@ -118,12 +118,9 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.rev_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
+    i = -1
+    for s in stages:
 
-    for i, s in enumerate(stages):
-        if i == 0:
-            extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
-        else:
-            extra_from = []
         if s.get("operator") is None:
             s["operator"] = "is"
 
@@ -132,6 +129,11 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         is_any = sessions._isAny_opreator(s["operator"])
         if not is_any and isinstance(s["value"], list) and len(s["value"]) == 0:
             continue
+        i += 1
+        if i == 0:
+            extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
+        else:
+            extra_from = []
         op = sessions.__get_sql_operator(s["operator"])
         event_type = s["type"].upper()
         if event_type == events.event_type.CLICK.ui_type:
@@ -213,7 +215,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                     ISS.issue_id as issue_id
             FROM events_common.issues AS ISE INNER JOIN issues AS ISS USING (issue_id)
             WHERE ISE.timestamp >= stages_t.stage1_timestamp 
-                AND ISE.timestamp <= stages_t.stage{len(stages)}_timestamp 
+                AND ISE.timestamp <= stages_t.stage{i + 1}_timestamp 
                 AND ISS.project_id=%(project_id)s
                 {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}) AS base_t
         ) AS issues_t 

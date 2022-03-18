@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Icon, BackLink, IconButton, Dropdown, Popup, TextEllipsis, Button } from 'UI';
 import { remove as deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered } from 'Duck/funnels';
-import { editFilter, addFilter } from 'Duck/funnels';
+import { editFilter, refresh, addFilter } from 'Duck/funnels';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
 import { confirm } from 'UI/Confirmation';
@@ -19,16 +19,11 @@ const Info = ({ label = '', value = '', className = 'mx-4' }) => {
 
 const FunnelHeader = (props) => {
   const { funnel, insights, funnels, onBack, funnelId, showFilters = false, renameHandler } = props;
-
   const [showSaveModal, setShowSaveModal] = useState(false)
 
   const writeOption = (e, { name, value }) => {
-    props.fetch(value).then(() => {
-      props.fetchInsights(value, {})
-      props.fetchIssuesFiltered(value, {})
-      props.fetchSessionsFiltered(value, {})
-      props.redirect(value)
-    })
+    props.redirect(value)
+    props.fetch(value).then(() => props.refresh(value))
   }
 
   const deleteFunnel = async (e, funnel) => {
@@ -45,11 +40,12 @@ const FunnelHeader = (props) => {
   }
   
   const onDateChange = (e) => {
-    props.editFilter(e, funnel.funnelId);
+    props.editFilter(e, funnelId);
   }
 
   const options = funnels.map(({ funnelId, name }) => ({ text: name, value: funnelId })).toJS();
   const selectedFunnel = funnels.filter(i => i.funnelId === parseInt(funnelId)).first() || {};
+  const eventsCount = funnel.filter.filters.filter(i => i.isEvent).size;
 
   return (
     <div>
@@ -76,7 +72,7 @@ const FunnelHeader = (props) => {
             selectOnBlur={false}
             icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
           />
-          <Info label="Events" value={funnel.filter.filters.size} />
+          <Info label="Events" value={eventsCount} />
           <span>-</span>
           <Button plain onClick={props.toggleFilters}>{ showFilters ? 'HIDE' : 'EDIT FUNNEL' }</Button>
           <Info label="Sessions" value={insights.sessionsCount} />          
@@ -114,4 +110,4 @@ const FunnelHeader = (props) => {
 
 export default connect(state => ({
   funnel: state.getIn([ 'funnels', 'instance' ]),
-}), { editFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered })(FunnelHeader)
+}), { editFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered, refresh })(FunnelHeader)
