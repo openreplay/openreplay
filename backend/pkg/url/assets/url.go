@@ -9,16 +9,17 @@ import (
 
 func getSessionKey(sessionID uint64) string {
 	// Based on timestamp, changes once per week. Check pkg/flakeid for understanding sessionID
-	return strconv.FormatUint(sessionID>>50, 10) 
+	return strconv.FormatUint(sessionID>>50, 10)
 }
 
 func ResolveURL(baseurl string, rawurl string) string {
+	rawurl = strings.Trim(rawurl, " ")
 	if !isRelativeCachable(rawurl) {
 		return rawurl
 	}
 	base, _ := url.ParseRequestURI(baseurl) // fn Only for base urls
-	u, _ := url.Parse(rawurl) // TODO: handle errors ?
-	if base == nil || u == nil { 
+	u, _ := url.Parse(rawurl)               // TODO: handle errors ?
+	if base == nil || u == nil {
 		return rawurl
 	}
 	return base.ResolveReference(u).String() // ResolveReference same as base.Parse(rawurl)
@@ -71,9 +72,8 @@ func GetCachePathForJS(rawurl string) string {
 }
 
 func GetCachePathForAssets(sessionID uint64, rawurl string) string {
-	return getCachePathWithKey(sessionID, rawurl) 
+	return getCachePathWithKey(sessionID, rawurl)
 }
-
 
 func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL string) string {
 	fullURL, cachable := GetFullCachableURL(baseURL, relativeURL)
@@ -81,12 +81,11 @@ func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL stri
 		return fullURL
 	}
 
-  u := url.URL{
-	  Path: r.assetsURL.Path + getCachePathWithKey(sessionID, fullURL),
-	  Host: r.assetsURL.Host,
-	  Scheme: r.assetsURL.Scheme,
+	u := url.URL{
+		Path:   r.assetsURL.Path + getCachePathWithKey(sessionID, fullURL),
+		Host:   r.assetsURL.Host,
+		Scheme: r.assetsURL.Scheme,
 	}
 
 	return u.String()
 }
-
