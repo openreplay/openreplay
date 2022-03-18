@@ -104,7 +104,7 @@ const Header = (props) => {
         className={ styles.nav }
         activeClassName={ styles.active }
       >         
-        <span>{ 'Metrics' }</span>
+        <span>{ 'Dashboard' }</span>
       </NavLink>
       <div className={ styles.right }>
         <Announcements />

@@ -1,5 +1,4 @@
 import store from 'App/store';
-
 import { queried } from './routes';
 
 const siteIdRequiredPaths = [

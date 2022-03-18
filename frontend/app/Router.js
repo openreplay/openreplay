@@ -14,7 +14,8 @@ import SessionPure from 'Components/Session/Session';
 import LiveSessionPure from 'Components/Session/LiveSession';
 import AssistPure from 'Components/Assist';
 import BugFinderPure from 'Components/BugFinder/BugFinder';
-import DashboardPure from 'Components/Dashboard/Dashboard';
+import DashboardPure from 'Components/Dashboard/NewDashboard';
+import WidgetViewPure from 'Components/Dashboard/WidgetView';
 import ErrorsPure from 'Components/Errors/Errors';
 import Header from 'Components/Header/Header';
 // import ResultsModal from 'Shared/Results/ResultsModal';
@@ -35,6 +36,7 @@ import { setSessionPath } from 'Duck/sessions';
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
+const WidgetView = withSiteIdUpdater(WidgetViewPure);
 const Session = withSiteIdUpdater(SessionPure);
 const LiveSession = withSiteIdUpdater(LiveSessionPure);
 const Assist = withSiteIdUpdater(AssistPure);
@@ -46,7 +48,8 @@ const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
 const withSiteId = routes.withSiteId;
 const withObTab = routes.withObTab;
 
-const DASHBOARD_PATH = routes.dashboard();
+const DASHBOARD_PATH = routes.dashboardSelected();
+const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
 const ASSIST_PATH = routes.assist();
 const ERRORS_PATH = routes.errors();
@@ -180,6 +183,7 @@ class Router extends React.Component {
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
           <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
           <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
           <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
           <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />

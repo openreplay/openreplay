@@ -100,7 +100,9 @@ export const testBuilderNew = () => '/test-builder';
 
 export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
 
-export const dashboard = () => '/metrics';
+export const dashboard = () => '/dashboard';
+export const dashboardSelected = (id = ':dashboardId', hash) => hashed(`/dashboard/${ id }`, hash);
+export const dashboardMetric = (id = ':dashboardId', metricId = ':metricId',  hash) => hashed(`/dashboard/${ id }/metric/${metricId}`, hash);
 
 export const RESULTS_QUERY_KEY = 'results';
 export const METRICS_QUERY_KEY = 'metrics';
