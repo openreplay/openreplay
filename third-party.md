@@ -6,9 +6,13 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 |----------|-------------|-------------|
 | btcutil | IST | Go |
 | confluent-kafka-go | Apache2 | Go |
+| compress | Apache2 | Go |
 | uuid | BSD3 | Go |
+| mux | BSD3 | Go |
+| lib/pq | MIT | Go |
 | pgconn | MIT | Go |
 | pgx | MIT | Go |
+| go-redis | BSD2 | Go |
 | pgerrcode | MIT | Go |
 | pgzip | MIT | Go |
 | maxminddb-golang | IST | Go |
@@ -90,7 +94,6 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | source-map | BSD3 | JavaScript |
 | aws-sdk | Apache2 | JavaScript |
 | serverless | MIT | JavaScript |
-| lib/pq | MIT | Go |
 | peerjs | MIT | JavaScript |
 | geoip-lite | Apache2 | JavaScript |
 | ua-parser-js | MIT | JavaScript |
@@ -104,3 +107,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | k3s | Apache2 | Infrastructure |
 | nginx | BSD2 | Infrastructure |
 | clickhouse | Apache2 | Infrastructure |
+| redis | BSD3 | Infrastructure |
