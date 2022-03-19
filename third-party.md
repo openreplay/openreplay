@@ -6,7 +6,7 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 |----------|-------------|-------------|
 | btcutil | IST | Go |
 | confluent-kafka-go | Apache2 | Go |
-| UUID | BSD3 | Go |
+| uuid | BSD3 | Go |
 | pgconn | MIT | Go |
 | pgx | MIT | Go |
 | pgerrcode | MIT | Go |
