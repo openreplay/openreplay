@@ -99,7 +99,8 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | stern | Apache2 | Go |
 | k9s | Apache2 | Go |
 | Minio | General Public License v3.0 | Go |
-| PostgreSQL | PostgreSQL License | c++ |
-| Ansible | GPL-3.0 | python |
+| PostgreSQL | PostgreSQL License | C++ |
+| Ansible | GPL-3.0 | Python |
 | k3s | Apache2 | Go |
-| Nginx | BSD-2-Clause | c |
+| Nginx | BSD-2-Clause | C |
+| Clickhouse | Apache License 2.0 | C++ |
