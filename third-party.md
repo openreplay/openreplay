@@ -95,12 +95,12 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | geoip-lite | Apache2 | JavaScript |
 | ua-parser-js | MIT | JavaScript |
 | express | MIT | JavaScript |
-| kafka | Apache2 | Java |
-| stern | Apache2 | Go |
-| k9s | Apache2 | Go |
-| Minio | General Public License v3.0 | Go |
-| PostgreSQL | PostgreSQL License | C++ |
-| Ansible | GPL-3.0 | Python |
-| k3s | Apache2 | Go |
-| Nginx | BSD-2-Clause | C |
-| Clickhouse | Apache License 2.0 | C++ |
+| kafka | Apache2 | Infrastructure |
+| stern | Apache2 | Infrastructure |
+| k9s | Apache2 | Infrastructure |
+| minio | GPLv3 | Infrastructure |
+| postgreSQL | PostgreSQL License | Infrastructure |
+| ansible | GPLv3 | Infrastructure |
+| k3s | Apache2 | Infrastructure |
+| nginx | BSD2 | Infrastructure |
+| clickhouse | Apache2 | Infrastructure |
