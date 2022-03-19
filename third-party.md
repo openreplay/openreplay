@@ -1,4 +1,4 @@
-## Licenses (as of February 23, 2022)
+## Licenses (as of March 19, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -95,3 +95,11 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | geoip-lite | Apache2 | JavaScript |
 | ua-parser-js | MIT | JavaScript |
 | express | MIT | JavaScript |
+| kafka | Apache2 | Java |
+| stern | Apache2 | Go |
+| k9s | Apache2 | Go |
+| Minio | General Public License v3.0 | Go |
+| PostgreSQL | PostgreSQL License | c++ |
+| Ansible | GPL-3.0 | python |
+| k3s | Apache2 | Go |
+| Nginx | BSD-2-Clause | c |
