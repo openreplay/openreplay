@@ -2,7 +2,7 @@ import { makeAutoObservable, runInAction, observable, action, reaction } from "m
 
 export default class Widget {
     widgetId: any = undefined
-    name: string = ""
+    name: string = "New Metric"
     type: string = ""
     position: number = 0
     data: any = {}

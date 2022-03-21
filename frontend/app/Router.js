@@ -48,8 +48,13 @@ const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
 const withSiteId = routes.withSiteId;
 const withObTab = routes.withObTab;
 
-const DASHBOARD_PATH = routes.dashboardSelected();
-const WIDGET_PATAH = routes.dashboardMetric();
+const DASHBOARD_PATH = routes.dashboard();
+// const DASHBOARD_WIDGET_CREATE_PATH = routes.dashboardMetricCreate();
+// const DASHBOARD_WIDGET_DETAILS_PATH = routes.dashboardMetricDetails();
+// const METRIC_CREATE_PATH = routes.metricCreate();
+// const METRIC_DETAILS_PATH = routes.metricDetails();
+
+// const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
 const ASSIST_PATH = routes.assist();
 const ERRORS_PATH = routes.errors();
@@ -182,8 +187,13 @@ class Router extends React.Component {
           { siteIdList.length === 0 && 
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
-          <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+          <Route path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+          {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
           <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } /> */}
+
           <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
           <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
           <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />

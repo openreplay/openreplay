@@ -1,9 +1,7 @@
 import React from 'react';
-import { observer } from "mobx-react-lite";
 import { useDashboardStore } from '../store/store';
 import cn from 'classnames';
-import { Link } from 'UI';
-import { dashboardMetric, withSiteId } from 'App/routes';
+import { ItemMenu } from 'UI';
 
 function WidgetWrapper(props) {
     const { widget } = props;
@@ -12,23 +10,33 @@ function WidgetWrapper(props) {
     const siteId = store.siteId;
     
     return (
-        <div className={cn("border rounded", 'col-span-' + widget.colSpan)} style={{ userSelect: 'none'}}>
-            <Link to={withSiteId(dashboardMetric(12, widget.widgetId), siteId)}>
-                <div className="p-3 cursor-pointer bg-white border-b flex items-center justify-between">
+        <div className={cn("border rounded bg-white", 'col-span-' + widget.colSpan)} style={{ userSelect: 'none'}}>
+            {/* <Link to={withSiteId(dashboardMetricDetails(dashboard.dashboardId, widget.widgetId), siteId)}> */}
+                <div className="p-3 cursor-pointe border-b flex items-center justify-between">
                     {widget.name} - {widget.position}
                     <div>
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => dashboard.removeWidget(widget.widgetId)}>
+                        <ItemMenu
+                            items={[
+                                {
+                                    text: 'Edit',
+                                    onClick: () => {
+                                        console.log('edit');
+                                    }
+                                },
+                            ]}
+                        />
+                        {/* <button className="btn btn-sm btn-outline-primary" onClick={() => dashboard.removeWidget(widget.widgetId)}>
                             remove
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 
-                <div className="bg-white h-40">
+                <div className="h-40">
 
                 </div>
-            </Link>
+            {/* </Link> */}
         </div>
     );
 }
 
-export default observer(WidgetWrapper);
+export default WidgetWrapper;

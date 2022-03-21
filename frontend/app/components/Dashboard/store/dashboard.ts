@@ -1,4 +1,4 @@
-import { makeAutoObservable, makeObservable, observable, action, runInAction, computed, reaction } from "mobx"
+import { makeAutoObservable, observable, action, runInAction } from "mobx"
 import Widget from "./widget"
 // import APIClient from 'App/api_client';
 
@@ -9,6 +9,7 @@ export default class Dashboard {
     widgets: Widget[] = []
     isValid: boolean = false
     isPinned: boolean = false
+    currentWidget: Widget = new Widget()
     
     constructor() {
         makeAutoObservable(this, {

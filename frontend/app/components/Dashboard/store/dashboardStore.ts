@@ -8,6 +8,7 @@ export default class DashboardStore {
     selectedDashboard: Dashboard | null = new Dashboard()
     isLoading: boolean = false
     siteId: any = null
+    currentWidget: Widget = new Widget()
 
     private client = new APIClient()
 
@@ -25,7 +26,8 @@ export default class DashboardStore {
             getDashboardByIndex: action,
             getDashboardCount: action,
             getDashboardIndexByDashboardId: action,
-            selectDashboardById: action,            
+            selectDashboardById: action,
+            selectDefaultDashboard: action, 
             toJson: action,
             fromJson: action,
             setSiteId: action,
@@ -34,7 +36,7 @@ export default class DashboardStore {
 
         // TODO remove this sample data
         this.dashboards = sampleDashboards
-        this.selectedDashboard = sampleDashboards[0]
+        // this.selectedDashboard = sampleDashboards[0]
 
         // setInterval(() => {
         //     this.selectedDashboard?.addWidget(getRandomWidget())
@@ -185,7 +187,7 @@ export default class DashboardStore {
     }
 
     selectDashboardById = (dashboardId: any) => {
-        this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || null;;
+        this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || new Dashboard();
     }
 
     setSiteId = (siteId: any) => {
@@ -193,15 +195,13 @@ export default class DashboardStore {
     }
 
     selectDefaultDashboard = () => {
-        const pinnedDashboard = this.dashboards.find(d => d.isPinned)
         if (this.dashboards.length > 0) {
+            const pinnedDashboard = this.dashboards.find(d => d.isPinned)
             if (pinnedDashboard) {
                 this.selectedDashboard = pinnedDashboard
             } else {
                 this.selectedDashboard = this.dashboards[0]
             }
-        } else {
-            this.selectedDashboard = new Dashboard()
         }
     }
 }
@@ -209,17 +209,38 @@ export default class DashboardStore {
 function getRandomWidget() {
     const widget = new Widget();
     widget.widgetId = Math.floor(Math.random() * 100);
-    widget.name = "Widget " + Math.floor(Math.random() * 100);
+    widget.name = randomMetricName();
     widget.type = "random";
     widget.colSpan = Math.floor(Math.random() * 2) + 1;
     return widget;
 }
 
-function getRandomDashboard(id: any = null) {
+function generateRandomPlaceName() {
+    const placeNames = [
+        "New York",
+        "Los Angeles",
+        "Chicago",
+        "Houston",
+        "Philadelphia",
+        "Phoenix",
+        "San Antonio",
+        "San Diego",
+    ]
+    return placeNames[Math.floor(Math.random() * placeNames.length)]
+}
+
+
+function randomMetricName () {
+    const metrics = ["Revenue", "Profit", "Expenses", "Sales", "Orders", "Revenue", "Profit", "Expenses", "Sales", "Orders", "Revenue", "Profit", "Expenses", "Sales", "Orders", "Revenue", "Profit", "Expenses", "Sales", "Orders"];
+    return metrics[Math.floor(Math.random() * metrics.length)];
+}
+
+function getRandomDashboard(id: any = null, isPinned = false) {
     const dashboard = new Dashboard();
-    dashboard.name = "Random Dashboard";
-    dashboard.dashboardId = id ? id : "random-dashboard-" +  Math.floor(Math.random() * 10);
-    for (let i = 0; i < 10; i++) {
+    dashboard.name = generateRandomPlaceName();
+    dashboard.dashboardId = id ? id : Math.floor(Math.random() * 10);
+    dashboard.isPinned = isPinned;
+    for (let i = 0; i < 8; i++) {
         const widget = getRandomWidget();
         widget.position = i;
         dashboard.addWidget(widget);
@@ -228,8 +249,8 @@ function getRandomDashboard(id: any = null) {
 }
 
 const sampleDashboards = [
-    getRandomDashboard(12),
-    getRandomDashboard(),
-    getRandomDashboard(),
-    getRandomDashboard(),
+    getRandomDashboard(1, true),
+    getRandomDashboard(2),
+    getRandomDashboard(3),
+    getRandomDashboard(4),
 ]

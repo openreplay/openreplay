@@ -39,13 +39,22 @@ export default class ItemMenu extends React.PureComponent {
 
     return (
       <div className={ styles.wrapper }>
-        <div
+        {/* <div
           ref={ (ref) => { this.menuBtnRef = ref; } }
           className={ styles.menuBtn }
           onClick={ this.toggleMenu }
           role="button"
           tabIndex="-1"
-        />
+        /> */}
+        <div
+          ref={ (ref) => { this.menuBtnRef = ref; } }
+          className="w-10 h-10 cursor-pointer bg-white rounded-full flex items-center justify-center hover:bg-gray-lightest"
+          onClick={ this.toggleMenu }
+          role="button"
+          tabIndex="-1"
+        >
+          <Icon name="ellipsis-v" size="16" />
+        </div>
         <div
           className={ styles.menu }
           data-displayed={ displayed }
@@ -58,9 +67,11 @@ export default class ItemMenu extends React.PureComponent {
               role="menuitem"
               tabIndex="-1"
             >
-              <div className={ styles.iconWrapper }>
-                <Icon name={ icon } size="13" color="gray-dark" />
-              </div>
+              { icon && (
+                <div className={ styles.iconWrapper }>
+                  <Icon name={ icon } size="13" color="gray-dark" />
+                </div>
+              )}
               <div>{ text }</div>
             </div>
           ))}
