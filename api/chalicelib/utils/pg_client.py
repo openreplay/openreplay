@@ -5,11 +5,12 @@ import psycopg2.extras
 from decouple import config
 from psycopg2 import pool
 
-PG_CONFIG = {"host": config("pg_host"),
-             "database": config("pg_dbname"),
-             "user": config("pg_user"),
-             "password": config("pg_password"),
-             "port": config("pg_port", cast=int)}
+_PG_CONFIG = {"host": config("pg_host"),
+              "database": config("pg_dbname"),
+              "user": config("pg_user"),
+              "password": config("pg_password"),
+              "port": config("pg_port", cast=int)}
+PG_CONFIG = dict(_PG_CONFIG)
 if config("pg_timeout", cast=int, default=0) > 0:
     PG_CONFIG["options"] = f"-c statement_timeout={config('pg_timeout', cast=int) * 1000}"
 
@@ -63,7 +64,7 @@ class PostgresClient:
     def __init__(self, long_query=False):
         self.long_query = long_query
         if long_query:
-            self.connection = psycopg2.connect(**PG_CONFIG)
+            self.connection = psycopg2.connect(**_PG_CONFIG)
         else:
             self.connection = postgreSQL_pool.getconn()
 
