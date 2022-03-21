@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.5.3-ee'
+SELECT 'v1.5.4-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -721,7 +721,6 @@ $$
             CREATE unique index IF NOT EXISTS autocomplete_unique ON autocomplete (project_id, value, type);
             CREATE index IF NOT EXISTS autocomplete_project_id_idx ON autocomplete (project_id);
             CREATE INDEX IF NOT EXISTS autocomplete_type_idx ON public.autocomplete (type);
-            CREATE INDEX IF NOT EXISTS autocomplete_value_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops);
 
             CREATE INDEX autocomplete_value_clickonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'CLICK';
             CREATE INDEX autocomplete_value_customonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'CUSTOM';

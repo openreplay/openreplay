@@ -13,7 +13,8 @@ def get_by_session_id(session_id):
                       header_size,
                       encoded_body_size,
                       decoded_body_size,
-                      success
+                      success,
+                      COALESCE(status, CASE WHEN success THEN 200 END) AS status
                 FROM events.resources
                 WHERE session_id = %(session_id)s;"""
         params = {"session_id": session_id}
