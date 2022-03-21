@@ -69,6 +69,7 @@ LANGUAGE plpgsql;
 UPDATE users
 SET email=LOWER(email);
 
+DROP INDEX IF EXISTS autocomplete_value_gin_idx;
 COMMIT;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS autocomplete_value_clickonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'CLICK';
