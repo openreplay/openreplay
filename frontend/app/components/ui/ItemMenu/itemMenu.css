@@ -6,7 +6,7 @@
 }
 
 .menuBtn {
-  @mixin icon-before ellipsis-v, $gray-darkest, 25px {
+  @mixin icon-before ellipsis-v, $gray-darkest, 18px {
     margin: 5px;
   }
   width: 36px;
