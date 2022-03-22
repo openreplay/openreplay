@@ -38,7 +38,7 @@ securityContext: {}
 
 service:
   annotations: {}
-  type: LoadBalancer
+  type: ClusterIP
   ports:
     - port: 80
       targetPort: http
