@@ -1,9 +1,10 @@
-from fastapi import Body
+from fastapi import Body, Depends
 
 import schemas
-from chalicelib.core import dashboard
+from chalicelib.core import dashboard, dashboards2
 from chalicelib.core import metadata
 from chalicelib.utils import helper
+from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
@@ -344,3 +345,25 @@ def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body
         *helper.explode_widget(dashboard.get_avg_cpu(project_id=projectId, **data.dict())),
         *helper.explode_widget(dashboard.get_avg_fps(project_id=projectId, **data.dict())),
     ]}
+
+
+@app.post('/{projectId}/dashboards', tags=["dashboard", "metrics"])
+@app.put('/{projectId}/dashboards', tags=["dashboard", "metrics"])
+def create_dashboards(projectId: int, data: schemas.CreateDashboardSchema = Body(...),
+                      context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.create_dashboard(project_id=projectId, user_id=context.user_id, data=data)}
+
+
+@app.get('/{projectId}/dashboards', tags=["dashboard", "metrics"])
+def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.get_dashboards(project_id=projectId, user_id=context.user_id)}
+
+
+@app.get('/{projectId}/dashboards/{dashboardId}', tags=["dashboard", "metrics"])
+def get_dashboards(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.get_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
+
+
+@app.get('/{projectId}/widgets', tags=["dashboard", "metrics"])
+def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.get_widgets(project_id=projectId)}

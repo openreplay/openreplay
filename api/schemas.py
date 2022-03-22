@@ -875,3 +875,12 @@ class UpdateCustomMetricsStatusSchema(BaseModel):
 
 class SavedSearchSchema(FunnelSchema):
     filter: FlatSessionsSearchPayloadSchema = Field([])
+
+
+class CreateDashboardSchema(BaseModel):
+    name: str = Field(...)
+    is_public: bool = Field(default=False)
+    is_pinned: bool = Field(default=False)
+
+    class Config:
+        alias_generator = attribute_to_camel_case
