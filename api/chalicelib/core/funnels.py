@@ -201,7 +201,7 @@ def get_sessions_on_the_fly(funnel_id, project_id, user_id, data: schemas.Funnel
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.range_value,
@@ -226,7 +226,7 @@ def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_dat
 def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelInsightsPayloadSchema):
     data.events = filter_stages(__parse_events(data.events))
     if len(data.events) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.rangeValue,
@@ -256,7 +256,7 @@ def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSe
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
     if len(data.events) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
         if f is None:
             return {"errors": ["funnel not found"]}
         get_start_end_time(filter_d=f["filter"], range_value=data.rangeValue,
@@ -307,7 +307,7 @@ def get(funnel_id, project_id, user_id, flatten=True, fix_stages=True):
 def search_by_issue(user_id, project_id, funnel_id, issue_id, data: schemas.FunnelSearchPayloadSchema, range_value=None,
                     start_date=None, end_date=None):
     if len(data.events) == 0:
-        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id)
+        f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
         if f is None:
             return {"errors": ["funnel not found"]}
         data.startDate = data.startDate if data.startDate is not None else start_date
