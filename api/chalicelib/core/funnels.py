@@ -299,7 +299,7 @@ def get(funnel_id, project_id, user_id, flatten=True, fix_stages=True):
         f["filter"]["events"] = __fix_stages(f["filter"]["events"])
     f["filter"]["events"] = [e.dict() for e in f["filter"]["events"]]
     if flatten:
-        f["filter"] = helper.old_search_payload_to_flat(f)
+        f["filter"] = helper.old_search_payload_to_flat(f["filter"])
     return f
 
 
