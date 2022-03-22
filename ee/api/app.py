@@ -14,7 +14,7 @@ from routers import core, core_dynamic, ee, saml
 from routers.app import v1_api, v1_api_ee
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
-from routers.subs import dashboard
+from routers.subs import dashboard, insights
 
 app = FastAPI()
 
@@ -65,7 +65,7 @@ app.include_router(saml.public_app)
 app.include_router(saml.app)
 app.include_router(saml.app_apikey)
 app.include_router(dashboard.app)
-# app.include_router(insights.app)
+app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
 app.include_router(v1_api_ee.app_apikey)
 
