@@ -41,8 +41,22 @@ minio:
       accessKey: "changeMeMinioAccessKey"
       secretKey: "changeMeMinioPassword"
 
+ingress-nginx: &ingress-nginx
+  controller:
+    ingressClassResource:
+      # -- Name of the ingressClass
+      name: openreplay
+    service:
+      externalTrafficPolicy: "Local"
+    extraArgs:
+      default-ssl-certificate: "app/ssl-ingress"
+    config:
+      enable-real-ip: true
+      forwarded-for-header: "proxy_protocol"
+
 # Application specific variables
 global:
+  ingress: *ingress-nginx
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
@@ -120,15 +134,3 @@ chalice:
 #   # Redirecting http to https
 #   customServerConfigs: |
 #      return 301 https://$host$request_uri;
-ingress-nginx:
-  controller:
-    ingressClassResource:
-      # -- Name of the ingressClass
-      name: openreplay-nginx
-    service:
-      externalTrafficPolicy: "Local"
-    extraArgs:
-      default-ssl-certificate: "app/ssl-ingress"
-    config:
-      enable-real-ip: true
-      forwarded-for-header: "proxy_protocol"
