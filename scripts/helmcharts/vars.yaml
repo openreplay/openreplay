@@ -120,3 +120,15 @@ chalice:
 #   # Redirecting http to https
 #   customServerConfigs: |
 #      return 301 https://$host$request_uri;
+ingress-nginx:
+  controller:
+    ingressClassResource:
+      # -- Name of the ingressClass
+      name: openreplay-nginx
+    service:
+      externalTrafficPolicy: "Local"
+    extraArgs:
+      default-ssl-certificate: "app/ssl-ingress"
+    config:
+      enable-real-ip: true
+      forwarded-for-header: "proxy_protocol"
