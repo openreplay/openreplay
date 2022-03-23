@@ -12,6 +12,7 @@
   background: white;
 }
 .overlay {
+  user-select: none;
   position: absolute;
   top: 0;
   left: 0;
