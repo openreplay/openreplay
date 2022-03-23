@@ -213,11 +213,11 @@ def values_for_operator(value: Union[str, list], op: schemas.SearchEventOperator
         if value is None:
             return value
         if op == schemas.SearchEventOperator._starts_with:
-            return value + '%'
+            return f"{value}%"
         elif op == schemas.SearchEventOperator._ends_with:
-            return '%' + value
+            return f"%{value}"
         elif op == schemas.SearchEventOperator._contains or op == schemas.SearchEventOperator._not_contains:
-            return '%' + value + '%'
+            return f"%{value}%"
     return value
 
 
