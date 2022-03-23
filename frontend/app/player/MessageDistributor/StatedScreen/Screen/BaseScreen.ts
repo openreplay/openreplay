@@ -70,10 +70,10 @@ export default abstract class BaseScreen {
 
   private boundingRect: DOMRect | null  = null;
   private getBoundingClientRect(): DOMRect {
-    //if (this.boundingRect === null) {
-      return this.boundingRect = this.overlay.getBoundingClientRect(); // expensive operation?
-    //}
-    //return this.boundingRect;
+     if (this.boundingRect === null) {
+      return this.boundingRect = this.overlay.getBoundingClientRect() // expensive operation?
+    }
+    return this.boundingRect
   }
 
   getInternalViewportCoordinates({ x, y }: Point): Point {
@@ -85,17 +85,22 @@ export default abstract class BaseScreen {
     const screenX = (x - overlayX) * scale;
     const screenY = (y - overlayY) * scale;
 
-    return { x: screenX, y: screenY };
+    return { x: Math.round(screenX), y: Math.round(screenY) };
+  }
+
+  getCurrentScroll(): Point {
+    const docEl = this.document?.documentElement
+    const x = docEl ? docEl.scrollLeft : 0
+    const y = docEl ? docEl.scrollTop : 0
+    return { x, y }
   }
 
   getInternalCoordinates(p: Point): Point {
     const { x, y } = this.getInternalViewportCoordinates(p);
 
-    const docEl = this.document?.documentElement
-    const scrollX = docEl ? docEl.scrollLeft : 0
-    const scrollY = docEl ? docEl.scrollTop : 0
+    const sc = this.getCurrentScroll()
 
-    return { x: x+scrollX, y: y+scrollY };
+    return { x: x+sc.x, y: y+sc.y };
   }
 
   getElementFromInternalPoint({ x, y }: Point): Element | null {

@@ -7,8 +7,8 @@ import store from 'App/store';
 import type { LocalStream } from './LocalStream';
 import { update, getState } from '../../store';
 import { iceServerConfigFromString } from 'App/utils'
-
-import MStreamReader from '../messages/MStreamReader';;
+import AnnotationCanvas from './AnnotationCanvas';
+import MStreamReader from '../messages/MStreamReader';
 import JSONRawMessageReader from '../messages/JSONRawMessageReader'
 
 export enum CallingState {
@@ -136,12 +136,13 @@ export default class AssistManager {
       //socket.onAny((...args) => console.log(...args))
       socket.on("connect", () => {
         waitingForMessages = true
-        this.setStatus(ConnectionStatus.WaitingMessages)
+        this.setStatus(ConnectionStatus.WaitingMessages) // TODO: happens frequently on bad network
       })
       socket.on("disconnect", () => {
         this.toggleRemoteControl(false)
       })
       socket.on('messages', messages => {
+        //console.log(messages.filter(m => m._id === 41 || m._id === 44))
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout);
         jmr.append(messages) // as RawMessage[]
 
@@ -173,9 +174,8 @@ export default class AssistManager {
           this.setStatus(ConnectionStatus.Disconnected)
         }, 30000)
 
-        if (getState().remoteControl === RemoteControlStatus.Requesting ||
-        getState().remoteControl === RemoteControlStatus.Enabled) {
-          this.toggleRemoteControl(false)
+        if (getState().remoteControl === RemoteControlStatus.Requesting) {
+          this.toggleRemoteControl(false) // else its remaining
         }
 
         // Call State
@@ -200,7 +200,7 @@ export default class AssistManager {
   private onMouseMove = (e: MouseEvent): void => {
     if (!this.socket) { return }
     const data = this.md.getInternalCoordinates(e)
-    this.socket.emit("move", [ Math.round(data.x), Math.round(data.y) ])
+    this.socket.emit("move", [ data.x, data.y ])
   }
 
   private onWheel = (e: WheelEvent): void => {
@@ -213,15 +213,23 @@ export default class AssistManager {
 
   private onMouseClick = (e: MouseEvent): void => {
     if (!this.socket) { return; }
-    const data = this.md.getInternalViewportCoordinates(e);
+    const data = this.md.getInternalViewportCoordinates(e)
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
     if (el instanceof HTMLElement) {
       el.focus()
-      el.oninput = e => e.preventDefault();
-      el.onkeydown = e => e.preventDefault();
+      el.oninput = e => {
+        if (el instanceof HTMLTextAreaElement 
+          || el instanceof HTMLInputElement
+        ) {
+          this.socket && this.socket.emit("input", el.value)
+        } else if (el.isContentEditable) {
+          this.socket && this.socket.emit("input", el.innerText)
+        }
+      }
+      //el.onkeydown = e => e.preventDefault()
     }
-    this.socket.emit("click",  [ Math.round(data.x), Math.round(data.y) ]);
+    this.socket.emit("click",  [ data.x, data.y ]);
   }
 
   private toggleRemoteControl(newState: boolean){
@@ -310,6 +318,8 @@ export default class AssistManager {
     this.callConnection && this.callConnection.close()
     update({ calling: CallingState.NoCall })
     this.callArgs = null
+    this.annot?.remove()
+    this.annot = null
   }
 
   private initiateCallEnd = () => {
@@ -355,6 +365,8 @@ export default class AssistManager {
     }
   }
 
+  private annot: AnnotationCanvas | null = null
+
   private _call() {
     if (![CallingState.NoCall, CallingState.Reconnecting].includes(getState().calling)) { return }
     update({ calling: CallingState.Connecting })
@@ -379,6 +391,34 @@ export default class AssistManager {
       call.on('stream', stream => {
         update({ calling: CallingState.OnCall })
         this.callArgs && this.callArgs.onStream(stream)
+
+        if (!this.annot) {
+          const annot = this.annot = new AnnotationCanvas()
+          annot.mount(this.md.overlay)
+          annot.canvas.addEventListener("mousedown", e => {
+            if (!this.socket) { return }
+            const data = this.md.getInternalViewportCoordinates(e)
+            annot.start([ data.x, data.y ])
+            this.socket.emit("startAnnotation", [ data.x, data.y ])
+          })
+          annot.canvas.addEventListener("mouseleave", () => {
+            if (!this.socket) { return }
+            annot.stop()
+            this.socket.emit("stopAnnotation")
+          })
+          annot.canvas.addEventListener("mouseup", () => {
+            if (!this.socket) { return }
+            annot.stop()
+            this.socket.emit("stopAnnotation")
+          })
+          annot.canvas.addEventListener("mousemove", e => {
+            if (!this.socket || !annot.isPainting()) { return }
+
+            const data = this.md.getInternalViewportCoordinates(e)
+            annot.move([ data.x, data.y ])
+            this.socket.emit("moveAnnotation", [ data.x, data.y ])
+          })
+        }
       });
       //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 
@@ -408,6 +448,10 @@ export default class AssistManager {
     if (this.socket) {
       this.socket.close()
       document.removeEventListener('visibilitychange', this.onVisChange)
+    }
+    if (this.annot) {
+      this.annot.remove()
+      this.annot = null
     }
   }
 }
