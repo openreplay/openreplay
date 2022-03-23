@@ -31,16 +31,6 @@ export default abstract class BaseScreen {
 
     const screen = document.createElement('div');
 
-    setTimeout(function() {    
-      iframe.contentDocument?.addEventListener('mousemove', function() {        
-        overlay.style.display = 'block';
-      })
-
-      overlay.addEventListener('contextmenu', function() {
-        overlay.style.display = 'none';
-      })
-    }, 10)
-
     screen.className = styles.screen;
     screen.appendChild(iframe);
     screen.appendChild(overlay);
@@ -58,6 +48,20 @@ export default abstract class BaseScreen {
     // parentElement.onresize = this.scale;
     window.addEventListener('resize', this.scale);  
     this.scale();
+
+    /* == For the Inspecting Document content  == */
+    this.overlay.addEventListener('contextmenu', () => {
+      this.overlay.style.display = 'none'
+      const doc = this.document
+      if (!doc) { return }
+      const returnOverlay = () => {
+        this.overlay.style.display = 'block'
+        doc.removeEventListener('mousemove', returnOverlay)
+        doc.removeEventListener('mouseclick', returnOverlay) // TODO: prevent default in case of input selection
+      }
+      doc.addEventListener('mousemove', returnOverlay)
+      doc.addEventListener('mouseclick', returnOverlay)
+    })
   }
 
   get window(): WindowProxy | null {
