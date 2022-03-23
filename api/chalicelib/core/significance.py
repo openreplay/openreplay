@@ -528,7 +528,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
         split = issue.split('__^__')
         issues_dict['significant' if is_sign else 'insignificant'].append({
             "type": split[0],
-            "title": get_issue_title(split[0]),
+            "title": helper.get_issue_title(split[0]),
             "affected_sessions": affected_sessions[issue],
             "unaffected_sessions": session_counts[1] - affected_sessions[issue],
             "lost_conversions": lost_conversions,
@@ -641,27 +641,3 @@ def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
     output['stages'] = stages_list
     output['criticalIssuesCount'] = n_critical_issues
     return output
-
-
-def get_issue_title(issue_type):
-    return {'click_rage': "Click Rage",
-            'dead_click': "Dead Click",
-            'excessive_scrolling': "Excessive Scrolling",
-            'bad_request': "Bad Request",
-            'missing_resource': "Missing Image",
-            'memory': "High Memory Usage",
-            'cpu': "High CPU",
-            'slow_resource': "Slow Resource",
-            'slow_page_load': "Slow Page Performance",
-            'crash': "Crash",
-            'ml_cpu': "High CPU",
-            'ml_memory': "High Memory Usage",
-            'ml_dead_click': "Dead Click",
-            'ml_click_rage': "Click Rage",
-            'ml_mouse_thrashing': "Mouse Thrashing",
-            'ml_excessive_scrolling': "Excessive Scrolling",
-            'ml_slow_resources': "Slow Resource",
-            'custom': "Custom Event",
-            'js_exception': "Error",
-            'custom_event_error': "Custom Error",
-            'js_error': "Error"}.get(issue_type, issue_type)
