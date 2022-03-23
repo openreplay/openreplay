@@ -240,13 +240,14 @@ def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data: schemas.Fu
         data = schemas.FunnelInsightsPayloadSchema.parse_obj(f["filter"])
     data.events = __fix_stages(data.events)
     insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data.dict(), project_id=project_id)
+    insights = helper.list_to_camel_case(insights)
     if len(insights) > 0:
         # fix: this fix for huge drop count
         if total_drop_due_to_issues > insights[0]["sessionsCount"]:
             total_drop_due_to_issues = insights[0]["sessionsCount"]
         # end fix
         insights[-1]["dropDueToIssues"] = total_drop_due_to_issues
-    return {"data": {"stages": helper.list_to_camel_case(insights),
+    return {"data": {"stages": insights,
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
