@@ -129,7 +129,7 @@ export default class ConfirmWindow {
         maxWidth: "fit-content",
         padding: "20px",
         background: "#F3F3F3",
-        opacity: ".75",
+        //opacity: ".75",
         color: "black",
         borderRadius: "3px",
         boxShadow: "0px 0px 3.99778px 1.99889px rgba(0, 0, 0, 0.1)"
@@ -138,6 +138,7 @@ export default class ConfirmWindow {
     );
 
     Object.assign(wrapper.style, {
+      position: "fixed",
       left: 0,
       top: 0,
       height: "100%",

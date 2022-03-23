@@ -5,8 +5,9 @@ import type { Properties } from 'csstype';
 import { App } from '@openreplay/tracker';
 
 import RequestLocalStream from './LocalStream.js';
-import Mouse from './Mouse.js';
+import RemoteControl from './RemoteControl.js';
 import CallWindow from './CallWindow.js';
+import AnnotationCanvas from './AnnotationCanvas.js';
 import ConfirmWindow, { callConfirmDefault, controlConfirmDefault } from './ConfirmWindow.js';
 import type { Options as ConfirmOptions } from './ConfirmWindow.js';
 
@@ -14,12 +15,12 @@ import type { Options as ConfirmOptions } from './ConfirmWindow.js';
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;
 
-type BehinEndCallback = () => ((()=>{}) | void)
+type StartEndCallback = () => ((()=>{}) | void)
 
 export interface Options {
-  onAgentConnect: BehinEndCallback,
-  onCallStart: BehinEndCallback,
-  onRemoteControlStart: BehinEndCallback,
+  onAgentConnect: StartEndCallback,
+  onCallStart: StartEndCallback,
+  onRemoteControlStart: StartEndCallback,
   session_calling_peer_key: string,
   session_control_peer_key: string,
   callConfirm: ConfirmOptions,
@@ -39,8 +40,11 @@ enum CallingState {
 };
 
 
+// TODO typing????
+type OptionalCallback = (()=>{}) | void
 type Agent = {
-  onDisconnect: ((()=>{}) | void), // TODO: better types here
+  onDisconnect?: OptionalCallback,
+  onControlReleased?: OptionalCallback,
   name?: string
   //
 }
@@ -139,6 +143,34 @@ export default class Assist {
     })
     socket.onAny((...args) => app.debug.log("Socket:", ...args))
 
+
+    const remoteControl = new RemoteControl(
+      this.options,
+      id => {
+        this.agents[id].onControlReleased = this.options.onRemoteControlStart()
+        this.emit("control_granted", id)
+      },
+      id => {
+        const cb = this.agents[id].onControlReleased
+        delete this.agents[id].onControlReleased
+        typeof cb === "function" && cb()
+        this.emit("control_rejected", id)
+      },
+    )
+
+    // TODO: check incoming args
+    socket.on("request_control", remoteControl.requestControl)
+    socket.on("release_control", remoteControl.releaseControl)
+    socket.on("scroll", remoteControl.scroll)
+    socket.on("click", remoteControl.click)
+    socket.on("move", remoteControl.move)
+    socket.on("input", remoteControl.input)
+
+    let annot: AnnotationCanvas | null = null
+    socket.on("moveAnnotation", (_, p) => annot && annot.move(p)) // TODO: restrict by id
+    socket.on("startAnnotation", (_, p) => annot && annot.start(p))
+    socket.on("stopAnnotation", () => annot && annot.stop())
+
     socket.on("NEW_AGENT", (id: string, info) => {
       this.agents[id] = {
         onDisconnect: this.options.onAgentConnect && this.options.onAgentConnect(),
@@ -148,7 +180,7 @@ export default class Assist {
       this.app.stop();
       this.app.start().then(() => { this.assistDemandedRestart = false })
     })
-    socket.on("AGENTS_CONNECTED", (ids) => {
+    socket.on("AGENTS_CONNECTED", (ids: string[]) => {
       ids.forEach(id =>{
         this.agents[id] = {
           onDisconnect: this.options.onAgentConnect && this.options.onAgentConnect(),
@@ -157,60 +189,9 @@ export default class Assist {
       this.assistDemandedRestart = true
       this.app.stop();
       this.app.start().then(() => { this.assistDemandedRestart = false })
-      const storedControllingAgent = sessionStorage.getItem(this.options.session_control_peer_key)
-      if (storedControllingAgent !== null && ids.includes(storedControllingAgent)) {
-        grantControl(storedControllingAgent)
-        socket.emit("control_granted", storedControllingAgent)
-      } else {
-        sessionStorage.removeItem(this.options.session_control_peer_key)
-      }
+
+      remoteControl.reconnect(ids)
     })
-
-    let confirmRC: ConfirmWindow | null = null
-    const mouse = new Mouse()     // TODO: lazy init
-    let controllingAgent: string | null = null
-    const requestControl = (id: string) => {
-      if (controllingAgent !== null) { 
-        socket.emit("control_rejected", id)
-        return
-      }
-      controllingAgent = id // TODO: more explicit pending state
-      confirmRC = new ConfirmWindow(controlConfirmDefault(this.options.controlConfirm))
-      confirmRC.mount().then(allowed => {
-        if (allowed) {
-          grantControl(id)
-          socket.emit("control_granted", id)
-        } else {
-          releaseControl()
-          socket.emit("control_rejected", id)
-        }
-      }).catch()
-    }
-    let onRemoteControlStop: (()=>void) | null = null
-    const grantControl = (id: string) => {
-      controllingAgent = id
-      mouse.mount()
-      onRemoteControlStop = this.options.onRemoteControlStart() || null
-      sessionStorage.setItem(this.options.session_control_peer_key, id)
-    }
-    const releaseControl = () => {
-      typeof onRemoteControlStop === 'function' && onRemoteControlStop()
-      onRemoteControlStop = null
-      confirmRC?.remove()
-      mouse.remove()
-      controllingAgent = null
-      sessionStorage.removeItem(this.options.session_control_peer_key)
-    }
-    socket.on("request_control", requestControl)
-    socket.on("release_control", (id: string) => {
-      if (controllingAgent !== id) { return }
-      releaseControl()
-    })
-
-
-    socket.on("scroll", (id, d) => { id === controllingAgent && mouse.scroll(d) })
-    socket.on("click", (id, xy) => { id === controllingAgent && mouse.click(xy) })
-    socket.on("move", (id, xy) => { id === controllingAgent && mouse.move(xy) })
 
     let confirmCall:ConfirmWindow | null = null
 
@@ -219,7 +200,7 @@ export default class Assist {
       this.agents[id] && this.agents[id].onDisconnect != null && this.agents[id].onDisconnect()
       delete this.agents[id]
 
-      controllingAgent === id && releaseControl()
+      remoteControl.releaseControl(id)
 
       // close the call also
       if (callingAgent === id) {
@@ -281,11 +262,20 @@ export default class Assist {
           style: this.options.confirmStyle,
         }))
         confirmAnswer = confirmCall.mount()
+        this.playNotificationSound()
         this.onRemoteCallEnd = () => { // if call cancelled by a caller before confirmation
           app.debug.log("Received call_end during confirm window opened")
           confirmCall?.remove()
           setCallingState(CallingState.False)
+          call.close()
         }
+        setTimeout(() => {
+          if (this.callingState !== CallingState.Requesting) { return }
+          call.close()
+          confirmCall?.remove()
+          this.notifyCallEnd()
+          setCallingState(CallingState.False)
+        }, 30000)
       }
 
       confirmAnswer.then(agreed => {
@@ -296,13 +286,17 @@ export default class Assist {
           return
         }
 
-        let callUI = new CallWindow()
+        const callUI = new CallWindow()
+        annot = new AnnotationCanvas()
+        annot.mount()
         callUI.setAssistentName(agentName)
         
         const onCallEnd = this.options.onCallStart()
         const handleCallEnd = () => {
           call.close()
           callUI.remove()
+          annot && annot.remove()
+          annot = null
           setCallingState(CallingState.False)
           onCallEnd && onCallEnd()
         }
@@ -348,6 +342,16 @@ export default class Assist {
         });
       }).catch(); // in case of Confirm.remove() without any confirmation/decline
     });
+  }
+
+  private playNotificationSound() {
+    if ('Audio' in window) {
+      new Audio("https://static.openreplay.com/tracker-assist/notification.mp3")
+      .play()
+      .catch(e => {
+        this.app.debug.warn(e)
+      })
+    }
   }
 
   private clean() {
