@@ -217,9 +217,14 @@ def get_top_insights(project_id, user_id, funnel_id, range_value=None, start_dat
         return {"errors": ["funnel not found"]}
     get_start_end_time(filter_d=f["filter"], range_value=range_value, start_date=start_date, end_date=end_date)
     insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=f["filter"], project_id=project_id)
+    insights = helper.list_to_camel_case(insights)
     if len(insights) > 0:
+        # fix: this fix for huge drop count
+        if total_drop_due_to_issues > insights[0]["sessionsCount"]:
+            total_drop_due_to_issues = insights[0]["sessionsCount"]
+        # end fix
         insights[-1]["dropDueToIssues"] = total_drop_due_to_issues
-    return {"data": {"stages": helper.list_to_camel_case(insights),
+    return {"data": {"stages": insights,
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
