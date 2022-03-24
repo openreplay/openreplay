@@ -1,3 +1,4 @@
+\set ON_ERROR_STOP true
 BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
