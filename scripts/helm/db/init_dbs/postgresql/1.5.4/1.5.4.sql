@@ -1,4 +1,5 @@
 \set ON_ERROR_STOP true
+SET client_min_messages TO NOTICE;
 BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
