@@ -217,14 +217,17 @@ export default class DashboardStore {
     }
 
     selectDefaultDashboard = () => {
-        if (this.dashboards.length > 0) {
-            const pinnedDashboard = this.dashboards.find(d => d.isPinned)
-            if (pinnedDashboard) {
-                this.selectedDashboard = pinnedDashboard
-            } else {
-                this.selectedDashboard = this.dashboards[0]
+        return new Promise((resolve, reject) => {
+            if (this.dashboards.length > 0) {
+                const pinnedDashboard = this.dashboards.find(d => d.isPinned)
+                if (pinnedDashboard) {
+                    this.selectedDashboard = pinnedDashboard
+                } else {
+                    this.selectedDashboard = this.dashboards[0]
+                }
             }
-        }
+            resolve(this.selectedDashboard)
+        })
     }
 }
 

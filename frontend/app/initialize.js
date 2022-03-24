@@ -7,6 +7,7 @@ import store from './store';
 import Router from './Router';
 import DashboardStore from './components/Dashboard/store';
 import { DashboardStoreProvider } from './components/Dashboard/store/store';
+import { ModalProvider } from './components/Modal/modalContext';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,9 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
   render(
     (
       <Provider store={ store }>
-        <DashboardStoreProvider store={ dashboardStore }>
-          <Router />
-        </DashboardStoreProvider>
+        <ModalProvider>
+          <DashboardStoreProvider store={ dashboardStore }>
+            <Router />
+          </DashboardStoreProvider>
+        </ModalProvider>
       </Provider>
     ),
     document.getElementById('app'),

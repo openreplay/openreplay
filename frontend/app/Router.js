@@ -186,9 +186,9 @@ class Router extends React.Component {
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
           
-          <Route index path={ withSiteId(DASHBOARD_METRICS_PATH, siteIdList) } component={ Dashboard } />
-          {/* <Route index path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } /> */}
-          {/* <Route index path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } /> */}
+          {/* <Route index path={ withSiteId(DASHBOARD_METRICS_PATH, siteIdList) } component={ Dashboard } /> */}
+          <Route index path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
+          <Route index path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
           
           {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
           <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />

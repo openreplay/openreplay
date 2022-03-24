@@ -30,7 +30,9 @@ function NewDashboard(props) {
             if (dashboardId) {
                 store.selectDashboardById(dashboardId);
             } else {
-                store.selectDefaultDashboard();
+                store.selectDefaultDashboard().then((resp) => {
+                    history.push(withSiteId(dashboardSelected(resp.dashboardId), siteId));
+                });
             }
         } 
 
