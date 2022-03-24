@@ -21,7 +21,7 @@ const oss = {
 	MINIO_ACCESS_KEY: process.env.MINIO_ACCESS_KEY,
 	MINIO_SECRET_KEY: process.env.MINIO_SECRET_KEY,
 	ICE_SERVERS: process.env.ICE_SERVERS,
-	TRACKER_VERSION: '3.5.3' // trackerInfo.version,
+	TRACKER_VERSION: '3.5.4' // trackerInfo.version,
 }
 
 module.exports = {
