@@ -93,7 +93,7 @@ module.exports = {
 		// 'transitionProperty',
 		// 'transitionTimingFunction',
 		// 'translate',
-		// 'userSelect',
+		'userSelect',
 		// 'verticalAlign',
 		'visibility',
 		'whitespace',

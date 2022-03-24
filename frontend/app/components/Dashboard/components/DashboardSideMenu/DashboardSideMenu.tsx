@@ -3,17 +3,20 @@ import React from 'react';
 import { SideMenuitem, SideMenuHeader, Icon } from 'UI';
 import { withDashboardStore } from '../../store/store';
 import { withRouter } from 'react-router-dom';
-import { withSiteId, dashboardSelected } from 'App/routes';
+import { withSiteId, dashboardSelected, dashboardMetrics } from 'App/routes';
 
 function DashboardSideMenu(props) {
     const { store, history } = props;
     const { dashboardId } = store.selectedDashboard;
 
+    const redirect = (path) => {
+        history.push(path);
+    }
+
     const onItemClick = (dashboard) => {
         store.selectDashboardById(dashboard.dashboardId);
         const path = withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(store.siteId));
-        // console.log('path', path);
-        // history.push(path);
+        history.push(path);
     };
 
     return (
@@ -41,7 +44,7 @@ function DashboardSideMenu(props) {
 					id="menu-manage-alerts"
 					title="Metrics"
 					iconName="bar-chart-line"
-					// onClick={() => setShowAlerts(true)}
+					onClick={() => redirect(withSiteId(dashboardMetrics(), store.siteId))}
 				/>
 			</div>
             <div className="border-t w-full my-2" />
