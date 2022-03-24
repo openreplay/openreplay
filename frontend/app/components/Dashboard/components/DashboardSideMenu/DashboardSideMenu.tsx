@@ -24,7 +24,7 @@ function DashboardSideMenu(props) {
             <SideMenuHeader className="mb-4" text="Dashboards" />
             {store.dashboards.map(item => (
                 <SideMenuitem
-                    key={ item.key }
+                    key={ item.dashboardId }
                     active={item.dashboardId === dashboardId}
                     title={ item.name }
                     iconName={ item.icon }

@@ -1,38 +1,18 @@
-const ModalContext = React.createContext({
-  component: null,
-  props: {},
-  content: null,
-  showModal: () => {},
-  hideModal: () => {}
-});
+import React from "react";
+import useModal from "./useModal";
+import Modal from "./modal";
 
-export class ModalProvider extends React.PureComponent {
-  showModal = (component, props = {}) => {
-    this.setState({
-      component,
-      props
-    });
-  };
+let ModalContext;
+let { Provider } = (ModalContext = React.createContext());
 
-  hideModal = () => this.setState({
-    component: null,
-    props: {},
-  });
+let ModalProvider = ({ children }) => {
+  let { modal, handleModal, modalContent } = useModal();
+  return (
+    <Provider value={{ modal, handleModal, modalContent }}>
+      <Modal />
+      {children}
+    </Provider>
+  );
+};
 
-  state = {
-    component: null,
-    props: {},
-    showModal: this.showModal,
-    hideModal: this.hideModal
-  };
-
-  render() {
-    return (
-      <ModalContext.Provider value={this.state}>
-        {this.props.children}
-      </ModalContext.Provider>
-    );
-  }
-}
-
-export const ModalConsumer = ModalContext.Consumer;
+export { ModalContext, ModalProvider };
