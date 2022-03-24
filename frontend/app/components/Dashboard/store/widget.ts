@@ -11,6 +11,10 @@ export default class Widget {
     viewType: string = "lineChart"
     series: FilterSeries[] = []
     sessions: [] = []
+    isPrivate: boolean = false
+    owner: string = ""
+    lastModified: Date = new Date()
+    dashboardIds: any[] = []
 
     position: number = 0
     data: any = {}

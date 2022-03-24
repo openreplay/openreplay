@@ -5,6 +5,7 @@ import Widget from "./widget";
 
 export default class DashboardStore {
     dashboards: Dashboard[] = []
+    widgets: Widget[] = []
     selectedDashboard: Dashboard | null = new Dashboard()
     isLoading: boolean = false
     siteId: any = null
@@ -48,6 +49,17 @@ export default class DashboardStore {
         //     this.selectedDashboard?.widgets[4].update({ position: 2 })
         //     this.selectedDashboard?.swapWidgetPosition(2, 0)
         // }, 3000)
+
+        for (let i = 0; i < 8; i++) {
+            const widget = getRandomWidget();
+            widget.position = i;
+            widget.name = `Widget ${i}`;
+            widget.isPrivate = [true, false][Math.floor(Math.random() * 2)];
+            widget.dashboardIds = [this.selectedDashboard?.dashboardId];
+            widget.owner = ["John", "Jane", "Jack", "Jill"][i % 4];
+            widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
+            this.widgets.push(widget);
+        }
     }
 
     resetCurrentWidget() {
