@@ -101,6 +101,7 @@ export const testBuilderNew = () => '/test-builder';
 export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
 
 export const dashboard = () => '/dashboard';
+export const dashboardMetrics = () => '/dashboard/metrics';
 export const dashboardSelected = (id = ':dashboardId', hash) => hashed(`/dashboard/${ id }`, hash);
 
 export const dashboardMetricDetails = (id = ':dashboardId', metricId = ':metricId',  hash) => hashed(`/dashboard/${ id }/metric/${metricId}`, hash);
@@ -121,6 +122,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     assist(),
     dashboard(''),
     dashboardSelected(''),
+    dashboardMetrics(''),
     // dashboardMetricCreate(''),
     dashboardMetricDetails(''),
     metricCreate(''),
@@ -152,7 +154,15 @@ export function isRoute(route, path){
     routeParts.every((p, i) => p.startsWith(':') || p === pathParts[ i ]);
 }
 
-const SITE_CHANGE_AVALIABLE_ROUTES = [ sessions(),  assist(), dashboard(), dashboardSelected(''), errors(), onboarding('')];
+const SITE_CHANGE_AVALIABLE_ROUTES = [
+  sessions(),
+  assist(),
+  dashboard(),
+  dashboardMetrics(''),
+  dashboardSelected(''),
+  errors(),
+  onboarding('')
+];
 export const siteChangeAvaliable = path => SITE_CHANGE_AVALIABLE_ROUTES.some(r => isRoute(r, path));
 
 export const redirects = Object.entries({

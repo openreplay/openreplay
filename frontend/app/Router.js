@@ -15,7 +15,7 @@ import LiveSessionPure from 'Components/Session/LiveSession';
 import AssistPure from 'Components/Assist';
 import BugFinderPure from 'Components/BugFinder/BugFinder';
 import DashboardPure from 'Components/Dashboard/NewDashboard';
-import WidgetViewPure from 'Components/Dashboard/WidgetView';
+import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import ErrorsPure from 'Components/Errors/Errors';
 import Header from 'Components/Header/Header';
 // import ResultsModal from 'Shared/Results/ResultsModal';
@@ -49,10 +49,8 @@ const withSiteId = routes.withSiteId;
 const withObTab = routes.withObTab;
 
 const DASHBOARD_PATH = routes.dashboard();
-// const DASHBOARD_WIDGET_CREATE_PATH = routes.dashboardMetricCreate();
-// const DASHBOARD_WIDGET_DETAILS_PATH = routes.dashboardMetricDetails();
-// const METRIC_CREATE_PATH = routes.metricCreate();
-// const METRIC_DETAILS_PATH = routes.metricDetails();
+const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
+const DASHBOARD_METRICS_PATH = routes.dashboardMetrics();
 
 // const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
@@ -187,7 +185,11 @@ class Router extends React.Component {
           { siteIdList.length === 0 && 
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
-          <Route path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+          
+          <Route index path={ withSiteId(DASHBOARD_METRICS_PATH, siteIdList) } component={ Dashboard } />
+          {/* <Route index path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } /> */}
+          {/* <Route index path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } /> */}
+          
           {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
           <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
           <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />

@@ -10,9 +10,11 @@ import {
 } from 'Duck/customMetrics';
 import { connect } from 'react-redux';
 import { IconButton, Icon } from 'UI';
-import FilterSelection from '../../Filters/FilterSelection';
+import FilterSelection from 'Shared/Filters/FilterSelection';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
+import { useDashboardStore } from '../../store/store';
+import { observer, useObserver } from 'mobx-react-lite';
 
 interface Props {
   seriesIndex: number;
@@ -35,23 +37,21 @@ function FilterSeries(props: Props) {
   const { series, seriesIndex } = props;
 
   const onAddFilter = (filter) => {
-    filter.value = [""]
-    if (filter.hasOwnProperty('filters')) {
-      filter.filters = filter.filters.map(i => ({ ...i, value: [""] }))
-    }
-    props.addSeriesFilterFilter(seriesIndex, filter);
+    series.filter.addFilter(filter)
   }
 
   const onUpdateFilter = (filterIndex, filter) => {
-    props.editSeriesFilterFilter(seriesIndex, filterIndex, filter);
+    series.filter.updateFilter(filterIndex, filter)
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
-    props.editSeriesFilter(seriesIndex, { eventsOrder: value });
+    series.filter.updateKey(name, value)
+    // props.editSeriesFilter(seriesIndex, { eventsOrder: value });
   }
 
   const onRemoveFilter = (filterIndex) => {
-    props.removeSeriesFilterFilter(seriesIndex, filterIndex);
+    series.filter.removeFilter(filterIndex)
+    // props.removeSeriesFilterFilter(seriesIndex, filterIndex);
   }
 
   return (
@@ -59,9 +59,9 @@ function FilterSeries(props: Props) {
       <div className={cn("border-b px-5 h-12 flex items-center relative", { 'hidden': hideHeader })}>
         <div className="mr-auto">
           <SeriesName seriesIndex={seriesIndex} name={series.name} onUpdate={(name) => props.updateSeries(seriesIndex, { name }) } />
-        </div>    
+        </div>
     
-        <div className="flex items-center cursor-pointer" >
+        <div className="flex items-center cursor-pointer">
           <div onClick={props.onRemoveSeries} className={cn("ml-3", {'disabled': !canDelete})}>
             <Icon name="trash" size="16" />
           </div>
@@ -69,13 +69,12 @@ function FilterSeries(props: Props) {
           <div onClick={() => setExpanded(!expanded)} className="ml-3">
             <Icon name="chevron-down" size="16" />
           </div>
-          
         </div>
       </div>
       { expanded && (
         <>
           <div className="p-5">
-            { series.filter.filters.size > 0 ? (
+            { series.filter.filters.length > 0 ? (
               <FilterList
                 filter={series.filter}
                 onUpdateFilter={onUpdateFilter}
@@ -109,4 +108,4 @@ export default connect(null, {
   editSeriesFilterFilter,
   editSeriesFilter,
   removeSeriesFilterFilter,
-})(FilterSeries);
+})(observer(FilterSeries));

@@ -18,6 +18,7 @@ export default class DashboardStore {
             selectedDashboard: observable,
             isLoading: observable,
 
+            resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
             updateDashboard: action,
@@ -31,6 +32,7 @@ export default class DashboardStore {
             toJson: action,
             fromJson: action,
             setSiteId: action,
+            editWidget: action,
         })
 
 
@@ -46,6 +48,14 @@ export default class DashboardStore {
         //     this.selectedDashboard?.widgets[4].update({ position: 2 })
         //     this.selectedDashboard?.swapWidgetPosition(2, 0)
         // }, 3000)
+    }
+
+    resetCurrentWidget() {
+        this.currentWidget = new Widget()
+    }
+
+    editWidget(widget: Widget) {
+        this.currentWidget.update(widget)
     }
 
     fetchList() {
@@ -210,7 +220,7 @@ function getRandomWidget() {
     const widget = new Widget();
     widget.widgetId = Math.floor(Math.random() * 100);
     widget.name = randomMetricName();
-    widget.type = "random";
+    // widget.type = "random";
     widget.colSpan = Math.floor(Math.random() * 2) + 1;
     return widget;
 }
