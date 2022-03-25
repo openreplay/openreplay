@@ -884,3 +884,20 @@ class CreateDashboardSchema(BaseModel):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class AddWidgetToDashboardPayloadSchema(BaseModel):
+    template_id: Optional[int] = Field(default=None)
+    metric_id: Optional[int] = Field(default=None)
+    name: Optional[str] = Field(default=None)
+    configuration: dict = Field(default={})
+
+    @root_validator
+    def validator(cls, values):
+        assert bool(values.get("template_id") is not None) != bool(values.get("metric_id") is not None), \
+            f"templateId or metricId should be provided, but not both at the same time"
+
+        return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
