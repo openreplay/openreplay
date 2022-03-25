@@ -2,14 +2,14 @@ import { makeAutoObservable, runInAction, observable, action, reaction } from "m
 import Dashboard from "./dashboard"
 import APIClient from 'App/api_client';
 import Widget from "./widget";
-
 export default class DashboardStore {
     dashboards: Dashboard[] = []
-    widgets: Widget[] = []
+    widgetTemplates: any[] = []
     selectedDashboard: Dashboard | null = new Dashboard()
     isLoading: boolean = false
     siteId: any = null
     currentWidget: Widget = new Widget()
+    widgetCategories: any[] = []
 
     private client = new APIClient()
 
@@ -50,16 +50,27 @@ export default class DashboardStore {
         //     this.selectedDashboard?.swapWidgetPosition(2, 0)
         // }, 3000)
 
-        for (let i = 0; i < 8; i++) {
-            const widget = getRandomWidget();
-            widget.position = i;
-            widget.name = `Widget ${i}`;
-            widget.isPrivate = [true, false][Math.floor(Math.random() * 2)];
-            widget.dashboardIds = [this.selectedDashboard?.dashboardId];
-            widget.owner = ["John", "Jane", "Jack", "Jill"][i % 4];
-            widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
-            this.widgets.push(widget);
+        for (let i = 0; i < 4; i++) {
+            const cat: any = { 
+                name: `Category ${i + 1}`,
+                categoryId: i,
+                description: `Category ${i + 1} description`,
+                widgets: []
+            }
+            // const randomBumberBetween = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+            const randomNumber = Math.floor(Math.random() * (5 - 2 + 1)) + 2
+            
+            for (let j = 0; j < randomNumber; j++) {
+                const widget: any= {};
+                widget.widgetId = `${i}-${j}`
+                widget.name = `Widget ${i}-${j}`;
+                widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
+                cat.widgets.push(widget);
+            }
+
+            this.widgetCategories.push(cat)
         }
+        
     }
 
     resetCurrentWidget() {
