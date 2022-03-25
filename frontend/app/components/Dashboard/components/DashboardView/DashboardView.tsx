@@ -4,24 +4,17 @@ import { observer } from 'mobx-react-lite';
 import { withDashboardStore } from '../../store/store';
 import { Button, PageTitle, Link } from 'UI';
 import { withSiteId, dashboardMetricCreate } from 'App/routes';
-import { ModalContext } from "App/components/Modal/modalContext";
-
-const ModalContent = () => {
-    let { handleModal } = React.useContext(ModalContext);
-    return (
-        <div className="h-screen bg-white relative p-5 shadow-lg" style={{ width: '300px'}}>
-          Hello this is test
-        </div>
-    )
-}
+import withModal from 'App/components/Modal/withModal';
+import DashboardModal from '../DashboardModal'
 
 function DashboardView(props) {
-    let { handleModal } = React.useContext(ModalContext);
+    // let { handleModal } = React.useContext(ModalContext);
     const { store } = props;
     const dashboard = store.selectedDashboard
     const list = dashboard?.widgets;
     useEffect(() => {
-        handleModal(<ModalContent />)
+        // handleModal(<ModalContent />)
+        props.showModal(DashboardModal)
     }, [])
     return (
         <div>
@@ -36,4 +29,4 @@ function DashboardView(props) {
     )
 }
 
-export default withDashboardStore(observer(DashboardView));
+export default withDashboardStore(withModal(observer(DashboardView)));

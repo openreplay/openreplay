@@ -1,23 +1,16 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { ModalContext } from "./modalContext";
-import ModalOverlay from "./ModalOverlay";
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-const Modal = () => {
-  let { modalContent, handleModal, modal } = React.useContext(ModalContext);
-  if (modal) {
+export default class Modal extends React.PureComponent {
+	constructor(props) {
+    super(props);
+    this.el = document.createElement('div');
+  }
+
+	render() {
     return ReactDOM.createPortal(
-      <div
-        className="fixed top-0 left-0 h-screen relative"
-        style={{ background: "rgba(0,0,0,0.8)", zIndex: '9999' }}
-      >
-        <ModalOverlay handleModal={handleModal}>
-          {modalContent}
-        </ModalOverlay>
-      </div>,
-      document.querySelector("#modal-root")
+      this.props.children,
+      this.el,
     );
-  } else return null;
-};
-
-export default Modal;
+	}
+}

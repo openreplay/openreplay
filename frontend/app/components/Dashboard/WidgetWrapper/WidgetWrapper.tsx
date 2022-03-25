@@ -5,9 +5,9 @@ import { ItemMenu } from 'UI';
 
 function WidgetWrapper(props) {
     const { widget } = props;
-    const store: any = useDashboardStore();
-    const dashboard = store.selectedDashboard;
-    const siteId = store.siteId;
+    // const store: any = useDashboardStore();
+    // const dashboard = store.selectedDashboard;
+    // const siteId = store.siteId;
     
     return (
         <div className={cn("border rounded bg-white", 'col-span-' + widget.colSpan)} style={{ userSelect: 'none'}}>

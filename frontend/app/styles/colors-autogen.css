@@ -62,6 +62,37 @@
 .color-white { color: $white }
 .color-borderColor { color: $borderColor }
 
+/* border-color */
+.border-color-main { border-color: $main }
+.border-color-gray-light-shade { border-color: $gray-light-shade }
+.border-color-gray-lightest { border-color: $gray-lightest }
+.border-color-gray-light { border-color: $gray-light }
+.border-color-gray-medium { border-color: $gray-medium }
+.border-color-gray-dark { border-color: $gray-dark }
+.border-color-gray-darkest { border-color: $gray-darkest }
+.border-color-teal { border-color: $teal }
+.border-color-teal-dark { border-color: $teal-dark }
+.border-color-teal-light { border-color: $teal-light }
+.border-color-tealx { border-color: $tealx }
+.border-color-tealx-light { border-color: $tealx-light }
+.border-color-tealx-light-border { border-color: $tealx-light-border }
+.border-color-orange { border-color: $orange }
+.border-color-yellow { border-color: $yellow }
+.border-color-yellow2 { border-color: $yellow2 }
+.border-color-orange-dark { border-color: $orange-dark }
+.border-color-green { border-color: $green }
+.border-color-green2 { border-color: $green2 }
+.border-color-green-dark { border-color: $green-dark }
+.border-color-red { border-color: $red }
+.border-color-red2 { border-color: $red2 }
+.border-color-blue { border-color: $blue }
+.border-color-blue2 { border-color: $blue2 }
+.border-color-active-blue { border-color: $active-blue }
+.border-color-active-blue-border { border-color: $active-blue-border }
+.border-color-pink { border-color: $pink }
+.border-color-white { border-color: $white }
+.border-color-borderColor { border-color: $borderColor }
+
 /* color */
 .hover-main:hover { color: $main }
 .hover-gray-light-shade:hover { color: $gray-light-shade }
