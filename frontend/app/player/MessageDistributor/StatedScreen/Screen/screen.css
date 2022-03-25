@@ -1,4 +1,5 @@
 .screen {
+  user-select: none;
   overflow: hidden;
   position: absolute;
   transform-origin: left top;

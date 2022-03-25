@@ -1,3 +1,5 @@
+\set ON_ERROR_STOP true
+SET client_min_messages TO NOTICE;
 BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
@@ -22,7 +24,7 @@ $$
                          LIMIT 1)
                   ORDER BY LOWER(email)) THEN
             raise notice 'duplicate users detected';
-            FOR duplicate IN SELECT user_id, email, deleted_at, verified_email, jwt_iat
+            FOR duplicate IN SELECT user_id, email, deleted_at, jwt_iat
                              FROM users
                              WHERE lower(email) =
                                    (SELECT LOWER(email)
