@@ -21,15 +21,23 @@ def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_
 
 
 @app.get('/{projectId}/dashboards/{dashboardId}', tags=["dashboard", "metrics"])
-def get_dashboards(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.get_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard", "metrics"])
 @app.put('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard", "metrics"])
-def add_widget_to_dashboards(projectId: int, dashboardId: int,
-                             data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
-                             context: schemas.CurrentContext = Depends(OR_context)):
+def add_widget_to_dashboard(projectId: int, dashboardId: int,
+                            data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
+                            context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
+                                           data=data)}
+
+
+@app.delete('/{projectId}/dashboards/{dashboardId}/metrics/{metricId}', tags=["dashboard", "metrics"])
+def remove_widget_from_dashboard(projectId: int, dashboardId: int, metricId: int,
+                                 data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
+                                 context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                            data=data)}
 
@@ -41,7 +49,7 @@ def add_widget_to_dashboards(projectId: int, dashboardId: int,
 
 @app.get('/{projectId}/metrics/templates', tags=["dashboard", "metrics"])
 def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": templates.get_templates()}
+    return {"data": templates.get_templates(project_id=projectId, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/metrics/try', tags=["dashboard"])

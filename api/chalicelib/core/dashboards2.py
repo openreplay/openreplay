@@ -77,13 +77,17 @@ def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashb
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
 
-# def get_widgets(project_id):
-#     with pg_client.PostgresClient() as cur:
-#         pg_query = f"""SELECT *
-#                         FROM widgets
-#                         WHERE deleted_at ISNULL
-#                           AND project_id = %(projectId)s;"""
-#         params = {"projectId": project_id}
-#         cur.execute(cur.mogrify(pg_query, params))
-#         rows = cur.fetchall()
-#     return helper.list_to_camel_case(rows)
+def remove_widget(project_id, user_id, dashboard_id,widget_id):
+    ref_key = "metric_id"
+    if data.template_id is not None:
+        ref_key = "template_id"
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""INSERT INTO dashboard_widgets(dashboard_id, {ref_key}, user_id, configuration, name)
+                      VALUES (%(dashboard_id)s, %({ref_key})s, %(userId)s, %(configuration)s::jsonb, %(name)s)
+                      RETURNING *;"""
+        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
+        params["configuration"] = json.dumps(params.get("configuration", {}))
+        cur.execute(cur.mogrify(pg_query, params))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
