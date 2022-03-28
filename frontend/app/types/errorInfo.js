@@ -5,6 +5,7 @@ import Session from './session';
 export const RESOLVED = "resolved";
 export const UNRESOLVED = "unresolved";
 export const IGNORED = "ignored";
+export const BOOKMARK = "bookmark";
 
 
 function getStck0InfoString(stack) {
