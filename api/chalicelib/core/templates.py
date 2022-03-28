@@ -6,12 +6,13 @@ CATEGORY_DESCRIPTION = {
 }
 
 
-def get_templates():
+def get_templates(project_id, user_id):
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT category, jsonb_agg(templates ORDER BY name) AS widgets
-                        FROM templates
+        pg_query = cur.mogrify(f"""SELECT category, jsonb_agg(metrics ORDER BY name) AS widgets
+                        FROM metrics
+                        WHERE project_id ISNULL OR (project_id = %(project_id)s AND (is_public OR user_id= %(userId)s))  
                         GROUP BY category
-                        ORDER BY category;"""
+                        ORDER BY category;""", {"project_id": project_id, "userId": user_id})
         cur.execute(pg_query)
         rows = cur.fetchall()
     for r in rows:
