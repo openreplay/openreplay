@@ -41,6 +41,11 @@ def login(data: schemas.UserLoginSchema = Body(...)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="You’ve entered invalid Email or Password."
         )
+    if "errors" in r:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=r["errors"][0]
+        )
 
     tenant_id = r.pop("tenantId")
 
