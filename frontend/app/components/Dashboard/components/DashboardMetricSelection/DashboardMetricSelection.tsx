@@ -103,7 +103,7 @@ function DashboardMetricSelection(props) {
                     </div>
                 </div>
                 <div className="col-span-9">
-                    <div className="grid grid-cols-2 gap-4 -mx-4 px-4">
+                    <div className="grid grid-cols-2 gap-4 -mx-4 px-4 lg:grid-cols-2 sm:grid-cols-1">
                         {activeCategory.widgets.map((widget: any) => (
                             <div
                                 key={widget.widgetId}
@@ -115,12 +115,6 @@ function DashboardMetricSelection(props) {
                         ))}
                     </div>
                 </div>
-            </div>
-
-            <div className="flex absolute bottom-0 left-0 right-0 bg-white border-t p-3">
-                <Button primary className="">
-                    Add Selected to Dashboard
-                </Button>
             </div>
         </div>
     ));

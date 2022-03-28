@@ -6,10 +6,14 @@ export default class DashboardStore {
     dashboards: Dashboard[] = []
     widgetTemplates: any[] = []
     selectedDashboard: Dashboard | null = new Dashboard()
+    newDashboard: Dashboard = new Dashboard()
     isLoading: boolean = false
     siteId: any = null
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
+    widgets: Widget[] = []
+    metricsPage: number = 1
+    metricsPageSize: number = 10
 
     private client = new APIClient()
 
@@ -50,6 +54,14 @@ export default class DashboardStore {
         //     this.selectedDashboard?.swapWidgetPosition(2, 0)
         // }, 3000)
 
+        for (let i = 0; i < 20; i++) {
+            const widget: any= {};
+            widget.widgetId = `${i}`
+            widget.name = `Widget ${i}`;
+            widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
+            this.widgets.push(widget)
+        }
+
         for (let i = 0; i < 4; i++) {
             const cat: any = { 
                 name: `Category ${i + 1}`,
@@ -57,9 +69,8 @@ export default class DashboardStore {
                 description: `Category ${i + 1} description`,
                 widgets: []
             }
-            // const randomBumberBetween = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
-            const randomNumber = Math.floor(Math.random() * (5 - 2 + 1)) + 2
             
+            const randomNumber = Math.floor(Math.random() * (5 - 2 + 1)) + 2
             for (let j = 0; j < randomNumber; j++) {
                 const widget: any= {};
                 widget.widgetId = `${i}-${j}`

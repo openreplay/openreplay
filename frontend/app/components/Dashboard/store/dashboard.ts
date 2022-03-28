@@ -5,7 +5,7 @@ import Widget from "./widget"
 export default class Dashboard {
     dashboardId: any = undefined
     name: string = "New Dashboard"
-    isPriavte: boolean = false
+    isPublic: boolean = false
     widgets: Widget[] = []
     isValid: boolean = false
     isPinned: boolean = false
@@ -14,7 +14,7 @@ export default class Dashboard {
     constructor() {
         makeAutoObservable(this, {
             name: observable,
-            isPriavte: observable,
+            isPublic: observable,
             widgets: observable,
             isValid: observable,
 
@@ -31,14 +31,24 @@ export default class Dashboard {
             validate: action,
             sortWidgets: action,
             swapWidgetPosition: action,
+            update: action,
         })
+
+        this.validate();
+    }
+
+    update(data: any) {
+        runInAction(() => {
+            Object.assign(this, data)
+        })
+        this.validate()
     }
 
     toJson() {
         return {
             dashboardId: this.dashboardId,
             name: this.name,
-            isPrivate: this.isPriavte,
+            isPrivate: this.isPublic,
             widgets: this.widgets.map(w => w.toJson())
         }
     }
@@ -47,14 +57,15 @@ export default class Dashboard {
         runInAction(() => {
             this.dashboardId = json.dashboardId
             this.name = json.name
-            this.isPriavte = json.isPrivate
+            this.isPublic = json.isPrivate
             this.widgets = json.widgets.map(w => new Widget().fromJson(w))
         })
         return this
     }
 
     validate() {
-        this.isValid = this.name.length > 0
+        console.log('called...')
+        return this.isValid = this.name.length > 0
     }
 
     addWidget(widget: Widget) {

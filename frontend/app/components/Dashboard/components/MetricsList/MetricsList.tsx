@@ -8,6 +8,13 @@ function MetricsList(props: Props) {
     const store: any = useDashboardStore();
     const widgets = store.widgets;
     const lenth = widgets.length;
+    const currentPage = store.metricsPage;
+    const totalPages = widgets.length;
+    
+    const pageSize = store.metricsPageSize;
+    const start = (currentPage - 1) * pageSize;
+    const end = currentPage * pageSize;
+    const list = widgets.slice(start, end);
 
     return useObserver(() => (
         <NoContent show={lenth === 0} icon="exclamation-circle">
@@ -21,7 +28,7 @@ function MetricsList(props: Props) {
                     <div>Last Modified</div>
                 </div>
 
-                {widgets.map((metric: any) => (
+                {list.map((metric: any) => (
                     <div className="grid grid-cols-7 p-3 border-t select-none">
                         <div className="col-span-2">
                             <Link to="/dashboard/metrics/create" className="link">
