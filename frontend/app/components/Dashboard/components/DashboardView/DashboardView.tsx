@@ -13,8 +13,7 @@ function DashboardView(props) {
     const dashboard = store.selectedDashboard
     const list = dashboard?.widgets;
     useEffect(() => {
-        // handleModal(<ModalContent />)
-        props.showModal(DashboardModal)
+        // props.showModal(DashboardModal)
     }, [])
     return (
         <div>
