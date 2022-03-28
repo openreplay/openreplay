@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
-import { Loader, NoContent, Button, LoadMoreButton } from 'UI';
+import { Loader, NoContent, Button, LoadMoreButton, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
-import { fetchSessions, addFilterByKeyAndValue } from 'Duck/search';
+import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
@@ -15,17 +15,19 @@ var timeoutId;
   shouldAutorefresh: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size === 0,
   savedFilters: state.getIn([ 'filters', 'list' ]),
   loading: state.getIn([ 'sessions', 'loading' ]),
-  activeTab: state.getIn([ 'sessions', 'activeTab' ]),
+  activeTab: state.getIn([ 'search', 'activeTab' ]),
   allList: state.getIn([ 'sessions', 'list' ]),
   total: state.getIn([ 'sessions', 'total' ]),
   filters: state.getIn([ 'search', 'instance', 'filters' ]),
   metaList: state.getIn(['customFields', 'list']).map(i => i.key),
+  currentPage: state.getIn([ 'search', 'currentPage' ]),
 }), {
   applyFilter,
   addAttribute,
   addEvent,
   fetchSessions,
   addFilterByKeyAndValue,
+  updateCurrentPage,
 })
 export default class SessionList extends React.PureComponent {
   state = {
@@ -76,6 +78,8 @@ export default class SessionList extends React.PureComponent {
     clearTimeout(timeoutId)
   }
 
+  
+
   renderActiveTabContent(list) {
     const {
       loading,
@@ -84,6 +88,8 @@ export default class SessionList extends React.PureComponent {
       allList,
       activeTab,
       metaList,
+      currentPage,
+      total,
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
@@ -93,28 +99,28 @@ export default class SessionList extends React.PureComponent {
     return (
       <NoContent
         title={this.getNoContentMessage(activeTab)}
-        subtext="Please try changing your search parameters."
+        // subtext="Please try changing your search parameters."
         icon="exclamation-circle"
         show={ !loading && list.size === 0}
         subtext={
-        <div>
-          <div>Please try changing your search parameters.</div>
-          {allList.size > 0 && (
-            <div className="pt-2">
-              However, we found other sessions based on your search parameters. 
-              <div>
-                <Button
-                  plain
-                  onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
-                >See All</Button>
+          <div>
+            <div>Please try changing your search parameters.</div>
+            {allList.size > 0 && (
+              <div className="pt-2">
+                However, we found other sessions based on your search parameters. 
+                <div>
+                  <Button
+                    plain
+                    onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
+                  >See All</Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
         }
       >
         <Loader loading={ loading }>
-          { list.take(displayedCount).map(session => (
+          { list.map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -124,7 +130,16 @@ export default class SessionList extends React.PureComponent {
             />
           ))}
         </Loader>
-        <LoadMoreButton
+        <div className="w-full flex items-center justify-center py-6">
+          <Pagination
+            page={currentPage}
+            totalPages={Math.ceil(total / PER_PAGE)}
+            onPageChange={(page) => this.props.updateCurrentPage(page)}
+            limit={PER_PAGE}
+            debounceRequest={1000}
+          />
+        </div>
+        {/* <LoadMoreButton
           className="mt-12 mb-12"
           displayedCount={displayedCount}
           totalCount={list.size}
@@ -135,7 +150,7 @@ export default class SessionList extends React.PureComponent {
               Haven't found the session in the above list? <br/>Try being a bit more specific by setting a specific time frame or simply use different filters
             </div>
           }
-        />
+        /> */}
       </NoContent>
     );
   }
