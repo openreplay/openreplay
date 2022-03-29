@@ -14,15 +14,12 @@ export default class DashboardStore {
     widgets: Widget[] = []
     metricsPage: number = 1
     metricsPageSize: number = 10
+    metricsSearch: string = ''
 
     private client = new APIClient()
 
     constructor() {
         makeAutoObservable(this, {
-            dashboards: observable,
-            selectedDashboard: observable,
-            isLoading: observable,
-
             resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
@@ -38,6 +35,7 @@ export default class DashboardStore {
             fromJson: action,
             setSiteId: action,
             editWidget: action,
+            updateKey: action,
         })
 
 
@@ -54,7 +52,7 @@ export default class DashboardStore {
         //     this.selectedDashboard?.swapWidgetPosition(2, 0)
         // }, 3000)
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 15; i++) {
             const widget: any= {};
             widget.widgetId = `${i}`
             widget.name = `Widget ${i}`;
@@ -82,6 +80,10 @@ export default class DashboardStore {
             this.widgetCategories.push(cat)
         }
         
+    }
+
+    updateKey(key: any, value: any) {
+        this[key] =  value
     }
 
     resetCurrentWidget() {

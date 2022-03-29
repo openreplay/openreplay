@@ -26,7 +26,10 @@ function NewDashboard(props) {
     }, []);
 
     useEffect(() => {
-        if (!dashboard || !dashboard.dashboardId) {
+        if (dashboardId) {
+            store.selectDashboardById(dashboardId);
+        }
+        if (!dashboardId) {
             if (dashboardId) {
                 store.selectDashboardById(dashboardId);
             } else {
@@ -35,19 +38,9 @@ function NewDashboard(props) {
                 });
             }
         } 
+    }, []);
 
-        // if (dashboard) {
-        //     if (dashboard.dashboardId !== dashboardId) {
-        //         history.push(withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(siteId)));
-        //     }
-
-        //     history.replace(withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(siteId)));
-        // }
-        
-        // console.log('dashboard', dashboard)
-    }, [dashboard]);
-
-    console.log('rendering dashboard', props.match.params);
+    // console.log('rendering dashboard', props.match.params);
 
     return (
         <>

@@ -1,20 +1,24 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { Icon, NoContent, Label, Link } from 'UI';
+import { Icon, NoContent, Label, Link, Pagination } from 'UI';
 import { useDashboardStore } from '../../store/store';
+import { getRE } from 'App/utils';
 
 interface Props { }
 function MetricsList(props: Props) {
     const store: any = useDashboardStore();
     const widgets = store.widgets;
     const lenth = widgets.length;
-    const currentPage = store.metricsPage;
-    const totalPages = widgets.length;
+    const currentPage = useObserver(() => store.metricsPage);
+    const metricsSearch = useObserver(() => store.metricsSearch);
+
+    const filterRE = getRE(metricsSearch, 'i');
+    const list = widgets.filter(w => filterRE.test(w.name))
     
+    const totalPages = list.length;
     const pageSize = store.metricsPageSize;
     const start = (currentPage - 1) * pageSize;
     const end = currentPage * pageSize;
-    const list = widgets.slice(start, end);
 
     return useObserver(() => (
         <NoContent show={lenth === 0} icon="exclamation-circle">
@@ -28,7 +32,7 @@ function MetricsList(props: Props) {
                     <div>Last Modified</div>
                 </div>
 
-                {list.map((metric: any) => (
+                {list.slice(start, end).map((metric: any) => (
                     <div className="grid grid-cols-7 p-3 border-t select-none">
                         <div className="col-span-2">
                             <Link to="/dashboard/metrics/create" className="link">
@@ -54,6 +58,16 @@ function MetricsList(props: Props) {
                         <div>Last Modified</div>
                     </div>
                 ))}
+            </div>
+
+            <div className="w-full flex items-center justify-center py-6">
+                <Pagination
+                    page={currentPage}
+                    totalPages={Math.ceil(totalPages / pageSize)}
+                    onPageChange={(page) => store.updateKey('metricsPage', page)}
+                    limit={pageSize}
+                    debounceRequest={100}
+                />
             </div>
         </NoContent>
     ));
