@@ -6,6 +6,7 @@ import { Button, PageTitle, Link } from 'UI';
 import { withSiteId, dashboardMetricCreate } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardModal from '../DashboardModal'
+import DashboardWidgetGrid from '../DashboardWidgetGrid';
 
 function DashboardView(props) {
     // let { handleModal } = React.useContext(ModalContext);
@@ -17,13 +18,16 @@ function DashboardView(props) {
     }, [])
     return (
         <div>
-            <div className="flex items-center mb-4">
-                <PageTitle title={dashboard.name} className="mr-3" />
-                <Link to={withSiteId(dashboardMetricCreate(dashboard.dashboardId), store.siteId)}><Button primary size="small">Add Metric</Button></Link>
+            <div className="flex items-center mb-4 justify-between">
+                <div className="flex items-center">
+                    <PageTitle title={dashboard.name} className="mr-3" />
+                    <Link to={withSiteId(dashboardMetricCreate(dashboard.dashboardId), store.siteId)}><Button primary size="small">Add Metric</Button></Link>
+                </div>
+                <div>
+                    Right
+                </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                {list && list.map(item => <WidgetWrapper widget={item} key={item.widgetId} />)}
-            </div>
+            <DashboardWidgetGrid />
         </div>
     )
 }

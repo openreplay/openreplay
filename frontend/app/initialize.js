@@ -9,6 +9,9 @@ import DashboardStore from './components/Dashboard/store';
 import { DashboardStoreProvider } from './components/Dashboard/store/store';
 import { ModalProvider } from './components/Modal/ModalContext';
 import ModalRoot from './components/Modal/ModalRoot';
+import { HTML5Backend } from 'react-dnd-html5-backend'
+import { DndProvider } from 'react-dnd'
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,12 +19,14 @@ document.addEventListener('DOMContentLoaded', () => {
   render(
     (
       <Provider store={ store }>
-        <DashboardStoreProvider store={ dashboardStore }>
-          <ModalProvider>
-              <ModalRoot />
-              <Router />
-          </ModalProvider>
-        </DashboardStoreProvider>
+        <DndProvider backend={HTML5Backend}>
+          <DashboardStoreProvider store={ dashboardStore }>
+            <ModalProvider>
+                <ModalRoot />
+                <Router />
+            </ModalProvider>
+          </DashboardStoreProvider>
+        </DndProvider>
       </Provider>
     ),
     document.getElementById('app'),

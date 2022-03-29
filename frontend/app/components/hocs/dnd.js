@@ -1,6 +1,6 @@
-import HTML5Backend from 'react-dnd-html5-backend';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { findDOMNode } from 'react-dom';
-import { DragSource, DropTarget, DragDropContext } from 'react-dnd';
+import { DragSource, DropTarget, DndContext } from 'react-dnd';
 
 const cardSource = {
   beginDrag(props) {
@@ -50,7 +50,7 @@ const cardTarget = {
   },
 };
 
-export const DNDContext = DragDropContext(HTML5Backend);
+export const DNDContext = DndContext(HTML5Backend);
 
 export const DNDSource = name => DragSource(name, cardSource, (connect, monitor) => ({
   connectDragSource: connect.dragSource(),
