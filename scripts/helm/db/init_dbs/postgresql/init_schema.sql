@@ -953,6 +953,7 @@ $$
                 metric_value  text[]           NOT NULL DEFAULT '{}'::text[],
                 metric_format text,
                 category      text             NULL     DEFAULT 'custom',
+                is_pinned     boolean          NOT NULL DEFAULT FALSE,
                 is_predefined boolean          NOT NULL DEFAULT FALSE,
                 is_template   boolean          NOT NULL DEFAULT FALSE,
                 key           text             NULL     DEFAULT NULL,

@@ -1,32 +1,50 @@
 from fastapi import Body, Depends
 
 import schemas
-from chalicelib.core import dashboards2, templates, custom_metrics
+from chalicelib.core import dashboards2, custom_metrics
 from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
 
 
-@app.post('/{projectId}/dashboards', tags=["dashboard", "metrics"])
-@app.put('/{projectId}/dashboards', tags=["dashboard", "metrics"])
+@app.post('/{projectId}/dashboards', tags=["dashboard"])
+@app.put('/{projectId}/dashboards', tags=["dashboard"])
 def create_dashboards(projectId: int, data: schemas.CreateDashboardSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.create_dashboard(project_id=projectId, user_id=context.user_id, data=data)}
 
 
-@app.get('/{projectId}/dashboards', tags=["dashboard", "metrics"])
+@app.get('/{projectId}/dashboards', tags=["dashboard"])
 def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.get_dashboards(project_id=projectId, user_id=context.user_id)}
 
 
-@app.get('/{projectId}/dashboards/{dashboardId}', tags=["dashboard", "metrics"])
+@app.get('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
 def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.get_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
 
 
-@app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard", "metrics"])
-@app.put('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard", "metrics"])
+@app.post('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
+@app.put('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
+def update_dashboard(projectId: int, dashboardId: int, data: schemas.CreateDashboardSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.update_dashboard(project_id=projectId, user_id=context.user_id,
+                                                 dashboard_id=dashboardId, data=data)}
+
+
+@app.delete('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
+def delete_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return dashboards2.delete_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)
+
+
+@app.get('/{projectId}/dashboards/{dashboardId}/pin', tags=["dashboard"])
+def pin_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.pin_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
+
+
+@app.post('/{projectId}/dashboards/{dashboardId}/widgets', tags=["dashboard"])
+@app.put('/{projectId}/dashboards/{dashboardId}/widgets', tags=["dashboard"])
 def add_widget_to_dashboard(projectId: int, dashboardId: int,
                             data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
@@ -34,22 +52,25 @@ def add_widget_to_dashboard(projectId: int, dashboardId: int,
                                            data=data)}
 
 
-@app.delete('/{projectId}/dashboards/{dashboardId}/metrics/{metricId}', tags=["dashboard", "metrics"])
-def remove_widget_from_dashboard(projectId: int, dashboardId: int, metricId: int,
-                                 data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
+@app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
+@app.put('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
+def update_widget_in_dashboard(projectId: int, dashboardId: int, widgetId: int,
+                               data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    return dashboards2.update_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
+                                     widget_id=widgetId, data=data)
+
+
+@app.delete('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
+def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": dashboards2.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                           data=data)}
+    return dashboards2.remove_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
+                                     widget_id=widgetId)
 
 
-# @app.get('/{projectId}/widgets', tags=["dashboard", "metrics"])
-# def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-#     return {"data": dashboards2.get_widgets(project_id=projectId)}
-
-
-@app.get('/{projectId}/metrics/templates', tags=["dashboard", "metrics"])
+@app.get('/{projectId}/metrics/templates', tags=["dashboard"])
 def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": templates.get_templates(project_id=projectId, user_id=context.user_id)}
+    return {"data": dashboards2.get_templates(project_id=projectId, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/metrics/try', tags=["dashboard"])
