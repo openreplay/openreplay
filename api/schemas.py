@@ -900,3 +900,11 @@ class AddWidgetToDashboardPayloadSchema(BaseModel):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+# these values should match the keys in metrics table
+class TemplateKeys(str, Enum):
+    count_sessions = "count_sessions"
+    avg_request_load_time = "avg_request_load_time"
+    avg_page_load_time = "avg_page_load_time"
+    avg_image_load_time = "avg_image_load_time"
