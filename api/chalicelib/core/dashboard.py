@@ -138,7 +138,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     with pg_client.PostgresClient() as cur:
         pg_query = f"""\
                 SELECT generated_timestamp AS timestamp,
-                       COALESCE(COUNT(sessions), 0) AS count
+                       COALESCE(COUNT(sessions), 0) AS value
                 FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                      LEFT JOIN LATERAL ( SELECT 1
                                          FROM public.sessions
@@ -151,7 +151,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         results = {
-            "count": sum([r["count"] for r in rows]),
+            "value": sum([r["value"] for r in rows]),
             "chart": rows
         }
 
@@ -170,7 +170,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 
         count = cur.fetchone()["count"]
 
-        results["countProgress"] = helper.__progress(old_val=count, new_val=results["count"])
+        results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
 
     return results
 
@@ -468,8 +468,9 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                   ORDER BY generated_timestamp) AS chart
                             ) AS chart ON (TRUE);"""
 
-        cur.execute(cur.mogrify(pg_query, {"step_size": step_size,"project_id": project_id, "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
+        cur.execute(
+            cur.mogrify(pg_query, {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+                                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
         rows = cur.fetchall()
     for i in range(len(rows)):
         rows[i]["sessions"] = rows[i].pop("sessions_count")
@@ -672,8 +673,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                              WHERE {" AND ".join(pg_sub_query)} AND positionUTF8(url_path, %(value)s) != 0
                              LIMIT 10);"""
             print(cur.mogrify(pg_query, {"project_id": project_id,
-                                               "value": helper.string_to_sql_like(text.lower()),
-                                               "platform_0": platform}))
+                                         "value": helper.string_to_sql_like(text.lower()),
+                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text.lower()),
                                                "platform_0": platform}))
@@ -691,9 +692,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                           WHERE {" AND ".join(pg_sub_query)} 
                           LIMIT 10;"""
             print(cur.mogrify(pg_query, {"project_id": project_id,
-                                               "value": helper.string_to_sql_like(text),
-                                               "resource_type": resource_type,
-                                               "platform_0": platform}))
+                                         "value": helper.string_to_sql_like(text),
+                                         "resource_type": resource_type,
+                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "resource_type": resource_type,
@@ -709,8 +710,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                           WHERE {" AND ".join(pg_sub_query)} 
                           LIMIT 10;"""
             print(cur.mogrify(pg_query, {"project_id": project_id,
-                                               "value": helper.string_to_sql_like(text),
-                                               "platform_0": platform}))
+                                         "value": helper.string_to_sql_like(text),
+                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
@@ -723,8 +724,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                              WHERE {" AND ".join(pg_sub_query)}
                              LIMIT 10;"""
             print(cur.mogrify(pg_query, {"project_id": project_id,
-                                               "value": helper.string_to_sql_like(text),
-                                               "platform_0": platform}))
+                                         "value": helper.string_to_sql_like(text),
+                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
@@ -737,8 +738,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                              WHERE {" AND ".join(pg_sub_query)}
                              LIMIT 10;"""
             print(cur.mogrify(pg_query, {"project_id": project_id,
-                                               "value": helper.string_to_sql_like(text),
-                                               "platform_0": platform}))
+                                         "value": helper.string_to_sql_like(text),
+                                         "platform_0": platform}))
             cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                                "value": helper.string_to_sql_like(text),
                                                "platform_0": platform}))
@@ -758,8 +759,8 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                       WHERE {" AND ".join(pg_sub_query)} 
                                       LIMIT 10;"""
                 print(cur.mogrify(pg_query,
-                                        {"project_id": project_id, "value": helper.string_to_sql_like(text), "key": key,
-                                         "platform_0": platform}))
+                                  {"project_id": project_id, "value": helper.string_to_sql_like(text), "key": key,
+                                   "platform_0": platform}))
                 cur.execute(cur.mogrify(pg_query,
                                         {"project_id": project_id, "value": helper.string_to_sql_like(text), "key": key,
                                          "platform_0": platform}))
@@ -785,9 +786,9 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
                                       LIMIT 10)""")
                 pg_query = " UNION ALL ".join(pg_query)
                 print(cur.mogrify(pg_query,
-                                        {"project_id": project_id, "value": helper.string_to_sql_like(text),
-                                         "key": key,
-                                         "platform_0": platform}))
+                                  {"project_id": project_id, "value": helper.string_to_sql_like(text),
+                                   "key": key,
+                                   "platform_0": platform}))
                 cur.execute(cur.mogrify(pg_query,
                                         {"project_id": project_id, "value": helper.string_to_sql_like(text),
                                          "key": key,
@@ -865,8 +866,6 @@ def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                            project=False, duration=False)
     pg_sub_query_subset.append("resources.timestamp>=%(startTimestamp)s")
     pg_sub_query_subset.append("resources.timestamp<%(endTimestamp)s")
-
-
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""WITH resources AS (SELECT resources.session_id,
@@ -1952,7 +1951,7 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     pg_sub_query_subset.append("resources.status > 200")
 
     pg_sub_query_subset_e = __get_constraints(project_id=project_id, data=args, duration=False, main_table="m_errors",
-                                            time_constraint=False)
+                                              time_constraint=False)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False,
                                            chart=True, data=args, main_table="", time_column="timestamp",
                                            project=False, duration=False)
@@ -2283,4 +2282,230 @@ def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                                            "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
 
         rows = cur.fetchall()
+    return rows
+
+
+def __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query.append("resources.duration > 0")
+    pg_sub_query.append("resources.type= %(type)s")
+    pg_query = f"""\
+                SELECT COALESCE(AVG(resources.duration),0) AS value 
+                FROM events.resources INNER JOIN public.sessions USING (session_id)
+                WHERE {" AND ".join(pg_sub_query)};"""
+
+    cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "type": 'img', "startTimestamp": startTimestamp,
+                                       "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
+    row = cur.fetchone()
+    return row
+
+
+def get_application_activity_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                                 endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        results = helper.dict_to_camel_case(row)
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        previous = helper.dict_to_camel_case(row)
+        results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+        results["chart"] = get_performance_avg_image_load_time(project_id, startTimestamp, endTimestamp, **args)
+    return results
+
+
+def get_performance_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                        endTimestamp=TimeUTC.now(),
+                                        density=19, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    img_constraints = []
+
+    img_constraints_vals = {}
+
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    with pg_client.PostgresClient() as cur:
+        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+                                                chart=False, data=args)
+        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                               chart=True, data=args, main_table="resources", time_column="timestamp",
+                                               duration=False)
+        pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
+        pg_sub_query_subset.append("resources.timestamp < %(endTimestamp)s")
+
+        pg_query = f"""WITH resources AS (SELECT resources.duration, resources.timestamp 
+                                        FROM events.resources INNER JOIN public.sessions USING (session_id)
+                                        WHERE {" AND ".join(pg_sub_query_subset)}
+                                          AND resources.type = 'img' AND resources.duration>0
+                                          {(f' AND ({" OR ".join(img_constraints)})') if len(img_constraints) > 0 else ""}
+                        )
+                    SELECT 
+                             generated_timestamp AS timestamp,
+                             COALESCE(AVG(resources.duration),0) AS value 
+                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL ( 
+                                SELECT resources.duration
+                                FROM resources
+                                WHERE {" AND ".join(pg_sub_query_chart)}
+                        ) AS resources ON (TRUE)
+                      GROUP BY timestamp
+                      ORDER BY timestamp;"""
+        cur.execute(cur.mogrify(pg_query, {**params, **img_constraints_vals, **__get_constraint_values(args)}))
+        rows = cur.fetchall()
+        rows = helper.list_to_camel_case(rows)
+
+    return rows
+
+
+def __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query.append("pages.timestamp >= %(startTimestamp)s")
+    pg_sub_query.append("pages.timestamp > %(endTimestamp)s")
+    pg_sub_query.append("pages.load_time > 0")
+    pg_sub_query.append("pages.load_time IS NOT NULL")
+    pg_query = f"""\
+                SELECT COALESCE(AVG(pages.load_time) ,0) AS value
+                FROM events.pages INNER JOIN public.sessions USING (session_id)
+                WHERE {" AND ".join(pg_sub_query)};"""
+    params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+              **__get_constraint_values(args)}
+
+    cur.execute(cur.mogrify(pg_query, params))
+    row = cur.fetchone()
+    return row
+
+
+@dev.timed
+def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                                endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        results = helper.dict_to_camel_case(row)
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        previous = helper.dict_to_camel_case(row)
+        results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+        results["chart"] = get_performance_avg_page_load_time(project_id, startTimestamp, endTimestamp, **args)
+    return results
+
+
+@dev.timed
+def get_performance_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                       endTimestamp=TimeUTC.now(),
+                                       density=19, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    location_constraints = []
+    location_constraints_vals = {}
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    with pg_client.PostgresClient() as cur:
+        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+                                                chart=False, data=args)
+        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                               chart=True, data=args, main_table="pages", time_column="timestamp",
+                                               duration=False)
+        pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
+        pg_sub_query_subset.append("pages.timestamp < %(endTimestamp)s")
+        pg_query = f"""WITH pages AS(SELECT pages.load_time, timestamp 
+                                    FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                    WHERE {" AND ".join(pg_sub_query_subset)} AND pages.load_time>0 AND pages.load_time IS NOT NULL
+                                      {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
+                        )
+                        SELECT 
+                             generated_timestamp AS timestamp,
+                             COALESCE(AVG(pages.load_time),0) AS value 
+                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL ( SELECT pages.load_time
+                                            FROM pages 
+                                            WHERE {" AND ".join(pg_sub_query_chart)}  
+                                              {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
+                                            ) AS pages ON (TRUE)
+                        GROUP BY generated_timestamp
+                        ORDER BY generated_timestamp;"""
+        cur.execute(cur.mogrify(pg_query, {**params, **location_constraints_vals, **__get_constraint_values(args)}))
+        rows = cur.fetchall()
+    return rows
+
+
+def __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query.append("resources.duration > 0")
+    pg_sub_query.append("resources.type= %(type)s")
+    pg_query = f"""\
+                SELECT COALESCE(AVG(resources.duration),0) AS value 
+                FROM events.resources INNER JOIN public.sessions USING (session_id)
+                WHERE {" AND ".join(pg_sub_query)};"""
+
+    cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "type": 'img', "startTimestamp": startTimestamp,
+                                       "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
+    cur.execute(cur.mogrify(pg_query, {"project_id": project_id, "type": 'fetch', "startTimestamp": startTimestamp,
+                                       "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
+
+    row = cur.fetchone()
+    return row
+
+
+@dev.timed
+def get_application_activity_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                                   endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        results = helper.dict_to_camel_case(row)
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
+        previous = helper.dict_to_camel_case(row)
+        results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+        results["chart"] = get_performance_avg_request_load_time(project_id, startTimestamp, endTimestamp, **args)
+    return results
+
+
+@dev.timed
+def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                          endTimestamp=TimeUTC.now(),
+                                          density=19, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    location_constraints = []
+    img_constraints = []
+    request_constraints = []
+
+    img_constraints_vals = {}
+    location_constraints_vals = {}
+    request_constraints_vals = {}
+
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    with pg_client.PostgresClient() as cur:
+        pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+                                                chart=False, data=args)
+        pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                               chart=True, data=args, main_table="resources", time_column="timestamp",
+                                               duration=False)
+        pg_sub_query_subset.append("resources.timestamp >= %(startTimestamp)s")
+        pg_sub_query_subset.append("resources.timestamp < %(endTimestamp)s")
+
+        pg_query = f"""WITH resources AS(SELECT resources.duration, resources.timestamp 
+                                            FROM events.resources INNER JOIN public.sessions USING (session_id)
+                                            WHERE {" AND ".join(pg_sub_query_subset)} 
+                                            AND resources.type = 'fetch' AND resources.duration>0  
+                                            {(f' AND ({" OR ".join(request_constraints)})') if len(request_constraints) > 0 else ""}
+                        )
+                        SELECT 
+                             generated_timestamp AS timestamp,
+                             COALESCE(AVG(resources.duration),0) AS value 
+                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL ( 
+                                SELECT resources.duration
+                                FROM resources
+                                WHERE {" AND ".join(pg_sub_query_chart)} 
+                        ) AS resources ON (TRUE)
+                      GROUP BY generated_timestamp
+                      ORDER BY generated_timestamp;"""
+        cur.execute(cur.mogrify(pg_query, {**params, **request_constraints_vals, **__get_constraint_values(args)}))
+        rows = cur.fetchall()
+
     return rows
