@@ -878,7 +878,7 @@ class SavedSearchSchema(FunnelSchema):
 
 
 class CreateDashboardSchema(BaseModel):
-    name: str = Field(...)
+    name: str = Field(..., min_length=1)
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
 
@@ -887,10 +887,9 @@ class CreateDashboardSchema(BaseModel):
 
 
 class AddWidgetToDashboardPayloadSchema(BaseModel):
-    template_id: Optional[int] = Field(default=None)
     metric_id: Optional[int] = Field(default=None)
     name: Optional[str] = Field(default=None)
-    configuration: dict = Field(default={})
+    config: dict = Field(default={})
 
     @root_validator
     def validator(cls, values):

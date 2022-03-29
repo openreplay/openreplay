@@ -53,6 +53,7 @@ ALTER TABLE IF EXISTS metrics
     DROP CONSTRAINT IF EXISTS null_project_id_for_template_only;
 
 ALTER TABLE IF EXISTS metrics
+    ADD COLUMN IF NOT EXISTS is_pinned     boolean NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS category      text    NULL     DEFAULT 'custom',
     ADD COLUMN IF NOT EXISTS is_predefined boolean NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS is_template   boolean NOT NULL DEFAULT FALSE,
