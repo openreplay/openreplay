@@ -78,7 +78,7 @@ function WidgetPreview(props: Props) {
                     </div>
             </div>
             <div className="bg-white rounded border p-4">
-                <WidgetWrapper widget={metric} />
+                <WidgetWrapper widget={metric} isPreview={true} />
             </div>
         </div>
     ));

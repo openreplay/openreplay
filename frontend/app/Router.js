@@ -50,7 +50,7 @@ const withObTab = routes.withObTab;
 
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
-const DASHBOARD_METRICS_PATH = routes.dashboardMetrics();
+const DASHBOARD_METRICS_PATH = routes.dashboardMetricCreate();
 
 // const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
@@ -186,8 +186,9 @@ class Router extends React.Component {
             <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
           }
           
-          {/* <Route index path={ withSiteId(DASHBOARD_METRICS_PATH, siteIdList) } component={ Dashboard } /> */}
-          <Route index path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
+          <Route exact index path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
+          <Route exact index path={ withSiteId(DASHBOARD_METRICS_PATH, siteIdList) } component={ Dashboard } />
+          
           <Route index path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
           
           {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
