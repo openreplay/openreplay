@@ -56,6 +56,9 @@ function NewDashboard(props) {
                             </div>
                         </div>
                     </Route>
+                    <Route exact strict path={withSiteId(dashboardMetricCreate(dashboard.dashboardId), siteId)}>
+                        <WidgetView />
+                    </Route>
                     { dashboardId && (
                         <>
                             <Route exact strict path={withSiteId(dashboardSelected(dashboardId), siteId)}>
@@ -69,9 +72,8 @@ function NewDashboard(props) {
                                 </div>
                             </Route>
                             
-                            {/* <Route exact strict path={withSiteId(dashboardMetricCreate(dashboard.dashboardId), siteId)}>
-                                <WidgetView />
-                            </Route>
+                           
+                            {/* 
                             <Route exact strict path={withSiteId(dashboardMetricDetails(dashboard.dashboardId, metricId), siteId)}>
                                 <WidgetView />
                             </Route> */}

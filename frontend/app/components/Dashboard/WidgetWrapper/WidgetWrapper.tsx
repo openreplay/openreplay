@@ -4,10 +4,16 @@ import cn from 'classnames';
 import { ItemMenu } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 
-function WidgetWrapper(props) {
-    const { widget, index, moveListItem } = props;
+interface Props {
+    className?: string;
+    widget?: any;
+    index?: number;
+    moveListItem?: any;
+    isPreview?: boolean;
+}
+function WidgetWrapper(props: Props) {
+    const { widget = {}, index = 0, moveListItem = null, isPreview = false } = props;
 
-    // useDrag - the list item is draggable
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
         item: { index },
@@ -15,41 +21,33 @@ function WidgetWrapper(props) {
             isDragging: monitor.isDragging(),
             opacity: monitor.isDragging() ? 0.5 : 1,
         }),
-    }, [index]);
 
-    // useDrop - the list item is also a drop area
-    const [spec, dropRef] = useDrop({
+    });
+
+    const [{ isOver, canDrop }, dropRef] = useDrop({
         accept: 'item',
+
         drop: (item: any) => {
             if (item.index === index) return;
             moveListItem(item.index, index);
         },
-        // hover: (item: any, monitor: any) => {
-        //     const dragIndex = item.index
-        //     const hoverIndex = index
-        //     const hoverBoundingRect = ref.current?.getBoundingClientRect()
-        //     const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
-        //     const hoverActualY = monitor.getClientOffset().y - hoverBoundingRect.top
-
-        //     // if dragging down, continue only when hover is smaller than middle Y
-        //     if (dragIndex < hoverIndex && hoverActualY < hoverMiddleY) return
-        //     // if dragging up, continue only when hover is bigger than middle Y
-        //     if (dragIndex > hoverIndex && hoverActualY > hoverMiddleY) return
-
-        //     moveListItem(dragIndex, hoverIndex)
-        //     item.index = hoverIndex
-        // },
-    }, [])
-
-    console.log('spec', spec)
+        collect: (monitor: any) => ({
+            isOver: monitor.isOver(),
+            canDrop: monitor.canDrop(),
+        }),
+    })
 
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
     
     return (
         <div
-            className={cn("border rounded bg-white", 'col-span-' + widget.colSpan)}
-            style={{ userSelect: 'none', opacity }}
+            className={cn("rounded bg-white", 'col-span-' + widget.colSpan, { 'border' : !isPreview })}
+            style={{
+                userSelect: 'none',
+                opacity: isDragging ? 0.5 : 1,
+                borderColor: canDrop && isOver ? '#394EFF' : '#EEE',
+            }}
             ref={dragDropRef}
         >
             {/* <Link to={withSiteId(dashboardMetricDetails(dashboard.dashboardId, widget.widgetId), siteId)}> */}

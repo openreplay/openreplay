@@ -27,7 +27,9 @@ export default class ItemMenu extends React.PureComponent {
   }
 
   toggleMenu = (e) => {
-    e.stopPropagation();
+    // e.preventDefault();
+    // e.stopPropagation();
+    console.log('toggleMenu', e);
     this.setState({ displayed: !this.state.displayed });
   }
 
@@ -51,7 +53,7 @@ export default class ItemMenu extends React.PureComponent {
           className="w-10 h-10 cursor-pointer bg-white rounded-full flex items-center justify-center hover:bg-gray-lightest"
           onClick={ this.toggleMenu }
           role="button"
-          tabIndex="-1"
+          // tabIndex="-1"
         >
           <Icon name="ellipsis-v" size="16" />
         </div>
