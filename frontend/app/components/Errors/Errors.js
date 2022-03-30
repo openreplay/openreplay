@@ -1,23 +1,19 @@
 import { connect } from 'react-redux';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';
 import withPermissions from 'HOCs/withPermissions'
-import { UNRESOLVED, RESOLVED, IGNORED } from "Types/errorInfo";
-import { getRE } from 'App/utils';
-import { fetchBookmarks } from "Duck/errors";
+import { UNRESOLVED, RESOLVED, IGNORED, BOOKMARK } from "Types/errorInfo";
+import { fetchBookmarks, editOptions } from "Duck/errors";
 import { applyFilter } from 'Duck/filters';
 import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { errors as errorsRoute, isRoute } from "App/routes";
-import EventFilter from 'Components/BugFinder/EventFilter';
 import DateRange from 'Components/BugFinder/DateRange';
 import withPageTitle from 'HOCs/withPageTitle';
-
-import { SavedSearchList } from 'UI';
+import cn from 'classnames';
 
 import List from './List/List';
 import ErrorInfo from './Error/ErrorInfo';
 import Header from './Header';
 import SideMenuSection from './SideMenu/SideMenuSection';
-import SideMenuHeader from './SideMenu/SideMenuHeader';
 import SideMenuDividedItem from './SideMenu/SideMenuDividedItem';
 
 const ERRORS_ROUTE = errorsRoute();
@@ -39,42 +35,24 @@ function getStatusLabel(status) {
 @withSiteIdRouter
 @connect(state => ({
 	list: state.getIn([ "errors", "list" ]),
+	status: state.getIn([ "errors", "options", "status" ]),
 }), {
 	fetchBookmarks,
 	applyFilter,
 	fetchSlackList,
+	editOptions,
 })
 @withPageTitle("Errors - OpenReplay")
 export default class Errors extends React.PureComponent {
-	state = {
-		status: UNRESOLVED,
-		bookmarksActive: false,
-		currentList: this.props.list.filter(e => e.status === UNRESOLVED),
-		filter: '',
+	constructor(props) {
+		super(props)
+		this.state = {
+			filter: '',
+		}
 	}
 
 	componentDidMount() {
 		this.props.fetchSlackList(); // Delete after implementing cache
-	}
-
-	onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
-
-	componentDidUpdate(prevProps, prevState) {
-		const { bookmarksActive, status, filter } = this.state;
-		const { list } = this.props;
-		if (prevProps.list !== list 
-			|| prevState.status !== status
-			|| prevState.bookmarksActive !== bookmarksActive
-			|| prevState.filter !== filter) {
-			const unfiltered = bookmarksActive 
-				? list 
-				: list.filter(e => e.status === status);
-			const filterRE = getRE(filter);
-			this.setState({
-				currentList: unfiltered
-					.filter(e => filterRE.test(e.name) || filterRE.test(e.message)),
-			})
-		}
 	}
 
 	ensureErrorsPage() {
@@ -85,22 +63,11 @@ export default class Errors extends React.PureComponent {
 	}
 
 	onStatusItemClick = ({ key }) => {
-		if (this.state.bookmarksActive) {
-			this.props.applyFilter();
-		}
-		this.setState({ 
-			status: key,
-			bookmarksActive: false,
-		});
-		this.ensureErrorsPage();
+		this.props.editOptions({ status: key });
 	}
 
 	onBookmarksClick = () => {
-		this.setState({
-			bookmarksActive: true,
-		});
-		this.props.fetchBookmarks();
-		this.ensureErrorsPage();
+		this.props.editOptions({ status: BOOKMARK });
 	}
 
 
@@ -110,12 +77,14 @@ export default class Errors extends React.PureComponent {
 			match: { 
 				params: { errorId } 
 			},
+			status,
+			list,
+			history,
 		} = this.props;
-		const { status, bookmarksActive, currentList } = this.state;
 
 		return (
 			<div className="page-margin container-90" >
-				<div className="side-menu">
+				<div className={cn("side-menu", {'disabled' : !isRoute(ERRORS_ROUTE, history.location.pathname)})}>
 					<SideMenuSection
 						title="Errors"
 						onItemClick={this.onStatusItemClick}
@@ -137,14 +106,14 @@ export default class Errors extends React.PureComponent {
 								icon: "ban",
 								label: getStatusLabel(IGNORED),
 								active: status === IGNORED,
-	    				}
+	    					}
 						]}
 					/>
 					<SideMenuDividedItem 
 						className="mt-3 mb-4"
 						iconName="star"
 						title="Bookmarks"
-						active={ bookmarksActive }
+						active={ status === BOOKMARK }
 						onClick={ this.onBookmarksClick }
 					/>				
 				</div>
@@ -154,8 +123,8 @@ export default class Errors extends React.PureComponent {
 						<>							
 							<div className="mb-5 flex">
 								<Header 
-									text={ bookmarksActive ? "Bookmarks" : getStatusLabel(status) }
-									count={ currentList.size }
+									text={ status === BOOKMARK ? "Bookmarks" : getStatusLabel(status) }
+									count={ list.size }
 								/>
 								<div className="ml-3 flex items-center">
 				          <span className="mr-2 color-gray-medium">Seen in</span>
@@ -164,12 +133,11 @@ export default class Errors extends React.PureComponent {
 				      </div>
 							<List 
 								status={ status }
-								list={ currentList }
-								onFilterChange={this.onFilterChange}
+								list={ list }
 							/>
 						</>
 						:
-						<ErrorInfo errorId={ errorId } list={ currentList } />
+						<ErrorInfo errorId={ errorId } list={ list } />
 					}
 				</div>
 			</div>

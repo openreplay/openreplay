@@ -6,7 +6,7 @@ import ShadowRootObserver from "./shadow_root_observer.js";
 
 import { CreateDocument } from "../../../messages/index.js";
 import App from "../index.js";
-import { IN_BROWSER } from '../../utils.js'
+import { IN_BROWSER, hasOpenreplayAttribute } from '../../utils.js'
 
 export interface Options {
   captureIFrames: boolean
@@ -17,15 +17,16 @@ const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : ()=>n
 export default class TopObserver extends Observer { 
   private readonly options: Options;
   constructor(app: App, options: Partial<Options>) {
-    super(app);
+    super(app, true);
     this.options = Object.assign({
-      captureIFrames: false
+      captureIFrames: true
     }, options);
 
     // IFrames
     this.app.nodes.attachNodeCallback(node => {
       if (isInstance(node, HTMLIFrameElement) && 
-         (this.options.captureIFrames || node.getAttribute("data-openreplay-capture"))
+         ((this.options.captureIFrames && !hasOpenreplayAttribute(node, "obscured")) 
+           || hasOpenreplayAttribute(node, "capture"))
       ) {
         this.handleIframe(node)
       }
@@ -42,26 +43,25 @@ export default class TopObserver extends Observer {
 
   private iframeObservers: IFrameObserver[] = [];
   private handleIframe(iframe: HTMLIFrameElement): void {
-    let context: Window | null = null
+    let doc: Document | null = null
     const handle = this.app.safe(() => {
       const id = this.app.nodes.getID(iframe)
       if (id === undefined) { return } //log
-      if (iframe.contentWindow === context) { return } //Does this happen frequently?
-      context = iframe.contentWindow as Window | null;
-      if (!context) { return }
-      const observer = new IFrameObserver(this.app, context)
+      if (iframe.contentDocument === doc) { return } // How frequently can it happen?
+      doc = iframe.contentDocument
+      if (!doc || !iframe.contentWindow) { return }
+      const observer = new IFrameObserver(this.app)
 
       this.iframeObservers.push(observer)
       observer.observe(iframe)
     })
-    this.app.attachEventListener(iframe, "load", handle)
+    iframe.addEventListener("load", handle) // why app.attachEventListener not working?
     handle()
   }
 
   private shadowRootObservers: ShadowRootObserver[] = []
   private handleShadowRoot(shRoot: ShadowRoot) {
-    const observer = new ShadowRootObserver(this.app, this.context)
-
+    const observer = new ShadowRootObserver(this.app)
     this.shadowRootObservers.push(observer)
     observer.observe(shRoot.host)
   }
@@ -81,9 +81,9 @@ export default class TopObserver extends Observer {
     // the change in the re-player behaviour caused by CreateDocument message: 
     //   the 0-node ("fRoot") will become #document rather than documentElement as it is now.
     // Alternatively - observe(#document) then bindNode(documentElement)
-    this.observeRoot(this.context.document, () => {
+    this.observeRoot(window.document, () => {
       this.app.send(new CreateDocument())
-    }, this.context.document.documentElement);
+    }, window.document.documentElement);
   }
 
   disconnect() {

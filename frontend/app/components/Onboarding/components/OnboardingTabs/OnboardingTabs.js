@@ -8,14 +8,14 @@ const DOCUMENTATION = 'NPM';
 // const SEGMENT = 'SEGMENT';
 // const GOOGLE_TAG = 'GOOGLE TAG';
 const TABS = [
-  { key: PROJECT, text: PROJECT },
   { key: DOCUMENTATION, text: DOCUMENTATION },
+  { key: PROJECT, text: PROJECT },
   // { key: SEGMENT, text: SEGMENT },
   // { key: GOOGLE_TAG, text: GOOGLE_TAG }
 ];
 
 class TrackingCodeModal extends React.PureComponent {
-  state = { copied: false, changed: false, activeTab: PROJECT };
+  state = { copied: false, changed: false, activeTab: DOCUMENTATION };
 
   setActiveTab = (tab) => {
     this.setState({ activeTab: tab });

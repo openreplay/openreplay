@@ -1,30 +1,20 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { SideMenuitem, SavedSearchList, Progress, Popup, Icon, CircularLoader } from 'UI'
+import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
 import stl from './sessionMenu.css';
 import {  fetchWatchdogStatus } from 'Duck/watchdogs';
-import { setActiveFlow, clearEvents } from 'Duck/filters';
-import { setActiveTab } from 'Duck/sessions';
+import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';
 
 function SessionsMenu(props) {
-  const { 
-    activeFlow, activeTab, watchdogs = [], keyMap, wdTypeCount,
-    fetchWatchdogStatus, toggleRehydratePanel, filters, sessionsLoading } = props;
+  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel } = props;
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
-    
-    if (activeFlow && activeFlow.type === 'flows') {
-      props.setActiveFlow(null)
-    }
   }
-  
-  // useEffect(() => {
-  //   fetchWatchdogStatus()
-  // }, [])
+
   
   const capturingAll = props.captureRate && props.captureRate.get('captureAll');
 
@@ -66,35 +56,12 @@ function SessionsMenu(props) {
       { issues_types.filter(item => item.visible).map(item => (        
         <SideMenuitem
           key={item.key}
-          disabled={!keyMap[item.type] && !wdTypeCount[item.type]}
+          // disabled={!keyMap[item.type] && !wdTypeCount[item.type]}
           active={activeTab.type === item.type}
           title={item.name} iconName={item.icon}
           onClick={() => onMenuItemClick(item)}
         />
       ))}
-
-      {/* <div className={stl.divider} />
-      <div className="my-3">
-        <SideMenuitem
-          title={
-            <div className="flex items-center">
-              <div>Assist</div>
-              { activeTab.type === 'live' && (
-                <div
-                  className="ml-4 h-5 w-6 flex items-center justify-center"
-                  onClick={() => !sessionsLoading && props.fetchSessionList(filters.toJS())}
-                >
-                  { sessionsLoading ? <CircularLoader className="ml-1" /> : <Icon name="sync-alt" size="14" />}
-                </div>
-              )}
-            </div>
-          }
-          iconName="person"
-          active={activeTab.type === 'live'}
-          onClick={() => onMenuItemClick({ name: 'Assist', type: 'live' })}
-        />
-
-      </div> */}
 
       <div className={stl.divider} />
       <div className="my-3">
@@ -113,13 +80,12 @@ function SessionsMenu(props) {
 }
 
 export default connect(state => ({
-  activeTab: state.getIn([ 'sessions', 'activeTab' ]),
+  activeTab: state.getIn([ 'search', 'activeTab' ]),
   keyMap: state.getIn([ 'sessions', 'keyMap' ]),
   wdTypeCount: state.getIn([ 'sessions', 'wdTypeCount' ]),
-  activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
 }), { 
-  fetchWatchdogStatus, setActiveFlow, clearEvents, setActiveTab, fetchSessionList
+  fetchWatchdogStatus, clearEvents, fetchSessionList
 })(SessionsMenu);

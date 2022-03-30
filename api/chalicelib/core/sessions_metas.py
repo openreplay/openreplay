@@ -80,32 +80,41 @@ def get_top_key_values(project_id):
     return helper.dict_to_CAPITAL_keys(row)
 
 
-def __generic_query(typename):
-    return f"""\
-                SELECT value, type 
-                FROM ((SELECT value, type  
-                        FROM public.autocomplete
-                        WHERE
-                          project_id = %(project_id)s
-                          AND type ='{typename}'
-                          AND value ILIKE %(svalue)s
-                        ORDER BY value
-                        LIMIT 5)
+def __generic_query(typename, value_length=None):
+    if value_length is None or value_length > 2:
+        return f""" (SELECT DISTINCT value, type  
+                            FROM public.autocomplete
+                            WHERE
+                              project_id = %(project_id)s
+                              AND type ='{typename}'
+                              AND value ILIKE %(svalue)s
+                            ORDER BY value
+                            LIMIT 5)
                       UNION
-                      (SELECT value, type  
+                      (SELECT DISTINCT value, type  
                         FROM public.autocomplete
                         WHERE
                           project_id = %(project_id)s
                           AND type ='{typename}'
                           AND value ILIKE %(value)s
                         ORDER BY value
-                        LIMIT 5)) AS met"""
+                        LIMIT 5);"""
+    return f""" SELECT DISTINCT value, type  
+                FROM public.autocomplete
+                WHERE
+                  project_id = %(project_id)s
+                  AND type ='{typename}'
+                  AND value ILIKE %(svalue)s
+                ORDER BY value
+                LIMIT 10;"""
 
 
 def __generic_autocomplete(typename):
     def f(project_id, text):
         with pg_client.PostgresClient() as cur:
-            query = cur.mogrify(__generic_query(typename),
+            query = cur.mogrify(__generic_query(typename,
+                                                value_length=len(text) \
+                                                    if SUPPORTED_TYPES[typename].change_by_length else None),
                                 {"project_id": project_id, "value": helper.string_to_sql_like(text),
                                  "svalue": helper.string_to_sql_like("^" + text)})
 
@@ -120,124 +129,73 @@ SUPPORTED_TYPES = {
     schemas.FilterType.user_os: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_os),
         query=__generic_query(typename=schemas.FilterType.user_os),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_browser: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_browser),
         query=__generic_query(typename=schemas.FilterType.user_browser),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_device: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_device),
         query=__generic_query(typename=schemas.FilterType.user_device),
-        value_limit=3,
-        starts_with="",
-        starts_limit=3,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_country: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_country),
         query=__generic_query(typename=schemas.FilterType.user_country),
-        value_limit=2,
-        starts_with="",
-        starts_limit=2,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_id: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_id),
         query=__generic_query(typename=schemas.FilterType.user_id),
-        value_limit=2,
-        starts_with="",
-        starts_limit=2,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_anonymous_id: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_anonymous_id),
         query=__generic_query(typename=schemas.FilterType.user_anonymous_id),
-        value_limit=3,
-        starts_with="",
-        starts_limit=3,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.rev_id: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.rev_id),
         query=__generic_query(typename=schemas.FilterType.rev_id),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.referrer: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.referrer),
         query=__generic_query(typename=schemas.FilterType.referrer),
-        value_limit=5,
-        starts_with="/",
-        starts_limit=5,
-        ignore_if_starts_with=[]),
+        change_by_length=True),
     schemas.FilterType.utm_campaign: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.utm_campaign),
         query=__generic_query(typename=schemas.FilterType.utm_campaign),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.utm_medium: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.utm_medium),
         query=__generic_query(typename=schemas.FilterType.utm_medium),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.utm_source: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.utm_source),
         query=__generic_query(typename=schemas.FilterType.utm_source),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     # IOS
     schemas.FilterType.user_os_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_os_ios),
         query=__generic_query(typename=schemas.FilterType.user_os_ios),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_device_ios: SupportedFilter(
         get=__generic_autocomplete(
             typename=schemas.FilterType.user_device_ios),
         query=__generic_query(typename=schemas.FilterType.user_device_ios),
-        value_limit=3,
-        starts_with="",
-        starts_limit=3,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_country_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_country_ios),
         query=__generic_query(typename=schemas.FilterType.user_country_ios),
-        value_limit=2,
-        starts_with="",
-        starts_limit=2,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_id_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_id_ios),
         query=__generic_query(typename=schemas.FilterType.user_id_ios),
-        value_limit=2,
-        starts_with="",
-        starts_limit=2,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.user_anonymous_id_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.user_anonymous_id_ios),
         query=__generic_query(typename=schemas.FilterType.user_anonymous_id_ios),
-        value_limit=3,
-        starts_with="",
-        starts_limit=3,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
     schemas.FilterType.rev_id_ios: SupportedFilter(
         get=__generic_autocomplete(typename=schemas.FilterType.rev_id_ios),
         query=__generic_query(typename=schemas.FilterType.rev_id_ios),
-        value_limit=0,
-        starts_with="",
-        starts_limit=0,
-        ignore_if_starts_with=["/"]),
+        change_by_length=True),
 
 }
 
@@ -247,6 +205,7 @@ def search(text, meta_type, project_id):
     if meta_type not in list(SUPPORTED_TYPES.keys()):
         return {"errors": ["unsupported type"]}
     rows += SUPPORTED_TYPES[meta_type].get(project_id=project_id, text=text)
-    if meta_type + "_IOS" in list(SUPPORTED_TYPES.keys()):
-        rows += SUPPORTED_TYPES[meta_type + "_IOS"].get(project_id=project_id, text=text)
+    # for IOS events autocomplete
+    # if meta_type + "_IOS" in list(SUPPORTED_TYPES.keys()):
+    #     rows += SUPPORTED_TYPES[meta_type + "_IOS"].get(project_id=project_id, text=text)
     return {"data": rows}
