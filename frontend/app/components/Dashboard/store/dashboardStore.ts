@@ -1,20 +1,69 @@
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
-import Dashboard from "./dashboard"
+import Dashboard, { IDashboard } from "./dashboard"
 import APIClient from 'App/api_client';
-import Widget from "./widget";
-export default class DashboardStore {
+import Widget, { IWidget } from "./widget";
+import { dashboardService } from "App/services";
+
+export interface IDashboardSotre {
+    dashboards: IDashboard[]
+    widgetTemplates: any[]
+    selectedDashboard: IDashboard | null
+    dashboardInstance: IDashboard
+    siteId: any
+    currentWidget: Widget
+    widgetCategories: any[]
+    widgets: Widget[]
+    metricsPage: number
+    metricsPageSize: number
+    metricsSearch: string
+    
+    isLoading: boolean
+    isSaving: boolean
+
+    initDashboard(dashboard?: IDashboard): void
+    updateKey(key: string, value: any): void
+    resetCurrentWidget(): void
+    editWidget(widget: any): void
+    fetchList(): void
+    fetch(dashboardId: string)
+    save(dashboard: IDashboard): Promise<any>
+    saveDashboardWidget(dashboard: Dashboard, widget: Widget)
+    delete(dashboard: IDashboard)
+    toJson(): void
+    fromJson(json: any): void
+    initDashboard(dashboard: IDashboard): void
+    addDashboard(dashboard: IDashboard): void
+    removeDashboard(dashboard: IDashboard): void
+    getDashboard(dashboardId: string): void
+    getDashboardIndex(dashboardId: string): number
+    getDashboardCount(): void
+    getDashboardIndexByDashboardId(dashboardId: string): number
+    updateDashboard(dashboard: IDashboard): void
+    selectDashboardById(dashboardId: string): void
+    setSiteId(siteId: any): void
+    selectDefaultDashboard(): Promise<IDashboard>
+
+    saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
+}
+export default class DashboardStore implements IDashboardSotre {
+    siteId: any = null
+    // Dashbaord / Widgets
     dashboards: Dashboard[] = []
     widgetTemplates: any[] = []
     selectedDashboard: Dashboard | null = new Dashboard()
-    newDashboard: Dashboard = new Dashboard()
-    isLoading: boolean = false
-    siteId: any = null
+    dashboardInstance: IDashboard = new Dashboard()
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
     widgets: Widget[] = []
+    
+    // Metrics
     metricsPage: number = 1
     metricsPageSize: number = 10
     metricsSearch: string = ''
+    
+    // Loading states
+    isLoading: boolean = false
+    isSaving: boolean = false
 
     private client = new APIClient()
 
@@ -40,25 +89,15 @@ export default class DashboardStore {
 
 
         // TODO remove this sample data
-        this.dashboards = sampleDashboards
-        // this.selectedDashboard = sampleDashboards[0]
+        // this.dashboards = sampleDashboards
 
-        // setInterval(() => {
-        //     this.selectedDashboard?.addWidget(getRandomWidget())
-        // }, 3000)
-
-        // setInterval(() => {
-        //     this.selectedDashboard?.widgets[4].update({ position: 2 })
-        //     this.selectedDashboard?.swapWidgetPosition(2, 0)
-        // }, 3000)
-
-        for (let i = 0; i < 15; i++) {
-            const widget: any= {};
-            widget.widgetId = `${i}`
-            widget.name = `Widget ${i}`;
-            widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
-            this.widgets.push(widget)
-        }
+        // for (let i = 0; i < 15; i++) {
+        //     const widget: any= {};
+        //     widget.widgetId = `${i}`
+        //     widget.name = `Widget ${i}`;
+        //     widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
+        //     this.widgets.push(widget)
+        // }
 
         for (let i = 0; i < 4; i++) {
             const cat: any = { 
@@ -79,7 +118,10 @@ export default class DashboardStore {
 
             this.widgetCategories.push(cat)
         }
-        
+    }
+
+    initDashboard(dashboard: Dashboard) {
+        this.dashboardInstance = dashboard || new Dashboard()
     }
 
     updateKey(key: any, value: any) {
@@ -90,59 +132,71 @@ export default class DashboardStore {
         this.currentWidget = new Widget()
     }
 
-    editWidget(widget: Widget) {
+    editWidget(widget: any) {
         this.currentWidget.update(widget)
     }
 
     fetchList() {
         this.isLoading = true
 
-        this.client.get('/dashboards')
-            .then(response => {
+        dashboardService.getDashboards()
+            .then((list: any) => {
                 runInAction(() => {
-                    this.dashboards = response.data.map(d => new Dashboard().fromJson(d))
+                    this.dashboards = list.map(d => new Dashboard().fromJson(d))
+                })
+            }).finally(() => {
+                runInAction(() => {
                     this.isLoading = false
                 })
-            }
-        )
+            })
     }
 
     fetch(dashboardId: string) {
         this.isLoading = true
-        this.client.get(`/dashboards/${dashboardId}`)
-            .then(response => {
-                runInAction(() => {
-                    this.selectedDashboard = new Dashboard().fromJson(response.data)
-                    this.isLoading = false
-                })
-            }
-        )
+        dashboardService.getDashboard(dashboardId).then(response => {
+            runInAction(() => {
+                this.selectedDashboard = new Dashboard().fromJson(response)
+            })
+        }).finally(() => {
+            runInAction(() => {
+                this.isLoading = false
+            })
+        })
     }
 
-    save(dashboard: Dashboard) {
-        dashboard.validate()
-        if (dashboard.isValid) {
-            this.isLoading = true
-            if (dashboard.dashboardId) {
-                this.client.put(`/dashboards/${dashboard.dashboardId}`, dashboard.toJson())
-                    .then(response => {
-                        runInAction(() => {
-                            this.isLoading = false
-                        })
-                    }
-                )
-            } else {
-                this.client.post('/dashboards', dashboard.toJson())
-                    .then(response => {
-                        runInAction(() => {
-                            this.isLoading = false
-                        })
-                    }
-                )
-            }
-        } else {
-            alert("Invalid dashboard") // TODO show validation errors
-        }
+    save(dashboard: IDashboard): Promise<any> {
+        this.isSaving = true
+        const isCreating = !dashboard.dashboardId
+        return dashboardService.saveDashboard(dashboard).then(response => {
+            runInAction(() => {
+                if (isCreating) {
+                    this.addDashboard(response.data)
+                } else {
+                    this.updateDashboard(response.data)
+                }
+            })
+        }).finally(() => {
+            runInAction(() => {
+                this.isSaving = false
+            })
+        })
+    }
+
+    saveMetric(metric: IWidget, dashboardId: string): Promise<any> {
+        const isCreating = !metric.widgetId
+        return dashboardService.saveMetric(metric, dashboardId).then(metric => {
+            runInAction(() => {
+                if (isCreating) {
+                    this.selectedDashboard?.widgets.push(metric)
+                } else {
+                    this.selectedDashboard?.widgets.map(w => {
+                        if (w.widgetId === metric.widgetId) {
+                            w.update(metric)
+                        }
+                    })
+                }
+            })
+        })
     }
 
     saveDashboardWidget(dashboard: Dashboard, widget: Widget) {
@@ -193,10 +247,6 @@ export default class DashboardStore {
         return this
     }
 
-    initDashboard(dashboard: Dashboard | null) {
-        this.selectedDashboard = dashboard || new Dashboard()
-    }
-
     addDashboard(dashboard: Dashboard) {
         this.dashboards.push(dashboard)
     }
@@ -234,13 +284,16 @@ export default class DashboardStore {
 
     selectDashboardById = (dashboardId: any) => {
         this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || new Dashboard();
+        if (this.selectedDashboard.dashboardId) {
+            this.fetch(this.selectedDashboard.dashboardId)
+        }
     }
 
     setSiteId = (siteId: any) => {
         this.siteId = siteId
     }
 
-    selectDefaultDashboard = () => {
+    selectDefaultDashboard = (): Promise<Dashboard> => {
         return new Promise((resolve, reject) => {
             if (this.dashboards.length > 0) {
                 const pinnedDashboard = this.dashboards.find(d => d.isPinned)
@@ -250,7 +303,11 @@ export default class DashboardStore {
                     this.selectedDashboard = this.dashboards[0]
                 }
             }
-            resolve(this.selectedDashboard)
+            if (this.selectedDashboard) {
+                resolve(this.selectedDashboard)
+            }
+
+            reject(new Error("No dashboards found"))
         })
     }
 }

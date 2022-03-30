@@ -1,14 +1,19 @@
 import React from 'react';
 import { ModalContext } from "App/components/Modal/modalContext";
-import useModal from 'App/components/Modal/useModal';
+import { useModal } from 'App/components/Modal';
+import stl from './ModalOverlay.css'
 
 function ModalOverlay({ children }) {
     let modal = useModal();
-    // console.log('m', m);
  
     return (
-        <div onClick={() => modal.handleModal(false)} style={{ background: "rgba(0,0,0,0.8)", zIndex: '9999' }}>
-            {children}
+        <div className="fixed w-full h-screen" style={{ zIndex: '99999' }}>
+            <div
+                onClick={() => modal.hideModal()}
+                className={stl.overlay}
+                style={{ background: "rgba(0,0,0,0.5)" }}
+            />
+            <div className={stl.slide}>{children}</div>
         </div>
     );
 }

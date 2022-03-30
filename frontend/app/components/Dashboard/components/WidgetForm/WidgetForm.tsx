@@ -2,20 +2,21 @@ import React from 'react';
 import DropdownPlain from 'Shared/DropdownPlain';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { HelpText, Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
+import { withRouter } from 'react-router-dom';
 
 interface Props {
-    // metric: any,
-    // editWidget: (metric, shouldFetch?) => void 
+    history: any;
+    match: any;
 }
 
 function WidgetForm(props: Props) {
-    // const { metric } = props;
-    const store: any = useDashboardStore();
-    const metric = store.currentWidget;
+    const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
+    const { dashboardStore } = useStore();
+    const metric: any = dashboardStore.currentWidget;
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
@@ -23,28 +24,32 @@ function WidgetForm(props: Props) {
     const isTimeSeries = metric.metricType === 'timeseries';
     const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
 
-    const write = ({ target: { value, name } }) => store.editWidget({ [ name ]: value }, false);
+    const write = ({ target: { value, name } }) => dashboardStore.editWidget({ [ name ]: value });
     const writeOption = (e, { value, name }) => {
-      store.editWidget({ [ name ]: value }, false);
+        dashboardStore.editWidget({ [ name ]: value });
   
       if (name === 'metricValue') {
-        store.editWidget({ metricValue: [value] }, false);
+        dashboardStore.editWidget({ metricValue: [value] });
       }
   
       if (name === 'metricOf') {
         if (value === FilterKey.ISSUE) {
-          store.editWidget({ metricValue: ['all'] }, false);
+            dashboardStore.editWidget({ metricValue: ['all'] });
         }
       }
   
       if (name === 'metricType') {
         if (value === 'timeseries') {
-          store.editWidget({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' }, false);
+          dashboardStore.editWidget({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' });
         } else if (value === 'table') {
-          store.editWidget({ metricOf: tableOptions[0].value, viewType: 'table' }, false);
+          dashboardStore.editWidget({ metricOf: tableOptions[0].value, viewType: 'table' });
         }
       }
     };
+
+    const onSave = () => {
+        dashboardStore.saveMetric(metric, dashboardId);
+    }
     
     return useObserver(() => (
         <div className="p-4">
@@ -141,20 +146,30 @@ function WidgetForm(props: Props) {
             </div>
 
             <div className="form-groups flex items-center justify-between">
-                <Button primary size="small">Save</Button>
+                <Button
+                    primary
+                    size="small"
+                    onClick={onSave}
+                >
+                    Save
+                </Button>
                 <div className="flex items-center">
-                    <Button plain size="small" className="flex items-center">
-                        <Icon name="trash" size="14" className="mr-2" color="teal"/>
-                        Delete
-                    </Button>
-                    <Button plain size="small" className="flex items-center ml-2">
-                        <Icon name="columns-gap" size="14" className="mr-2" color="teal"/>
-                        Add to Dashboard
-                    </Button>
+                    {metric.widgetId && (
+                        <>
+                            <Button plain size="small" className="flex items-center">
+                                <Icon name="trash" size="14" className="mr-2" color="teal"/>
+                                Delete
+                            </Button>
+                            <Button plain size="small" className="flex items-center ml-2">
+                                <Icon name="columns-gap" size="14" className="mr-2" color="teal"/>
+                                Add to Dashboard
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
     ));
 }
 
-export default WidgetForm;
+export default withRouter(WidgetForm);

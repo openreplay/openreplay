@@ -1,15 +1,15 @@
 import React from 'react';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import WidgetWrapper from '../../WidgetWrapper';
 import { NoContent, Button, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-// import { divider } from '../../Filters/filters.css';
 
 function DashboardWidgetGrid(props) {
-    const store: any = useDashboardStore();
-    const loading = store.isLoading;
-    const dashbaord = store.selectedDashboard;
-    const list = dashbaord.widgets;
+    const { dashboardStore } = useStore();
+    const loading = useObserver(() => dashboardStore.isLoading);
+    const dashbaord: any = dashboardStore.selectedDashboard;
+    const list: any = dashbaord?.widgets;
+
     return useObserver(() => (
         <Loader loading={loading}>
             <NoContent

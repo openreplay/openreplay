@@ -2,7 +2,36 @@ import { makeAutoObservable, runInAction, observable, action, reaction } from "m
 import Filter from 'Types/filter';
 import FilterSeries from "./filterSeries";
 
-export default class Widget {
+export interface IWidget {
+    widgetId: any
+    name: string
+    metricType: string
+    metricOf: string
+    metricValue: string
+    viewType: string
+    series: FilterSeries[]
+    sessions: []
+    isPublic: boolean
+    owner: string
+    lastModified: Date
+    dashboardIds: any[]
+
+    position: number
+    data: any
+    isLoading: boolean
+    isValid: boolean
+    dashboardId: any
+    colSpan: number
+
+    udpateKey(key: string, value: any): void
+    removeSeries(index: number): void
+    addSeries(): void
+    fromJson(json: any): void
+    toJson(): any
+    validate(): void
+    update(data: any): void
+}
+export default class Widget implements IWidget {
     widgetId: any = undefined
     name: string = "New Metric"
     metricType: string = "timeseries"
@@ -11,7 +40,7 @@ export default class Widget {
     viewType: string = "lineChart"
     series: FilterSeries[] = []
     sessions: [] = []
-    isPrivate: boolean = false
+    isPublic: boolean = false
     owner: string = ""
     lastModified: Date = new Date()
     dashboardIds: any[] = []
@@ -76,7 +105,12 @@ export default class Widget {
         return {
             widgetId: this.widgetId,
             name: this.name,
-            data: this.data
+            metricOf: this.metricOf,
+            metricValue: this.metricValue,
+            viewType: this.viewType,
+            series: this.series,
+            sessions: this.sessions,
+            isPublic: this.isPublic,
         }
     }
 
