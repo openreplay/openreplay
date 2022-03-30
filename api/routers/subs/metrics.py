@@ -12,7 +12,7 @@ public_app, app, app_apikey = get_routers()
 @app.put('/{projectId}/dashboards', tags=["dashboard"])
 def create_dashboards(projectId: int, data: schemas.CreateDashboardSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": dashboards2.create_dashboard(project_id=projectId, user_id=context.user_id, data=data)}
+    return dashboards2.create_dashboard(project_id=projectId, user_id=context.user_id, data=data)
 
 
 @app.get('/{projectId}/dashboards', tags=["dashboard"])
@@ -27,7 +27,7 @@ def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentCont
 
 @app.post('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
-def update_dashboard(projectId: int, dashboardId: int, data: schemas.CreateDashboardSchema = Body(...),
+def update_dashboard(projectId: int, dashboardId: int, data: schemas.EditDashboardSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.update_dashboard(project_id=projectId, user_id=context.user_id,
                                                  dashboard_id=dashboardId, data=data)}
