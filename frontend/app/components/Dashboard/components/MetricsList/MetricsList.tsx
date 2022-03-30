@@ -1,22 +1,22 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
 import { Icon, NoContent, Label, Link, Pagination } from 'UI';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import { getRE } from 'App/utils';
 
 interface Props { }
 function MetricsList(props: Props) {
-    const store: any = useDashboardStore();
-    const widgets = store.widgets;
+    const { dashboardStore } = useStore();
+    const widgets = dashboardStore.widgets;
     const lenth = widgets.length;
-    const currentPage = useObserver(() => store.metricsPage);
-    const metricsSearch = useObserver(() => store.metricsSearch);
+    const currentPage = useObserver(() => dashboardStore.metricsPage);
+    const metricsSearch = useObserver(() => dashboardStore.metricsSearch);
 
     const filterRE = getRE(metricsSearch, 'i');
     const list = widgets.filter(w => filterRE.test(w.name))
     
     const totalPages = list.length;
-    const pageSize = store.metricsPageSize;
+    const pageSize = dashboardStore.metricsPageSize;
     const start = (currentPage - 1) * pageSize;
     const end = currentPage * pageSize;
 
@@ -64,7 +64,7 @@ function MetricsList(props: Props) {
                 <Pagination
                     page={currentPage}
                     totalPages={Math.ceil(totalPages / pageSize)}
-                    onPageChange={(page) => store.updateKey('metricsPage', page)}
+                    onPageChange={(page) => dashboardStore.updateKey('metricsPage', page)}
                     limit={pageSize}
                     debounceRequest={100}
                 />

@@ -1,7 +1,7 @@
 import React from 'react';
 import { NoContent } from 'UI';
 import cn from 'classnames';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
 
 interface Props {
@@ -9,8 +9,8 @@ interface Props {
 }
 function WidgetSessions(props: Props) {
     const { className = '' } = props;
-    const store: any = useDashboardStore();
-    const widget = store.currentWidget;
+    const { dashboardStore } = useStore();
+    const widget = dashboardStore.currentWidget;
 
     return (
         <div className={cn(className)}>

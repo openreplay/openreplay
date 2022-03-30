@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import WidgetWrapper from '../../WidgetWrapper';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
 import DateRange from 'Shared/DateRange';
 import { useObserver } from 'mobx-react-lite';
@@ -11,8 +11,8 @@ interface Props {
 }
 function WidgetPreview(props: Props) {
     const { className = '' } = props;
-    const store: any = useDashboardStore();
-    const metric = store.currentWidget;
+    const { dashboardStore } = useStore();
+    const metric: any = dashboardStore.currentWidget;
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
 

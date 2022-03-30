@@ -4,6 +4,7 @@ import { useDashboardStore } from '../../store/store';
 import { useObserver } from 'mobx-react-lite';
 import cn from 'classnames';
 import { Button } from 'UI';
+import { useStore } from 'App/mstore';
 
 function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, unSelectCategory }) {
     const selectedCategoryWidgetsCount = useObserver(() => {
@@ -27,9 +28,9 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, 
 }
 
 function DashboardMetricSelection(props) {
-    const store: any = useDashboardStore();
-    const widgetCategories = store?.widgetCategories;
-    const widgetTemplates = store?.widgetTemplates;
+    const { dashboardStore } = useStore();
+    const widgetCategories = dashboardStore?.widgetCategories;
+    const widgetTemplates = dashboardStore?.widgetTemplates;
     const [activeCategory, setActiveCategory] = React.useState<any>(widgetCategories[0]);
     const [selectedWidgets, setSelectedWidgets] = React.useState<any>([]);
     const selectedWidgetIds = selectedWidgets.map((widget: any) => widget.widgetId);
@@ -73,18 +74,22 @@ function DashboardMetricSelection(props) {
                 </div>
 
                 <div className="col-span-9 flex items-center">
-                    <div className="flex items-center">
-                        <h2 className="text-2xl">Errors Tracking</h2>
-                        <span className="text-2xl color-gray-medium ml-2">12</span>
-                    </div>
+                   {activeCategory && (
+                       <>
+                            <div className="flex items-baseline">
+                                <h2 className="text-2xl">{activeCategory.name}</h2>
+                                <span className="text-2xl color-gray-medium ml-2">{activeCategory.widgets.length}</span>
+                            </div>
 
-                    <div className="ml-auto flex items-center">
-                        <span className="color-gray-medium">Showing past 7 days data for visual clue</span>
-                        <div className="flex items-center ml-3">
-                            <input type="checkbox" onChange={toggleAllWidgets} />
-                            <span className="ml-2">Select All</span>
-                        </div>
-                    </div>
+                            <div className="ml-auto flex items-center">
+                                <span className="color-gray-medium">Showing past 7 days data for visual clue</span>
+                                <div className="flex items-center ml-3">
+                                    <input type="checkbox" onChange={toggleAllWidgets} />
+                                    <span className="ml-2">Select All</span>
+                                </div>
+                            </div>
+                        </>
+                   )}
                 </div>
             </div>
             <div className="grid grid-cols-12 gap-4">
@@ -104,7 +109,7 @@ function DashboardMetricSelection(props) {
                 </div>
                 <div className="col-span-9">
                     <div className="grid grid-cols-2 gap-4 -mx-4 px-4 lg:grid-cols-2 sm:grid-cols-1">
-                        {activeCategory.widgets.map((widget: any) => (
+                        {activeCategory && activeCategory.widgets.map((widget: any) => (
                             <div
                                 key={widget.widgetId}
                                 className={cn("border rounded cursor-pointer", { 'border-color-teal' : selectedWidgetIds.includes(widget.widgetId) })}

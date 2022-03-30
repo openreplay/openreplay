@@ -23,6 +23,8 @@ const siteIdRequiredPaths = [
   '/assist',
   '/heatmaps',
   '/custom_metrics',
+  '/dashboards',
+  '/metrics'
   // '/custom_metrics/sessions',
 ];
 

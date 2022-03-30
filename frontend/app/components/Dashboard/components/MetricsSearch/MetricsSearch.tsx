@@ -1,11 +1,11 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import { Icon } from 'UI';
 
 function MetricsSearch(props) {
-    const store: any = useDashboardStore();
-    const metricsSearch = useObserver(() => store.metricsSearch);
+    const { dashboardStore } = useStore();
+    const metricsSearch = useObserver(() => dashboardStore.metricsSearch);
 
     
     return useObserver(() => (
@@ -16,7 +16,7 @@ function MetricsSearch(props) {
                 name="metricsSearch"
                 className="bg-white p-2 border rounded w-full pl-10"
                 placeholder="Filter by title, type, dashboard and owner"
-                onChange={({ target: { name, value } }) => store.updateKey(name, value)}
+                onChange={({ target: { name, value } }) => dashboardStore.updateKey(name, value)}
             />
         </div>
     ));

@@ -3,13 +3,14 @@ import React from 'react';
 import { Input } from 'UI';
 import { useDashboardStore } from '../../store/store';
 import cn from 'classnames';
+import { useStore } from 'App/mstore';
 
 interface Props {
 }
 
-function DashboardForm(props) {
-    const store: any = useDashboardStore();
-    const dashboard = store.newDashboard;
+function DashboardForm(props: Props) {
+    const { dashboardStore } = useStore();
+    const dashboard = dashboardStore.dashboardInstance;
     
     const write = ({ target: { value, name } }) => dashboard.update({ [ name ]: value })
     const writeRadio = ({ target: { value, name } }) => {

@@ -26,6 +26,7 @@ import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
 import { fetchWatchdogStatus } from 'Duck/watchdogs';
+import { dashboardService } from "App/services";
 
 import APIClient from './api_client';
 import * as routes from './routes';
@@ -114,6 +115,7 @@ class Router extends React.Component {
   fetchInitialData = () => {
     Promise.all([
       this.props.fetchUserInfo().then(() => {
+        dashboardService.initClient();
         this.props.fetchIntegrationVariables() 
       }),
       this.props.fetchSiteList().then(() => {

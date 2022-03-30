@@ -1,15 +1,39 @@
 import { makeAutoObservable, observable, action, runInAction } from "mobx"
-import Widget from "./widget"
-// import APIClient from 'App/api_client';
+import Widget, { IWidget } from "./widget"
+import { dashboardService } from 'App/services'
 
-export default class Dashboard {
+export interface IDashboard {
+    dashboardId: any
+    name: string
+    isPublic: boolean
+    widgets: IWidget[]
+    isValid: boolean
+    isPinned: boolean
+    currentWidget: IWidget
+
+    update(data: any): void
+    toJson(): any
+    fromJson(json: any): void
+    validate(): void
+    addWidget(widget: IWidget): void
+    removeWidget(widgetId: string): void
+    updateWidget(widget: IWidget): void
+    getWidget(widgetId: string): void
+    getWidgetIndex(widgetId: string)
+    getWidgetByIndex(index: number): void
+    getWidgetCount(): void
+    getWidgetIndexByWidgetId(widgetId: string): void
+    swapWidgetPosition(positionA: number, positionB: number): void
+    sortWidgets(): void
+}
+export default class Dashboard implements IDashboard {
     dashboardId: any = undefined
     name: string = "New Dashboard"
     isPublic: boolean = false
-    widgets: Widget[] = []
+    widgets: IWidget[] = []
     isValid: boolean = false
     isPinned: boolean = false
-    currentWidget: Widget = new Widget()
+    currentWidget: IWidget = new Widget()
     
     constructor() {
         makeAutoObservable(this, {
@@ -57,8 +81,8 @@ export default class Dashboard {
         runInAction(() => {
             this.dashboardId = json.dashboardId
             this.name = json.name
-            this.isPublic = json.isPrivate
-            this.widgets = json.widgets.map(w => new Widget().fromJson(w))
+            this.isPublic = json.isPublic
+            this.widgets = json.widgets ? json.widgets.map(w => new Widget().fromJson(w)) : []
         })
         return this
     }
@@ -68,7 +92,7 @@ export default class Dashboard {
         return this.isValid = this.name.length > 0
     }
 
-    addWidget(widget: Widget) {
+    addWidget(widget: IWidget) {
         this.widgets.push(widget)
     }
 
@@ -76,7 +100,7 @@ export default class Dashboard {
         this.widgets = this.widgets.filter(w => w.widgetId !== widgetId)
     }
 
-    updateWidget(widget: Widget) {
+    updateWidget(widget: IWidget) {
         const index = this.widgets.findIndex(w => w.widgetId === widget.widgetId)
         if (index >= 0) {
             this.widgets[index] = widget

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { useDashboardStore } from '../../store/store';
+import { useStore } from 'App/mstore';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
@@ -11,8 +11,8 @@ interface Props {
 }
 function WidgetView(props: Props) {
     const [expanded, setExpanded] = useState(true);
-    const store: any = useDashboardStore();
-    const widget = store.currentWidget;
+    const { dashboardStore } = useStore();
+    const widget = dashboardStore.currentWidget;
     return (
         <div className="page-margin container-70 mb-8">
             <div className="bg-white rounded border">
