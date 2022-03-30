@@ -118,12 +118,9 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                 first_stage_extra_constraints.append(
                     sessions._multiple_conditions(f's.rev_id {op} %({f_k})s', f["value"], value_key=f_k))
                 # values[f_k] = helper.string_to_sql_like_with_op(f["value"][0], op)
+    i = -1
+    for s in stages:
 
-    for i, s in enumerate(stages):
-        if i == 0:
-            extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
-        else:
-            extra_from = []
         if s.get("operator") is None:
             s["operator"] = "is"
 
@@ -132,6 +129,11 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
         is_any = sessions._isAny_opreator(s["operator"])
         if not is_any and isinstance(s["value"], list) and len(s["value"]) == 0:
             continue
+        i += 1
+        if i == 0:
+            extra_from = filter_extra_from + ["INNER JOIN public.sessions AS s USING (session_id)"]
+        else:
+            extra_from = []
         op = sessions.__get_sql_operator(s["operator"])
         event_type = s["type"].upper()
         if event_type == events.event_type.CLICK.ui_type:
@@ -213,7 +215,7 @@ def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
                     ISS.issue_id as issue_id
             FROM events_common.issues AS ISE INNER JOIN issues AS ISS USING (issue_id)
             WHERE ISE.timestamp >= stages_t.stage1_timestamp 
-                AND ISE.timestamp <= stages_t.stage{len(stages)}_timestamp 
+                AND ISE.timestamp <= stages_t.stage{i + 1}_timestamp 
                 AND ISS.project_id=%(project_id)s
                 {"AND ISS.type IN %(issueTypes)s" if len(filter_issues) > 0 else ""}) AS base_t
         ) AS issues_t 
@@ -526,7 +528,7 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
         split = issue.split('__^__')
         issues_dict['significant' if is_sign else 'insignificant'].append({
             "type": split[0],
-            "title": get_issue_title(split[0]),
+            "title": helper.get_issue_title(split[0]),
             "affected_sessions": affected_sessions[issue],
             "unaffected_sessions": session_counts[1] - affected_sessions[issue],
             "lost_conversions": lost_conversions,
@@ -639,27 +641,3 @@ def get_overview(filter_d, project_id, first_stage=None, last_stage=None):
     output['stages'] = stages_list
     output['criticalIssuesCount'] = n_critical_issues
     return output
-
-
-def get_issue_title(issue_type):
-    return {'click_rage': "Click Rage",
-            'dead_click': "Dead Click",
-            'excessive_scrolling': "Excessive Scrolling",
-            'bad_request': "Bad Request",
-            'missing_resource': "Missing Image",
-            'memory': "High Memory Usage",
-            'cpu': "High CPU",
-            'slow_resource': "Slow Resource",
-            'slow_page_load': "Slow Page Performance",
-            'crash': "Crash",
-            'ml_cpu': "High CPU",
-            'ml_memory': "High Memory Usage",
-            'ml_dead_click': "Dead Click",
-            'ml_click_rage': "Click Rage",
-            'ml_mouse_thrashing': "Mouse Thrashing",
-            'ml_excessive_scrolling': "Excessive Scrolling",
-            'ml_slow_resources': "Slow Resource",
-            'custom': "Custom Event",
-            'js_exception': "Error",
-            'custom_event_error': "Custom Error",
-            'js_error': "Error"}.get(issue_type, issue_type)

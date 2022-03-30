@@ -1,4 +1,4 @@
-fromVersion: "v1.5.3"
+fromVersion: "v1.5.4"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -100,7 +100,7 @@ utilities:
   env:
     debug: 0
     uws: false
-    cluster: false
+    redis: false
 
 # If you want to override something
 # chartname:

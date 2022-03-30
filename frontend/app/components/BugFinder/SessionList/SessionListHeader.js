@@ -64,5 +64,5 @@ function SessionListHeader({
 };
 
 export default connect(state => ({
-  activeTab: state.getIn([ 'sessions', 'activeTab' ]),
+  activeTab: state.getIn([ 'search', 'activeTab' ]),
 }), { applyFilter })(SessionListHeader);

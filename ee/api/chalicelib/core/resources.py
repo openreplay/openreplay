@@ -7,7 +7,7 @@ def get_by_session_id(session_id):
     with ch_client.ClickHouseClient() as ch:
         ch_query = """\
                 SELECT
-                       datetime,url,type,duration,ttfb,header_size,encoded_body_size,decoded_body_size,success
+                       datetime,url,type,duration,ttfb,header_size,encoded_body_size,decoded_body_size,success,coalesce(status,if(success, 200, status)) AS status
                 FROM resources
                 WHERE session_id = toUInt64(%(session_id)s);"""
         params = {"session_id": session_id}

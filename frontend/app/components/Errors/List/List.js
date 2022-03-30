@@ -1,28 +1,26 @@
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { Set, List as ImmutableList } from "immutable";
-import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain } from 'UI';
-import { merge, resolve, unresolve, ignore, updateCurrentPage } from "Duck/errors";
+import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain, Pagination } from 'UI';
+import { merge, resolve, unresolve, ignore, updateCurrentPage, editOptions } from "Duck/errors";
 import { applyFilter } from 'Duck/filters';
 import { IGNORED, RESOLVED, UNRESOLVED } from 'Types/errorInfo';
 import SortDropdown from 'Components/BugFinder/Filters/SortDropdown';
 import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
+import { debounce } from 'App/utils';
 
-const PER_PAGE = 5;
-const DEFAULT_SORT = 'lastOccurrence';
-const DEFAULT_ORDER = 'desc';
+const PER_PAGE = 10;
 const sortOptionsMap = {
-	'lastOccurrence-desc': 'Last Occurrence',
-  'firstOccurrence-desc': 'First Occurrence',
-  'sessions-asc': 'Sessions Ascending',
-  'sessions-desc': 'Sessions Descending',
-  'users-asc': 'Users Ascending',
-  'users-desc': 'Users Descending',
+	'occurrence-desc': 'Last Occurrence',
+	'occurrence-desc': 'First Occurrence',
+	'sessions-asc': 'Sessions Ascending',
+	'sessions-desc': 'Sessions Descending',
+	'users-asc': 'Users Ascending',
+	'users-desc': 'Users Descending',
 };
 const sortOptions = Object.entries(sortOptionsMap)
   .map(([ value, text ]) => ({ value, text }));
-
 
 @connect(state => ({
 	loading: state.getIn([ "errors", "loading" ]),
@@ -30,24 +28,35 @@ const sortOptions = Object.entries(sortOptionsMap)
 		state.getIn(["errors", "unresolve", "loading"]),
 	ignoreLoading: state.getIn([ "errors", "ignore", "loading" ]),
 	mergeLoading: state.getIn([ "errors", "merge", "loading" ]),
-  currentPage: state.getIn(["errors", "currentPage"]),
+	currentPage: state.getIn(["errors", "currentPage"]),
+	total: state.getIn([ 'errors', 'totalCount' ]),
+	sort: state.getIn([ 'errors', 'options', 'sort' ]),
+	order: state.getIn([ 'errors', 'options', 'order' ]),
+	query: state.getIn([ "errors", "options", "query" ]),
 }), {
 	merge,
 	resolve,
 	unresolve,
 	ignore,
 	applyFilter,
-  updateCurrentPage,
+  	updateCurrentPage,
+	editOptions,
 })
 export default class List extends React.PureComponent {
-	state = {
-		checkedAll: false,
-		checkedIds: Set(),
-		sort: {}
+	constructor(props) {
+		super(props)
+		this.state = {
+			checkedAll: false,
+			checkedIds: Set(),
+			query: props.query,
+		}
+		this.debounceFetch = debounce(this.props.editOptions, 1000);
 	}
-
+	
 	componentDidMount() {
-	 	this.props.applyFilter({ sort: DEFAULT_SORT, order: DEFAULT_ORDER, events: ImmutableList(), filters: ImmutableList() });
+		if (this.props.list.size === 0) {
+	 		this.props.applyFilter({ });
+		}
 	}
 
 	check = ({ errorId }) => {
@@ -111,8 +120,14 @@ export default class List extends React.PureComponent {
 
 	writeOption = (e, { name, value }) => {
 		const [ sort, order ] = value.split('-');
-		const sign = order === 'desc' ? -1 : 1;
-		this.setState({ sort: { sort, order }})
+		if (name === 'sort') {
+			this.props.editOptions({ sort, order });
+		}
+	}
+
+	onQueryChange = (e, { value }) => {
+		this.setState({ query: value });
+		this.debounceFetch({ query: value });
 	}
 
 	render() {
@@ -123,19 +138,18 @@ export default class List extends React.PureComponent {
 			ignoreLoading,
 			resolveToggleLoading,
 			mergeLoading,
-			onFilterChange,
-      currentPage,
+      		currentPage,
+		  	total,
+			sort,
+			order,
 		} = this.props;
 		const {
 			checkedAll,
 			checkedIds,
-			sort
+			query,
 		} = this.state;
 		const someLoading = loading || ignoreLoading || resolveToggleLoading || mergeLoading;
 		const currentCheckedIds = this.currentCheckedIds();
-		const displayedCount = Math.min(currentPage * PER_PAGE, list.size);
-		let _list = sort.sort ? list.sortBy(i => i[sort.sort]) : list;
-		_list = sort.order === 'desc' ? _list.reverse() : _list;
 
 		return (
 			<div className="bg-white p-5 border-radius-3 thin-gray-border">
@@ -182,33 +196,35 @@ export default class List extends React.PureComponent {
 						}							
 					</div>
 					<div className="flex items-center ml-6">
-	          <span className="mr-2 color-gray-medium">Sort By</span>	          
+						<span className="mr-2 color-gray-medium">Sort By</span>	          
 						<DropdownPlain
-              name="type"              
-              options={ sortOptions }
-              onChange={ this.writeOption }
-            />
-	          <Input
+							defaultValue={ `${sort}-${order}` }
+							name="sort"
+							options={ sortOptions }
+							onChange={ this.writeOption }
+						/>
+						<Input
 							style={{ width: '350px'}}
-              className="input-small ml-3"
-              placeholder="Filter by Name or Message"
-              icon="search"
-              iconPosition="left"
-              name="filter"
-              onChange={ onFilterChange }
-            />
-	        </div>
-				</div>
-				<Divider />
-				<NoContent
-	        title="No Errors Found!"
-	        subtext="Please try to change your search parameters."
-	        icon="exclamation-circle"
-	        show={ !loading && list.size === 0}
-	      >
-	        <Loader loading={ loading }>
-	          { _list.take(displayedCount).map(e =>
-	          	<>
+							className="input-small ml-3"
+							placeholder="Filter by Name or Message"
+							icon="search"
+							iconPosition="left"
+							name="filter"
+							onChange={ this.onQueryChange }
+							value={query}
+						/>
+	        			</div>
+					</div>
+					<Divider />
+					<NoContent
+						title="No Errors Found!"
+						subtext="Please try to change your search parameters."
+						icon="exclamation-circle"
+						show={ !loading && list.size === 0}
+					>
+					<Loader loading={ loading }>
+						{ list.map(e =>
+							<div key={e.errorId}>
 								<ListItem
 									disabled={someLoading}
 									key={e.errorId}
@@ -217,16 +233,19 @@ export default class List extends React.PureComponent {
 									onCheck={ this.check }
 								/>
 								<Divider/>
-							</>
+							</div>
 						)}
-						<LoadMoreButton
-		          className="mt-3"
-		          displayedCount={displayedCount}
-		          totalCount={list.size}
-		          onClick={this.addPage}
-		        />
-	        </Loader>
-	      </NoContent>
+						<div className="w-full flex items-center justify-center mt-4">
+							<Pagination
+								page={currentPage}
+								totalPages={Math.ceil(total / PER_PAGE)}
+								onPageChange={(page) => this.props.updateCurrentPage(page)}
+								limit={PER_PAGE}
+								debounceRequest={500}
+							/>
+						</div>
+					</Loader>
+	     		</NoContent>
 			</div>
 		);
 	}

@@ -11,6 +11,10 @@ def attribute_to_camel_case(snake_str):
     return components[0] + ''.join(x.title() for x in components[1:])
 
 
+def transform_email(email: str) -> str:
+    return email.lower() if isinstance(email, str) else email
+
+
 class _Grecaptcha(BaseModel):
     g_recaptcha_response: Optional[str] = Field(None, alias='g-recaptcha-response')
 
@@ -18,6 +22,7 @@ class _Grecaptcha(BaseModel):
 class UserLoginSchema(_Grecaptcha):
     email: EmailStr = Field(...)
     password: str = Field(...)
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class UserSignupSchema(UserLoginSchema):
@@ -31,9 +36,11 @@ class UserSignupSchema(UserLoginSchema):
 
 class EditUserSchema(BaseModel):
     name: Optional[str] = Field(None)
-    email: Optional[str] = Field(None)
+    email: Optional[EmailStr] = Field(None)
     admin: Optional[bool] = Field(False)
     appearance: Optional[dict] = Field({})
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditUserAppearanceSchema(BaseModel):
@@ -41,7 +48,9 @@ class EditUserAppearanceSchema(BaseModel):
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):
-    email: str = Field(...)
+    email: EmailStr = Field(...)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditUserPasswordSchema(BaseModel):
@@ -70,7 +79,9 @@ class CurrentAPIContext(BaseModel):
 
 class CurrentContext(CurrentAPIContext):
     user_id: int = Field(...)
-    email: str = Field(...)
+    email: EmailStr = Field(...)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class AddSlackSchema(BaseModel):
@@ -81,15 +92,6 @@ class AddSlackSchema(BaseModel):
 class EditSlackSchema(BaseModel):
     name: Optional[str] = Field(None)
     url: HttpUrl = Field(...)
-
-
-class SearchErrorsSchema(BaseModel):
-    platform: Optional[str] = Field(None)
-    startDate: Optional[int] = Field(TimeUTC.now(-7))
-    endDate: Optional[int] = Field(TimeUTC.now())
-    density: Optional[int] = Field(7)
-    sort: Optional[str] = Field(None)
-    order: Optional[str] = Field(None)
 
 
 class CreateNotificationSchema(BaseModel):
@@ -124,14 +126,18 @@ class CreateEditWebhookSchema(BaseModel):
 class CreateMemberSchema(BaseModel):
     userId: Optional[int] = Field(None)
     name: str = Field(...)
-    email: str = Field(...)
+    email: EmailStr = Field(...)
     admin: bool = Field(False)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditMemberSchema(BaseModel):
     name: str = Field(...)
-    email: str = Field(...)
+    email: EmailStr = Field(...)
     admin: bool = Field(False)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -253,6 +259,8 @@ class EmailPayloadSchema(BaseModel):
     link: str = Field(...)
     message: str = Field(...)
 
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
+
 
 class MemberInvitationPayloadSchema(BaseModel):
     auth: str = Field(...)
@@ -260,6 +268,8 @@ class MemberInvitationPayloadSchema(BaseModel):
     invitation_link: str = Field(...)
     client_id: str = Field(...)
     sender_name: str = Field(...)
+
+    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -609,11 +619,12 @@ class SessionsSearchPayloadSchema(BaseModel):
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
-    order: str = Field(default="DESC")
+    order: Literal["asc", "desc"] = Field(default="desc")
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
     limit: int = Field(default=200, gt=0, le=200)
     page: int = Field(default=1, gt=0)
+    bookmarked: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -662,6 +673,7 @@ class FunnelSearchPayloadSchema(FlatSessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+    rangeValue: Optional[str] = Field(None)
 
     @root_validator(pre=True)
     def enforce_default_values(cls, values):
@@ -694,6 +706,27 @@ class FunnelInsightsPayloadSchema(FlatSessionsSearchPayloadSchema):
     order: Optional[str] = Field(None)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then, const=True)
     group_by_user: Optional[bool] = Field(default=False, const=True)
+    rangeValue: Optional[str] = Field(None)
+
+
+class ErrorStatus(str, Enum):
+    all = 'all'
+    unresolved = 'unresolved'
+    resolved = 'resolved'
+    ignored = 'ignored'
+
+
+class ErrorSort(str, Enum):
+    occurrence = 'occurrence'
+    users_count = 'users'
+    sessions_count = 'sessions'
+
+
+class SearchErrorsSchema(SessionsSearchPayloadSchema):
+    sort: ErrorSort = Field(default=ErrorSort.occurrence)
+    density: Optional[int] = Field(7)
+    status: Optional[ErrorStatus] = Field(default=ErrorStatus.all)
+    query: Optional[str] = Field(default=None)
 
 
 class MetricPayloadSchema(BaseModel):
