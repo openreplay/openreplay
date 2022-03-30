@@ -27,11 +27,20 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
     with pg_client.PostgresClient() as cur:
         pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned) 
                         VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s)
-                        RETURNING *;"""
+                        RETURNING *"""
         params = {"userId": user_id, "projectId": project_id, **data.dict()}
+        if data.metrics is not None and len(data.metrics) > 0:
+            pg_query = f"""WITH dash AS ({pg_query})
+                         INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id)
+                         VALUES {",".join([f"((SELECT dashboard_id FROM dash),%(metric_id_{i})s, %(userId)s)" for i in range(len(data.metrics))])}
+                         RETURNING (SELECT dashboard_id FROM dash)"""
+        for i, m in enumerate(data.metrics):
+            params[f"metric_id_{i}"] = m
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
-    return helper.dict_to_camel_case(row)
+    if row is None:
+        return {"errors": ["something went wrong while creating the dashboard"]}
+    return {"data": get_dashboard(project_id=project_id, user_id=user_id, dashboard_id=row["dashboard_id"])}
 
 
 def get_dashboards(project_id, user_id):
@@ -87,10 +96,10 @@ def delete_dashboard(project_id, user_id, dashboard_id):
     return {"data": {"success": True}}
 
 
-def update_dashboard(project_id, user_id, dashboard_id, data: schemas.CreateDashboardSchema):
+def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashboardSchema):
     with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboards
-                      SET name = %(name)s, is_pinned = %(is_pinned)s, is_public = %(is_public)s
+                      SET name = %(name)s, is_public = %(is_public)s
                         WHERE dashboards.project_id = %(projectId)s
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public)

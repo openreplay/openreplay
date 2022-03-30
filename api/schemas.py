@@ -881,22 +881,24 @@ class CreateDashboardSchema(BaseModel):
     name: str = Field(..., min_length=1)
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
+    metrics: Optional[List[int]] = Field(default=[])
+
+    class Config:
+        alias_generator = attribute_to_camel_case
+
+
+class EditDashboardSchema(BaseModel):
+    name: str = Field(..., min_length=1)
+    is_public: bool = Field(default=False)
 
     class Config:
         alias_generator = attribute_to_camel_case
 
 
 class AddWidgetToDashboardPayloadSchema(BaseModel):
-    metric_id: Optional[int] = Field(default=None)
+    metric_id: int = Field(default=None)
     name: Optional[str] = Field(default=None)
     config: dict = Field(default={})
-
-    @root_validator
-    def validator(cls, values):
-        assert bool(values.get("template_id") is not None) != bool(values.get("metric_id") is not None), \
-            f"templateId or metricId should be provided, but not both at the same time"
-
-        return values
 
     class Config:
         alias_generator = attribute_to_camel_case
