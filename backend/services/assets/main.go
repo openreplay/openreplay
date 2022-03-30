@@ -18,7 +18,7 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	GROUP_CACHE :=  env.String("GROUP_CACHE") 
+	GROUP_CACHE := env.String("GROUP_CACHE")
 	TOPIC_CACHE := env.String("TOPIC_CACHE")
 
 	cacher := cacher.NewCacher(
@@ -29,10 +29,10 @@ func main() {
 	)
 
 	consumer := queue.NewMessageConsumer(
-		GROUP_CACHE, 
-		[]string{ TOPIC_CACHE }, 
+		GROUP_CACHE,
+		[]string{TOPIC_CACHE},
 		func(sessionID uint64, message messages.Message, e *types.Meta) {
-			switch msg := message.(type) {			
+			switch msg := message.(type) {
 			case *messages.AssetCache:
 				cacher.CacheURL(sessionID, msg.URL)
 			case *messages.ErrorEvent:
@@ -47,17 +47,17 @@ func main() {
 				for _, source := range sourceList {
 					cacher.CacheJSFile(source)
 				}
-			}		
+			}
 		},
+		true,
 	)
-
 
 	tick := time.Tick(20 * time.Minute)
 
 	sigchan := make(chan os.Signal, 1)
-  signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-  log.Printf("Cacher service started\n")
+	log.Printf("Cacher service started\n")
 	for {
 		select {
 		case sig := <-sigchan:

@@ -25,7 +25,12 @@ type Consumer struct {
 	lastKafkaEventTs int64
 }
 
-func NewConsumer(group string, topics []string, messageHandler types.MessageHandler) *Consumer {
+func NewConsumer(
+	group string,
+	topics []string,
+	messageHandler types.MessageHandler,
+	autoCommit bool,
+) *Consumer {
 	protocol := "plaintext"
 	if env.Bool("KAFKA_USE_SSL") {
 		protocol = "ssl"
@@ -53,16 +58,17 @@ func NewConsumer(group string, topics []string, messageHandler types.MessageHand
 		log.Fatalln(err)
 	}
 
+	var commitTicker *time.Ticker
+	if autoCommit {
+		commitTicker = time.NewTicker(2 * time.Minute)
+	}
+
 	return &Consumer{
 		c:              c,
 		messageHandler: messageHandler,
-		commitTicker:   time.NewTicker(2 * time.Minute),
+		commitTicker:   commitTicker,
 		pollTimeout:    200,
 	}
-}
-
-func (consumer *Consumer) DisableAutoCommit() {
-	consumer.commitTicker.Stop()
 }
 
 func (consumer *Consumer) Commit() error {
@@ -128,10 +134,12 @@ func (consumer *Consumer) ConsumeNext() error {
 		return nil
 	}
 
-	select {
-	case <-consumer.commitTicker.C:
-		consumer.Commit()
-	default:
+	if consumer.commitTicker != nil {
+		select {
+		case <-consumer.commitTicker.C:
+			consumer.Commit()
+		default:
+		}
 	}
 
 	switch e := ev.(type) {

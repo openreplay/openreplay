@@ -8,12 +8,12 @@ import (
 	"os/signal"
 	"syscall"
 
-	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/env"
+	"openreplay/backend/pkg/intervals"
+	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
-	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/services/ender/builder"
 )
 
@@ -29,24 +29,24 @@ func main() {
 
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
-		GROUP_EVENTS, 
-		[]string{ 
+		GROUP_EVENTS,
+		[]string{
 			env.String("TOPIC_RAW_WEB"),
 			env.String("TOPIC_RAW_IOS"),
-		}, 
+		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			statsLogger.HandleAndLog(sessionID, meta)
 			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
 		},
+		false,
 	)
-	consumer.DisableAutoCommit()
-	
+
 	tick := time.Tick(intervals.EVENTS_COMMIT_INTERVAL * time.Millisecond)
 
 	sigchan := make(chan os.Signal, 1)
-  signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-  log.Printf("Ender service started\n")
+	log.Printf("Ender service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
@@ -55,7 +55,7 @@ func main() {
 			consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP)
 			consumer.Close()
 			os.Exit(0)
-		case <- tick:
+		case <-tick:
 			builderMap.IterateReadyMessages(time.Now().UnixNano()/1e6, func(sessionID uint64, readyMsg messages.Message) {
 				producer.Produce(TOPIC_TRIGGER, sessionID, messages.Encode(readyMsg))
 			})
@@ -69,4 +69,3 @@ func main() {
 		}
 	}
 }
-
