@@ -31,6 +31,7 @@ export default class AnnotationCanvas {
   }
 
   stop = () => {
+    if (!this.painting) { return }
     this.painting = false
     this.fadeOut()
   }

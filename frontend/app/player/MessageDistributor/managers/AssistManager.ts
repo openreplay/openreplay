@@ -140,6 +140,7 @@ export default class AssistManager {
       })
       socket.on("disconnect", () => {
         this.toggleRemoteControl(false)
+        update({ calling: CallingState.NoCall })
       })
       socket.on('messages', messages => {
         //console.log(messages.filter(m => m._id === 41 || m._id === 44))
@@ -181,6 +182,8 @@ export default class AssistManager {
         // Call State
         if (getState().calling === CallingState.OnCall) {
           update({ calling: CallingState.Reconnecting })
+        } else if (getState().calling === CallingState.Requesting){
+          update({ calling: CallingState.NoCall })
         }
       })
       socket.on('error', e => {

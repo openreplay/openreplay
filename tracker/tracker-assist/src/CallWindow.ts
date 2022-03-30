@@ -1,4 +1,5 @@
 import type { LocalStream } from './LocalStream.js';
+import attachDND from './dnd';
 
 const SS_START_TS_KEY = "__openreplay_assist_call_start_ts"
 
@@ -18,20 +19,21 @@ export default class CallWindow {
   private load: Promise<void>
 
   constructor() {
-    const iframe = this.iframe = document.createElement('iframe');
+    const iframe = this.iframe = document.createElement('iframe')
     Object.assign(iframe.style, {
       position: "fixed",
       zIndex: 2147483647 - 1,
-      //borderRadius: ".25em .25em .4em .4em",
-      //border: "4px rgba(0, 0, 0, .7)",
       border: "none",
       bottom: "10px",
       right: "10px",
-      background: "white",
       height: "200px",
       width: "200px",
-    });
-    document.body.appendChild(iframe);
+    })
+    // TODO: find the best attribute name for the ignoring iframes
+    iframe.setAttribute("data-openreplay-obscured", "")
+    iframe.setAttribute("data-openreplay-hidden", "")
+    iframe.setAttribute("data-openreplay-ignore", "")
+    document.body.appendChild(iframe)
 
     const doc = iframe.contentDocument;
     if (!doc) {
@@ -91,22 +93,10 @@ export default class CallWindow {
         }, 500);
       }
 
-      // TODO: better D'n'D 
-      // mb set cursor:move here?
-      doc.body.setAttribute("draggable", "true");
-      doc.body.ondragstart = (e) => {
-        if (!e.dataTransfer || !e.target) { return; }
-        //@ts-ignore
-        if (!e.target.classList || !e.target.classList.contains("drag-area")) { return; }
-        e.dataTransfer.setDragImage(doc.body, e.clientX, e.clientY);
-      };
-      doc.body.ondragend = e => {
-        Object.assign(iframe.style, {
-          left: `${e.clientX}px`, // TODO: fix the case when ecoordinates are inside the iframe
-          top: `${e.clientY}px`,
-          bottom: 'auto',
-          right: 'auto',
-        })
+      const dragArea = doc.querySelector(".drag-area")
+      if (dragArea) {
+        // TODO: save coordinates on the new page
+        attachDND(iframe, dragArea, doc.documentElement)
       }
     });
 
