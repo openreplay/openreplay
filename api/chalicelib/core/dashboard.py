@@ -2261,14 +2261,15 @@ def get_application_activity_avg_image_load_time(project_id, startTimestamp=Time
                                                  endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
         row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
-        results = helper.dict_to_camel_case(row)
+        results = row
+        results["chart"] = get_performance_avg_image_load_time(project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
         row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-        results["chart"] = get_performance_avg_image_load_time(project_id, startTimestamp, endTimestamp, **args)
+
     return results
 
 
@@ -2297,8 +2298,7 @@ def get_performance_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(d
                                           AND resources.type = 'img' AND resources.duration>0
                                           {(f' AND ({" OR ".join(img_constraints)})') if len(img_constraints) > 0 else ""}
                         )
-                    SELECT 
-                             generated_timestamp AS timestamp,
+                    SELECT   generated_timestamp AS timestamp,
                              COALESCE(AVG(resources.duration),0) AS value 
                       FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                         LEFT JOIN LATERAL ( 
@@ -2337,14 +2337,14 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
                                                 endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
         row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
-        results = helper.dict_to_camel_case(row)
+        results = row
+        results["chart"] = get_performance_avg_page_load_time(project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
         row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-        results["chart"] = get_performance_avg_page_load_time(project_id, startTimestamp, endTimestamp, **args)
     return results
 
 
@@ -2369,8 +2369,7 @@ def get_performance_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(de
                                     WHERE {" AND ".join(pg_sub_query_subset)} AND pages.load_time>0 AND pages.load_time IS NOT NULL
                                       {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
                         )
-                        SELECT 
-                             generated_timestamp AS timestamp,
+                        SELECT generated_timestamp AS timestamp,
                              COALESCE(AVG(pages.load_time),0) AS value 
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                         LEFT JOIN LATERAL ( SELECT pages.load_time
@@ -2407,14 +2406,14 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
                                                    endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
         row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
-        results = helper.dict_to_camel_case(row)
+        results = row
+        results["chart"] = get_performance_avg_request_load_time(project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
         row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-        results["chart"] = get_performance_avg_request_load_time(project_id, startTimestamp, endTimestamp, **args)
     return results
 
 
@@ -2447,8 +2446,7 @@ def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now
                                             AND resources.type = 'fetch' AND resources.duration>0  
                                             {(f' AND ({" OR ".join(request_constraints)})') if len(request_constraints) > 0 else ""}
                         )
-                        SELECT 
-                             generated_timestamp AS timestamp,
+                        SELECT generated_timestamp AS timestamp,
                              COALESCE(AVG(resources.duration),0) AS value 
                       FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                         LEFT JOIN LATERAL ( 
