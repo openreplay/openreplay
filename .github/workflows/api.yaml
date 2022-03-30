@@ -1,5 +1,6 @@
 # This action will push the chalice changes to aws
 on:
+  workflow_dispatch:
   push:
     branches:
       - api-v1.5.5
