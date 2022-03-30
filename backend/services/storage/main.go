@@ -2,45 +2,41 @@ package main
 
 import (
 	"log"
-	"time"
 	"os"
 	"strconv"
+	"time"
 
 	"os/signal"
 	"syscall"
 
 	"openreplay/backend/pkg/env"
-	"openreplay/backend/pkg/storage"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/storage"
 )
-
-
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-
-	storageWeb := storage.NewS3(env.String("AWS_REGION_WEB"), env.String("S3_BUCKET_WEB"))
-	//storageIos := storage.NewS3(env.String("AWS_REGION_IOS"), env.String("S3_BUCKET_IOS"))
+	storage := storage.NewS3(env.String("AWS_REGION_WEB"), env.String("S3_BUCKET_WEB"))
 	FS_DIR := env.String("FS_DIR")
 	FS_CLEAN_HRS := env.Int("FS_CLEAN_HRS")
 
-	var uploadKey func(string, int, *storage.S3)
-	uploadKey = func(key string, retryCount int, s *storage.S3) {
+	var uploadKey func(string, int)
+	uploadKey = func(key string, retryCount int) {
 		if retryCount <= 0 {
-			return;
+			return
 		}
 		file, err := os.Open(FS_DIR + "/" + key)
 		defer file.Close()
 		if err != nil {
 			log.Printf("File error: %v; Will retry %v more time(s)\n", err, retryCount)
 			time.AfterFunc(2*time.Minute, func() {
-				uploadKey(key, retryCount - 1, s)
+				uploadKey(key, retryCount-1)
 			})
 		} else {
-			if err := s.Upload(gzipFile(file), key, "application/octet-stream", true); err != nil {
+			if err := storage.Upload(gzipFile(file), key, "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage upload error: %v\n", err)
 			}
 		}
@@ -48,27 +44,24 @@ func main() {
 
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_STORAGE"),
-		[]string{ 
+		[]string{
 			env.String("TOPIC_TRIGGER"),
-	  },
-	  func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-	  	switch msg.(type) {
-				case *messages.SessionEnd:
-					uploadKey(strconv.FormatUint(sessionID, 10), 5, storageWeb)
-				//case *messages.IOSSessionEnd:
-				//	uploadKey(strconv.FormatUint(sessionID, 10), 5, storageIos)
-	  	}
-	  },
+		},
+		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
+			switch msg.(type) {
+			case *messages.SessionEnd:
+				uploadKey(strconv.FormatUint(sessionID, 10), 5)
+			}
+		},
+		true,
 	)
 
 	sigchan := make(chan os.Signal, 1)
-  signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
+	cleanTick := time.Tick(time.Duration(FS_CLEAN_HRS) * time.Hour)
 
-  cleanTick := time.Tick(time.Duration(FS_CLEAN_HRS) * time.Hour)
-
-
-  log.Printf("Storage service started\n")
+	log.Printf("Storage service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
@@ -85,4 +78,3 @@ func main() {
 		}
 	}
 }
-
