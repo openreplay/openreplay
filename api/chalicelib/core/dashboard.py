@@ -992,13 +992,13 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
                                     FROM public.sessions
                                              INNER JOIN events.pages USING (session_id)
                                     WHERE {" AND ".join(pg_sub_query_subset)})
-                        SELECT COALESCE(avg, 0) AS avg, chart
+                        SELECT COALESCE(avg, 0) AS value, chart
                         FROM (SELECT AVG(dom_building_time) FROM pages) AS avg
                                  LEFT JOIN
                              (SELECT jsonb_agg(chart) AS chart
                               FROM (
                                        SELECT generated_timestamp                 AS timestamp,
-                                              COALESCE(AVG(dom_building_time), 0) AS avg
+                                              COALESCE(AVG(dom_building_time), 0) AS value
                                        FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                                 LEFT JOIN LATERAL ( SELECT pages.dom_building_time
                                                                     FROM pages
@@ -1154,7 +1154,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
         pg_sub_query_chart.append(f"url = %(value)s")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
-                                COALESCE(AVG(pages.response_time),0) AS avg
+                                COALESCE(AVG(pages.response_time),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                              LEFT JOIN LATERAL (
                                     SELECT response_time
@@ -1175,7 +1175,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"avg": avg, "chart": rows}
+    return {"value": avg, "chart": rows}
 
 
 @dev.timed
@@ -2509,3 +2509,133 @@ def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now
         rows = cur.fetchall()
 
     return rows
+
+
+def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                                endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        rows = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
+        if len(rows) > 0:
+            results = helper.dict_to_camel_case(rows[0])
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        rows = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
+        if len(rows) > 0:
+            previous = helper.dict_to_camel_case(rows[0])
+            results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    return results
+
+
+def __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query.append("pages.timestamp>=%(startTimestamp)s")
+    pg_sub_query.append("pages.timestamp<%(endTimestamp)s")
+    pg_sub_query.append("pages.dom_content_loaded_time > 0")
+    pg_query = f"""SELECT COALESCE(AVG(NULLIF(pages.dom_content_loaded_time, 0)), 0) AS value
+                    FROM (SELECT pages.dom_content_loaded_time
+                          FROM events.pages
+                                   INNER JOIN public.sessions USING (session_id)
+                          WHERE {" AND ".join(pg_sub_query)}
+                         ) AS pages;"""
+    params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+              **__get_constraint_values(args)}
+    cur.execute(cur.mogrify(pg_query, params))
+    rows = cur.fetchall()
+    return rows
+
+
+def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                                endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
+        if len(rows) > 0:
+            results = helper.dict_to_camel_case(rows[0])
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
+        if len(rows) > 0:
+            previous = helper.dict_to_camel_case(rows[0])
+            results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    return results
+
+
+def __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query.append("pages.timestamp>=%(startTimestamp)s")
+    pg_sub_query.append("pages.timestamp<%(endTimestamp)s")
+    pg_sub_query.append("pages.first_contentful_paint_time > 0")
+    pg_query = f"""SELECT COALESCE(AVG(NULLIF(pages.first_contentful_paint_time, 0)), 0) AS value
+                    FROM (SELECT pages.first_contentful_paint_time
+                          FROM events.pages
+                                   INNER JOIN public.sessions USING (session_id)
+                          WHERE {" AND ".join(pg_sub_query)}
+                         ) AS pages;"""
+    params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+              **__get_constraint_values(args)}
+    cur.execute(cur.mogrify(pg_query, params))
+    rows = cur.fetchall()
+    return rows
+
+
+
+
+def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                      endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
+        results = helper.dict_to_camel_case(row)
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
+
+        previous = helper.dict_to_camel_case(row)
+        results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    return results
+
+
+def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    pg_query = f"""\
+        SELECT COALESCE(CEIL(AVG(NULLIF(sessions.pages_count,0))),0) AS value
+        FROM public.sessions
+        WHERE {" AND ".join(pg_sub_query)};"""
+    params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+              **__get_constraint_values(args)}
+
+    cur.execute(cur.mogrify(pg_query, params))
+    row = cur.fetchone()
+    return row
+
+
+def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                      endTimestamp=TimeUTC.now(), **args):
+    with pg_client.PostgresClient() as cur:
+        row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
+        results = helper.dict_to_camel_case(row)
+        diff = endTimestamp - startTimestamp
+        endTimestamp = startTimestamp
+        startTimestamp = endTimestamp - diff
+        row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
+
+        previous = helper.dict_to_camel_case(row)
+        results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    return results
+
+
+def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    pg_query = f"""\
+        SELECT COALESCE(AVG(NULLIF(sessions.duration,0)),0) AS value
+        FROM public.sessions
+        WHERE {" AND ".join(pg_sub_query)};"""
+    params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
+              **__get_constraint_values(args)}
+
+    cur.execute(cur.mogrify(pg_query, params))
+    row = cur.fetchone()
+    return row
