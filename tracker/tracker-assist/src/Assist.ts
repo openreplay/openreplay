@@ -196,10 +196,6 @@ export default class Assist {
     let confirmCall:ConfirmWindow | null = null
 
     socket.on("AGENT_DISCONNECTED", (id) => {
-      // @ts-ignore (wtf, typescript?!)
-      this.agents[id] && this.agents[id].onDisconnect != null && this.agents[id].onDisconnect()
-      delete this.agents[id]
-
       remoteControl.releaseControl(id)
 
       // close the call also
@@ -207,6 +203,10 @@ export default class Assist {
         confirmCall?.remove()
         this.onRemoteCallEnd()
       }
+
+      // @ts-ignore (wtf, typescript?!)
+      this.agents[id] && this.agents[id].onDisconnect != null && this.agents[id].onDisconnect()
+      delete this.agents[id]
     })
     socket.on("NO_AGENT", () => {
       this.agents = {}
@@ -293,6 +293,7 @@ export default class Assist {
         
         const onCallEnd = this.options.onCallStart()
         const handleCallEnd = () => {
+          app.debug.log("Handle Call End")
           call.close()
           callUI.remove()
           annot && annot.remove()
