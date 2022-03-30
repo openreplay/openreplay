@@ -51,11 +51,15 @@ def add_widget_to_dashboard(projectId: int, dashboardId: int,
     return {"data": dashboards2.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
                                            data=data)}
 
+
 @app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
 @app.put('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
-def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int, data: schemas.CreateCustomMetricsSchema = Body(...),context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": dashboards2.create_metric_add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                           data=data)}
+def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
+                                       data: schemas.CreateCustomMetricsSchema = Body(...),
+                                       context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": dashboards2.create_metric_add_widget(project_id=projectId, user_id=context.user_id,
+                                                         dashboard_id=dashboardId,
+                                                         data=data)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
