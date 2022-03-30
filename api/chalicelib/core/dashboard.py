@@ -127,7 +127,6 @@ SESSIONS_META_FIELDS = {"revId": "rev_id",
                         "browser": "user_browser"}
 
 
-@dev.timed
 def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(),
                            density=7, **args):
@@ -175,7 +174,6 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     return results
 
 
-@dev.timed
 def get_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -234,7 +232,6 @@ def __count_distinct_errors(cur, project_id, startTimestamp, endTimestamp, pg_su
     return cur.fetchone()["count"]
 
 
-@dev.timed
 def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      endTimestamp=TimeUTC.now(),
                      density=7, **args):
@@ -298,7 +295,6 @@ def get_errors_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return rows
 
 
-@dev.timed
 def get_page_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                      endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
@@ -316,7 +312,6 @@ def get_page_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return results
 
 
-@dev.timed
 def __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query.append("pages.timestamp>=%(startTimestamp)s")
@@ -336,7 +331,6 @@ def __get_page_metrics(cur, project_id, startTimestamp, endTimestamp, **args):
     return rows
 
 
-@dev.timed
 def get_application_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
@@ -390,7 +384,6 @@ def __get_application_activity(cur, project_id, startTimestamp, endTimestamp, **
     return result
 
 
-@dev.timed
 def get_user_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                       endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
@@ -423,7 +416,6 @@ def __get_user_activity(cur, project_id, startTimestamp, endTimestamp, **args):
     return row
 
 
-@dev.timed
 def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(),
                        density=7, **args):
@@ -479,7 +471,6 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return sorted(rows, key=lambda k: k["sessions"], reverse=True)
 
 
-@dev.timed
 def __get_performance_constraint(l):
     if len(l) == 0:
         return ""
@@ -487,7 +478,6 @@ def __get_performance_constraint(l):
     return f"AND ({' OR '.join(l)})"
 
 
-@dev.timed
 def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                     density=19, resources=None, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
@@ -622,7 +612,6 @@ def __get_resource_db_type_from_type(resource_type):
     return {v: k for k, v in RESOURCS_TYPE_TO_DB_TYPE.items()}.get(resource_type, resource_type)
 
 
-@dev.timed
 def search(text, resource_type, project_id, performance=False, pages_only=False, events_only=False,
            metadata=False, key=None, platform=None):
     if not resource_type:
@@ -799,7 +788,6 @@ def search(text, resource_type, project_id, performance=False, pages_only=False,
     return [helper.dict_to_camel_case(row) for row in rows]
 
 
-@dev.timed
 def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(),
                                 density=7, **args):
@@ -855,7 +843,6 @@ def get_missing_resources_trend(project_id, startTimestamp=TimeUTC.now(delta_day
     return rows
 
 
-@dev.timed
 def get_network(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(),
                 density=7, **args):
@@ -921,7 +908,6 @@ def dashboard_args(params):
     return args
 
 
-@dev.timed
 def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                endTimestamp=TimeUTC.now(),
                                density=19, type=None, url=None, **args):
@@ -970,7 +956,6 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
     return {"avg": avg, "chart": rows}
 
 
-@dev.timed
 def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), density=19, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1016,7 +1001,6 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
     return row
 
 
-@dev.timed
 def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), type="all", density=19, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1090,7 +1074,6 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return rows
 
 
-@dev.timed
 def get_sessions_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                           endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1109,7 +1092,6 @@ def get_sessions_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return {"count": sum(i["count"] for i in rows), "chart": helper.list_to_camel_case(rows)}
 
 
-@dev.timed
 def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                              endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1138,7 +1120,6 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
     return {"avg": avg, "chart": helper.list_to_camel_case(rows)}
 
 
-@dev.timed
 def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                             endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1178,7 +1159,6 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
     return {"value": avg, "chart": rows}
 
 
-@dev.timed
 def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                          endTimestamp=TimeUTC.now(), density=20, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1296,7 +1276,6 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
     return result
 
 
-@dev.timed
 def get_busiest_time_of_day(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                             endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1316,7 +1295,6 @@ def get_busiest_time_of_day(project_id, startTimestamp=TimeUTC.now(delta_days=-1
     return rows
 
 
-@dev.timed
 def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                     endTimestamp=TimeUTC.now(), value=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1367,7 +1345,6 @@ def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return helper.dict_to_camel_case(row)
 
 
-@dev.timed
 def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=7, url=None, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1383,11 +1360,11 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         pg_query = f"""WITH pages AS(SELECT pages.visually_complete,pages.timestamp 
                                     FROM events.pages INNER JOIN public.sessions USING (session_id)
                                     WHERE {" AND ".join(pg_sub_query_subset)})
-                        SELECT COALESCE((SELECT AVG(pages.visually_complete) FROM pages),0) AS avg,
+                        SELECT COALESCE((SELECT AVG(pages.visually_complete) FROM pages),0) AS value,
                             jsonb_agg(chart) AS chart
                         FROM  
                         (SELECT generated_timestamp AS timestamp,
-                                COALESCE(AVG(visually_complete), 0) AS avg
+                                COALESCE(AVG(visually_complete), 0) AS value
                          FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                      LEFT JOIN LATERAL ( SELECT pages.visually_complete
                                                          FROM pages
@@ -1404,7 +1381,6 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return row
 
 
-@dev.timed
 def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                         endTimestamp=TimeUTC.now(), value=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1443,7 +1419,6 @@ def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(d
     return rows
 
 
-@dev.timed
 def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1453,7 +1428,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
-                            COALESCE(AVG(performance.avg_used_js_heap_size),0) AS avg_used_js_heap_size
+                            COALESCE(AVG(performance.avg_used_js_heap_size),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                              LEFT JOIN LATERAL (
                                 SELECT avg_used_js_heap_size 
@@ -1473,10 +1448,9 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"avgUsedJsHeapSize": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows)}
 
 
-@dev.timed
 def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1486,7 +1460,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
-                            COALESCE(AVG(performance.avg_cpu),0) AS avg_cpu
+                            COALESCE(AVG(performance.avg_cpu),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                              LEFT JOIN LATERAL (
                                 SELECT avg_cpu  
@@ -1506,10 +1480,9 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"avgCpu": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows)}
 
 
-@dev.timed
 def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1519,7 +1492,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
-                              COALESCE(AVG(NULLIF(performance.avg_fps,0)),0) AS avg_fps
+                              COALESCE(AVG(NULLIF(performance.avg_fps,0)),0) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp 
                             LEFT JOIN LATERAL (
                                 SELECT avg_fps 
@@ -1539,10 +1512,9 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"avgFps": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows)}
 
 
-@dev.timed
 def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1627,7 +1599,6 @@ def __merge_rows_with_neutral(rows, neutral):
     return rows
 
 
-@dev.timed
 def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                        endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1678,7 +1649,6 @@ def get_domains_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return result
 
 
-@dev.timed
 def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1719,7 +1689,6 @@ def get_domains_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         return rows
 
 
-@dev.timed
 def get_domains_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=6, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -1768,7 +1737,6 @@ def __nested_array_to_dict_array(rows, key="url_host", value="count"):
     return rows
 
 
-@dev.timed
 def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1800,7 +1768,6 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return {"avg": avg, "partition": rows}
 
 
-@dev.timed
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1822,7 +1789,6 @@ def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
     return helper.list_to_camel_case(rows)
 
 
-@dev.timed
 def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                              platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1865,7 +1831,6 @@ def get_sessions_per_browser(project_id, startTimestamp=TimeUTC.now(delta_days=-
     return {"count": sum(i["count"] for i in rows), "chart": rows}
 
 
-@dev.timed
 def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                      platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1891,7 +1856,6 @@ def get_calls_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endT
     return helper.list_to_camel_case(rows)
 
 
-@dev.timed
 def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1915,7 +1879,6 @@ def get_calls_errors_4xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
     return helper.list_to_camel_case(rows)
 
 
-@dev.timed
 def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                          platform=None, **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
@@ -1939,7 +1902,6 @@ def get_calls_errors_5xx(project_id, startTimestamp=TimeUTC.now(delta_days=-1), 
     return helper.list_to_camel_case(rows)
 
 
-@dev.timed
 def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(),
                         platform=None, density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -2004,7 +1966,6 @@ def get_errors_per_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1), e
     return rows
 
 
-@dev.timed
 def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                   endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -2059,7 +2020,6 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
     return helper.list_to_camel_case(__merge_charts(response_end, actions))
 
 
-@dev.timed
 def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -2141,7 +2101,6 @@ def get_impacted_sessions_by_js_errors(project_id, startTimestamp=TimeUTC.now(de
     return {**row_sessions, **row_errors, "chart": chart}
 
 
-@dev.timed
 def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -2192,7 +2151,6 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
     return helper.list_to_camel_case(rows)
 
 
-@dev.timed
 def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                 endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -2229,7 +2187,6 @@ def get_resources_count_by_type(project_id, startTimestamp=TimeUTC.now(delta_day
     return rows
 
 
-@dev.timed
 def get_resources_by_party(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(), density=7, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
@@ -2376,7 +2333,6 @@ def __get_application_activity_avg_page_load_time(cur, project_id, startTimestam
     return row
 
 
-@dev.timed
 def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
@@ -2392,7 +2348,6 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
     return results
 
 
-@dev.timed
 def get_performance_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(),
                                        density=19, **args):
@@ -2448,7 +2403,6 @@ def __get_application_activity_avg_request_load_time(cur, project_id, startTimes
     return row
 
 
-@dev.timed
 def get_application_activity_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                    endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
@@ -2464,7 +2418,6 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
     return results
 
 
-@dev.timed
 def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                           endTimestamp=TimeUTC.now(),
                                           density=19, **args):
@@ -2579,10 +2532,8 @@ def __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestam
     return rows
 
 
-
-
 def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                      endTimestamp=TimeUTC.now(), **args):
+                                        endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
         row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
@@ -2612,7 +2563,7 @@ def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTi
 
 
 def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                      endTimestamp=TimeUTC.now(), **args):
+                                           endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
         row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
@@ -2639,3 +2590,131 @@ def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, en
     cur.execute(cur.mogrify(pg_query, params))
     row = cur.fetchone()
     return row
+
+
+def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                      endTimestamp=TimeUTC.now(), value=None, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    if value is not None:
+        pg_sub_query.append("pages.path = %(value)s")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT COALESCE(AVG(pages.response_time), 0) AS value
+                       FROM events.pages
+                                INNER JOIN public.sessions USING (session_id)
+                       WHERE {" AND ".join(pg_sub_query)}
+                         AND pages.timestamp >= %(startTimestamp)s
+                         AND pages.timestamp < %(endTimestamp)s
+                         AND pages.response_time > 0;"""
+        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+                                           "startTimestamp": startTimestamp,
+                                           "endTimestamp": endTimestamp,
+                                           "value": value, **__get_constraint_values(args)}))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+
+def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                    endTimestamp=TimeUTC.now(), value=None, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    if value is not None:
+        pg_sub_query.append("pages.path = %(value)s")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT COALESCE(AVG(pages.first_paint_time), 0) AS value
+                       FROM events.pages
+                                INNER JOIN public.sessions USING (session_id)
+                       WHERE {" AND ".join(pg_sub_query)}
+                         AND pages.timestamp >= %(startTimestamp)s
+                         AND pages.timestamp < %(endTimestamp)s
+                         AND pages.first_paint_time > 0;"""
+        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+                                           "startTimestamp": startTimestamp,
+                                           "endTimestamp": endTimestamp,
+                                           "value": value, **__get_constraint_values(args)}))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+
+def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                           endTimestamp=TimeUTC.now(), value=None, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    if value is not None:
+        pg_sub_query.append("pages.path = %(value)s")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT COALESCE(AVG(pages.dom_content_loaded_time), 0) AS value
+                       FROM events.pages
+                                INNER JOIN public.sessions USING (session_id)
+                       WHERE {" AND ".join(pg_sub_query)}
+                         AND pages.timestamp >= %(startTimestamp)s
+                         AND pages.timestamp < %(endTimestamp)s
+                         AND pages.dom_content_loaded_time > 0;"""
+        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+                                           "startTimestamp": startTimestamp,
+                                           "endTimestamp": endTimestamp,
+                                           "value": value, **__get_constraint_values(args)}))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+
+def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                       endTimestamp=TimeUTC.now(), value=None, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    if value is not None:
+        pg_sub_query.append("pages.path = %(value)s")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT COALESCE(AVG(pages.ttfb), 0) AS value
+                       FROM events.pages
+                                INNER JOIN public.sessions USING (session_id)
+                       WHERE {" AND ".join(pg_sub_query)}
+                         AND pages.timestamp >= %(startTimestamp)s
+                         AND pages.timestamp < %(endTimestamp)s
+                         AND pages.ttfb > 0;"""
+        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+                                           "startTimestamp": startTimestamp,
+                                           "endTimestamp": endTimestamp,
+                                           "value": value, **__get_constraint_values(args)}))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+
+def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                            endTimestamp=TimeUTC.now(), value=None, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    if value is not None:
+        pg_sub_query.append("pages.path = %(value)s")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT COALESCE(AVG(pages.time_to_interactive), 0) AS value
+                       FROM events.pages
+                                INNER JOIN public.sessions USING (session_id)
+                       WHERE {" AND ".join(pg_sub_query)}
+                         AND pages.timestamp >= %(startTimestamp)s
+                         AND pages.timestamp < %(endTimestamp)s
+                         AND pages.time_to_interactive > 0;"""
+        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+                                           "startTimestamp": startTimestamp,
+                                           "endTimestamp": endTimestamp,
+                                           "value": value, **__get_constraint_values(args)}))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+
+def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+                                   endTimestamp=TimeUTC.now(), value=None, **args):
+    pg_sub_query = __get_constraints(project_id=project_id, data=args)
+
+    if value is not None:
+        pg_sub_query.append("pages.path = %(value)s")
+    with pg_client.PostgresClient() as cur:
+        pg_query = f"""SELECT COUNT(pages.session_id) AS value
+                        FROM events.pages INNER JOIN public.sessions USING (session_id)
+                        WHERE {" AND ".join(pg_sub_query)};"""
+        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+                                           "startTimestamp": startTimestamp,
+                                           "endTimestamp": endTimestamp,
+                                           "value": value, **__get_constraint_values(args)}))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
