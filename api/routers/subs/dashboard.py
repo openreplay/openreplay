@@ -325,7 +325,7 @@ def get_dashboard_resources_count_by_type(projectId: int, data: schemas.MetricPa
 @app.post('/{projectId}/dashboard/overview', tags=["dashboard", "metrics"])
 @app.get('/{projectId}/dashboard/overview', tags=["dashboard", "metrics"])
 def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": [
+    results = [
         {"key": "count_sessions",
          "data": dashboard.get_processed_sessions(project_id=projectId, **data.dict())},
         *helper.explode_widget(data={**dashboard.get_application_activity(project_id=projectId, **data.dict()),
@@ -343,13 +343,15 @@ def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body
         {"key": "avg_used_js_heap_size", "data": dashboard.get_memory_consumption(project_id=projectId, **data.dict())},
         {"key": "avg_cpu", "data": dashboard.get_avg_cpu(project_id=projectId, **data.dict())},
         {"key": schemas.TemplateKeys.avg_fps, "data": dashboard.get_avg_fps(project_id=projectId, **data.dict())}
-    ]}
+    ]
+    results = sorted(results, key=lambda r: r["key"])
+    return {"data": results}
 
 
 @app.post('/{projectId}/dashboard/overview2', tags=["dashboard", "metrics"])
 @app.get('/{projectId}/dashboard/overview2', tags=["dashboard", "metrics"])
 def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
-    return {"data": [
+    results = [
         {"key": schemas.TemplateKeys.count_sessions,
          "data": dashboard.get_processed_sessions(project_id=projectId, **data.dict())},
         {"key": schemas.TemplateKeys.avg_image_load_time,
@@ -388,4 +390,6 @@ def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body
          "data": dashboard.get_memory_consumption(project_id=projectId, **data.dict())},
         {"key": schemas.TemplateKeys.avg_cpu, "data": dashboard.get_avg_cpu(project_id=projectId, **data.dict())},
         {"key": schemas.TemplateKeys.avg_fps, "data": dashboard.get_avg_fps(project_id=projectId, **data.dict())}
-    ]}
+    ]
+    results = sorted(results, key=lambda r: r["key"])
+    return {"data": results}
