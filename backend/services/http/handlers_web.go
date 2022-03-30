@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/token"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/token"
 )
 
 func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -30,12 +30,12 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		UserID          string  `json:"userID"`
 	}
 	type response struct {
-		Timestamp int64  			`json:"timestamp"`
-		Delay     int64  			`json:"delay"`
-		Token     string 			`json:"token"`
-		UserUUID  string 			`json:"userUUID"`
-		SessionID string 			`json:"sessionID"`
-		BeaconSizeLimit int64 `json:"beaconSizeLimit"`
+		Timestamp       int64  `json:"timestamp"`
+		Delay           int64  `json:"delay"`
+		Token           string `json:"token"`
+		UserUUID        string `json:"userUUID"`
+		SessionID       string `json:"sessionID"`
+		BeaconSizeLimit int64  `json:"beaconSizeLimit"`
 	}
 
 	startTime := time.Now()
@@ -102,7 +102,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			UserCountry:          country,
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
-			UserID:								req.UserID,
+			UserID:               req.UserID,
 		}))
 	}
 
@@ -110,9 +110,9 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	responseWithJSON(w, &response{
 		//Timestamp: startTime.UnixNano() / 1e6,
 		//Delay:     delayDuration.Nanoseconds() / 1e6,
-		Token:     tokenizer.Compose(*tokenData),
-		UserUUID:  userUUID,
-		SessionID: strconv.FormatUint(tokenData.ID, 10),
+		Token:           tokenizer.Compose(*tokenData),
+		UserUUID:        userUUID,
+		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: BEACON_SIZE_LIMIT,
 	})
 }
@@ -124,7 +124,7 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
-	//defer body.Close()
+	defer body.Close()
 	buf, err := ioutil.ReadAll(body)
 	if err != nil {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
