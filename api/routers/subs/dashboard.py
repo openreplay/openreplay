@@ -326,17 +326,18 @@ def get_dashboard_resources_count_by_type(projectId: int, data: schemas.MetricPa
 @app.get('/{projectId}/dashboard/overview', tags=["dashboard", "metrics"])
 def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
     return {"data": [
-        *helper.explode_widget(key="count_sessions",
-                               data=dashboard.get_processed_sessions(project_id=projectId, **data.dict())),
+        {"key": "count_sessions",
+         "data": dashboard.get_processed_sessions(project_id=projectId, **data.dict())},
         *helper.explode_widget(data={**dashboard.get_application_activity(project_id=projectId, **data.dict()),
                                      "chart": dashboard.get_performance(project_id=projectId, **data.dict())
                                .get("chart", [])}),
         *helper.explode_widget(data=dashboard.get_page_metrics(project_id=projectId, **data.dict())),
         *helper.explode_widget(data=dashboard.get_user_activity(project_id=projectId, **data.dict())),
-        *helper.explode_widget(data=dashboard.get_pages_dom_build_time(project_id=projectId, **data.dict()),
-                               key="avg_pages_dom_buildtime"),
-        *helper.explode_widget(data=dashboard.get_pages_response_time(project_id=projectId, **data.dict()),
-                               key="avg_pages_response_time"),
+        {"key": "avg_pages_dom_buildtime",
+         "data": dashboard.get_pages_dom_build_time(project_id=projectId, **data.dict())},
+        {"key": "avg_pages_response_time",
+         "data": dashboard.get_pages_response_time(project_id=projectId, **data.dict())
+         },
         *helper.explode_widget(dashboard.get_top_metrics(project_id=projectId, **data.dict())),
         *helper.explode_widget(data=dashboard.get_time_to_render(project_id=projectId, **data.dict()),
                                key="avg_time_to_render"),
@@ -345,25 +346,32 @@ def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body
         *helper.explode_widget(dashboard.get_avg_fps(project_id=projectId, **data.dict())),
     ]}
 
+
 @app.post('/{projectId}/dashboard/overview2', tags=["dashboard", "metrics"])
 @app.get('/{projectId}/dashboard/overview2', tags=["dashboard", "metrics"])
 def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body(...)):
     return {"data": [
-        {"key": schemas.TemplateKeys.count_sessions,
-         "data": dashboard.get_processed_sessions(project_id=projectId, **data.dict())},
-        {"key": schemas.TemplateKeys.avg_image_load_time,
-         "data": dashboard.get_application_activity_avg_image_load_time(project_id=projectId, **data.dict())},
-        {"key": schemas.TemplateKeys.avg_page_load_time,
-         "data": dashboard.get_application_activity_avg_page_load_time(project_id=projectId, **data.dict())},
-        {"key": schemas.TemplateKeys.avg_request_load_time,
-         "data": dashboard.get_application_activity_avg_request_load_time(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.count_sessions,
+        #  "data": dashboard.get_processed_sessions(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.avg_image_load_time,
+        #  "data": dashboard.get_application_activity_avg_image_load_time(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.avg_page_load_time,
+        #  "data": dashboard.get_application_activity_avg_page_load_time(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.avg_request_load_time,
+        #  "data": dashboard.get_application_activity_avg_request_load_time(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.avg_dom_content_load_start,
+        #  "data": dashboard.get_page_metrics_avg_dom_content_load_start(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.avg_first_contentful_pixel,
+        #  "data": dashboard.get_page_metrics_avg_first_contentful_pixel(project_id=projectId, **data.dict())}
+        # {"key": schemas.TemplateKeys.avg_visited_pages,
+        #  "data": dashboard.get_user_activity_avg_visited_pages(project_id=projectId, **data.dict())},
+        # {"key": schemas.TemplateKeys.avg_session_duration,
+        #  "data": dashboard.get_user_activity_avg_session_duration(project_id=projectId, **data.dict())}
+        # {"key": schemas.TemplateKeys.avg_pages_dom_buildtime,
+        #  "data": dashboard.get_pages_dom_build_time(project_id=projectId, **data.dict())},
 
-        # *helper.explode_widget(data=dashboard.get_page_metrics(project_id=projectId, **data.dict())),
-        # *helper.explode_widget(data=dashboard.get_user_activity(project_id=projectId, **data.dict())),
-        # *helper.explode_widget(data=dashboard.get_pages_dom_build_time(project_id=projectId, **data.dict()),
-        #                        key="avg_pages_dom_buildtime"),
-        # *helper.explode_widget(data=dashboard.get_pages_response_time(project_id=projectId, **data.dict()),
-        #                        key="avg_pages_response_time"),
+        *helper.explode_widget(data=dashboard.get_pages_response_time(project_id=projectId, **data.dict()),
+                               key="avg_pages_response_time"),
         # *helper.explode_widget(dashboard.get_top_metrics(project_id=projectId, **data.dict())),
         # *helper.explode_widget(data=dashboard.get_time_to_render(project_id=projectId, **data.dict()),
         #                        key="avg_time_to_render"),
