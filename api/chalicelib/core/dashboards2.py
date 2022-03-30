@@ -1,6 +1,7 @@
 import json
 
 import schemas
+from chalicelib.core import custom_metrics
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
@@ -162,3 +163,9 @@ def pin_dashboard(project_id, user_id, dashboard_id):
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
+
+
+def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.CreateCustomMetricsSchema):
+    metric_id = custom_metrics.create(project_id=project_id, user_id=user_id, data=data, dashboard=True)
+    return add_widget(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id,
+                      data=schemas.AddWidgetToDashboardPayloadSchema(metric_id=metric_id))
