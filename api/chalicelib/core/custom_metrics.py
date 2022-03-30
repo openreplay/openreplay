@@ -102,7 +102,7 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     return results
 
 
-def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
+def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         _data = {}
         for i, s in enumerate(data.series):
@@ -129,6 +129,8 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
             query
         )
         r = cur.fetchone()
+        if dashboard:
+            return r["metric_id"]
     return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
