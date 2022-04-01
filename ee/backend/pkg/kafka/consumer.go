@@ -147,7 +147,7 @@ func (consumer *Consumer) ConsumeNext() error {
 		if e.TopicPartition.Error != nil {
 			return errors.Wrap(e.TopicPartition.Error, "Consumer Partition Error")
 		}
-		ts := e.Timestamp.UnixNano() / 1e6
+		ts := e.Timestamp.UnixMilli()
 		consumer.messageHandler(decodeKey(e.Key), e.Value, &types.Meta{
 			Topic:     *(e.TopicPartition.Topic),
 			ID:        uint64(e.TopicPartition.Offset),

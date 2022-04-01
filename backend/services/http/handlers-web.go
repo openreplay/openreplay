@@ -76,14 +76,14 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			responseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
-		sessionID, err := flaker.Compose(uint64(startTime.UnixNano() / 1e6))
+		sessionID, err := flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
 			responseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, expTime.UnixNano() / 1e6}
+		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
 
 		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
 		producer.Produce(TOPIC_RAW_WEB, tokenData.ID, Encode(&SessionStart{
@@ -108,8 +108,8 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	//delayDuration := time.Now().Sub(startTime)
 	responseWithJSON(w, &response{
-		//Timestamp: startTime.UnixNano() / 1e6,
-		//Delay:     delayDuration.Nanoseconds() / 1e6,
+		//Timestamp: startTime.UnixMilli(),
+		//Delay:     delayDuration.Milliseconds(),
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
