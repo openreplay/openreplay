@@ -820,7 +820,7 @@ class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema):
 class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
     name: str = Field(...)
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
-    is_public: bool = Field(default=True, const=True)
+    is_public: bool = Field(default=True)
     view_type: Union[MetricTimeseriesViewType, MetricTableViewType] = Field(MetricTimeseriesViewType.line_chart)
     metric_type: MetricType = Field(MetricType.timeseries)
     metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
