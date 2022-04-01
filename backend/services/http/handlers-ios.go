@@ -2,50 +2,50 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
 	"errors"
-	"time"
-	"math/rand"
-	"strconv"
 	"log"
+	"math/rand"
+	"net/http"
+	"strconv"
+	"time"
 
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/token"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/token"
 )
 
-const FILES_SIZE_LIMIT int64 = 1e7		// 10Mb
+const FILES_SIZE_LIMIT int64 = 1e7 // 10Mb
 
 func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	type request struct {
-		Token                string  `json:"token"`
-		ProjectKey          *string `json:"projectKey"`
-		TrackerVersion       string `json:"trackerVersion"`
-		RevID                string `json:"revID"`
-		UserUUID             *string `json:"userUUID"`
+		Token          string  `json:"token"`
+		ProjectKey     *string `json:"projectKey"`
+		TrackerVersion string  `json:"trackerVersion"`
+		RevID          string  `json:"revID"`
+		UserUUID       *string `json:"userUUID"`
 		//UserOS string `json"userOS"`  //hardcoded 'MacOS'
-		UserOSVersion        string `json:"userOSVersion"`
-		UserDevice           string `json:"userDevice"`
-		Timestamp            uint64 `json:"timestamp"`
+		UserOSVersion string `json:"userOSVersion"`
+		UserDevice    string `json:"userDevice"`
+		Timestamp     uint64 `json:"timestamp"`
 		// UserDeviceType uint  0:phone 1:pad 2:tv 3:carPlay 5:mac
 		// “performances”:{
-  //     “activeProcessorCount”:8,
-  //     “isLowPowerModeEnabled”:0,
-  //     “orientation”:0,
-  //     “systemUptime”:585430,
-  //     “batteryState”:0,
-  //     “thermalState”:0,
-  //     “batteryLevel”:0,
-  //     “processorCount”:8,
-  //     “physicalMemory”:17179869184
-  //  },
+		//     “activeProcessorCount”:8,
+		//     “isLowPowerModeEnabled”:0,
+		//     “orientation”:0,
+		//     “systemUptime”:585430,
+		//     “batteryState”:0,
+		//     “thermalState”:0,
+		//     “batteryLevel”:0,
+		//     “processorCount”:8,
+		//     “physicalMemory”:17179869184
+		//  },
 	}
 	type response struct {
-		Token     		     string   `json:"token"`
-		ImagesHashList     []string `json:"imagesHashList"`
-		UserUUID           string   `json:"userUUID"`
-		BeaconSizeLimit    int64 `json:"beaconSizeLimit"`
-		SessionID          string   `json:"sessionID"`
+		Token           string   `json:"token"`
+		ImagesHashList  []string `json:"imagesHashList"`
+		UserUUID        string   `json:"userUUID"`
+		BeaconSizeLimit int64    `json:"beaconSizeLimit"`
+		SessionID       string   `json:"sessionID"`
 	}
 	startTime := time.Now()
 	req := &request{}
@@ -98,16 +98,16 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 
 		// The difference with web is mostly here:
 		producer.Produce(TOPIC_RAW_IOS, tokenData.ID, Encode(&IOSSessionStart{
-			Timestamp:            req.Timestamp,
-			ProjectID:            uint64(p.ProjectID),
-			TrackerVersion:       req.TrackerVersion,
-			RevID:                req.RevID,
-			UserUUID:             userUUID,
-			UserOS:               "IOS",
-			UserOSVersion:        req.UserOSVersion,
-			UserDevice:           MapIOSDevice(req.UserDevice),
-			UserDeviceType:       GetIOSDeviceType(req.UserDevice),
-			UserCountry:          country,
+			Timestamp:      req.Timestamp,
+			ProjectID:      uint64(p.ProjectID),
+			TrackerVersion: req.TrackerVersion,
+			RevID:          req.RevID,
+			UserUUID:       userUUID,
+			UserOS:         "IOS",
+			UserOSVersion:  req.UserOSVersion,
+			UserDevice:     MapIOSDevice(req.UserDevice),
+			UserDeviceType: GetIOSDeviceType(req.UserDevice),
+			UserCountry:    country,
 		}))
 	}
 
@@ -119,13 +119,12 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 
 	responseWithJSON(w, &response{
 		// ImagesHashList: imagesHashList,
-		Token:     tokenizer.Compose(*tokenData),
-		UserUUID:  userUUID,
-		SessionID: strconv.FormatUint(tokenData.ID, 10),
+		Token:           tokenizer.Compose(*tokenData),
+		UserUUID:        userUUID,
+		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: BEACON_SIZE_LIMIT,
 	})
 }
-
 
 func pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
@@ -136,8 +135,6 @@ func pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	pushMessages(w, r, sessionData.ID, TOPIC_RAW_IOS)
 }
 
-
-
 func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
 	if err != nil && err != token.EXPIRED {
@@ -145,9 +142,8 @@ func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Check timestamps here?
-	pushMessages(w, r, sessionData.ID,TOPIC_RAW_IOS)
+	pushMessages(w, r, sessionData.ID, TOPIC_RAW_IOS)
 }
-
 
 func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	log.Printf("recieved imagerequest")
@@ -163,12 +159,12 @@ func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		responseWithError(w, http.StatusUnsupportedMediaType, err)
-	// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
+		// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
 	} else if err != nil {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 	}
 
-	if (r.MultipartForm == nil) {
+	if r.MultipartForm == nil {
 		responseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
 	}
 
@@ -177,7 +173,7 @@ func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	prefix := r.MultipartForm.Value["projectKey"][0] + "/" + strconv.FormatUint(sessionData.ID, 10) + "/" 
+	prefix := r.MultipartForm.Value["projectKey"][0] + "/" + strconv.FormatUint(sessionData.ID, 10) + "/"
 
 	for _, fileHeaderList := range r.MultipartForm.File {
 		for _, fileHeader := range fileHeaderList {
@@ -187,7 +183,7 @@ func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 			}
 			key := prefix + fileHeader.Filename
 			log.Printf("Uploading image... %v", key)
-			go func() {  //TODO: mime type from header
+			go func() { //TODO: mime type from header
 				if err := s3.Upload(file, key, "image/jpeg", false); err != nil {
 					log.Printf("Upload ios screen error. %v", err)
 				}

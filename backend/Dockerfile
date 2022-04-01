@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine3.10 AS prepare
+FROM golang:1.18-alpine3.15 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
 
