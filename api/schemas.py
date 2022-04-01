@@ -926,3 +926,13 @@ class TemplateKeys(str, Enum):
     avg_used_js_heap_size = "avg_used_js_heap_size"
     avg_cpu = "avg_cpu"
     avg_fps = "avg_fps"
+
+
+# class CustomMetricAndTemplate(CreateCustomMetricsSchema):
+class CustomMetricAndTemplate(BaseModel):
+    is_template: bool = Field(...)
+    project_id: Optional[int] = Field(...)
+    key: Optional[TemplateKeys] = Field(...)
+
+    class Config:
+        alias_generator = attribute_to_camel_case

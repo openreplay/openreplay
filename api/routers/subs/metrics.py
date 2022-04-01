@@ -22,7 +22,10 @@ def get_dashboards(projectId: int, context: schemas.CurrentContext = Depends(OR_
 
 @app.get('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
 def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": dashboards2.get_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)}
+    data = dashboards2.get_dashboard(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId)
+    if data is None:
+        return {"errors": ["dashboard not found"]}
+    return {"data": data}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
@@ -78,6 +81,17 @@ def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int
                                      widget_id=widgetId)
 
 
+@app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}/chart', tags=["dashboard"])
+def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
+                     data: schemas.CustomMetricChartPayloadSchema = Body(...),
+                     context: schemas.CurrentContext = Depends(OR_context)):
+    data = dashboards2.make_chart_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
+                                         widget_id=widgetId, data=data)
+    if data is None:
+        return {"errors": ["widget not found"]}
+    return {"data": data}
+
+
 @app.get('/{projectId}/metrics/templates', tags=["dashboard"])
 def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards2.get_templates(project_id=projectId, user_id=context.user_id)}
@@ -131,8 +145,8 @@ def get_custom_metric_sessions(projectId: int, metric_id: int,
 @app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
 def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                     data=data)
+    data = dashboards2.make_chart_metrics(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                          data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
