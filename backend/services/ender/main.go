@@ -56,7 +56,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			builderMap.IterateReadyMessages(time.Now().UnixNano()/1e6, func(sessionID uint64, readyMsg messages.Message) {
+			builderMap.IterateReadyMessages(time.Now().UnixMilli(), func(sessionID uint64, readyMsg messages.Message) {
 				producer.Produce(TOPIC_TRIGGER, sessionID, messages.Encode(readyMsg))
 			})
 			// TODO: why exactly do we need Flush here and not in any other place?
