@@ -1,7 +1,7 @@
 import json
 
 import schemas
-from chalicelib.core import custom_metrics
+from chalicelib.core import custom_metrics, dashboard
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 
@@ -79,7 +79,6 @@ def get_dashboard(project_id, user_id, dashboard_id):
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public);"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id}
-        print(cur.mogrify(pg_query, params))
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
@@ -106,6 +105,30 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                           AND (dashboards.user_id = %(userId)s OR is_public)
                       RETURNING *;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
+        cur.execute(cur.mogrify(pg_query, params))
+        row = cur.fetchone()
+    return helper.dict_to_camel_case(row)
+
+
+def get_widget(project_id, user_id, dashboard_id, widget_id):
+    with pg_client.PostgresClient() as cur:
+        pg_query = """SELECT metrics.*, metric_series.series
+                        FROM dashboard_widgets
+                                 INNER JOIN dashboards USING (dashboard_id)
+                                 INNER JOIN metrics USING (metric_id)
+                                 LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index), '[]'::jsonb) AS series
+                                                    FROM metric_series
+                                                    WHERE metric_series.metric_id = metrics.metric_id
+                                                      AND metric_series.deleted_at ISNULL
+                            ) AS metric_series ON (TRUE)
+                        WHERE dashboard_id = %(dashboard_id)s
+                          AND widget_id = %(widget_id)s
+                          AND (dashboards.is_public OR dashboards.user_id = %(userId)s)
+                          AND dashboards.deleted_at IS NULL
+                          AND metrics.deleted_at ISNULL
+                          AND (metrics.project_id = %(projectId)s OR metrics.project_id ISNULL)
+                          AND (metrics.is_public OR metrics.user_id = %(userId)s);"""
+        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, "widget_id": widget_id}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
@@ -154,7 +177,7 @@ def pin_dashboard(project_id, user_id, dashboard_id):
     with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboards
                       SET is_pinned = FALSE
-                      WHERE dashboard_id=%(dashboard_id)s AND project_id=%(project_id)s;
+                      WHERE project_id=%(project_id)s;
                       UPDATE dashboards
                       SET is_pinned = True
                       WHERE dashboard_id=%(dashboard_id)s AND project_id=%(project_id)s AND deleted_at ISNULL
@@ -169,3 +192,53 @@ def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.Cr
     metric_id = custom_metrics.create(project_id=project_id, user_id=user_id, data=data, dashboard=True)
     return add_widget(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id,
                       data=schemas.AddWidgetToDashboardPayloadSchema(metric_id=metric_id))
+
+
+PREDEFINED = {schemas.TemplateKeys.count_sessions: dashboard.get_processed_sessions,
+              schemas.TemplateKeys.avg_image_load_time: dashboard.get_application_activity_avg_image_load_time,
+              schemas.TemplateKeys.avg_page_load_time: dashboard.get_application_activity_avg_page_load_time,
+              schemas.TemplateKeys.avg_request_load_time: dashboard.get_application_activity_avg_request_load_time,
+              schemas.TemplateKeys.avg_dom_content_load_start: dashboard.get_page_metrics_avg_dom_content_load_start,
+              schemas.TemplateKeys.avg_first_contentful_pixel: dashboard.get_page_metrics_avg_first_contentful_pixel,
+              schemas.TemplateKeys.avg_visited_pages: dashboard.get_user_activity_avg_visited_pages,
+              schemas.TemplateKeys.avg_session_duration: dashboard.get_user_activity_avg_session_duration,
+              schemas.TemplateKeys.avg_pages_dom_buildtime: dashboard.get_pages_dom_build_time,
+              schemas.TemplateKeys.avg_pages_response_time: dashboard.get_pages_response_time,
+              schemas.TemplateKeys.avg_response_time: dashboard.get_top_metrics_avg_response_time,
+              schemas.TemplateKeys.avg_first_paint: dashboard.get_top_metrics_avg_first_paint,
+              schemas.TemplateKeys.avg_dom_content_loaded: dashboard.get_top_metrics_avg_dom_content_loaded,
+              schemas.TemplateKeys.avg_till_first_bit: dashboard.get_top_metrics_avg_till_first_bit,
+              schemas.TemplateKeys.avg_time_to_interactive: dashboard.get_top_metrics_avg_time_to_interactive,
+              schemas.TemplateKeys.count_requests: dashboard.get_top_metrics_count_requests,
+              schemas.TemplateKeys.avg_time_to_render: dashboard.get_time_to_render,
+              schemas.TemplateKeys.avg_used_js_heap_size: dashboard.get_memory_consumption,
+              schemas.TemplateKeys.avg_cpu: dashboard.get_avg_cpu,
+              schemas.TemplateKeys.avg_fps: dashboard.get_avg_fps}
+
+
+def get_predefined_metric(key: schemas.TemplateKeys, project_id: int, data: dict):
+    return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
+
+
+def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
+    raw_metric = custom_metrics.get_with_template(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    if raw_metric is None:
+        return None
+    metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
+    if metric.is_template:
+        return get_predefined_metric(key=metric.key, project_id=project_id, data=data.dict())
+    else:
+        return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=metric_id, data=data,
+                                         metric=raw_metric)
+
+
+def make_chart_widget(dashboard_id, project_id, user_id, widget_id, data: schemas.CustomMetricChartPayloadSchema):
+    raw_metric = get_widget(widget_id=widget_id, project_id=project_id, user_id=user_id, dashboard_id=dashboard_id)
+    if raw_metric is None:
+        return None
+    metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
+    if metric.is_template:
+        return get_predefined_metric(key=metric.key, project_id=project_id, data=data.dict())
+    else:
+        return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=raw_metric["metricId"],
+                                         data=data, metric=raw_metric)

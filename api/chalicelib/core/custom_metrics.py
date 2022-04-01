@@ -54,13 +54,9 @@ def merged_live(project_id, data: schemas.CreateCustomMetricsSchema):
     return results
 
 
-def __get_merged_metric(project_id, user_id, metric_id,
-                        data: Union[schemas.CustomMetricChartPayloadSchema,
-                                    schemas.CustomMetricSessionsPayloadSchema]) \
+def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
+                                                 schemas.CustomMetricSessionsPayloadSchema]) \
         -> Union[schemas.CreateCustomMetricsSchema, None]:
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if metric is None:
-        return None
     metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
@@ -71,11 +67,12 @@ def __get_merged_metric(project_id, user_id, metric_id,
     return metric
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
-    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
-                                                                    metric_id=metric_id, data=data)
+def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema, metric=None):
+    if metric is None:
+        metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     series_charts = __try_live(project_id=project_id, data=metric)
     if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
         return series_charts
@@ -88,8 +85,10 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
-                                                                    metric_id=metric_id, data=data)
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     results = []
@@ -291,6 +290,36 @@ def get(metric_id, project_id, user_id, flatten=True):
         if flatten:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+    return helper.dict_to_camel_case(row)
+
+
+def get_with_template(metric_id, project_id, user_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """SELECT *
+                    FROM metrics
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
+                                                FROM metric_series
+                                                WHERE metric_series.metric_id = metrics.metric_id
+                                                  AND metric_series.deleted_at ISNULL 
+                                                ) AS metric_series ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT dashboard_id, name, is_public
+                                                      FROM dashboards
+                                                      WHERE deleted_at ISNULL
+                                                        AND project_id = %(project_id)s
+                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)
+                    WHERE (metrics.project_id = %(project_id)s OR metrics.project_id ISNULL)
+                      AND metrics.deleted_at ISNULL
+                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                      AND metrics.metric_id = %(metric_id)s
+                    ORDER BY created_at;""",
+                {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
+            )
+        )
+        row = cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 
