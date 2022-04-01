@@ -205,29 +205,40 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
     return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def get_all(project_id, user_id):
+def get_all(project_id, user_id, include_series=False):
     with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT *
-                    FROM metrics
-                             LEFT JOIN LATERAL (SELECT jsonb_agg(metric_series.* ORDER BY index) AS series
+        sub_join = ""
+        if include_series:
+            sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
-                                                ) AS metric_series ON (TRUE)
+                                                ) AS metric_series ON (TRUE)"""
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT *
+                    FROM metrics
+                             {sub_join}
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT dashboard_id, name, is_public
+                                                      FROM dashboards
+                                                      WHERE deleted_at ISNULL
+                                                        AND project_id = %(project_id)s
+                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
-                      AND (user_id = %(user_id)s OR is_public)
+                      AND (user_id = %(user_id)s OR metrics.is_public)
                     ORDER BY created_at;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )
         rows = cur.fetchall()
-        for r in rows:
-            r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
-            for s in r["series"]:
-                s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+        if include_series:
+            for r in rows:
+                # r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                for s in r["series"]:
+                    s["filter"] = helper.old_search_payload_to_flat(s["filter"])
         rows = helper.list_to_camel_case(rows)
     return rows
 
@@ -258,6 +269,13 @@ def get(metric_id, project_id, user_id, flatten=True):
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT dashboard_id, name, is_public
+                                                      FROM dashboards
+                                                      WHERE deleted_at ISNULL
+                                                        AND project_id = %(project_id)s
+                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
                       AND (metrics.user_id = %(user_id)s OR metrics.is_public)
