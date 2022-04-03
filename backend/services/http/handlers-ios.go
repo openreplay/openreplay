@@ -50,7 +50,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	req := &request{}
 	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)
-	//defer body.Close()
+	defer body.Close()
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
 		return
@@ -155,7 +155,7 @@ func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	r.Body = http.MaxBytesReader(w, r.Body, FILES_SIZE_LIMIT)
-	// defer r.Body.Close()
+	defer r.Body.Close()
 	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		responseWithError(w, http.StatusUnsupportedMediaType, err)

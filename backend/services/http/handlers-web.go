@@ -41,7 +41,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	req := &request{}
 	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT) // what if Body == nil??  // use r.ContentLength to return specific error?
-	//defer body.Close()
+	defer body.Close()
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
 		return
