@@ -1,43 +1,40 @@
 package integration
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"encoding/json"
-	"strings"
-	"fmt"
-	"time"
 	"strconv"
-	"io"
-  "io/ioutil"
+	"strings"
+	"time"
 
-  "openreplay/backend/pkg/utime"
 	"openreplay/backend/pkg/messages"
 )
 
-
-/* 
+/*
 	They also have different stuff
-	Documentation says: 
+	Documentation says:
 		"Note: This endpoint is experimental and may be removed without notice."
 */
 
 type sentry struct {
 	OrganizationSlug string // `json:"organization_slug"`
-	ProjectSlug string      // `json:"project_slug"`
-	Token string            // `json:"token"`
+	ProjectSlug      string // `json:"project_slug"`
+	Token            string // `json:"token"`
 }
 
 type sentryEvent struct {
 	Tags []struct {
-		Key string
-		Value string  `json:"value"`
+		Key   string
+		Value string `json:"value"`
 	}
-	DateCreated string `json:"dateCreated"`  // or dateReceived ?
-	Title string
-	EventID string `json:"eventID"`
+	DateCreated string `json:"dateCreated"` // or dateReceived ?
+	Title       string
+	EventID     string `json:"eventID"`
 }
-
 
 func (sn *sentry) Request(c *client) error {
 	requestURL := fmt.Sprintf("https://sentry.io/api/0/projects/%v/%v/events/", sn.OrganizationSlug, sn.ProjectSlug)
@@ -88,9 +85,9 @@ PageLoop:
 				c.errChan <- fmt.Errorf("%v | Event: %v", err, e)
 				continue
 			}
-			timestamp := uint64(utime.ToMilliseconds(parsedTime))
+			timestamp := uint64(parsedTime.UnixMilli())
 			// TODO: not to receive all the messages (use default integration timestamp)
-			if firstEvent {   // TODO: reverse range?
+			if firstEvent { // TODO: reverse range?
 				c.setLastMessageId(timestamp, e.EventID)
 				firstEvent = false
 			}
@@ -117,12 +114,12 @@ PageLoop:
 
 			c.evChan <- &SessionErrorEvent{
 				SessionID: sessionID,
-				Token: token,
+				Token:     token,
 				RawErrorEvent: &messages.RawErrorEvent{
-					Source: "sentry",
+					Source:    "sentry",
 					Timestamp: timestamp,
-					Name: e.Title,
-					Payload: string(jsonEvent),
+					Name:      e.Title,
+					Payload:   string(jsonEvent),
 				},
 			}
 		}
@@ -137,7 +134,7 @@ PageLoop:
 			return fmt.Errorf("Link header format error. Got: '%v'", linkHeader)
 		}
 
-		nextLinkInfo := pagInfo[ 1 ]
+		nextLinkInfo := pagInfo[1]
 		if strings.Contains(nextLinkInfo, `results="false"`) {
 			break
 		}

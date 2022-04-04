@@ -281,3 +281,13 @@ def update_capture_status(project_id, changes):
         )
 
     return changes
+
+
+def get_projects_ids(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(f"""SELECT s.project_id
+                        FROM public.projects AS s
+                        WHERE s.deleted_at IS NULL
+                        ORDER BY s.project_id;""")
+        rows = cur.fetchall()
+    return [r["project_id"] for r in rows]
