@@ -1,8 +1,8 @@
 import React, { useRef } from 'react';
-import { useDashboardStore } from '../store/store';
 import cn from 'classnames';
 import { ItemMenu } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
+import WidgetChart from '../WidgetChart';
 
 interface Props {
     className?: string;
@@ -46,7 +46,7 @@ function WidgetWrapper(props: Props) {
             style={{
                 userSelect: 'none',
                 opacity: isDragging ? 0.5 : 1,
-                borderColor: canDrop && isOver ? '#394EFF' : '#EEE',
+                borderColor: canDrop && isOver ? '#394EFF' : '',
             }}
             ref={dragDropRef}
         >
@@ -54,7 +54,7 @@ function WidgetWrapper(props: Props) {
                 <div
                     className="p-3 cursor-move border-b flex items-center justify-between"
                 >
-                    {widget.name} - {widget.position}
+                    {widget.name}
                     <div>
                         <ItemMenu
                             items={[
@@ -66,14 +66,11 @@ function WidgetWrapper(props: Props) {
                                 },
                             ]}
                         />
-                        {/* <button className="btn btn-sm btn-outline-primary" onClick={() => dashboard.removeWidget(widget.widgetId)}>
-                            remove
-                        </button> */}
                     </div>
                 </div>
 
                 <div className="h-40">
-
+                    <WidgetChart metric={props.widget} />
                 </div>
             {/* </Link> */}
         </div>

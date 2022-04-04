@@ -1,3 +1,4 @@
+import React, { lazy, Suspense } from 'react';
 import { Switch, Route, Redirect } from 'react-router';
 import { BrowserRouter, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -5,28 +6,29 @@ import { Notification } from 'UI';
 import { Loader } from 'UI';
 import { fetchUserInfo } from 'Duck/user';
 import withSiteIdUpdater from 'HOCs/withSiteIdUpdater';
-import Login from 'Components/Login/Login';
-import ForgotPassword from 'Components/ForgotPassword/ForgotPassword';
-import UpdatePassword from 'Components/UpdatePassword/UpdatePassword';
-import ClientPure from 'Components/Client/Client';
-import OnboardingPure from 'Components/Onboarding/Onboarding';
-import SessionPure from 'Components/Session/Session';
-import LiveSessionPure from 'Components/Session/LiveSession';
-import AssistPure from 'Components/Assist';
-import BugFinderPure from 'Components/BugFinder/BugFinder';
-import DashboardPure from 'Components/Dashboard/NewDashboard';
+const Login = lazy(() => import('Components/Login/Login'));
+const ForgotPassword = lazy(() => import('Components/ForgotPassword/ForgotPassword'));
+const UpdatePassword = lazy(() => import('Components/UpdatePassword/UpdatePassword'));
+const SessionPure = lazy(() => import('Components/Session/Session'));
+const LiveSessionPure = lazy(() => import('Components/Session/LiveSession'));
+const OnboardingPure = lazy(() => import('Components/Onboarding/Onboarding'));
+const ClientPure = lazy(() => import('Components/Client/Client'));
+const AssistPure = lazy(() => import('Components/Assist'));
+const BugFinderPure = lazy(() => import('Components/BugFinder/BugFinder'));
+const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
+const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
+const FunnelDetails = lazy(() => import('Components/Funnels/FunnelDetails'));
+const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDetails'));
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
-import ErrorsPure from 'Components/Errors/Errors';
 import Header from 'Components/Header/Header';
 // import ResultsModal from 'Shared/Results/ResultsModal';
-import FunnelDetails from 'Components/Funnels/FunnelDetails';
-import FunnelIssueDetails from 'Components/Funnels/FunnelIssueDetails';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
 import { fetchWatchdogStatus } from 'Duck/watchdogs';
 import { dashboardService } from "App/services";
+import { withStore } from 'App/mstore'
 
 import APIClient from './api_client';
 import * as routes from './routes';
@@ -49,9 +51,12 @@ const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
 const withSiteId = routes.withSiteId;
 const withObTab = routes.withObTab;
 
+const METRICS_PATH = routes.metrics();
+const METRICS_DETAILS = routes.metricDetails();
+
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
-const DASHBOARD_METRICS_PATH = routes.dashboardMetricCreate();
+const DASHBOARD_METRIC_CREATE_PATH = routes.dashboardMetricCreate();
 
 // const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
@@ -69,6 +74,7 @@ const CLIENT_PATH = routes.client();
 const ONBOARDING_PATH = routes.onboarding();
 const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
 
+@withStore
 @withRouter
 @connect((state) => {
   const siteId = state.getIn([ 'user', 'siteId' ]);
@@ -115,7 +121,8 @@ class Router extends React.Component {
   fetchInitialData = () => {
     Promise.all([
       this.props.fetchUserInfo().then(() => {
-        dashboardService.initClient();
+        const { mstore } = this.props
+        mstore.initClient();
         this.props.fetchIntegrationVariables() 
       }),
       this.props.fetchSiteList().then(() => {
@@ -161,65 +168,74 @@ class Router extends React.Component {
         {!hideHeader && <Header key="header"/>}
         <Notification />
         
-        <Switch key="content" >
-          <Route path={ CLIENT_PATH } component={ Client } />
-          <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />
-          <Route
-            path="/integrations/"
-            render={
-            ({ location }) => {
-              const client = new APIClient(jwt);
-              switch (location.pathname) {
-                case '/integrations/slack':
-                  client.post('integrations/slack/add', { 
-                    code: location.search.split('=')[ 1 ],
-                    state: tenantId,
-                  });
-                  break;
+        <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+          <Switch key="content" >
+            <Route path={ CLIENT_PATH } component={ Client } />
+            <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />
+            <Route
+              path="/integrations/"
+              render={
+              ({ location }) => {
+                const client = new APIClient(jwt);
+                switch (location.pathname) {
+                  case '/integrations/slack':
+                    client.post('integrations/slack/add', { 
+                      code: location.search.split('=')[ 1 ],
+                      state: tenantId,
+                    });
+                    break;
+                }
+                return <Redirect to={ CLIENT_PATH } />;
               }
-              return <Redirect to={ CLIENT_PATH } />;
             }
-          }
-          />
-          { onboarding && 
-            <Redirect to={ withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
-          }
-          { siteIdList.length === 0 && 
-            <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
-          }
-          
-          <Route exact index path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
-          <Route exact index path={ withSiteId(DASHBOARD_METRICS_PATH, siteIdList) } component={ Dashboard } />
-          
-          <Route index path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
-          
-          {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-          <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } /> */}
+            />
+            { onboarding && 
+              <Redirect to={ withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
+            }
+            { siteIdList.length === 0 && 
+              <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
+            }
+            
+            <Route exact strict path={ withSiteId(METRICS_PATH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(METRICS_DETAILS, siteIdList) } component={ Dashboard } />
 
-          <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
-          <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
-          <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
-          <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } />
-          <Route exact strict path={ withSiteId(FUNNEL_ISSUE_PATH, siteIdList) } component={ FunnelIssue } />
-          <Route exact strict path={ withSiteId(SESSIONS_PATH, siteIdList) } component={ BugFinder } />
-          <Route exact strict path={ withSiteId(SESSION_PATH, siteIdList) } component={ Session } />
-          <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } component={ LiveSession } />
-          <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } render={ (props) => <Session { ...props } live /> } />
-          { routes.redirects.map(([ fr, to ]) => (
-            <Redirect key={ fr } exact strict from={ fr } to={ to } />
-          )) }
-          <Redirect to={ withSiteId(SESSIONS_PATH, siteId) } />
+            <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />
+            
+            
+            
+            {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } /> */}
+
+            <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
+            <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
+            <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
+            <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } />
+            <Route exact strict path={ withSiteId(FUNNEL_ISSUE_PATH, siteIdList) } component={ FunnelIssue } />
+            <Route exact strict path={ withSiteId(SESSIONS_PATH, siteIdList) } component={ BugFinder } />
+            <Route exact strict path={ withSiteId(SESSION_PATH, siteIdList) } component={ Session } />
+            <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } component={ LiveSession } />
+            <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } render={ (props) => <Session { ...props } live /> } />
+            { routes.redirects.map(([ fr, to ]) => (
+              <Redirect key={ fr } exact strict from={ fr } to={ to } />
+            )) }
+            <Redirect to={ withSiteId(SESSIONS_PATH, siteId) } />
+          </Switch>
+        </Suspense>
+      </Loader>
+       :
+       <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+        <Switch>
+          <Route exact strict path={ FORGOT_PASSWORD } component={ ForgotPassword } />
+          <Route exact strict path={ LOGIN_PATH } component={ changePassword ? UpdatePassword : Login } />
+          { !existingTenant && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
+          <Redirect to={ LOGIN_PATH } />
         </Switch>
-      </Loader> :
-      <Switch>
-        <Route exact strict path={ FORGOT_PASSWORD } component={ ForgotPassword } />
-        <Route exact strict path={ LOGIN_PATH } component={ changePassword ? UpdatePassword : Login } />
-        { !existingTenant && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
-        <Redirect to={ LOGIN_PATH } />
-      </Switch>;
+      </Suspense>;
   }
 }
 

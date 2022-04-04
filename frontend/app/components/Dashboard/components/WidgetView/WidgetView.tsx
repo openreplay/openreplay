@@ -4,38 +4,65 @@ import { useStore } from 'App/mstore';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
-import { Icon } from 'UI';
-
+import { Icon, BackLink, Loader } from 'UI';
+import { useObserver } from 'mobx-react-lite';
+import { withSiteId } from 'App/routes';
 interface Props {
-
+    history: any;
+    match: any
+    siteId: any
 }
 function WidgetView(props: Props) {
+    const { match: { params: { siteId, dashboardId, metricId } } } = props;
     const [expanded, setExpanded] = useState(true);
-    const { dashboardStore } = useStore();
-    const widget = dashboardStore.currentWidget;
-    return (
-        <div className="page-margin container-70 mb-8">
-            <div className="bg-white rounded border">
-                <div className="p-4 flex justify-between items-center">
-                    <h1 className="mb-0 text-2xl">{widget.name}</h1>
-                    <div className="text-gray-600">
-                        <div
-                            onClick={() => setExpanded(!expanded)}
-                            className="flex items-center cursor-pointer select-none"
-                        >
-                            <span className="mr-2 color-teal">{expanded ? 'Collapse' : 'Expand'}</span>
-                            <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
+    const { metricStore } = useStore();
+    const widget = useObserver(() => metricStore.instance);
+    const loading = useObserver(() => metricStore.isLoading);
+
+    React.useEffect(() => {
+        if (metricId && metricId !== 'create') {
+            metricStore.fetch(metricId).then((metric) => {
+                // metricStore.init(metric)
+            });
+        } else {
+            metricStore.init();
+        }
+    }, [])
+
+    const onBackHandler = () => {
+        if (dashboardId) {
+            props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));    
+        } {
+            props.history.push(withSiteId(`/metrics`, siteId));
+        }
+    }
+
+    return useObserver(() => (
+        <Loader loading={loading}>
+            <div className="relative">
+                <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
+                <div className="bg-white rounded border">
+                    <div className="p-4 flex justify-between items-center">
+                        <h1 className="mb-0 text-2xl">{widget.name}</h1>
+                        <div className="text-gray-600">
+                            <div
+                                onClick={() => setExpanded(!expanded)}
+                                className="flex items-center cursor-pointer select-none"
+                            >
+                                <span className="mr-2 color-teal">{expanded ? 'Collapse' : 'Expand'}</span>
+                                <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
+                            </div>
                         </div>
                     </div>
+
+                    { expanded && <WidgetForm onDelete={onBackHandler} {...props}/>}
                 </div>
 
-                { expanded && <WidgetForm />}
+                <WidgetPreview  className="mt-8" />
+                <WidgetSessions className="mt-8" />
             </div>
-
-            <WidgetPreview  className="mt-8" />
-            <WidgetSessions className="mt-8" />
-        </div>
-    );
+        </Loader>
+    ));
 }
 
-export default withRouter(WidgetView);
+export default WidgetView;

@@ -105,9 +105,10 @@ export const dashboardMetrics = () => '/dashboard/metrics';
 export const dashboardSelected = (id = ':dashboardId', hash) => hashed(`/dashboard/${ id }`, hash);
 
 export const dashboardMetricDetails = (id = ':dashboardId', metricId = ':metricId',  hash) => hashed(`/dashboard/${ id }/metric/${metricId}`, hash);
-export const dashboardMetricCreate = (id = ':dashboardId',  hash) => hashed(`/dashboard/${ id }/metric/create`, hash);
-export const metricCreate = () => `/metric/create`;
-export const metricDetails = (id = ':metricId', hash) => hashed(`/metric/${ id }`, hash);
+export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => hashed(`/dashboard/${ dashboardId }/metric/create`, hash);
+export const metrics = () => `/metrics`;
+export const metricCreate = () => `/metrics/create`;
+export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
 
 
 export const RESULTS_QUERY_KEY = 'results';
@@ -120,12 +121,16 @@ const REQUIRED_SITE_ID_ROUTES = [
     session(''),
     sessions(),
     assist(),
+    
+    metrics(),
+    metricDetails(''),
+
     dashboard(''),
     dashboardSelected(''),
     dashboardMetrics(''),
-    // dashboardMetricCreate(''),
+    dashboardMetricCreate(''),
     dashboardMetricDetails(''),
-    metricCreate(''),
+
     error(''),
     errors(),
     onboarding(''),
@@ -158,8 +163,7 @@ const SITE_CHANGE_AVALIABLE_ROUTES = [
   sessions(),
   assist(),
   dashboard(),
-  dashboardMetrics(''),
-  dashboardSelected(''),
+  metrics(),
   errors(),
   onboarding('')
 ];

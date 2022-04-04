@@ -10,9 +10,6 @@ import { ModalProvider } from './components/Modal';
 import ModalRoot from './components/Modal/ModalRoot';
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { DndProvider } from 'react-dnd'
-import Modal from 'react-modal';
-
-Modal.setAppElement('#modal-root');
 
 document.addEventListener('DOMContentLoaded', () => {
   render(

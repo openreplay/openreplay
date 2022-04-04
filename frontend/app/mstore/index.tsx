@@ -1,10 +1,22 @@
 import React from 'react';
-import DashboardStore, { IDashboardSotre } from 'App/components/Dashboard/store/DashboardStore';
+import DashboardStore, { IDashboardSotre } from './dashboardStore';
+import MetricStore, { IMetricStore } from './metricStore';
+import APIClient from 'App/api_client';
+import { dashboardService, metricService } from 'App/services';
 
 export class RootStore {
     dashboardStore: IDashboardSotre;
+    metricStore: IMetricStore;
+
     constructor() {
         this.dashboardStore = new DashboardStore();
+        this.metricStore = new MetricStore();
+    }
+
+    initClient() {
+      const client  = new APIClient();
+      dashboardService.initClient(client)
+      metricService.initClient(client)
     }
 }
 
@@ -19,6 +31,5 @@ export const StoreProvider = ({ children, store }) => {
 export const useStore = () => React.useContext(StoreContext);
 
 export const withStore = (Component) => (props) => {
-  return <Component {...props} store={useStore()} />;
+  return <Component {...props} mstore={useStore()} />;
 };
-

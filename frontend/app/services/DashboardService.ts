@@ -3,7 +3,7 @@ import APIClient from 'App/api_client';
 import { IWidget } from "App/components/Dashboard/store/widget";
 
 export interface IDashboardService {
-    initClient(): void
+    initClient(client?: APIClient)
     getWidgets(dashboardId: string): Promise<any>
     
     getDashboards(): Promise<any[]>
@@ -20,15 +20,15 @@ export interface IDashboardService {
 }
 
 
-export class DashboardService implements IDashboardService {
+export default class DashboardService implements IDashboardService {
     private client: APIClient;
 
     constructor(client?: APIClient) {
         this.client = client ? client : new APIClient();
     }
 
-    initClient() {
-        this.client = new APIClient();
+    initClient(client?: APIClient) {
+        this.client = client || new APIClient();
     }
 
     /**
@@ -102,8 +102,8 @@ export class DashboardService implements IDashboardService {
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any> {
         const data = metric.toJson();
 
-        const path = dashboardId ? `/metrics` : '/metrics'; // TODO change to /dashboards/:dashboardId/widgets
-        // const path = dashboardId ? `/dashboards/${dashboardId}/widgets` : '/widgets';
+        // const path = dashboardId ? `/metrics` : '/metrics'; // TODO change to /dashboards/:dashboardId/widgets
+        const path = dashboardId ? `/dashboards/${dashboardId}/metrics` : '/metrics';
         if (metric.widgetId) {
             return this.client.put(path + '/' + metric.widgetId, data)
         } else {

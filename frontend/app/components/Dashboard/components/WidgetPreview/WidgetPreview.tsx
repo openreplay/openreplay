@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import WidgetWrapper from '../../WidgetWrapper';
+import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
 import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
 import DateRange from 'Shared/DateRange';
@@ -11,8 +11,8 @@ interface Props {
 }
 function WidgetPreview(props: Props) {
     const { className = '' } = props;
-    const { dashboardStore } = useStore();
-    const metric: any = dashboardStore.currentWidget;
+    const { metricStore } = useStore();
+    const metric: any = metricStore.instance;
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
 

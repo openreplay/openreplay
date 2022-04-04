@@ -1,1 +1,1 @@
-export { default } from './dashboardStore'
+export { default as DashboardStore } from './dashboardStore';

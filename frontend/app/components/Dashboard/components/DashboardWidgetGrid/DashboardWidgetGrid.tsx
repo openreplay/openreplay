@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore } from 'App/mstore';
-import WidgetWrapper from '../../WidgetWrapper';
+import WidgetWrapper from '../WidgetWrapper';
 import { NoContent, Button, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 

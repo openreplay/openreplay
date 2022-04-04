@@ -7,16 +7,19 @@ import { useObserver } from 'mobx-react-lite';
 import { HelpText, Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
 import { withRouter } from 'react-router-dom';
+import { confirm } from 'UI/Confirmation';
 
 interface Props {
     history: any;
     match: any;
+    onDelete: () => void;
 }
 
 function WidgetForm(props: Props) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
-    const { dashboardStore } = useStore();
-    const metric: any = dashboardStore.currentWidget;
+    console.log('WidgetForm params', props.match.params);
+    const { metricStore } = useStore();
+    const metric: any = metricStore.instance;
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
@@ -24,31 +27,44 @@ function WidgetForm(props: Props) {
     const isTimeSeries = metric.metricType === 'timeseries';
     const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
 
-    const write = ({ target: { value, name } }) => dashboardStore.editWidget({ [ name ]: value });
+    const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = (e, { value, name }) => {
-        dashboardStore.editWidget({ [ name ]: value });
+        metricStore.merge({ [ name ]: value });
   
       if (name === 'metricValue') {
-        dashboardStore.editWidget({ metricValue: [value] });
+        metricStore.merge({ metricValue: [value] });
       }
   
       if (name === 'metricOf') {
         if (value === FilterKey.ISSUE) {
-            dashboardStore.editWidget({ metricValue: ['all'] });
+            metricStore.merge({ metricValue: ['all'] });
         }
       }
   
       if (name === 'metricType') {
         if (value === 'timeseries') {
-          dashboardStore.editWidget({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' });
+          metricStore.merge({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' });
         } else if (value === 'table') {
-          dashboardStore.editWidget({ metricOf: tableOptions[0].value, viewType: 'table' });
+          metricStore.merge({ metricOf: tableOptions[0].value, viewType: 'table' });
         }
       }
     };
 
     const onSave = () => {
-        dashboardStore.saveMetric(metric, dashboardId);
+        metricStore.save(metric, dashboardId);
+    }
+
+    const onDelete = async () => {
+        if (await confirm({
+          header: 'Confirm',
+          confirmButton: 'Yes, Delete',
+          confirmation: `Are you sure you want to permanently delete this metric?`
+        })) {
+            metricStore.delete(metric).then(props.onDelete);
+        //   props.remove(instance.alertId).then(() => {
+        //     toggleForm(null, false);
+        //   });
+        }
     }
     
     return useObserver(() => (
@@ -88,15 +104,15 @@ function WidgetForm(props: Props) {
                     )}
 
                     {metric.metricOf === FilterKey.ISSUE && (
-                    <>
-                        <span className="mx-3">issue type</span>
-                        <DropdownPlain
-                        name="metricValue"
-                        options={_issueOptions}
-                        value={ metric.metricValue[0] }
-                        onChange={ writeOption }
-                        />
-                    </>
+                        <>
+                            <span className="mx-3">issue type</span>
+                            <DropdownPlain
+                            name="metricValue"
+                            options={_issueOptions}
+                            value={ metric.metricValue[0] }
+                            onChange={ writeOption }
+                            />
+                        </>
                     )}
 
                     {metric.metricType === 'table' && (
@@ -154,9 +170,9 @@ function WidgetForm(props: Props) {
                     Save
                 </Button>
                 <div className="flex items-center">
-                    {metric.widgetId && (
+                    {metric.exists() && (
                         <>
-                            <Button plain size="small" className="flex items-center">
+                            <Button plain size="small" onClick={onDelete} className="flex items-center">
                                 <Icon name="trash" size="14" className="mr-2" color="teal"/>
                                 Delete
                             </Button>
@@ -172,4 +188,4 @@ function WidgetForm(props: Props) {
     ));
 }
 
-export default withRouter(WidgetForm);
+export default WidgetForm;

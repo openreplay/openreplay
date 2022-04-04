@@ -1,7 +1,6 @@
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
-import Dashboard, { IDashboard } from "./dashboard"
-import APIClient from 'App/api_client';
-import Widget, { IWidget } from "./widget";
+import Dashboard, { IDashboard } from "./types/dashboard"
+import Widget, { IWidget } from "./types/widget";
 import { dashboardService } from "App/services";
 
 export interface IDashboardSotre {
@@ -24,7 +23,7 @@ export interface IDashboardSotre {
     updateKey(key: string, value: any): void
     resetCurrentWidget(): void
     editWidget(widget: any): void
-    fetchList(): void
+    fetchList(): Promise<any>
     fetch(dashboardId: string)
     save(dashboard: IDashboard): Promise<any>
     saveDashboardWidget(dashboard: Dashboard, widget: Widget)
@@ -62,10 +61,8 @@ export default class DashboardStore implements IDashboardSotre {
     metricsSearch: string = ''
     
     // Loading states
-    isLoading: boolean = false
+    isLoading: boolean = true
     isSaving: boolean = false
-
-    private client = new APIClient()
 
     constructor() {
         makeAutoObservable(this, {
@@ -120,6 +117,10 @@ export default class DashboardStore implements IDashboardSotre {
         }
     }
 
+    findByIds(ids: string[]) {
+        return this.dashboards.filter(d => ids.includes(d.dashboardId))
+    }
+
     initDashboard(dashboard: Dashboard) {
         this.dashboardInstance = dashboard || new Dashboard()
     }
@@ -136,10 +137,10 @@ export default class DashboardStore implements IDashboardSotre {
         this.currentWidget.update(widget)
     }
 
-    fetchList() {
+    fetchList(): Promise<any> {
         this.isLoading = true
 
-        dashboardService.getDashboards()
+        return dashboardService.getDashboards()
             .then((list: any) => {
                 runInAction(() => {
                     this.dashboards = list.map(d => new Dashboard().fromJson(d))
@@ -203,35 +204,11 @@ export default class DashboardStore implements IDashboardSotre {
         widget.validate()
         if (widget.isValid) {
             this.isLoading = true
-            if (widget.widgetId) {
-                this.client.put(`/dashboards/${dashboard.dashboardId}/widgets/${widget.widgetId}`, widget.toJson())
-                    .then(response => {
-                        runInAction(() => {
-                            this.isLoading = false
-                        })
-                    }
-                )
-            } else {
-                this.client.post(`/dashboards/${dashboard.dashboardId}/widgets`, widget.toJson())
-                    .then(response => {
-                        runInAction(() => {
-                            this.isLoading = false
-                        })
-                    }
-                )
-            }
         }
     }
 
     delete(dashboard: Dashboard) {
         this.isLoading = true
-        this.client.delete(`/dashboards/${dashboard.dashboardId}`)
-            .then(response => {
-                runInAction(() => {
-                    this.isLoading = false
-                })
-            }
-        )
     }
 
     toJson() {
@@ -298,8 +275,10 @@ export default class DashboardStore implements IDashboardSotre {
             if (this.dashboards.length > 0) {
                 const pinnedDashboard = this.dashboards.find(d => d.isPinned)
                 if (pinnedDashboard) {
+                    console.log('selecting pined dashboard')
                     this.selectedDashboard = pinnedDashboard
                 } else {
+                    console.log('selecting first dashboard')
                     this.selectedDashboard = this.dashboards[0]
                 }
             }

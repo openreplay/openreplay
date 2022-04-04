@@ -3,23 +3,23 @@ import React from 'react';
 import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
-import { withSiteId, dashboardSelected, dashboardMetrics } from 'App/routes';
+import { withSiteId, dashboardSelected, metrics } from 'App/routes';
 import { useModal } from 'App/components/Modal';
 import DashbaordListModal from '../DashbaordListModal';
 import DashboardModal from '../DashboardModal';
 
 const SHOW_COUNT = 5;
-function DashboardSideMenu(props) {
+interface Props {
+    siteId: string
+    history: any
+}
+function DashboardSideMenu(props: Props) {
+    const { history, siteId } = props;
     const { hideModal, showModal } = useModal();
-    const { history } = props;
     const { dashboardStore } = useStore();
     const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
     const dashboardsPicked = dashboardStore.dashboards.slice(0, SHOW_COUNT);
     const remainingDashboardsCount = dashboardStore.dashboards.length - SHOW_COUNT;
-    
-    // React.useEffect(() => {
-    //     showModal(<DashbaordListModal />, {});
-    // }, []);
 
     const redirect = (path) => {
         history.push(path);
@@ -27,7 +27,7 @@ function DashboardSideMenu(props) {
 
     const onItemClick = (dashboard) => {
         dashboardStore.selectDashboardById(dashboard.dashboardId);
-        const path = withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(dashboardStore.siteId));
+        const path = withSiteId(dashboardSelected(dashboard.dashboardId), parseInt(siteId));
         history.push(path);
     };
 
@@ -36,7 +36,7 @@ function DashboardSideMenu(props) {
         showModal(<DashboardModal />, {})
     }
 
-    return (
+    return useObserver(() => (
         <div>
             <SideMenuHeader className="mb-4" text="Dashboards" />
             {dashboardsPicked.map((item: any) => (
@@ -48,7 +48,7 @@ function DashboardSideMenu(props) {
                     onClick={() => onItemClick(item)}
                     leading = {(
                         <div className="ml-2 flex items-center">
-                            <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>
+                            {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
                             {item.isPinned && <div className="p-1"><Icon name="pin-fill" size="16" /></div>}
                         </div>
                     )}
@@ -79,7 +79,7 @@ function DashboardSideMenu(props) {
 					id="menu-manage-alerts"
 					title="Metrics"
 					iconName="bar-chart-line"
-					onClick={() => redirect(withSiteId(dashboardMetrics(), dashboardStore.siteId))}
+					onClick={() => redirect(withSiteId(metrics(), siteId))}
 				/>
 			</div>
             <div className="border-t w-full my-2" />
@@ -92,7 +92,7 @@ function DashboardSideMenu(props) {
 				/>				
 			</div>
         </div>
-    );
+    ));
 }
 
-export default withRouter(observer(DashboardSideMenu));
+export default withRouter(DashboardSideMenu);

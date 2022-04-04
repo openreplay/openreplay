@@ -1,9 +1,7 @@
 import React from 'react';
-import WidgetWrapper from '../../WidgetWrapper';
-import { useDashboardStore } from '../../store/store';
+import WidgetWrapper from '../WidgetWrapper';
 import { useObserver } from 'mobx-react-lite';
 import cn from 'classnames';
-import { Button } from 'UI';
 import { useStore } from 'App/mstore';
 
 function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, unSelectCategory }) {
@@ -30,7 +28,6 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, 
 function DashboardMetricSelection(props) {
     const { dashboardStore } = useStore();
     const widgetCategories = dashboardStore?.widgetCategories;
-    const widgetTemplates = dashboardStore?.widgetTemplates;
     const [activeCategory, setActiveCategory] = React.useState<any>(widgetCategories[0]);
     const [selectedWidgets, setSelectedWidgets] = React.useState<any>([]);
     const selectedWidgetIds = selectedWidgets.map((widget: any) => widget.widgetId);
