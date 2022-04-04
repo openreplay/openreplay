@@ -21,6 +21,7 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
+@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
@@ -36,6 +37,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.Cu
     }
 
 
+@app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
@@ -44,6 +46,7 @@ def add_remove_favorite_session2(projectId: int, sessionId: int,
                                                           session_id=sessionId)}
 
 
+@app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}/assign', tags=["sessions"])
 def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
@@ -56,6 +59,7 @@ def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = 
     }
 
 
+@app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 @app.get('/{projectId}/sessions2/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
@@ -67,6 +71,7 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
     }
 
 
+@app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 @app.get('/{projectId}/sessions2/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 def assign_session(projectId: int, sessionId: int, issueId: str,
                    context: schemas.CurrentContext = Depends(OR_context)):
@@ -79,6 +84,8 @@ def assign_session(projectId: int, sessionId: int, issueId: str,
     }
 
 
+@app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
+@app.put('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 @app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 @app.put('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
@@ -822,6 +829,19 @@ def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
 def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_sessions_ws(projectId, user_id=userId)
+    return {'data': data}
+
+
+@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])
+def get_live_session(projectId: int, sessionId: str, context: schemas.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
+    if data is None:
+        data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
+                                      user_id=context.user_id, include_fav_viewed=True, group_metadata=True, live=False)
+        if data is None:
+            return {"errors": ["session not found"]}
+        if data.get("inDB"):
+            sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
     return {'data': data}
 
 
