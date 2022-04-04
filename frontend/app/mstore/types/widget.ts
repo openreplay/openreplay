@@ -1,8 +1,8 @@
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
-import Filter from 'Types/filter';
 import FilterSeries from "./filterSeries";
 
 export interface IWidget {
+    metricId: string
     widgetId: any
     name: string
     metricType: string
@@ -14,6 +14,7 @@ export interface IWidget {
     isPublic: boolean
     owner: string
     lastModified: Date
+    dashboards: any[]
     dashboardIds: any[]
 
     position: number
@@ -30,9 +31,11 @@ export interface IWidget {
     toJson(): any
     validate(): void
     update(data: any): void
+    exists(): boolean
 }
 export default class Widget implements IWidget {
-    public static get ID_KEY():string { return "widgetId" }
+    public static get ID_KEY():string { return "metricId" }
+    metricId: any = undefined
     widgetId: any = undefined
     name: string = "New Metric"
     metricType: string = "timeseries"
@@ -41,9 +44,10 @@ export default class Widget implements IWidget {
     viewType: string = "lineChart"
     series: FilterSeries[] = []
     sessions: [] = []
-    isPublic: boolean = false
+    isPublic: boolean = true
     owner: string = ""
     lastModified: Date = new Date()
+    dashboards: any[] = []
     dashboardIds: any[] = []
 
     position: number = 0
@@ -92,26 +96,28 @@ export default class Widget implements IWidget {
         this.series.push(series)
     }
 
-
     fromJson(json: any) {
+        console.log('json', json);
         runInAction(() => {
+            this.metricId = json.metricId
             this.widgetId = json.widgetId
             this.name = json.name
             this.data = json.data
+            this.series = json.series.map((series: any) => new FilterSeries().fromJson(series)),
+            this.dashboards = json.dashboards
         })
         return this
     }
 
     toJson() {
         return {
+            metricId: this.metricId,
             widgetId: this.widgetId,
-            name: this.name,
             metricOf: this.metricOf,
             metricValue: this.metricValue,
-            viewType: this.viewType,
-            series: this.series,
-            sessions: this.sessions,
-            isPublic: this.isPublic,
+            metricType: this.metricType,
+            name: this.name,
+            series: this.series.map((series: any) => series.toJson()),
         }
     }
 
@@ -123,5 +129,9 @@ export default class Widget implements IWidget {
         runInAction(() => {
             Object.assign(this, data)
         })
+    }
+
+    exists() {
+        return this.metricId !== undefined
     }
 }

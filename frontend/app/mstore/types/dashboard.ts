@@ -1,6 +1,5 @@
 import { makeAutoObservable, observable, action, runInAction } from "mobx"
 import Widget, { IWidget } from "./widget"
-import { dashboardService } from 'App/services'
 
 export interface IDashboard {
     dashboardId: any
@@ -27,8 +26,9 @@ export interface IDashboard {
     sortWidgets(): void
 }
 export default class Dashboard implements IDashboard {
+    public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
-    name: string = "New Dashboard"
+    name: string = "New Dashboard X"
     isPublic: boolean = false
     widgets: IWidget[] = []
     isValid: boolean = false
