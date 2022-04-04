@@ -10,19 +10,17 @@ import (
 
 	"golang.org/x/net/http2"
 
-
+	"openreplay/backend/pkg/db/cache"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/storage"
-	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/db/cache"
-	"openreplay/backend/pkg/url/assets"
 	"openreplay/backend/pkg/token"
+	"openreplay/backend/pkg/url/assets"
 	"openreplay/backend/services/http/geoip"
 	"openreplay/backend/services/http/uaparser"
-
 )
 
 var rewriter *assets.Rewriter
@@ -38,6 +36,7 @@ var TOPIC_RAW_WEB string
 var TOPIC_RAW_IOS string
 var TOPIC_CACHE string
 var TOPIC_TRIGGER string
+
 //var TOPIC_ANALYTICS string
 var CACHE_ASSESTS bool
 var BEACON_SIZE_LIMIT int64
@@ -53,7 +52,7 @@ func main() {
 	TOPIC_TRIGGER = env.String("TOPIC_TRIGGER")
 	//TOPIC_ANALYTICS = env.String("TOPIC_ANALYTICS")
 	rewriter = assets.NewRewriter(env.String("ASSETS_ORIGIN"))
-	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000 * 60 * 20)
+	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000*60*20)
 	defer pgconn.Close()
 	s3 = storage.NewS3(env.String("AWS_REGION"), env.String("S3_BUCKET_IOS_IMAGES"))
 	tokenizer = token.NewTokenizer(env.String("TOKEN_SECRET"))
@@ -70,7 +69,7 @@ func main() {
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			// TODO: agree with specification
-			w.Header().Set("Access-Control-Allow-Origin", "*") 
+			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "POST")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,Authorization")
 			if r.Method == http.MethodOptions {
@@ -79,13 +78,12 @@ func main() {
 				return
 			}
 
-			log.Printf("Request: %v  -  %v  ",  r.Method, r.URL.Path)
-
+			log.Printf("Request: %v  -  %v  ", r.Method, r.URL.Path)
 
 			switch r.URL.Path {
 			case "/":
 				w.WriteHeader(http.StatusOK)
-			case "/v1/web/not-started": 
+			case "/v1/web/not-started":
 				switch r.Method {
 				case http.MethodPost:
 					notStartedHandlerWeb(w, r)

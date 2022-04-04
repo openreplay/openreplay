@@ -2,25 +2,24 @@ package integration
 
 import (
 	"encoding/json"
-	"time"
+	"errors"
 	"fmt"
-	"net/http"
 	"io"
-  "io/ioutil"
-  "errors"
+	"io/ioutil"
+	"net/http"
+	"time"
 
 	"openreplay/backend/pkg/messages"
 )
 
 /*
-	We use insights-api for query. They also have Logs and Events 
+	We use insights-api for query. They also have Logs and Events
 */
-
 
 // TODO: Eu/us
 type newrelic struct {
-  ApplicationId string //`json:"application_id"`
-  XQueryKey string //`json:"x_query_key"`
+	ApplicationId string //`json:"application_id"`
+	XQueryKey     string //`json:"x_query_key"`
 }
 
 // TODO: Recheck
@@ -34,14 +33,14 @@ type newrelicResponce struct {
 type newrelicEvent struct {
 	//AsayerSessionID uint64 `json:"asayer_session_id,string"`  //  string/int decoder?
 	OpenReplaySessionToken string `json:"openReplaySessionToken"`
-	ErrorClass string `json:"error.class"`  
-	Timestamp uint64 `json:"timestamp"`
+	ErrorClass             string `json:"error.class"`
+	Timestamp              uint64 `json:"timestamp"`
 }
 
 func (nr *newrelic) Request(c *client) error {
 	sinceTs := c.getLastMessageTimestamp() + 1000 // From next second
 	// In docs - format "yyyy-mm-dd HH:MM:ss", but time.RFC3339 works fine too
-	sinceFormatted := time.Unix(0, int64(sinceTs*1e6)).Format(time.RFC3339)
+	sinceFormatted := time.UnixMilli(int64(sinceTs)).Format(time.RFC3339)
 	// US/EU endpoint ??
 	requestURL := fmt.Sprintf("https://insights-api.eu.newrelic.com/v1/accounts/%v/query", nr.ApplicationId)
 	req, err := http.NewRequest("GET", requestURL, nil)
@@ -64,11 +63,10 @@ func (nr *newrelic) Request(c *client) error {
 	}
 	defer resp.Body.Close()
 
-
 	//  401 (unauthorised) if wrong XQueryKey/deploymentServer is wrong or 403 (Forbidden) if ApplicationId is wrong
 	// 400 if Query has problems
 	if resp.StatusCode >= 400 {
-  	io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
+		io.Copy(ioutil.Discard, resp.Body) // Read the body to free socket
 		return fmt.Errorf("Newrelic: server respond with the code %v| Request: ", resp.StatusCode, *req)
 	}
 	// Pagination depending on returning metadata ?
@@ -92,10 +90,10 @@ func (nr *newrelic) Request(c *client) error {
 			c.evChan <- &SessionErrorEvent{
 				Token: e.OpenReplaySessionToken,
 				RawErrorEvent: &messages.RawErrorEvent{
-					Source: "newrelic",
+					Source:    "newrelic",
 					Timestamp: e.Timestamp,
-					Name: e.ErrorClass,
-					Payload: string(jsonEvent),
+					Name:      e.ErrorClass,
+					Payload:   string(jsonEvent),
 				},
 			}
 		}

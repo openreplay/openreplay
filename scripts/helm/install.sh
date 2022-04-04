@@ -26,7 +26,7 @@ which docker &> /dev/null || {
 }
 
 
-# https://parrot.asayer.io/os/license
+# https://api.openreplay.com/os/license
 # payload: {"mid": "UUID of the machine", "license": ""}
 # response {"data":{"valid": TRUE|FALSE, "expiration": expiration date in ms}}
 

@@ -1,20 +1,19 @@
 package integration
 
 import (
-	"net/http"
-	"time"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"io"
-  "io/ioutil"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
 
-  "openreplay/backend/pkg/utime"
 	"openreplay/backend/pkg/messages"
 )
 
-/* 
-	The maximum value for limit is 10,000 messages or 100 MB in total message size, 
+/*
+	The maximum value for limit is 10,000 messages or 100 MB in total message size,
 	which means the query may return less than 10,000 messages if you exceed the size limit.
 
 	API Documentation: https://help.sumologic.com/APIs/Search-Job-API/About-the-Search-Job-API
@@ -22,31 +21,30 @@ import (
 const SL_LIMIT = 10000
 
 type sumologic struct {
-  AccessId string   // `json:"access_id"`
-  AccessKey string  // `json:"access_key"`  
-  cookies []*http.Cookie
+	AccessId  string // `json:"access_id"`
+	AccessKey string // `json:"access_key"`
+	cookies   []*http.Cookie
 }
-
 
 type sumplogicJobResponce struct {
 	Id string
 }
 
 type sumologicJobStatusResponce struct {
-	State string
+	State        string
 	MessageCount int
 	//PendingErrors []string
 }
 
 type sumologicResponce struct {
-	Messages [] struct {
+	Messages []struct {
 		Map json.RawMessage
 	}
 }
 
 type sumologicEvent struct {
 	Timestamp uint64 `json:"_messagetime,string"`
-	Raw string `json:"_raw"`
+	Raw       string `json:"_raw"`
 }
 
 func (sl *sumologic) deleteJob(jobId string, errChan chan<- error) {
@@ -68,10 +66,9 @@ func (sl *sumologic) deleteJob(jobId string, errChan chan<- error) {
 	resp.Body.Close()
 }
 
-
 func (sl *sumologic) Request(c *client) error {
 	fromTs := c.getLastMessageTimestamp() + 1 // From next millisecond
-	toTs := utime.CurrentTimestamp()
+	toTs := time.Now().UnixMilli()
 	requestURL := fmt.Sprintf("https://api.%vsumologic.com/api/v1/search/jobs", "eu.") // deployment server??
 	jsonBody := fmt.Sprintf(`{
 		"query": "\"openReplaySessionToken=\" AND (*error* OR *fail* OR *exception*)",
@@ -132,7 +129,7 @@ func (sl *sumologic) Request(c *client) error {
 
 	tick := time.Tick(5 * time.Second)
 	for {
-		<- tick
+		<-tick
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			return err // TODO: retry, counter/timeout
@@ -147,12 +144,12 @@ func (sl *sumologic) Request(c *client) error {
 		}
 		if jobStatus.State == "DONE GATHERING RESULTS" {
 			offset := 0
-			for ;offset < jobStatus.MessageCount; {
+			for offset < jobStatus.MessageCount {
 				requestURL = fmt.Sprintf(
-					"https://api.%vsumologic.com/api/v1/search/jobs/%v/messages?offset=%v&limit=%v", 
-					"eu.", 
-					jobResponce.Id, 
-					offset, 
+					"https://api.%vsumologic.com/api/v1/search/jobs/%v/messages?offset=%v&limit=%v",
+					"eu.",
+					jobResponce.Id,
+					offset,
 					SL_LIMIT,
 				)
 				req, err = http.NewRequest("GET", requestURL, nil)
@@ -190,17 +187,17 @@ func (sl *sumologic) Request(c *client) error {
 					}
 					name := e.Raw
 					if len(name) > 20 {
-						name = name[:20]  // not sure about that
+						name = name[:20] // not sure about that
 					}
 					c.setLastMessageTimestamp(e.Timestamp)
 					c.evChan <- &SessionErrorEvent{
 						//SessionID: sessionID,
 						Token: token,
 						RawErrorEvent: &messages.RawErrorEvent{
-							Source: "sumologic",
+							Source:    "sumologic",
 							Timestamp: e.Timestamp,
-							Name: name,
-							Payload: string(m.Map), //e.Raw ?
+							Name:      name,
+							Payload:   string(m.Map), //e.Raw ?
 						},
 					}
 
@@ -209,7 +206,7 @@ func (sl *sumologic) Request(c *client) error {
 			}
 			break
 		}
-		if jobStatus.State != "NOT STARTED" && 
+		if jobStatus.State != "NOT STARTED" &&
 			jobStatus.State != "GATHERING RESULTS" {
 			// error
 			break

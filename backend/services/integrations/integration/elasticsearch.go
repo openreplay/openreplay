@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/utime"
 )
 
 type elasticsearch struct {
@@ -164,7 +163,7 @@ func (es *elasticsearch) Request(c *client) error {
 				c.errChan <- err
 				continue
 			}
-			timestamp := uint64(utime.ToMilliseconds(esLog.Time))
+			timestamp := uint64(esLog.Time.UnixMilli())
 			c.setLastMessageTimestamp(timestamp)
 
 			var sessionID uint64

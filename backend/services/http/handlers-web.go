@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/token"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/token"
 )
 
 func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -30,18 +30,18 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		UserID          string  `json:"userID"`
 	}
 	type response struct {
-		Timestamp int64  			`json:"timestamp"`
-		Delay     int64  			`json:"delay"`
-		Token     string 			`json:"token"`
-		UserUUID  string 			`json:"userUUID"`
-		SessionID string 			`json:"sessionID"`
-		BeaconSizeLimit int64 `json:"beaconSizeLimit"`
+		Timestamp       int64  `json:"timestamp"`
+		Delay           int64  `json:"delay"`
+		Token           string `json:"token"`
+		UserUUID        string `json:"userUUID"`
+		SessionID       string `json:"sessionID"`
+		BeaconSizeLimit int64  `json:"beaconSizeLimit"`
 	}
 
 	startTime := time.Now()
 	req := &request{}
 	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT) // what if Body == nil??  // use r.ContentLength to return specific error?
-	//defer body.Close()
+	defer body.Close()
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
 		return
@@ -76,14 +76,14 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			responseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
-		sessionID, err := flaker.Compose(uint64(startTime.UnixNano() / 1e6))
+		sessionID, err := flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
 			responseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, expTime.UnixNano() / 1e6}
+		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
 
 		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
 		producer.Produce(TOPIC_RAW_WEB, tokenData.ID, Encode(&SessionStart{
@@ -102,17 +102,17 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			UserCountry:          country,
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
-			UserID:								req.UserID,
+			UserID:               req.UserID,
 		}))
 	}
 
 	//delayDuration := time.Now().Sub(startTime)
 	responseWithJSON(w, &response{
-		//Timestamp: startTime.UnixNano() / 1e6,
-		//Delay:     delayDuration.Nanoseconds() / 1e6,
-		Token:     tokenizer.Compose(*tokenData),
-		UserUUID:  userUUID,
-		SessionID: strconv.FormatUint(tokenData.ID, 10),
+		//Timestamp: startTime.UnixMilli(),
+		//Delay:     delayDuration.Milliseconds(),
+		Token:           tokenizer.Compose(*tokenData),
+		UserUUID:        userUUID,
+		SessionID:       strconv.FormatUint(tokenData.ID, 10),
 		BeaconSizeLimit: BEACON_SIZE_LIMIT,
 	})
 }
@@ -124,7 +124,7 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
-	//defer body.Close()
+	defer body.Close()
 	buf, err := ioutil.ReadAll(body)
 	if err != nil {
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
