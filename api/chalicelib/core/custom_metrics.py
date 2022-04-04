@@ -148,10 +148,11 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
               "metric_value": data.metric_value, "metric_format": data.metric_format}
     for i, s in enumerate(data.series):
         prefix = "u_"
+        if s.index is None:
+            s.index = i
         if s.series_id is None or s.series_id not in series_ids:
             n_series.append({"i": i, "s": s})
             prefix = "n_"
-            s.index = i
         else:
             u_series.append({"i": i, "s": s})
             u_series_ids.append(s.series_id)
@@ -198,9 +199,7 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
-        cur.execute(
-            query
-        )
+        cur.execute(query)
     return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
