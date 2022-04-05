@@ -13,7 +13,6 @@ export interface IDashboardService {
     deleteDashboard(dashboardId: string): Promise<any>
 
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
-    deleteMetric(metricId: string): Promise<any>
 
     saveWidget(dashboardId: string, widget: IWidget): Promise<any>
     deleteWidget(dashboardId: string, widgetId: string): Promise<any>
@@ -109,15 +108,6 @@ export default class DashboardService implements IDashboardService {
         } else {
             return this.client.post(path, data)
         }
-    }
-
-    /**
-     * Delete a Metric by metricId.
-     * @param metricId 
-     * @returns {Promise<any>}
-     */
-    deleteMetric(metricId: string): Promise<any> {
-        return this.client.delete(`/metrics/${metricId}`)
     }
 
     /**

@@ -3,11 +3,19 @@ import { useObserver } from 'mobx-react-lite';
 import DashboardMetricSelection from '../DashboardMetricSelection';
 import DashboardForm from '../DashboardForm';
 import { Button } from 'UI';
+import { withRouter } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
+import { dashboardMetricCreate, withSiteId } from 'App/routes';
 
-
+interface Props {
+    history: any
+    siteId?: string
+    dashboardId?: string
+}
 function DashboardModal(props) {
+    const { history, siteId, dashboardId } = props;
+    console.log('DashboardModal', props);
     const { dashboardStore } = useStore();
     const { hideModal } = useModal();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
@@ -18,6 +26,8 @@ function DashboardModal(props) {
     }
 
     const handleCreateNew = () => {
+        const path = withSiteId(dashboardMetricCreate(dashboardId), siteId);
+        history.push(path);
         hideModal();
     }
 
@@ -33,7 +43,7 @@ function DashboardModal(props) {
                     </h1>
                 </div>
                 <div>
-                    <Button outline size="small" onClick={handleCreateNew}>Create New</Button>
+                    {dashboard.exists() && <Button outline size="small" onClick={handleCreateNew}>Create New</Button>}
                 </div>
             </div>
             { !dashboard.exists() && (
@@ -58,4 +68,4 @@ function DashboardModal(props) {
     ));
 }
 
-export default DashboardModal;
+export default withRouter(DashboardModal);

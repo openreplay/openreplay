@@ -29,7 +29,7 @@ function DashboardView(props: Props) {
     
     const onEditHandler = () => {
         dashboardStore.initDashboard(dashboard)
-        showModal(<DashboardModal />, {})
+        showModal(<DashboardModal siteId={siteId} dashboardId={dashboardId} />, {})
     }
 
     const onDelete = async () => {
@@ -64,7 +64,7 @@ function DashboardView(props: Props) {
                             <Button onClick={onDelete}>Remove</Button>
                         </div>
                     </div>
-                    <DashboardWidgetGrid />
+                    <DashboardWidgetGrid dashboardId={dashboardId} onEditHandler={onEditHandler} />
                 </div>
             </NoContent>
         </Loader>

@@ -51,6 +51,7 @@ export interface IDashboardSotre {
 
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
     fetchTemplates(): Promise<any>
+    deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>
 }
 export default class DashboardStore implements IDashboardSotre {
     siteId: any = null
@@ -159,6 +160,7 @@ export default class DashboardStore implements IDashboardSotre {
 
     initDashboard(dashboard: Dashboard) {
         this.dashboardInstance = dashboard || new Dashboard()
+        this.selectedWidgets = []
     }
 
     updateKey(key: any, value: any) {
@@ -201,9 +203,7 @@ export default class DashboardStore implements IDashboardSotre {
         this.isSaving = true
         const isCreating = !dashboard.dashboardId
         
-        if (isCreating) {
-            dashboard.metrics = this.selectedWidgets.map(w => w.metricId)
-        }
+        dashboard.metrics = this.selectedWidgets.map(w => w.metricId)
         
         return dashboardService.saveDashboard(dashboard).then(_dashboard => {
             runInAction(() => {
@@ -358,6 +358,17 @@ export default class DashboardStore implements IDashboardSotre {
                     reject(error)
                 })
             }
+        })
+    }
+
+    deleteDashboardWidget(dashboardId: string, widgetId: string) {
+        this.isDeleting = true
+        return dashboardService.deleteWidget(dashboardId, widgetId).then(() => {
+            runInAction(() => {
+                this.selectedDashboard?.removeWidget(widgetId)
+            })
+        }).finally(() => {
+            this.isDeleting = false
         })
     }
 }
