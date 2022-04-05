@@ -6,6 +6,7 @@ WORKDIR /work
 COPY . .
 RUN pip install -r requirements.txt
 RUN mv .env.default .env
+ENV APP_NAME chalice
 
 # Add Tini
 # Startup daemon
