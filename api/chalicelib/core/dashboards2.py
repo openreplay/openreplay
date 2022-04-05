@@ -153,9 +153,9 @@ def get_widget(project_id, user_id, dashboard_id, widget_id):
 
 def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashboardPayloadSchema):
     with pg_client.PostgresClient() as cur:
-        pg_query = """INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config, name)
+        pg_query = """INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
                           SELECT %(dashboard_id)s AS dashboard_id, %(metric_id)s AS metric_id, 
-                                 %(userId)s AS user_id, %(config)s::jsonb AS config, %(name)s AS name
+                                 %(userId)s AS user_id, %(config)s::jsonb AS config
                           WHERE EXISTS(SELECT 1 FROM dashboards 
                                        WHERE dashboards.deleted_at ISNULL AND dashboards.project_id = %(projectId)s
                                           AND dashboard_id = %(dashboard_id)s
