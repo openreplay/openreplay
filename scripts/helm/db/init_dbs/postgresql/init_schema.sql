@@ -947,6 +947,7 @@ $$
                 active        boolean          NOT NULL DEFAULT TRUE,
                 created_at    timestamp                 default timezone('utc'::text, now()) not null,
                 deleted_at    timestamp,
+                edited_at     timestamp,
                 metric_type   metric_type      NOT NULL DEFAULT 'timeseries',
                 view_type     metric_view_type NOT NULL DEFAULT 'lineChart',
                 metric_of     text             NOT NULL DEFAULT 'sessionCount',
