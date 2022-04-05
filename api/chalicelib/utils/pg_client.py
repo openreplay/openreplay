@@ -9,7 +9,8 @@ _PG_CONFIG = {"host": config("pg_host"),
               "database": config("pg_dbname"),
               "user": config("pg_user"),
               "password": config("pg_password"),
-              "port": config("pg_port", cast=int)}
+              "port": config("pg_port", cast=int),
+              "application_name": config("APP_NAME", default="PY")}
 PG_CONFIG = dict(_PG_CONFIG)
 if config("pg_timeout", cast=int, default=0) > 0:
     PG_CONFIG["options"] = f"-c statement_timeout={config('pg_timeout', cast=int) * 1000}"
@@ -64,6 +65,8 @@ class PostgresClient:
     def __init__(self, long_query=False):
         self.long_query = long_query
         if long_query:
+            long_config = dict(_PG_CONFIG)
+            long_config["application_name"] += "-LONG"
             self.connection = psycopg2.connect(**_PG_CONFIG)
         else:
             self.connection = postgreSQL_pool.getconn()
