@@ -1025,4 +1025,31 @@ $$
 $$
 LANGUAGE plpgsql;
 
+INSERT INTO metrics (name, category, config, is_predefined, is_template, is_public, key)
+VALUES ('sessions count', 'overview', '{}', true, true, true, 'count_sessions'),
+       ('avg request load time', 'overview', '{}', true, true, true, 'avg_request_load_time'),
+       ('avg page load time', 'overview', '{}', true, true, true, 'avg_page_load_time'),
+       ('avg image load time', 'overview', '{}', true, true, true, 'avg_image_load_time'),
+       ('avg dom content load start', 'overview', '{}', true, true, true, 'avg_dom_content_load_start'),
+       ('avg first contentful pixel', 'overview', '{}', true, true, true, 'avg_first_contentful_pixel'),
+       ('avg visited pages count', 'overview', '{}', true, true, true, 'avg_visited_pages'),
+       ('avg session duration', 'overview', '{}', true, true, true, 'avg_session_duration'),
+       ('avg pages dom build time', 'overview', '{}', true, true, true, 'avg_pages_dom_buildtime'),
+       ('avg pages response time', 'overview', '{}', true, true, true, 'avg_pages_response_time'),
+       ('avg response time', 'overview', '{}', true, true, true, 'avg_response_time'),
+       ('avg first paint', 'overview', '{}', true, true, true, 'avg_first_paint'),
+       ('avg dom content loaded', 'overview', '{}', true, true, true, 'avg_dom_content_loaded'),
+       ('avg time till first bit', 'overview', '{}', true, true, true, 'avg_till_first_bit'),
+       ('avg time to interactive', 'overview', '{}', true, true, true, 'avg_time_to_interactive'),
+       ('requests count', 'overview', '{}', true, true, true, 'count_requests'),
+       ('avg time to render', 'overview', '{}', true, true, true, 'avg_time_to_render'),
+       ('avg used js heap size', 'overview', '{}', true, true, true, 'avg_used_js_heap_size'),
+       ('avg cpu', 'overview', '{}', true, true, true, 'avg_cpu')
+ON CONFLICT (key) DO UPDATE SET name=excluded.name,
+                                category=excluded.category,
+                                config=excluded.config,
+                                is_predefined=excluded.is_predefined,
+                                is_template=excluded.is_template,
+                                is_public=excluded.is_public;
+
 COMMIT;
