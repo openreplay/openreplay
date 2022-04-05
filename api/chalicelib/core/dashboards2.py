@@ -113,8 +113,7 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                          INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
-                         VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, %(config_{i})s)" for i in range(len(data.metrics))])}
-                         RETURNING (SELECT dashboard_id FROM dash)"""
+                         VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, %(config_{i})s)" for i in range(len(data.metrics))])};"""
             for i, m in enumerate(data.metrics):
                 params[f"metric_id_{i}"] = m
                 params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
