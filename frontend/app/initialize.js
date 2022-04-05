@@ -17,10 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
       <Provider store={ store }>
         <StoreProvider store={new RootStore()}>
           <DndProvider backend={HTML5Backend}>
-            <ModalProvider>
-              <ModalRoot />
+            {/* <ModalProvider> */}
+              {/* <ModalRoot /> */}
               <Router />
-            </ModalProvider>
+            {/* </ModalProvider> */}
           </DndProvider>
         </StoreProvider>
       </Provider>

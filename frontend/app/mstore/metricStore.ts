@@ -31,6 +31,7 @@ export interface IMetricStore {
     fetchList(): void
     fetch(metricId: string)
     delete(metric: IWidget)
+    // fetchMetricChartData(metric: IWidget)
 }
 
 export default class MetricStore implements IMetricStore {
@@ -69,7 +70,6 @@ export default class MetricStore implements IMetricStore {
             fetch: action,
             delete: action,
 
-
             paginatedList: computed,
         })
 
@@ -85,7 +85,7 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
-        this.instance = metric || new Widget()
+        this.instance.update(metric || new Widget())
     }
 
     updateKey(key: string, value: any) {
@@ -149,7 +149,7 @@ export default class MetricStore implements IMetricStore {
         this.isLoading = true
         return metricService.getMetrics()
             .then(metrics => {
-                this.metrics = metrics
+                this.metrics = metrics.map(m => new Widget().fromJson(m))
             }).finally(() => {
                 this.isLoading = false
             })
@@ -172,6 +172,19 @@ export default class MetricStore implements IMetricStore {
                 this.removeById(metric[Widget.ID_KEY])
             }).finally(() => {
                 this.isSaving = false
+            })
+    }
+
+    fetchMetricChartData(metric: IWidget) {
+        this.isLoading = true
+        return metricService.getMetricChartData(metric)
+            .then(data => {
+                console.log('data', data)
+                // runInAction(() => {
+                    // metric.data = data
+                // })
+            }).finally(() => {
+                this.isLoading = false
             })
     }
 }

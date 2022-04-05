@@ -12,7 +12,7 @@ interface Props {
 function WidgetPreview(props: Props) {
     const { className = '' } = props;
     const { metricStore } = useStore();
-    const metric: any = metricStore.instance;
+    const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
 

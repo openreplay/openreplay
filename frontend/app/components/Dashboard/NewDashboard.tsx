@@ -18,12 +18,12 @@ function NewDashboard(props) {
 
     useEffect(() => {
         dashboardStore.fetchList().then((resp) => {
-            if (dashboardId) {
+            if (parseInt(dashboardId) > 0) {
                 dashboardStore.selectDashboardById(dashboardId);
             } else {
-                dashboardStore.selectDefaultDashboard().then((b) => {
+                dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
                     if (!history.location.pathname.includes('/metrics')) {
-                        history.push(withSiteId(dashboardSelected(b.dashboardId), siteId));
+                        history.push(withSiteId(dashboardSelected(dashboardId), siteId));
                     }
                 });
             }

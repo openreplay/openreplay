@@ -6,6 +6,7 @@ export interface IDashboard {
     name: string
     isPublic: boolean
     widgets: IWidget[]
+    metrics: any[]
     isValid: boolean
     isPinned: boolean
     currentWidget: IWidget
@@ -24,13 +25,15 @@ export interface IDashboard {
     getWidgetIndexByWidgetId(widgetId: string): void
     swapWidgetPosition(positionA: number, positionB: number): void
     sortWidgets(): void
+    exists(): boolean
 }
 export default class Dashboard implements IDashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
-    name: string = "New Dashboard X"
+    name: string = "New Dashboard"
     isPublic: boolean = false
     widgets: IWidget[] = []
+    metrics: any[] = []
     isValid: boolean = false
     isPinned: boolean = false
     currentWidget: IWidget = new Widget()
@@ -73,7 +76,9 @@ export default class Dashboard implements IDashboard {
             dashboardId: this.dashboardId,
             name: this.name,
             isPrivate: this.isPublic,
-            widgets: this.widgets.map(w => w.toJson())
+            // widgets: this.widgets.map(w => w.toJson())
+            // widgets: this.widgets
+            metrics: this.metrics
         }
     }
 
@@ -148,5 +153,9 @@ export default class Dashboard implements IDashboard {
                 return 0
             }
         })
+    }
+
+    exists() {
+        return this.dashboardId !== undefined
     }
 }

@@ -1,6 +1,6 @@
-import { IDashboard } from "App/components/Dashboard/store/dashboard";
+import { IDashboard } from "App/mstore/types/dashboard";
 import APIClient from 'App/api_client';
-import { IWidget } from "App/components/Dashboard/store/widget";
+import { IWidget } from "App/mstore/types/widget";
 
 export interface IDashboardService {
     initClient(client?: APIClient)

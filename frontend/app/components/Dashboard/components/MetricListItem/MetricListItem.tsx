@@ -1,5 +1,6 @@
 import React from 'react';
 import { Icon, NoContent, Label, Link, Pagination } from 'UI';
+import { checkForRecent, formatDateTimeDefault, convertTimestampToUtcTimestamp } from 'App/date';
 
 interface Props {
     metric: any;
@@ -30,17 +31,15 @@ function MetricListItem(props: Props) {
             <div><Label className="capitalize">{metric.metricType}</Label></div>
             <div>
                 <DashboardLink dashboards={metric.dashboards} />
-                {/* <div className="link flex items-center">
-                    <div className="mr-2 text-4xl">·</div>
-                    <span>Dashboards</span>
-                </div> */}
             </div>
             <div>{metric.owner}</div>
-            {/* <div className="flex items-center">
-                <Icon name={metric.isPublic ? "user-friends" : "person-fill"} className="mr-2" />
-                <span>{metric.isPublic ? 'Team' : 'Private'}</span>
-            </div> */}
-            <div>Last Modified</div>
+            <div>
+                <div className="flex items-center">
+                    <Icon name={metric.isPublic ? "user-friends" : "person-fill"} className="mr-2" />
+                    <span>{metric.isPublic ? 'Team' : 'Private'}</span>
+                </div>
+            </div>
+            <div>{metric.lastModified && checkForRecent(metric.lastModified, 'LLL dd, yyyy, hh:mm a')}</div>
         </div>
     );
 }

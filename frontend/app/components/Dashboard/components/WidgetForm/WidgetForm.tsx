@@ -17,9 +17,8 @@ interface Props {
 
 function WidgetForm(props: Props) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
-    console.log('WidgetForm params', props.match.params);
     const { metricStore } = useStore();
-    const metric: any = metricStore.instance;
+    const metric: any = useObserver(() => metricStore.instance);
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
@@ -31,23 +30,23 @@ function WidgetForm(props: Props) {
     const writeOption = (e, { value, name }) => {
         metricStore.merge({ [ name ]: value });
   
-      if (name === 'metricValue') {
-        metricStore.merge({ metricValue: [value] });
-      }
-  
-      if (name === 'metricOf') {
-        if (value === FilterKey.ISSUE) {
-            metricStore.merge({ metricValue: ['all'] });
+        if (name === 'metricValue') {
+            metricStore.merge({ metricValue: [value] });
         }
-      }
-  
-      if (name === 'metricType') {
-        if (value === 'timeseries') {
-          metricStore.merge({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' });
-        } else if (value === 'table') {
-          metricStore.merge({ metricOf: tableOptions[0].value, viewType: 'table' });
+    
+        if (name === 'metricOf') {
+            if (value === FilterKey.ISSUE) {
+                metricStore.merge({ metricValue: ['all'] });
+            }
         }
-      }
+    
+        if (name === 'metricType') {
+            if (value === 'timeseries') {
+            metricStore.merge({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' });
+            } else if (value === 'table') {
+            metricStore.merge({ metricOf: tableOptions[0].value, viewType: 'table' });
+            }
+        }
     };
 
     const onSave = () => {
@@ -61,10 +60,12 @@ function WidgetForm(props: Props) {
           confirmation: `Are you sure you want to permanently delete this metric?`
         })) {
             metricStore.delete(metric).then(props.onDelete);
-        //   props.remove(instance.alertId).then(() => {
-        //     toggleForm(null, false);
-        //   });
         }
+    }
+
+    const onObserveChanges = () => {
+        console.log('observe changes');
+        // metricStore.fetchMetricChartData(metric);
     }
     
     return useObserver(() => (
@@ -156,6 +157,7 @@ function WidgetForm(props: Props) {
                                 'Filter data using any event or attribute. Use Add Step button below to do so.' :
                                 'Add user event or filter to define the series by clicking Add Step.'
                             }
+                            observeChanges={onObserveChanges}
                         />
                     </div>
                 ))}

@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import FilterItem from '../FilterItem';
 import { SegmentSelection, Popup } from 'UI';
 import { List } from 'immutable';
@@ -11,13 +11,16 @@ interface Props {
   onRemoveFilter: (filterIndex) => void;
   onChangeEventsOrder: (e, { name, value }) => void;
   hideEventsOrder?: boolean;
+  observeChanges?: () => void;
 }
 function FilterList(props: Props) {
-  const { filter, hideEventsOrder = false } = props;
+  const { observeChanges = () => {}, filter, hideEventsOrder = false } = props;
   const filters = List(filter.filters);
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
   let rowIndex = 0;
+
+  useEffect(observeChanges, [filters]);
 
   const onRemoveFilter = (filterIndex) => {
     props.onRemoveFilter(filterIndex);

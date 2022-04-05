@@ -10,6 +10,7 @@ export interface IMetricService {
     deleteMetric(metricId: string): Promise<any>;
 
     getTemplates(): Promise<any>;
+    getMetricChartData(metric: IWidget): Promise<any>;
 }
 
 export default class MetricService implements IMetricService {
@@ -87,5 +88,12 @@ export default class MetricService implements IMetricService {
         return this.client.get('/metrics/templates')
             .then(response => response.json())
             .then(response => response.data || []);
+    }
+
+    getMetricChartData(metric: IWidget): Promise<any> {
+        const path = metric.metricId ? `/metrics/${metric.metricId}/chart` : `/custom_metrics/try`;
+        return this.client.get(path)
+            .then(response => response.json())
+            .then(response => response.data || {});
     }
 }
