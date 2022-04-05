@@ -388,8 +388,10 @@ def get_dashboard_group(projectId: int, data: schemas.MetricPayloadSchema = Body
          "data": dashboard.get_time_to_render(project_id=projectId, **data.dict())},
         {"key": schemas.TemplateKeys.avg_used_js_heap_size,
          "data": dashboard.get_memory_consumption(project_id=projectId, **data.dict())},
-        {"key": schemas.TemplateKeys.avg_cpu, "data": dashboard.get_avg_cpu(project_id=projectId, **data.dict())},
-        {"key": schemas.TemplateKeys.avg_fps, "data": dashboard.get_avg_fps(project_id=projectId, **data.dict())}
+        {"key": schemas.TemplateKeys.avg_cpu,
+         "data": dashboard.get_avg_cpu(project_id=projectId, **data.dict())},
+        {"key": schemas.TemplateKeys.avg_fps,
+         "data": dashboard.get_avg_fps(project_id=projectId, **data.dict())}
     ]
     results = sorted(results, key=lambda r: r["key"])
     return {"data": results}
