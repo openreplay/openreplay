@@ -4,11 +4,16 @@ import WidgetWrapper from '../WidgetWrapper';
 import { NoContent, Button, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 
+interface Props {
+    dashboardId: string;
+    onEditHandler: () => void;
+}
 function DashboardWidgetGrid(props) {
+    const { dashboardId } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
     const dashbaord: any = dashboardStore.selectedDashboard;
-    const list: any = dashbaord?.widgets;
+    const list: any = useObserver(() => dashbaord?.widgets);
 
     return useObserver(() => (
         <Loader loading={loading}>
@@ -19,7 +24,7 @@ function DashboardWidgetGrid(props) {
                 subtext={
                     <div>
                         <p>Metrics helps you visualize trends from sessions captured by OpenReplay</p>
-                        <Button size="small" primary>Add Metric</Button>
+                        <Button size="small" primary onClick={props.onEditHandler}>Add Metric</Button>
                     </div>
                 }
             >
@@ -30,6 +35,7 @@ function DashboardWidgetGrid(props) {
                             widget={item}
                             key={item.widgetId}
                             moveListItem={(dragIndex, hoverIndex) => dashbaord.swapWidgetPosition(dragIndex, hoverIndex)}
+                            dashboardId={dashboardId}
                         />
                     ))}
                 </div>

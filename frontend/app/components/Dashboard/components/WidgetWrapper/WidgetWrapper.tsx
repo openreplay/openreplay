@@ -4,6 +4,8 @@ import { ItemMenu } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
+import { confirm } from 'UI/Confirmation';
+import { useStore } from 'App/mstore';
 
 interface Props {
     className?: string;
@@ -11,9 +13,11 @@ interface Props {
     index?: number;
     moveListItem?: any;
     isPreview?: boolean;
+    dashboardId?: string;
 }
 function WidgetWrapper(props: Props) {
-    const { widget, index = 0, moveListItem = null, isPreview = false } = props;
+    const { dashboardStore } = useStore();
+    const { widget, index = 0, moveListItem = null, isPreview = false, dashboardId } = props;
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -36,6 +40,18 @@ function WidgetWrapper(props: Props) {
             canDrop: monitor.canDrop(),
         }),
     })
+
+    const onDelete = async () => {
+        if (await confirm({
+          header: 'Confirm',
+          confirmButton: 'Yes, Delete',
+          confirmation: `Are you sure you want to permanently delete this Dashboard?`
+        })) {
+            dashboardStore.deleteDashboardWidget(dashboardId!, widget.widgetId).then(() => {
+
+            })
+        }
+    }
 
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
@@ -63,6 +79,10 @@ function WidgetWrapper(props: Props) {
                                     onClick: () => {
                                         console.log('edit');
                                     }
+                                },
+                                {
+                                    text: 'Hide from view' + dashboardId,
+                                    onClick: onDelete
                                 },
                             ]}
                         />
