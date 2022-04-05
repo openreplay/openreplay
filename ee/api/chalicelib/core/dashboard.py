@@ -456,7 +456,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     ch_sub_query.append("resources.type = 'img'")
     ch_sub_query_chart = __get_basic_constraints(table_name="resources", round_start=True, data=args)
     ch_sub_query_chart.append("resources.type = 'img'")
-    ch_sub_query_chart.append("resources.url = %(url)s")
+    ch_sub_query_chart.append("resources.url IN %(url)s")
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query_chart += meta_condition
@@ -468,35 +468,42 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                         WHERE {" AND ".join(ch_sub_query)} 
                         GROUP BY resources.url ORDER BY avg DESC LIMIT 10;"""
-
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id, "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
+        params = {"project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        # print(ch.client().substitute_params(ch_query, params))
+        rows = ch.execute(query=ch_query, params=params)
 
         rows = [{"url": i["url"], "avgDuration": i["avg"], "sessions": i["count"]} for i in rows]
-
+        if len(rows) == 0:
+            return []
         urls = [row["url"] for row in rows]
 
         charts = {}
+        ch_query = f"""\
+        SELECT url, 
+               toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+               AVG(NULLIF(resources.duration,0)) AS avg
+        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+        WHERE {" AND ".join(ch_sub_query_chart)}
+        GROUP BY url, timestamp
+        ORDER BY url, timestamp;"""
+        params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, "url": urls, **__get_constraint_values(args)}
+        print(ch.client().substitute_params(ch_query, params))
+        u_rows = ch.execute(query=ch_query, params=params)
         for url in urls:
-            ch_query = f"""\
-            SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                   AVG(NULLIF(resources.duration,0)) AS avg
-            FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-            WHERE {" AND ".join(ch_sub_query_chart)}
-            GROUP BY timestamp
-            ORDER BY timestamp;"""
-            params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
-                      "endTimestamp": endTimestamp, "url": url, **__get_constraint_values(args)}
-            r = ch.execute(query=ch_query, params=params)
+            sub_rows = []
+            for r in u_rows:
+                if r["url"] == url:
+                    sub_rows.append(r)
             charts[url] = [{"timestamp": int(i["timestamp"]),
                             "avgDuration": i["avg"]}
-                           for i in __complete_missing_steps(rows=r, start_time=startTimestamp,
+                           for i in __complete_missing_steps(rows=sub_rows, start_time=startTimestamp,
                                                              end_time=endTimestamp,
                                                              density=density, neutral={"avg": 0})]
         for i in range(len(rows)):
             rows[i] = helper.dict_to_camel_case(rows[i])
-            rows[i]["chart"] = [helper.dict_to_camel_case(chart) for chart in charts[rows[i]["url"]]]
+            rows[i]["chart"] = helper.list_to_camel_case(charts[rows[i]["url"]])
 
     return sorted(rows, key=lambda k: k["sessions"], reverse=True)
 
@@ -1286,8 +1293,8 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg, "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                                          end_time=endTimestamp, density=density,
-                                                          neutral={"value": 0})}
+                                                            end_time=endTimestamp, density=density,
+                                                            neutral={"value": 0})}
 
 
 def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
