@@ -220,10 +220,11 @@ def get_all(project_id, user_id, include_series=False):
                              {sub_join}
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
                                                 FROM (SELECT dashboard_id, name, is_public
-                                                      FROM dashboards
+                                                      FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
                                                       WHERE deleted_at ISNULL
+                                                        AND dashboard_widgets.metric_id = metrics.metric_id
                                                         AND project_id = %(project_id)s
-                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                        AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)
                              LEFT JOIN LATERAL (SELECT email AS owner_email
                                                 FROM users
