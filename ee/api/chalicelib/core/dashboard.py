@@ -489,13 +489,15 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         ORDER BY url, timestamp;"""
         params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, "url": urls, **__get_constraint_values(args)}
-        print(ch.client().substitute_params(ch_query, params))
+        # print(ch.client().substitute_params(ch_query, params))
         u_rows = ch.execute(query=ch_query, params=params)
         for url in urls:
             sub_rows = []
             for r in u_rows:
                 if r["url"] == url:
                     sub_rows.append(r)
+                elif len(sub_rows) > 0:
+                    break
             charts[url] = [{"timestamp": int(i["timestamp"]),
                             "avgDuration": i["avg"]}
                            for i in __complete_missing_steps(rows=sub_rows, start_time=startTimestamp,
@@ -970,52 +972,50 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     ch_sub_query_chart.append("isNotNull(resources.duration)")
     ch_sub_query_chart.append("resources.duration>0")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT splitByChar('/', resources.url_hostpath)[-1] AS name,
+        ch_query = f"""SELECT any(url) AS url, any(type) AS type,
+                              splitByChar('/', resources.url_hostpath)[-1] AS name,
                               AVG(NULLIF(resources.duration,0)) AS avg 
                           FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                           WHERE {" AND ".join(ch_sub_query)} 
                           GROUP BY name
                           ORDER BY avg DESC
                           LIMIT 10;"""
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp, **__get_constraint_values(args)})
-        ch_sub_query_chart.append("endsWith(resources.url_hostpath, %(url)s)>0")
+        params = {"project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp, **__get_constraint_values(args)}
+        print(ch.format(query=ch_query, params=params))
+        rows = ch.execute(query=ch_query, params=params)
+        # ch_sub_query_chart.append("endsWith(resources.url_hostpath, %(url)s)>0")
         ch_sub_query.append(ch_sub_query_chart[-1])
         results = []
+        names = {f"name_{i}": r["name"] for i, r in enumerate(rows)}
+        ch_query = f"""SELECT splitByChar('/', resources.url_hostpath)[-1] AS name,
+                            toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                            AVG(resources.duration) AS avg 
+                        FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                        WHERE {" AND ".join(ch_sub_query_chart)} 
+                            AND ({" OR ".join([f"endsWith(resources.url_hostpath, %(name_{i})s)>0" for i in range(len(names.keys()))])})
+                        GROUP BY name,timestamp
+                        ORDER BY name,timestamp;"""
+        params = {"step_size": step_size, "project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp,
+                  **names, **__get_constraint_values(args)}
+        # print(ch.format(query=ch_query, params=params))
+        charts = ch.execute(query=ch_query, params=params)
         for r in rows:
-            # if isinstance(r["url"], bytes):
-            #     try:
-            #         r["url"] = r["url"].decode("utf-8")
-            #     except UnicodeDecodeError:
-            #         continue
-            ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                                  AVG(resources.duration) AS avg 
-                              FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                              WHERE {" AND ".join(ch_sub_query_chart)} 
-                              GROUP BY timestamp
-                              ORDER BY timestamp;"""
-            chart = ch.execute(query=ch_query,
-                               params={"step_size": step_size, "project_id": project_id,
-                                       "startTimestamp": startTimestamp,
-                                       "endTimestamp": endTimestamp,
-                                       "url": r["name"], **__get_constraint_values(args)})
-            r["chart"] = __complete_missing_steps(rows=chart, start_time=startTimestamp,
+            sub_chart = []
+            for c in charts:
+                if c["name"] == r["name"]:
+                    cc = dict(c)
+                    cc.pop("name")
+                    sub_chart.append(cc)
+                elif len(sub_chart) > 0:
+                    break
+            r["chart"] = __complete_missing_steps(rows=sub_chart, start_time=startTimestamp,
                                                   end_time=endTimestamp,
                                                   density=density, neutral={"avg": 0})
-            ch_query = f"""SELECT url, type
-                              FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                              WHERE {" AND ".join(ch_sub_query)}
-                              ORDER BY duration DESC
-                              LIMIT 1;"""
-            url = ch.execute(query=ch_query,
-                             params={"project_id": project_id,
-                                     "startTimestamp": startTimestamp,
-                                     "endTimestamp": endTimestamp,
-                                     "url": r["name"], **__get_constraint_values(args)})
-            r["url"] = url[0]["url"]
-            r["type"] = __get_resource_type_from_db_type(url[0]["type"])
+            r["type"] = __get_resource_type_from_db_type(r["type"])
             results.append(r)
 
     return results
