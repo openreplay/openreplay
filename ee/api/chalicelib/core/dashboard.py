@@ -985,7 +985,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         print(ch.format(query=ch_query, params=params))
         rows = ch.execute(query=ch_query, params=params)
-        # ch_sub_query_chart.append("endsWith(resources.url_hostpath, %(url)s)>0")
+
         ch_sub_query.append(ch_sub_query_chart[-1])
         results = []
         names = {f"name_{i}": r["name"] for i, r in enumerate(rows)}
