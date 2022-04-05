@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import { 
   edit,
@@ -29,12 +29,15 @@ interface Props {
   removeSeriesFilterFilter: typeof removeSeriesFilterFilter;
   hideHeader?: boolean;
   emptyMessage?: any;
+  observeChanges?: () => void;
 }
 
 function FilterSeries(props: Props) {
-  const { canDelete, hideHeader = false, emptyMessage = 'Add user event or filter to define the series by clicking Add Step.' } = props;
+  const { observeChanges = () => {}, canDelete, hideHeader = false, emptyMessage = 'Add user event or filter to define the series by clicking Add Step.' } = props;
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
+
+  useEffect(observeChanges, [series])
 
   const onAddFilter = (filter) => {
     series.filter.addFilter(filter)
@@ -58,7 +61,7 @@ function FilterSeries(props: Props) {
     <div className="border rounded bg-white">
       <div className={cn("border-b px-5 h-12 flex items-center relative", { 'hidden': hideHeader })}>
         <div className="mr-auto">
-          <SeriesName seriesIndex={seriesIndex} name={series.name} onUpdate={(name) => props.updateSeries(seriesIndex, { name }) } />
+          <SeriesName seriesIndex={seriesIndex} name={series.name} onUpdate={(name) => series.update('name', name) } />
         </div>
     
         <div className="flex items-center cursor-pointer">
@@ -80,6 +83,7 @@ function FilterSeries(props: Props) {
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}
                 onChangeEventsOrder={onChangeEventsOrder}
+                observeChanges={observeChanges}
               />
             ): (
               <div className="color-gray-medium">{emptyMessage}</div>

@@ -19,6 +19,11 @@ export default class FilterItem {
             type: observable,
             key: observable,
             value: observable,
+            operator: observable,
+            source: observable,
+            filters: observable,
+
+            merge: action
         })
 
         this.merge(data)

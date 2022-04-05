@@ -9,11 +9,14 @@ import FilterItem from "./filterItem"
 export default class Filter {
     public static get ID_KEY():string { return "filterId" }
     name: string = ''
-    filters: any[] = []
+    filters: FilterItem[] = []
     eventsOrder: string = 'then'
 
     constructor() {
         makeAutoObservable(this, {
+            filters: observable,
+            eventsOrder: observable,
+
             addFilter: action,
             removeFilter: action,
             updateKey: action,

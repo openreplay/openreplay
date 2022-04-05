@@ -1,8 +1,9 @@
-import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
+import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
 import FilterSeries from "./filterSeries";
+import { DateTime } from 'luxon';
 
 export interface IWidget {
-    metricId: string
+    metricId: any
     widgetId: any
     name: string
     metricType: string
@@ -59,18 +60,20 @@ export default class Widget implements IWidget {
     
     constructor() {
         makeAutoObservable(this, {
+            // data: observable,
             widgetId: observable,
             name: observable,
             metricType: observable,
             metricOf: observable,
             position: observable,
-            data: observable,
             isLoading: observable,
             isValid: observable,
             dashboardId: observable,
-            addSeries: action,
             colSpan: observable,
-
+            series: observable,
+            
+            addSeries: action,
+            removeSeries: action,
             fromJson: action,
             toJson: action,
             validate: action,
@@ -97,14 +100,17 @@ export default class Widget implements IWidget {
     }
 
     fromJson(json: any) {
-        console.log('json', json);
         runInAction(() => {
             this.metricId = json.metricId
             this.widgetId = json.widgetId
+            this.metricValue = json.metricValue
+            this.metricOf = json.metricOf
+            this.metricType = json.metricType
             this.name = json.name
-            this.data = json.data
-            this.series = json.series.map((series: any) => new FilterSeries().fromJson(series)),
+            this.series = json.series ? json.series.map((series: any) => new FilterSeries().fromJson(series)) : [],
             this.dashboards = json.dashboards
+            this.owner = json.ownerEmail
+            this.lastModified = DateTime.fromISO(json.editedAt || json.createdAt)
         })
         return this
     }

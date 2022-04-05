@@ -18,7 +18,7 @@ function DashboardSideMenu(props: Props) {
     const { hideModal, showModal } = useModal();
     const { dashboardStore } = useStore();
     const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
-    const dashboardsPicked = dashboardStore.dashboards.slice(0, SHOW_COUNT);
+    const dashboardsPicked = useObserver(() => dashboardStore.dashboards.slice(0, SHOW_COUNT));
     const remainingDashboardsCount = dashboardStore.dashboards.length - SHOW_COUNT;
 
     const redirect = (path) => {
@@ -58,7 +58,7 @@ function DashboardSideMenu(props: Props) {
                 {remainingDashboardsCount > 0 && (
                     <div
                         className="my-2 py-2 color-teal cursor-pointer"
-                        onClick={() => showModal(<DashbaordListModal />, {})}
+                        onClick={() => showModal(<DashbaordListModal siteId={siteId} />, {})}
                     >
                         {remainingDashboardsCount} More
                     </div>

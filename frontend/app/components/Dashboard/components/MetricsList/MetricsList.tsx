@@ -24,7 +24,7 @@ function MetricsList(props: Props) {
                     <div>Type</div>
                     <div>Dashboards</div>
                     <div>Owner</div>
-                    {/* <div>Visibility & Edit Access</div> */}
+                    <div>Visibility & Edit Access</div>
                     <div>Last Modified</div>
                 </div>
 

@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import cn from 'classnames';
 import { ItemMenu } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
+import { useObserver } from 'mobx-react-lite';
 
 interface Props {
     className?: string;
@@ -12,7 +13,7 @@ interface Props {
     isPreview?: boolean;
 }
 function WidgetWrapper(props: Props) {
-    const { widget = {}, index = 0, moveListItem = null, isPreview = false } = props;
+    const { widget, index = 0, moveListItem = null, isPreview = false } = props;
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -21,7 +22,6 @@ function WidgetWrapper(props: Props) {
             isDragging: monitor.isDragging(),
             opacity: monitor.isDragging() ? 0.5 : 1,
         }),
-
     });
 
     const [{ isOver, canDrop }, dropRef] = useDrop({
@@ -40,7 +40,7 @@ function WidgetWrapper(props: Props) {
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
     
-    return (
+    return useObserver(() => (
         <div
             className={cn("rounded bg-white", 'col-span-' + widget.colSpan, { 'border' : !isPreview })}
             style={{
@@ -69,12 +69,12 @@ function WidgetWrapper(props: Props) {
                     </div>
                 </div>
 
-                <div className="h-40">
-                    <WidgetChart metric={props.widget} />
+                <div className="">
+                    <WidgetChart />
                 </div>
             {/* </Link> */}
         </div>
-    );
+    ));
 }
 
 export default WidgetWrapper;
