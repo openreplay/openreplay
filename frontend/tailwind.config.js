@@ -86,7 +86,7 @@ module.exports = {
 		'textAlign',
 		// 'textColor',
 		// 'textOpacity',
-		// 'textDecoration',
+		'textDecoration',
 		'textTransform',
 		// 'transform',
 		// 'transitionDuration',
@@ -109,6 +109,7 @@ module.exports = {
 		},
     extend: {},
   },
+  content: [],
   variants: {
 		visibility: ['responsive', 'hover', 'focus', 'group-hover']
 	},
