@@ -76,7 +76,7 @@ def get_dashboard(project_id, user_id, dashboard_id):
                                                               ) AS metric_series ON (TRUE)
                                                           WHERE dashboard_widgets.dashboard_id = dashboards.dashboard_id
                                                             AND metrics.deleted_at ISNULL
-                                                            AND metrics.project_id = %(projectId)s) AS raw_metrics
+                                                            AND (metrics.project_id = %(projectId)s OR metrics.project_id ISNULL)) AS raw_metrics
                             ) AS all_metric_widgets ON (TRUE)
                         WHERE dashboards.deleted_at ISNULL
                           AND dashboards.project_id = %(projectId)s
