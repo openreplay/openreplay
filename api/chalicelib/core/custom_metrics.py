@@ -194,7 +194,8 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             SET name = %(name)s, is_public= %(is_public)s, 
                 view_type= %(view_type)s, metric_type= %(metric_type)s, 
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
-                metric_format= %(metric_format)s
+                metric_format= %(metric_format)s,
+                edited_at = timezone('utc'::text, now())
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
@@ -224,6 +225,11 @@ def get_all(project_id, user_id, include_series=False):
                                                         AND project_id = %(project_id)s
                                                         AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT email AS owner_email
+                                                FROM users
+                                                WHERE deleted_at ISNULL
+                                                  AND users.user_id = metrics.user_id
+                                                ) AS owner ON (TRUE)
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
                       AND (user_id = %(user_id)s OR metrics.is_public)
@@ -246,7 +252,7 @@ def delete(project_id, metric_id, user_id):
         cur.execute(
             cur.mogrify("""\
             UPDATE public.metrics 
-            SET deleted_at = timezone('utc'::text, now()) 
+            SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
               AND (user_id = %(user_id)s OR is_public);""",
@@ -274,6 +280,11 @@ def get(metric_id, project_id, user_id, flatten=True):
                                                         AND project_id = %(project_id)s
                                                         AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
                                                 ) AS connected_dashboards ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT email AS owner_email
+                                                FROM users
+                                                WHERE deleted_at ISNULL
+                                                AND users.user_id = metrics.user_id
+                                                ) AS owner ON (TRUE)
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
                       AND (metrics.user_id = %(user_id)s OR metrics.is_public)

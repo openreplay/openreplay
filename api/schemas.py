@@ -776,6 +776,7 @@ class CustomMetricCreateSeriesSchema(BaseModel):
 class MetricTimeseriesViewType(str, Enum):
     line_chart = "lineChart"
     progress = "progress"
+    area_chart = "areaChart"
 
 
 class MetricTableViewType(str, Enum):
