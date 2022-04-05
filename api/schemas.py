@@ -888,18 +888,15 @@ class CreateDashboardSchema(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
-class EditDashboardSchema(BaseModel):
-    name: str = Field(..., min_length=1)
-    is_public: bool = Field(default=False)
-
-    class Config:
-        alias_generator = attribute_to_camel_case
+class EditDashboardSchema(CreateDashboardSchema):
+    is_public: Optional[bool] = Field(default=None)
+    is_pinned: Optional[bool] = Field(default=None)
 
 
 class AddWidgetToDashboardPayloadSchema(BaseModel):
     metric_id: int = Field(default=None)
-    name: Optional[str] = Field(default=None)
-    config: dict = Field(default={})
+    # if you change the config attribute name, please make sure to update it in dashboard2.py
+    config: dict = Field(default={"col": 1, "row": 1, "position": 0})
 
     class Config:
         alias_generator = attribute_to_camel_case
@@ -929,7 +926,6 @@ class TemplateKeys(str, Enum):
     avg_fps = "avg_fps"
 
 
-# class CustomMetricAndTemplate(CreateCustomMetricsSchema):
 class CustomMetricAndTemplate(BaseModel):
     is_template: bool = Field(...)
     project_id: Optional[int] = Field(...)

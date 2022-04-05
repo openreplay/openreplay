@@ -32,11 +32,15 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
         params = {"userId": user_id, "projectId": project_id, **data.dict()}
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
-                         INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id)
-                         VALUES {",".join([f"((SELECT dashboard_id FROM dash),%(metric_id_{i})s, %(userId)s)" for i in range(len(data.metrics))])}
+                         INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
+                         VALUES {",".join([f"((SELECT dashboard_id FROM dash),%(metric_id_{i})s, %(userId)s, %(config_{i})s)" for i in range(len(data.metrics))])}
                          RETURNING (SELECT dashboard_id FROM dash)"""
-        for i, m in enumerate(data.metrics):
-            params[f"metric_id_{i}"] = m
+            for i, m in enumerate(data.metrics):
+                params[f"metric_id_{i}"] = m
+                params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
+                    .get("properties", {}).get("config", {}).get("default", {})
+                params[f"config_{i}"]["position"] = i
+                params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
     if row is None:
@@ -98,16 +102,29 @@ def delete_dashboard(project_id, user_id, dashboard_id):
 
 def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashboardSchema):
     with pg_client.PostgresClient() as cur:
-        pg_query = """UPDATE dashboards
-                      SET name = %(name)s, is_public = %(is_public)s
+        pg_query = f"""UPDATE dashboards
+                      SET name = %(name)s 
+                            {", is_public = %(is_public)s" if data.is_public is not None else ""}
+                            {", is_pinned = %(is_pinned)s" if data.is_pinned is not None else ""}
                         WHERE dashboards.project_id = %(projectId)s
                           AND dashboard_id = %(dashboard_id)s
-                          AND (dashboards.user_id = %(userId)s OR is_public)
-                      RETURNING *;"""
+                          AND (dashboards.user_id = %(userId)s OR is_public)"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
+        if data.metrics is not None and len(data.metrics) > 0:
+            pg_query = f"""WITH dash AS ({pg_query})
+                         INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
+                         VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, %(config_{i})s)" for i in range(len(data.metrics))])}
+                         RETURNING (SELECT dashboard_id FROM dash)"""
+            for i, m in enumerate(data.metrics):
+                params[f"metric_id_{i}"] = m
+                params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
+                    .get("properties", {}).get("config", {}).get("default", {})
+                params[f"config_{i}"]["position"] = i
+                params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
+
         cur.execute(cur.mogrify(pg_query, params))
-        row = cur.fetchone()
-    return helper.dict_to_camel_case(row)
+
+    return get_dashboard(project_id=project_id, user_id=user_id, dashboard_id=dashboard_id)
 
 
 def get_widget(project_id, user_id, dashboard_id, widget_id):
@@ -154,7 +171,7 @@ def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashb
 def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.AddWidgetToDashboardPayloadSchema):
     with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboard_widgets
-                      SET name= %(name)s, config= %(config)s
+                      SET config= %(config)s
                       WHERE dashboard_id=%(dashboard_id)s AND widget_id=%(widget_id)s
                       RETURNINIG *;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id,

@@ -233,7 +233,7 @@ def get_all(project_id, user_id, include_series=False):
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
                       AND (user_id = %(user_id)s OR metrics.is_public)
-                    ORDER BY created_at;""",
+                    ORDER BY metrics.edited_at, metrics.created_at;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )
@@ -243,6 +243,10 @@ def get_all(project_id, user_id, include_series=False):
                 # r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
                 for s in r["series"]:
                     s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+        else:
+            for r in rows:
+                r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
     return rows
 
@@ -297,6 +301,7 @@ def get(metric_id, project_id, user_id, flatten=True):
         if row is None:
             return None
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+        row["edited_at"] = TimeUTC.datetime_to_timestamp(row["edited_at"])
         if flatten:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
