@@ -219,7 +219,7 @@ def get_all(project_id, user_id, include_series=False):
                     FROM metrics
                              {sub_join}
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT dashboard_id, name, is_public
+                                                FROM (SELECT DISTINCT dashboard_id, name, is_public
                                                       FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
                                                       WHERE deleted_at ISNULL
                                                         AND dashboard_widgets.metric_id = metrics.metric_id
