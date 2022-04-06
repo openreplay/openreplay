@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { withRouter } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import WidgetForm from '../WidgetForm';
@@ -15,16 +15,18 @@ interface Props {
 }
 function WidgetView(props: Props) {
     const { match: { params: { siteId, dashboardId, metricId } } } = props;
-    const [expanded, setExpanded] = useState(true);
     const { metricStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
+    const [expanded, setExpanded] = useState(false);
+
+    useEffect(() => {
+        setExpanded(!widget.exists())
+    }, [widget])
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
-            metricStore.fetch(metricId).then((metric) => {
-                // metricStore.init(metric)
-            });
+            metricStore.fetch(metricId);
         } else {
             metricStore.init();
         }
@@ -45,7 +47,11 @@ function WidgetView(props: Props) {
                 <div className="bg-white rounded border">
                     <div className="p-4 flex justify-between items-center">
                         <h1 className="mb-0 text-2xl">
-                            <WidgetName name={widget.name} onUpdate={(name) => metricStore.merge({ name })} />
+                            <WidgetName
+                                name={widget.name}
+                                onUpdate={(name) => metricStore.merge({ name })}
+                                canEdit={expanded}
+                            />
                         </h1>
                         <div className="text-gray-600">
                             <div

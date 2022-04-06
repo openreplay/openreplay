@@ -41,10 +41,8 @@ export interface IDashboardSotre {
     // initDashboard(dashboard: IDashboard): void
     addDashboard(dashboard: IDashboard): void
     removeDashboard(dashboard: IDashboard): void
-    getDashboard(dashboardId: string): void
-    getDashboardIndex(dashboardId: string): number
+    getDashboard(dashboardId: string): IDashboard|null
     getDashboardCount(): void
-    getDashboardIndexByDashboardId(dashboardId: string): number
     updateDashboard(dashboard: IDashboard): void
     selectDashboardById(dashboardId: string): void
     setSiteId(siteId: any): void
@@ -53,6 +51,7 @@ export interface IDashboardSotre {
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
     fetchTemplates(): Promise<any>
     deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>
+    addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>
 }
 export default class DashboardStore implements IDashboardSotre {
     siteId: any = null
@@ -86,10 +85,8 @@ export default class DashboardStore implements IDashboardSotre {
             removeDashboard: action,
             updateDashboard: action,
             getDashboard: action,
-            getDashboardIndex: action,
             getDashboardByIndex: action,
             getDashboardCount: action,
-            getDashboardIndexByDashboardId: action,
             selectDashboardById: action,
             selectDefaultDashboard: action, 
             toJson: action,
@@ -287,12 +284,8 @@ export default class DashboardStore implements IDashboardSotre {
         this.dashboards = this.dashboards.filter(d => d.dashboardId !== dashboard.dashboardId)
     }
 
-    getDashboard(dashboardId: string) {
-        return this.dashboards.find(d => d.dashboardId === dashboardId)
-    }
-
-    getDashboardIndex(dashboardId: string) {
-        return this.dashboards.findIndex(d => d.dashboardId === dashboardId)
+    getDashboard(dashboardId: string): IDashboard|null {
+        return this.dashboards.find(d => d.dashboardId === dashboardId) || null
     }
 
     getDashboardByIndex(index: number) {
@@ -301,10 +294,6 @@ export default class DashboardStore implements IDashboardSotre {
 
     getDashboardCount() {
         return this.dashboards.length
-    }
-
-    getDashboardIndexByDashboardId(dashboardId: string) {
-        return this.dashboards.findIndex(d => d.dashboardId === dashboardId)
     }
 
     updateDashboard(dashboard: Dashboard) {
@@ -380,6 +369,19 @@ export default class DashboardStore implements IDashboardSotre {
         }).finally(() => {
             this.isDeleting = false
         })
+    }
+
+    addWidgetToDashboard(dashboard: IDashboard, metricIds: any) : Promise<any> {
+        this.isSaving = true
+        return dashboardService.addWidget(dashboard, metricIds)
+            .then(response => {
+                toast.success('Widget added successfully')
+            }).catch(() => {
+                toast.error('Widget could not be added')
+            }).finally(() => {
+                this.isSaving = false
+            })
+
     }
 }
 
