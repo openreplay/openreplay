@@ -167,7 +167,7 @@ def add_widget(project_id, user_id, dashboard_id, data: schemas.AddWidgetToDashb
     return helper.dict_to_camel_case(row)
 
 
-def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.AddWidgetToDashboardPayloadSchema):
+def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.UpdateWidgetPayloadSchema):
     with pg_client.PostgresClient() as cur:
         pg_query = """UPDATE dashboard_widgets
                       SET config= %(config)s
