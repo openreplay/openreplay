@@ -14,6 +14,7 @@ export interface IDashboardService {
 
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
 
+    addWidget(dashboard: IDashboard, metricIds: []): Promise<any>
     saveWidget(dashboardId: string, widget: IWidget): Promise<any>
     deleteWidget(dashboardId: string, widgetId: string): Promise<any>
 }
@@ -79,6 +80,20 @@ export default class DashboardService implements IDashboardService {
                 .then(response => response.json())
                 .then(response => response.data || {});
         }
+    }
+
+    /**
+     * Add a widget to a dashboard.
+     * @param dashboard 
+     * @param metricIds 
+     * @returns 
+     */
+    addWidget(dashboard: IDashboard, metricIds: any): Promise<any> {
+        const data = dashboard.toJson()
+        data.metrics = metricIds
+        return this.client.put(`/dashboards/${dashboard.dashboardId}`, data)
+            .then(response => response.json())
+            .then(response => response.data || {});
     }
 
     /**

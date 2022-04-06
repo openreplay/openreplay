@@ -27,6 +27,7 @@ export interface IDashboard {
     swapWidgetPosition(positionA: number, positionB: number): void
     sortWidgets(): void
     exists(): boolean
+    toggleMetrics(metricId: string): void
 }
 export default class Dashboard implements IDashboard {
     public static get ID_KEY():string { return "dashboardId" }
@@ -46,6 +47,7 @@ export default class Dashboard implements IDashboard {
             isPublic: observable,
             widgets: observable,
             isValid: observable,
+            metrics: observable,
 
             toJson: action,
             fromJson: action,
@@ -61,6 +63,7 @@ export default class Dashboard implements IDashboard {
             sortWidgets: action,
             swapWidgetPosition: action,
             update: action,
+            toggleMetrics: action
         })
 
         this.validate();
@@ -160,5 +163,13 @@ export default class Dashboard implements IDashboard {
 
     exists() {
         return this.dashboardId !== undefined
+    }
+
+    toggleMetrics(metricId: string) {
+        if (this.metrics.includes(metricId)) {
+            this.metrics = this.metrics.filter(m => m !== metricId)
+        } else {
+            this.metrics.push(metricId)
+        }
     }
 }

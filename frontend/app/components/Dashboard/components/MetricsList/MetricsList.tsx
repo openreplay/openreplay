@@ -13,7 +13,7 @@ function MetricsList(props: Props) {
     
     const metricsSearch = useObserver(() => metricStore.metricsSearch);
     const filterRE = getRE(metricsSearch, 'i');
-    const list = metrics.filter(w => filterRE.test(w.name));
+    const list = useObserver(() => metrics.filter(w => filterRE.test(w.name)));
 
 
     return useObserver(() => (

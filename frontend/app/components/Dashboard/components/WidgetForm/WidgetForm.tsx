@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import DropdownPlain from 'Shared/DropdownPlain';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
@@ -9,6 +9,7 @@ import FilterSeries from '../FilterSeries';
 import { withRouter } from 'react-router-dom';
 import { confirm } from 'UI/Confirmation';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
+import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
 interface Props {
     history: any;
@@ -17,8 +18,10 @@ interface Props {
 }
 
 function WidgetForm(props: Props) {
+    const [showDashboardSelectionModal, setShowDashboardSelectionModal] = useState(false);
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
     const { metricStore } = useStore();
+    const isSaving = useObserver(() => metricStore.isSaving);
     const metric: any = useObserver(() => metricStore.instance);
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
@@ -52,12 +55,14 @@ function WidgetForm(props: Props) {
 
     const onSave = () => {
         const wasCreating = !metric.exists()
-        metricStore.save(metric, dashboardId).then(() => {
+        metricStore.save(metric, dashboardId).then((metric) => {
             if (wasCreating) {
                 if (parseInt(dashboardId) > 0) {
-                    history.push(withSiteId(dashboardMetricDetails(parseInt(dashboardId)), siteId));
+                    history.push(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                    history.go(0)
                 } else {
                     history.push(withSiteId(metricDetails(metric.metricId), siteId));
+                    history.go(0)
                 }
                 
             }
@@ -179,8 +184,9 @@ function WidgetForm(props: Props) {
                     primary
                     size="small"
                     onClick={onSave}
+                    disabled={isSaving}
                 >
-                    Save
+                    {metric.exists() ? 'Update' : 'Create'}
                 </Button>
                 <div className="flex items-center">
                     {metric.exists() && (
@@ -189,7 +195,7 @@ function WidgetForm(props: Props) {
                                 <Icon name="trash" size="14" className="mr-2" color="teal"/>
                                 Delete
                             </Button>
-                            <Button plain size="small" className="flex items-center ml-2">
+                            <Button plain size="small" className="flex items-center ml-2" onClick={() => setShowDashboardSelectionModal(true)}>
                                 <Icon name="columns-gap" size="14" className="mr-2" color="teal"/>
                                 Add to Dashboard
                             </Button>
@@ -197,6 +203,13 @@ function WidgetForm(props: Props) {
                     )}
                 </div>
             </div>
+
+
+            <DashboardSelectionModal
+                metricId={metric.metricId}
+                show={showDashboardSelectionModal}
+                closeHandler={() => setShowDashboardSelectionModal(false)}
+            />
         </div>
     ));
 }

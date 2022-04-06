@@ -90,7 +90,7 @@ export default class MetricStore implements IMetricStore {
     }
 
     updateKey(key: string, value: any) {
-        this.instance[key] = value
+        this[key] = value
     }
 
     merge(object: any) {
@@ -131,18 +131,22 @@ export default class MetricStore implements IMetricStore {
     }
 
     // API Communication
-    save(metric: IWidget, dashboardId?: string) {
+    save(metric: IWidget, dashboardId?: string): Promise<any> {
         const wasCreating = !metric[Widget.ID_KEY]
         this.isSaving = true
         return metricService.saveMetric(metric, dashboardId)
-            .then(() => {
+            .then((metric) => {
+                const _metric = new Widget().fromJson(metric)
                 if (wasCreating) {
                     toast.success('Metric created successfully')
-                    this.addToList(metric)
+                    this.addToList(_metric)
                 } else {
                     toast.success('Metric updated successfully')
-                    this.updateInList(metric)
+                    this.updateInList(_metric)
                 }
+                return _metric
+            }).catch(() => {
+                toast.error('Error saving metric')
             }).finally(() => {
                 this.isSaving = false
             })
