@@ -16,7 +16,7 @@ COPY services services
 RUN for name in alerts assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
 
 
-FROM alpine
+FROM alpine:3.15.4
 #FROM pygmy/alpine-tini:latest
 RUN apk add --no-cache ca-certificates
 
