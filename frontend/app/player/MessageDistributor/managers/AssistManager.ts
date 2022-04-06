@@ -144,7 +144,6 @@ export default class AssistManager {
       })
       socket.on('messages', messages => {
         //console.log(messages.filter(m => m._id === 41 || m._id === 44))
-        showDisconnectTimeout && clearTimeout(showDisconnectTimeout);
         jmr.append(messages) // as RawMessage[]
 
         if (waitingForMessages) {
@@ -167,6 +166,9 @@ export default class AssistManager {
       })
       socket.on("control_rejected", id => {
         id === socket.id && this.toggleRemoteControl(false)
+      })
+      socket.on('SESSION_RECONNECTED', () => {
+        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
