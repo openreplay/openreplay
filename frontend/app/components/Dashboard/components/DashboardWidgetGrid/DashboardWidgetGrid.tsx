@@ -5,11 +5,12 @@ import { NoContent, Button, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 
 interface Props {
+    siteId: string,
     dashboardId: string;
     onEditHandler: () => void;
 }
 function DashboardWidgetGrid(props) {
-    const { dashboardId } = props;
+    const { dashboardId, siteId } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
     const dashbaord: any = dashboardStore.selectedDashboard;
@@ -36,6 +37,7 @@ function DashboardWidgetGrid(props) {
                             key={item.widgetId}
                             moveListItem={(dragIndex, hoverIndex) => dashbaord.swapWidgetPosition(dragIndex, hoverIndex)}
                             dashboardId={dashboardId}
+                            siteId={siteId}
                         />
                     ))}
                 </div>

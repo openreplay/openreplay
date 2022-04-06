@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
 import Widget, { IWidget } from "./types/widget";
 import { metricService } from "App/services";
+import { toast } from 'react-toastify';
 
 export interface IMetricStore {
     paginatedList: any;
@@ -136,8 +137,10 @@ export default class MetricStore implements IMetricStore {
         return metricService.saveMetric(metric, dashboardId)
             .then(() => {
                 if (wasCreating) {
+                    toast.success('Metric created successfully')
                     this.addToList(metric)
                 } else {
+                    toast.success('Metric updated successfully')
                     this.updateInList(metric)
                 }
             }).finally(() => {

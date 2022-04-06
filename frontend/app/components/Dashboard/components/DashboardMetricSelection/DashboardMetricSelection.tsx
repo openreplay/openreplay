@@ -91,10 +91,10 @@ function DashboardMetricSelection(props) {
                         {activeCategory && activeCategory.widgets.map((widget: any) => (
                             <div
                                 key={widget.metricId}
-                                className={cn("border rounded cursor-pointer", { 'border-color-teal' : selectedWidgetIds.includes(widget.metricId) })}
+                                className={cn("rounded cursor-pointer")}
                                 onClick={() => dashboardStore.toggleWidgetSelection(widget)}
                             >
-                                <WidgetWrapper widget={widget} />
+                                <WidgetWrapper widget={widget} active={selectedWidgetIds.includes(widget.metricId)} isTemplate={true}/>
                             </div>
                         ))}
                     </div>

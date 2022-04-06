@@ -8,6 +8,7 @@ import { HelpText, Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
 import { withRouter } from 'react-router-dom';
 import { confirm } from 'UI/Confirmation';
+import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 
 interface Props {
     history: any;
@@ -50,7 +51,17 @@ function WidgetForm(props: Props) {
     };
 
     const onSave = () => {
-        metricStore.save(metric, dashboardId);
+        const wasCreating = !metric.exists()
+        metricStore.save(metric, dashboardId).then(() => {
+            if (wasCreating) {
+                if (parseInt(dashboardId) > 0) {
+                    history.push(withSiteId(dashboardMetricDetails(parseInt(dashboardId)), siteId));
+                } else {
+                    history.push(withSiteId(metricDetails(metric.metricId), siteId));
+                }
+                
+            }
+        });
     }
 
     const onDelete = async () => {

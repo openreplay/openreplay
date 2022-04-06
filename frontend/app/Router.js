@@ -59,6 +59,7 @@ const METRICS_DETAILS = routes.metricDetails();
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
 const DASHBOARD_METRIC_CREATE_PATH = routes.dashboardMetricCreate();
+const DASHBOARD_METRIC_DETAILS_PATH = routes.dashboardMetricDetails();
 
 // const WIDGET_PATAH = routes.dashboardMetric();
 const SESSIONS_PATH = routes.sessions();
@@ -206,6 +207,7 @@ class Router extends React.Component {
             <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList) } component={ Dashboard } />
             
             
             

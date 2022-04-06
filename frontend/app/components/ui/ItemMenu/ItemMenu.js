@@ -1,35 +1,18 @@
 import { Icon } from 'UI';
 import styles from './itemMenu.css';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 export default class ItemMenu extends React.PureComponent {
   state = {
     displayed: false,
   };
 
-  componentDidMount() {
-    document.addEventListener('click', this.handleClickOutside);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('click', this.handleClickOutside);
-  }
-
   onClick = callback => (e) => {
     e.stopPropagation();
     callback(e);
   }
 
-  handleClickOutside = (e) => {
-    if (!this.state.displayed) return;
-    if (e.target !== this.menuBtnRef) {
-      this.closeMenu();
-    }
-  }
-
   toggleMenu = (e) => {
-    // e.preventDefault();
-    // e.stopPropagation();
-    console.log('toggleMenu', e);
     this.setState({ displayed: !this.state.displayed });
   }
 
@@ -41,22 +24,18 @@ export default class ItemMenu extends React.PureComponent {
 
     return (
       <div className={ styles.wrapper }>
-        {/* <div
-          ref={ (ref) => { this.menuBtnRef = ref; } }
-          className={ styles.menuBtn }
-          onClick={ this.toggleMenu }
-          role="button"
-          tabIndex="-1"
-        /> */}
-        <div
-          ref={ (ref) => { this.menuBtnRef = ref; } }
-          className="w-10 h-10 cursor-pointer bg-white rounded-full flex items-center justify-center hover:bg-gray-lightest"
-          onClick={ this.toggleMenu }
-          role="button"
-          // tabIndex="-1"
+        <OutsideClickDetectingDiv 
+          onClickOutside={ this.closeMenu }
         >
-          <Icon name="ellipsis-v" size="16" />
-        </div>
+          <div
+            ref={ (ref) => { this.menuBtnRef = ref; } }
+            className="w-10 h-10 cursor-pointer bg-white rounded-full flex items-center justify-center hover:bg-gray-lightest"
+            onClick={ this.toggleMenu }
+            role="button"
+          >
+            <Icon name="ellipsis-v" size="16" />
+          </div>
+        </OutsideClickDetectingDiv>
         <div
           className={ styles.menu }
           data-displayed={ displayed }

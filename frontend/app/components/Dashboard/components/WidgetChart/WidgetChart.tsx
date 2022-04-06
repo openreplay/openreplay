@@ -11,12 +11,12 @@ import { observer, useObserver } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 interface Props {
-    // metric: any;
+    metric: any;
 }
 function WidgetChart(props: Props) {
-    // const metric = useObserver(() => props.metric);
+    const metric = useObserver(() => props.metric);
     const { metricStore } = useStore();
-    const metric: any = useObserver(() => metricStore.instance);
+    // const metric: any = useObserver(() => metricStore.instance);
     const series = useObserver(() => metric.series);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(false)
