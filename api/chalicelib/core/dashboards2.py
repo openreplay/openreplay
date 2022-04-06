@@ -4,6 +4,7 @@ import schemas
 from chalicelib.core import custom_metrics, dashboard
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
+from chalicelib.utils.TimeUTC import TimeUTC
 
 CATEGORY_DESCRIPTION = {
     'categ1': 'lorem',
@@ -21,6 +22,9 @@ def get_templates(project_id, user_id):
         rows = cur.fetchall()
     for r in rows:
         r["description"] = CATEGORY_DESCRIPTION.get(r["category"], "")
+        for w in r["widgets"]:
+            w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
+            w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
     return helper.list_to_camel_case(rows)
 
 
@@ -85,6 +89,10 @@ def get_dashboard(project_id, user_id, dashboard_id):
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
+        if row is not None:
+            for w in row["widgets"]:
+                row["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
+                row["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
     return helper.dict_to_camel_case(row)
 
 

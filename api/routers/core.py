@@ -394,7 +394,7 @@ def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(O
 def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
-    if error is not None:
+    if error is not None and integration is None:
         return {"data": {}}
     return {"data": integration.get_obfuscated()}
 
@@ -406,7 +406,7 @@ def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
-    if error is not None:
+    if error is not None and integration is None:
         return error
     data.provider = integration_jira_cloud.PROVIDER
     return {"data": integration.add_edit(data=data.dict())}
@@ -429,7 +429,7 @@ def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
 def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
-    if error is not None:
+    if error is not None and integration is None:
         return error
     return {"data": integration.delete()}
 
