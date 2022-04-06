@@ -17,6 +17,7 @@ export interface IWidget {
     lastModified: Date
     dashboards: any[]
     dashboardIds: any[]
+    config: any
 
     position: number
     data: any
@@ -50,6 +51,7 @@ export default class Widget implements IWidget {
     lastModified: Date = new Date()
     dashboards: any[] = []
     dashboardIds: any[] = []
+    config: any = {}
 
     position: number = 0
     data: any = {}
@@ -111,6 +113,8 @@ export default class Widget implements IWidget {
             this.dashboards = json.dashboards
             this.owner = json.ownerEmail
             this.lastModified = DateTime.fromISO(json.editedAt || json.createdAt)
+            this.config = json.config
+            this.position = json.config.position
         })
         return this
     }
@@ -122,6 +126,7 @@ export default class Widget implements IWidget {
             metricOf: this.metricOf,
             metricValue: this.metricValue,
             metricType: this.metricType,
+            viewType: this.viewType,
             name: this.name,
             series: this.series.map((series: any) => series.toJson()),
         }

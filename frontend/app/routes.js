@@ -104,7 +104,7 @@ export const dashboard = () => '/dashboard';
 export const dashboardMetrics = () => '/dashboard/metrics';
 export const dashboardSelected = (id = ':dashboardId', hash) => hashed(`/dashboard/${ id }`, hash);
 
-export const dashboardMetricDetails = (id = ':dashboardId', metricId = ':metricId',  hash) => hashed(`/dashboard/${ id }/metric/${metricId}`, hash);
+export const dashboardMetricDetails = (dashboardId = ':dashboardId', metricId = ':metricId',  hash) => hashed(`/dashboard/${ dashboardId }/metric/${metricId}`, hash);
 export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => hashed(`/dashboard/${ dashboardId }/metric/create`, hash);
 export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;

@@ -19,13 +19,13 @@ function MetricsList(props: Props) {
     return useObserver(() => (
         <NoContent show={lenth === 0} icon="exclamation-circle">
             <div className="mt-3 border rounded bg-white">
-                <div className="grid grid-cols-7 p-3 font-medium">
-                    <div className="col-span-2">Title</div>
+                <div className="grid grid-cols-12 p-3 font-medium">
+                    <div className="col-span-3">Title</div>
                     <div>Type</div>
-                    <div>Dashboards</div>
-                    <div>Owner</div>
-                    <div>Visibility & Edit Access</div>
-                    <div>Last Modified</div>
+                    <div className="col-span-2">Dashboards</div>
+                    <div className="col-span-3">Owner</div>
+                    <div>Visibility</div>
+                    <div className="col-span-2">Last Modified</div>
                 </div>
 
                 {list.map((metric: any) => (

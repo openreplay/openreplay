@@ -10,6 +10,7 @@ export interface IDashboard {
     isValid: boolean
     isPinned: boolean
     currentWidget: IWidget
+    config: any
 
     update(data: any): void
     toJson(): any
@@ -31,12 +32,13 @@ export default class Dashboard implements IDashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
     name: string = "New Dashboard"
-    isPublic: boolean = false
+    isPublic: boolean = true
     widgets: IWidget[] = []
     metrics: any[] = []
     isValid: boolean = false
     isPinned: boolean = false
     currentWidget: IWidget = new Widget()
+    config: any = {}
     
     constructor() {
         makeAutoObservable(this, {
@@ -75,7 +77,7 @@ export default class Dashboard implements IDashboard {
         return {
             dashboardId: this.dashboardId,
             name: this.name,
-            isPrivate: this.isPublic,
+            isPublic: this.isPublic,
             // widgets: this.widgets.map(w => w.toJson())
             // widgets: this.widgets
             metrics: this.metrics
@@ -88,6 +90,7 @@ export default class Dashboard implements IDashboard {
             this.name = json.name
             this.isPublic = json.isPublic
             this.isPinned = json.isPinned
+            this.config = json.config
             this.widgets = json.widgets ? json.widgets.map(w => new Widget().fromJson(w)) : []
         })
         return this

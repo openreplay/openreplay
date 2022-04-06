@@ -7,6 +7,7 @@ import {
     metricDetails,
     dashboardSelected,
     dashboardMetricCreate,
+    dashboardMetricDetails,
     withSiteId,
     dashboard,
 } from 'App/routes';
@@ -24,10 +25,14 @@ function DashboardRouter(props: Props) {
         <div>
             <Switch>
                 <Route exact strict path={withSiteId(metrics(), siteId)}>
-                    <MetricsView />
+                    <MetricsView siteId={siteId} />
                 </Route>
 
                 <Route exact strict path={withSiteId(metricDetails(), siteId)}>
+                    <WidgetView siteId={siteId} {...props} />
+                </Route>
+
+                <Route exact strict path={withSiteId(dashboardMetricDetails(dashboardId), siteId)}>
                     <WidgetView siteId={siteId} {...props} />
                 </Route>
 

@@ -6,6 +6,9 @@ import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
 import { confirm } from 'UI/Confirmation';
 import { useStore } from 'App/mstore';
+import LazyLoad from 'react-lazyload';
+import { withRouter } from 'react-router-dom';
+import { withSiteId, dashboardMetricDetails } from 'App/routes';
 
 interface Props {
     className?: string;
@@ -13,11 +16,15 @@ interface Props {
     index?: number;
     moveListItem?: any;
     isPreview?: boolean;
+    isTemplate?: boolean
     dashboardId?: string;
+    siteId?: string,
+    active?: boolean;
+    history?: any
 }
 function WidgetWrapper(props: Props) {
     const { dashboardStore } = useStore();
-    const { widget, index = 0, moveListItem = null, isPreview = false, dashboardId } = props;
+    const { active = false, widget, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -47,10 +54,17 @@ function WidgetWrapper(props: Props) {
           confirmButton: 'Yes, Delete',
           confirmation: `Are you sure you want to permanently delete this Dashboard?`
         })) {
-            dashboardStore.deleteDashboardWidget(dashboardId!, widget.widgetId).then(() => {
-
-            })
+            dashboardStore.deleteDashboardWidget(dashboardId!, widget.widgetId);
         }
+    }
+
+    const editHandler = () => {
+        console.log('clicked', widget.metricId);
+    }
+
+    const onChartClick = () => {
+        if (isPreview || isTemplate) return;
+        props.history.push(withSiteId(dashboardMetricDetails(dashboardId, widget.metricId),siteId));
     }
 
     const ref: any = useRef(null)
@@ -58,43 +72,44 @@ function WidgetWrapper(props: Props) {
     
     return useObserver(() => (
         <div
-            className={cn("rounded bg-white", 'col-span-' + widget.colSpan, { 'border' : !isPreview })}
+            className={cn("rounded bg-white border", 'col-span-' + widget.config.col)}
             style={{
+                // borderColor: 'transparent'
                 userSelect: 'none',
                 opacity: isDragging ? 0.5 : 1,
-                borderColor: canDrop && isOver ? '#394EFF' : '',
+                borderColor: (canDrop && isOver) || active ? '#394EFF' : (isPreview ? 'transparent' : '#EEEEEE'),
             }}
             ref={dragDropRef}
         >
-            {/* <Link to={withSiteId(dashboardMetricDetails(dashboard.dashboardId, widget.widgetId), siteId)}> */}
-                <div
-                    className="p-3 cursor-move border-b flex items-center justify-between"
-                >
-                    {widget.name}
+            <div
+                className="p-3 cursor-move flex items-center justify-between"
+            >
+                
+                <h3 className="capitalize">{widget.name}</h3>
+                {!isPreview && !isTemplate && (
                     <div>
                         <ItemMenu
                             items={[
                                 {
-                                    text: 'Edit',
-                                    onClick: () => {
-                                        console.log('edit');
-                                    }
+                                    text: 'Edit', onClick: editHandler,
                                 },
                                 {
-                                    text: 'Hide from view' + dashboardId,
+                                    text: 'Hide from view',
                                     onClick: onDelete
                                 },
                             ]}
                         />
                     </div>
-                </div>
+                )}
+            </div>
 
-                <div className="">
-                    <WidgetChart />
+            <LazyLoad height={300} offset={320} >
+                <div className="px-2" onClick={onChartClick}>
+                    <WidgetChart metric={props.widget}/>
                 </div>
-            {/* </Link> */}
+            </LazyLoad>
         </div>
     ));
 }
 
-export default WidgetWrapper;
+export default withRouter(WidgetWrapper);

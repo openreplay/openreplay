@@ -7,6 +7,7 @@ import WidgetSessions from '../WidgetSessions';
 import { Icon, BackLink, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
+import WidgetName from '../WidgetName';
 interface Props {
     history: any;
     match: any
@@ -32,7 +33,7 @@ function WidgetView(props: Props) {
     const onBackHandler = () => {
         if (dashboardId) {
             props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));    
-        } {
+        } else {
             props.history.push(withSiteId(`/metrics`, siteId));
         }
     }
@@ -43,7 +44,9 @@ function WidgetView(props: Props) {
                 <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
                 <div className="bg-white rounded border">
                     <div className="p-4 flex justify-between items-center">
-                        <h1 className="mb-0 text-2xl">{widget.name}</h1>
+                        <h1 className="mb-0 text-2xl">
+                            <WidgetName name={widget.name} onUpdate={(name) => metricStore.merge({ name })} />
+                        </h1>
                         <div className="text-gray-600">
                             <div
                                 onClick={() => setExpanded(!expanded)}

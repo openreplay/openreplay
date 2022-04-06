@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction, observable, action, reaction } from "m
 import Dashboard, { IDashboard } from "./types/dashboard"
 import Widget, { IWidget } from "./types/widget";
 import { dashboardService, metricService } from "App/services";
+import { toast } from 'react-toastify';
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -37,7 +38,7 @@ export interface IDashboardSotre {
     deleteDashboard(dashboard: IDashboard): Promise<any>
     toJson(): void
     fromJson(json: any): void
-    initDashboard(dashboard: IDashboard): void
+    // initDashboard(dashboard: IDashboard): void
     addDashboard(dashboard: IDashboard): void
     removeDashboard(dashboard: IDashboard): void
     getDashboard(dashboardId: string): void
@@ -78,6 +79,7 @@ export default class DashboardStore implements IDashboardSotre {
     constructor() {
         makeAutoObservable(this, {
             widgetCategories: observable.ref,
+            // dashboardInstance: observable.ref,
 
             resetCurrentWidget: action,
             addDashboard: action,
@@ -159,7 +161,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     initDashboard(dashboard: Dashboard) {
-        this.dashboardInstance = dashboard || new Dashboard()
+        this.dashboardInstance = dashboard ? new Dashboard().fromJson(dashboard) : new Dashboard()
         this.selectedWidgets = []
     }
 
@@ -208,8 +210,10 @@ export default class DashboardStore implements IDashboardSotre {
         return dashboardService.saveDashboard(dashboard).then(_dashboard => {
             runInAction(() => {
                 if (isCreating) {
+                    toast.success('Dashboard created successfully')
                     this.addDashboard(_dashboard)
                 } else {
+                    toast.success('Dashboard updated successfully')
                     this.updateDashboard(_dashboard)
                 }
             })
@@ -247,10 +251,15 @@ export default class DashboardStore implements IDashboardSotre {
     deleteDashboard(dashboard: Dashboard): Promise<any> {
         this.isDeleting = true
         return dashboardService.deleteDashboard(dashboard.dashboardId).then(() => {
+            toast.success('Dashboard deleted successfully')
             runInAction(() => {
                 this.removeDashboard(dashboard)
             })
-        }).finally(() => {
+        })
+        .catch(() => {
+            toast.error('Dashboard could not be deleted')
+        })
+        .finally(() => {
             runInAction(() => {
                 this.isDeleting = false
             })
@@ -364,6 +373,7 @@ export default class DashboardStore implements IDashboardSotre {
     deleteDashboardWidget(dashboardId: string, widgetId: string) {
         this.isDeleting = true
         return dashboardService.deleteWidget(dashboardId, widgetId).then(() => {
+            toast.success('Widget deleted successfully')
             runInAction(() => {
                 this.selectedDashboard?.removeWidget(widgetId)
             })

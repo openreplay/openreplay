@@ -34,7 +34,7 @@ function DashboardModal(props) {
     return useObserver(() => (
         <div
             className="fixed border-r shadow p-4 h-screen"
-            style={{ backgroundColor: '#FAFAFA', zIndex: '9999', width: '80%'}}
+            style={{ backgroundColor: '#FAFAFA', zIndex: '9999', width: '85%'}}
         >
             <div className="mb-6 flex items-end justify-between">
                 <div>
