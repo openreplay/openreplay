@@ -15,10 +15,17 @@ class JIRAIntegration(integration_base.BaseIntegration):
         # TODO: enable super-constructor when OAuth is done
         # super(JIRAIntegration, self).__init__(jwt, user_id, JIRACloudIntegrationProxy)
         self._user_id = user_id
-        i = self.get()
-        if i is None:
+        self.integration = self.get()
+        if self.integration is None:
             return
-        self.issue_handler = JIRACloudIntegrationIssue(token=i["token"], username=i["username"], url=i["url"])
+        self.integration["valid"] = True
+        try:
+            self.issue_handler = JIRACloudIntegrationIssue(token=self.integration["token"],
+                                                           username=self.integration["username"],
+                                                           url=self.integration["url"])
+        except Exception as e:
+            self.issue_handler = None
+            self.integration["valid"] = False
 
     @property
     def provider(self):
@@ -37,10 +44,10 @@ class JIRAIntegration(integration_base.BaseIntegration):
             return helper.dict_to_camel_case(cur.fetchone())
 
     def get_obfuscated(self):
-        integration = self.get()
-        if integration is None:
+        if self.integration is None:
             return None
-        integration["token"] = obfuscate_string(integration["token"])
+        integration = dict(self.integration)
+        integration["token"] = obfuscate_string(self.integration["token"])
         integration["provider"] = self.provider.lower()
         return integration
 
@@ -90,14 +97,13 @@ class JIRAIntegration(integration_base.BaseIntegration):
             return {"state": "success"}
 
     def add_edit(self, data):
-        s = self.get()
-        if s is not None:
+        if self.integration is not None:
             return self.update(
                 changes={
                     "username": data["username"],
                     "token": data["token"] \
                         if data.get("token") and len(data["token"]) > 0 and data["token"].find("***") == -1 \
-                        else s["token"],
+                        else self.integration["token"],
                     "url": data["url"]
                 },
                 obfuscate=True

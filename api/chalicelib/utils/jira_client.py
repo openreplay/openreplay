@@ -22,7 +22,7 @@ class JiraManager:
         except Exception as e:
             print("!!! JIRA AUTH ERROR")
             print(e)
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"JIRA: Authentication error")
+            raise e
 
     def set_jira_project_id(self, project_id):
         self._config["JIRA_PROJECT_ID"] = project_id
