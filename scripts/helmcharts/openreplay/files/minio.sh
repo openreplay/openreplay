@@ -12,9 +12,7 @@ mc alias set minio http://minio.db.svc.cluster.local:9000 $MINIO_ACCESS_KEY $MIN
 function init() {
 echo "Initializing minio"
 
-for bucket in ${buckets[*]}; do
-mc mb minio/${bucket} || true
-mc ilm import minio/${bucket} <<EOF
+cat <<EOF > /tmp/lifecycle.json
 {
     "Rules": [
         {
@@ -27,13 +25,17 @@ mc ilm import minio/${bucket} <<EOF
     ]
 }
 EOF
+
+for bucket in ${buckets[*]}; do
+mc mb minio/${bucket} || true
+mc ilm import minio/${bucket} < /tmp/lifecycle.json || true
 done
 
 # Creating frontend bucket
 mc mb minio/frontend || true
-mc policy set download minio/frontend
-mc policy set download minio/sessions-assets
-mc policy set download minio/static
+mc policy set download minio/frontend || true
+mc policy set download minio/sessions-assets || true
+mc policy set download minio/static || true
 
 curl -L https://github.com/openreplay/openreplay/releases/download/v${CHART_APP_VERSION}/frontend.tar.gz -O
 tar -xf frontend.tar.gz
@@ -53,4 +55,3 @@ case "$1" in
         exit 1
         ;;
 esac
-
