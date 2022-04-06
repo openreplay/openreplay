@@ -1,23 +1,23 @@
 package main
 
 import (
-	"os"
-	"log"
-	"time"
-	"strconv"
 	"io/ioutil"
+	"log"
+	"os"
+	"strconv"
+	"time"
 
 	"openreplay/backend/pkg/flakeid"
 )
 
-const DELETE_TIMEOUT = 12 * time.Hour;
+const DELETE_TIMEOUT = 48 * time.Hour
 
 func cleanDir(dirname string) {
-  files, err := ioutil.ReadDir(dirname)
-  if err != nil {
-  	log.Printf("Cannot read file directory. %v", err)
-  	return
-  }
+	files, err := ioutil.ReadDir(dirname)
+	if err != nil {
+		log.Printf("Cannot read file directory. %v", err)
+		return
+	}
 
 	for _, f := range files {
 		name := f.Name()
@@ -27,7 +27,8 @@ func cleanDir(dirname string) {
 			continue
 		}
 		ts := int64(flakeid.ExtractTimestamp(id))
-		if time.Unix(ts/1000, 0).Add(DELETE_TIMEOUT).Before(time.Now()) {
+		if time.UnixMilli(ts).Add(DELETE_TIMEOUT).Before(time.Now()) {
+			// returns a error. Don't log it sinse it can be race condition between worker instances
 			os.Remove(dirname + "/" + name)
 		}
 	}

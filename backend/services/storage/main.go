@@ -69,7 +69,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-cleanTick:
-			cleanDir(FS_DIR)
+			go cleanDir(FS_DIR)
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
