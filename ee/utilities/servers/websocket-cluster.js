@@ -14,6 +14,7 @@ const AGENT_DISCONNECT = "AGENT_DISCONNECTED";
 const AGENTS_CONNECTED = "AGENTS_CONNECTED";
 const NO_SESSIONS = "SESSION_DISCONNECTED";
 const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
+const SESSION_RECONNECTED = "SESSION_RECONNECTED";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
@@ -309,6 +310,7 @@ module.exports = {
                     debug && console.log(`notifying new session about agent-existence`);
                     let agents_ids = await get_all_agents_ids(io, socket);
                     io.to(socket.id).emit(AGENTS_CONNECTED, agents_ids);
+                    socket.to(socket.peerId).emit(SESSION_RECONNECTED, socket.id);
                 }
 
             } else if (c_sessions <= 0) {
