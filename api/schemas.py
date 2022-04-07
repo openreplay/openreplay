@@ -906,7 +906,7 @@ class UpdateWidgetPayloadSchema(BaseModel):
 
 
 class AddWidgetToDashboardPayloadSchema(UpdateWidgetPayloadSchema):
-    metric_id: int = Field(default=None)
+    metric_id: int = Field(...)
 
     class Config:
         alias_generator = attribute_to_camel_case
