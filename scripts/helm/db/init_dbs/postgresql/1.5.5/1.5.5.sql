@@ -83,7 +83,20 @@ VALUES ('sessions count', 'overview', '{"col":1,"row":1,"position":0}', true, tr
        ('errors per domain', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'errors_per_domains', 'predefined', 'table'),
        ('fetch calls with errors', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'calls_errors', 'predefined', 'table'),
        ('errors by type', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'errors_per_type', 'predefined', 'barChart'),
-       ('errors by origin', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'resources_by_party', 'predefined', 'stackedBarChart')
+       ('errors by origin', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'resources_by_party', 'predefined', 'stackedBarChart'),
+       ('speed index by location', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'speed_location', 'predefined', 'map'),
+       ('slowest domains', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'slowest_domains', 'predefined', 'table'),
+       ('sessions per browser', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'sessions_per_browser', 'predefined', 'table'),
+       ('time to render', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'time_to_render', 'predefined', 'areaChart'),
+       ('sessions impacted by slow pages', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'impacted_sessions_by_slow_pages', 'predefined', 'areaChart'),
+       ('memory consumption', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'memory_consumption', 'predefined', 'areaChart'),
+       ('cpu load', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'cpu', 'predefined', 'areaChart'),
+       ('frame rate', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'fps', 'predefined', 'areaChart'),
+       ('crashes', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'crashes', 'predefined', 'areaChart'),
+       ('resources vs visually complete', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'resources_vs_visually_complete', 'predefined', 'areaChart'),
+       ('dom build time', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'pages_dom_buildtime', 'predefined', 'areaChart'),
+       ('pages response time', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'pages_response_time', 'predefined', 'areaChart'),
+       ('pages response time distribution', 'performance', '{"col":1,"row":1,"position":0}', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart')
 ON CONFLICT (predefined_key) DO UPDATE
     SET name=excluded.name,
         category=excluded.category,

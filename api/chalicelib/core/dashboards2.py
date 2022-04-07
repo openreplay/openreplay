@@ -257,6 +257,19 @@ PREDEFINED = {schemas.TemplatePredefinedKeys.count_sessions: dashboard.get_proce
               schemas.TemplatePredefinedKeys.calls_errors: dashboard.get_calls_errors,
               schemas.TemplatePredefinedKeys.errors_by_type: dashboard.get_errors_per_type,
               schemas.TemplatePredefinedKeys.errors_by_origin: dashboard.get_resources_by_party,
+              schemas.TemplatePredefinedKeys.speed_index_by_location: dashboard.get_speed_index_location,
+              schemas.TemplatePredefinedKeys.slowest_domains: dashboard.get_slowest_domains,
+              schemas.TemplatePredefinedKeys.sessions_per_browser: dashboard.get_sessions_per_browser,
+              schemas.TemplatePredefinedKeys.time_to_render: dashboard.get_time_to_render,
+              schemas.TemplatePredefinedKeys.impacted_sessions_by_slow_pages: dashboard.get_impacted_sessions_by_slow_pages,
+              schemas.TemplatePredefinedKeys.memory_consumption: dashboard.get_memory_consumption,
+              schemas.TemplatePredefinedKeys.cpu_load: dashboard.get_avg_cpu,
+              schemas.TemplatePredefinedKeys.frame_rate: dashboard.get_avg_fps,
+              schemas.TemplatePredefinedKeys.crashes: dashboard.get_crashes,
+              schemas.TemplatePredefinedKeys.resources_vs_visually_complete: dashboard.get_resources_vs_visually_complete,
+              schemas.TemplatePredefinedKeys.pages_dom_buildtime: dashboard.get_pages_dom_build_time,
+              schemas.TemplatePredefinedKeys.pages_response_time: dashboard.get_pages_response_time,
+              schemas.TemplatePredefinedKeys.pages_response_time_distribution: dashboard.get_pages_response_time_distribution,
               }
 
 

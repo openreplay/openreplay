@@ -941,6 +941,19 @@ class TemplatePredefinedKeys(str, Enum):
     calls_errors = "calls_errors"
     errors_by_type = "errors_per_type"
     errors_by_origin = "resources_by_party"
+    speed_index_by_location="speed_location"
+    slowest_domains="slowest_domains"
+    sessions_per_browser="sessions_per_browser"
+    time_to_render="time_to_render"
+    impacted_sessions_by_slow_pages="impacted_sessions_by_slow_pages"
+    memory_consumption="memory_consumption"
+    cpu_load="cpu"
+    frame_rate="fps"
+    crashes="crashes"
+    resources_vs_visually_complete="resources_vs_visually_complete"
+    pages_dom_buildtime="pages_dom_buildtime"
+    pages_response_time="pages_response_time"
+    pages_response_time_distribution="pages_response_time_distribution"
 
 
 class TemplatePredefinedUnits(str, Enum):
