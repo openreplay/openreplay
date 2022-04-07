@@ -88,7 +88,7 @@ class TimeUTC:
         return datetime.utcfromtimestamp(ts // 1000).strftime(fmt)
 
     @staticmethod
-    def human_to_timestamp(ts, pattern):
+    def human_to_timestamp(ts, pattern="%Y-%m-%dT%H:%M:%S.%f"):
         return int(datetime.strptime(ts, pattern).timestamp() * 1000)
 
     @staticmethod
@@ -96,7 +96,10 @@ class TimeUTC:
         if date is None:
             return None
         if isinstance(date, str):
-            return TimeUTC.human_to_timestamp(date, "%Y-%m-%dT%H:%M:%S.%f")
+            fp = date.find(".")
+            if fp > 0:
+                date += '0' * (6 - len(date[fp + 1:]))
+            date = datetime.fromisoformat(date)
         return int(datetime.timestamp(date) * 1000)
 
     @staticmethod
