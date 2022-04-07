@@ -100,7 +100,7 @@ def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_c
 @app.put('/{projectId}/metrics/try', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
+def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsPayloadSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data)}
 

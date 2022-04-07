@@ -7,7 +7,8 @@ from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 CATEGORY_DESCRIPTION = {
-    'categ1': 'lorem',
+    'overview': 'lorem ipsum',
+    'custom': 'lorem cusipsum',
 }
 
 
