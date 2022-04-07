@@ -12,8 +12,8 @@ PIE_CHART_GROUP = 5
 def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     results = []
     for i, s in enumerate(data.series):
-        s.filter.startDate = data.startDate
-        s.filter.endDate = data.endDate
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
@@ -93,8 +93,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
         return None
     results = []
     for s in metric.series:
-        s.filter.startDate = data.startDate
-        s.filter.endDate = data.endDate
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
 
@@ -311,9 +311,9 @@ def get(metric_id, project_id, user_id, flatten=True):
 
 def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
     with pg_client.PostgresClient() as cur:
-        sub_query=""
+        sub_query = ""
         if include_dashboard:
-            sub_query="""LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+            sub_query = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
                                                 FROM (SELECT dashboard_id, name, is_public
                                                       FROM dashboards
                                                       WHERE deleted_at ISNULL

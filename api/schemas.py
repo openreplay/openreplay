@@ -804,8 +804,8 @@ class TimeseriesMetricOfType(str, Enum):
 
 
 class CustomMetricSessionsPayloadSchema(FlatSessionsSearch):
-    startDate: int = Field(TimeUTC.now(-7))
-    endDate: int = Field(TimeUTC.now())
+    startTimestamp: int = Field(TimeUTC.now(-7))
+    endTimestamp: int = Field(TimeUTC.now())
 
     class Config:
         alias_generator = attribute_to_camel_case
