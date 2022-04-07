@@ -43,7 +43,7 @@ export default class MetricStore implements IMetricStore {
     instance: IWidget = new Widget()
 
     page: number = 1
-    pageSize: number = 10
+    pageSize: number = 4
     metricsSearch: string = ""
     sort: any = {}
 
@@ -74,14 +74,14 @@ export default class MetricStore implements IMetricStore {
             paginatedList: computed,
         })
 
-        // reaction(
-        //     () => this.metricsSearch,
-        //     (metricsSearch) => { // TODO filter the list for View
-        //         console.log('metricsSearch', metricsSearch)
-        //         this.page = 1
-        //         this.paginatedList()
-        //     }
-        // )
+        reaction(
+            () => this.metricsSearch,
+            (metricsSearch) => { // TODO filter the list for View
+                console.log('metricsSearch', metricsSearch)
+                this.page = 1
+                this.paginatedList
+            }
+        )
     }
 
     // State Actions
@@ -140,6 +140,7 @@ export default class MetricStore implements IMetricStore {
                 if (wasCreating) {
                     toast.success('Metric created successfully')
                     this.addToList(_metric)
+                    this.instance = _metric
                 } else {
                     toast.success('Metric updated successfully')
                     this.updateInList(_metric)

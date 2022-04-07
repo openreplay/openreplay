@@ -59,10 +59,8 @@ function WidgetForm(props: Props) {
             if (wasCreating) {
                 if (parseInt(dashboardId) > 0) {
                     history.push(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
-                    history.go(0)
                 } else {
                     history.push(withSiteId(metricDetails(metric.metricId), siteId));
-                    history.go(0)
                 }
                 
             }
