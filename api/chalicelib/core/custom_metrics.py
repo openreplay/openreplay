@@ -9,7 +9,7 @@ from chalicelib.utils.TimeUTC import TimeUTC
 PIE_CHART_GROUP = 5
 
 
-def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
+def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     results = []
     for i, s in enumerate(data.series):
         s.filter.startDate = data.startDate
@@ -42,7 +42,7 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
     return results
 
 
-def merged_live(project_id, data: schemas.CreateCustomMetricsSchema):
+def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
