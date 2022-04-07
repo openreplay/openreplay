@@ -9,6 +9,9 @@ from chalicelib.utils.TimeUTC import TimeUTC
 CATEGORY_DESCRIPTION = {
     'overview': 'lorem ipsum',
     'custom': 'lorem cusipsum',
+    'errors': 'lorem erripsum',
+    'performance': 'lorem perfipsum',
+    'resources': 'lorem resipsum'
 }
 
 
@@ -226,29 +229,29 @@ def create_metric_add_widget(project_id, user_id, dashboard_id, data: schemas.Cr
                       data=schemas.AddWidgetToDashboardPayloadSchema(metricId=metric_id))
 
 
-PREDEFINED = {schemas.TemplateKeys.count_sessions: dashboard.get_processed_sessions,
-              schemas.TemplateKeys.avg_image_load_time: dashboard.get_application_activity_avg_image_load_time,
-              schemas.TemplateKeys.avg_page_load_time: dashboard.get_application_activity_avg_page_load_time,
-              schemas.TemplateKeys.avg_request_load_time: dashboard.get_application_activity_avg_request_load_time,
-              schemas.TemplateKeys.avg_dom_content_load_start: dashboard.get_page_metrics_avg_dom_content_load_start,
-              schemas.TemplateKeys.avg_first_contentful_pixel: dashboard.get_page_metrics_avg_first_contentful_pixel,
-              schemas.TemplateKeys.avg_visited_pages: dashboard.get_user_activity_avg_visited_pages,
-              schemas.TemplateKeys.avg_session_duration: dashboard.get_user_activity_avg_session_duration,
-              schemas.TemplateKeys.avg_pages_dom_buildtime: dashboard.get_pages_dom_build_time,
-              schemas.TemplateKeys.avg_pages_response_time: dashboard.get_pages_response_time,
-              schemas.TemplateKeys.avg_response_time: dashboard.get_top_metrics_avg_response_time,
-              schemas.TemplateKeys.avg_first_paint: dashboard.get_top_metrics_avg_first_paint,
-              schemas.TemplateKeys.avg_dom_content_loaded: dashboard.get_top_metrics_avg_dom_content_loaded,
-              schemas.TemplateKeys.avg_till_first_bit: dashboard.get_top_metrics_avg_till_first_bit,
-              schemas.TemplateKeys.avg_time_to_interactive: dashboard.get_top_metrics_avg_time_to_interactive,
-              schemas.TemplateKeys.count_requests: dashboard.get_top_metrics_count_requests,
-              schemas.TemplateKeys.avg_time_to_render: dashboard.get_time_to_render,
-              schemas.TemplateKeys.avg_used_js_heap_size: dashboard.get_memory_consumption,
-              schemas.TemplateKeys.avg_cpu: dashboard.get_avg_cpu,
-              schemas.TemplateKeys.avg_fps: dashboard.get_avg_fps}
+PREDEFINED = {schemas.TemplatePredefinedKeys.count_sessions: dashboard.get_processed_sessions,
+              schemas.TemplatePredefinedKeys.avg_image_load_time: dashboard.get_application_activity_avg_image_load_time,
+              schemas.TemplatePredefinedKeys.avg_page_load_time: dashboard.get_application_activity_avg_page_load_time,
+              schemas.TemplatePredefinedKeys.avg_request_load_time: dashboard.get_application_activity_avg_request_load_time,
+              schemas.TemplatePredefinedKeys.avg_dom_content_load_start: dashboard.get_page_metrics_avg_dom_content_load_start,
+              schemas.TemplatePredefinedKeys.avg_first_contentful_pixel: dashboard.get_page_metrics_avg_first_contentful_pixel,
+              schemas.TemplatePredefinedKeys.avg_visited_pages: dashboard.get_user_activity_avg_visited_pages,
+              schemas.TemplatePredefinedKeys.avg_session_duration: dashboard.get_user_activity_avg_session_duration,
+              schemas.TemplatePredefinedKeys.avg_pages_dom_buildtime: dashboard.get_pages_dom_build_time,
+              schemas.TemplatePredefinedKeys.avg_pages_response_time: dashboard.get_pages_response_time,
+              schemas.TemplatePredefinedKeys.avg_response_time: dashboard.get_top_metrics_avg_response_time,
+              schemas.TemplatePredefinedKeys.avg_first_paint: dashboard.get_top_metrics_avg_first_paint,
+              schemas.TemplatePredefinedKeys.avg_dom_content_loaded: dashboard.get_top_metrics_avg_dom_content_loaded,
+              schemas.TemplatePredefinedKeys.avg_till_first_bit: dashboard.get_top_metrics_avg_till_first_bit,
+              schemas.TemplatePredefinedKeys.avg_time_to_interactive: dashboard.get_top_metrics_avg_time_to_interactive,
+              schemas.TemplatePredefinedKeys.count_requests: dashboard.get_top_metrics_count_requests,
+              schemas.TemplatePredefinedKeys.avg_time_to_render: dashboard.get_time_to_render,
+              schemas.TemplatePredefinedKeys.avg_used_js_heap_size: dashboard.get_memory_consumption,
+              schemas.TemplatePredefinedKeys.avg_cpu: dashboard.get_avg_cpu,
+              schemas.TemplatePredefinedKeys.avg_fps: dashboard.get_avg_fps}
 
 
-def get_predefined_metric(key: schemas.TemplateKeys, project_id: int, data: dict):
+def get_predefined_metric(key: schemas.TemplatePredefinedKeys, project_id: int, data: dict):
     return PREDEFINED.get(key, lambda *args: None)(project_id=project_id, **data)
 
 
