@@ -270,6 +270,11 @@ PREDEFINED = {schemas.TemplatePredefinedKeys.count_sessions: dashboard.get_proce
               schemas.TemplatePredefinedKeys.pages_dom_buildtime: dashboard.get_pages_dom_build_time,
               schemas.TemplatePredefinedKeys.pages_response_time: dashboard.get_pages_response_time,
               schemas.TemplatePredefinedKeys.pages_response_time_distribution: dashboard.get_pages_response_time_distribution,
+              schemas.TemplatePredefinedKeys.missing_resources: dashboard.get_missing_resources_trend,
+              schemas.TemplatePredefinedKeys.slowest_resources: dashboard.get_slowest_resources,
+              schemas.TemplatePredefinedKeys.resources_fetch_time: dashboard.get_resources_loading_time,
+              schemas.TemplatePredefinedKeys.resource_type_vs_response_end: dashboard.resource_type_vs_response_end,
+              schemas.TemplatePredefinedKeys.resources_count_by_type: dashboard.get_resources_count_by_type,
               }
 
 
