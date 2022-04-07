@@ -958,7 +958,7 @@ $$
                 is_predefined  boolean          NOT NULL DEFAULT FALSE,
                 is_template    boolean          NOT NULL DEFAULT FALSE,
                 predefined_key text             NULL     DEFAULT NULL,
-                config         jsonb            NOT NULL DEFAULT '{"col": 2,"row": 2,"position": 0}'::jsonb,
+                default_config jsonb            NOT NULL DEFAULT '{"col": 2,"row": 2,"position": 0}'::jsonb,
                 CONSTRAINT null_project_id_for_template_only
                     CHECK ( (metrics.category != 'custom') != (metrics.project_id IS NOT NULL) ),
                 CONSTRAINT unique_key UNIQUE (predefined_key)
@@ -1048,7 +1048,7 @@ $$
 $$
 LANGUAGE plpgsql;
 
-INSERT INTO metrics (name, category, config, is_predefined, is_template, is_public, predefined_key, metric_type, view_type)
+INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type, view_type)
 VALUES ('Captured sessions', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'count_sessions', 'predefined', 'overview'),
        ('Request Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_request_load_time', 'predefined', 'overview'),
        ('Page Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_page_load_time', 'predefined', 'overview'),

@@ -24,13 +24,13 @@ ALTER TABLE IF EXISTS metrics
     DROP CONSTRAINT IF EXISTS unique_key;
 
 ALTER TABLE IF EXISTS metrics
-    ADD COLUMN IF NOT EXISTS edited_at      timestamp NULL     DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS edited_at      timestamp NULL DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS is_pinned      boolean   NOT NULL DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS category       text      NULL     DEFAULT 'custom',
+    ADD COLUMN IF NOT EXISTS category       text      NULL DEFAULT 'custom',
     ADD COLUMN IF NOT EXISTS is_predefined  boolean   NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS is_template    boolean   NOT NULL DEFAULT FALSE,
-    ADD COLUMN IF NOT EXISTS predefined_key text      NULL     DEFAULT NULL,
-    ADD COLUMN IF NOT EXISTS config         jsonb     NOT NULL DEFAULT '{"col":2,"row":2,"position":0}'::jsonb,
+    ADD COLUMN IF NOT EXISTS predefined_key text      NULL DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS default_config jsonb     NOT NULL DEFAULT '{"col": 2,"row": 2,"position": 0}'::jsonb,
     ALTER COLUMN project_id DROP NOT NULL,
     ADD CONSTRAINT null_project_id_for_template_only
         CHECK ( (metrics.category != 'custom') != (metrics.project_id IS NOT NULL) ),
@@ -57,7 +57,7 @@ ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'overview';
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'map';
 ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'predefined';
 
-INSERT INTO metrics (name, category, config, is_predefined, is_template, is_public, predefined_key, metric_type, view_type)
+INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type, view_type)
 VALUES ('Captured sessions', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'count_sessions', 'predefined', 'overview'),
        ('Request Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_request_load_time', 'predefined', 'overview'),
        ('Page Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_page_load_time', 'predefined', 'overview'),
