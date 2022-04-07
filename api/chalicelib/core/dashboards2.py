@@ -191,9 +191,10 @@ def update_widget(project_id, user_id, dashboard_id, widget_id, data: schemas.Up
         pg_query = """UPDATE dashboard_widgets
                       SET config= %(config)s
                       WHERE dashboard_id=%(dashboard_id)s AND widget_id=%(widget_id)s
-                      RETURNINIG *;"""
+                      RETURNING *;"""
         params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id,
                   "widget_id": widget_id, **data.dict()}
+        params["config"] = json.dumps(data.config)
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
     return helper.dict_to_camel_case(row)
@@ -248,7 +249,15 @@ PREDEFINED = {schemas.TemplatePredefinedKeys.count_sessions: dashboard.get_proce
               schemas.TemplatePredefinedKeys.avg_time_to_render: dashboard.get_time_to_render,
               schemas.TemplatePredefinedKeys.avg_used_js_heap_size: dashboard.get_memory_consumption,
               schemas.TemplatePredefinedKeys.avg_cpu: dashboard.get_avg_cpu,
-              schemas.TemplatePredefinedKeys.avg_fps: dashboard.get_avg_fps}
+              schemas.TemplatePredefinedKeys.avg_fps: dashboard.get_avg_fps,
+              schemas.TemplatePredefinedKeys.impacted_sessions_by_js_errors: dashboard.get_impacted_sessions_by_js_errors,
+              schemas.TemplatePredefinedKeys.domains_errors_4xx: dashboard.get_domains_errors_4xx,
+              schemas.TemplatePredefinedKeys.domains_errors_5xx: dashboard.get_domains_errors_5xx,
+              schemas.TemplatePredefinedKeys.errors_per_domains: dashboard.get_errors_per_domains,
+              schemas.TemplatePredefinedKeys.calls_errors: dashboard.get_calls_errors,
+              schemas.TemplatePredefinedKeys.errors_by_type: dashboard.get_errors_per_type,
+              schemas.TemplatePredefinedKeys.errors_by_origin: dashboard.get_resources_by_party,
+              }
 
 
 def get_predefined_metric(key: schemas.TemplatePredefinedKeys, project_id: int, data: dict):
@@ -260,7 +269,6 @@ def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetri
                                                   include_dashboard=False)
     if raw_metric is None:
         return None
-    print(raw_metric)
     metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
     if metric.is_template:
         return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())

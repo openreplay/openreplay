@@ -170,7 +170,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         count = cur.fetchone()["count"]
 
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-
+    results["unit"] = schemas.TemplatePredefinedUnits.count
     return results
 
 
@@ -998,6 +998,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
 
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return row
 
 
@@ -1156,7 +1157,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": rows}
+    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1378,6 +1379,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, "value": url, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return row
 
 
@@ -1448,7 +1450,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.memory}
 
 
 def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1480,7 +1482,8 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows),
+              "unit": schemas.TemplatePredefinedUnits.percentage}
 
 
 def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1512,7 +1515,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.frame}
 
 
 def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2269,7 +2272,7 @@ def get_application_activity_avg_image_load_time(project_id, startTimestamp=Time
         row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2345,6 +2348,7 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
         row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2414,6 +2418,7 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
         row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2475,6 +2480,7 @@ def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeU
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2509,6 +2515,7 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2542,6 +2549,7 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
 
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.count
     return results
 
 
@@ -2572,6 +2580,7 @@ def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.no
 
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2609,6 +2618,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return helper.dict_to_camel_case(row)
 
 
@@ -2631,6 +2641,7 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return helper.dict_to_camel_case(row)
 
 
@@ -2653,6 +2664,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return helper.dict_to_camel_case(row)
 
 
@@ -2675,6 +2687,7 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return helper.dict_to_camel_case(row)
 
 
@@ -2697,6 +2710,7 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return helper.dict_to_camel_case(row)
 
 
@@ -2715,4 +2729,5 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.count
     return helper.dict_to_camel_case(row)
