@@ -18,11 +18,7 @@ function WidgetView(props: Props) {
     const { metricStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
-    const [expanded, setExpanded] = useState(false);
-
-    useEffect(() => {
-        setExpanded(!widget.exists())
-    }, [widget])
+    const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {

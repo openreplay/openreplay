@@ -4,17 +4,22 @@ import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
 import { getRE } from 'App/utils';
 import MetricListItem from '../MetricListItem';
+import { sliceListPerPage } from 'App/utils';
 
 interface Props { }
 function MetricsList(props: Props) {
     const { metricStore } = useStore();
     const metrics = useObserver(() => metricStore.metrics);
-    const lenth = metrics.length;
-    
     const metricsSearch = useObserver(() => metricStore.metricsSearch);
-    const filterRE = getRE(metricsSearch, 'i');
-    const list = useObserver(() => metrics.filter(w => filterRE.test(w.name)));
-
+    const filterList = (list) => {
+        const filterRE = getRE(metricsSearch, 'i');
+        let _list = list.filter(w => {
+            return filterRE.test(w.name) || filterRE.test(w.metricType) || filterRE.test(w.owner) ;
+        });
+        return _list
+    }
+    const list: any = metricsSearch !== '' ? filterList(metrics) : metrics;
+    const lenth = list.length;
 
     return useObserver(() => (
         <NoContent show={lenth === 0} icon="exclamation-circle">
@@ -28,7 +33,7 @@ function MetricsList(props: Props) {
                     <div className="col-span-2">Last Modified</div>
                 </div>
 
-                {list.map((metric: any) => (
+                {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
                     <MetricListItem metric={metric} />
                 ))}
             </div>
