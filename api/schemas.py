@@ -939,7 +939,7 @@ class TemplatePredefinedKeys(str, Enum):
 class CustomMetricAndTemplate(BaseModel):
     is_template: bool = Field(...)
     project_id: Optional[int] = Field(...)
-    key: Optional[TemplatePredefinedKeys] = Field(...)
+    predefined_key: Optional[TemplatePredefinedKeys] = Field(...)
 
     class Config:
         alias_generator = attribute_to_camel_case
