@@ -25,8 +25,6 @@ function WidgetPreview(props: Props) {
         metric.update({  ...changedDates, rangeName: changedDates.rangeValue });
     }
 
-    console.log('view', metric.viewType)
-
     return useObserver(() => (
         <div className={cn(className)}>
             <div className="flex items-center justify-between">
