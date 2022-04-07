@@ -18,7 +18,7 @@ CATEGORY_DESCRIPTION = {
 def get_templates(project_id, user_id):
     with pg_client.PostgresClient() as cur:
         pg_query = cur.mogrify(f"""SELECT category, jsonb_agg(metrics ORDER BY name) AS widgets
-                        FROM (SELECT * 
+                        FROM (SELECT * , default_config AS config
                               FROM metrics LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index), '[]'::jsonb) AS series
                                                               FROM metric_series
                                                               WHERE metric_series.metric_id = metrics.metric_id
