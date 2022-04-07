@@ -256,12 +256,14 @@ def get_predefined_metric(key: schemas.TemplatePredefinedKeys, project_id: int, 
 
 
 def make_chart_metrics(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
-    raw_metric = custom_metrics.get_with_template(metric_id=metric_id, project_id=project_id, user_id=user_id)
+    raw_metric = custom_metrics.get_with_template(metric_id=metric_id, project_id=project_id, user_id=user_id,
+                                                  include_dashboard=False)
     if raw_metric is None:
         return None
+    print(raw_metric)
     metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
     if metric.is_template:
-        return get_predefined_metric(key=metric.key, project_id=project_id, data=data.dict())
+        return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
     else:
         return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=metric_id, data=data,
                                          metric=raw_metric)
@@ -273,7 +275,7 @@ def make_chart_widget(dashboard_id, project_id, user_id, widget_id, data: schema
         return None
     metric = schemas.CustomMetricAndTemplate = schemas.CustomMetricAndTemplate.parse_obj(raw_metric)
     if metric.is_template:
-        return get_predefined_metric(key=metric.key, project_id=project_id, data=data.dict())
+        return get_predefined_metric(key=metric.predefined_key, project_id=project_id, data=data.dict())
     else:
         return custom_metrics.make_chart(project_id=project_id, user_id=user_id, metric_id=raw_metric["metricId"],
                                          data=data, metric=raw_metric)

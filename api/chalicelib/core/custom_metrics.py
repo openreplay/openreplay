@@ -309,24 +309,27 @@ def get(metric_id, project_id, user_id, flatten=True):
     return helper.dict_to_camel_case(row)
 
 
-def get_with_template(metric_id, project_id, user_id):
+def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
     with pg_client.PostgresClient() as cur:
+        sub_query=""
+        if include_dashboard:
+            sub_query="""LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT dashboard_id, name, is_public
+                                                      FROM dashboards
+                                                      WHERE deleted_at ISNULL
+                                                        AND project_id = %(project_id)s
+                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)"""
         cur.execute(
             cur.mogrify(
-                """SELECT *
+                f"""SELECT *
                     FROM metrics
                              LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)
-                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
-                                                FROM (SELECT dashboard_id, name, is_public
-                                                      FROM dashboards
-                                                      WHERE deleted_at ISNULL
-                                                        AND project_id = %(project_id)s
-                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
-                                                ) AS connected_dashboards ON (TRUE)
+                             {sub_query}
                     WHERE (metrics.project_id = %(project_id)s OR metrics.project_id ISNULL)
                       AND metrics.deleted_at ISNULL
                       AND (metrics.user_id = %(user_id)s OR metrics.is_public)
