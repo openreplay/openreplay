@@ -818,7 +818,7 @@ class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema):
         alias_generator = attribute_to_camel_case
 
 
-class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
+class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
     name: str = Field(...)
     series: List[CustomMetricCreateSeriesSchema] = Field(...)
     is_public: bool = Field(default=True)
@@ -857,6 +857,10 @@ class CreateCustomMetricsSchema(CustomMetricChartPayloadSchema):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
+    series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
 
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
