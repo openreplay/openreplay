@@ -95,6 +95,8 @@ class TimeUTC:
     def datetime_to_timestamp(date):
         if date is None:
             return None
+        if isinstance(date, str):
+            return TimeUTC.human_to_timestamp(date, "%Y-%m-%dT%H:%M:%S.%f")
         return int(datetime.timestamp(date) * 1000)
 
     @staticmethod
