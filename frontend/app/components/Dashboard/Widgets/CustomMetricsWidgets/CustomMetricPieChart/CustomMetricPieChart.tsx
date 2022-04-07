@@ -113,7 +113,7 @@ function CustomMetricPieChart(props: Props) {
                             }}
                     >
                         {data && data.values && data.values.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={Styles.colorsPie[index % Styles.colorsPie.length]} />
+                            <Cell key={`cell-${index}`} fill={Styles.colorsPie[index % Styles.colorsPie.length]} />
                         ))}
                     </Pie>
                     <Tooltip {...Styles.tooltip} />

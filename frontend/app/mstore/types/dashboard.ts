@@ -139,7 +139,6 @@ export default class Dashboard implements IDashboard {
     }
 
     swapWidgetPosition(positionA, positionB) {
-        console.log('swapWidgetPosition', positionA, positionB)
         const widgetA = this.widgets[positionA]
         const widgetB = this.widgets[positionB]
         this.widgets[positionA] = widgetB

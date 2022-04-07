@@ -14,7 +14,8 @@ function MetricsList(props: Props) {
     const filterList = (list) => {
         const filterRE = getRE(metricsSearch, 'i');
         let _list = list.filter(w => {
-            return filterRE.test(w.name) || filterRE.test(w.metricType) || filterRE.test(w.owner) ;
+            const dashbaordNames = w.dashboards.map(d => d.name).join(' ');
+            return filterRE.test(w.name) || filterRE.test(w.metricType) || filterRE.test(w.owner) || filterRE.test(dashbaordNames);
         });
         return _list
     }

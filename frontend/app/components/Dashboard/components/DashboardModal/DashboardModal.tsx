@@ -15,7 +15,6 @@ interface Props {
 }
 function DashboardModal(props) {
     const { history, siteId, dashboardId } = props;
-    console.log('DashboardModal', props);
     const { dashboardStore } = useStore();
     const { hideModal } = useModal();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);

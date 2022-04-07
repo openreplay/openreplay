@@ -124,7 +124,6 @@ export default class MetricStore implements IMetricStore {
     }
 
     get paginatedList(): IWidget[] {
-        console.log('here...' + this.page)
         const start = (this.page - 1) * this.pageSize
         const end = start + this.pageSize
         return this.metrics.slice(start, end)
@@ -187,7 +186,6 @@ export default class MetricStore implements IMetricStore {
         this.isLoading = true
         return metricService.getMetricChartData(metric)
             .then(data => {
-                console.log('data', data)
                 // runInAction(() => {
                     // metric.data = data
                 // })
