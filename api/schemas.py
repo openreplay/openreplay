@@ -934,6 +934,22 @@ class TemplatePredefinedKeys(str, Enum):
     avg_used_js_heap_size = "avg_used_js_heap_size"
     avg_cpu = "avg_cpu"
     avg_fps = "avg_fps"
+    impacted_sessions_by_js_errors = "impacted_sessions_by_js_errors"
+    domains_errors_4xx = "domains_errors_4xx"
+    domains_errors_5xx = "domains_errors_5xx"
+    errors_per_domains = "errors_per_domains"
+    calls_errors = "calls_errors"
+    errors_by_type = "errors_per_type"
+    errors_by_origin = "resources_by_party"
+
+
+class TemplatePredefinedUnits(str, Enum):
+    millisecond = "ms"
+    minute = "min"
+    memory = "mb"
+    frame = "f/s"
+    percentage = "%"
+    count = "count"
 
 
 class CustomMetricAndTemplate(BaseModel):

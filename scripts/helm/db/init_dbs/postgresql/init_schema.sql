@@ -1067,7 +1067,14 @@ VALUES ('sessions count', 'overview', '{"col":1,"row":1,"position":0}', true, tr
        ('requests count', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'count_requests', 'predefined', 'overview'),
        ('avg time to render', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_time_to_render', 'predefined', 'overview'),
        ('avg used js heap size', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_used_js_heap_size', 'predefined', 'overview'),
-       ('avg cpu', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_cpu', 'predefined', 'overview')
+       ('avg cpu', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_cpu', 'predefined', 'overview'),
+       ('sessions affected by js errors', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'impacted_sessions_by_js_errors', 'predefined', 'barChart'),
+       ('top domains with 4xx fetch errors', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'domains_errors_4xx', 'predefined', 'lineChart'),
+       ('top domains with 5xx fetch errors', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'domains_errors_5xx', 'predefined', 'lineChart'),
+       ('errors per domain', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'errors_per_domains', 'predefined', 'table'),
+       ('fetch calls with errors', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'calls_errors', 'predefined', 'table'),
+       ('errors by type', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'errors_per_type', 'predefined', 'barChart'),
+       ('errors by origin', 'errors', '{"col":1,"row":1,"position":0}', true, true, true, 'resources_by_party', 'predefined', 'stackedBarChart')
 ON CONFLICT (predefined_key) DO UPDATE
     SET name=excluded.name,
         category=excluded.category,
