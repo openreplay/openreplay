@@ -22,7 +22,7 @@ class SlackAddForm extends React.PureComponent {
   remove = async (id) => {
     if (await confirm({
       header: 'Confirm',
-      confirmButton: 'Yes, Delete',
+      confirmButton: 'Yes, delete',
       confirmation: `Are you sure you want to permanently delete this channel?`
     })) {
       this.props.remove(id);

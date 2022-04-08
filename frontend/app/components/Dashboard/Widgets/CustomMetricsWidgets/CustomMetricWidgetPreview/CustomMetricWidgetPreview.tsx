@@ -61,27 +61,27 @@ function CustomMetricWidget(props: Props) {
     setLoading(true);
     
     // fetch new data for the widget preview
-    new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
-      .then(response => response.json())
-      .then(({ errors, data }) => {
-        if (errors) {
-          console.log('err', errors)
-        } else {
-          const namesMap = data
-            .map(i => Object.keys(i))
-            .flat()
-            .filter(i => i !== 'time' && i !== 'timestamp')
-            .reduce((unique: any, item: any) => {
-              if (!unique.includes(item)) {
-                unique.push(item);
-              }
-              return unique;
-            }, []);
+    // new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
+    //   .then(response => response.json())
+    //   .then(({ errors, data }) => {
+    //     if (errors) {
+    //       console.log('err', errors)
+    //     } else {
+    //       const namesMap = data
+    //         .map(i => Object.keys(i))
+    //         .flat()
+    //         .filter(i => i !== 'time' && i !== 'timestamp')
+    //         .reduce((unique: any, item: any) => {
+    //           if (!unique.includes(item)) {
+    //             unique.push(item);
+    //           }
+    //           return unique;
+    //         }, []);
 
-          setSeriesMap(namesMap);
-          setData(getChartFormatter(period)(data));
-        }
-      }).finally(() => setLoading(false));
+    //       setSeriesMap(namesMap);
+    //       setData(getChartFormatter(period)(data));
+    //     }
+    //   }).finally(() => setLoading(false));
   }, [metric])
 
   const onDateChange = (changedDates) => {
