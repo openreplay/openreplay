@@ -133,13 +133,14 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                          INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
-                         VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, %(config_{i})s)" for i in range(len(data.metrics))])};"""
+                         VALUES {",".join([f"(%(dashboard_id)s, %(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s)" for i in range(len(data.metrics))])};"""
             for i, m in enumerate(data.metrics):
                 params[f"metric_id_{i}"] = m
-                params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
-                    .get("properties", {}).get("config", {}).get("default", {})
-                params[f"config_{i}"]["position"] = i
-                params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
+                # params[f"config_{i}"] = schemas.AddWidgetToDashboardPayloadSchema.schema() \
+                #     .get("properties", {}).get("config", {}).get("default", {})
+                # params[f"config_{i}"]["position"] = i
+                # params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
+                params[f"config_{i}"] = json.dumps({"position": i})
 
         cur.execute(cur.mogrify(pg_query, params))
 
