@@ -1,5 +1,4 @@
 import React from 'react';
-import { ModalContext } from "App/components/Modal/modalContext";
 import { useModal } from 'App/components/Modal';
 import stl from './ModalOverlay.css'
 
