@@ -1,5 +1,5 @@
 import React from 'react';
-import { NoContent } from 'UI';
+import { NoContent, DropdownPlain } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import { withRequest } from 'HOCs'
 import { 
@@ -11,7 +11,16 @@ import {
 import WidgetAutoComplete from 'Shared/WidgetAutoComplete';
 import { toUnderscore } from 'App/utils';
 
-const WIDGET_KEY = 'timeToRender';
+const WIDGET_KEY = 'resourcesLoadingTime';
+export const RESOURCE_OPTIONS = [
+  { text: 'All', value: 'all', },
+  { text: 'JS', value: "SCRIPT", },
+  { text: 'CSS', value: "STYLESHEET", },
+  { text: 'Fetch', value: "REQUEST", },
+  { text: 'Image', value: "IMG", },
+  { text: 'Media', value: "MEDIA", },
+  { text: 'Other', value: "OTHER", },
+];
 
 interface Props {
     data: any
@@ -19,16 +28,25 @@ interface Props {
     fetchOptions: any
     options: any
 }
-function TimeToRender(props: Props) {
+function ResourceLoadingTime(props: Props) {
     const { data, optionsLoading } = props;
     const gradientDef = Styles.gradientDef();
     const params = { density: 70 }
-
+    const [autoCompleteSelected, setSutoCompleteSelected] = React.useState('');
+    const [type, setType] = React.useState('');
 
     const onSelect = (params) => {
       const _params = { density: 70 }
+      setSutoCompleteSelected(params.value);
       console.log('params', params) // TODO reload the data with new params;
       // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
+    }
+
+    const writeOption = (e, { name, value }) => {
+      // this.setState({ [name]: value })
+      setType(value);
+      const _params = { density: 70 } // TODO reload the data with new params;
+      // this.props.fetchWidget(WIDGET_KEY, this.props.period, this.props.platform, { ..._params, [ name ]: value === 'all' ? null : value  })
     }
 
     return (
@@ -45,6 +63,19 @@ function TimeToRender(props: Props) {
                 onSelect={onSelect}
                 placeholder="Search for Page"
               />
+              <DropdownPlain
+                disabled={!!autoCompleteSelected}
+                name="type"
+                label="Resource"
+                options={ RESOURCE_OPTIONS }
+                onChange={ writeOption }
+                defaultValue={'all'}
+                wrapperStyle={{
+                  position: 'absolute',
+                  top: '12px',
+                  left: '170px',
+                }}
+              />
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.avg)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 200 } width="100%">
@@ -57,16 +88,16 @@ function TimeToRender(props: Props) {
                   <XAxis {...Styles.xaxis} dataKey="time" interval={(params.density/7)} />
                   <YAxis
                     {...Styles.yaxis}
-                    // allowDecimals={false}
+                    allowDecimals={false}
                     tickFormatter={val => Styles.tickFormatter(val)}
-                    label={{ ...Styles.axisLabelLeft, value: "Time to Render (ms)" }}
+                    label={{ ...Styles.axisLabelLeft, value: "CPU Load (%)" }}
                   />
                   <Tooltip {...Styles.tooltip} />
                   <Area
                     name="Avg"
-                    type="monotone"
                     unit=" ms"
-                    dataKey="avgCpu"
+                    type="monotone"
+                    dataKey="avg"
                     stroke={Styles.colors[0]}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
@@ -88,4 +119,4 @@ export default withRequest({
 	requestName: "fetchOptions",
 	endpoint: '/dashboard/' + toUnderscore(WIDGET_KEY) + '/search',
 	method: 'GET'
-})(TimeToRender)
+})(ResourceLoadingTime)
