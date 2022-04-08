@@ -35,8 +35,7 @@ function CustomMetricPieChart(props: Props) {
         }
     }
     return (
-        <div>
-          <NoContent size="small" show={data.values && data.values.length === 0} >
+        <NoContent size="small" show={!data.values || data.values.length === 0} style={{ minHeight: '240px'}}>
             <ResponsiveContainer height={ 220 } width="100%">
                 <PieChart>
                     <Pie
@@ -52,105 +51,77 @@ function CustomMetricPieChart(props: Props) {
                         activeIndex={1}
                         onClick={onClickHandler}
                         labelLine={({
-                          cx,
-                          cy,
-                          midAngle,
-                          innerRadius,
-                          outerRadius,
-                          value,
-                          index
-                      }) => {
-                          const RADIAN = Math.PI / 180;
-                              let radius1 = 15 + innerRadius + (outerRadius - innerRadius);
-                              let radius2 = innerRadius + (outerRadius - innerRadius);
-                              let x2 = cx + radius1 * Math.cos(-midAngle * RADIAN);
-                              let y2 = cy + radius1 * Math.sin(-midAngle * RADIAN);
-                              let x1 = cx + radius2 * Math.cos(-midAngle * RADIAN);
-                              let y1 = cy + radius2 * Math.sin(-midAngle * RADIAN);
+                            cx,
+                            cy,
+                            midAngle,
+                            innerRadius,
+                            outerRadius,
+                            value,
+                            index
+                        }) => {
+                            const RADIAN = Math.PI / 180;
+                                let radius1 = 15 + innerRadius + (outerRadius - innerRadius);
+                                let radius2 = innerRadius + (outerRadius - innerRadius);
+                                let x2 = cx + radius1 * Math.cos(-midAngle * RADIAN);
+                                let y2 = cy + radius1 * Math.sin(-midAngle * RADIAN);
+                                let x1 = cx + radius2 * Math.cos(-midAngle * RADIAN);
+                                let y1 = cy + radius2 * Math.sin(-midAngle * RADIAN);
 
-                              const percentage = value * 100 / data.values.reduce((a, b) => a + b.sessionCount, 0);
-                      
-                              if (percentage<3){
-                                  return null;
-                              }
-                      
-                              return(
-                                  <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#3EAAAF" strokeWidth={1} />
-                              )
-                          }}
-                          label={({
-                              cx,
-                              cy,
-                              midAngle,
-                              innerRadius,
-                              outerRadius,
-                              value,
-                              index
-                          }) => {
-                              const RADIAN = Math.PI / 180;
-                              let radius = 20 + innerRadius + (outerRadius - innerRadius);
-                              let x = cx + radius * Math.cos(-midAngle * RADIAN);
-                              let y = cy + radius * Math.sin(-midAngle * RADIAN);
-                              const percentage = (value / data.values.reduce((a, b) => a + b.sessionCount, 0)) * 100;
-                              let name = data.values[index].name || 'Unidentified';
-                              name = name.length > 20 ? name.substring(0, 20) + '...' : name; 
-                              if (percentage<3){
-                                  return null;
-                              }
-                              return (
-                                  <text
-                                      x={x}
-                                      y={y}
-                                      fontWeight="400"
-                                      fontSize="12px"
-                                      // fontFamily="'Source Sans Pro', 'Roboto', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'"
-                                      textAnchor={x > cx ? "start" : "end"}
-                                      dominantBaseline="central"
-                                      fill='#666'
-                                  >
-                                      {name || 'Unidentified'} {numberWithCommas(value)}
-                                  </text>
-                              );
-                          }}
-                        // label={({
-                        //     cx,
-                        //     cy,
-                        //     midAngle,
-                        //     innerRadius,
-                        //     outerRadius,
-                        //     value,
-                        //     index
-                        //   }) => {
-                        //     const RADIAN = Math.PI / 180;
-                        //     const radius = 30 + innerRadius + (outerRadius - innerRadius);
-                        //     const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                        //     const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                  
-                        //     return (
-                        //       <text
-                        //         x={x}
-                        //         y={y}
-                        //         fill="#3EAAAF"
-                        //         textAnchor={x > cx ? "start" : "end"}
-                        //         dominantBaseline="top"
-                        //         fontSize={10}
-                        //       >
-                        //         {data.values[index].name} ({value})
-                        //       </text>
-                        //     );
-                        //   }}
+                                const percentage = value * 100 / data.values.reduce((a, b) => a + b.sessionCount, 0);
+                        
+                                if (percentage<3){
+                                    return null;
+                                }
+                        
+                                return(
+                                    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#3EAAAF" strokeWidth={1} />
+                                )
+                            }}
+                            label={({
+                                cx,
+                                cy,
+                                midAngle,
+                                innerRadius,
+                                outerRadius,
+                                value,
+                                index
+                            }) => {
+                                const RADIAN = Math.PI / 180;
+                                let radius = 20 + innerRadius + (outerRadius - innerRadius);
+                                let x = cx + radius * Math.cos(-midAngle * RADIAN);
+                                let y = cy + radius * Math.sin(-midAngle * RADIAN);
+                                const percentage = (value / data.values.reduce((a, b) => a + b.sessionCount, 0)) * 100;
+                                let name = data.values[index].name || 'Unidentified';
+                                name = name.length > 20 ? name.substring(0, 20) + '...' : name; 
+                                if (percentage<3){
+                                    return null;
+                                }
+                                return (
+                                    <text
+                                        x={x}
+                                        y={y}
+                                        fontWeight="400"
+                                        fontSize="12px"
+                                        // fontFamily="'Source Sans Pro', 'Roboto', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'"
+                                        textAnchor={x > cx ? "start" : "end"}
+                                        dominantBaseline="central"
+                                        fill='#666'
+                                    >
+                                        {name || 'Unidentified'} {numberWithCommas(value)}
+                                    </text>
+                                );
+                            }}
                     >
-                      {data.values.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={Styles.colorsPie[index % Styles.colorsPie.length]} />
-                      ))}
+                        {data && data.values && data.values.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={Styles.colorsPie[index % Styles.colorsPie.length]} />
+                        ))}
                     </Pie>
                     <Tooltip {...Styles.tooltip} />
                 </PieChart>
-              
+                
             </ResponsiveContainer>
             <div className="text-sm color-gray-medium">Top 5 </div>
-          </NoContent>
-        </div>
+        </NoContent>
     )
 }
 

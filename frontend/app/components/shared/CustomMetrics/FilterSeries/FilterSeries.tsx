@@ -86,13 +86,15 @@ function FilterSeries(props: Props) {
               <div className="color-gray-medium">{emptyMessage}</div>
             )}
           </div>
-          <div className="px-6 border-t h-12 flex items-center -mx-4">
-            <FilterSelection
-              filter={undefined}
-              onFilterClick={onAddFilter}
-            >
-              <IconButton primaryText label="ADD STEP" icon="plus" />
-            </FilterSelection>
+          <div className="border-t h-12 flex items-center">
+            <div className="-mx-4 px-6">
+              <FilterSelection
+                filter={undefined}
+                onFilterClick={onAddFilter}
+              >
+                <IconButton primaryText label="ADD STEP" icon="plus" />
+              </FilterSelection>
+            </div>
           </div>
         </>
       )}

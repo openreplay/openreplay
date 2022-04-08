@@ -100,14 +100,43 @@ export const testBuilderNew = () => '/test-builder';
 
 export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
 
-export const dashboard = () => '/metrics';
+export const dashboard = () => '/dashboard';
+export const dashboardMetrics = () => '/dashboard/metrics';
+export const dashboardSelected = (id = ':dashboardId', hash) => hashed(`/dashboard/${ id }`, hash);
+
+export const dashboardMetricDetails = (dashboardId = ':dashboardId', metricId = ':metricId',  hash) => hashed(`/dashboard/${ dashboardId }/metric/${metricId}`, hash);
+export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => hashed(`/dashboard/${ dashboardId }/metric/create`, hash);
+export const metrics = () => `/metrics`;
+export const metricCreate = () => `/metrics/create`;
+export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
+
 
 export const RESULTS_QUERY_KEY = 'results';
 export const METRICS_QUERY_KEY = 'metrics';
 export const SOURCE_QUERY_KEY = 'source';
 export const WIDGET_QUERY_KEY = 'widget';
 
-const REQUIRED_SITE_ID_ROUTES = [ liveSession(''), session(''), sessions(), assist(), dashboard(''), error(''), errors(), onboarding(''), funnel(''), funnelIssue(''), ];
+const REQUIRED_SITE_ID_ROUTES = [
+    liveSession(''),
+    session(''),
+    sessions(),
+    assist(),
+    
+    metrics(),
+    metricDetails(''),
+
+    dashboard(''),
+    dashboardSelected(''),
+    dashboardMetrics(''),
+    dashboardMetricCreate(''),
+    dashboardMetricDetails(''),
+
+    error(''),
+    errors(),
+    onboarding(''),
+    funnel(''),
+    funnelIssue(''),
+  ];
 const routeNeedsSiteId = path => REQUIRED_SITE_ID_ROUTES.some(r => path.startsWith(r));
 const siteIdToUrl = (siteId = ':siteId') => {
   if (Array.isArray(siteId)) {
@@ -130,7 +159,14 @@ export function isRoute(route, path){
     routeParts.every((p, i) => p.startsWith(':') || p === pathParts[ i ]);
 }
 
-const SITE_CHANGE_AVALIABLE_ROUTES = [ sessions(),  assist(), dashboard(), errors(), onboarding('')];
+const SITE_CHANGE_AVALIABLE_ROUTES = [
+  sessions(),
+  assist(),
+  dashboard(),
+  metrics(),
+  errors(),
+  onboarding('')
+];
 export const siteChangeAvaliable = path => SITE_CHANGE_AVALIABLE_ROUTES.some(r => isRoute(r, path));
 
 export const redirects = Object.entries({

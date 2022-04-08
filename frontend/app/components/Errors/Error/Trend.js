@@ -20,7 +20,6 @@ function Trend({ title = '', chart, onDateChange, timeFormat = 'hh:mm a' }) {
 	if (!Array.isArray(chart)) return null
 
 	const getDateFormat = val => {
-		console.log(val);
 		const d = new Date(val);
 		return  (d.getMonth()+ 1) + '/' + d.getDate()
 	}

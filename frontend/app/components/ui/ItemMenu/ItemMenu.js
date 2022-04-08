@@ -1,33 +1,19 @@
 import { Icon } from 'UI';
 import styles from './itemMenu.css';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import cn from 'classnames';
 
 export default class ItemMenu extends React.PureComponent {
   state = {
     displayed: false,
   };
 
-  componentDidMount() {
-    document.addEventListener('click', this.handleClickOutside);
-  }
-
-  componentWillUnmount() {
-    document.removeEventListener('click', this.handleClickOutside);
-  }
-
   onClick = callback => (e) => {
     e.stopPropagation();
     callback(e);
   }
 
-  handleClickOutside = (e) => {
-    if (!this.state.displayed) return;
-    if (e.target !== this.menuBtnRef) {
-      this.closeMenu();
-    }
-  }
-
   toggleMenu = (e) => {
-    e.stopPropagation();
     this.setState({ displayed: !this.state.displayed });
   }
 
@@ -39,13 +25,18 @@ export default class ItemMenu extends React.PureComponent {
 
     return (
       <div className={ styles.wrapper }>
-        <div
-          ref={ (ref) => { this.menuBtnRef = ref; } }
-          className={ styles.menuBtn }
-          onClick={ this.toggleMenu }
-          role="button"
-          tabIndex="-1"
-        />
+        <OutsideClickDetectingDiv 
+          onClickOutside={ this.closeMenu }
+        >
+          <div
+            ref={ (ref) => { this.menuBtnRef = ref; } }
+            className={cn("w-10 h-10 cursor-pointer rounded-full flex items-center justify-center hover:bg-gray-light", { 'bg-gray-light' : displayed })}
+            onClick={ this.toggleMenu }
+            role="button"
+          >
+            <Icon name="ellipsis-v" size="16" />
+          </div>
+        </OutsideClickDetectingDiv>
         <div
           className={ styles.menu }
           data-displayed={ displayed }
@@ -58,9 +49,11 @@ export default class ItemMenu extends React.PureComponent {
               role="menuitem"
               tabIndex="-1"
             >
-              <div className={ styles.iconWrapper }>
-                <Icon name={ icon } size="13" color="gray-dark" />
-              </div>
+              { icon && (
+                <div className={ styles.iconWrapper }>
+                  <Icon name={ icon } size="13" color="gray-dark" />
+                </div>
+              )}
               <div>{ text }</div>
             </div>
           ))}

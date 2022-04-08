@@ -1,13 +1,15 @@
-export default class Modal extends React.PureComponent {
-	constructor(props) {
-    super(props);
-    this.el = document.createElement('div');
-  }
+import React, { useEffect } from 'react';
+import ReactDOM from 'react-dom';
+import { useModal } from '.';
+import ModalOverlay from './ModalOverlay';
 
-	render() {
-    return ReactDOM.createPortal(
-      this.props.children,
-      this.el,
-    );
-	}
+export default function Modal({ children }){
+  const { component } = useModal();
+
+  return component ? ReactDOM.createPortal(
+    <ModalOverlay>
+      {component}
+    </ModalOverlay>,
+    document.querySelector("#modal-root"),
+  ) : null;
 }

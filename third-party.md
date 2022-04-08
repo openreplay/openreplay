@@ -1,4 +1,4 @@
-## Licenses (as of February 23, 2022)
+## Licenses (as of March 19, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -6,9 +6,13 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 |----------|-------------|-------------|
 | btcutil | IST | Go |
 | confluent-kafka-go | Apache2 | Go |
-| UUID | BSD3 | Go |
+| compress | Apache2 | Go |
+| uuid | BSD3 | Go |
+| mux | BSD3 | Go |
+| lib/pq | MIT | Go |
 | pgconn | MIT | Go |
 | pgx | MIT | Go |
+| go-redis | BSD2 | Go |
 | pgerrcode | MIT | Go |
 | pgzip | MIT | Go |
 | maxminddb-golang | IST | Go |
@@ -90,8 +94,17 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | source-map | BSD3 | JavaScript |
 | aws-sdk | Apache2 | JavaScript |
 | serverless | MIT | JavaScript |
-| lib/pq | MIT | Go |
 | peerjs | MIT | JavaScript |
 | geoip-lite | Apache2 | JavaScript |
 | ua-parser-js | MIT | JavaScript |
 | express | MIT | JavaScript |
+| kafka | Apache2 | Infrastructure |
+| stern | Apache2 | Infrastructure |
+| k9s | Apache2 | Infrastructure |
+| minio | GPLv3 | Infrastructure |
+| postgreSQL | PostgreSQL License | Infrastructure |
+| ansible | GPLv3 | Infrastructure |
+| k3s | Apache2 | Infrastructure |
+| nginx | BSD2 | Infrastructure |
+| clickhouse | Apache2 | Infrastructure |
+| redis | BSD3 | Infrastructure |

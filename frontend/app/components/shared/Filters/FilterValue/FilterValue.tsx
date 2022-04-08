@@ -12,7 +12,7 @@ interface Props {
 }
 function FilterValue(props: Props) {
   const { filter } = props;
-  const [durationValues, setDurationValues] = useState({ minDuration: filter.value[0], maxDuration: filter.value[1] });
+  const [durationValues, setDurationValues] = useState({ minDuration: filter.value[0], maxDuration: filter.value.length > 1 ? filter.value[1] : filter.value[0] });
   const showCloseButton = filter.value.length > 1;
   const lastIndex = filter.value.length - 1;
 
