@@ -3,12 +3,17 @@ import Dashboard, { IDashboard } from "./types/dashboard"
 import Widget, { IWidget } from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
+import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
+import { getChartFormatter } from 'Types/dashboard/helper'; 
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
     selectedDashboard: IDashboard | null
     dashboardInstance: IDashboard
     selectedWidgets: IWidget[]
+    startTimestamp: number
+    endTimestamp: number
+    period: Period
 
     siteId: any
     currentWidget: Widget
@@ -52,6 +57,10 @@ export interface IDashboardSotre {
     fetchTemplates(): Promise<any>
     deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>
     addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>
+
+    updatePinned(dashboardId: string): Promise<any>
+    fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean): Promise<any>
+    setPeriod(period: any): void
 }
 export default class DashboardStore implements IDashboardSotre {
     siteId: any = null
@@ -63,6 +72,9 @@ export default class DashboardStore implements IDashboardSotre {
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
     widgets: Widget[] = []
+    period: Period = Period({ rangeName: LAST_7_DAYS })
+    startTimestamp: number = 0
+    endTimestamp: number = 0
     
     // Metrics
     metricsPage: number = 1
@@ -78,8 +90,6 @@ export default class DashboardStore implements IDashboardSotre {
     constructor() {
         makeAutoObservable(this, {
             widgetCategories: observable.ref,
-            // dashboardInstance: observable.ref,
-
             resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
@@ -99,32 +109,11 @@ export default class DashboardStore implements IDashboardSotre {
             removeSelectedWidgetByCategory: action,
             toggleWidgetSelection: action,
             fetchTemplates: action,
+            updatePinned: action,
+            setPeriod: action,
+
+            fetchMetricChartData: action
         })
-
-
-        // TODO remove this sample data
-
-        // for (let i = 0; i < 4; i++) {
-        //     const cat: any = { 
-        //         name: `Category ${i + 1}`,
-        //         categoryId: i,
-        //         description: `Category ${i + 1} description`,
-        //         widgets: []
-        //     }
-            
-        //     const randomNumber = Math.floor(Math.random() * (5 - 2 + 1)) + 2
-        //     for (let j = 0; j < randomNumber; j++) {
-        //         const widget: any= new Widget();
-        //         widget.widgetId = `${i}-${j}`
-        //         widget.viewType = 'lineChart'
-        //         widget.name = `Widget ${i}-${j}`;
-        //         // widget.metricType = ['timeseries', 'table'][Math.floor(Math.random() * 2)];
-        //         widget.metricType = 'timeseries';
-        //         cat.widgets.push(widget);
-        //     }
-
-        //     this.widgetCategories.push(cat)
-        // }
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {
@@ -180,7 +169,7 @@ export default class DashboardStore implements IDashboardSotre {
         return dashboardService.getDashboards()
             .then((list: any) => {
                 runInAction(() => {
-                    this.dashboards = list.map(d => new Dashboard().fromJson(d))
+                    this.dashboards = list.map(d => new Dashboard().fromJson(d)).sort((a, b) => a.position - b.position)
                 })
             }).finally(() => {
                 runInAction(() => {
@@ -383,53 +372,65 @@ export default class DashboardStore implements IDashboardSotre {
             })
 
     }
-}
 
-function getRandomWidget() {
-    const widget = new Widget();
-    widget.widgetId = Math.floor(Math.random() * 100);
-    widget.name = randomMetricName();
-    // widget.type = "random";
-    widget.colSpan = Math.floor(Math.random() * 2) + 1;
-    return widget;
-}
-
-function generateRandomPlaceName() {
-    const placeNames = [
-        "New York",
-        "Los Angeles",
-        "Chicago",
-        "Houston",
-        "Philadelphia",
-        "Phoenix",
-        "San Antonio",
-        "San Diego",
-    ]
-    return placeNames[Math.floor(Math.random() * placeNames.length)]
-}
-
-
-function randomMetricName () {
-    const metrics = ["Revenue", "Profit", "Expenses", "Sales", "Orders", "Revenue", "Profit", "Expenses", "Sales", "Orders", "Revenue", "Profit", "Expenses", "Sales", "Orders", "Revenue", "Profit", "Expenses", "Sales", "Orders"];
-    return metrics[Math.floor(Math.random() * metrics.length)];
-}
-
-function getRandomDashboard(id: any = null, isPinned = false) {
-    const dashboard = new Dashboard();
-    dashboard.name = generateRandomPlaceName();
-    dashboard.dashboardId = id ? id : Math.floor(Math.random() * 10);
-    dashboard.isPinned = isPinned;
-    for (let i = 0; i < 8; i++) {
-        const widget = getRandomWidget();
-        widget.position = i;
-        dashboard.addWidget(widget);
+    updatePinned(dashboardId: string): Promise<any> {
+        // this.isSaving = true
+        return dashboardService.updatePinned(dashboardId).then(() => {
+            toast.success('Dashboard pinned successfully')
+            this.dashboards.forEach(d => {
+                if (d.dashboardId === dashboardId) {
+                    d.isPinned = true
+                } else {
+                    d.isPinned = false
+                }
+            })
+        }).catch(() => {
+            toast.error('Dashboard could not be pinned')
+        }).finally(() => {
+            // this.isSaving = false
+        })
     }
-    return dashboard;
-}
+    
+    setPeriod(period: any) {
+        this.period = Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeValue })
+    }
 
-const sampleDashboards = [
-    getRandomDashboard(1, true),
-    getRandomDashboard(2),
-    getRandomDashboard(3),
-    getRandomDashboard(4),
-]
+    fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
+        const period = this.period.toTimestamps()
+        return new Promise((resolve, reject) => {
+            // this.isLoading = true
+            return metricService.getMetricChartData(metric, { ...period, ...data, key: metric.predefinedKey }, isWidget)
+                .then(data => {
+                    if (metric.metricType === 'predefined' && metric.viewType === 'overview') {
+                        const _data = { ...data, chart: getChartFormatter(this.period)(data.chart) }
+                        metric.setData(_data)
+                        resolve(_data);
+                    } else {
+                        if (metric.predefinedKey === 'errors_per_domains') {
+                            console.log('errors_per_domains', data)
+                            data.chart = data
+                        } else {
+                            data.chart = getChartFormatter(this.period)(Array.isArray(data) ? data : data.chart)
+                        }
+                        data.namesMap = Array.isArray(data) ? data    
+                            .map(i => Object.keys(i))
+                            .flat()
+                            .filter(i => i !== 'time' && i !== 'timestamp')
+                            .reduce((unique: any, item: any) => {
+                                if (!unique.includes(item)) {
+                                    unique.push(item);
+                                }
+                                return unique;
+                            }, []) : data.chart;
+                            console.log('map', data.namesMap)
+                        const _data = { namesMap: data.namesMap, chart: data.chart }
+                        metric.setData(_data)
+                        resolve(_data);
+                    }
+                }).catch((err) => {
+                    console.log('err', err)
+                    reject(err)
+                })
+        })
+    }
+}

@@ -69,10 +69,14 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
-  fetch(path, params, options = { clean: true }) {
+  fetch(path, params, options = { clean: true }) {    
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
       this.init.body = JSON.stringify(cleanedParams);
+    }
+
+    if (this.init.method === 'GET') {
+      delete this.init.body;
     }
 
 

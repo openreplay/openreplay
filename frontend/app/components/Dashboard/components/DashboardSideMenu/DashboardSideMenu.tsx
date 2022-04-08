@@ -1,4 +1,4 @@
-import { useObserver, observer, useLocalObservable } from 'mobx-react-lite';
+import { useObserver } from 'mobx-react-lite';
 import React from 'react';
 import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';
 import { useStore } from 'App/mstore';
@@ -7,6 +7,7 @@ import { withSiteId, dashboardSelected, metrics } from 'App/routes';
 import { useModal } from 'App/components/Modal';
 import DashbaordListModal from '../DashbaordListModal';
 import DashboardModal from '../DashboardModal';
+import cn from 'classnames';
 
 const SHOW_COUNT = 5;
 interface Props {
@@ -36,20 +37,25 @@ function DashboardSideMenu(props: Props) {
         showModal(<DashboardModal />, {})
     }
 
+    const togglePinned = (dashboard) => {
+        dashboardStore.updatePinned(dashboard.dashboardId);
+    }
+
     return useObserver(() => (
         <div>
             <SideMenuHeader className="mb-4" text="Dashboards" />
-            {dashboardsPicked.map((item: any) => (
+            {dashboardsPicked.sort((a: any, b: any) => a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1 ).map((item: any) => (
                 <SideMenuitem
                     key={ item.dashboardId }
                     active={item.dashboardId === dashboardId}
                     title={ item.name }
                     iconName={ item.icon }
                     onClick={() => onItemClick(item)}
+                    className="group"
                     leading = {(
                         <div className="ml-2 flex items-center">
                             {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
-                            {item.isPinned && <div className="p-1"><Icon name="pin-fill" size="16" /></div>}
+                            {<div className={cn("p-1 group-hover:visible", { 'invisible' : !item.isPinned })} onClick={() => togglePinned(item)}><Icon name="pin-fill" size="16" /></div>}
                         </div>
                     )}
                 />

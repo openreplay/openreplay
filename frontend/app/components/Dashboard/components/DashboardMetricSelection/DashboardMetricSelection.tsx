@@ -87,15 +87,19 @@ function DashboardMetricSelection(props) {
                     </div>
                 </div>
                 <div className="col-span-9">
-                    <div className="grid grid-cols-2 gap-4 -mx-4 px-4 lg:grid-cols-2 sm:grid-cols-1">
+                    <div
+                        className="grid grid-cols-4 gap-4 -mx-4 px-4 pb-20 items-start"
+                        style={{ height: "calc(100vh - 165px)", overflowY: 'auto' }}
+                    >
                         {activeCategory && activeCategory.widgets.map((widget: any) => (
-                            <div
+                            <WidgetWrapper
                                 key={widget.metricId}
-                                className={cn("rounded cursor-pointer")}
+                                widget={widget}
+                                active={selectedWidgetIds.includes(widget.metricId)}
+                                isTemplate={true}
+                                isWidget={widget.metricType === 'predefined'}
                                 onClick={() => dashboardStore.toggleWidgetSelection(widget)}
-                            >
-                                <WidgetWrapper widget={widget} active={selectedWidgetIds.includes(widget.metricId)} isTemplate={true}/>
-                            </div>
+                            />
                         ))}
                     </div>
                 </div>

@@ -32,7 +32,6 @@ export interface IMetricStore {
     fetchList(): void
     fetch(metricId: string)
     delete(metric: IWidget)
-    // fetchMetricChartData(metric: IWidget)
 }
 
 export default class MetricStore implements IMetricStore {
@@ -131,7 +130,7 @@ export default class MetricStore implements IMetricStore {
 
     // API Communication
     save(metric: IWidget, dashboardId?: string): Promise<any> {
-        const wasCreating = !metric[Widget.ID_KEY]
+        const wasCreating = !metric.exists()
         this.isSaving = true
         return metricService.saveMetric(metric, dashboardId)
             .then((metric) => {
@@ -177,20 +176,9 @@ export default class MetricStore implements IMetricStore {
         return metricService.deleteMetric(metric[Widget.ID_KEY])
             .then(() => {
                 this.removeById(metric[Widget.ID_KEY])
+                toast.success('Metric deleted successfully')
             }).finally(() => {
                 this.isSaving = false
-            })
-    }
-
-    fetchMetricChartData(metric: IWidget) {
-        this.isLoading = true
-        return metricService.getMetricChartData(metric)
-            .then(data => {
-                // runInAction(() => {
-                    // metric.data = data
-                // })
-            }).finally(() => {
-                this.isLoading = false
             })
     }
 }

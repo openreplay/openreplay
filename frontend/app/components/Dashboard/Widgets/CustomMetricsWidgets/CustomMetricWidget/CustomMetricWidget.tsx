@@ -56,29 +56,29 @@ function CustomMetricWidget(props: Props) {
   const isTable = metric.viewType === 'table';
   const isPieChart = metric.viewType === 'pieChart';
 
-  useEffect(() => {
-    new APIClient()['post'](`/custom_metrics/${metricParams.metricId}/chart`, { ...metricParams, q: metric.name })
-      .then(response => response.json())
-      .then(({ errors, data }) => {
-        if (errors) {
-          console.log('err', errors)
-        } else {
-          const namesMap = data
-            .map(i => Object.keys(i))
-            .flat()
-            .filter(i => i !== 'time' && i !== 'timestamp')
-            .reduce((unique: any, item: any) => {
-              if (!unique.includes(item)) {
-                unique.push(item);
-              }
-              return unique;
-            }, []);
+  // useEffect(() => {
+  //   new APIClient()['post'](`/custom_metrics/${metricParams.metricId}/chart`, { ...metricParams, q: metric.name })
+  //     .then(response => response.json())
+  //     .then(({ errors, data }) => {
+  //       if (errors) {
+  //         console.log('err', errors)
+  //       } else {
+  //         const namesMap = data
+  //           .map(i => Object.keys(i))
+  //           .flat()
+  //           .filter(i => i !== 'time' && i !== 'timestamp')
+  //           .reduce((unique: any, item: any) => {
+  //             if (!unique.includes(item)) {
+  //               unique.push(item);
+  //             }
+  //             return unique;
+  //           }, []);
 
-          setSeriesMap(namesMap);
-          setData(getChartFormatter(period)(data));
-        }
-      }).finally(() => setLoading(false));
-  }, [period])
+  //         setSeriesMap(namesMap);
+  //         setData(getChartFormatter(period)(data));
+  //       }
+  //     }).finally(() => setLoading(false));
+  // }, [period])
 
   const clickHandlerTable = (filters) => {
     const activeWidget = {

@@ -1,6 +1,7 @@
 import { Icon } from 'UI';
 import styles from './itemMenu.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import cn from 'classnames';
 
 export default class ItemMenu extends React.PureComponent {
   state = {
@@ -29,7 +30,7 @@ export default class ItemMenu extends React.PureComponent {
         >
           <div
             ref={ (ref) => { this.menuBtnRef = ref; } }
-            className="w-10 h-10 cursor-pointer bg-white rounded-full flex items-center justify-center hover:bg-gray-lightest"
+            className={cn("w-10 h-10 cursor-pointer rounded-full flex items-center justify-center hover:bg-gray-light", { 'bg-gray-light' : displayed })}
             onClick={ this.toggleMenu }
             role="button"
           >

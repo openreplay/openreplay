@@ -19,7 +19,7 @@ function MetricsSearch(props) {
     
     return useObserver(() => (
         <div className="relative">
-            <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="18" />
+            <Icon name="search" className="absolute top-0 bottom-0 ml-2 m-auto" size="16" />
             <input
                 value={query}
                 name="metricsSearch"

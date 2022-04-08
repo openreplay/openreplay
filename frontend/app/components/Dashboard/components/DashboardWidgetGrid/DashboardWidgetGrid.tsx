@@ -29,7 +29,7 @@ function DashboardWidgetGrid(props) {
                     </div>
                 }
             >
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 grid-cols-4 items-start pb-10">
                     {list && list.map((item, index) => (
                         <WidgetWrapper
                             index={index}
@@ -38,6 +38,7 @@ function DashboardWidgetGrid(props) {
                             moveListItem={(dragIndex, hoverIndex) => dashbaord.swapWidgetPosition(dragIndex, hoverIndex)}
                             dashboardId={dashboardId}
                             siteId={siteId}
+                            isWidget={true}
                         />
                     ))}
                 </div>
