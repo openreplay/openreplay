@@ -45,7 +45,7 @@ function AlertFormModal(props: Props) {
   const onDelete = async (instance) => {
     if (await confirm({
       header: 'Confirm',
-      confirmButton: 'Yes, Delete',
+      confirmButton: 'Yes, delete',
       confirmation: `Are you sure you want to permanently delete this alert?`
     })) {
       props.remove(instance.alertId).then(() => {

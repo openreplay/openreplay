@@ -10,7 +10,7 @@ export interface IMetricService {
     deleteMetric(metricId: string): Promise<any>;
 
     getTemplates(): Promise<any>;
-    getMetricChartData(metric: IWidget): Promise<any>;
+    getMetricChartData(metric: IWidget, data: any, isWidget: boolean): Promise<any>;
 }
 
 export default class MetricService implements IMetricService {
@@ -54,18 +54,10 @@ export default class MetricService implements IMetricService {
         const data = metric.toJson()
         const isCreating = !data[Widget.ID_KEY];
         const method = isCreating ? 'post' : 'put';
-        
-        if(dashboardId) {
-            const url = `/dashboards/${dashboardId}/metrics`;
-            return this.client[method](url, data)
-                .then(response => response.json())
-                .then(response => response.data || {});
-        } else {
-            const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
-            return this.client[method](url, data)
-                .then(response => response.json())
-                .then(response => response.data || {});
-        }
+        const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
+        return this.client[method](url, data)
+            .then(response => response.json())
+            .then(response => response.data || {});      
     }
 
     /**
@@ -90,9 +82,9 @@ export default class MetricService implements IMetricService {
             .then(response => response.data || []);
     }
 
-    getMetricChartData(metric: IWidget): Promise<any> {
-        const path = metric.metricId ? `/metrics/${metric.metricId}/chart` : `/custom_metrics/try`;
-        return this.client.get(path)
+    getMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
+        const path = isWidget ? `/metrics/${metric.metricId}/chart` : `/metrics/try`;
+        return this.client.post(path, data)
             .then(response => response.json())
             .then(response => response.data || {});
     }

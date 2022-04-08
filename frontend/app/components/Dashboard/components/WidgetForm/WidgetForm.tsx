@@ -70,7 +70,7 @@ function WidgetForm(props: Props) {
     const onDelete = async () => {
         if (await confirm({
           header: 'Confirm',
-          confirmButton: 'Yes, Delete',
+          confirmButton: 'Yes, delete',
           confirmation: `Are you sure you want to permanently delete this metric?`
         })) {
             metricStore.delete(metric).then(props.onDelete);
@@ -122,10 +122,10 @@ function WidgetForm(props: Props) {
                         <>
                             <span className="mx-3">issue type</span>
                             <DropdownPlain
-                            name="metricValue"
-                            options={_issueOptions}
-                            value={ metric.metricValue[0] }
-                            onChange={ writeOption }
+                                name="metricValue"
+                                options={_issueOptions}
+                                value={ metric.metricValue[0] }
+                                onChange={ writeOption }
                             />
                         </>
                     )}
@@ -134,12 +134,12 @@ function WidgetForm(props: Props) {
                     <>
                         <span className="mx-3">showing</span>
                         <DropdownPlain
-                        name="metricFormat"
-                        options={[
-                            { value: 'sessionCount', text: 'Session Count' },
-                        ]}
-                        value={ metric.metricFormat }
-                        onChange={ writeOption }
+                            name="metricFormat"
+                            options={[
+                                { value: 'sessionCount', text: 'Session Count' },
+                            ]}
+                            value={ metric.metricFormat }
+                            onChange={ writeOption }
                         />
                     </>
                     )}

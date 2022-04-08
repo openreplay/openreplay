@@ -1,5 +1,7 @@
 import { makeAutoObservable, observable, action, runInAction } from "mobx"
 import Widget, { IWidget } from "./widget"
+import { dashboardService  } from "App/services"
+import { toast } from 'react-toastify';
 
 export interface IDashboard {
     dashboardId: any
@@ -24,7 +26,7 @@ export interface IDashboard {
     getWidgetByIndex(index: number): void
     getWidgetCount(): void
     getWidgetIndexByWidgetId(widgetId: string): void
-    swapWidgetPosition(positionA: number, positionB: number): void
+    swapWidgetPosition(positionA: number, positionB: number): Promise<any>
     sortWidgets(): void
     exists(): boolean
     toggleMetrics(metricId: string): void
@@ -93,7 +95,7 @@ export default class Dashboard implements IDashboard {
             this.name = json.name
             this.isPublic = json.isPublic
             this.isPinned = json.isPinned
-            this.config = json.config
+            // this.config = json.config
             this.widgets = json.widgets ? json.widgets.map(w => new Widget().fromJson(w)) : []
         })
         return this
@@ -138,7 +140,7 @@ export default class Dashboard implements IDashboard {
         return this.widgets.findIndex(w => w.widgetId === widgetId)
     }
 
-    swapWidgetPosition(positionA, positionB) {
+    swapWidgetPosition(positionA, positionB): Promise<any> {
         const widgetA = this.widgets[positionA]
         const widgetB = this.widgets[positionB]
         this.widgets[positionA] = widgetB
@@ -146,6 +148,19 @@ export default class Dashboard implements IDashboard {
 
         widgetA.position = positionB
         widgetB.position = positionA
+
+        return new Promise<void>((resolve, reject) => {
+            Promise.all([
+                dashboardService.saveWidget(this.dashboardId, widgetA),
+                dashboardService.saveWidget(this.dashboardId, widgetB)
+            ]).then(() => {
+                toast.success("Widget position updated")
+                resolve()
+            }).catch(() => {
+                toast.error("Error updating widget position")
+                reject()
+            })
+        })
     }
 
     sortWidgets() {

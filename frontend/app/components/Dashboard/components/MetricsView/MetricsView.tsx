@@ -12,6 +12,7 @@ interface Props{
 function MetricsView(props: Props) {
     const { siteId } = props;
     const { metricStore } = useStore();
+    const metricsCount = useObserver(() => metricStore.metrics.length);
 
     React.useEffect(() => {
         metricStore.fetchList();
@@ -19,7 +20,10 @@ function MetricsView(props: Props) {
     return useObserver(() => (
         <div>
             <div className="flex items-center mb-4 justify-between">
-                <PageTitle title="Metrics" className="mr-3" />
+                <div className="flex items-baseline mr-3">
+                    <PageTitle title="Metrics" className="" />
+                    <span className="text-2xl color-gray-medium ml-2">{metricsCount}</span>
+                </div>
                 <Link to={'/metrics/create'}><Button primary size="small">Add Metric</Button></Link>
                 <div className="ml-auto w-1/3">
                     <MetricsSearch />

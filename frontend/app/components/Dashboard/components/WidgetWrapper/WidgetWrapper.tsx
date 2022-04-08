@@ -21,10 +21,13 @@ interface Props {
     siteId?: string,
     active?: boolean;
     history?: any
+    onClick?: () => void;
+    isWidget?: boolean;
 }
 function WidgetWrapper(props: Props) {
     const { dashboardStore } = useStore();
-    const { active = false, widget, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
+    const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
+    const widget = useObserver(() => props.widget);    
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -51,8 +54,8 @@ function WidgetWrapper(props: Props) {
     const onDelete = async () => {
         if (await confirm({
           header: 'Confirm',
-          confirmButton: 'Yes, Delete',
-          confirmation: `Are you sure you want to permanently delete this Dashboard?`
+          confirmButton: 'Yes, delete',
+          confirmation: `Are you sure you want to permanently delete the widget from this dashboard?`
         })) {
             dashboardStore.deleteDashboardWidget(dashboardId!, widget.widgetId);
         }
@@ -63,7 +66,7 @@ function WidgetWrapper(props: Props) {
     }
 
     const onChartClick = () => {
-        if (isPreview || isTemplate) return;
+        if (!isWidget || widget.metricType === 'predefined') return;
         props.history.push(withSiteId(dashboardMetricDetails(dashboardId, widget.metricId),siteId));
     }
 
@@ -80,13 +83,14 @@ function WidgetWrapper(props: Props) {
                 borderColor: (canDrop && isOver) || active ? '#394EFF' : (isPreview ? 'transparent' : '#EEEEEE'),
             }}
             ref={dragDropRef}
+            onClick={props.onClick ? props.onClick : () => {}}
         >
             <div
                 className="p-3 cursor-move flex items-center justify-between"
             >
                 
                 <h3 className="capitalize">{widget.name}</h3>
-                {!isPreview && !isTemplate && (
+                {isWidget && (
                     <div>
                         <ItemMenu
                             items={[
@@ -104,8 +108,8 @@ function WidgetWrapper(props: Props) {
             </div>
 
             <LazyLoad height={300} offset={320} >
-                <div className="px-2" onClick={onChartClick}>
-                    <WidgetChart metric={props.widget}/>
+                <div className="px-4" onClick={onChartClick}>
+                    <WidgetChart metric={widget} isWidget={isWidget} />
                 </div>
             </LazyLoad>
         </div>

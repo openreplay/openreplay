@@ -17,6 +17,8 @@ export interface IDashboardService {
     addWidget(dashboard: IDashboard, metricIds: []): Promise<any>
     saveWidget(dashboardId: string, widget: IWidget): Promise<any>
     deleteWidget(dashboardId: string, widgetId: string): Promise<any>
+    
+    updatePinned(dashboardId: string): Promise<any>
 }
 
 
@@ -115,8 +117,6 @@ export default class DashboardService implements IDashboardService {
      */
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any> {
         const data = metric.toJson();
-
-        // const path = dashboardId ? `/metrics` : '/metrics'; // TODO change to /dashboards/:dashboardId/widgets
         const path = dashboardId ? `/dashboards/${dashboardId}/metrics` : '/metrics';
         if (metric.widgetId) {
             return this.client.put(path + '/' + metric.widgetId, data)
@@ -142,6 +142,23 @@ export default class DashboardService implements IDashboardService {
      * @returns {Promise<any>}
      */
     saveWidget(dashboardId: string, widget: IWidget): Promise<any> {
-        return this.client.post(`/dashboards/${dashboardId}/widgets`, widget.toJson())
+        if (widget.widgetId) {
+            return this.client.put(`/dashboards/${dashboardId}/widgets/${widget.widgetId}`, widget.toWidget())
+                .then(response => response.json())
+                .then(response => response.data || {});
+        }
+        return this.client.post(`/dashboards/${dashboardId}/widgets`, widget.toWidget())
+            .then(response => response.json())
+            .then(response => response.data || {});
+    }
+
+    /**
+     * Update the pinned status of a dashboard.
+     * @param dashboardId 
+     * @returns 
+     */
+    updatePinned(dashboardId: string): Promise<any> {
+        return this.client.get(`/dashboards/${dashboardId}/pin`, {})
+            .then(response => response.json())
     }
 }

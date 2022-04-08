@@ -10,6 +10,7 @@ import { withRouter } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import DashboardModal from '../DashboardModal';
 import DashboardEditModal from '../DashboardEditModal';
+import DateRange from 'Shared/DateRange';
 
 interface Props {
     siteId: number;
@@ -23,6 +24,7 @@ function DashboardView(props: Props) {
     const { hideModal, showModal } = useModal();
     const loading = useObserver(() => dashboardStore.fetchingDashboard);
     const dashboard: any = dashboardStore.selectedDashboard
+    const period = useObserver(() => dashboardStore.period);
     const [showEditModal, setShowEditModal] = React.useState(false);
 
     useEffect(() => {
@@ -42,7 +44,7 @@ function DashboardView(props: Props) {
     const onDelete = async () => {
         if (await confirm({
           header: 'Confirm',
-          confirmButton: 'Yes, Delete',
+          confirmButton: 'Yes, delete',
           confirmation: `Are you sure you want to permanently delete this Dashboard?`
         })) {
             dashboardStore.deleteDashboard(dashboard).then(() => {
@@ -53,7 +55,7 @@ function DashboardView(props: Props) {
         }
     }
     
-    return (
+    return useObserver(() => (
         <Loader loading={loading}>
             <NoContent
                 show={!dashboard || !dashboard.dashboardId}
@@ -63,16 +65,26 @@ function DashboardView(props: Props) {
                 <div>
                     <DashboardEditModal
                         show={showEditModal}
-                        // dashboard={dashboard}
                         closeHandler={() => setShowEditModal(false)}
                     />
                     <div className="flex items-center mb-4 justify-between">
                         <div className="flex items-center">
                             <PageTitle title={dashboard?.name} className="mr-3" />
-                            {/* <Link to={withSiteId(dashboardMetricCreate(dashboard?.dashboardId), siteId)}><Button primary size="small">Add Metric</Button></Link> */}
                             <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
                         </div>
-                        <div>
+                        <div className="flex items-center">
+                            <div className="flex items-center">
+                                <span className="mr-2 color-gray-medium">Time Range</span>
+                                <DateRange
+                                    rangeValue={period.rangeName}
+                                    startDate={period.start}
+                                    endDate={period.end}
+                                    onDateChange={(period) => dashboardStore.setPeriod(period)}
+                                    customRangeRight
+                                    direction="left"
+                                />
+                            </div>
+                            <div className="mx-4" />
                             <ItemMenu
                                 items={[
                                     {
@@ -95,7 +107,7 @@ function DashboardView(props: Props) {
                 </div>
             </NoContent>
         </Loader>
-    )
+    ));
 }
 
 export default withRouter(withModal(observer(DashboardView)));
