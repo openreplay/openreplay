@@ -8,6 +8,7 @@ import { observer, useObserver, useLocalObservable } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
+import CustomMetricOverviewChart from '../../Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
 interface Props {
     metric: any;
     isWidget?: boolean
@@ -45,6 +46,9 @@ function WidgetChart(props: Props) {
         const { metricType, viewType, predefinedKey } = metric;
 
         if (metricType === 'predefined') {
+            if (viewType === 'overview') {
+                return <CustomMetricOverviewChart data={data} />
+            }
             return <WidgetPredefinedChart data={data} predefinedKey={metric.predefinedKey} />
         }
 

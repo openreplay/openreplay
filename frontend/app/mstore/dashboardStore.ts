@@ -193,19 +193,25 @@ export default class DashboardStore implements IDashboardSotre {
         
         dashboard.metrics = this.selectedWidgets.map(w => w.metricId)
         
-        return dashboardService.saveDashboard(dashboard).then(_dashboard => {
-            runInAction(() => {
-                if (isCreating) {
-                    toast.success('Dashboard created successfully')
-                    this.addDashboard(_dashboard)
-                } else {
-                    toast.success('Dashboard updated successfully')
-                    this.updateDashboard(_dashboard)
-                }
-            })
-        }).finally(() => {
-            runInAction(() => {
-                this.isSaving = false
+        return new Promise((resolve, reject) => {
+            dashboardService.saveDashboard(dashboard).then(_dashboard => {
+                runInAction(() => {
+                    if (isCreating) {
+                        toast.success('Dashboard created successfully')
+                        this.addDashboard(_dashboard)
+                    } else {
+                        toast.success('Dashboard updated successfully')
+                        this.updateDashboard(_dashboard)
+                    }
+                    resolve(_dashboard)
+                })
+            }).catch(error => {
+                toast.error('Error saving dashboard')
+                reject()
+            }).finally(() => {
+                runInAction(() => {
+                    this.isSaving = false
+                })
             })
         })
     }
@@ -406,12 +412,12 @@ export default class DashboardStore implements IDashboardSotre {
                         metric.setData(_data)
                         resolve(_data);
                     } else {
-                        if (metric.predefinedKey === 'errors_per_domains') {
-                            console.log('errors_per_domains', data)
-                            data.chart = data
-                        } else {
-                            data.chart = getChartFormatter(this.period)(Array.isArray(data) ? data : data.chart)
-                        }
+                        // if (metric.predefinedKey === 'errors_per_domains') {
+                        //     console.log('errors_per_domains', data)
+                        //     data.chart = data
+                        // } else {
+                        //     data.chart = getChartFormatter(this.period)(Array.isArray(data) ? data : data.chart)
+                        // }
                         data.namesMap = Array.isArray(data) ? data    
                             .map(i => Object.keys(i))
                             .flat()
@@ -422,10 +428,40 @@ export default class DashboardStore implements IDashboardSotre {
                                 }
                                 return unique;
                             }, []) : data.chart;
-                            console.log('map', data.namesMap)
-                        const _data = { namesMap: data.namesMap, chart: data.chart }
+                        //     console.log('map', data.namesMap)
+                        // const _data = { ...data, namesMap: data.namesMap, chart: data.chart }
+                        // metric.setData(_data)
+                        // resolve(_data);
+
+                        const _data = {}
+                        if (data.hasOwnProperty('chart')) {
+                            _data['chart'] = getChartFormatter(this.period)(data.chart)
+                            _data['namesMap'] = data.chart
+                                .map(i => Object.keys(i))
+                                .flat()
+                                .filter(i => i !== 'time' && i !== 'timestamp')
+                                .reduce((unique: any, item: any) => {
+                                    if (!unique.includes(item)) {
+                                        unique.push(item);
+                                    }
+                                    return unique;
+                                }, [])
+                        } else {
+                            _data['chart'] = data
+                            _data['namesMap'] = data
+                                .map(i => Object.keys(i))
+                                .flat()
+                                .filter(i => i !== 'time' && i !== 'timestamp')
+                                .reduce((unique: any, item: any) => {
+                                    if (!unique.includes(item)) {
+                                        unique.push(item);
+                                    }
+                                    return unique;
+                                }, [])
+                        }
+                        
                         metric.setData(_data)
-                        resolve(_data);
+                        resolve({ ...data, ..._data });
                     }
                 }).catch((err) => {
                     console.log('err', err)

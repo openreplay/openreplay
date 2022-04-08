@@ -8,26 +8,18 @@ import { numberWithCommas } from 'App/utils';
 
 interface Props {
     data: any;
-    params: any;
-    seriesMap: any;
-    colors: any;
-    onClick?: (event, index) => void;
+    // onClick?: (event, index) => void;
 }
 function CustomMetricOverviewChart(props: Props) {
-    const { data, params, seriesMap, colors, onClick = () => null } = props;
+    const { data } = props;
     console.log('data', data)
     const gradientDef = Styles.gradientDef();
     return (
-        <div className='relative'>
+        <div className="relative -mx-4">
             <div className="absolute flex items-start flex-col justify-center inset-0 p-3">
                 <div className="mb-2 flex items-center" >
-                {/* <div className={ cn("text-lg") }>{ 'test' }</div> */}
                 </div>
                 <div className="flex items-center">
-                {/* {prefix} */}
-                {/* <div className="h-2 w-2 bg-red mr-2" />
-                <div className="h-2 w-2 bg-green mr-2 rounded-full" />
-                <div className="mr-2" style={{ borderWidth: "0 5px 7px 5px", borderColor: "transparent transparent #007bff transparent" }} /> */}
                 <CountBadge
                     // title={subtext}
                     count={ countView(Math.round(data.value), data.unit) }
@@ -40,7 +32,6 @@ function CustomMetricOverviewChart(props: Props) {
             <ResponsiveContainer height={ 100 } width="100%">
                 <AreaChart
                     data={ data.chart }
-                    // syncId={syncId}
                     margin={ {
                         top: 85, right: 0, left: 0, bottom: 5,
                     } }

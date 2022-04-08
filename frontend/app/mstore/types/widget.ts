@@ -111,6 +111,7 @@ export default class Widget implements IWidget {
     }
 
     fromJson(json: any) {
+        json.config = json.config || {}
         runInAction(() => {
             this.metricId = json.metricId
             this.widgetId = json.widgetId
