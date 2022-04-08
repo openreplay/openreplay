@@ -48,7 +48,7 @@ def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                          INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
-                         VALUES {",".join([f"((SELECT dashboard_id FROM dash),%(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s))" for i in range(len(data.metrics))])}
+                         VALUES {",".join([f"((SELECT dashboard_id FROM dash),%(metric_id_{i})s, %(userId)s, (SELECT default_config FROM metrics WHERE metric_id=%(metric_id_{i})s)||%(config_{i})s)" for i in range(len(data.metrics))])}
                          RETURNING (SELECT dashboard_id FROM dash)"""
             for i, m in enumerate(data.metrics):
                 params[f"metric_id_{i}"] = m
