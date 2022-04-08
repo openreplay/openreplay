@@ -898,8 +898,7 @@ class EditDashboardSchema(CreateDashboardSchema):
 
 
 class UpdateWidgetPayloadSchema(BaseModel):
-    # if you change the config attribute name, please make sure to update it in dashboard2.py
-    config: dict = Field(default={"col": 2, "row": 2, "position": 0})
+    config: dict = Field(default={})
 
     class Config:
         alias_generator = attribute_to_camel_case
