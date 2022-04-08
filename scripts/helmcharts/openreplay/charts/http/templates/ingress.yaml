@@ -88,3 +88,6 @@ spec:
   tls:
     - hosts:
       - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
