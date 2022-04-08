@@ -140,8 +140,8 @@ export default Record({
       }
     }
     return {
-      ...filter,
       ..._filter,
+      ...filter,
       key: _filter.key,
       type: _filter.type, // camelCased(filter.type.toLowerCase()),
       value: value.length === 0 || !value ? [""] : value,

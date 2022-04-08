@@ -71,7 +71,7 @@ function reducer(state = initialState, action = {}) {
 			return state.set("instance", action.data);
 		case success(FETCH_LIST):
 			const { data } = action;
-			return state.set("list", List(data.map(SavedFilter)));
+			return state.set("list", List(data.map(SavedFilter)).sortBy(i => i.searchId));
     case success(FETCH_FILTER_SEARCH):
       const groupedList = action.data.reduce((acc, item) => {
         const { projectId, type, value } = item;
