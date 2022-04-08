@@ -102,14 +102,14 @@ VALUES ('Captured sessions', 'overview', '{"col":1,"row":1,"position":0}', true,
        ('Pages Response Time Distribution', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart'),
 
        ('Missing Resources', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'missing_resources', 'predefined', 'table'),
-       ('Slowest Resources', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'slowest_resources', 'predefined', 'table'),
+       ('Slowest Resources', 'resources', '{"col":4,"row":2,"position":0}', true, true, true, 'slowest_resources', 'predefined', 'table'),
        ('Resources Fetch Time', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_loading_time', 'predefined', 'table'),
        ('Resource Loaded vs Response End', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'resource_type_vs_response_end', 'predefined', 'stackedBarLineChart'),
        ('Breakdown of Loaded Resources', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_count_by_type', 'predefined', 'stackedBarChart')
 ON CONFLICT (predefined_key) DO UPDATE
     SET name=excluded.name,
         category=excluded.category,
-        config=excluded.config,
+        default_config=excluded.default_config,
         is_predefined=excluded.is_predefined,
         is_template=excluded.is_template,
         is_public=excluded.is_public,
