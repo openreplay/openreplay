@@ -49,7 +49,7 @@ ingress-nginx: &ingress-nginx
     service:
       externalTrafficPolicy: "Local"
     extraArgs:
-      default-ssl-certificate: "app/ssl-ingress"
+      default-ssl-certificate: "app/openreplay-ssl"
     config:
       enable-real-ip: true
       forwarded-for-header: "proxy_protocol"
