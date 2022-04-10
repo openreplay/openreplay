@@ -20,7 +20,7 @@ export default function (app: App): void {
     ),
   );
 
-  const sendSetNodeScroll = app.safe((s, node): void => {
+  const sendSetNodeScroll = app.safe((s: [number, number], node: Node): void => {
     const id = app.nodes.getID(node);
     if (id !== undefined) {
       app.send(new SetNodeScroll(id, s[0], s[1]));
@@ -34,6 +34,12 @@ export default function (app: App): void {
     nodeScroll.clear();
   });
 
+  app.nodes.attachNodeCallback(node => {
+    if (node instanceof Element && node.scrollLeft + node.scrollTop > 0) {
+      nodeScroll.set(node, [node.scrollLeft, node.scrollTop]);
+    }
+  })
+
   app.attachEventListener(window, 'scroll', (e: Event): void => {
     const target = e.target;
     if (target === document) {
@@ -41,9 +47,7 @@ export default function (app: App): void {
       return;
     }
     if (target instanceof Element) {
-      {
-        nodeScroll.set(target, [target.scrollLeft, target.scrollTop]);
-      }
+      nodeScroll.set(target, [target.scrollLeft, target.scrollTop]);
     }
   });
 
