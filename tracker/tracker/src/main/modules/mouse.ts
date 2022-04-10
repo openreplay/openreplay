@@ -1,4 +1,8 @@
-import { normSpaces, hasOpenreplayAttribute, getLabelAttribute } from "../utils.js";
+import { 
+  normSpaces,
+  hasOpenreplayAttribute,
+  getLabelAttribute,
+} from "../utils.js";
 import App from "../app/index.js";
 import { MouseMove, MouseClick } from "../../messages/index.js";
 import { getInputLabel } from "./input.js";
@@ -22,6 +26,18 @@ function _getSelector(target: Element): string {
      el = el.parentElement
   } while (el !== document.body && el !== null)
   return selector
+}
+
+function isClickable(element: Element): boolean {
+  const tag = element.tagName.toUpperCase()
+  return tag === 'BUTTON' ||
+    tag === 'A' ||
+    tag === 'LI' ||
+    tag === 'SELECT' ||
+    (element as HTMLElement).onclick != null ||
+    element.getAttribute('role') === 'button' 
+    //|| element.className.includes("btn")
+    // MBTODO: intersect addEventListener
 }
 
 //TODO: fix (typescript doesn't allow work when the guard is inside the function)
@@ -56,13 +72,7 @@ function _getTarget(target: Element): Element | null {
     if (tag === 'INPUT') {
       return element;
     }
-    if (
-      tag === 'BUTTON' ||
-      tag === 'A' ||
-      tag === 'LI' ||
-      tag === 'SELECT' ||
-      (element as HTMLElement).onclick != null ||
-      element.getAttribute('role') === 'button' ||
+    if (isClickable(element) ||
       getLabelAttribute(element) !== null
     ) {
       return element;
@@ -83,19 +93,16 @@ export default function (app: App): void {
     if (dl !== null) {
       return dl;
     }
-    const tag = target.tagName.toUpperCase();
-    if (tag === 'INPUT') {
-      return getInputLabel(target as HTMLInputElement)
+    if (target instanceof HTMLInputElement) {
+      return getInputLabel(target)
     }
-    if (tag === 'BUTTON' ||
-        tag === 'A' ||
-        tag === 'LI' ||
-        tag === 'SELECT' ||
-        (target as HTMLElement).onclick != null ||
-        target.getAttribute('role') === 'button'
-      ) {
-      const label: string = app.sanitizer.getInnerTextSecure(target as HTMLElement);
-      return normSpaces(label).slice(0, 100);
+    if (isClickable(target)) {
+        let label = ''
+        if (target instanceof HTMLElement) {
+          label = app.sanitizer.getInnerTextSecure(target)
+        }
+        label = label || target.id || target.className
+      return normSpaces(label).slice(0, 100)
     }
     return '';
   }
@@ -126,7 +133,7 @@ export default function (app: App): void {
   }
 
   app.attachEventListener(
-    <HTMLElement>document.documentElement,
+    document.documentElement,
     'mouseover',
     (e: MouseEvent): void => {
       const target = getTarget(e.target);

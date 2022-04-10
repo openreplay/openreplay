@@ -1,4 +1,9 @@
-import { normSpaces, IN_BROWSER, getLabelAttribute, hasOpenreplayAttribute } from "../utils.js";
+import {
+  normSpaces,
+  IN_BROWSER,
+  getLabelAttribute,
+  hasOpenreplayAttribute,
+} from "../utils.js";
 import App from "../app/index.js";
 import { SetInputTarget, SetInputValue, SetInputChecked } from "../../messages/index.js";
 
@@ -31,14 +36,14 @@ function isCheckable(node: any): node is HTMLInputElement {
 }
 
 const labelElementFor: (
-  node: TextEditableElement,
+  element: TextEditableElement,
 ) => HTMLLabelElement | undefined =
   IN_BROWSER && 'labels' in HTMLInputElement.prototype
-    ? (node): HTMLLabelElement | undefined => {
+    ? (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (p.nodeName === 'LABEL') {
-            return p as HTMLLabelElement;
+          if (p instanceof HTMLLabelElement) {
+            return p
           }
         }
         const labels = node.labels;
@@ -46,10 +51,10 @@ const labelElementFor: (
           return labels[0];
         }
       }
-    : (node): HTMLLabelElement | undefined => {
+    : (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (p.nodeName === 'LABEL') {
+          if (p instanceof HTMLLabelElement) {
             return p as HTMLLabelElement;
           }
         }
@@ -66,10 +71,12 @@ export function getInputLabel(node: TextEditableElement): string {
   let label = getLabelAttribute(node);
   if (label === null) {
     const labelElement = labelElementFor(node);
-    label =
-      labelElement === undefined
-        ? node.placeholder || node.name
-        : labelElement.innerText;
+    label = (labelElement && labelElement.innerText) 
+      || node.placeholder 
+      || node.name 
+      || node.id 
+      || node.className 
+      || node.type
   }
   return normSpaces(label).slice(0, 100);
 }
@@ -101,7 +108,7 @@ export default function (app: App, opts: Partial<Options>): void {
       app.send(new SetInputTarget(id, label));
     }
   }
-  function sendInputValue(id: number, node: TextEditableElement): void {
+  function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
     let value = node.value;
     let inputMode: InputMode = options.defaultInputMode;
     if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
@@ -174,6 +181,13 @@ export default function (app: App, opts: Partial<Options>): void {
       const id = app.nodes.getID(node);
       if (id === undefined) {
         return;
+      }
+      // TODO: support multiple select (?): use selectedOptions; Need send target?
+      if (node instanceof HTMLSelectElement) {
+        sendInputValue(id, node)
+        app.attachEventListener(node, "change", () => {
+          sendInputValue(id, node)
+        })
       }
       if (isTextEditable(node)) {
         inputValues.set(id, node.value);
