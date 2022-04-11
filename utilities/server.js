@@ -32,10 +32,6 @@ wsapp.use('/assist', socket.wsRouter);
 
 app.get('/heapdump', dumps.sendHeapSnapshot);
 app.get('/heapdump/save', dumps.saveHeapSnapshot);
-wsapp.get('/heapdump', dumps.sendHeapSnapshot);
-wsapp.get('/heapdump/save', dumps.saveHeapSnapshot);
-
-console.log(`Heapdump enabled. Send a request to "/heapdump" to download a heapdump,\nor "/heapdump/save" to only generate a heapdump.`);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);
@@ -59,3 +55,4 @@ app.enable('trust proxy');
 wsapp.enable('trust proxy');
 socket.start(wsserver);
 module.exports = {wsserver, server};
+console.log(`Heapdump enabled. Send a request to "/heapdump" to download a heapdump,\nor "/heapdump/save" to only generate a heapdump.`);
