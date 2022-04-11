@@ -30,8 +30,7 @@ app.use('/sourcemaps', sourcemapsReaderServer);
 app.use('/assist', peerRouter);
 wsapp.use('/assist', socket.wsRouter);
 
-app.get('/heapdump', dumps.sendHeapSnapshot);
-app.get('/heapdump/save', dumps.saveHeapSnapshot);
+app.use('/heapdump', dumps.router);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);

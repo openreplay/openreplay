@@ -51,8 +51,7 @@ peerServer.on('disconnect', peerDisconnect);
 peerServer.on('error', peerError);
 app.use('/', peerServer);
 app.enable('trust proxy');
-app.get('/heapdump', dumps.sendHeapSnapshot);
-app.get('/heapdump/save', dumps.saveHeapSnapshot);
+app.use('/heapdump', dumps.router);
 
 if (process.env.uws !== "true") {
     var wsapp = express();
