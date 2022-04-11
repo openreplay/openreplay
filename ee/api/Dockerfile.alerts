@@ -7,6 +7,7 @@ COPY . .
 RUN pip install -r requirements.txt
 RUN mv .env.default .env && mv app_alerts.py app.py
 ENV pg_minconn 2
+ENV APP_NAME alerts
 
 # Add Tini
 # Startup daemon

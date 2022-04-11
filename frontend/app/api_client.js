@@ -1,5 +1,4 @@
 import store from 'App/store';
-
 import { queried } from './routes';
 
 const siteIdRequiredPaths = [
@@ -24,6 +23,8 @@ const siteIdRequiredPaths = [
   '/assist',
   '/heatmaps',
   '/custom_metrics',
+  '/dashboards',
+  '/metrics'
   // '/custom_metrics/sessions',
 ];
 
@@ -68,10 +69,14 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
-  fetch(path, params, options = { clean: true }) {
+  fetch(path, params, options = { clean: true }) {    
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
       this.init.body = JSON.stringify(cleanedParams);
+    }
+
+    if (this.init.method === 'GET') {
+      delete this.init.body;
     }
 
 

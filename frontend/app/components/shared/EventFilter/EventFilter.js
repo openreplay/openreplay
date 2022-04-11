@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { DNDContext } from 'Components/hocs/dnd';
+// import { DNDContext } from 'Components/hocs/dnd';
 import {
   addEvent, applyFilter, moveEvent, clearEvents,
   addCustomFilter, addAttribute, setSearchQuery, setActiveFlow, setFilterOption
@@ -39,7 +39,7 @@ import CustomFilters from './CustomFilters';
   updateFunnelFilters,
   refreshFunnel
 })
-@DNDContext
+// @DNDContext
 export default class EventFilter extends React.PureComponent {
   state = { search: '', showFilterModal: false, showPlacehoder: true, showSaveModal: false }  
   fetchEventList = debounce(this.props.fetchEventList, 500)

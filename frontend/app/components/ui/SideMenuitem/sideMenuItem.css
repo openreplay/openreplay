@@ -5,10 +5,14 @@
   cursor: pointer;
 
   &:hover {
-    color: $teal;
-    & svg {
-      fill: $teal;
+    & .iconLabel {
+      color: $teal;
+
+      & svg {
+        fill: $teal;
+      }
     }
+    
     & .actions {
       opacity: 1;
     }
@@ -28,7 +32,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-left: 10px;
     margin-top: 1px;
   }
 

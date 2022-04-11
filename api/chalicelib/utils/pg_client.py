@@ -1,3 +1,4 @@
+import time
 from threading import Semaphore
 
 import psycopg2
@@ -9,7 +10,8 @@ _PG_CONFIG = {"host": config("pg_host"),
               "database": config("pg_dbname"),
               "user": config("pg_user"),
               "password": config("pg_password"),
-              "port": config("pg_port", cast=int)}
+              "port": config("pg_port", cast=int),
+              "application_name": config("APP_NAME", default="PY")}
 PG_CONFIG = dict(_PG_CONFIG)
 if config("pg_timeout", cast=int, default=0) > 0:
     PG_CONFIG["options"] = f"-c statement_timeout={config('pg_timeout', cast=int) * 1000}"
@@ -36,9 +38,14 @@ class ORThreadedConnectionPool(psycopg2.pool.ThreadedConnectionPool):
 
 postgreSQL_pool: ORThreadedConnectionPool = None
 
+RETRY_MAX = config("PG_RETRY_MAX", cast=int, default=50)
+RETRY_INTERVAL = config("PG_RETRY_INTERVAL", cast=int, default=2)
+RETRY = 0
+
 
 def make_pool():
     global postgreSQL_pool
+    global RETRY
     if postgreSQL_pool is not None:
         try:
             postgreSQL_pool.closeall()
@@ -50,7 +57,13 @@ def make_pool():
             print("Connection pool created successfully")
     except (Exception, psycopg2.DatabaseError) as error:
         print("Error while connecting to PostgreSQL", error)
-        raise error
+        if RETRY < RETRY_MAX:
+            RETRY += 1
+            print(f"waiting for {RETRY_INTERVAL}s before retry n°{RETRY}")
+            time.sleep(RETRY_INTERVAL)
+            make_pool()
+        else:
+            raise error
 
 
 make_pool()
@@ -64,6 +77,8 @@ class PostgresClient:
     def __init__(self, long_query=False):
         self.long_query = long_query
         if long_query:
+            long_config = dict(_PG_CONFIG)
+            long_config["application_name"] += "-LONG"
             self.connection = psycopg2.connect(**_PG_CONFIG)
         else:
             self.connection = postgreSQL_pool.getconn()

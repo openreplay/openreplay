@@ -13,9 +13,9 @@ def jwt_authorizer(token):
     try:
         payload = jwt.decode(
             token[1],
-            config("jwt_secret"),
+            "",
             algorithms=config("jwt_algorithm"),
-            audience=[f"plugin:{helper.get_stage_name()}", f"front:{helper.get_stage_name()}"]
+            audience=[ f"front:default-foss"]
         )
     except jwt.ExpiredSignatureError:
         print("! JWT Expired signature")
