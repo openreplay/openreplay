@@ -46,6 +46,9 @@ ingress-nginx: &ingress-nginx
     ingressClassResource:
       # -- Name of the ingressClass
       name: openreplay
+  # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+  # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+    ingressClass: openreplay
     service:
       externalTrafficPolicy: "Local"
     extraArgs:
