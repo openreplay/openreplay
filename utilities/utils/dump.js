@@ -15,20 +15,14 @@ async function createHeapSnapshot() {
 
 async function sendHeapSnapshot(req, res) {
     const fileName = await createHeapSnapshot();
-    const file = fs.readFileSync(location + fileName, 'binary');
-    const stat = fs.statSync(location + fileName);
-
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
-    res.write(file, 'binary');
-    res.end();
-    try {
-        fs.unlinkSync(location + fileName)
-    } catch (err) {
-        console.error("error while deleting heapsnapshot file");
-        console.error(err);
-    }
+    res.download(location + fileName, function (err) {
+        try {
+            fs.unlinkSync(location + fileName)
+        } catch (err) {
+            console.error("error while deleting heapsnapshot file");
+            console.error(err);
+        }
+    });
 }
 
 process.on('USR2', () => {
