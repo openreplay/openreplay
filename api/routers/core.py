@@ -21,6 +21,7 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
+@app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
@@ -36,6 +37,7 @@ def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.Cu
     }
 
 
+@app.get('/{projectId}/sessions/{sessionId}/favorite', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}/favorite', tags=["sessions"])
 def add_remove_favorite_session2(projectId: int, sessionId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
@@ -44,6 +46,7 @@ def add_remove_favorite_session2(projectId: int, sessionId: int,
                                                           session_id=sessionId)}
 
 
+@app.get('/{projectId}/sessions/{sessionId}/assign', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}/assign', tags=["sessions"])
 def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = Depends(OR_context)):
     data = sessions_assignments.get_by_session(project_id=projectId, session_id=sessionId,
@@ -56,6 +59,7 @@ def assign_session(projectId: int, sessionId, context: schemas.CurrentContext = 
     }
 
 
+@app.get('/{projectId}/sessions/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 @app.get('/{projectId}/sessions2/{sessionId}/errors/{errorId}/sourcemaps', tags=["sessions", "sourcemaps"])
 def get_error_trace(projectId: int, sessionId: int, errorId: str,
                     context: schemas.CurrentContext = Depends(OR_context)):
@@ -67,6 +71,7 @@ def get_error_trace(projectId: int, sessionId: int, errorId: str,
     }
 
 
+@app.get('/{projectId}/sessions/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 @app.get('/{projectId}/sessions2/{sessionId}/assign/{issueId}', tags=["sessions", "issueTracking"])
 def assign_session(projectId: int, sessionId: int, issueId: str,
                    context: schemas.CurrentContext = Depends(OR_context)):
@@ -79,6 +84,8 @@ def assign_session(projectId: int, sessionId: int, issueId: str,
     }
 
 
+@app.post('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
+@app.put('/{projectId}/sessions/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 @app.post('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 @app.put('/{projectId}/sessions2/{sessionId}/assign/{issueId}/comment', tags=["sessions", "issueTracking"])
 def comment_assignment(projectId: int, sessionId: int, issueId: str, data: schemas.CommentAssignmentSchema = Body(...),
@@ -387,7 +394,7 @@ def delete_sumologic(projectId: int, context: schemas.CurrentContext = Depends(O
 def get_integration_status(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
-    if error is not None:
+    if error is not None and integration is None:
         return {"data": {}}
     return {"data": integration.get_obfuscated()}
 
@@ -399,7 +406,7 @@ def add_edit_jira_cloud(data: schemas.JiraGithubSchema = Body(...),
     error, integration = integrations_manager.get_integration(tool=integration_jira_cloud.PROVIDER,
                                                               tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
-    if error is not None:
+    if error is not None and integration is None:
         return error
     data.provider = integration_jira_cloud.PROVIDER
     return {"data": integration.add_edit(data=data.dict())}
@@ -422,7 +429,7 @@ def add_edit_github(data: schemas.JiraGithubSchema = Body(...),
 def delete_default_issue_tracking_tool(context: schemas.CurrentContext = Depends(OR_context)):
     error, integration = integrations_manager.get_integration(tenant_id=context.tenant_id,
                                                               user_id=context.user_id)
-    if error is not None:
+    if error is not None and integration is None:
         return error
     return {"data": integration.delete()}
 
@@ -825,6 +832,19 @@ def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentCo
     return {'data': data}
 
 
+@app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])
+def get_live_session(projectId: int, sessionId: str, context: schemas.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
+    if data is None:
+        data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
+                                      user_id=context.user_id, include_fav_viewed=True, group_metadata=True, live=False)
+        if data is None:
+            return {"errors": ["session not found"]}
+        if data.get("inDB"):
+            sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
+    return {'data': data}
+
+
 @app.post('/{projectId}/heatmaps/url', tags=["heatmaps"])
 def get_heatmaps_by_url(projectId: int, data: schemas.GetHeatmapPayloadSchema = Body(...),
                         context: schemas.CurrentContext = Depends(OR_context)):
@@ -1063,78 +1083,6 @@ def change_client_password(data: schemas.EditUserPasswordSchema = Body(...),
     return users.change_password(email=context.email, old_password=data.old_password,
                                  new_password=data.new_password, tenant_id=context.tenant_id,
                                  user_id=context.user_id)
-
-
-@app.post('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-@app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
-def try_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.merged_live(project_id=projectId, data=data)}
-
-
-@app.post('/{projectId}/custom_metrics', tags=["customMetrics"])
-@app.put('/{projectId}/custom_metrics', tags=["customMetrics"])
-def add_custom_metric(projectId: int, data: schemas.CreateCustomMetricsSchema = Body(...),
-                      context: schemas.CurrentContext = Depends(OR_context)):
-    return custom_metrics.create(project_id=projectId, user_id=context.user_id, data=data)
-
-
-@app.get('/{projectId}/custom_metrics', tags=["customMetrics"])
-def get_custom_metrics(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.get_all(project_id=projectId, user_id=context.user_id)}
-
-
-@app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
-@app.post('/{projectId}/custom_metrics/{metric_id}/sessions', tags=["customMetrics"])
-def get_custom_metric_sessions(projectId: int, metric_id: int,
-                               data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
-@app.post('/{projectId}/custom_metrics/{metric_id}/chart', tags=["customMetrics"])
-def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.make_chart(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                     data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
-@app.post('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-@app.put('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def update_custom_metric(projectId: int, metric_id: int, data: schemas.UpdateCustomMetricsSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.update(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
-    if data is None:
-        return {"errors": ["custom metric not found"]}
-    return {"data": data}
-
-
-@app.post('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
-@app.put('/{projectId}/custom_metrics/{metric_id}/status', tags=["customMetrics"])
-def update_custom_metric_state(projectId: int, metric_id: int,
-                               data: schemas.UpdateCustomMetricsStatusSchema = Body(...),
-                               context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": custom_metrics.change_state(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                            status=data.active)}
-
-
-@app.delete('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def delete_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.delete(project_id=projectId, user_id=context.user_id, metric_id=metric_id)}
 
 
 @app.post('/{projectId}/saved_search', tags=["savedSearch"])

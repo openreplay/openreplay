@@ -11,7 +11,7 @@ interface Props {
     onClick?: (event, index) => void;
 }
 function CustomMetriLineChart(props: Props) {
-    const { data, params, seriesMap, colors, onClick = () => null } = props;
+    const { data, params, seriesMap = [], colors, onClick = () => null } = props;
     return (
         <ResponsiveContainer height={ 240 } width="100%">
             <LineChart

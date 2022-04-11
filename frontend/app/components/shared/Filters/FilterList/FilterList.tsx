@@ -1,6 +1,8 @@
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import FilterItem from '../FilterItem';
 import { SegmentSelection, Popup } from 'UI';
+import { List } from 'immutable';
+import { useObserver } from 'mobx-react-lite';
 
 interface Props {
   // filters: any[]; // event/filter
@@ -9,19 +11,22 @@ interface Props {
   onRemoveFilter: (filterIndex) => void;
   onChangeEventsOrder: (e, { name, value }) => void;
   hideEventsOrder?: boolean;
+  observeChanges?: () => void;
 }
 function FilterList(props: Props) {
-  const { filter, hideEventsOrder = false } = props;
-  const filters = filter.filters;
-  const hasEvents = filter.filters.filter(i => i.isEvent).size > 0;
-  const hasFilters = filter.filters.filter(i => !i.isEvent).size > 0;
+  const { observeChanges = () => {}, filter, hideEventsOrder = false } = props;
+  const filters = List(filter.filters);
+  const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
+  const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
   let rowIndex = 0;
+
+  useEffect(observeChanges, [filters]);
 
   const onRemoveFilter = (filterIndex) => {
     props.onRemoveFilter(filterIndex);
   }
 
-  return (
+  return useObserver(() => (
     <div className="flex flex-col">
       { hasEvents && (
         <>
@@ -54,7 +59,7 @@ function FilterList(props: Props) {
               </div>
             )}
           </div>
-          {filters.map((filter, filterIndex) => filter.isEvent ? (
+          {filters.map((filter: any, filterIndex: any) => filter.isEvent ? (
             <FilterItem
               key={filterIndex}
               filterIndex={rowIndex++}
@@ -71,7 +76,7 @@ function FilterList(props: Props) {
         <>
           {hasEvents && <div className='border-t -mx-5 mb-4' />}
           <div className="mb-2 text-sm color-gray-medium mr-auto">FILTERS</div>
-          {filters.map((filter, filterIndex) => !filter.isEvent ? (
+          {filters.map((filter: any, filterIndex: any) => !filter.isEvent ? (
             <FilterItem
               key={filterIndex}
               isFilter={true}
@@ -84,7 +89,7 @@ function FilterList(props: Props) {
         </>
       )}
     </div>
-  );
+  ));
 }
 
 export default FilterList;

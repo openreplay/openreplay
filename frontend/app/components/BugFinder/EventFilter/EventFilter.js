@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { Input } from 'semantic-ui-react';
-import { DNDContext } from 'Components/hocs/dnd';
+// import { DNDContext } from 'Components/hocs/dnd';
 import {
   addEvent, applyFilter, moveEvent, clearEvents, edit,
   addCustomFilter, addAttribute, setSearchQuery, setActiveFlow, setFilterOption
@@ -45,7 +45,7 @@ import SaveFilterButton from 'Shared/SaveFilterButton';
   setBlink,
   edit,
 })
-@DNDContext
+// @DNDContext
 export default class EventFilter extends React.PureComponent {
   state = { search: '', showFilterModal: false, showPlacehoder: true }
   fetchEventList = debounce(this.props.fetchEventList, 500)
