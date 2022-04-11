@@ -1,4 +1,4 @@
-const dumps = require('./utils/dump');
+const dumps = require('./utils/HeapSnapshot');
 const sourcemapsReaderServer = require('./servers/sourcemaps-server');
 const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 const express = require('express');
