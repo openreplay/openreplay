@@ -1,8 +1,9 @@
-var sourcemapsReaderServer = require('./servers/sourcemaps-server');
-var {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
-var express = require('express');
+const dumps = require('./utils/dump');
+const sourcemapsReaderServer = require('./servers/sourcemaps-server');
+const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
+const express = require('express');
 const {ExpressPeerServer} = require('peer');
-var socket;
+let socket;
 if (process.env.redis === "true") {
     console.log("Using Redis");
     socket = require("./servers/websocket-cluster");
@@ -13,7 +14,7 @@ if (process.env.redis === "true") {
 const HOST = '0.0.0.0';
 const PORT = 9000;
 
-var app = express();
+const app = express();
 
 let debug = process.env.debug === "1" || false;
 const request_logger = (identity) => {
@@ -50,6 +51,8 @@ peerServer.on('disconnect', peerDisconnect);
 peerServer.on('error', peerError);
 app.use('/', peerServer);
 app.enable('trust proxy');
+app.get('/heapdump', dumps.sendHeapSnapshot);
+app.get('/heapdump/save', dumps.saveHeapSnapshot);
 
 if (process.env.uws !== "true") {
     var wsapp = express();
@@ -126,3 +129,4 @@ if (process.env.uws !== "true") {
     });
     module.exports = {uapp, server};
 }
+console.log(`Heapdump enabled. Send a request to "/heapdump" to download a heapdump,\nor "/heapdump/save" to only generate a heapdump.`);
