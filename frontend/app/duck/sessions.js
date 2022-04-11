@@ -316,10 +316,10 @@ export function fetchInsights(params) {
   };
 }
 
-export function fetchLiveList() {
+export function fetchLiveList(params = {}) {
   return {
     types: FETCH_LIVE_LIST.toArray(),
-    call: client => client.get('/assist/sessions', { userId: 'test'}),
+    call: client => client.get('/assist/sessions', params),
   };
 }
 
