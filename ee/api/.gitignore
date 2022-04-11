@@ -242,6 +242,7 @@ Pipfile
 /auth/auth_apikey.py
 /auth/auth_jwt.py
 /build.sh
+/routers/base.py
 /routers/core.py
 /routers/crons/core_crons.py
 /routers/subs/dashboard.py
