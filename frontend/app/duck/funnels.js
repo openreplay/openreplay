@@ -24,6 +24,7 @@ const SAVE = saveType('funnel/SAVE');
 const UPDATE = saveType('funnel/UPDATE');
 const EDIT = editType('funnel/EDIT');
 const EDIT_FILTER = `${name}/EDIT_FILTER`;
+const EDIT_FUNNEL_FILTER = `${name}/EDIT_FUNNEL_FILTER`;
 const REMOVE = removeType('funnel/REMOVE');
 const INIT = initType('funnel/INIT');
 const SET_NAV_REF = 'funnels/SET_NAV_REF'
@@ -51,7 +52,6 @@ const REMOVE_SUCCESS = success(REMOVE);
 
 const range = getDateRangeFromValue(LAST_7_DAYS);
 const defaultDateFilters = {
-  events: [],
   rangeValue: LAST_7_DAYS,
   startDate: range.start.unix() * 1000,
   endDate: range.end.unix() * 1000
@@ -67,7 +67,7 @@ const initialState = Map({
   sessionsTotal: 0,
   sessions: List(),
   activeStages: List(),
-  funnelFilters: defaultDateFilters,
+  funnelFilters: Map(defaultDateFilters),
   sessionsSort: Map({ order: "desc", sort: "newest" }),
   issueFilters: Map({
     filters: List(),
@@ -87,6 +87,8 @@ const reducer = (state = initialState, action = {}) => {
       return state.mergeIn([ 'instance' ], action.instance);
     case EDIT_FILTER:
       return state.mergeIn([ 'instance', 'filter' ], action.instance);
+    case EDIT_FUNNEL_FILTER:
+      return state.mergeIn([ 'funnelFilters' ], action.instance);
     case INIT:
       return state.set('instance', Funnel(action.instance))
 		case FETCH_LIST_SUCCESS:
@@ -171,7 +173,7 @@ const reducer = (state = initialState, action = {}) => {
         .set('instance', Funnel())
         .set('activeStages', List())
         .set('issuesSort', Map({}))
-        .set('funnelFilters', defaultDateFilters)
+        // .set('funnelFilters', Map(defaultDateFilters))
         .set('insights', Funnel())
         .set('issues', List())
         .set('sessions', List());
@@ -200,6 +202,7 @@ export const fetch = (funnelId, params) => (dispatch, getState) => {
 function getParams(params, state) {
   const filter = state.getIn([ 'funnels', 'instance', 'filter']).toData();
   filter.filters = filter.filters.map(filterMap);
+  const funnelFilters = state.getIn([ 'funnels', 'funnelFilters']).toJS();
 
   // const appliedFilter = state.getIn([ 'funnels', 'instance', 'filter' ]);
   // const filter = appliedFilter
@@ -209,7 +212,7 @@ function getParams(params, state) {
   // filter.filters = state.getIn([ 'funnelFilters', 'appliedFilter', 'filters' ])
   //   .map(filterMap).toJS();
 
-  return filter;
+  return { ...filter, ...funnelFilters };
 }
 
 export const fetchInsights = (funnelId, params = {}, isRefresh = false) => (dispatch, getState) => {  
@@ -372,7 +375,7 @@ export const resetIssue = () => {
 
 export const resetFunnel = () => {  
   return {
-    type: RESET_FUNNEL,    
+    type: RESET_FUNNEL,
   }
 }
 
@@ -425,6 +428,11 @@ const reduceThenFetchList = actionCreator => (...args) => (dispatch, getState) =
 
 export const editFilter = reduceThenFetchList((instance) => ({
   type: EDIT_FILTER,
+  instance,
+}));
+
+export const editFunnelFilter = reduceThenFetchList((instance) => ({
+  type: EDIT_FUNNEL_FILTER,
   instance,
 }));
 

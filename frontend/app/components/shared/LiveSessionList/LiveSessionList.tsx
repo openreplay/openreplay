@@ -45,11 +45,11 @@ function LiveSessionList(props: Props) {
   // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
   // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
-  useEffect(() => {
-    if (filters.size === 0) {
-      props.addFilterByKeyAndValue(FilterKey.USERID, '');
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (filters.size === 0) {
+  //     props.addFilterByKeyAndValue(FilterKey.USERID, '');
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (metaList.size === 0 || !!sort.field) return;

@@ -319,7 +319,7 @@ export function fetchInsights(params) {
 export function fetchLiveList() {
   return {
     types: FETCH_LIVE_LIST.toArray(),
-    call: client => client.get('/assist/sessions'),
+    call: client => client.get('/assist/sessions', { userId: 'test'}),
   };
 }
 

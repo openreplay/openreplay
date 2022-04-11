@@ -169,7 +169,7 @@ export default class DashboardStore implements IDashboardSotre {
         return dashboardService.getDashboards()
             .then((list: any) => {
                 runInAction(() => {
-                    this.dashboards = list.map(d => new Dashboard().fromJson(d)).sort((a, b) => a.position - b.position)
+                    this.dashboards = list.map(d => new Dashboard().fromJson(d))
                 })
             }).finally(() => {
                 runInAction(() => {

@@ -107,7 +107,7 @@ function WidgetWrapper(props: Props) {
                 )}
             </div>
 
-            <LazyLoad height={300} offset={320} >
+            <LazyLoad height={100} offset={120} >
                 <div className="px-4" onClick={onChartClick}>
                     <WidgetChart metric={widget} isWidget={isWidget} />
                 </div>

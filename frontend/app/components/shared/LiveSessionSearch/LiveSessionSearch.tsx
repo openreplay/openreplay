@@ -42,9 +42,9 @@ function LiveSessionSearch(props: Props) {
     });
 
     props.edit({ filters: newFilters, });
-    if (newFilters.size === 0) {
-      props.addFilterByKeyAndValue(FilterKey.USERID, '');
-    }
+    // if (newFilters.size === 0) {
+    //   props.addFilterByKeyAndValue(FilterKey.USERID, '');
+    // }
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
@@ -53,7 +53,7 @@ function LiveSessionSearch(props: Props) {
     });
   }
 
-  return (hasEvents || hasFilters) ? (
+  return  (
     <div className="border bg-white rounded mt-4">
       <div className="p-5">
         <FilterList
@@ -75,7 +75,7 @@ function LiveSessionSearch(props: Props) {
         </div>
       </div>
     </div>
-  ) : <></>;
+  );
 }
 
 export default connect(state => ({
