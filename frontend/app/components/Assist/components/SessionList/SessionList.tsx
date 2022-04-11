@@ -8,11 +8,15 @@ interface Props {
   loading: boolean,
   list: any,
   session: any,
-  fetchLiveList: () => void,
+  fetchLiveList: (params: any) => void,
 }
 function SessionList(props: Props) {
   useEffect(() => {
-    props.fetchLiveList();
+    const params: any = {}
+    if (props.session.userId) {
+      params.userId = props.session.userId
+    }
+    props.fetchLiveList(params);
   }, [])
 
   return (
