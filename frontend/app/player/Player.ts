@@ -30,10 +30,10 @@ const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
 const SHOW_EVENTS_STORAGE_KEY = "__$player-show-events$__";
 const storedSpeed: number = parseInt(localStorage.getItem(SPEED_STORAGE_KEY) || "") ;
 const initialSpeed = [1,2,4,8,16].includes(storedSpeed) ? storedSpeed : 1;
-const initialSkip = !!localStorage.getItem(SKIP_STORAGE_KEY);
-const initialSkipToIssue = !!localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY);
-const initialAutoplay = !!localStorage.getItem(AUTOPLAY_STORAGE_KEY);
-const initialShowEvents = !!localStorage.getItem(SHOW_EVENTS_STORAGE_KEY);
+const initialSkip = localStorage.getItem(SKIP_STORAGE_KEY) === 'true';
+const initialSkipToIssue = localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY) === 'true';
+const initialAutoplay = localStorage.getItem(AUTOPLAY_STORAGE_KEY) === 'true';
+const initialShowEvents = localStorage.getItem(SHOW_EVENTS_STORAGE_KEY) === 'true';
 
 export const INITIAL_STATE = {
   ...SUPER_INITIAL_STATE,
