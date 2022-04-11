@@ -1,14 +1,15 @@
-var sourcemapsReaderServer = require('./servers/sourcemaps-server');
-var {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
-var express = require('express');
+const dumps = require('./utils/dump');
+const sourcemapsReaderServer = require('./servers/sourcemaps-server');
+const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
+const express = require('express');
 const {ExpressPeerServer} = require('peer');
 const socket = require("./servers/websocket");
 
 const HOST = '0.0.0.0';
 const PORT = 9000;
 
-var app = express();
-var wsapp = express();
+const app = express();
+const wsapp = express();
 let debug = process.env.debug === "1" || false;
 const request_logger = (identity) => {
     return (req, res, next) => {
@@ -28,6 +29,13 @@ wsapp.use(request_logger("[wsapp]"));
 app.use('/sourcemaps', sourcemapsReaderServer);
 app.use('/assist', peerRouter);
 wsapp.use('/assist', socket.wsRouter);
+
+app.get('/heapdump', dumps.sendHeapSnapshot);
+app.get('/heapdump/save', dumps.saveHeapSnapshot);
+wsapp.get('/heapdump', dumps.sendHeapSnapshot);
+wsapp.get('/heapdump/save', dumps.saveHeapSnapshot);
+
+console.log(`Heapdump enabled. Send a request to "/heapdump" to download a heapdump,\nor "/heapdump/save" to only generate a heapdump.`);
 
 const server = app.listen(PORT, HOST, () => {
     console.log(`App listening on http://${HOST}:${PORT}`);
