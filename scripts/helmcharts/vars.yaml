@@ -56,6 +56,10 @@ ingress-nginx: &ingress-nginx
     config:
       enable-real-ip: true
       forwarded-for-header: "proxy_protocol"
+      # If you want the ssl offload in LB layer
+      # Uncomment the following line
+      # ssl-redirect: false
+      # force-ssl-redirect: false
 
 # Application specific variables
 global:
