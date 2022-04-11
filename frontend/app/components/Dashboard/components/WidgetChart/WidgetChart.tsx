@@ -4,25 +4,24 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer, useObserver, useLocalObservable } from 'mobx-react-lite';
+import { useObserver } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
-import CustomMetricOverviewChart from '../../Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
+import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
 interface Props {
     metric: any;
     isWidget?: boolean
 }
 function WidgetChart(props: Props) {
     const { isWidget = false, metric } = props;
-    // const metric = useObserver(() => props.metric);
     const { dashboardStore } = useStore();
     const period = useObserver(() => dashboardStore.period);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(false)
     const [seriesMap, setSeriesMap] = useState<any>([]);
-    const params = { density: 70 } 
-    const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
+    const params = { density: 28 } 
+    const metricParams = { ...params }
     const prevMetricRef = useRef<any>();
     const [data, setData] = useState<any>(metric.data);
 
@@ -34,7 +33,7 @@ function WidgetChart(props: Props) {
         prevMetricRef.current = metric;
         
         setLoading(true);
-        const data = isWidget ? {} : { ...metricParams, ...metric.toJson() };
+        const data = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
         dashboardStore.fetchMetricChartData(metric, data, isWidget).then((res: any) => {
             setData(res);
         }).finally(() => {

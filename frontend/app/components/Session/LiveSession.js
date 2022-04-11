@@ -27,7 +27,7 @@ function LiveSession({
 
 	useEffect(() => {
 		if (sessionId != null) {
-			fetchSession(sessionId)
+			fetchSession(sessionId, true)
 		} else {
 			console.error("No sessionID in route.")
 		}
