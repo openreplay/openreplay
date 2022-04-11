@@ -255,6 +255,16 @@ async function get_all_agents_ids(io, socket) {
     return agents;
 }
 
+let geoip = null;
+geoip2Reader.open(process.env.MAXMINDDB_FILE, {})
+    .then(reader => {
+        geoip = reader;
+    })
+    .catch(error => {
+        console.log("Error while opening the MAXMINDDB_FILE.")
+        console.error(error);
+    });
+
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
         debug && console.log("received headers");
@@ -268,21 +278,11 @@ function extractSessionInfo(socket) {
         socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
         socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || 'desktop';
         socket.handshake.query.sessionInfo.userCountry = null;
-
-        const options = {
-            // you can use options like `cache` or `watchForUpdates`
-        };
-        // console.log("Looking for MMDB file in " + process.env.MAXMINDDB_FILE);
-        geoip2Reader.open(process.env.MAXMINDDB_FILE, options)
-            .then(reader => {
-                debug && console.log("looking for location of ");
-                debug && console.log(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
-                let country = reader.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
-                socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
-            })
-            .catch(error => {
-                console.error(error);
-            });
+        if (geoip !== null) {
+            debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
+            let country = geoip.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+            socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
+        }
     }
 }
 
@@ -294,10 +294,6 @@ module.exports = {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
-            const {projectKey, sessionId} = extractPeerId(socket.peerId);
-            socket.sessionId = sessionId;
-            socket.projectKey = projectKey;
-            socket.lastMessageReceivedAt = Date.now();
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 if (c_sessions > 0) {
@@ -361,7 +357,6 @@ module.exports = {
             });
 
             socket.onAny(async (eventName, ...args) => {
-                socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
