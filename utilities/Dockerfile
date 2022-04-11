@@ -1,4 +1,4 @@
-FROM node:17-stretch
+FROM node:17-alpine
 WORKDIR /work
 COPY . .
 RUN npm install
