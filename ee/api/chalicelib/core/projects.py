@@ -257,7 +257,8 @@ def get_project_key(project_id):
                     where project_id =%(project_id)s AND deleted_at ISNULL;""",
                         {"project_id": project_id})
         )
-        return cur.fetchone()["project_key"]
+        project = cur.fetchone()
+        return project["project_key"] if project is not None else None
 
 
 def get_capture_status(project_id):
