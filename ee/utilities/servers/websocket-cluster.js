@@ -87,8 +87,7 @@ const extractProjectKeyFromRequest = function (req) {
 
 
 const getAvailableRooms = async function () {
-    let rooms = await io.of('/').adapter.allRooms();
-    return rooms;
+    return io.of('/').adapter.allRooms();
 }
 
 const respond = function (res, data) {
@@ -175,7 +174,7 @@ const socketsLive = async function (req, res) {
                     }
                 }
             }
-            liveSessions[projectKey] = uniqueSessions(liveSessions[_projectKey]);
+            liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey]);
         }
     }
     respond(res, liveSessions);
@@ -204,7 +203,7 @@ const socketsLiveByProject = async function (req, res) {
                     }
                 }
             }
-            liveSessions[projectKey] = uniqueSessions(liveSessions[_projectKey]);
+            liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey] || []);
         }
     }
     respond(res, liveSessions[_projectKey] || []);
