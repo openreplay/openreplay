@@ -113,7 +113,7 @@ class Notifications extends React.Component {
               <NoContent
                 title=""
                 subtext="There are no alerts to show."
-                icon="exclamation-circle"
+                animatedIcon="no-results"
                 show={ !loading && notifications.size === 0 }
                 size="small"
               >

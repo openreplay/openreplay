@@ -23,7 +23,7 @@ function MetricsList(props: Props) {
     const lenth = list.length;
 
     return useObserver(() => (
-        <NoContent show={lenth === 0} icon="exclamation-circle">
+        <NoContent show={lenth === 0} animatedIcon="no-results">
             <div className="mt-3 border rounded bg-white">
                 <div className="grid grid-cols-12 p-3 font-medium">
                     <div className="col-span-3">Title</div>

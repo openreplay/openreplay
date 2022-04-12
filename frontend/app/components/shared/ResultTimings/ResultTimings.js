@@ -24,7 +24,7 @@ function ResultTimings({ duration, timing }) {
   return (
     <NoContent
       title="No Data!"
-      icon="exclamation-circle"
+      animatedIcon="no-results"
       show={ List.isList(timing)}
       size="small"
     >

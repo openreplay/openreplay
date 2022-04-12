@@ -44,7 +44,7 @@ export default class FetchDetails extends React.PureComponent {
             title="Body is Empty."
             size="small"
             show={ !payload }
-            icon="exclamation-circle"
+            animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
@@ -63,7 +63,7 @@ export default class FetchDetails extends React.PureComponent {
             title="Body is Empty."
             size="small"
             show={ !response }
-            icon="exclamation-circle"
+            animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">

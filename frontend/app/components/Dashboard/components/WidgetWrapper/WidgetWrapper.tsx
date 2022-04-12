@@ -61,10 +61,6 @@ function WidgetWrapper(props: Props) {
         }
     }
 
-    const editHandler = () => {
-        console.log('clicked', widget.metricId);
-    }
-
     const onChartClick = () => {
         if (!isWidget || widget.metricType === 'predefined') return;
         props.history.push(withSiteId(dashboardMetricDetails(dashboardId, widget.metricId),siteId));
@@ -88,14 +84,13 @@ function WidgetWrapper(props: Props) {
             <div
                 className="p-3 cursor-move flex items-center justify-between"
             >
-                
                 <h3 className="capitalize">{widget.name}</h3>
                 {isWidget && (
                     <div>
                         <ItemMenu
                             items={[
                                 {
-                                    text: 'Edit', onClick: editHandler,
+                                    text: 'Edit', onClick: onChartClick,
                                 },
                                 {
                                     text: 'Hide from view',

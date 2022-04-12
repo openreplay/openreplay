@@ -101,7 +101,7 @@ function SessionListModal(props: Props) {
                         <NoContent 
                             show={ !loading && (filteredSessions.length === 0 )}
                             title="No recordings found!"
-                            icon="exclamation-circle"
+                            animatedIcon="no-results"
                         >
                             { filteredSessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
                         </NoContent> 

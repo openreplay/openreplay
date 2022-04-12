@@ -30,7 +30,7 @@ function FunnelSessionList(props) {
       <NoContent
         title="No recordings found!"
         subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ list.size === 0}
       >
         { list.take(displayedCount).map(session => (

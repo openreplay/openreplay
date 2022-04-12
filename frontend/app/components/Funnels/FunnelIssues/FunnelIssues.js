@@ -44,7 +44,7 @@ function FunnelIssues(props) {
       <NoContent
         title="No Issues Found!"
         subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ !loading && filteredList.size === 0}
       >        
         { filteredList.take(displayedCount).map(issue => (

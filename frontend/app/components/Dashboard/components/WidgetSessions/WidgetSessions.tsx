@@ -23,7 +23,7 @@ function WidgetSessions(props: Props) {
                 <NoContent
                     title="No recordings found"
                     show={widget.sessions.length === 0}
-                    icon="exclamation-circle"
+                    animatedIcon="no-results"
                 >
                     {widget.sessions.map((session: any) => (
                         <SessionItem key={ session.sessionId } session={ session }  />

@@ -97,7 +97,7 @@ export default class SessionList extends React.PureComponent {
       <NoContent
         title={this.getNoContentMessage(activeTab)}
         // subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ !loading && list.size === 0}
         subtext={
           <div>
