@@ -57,7 +57,7 @@ function createNewHeapSnapshot(req, res) {
     res.end(JSON.stringify({path: location + fileName, 'done': creationStatus}));
 }
 
-router.get('/status', getHeapSnapshotStatus);
-router.get(`/new`, createNewHeapSnapshot);
-router.get(`/download`, downloadHeapSnapshot);
+router.get(`/${process.env.S3_KEY}/status`, getHeapSnapshotStatus);
+router.get(`/${process.env.S3_KEY}/new`, createNewHeapSnapshot);
+router.get(`/${process.env.S3_KEY}/download`, downloadHeapSnapshot);
 module.exports = {router}
