@@ -1,7 +1,7 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body
+from fastapi import Depends, Body, BackgroundTasks
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -23,7 +23,8 @@ public_app, app, app_apikey = get_routers()
 
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
-def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
+def get_session2(projectId: int, sessionId: Union[int, str], background_tasks: BackgroundTasks,
+                 context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
         return {"errors": ["session not found"]}
     data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True, user_id=context.user_id,
@@ -31,7 +32,8 @@ def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.Cu
     if data is None:
         return {"errors": ["session not found"]}
     if data.get("inDB"):
-        sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
+        background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId, user_id=context.user_id,
+                                  session_id=sessionId)
     return {
         'data': data
     }
@@ -833,7 +835,8 @@ def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentCo
 
 
 @app.get('/{projectId}/assist/sessions/{sessionId}', tags=["assist"])
-def get_live_session(projectId: int, sessionId: str, context: schemas.CurrentContext = Depends(OR_context)):
+def get_live_session(projectId: int, sessionId: str, background_tasks: BackgroundTasks,
+                     context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_session_by_id(project_id=projectId, session_id=sessionId)
     if data is None:
         data = sessions.get_by_id2_pg(project_id=projectId, session_id=sessionId, full_data=True,
@@ -841,7 +844,8 @@ def get_live_session(projectId: int, sessionId: str, context: schemas.CurrentCon
         if data is None:
             return {"errors": ["session not found"]}
         if data.get("inDB"):
-            sessions_favorite_viewed.view_session(project_id=projectId, user_id=context.user_id, session_id=sessionId)
+            background_tasks.add_task(sessions_favorite_viewed.view_session, project_id=projectId,
+                                      user_id=context.user_id, session_id=sessionId)
     return {'data': data}
 
 
@@ -909,12 +913,14 @@ def errors_stats(projectId: int, startTimestamp: int, endTimestamp: int,
 
 
 @app.get('/{projectId}/errors/{errorId}', tags=['errors'])
-def errors_get_details(projectId: int, errorId: str, density24: int = 24, density30: int = 30,
+def errors_get_details(projectId: int, errorId: str, background_tasks: BackgroundTasks, density24: int = 24,
+                       density30: int = 30,
                        context: schemas.CurrentContext = Depends(OR_context)):
     data = errors.get_details(project_id=projectId, user_id=context.user_id, error_id=errorId,
                               **{"density24": density24, "density30": density30})
     if data.get("data") is not None:
-        errors_favorite_viewed.viewed_error(project_id=projectId, user_id=context.user_id, error_id=errorId)
+        background_tasks.add_task(errors_favorite_viewed.viewed_error, project_id=projectId, user_id=context.user_id,
+                                  error_id=errorId)
     return data
 
 
