@@ -20,7 +20,7 @@ function DashboardWidgetGrid(props) {
         <Loader loading={loading}>
             <NoContent
                 show={list.length === 0}
-                icon="exclamation-circle"
+                icon="no-metrics-chart"
                 title="No metrics added to this dashboard"
                 subtext={
                     <div>

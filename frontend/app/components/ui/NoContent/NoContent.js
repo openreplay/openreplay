@@ -5,6 +5,7 @@ export default ({
   title = "No data available.",
   subtext,
   icon,
+  iconSize = 100,
   size,
   show = true,
   children = null,
@@ -14,7 +15,8 @@ export default ({
 }) => (!show ? children :
 <div className={ `${ styles.wrapper } ${ size && styles[ size ] }` } style={style}>
   {
-    icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
+    // icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
+    icon && <Icon name={icon} size={iconSize} />
   }
   { title && <div className={ styles.title }>{ title }</div> }
   {
