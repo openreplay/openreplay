@@ -74,7 +74,6 @@ export default class SessionList extends React.PureComponent {
 
   componentDidMount() {
     const { scrollY } = this.props;
-    console.log('scrollY', scrollY);
     window.scrollTo(0, scrollY);
   }
 
