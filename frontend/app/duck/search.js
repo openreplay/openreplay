@@ -30,6 +30,7 @@ const APPLY = `${name}/APPLY`;
 const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
 const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
 const SET_ACTIVE_TAB = `${name}/SET_ACTIVE_TAB`;
+const SET_SCROLL_POSITION = `${name}/SET_SCROLL_POSITION`;
 
 const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
 
@@ -53,6 +54,7 @@ const initialState = Map({
   filterSearchList: {},
   currentPage: 1,
   activeTab: {name: 'All', type: 'all' },
+  scrollY: 0,
 });
 
 // Metric - Series - [] - filters
@@ -91,6 +93,8 @@ function reducer(state = initialState, action = {}) {
       return state.set('currentPage', action.page);
     case SET_ACTIVE_TAB:
       return state.set('activeTab', action.tab).set('currentPage', 1);
+    case SET_SCROLL_POSITION:
+      return state.set('scrollY', action.scrollPosition);
 	}
 	return state;
 }
@@ -299,5 +303,12 @@ export const editSavedSearch = instance => {
 export const refreshFilterOptions = () => {
   return {
     type: REFRESH_FILTER_OPTIONS
+  }
+}
+
+export const setScrollPosition = (scrollPosition) => {
+  return {
+    type: SET_SCROLL_POSITION,
+    scrollPosition,
   }
 }
