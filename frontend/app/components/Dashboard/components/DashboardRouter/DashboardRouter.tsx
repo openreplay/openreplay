@@ -15,6 +15,12 @@ import DashboardView from '../DashboardView';
 import MetricsView from '../MetricsView';
 import WidgetView from '../WidgetView';
 
+function DashboardViewSelected({ siteId, dashboardId}) {
+    return (
+        <DashboardView siteId={siteId} dashboardId={dashboardId} />
+    )
+}
+
 interface Props {
     history: any
     match: any
@@ -32,6 +38,10 @@ function DashboardRouter(props: Props) {
                     <WidgetView siteId={siteId} {...props} />
                 </Route>
 
+                <Route exact strict path={withSiteId(dashboard(''), siteId)}>
+                    <DashboardView siteId={siteId} dashboardId={dashboardId} />
+                </Route>
+
                 <Route exact strict path={withSiteId(dashboardMetricDetails(dashboardId), siteId)}>
                     <WidgetView siteId={siteId} {...props} />
                 </Route>
@@ -40,12 +50,8 @@ function DashboardRouter(props: Props) {
                     <WidgetView siteId={siteId} {...props} />
                 </Route>
 
-                <Route exact strict path={withSiteId(dashboard(''), siteId)}>
-                    <>Nothing...</>
-                </Route>
-
                 <Route exact strict path={withSiteId(dashboardSelected(dashboardId), siteId)}>
-                    <DashboardView siteId={siteId} dashboardId={dashboardId} />
+                    <DashboardViewSelected siteId={siteId} dashboardId={dashboardId} />
                 </Route>
             </Switch>
         </div>

@@ -18,7 +18,7 @@ function DashboardSideMenu(props: Props) {
     const { history, siteId } = props;
     const { hideModal, showModal } = useModal();
     const { dashboardStore } = useStore();
-    const dashboardId = dashboardStore.selectedDashboard?.dashboardId;
+    const dashboardId = useObserver(() => dashboardStore.selectedDashboard?.dashboardId);
     const dashboardsPicked = useObserver(() => dashboardStore.dashboards.slice(0, SHOW_COUNT));
     const remainingDashboardsCount = dashboardStore.dashboards.length - SHOW_COUNT;
 

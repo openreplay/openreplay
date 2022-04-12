@@ -23,12 +23,19 @@ function DashboardView(props: Props) {
     const { dashboardStore } = useStore();
     const { hideModal, showModal } = useModal();
     const loading = useObserver(() => dashboardStore.fetchingDashboard);
-    const dashboard: any = dashboardStore.selectedDashboard
+    const dashboards = useObserver(() => dashboardStore.dashboards);
+    const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
     const period = useObserver(() => dashboardStore.period);
     const [showEditModal, setShowEditModal] = React.useState(false);
 
     useEffect(() => {
-        dashboardStore.fetch(dashboardId)
+        if (!dashboard || !dashboard.dashboardId) return;
+        dashboardStore.fetch(dashboard.dashboardId)
+    }, [dashboard]);
+
+    useEffect(() => {
+        if (dashboardId) return;
+        dashboardStore.selectDefaultDashboard();
     }, []);
     
     const onAddWidgets = () => {
@@ -58,9 +65,14 @@ function DashboardView(props: Props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <NoContent
-                show={!dashboard || !dashboard.dashboardId}
-                title="No data available."
+                show={dashboards.length === 0 || !dashboard || !dashboard.dashboardId}
+                icon="no-metrics-chart"
+                title="No dashboards available."
                 size="small"
+                iconSize={180}
+                subtext={
+                    <Button primary size="small" onClick={onAddWidgets}>Create Dashboard</Button>
+                }
             >
                 <div>
                     <DashboardEditModal
@@ -110,4 +122,4 @@ function DashboardView(props: Props) {
     ));
 }
 
-export default withRouter(withModal(observer(DashboardView)));
+export default withRouter(withModal(DashboardView));

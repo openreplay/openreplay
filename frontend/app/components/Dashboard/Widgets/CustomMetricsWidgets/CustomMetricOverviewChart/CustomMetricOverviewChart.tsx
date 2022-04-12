@@ -12,8 +12,8 @@ interface Props {
 }
 function CustomMetricOverviewChart(props: Props) {
     const { data } = props;
-    console.log('data', data)
     const gradientDef = Styles.gradientDef();
+    
     return (
         <div className="relative -mx-4">
             <div className="absolute flex items-start flex-col justify-center inset-0 p-3">

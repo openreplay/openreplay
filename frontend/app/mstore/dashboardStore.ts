@@ -181,7 +181,8 @@ export default class DashboardStore implements IDashboardSotre {
     fetch(dashboardId: string): Promise<any> {
         this.fetchingDashboard = true
         return dashboardService.getDashboard(dashboardId).then(response => {
-            this.selectedDashboard = new Dashboard().fromJson(response)
+            // const widgets =  new Dashboard().fromJson(response).widgets
+            this.selectedDashboard?.update({ 'widgets' : new Dashboard().fromJson(response).widgets})
         }).finally(() => {
             this.fetchingDashboard = false
         })
@@ -300,9 +301,9 @@ export default class DashboardStore implements IDashboardSotre {
 
     selectDashboardById = (dashboardId: any) => {
         this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || new Dashboard();
-        if (this.selectedDashboard.dashboardId) {
-            this.fetch(this.selectedDashboard.dashboardId)
-        }
+        // if (this.selectedDashboard.dashboardId) {
+        //     this.fetch(this.selectedDashboard.dashboardId)
+        // }
     }
 
     setSiteId = (siteId: any) => {
@@ -418,16 +419,16 @@ export default class DashboardStore implements IDashboardSotre {
                         // } else {
                         //     data.chart = getChartFormatter(this.period)(Array.isArray(data) ? data : data.chart)
                         // }
-                        data.namesMap = Array.isArray(data) ? data    
-                            .map(i => Object.keys(i))
-                            .flat()
-                            .filter(i => i !== 'time' && i !== 'timestamp')
-                            .reduce((unique: any, item: any) => {
-                                if (!unique.includes(item)) {
-                                    unique.push(item);
-                                }
-                                return unique;
-                            }, []) : data.chart;
+                        // data.namesMap = Array.isArray(data) ? data    
+                        //     .map(i => Object.keys(i))
+                        //     .flat()
+                        //     .filter(i => i !== 'time' && i !== 'timestamp')
+                        //     .reduce((unique: any, item: any) => {
+                        //         if (!unique.includes(item)) {
+                        //             unique.push(item);
+                        //         }
+                        //         return unique;
+                        //     }, []) : data.chart;
                         //     console.log('map', data.namesMap)
                         // const _data = { ...data, namesMap: data.namesMap, chart: data.chart }
                         // metric.setData(_data)
@@ -447,9 +448,8 @@ export default class DashboardStore implements IDashboardSotre {
                                     return unique;
                                 }, [])
                         } else {
-                            _data['chart'] = data
-                            _data['namesMap'] = data
-                                .map(i => Object.keys(i))
+                            _data['chart'] = Array.isArray(data) ? data : []
+                            _data['namesMap'] = Array.isArray(data) ? data.map(i => Object.keys(i))
                                 .flat()
                                 .filter(i => i !== 'time' && i !== 'timestamp')
                                 .reduce((unique: any, item: any) => {
@@ -457,7 +457,7 @@ export default class DashboardStore implements IDashboardSotre {
                                         unique.push(item);
                                     }
                                     return unique;
-                                }, [])
+                                }, []) : []
                         }
                         
                         metric.setData(_data)

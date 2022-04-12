@@ -130,7 +130,6 @@ export default class Widget implements IWidget {
             this.position = json.config.position
             this.predefinedKey = json.predefinedKey
         })
-        console.log(this.name, this.position)
         return this
     }
 
