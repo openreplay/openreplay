@@ -89,7 +89,7 @@ function DashboardMetricSelection(props) {
                 <div className="col-span-9">
                     <div
                         className="grid grid-cols-4 gap-4 -mx-4 px-4 pb-40 items-start"
-                        style={{ height: "calc(100vh - 165px)", overflowY: 'auto' }}
+                        style={{ maxHeight: "calc(100vh - 165px)", overflowY: 'auto' }}
                     >
                         {activeCategory && activeCategory.widgets.map((widget: any) => (
                             <WidgetWrapper
