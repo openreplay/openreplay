@@ -3,14 +3,14 @@ from chalicelib.utils import ch_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 
-def get_by_session_id(session_id):
+def get_by_session_id(session_id, project_id):
     with ch_client.ClickHouseClient() as ch:
         ch_query = """\
                 SELECT
                        datetime,url,type,duration,ttfb,header_size,encoded_body_size,decoded_body_size,success,coalesce(status,if(success, 200, status)) AS status
                 FROM resources
-                WHERE session_id = toUInt64(%(session_id)s);"""
-        params = {"session_id": session_id}
+                WHERE session_id = toUInt64(%(session_id)s) AND project_id=%(project_id)s;"""
+        params = {"session_id": session_id, "project_id": project_id}
         rows = ch.execute(query=ch_query, params=params)
         results = []
         for r in rows:
