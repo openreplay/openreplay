@@ -33,9 +33,10 @@ export default function(opts: Partial<Options> = {}) {
     },
     opts,
   );
+  const origFetch = window.fetch
   return (app: App | null) => {
     if (app === null) {
-      return window.fetch;
+      return origFetch
     }
 
     const ihOpt = options.ignoreHeaders
@@ -45,7 +46,7 @@ export default function(opts: Partial<Options> = {}) {
 
     const fetch = async (input: RequestInfo, init: RequestInit = {}) => {
       if (typeof input !== 'string') {
-        return window.fetch(input, init);
+        return origFetch(input, init);
       }
       if (options.sessionTokenHeader) {
         const sessionToken = app.getSessionToken();
@@ -63,7 +64,7 @@ export default function(opts: Partial<Options> = {}) {
         }
       }
       const startTime = performance.now();
-      const response = await window.fetch(input, init);
+      const response = await origFetch(input, init);
       const duration = performance.now() - startTime;
       if (options.failuresOnly && response.status < 400) {
         return response

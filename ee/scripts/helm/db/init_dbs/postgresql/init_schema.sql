@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.5.3-ee'
+SELECT 'v1.5.4-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -721,7 +721,22 @@ $$
             CREATE unique index IF NOT EXISTS autocomplete_unique ON autocomplete (project_id, value, type);
             CREATE index IF NOT EXISTS autocomplete_project_id_idx ON autocomplete (project_id);
             CREATE INDEX IF NOT EXISTS autocomplete_type_idx ON public.autocomplete (type);
-            CREATE INDEX IF NOT EXISTS autocomplete_value_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops);
+
+            CREATE INDEX autocomplete_value_clickonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'CLICK';
+            CREATE INDEX autocomplete_value_customonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'CUSTOM';
+            CREATE INDEX autocomplete_value_graphqlonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'GRAPHQL';
+            CREATE INDEX autocomplete_value_inputonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'INPUT';
+            CREATE INDEX autocomplete_value_locationonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'LOCATION';
+            CREATE INDEX autocomplete_value_referreronly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'REFERRER';
+            CREATE INDEX autocomplete_value_requestonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'REQUEST';
+            CREATE INDEX autocomplete_value_revidonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'REVID';
+            CREATE INDEX autocomplete_value_stateactiononly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'STATEACTION';
+            CREATE INDEX autocomplete_value_useranonymousidonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'USERANONYMOUSID';
+            CREATE INDEX autocomplete_value_userbrowseronly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'USERBROWSER';
+            CREATE INDEX autocomplete_value_usercountryonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'USERCOUNTRY';
+            CREATE INDEX autocomplete_value_userdeviceonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'USERDEVICE';
+            CREATE INDEX autocomplete_value_useridonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'USERID';
+            CREATE INDEX autocomplete_value_userosonly_gin_idx ON public.autocomplete USING GIN (value gin_trgm_ops) WHERE type = 'USEROS';
 
             BEGIN
                 IF NOT EXISTS(SELECT *
@@ -1018,7 +1033,7 @@ $$
             CREATE INDEX IF NOT EXISTS graphql_request_body_nn_gin_idx ON events.graphql USING GIN (request_body gin_trgm_ops) WHERE request_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS graphql_response_body_nn_idx ON events.graphql (response_body) WHERE response_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS graphql_response_body_nn_gin_idx ON events.graphql USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
-            
+
             CREATE TABLE IF NOT EXISTS events.state_actions
             (
                 session_id bigint NOT NULL REFERENCES sessions (session_id) ON DELETE CASCADE,

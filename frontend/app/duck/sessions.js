@@ -7,9 +7,9 @@ import withRequestState, { RequestTypes } from './requestStateCreator';
 import { getRE } from 'App/utils';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
+const name = 'sessions';
 
 const INIT = 'sessions/INIT';
-
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
 const FETCH_FAVORITE_LIST = new RequestTypes('sessions/FETCH_FAVORITE_LIST');
@@ -26,6 +26,7 @@ const TOGGLE_CHAT_WINDOW = 'sessions/TOGGLE_CHAT_WINDOW';
 const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
 const SET_SESSION_PATH = 'sessions/SET_SESSION_PATH';
+const LAST_PLAYED_SESSION_ID = `${name}/LAST_PLAYED_SESSION_ID`;
 
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
@@ -60,6 +61,7 @@ const initialState = Map({
   funnelPage: Map(),
   timelinePointer: null,
   sessionPath: '',
+  lastPlayedSessionId: null,
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -248,10 +250,20 @@ const reducer = (state = initialState, action = {}) => {
       return state.set('timelinePointer', action.pointer);
     case SET_SESSION_PATH:
       return state.set('sessionPath', action.path);
+    case LAST_PLAYED_SESSION_ID:
+      return updateListItem(state, action.sessionId, { viewed: true }).set('lastPlayedSessionId', action.sessionId);
     default:
       return state;
   }
 };
+
+function updateListItem(state, sourceSessionId, instance) {
+  const list = state.get('list');
+  const index = list.findIndex(({ sessionId }) => sessionId === sourceSessionId);
+  if (index === -1) return state;
+  
+  return state.updateIn([ 'list', index ], session => session.merge(instance));
+}
 
 export default withRequestState({
   _: [ FETCH, FETCH_LIST ],
@@ -391,4 +403,11 @@ export function setSessionPath(path) {
     type: SET_SESSION_PATH,
     path
   }
+}
+
+export function updateLastPlayedSession(sessionId) {
+  return {
+    type: LAST_PLAYED_SESSION_ID,
+    sessionId,
+  };
 }

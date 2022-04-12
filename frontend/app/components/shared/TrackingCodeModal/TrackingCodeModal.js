@@ -10,12 +10,12 @@ import cn from 'classnames';
 const PROJECT = 'Using Script';
 const DOCUMENTATION = 'Using NPM';
 const TABS = [
+  { key: DOCUMENTATION, text: DOCUMENTATION },
   { key: PROJECT, text: PROJECT },
-  { key: DOCUMENTATION, text: DOCUMENTATION }
 ];
 
 class TrackingCodeModal extends React.PureComponent {
-  state = { copied: false, changed: false, activeTab: PROJECT };
+  state = { copied: false, changed: false, activeTab: DOCUMENTATION };
 
   setActiveTab = (tab) => {
     this.setState({ activeTab: tab });

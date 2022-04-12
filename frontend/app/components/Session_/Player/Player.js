@@ -9,6 +9,7 @@ import Controls from './Controls';
 import Overlay from './Overlay';
 import stl from './player.css';
 import EventsToggleButton from '../../Session/EventsToggleButton';
+import { updateLastPlayedSession } from 'Duck/sessions';
 
 @connectPlayer(state => ({
   live: state.live,
@@ -18,16 +19,19 @@ import EventsToggleButton from '../../Session/EventsToggleButton';
   return {
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
     nextId: state.getIn([ 'sessions', 'nextId' ]),
+    sessionId: state.getIn([ 'sessions', 'current', 'sessionId' ]),
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !state.getIn([ 'sessions', 'current', 'live' ])),
   }
 }, {
   hideTargetDefiner,
   fullscreenOff,
+  updateLastPlayedSession,
 })
 export default class Player extends React.PureComponent {
   screenWrapper = React.createRef();
 
   componentDidMount() {
+    this.props.updateLastPlayedSession(this.props.sessionId);
     if (this.props.closedLive) return;
 
     const parentElement = findDOMNode(this.screenWrapper.current);  //TODO: good architecture

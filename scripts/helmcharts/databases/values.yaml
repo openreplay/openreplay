@@ -99,6 +99,9 @@ redis:
         cpu: 100m
         memory: 128Mi
 
+minio:
+  enabled: true
+
 postgresql:
   # postgresqlPassword: asayerPostgres
   fullnameOverride: postgresql

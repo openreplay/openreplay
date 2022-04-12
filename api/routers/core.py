@@ -21,13 +21,6 @@ from routers.base import get_routers
 public_app, app, app_apikey = get_routers()
 
 
-@app.get('/{projectId}/sessions2/favorite', tags=["sessions"])
-def get_favorite_sessions(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': sessions.get_favorite_sessions(project_id=projectId, user_id=context.user_id, include_viewed=True)
-    }
-
-
 @app.get('/{projectId}/sessions2/{sessionId}', tags=["sessions"])
 def get_session2(projectId: int, sessionId: Union[int, str], context: schemas.CurrentContext = Depends(OR_context)):
     if isinstance(sessionId, str):
@@ -126,7 +119,7 @@ def events_search(projectId: int, q: str,
         else:
             return {"data": []}
 
-    result = events.search_pg2(text=q, event_type=type, project_id=projectId, source=source, key=key)
+    result = events.search(text=q, event_type=type, project_id=projectId, source=source, key=key)
     return result
 
 
@@ -145,17 +138,6 @@ def session_filter_values(projectId: int, context: schemas.CurrentContext = Depe
 @app.get('/{projectId}/sessions/filters/top', tags=["sessions"])
 def session_top_filter_values(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {'data': sessions_metas.get_top_key_values(projectId)}
-
-
-@app.get('/{projectId}/sessions/filters/search', tags=["sessions"])
-def get_session_filters_meta(projectId: int, q: str, type: str,
-                             context: schemas.CurrentContext = Depends(OR_context)):
-    meta_type = type
-    if len(meta_type) == 0:
-        return {"data": []}
-    if len(q) == 0:
-        return {"data": []}
-    return sessions_metas.search(project_id=projectId, meta_type=meta_type, text=q)
 
 
 @app.post('/{projectId}/integrations/{integration}/notify/{integrationId}/{source}/{sourceId}', tags=["integrations"])
@@ -838,15 +820,8 @@ def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
-def sessions_live(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_sessions_ws(projectId)
-    return {'data': data}
-
-
-@app.post('/{projectId}/assist/sessions', tags=["assist"])
-def sessions_live_search(projectId: int, data: schemas.AssistSearchPayloadSchema = Body(...),
-                         context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_sessions_ws(projectId)
+def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_sessions_ws(projectId, user_id=userId)
     return {'data': data}
 
 
@@ -902,12 +877,9 @@ def edit_client(data: schemas.UpdateTenantSchema = Body(...),
 
 
 @app.post('/{projectId}/errors/search', tags=['errors'])
-def errors_search(projectId: int, status: str = "ALL", favorite: Union[str, bool] = False,
-                  data: schemas.SearchErrorsSchema = Body(...),
+def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    if isinstance(favorite, str):
-        favorite = True if len(favorite) == 0 else False
-    return errors.search(data, projectId, user_id=context.user_id, status=status, favorite_only=favorite)
+    return errors.search(data, projectId, user_id=context.user_id)
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
