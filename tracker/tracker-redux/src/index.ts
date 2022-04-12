@@ -23,8 +23,11 @@ export default function(opts: Partial<Options> = {}) {
       return () => next => action => next(action);
     }
     const encoder = new Encoder(sha1, 50);
+    app.attachStopCallback(() => {
+      encoder.clear()
+    })
     return ({ getState }) => next => action => {
-      if (!options.actionFilter(action)) {
+      if (!app.active() || !options.actionFilter(action)) {
         return next(action);
       }
       const startTime = performance.now();

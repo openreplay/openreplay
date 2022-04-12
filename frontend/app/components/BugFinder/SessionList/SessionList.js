@@ -22,6 +22,7 @@ var timeoutId;
   metaList: state.getIn(['customFields', 'list']).map(i => i.key),
   currentPage: state.getIn([ 'search', 'currentPage' ]),
   scrollY: state.getIn([ 'search', 'scrollY' ]),
+  lastPlayedSessionId: state.getIn([ 'sessions', 'lastPlayedSessionId' ]),
 }), {
   applyFilter,
   addAttribute,
@@ -87,6 +88,7 @@ export default class SessionList extends React.PureComponent {
       metaList,
       currentPage,
       total,
+      lastPlayedSessionId,
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
@@ -122,6 +124,7 @@ export default class SessionList extends React.PureComponent {
               hasUserFilter={hasUserFilter}
               onUserClick={this.onUserClick}
               metaList={metaList}
+              lastPlayedSessionId={lastPlayedSessionId}
             />
           ))}
         </Loader>

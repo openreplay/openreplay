@@ -1,4 +1,4 @@
-fromVersion: "v1.5.3"
+fromVersion: "v1.5.4"
 # Databases specific variables
 postgresql: &postgres
   # For generating passwords
@@ -94,13 +94,6 @@ chalice:
     # idp_sls_url: ''
     # idp_name: ''
     # idp_tenantKey: ''
-
-utilities:
-  replicaCount: 1
-  env:
-    debug: 0
-    uws: false
-    cluster: false
 
 # If you want to override something
 # chartname:

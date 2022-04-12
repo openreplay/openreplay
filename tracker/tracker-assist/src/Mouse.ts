@@ -45,7 +45,9 @@ export default class Mouse {
     if (el instanceof HTMLElement) {
       el.click()
       el.focus()
+      return el
     }
+    return null
   }
 
   private readonly pScrEl = document.scrollingElement || document.documentElement // Is it always correct

@@ -3,29 +3,25 @@ import cn from 'classnames';
 import { 
   Link,
   Icon,
-  OsIcon,
-  BrowserIcon,
   CountryFlag,
   Avatar,
   TextEllipsis,
   Label,
 } from 'UI';
-import { deviceTypeIcon } from 'App/iconNames';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import { session as sessionRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
-import LiveTag from 'Shared/LiveTag';
-import Bookmark from 'Shared/Bookmark';
 import Counter from './Counter'
 import { withRouter } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
 import ErrorBars from './ErrorBars';
-import { assist as assistRoute, liveSession, isRoute } from "App/routes";
+import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from "App/routes";
 import { capitalize } from 'App/utils';
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession()
+const SESSIONS_ROUTE = sessionsRoute();
 
 // const Label = ({ label = '', color = 'color-gray-medium'}) => (
 //   <div className={ cn('font-light text-sm', color)}>{label}</div>
@@ -69,10 +65,13 @@ export default class SessionItem extends React.PureComponent {
       disableUser = false,
       metaList = [],
       showActive = false,
+      lastPlayedSessionId,
     } = this.props;
     const formattedDuration = durationFormatted(duration);
     const hasUserId = userId || userAnonymousId;
+    const isSessions = isRoute(SESSIONS_ROUTE, this.props.location.pathname);
     const isAssist = isRoute(ASSIST_ROUTE, this.props.location.pathname) || isRoute(ASSIST_LIVE_SESSION, this.props.location.pathname);
+    const isLastPlayed = lastPlayedSessionId === sessionId;
 
     const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
       const value = metadata[key];
@@ -125,7 +124,7 @@ export default class SessionItem extends React.PureComponent {
                 </span>
               </div>
             </div>
-            { !isAssist && (
+            { isSessions && (
               <div style={{ width: "10%"}} className="self-center px-2 flex items-center">
                 <ErrorBars count={issueTypes.length} />
               </div>
@@ -139,6 +138,15 @@ export default class SessionItem extends React.PureComponent {
               </Label>
             )}
             <div className={ stl.playLink } id="play-button" data-viewed={ viewed }>
+              { isSessions && (
+                <div className="mr-4 flex-shrink-0 w-24">
+                  { isLastPlayed && (
+                    <Label className="bg-gray-lightest p-1 px-2 rounded-lg">
+                      <span className="color-gray-medium text-xs" style={{ whiteSpace: 'nowrap'}}>LAST PLAYED</span>
+                    </Label>
+                  )}
+                </div>
+              )}
               <Link to={ isAssist ? liveSessionRoute(sessionId) : sessionRoute(sessionId) }>
                 <Icon name={ !viewed && !isAssist ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
               </Link>
