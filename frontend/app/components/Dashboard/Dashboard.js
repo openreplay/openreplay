@@ -212,8 +212,7 @@ export default class Dashboard extends React.PureComponent {
                 show={ noWidgets }
                 title="You haven't added any insights widgets!"
                 subtext="Add new to keep track of Processed Sessions, Application Activity, Errors and lot more."
-                icon
-                empty
+                animatedIcon="empty-state"
               >
                 <WidgetSection
                   title="Overview"

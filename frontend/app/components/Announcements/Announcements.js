@@ -71,7 +71,7 @@ class Announcements extends React.Component {
               <NoContent
                 title=""
                 subtext="There are no announcements to show."
-                icon="exclamation-circle"
+                animatedIcon="no-results"
                 show={ !loading && announcements.size === 0 }
                 size="small"
               >

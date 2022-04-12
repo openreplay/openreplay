@@ -67,7 +67,7 @@ export default class ErrorInfo extends React.PureComponent {
 			<NoContent
         title="No Error Found!"
         subtext="Please try to find existing one."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ !loading && errorIdInStore == null }
       >
 				<div className="w-9/12 mb-4 flex justify-between">
