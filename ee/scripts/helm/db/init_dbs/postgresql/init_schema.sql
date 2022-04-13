@@ -811,7 +811,11 @@ $$
                 is_predefined  boolean          NOT NULL DEFAULT FALSE,
                 is_template    boolean          NOT NULL DEFAULT FALSE,
                 predefined_key text             NULL     DEFAULT NULL,
-                default_config jsonb            NOT NULL DEFAULT '{"col": 2,"row": 2,"position": 0}'::jsonb,
+                default_config jsonb            NOT NULL DEFAULT '{
+                  "col": 2,
+                  "row": 2,
+                  "position": 0
+                }'::jsonb,
                 CONSTRAINT null_project_id_for_template_only
                     CHECK ( (metrics.category != 'custom') != (metrics.project_id IS NOT NULL) ),
                 CONSTRAINT unique_key UNIQUE (predefined_key)
@@ -935,6 +939,7 @@ $$
                 host                        text   NOT NULL,
                 path                        text   NOT NULL,
                 base_path                   text   NOT NULL,
+                query                       text   NULL,
                 referrer                    text    DEFAULT NULL,
                 base_referrer               text    DEFAULT NULL,
                 dom_building_time           integer DEFAULT NULL,
@@ -994,6 +999,9 @@ $$
             CREATE INDEX IF NOT EXISTS pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
             CREATE INDEX IF NOT EXISTS pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
             CREATE INDEX IF NOT EXISTS pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHERE length(base_path) > 2;
+            CREATE INDEX IF NOT EXISTS pages_query_nn_idx ON events.pages (query) WHERE query IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
+
 
             CREATE TABLE IF NOT EXISTS events.clicks
             (
@@ -1229,6 +1237,9 @@ $$
                 response_body text        NULL,
                 status_code   smallint    NULL,
                 method        http_method NULL,
+                host          text        NULL,
+                base_path     text        NULL,
+                query         text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
             CREATE INDEX IF NOT EXISTS requests_url_idx ON events_common.requests (url);
@@ -1250,6 +1261,12 @@ $$
             CREATE INDEX IF NOT EXISTS requests_response_body_nn_idx ON events_common.requests (response_body) WHERE response_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_response_body_nn_gin_idx ON events_common.requests USING GIN (response_body gin_trgm_ops) WHERE response_body IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_base_path_nn_idx ON events_common.requests (base_path) WHERE base_path IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_query_nn_idx ON events_common.requests (query) WHERE query IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 
 
         END IF;
@@ -1257,55 +1274,236 @@ $$
 $$
 LANGUAGE plpgsql;
 
-INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type, view_type)
-VALUES ('Captured sessions', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'count_sessions', 'predefined', 'overview'),
-       ('Request Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_request_load_time', 'predefined', 'overview'),
-       ('Page Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_page_load_time', 'predefined', 'overview'),
-       ('Image Load Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_image_load_time', 'predefined', 'overview'),
-       ('DOM Content Load Start', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_dom_content_load_start', 'predefined', 'overview'),
-       ('First Meaningful paint', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_first_contentful_pixel', 'predefined', 'overview'),
-       ('No. of Visited Pages', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_visited_pages', 'predefined', 'overview'),
-       ('Session Duration', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_session_duration', 'predefined', 'overview'),
-       ('DOM Build Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_pages_dom_buildtime', 'predefined', 'overview'),
-       ('Pages Response Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_pages_response_time', 'predefined', 'overview'),
-       ('Response Time', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_response_time', 'predefined', 'overview'),
-       ('First Paint', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_first_paint', 'predefined', 'overview'),
-       ('DOM Content Loaded', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_dom_content_loaded', 'predefined', 'overview'),
-       ('Time Till First byte', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_till_first_byte', 'predefined', 'overview'),
-       ('Time To Interactive', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_time_to_interactive', 'predefined', 'overview'),
-       ('Captured requests', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'count_requests', 'predefined', 'overview'),
-       ('Time To Render', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_time_to_render', 'predefined', 'overview'),
-       ('Memory Consumption', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_used_js_heap_size', 'predefined', 'overview'),
-       ('CPU Load', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_cpu', 'predefined', 'overview'),
-       ('Frame rate', 'overview', '{"col":1,"row":1,"position":0}', true, true, true, 'avg_fps', 'predefined', 'overview'),
+INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
+                     view_type)
+VALUES ('Captured sessions', 'overview', '{
+  "col": 1,
+  "row": 1,
+  "position": 0
+}', true, true, true, 'count_sessions', 'predefined', 'overview'),
+       ('Request Load Time', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_request_load_time', 'predefined', 'overview'),
+       ('Page Load Time', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_page_load_time', 'predefined', 'overview'),
+       ('Image Load Time', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_image_load_time', 'predefined', 'overview'),
+       ('DOM Content Load Start', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_dom_content_load_start', 'predefined', 'overview'),
+       ('First Meaningful paint', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_first_contentful_pixel', 'predefined', 'overview'),
+       ('No. of Visited Pages', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_visited_pages', 'predefined', 'overview'),
+       ('Session Duration', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_session_duration', 'predefined', 'overview'),
+       ('DOM Build Time', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_pages_dom_buildtime', 'predefined', 'overview'),
+       ('Pages Response Time', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_pages_response_time', 'predefined', 'overview'),
+       ('Response Time', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_response_time', 'predefined', 'overview'),
+       ('First Paint', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_first_paint', 'predefined', 'overview'),
+       ('DOM Content Loaded', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_dom_content_loaded', 'predefined', 'overview'),
+       ('Time Till First byte', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_till_first_byte', 'predefined', 'overview'),
+       ('Time To Interactive', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_time_to_interactive', 'predefined', 'overview'),
+       ('Captured requests', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'count_requests', 'predefined', 'overview'),
+       ('Time To Render', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_time_to_render', 'predefined', 'overview'),
+       ('Memory Consumption', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_used_js_heap_size', 'predefined', 'overview'),
+       ('CPU Load', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_cpu', 'predefined', 'overview'),
+       ('Frame rate', 'overview', '{
+         "col": 1,
+         "row": 1,
+         "position": 0
+       }', true, true, true, 'avg_fps', 'predefined', 'overview'),
 
-       ('Sessions Affected by JS Errors', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'impacted_sessions_by_js_errors', 'predefined', 'barChart'),
-       ('Top Domains with 4xx Fetch Errors', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'domains_errors_4xx', 'predefined', 'lineChart'),
-       ('Top Domains with 5xx Fetch Errors', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'domains_errors_5xx', 'predefined', 'lineChart'),
-       ('Errors per Domain', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'errors_per_domains', 'predefined', 'table'),
-       ('Fetch Calls with Errors', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'calls_errors', 'predefined', 'table'),
-       ('Errors by Type', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'errors_per_type', 'predefined', 'barChart'),
-       ('Errors by Origin', 'errors', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_by_party', 'predefined', 'stackedBarChart'),
+       ('Sessions Affected by JS Errors', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'impacted_sessions_by_js_errors', 'predefined', 'barChart'),
+       ('Top Domains with 4xx Fetch Errors', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'domains_errors_4xx', 'predefined', 'lineChart'),
+       ('Top Domains with 5xx Fetch Errors', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'domains_errors_5xx', 'predefined', 'lineChart'),
+       ('Errors per Domain', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'errors_per_domains', 'predefined', 'table'),
+       ('Fetch Calls with Errors', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'calls_errors', 'predefined', 'table'),
+       ('Errors by Type', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'errors_per_type', 'predefined', 'barChart'),
+       ('Errors by Origin', 'errors', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'resources_by_party', 'predefined', 'stackedBarChart'),
 
-       ('Speed Index by Location', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'speed_location', 'predefined', 'map'),
-       ('Slowest Domains', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'slowest_domains', 'predefined', 'table'),
-       ('Sessions per Browser', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'sessions_per_browser', 'predefined', 'table'),
-       ('Time To Render', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'time_to_render', 'predefined', 'areaChart'),
-       ('Sessions Impacted by Slow Pages', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'impacted_sessions_by_slow_pages', 'predefined', 'areaChart'),
-       ('Memory Consumption', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'memory_consumption', 'predefined', 'areaChart'),
-       ('CPU Load', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'cpu', 'predefined', 'areaChart'),
-       ('Frame Rate', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'fps', 'predefined', 'areaChart'),
-       ('Crashes', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'crashes', 'predefined', 'areaChart'),
-       ('Resources Loaded vs Visually Complete', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_vs_visually_complete', 'predefined', 'areaChart'),
-       ('DOM Build Time', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_dom_buildtime', 'predefined', 'areaChart'),
-       ('Pages Response Time', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_response_time', 'predefined', 'areaChart'),
-       ('Pages Response Time Distribution', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart'),
+       ('Speed Index by Location', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'speed_location', 'predefined', 'map'),
+       ('Slowest Domains', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'slowest_domains', 'predefined', 'table'),
+       ('Sessions per Browser', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'sessions_per_browser', 'predefined', 'table'),
+       ('Time To Render', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'time_to_render', 'predefined', 'areaChart'),
+       ('Sessions Impacted by Slow Pages', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'impacted_sessions_by_slow_pages', 'predefined', 'areaChart'),
+       ('Memory Consumption', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'memory_consumption', 'predefined', 'areaChart'),
+       ('CPU Load', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'cpu', 'predefined', 'areaChart'),
+       ('Frame Rate', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'fps', 'predefined', 'areaChart'),
+       ('Crashes', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'crashes', 'predefined', 'areaChart'),
+       ('Resources Loaded vs Visually Complete', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'resources_vs_visually_complete', 'predefined', 'areaChart'),
+       ('DOM Build Time', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'pages_dom_buildtime', 'predefined', 'areaChart'),
+       ('Pages Response Time', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'pages_response_time', 'predefined', 'areaChart'),
+       ('Pages Response Time Distribution', 'performance', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart'),
 
-       ('Missing Resources', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'missing_resources', 'predefined', 'table'),
-       ('Slowest Resources', 'resources', '{"col":4,"row":2,"position":0}', true, true, true, 'slowest_resources', 'predefined', 'table'),
-       ('Resources Fetch Time', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_loading_time', 'predefined', 'table'),
-       ('Resource Loaded vs Response End', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'resource_type_vs_response_end', 'predefined', 'stackedBarLineChart'),
-       ('Breakdown of Loaded Resources', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_count_by_type', 'predefined', 'stackedBarChart')
+       ('Missing Resources', 'resources', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'missing_resources', 'predefined', 'table'),
+       ('Slowest Resources', 'resources', '{
+         "col": 4,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'slowest_resources', 'predefined', 'table'),
+       ('Resources Fetch Time', 'resources', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'resources_loading_time', 'predefined', 'table'),
+       ('Resource Loaded vs Response End', 'resources', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'resource_type_vs_response_end', 'predefined', 'stackedBarLineChart'),
+       ('Breakdown of Loaded Resources', 'resources', '{
+         "col": 2,
+         "row": 2,
+         "position": 0
+       }', true, true, true, 'resources_count_by_type', 'predefined', 'stackedBarChart')
 ON CONFLICT (predefined_key) DO UPDATE
     SET name=excluded.name,
         category=excluded.category,

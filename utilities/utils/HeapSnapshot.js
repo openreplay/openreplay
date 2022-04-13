@@ -31,6 +31,9 @@ async function downloadHeapSnapshot(req, res) {
         return res.end("should wait for done status");
     }
     res.download(location + fileName, function (err) {
+        if (err) {
+            return console.error("error while uploading HeapSnapshot file");
+        }
         try {
             fs.unlinkSync(location + fileName)
         } catch (err) {
@@ -57,7 +60,9 @@ function createNewHeapSnapshot(req, res) {
     res.end(JSON.stringify({path: location + fileName, 'done': creationStatus}));
 }
 
-router.get('/status', getHeapSnapshotStatus);
+router.get(`/status`, getHeapSnapshotStatus);
 router.get(`/new`, createNewHeapSnapshot);
 router.get(`/download`, downloadHeapSnapshot);
 module.exports = {router}
+
+console.log(`HeapSnapshot enabled. Send a request to "/heapdump/new" to generate a heapdump.`);

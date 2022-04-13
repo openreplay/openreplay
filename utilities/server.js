@@ -1,57 +1,21 @@
 const dumps = require('./utils/HeapSnapshot');
-const sourcemapsReaderServer = require('./servers/sourcemaps-server');
-const {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
 const express = require('express');
-const {ExpressPeerServer} = require('peer');
 const socket = require("./servers/websocket");
+const {request_logger} = require("./utils/helper");
 
 const HOST = '0.0.0.0';
-const PORT = 9000;
+const PORT = 9001;
 
-const app = express();
 const wsapp = express();
-let debug = process.env.debug === "1" || false;
-const request_logger = (identity) => {
-    return (req, res, next) => {
-        debug && console.log(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
-        res.on('finish', function () {
-            if (this.statusCode !== 200 || debug) {
-                console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
-            }
-        })
-
-        next();
-    }
-};
-app.use(request_logger("[app]"));
 wsapp.use(request_logger("[wsapp]"));
 
-app.use('/sourcemaps', sourcemapsReaderServer);
-app.use('/assist', peerRouter);
-wsapp.use('/assist', socket.wsRouter);
+wsapp.use(`/assist/${process.env.S3_KEY}`, socket.wsRouter);
+wsapp.use(`/heapdump/${process.env.S3_KEY}`, dumps.router);
 
-app.use('/heapdump', dumps.router);
-
-const server = app.listen(PORT, HOST, () => {
-    console.log(`App listening on http://${HOST}:${PORT}`);
+const wsserver = wsapp.listen(PORT, HOST, () => {
+    console.log(`WS App listening on http://${HOST}:${PORT}`);
     console.log('Press Ctrl+C to quit.');
 });
-const wsserver = wsapp.listen(PORT + 1, HOST, () => {
-    console.log(`WS App listening on http://${HOST}:${PORT + 1}`);
-    console.log('Press Ctrl+C to quit.');
-});
-const peerServer = ExpressPeerServer(server, {
-    debug: true,
-    path: '/',
-    proxied: true,
-    allow_discovery: false
-});
-peerServer.on('connection', peerConnection);
-peerServer.on('disconnect', peerDisconnect);
-peerServer.on('error', peerError);
-app.use('/', peerServer);
-app.enable('trust proxy');
 wsapp.enable('trust proxy');
 socket.start(wsserver);
-module.exports = {wsserver, server};
-console.log(`Heapdump enabled. Send a request to "/heapdump" to download a heapdump,\nor "/heapdump/save" to only generate a heapdump.`);
+module.exports = {wsserver};

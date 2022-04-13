@@ -1,20 +1,9 @@
-var express = require('express');
-var peerRouter = express.Router();
+const express = require('express');
+const peerRouter = express.Router();
+const {extractPeerId} = require('../utils/helper');
 
-let PROJECT_KEY_LENGTH = parseInt(process.env.PROJECT_KEY_LENGTH) || 20;
 let debug = process.env.debug === "1" || false;
-const extractPeerId = (peerId) => {
-    let splited = peerId.split("-");
-    if (splited.length !== 2) {
-        debug && console.error(`cannot split peerId: ${peerId}`);
-        return {};
-    }
-    if (PROJECT_KEY_LENGTH > 0 && splited[0].length !== PROJECT_KEY_LENGTH) {
-        debug && console.error(`wrong project key length for peerId: ${peerId}`);
-        return {};
-    }
-    return {projectKey: splited[0], sessionId: splited[1]};
-};
+
 const connectedPeers = {};
 
 const peerConnection = (client) => {
@@ -53,13 +42,13 @@ const peerError = (error) => {
 }
 
 
-peerRouter.get(`/${process.env.S3_KEY}/peers`, function (req, res) {
+peerRouter.get(`/peers`, function (req, res) {
     debug && console.log("looking for all available sessions");
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
     res.end(JSON.stringify({"data": connectedPeers}));
 });
-peerRouter.get(`/${process.env.S3_KEY}/peers/:projectKey`, function (req, res) {
+peerRouter.get(`/peers/:projectKey`, function (req, res) {
     debug && console.log(`looking for available sessions for ${req.params.projectKey}`);
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');

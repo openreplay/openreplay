@@ -1,5 +1,5 @@
 {
-  "name": "utilities_server",
+  "name": "utilities-server",
   "version": "1.0.0",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/openreplay/openreplay.git"
   },
   "author": "KRAIEM Taha Yassine <tahayk2@gmail.com>",
-  "license": "MIT",
+  "license": "Elastic License 2.0 (ELv2)",
   "bugs": {
     "url": "https://github.com/openreplay/openreplay/issues"
   },
@@ -20,12 +20,9 @@
   "dependencies": {
     "@maxmind/geoip2-node": "^3.4.0",
     "@socket.io/redis-adapter": "^7.1.0",
-    "aws-sdk": "^2.992.0",
     "express": "^4.17.1",
-    "peer": "^0.6.1",
     "redis": "^4.0.3",
     "socket.io": "^4.4.1",
-    "source-map": "^0.7.3",
     "ua-parser-js": "^1.0.2",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.6.0"
   }
