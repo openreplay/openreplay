@@ -1,16 +1,14 @@
-import { filter } from "App/components/BugFinder/ManageFilters/savedFilterList.css"
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
 import { FilterKey, FilterType } from 'Types/filter/filterType'
 import { filtersMap } from 'Types/filter/newFilter'
 import FilterItem from "./filterItem"
-
-// console.log('filtersMap', filtersMap)
-
 export default class Filter {
     public static get ID_KEY():string { return "filterId" }
     name: string = ''
     filters: FilterItem[] = []
     eventsOrder: string = 'then'
+    startTimestamp: number = 0
+    endTimestamp: number = 0
 
     constructor() {
         makeAutoObservable(this, {
@@ -51,6 +49,17 @@ export default class Filter {
         this.filters = json.filters.map(i => new FilterItem().fromJson(i))
         this.eventsOrder = json.eventsOrder
         return this
+    }
+
+    toJsonDrilldown() {
+        const json = {
+            name: this.name,
+            filters: this.filters.map(i => i.toJson()),
+            eventsOrder: this.eventsOrder,
+            startTimestamp: this.startTimestamp,
+            endTimestamp: this.endTimestamp,
+        }
+        return json
     }
 
     toJson() {

@@ -37,7 +37,7 @@ const styles = {
 };
 
 @connect(state => ({
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
   boarding: state.getIn([ 'dashboard', 'boarding' ]),
   boardingCompletion: state.getIn([ 'dashboard', 'boardingCompletion' ]),
 }), {

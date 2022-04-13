@@ -3,18 +3,16 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { observer, useObserver } from "mobx-react-lite";
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
-import {
-    dashboardSelected,
-    withSiteId,
-} from 'App/routes';
 import DashboardSideMenu from './components/DashboardSideMenu';
 import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
+import cn from 'classnames';
 
 function NewDashboard(props) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
+    const isMetricDetails = history.location.pathname.includes('/metrics/') || history.location.pathname.includes('/metric/');
 
     useEffect(() => {
         dashboardStore.fetchList().then((resp) => {
@@ -32,20 +30,18 @@ function NewDashboard(props) {
         });
     }, [siteId]);
     
-    return (
+    return useObserver(() => (
         <Loader loading={loading}>
              <div className="page-margin container-90">
-                <div className="side-menu">
+                <div className={cn("side-menu", { 'hidden' : isMetricDetails })}>
                     <DashboardSideMenu siteId={siteId} />
                 </div>
-                <div className="side-menu-margined">
+                <div className={cn({ "side-menu-margined" : !isMetricDetails, "container-70" : isMetricDetails })}>
                     <DashboardRouter siteId={siteId} />
                 </div>
             </div>
         </Loader>
-    );
+    ));
 }
 
-export default withPageTitle('New Dashboard')(
-    withRouter(observer(NewDashboard))
-);
+export default withPageTitle('New Dashboard')(withRouter(NewDashboard));

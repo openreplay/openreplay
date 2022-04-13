@@ -66,7 +66,7 @@ function StackEvents({
 
 export default connect(state => ({
   hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'stack']) || 
-    !state.getIn([ 'user', 'client', 'sites' ]).some(s => s.stackIntegrations),
+    !state.getIn([ 'site', 'list' ]).some(s => s.stackIntegrations),
 }), {
   hideHint
 })(StackEvents);

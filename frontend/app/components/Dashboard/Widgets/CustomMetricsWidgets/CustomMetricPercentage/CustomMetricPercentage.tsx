@@ -12,7 +12,7 @@ function CustomMetriPercentage(props: Props) {
     return (
         <div className="flex flex-col items-center justify-center" style={{ height: '240px'}}>
             <div className="text-6xl">{numberWithCommas(data.count)}</div>
-            <div className="text-lg mt-6">{`${parseInt(data.previousCount).toFixed(1)} ( ${parseInt(data.countProgress).toFixed(1)}% )`}</div>
+            <div className="text-lg mt-6">{`${parseInt(data.previousCount)} ( ${parseInt(data.countProgress).toFixed(1)}% )`}</div>
             <div className="color-gray-medium">from previous period.</div>
         </div>
     )

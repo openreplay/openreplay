@@ -15,5 +15,5 @@ const OpenReplayLink = ({ siteId, to, className="", dispatch, ...other })  => (
 OpenReplayLink.displayName = 'OpenReplayLink';
 
 export default connect((state, props) => ({ 
-	siteId: props.siteId || state.getIn([ 'user', 'siteId' ])
+	siteId: props.siteId || state.getIn([ 'site', 'siteId' ])
 }))(OpenReplayLink);

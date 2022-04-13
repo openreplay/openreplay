@@ -39,5 +39,5 @@ export default connect((state, props) => ({
   issue: state.getIn(['funnels', 'issue']),  
   issueId: props.match.params.issueId,
   funnelId: props.match.params.funnelId,
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
 }), { fetchIssue, setNavRef, resetIssue })(withRouter(FunnelIssueDetails))

@@ -53,7 +53,7 @@ const allowedQueryKeys = [
   sources: state.getIn([ 'customFields', 'sources' ]),
   filterValues: state.get('filterValues'),
   favoriteList: state.getIn([ 'sessions', 'favoriteList' ]),
-  currentProjectId: state.getIn([ 'user', 'siteId' ]),
+  currentProjectId: state.getIn([ 'site', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ]),
   watchdogs: state.getIn(['watchdogs', 'list']),
   activeFlow: state.getIn([ 'filters', 'activeFlow' ]),

@@ -37,13 +37,13 @@ function FPS(props: Props) {
                     {...Styles.yaxis}
                     allowDecimals={false}
                     tickFormatter={val => Styles.tickFormatter(val)}
-                    label={{ ...Styles.axisLabelLeft, value: "CPU Load (%)" }}
+                    label={{ ...Styles.axisLabelLeft, value: "Frames Per Second" }}
                   />
                   <Tooltip {...Styles.tooltip} />
                   <Area
                     name="Avg"
                     type="monotone"
-                    dataKey="avgFps"
+                    dataKey="avg"
                     stroke={Styles.colors[0]}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }

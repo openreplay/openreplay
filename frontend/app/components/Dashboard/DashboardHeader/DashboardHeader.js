@@ -35,6 +35,6 @@ const DashboardHeader = props => {
 export default connect(state => ({
   period: state.getIn([ 'dashboard', 'period' ]),
   platform: state.getIn([ 'dashboard', 'platform' ]),
-  currentProjectId: state.getIn([ 'user', 'siteId' ]),
+  currentProjectId: state.getIn([ 'site', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ]),
 }), { setPeriod, setPlatform })(DashboardHeader)

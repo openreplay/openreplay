@@ -96,6 +96,6 @@ class Announcements extends React.Component {
 export default connect(state => ({
   announcements: state.getIn(['announcements', 'list']),
   loading: state.getIn(['announcements', 'fetchList', 'loading']),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ]),
 }), { fetchList, setLastRead })(Announcements);

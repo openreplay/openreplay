@@ -86,7 +86,7 @@ function DashboardView(props: Props) {
                         </div>
                         <div className="flex items-center">
                             <div className="flex items-center">
-                                <span className="mr-2 color-gray-medium">Time Range</span>
+                                {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
                                 <DateRange
                                     rangeValue={period.rangeName}
                                     startDate={period.start}
@@ -97,18 +97,21 @@ function DashboardView(props: Props) {
                                 />
                             </div>
                             <div className="mx-4" />
-                            <ItemMenu
-                                items={[
-                                    {
-                                        text: 'Edit',
-                                        onClick: onEdit
-                                    },
-                                    {
-                                        text: 'Delete Dashboard',
-                                        onClick: onDelete
-                                    },
-                                ]}
-                            />
+                            <div className="flex items-center">
+                                <span className="mr-1 color-gray-medium">More</span>
+                                <ItemMenu
+                                    items={[
+                                        {
+                                            text: 'Edit',
+                                            onClick: onEdit
+                                        },
+                                        {
+                                            text: 'Delete Dashboard',
+                                            onClick: onDelete
+                                        },
+                                    ]}
+                                />
+                            </div>
                         </div>
                     </div>
                     <DashboardWidgetGrid

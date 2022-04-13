@@ -5,6 +5,7 @@ import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
+import Filter from "./types/filter";
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -14,6 +15,7 @@ export interface IDashboardSotre {
     startTimestamp: number
     endTimestamp: number
     period: Period
+    drillDownFilter: Filter
 
     siteId: any
     currentWidget: Widget
@@ -73,6 +75,7 @@ export default class DashboardStore implements IDashboardSotre {
     widgetCategories: any[] = []
     widgets: Widget[] = []
     period: Period = Period({ rangeName: LAST_7_DAYS })
+    drillDownFilter: Filter = new Filter()
     startTimestamp: number = 0
     endTimestamp: number = 0
     
@@ -114,6 +117,10 @@ export default class DashboardStore implements IDashboardSotre {
 
             fetchMetricChartData: action
         })
+
+        const drillDownPeriod = Period({ rangeName: LAST_7_DAYS }).toTimestamps();
+        this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
+        this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {
@@ -434,7 +441,9 @@ export default class DashboardStore implements IDashboardSotre {
                         // metric.setData(_data)
                         // resolve(_data);
 
-                        const _data = {}
+                        const _data = {
+                            ...data,
+                        }
                         if (data.hasOwnProperty('chart')) {
                             _data['chart'] = getChartFormatter(this.period)(data.chart)
                             _data['namesMap'] = data.chart
@@ -461,10 +470,9 @@ export default class DashboardStore implements IDashboardSotre {
                         }
                         
                         metric.setData(_data)
-                        resolve({ ...data, ..._data });
+                        resolve(_data);
                     }
                 }).catch((err) => {
-                    console.log('err', err)
                     reject(err)
                 })
         })

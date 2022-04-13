@@ -59,14 +59,14 @@ function DomBuildingTime(props: Props) {
                     {...Styles.yaxis}
                     allowDecimals={false}
                     tickFormatter={val => Styles.tickFormatter(val)}
-                    label={{ ...Styles.axisLabelLeft, value: "CPU Load (%)" }}
+                    label={{ ...Styles.axisLabelLeft, value: "DOM Build Time (ms)" }}
                   />
                   <Tooltip {...Styles.tooltip} />
                   <Area
                     name="Avg"
                     type="monotone"
-                    unit="%"
-                    dataKey="avgCpu"
+                    // unit="%"
+                    dataKey="avg"
                     stroke={Styles.colors[0]}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }
