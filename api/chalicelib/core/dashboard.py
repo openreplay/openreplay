@@ -1483,7 +1483,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
     return {"value": avg, "chart": helper.list_to_camel_case(rows),
-              "unit": schemas.TemplatePredefinedUnits.percentage}
+            "unit": schemas.TemplatePredefinedUnits.percentage}
 
 
 def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2426,12 +2426,7 @@ def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now
                                           endTimestamp=TimeUTC.now(),
                                           density=19, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
-    location_constraints = []
-    img_constraints = []
     request_constraints = []
-
-    img_constraints_vals = {}
-    location_constraints_vals = {}
     request_constraints_vals = {}
 
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
@@ -2470,16 +2465,16 @@ def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now
 def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                                 endTimestamp=TimeUTC.now(), **args):
     with pg_client.PostgresClient() as cur:
-        rows = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
-        if len(rows) > 0:
-            results = helper.dict_to_camel_case(rows[0])
+        row = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
+        results = helper.dict_to_camel_case(row)
+        results["chart"] = __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp,
+                                                                               endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
-        rows = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
-        if len(rows) > 0:
-            previous = helper.dict_to_camel_case(rows[0])
-            results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+        row = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
+        previous = helper.dict_to_camel_case(row)
+        results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
     results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
@@ -2498,6 +2493,39 @@ def __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestam
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
     cur.execute(cur.mogrify(pg_query, params))
+    row = cur.fetchone()
+    return row
+
+
+def __get_page_metrics_avg_dom_content_load_start_chart(cur, project_id, startTimestamp, endTimestamp, density=19,
+                                                        **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+                                            chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                           chart=True, data=args, main_table="pages", time_column="timestamp",
+                                           duration=False)
+    pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
+    pg_sub_query_subset.append("pages.timestamp < %(endTimestamp)s")
+    pg_sub_query_subset.append("pages.dom_content_loaded_time > 0")
+
+    pg_query = f"""WITH pages AS(SELECT pages.dom_content_loaded_time, pages.timestamp
+                                    FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                    WHERE {" AND ".join(pg_sub_query_subset)}
+                    )
+                    SELECT generated_timestamp AS timestamp,
+                         COALESCE(AVG(pages.dom_content_loaded_time),0) AS value
+                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL (
+                                SELECT pages.dom_content_loaded_time
+                                FROM pages
+                                WHERE {" AND ".join(pg_sub_query_chart)}
+                        ) AS pages ON (TRUE)
+                      GROUP BY generated_timestamp
+                      ORDER BY generated_timestamp;"""
+    cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
     rows = cur.fetchall()
     return rows
 
