@@ -22,7 +22,7 @@ import (
 	"openreplay/backend/services/http/geoip"
 	"openreplay/backend/services/http/uaparser"
 
-	_ "net/http/pprof"
+	"openreplay/backend/pkg/pprof"
 )
 
 var rewriter *assets.Rewriter
@@ -45,6 +45,7 @@ var BEACON_SIZE_LIMIT int64
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
+	pprof.StartProfilingServer()
 
 	producer = queue.NewProducer()
 	defer producer.Close(15000)
