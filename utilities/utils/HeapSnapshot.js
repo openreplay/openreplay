@@ -64,3 +64,5 @@ router.get(`/status`, getHeapSnapshotStatus);
 router.get(`/new`, createNewHeapSnapshot);
 router.get(`/download`, downloadHeapSnapshot);
 module.exports = {router}
+
+console.log(`HeapSnapshot enabled. Send a request to "/heapdump/new" to generate a heapdump.`);
