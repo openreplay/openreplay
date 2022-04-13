@@ -1,8 +1,8 @@
 const _io = require('socket.io');
 const express = require('express');
 const uaParser = require('ua-parser-js');
-const geoip2Reader = require('@maxmind/geoip2-node').Reader;
-const {extractPeerId} = require('./peerjs-server');
+const {extractPeerId} = require('../utils/helper');
+const {geoip} = require('../utils/geoIP');
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 const wsRouter = express.Router();
@@ -159,7 +159,7 @@ const socketsLive = async function (req, res) {
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
-        let {projectKey, sessionId} = extractPeerId(peerId);
+        let {projectKey} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
@@ -188,7 +188,7 @@ const socketsLiveByProject = async function (req, res) {
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
-        let {projectKey, sessionId} = extractPeerId(peerId);
+        let {projectKey} = extractPeerId(peerId);
         if (projectKey === _projectKey) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
@@ -254,15 +254,6 @@ async function get_all_agents_ids(io, socket) {
     return agents;
 }
 
-let geoip = null;
-geoip2Reader.open(process.env.MAXMINDDB_FILE, {})
-    .then(reader => {
-        geoip = reader;
-    })
-    .catch(error => {
-        console.log("Error while opening the MAXMINDDB_FILE.")
-        console.error(error);
-    });
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
@@ -379,7 +370,7 @@ module.exports = {
                 let rooms = await io.of('/').adapter.allRooms();
                 let validRooms = [];
                 console.log(` ====== Rooms: ${rooms.size} ====== `);
-                const arr = Array.from(rooms)
+                // const arr = Array.from(rooms)
                 // const filtered = arr.filter(room => !room[1].has(room[0]))
                 for (let i of rooms) {
                     let {projectKey, sessionId} = extractPeerId(i);

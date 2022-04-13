@@ -19,4 +19,3 @@ const wsserver = wsapp.listen(PORT, HOST, () => {
 wsapp.enable('trust proxy');
 socket.start(wsserver);
 module.exports = {wsserver};
-console.log(`Heapdump enabled. Send a request to "/heapdump" to download a heapdump,\nor "/heapdump/save" to only generate a heapdump.`);
