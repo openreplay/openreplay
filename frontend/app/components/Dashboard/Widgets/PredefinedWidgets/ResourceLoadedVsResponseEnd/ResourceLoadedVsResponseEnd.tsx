@@ -8,19 +8,19 @@ import {
 
 interface Props {
     data: any
+    metric?: any
 }
 function ResourceLoadedVsResponseEnd(props: Props) {
-    const { data } = props;
-    const params = { density: 70 }
+    const { data, metric } = props;
 
     return (
         <NoContent
           size="small"
-          show={ data.chart.length === 0 }
+          show={ metric.data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">
             <ComposedChart
-                data={data.chart}
+                data={metric.data.chart}
                 margin={ Styles.chartMargins}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
@@ -28,7 +28,7 @@ function ResourceLoadedVsResponseEnd(props: Props) {
                   {...Styles.xaxis}
                   dataKey="time"
                   // interval={3}
-                  interval={(params.density / 7)}
+                  interval={(metric.params.density / 7)}
                 />
                 <YAxis
                   {...Styles.yaxis}

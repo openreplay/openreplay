@@ -28,6 +28,8 @@ export interface IWidget {
     colSpan: number
     predefinedKey: string
 
+    params: any
+
     udpateKey(key: string, value: any): void
     removeSeries(index: number): void
     addSeries(): void
@@ -57,6 +59,7 @@ export default class Widget implements IWidget {
     dashboards: any[] = []
     dashboardIds: any[] = []
     config: any = {}
+    params: any = { density: 70 }
 
     position: number = 0
     data: any = {

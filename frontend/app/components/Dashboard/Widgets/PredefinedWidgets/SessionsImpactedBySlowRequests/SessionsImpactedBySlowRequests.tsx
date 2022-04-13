@@ -10,30 +10,32 @@ import {
 
 interface Props {
     data: any
+    metric?: any
 }
 function SessionsImpactedBySlowRequests(props: Props) {
-    const { data } = props;
+    const { data, metric } = props;
     const gradientDef = Styles.gradientDef();
-    const params = { density: 70 }
+
+    console.log('SessionsImpactedBySlowRequests', metric.data)
 
     return (
         <NoContent
           size="small"
-          show={ data.chart.length === 0 }
+          show={ metric.data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">
             <AreaChart
-                data={ data.chart }
+                data={ metric.data.chart }
                 margin={ Styles.chartMargins }
               >
                 {gradientDef}
                 <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
-                <XAxis {...Styles.xaxis} dataKey="time" interval={(params.density/7)} />
+                <XAxis {...Styles.xaxis} dataKey="time" interval={(metric.params.density/7)} />
                 <YAxis
                   {...Styles.yaxis}
                   allowDecimals={false}
                   tickFormatter={val => Styles.tickFormatter(val)}
-                  label={{ ...Styles.axisLabelLeft, value: "CPU Load (%)" }}
+                  label={{ ...Styles.axisLabelLeft, value: "Number of Requests" }}
                 />
                 <Tooltip {...Styles.tooltip} />
                 <Area
