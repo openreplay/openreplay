@@ -1,8 +1,8 @@
 const _io = require('socket.io');
 const express = require('express');
 const uaParser = require('ua-parser-js');
-const geoip2Reader = require('@maxmind/geoip2-node').Reader;
-const {extractPeerId} = require('./peerjs-server');
+const {extractPeerId} = require('../utils/helper');
+const {geoip} = require('../utils/geoIP');
 const wsRouter = express.Router();
 const UPDATE_EVENT = "UPDATE_SESSION";
 const IDENTITIES = {agent: 'agent', session: 'session'};
@@ -79,7 +79,7 @@ const socketsList = async function (req, res) {
     }
     respond(res, liveSessions);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
+wsRouter.get(`/sockets-list`, socketsList);
 
 const socketsListByProject = async function (req, res) {
     debug && console.log("[WS]looking for available sessions");
@@ -105,7 +105,7 @@ const socketsListByProject = async function (req, res) {
     }
     respond(res, liveSessions[_projectKey] || []);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, socketsListByProject);
+wsRouter.get(`/sockets-list/:projectKey`, socketsListByProject);
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
@@ -113,7 +113,7 @@ const socketsLive = async function (req, res) {
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
-        let {projectKey, sessionId} = extractPeerId(peerId);
+        let {projectKey} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
@@ -132,7 +132,7 @@ const socketsLive = async function (req, res) {
     }
     respond(res, liveSessions);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
+wsRouter.get(`/sockets-live`, socketsLive);
 
 const socketsLiveByProject = async function (req, res) {
     debug && console.log("[WS]looking for available LIVE sessions");
@@ -141,7 +141,7 @@ const socketsLiveByProject = async function (req, res) {
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
-        let {projectKey, sessionId} = extractPeerId(peerId);
+        let {projectKey} = extractPeerId(peerId);
         if (projectKey === _projectKey) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
@@ -160,7 +160,7 @@ const socketsLiveByProject = async function (req, res) {
     }
     respond(res, liveSessions[_projectKey] || []);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, socketsLiveByProject);
+wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
@@ -204,15 +204,6 @@ async function get_all_agents_ids(io, socket) {
     return agents;
 }
 
-let geoip = null;
-geoip2Reader.open(process.env.MAXMINDDB_FILE, {})
-    .then(reader => {
-        geoip = reader;
-    })
-    .catch(error => {
-        console.log("Error while opening the MAXMINDDB_FILE.")
-        console.error(error);
-    });
 
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
