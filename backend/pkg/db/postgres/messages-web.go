@@ -217,8 +217,8 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 		request = &e.Request
 		response = &e.Response
 	}
-	conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
 	host, path, query, err := url.GetURLParts(e.URL)
+	conn.insertAutocompleteValue(sessionID, "REQUEST", path)
 	if err != nil {
 		return err
 	}
