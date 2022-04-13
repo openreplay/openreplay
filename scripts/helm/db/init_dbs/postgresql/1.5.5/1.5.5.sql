@@ -48,6 +48,11 @@ CREATE TABLE IF NOT EXISTS dashboard_widgets
     config       jsonb     NOT NULL DEFAULT '{}'::jsonb
 );
 
+ALTER TABLE events_common.requests
+    ADD COLUMN IF NOT EXISTS host      text NULL,
+    ADD COLUMN IF NOT EXISTS base_path text NULL,
+    ADD COLUMN IF NOT EXISTS query     text NULL;
+
 COMMIT;
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'areaChart';
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'barChart';
@@ -115,3 +120,11 @@ ON CONFLICT (predefined_key) DO UPDATE
         is_public=excluded.is_public,
         metric_type=excluded.metric_type,
         view_type=excluded.view_type;
+
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_base_path_nn_idx ON events_common.requests (base_path) WHERE base_path IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_query_nn_idx ON events_common.requests (query) WHERE query IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
