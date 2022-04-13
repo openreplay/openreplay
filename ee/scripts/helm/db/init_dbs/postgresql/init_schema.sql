@@ -939,6 +939,7 @@ $$
                 host                        text   NOT NULL,
                 path                        text   NOT NULL,
                 base_path                   text   NOT NULL,
+                query                       text   NULL,
                 referrer                    text    DEFAULT NULL,
                 base_referrer               text    DEFAULT NULL,
                 dom_building_time           integer DEFAULT NULL,
@@ -998,6 +999,9 @@ $$
             CREATE INDEX IF NOT EXISTS pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
             CREATE INDEX IF NOT EXISTS pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
             CREATE INDEX IF NOT EXISTS pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHERE length(base_path) > 2;
+            CREATE INDEX IF NOT EXISTS pages_query_nn_idx ON events.pages (query) WHERE query IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
+
 
             CREATE TABLE IF NOT EXISTS events.clicks
             (
