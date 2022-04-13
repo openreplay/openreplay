@@ -1,5 +1,5 @@
 {
-  "name": "utilities_server",
+  "name": "peers-server",
   "version": "1.0.0",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
@@ -12,7 +12,7 @@
     "url": "git+https://github.com/openreplay/openreplay.git"
   },
   "author": "KRAIEM Taha Yassine <tahayk2@gmail.com>",
-  "license": "MIT",
+  "license": "Elastic License 2.0 (ELv2)",
   "bugs": {
     "url": "https://github.com/openreplay/openreplay/issues"
   },
