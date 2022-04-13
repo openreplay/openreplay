@@ -35,7 +35,7 @@ func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrac
 }
 
 func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent) error {
-	host, _, err := url.GetURLParts(e.URL)
+	host, _, _, err := url.GetURLParts(e.URL)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func (conn *Conn) InsertWebUserAnonymousID(sessionID uint64, userAnonymousID *Us
 
 // TODO: fix column "dom_content_loaded_event_end" of relation "pages"
 func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
-	host, path, err := url.GetURLParts(e.URL)
+	host, path, query, err := url.GetURLParts(e.URL)
 	if err != nil {
 		return err
 	}
@@ -64,20 +64,27 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 		return err
 	}
 	defer tx.rollback()
+	// base_path is depricated
 	if err := tx.exec(`
 		INSERT INTO events.pages (
-			session_id, message_id, timestamp, referrer, base_referrer, host, path, base_path,
+			session_id, message_id, timestamp, referrer, base_referrer, host, path, query,
 			dom_content_loaded_time, load_time, response_end, first_paint_time, first_contentful_paint_time, 
 			speed_index, visually_complete, time_to_interactive,
-			response_time, dom_building_time
+			response_time, dom_building_time,
+			base_path
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8,
+			$1, $2, $3, 
+			$4, $5, 
+			$6, $7, $8,
 			NULLIF($9, 0), NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), 
 			NULLIF($14, 0), NULLIF($15, 0), NULLIF($16, 0),
-			NULLIF($17, 0), NULLIF($18, 0)
+			NULLIF($17, 0), NULLIF($18, 0),
+			'',
 		)
 		`,
-		sessionID, e.MessageID, e.Timestamp, e.Referrer, url.DiscardURLQuery(e.Referrer), host, path, url.DiscardURLQuery(path),
+		sessionID, e.MessageID, e.Timestamp,
+		e.Referrer, url.DiscardURLQuery(e.Referrer),
+		host, path, query,
 		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive,
 		calcResponseTime(e), calcDomBuildingTime(e),
@@ -109,7 +116,7 @@ func (conn *Conn) InsertWebClickEvent(sessionID uint64, e *ClickEvent) error {
 		INSERT INTO events.clicks
 			(session_id, message_id, timestamp, label, selector, url)
 		(SELECT
-			$1, $2, $3, NULLIF($4, ''), $5, host || base_path
+			$1, $2, $3, NULLIF($4, ''), $5, host || path
 			FROM events.pages
 			WHERE session_id = $1 AND timestamp <= $3 ORDER BY timestamp DESC LIMIT 1
 		)
@@ -211,19 +218,26 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 		response = &e.Response
 	}
 	conn.insertAutocompleteValue(sessionID, "REQUEST", url.DiscardURLQuery(e.URL))
+	host, path, query, err := url.GetURLParts(e.URL)
+	if err != nil {
+		return err
+	}
 	return conn.batchQueue(sessionID, `
 		INSERT INTO events_common.requests (
-			session_id, timestamp, 
-			seq_index, url, duration, success,
-			request_body, response_body, status_code, method
+			session_id, timestamp, seq_index, 
+			url, host, path, query,
+			request_body, response_body, status_code, method,
+			duration, success,
 		) VALUES (
-			$1, $2, 
-			$3, $4, $5, $6,
-			$7, $8, $9::smallint, NULLIF($10, '')::http_method
+			$1, $2, $3, 
+			$4, $5, $6, $7
+			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
+			$12, $13
 		) ON CONFLICT DO NOTHING`,
-		sessionID, e.Timestamp,
-		getSqIdx(e.MessageID), e.URL, e.Duration, e.Status < 400,
+		sessionID, e.Timestamp, getSqIdx(e.MessageID),
+		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
+		e.Duration, e.Status < 400,
 	)
 
 }
