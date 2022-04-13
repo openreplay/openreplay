@@ -1784,7 +1784,7 @@ def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY resources.url_host
                         ORDER BY errors_count DESC
-                        LIMIT 10;"""
+                        LIMIT 5;"""
         cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
                                            "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
