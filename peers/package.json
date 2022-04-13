@@ -1,5 +1,5 @@
 {
-  "name": "utilities-server",
+  "name": "peers-server",
   "version": "1.0.0",
   "description": "assist server to get live sessions & sourcemaps reader to get stack trace",
   "main": "peerjs-server.js",
@@ -18,9 +18,7 @@
   },
   "homepage": "https://github.com/openreplay/openreplay#readme",
   "dependencies": {
-    "@maxmind/geoip2-node": "^3.4.0",
     "express": "^4.17.1",
-    "socket.io": "^4.4.1",
-    "ua-parser-js": "^1.0.2"
+    "peer": "^0.6.1"
   }
 }
