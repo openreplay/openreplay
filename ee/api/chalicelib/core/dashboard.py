@@ -2097,7 +2097,7 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
     with ch_client.ClickHouseClient() as ch:
         row = __get_application_activity_avg_page_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
-        results["chart"] = get_performance_avg_page_load_time(project_id, startTimestamp, endTimestamp, **args)
+        results["chart"] = get_performance_avg_page_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2126,7 +2126,7 @@ def __get_application_activity_avg_page_load_time(ch, project_id, startTimestamp
     return result
 
 
-def get_performance_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+def get_performance_avg_page_load_time(ch, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                        endTimestamp=TimeUTC.now(),
                                        density=19, resources=None, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
@@ -2143,30 +2143,30 @@ def get_performance_avg_page_load_time(project_id, startTimestamp=TimeUTC.now(de
 
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    with ch_client.ClickHouseClient() as ch:
-        ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True,
-                                                     data=args)
-        ch_sub_query_chart += meta_condition
 
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(NULLIF(pages.load_event_end ,0)) AS value 
-                      FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                      WHERE {" AND ".join(ch_sub_query_chart)} 
-                          {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
-                      GROUP BY timestamp
-                      ORDER BY timestamp;"""
+    ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True,
+                                                 data=args)
+    ch_sub_query_chart += meta_condition
 
-        rows = ch.execute(query=ch_query,
-                          params={**params, **location_constraints_vals, **__get_constraint_values(args)})
-        pages = [{"timestamp": i["timestamp"], "value": i["value"]} for i in
-                 __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                          end_time=endTimestamp,
-                                          density=density, neutral={"value": 0})]
+    ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                          AVG(NULLIF(pages.load_event_end ,0)) AS value 
+                  FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                  WHERE {" AND ".join(ch_sub_query_chart)} 
+                      {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
+                  GROUP BY timestamp
+                  ORDER BY timestamp;"""
 
-        for s in pages:
-            for k in s:
-                if s[k] is None:
-                    s[k] = 0
+    rows = ch.execute(query=ch_query,
+                      params={**params, **location_constraints_vals, **__get_constraint_values(args)})
+    pages = [{"timestamp": i["timestamp"], "value": i["value"]} for i in
+             __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                      end_time=endTimestamp,
+                                      density=density, neutral={"value": 0})]
+
+    for s in pages:
+        for k in s:
+            if s[k] is None:
+                s[k] = 0
     return pages
 
 
@@ -2175,7 +2175,7 @@ def get_application_activity_avg_image_load_time(project_id, startTimestamp=Time
     with ch_client.ClickHouseClient() as ch:
         row = __get_application_activity_avg_image_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
-        results["chart"] = get_performance_avg_image_load_time(project_id, startTimestamp, endTimestamp, **args)
+        results["chart"] = get_performance_avg_image_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2204,7 +2204,7 @@ def __get_application_activity_avg_image_load_time(ch, project_id, startTimestam
     return result
 
 
-def get_performance_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+def get_performance_avg_image_load_time(ch, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                         endTimestamp=TimeUTC.now(),
                                         density=19, resources=None, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
@@ -2223,25 +2223,24 @@ def get_performance_avg_image_load_time(project_id, startTimestamp=TimeUTC.now(d
 
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(NULLIF(resources.duration,0)) AS value 
-                      FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                      WHERE {" AND ".join(ch_sub_query_chart)}
-                          AND resources.type = 'img' 
-                          {(f' AND ({" OR ".join(img_constraints)})') if len(img_constraints) > 0 else ""}
-                      GROUP BY timestamp
-                      ORDER BY timestamp;"""
-        rows = ch.execute(query=ch_query, params={**params, **img_constraints_vals, **__get_constraint_values(args)})
-        images = [{"timestamp": i["timestamp"], "value": i["value"]} for i in
-                  __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                           end_time=endTimestamp,
-                                           density=density, neutral={"value": 0})]
+    ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                          AVG(NULLIF(resources.duration,0)) AS value 
+                  FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                  WHERE {" AND ".join(ch_sub_query_chart)}
+                      AND resources.type = 'img' 
+                      {(f' AND ({" OR ".join(img_constraints)})') if len(img_constraints) > 0 else ""}
+                  GROUP BY timestamp
+                  ORDER BY timestamp;"""
+    rows = ch.execute(query=ch_query, params={**params, **img_constraints_vals, **__get_constraint_values(args)})
+    images = [{"timestamp": i["timestamp"], "value": i["value"]} for i in
+              __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                       end_time=endTimestamp,
+                                       density=density, neutral={"value": 0})]
 
-        for s in images:
-            for k in s:
-                if s[k] is None:
-                    s[k] = 0
+    for s in images:
+        for k in s:
+            if s[k] is None:
+                s[k] = 0
     return images
 
 
@@ -2250,7 +2249,7 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
     with ch_client.ClickHouseClient() as ch:
         row = __get_application_activity_avg_request_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
-        results["chart"] = get_performance_avg_request_load_time(project_id, startTimestamp, endTimestamp, **args)
+        results["chart"] = get_performance_avg_request_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2279,7 +2278,7 @@ def __get_application_activity_avg_request_load_time(ch, project_id, startTimest
     return result
 
 
-def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
+def get_performance_avg_request_load_time(ch, project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                                           endTimestamp=TimeUTC.now(),
                                           density=19, resources=None, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
@@ -2297,26 +2296,26 @@ def get_performance_avg_request_load_time(project_id, startTimestamp=TimeUTC.now
                 request_constraints_vals["val_" + str(len(request_constraints) - 1)] = r['value']
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(NULLIF(resources.duration,0)) AS value 
-                      FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                      WHERE {" AND ".join(ch_sub_query_chart)} 
-                          AND resources.type = 'fetch'  
-                          {(f' AND ({" OR ".join(request_constraints)})') if len(request_constraints) > 0 else ""}
-                      GROUP BY timestamp
-                      ORDER BY timestamp;"""
-        rows = ch.execute(query=ch_query,
-                          params={**params, **request_constraints_vals, **__get_constraint_values(args)})
-        requests = [{"timestamp": i["timestamp"], "value": i["value"]} for i in
-                    __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                             end_time=endTimestamp, density=density,
-                                             neutral={"value": 0})]
 
-        for s in requests:
-            for k in s:
-                if s[k] is None:
-                    s[k] = 0
+    ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                          AVG(NULLIF(resources.duration,0)) AS value 
+                  FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                  WHERE {" AND ".join(ch_sub_query_chart)} 
+                      AND resources.type = 'fetch'  
+                      {(f' AND ({" OR ".join(request_constraints)})') if len(request_constraints) > 0 else ""}
+                  GROUP BY timestamp
+                  ORDER BY timestamp;"""
+    rows = ch.execute(query=ch_query,
+                      params={**params, **request_constraints_vals, **__get_constraint_values(args)})
+    requests = [{"timestamp": i["timestamp"], "value": i["value"]} for i in
+                __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                         end_time=endTimestamp, density=density,
+                                         neutral={"value": 0})]
+
+    for s in requests:
+        for k in s:
+            if s[k] is None:
+                s[k] = 0
     return requests
 
 
