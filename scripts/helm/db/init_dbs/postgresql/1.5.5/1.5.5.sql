@@ -53,7 +53,10 @@ ALTER TABLE events_common.requests
     ADD COLUMN IF NOT EXISTS base_path text NULL,
     ADD COLUMN IF NOT EXISTS query     text NULL;
 
+ALTER TABLE events.pages
+    ADD COLUMN IF NOT EXISTS query text NULL;
 COMMIT;
+
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'areaChart';
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'barChart';
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'stackedBarChart';
@@ -128,3 +131,6 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_base_path_nn_idx ON events_comm
 CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_query_nn_idx ON events_common.requests (query) WHERE query IS NOT NULL;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS pages_query_nn_idx ON events.pages (query) WHERE query IS NOT NULL;
+CREATE INDEX CONCURRENTLY IF NOT EXISTS pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
