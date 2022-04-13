@@ -1690,7 +1690,7 @@ def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY resources.url_host
                         ORDER BY errors_count DESC
-                        LIMIT 10;"""
+                        LIMIT 5;"""
         rows = ch.execute(query=ch_query,
                           params={"project_id": project_id,
                                   "startTimestamp": startTimestamp,
