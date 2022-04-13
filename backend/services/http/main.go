@@ -21,6 +21,8 @@ import (
 	"openreplay/backend/pkg/url/assets"
 	"openreplay/backend/services/http/geoip"
 	"openreplay/backend/services/http/uaparser"
+
+	_ "net/http/pprof"
 )
 
 var rewriter *assets.Rewriter
