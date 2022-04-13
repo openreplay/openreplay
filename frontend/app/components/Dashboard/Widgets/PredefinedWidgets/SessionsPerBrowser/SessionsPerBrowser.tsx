@@ -8,10 +8,15 @@ interface Props {
     data: any
     metric?: any
 }
-function ErrorsPerDomain(props: Props) {
+function SessionsPerBrowser(props: Props) {
     const { data, metric } = props;
-    // const firstAvg = 10;
-    const firstAvg = metric.data.chart[0] && metric.data.chart[0].errorsCount;
+    const firstAvg = metric.data.chart[0] && metric.data.chart[0].count;
+
+    const getVersions = item => {
+      return Object.keys(item)
+        .filter(i => i !== 'browser' && i !== 'count')
+        .map(i => ({ key: 'v' +i, value: item[i]}))
+    }
     return (
         <NoContent
           size="small"
@@ -21,11 +26,12 @@ function ErrorsPerDomain(props: Props) {
             {metric.data.chart.map((item, i) => 
               <Bar
                 key={i}
-                className="mb-2"
-                avg={numberWithCommas(Math.round(item.errorsCount))}
-                width={Math.round((item.errorsCount * 100) / firstAvg) - 10}
-                domain={item.domain}
-                color={Styles.colors[i]}
+                className="mb-4"
+                avg={Math.round(item.count)}
+                versions={getVersions(item)}
+                width={Math.round((item.count * 100) / firstAvg) - 10}
+                domain={item.browser}
+                colors={Styles.colors}
               />
             )}
           </div>
@@ -33,4 +39,4 @@ function ErrorsPerDomain(props: Props) {
     );
 }
 
-export default ErrorsPerDomain;
+export default SessionsPerBrowser;

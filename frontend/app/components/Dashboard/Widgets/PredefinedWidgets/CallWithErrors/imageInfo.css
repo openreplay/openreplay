@@ -1,0 +1,39 @@
+.name {
+  display: flex;
+  align-items: center;
+
+  & > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; 
+    max-width: 60%;
+  }
+}
+
+.imagePreview {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.imageWrapper {
+  display: flex;
+  flex-flow: column;
+  align-items: center;
+  width: 40px;
+  text-align: center;
+  margin-right: 10px;
+  & > span {
+    height: 16px;
+  }
+  & .label {
+    font-size: 9px;
+    color: $gray-light;
+  }
+}
+
+.popup {
+  background-color: #f5f5f5 !important;
+  &:before {
+    background-color: #f5f5f5 !important;
+  }
+}

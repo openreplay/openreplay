@@ -70,7 +70,7 @@ function WidgetChart(props: Props) {
             if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
-            return <WidgetPredefinedChart data={data} predefinedKey={metric.predefinedKey} />
+            return <WidgetPredefinedChart metric={metric} data={data} predefinedKey={metric.predefinedKey} />
         }
 
         if (metricType === 'timeseries') {

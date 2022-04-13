@@ -22,64 +22,69 @@ import ResourceLoadingTime from 'App/components/Dashboard/Widgets/PredefinedWidg
 import BreakdownOfLoadedResources from 'App/components/Dashboard/Widgets/PredefinedWidgets/BreakdownOfLoadedResources';
 import MissingResources from 'App/components/Dashboard/Widgets/PredefinedWidgets/MissingResources';
 import ResourceLoadedVsResponseEnd from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResourceLoadedVsResponseEnd';
+import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsPerBrowser';
+import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
 
 interface Props {
     data: any;
     predefinedKey: string
+    metric?: any;
 }
 function WidgetPredefinedChart(props: Props) {
-    const { data, predefinedKey } = props;
+    const { data, predefinedKey, metric } = props;
 
     const renderWidget = () => {
         switch (predefinedKey) {
             // ERRORS
             case 'errors_per_type':
-                return <ErrorsByType data={data} />
+                return <ErrorsByType data={data} metric={metric} />
             case 'errors_per_domains':
-                return <ErrorsPerDomain data={data} />
+                return <ErrorsPerDomain data={data} metric={metric} />
             case 'resources_by_party':
-                return <ErrorsByOrigin data={data} />
+                return <ErrorsByOrigin data={data} metric={metric} />
             case 'impacted_sessions_by_js_errors':
-                return <SessionsAffectedByJSErrors data={data} />
+                return <SessionsAffectedByJSErrors data={data} metric={metric} />
             case 'domains_errors_4xx':
-                return <CallsErrors4xx data={data} />
+                return <CallsErrors4xx data={data} metric={metric} />
             case 'domains_errors_5xx':
-                return <CallsErrors5xx data={data} />
+                return <CallsErrors5xx data={data} metric={metric} />
+            case 'calls_errors':
+                return <CallWithErrors data={data} metric={metric} />
 
             // PERFORMANCE
             // case 'impacted_sessions_by_slow_pages':
             // case 'pages_response_time_distribution':
             // case 'speed_location':
             case 'cpu':
-                return <CPULoad data={data} />
+                return <CPULoad data={data} metric={metric} />
             case 'crashes':
-                return <Crashes data={data} />
+                return <Crashes data={data} metric={metric} />
             case 'pages_dom_buildtime':
-                return <DomBuildingTime data={data} />
+                return <DomBuildingTime data={data} metric={metric} />
             case 'fps':
-                return <FPS data={data} />
+                return <FPS data={data} metric={metric} />
             case 'memory_consumption':
-                return <MemoryConsumption data={data} />
+                return <MemoryConsumption data={data} metric={metric} />
             case 'pages_response_time':
-                return <ResponseTime data={data} />
+                return <ResponseTime data={data} metric={metric} />
             case 'resources_vs_visually_complete':
-                return <ResourceLoadedVsVisuallyComplete data={data} />
+                return <ResourceLoadedVsVisuallyComplete data={data} metric={metric} />
             case 'sessions_per_browser':
-                return <SessionsImpactedBySlowRequests data={data} />
+                return <SessionsPerBrowser data={data} metric={metric} />
             case 'slowest_domains':
-                return <SlowestDomains data={data} />
+                return <SlowestDomains data={data} metric={metric} />
             case 'time_to_render':
-                return <TimeToRender data={data} />
+                return <TimeToRender data={data} metric={metric} />
 
             // Resources
             case 'resources_count_by_type':
-                return <BreakdownOfLoadedResources data={data} />
+                return <BreakdownOfLoadedResources data={data} metric={metric} />
             case 'missing_resources':
-                return <MissingResources data={data} />
+                return <MissingResources data={data} metric={metric} />
             case 'resource_type_vs_response_end':
-                return <ResourceLoadedVsResponseEnd data={data} />
+                return <ResourceLoadedVsResponseEnd data={data} metric={metric} />
             case 'resources_loading_time':
-                return <ResourceLoadingTime data={data} />
+                return <ResourceLoadingTime data={data} metric={metric} />
             // case 'slowest_resources':
 
             default:

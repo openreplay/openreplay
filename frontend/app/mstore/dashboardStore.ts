@@ -420,27 +420,6 @@ export default class DashboardStore implements IDashboardSotre {
                         metric.setData(_data)
                         resolve(_data);
                     } else {
-                        // if (metric.predefinedKey === 'errors_per_domains') {
-                        //     console.log('errors_per_domains', data)
-                        //     data.chart = data
-                        // } else {
-                        //     data.chart = getChartFormatter(this.period)(Array.isArray(data) ? data : data.chart)
-                        // }
-                        // data.namesMap = Array.isArray(data) ? data    
-                        //     .map(i => Object.keys(i))
-                        //     .flat()
-                        //     .filter(i => i !== 'time' && i !== 'timestamp')
-                        //     .reduce((unique: any, item: any) => {
-                        //         if (!unique.includes(item)) {
-                        //             unique.push(item);
-                        //         }
-                        //         return unique;
-                        //     }, []) : data.chart;
-                        //     console.log('map', data.namesMap)
-                        // const _data = { ...data, namesMap: data.namesMap, chart: data.chart }
-                        // metric.setData(_data)
-                        // resolve(_data);
-
                         const _data = {
                             ...data,
                         }
@@ -457,7 +436,7 @@ export default class DashboardStore implements IDashboardSotre {
                                     return unique;
                                 }, [])
                         } else {
-                            _data['chart'] = Array.isArray(data) ? data : []
+                            _data['chart'] =  getChartFormatter(this.period)(Array.isArray(data) ? data : []);
                             _data['namesMap'] = Array.isArray(data) ? data.map(i => Object.keys(i))
                                 .flat()
                                 .filter(i => i !== 'time' && i !== 'timestamp')

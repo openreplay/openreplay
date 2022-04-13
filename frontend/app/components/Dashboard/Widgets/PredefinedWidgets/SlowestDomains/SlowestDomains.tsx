@@ -6,17 +6,18 @@ import Bar from 'App/components/Dashboard/Widgets/SlowestDomains/Bar';
 
 interface Props {
     data: any
+    metric?: any
 }
 function SlowestDomains(props: Props) {
-    const { data } = props;
-    const firstAvg = data.chart[0] && data.chart[0].errorsCount;
+    const { data, metric } = props;
+    const firstAvg = metric.data.chart[0] && metric.data.chart[0].errorsCount;
     return (
         <NoContent
           size="small"
-          show={ data.chart.length === 0 }
+          show={ metric.data.chart.length === 0 }
         >
           <div className="w-full" style={{ height: '240px' }}>
-            {data.chart.map((item, i) => 
+            {metric.data.chart.map((item, i) => 
               <Bar
                 key={i}
                 className="mb-2"
