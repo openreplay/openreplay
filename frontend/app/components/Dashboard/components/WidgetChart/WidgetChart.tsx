@@ -9,9 +9,11 @@ import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
+import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
 interface Props {
     metric: any;
     isWidget?: boolean
+    onClick?: () => void;
 }
 function WidgetChart(props: Props) {
     const { isWidget = false, metric } = props;
@@ -19,11 +21,31 @@ function WidgetChart(props: Props) {
     const period = useObserver(() => dashboardStore.period);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(false)
-    const [seriesMap, setSeriesMap] = useState<any>([]);
-    const params = { density: 28 } 
+    const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
+    const params = { density: isOverviewWidget ? 7 : 70 } 
     const metricParams = { ...params }
     const prevMetricRef = useRef<any>();
     const [data, setData] = useState<any>(metric.data);
+
+    const onChartClick = (event: any) => {
+        if (event) {
+            const payload = event.activePayload[0].payload;
+            const timestamp = payload.timestamp;
+            const periodTimestamps = metric.metricType === 'timeseries' ?
+              getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density) :
+              period.toTimestamps();
+            
+            // const activeWidget = {
+            //   widget: metric,
+            //   period: period,
+            //   ...periodTimestamps,
+            //   timestamp: payload.timestamp,
+            //   index,
+            // }
+      
+            // props.setActiveWidget(activeWidget);
+        }
+    }
 
     useEffect(() => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
@@ -33,8 +55,8 @@ function WidgetChart(props: Props) {
         prevMetricRef.current = metric;
         
         setLoading(true);
-        const data = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
-        dashboardStore.fetchMetricChartData(metric, data, isWidget).then((res: any) => {
+        const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
+        dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
             setData(res);
         }).finally(() => {
             setLoading(false);
@@ -42,10 +64,10 @@ function WidgetChart(props: Props) {
     }, [period]);
 
     const renderChart = () => {
-        const { metricType, viewType, predefinedKey } = metric;
+        const { metricType, viewType } = metric;
 
         if (metricType === 'predefined') {
-            if (viewType === 'overview') {
+            if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
             return <WidgetPredefinedChart data={data} predefinedKey={metric.predefinedKey} />
@@ -55,16 +77,16 @@ function WidgetChart(props: Props) {
             if (viewType === 'lineChart') {
                 return (
                     <CustomMetriLineChart
-                        data={metric.data}
-                        seriesMap={seriesMap}
+                        data={data}
                         colors={colors}
                         params={params}
+                        onClick={onChartClick}
                     />
                 )
             } else if (viewType === 'progress') {
                 return (
                     <CustomMetricPercentage
-                        data={metric.data[0]}
+                        data={data[0]}
                         colors={colors}
                         params={params}
                     />
@@ -74,12 +96,12 @@ function WidgetChart(props: Props) {
 
         if (metricType === 'table') {
             if (viewType === 'table') {
-                return <CustomMetricTable  metric={metric} data={metric.data[0]} />;
+                return <CustomMetricTable  metric={metric} data={data[0]} />;
             } else if (viewType === 'pieChart') {
                 return (
                     <CustomMetricPieChart
                         metric={metric}
-                        data={metric.data[0]}
+                        data={data[0]}
                         colors={colors}
                         params={params}
                     />

@@ -1,11 +1,11 @@
 import { connect } from 'react-redux';
 import  { withSiteId } from 'App/routes';
-import { setSiteId } from 'Duck/user';
+import { setSiteId } from 'Duck/site';
 
 export default BaseComponent =>
 @connect((state, props) => ({
   urlSiteId: props.match.params.siteId,
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
 }), {
   setSiteId,
 })

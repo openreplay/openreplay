@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent'; 
-import { Modal, Icon, SlideModal } from 'UI';
+import { Modal, Icon, SlideModal, IconButton } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import Sentry from './Sentry';
 import JsonViewer from './JsonViewer';
@@ -54,34 +54,42 @@ export default class UserEvent extends React.PureComponent {
 		return !!this.props.userEvent.payload;
 	}
 
+	onClickDetails = (e) => {
+		e.stopPropagation();
+		this.props.switchOpen();
+	}
+
 	renderContent(modalTrigger) {
 		const { userEvent } = this.props;
 		//const message = this.getEventMessage();
 		return (
 			<div
 				data-scroll-item={ userEvent.isRed() }
-				onClick={ this.props.switchOpen } //
-		    className={ 
-		    	cn(
-			    	stl.userEvent,
-			    	this.getLevelClassname(),
-			    	{ [ stl.modalTrigger ]: modalTrigger }
-			    )
-		  	} 
-		  >
-		    <div className={ stl.infoWrapper }>
-		      <div 
-		      	className={ stl.title }
-		      >
-		      	<Icon { ...this.getIconProps() } />
-	        	{ userEvent.name }
-		      </div>
-		      { /* message && 
-		      	<div className={ stl.message }>
-			      	{ message }
-			      </div> */
-			    }
-		    </div>
+				// onClick={ this.props.switchOpen } //
+				onClick={ this.props.onJump } //
+				className={ 
+					cn(
+						"group",
+						stl.userEvent,
+						this.getLevelClassname(),
+						{ [ stl.modalTrigger ]: modalTrigger }
+					)
+				} 
+		  	>
+				<div className={ stl.infoWrapper }>
+					<div className={ stl.title } >
+						<Icon { ...this.getIconProps() } />
+						{ userEvent.name }
+					</div>
+					{ /* message && 
+						<div className={ stl.message }>
+							{ message }
+						</div> */
+					}
+					<div className="invisible self-end ml-auto group-hover:visible">
+						<IconButton size="small" plain onClick={this.onClickDetails} label="DETAILS" />
+					</div>
+				</div>
 		  </div>
 		); 
 	}
@@ -91,15 +99,15 @@ export default class UserEvent extends React.PureComponent {
 		if (this.ifNeedModal()) {
 			return (
 				<React.Fragment>
-				<SlideModal
-          //title="Add Custom Field"
-          size="middle"
-          isDisplayed={ this.props.open }
-          content={ this.props.open && this.renderPopupContent() }
-          onClose={ this.props.switchOpen }
-        />
-        { this.renderContent(true) }
-        </React.Fragment>
+					<SlideModal
+						//title="Add Custom Field"
+						size="middle"
+						isDisplayed={ this.props.open }
+						content={ this.props.open && this.renderPopupContent() }
+						onClose={ this.props.switchOpen }
+					/>
+					{ this.renderContent(true) }
+        		</React.Fragment>
 				//<Modal 
 				//	trigger={ this.renderContent(true) }
 				//	content={ this.renderPopupContent() }

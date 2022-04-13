@@ -52,6 +52,6 @@ function AutoplayTimer({ nextId, siteId, history }) {
 
 
 export default withRouter(connect(state => ({
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
   nextId: parseInt(state.getIn([ 'sessions', 'nextId' ])),
 }))(AutoplayTimer))

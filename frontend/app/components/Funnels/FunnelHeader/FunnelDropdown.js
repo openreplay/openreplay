@@ -33,5 +33,5 @@ function FunnelDropdown(props) {
 export default connect((state, props) => ({
   funnels: state.getIn(['funnels', 'list']),
   funnel: state.getIn(['funnels', 'instance']),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
 }), { })(withRouter(FunnelDropdown))

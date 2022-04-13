@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { connectPlayer } from 'Player';
+import { connectPlayer, jump } from 'Player';
 import { NoContent, Tabs } from 'UI';
 import withEnumToggle from 'HOCs/withEnumToggle';
 import { hideHint } from 'Duck/components/player';
@@ -18,7 +18,7 @@ const TABS = [ ALL, ...typeList ].map(tab =>({ text: tab, key: tab }));
 }))
 @connect(state => ({
   hintIsHidden: state.getIn(['components', 'player', 'hiddenHints', 'stack']) || 
-    !state.getIn([ 'user', 'client', 'sites' ]).some(s => s.stackIntegrations),
+    !state.getIn([ 'site', 'list' ]).some(s => s.stackIntegrations),
 }), {
   hideHint
 })
@@ -66,7 +66,11 @@ export default class StackEvents extends React.PureComponent {
           >
             <Autoscroll>
               { filteredStackEvents.map(userEvent => (
-                <UserEvent key={ userEvent.key } userEvent={ userEvent }/>
+                <UserEvent
+                  key={ userEvent.key }
+                  userEvent={ userEvent }
+                  onJump={ () => jump(userEvent.time) }
+                />
               ))}
             </Autoscroll>
           </NoContent>

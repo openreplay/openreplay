@@ -56,7 +56,7 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
 export default class APIClient {
   constructor() {
     const jwt = store.getState().get('jwt');
-    const siteId = store.getState().getIn([ 'user', 'siteId' ]);
+    const siteId = store.getState().getIn([ 'site', 'siteId' ]);
     this.init = {
       headers: {
         Accept: 'application/json',

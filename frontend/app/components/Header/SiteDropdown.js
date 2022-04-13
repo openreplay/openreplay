@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { setSiteId } from 'Duck/user';
+import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import { hasSiteId, siteChangeAvaliable } from 'App/routes';
 import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
@@ -19,7 +19,7 @@ import { withStore } from 'App/mstore'
 @withRouter
 @connect(state => ({  
   sites: state.getIn([ 'site', 'list' ]),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
   account: state.getIn([ 'user', 'account' ]),
 }), {
   setSiteId,

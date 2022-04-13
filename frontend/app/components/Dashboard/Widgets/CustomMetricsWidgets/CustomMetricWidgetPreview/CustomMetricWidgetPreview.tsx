@@ -168,7 +168,7 @@ function CustomMetricWidget(props: Props) {
                     { metric.viewType === 'lineChart' && (
                       <CustomMetriLineChart
                         data={data}
-                        seriesMap={seriesMap}
+                        // seriesMap={seriesMap}
                         colors={colors}
                         params={params}
                       />

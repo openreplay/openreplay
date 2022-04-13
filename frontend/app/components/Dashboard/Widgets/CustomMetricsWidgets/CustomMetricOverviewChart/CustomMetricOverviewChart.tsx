@@ -16,24 +16,24 @@ function CustomMetricOverviewChart(props: Props) {
     
     return (
         <div className="relative -mx-4">
-            <div className="absolute flex items-start flex-col justify-center inset-0 p-3">
+            <div className="absolute flex items-start flex-col justify-start inset-0 p-3">
                 <div className="mb-2 flex items-center" >
                 </div>
                 <div className="flex items-center">
-                <CountBadge
-                    // title={subtext}
-                    count={ countView(Math.round(data.value), data.unit) }
-                    change={ data.progress || 0 }
-                    unit={ data.unit }
-                    // className={textClass}
-                />
+                    <CountBadge
+                        // title={subtext}
+                        count={ countView(Math.round(data.value), data.unit) }
+                        change={ data.progress || 0 }
+                        unit={ data.unit }
+                        // className={textClass}
+                    />
                 </div>
             </div>
             <ResponsiveContainer height={ 100 } width="100%">
                 <AreaChart
                     data={ data.chart }
                     margin={ {
-                        top: 85, right: 0, left: 0, bottom: 5,
+                        top: 50, right: 0, left: 0, bottom: 5,
                     } }
                 >
                     {gradientDef}

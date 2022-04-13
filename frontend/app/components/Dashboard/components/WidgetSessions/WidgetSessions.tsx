@@ -11,12 +11,12 @@ interface Props {
 function WidgetSessions(props: Props) {
     const { className = '' } = props;
     const { dashboardStore } = useStore();
-    const period = useObserver(() => dashboardStore.period);
+    const filter = useObserver(() => dashboardStore.drillDownFilter);
     const widget = dashboardStore.currentWidget;
 
-    const range = period.toTimestamps()
-    const startTime = DateTime.fromMillis(range.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
-    const endTime = DateTime.fromMillis(range.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+    // const range = period.toTimestamps()
+    const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+    const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
 
     return useObserver(() => (
         <div className={cn(className)}>

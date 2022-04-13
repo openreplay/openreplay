@@ -63,6 +63,7 @@ function WidgetWrapper(props: Props) {
 
     const onChartClick = () => {
         if (!isWidget || widget.metricType === 'predefined') return;
+        
         props.history.push(withSiteId(dashboardMetricDetails(dashboardId, widget.metricId),siteId));
     }
 

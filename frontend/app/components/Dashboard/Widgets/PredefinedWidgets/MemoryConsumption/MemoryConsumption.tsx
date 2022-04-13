@@ -44,7 +44,7 @@ function MemoryConsumption(props: Props) {
                     name="Avg"
                     unit=" mb"
                     type="monotone"
-                    dataKey="avgFps"
+                    dataKey="avg"
                     stroke={Styles.colors[0]}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }

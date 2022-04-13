@@ -40,7 +40,7 @@ function CPULoad(props: Props) {
                   name="Avg"
                   type="monotone"
                   unit="%"
-                  dataKey="avgCpu"
+                  dataKey="value"
                   stroke={Styles.colors[0]}
                   fillOpacity={ 1 }
                   strokeWidth={ 2 }

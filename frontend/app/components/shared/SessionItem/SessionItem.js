@@ -28,7 +28,7 @@ const SESSIONS_ROUTE = sessionsRoute();
 // )
 @connect(state => ({
   timezone: state.getIn(['sessions', 'timezone']),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
 }), { toggleFavorite, setSessionPath })
 @withRouter
 export default class SessionItem extends React.PureComponent {

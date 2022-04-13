@@ -28,5 +28,5 @@ function FunnelList(props) {
 
 export default connect(state => ({
   list: state.getIn(['funnels', 'list']),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
 }))(withRouter(FunnelList))
