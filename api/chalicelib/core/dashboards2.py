@@ -85,7 +85,7 @@ def get_dashboard(project_id, user_id, dashboard_id):
                                                     FROM (SELECT dashboard_widgets.*, metrics.*, metric_series.series
                                                           FROM metrics
                                                                    INNER JOIN dashboard_widgets USING (metric_id)
-                                                                   LEFT JOIN LATERAL (SELECT JSONB_AGG(metric_series.* ORDER BY index) AS series
+                                                                   LEFT JOIN LATERAL (SELECT COALESCE(JSONB_AGG(metric_series.* ORDER BY index),'[]') AS series
                                                                                       FROM metric_series
                                                                                       WHERE metric_series.metric_id = metrics.metric_id
                                                                                         AND metric_series.deleted_at ISNULL
@@ -102,9 +102,12 @@ def get_dashboard(project_id, user_id, dashboard_id):
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
         if row is not None:
+            row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
             for w in row["widgets"]:
-                row["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
-                row["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
+                w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
+                w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
+                for s in w["series"]:
+                    s["created_at"] = TimeUTC.datetime_to_timestamp(s["created_at"])
     return helper.dict_to_camel_case(row)
 
 
