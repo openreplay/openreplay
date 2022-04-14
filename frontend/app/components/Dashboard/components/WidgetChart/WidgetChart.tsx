@@ -19,6 +19,7 @@ function WidgetChart(props: Props) {
     const { isWidget = false, metric } = props;
     const { dashboardStore } = useStore();
     const period = useObserver(() => dashboardStore.period);
+    const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(false)
     const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
@@ -34,6 +35,11 @@ function WidgetChart(props: Props) {
             const periodTimestamps = metric.metricType === 'timeseries' ?
               getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density) :
               period.toTimestamps();
+
+            drillDownFilter.merge({
+                startTimestamp: periodTimestamps.startTimestamp,
+                endTimestamp: periodTimestamps.endTimestamp,
+            });
             
             // const activeWidget = {
             //   widget: metric,
@@ -42,8 +48,6 @@ function WidgetChart(props: Props) {
             //   timestamp: payload.timestamp,
             //   index,
             // }
-      
-            // props.setActiveWidget(activeWidget);
         }
     }
 

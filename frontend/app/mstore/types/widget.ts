@@ -1,7 +1,9 @@
 import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
 import FilterSeries from "./filterSeries";
 import { DateTime } from 'luxon';
-
+import { IFilter } from "./filter";
+import { metricService } from "App/services";
+import Session, { ISession } from "App/mstore/types/session";
 export interface IWidget {
     metricId: any
     widgetId: any
@@ -20,6 +22,8 @@ export interface IWidget {
     dashboardIds: any[]
     config: any
 
+    sessionsLoading: boolean
+
     position: number
     data: any
     isLoading: boolean
@@ -34,12 +38,14 @@ export interface IWidget {
     removeSeries(index: number): void
     addSeries(): void
     fromJson(json: any): void
+    toJsonDrilldown(json: any): void
     toJson(): any
     validate(): void
     update(data: any): void
     exists(): boolean
     toWidget(): any
     setData(data: any): void
+    fetchSessions(filter: any): Promise<any>
 }
 export default class Widget implements IWidget {
     public static get ID_KEY():string { return "metricId" }
@@ -61,6 +67,8 @@ export default class Widget implements IWidget {
     config: any = {}
     params: any = { density: 70 }
 
+    sessionsLoading: boolean = false
+
     position: number = 0
     data: any = {
         chart: [],
@@ -74,7 +82,9 @@ export default class Widget implements IWidget {
     
     constructor() {
         makeAutoObservable(this, {
+            sessionsLoading: observable,
             data: observable.ref,
+            metricId: observable,
             widgetId: observable,
             name: observable,
             metricType: observable,
@@ -146,6 +156,12 @@ export default class Widget implements IWidget {
         }
     }
 
+    toJsonDrilldown() {
+        return {
+            series: this.series.map((series: any) => series.toJson()),
+        }
+    }
+
     toJson() {
         return {
             metricId: this.metricId,
@@ -177,6 +193,23 @@ export default class Widget implements IWidget {
     setData(data: any) {
         runInAction(() => {
             Object.assign(this.data, data)
+        })
+    }
+
+    fetchSessions(filter: any): Promise<any> {
+        this.sessionsLoading = true
+        return new Promise((resolve, reject) => {
+            console.log('fetching sessions', filter)
+            metricService.fetchSessions(this.metricId, filter).then(response => {
+                resolve(response.map(cat => {
+                    return {
+                        ...cat,
+                        sessions: cat.sessions.map(s => new Session().fromJson(s))
+                    }
+                }))
+            }).finally(() => {
+                this.sessionsLoading = false
+            })
         })
     }
 }

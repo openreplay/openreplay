@@ -19,7 +19,7 @@ function CallsErrors5xx(props: Props) {
           show={ metric.data.chart.length === 0 }
         >
           <ResponsiveContainer height={ 240 } width="100%">
-            <BarChart
+            <LineChart
               data={metric.data.chart}
               margin={Styles.chartMargins}
             >
@@ -39,7 +39,7 @@ function CallsErrors5xx(props: Props) {
               { Array.isArray(metric.data.namesMap) && metric.data.namesMap.map((key, index) => (
                 <Line key={key} name={key} type="monotone" dataKey={key} stroke={Styles.colors[index]} fillOpacity={ 1 } strokeWidth={ 2 } strokeOpacity={ 0.8 } fill="url(#colorCount)" dot={false} />
               ))}
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
         </NoContent>
     );

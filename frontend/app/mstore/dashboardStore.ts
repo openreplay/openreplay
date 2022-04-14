@@ -5,7 +5,7 @@ import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
-import Filter from "./types/filter";
+import Filter, { IFilter } from "./types/filter";
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -15,7 +15,7 @@ export interface IDashboardSotre {
     startTimestamp: number
     endTimestamp: number
     period: Period
-    drillDownFilter: Filter
+    drillDownFilter: IFilter
 
     siteId: any
     currentWidget: Widget
@@ -29,6 +29,7 @@ export interface IDashboardSotre {
     isSaving: boolean
     isDeleting: boolean
     fetchingDashboard: boolean
+    sessionsLoading: boolean
 
     toggleAllSelectedWidgets: (isSelected: boolean) => void
     removeSelectedWidgetByCategory(category: string): void
@@ -89,9 +90,11 @@ export default class DashboardStore implements IDashboardSotre {
     isSaving: boolean = false
     isDeleting: boolean = false
     fetchingDashboard: boolean = false
+    sessionsLoading: boolean = false;
 
     constructor() {
         makeAutoObservable(this, {
+            drillDownFilter: observable.ref,
             widgetCategories: observable.ref,
             resetCurrentWidget: action,
             addDashboard: action,
