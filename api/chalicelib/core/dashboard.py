@@ -1,11 +1,12 @@
+import math
+
 import schemas
 from chalicelib.core import metadata
 from chalicelib.utils import args_transformer
-from chalicelib.utils import helper, dev
+from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
-import math
 
 
 # Written by David Aznaurov, inspired by numpy.quantile
@@ -75,8 +76,6 @@ METADATA_FIELDS = {"userId": "user_id",
                    "metadata9": "metadata_9",
                    "metadata10": "metadata_10"}
 
-from chalicelib.core import sessions_metas
-
 
 def __get_meta_constraint(project_id, data):
     if len(data.get("filters", [])) == 0:
@@ -125,6 +124,13 @@ SESSIONS_META_FIELDS = {"revId": "rev_id",
                         "platform": "user_device_type",
                         "device": "user_device",
                         "browser": "user_browser"}
+
+
+def __get_domains_errors_neutral(rows):
+    neutral = {l: 0 for l in [i for k in [list(v.keys()) for v in rows] for i in k]}
+    if len(neutral.keys()) == 0:
+        neutral = {"All": 0}
+    return neutral
 
 
 def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1591,7 +1597,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def __get_neutral(rows, add_All_if_empty=True):
     neutral = {l: 0 for l in [i for k in [list(v.keys()) for v in rows] for i in k]}
-    if add_All_if_empty and len(neutral.keys()) == 0:
+    if add_All_if_empty and len(neutral.keys()) <= 1:
         neutral = {"All": 0}
     return neutral
 
