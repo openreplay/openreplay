@@ -13,6 +13,11 @@ fatal()
     exit 1
 }
 
+read -p "enter openreplay domain name: " domain
+nslookup domain > /dev/null || {
+    fatal "Domain name doesn't have ip associated with it. Please check your DNS record."
+}
+
 # Reading email address for ssl certificate
 [[ -z $EMAIL_ADDRESS ]] && {
     read -p "Enter your email address for letsencrypt certificate: " EMAIL_ADDRESS
