@@ -11,6 +11,7 @@ import { useModal } from 'App/components/Modal';
 import DashboardModal from '../DashboardModal';
 import DashboardEditModal from '../DashboardEditModal';
 import DateRange from 'Shared/DateRange';
+import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 
 interface Props {
     siteId: number;
@@ -22,6 +23,7 @@ function DashboardView(props: Props) {
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
     const { hideModal, showModal } = useModal();
+    const showAlertModal = useObserver(() => dashboardStore.showAlertModal);
     const loading = useObserver(() => dashboardStore.fetchingDashboard);
     const dashboards = useObserver(() => dashboardStore.dashboards);
     const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
@@ -98,18 +100,11 @@ function DashboardView(props: Props) {
                             </div>
                             <div className="mx-4" />
                             <div className="flex items-center">
-                                {/* <span className="mr-1 color-gray-medium">Options</span> */}
                                 <ItemMenu
                                     label="Options"
                                     items={[
-                                        {
-                                            text: 'Rename',
-                                            onClick: onEdit
-                                        },
-                                        {
-                                            text: 'Delete',
-                                            onClick: onDelete
-                                        },
+                                        { text: 'Rename', onClick: onEdit },
+                                        { text: 'Delete', onClick: onDelete },
                                     ]}
                                 />
                             </div>
@@ -119,6 +114,10 @@ function DashboardView(props: Props) {
                         siteId={siteId}
                         dashboardId={dashboardId}
                         onEditHandler={onAddWidgets}
+                    />
+                    <AlertFormModal
+                        showModal={showAlertModal}
+                        onClose={() => dashboardStore.updateKey('showAlertModal', false)}
                     />
                 </div>
             </NoContent>
