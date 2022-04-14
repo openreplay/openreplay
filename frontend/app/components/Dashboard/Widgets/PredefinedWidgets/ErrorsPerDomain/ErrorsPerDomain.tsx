@@ -16,6 +16,7 @@ function ErrorsPerDomain(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          style={{ height: '240px'}}
         >
           <div className="w-full" style={{ height: '240px' }}>
             {metric.data.chart.map((item, i) => 

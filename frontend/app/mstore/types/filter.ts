@@ -2,8 +2,27 @@ import { makeAutoObservable, runInAction, observable, action, reaction } from "m
 import { FilterKey, FilterType } from 'Types/filter/filterType'
 import { filtersMap } from 'Types/filter/newFilter'
 import FilterItem from "./filterItem"
-export default class Filter {
+
+export interface IFilter {
+    filterId: string
+    name: string
+    filters: FilterItem[]
+    eventsOrder: string
+    startTimestamp: number
+    endTimestamp: number
+
+    merge: (filter: any) => void
+    addFilter: (filter: FilterItem) => void
+    updateFilter: (index:number, filter: any) => void
+    updateKey: (key: any, value: any) => void
+    removeFilter: (index: number) => void
+    fromJson: (json: any) => void
+    toJson: () => any
+    toJsonDrilldown: () => any
+}
+export default class Filter implements IFilter {
     public static get ID_KEY():string { return "filterId" }
+    filterId: string = ''
     name: string = ''
     filters: FilterItem[] = []
     eventsOrder: string = 'then'
@@ -14,10 +33,19 @@ export default class Filter {
         makeAutoObservable(this, {
             filters: observable,
             eventsOrder: observable,
+            startTimestamp: observable,
+            endTimestamp: observable,
 
             addFilter: action,
             removeFilter: action,
             updateKey: action,
+            merge: action,
+        })
+    }
+
+    merge(filter: any) {
+        runInAction(() => {
+            Object.assign(this, filter)
         })
     }
 
@@ -36,7 +64,7 @@ export default class Filter {
         this.filters[index] = new FilterItem(filter)
     }
 
-    updateKey(key, value) {
+    updateKey(key: string, value) {
         this[key] = value
     }
 
