@@ -1,16 +1,14 @@
 {{- if .Values.ingress.enabled }}
-{{- $fullName := include "utilities.fullname" . -}}
+{{- $fullName := include "peers.fullname" . -}}
 {{- $peerjsSvcPort := .Values.service.ports.peerjs -}}
-{{- $socketioSvcPort := .Values.service.ports.socketio -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ $fullName }}
   labels:
-    {{- include "utilities.labels" . | nindent 4 }}
+    {{- include "peers.labels" . | nindent 4 }}
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -33,11 +31,4 @@ spec:
                 port:
                   number: {{ $peerjsSvcPort }}
             path: /assist/(.*)
-          - pathType: Prefix
-            backend:
-              service:
-                name: {{ $fullName }}
-                port:
-                  number: {{ $socketioSvcPort }}
-            path: /ws-assist/(.*)
 {{- end }}
