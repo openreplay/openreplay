@@ -31,6 +31,7 @@ export interface IDashboardSotre {
     fetchingDashboard: boolean
     sessionsLoading: boolean
 
+    selectWidgetsByCategory: (category: string) => void
     toggleAllSelectedWidgets: (isSelected: boolean) => void
     removeSelectedWidgetByCategory(category: string): void
     toggleWidgetSelection(widget: IWidget): void
@@ -111,6 +112,7 @@ export default class DashboardStore implements IDashboardSotre {
             editWidget: action,
             updateKey: action,
 
+            selectWidgetsByCategory: action,
             toggleAllSelectedWidgets: action,
             removeSelectedWidgetByCategory: action,
             toggleWidgetSelection: action,
@@ -136,6 +138,12 @@ export default class DashboardStore implements IDashboardSotre {
         } else {
             this.selectedWidgets = []
         }
+    }
+
+    selectWidgetsByCategory(category: string) {
+        const selectedWidgetIds = this.selectedWidgets.map((widget: any) => widget.metricId);
+        const widgets = this.widgetCategories.find(cat => cat.name === category)?.widgets.filter(widget => !selectedWidgetIds.includes(widget.metricId))
+        this.selectedWidgets = this.selectedWidgets.concat(widgets) || []
     }
 
     removeSelectedWidgetByCategory = (category: any) => {

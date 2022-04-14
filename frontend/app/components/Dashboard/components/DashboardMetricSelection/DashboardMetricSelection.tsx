@@ -17,8 +17,8 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, 
             <div className="mb-2">{category.description}</div>
             {selectedCategoryWidgetsCount > 0 && (
                 <div className="flex items-center">
-                    <input type="checkbox" checked={true} onChange={() => unSelectCategory(category)} />
-                    <span className="color-gray-medium ml-2">{`Selected ${selectedCategoryWidgetsCount} of ${category.widgets.length}`}</span>
+                    {/* <input type="checkbox" checked={true} onChange={() => unSelectCategory(category)} /> */}
+                    <span className="color-gray-medium text-sm">{`Selected ${selectedCategoryWidgetsCount} of ${category.widgets.length}`}</span>
                 </div>
             )}
         </div>
@@ -29,6 +29,7 @@ function DashboardMetricSelection(props) {
     const { dashboardStore } = useStore();
     let widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
     const [activeCategory, setActiveCategory] = React.useState<any>();
+    const [selectAllCheck, setSelectAllCheck] = React.useState(false);
     const selectedWidgetIds = useObserver(() => dashboardStore.selectedWidgets.map((widget: any) => widget.metricId));
 
     useEffect(() => {
@@ -39,10 +40,17 @@ function DashboardMetricSelection(props) {
 
     const handleWidgetCategoryClick = (category: any) => {
         setActiveCategory(category);
+        setSelectAllCheck(false);
     };
 
     const toggleAllWidgets = ({ target: { checked }}) => {
-        dashboardStore.toggleAllSelectedWidgets(checked);
+        // dashboardStore.toggleAllSelectedWidgets(checked);
+        setSelectAllCheck(checked);
+        if (checked) {
+            dashboardStore.selectWidgetsByCategory(activeCategory.name);
+        } else {
+            dashboardStore.removeSelectedWidgetByCategory(activeCategory);
+        }
     }
 
     return useObserver(() => (
@@ -62,10 +70,10 @@ function DashboardMetricSelection(props) {
 
                             <div className="ml-auto flex items-center">
                                 <span className="color-gray-medium">Showing past 7 days data for visual clue</span>
-                                <div className="flex items-center ml-3">
-                                    <input type="checkbox" onChange={toggleAllWidgets} />
-                                    <span className="ml-2">Select All</span>
-                                </div>
+                                <label className="flex items-center ml-3 cursor-pointer select-none">
+                                    <input type="checkbox" onChange={toggleAllWidgets} checked={selectAllCheck} />
+                                    <div className="ml-2">Select All</div>
+                                </label>
                             </div>
                         </>
                    )}

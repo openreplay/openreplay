@@ -21,6 +21,7 @@ function DashboardSideMenu(props: Props) {
     const dashboardId = useObserver(() => dashboardStore.selectedDashboard?.dashboardId);
     const dashboardsPicked = useObserver(() => dashboardStore.dashboards.slice(0, SHOW_COUNT));
     const remainingDashboardsCount = dashboardStore.dashboards.length - SHOW_COUNT;
+    const isMetric = history.location.pathname.includes('metrics');
 
     const redirect = (path) => {
         history.push(path);
@@ -82,6 +83,7 @@ function DashboardSideMenu(props: Props) {
             <div className="border-t w-full my-2" />
             <div className="w-full">
 				<SideMenuitem
+                    active={isMetric}
 					id="menu-manage-alerts"
 					title="Metrics"
 					iconName="bar-chart-line"
