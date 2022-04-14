@@ -117,5 +117,4 @@ function DashboardSideMenu(props: Props) {
     ));
 }
 
-export default connect((state) => {
-}, { setShowAlerts })(withRouter(DashboardSideMenu));
+export default connect(null, { setShowAlerts })(withRouter(DashboardSideMenu));

@@ -38,13 +38,13 @@ function ResponseTime(props: Props) {
         >
           <>
             <div className="flex items-center mb-3">
-              <WidgetAutoComplete
+              {/* <WidgetAutoComplete
                 loading={optionsLoading}
                 fetchOptions={props.fetchOptions}
                 options={props.options}
                 onSelect={onSelect}
                 placeholder="Search for Page"
-              />
+              /> */}
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(metric.data.avg)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 200 } width="100%">
