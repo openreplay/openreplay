@@ -56,6 +56,8 @@ ingress-nginx: &ingress-nginx
     config:
       enable-real-ip: true
       forwarded-for-header: "proxy_protocol"
+      # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#max-worker-connections
+      max-worker-connections: 0
       # If you want the ssl offload in LB layer
       # Uncomment the following line
       # ssl-redirect: false
