@@ -2760,11 +2760,18 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
 
 
 def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                   endTimestamp=TimeUTC.now(), value=None, **args):
+                                   endTimestamp=TimeUTC.now(), value=None,density=20, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                           chart=True, data=args, main_table="pages", time_column="timestamp",
+                                           duration=False)
 
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
+        pg_sub_query_chart.append("pages.path = %(value)s")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COUNT(pages.session_id) AS value
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
@@ -2774,5 +2781,22 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                                            "endTimestamp": endTimestamp,
                                            "value": value, **__get_constraint_values(args)}))
         row = cur.fetchone()
+        pg_query = f"""WITH pages AS(SELECT pages.timestamp
+                                                FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                                WHERE {" AND ".join(pg_sub_query)}
+                                )
+                    SELECT generated_timestamp AS timestamp,
+                         COUNT(pages.*) AS value
+                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL (
+                                SELECT 1
+                                FROM pages
+                                WHERE {" AND ".join(pg_sub_query_chart)}
+                        ) AS pages ON (TRUE)
+                      GROUP BY generated_timestamp
+                      ORDER BY generated_timestamp;"""
+        cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
+        rows = cur.fetchall()
+        row["chart"]=rows
     row["unit"] = schemas.TemplatePredefinedUnits.count
     return helper.dict_to_camel_case(row)
