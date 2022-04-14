@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "utilities.fullname" . }}
+  name: {{ include "peers.fullname" . }}
   labels:
-    {{- include "utilities.labels" . | nindent 4 }}
+    {{- include "peers.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "utilities.selectorLabels" . | nindent 6 }}
+      {{- include "peers.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "utilities.selectorLabels" . | nindent 8 }}
+        {{- include "peers.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "utilities.serviceAccountName" . }}
+      serviceAccountName: {{ include "peers.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -38,18 +38,8 @@ spec:
           {{- end }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: AWS_DEFAULT_REGION
-              value: "{{ .Values.global.s3.region }}"
-            - name: S3_HOST
-              {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
-              value: 'https://{{ .Values.global.domainName }}'
-              {{- else}}
-              value: '{{ .Values.global.s3.endpoint }}'
-              {{- end}}
             - name: S3_KEY
               value: {{ .Values.global.s3.accessKey }}
-            - name: S3_SECRET
-              value: {{ .Values.global.s3.secretKey }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

@@ -5,14 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: rg.fr-par.scw.cloud/foss/utilities
+  repository: rg.fr-par.scw.cloud/foss/assist
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 imagePullSecrets: []
-nameOverride: "utililities"
-fullnameOverride: "utililities"
+nameOverride: "assist"
+fullnameOverride: "assist"
 
 serviceAccount:
   # Specifies whether a service account should be created
