@@ -806,6 +806,7 @@ class TimeseriesMetricOfType(str, Enum):
 class CustomMetricSessionsPayloadSchema(FlatSessionsSearch):
     startTimestamp: int = Field(TimeUTC.now(-7))
     endTimestamp: int = Field(TimeUTC.now())
+    series: Optional[List[CustomMetricCreateSeriesSchema]] = Field(default=None)
 
     class Config:
         alias_generator = attribute_to_camel_case

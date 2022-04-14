@@ -57,6 +57,8 @@ def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
 def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
                                                  schemas.CustomMetricSessionsPayloadSchema]) \
         -> Union[schemas.CreateCustomMetricsSchema, None]:
+    if data.series is not None and len(data.series) > 0:
+        metric["series"] = data.series
     metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
