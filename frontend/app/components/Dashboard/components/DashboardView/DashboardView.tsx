@@ -74,7 +74,7 @@ function DashboardView(props: Props) {
                     <Button primary size="small" onClick={onAddWidgets}>Create Dashboard</Button>
                 }
             >
-                <div>
+                <div style={{ maxWidth: '1300px', margin: 'auto'}}>
                     <DashboardEditModal
                         show={showEditModal}
                         closeHandler={() => setShowEditModal(false)}
@@ -98,15 +98,16 @@ function DashboardView(props: Props) {
                             </div>
                             <div className="mx-4" />
                             <div className="flex items-center">
-                                <span className="mr-1 color-gray-medium">More</span>
+                                {/* <span className="mr-1 color-gray-medium">Options</span> */}
                                 <ItemMenu
+                                    label="Options"
                                     items={[
                                         {
-                                            text: 'Edit',
+                                            text: 'Rename',
                                             onClick: onEdit
                                         },
                                         {
-                                            text: 'Delete Dashboard',
+                                            text: 'Delete',
                                             onClick: onDelete
                                         },
                                     ]}

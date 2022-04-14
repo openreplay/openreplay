@@ -54,7 +54,7 @@ function WidgetView(props: Props) {
                                 onClick={() => setExpanded(!expanded)}
                                 className="flex items-center cursor-pointer select-none"
                             >
-                                <span className="mr-2 color-teal">{expanded ? 'Collapse' : 'Expand'}</span>
+                                <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
                                 <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
                             </div>
                         </div>
