@@ -56,7 +56,7 @@ function ResourceLoadingTime(props: Props) {
         >
           <>
             <div className="flex items-center mb-3">
-              <WidgetAutoComplete
+              {/* <WidgetAutoComplete
                 loading={optionsLoading}
                 fetchOptions={props.fetchOptions}
                 options={props.options}
@@ -75,7 +75,7 @@ function ResourceLoadingTime(props: Props) {
                   top: '12px',
                   left: '170px',
                 }}
-              />
+              /> */}
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.avg)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 200 } width="100%">

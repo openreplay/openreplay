@@ -17,6 +17,7 @@ function CallsErrors4xx(props: Props) {
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
+          style={ { height: '240px' } }
         >
           <ResponsiveContainer height={ 240 } width="100%">
             <LineChart

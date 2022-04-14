@@ -24,6 +24,8 @@ import MissingResources from 'App/components/Dashboard/Widgets/PredefinedWidgets
 import ResourceLoadedVsResponseEnd from 'App/components/Dashboard/Widgets/PredefinedWidgets/ResourceLoadedVsResponseEnd';
 import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidgets/SessionsPerBrowser';
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
+import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
+import SlowestResources from '../../Widgets/PredefinedWidgets/SlowestResources';
 
 interface Props {
     data: any;
@@ -54,7 +56,8 @@ function WidgetPredefinedChart(props: Props) {
             // PERFORMANCE
             // case 'impacted_sessions_by_slow_pages':
             // case 'pages_response_time_distribution':
-            // case 'speed_location':
+            case 'speed_location':
+                return <SpeedIndexByLocation metric={metric} />
             case 'cpu':
                 return <CPULoad data={data} metric={metric} />
             case 'crashes':
@@ -85,7 +88,8 @@ function WidgetPredefinedChart(props: Props) {
                 return <ResourceLoadedVsResponseEnd data={data} metric={metric} />
             case 'resources_loading_time':
                 return <ResourceLoadingTime data={data} metric={metric} />
-            // case 'slowest_resources':
+            case 'slowest_resources':
+                return <SlowestResources data={data} metric={metric} />
 
             default:
                 return <div className="h-40 color-red">Widget not supported</div>
