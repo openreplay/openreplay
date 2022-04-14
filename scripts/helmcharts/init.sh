@@ -81,7 +81,6 @@ sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" v
 sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
 sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 
-
 ## Installing OpenReplay
 info "Installing databases"
 helm upgrade --install databases ./databases -n db --create-namespace --wait -f ./vars.yaml --atomic

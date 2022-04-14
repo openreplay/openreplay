@@ -41,8 +41,29 @@ minio:
       accessKey: "changeMeMinioAccessKey"
       secretKey: "changeMeMinioPassword"
 
+ingress-nginx: &ingress-nginx
+  controller:
+    ingressClassResource:
+      # -- Name of the ingressClass
+      name: openreplay
+  # -- For backwards compatibility with ingress.class annotation, use ingressClass.
+  # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
+    ingressClass: openreplay
+    service:
+      externalTrafficPolicy: "Local"
+    extraArgs:
+      default-ssl-certificate: "app/openreplay-ssl"
+    config:
+      enable-real-ip: true
+      forwarded-for-header: "proxy_protocol"
+      # If you want the ssl offload in LB layer
+      # Uncomment the following line
+      # ssl-redirect: false
+      # force-ssl-redirect: false
+
 # Application specific variables
 global:
+  ingress: *ingress-nginx
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
