@@ -43,7 +43,6 @@ securityContext: {}
 service:
   type: ClusterIP
   ports:
-    peerjs: 9000
     socketio: 9001
 
 ingress:

@@ -1,6 +1,5 @@
 {{- if .Values.ingress.enabled }}
 {{- $fullName := include "assist.fullname" . -}}
-{{- $peerjsSvcPort := .Values.service.ports.peerjs -}}
 {{- $socketioSvcPort := .Values.service.ports.socketio -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -31,13 +30,6 @@ spec:
               service:
                 name: {{ $fullName }}
                 port:
-                  number: {{ $peerjsSvcPort }}
-            path: /assist/(.*)
-          - pathType: Prefix
-            backend:
-              service:
-                name: {{ $fullName }}
-                port:
                   number: {{ $socketioSvcPort }}
-            path: /ws-assist/(.*)
+            path: /assist/(.*)
 {{- end }}
