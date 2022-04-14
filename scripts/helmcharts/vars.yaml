@@ -78,7 +78,7 @@ global:
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
-    accessKey: "changeMeMinioAccessKey"
+    accessKey: "YkkPAPYjogRlicqvCuNSHkfsdGtCCq"
     secretKey: "changeMeMinioPassword"
   email:
     emailHost: ''
@@ -92,7 +92,7 @@ global:
     emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
 
   enterpriseEditionLicense: ""
-  domainName: ""
+  domainName: "foss.openreplay.com"
 
 # If there is multiple nodes in the kubernetes cluster,
 # we'll have to create a NFS share PVC for both the containers to share data.
@@ -132,14 +132,3 @@ chalice:
 #     requests:
 #       cpu: 512m
 #       memory: 2056Mi
-
-##  Changes to nginx
-#
-# nginx-ingress:
-#   # Key and certificate files must be named site.key and site.crt
-#   # and copied to ../openreplay/files/
-#   sslKey: site.key
-#   sslCert: site.crt
-#   # Redirecting http to https
-#   customServerConfigs: |
-#      return 301 https://$host$request_uri;
