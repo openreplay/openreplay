@@ -31,6 +31,8 @@ export interface IDashboardSotre {
     fetchingDashboard: boolean
     sessionsLoading: boolean
 
+    showAlertModal: boolean
+
     selectWidgetsByCategory: (category: string) => void
     toggleAllSelectedWidgets: (isSelected: boolean) => void
     removeSelectedWidgetByCategory(category: string): void
@@ -92,6 +94,8 @@ export default class DashboardStore implements IDashboardSotre {
     isDeleting: boolean = false
     fetchingDashboard: boolean = false
     sessionsLoading: boolean = false;
+
+    showAlertModal: boolean = false;
 
     constructor() {
         makeAutoObservable(this, {

@@ -8,14 +8,18 @@ import { useModal } from 'App/components/Modal';
 import DashbaordListModal from '../DashbaordListModal';
 import DashboardModal from '../DashboardModal';
 import cn from 'classnames';
+import { Tooltip } from 'react-tippy';
+import { connect } from 'react-redux';
+import { setShowAlerts } from 'Duck/dashboard';
 
-const SHOW_COUNT = 5;
+const SHOW_COUNT = 8;
 interface Props {
     siteId: string
     history: any
+    setShowAlerts: (show: boolean) => void
 }
 function DashboardSideMenu(props: Props) {
-    const { history, siteId } = props;
+    const { history, siteId, setShowAlerts } = props;
     const { hideModal, showModal } = useModal();
     const { dashboardStore } = useStore();
     const dashboardId = useObserver(() => dashboardStore.selectedDashboard?.dashboardId);
@@ -54,9 +58,19 @@ function DashboardSideMenu(props: Props) {
                     onClick={() => onItemClick(item)}
                     className="group"
                     leading = {(
-                        <div className="ml-2 flex items-center">
+                        <div className="ml-2 flex items-center cursor-default">
                             {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
-                            {<div className={cn("p-1 group-hover:visible", { 'invisible' : !item.isPinned })} onClick={() => togglePinned(item)}><Icon name="pin-fill" size="16" /></div>}
+                            {item.isPinned && <div className="p-1 pointer-events-none"><Icon name="pin-fill" size="16" /></div>}
+                            {!item.isPinned && (
+                                <Tooltip delay={500} arrow title="Set as default dashboard" hideOnClick={true}>
+                                    <div
+                                        className={cn("p-1 invisible group-hover:visible cursor-pointer")}
+                                        onClick={() => togglePinned(item)}
+                                    >
+                                        <Icon name="pin-fill" size="16" color="gray-light" />
+                                    </div>
+                                </Tooltip>
+                            )}
                         </div>
                     )}
                 />
@@ -96,11 +110,12 @@ function DashboardSideMenu(props: Props) {
 					id="menu-manage-alerts"
 					title="Alerts"
 					iconName="bell-plus"
-					// onClick={() => setShowAlerts(true)}
+					onClick={() => setShowAlerts(true)}
 				/>				
 			</div>
         </div>
     ));
 }
 
-export default withRouter(DashboardSideMenu);
+export default connect((state) => {
+}, { setShowAlerts })(withRouter(DashboardSideMenu));

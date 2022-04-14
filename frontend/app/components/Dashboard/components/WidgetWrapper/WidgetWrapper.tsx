@@ -4,12 +4,14 @@ import { ItemMenu } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
-import { confirm } from 'UI/Confirmation';
+// import { confirm } from 'UI/Confirmation';
 import { useStore } from 'App/mstore';
 import LazyLoad from 'react-lazyload';
 import { withRouter } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
+import WidgetIcon from './WidgetIcon';
+import AlertButton from './AlertButton';
 
 interface Props {
     className?: string;
@@ -29,6 +31,7 @@ function WidgetWrapper(props: Props) {
     const { dashboardStore } = useStore();
     const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
     const widget: any = useObserver(() => props.widget);    
+    const isPredefined = widget.metricType === 'predefined';
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -63,7 +66,7 @@ function WidgetWrapper(props: Props) {
     }
 
     const onChartClick = () => {
-        if (!isWidget || widget.metricType === 'predefined') return;
+        if (!isWidget || isPredefined) return;
         
         props.history.push(withSiteId(dashboardMetricDetails(dashboardId, widget.metricId),siteId));
     }
@@ -88,7 +91,14 @@ function WidgetWrapper(props: Props) {
             >
                 <h3 className="capitalize">{widget.name}</h3>
                 {isWidget && (
-                    <div>
+                    <div className="flex items-center">
+                        {!isPredefined && (
+                            <>
+                                <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
+                                <div className='mx-2'/>
+                            </>
+                        )}
+                        
                         <ItemMenu
                             items={[
                                 {
