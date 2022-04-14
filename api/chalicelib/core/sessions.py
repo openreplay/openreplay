@@ -3,7 +3,7 @@ from typing import List
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event
-from chalicelib.utils import pg_client, helper, dev, metrics_helper
+from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
@@ -168,7 +168,6 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._is_undefined]
 
 
-@dev.timed
 def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
@@ -659,11 +658,6 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                              **_multiple_values(event.value, value_key=e_k),
                              **_multiple_values(event.source, value_key=s_k)}
 
-            # if event_type not in list(events.SUPPORTED_TYPES.keys()) \
-            #         or event.value in [None, "", "*"] \
-            #         and (event_type != events.event_type.ERROR.ui_type \
-            #              or event_type != events.event_type.ERROR_IOS.ui_type):
-            #     continue
             if event_type == events.event_type.CLICK.ui_type:
                 event_from = event_from % f"{events.event_type.CLICK.table} AS main "
                 if not is_any:
