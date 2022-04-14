@@ -1,11 +1,12 @@
+import math
+
 import schemas
 from chalicelib.core import metadata
 from chalicelib.utils import args_transformer
-from chalicelib.utils import helper, dev
+from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 from chalicelib.utils.metrics_helper import __get_step_size
-import math
 
 
 # Written by David Aznaurov, inspired by numpy.quantile
@@ -74,8 +75,6 @@ METADATA_FIELDS = {"userId": "user_id",
                    "metadata8": "metadata_8",
                    "metadata9": "metadata_9",
                    "metadata10": "metadata_10"}
-
-from chalicelib.core import sessions_metas
 
 
 def __get_meta_constraint(project_id, data):
@@ -1591,7 +1590,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
 def __get_neutral(rows, add_All_if_empty=True):
     neutral = {l: 0 for l in [i for k in [list(v.keys()) for v in rows] for i in k]}
-    if add_All_if_empty and len(neutral.keys()) == 0:
+    if add_All_if_empty and len(neutral.keys()) <= 1:
         neutral = {"All": 0}
     return neutral
 
