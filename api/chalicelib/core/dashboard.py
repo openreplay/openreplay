@@ -126,13 +126,6 @@ SESSIONS_META_FIELDS = {"revId": "rev_id",
                         "browser": "user_browser"}
 
 
-def __get_domains_errors_neutral(rows):
-    neutral = {l: 0 for l in [i for k in [list(v.keys()) for v in rows] for i in k]}
-    if len(neutral.keys()) == 0:
-        neutral = {"All": 0}
-    return neutral
-
-
 def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                            endTimestamp=TimeUTC.now(),
                            density=7, **args):
