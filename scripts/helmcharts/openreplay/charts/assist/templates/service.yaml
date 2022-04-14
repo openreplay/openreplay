@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "utilities.fullname" . }}
+  name: {{ include "assist.fullname" . }}
   labels:
-    {{- include "utilities.labels" . | nindent 4 }}
+    {{- include "assist.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -14,15 +14,15 @@ spec:
       name: {{ $key }}
     {{- end}}
   selector:
-    {{- include "utilities.selectorLabels" . | nindent 4 }}
+    {{- include "assist.selectorLabels" . | nindent 4 }}
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "utilities.fullname" . }}-headless
+  name: {{ include "assist.fullname" . }}-headless
   labels:
-    {{- include "utilities.labels" . | nindent 4 }}
+    {{- include "assist.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   clusterIP: None
@@ -34,4 +34,4 @@ spec:
       name: {{ $key }}
     {{- end}}
   selector:
-    {{- include "utilities.selectorLabels" . | nindent 4 }}
+    {{- include "assist.selectorLabels" . | nindent 4 }}

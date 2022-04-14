@@ -17,4 +17,6 @@ echo $DOCKER_REPO
     PUSH_IMAGE=1 bash build.sh $@
     cd ../utilities
     PUSH_IMAGE=1 bash build.sh $@
+    cd ../peers
+    PUSH_IMAGE=1 bash build.sh $@
 }
