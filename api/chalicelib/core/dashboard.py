@@ -2535,7 +2535,6 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
             results = helper.dict_to_camel_case(rows[0])
         results["chart"] = __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp,
                                                                                endTimestamp, **args)
-
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2603,6 +2602,9 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
     with pg_client.PostgresClient() as cur:
         row = __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
+        results["chart"] = __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp,
+                                                                       endTimestamp, **args)
+
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2627,6 +2629,36 @@ def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTi
     cur.execute(cur.mogrify(pg_query, params))
     row = cur.fetchone()
     return row
+
+
+def __get_user_activity_avg_visited_pages_chart(cur, project_id, startTimestamp, endTimestamp,density=20, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+                                            chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                           chart=True, data=args, main_table="sessions", time_column="start_ts",
+                                           duration=False)
+    pg_sub_query_subset.append("sessions.duration IS NOT NULL")
+
+    pg_query = f"""WITH sessions AS(SELECT sessions.pages_count, sessions.start_ts
+                                    FROM public.sessions
+                                    WHERE {" AND ".join(pg_sub_query_subset)}
+                    )
+                    SELECT generated_timestamp AS timestamp,
+                         COALESCE(AVG(sessions.pages_count),0) AS value
+                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL (
+                                SELECT sessions.pages_count
+                                FROM sessions
+                                WHERE {" AND ".join(pg_sub_query_chart)}
+                        ) AS sessions ON (TRUE)
+                      GROUP BY generated_timestamp
+                      ORDER BY generated_timestamp;"""
+    cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
+    rows = cur.fetchall()
+    return rows
 
 
 def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
