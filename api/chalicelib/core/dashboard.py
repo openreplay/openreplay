@@ -2533,6 +2533,9 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
         rows = __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
+        results["chart"] = __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp,
+                                                                               endTimestamp, **args)
+
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2558,6 +2561,39 @@ def __get_page_metrics_avg_first_contentful_pixel(cur, project_id, startTimestam
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
     cur.execute(cur.mogrify(pg_query, params))
+    rows = cur.fetchall()
+    return rows
+
+
+def __get_page_metrics_avg_first_contentful_pixel_chart(cur, project_id, startTimestamp, endTimestamp, density=20,
+                                                        **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    pg_sub_query_subset = __get_constraints(project_id=project_id, time_constraint=True,
+                                            chart=False, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                           chart=True, data=args, main_table="pages", time_column="timestamp",
+                                           duration=False)
+    pg_sub_query_subset.append("pages.timestamp >= %(startTimestamp)s")
+    pg_sub_query_subset.append("pages.timestamp < %(endTimestamp)s")
+    pg_sub_query_subset.append("pages.first_contentful_paint_time > 0")
+
+    pg_query = f"""WITH pages AS(SELECT pages.first_contentful_paint_time, pages.timestamp
+                                    FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                    WHERE {" AND ".join(pg_sub_query_subset)}
+                    )
+                    SELECT generated_timestamp AS timestamp,
+                         COALESCE(AVG(pages.first_contentful_paint_time),0) AS value
+                      FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                        LEFT JOIN LATERAL (
+                                SELECT pages.first_contentful_paint_time
+                                FROM pages
+                                WHERE {" AND ".join(pg_sub_query_chart)}
+                        ) AS pages ON (TRUE)
+                      GROUP BY generated_timestamp
+                      ORDER BY generated_timestamp;"""
+    cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
     rows = cur.fetchall()
     return rows
 
@@ -2760,7 +2796,7 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
 
 
 def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                   endTimestamp=TimeUTC.now(), value=None,density=20, **args):
+                                   endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
@@ -2797,6 +2833,6 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                       ORDER BY generated_timestamp;"""
         cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
         rows = cur.fetchall()
-        row["chart"]=rows
+        row["chart"] = rows
     row["unit"] = schemas.TemplatePredefinedUnits.count
     return helper.dict_to_camel_case(row)

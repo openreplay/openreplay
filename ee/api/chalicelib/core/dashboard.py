@@ -2388,6 +2388,8 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
         rows = __get_page_metrics_avg_first_contentful_pixel(ch, project_id, startTimestamp, endTimestamp, **args)
         if len(rows) > 0:
             results = helper.dict_to_camel_case(rows[0])
+        results["chart"] = __get_page_metrics_avg_first_contentful_pixel_chart(ch, project_id, startTimestamp,
+                                                                               endTimestamp, **args)
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2395,6 +2397,7 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2410,6 +2413,29 @@ def __get_page_metrics_avg_first_contentful_pixel(ch, project_id, startTimestamp
     params = {"project_id": project_id, "type": 'fetch', "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
     rows = ch.execute(query=ch_query, params=params)
+    return rows
+
+
+def __get_page_metrics_avg_first_contentful_pixel_chart(ch, project_id, startTimestamp, endTimestamp, density=20,
+                                                        **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
+    ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
+    meta_condition = __get_meta_constraint(args)
+    ch_sub_query_chart += meta_condition
+
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+
+    ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                              COALESCE(AVG(NULLIF(pages.first_contentful_paint,0)),0) AS value 
+                  FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                  WHERE {" AND ".join(ch_sub_query_chart)}
+                  GROUP BY timestamp
+                  ORDER BY timestamp;"""
+    rows = ch.execute(query=ch_query, params={**params, **__get_constraint_values(args)})
+    rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                    end_time=endTimestamp,
+                                    density=density, neutral={"value": 0})
     return rows
 
 
