@@ -41,7 +41,6 @@ def __create(tenant_id, name):
     return get_project(tenant_id=tenant_id, project_id=project_id, include_gdpr=True)
 
 
-@dev.timed
 def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, stack_integrations=False, version=False,
                  last_tracker_version=None):
     with pg_client.PostgresClient() as cur:

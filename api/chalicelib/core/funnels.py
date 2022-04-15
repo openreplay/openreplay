@@ -261,7 +261,6 @@ def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None
     }}
 
 
-@dev.timed
 def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSearchPayloadSchema):
     data.events = filter_stages(data.events)
     data.events = __fix_stages(data.events)
@@ -313,7 +312,6 @@ def get(funnel_id, project_id, user_id, flatten=True, fix_stages=True):
     return f
 
 
-@dev.timed
 def search_by_issue(user_id, project_id, funnel_id, issue_id, data: schemas.FunnelSearchPayloadSchema, range_value=None,
                     start_date=None, end_date=None):
     if len(data.events) == 0:
