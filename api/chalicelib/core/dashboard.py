@@ -2716,11 +2716,15 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
 
 
 def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                    endTimestamp=TimeUTC.now(), value=None, **args):
+                                    endTimestamp=TimeUTC.now(), value=None,density=20, **args):
+    step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
+                                           chart=True, data=args)
 
     if value is not None:
         pg_sub_query.append("pages.path = %(value)s")
+        pg_sub_query_chart.append("pages.path = %(value)s")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT COALESCE(AVG(pages.first_paint_time), 0) AS value
                        FROM events.pages
@@ -2729,11 +2733,25 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
                          AND pages.timestamp >= %(startTimestamp)s
                          AND pages.timestamp < %(endTimestamp)s
                          AND pages.first_paint_time > 0;"""
-        cur.execute(cur.mogrify(pg_query, {"project_id": project_id,
+        params={"step_size":step_size,"project_id": project_id,
                                            "startTimestamp": startTimestamp,
                                            "endTimestamp": endTimestamp,
-                                           "value": value, **__get_constraint_values(args)}))
+                                           "value": value, **__get_constraint_values(args)}
+        cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
+        pg_query = f"""SELECT generated_timestamp AS timestamp,
+                                      COALESCE(AVG(pages.first_paint_time),0) AS value
+                                FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp 
+                                    LEFT JOIN LATERAL (
+                                        SELECT first_paint_time 
+                                        FROM events.pages INNER JOIN public.sessions USING (session_id)
+                                        WHERE {" AND ".join(pg_sub_query_chart)} AND pages.first_paint_time > 0
+                                ) AS pages ON (TRUE)
+                                GROUP BY generated_timestamp
+                                ORDER BY generated_timestamp ASC;"""
+        cur.execute(cur.mogrify(pg_query, params))
+        rows = cur.fetchall()
+        row["chart"] = helper.list_to_camel_case(rows)
     row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return helper.dict_to_camel_case(row)
 
