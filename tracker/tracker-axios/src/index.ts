@@ -4,12 +4,32 @@ import { App, Messages } from '@openreplay/tracker';
 import { getExceptionMessage } from '@openreplay/tracker/lib/modules/exception.js';  // TODO: export from tracker root
 import { buildFullPath } from './url.js';
 
+
+interface RequestData {
+  body: BodyInit | null | undefined
+  headers: Record<string, string>
+}
+
+interface ResponseData {
+  body: string | Object | null
+  headers: Record<string, string>
+}
+
+interface RequestResponseData {
+  readonly status: number
+  readonly method: string
+  url: string
+  request: RequestData
+  response: ResponseData
+}
+
 export interface Options {
 	sessionTokenHeader?: string;
   instance: AxiosInstance;
   failuresOnly: boolean;
   captureWhen: (AxiosRequestConfig) => boolean;
   ignoreHeaders: Array<string> | boolean;
+  sanitiser?: (RequestResponseData) => RequestResponseData | null;
 }
 
 // TODO: test webpack 5 for axios imports
@@ -27,6 +47,7 @@ export default function(opts: Partial<Options> = {}) {
     	failuresOnly: false,
     	captureWhen: () => true,
     	ignoreHeaders: [ 'Cookie', 'Set-Cookie', 'Authorization' ],
+      sanitiser: null,
     },
     opts,
   );
@@ -88,22 +109,53 @@ export default function(opts: Partial<Options> = {}) {
         }
       } 
 
+      // TODO: split the code on functions & files
     	// Why can't axios propogate the final request URL somewhere?
-    	const fullURL = buildFullPath(res.config.baseURL, options.instance.getUri(res.config));
+    	const url = buildFullPath(res.config.baseURL, options.instance.getUri(res.config))
+      const method = typeof res.config.method === 'string' ? res.config.method.toUpperCase() : 'GET'
+      const status = res.status
+      let reqResData: RequestResponseData | null = {
+        status,
+        method,
+        url,
+        request: {
+          headers: reqHs,
+          body: reqBody,
+        },
+        response: {
+          headers: resHs,
+          body: resBody,
+        },
+      }
+      if (options.sanitiser) {
+        try {
+          reqResData.response.body = JSON.parse(resBody) as Object // Why the returning type is "any"?
+        } catch {}
+        reqResData = options.sanitiser(reqResData)
+        if (!reqResData) {
+          return
+        }
+      }
+
+      const getStj = (r: RequestData | ResponseData): string => {
+        if (r && typeof r.body !== 'string') {
+          try {
+            r.body = JSON.stringify(r.body)
+          } catch {
+            r.body = "<unable to stringify>"
+            //app.log.warn("Openreplay fetch") // TODO: version check
+          }
+        }
+        return JSON.stringify(r)
+      }
 
       app.send(
         Messages.Fetch(
-          typeof res.config.method === 'string' ? res.config.method.toUpperCase() : 'GET',
-          fullURL,
-          JSON.stringify({ 
-            headers: reqHs,
-            body: reqBody,
-          }),
-          JSON.stringify({ 
-            headers: resHs,
-            body: resBody,
-          }),
-          res.status,
+          method,
+          String(reqResData.url),
+          getStj(reqResData.request),
+          getStj(reqResData.response),
+          status,
           startTime + performance.timing.navigationStart,
           duration,
         ),
