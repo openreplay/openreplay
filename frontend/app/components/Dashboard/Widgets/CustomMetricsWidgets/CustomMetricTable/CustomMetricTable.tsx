@@ -33,6 +33,7 @@ function CustomMetriTable(props: Props) {
     const rows = List(data.values);
 
     const onClickHandler = (event, data) => {
+        console.log('onClickHandler', data);
         const filters = Array<any>();
         let filter = { ...filtersMap[metric.metricOf] }
         filter.value = [data.name]
