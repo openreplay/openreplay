@@ -42,6 +42,7 @@ func NewConsumer(
 		"enable.auto.commit":              "false",
 		"security.protocol":               protocol,
 		"go.application.rebalance.enable": true,
+		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 	})
 	if err != nil {
 		log.Fatalln(err)
