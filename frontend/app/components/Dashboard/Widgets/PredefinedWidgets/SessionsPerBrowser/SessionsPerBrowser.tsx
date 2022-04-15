@@ -1,8 +1,7 @@
 import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
-import { numberWithCommas } from 'App/utils';
-import Bar from 'App/components/Dashboard/Widgets/ErrorsPerDomain/Bar';
+import Bar from './Bar';
 
 interface Props {
     data: any
