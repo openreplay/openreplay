@@ -36,7 +36,8 @@ export default class FilterItem {
     }
 
     fromJson(json, mainFilterKey = '') {
-        let _filter = filtersMap[json.type]
+        console.log('fromJson', json.type)
+        let _filter = filtersMap[json.type] || {}
         if (mainFilterKey) {
             const mainFilter = filtersMap[mainFilterKey];
             const subFilterMap = {}

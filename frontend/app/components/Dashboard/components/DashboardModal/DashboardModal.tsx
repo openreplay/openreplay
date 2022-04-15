@@ -22,7 +22,9 @@ function DashboardModal(props) {
     const loading = useObserver(() => dashboardStore.isSaving);
 
     const onSave = () => {
-        dashboardStore.save(dashboard).then(hideModal)
+        dashboardStore.save(dashboard).then(hideModal).then(() => {
+            dashboardStore.fetch(dashboard.dashboardId)
+        })
     }
 
     const handleCreateNew = () => {
