@@ -15,7 +15,7 @@ import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
 
 
-import type { Options as WebworkerOptions, WorkerMessageData } from "../../messages/webworker.js";
+import type { Options as WebworkerOptions, WorkerMessageData } from "../../webworker/types.js";
 
 export interface OnStartInfo {
   sessionID: string, 
@@ -23,10 +23,12 @@ export interface OnStartInfo {
   userUUID: string,
 }
 
+
+// TODO: Unify and clearly describe options logic
 export interface StartOptions {
   userID?: string,
   metadata?: Record<string, string>,
-  forceNew: boolean,
+  forceNew?: boolean,
 }
 
 type AppOptions = {
@@ -46,12 +48,12 @@ type AppOptions = {
 
   // @deprecated
   onStart?: (info: OnStartInfo) => void;
-} &  WebworkerOptions;
+} & WebworkerOptions;
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
-type Callback = () => void;
-type CommitCallback = (messages: Array<Message>) => void;
+type Callback = () => void
+type CommitCallback = (messages: Array<Message>) => void
 enum ActivityState {
   NotActive,
   Starting,
@@ -130,13 +132,13 @@ export default class App {
         this._debug("webworker_error", e)
       }
       this.worker.onmessage = ({ data }: MessageEvent) => {
-        if (data === null) {
+        if (data === "failed") {
           this.stop();
         } else if (data === "restart") {
           this.stop();
           this.start({ forceNew: true });
         }
-      };
+      }
       const alertWorker = () => {
         if (this.worker) {
           this.worker.postMessage(null);
@@ -331,14 +333,15 @@ export default class App {
     sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
 
     const startInfo = this.getStartInfo()
-    const messageData: WorkerMessageData = {
-      ingestPoint: this.options.ingestPoint,
+    const startWorkerMsg: WorkerMessageData = {
+      type: "start",
       pageNo,
-      startTimestamp: startInfo.timestamp,
+      ingestPoint: this.options.ingestPoint,
+      timestamp: startInfo.timestamp,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
     }
-    this.worker.postMessage(messageData); // brings delay of 10th ms?
+    this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
 
     const sReset = sessionStorage.getItem(this.options.session_reset_key);
     sessionStorage.removeItem(this.options.session_reset_key);
@@ -385,7 +388,12 @@ export default class App {
       });
 
       this.activityState = ActivityState.Active
-      this.worker.postMessage({ token, beaconSizeLimit });
+      const startWorkerMsg: WorkerMessageData = {
+        type: "auth",
+        token,
+        beaconSizeLimit
+      }
+      this.worker.postMessage(startWorkerMsg)
       this.startCallbacks.forEach((cb) => cb());
       this.observer.observe();
       this.ticker.start();
@@ -411,7 +419,7 @@ export default class App {
     })
   }
 
-  start(options: StartOptions = { forceNew: false }): Promise<OnStartInfo> {
+  start(options: StartOptions = {}): Promise<OnStartInfo> {
     if (!document.hidden) {
       return this._start(options);
     } else {

@@ -32,6 +32,8 @@ type Constructor<T> = { new (...args: any[]): T , name: string  };
 
  // TODO: we need a type expert here so we won't have to ignore the lines
  // TODO: use it everywhere (static function; export from which file? <-- global Window typing required)
+ // TODO: most efficient and common way
+ // Problem: on YouTube there is context[constr.name] undefined for constr=ShadowDom due to some minimisations
 export function isInstance<T extends WindowConstructor>(node: Node, constr: Constructor<T>): node is T {
   const doc = node.ownerDocument;
   if (!doc) { // null if Document
@@ -43,14 +45,14 @@ export function isInstance<T extends WindowConstructor>(node: Node, constr: Cons
     doc.defaultView; // TODO: smart global typing for Window object
   while(context !== window) {
     // @ts-ignore
-    if (node instanceof context[constr.name]) {
+    if (context[constr.name] && node instanceof context[constr.name]) {
       return true
     }
     // @ts-ignore
     context = context.parent || window
   }
   // @ts-ignore
-  return node instanceof context[constr.name]
+  return context[constr.name] ? node instanceof context[constr.name] : node instanceof constr
 }
 
 // TODO: ensure 1. it works in every cases (iframes/detached nodes) and 2. the most efficient
