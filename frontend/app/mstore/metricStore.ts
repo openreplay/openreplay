@@ -42,7 +42,7 @@ export default class MetricStore implements IMetricStore {
     instance: IWidget = new Widget()
 
     page: number = 1
-    pageSize: number = 4
+    pageSize: number = 15
     metricsSearch: string = ""
     sort: any = {}
 
