@@ -588,7 +588,7 @@ class SessionSearchFilterSchema(__MixedSearchFilter):
                  Optional[List[Union[IssueType, PlatformType, int, str]]]] = Field(...)
     type: FilterType = Field(...)
     operator: Union[SearchEventOperator, MathOperator] = Field(...)
-    source: Optional[Union[ErrorSource, str]] = Field(default=ErrorSource.js_exception)
+    source: Optional[Union[ErrorSource, str]] = Field(default=None)
 
     @root_validator
     def filter_validator(cls, values):
