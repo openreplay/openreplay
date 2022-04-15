@@ -33,7 +33,7 @@ func CheckLicense() {
 		log.Fatal("Can not form a license check request.")
 	}
 
-	resp, err := http.Post("https://parrot.asayer.io/os/license", "application/json", bytes.NewReader(requestBody))
+	resp, err := http.Post("https://api.openreplay.com/os/license", "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		log.Fatalf("Error while checking license. %v", err)
 	}

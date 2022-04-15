@@ -1,8 +1,8 @@
 const _io = require('socket.io');
 const express = require('express');
 const uaParser = require('ua-parser-js');
-const geoip2Reader = require('@maxmind/geoip2-node').Reader;
-const {extractPeerId} = require('./peerjs-server');
+const {extractPeerId} = require('../utils/helper');
+const {geoip} = require('../utils/geoIP');
 const {createAdapter} = require("@socket.io/redis-adapter");
 const {createClient} = require("redis");
 const wsRouter = express.Router();
@@ -14,6 +14,7 @@ const AGENT_DISCONNECT = "AGENT_DISCONNECTED";
 const AGENTS_CONNECTED = "AGENTS_CONNECTED";
 const NO_SESSIONS = "SESSION_DISCONNECTED";
 const SESSION_ALREADY_CONNECTED = "SESSION_ALREADY_CONNECTED";
+const SESSION_RECONNECTED = "SESSION_RECONNECTED";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
@@ -86,8 +87,7 @@ const extractProjectKeyFromRequest = function (req) {
 
 
 const getAvailableRooms = async function () {
-    let rooms = await io.of('/').adapter.allRooms();
-    return rooms;
+    return io.of('/').adapter.allRooms();
 }
 
 const respond = function (res, data) {
@@ -159,7 +159,7 @@ const socketsLive = async function (req, res) {
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
-        let {projectKey, sessionId} = extractPeerId(peerId);
+        let {projectKey} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
@@ -174,7 +174,7 @@ const socketsLive = async function (req, res) {
                     }
                 }
             }
-            liveSessions[projectKey] = uniqueSessions(liveSessions[_projectKey]);
+            liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey]);
         }
     }
     respond(res, liveSessions);
@@ -188,7 +188,7 @@ const socketsLiveByProject = async function (req, res) {
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
-        let {projectKey, sessionId} = extractPeerId(peerId);
+        let {projectKey} = extractPeerId(peerId);
         if (projectKey === _projectKey) {
             let connected_sockets = await io.in(peerId).fetchSockets();
             for (let item of connected_sockets) {
@@ -203,7 +203,7 @@ const socketsLiveByProject = async function (req, res) {
                     }
                 }
             }
-            liveSessions[projectKey] = uniqueSessions(liveSessions[_projectKey]);
+            liveSessions[projectKey] = uniqueSessions(liveSessions[projectKey] || []);
         }
     }
     respond(res, liveSessions[_projectKey] || []);
@@ -254,6 +254,7 @@ async function get_all_agents_ids(io, socket) {
     return agents;
 }
 
+
 function extractSessionInfo(socket) {
     if (socket.handshake.query.sessionInfo !== undefined) {
         debug && console.log("received headers");
@@ -267,21 +268,11 @@ function extractSessionInfo(socket) {
         socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
         socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || 'desktop';
         socket.handshake.query.sessionInfo.userCountry = null;
-
-        const options = {
-            // you can use options like `cache` or `watchForUpdates`
-        };
-        // console.log("Looking for MMDB file in " + process.env.MAXMINDDB_FILE);
-        geoip2Reader.open(process.env.MAXMINDDB_FILE, options)
-            .then(reader => {
-                debug && console.log("looking for location of ");
-                debug && console.log(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
-                let country = reader.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
-                socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
-            })
-            .catch(error => {
-                console.error(error);
-            });
+        if (geoip !== null) {
+            debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
+            let country = geoip.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+            socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
+        }
     }
 }
 
@@ -293,10 +284,6 @@ module.exports = {
             debug && console.log(`WS started:${socket.id}, Query:${JSON.stringify(socket.handshake.query)}`);
             socket.peerId = socket.handshake.query.peerId;
             socket.identity = socket.handshake.query.identity;
-            const {projectKey, sessionId} = extractPeerId(socket.peerId);
-            socket.sessionId = sessionId;
-            socket.projectKey = projectKey;
-            socket.lastMessageReceivedAt = Date.now();
             let {c_sessions, c_agents} = await sessions_agents_count(io, socket);
             if (socket.identity === IDENTITIES.session) {
                 if (c_sessions > 0) {
@@ -309,6 +296,7 @@ module.exports = {
                     debug && console.log(`notifying new session about agent-existence`);
                     let agents_ids = await get_all_agents_ids(io, socket);
                     io.to(socket.id).emit(AGENTS_CONNECTED, agents_ids);
+                    socket.to(socket.peerId).emit(SESSION_RECONNECTED, socket.id);
                 }
 
             } else if (c_sessions <= 0) {
@@ -359,7 +347,6 @@ module.exports = {
             });
 
             socket.onAny(async (eventName, ...args) => {
-                socket.lastMessageReceivedAt = Date.now();
                 if (socket.identity === IDENTITIES.session) {
                     debug && console.log(`received event:${eventName}, from:${socket.identity}, sending message to room:${socket.peerId}`);
                     socket.to(socket.peerId).emit(eventName, args[0]);
@@ -383,7 +370,7 @@ module.exports = {
                 let rooms = await io.of('/').adapter.allRooms();
                 let validRooms = [];
                 console.log(` ====== Rooms: ${rooms.size} ====== `);
-                const arr = Array.from(rooms)
+                // const arr = Array.from(rooms)
                 // const filtered = arr.filter(room => !room[1].has(room[0]))
                 for (let i of rooms) {
                     let {projectKey, sessionId} = extractPeerId(i);

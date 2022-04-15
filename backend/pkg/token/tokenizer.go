@@ -22,8 +22,8 @@ func NewTokenizer(secret string) *Tokenizer {
 }
 
 type TokenData struct {
-  ID uint64
-  ExpTime int64
+	ID      uint64
+	ExpTime int64
 }
 
 func (tokenizer *Tokenizer) sign(body string) []byte {
@@ -33,7 +33,7 @@ func (tokenizer *Tokenizer) sign(body string) []byte {
 }
 
 func (tokenizer *Tokenizer) Compose(d TokenData) string {
-	body := strconv.FormatUint(d.ID, 36) + 
+	body := strconv.FormatUint(d.ID, 36) +
 		"." + strconv.FormatInt(d.ExpTime, 36)
 	sign := base58.Encode(tokenizer.sign(body))
 	return body + "." + sign
@@ -58,8 +58,8 @@ func (tokenizer *Tokenizer) Parse(token string) (*TokenData, error) {
 	if err != nil {
 		return nil, err
 	}
-	if expTime <= time.Now().UnixNano()/1e6 {
-		return &TokenData{id,expTime}, EXPIRED
+	if expTime <= time.Now().UnixMilli() {
+		return &TokenData{id, expTime}, EXPIRED
 	}
-	return &TokenData{id,expTime}, nil
+	return &TokenData{id, expTime}, nil
 }

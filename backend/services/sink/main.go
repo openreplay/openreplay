@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"encoding/binary"
+	"log"
 	"time"
 
 	"os"
@@ -10,67 +10,64 @@ import (
 	"syscall"
 
 	"openreplay/backend/pkg/env"
+	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
-	. "openreplay/backend/pkg/messages"
 )
-
- 
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	FS_DIR := env.String("FS_DIR");
+	FS_DIR := env.String("FS_DIR")
 	if _, err := os.Stat(FS_DIR); os.IsNotExist(err) {
 		log.Fatalf("%v doesn't exist. %v", FS_DIR, err)
 	}
 
 	writer := NewWriter(env.Uint16("FS_ULIMIT"), FS_DIR)
 
-  count := 0
+	count := 0
 
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_SINK"),
-		[]string{ 
+		[]string{
 			env.String("TOPIC_RAW_WEB"),
 			env.String("TOPIC_RAW_IOS"),
-	  },
-	  func(sessionID uint64, message Message, _ *types.Meta) {
-	  	//typeID, err := GetMessageTypeID(value)
-	  	// if err != nil {
-	  	// 	log.Printf("Message type decoding error: %v", err)
-	  	// 	return
-	  	// }
-	  	typeID := message.Meta().TypeID
-	  	if !IsReplayerType(typeID) {
-	  		return
-	  	}
+		},
+		func(sessionID uint64, message Message, _ *types.Meta) {
+			//typeID, err := GetMessageTypeID(value)
+			// if err != nil {
+			// 	log.Printf("Message type decoding error: %v", err)
+			// 	return
+			// }
+			typeID := message.Meta().TypeID
+			if !IsReplayerType(typeID) {
+				return
+			}
 
-	  	count++
+			count++
 
-	  	value := message.Encode()
-	  	var data []byte
-	  	if IsIOSType(typeID) {
-	  		data = value
-	  	} else {
+			value := message.Encode()
+			var data []byte
+			if IsIOSType(typeID) {
+				data = value
+			} else {
 				data = make([]byte, len(value)+8)
 				copy(data[8:], value[:])
 				binary.LittleEndian.PutUint64(data[0:], message.Meta().Index)
-	  	}
-	  	if err := writer.Write(sessionID, data); err != nil {
+			}
+			if err := writer.Write(sessionID, data); err != nil {
 				log.Printf("Writer error: %v\n", err)
 			}
-	  },
+		},
+		false,
 	)
-	consumer.DisableAutoCommit()
-
 
 	sigchan := make(chan os.Signal, 1)
-  signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-  tick := time.Tick(30 * time.Second)
+	tick := time.Tick(30 * time.Second)
 
-  log.Printf("Sink service started\n")
+	log.Printf("Sink service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
@@ -85,7 +82,7 @@ func main() {
 
 			log.Printf("%v messages during 30 sec", count)
 			count = 0
-			
+
 			consumer.Commit()
 		default:
 			err := consumer.ConsumeNext()
@@ -96,4 +93,3 @@ func main() {
 	}
 
 }
-

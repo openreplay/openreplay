@@ -82,22 +82,22 @@ def get_projects(tenant_id, recording_state=False, gdpr=None, recorded=False, st
         rows = cur.fetchall()
         if recording_state:
             project_ids = [f'({r["project_id"]})' for r in rows]
-            query = f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
-                        FROM (VALUES {",".join(project_ids)}) AS projects(project_id)
-                                 LEFT JOIN sessions USING (project_id)
-                        GROUP BY project_id;"""
-            cur.execute(
-                query=query
-            )
+            query = cur.mogrify(f"""SELECT projects.project_id, COALESCE(MAX(start_ts), 0) AS last
+                                    FROM (VALUES {",".join(project_ids)}) AS projects(project_id)
+                                             LEFT JOIN sessions USING (project_id)
+                                    WHERE sessions.start_ts >= %(startDate)s AND sessions.start_ts <= %(endDate)s
+                                    GROUP BY project_id;""",
+                                {"startDate": TimeUTC.now(delta_days=-3), "endDate": TimeUTC.now(delta_days=1)})
+
+            cur.execute(query=query)
             status = cur.fetchall()
             for r in rows:
+                r["status"] = "red"
                 for s in status:
                     if s["project_id"] == r["project_id"]:
-                        if s["last"] < TimeUTC.now(-2):
-                            r["status"] = "red"
-                        elif s["last"] < TimeUTC.now(-1):
+                        if TimeUTC.now(-2) <= s["last"] < TimeUTC.now(-1):
                             r["status"] = "yellow"
-                        else:
+                        elif s["last"] >= TimeUTC.now(-1):
                             r["status"] = "green"
                         break
 
@@ -257,7 +257,8 @@ def get_project_key(project_id):
                     where project_id =%(project_id)s AND deleted_at ISNULL;""",
                         {"project_id": project_id})
         )
-        return cur.fetchone()["project_key"]
+        project = cur.fetchone()
+        return project["project_key"] if project is not None else None
 
 
 def get_capture_status(project_id):
@@ -324,7 +325,7 @@ def is_authorized_batch(project_ids, tenant_id):
         query = cur.mogrify("""\
                     SELECT project_id
                     FROM public.projects
-                    where tenant_id =%(tenant_id)s 
+                    WHERE tenant_id =%(tenant_id)s 
                         AND project_id IN %(project_ids)s
                         AND deleted_at IS NULL;""",
                             {"tenant_id": tenant_id, "project_ids": tuple(project_ids)})
@@ -334,3 +335,13 @@ def is_authorized_batch(project_ids, tenant_id):
         )
         rows = cur.fetchall()
         return [r["project_id"] for r in rows]
+
+
+def get_projects_ids(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify("""SELECT s.project_id
+                                    FROM public.projects AS s
+                                    WHERE tenant_id =%(tenant_id)s AND s.deleted_at IS NULL
+                                    ORDER BY s.project_id;""", {"tenant_id": tenant_id}))
+        rows = cur.fetchall()
+    return [r["project_id"] for r in rows]

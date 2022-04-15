@@ -31,42 +31,18 @@ let sendIntervalID: ReturnType<typeof setInterval> | null = null;
 const sendQueue: Array<Uint8Array> = [];
 let busy = false;
 let attemptsCount = 0;
-let ATTEMPT_TIMEOUT = 8000;
+let ATTEMPT_TIMEOUT = 3000;
 let MAX_ATTEMPTS_COUNT = 10;
 
 // TODO?: exploit https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon
 function sendBatch(batch: Uint8Array):void {
-  const req = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
   // TODO:  async=false (3d param) instead of sendQueue array ?
-  req.open("POST", ingestPoint + "/v1/web/i", false);  // TODO opaque request?
-  req.setRequestHeader("Authorization", "Bearer " + token);
-  // req.setRequestHeader("Content-Type", "");
-  req.onreadystatechange = function() {
-    if (this.readyState === 4) {
-      if (this.status == 0) {
-        return; // happens simultaneously with onerror TODO: clear codeflow
-      }
-      if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
-        busy = false;
-        reset();
-        sendQueue.length = 0;
-        if (this.status === 401) { // Unauthorised (Token expired)
-          self.postMessage("restart")
-          return
-        }
-        self.postMessage(null);
-        return
-      }
-      //if (this.response == null)
-      const nextBatch = sendQueue.shift();
-      if (nextBatch) {
-        sendBatch(nextBatch);
-      } else {
-        busy = false;
-      }
-    }
-  };
-  req.onerror = function(e) {
+  xhr.open("POST", ingestPoint + "/v1/web/i", false);
+  xhr.setRequestHeader("Authorization", "Bearer " + token);
+  // xhr.setRequestHeader("Content-Type", "");
+
+  function retry() {
     if (attemptsCount >= MAX_ATTEMPTS_COUNT) {
       reset();
       self.postMessage(null);
@@ -75,8 +51,32 @@ function sendBatch(batch: Uint8Array):void {
     attemptsCount++;
     setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT);
   }
-  // TODO: handle offline exception
-  req.send(batch.buffer);
+  xhr.onreadystatechange = function() {
+    if (this.readyState === 4) {
+      if (this.status == 0) {
+        return; // happens simultaneously with onerror TODO: clear codeflow
+      }
+      if (this.status === 401) { // Unauthorised (Token expired)
+        busy = false
+        self.postMessage("restart")
+        return
+      } else if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
+        retry()
+        return
+      }
+      // Success
+      attemptsCount = 0
+      const nextBatch = sendQueue.shift();
+      if (nextBatch) {
+        sendBatch(nextBatch);
+      } else {
+        busy = false;
+      }
+    }
+  };
+  xhr.onerror = retry // TODO: when in Offline mode it doesn't handle the error
+  // TODO: handle offline exception (?)
+  xhr.send(batch.buffer);
 }
 
 function send(): void {
@@ -101,6 +101,7 @@ function reset() {
     clearInterval(sendIntervalID);
     sendIntervalID = null;
   }
+  sendQueue.length = 0;
   writer.reset();
 }
 

@@ -110,11 +110,11 @@ func (b *builder) buildInputEvent() {
 
 func (b *builder) handleMessage(message Message, messageID uint64) {
 	timestamp := GetTimestamp(message)
-	if b.timestamp <= timestamp { // unnecessary? TODO: test and remove
+	if b.timestamp < timestamp { // unnecessary? TODO: test and remove
 		b.timestamp = timestamp
 	}
 
-	b.lastProcessedTimestamp = time.Now().UnixNano() / 1e6
+	b.lastProcessedTimestamp = time.Now().UnixMilli()
 
 	// Might happen before  the first timestamp.
 	switch msg := message.(type) {

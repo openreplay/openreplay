@@ -9,11 +9,11 @@ from chalicelib.utils.TimeUTC import TimeUTC
 PIE_CHART_GROUP = 5
 
 
-def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
+def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     results = []
     for i, s in enumerate(data.series):
-        s.filter.startDate = data.startDate
-        s.filter.endDate = data.endDate
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
         results.append(sessions.search2_series(data=s.filter, project_id=project_id, density=data.density,
                                                view_type=data.view_type, metric_type=data.metric_type,
                                                metric_of=data.metric_of, metric_value=data.metric_value))
@@ -42,7 +42,7 @@ def __try_live(project_id, data: schemas.CreateCustomMetricsSchema):
     return results
 
 
-def merged_live(project_id, data: schemas.CreateCustomMetricsSchema):
+def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
@@ -54,13 +54,9 @@ def merged_live(project_id, data: schemas.CreateCustomMetricsSchema):
     return results
 
 
-def __get_merged_metric(project_id, user_id, metric_id,
-                        data: Union[schemas.CustomMetricChartPayloadSchema,
-                                    schemas.CustomMetricSessionsPayloadSchema]) \
+def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
+                                                 schemas.CustomMetricSessionsPayloadSchema]) \
         -> Union[schemas.CreateCustomMetricsSchema, None]:
-    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
-    if metric is None:
-        return None
     metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
@@ -71,11 +67,12 @@ def __get_merged_metric(project_id, user_id, metric_id,
     return metric
 
 
-def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema):
-    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
-                                                                    metric_id=metric_id, data=data)
+def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPayloadSchema, metric=None):
+    if metric is None:
+        metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
     if metric is None:
         return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     series_charts = __try_live(project_id=project_id, data=metric)
     if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
         return series_charts
@@ -88,21 +85,23 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
-    metric: schemas.CreateCustomMetricsSchema = __get_merged_metric(project_id=project_id, user_id=user_id,
-                                                                    metric_id=metric_id, data=data)
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
     results = []
     for s in metric.series:
-        s.filter.startDate = data.startDate
-        s.filter.endDate = data.endDate
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 
 
-def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
+def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         _data = {}
         for i, s in enumerate(data.series):
@@ -129,6 +128,8 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema):
             query
         )
         r = cur.fetchone()
+        if dashboard:
+            return r["metric_id"]
     return {"data": get(metric_id=r["metric_id"], project_id=project_id, user_id=user_id)}
 
 
@@ -147,10 +148,11 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
               "metric_value": data.metric_value, "metric_format": data.metric_format}
     for i, s in enumerate(data.series):
         prefix = "u_"
+        if s.index is None:
+            s.index = i
         if s.series_id is None or s.series_id not in series_ids:
             n_series.append({"i": i, "s": s})
             prefix = "n_"
-            s.index = i
         else:
             u_series.append({"i": i, "s": s})
             u_series_ids.append(s.series_id)
@@ -192,40 +194,60 @@ def update(metric_id, user_id, project_id, data: schemas.UpdateCustomMetricsSche
             SET name = %(name)s, is_public= %(is_public)s, 
                 view_type= %(view_type)s, metric_type= %(metric_type)s, 
                 metric_of= %(metric_of)s, metric_value= %(metric_value)s,
-                metric_format= %(metric_format)s
+                metric_format= %(metric_format)s,
+                edited_at = timezone('utc'::text, now())
             WHERE metric_id = %(metric_id)s
             AND project_id = %(project_id)s 
             AND (user_id = %(user_id)s OR is_public) 
             RETURNING metric_id;""", params)
-        cur.execute(
-            query
-        )
+        cur.execute(query)
     return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
 
 
-def get_all(project_id, user_id):
+def get_all(project_id, user_id, include_series=False):
     with pg_client.PostgresClient() as cur:
-        cur.execute(
-            cur.mogrify(
-                """SELECT *
-                    FROM metrics
-                             LEFT JOIN LATERAL (SELECT jsonb_agg(metric_series.* ORDER BY index) AS series
+        sub_join = ""
+        if include_series:
+            sub_join = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
                                                 FROM metric_series
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
-                                                ) AS metric_series ON (TRUE)
+                                                ) AS metric_series ON (TRUE)"""
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT *
+                    FROM metrics
+                             {sub_join}
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT DISTINCT dashboard_id, name, is_public
+                                                      FROM dashboards INNER JOIN dashboard_widgets USING (dashboard_id)
+                                                      WHERE deleted_at ISNULL
+                                                        AND dashboard_widgets.metric_id = metrics.metric_id
+                                                        AND project_id = %(project_id)s
+                                                        AND ((dashboards.user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT email AS owner_email
+                                                FROM users
+                                                WHERE deleted_at ISNULL
+                                                  AND users.user_id = metrics.user_id
+                                                ) AS owner ON (TRUE)
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
-                      AND (user_id = %(user_id)s OR is_public)
-                    ORDER BY created_at;""",
+                      AND (user_id = %(user_id)s OR metrics.is_public)
+                    ORDER BY metrics.edited_at, metrics.created_at;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )
         rows = cur.fetchall()
-        for r in rows:
-            r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
-            for s in r["series"]:
-                s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+        if include_series:
+            for r in rows:
+                # r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                for s in r["series"]:
+                    s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+        else:
+            for r in rows:
+                r["created_at"] = TimeUTC.datetime_to_timestamp(r["created_at"])
+                r["edited_at"] = TimeUTC.datetime_to_timestamp(r["edited_at"])
         rows = helper.list_to_camel_case(rows)
     return rows
 
@@ -235,7 +257,7 @@ def delete(project_id, metric_id, user_id):
         cur.execute(
             cur.mogrify("""\
             UPDATE public.metrics 
-            SET deleted_at = timezone('utc'::text, now()) 
+            SET deleted_at = timezone('utc'::text, now()), edited_at = timezone('utc'::text, now()) 
             WHERE project_id = %(project_id)s
               AND metric_id = %(metric_id)s
               AND (user_id = %(user_id)s OR is_public);""",
@@ -256,6 +278,18 @@ def get(metric_id, project_id, user_id, flatten=True):
                                                 WHERE metric_series.metric_id = metrics.metric_id
                                                   AND metric_series.deleted_at ISNULL 
                                                 ) AS metric_series ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT dashboard_id, name, is_public
+                                                      FROM dashboards
+                                                      WHERE deleted_at ISNULL
+                                                        AND project_id = %(project_id)s
+                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)
+                             LEFT JOIN LATERAL (SELECT email AS owner_email
+                                                FROM users
+                                                WHERE deleted_at ISNULL
+                                                AND users.user_id = metrics.user_id
+                                                ) AS owner ON (TRUE)
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
                       AND (metrics.user_id = %(user_id)s OR metrics.is_public)
@@ -268,9 +302,43 @@ def get(metric_id, project_id, user_id, flatten=True):
         if row is None:
             return None
         row["created_at"] = TimeUTC.datetime_to_timestamp(row["created_at"])
+        row["edited_at"] = TimeUTC.datetime_to_timestamp(row["edited_at"])
         if flatten:
             for s in row["series"]:
                 s["filter"] = helper.old_search_payload_to_flat(s["filter"])
+    return helper.dict_to_camel_case(row)
+
+
+def get_with_template(metric_id, project_id, user_id, include_dashboard=True):
+    with pg_client.PostgresClient() as cur:
+        sub_query = ""
+        if include_dashboard:
+            sub_query = """LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(connected_dashboards.* ORDER BY is_public,name),'[]'::jsonb) AS dashboards
+                                                FROM (SELECT dashboard_id, name, is_public
+                                                      FROM dashboards
+                                                      WHERE deleted_at ISNULL
+                                                        AND project_id = %(project_id)s
+                                                        AND ((user_id = %(user_id)s OR is_public))) AS connected_dashboards
+                                                ) AS connected_dashboards ON (TRUE)"""
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT *
+                    FROM metrics
+                             LEFT JOIN LATERAL (SELECT COALESCE(jsonb_agg(metric_series.* ORDER BY index),'[]'::jsonb) AS series
+                                                FROM metric_series
+                                                WHERE metric_series.metric_id = metrics.metric_id
+                                                  AND metric_series.deleted_at ISNULL 
+                                                ) AS metric_series ON (TRUE)
+                             {sub_query}
+                    WHERE (metrics.project_id = %(project_id)s OR metrics.project_id ISNULL)
+                      AND metrics.deleted_at ISNULL
+                      AND (metrics.user_id = %(user_id)s OR metrics.is_public)
+                      AND metrics.metric_id = %(metric_id)s
+                    ORDER BY created_at;""",
+                {"metric_id": metric_id, "project_id": project_id, "user_id": user_id}
+            )
+        )
+        row = cur.fetchone()
     return helper.dict_to_camel_case(row)
 
 

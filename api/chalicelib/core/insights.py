@@ -1,11 +1,8 @@
 import schemas
-from chalicelib.core import sessions_metas
+from chalicelib.core.dashboard import __get_constraints, __get_constraint_values
 from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
-import math
-from chalicelib.core.dashboard import __get_constraints, __get_constraint_values
 
 
 def __transform_journey(rows):

@@ -234,10 +234,11 @@ export default class App {
     );
   }
 
+  // TODO: full correct semantic
   checkRequiredVersion(version: string): boolean {
     const reqVer = version.split('.')
     const ver = this.version.split('.')
-    for (let i = 0; i < ver.length; i++) {
+    for (let i = 0; i < 3; i++) {
       if (Number(ver[i]) < Number(reqVer[i]) || isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
         return false
       }

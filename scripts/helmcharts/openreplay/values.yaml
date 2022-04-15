@@ -110,5 +110,7 @@ sink:
   fullnameOverride: sink-openreplay
 storage:
   fullnameOverride: storage-openreplay
-utilities:
-  fullnameOverride: utilities-openreplay
+assist:
+  fullnameOverride: assist-openreplay
+peers:
+  fullnameOverride: peers-openreplay

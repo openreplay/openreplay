@@ -9,12 +9,11 @@ from starlette.responses import StreamingResponse
 from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from routers import core, core_dynamic
-from routers.app import v1_api
 from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
-from routers.subs import dashboard
+from routers.subs import dashboard, insights, metrics, v1_api
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 
 @app.middleware('http')
@@ -54,7 +53,8 @@ app.include_router(core_dynamic.public_app)
 app.include_router(core_dynamic.app)
 app.include_router(core_dynamic.app_apikey)
 app.include_router(dashboard.app)
-# app.include_router(insights.app)
+app.include_router(metrics.app)
+app.include_router(insights.app)
 app.include_router(v1_api.app_apikey)
 
 Schedule = AsyncIOScheduler()
