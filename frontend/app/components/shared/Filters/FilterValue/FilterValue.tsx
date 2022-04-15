@@ -137,6 +137,7 @@ function FilterValue(props: Props) {
             onSelect={(e, item) => debounceOnSelect(e, item, valueIndex)}
             icon={filter.icon}
             type="number"
+            allowDecimals={false}
             isMultilple={false}
           />
           // <input
