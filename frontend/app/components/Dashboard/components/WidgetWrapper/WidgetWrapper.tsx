@@ -32,6 +32,7 @@ function WidgetWrapper(props: Props) {
     const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
     const widget: any = useObserver(() => props.widget);    
     const isPredefined = widget.metricType === 'predefined';
+    const dashboard = useObserver(() => dashboardStore.selectedDashboard);
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -55,7 +56,7 @@ function WidgetWrapper(props: Props) {
     })
 
     const onDelete = async () => {
-        dashboardStore.deleteDashboardWidget(dashboardId!, widget.widgetId);
+        dashboardStore.deleteDashboardWidget(dashboard?.dashboardId, widget.widgetId);
         // if (await confirm({
         //   header: 'Confirm',
         //   confirmButton: 'Yes, delete',
