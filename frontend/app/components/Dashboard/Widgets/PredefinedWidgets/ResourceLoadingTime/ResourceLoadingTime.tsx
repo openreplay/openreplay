@@ -38,7 +38,7 @@ function ResourceLoadingTime(props: Props) {
     const onSelect = (params) => {
       // const _params = { density: 70 }
       setSutoCompleteSelected(params.value);
-      console.log('params', params) // TODO reload the data with new params;
+      // TODO reload the data with new params;
       // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
     }
 

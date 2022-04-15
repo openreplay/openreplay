@@ -80,7 +80,6 @@ function WidgetForm(props: Props) {
     }
 
     const onObserveChanges = () => {
-        console.log('observe changes');
         // metricStore.fetchMetricChartData(metric);
     }
     

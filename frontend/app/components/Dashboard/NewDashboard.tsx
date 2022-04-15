@@ -18,15 +18,7 @@ function NewDashboard(props) {
         dashboardStore.fetchList().then((resp) => {
             if (parseInt(dashboardId) > 0) {
                 dashboardStore.selectDashboardById(dashboardId);
-            } 
-            // else {
-            //     dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
-            //         console.log('dashboardId', dashboardId)
-            //         // if (!history.location.pathname.includes('/metrics')) {
-            //         //     history.push(withSiteId(dashboardSelected(dashboardId), siteId));
-            //         // }
-            //     });
-            // }
+            }
         });
     }, [siteId]);
     

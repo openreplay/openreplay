@@ -200,7 +200,6 @@ export default class Widget implements IWidget {
     fetchSessions(filter: any): Promise<any> {
         this.sessionsLoading = true
         return new Promise((resolve, reject) => {
-            console.log('fetching sessions', filter)
             metricService.fetchSessions(this.metricId, filter).then(response => {
                 resolve(response.map(cat => {
                     return {

@@ -161,8 +161,6 @@ export default class FilterModal extends React.PureComponent {
     const staticFilters = preloadedFilters
       .filter(({ value, actualValue }) => !this.props.loading && this.test(actualValue || value))
 
-    // console.log('filteredList', filteredList);
-
     return (!displayed ? null :
       <div  className={ stl.modal }>
         { loading && 
