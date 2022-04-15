@@ -39,7 +39,8 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False):
+def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False,
+                  live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
@@ -93,13 +94,13 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
-                    data['resources'] = resources.get_by_session_id(session_id=session_id)
+                    data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id)
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id)
-                data['live'] = assist.is_live(project_id=project_id,
-                                              session_id=session_id,
-                                              project_key=data["projectKey"])
+                data['live'] = live and assist.is_live(project_id=project_id,
+                                                       session_id=session_id,
+                                                       project_key=data["projectKey"])
             data["inDB"] = True
             return data
         else:
@@ -233,20 +234,19 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
                 data.order = "DESC"
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
-                sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
-            else:
-                sort = 'session_id'
+                # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
+                sort = helper.key_to_snake_case(data.sort)
 
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY issue_score DESC, {sort} {data.order}, session_id desc) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY issue_score DESC, {sort} {data.order}) AS full_sessions;""",
+                                            ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
         # print("--------------------")
         # print(main_query)
@@ -280,9 +280,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         for i, s in enumerate(sessions):
             sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
                                        if sessions[i][f'metadata_{k["index"]}'] is not None}
-    if not data.group_by_user and data.sort is not None and data.sort != "session_id":
-        sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
-                          reverse=data.order.upper() == "DESC")
+    # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
+    #     sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
+    #                       reverse=data.order.upper() == "DESC")
     return {
         'total': total,
         'sessions': helper.list_to_camel_case(sessions)

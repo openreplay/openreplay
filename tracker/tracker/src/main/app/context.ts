@@ -41,13 +41,13 @@ export function isInstance<T extends WindowConstructor>(node: Node, constr: Cons
     // @ts-ignore (for EI, Safary)
     doc.parentWindow || 
     doc.defaultView; // TODO: smart global typing for Window object
-  while((context.parent || context.top) && context.parent !== context) {
+  while(context !== window) {
     // @ts-ignore
     if (node instanceof context[constr.name]) {
       return true
     }
     // @ts-ignore
-    context = context.parent || context.top
+    context = context.parent || window
   }
   // @ts-ignore
   return node instanceof context[constr.name]

@@ -1,38 +1,37 @@
 package integration
 
 import (
-	"fmt"
-	"net/http"
-	"encoding/json"
 	"bytes"
-	"time"
+	"encoding/json"
+	"fmt"
 	"io"
-  "io/ioutil"
+	"io/ioutil"
+	"net/http"
+	"time"
 
-  "openreplay/backend/pkg/utime"
 	"openreplay/backend/pkg/messages"
 )
 
-/* 
+/*
 	We collect Logs. Datadog also has Events
 
 */
 
 type datadog struct {
-	ApplicationKey string   //`json:"application_key"`
-	ApiKey string           //`json:"api_key"`
+	ApplicationKey string //`json:"application_key"`
+	ApiKey         string //`json:"api_key"`
 }
 
 type datadogResponce struct {
-	Logs []json.RawMessage
+	Logs      []json.RawMessage
 	NextLogId *string
-	Status string
+	Status    string
 }
 
 type datadogLog struct {
 	Content struct {
-		Timestamp string
-		Message string
+		Timestamp  string
+		Message    string
 		Attributes struct {
 			Error struct { // Not sure about this
 				Message string
@@ -48,10 +47,10 @@ func (d *datadog) makeRequest(nextLogId *string, fromTs uint64, toTs uint64) (*h
 		d.ApplicationKey,
 	)
 	startAt := "null"
-	if nextLogId != nil &&  *nextLogId != "" {
+	if nextLogId != nil && *nextLogId != "" {
 		startAt = *nextLogId
 	}
-	// Query: status:error/info/warning? 
+	// Query: status:error/info/warning?
 	// openReplaySessionToken instead of asayer_session_id
 	jsonBody := fmt.Sprintf(`{
     "limit": 1000,
@@ -72,8 +71,8 @@ func (d *datadog) makeRequest(nextLogId *string, fromTs uint64, toTs uint64) (*h
 }
 
 func (d *datadog) Request(c *client) error {
-	fromTs := c.getLastMessageTimestamp() + 1  // From next millisecond
-	toTs := uint64(utime.CurrentTimestamp())
+	fromTs := c.getLastMessageTimestamp() + 1 // From next millisecond
+	toTs := uint64(time.Now().UnixMilli())
 	var nextLogId *string
 	for {
 		req, err := d.makeRequest(nextLogId, fromTs, toTs)
@@ -111,16 +110,16 @@ func (d *datadog) Request(c *client) error {
 				c.errChan <- err
 				continue
 			}
-			timestamp := uint64(utime.ToMilliseconds(parsedTime))
+			timestamp := uint64(parsedTime.UnixMilli())
 			c.setLastMessageTimestamp(timestamp)
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
 				Token: token,
 				RawErrorEvent: &messages.RawErrorEvent{
-					Source: "datadog",
+					Source:    "datadog",
 					Timestamp: timestamp,
-					Name: ddLog.Content.Attributes.Error.Message,
-					Payload: string(jsonLog),
+					Name:      ddLog.Content.Attributes.Error.Message,
+					Payload:   string(jsonLog),
 				},
 			}
 		}

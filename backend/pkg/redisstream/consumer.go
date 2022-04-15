@@ -1,24 +1,22 @@
 package redisstream
 
 import (
+	"log"
 	"net"
+	"sort"
 	"strconv"
 	"strings"
-	"log"
-	"sort"
 	"time"
 
-	"github.com/pkg/errors"
 	_redis "github.com/go-redis/redis"
+	"github.com/pkg/errors"
 
 	"openreplay/backend/pkg/queue/types"
 )
 
-
-
-type idsInfo struct{ 
-	id []string 
-	ts []int64 
+type idsInfo struct {
+	id []string
+	ts []int64
 }
 type streamPendingIDsMap map[string]*idsInfo
 
@@ -41,26 +39,25 @@ func NewConsumer(group string, streams []string, messageHandler types.MessageHan
 		}
 	}
 
-
 	idsPending := make(streamPendingIDsMap)
 
 	streamsCount := len(streams)
 	for i := 0; i < streamsCount; i++ {
-		// ">" is for never-delivered messages. 
-		// Otherwise - never acknoledged only 
+		// ">" is for never-delivered messages.
+		// Otherwise - never acknoledged only
 		// TODO: understand why in case of "0" it eats 100% cpu
-		streams = append(streams, ">") 
-		
+		streams = append(streams, ">")
+
 		idsPending[streams[i]] = new(idsInfo)
 	}
 
 	return &Consumer{
-		redis: redis,
+		redis:          redis,
 		messageHandler: messageHandler,
-		streams: streams,
-		group: group,
-		autoCommit: true,
-		idsPending: idsPending,
+		streams:        streams,
+		group:          group,
+		autoCommit:     true,
+		idsPending:     idsPending,
 	}
 }
 
@@ -106,9 +103,9 @@ func (c *Consumer) ConsumeNext() error {
 				return errors.New("Too many messages per ms in redis")
 			}
 			c.messageHandler(sessionID, []byte(valueString), &types.Meta{
-				Topic: r.Stream,
+				Topic:     r.Stream,
 				Timestamp: int64(ts),
-				ID: ts << 13 | (idx & 0x1FFF), // Max: 4096 messages/ms for 69 years
+				ID:        ts<<13 | (idx & 0x1FFF), // Max: 4096 messages/ms for 69 years
 			})
 			if c.autoCommit {
 				if err = c.redis.XAck(r.Stream, c.group, m.ID).Err(); err != nil {
@@ -119,7 +116,7 @@ func (c *Consumer) ConsumeNext() error {
 				c.idsPending[r.Stream].id = append(c.idsPending[r.Stream].id, m.ID)
 				c.idsPending[r.Stream].ts = append(c.idsPending[r.Stream].ts, int64(ts))
 			}
-			
+
 		}
 	}
 	return nil
@@ -158,11 +155,7 @@ func (c *Consumer) CommitBack(gap int64) error {
 		c.idsPending[stream].id = idsInfo.id[maxI:]
 		c.idsPending[stream].ts = idsInfo.ts[maxI:]
 	}
-	return nil	
-}
-
-func (c *Consumer) DisableAutoCommit() {
-	//c.autoCommit = false
+	return nil
 }
 
 func (c *Consumer) Close() {

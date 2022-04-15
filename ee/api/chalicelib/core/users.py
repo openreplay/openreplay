@@ -632,7 +632,6 @@ def change_jwt_iat(user_id):
         return cur.fetchone().get("jwt_iat")
 
 
-@dev.timed
 def authenticate(email, password, for_change_password=False, for_plugin=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(

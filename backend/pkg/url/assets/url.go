@@ -5,11 +5,18 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"openreplay/backend/pkg/flakeid"
 )
 
 func getSessionKey(sessionID uint64) string {
-	// Based on timestamp, changes once per week. Check pkg/flakeid for understanding sessionID
-	return strconv.FormatUint(sessionID>>50, 10)
+	return strconv.FormatUint(
+		uint64(time.UnixMilli(
+			int64(flakeid.ExtractTimestamp(sessionID)),
+		).Weekday()),
+		10,
+	)
 }
 
 func ResolveURL(baseurl string, rawurl string) string {
