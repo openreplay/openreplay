@@ -21,7 +21,8 @@ interface Props {
 function PageInsightsPanel({ 
   filters, fetchInsights, events = [], insights, urlOptions, host, loading = true
 }: Props) {
-  const [insightsFilters, setInsightsFilters] = useState(filters)  
+  const [insightsFilters, setInsightsFilters] = useState(filters)
+  const defaultValue = (urlOptions && urlOptions[0]) ? urlOptions[0].value : ''
   
   const onDateChange = (e) => {
     const { startDate, endDate, rangeValue } = e;
@@ -36,9 +37,11 @@ function PageInsightsPanel({
   }, [insights])
 
   useEffect(() => {
-    const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
-    Player.pause();
-    fetchInsights({ ...insightsFilters, url })
+    if (urlOptions && urlOptions[0]) {
+      const url = insightsFilters.url ? insightsFilters.url : host + urlOptions[0].value;
+      Player.pause();
+      fetchInsights({ ...insightsFilters, url })
+    }
   }, [insightsFilters])
 
   const onPageSelect = (e, { name, value }) => {
@@ -68,7 +71,7 @@ function PageInsightsPanel({
           selection
           options={ urlOptions }
           name="url"
-          defaultValue={urlOptions[0].value}
+          defaultValue={defaultValue}
           onChange={ onPageSelect }
           id="change-dropdown"
           className="customDropdown"          
