@@ -2331,6 +2331,7 @@ def __get_application_activity_avg_page_load_time(cur, project_id, startTimestam
 
     cur.execute(cur.mogrify(pg_query, params))
     row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return row
 
 
@@ -2400,6 +2401,7 @@ def __get_application_activity_avg_request_load_time(cur, project_id, startTimes
                                        "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
 
     row = cur.fetchone()
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return row
 
 
@@ -2753,7 +2755,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
                                               COALESCE(AVG(pages.response_time),0) AS value
                                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp 
                                             LEFT JOIN LATERAL (
-                                                SELECT first_paint_time 
+                                                SELECT response_time 
                                                 FROM events.pages INNER JOIN public.sessions USING (session_id)
                                                 WHERE {" AND ".join(pg_sub_query_chart)} AND pages.response_time > 0
                                         ) AS pages ON (TRUE)

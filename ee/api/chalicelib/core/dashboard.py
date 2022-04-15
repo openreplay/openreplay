@@ -203,7 +203,7 @@ def get_processed_sessions(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
         count = count[0]["count"]
 
         results["progress"] = helper.__progress(old_val=count, new_val=results["value"])
-
+    results["unit"] = schemas.TemplatePredefinedUnits.count
     return results
 
 
@@ -249,15 +249,15 @@ def get_errors(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimesta
     return results
 
 
-def __count_distinct_errors(cur, project_id, startTimestamp, endTimestamp, ch_sub_query, meta=False, **args):
+def __count_distinct_errors(ch, project_id, startTimestamp, endTimestamp, ch_sub_query, meta=False, **args):
     ch_query = f"""\
                 SELECT
                        COUNT(DISTINCT errors.message) AS count
                 FROM errors {"INNER JOIN sessions_metadata USING(session_id)" if meta else ""}
                 WHERE {" AND ".join(ch_sub_query)};"""
-    count = cur.execute(query=ch_query,
-                        params={"project_id": project_id, "startTimestamp": startTimestamp,
-                                "endTimestamp": endTimestamp, **__get_constraint_values(args)})
+    count = ch.execute(query=ch_query,
+                       params={"project_id": project_id, "startTimestamp": startTimestamp,
+                               "endTimestamp": endTimestamp, **__get_constraint_values(args)})
 
     if count is not None and len(count) > 0:
         return count[0]["count"]
@@ -431,7 +431,7 @@ def get_user_activity(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     return results
 
 
-def __get_user_activity(cur, project_id, startTimestamp, endTimestamp, **args):
+def __get_user_activity(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -444,7 +444,7 @@ def __get_user_activity(cur, project_id, startTimestamp, endTimestamp, **args):
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
 
-    rows = cur.execute(query=ch_query, params=params)
+    rows = ch.execute(query=ch_query, params=params)
 
     return rows
 
@@ -952,7 +952,8 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
     return {"value": avg,
             "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                               end_time=endTimestamp,
-                                              density=density, neutral={"value": 0})}
+                                              density=density, neutral={"value": 0}),
+            "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1097,7 +1098,8 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
     return {"value": avg,
             "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                               end_time=endTimestamp,
-                                              density=density, neutral={"value": 0})}
+                                              density=density, neutral={"value": 0}),
+            "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1295,7 +1297,8 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
     return {"value": avg, "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                             end_time=endTimestamp, density=density,
-                                                            neutral={"value": 0})}
+                                                            neutral={"value": 0}),
+            "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1359,7 +1362,8 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
             "chart": helper.list_to_camel_case(__complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                                         end_time=endTimestamp,
                                                                         density=density,
-                                                                        neutral={"value": 0}))}
+                                                                        neutral={"value": 0})),
+            "unit": schemas.TemplatePredefinedUnits.memory}
 
 
 def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1390,7 +1394,8 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
             "chart": helper.list_to_camel_case(__complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                                         end_time=endTimestamp,
                                                                         density=density,
-                                                                        neutral={"value": 0}))}
+                                                                        neutral={"value": 0})),
+            "unit": schemas.TemplatePredefinedUnits.percentage}
 
 
 def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1421,7 +1426,8 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
             "chart": helper.list_to_camel_case(__complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                                         end_time=endTimestamp,
                                                                         density=density,
-                                                                        neutral={"value": 0}))}
+                                                                        neutral={"value": 0})),
+            "unit": schemas.TemplatePredefinedUnits.frame}
 
 
 def __get_crashed_sessions_ids(project_id, startTimestamp, endTimestamp):
@@ -2104,6 +2110,7 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
         row = __get_application_activity_avg_page_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2182,6 +2189,7 @@ def get_application_activity_avg_image_load_time(project_id, startTimestamp=Time
         row = __get_application_activity_avg_image_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+        results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2256,6 +2264,7 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
         row = __get_application_activity_avg_request_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
@@ -2465,7 +2474,7 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
     return results
 
 
-def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTimestamp, **args):
+def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -2477,7 +2486,7 @@ def __get_user_activity_avg_visited_pages(cur, project_id, startTimestamp, endTi
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
 
-    rows = cur.execute(query=ch_query, params=params)
+    rows = ch.execute(query=ch_query, params=params)
 
     return rows
 
@@ -2529,7 +2538,7 @@ def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.no
     return results
 
 
-def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args):
+def __get_user_activity_avg_session_duration(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
@@ -2543,7 +2552,7 @@ def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, en
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
 
-    rows = cur.execute(query=ch_query, params=params)
+    rows = ch.execute(query=ch_query, params=params)
 
     return rows
 
@@ -2719,6 +2728,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
                                                                               end_time=endTimestamp,
                                                                               density=density,
                                                                               neutral={"value": 0}))
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
     return results
 
 
