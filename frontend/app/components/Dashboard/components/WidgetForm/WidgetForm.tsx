@@ -20,7 +20,8 @@ interface Props {
 function WidgetForm(props: Props) {
     const [showDashboardSelectionModal, setShowDashboardSelectionModal] = useState(false);
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
-    const { metricStore } = useStore();
+    const { metricStore, dashboardStore } = useStore();
+    const dashboards = dashboardStore.dashboards;
     const isSaving = useObserver(() => metricStore.isSaving);
     const metric: any = useObserver(() => metricStore.instance);
 
@@ -29,6 +30,7 @@ function WidgetForm(props: Props) {
     const isTable = metric.metricType === 'table';
     const isTimeSeries = metric.metricType === 'timeseries';
     const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
+    const canAddToDashboard = metric.exists() && dashboards.length > 0;
 
     const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = (e, { value, name }) => {
@@ -193,7 +195,12 @@ function WidgetForm(props: Props) {
                                 <Icon name="trash" size="14" className="mr-2" color="teal"/>
                                 Delete
                             </Button>
-                            <Button plain size="small" className="flex items-center ml-2" onClick={() => setShowDashboardSelectionModal(true)}>
+                            <Button
+                                plain size="small"
+                                className="flex items-center ml-2"
+                                onClick={() => setShowDashboardSelectionModal(true)}
+                                disabled={!canAddToDashboard}
+                            >
                                 <Icon name="columns-gap" size="14" className="mr-2" color="teal"/>
                                 Add to Dashboard
                             </Button>
@@ -201,13 +208,13 @@ function WidgetForm(props: Props) {
                     )}
                 </div>
             </div>
-
-
-            <DashboardSelectionModal
-                metricId={metric.metricId}
-                show={showDashboardSelectionModal}
-                closeHandler={() => setShowDashboardSelectionModal(false)}
-            />
+            { canAddToDashboard && (
+                <DashboardSelectionModal
+                    metricId={metric.metricId}
+                    show={showDashboardSelectionModal}
+                    closeHandler={() => setShowDashboardSelectionModal(false)}
+                />
+            )}
         </div>
     ));
 }

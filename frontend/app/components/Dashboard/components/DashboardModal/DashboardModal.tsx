@@ -16,6 +16,7 @@ interface Props {
 function DashboardModal(props) {
     const { history, siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
+    const selectedWidgetsCount = useObserver(() => dashboardStore.selectedWidgets.length);
     const { hideModal } = useModal();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
     const loading = useObserver(() => dashboardStore.isSaving);
@@ -33,7 +34,7 @@ function DashboardModal(props) {
     return useObserver(() => (
         <div
             className="fixed border-r shadow p-4 h-screen"
-            style={{ backgroundColor: '#FAFAFA', zIndex: '9999', width: '85%'}}
+            style={{ backgroundColor: '#FAFAFA', zIndex: '999', width: '85%', maxWidth: '1300px' }}
         >
             <div className="mb-6 flex items-end justify-between">
                 <div>
@@ -53,15 +54,16 @@ function DashboardModal(props) {
             )}
             <DashboardMetricSelection />
 
-            <div className="flex absolute bottom-0 left-0 right-0 bg-white border-t p-3">
+            <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                 <Button
                     primary
                     className=""
                     disabled={!dashboard.isValid || loading}
                     onClick={onSave}
                 >
-                    { dashboard.exists() ? "Add Selected to Dashboard" : "Create and Add to Dashboard" }
+                    { dashboard.exists() ? "Add Selected to Dashboard" : "Create" }
                 </Button>
+                <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Widgets</span>
             </div>
         </div>
     ));

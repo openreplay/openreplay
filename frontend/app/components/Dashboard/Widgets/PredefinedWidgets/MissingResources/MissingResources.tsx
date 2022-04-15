@@ -37,21 +37,22 @@ const cols = [
 
 interface Props {
     data: any
+    metric?: any
 }
 function MissingResources(props: Props) {
-    const { data } = props;
+    const { data, metric } = props;
 
     return (
         <NoContent
           title="No resources missing."
           size="small"
-          show={ data.chart.length === 0 }
+          show={ metric.data.chart.length === 0 }
         >
           <div style={{ height: '240px'}}>
             <Table
               small
               cols={ cols }
-              rows={ List(data.chart) }
+              rows={ List(metric.data.chart) }
               rowClass="group"
             />
           </div>

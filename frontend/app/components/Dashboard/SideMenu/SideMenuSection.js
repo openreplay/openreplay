@@ -41,5 +41,5 @@ function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 SideMenuSection.displayName = "SideMenuSection";
 
 export default connect(state => ({
-	siteId: state.getIn([ 'user', 'siteId' ])
+	siteId: state.getIn([ 'site', 'siteId' ])
 }), { setShowAlerts })(SideMenuSection);

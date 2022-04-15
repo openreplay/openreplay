@@ -1,12 +1,9 @@
 import { useCallback } from 'react';
 import cn from 'classnames';
 import { Popup } from 'UI';
-
 import { CRASHES, EVENTS } from 'Player/ios/state';
-
 import TimeTracker from './TimeTracker';
 import PlayerTime from './PlayerTime';
-
 import cls from './timeline.css';
 
 export default function Timeline({ player }) {
@@ -19,7 +16,7 @@ export default function Timeline({ player }) {
     const time = Math.max(Math.round(p * player.state.endTime), 0);
     player.jump(time);
   });
-  const scale = 100 / player.state.endTime;  
+  const scale = 100 / player.state.endTime;
 	return (
 		<div className="flex items-center" >
 			<PlayerTime  player={player} timeKey="time"/>

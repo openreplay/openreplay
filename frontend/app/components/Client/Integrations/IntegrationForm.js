@@ -4,8 +4,8 @@ import SiteDropdown from 'Shared/SiteDropdown';
 import { save, init, edit, remove, fetchList } from 'Duck/integrations/actions';
 
 @connect((state, { name, customPath }) => ({
-  sites: state.getIn([ 'user', 'client', 'sites' ]),
-  initialSiteId: state.getIn([ 'user', 'siteId' ]),
+  sites: state.getIn([ 'site', 'list' ]),
+  initialSiteId: state.getIn([ 'site', 'siteId' ]),
   list: state.getIn([ name, 'list' ]),
   config: state.getIn([ name, 'instance']),
   saving: state.getIn([ customPath || name, 'saveRequest', 'loading']),

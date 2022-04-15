@@ -118,6 +118,7 @@ export default class Controls extends React.Component {
   componentDidMount() {
     document.addEventListener('keydown', this.onKeyDown);
   }
+
   componentWillUnmount() {
     document.removeEventListener('keydown', this.onKeyDown);
     //this.props.toggleInspectorMode(false);
@@ -166,10 +167,10 @@ export default class Controls extends React.Component {
       return;
     }
     if (this.props.inspectorMode) return;
-    if (e.key === ' ') {
-      document.activeElement.blur();
-      this.props.togglePlay();
-    }
+    // if (e.key === ' ') {
+    //   document.activeElement.blur();
+    //   this.props.togglePlay();
+    // } 
     if (e.key === 'Esc' || e.key === 'Escape') {
       this.props.fullscreenOff();
     }
@@ -262,7 +263,7 @@ export default class Controls extends React.Component {
 
     return (
       <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
-        { !live && <Timeline jump={ this.props.jump } /> }
+        { !live && <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> }
         { !fullscreen &&
           <div className={ styles.buttons } data-is-live={ live }>
             <div>

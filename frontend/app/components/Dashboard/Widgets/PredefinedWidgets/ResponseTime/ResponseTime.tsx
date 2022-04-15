@@ -18,15 +18,15 @@ interface Props {
     optionsLoading: any
     fetchOptions: any
     options: any
+    metric?: any
 }
 function ResponseTime(props: Props) {
-    const { data, optionsLoading } = props;
+    const { data, optionsLoading, metric } = props;
     const gradientDef = Styles.gradientDef();
-    const params = { density: 70 }
 
 
     const onSelect = (params) => {
-      const _params = { density: 70 }
+      // const _params = { density: 70 }
       console.log('params', params) // TODO reload the data with new params;
       // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
     }
@@ -34,27 +34,27 @@ function ResponseTime(props: Props) {
     return (
         <NoContent
           size="small"
-          show={ data.chart.length === 0 }
+          show={ metric.data.chart.length === 0 }
         >
           <>
             <div className="flex items-center mb-3">
-              <WidgetAutoComplete
+              {/* <WidgetAutoComplete
                 loading={optionsLoading}
                 fetchOptions={props.fetchOptions}
                 options={props.options}
                 onSelect={onSelect}
                 placeholder="Search for Page"
-              />
-              <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.avg)} unit="ms" />
+              /> */}
+              <AvgLabel className="ml-auto" text="Avg" count={Math.round(metric.data.avg)} unit="ms" />
             </div>
-            <ResponsiveContainer height={ 207 } width="100%">
+            <ResponsiveContainer height={ 200 } width="100%">
               <AreaChart
                   data={ data.chart }
                   margin={ Styles.chartMargins }
                 >
                   {gradientDef}
                   <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
-                  <XAxis {...Styles.xaxis} dataKey="time" interval={(params.density/7)} />
+                  <XAxis {...Styles.xaxis} dataKey="time" interval={(metric.params.density/7)} />
                   <YAxis
                     {...Styles.yaxis}
                     allowDecimals={false}
@@ -66,7 +66,7 @@ function ResponseTime(props: Props) {
                     name="Avg"
                     type="monotone"
                     unit=" ms"
-                    dataKey="avgCpu"
+                    dataKey="value"
                     stroke={Styles.colors[0]}
                     fillOpacity={ 1 }
                     strokeWidth={ 2 }

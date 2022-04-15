@@ -1,25 +1,51 @@
-import { filter } from "App/components/BugFinder/ManageFilters/savedFilterList.css"
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
 import { FilterKey, FilterType } from 'Types/filter/filterType'
 import { filtersMap } from 'Types/filter/newFilter'
 import FilterItem from "./filterItem"
 
-// console.log('filtersMap', filtersMap)
+export interface IFilter {
+    filterId: string
+    name: string
+    filters: FilterItem[]
+    eventsOrder: string
+    startTimestamp: number
+    endTimestamp: number
 
-export default class Filter {
+    merge: (filter: any) => void
+    addFilter: (filter: FilterItem) => void
+    updateFilter: (index:number, filter: any) => void
+    updateKey: (key: any, value: any) => void
+    removeFilter: (index: number) => void
+    fromJson: (json: any) => void
+    toJson: () => any
+    toJsonDrilldown: () => any
+}
+export default class Filter implements IFilter {
     public static get ID_KEY():string { return "filterId" }
+    filterId: string = ''
     name: string = ''
     filters: FilterItem[] = []
     eventsOrder: string = 'then'
+    startTimestamp: number = 0
+    endTimestamp: number = 0
 
     constructor() {
         makeAutoObservable(this, {
             filters: observable,
             eventsOrder: observable,
+            startTimestamp: observable,
+            endTimestamp: observable,
 
             addFilter: action,
             removeFilter: action,
             updateKey: action,
+            merge: action,
+        })
+    }
+
+    merge(filter: any) {
+        runInAction(() => {
+            Object.assign(this, filter)
         })
     }
 
@@ -38,7 +64,7 @@ export default class Filter {
         this.filters[index] = new FilterItem(filter)
     }
 
-    updateKey(key, value) {
+    updateKey(key: string, value) {
         this[key] = value
     }
 
@@ -51,6 +77,17 @@ export default class Filter {
         this.filters = json.filters.map(i => new FilterItem().fromJson(i))
         this.eventsOrder = json.eventsOrder
         return this
+    }
+
+    toJsonDrilldown() {
+        const json = {
+            name: this.name,
+            filters: this.filters.map(i => i.toJson()),
+            eventsOrder: this.eventsOrder,
+            startTimestamp: this.startTimestamp,
+            endTimestamp: this.endTimestamp,
+        }
+        return json
     }
 
     toJson() {

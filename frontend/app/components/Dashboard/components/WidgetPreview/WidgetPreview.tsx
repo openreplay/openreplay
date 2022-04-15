@@ -11,18 +11,14 @@ interface Props {
 }
 function WidgetPreview(props: Props) {
     const { className = '' } = props;
-    const { metricStore } = useStore();
+    const { metricStore, dashboardStore } = useStore();
+    const period = useObserver(() => dashboardStore.period);
     const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
 
     const chagneViewType = (e, { name, value }) => {
         metric.update({ [ name ]: value });
-    }
-
-    const onDateChange = (changedDates) => {
-        // setPeriod({  ...changedDates, rangeName: changedDates.rangeValue })
-        metric.update({  ...changedDates, rangeName: changedDates.rangeValue });
     }
 
     return useObserver(() => (
@@ -68,10 +64,10 @@ function WidgetPreview(props: Props) {
                     <div className="mx-4" />
                         <span className="mr-1 color-gray-medium">Time Range</span>
                         <DateRange
-                            rangeValue={metric.rangeName}
-                            startDate={metric.startDate}
-                            endDate={metric.endDate}
-                            onDateChange={onDateChange}
+                            rangeValue={period.rangeName}
+                            startDate={period.startDate}
+                            endDate={period.endDate}
+                            onDateChange={(period) => dashboardStore.setPeriod(period)}
                             customRangeRight
                             direction="left"
                         />

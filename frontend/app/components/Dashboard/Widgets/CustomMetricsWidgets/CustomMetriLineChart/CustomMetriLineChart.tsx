@@ -6,16 +6,17 @@ import { LineChart, Line, Legend } from 'recharts';
 interface Props {
     data: any;
     params: any;
-    seriesMap: any;
+    // seriesMap: any;
     colors: any;
     onClick?: (event, index) => void;
 }
 function CustomMetriLineChart(props: Props) {
-    const { data, params, seriesMap = [], colors, onClick = () => null } = props;
+    const { data = { chart: [], namesMap: [] }, params, colors, onClick = () => null } = props;
+
     return (
         <ResponsiveContainer height={ 240 } width="100%">
             <LineChart
-                data={ data }
+                data={ data.chart }
                 margin={Styles.chartMargins}
                 // syncId={ showSync ? "domainsErrors_4xx" : undefined }
                 onClick={onClick}
@@ -37,18 +38,18 @@ function CustomMetriLineChart(props: Props) {
                 />
                 <Legend />
                 <Tooltip {...Styles.tooltip} />
-                { seriesMap.map((key, index) => (
+                { Array.isArray(data.namesMap) && data.namesMap.map((key, index) => (
                     <Line
-                    key={key}
-                    name={key}
-                    type="monotone"
-                    dataKey={key}
-                    stroke={colors[index]}
-                    fillOpacity={ 1 }
-                    strokeWidth={ 2 }
-                    strokeOpacity={ 0.6 }
-                    // fill="url(#colorCount)"
-                    dot={false}
+                        key={key}
+                        name={key}
+                        type="monotone"
+                        dataKey={key}
+                        stroke={colors[index]}
+                        fillOpacity={ 1 }
+                        strokeWidth={ 2 }
+                        strokeOpacity={ 0.6 }
+                        // fill="url(#colorCount)"
+                        dot={false}
                     />
                 ))}
             </LineChart>

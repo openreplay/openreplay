@@ -11,6 +11,7 @@ import { useModal } from 'App/components/Modal';
 import DashboardModal from '../DashboardModal';
 import DashboardEditModal from '../DashboardEditModal';
 import DateRange from 'Shared/DateRange';
+import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 
 interface Props {
     siteId: number;
@@ -22,13 +23,21 @@ function DashboardView(props: Props) {
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
     const { hideModal, showModal } = useModal();
+    const showAlertModal = useObserver(() => dashboardStore.showAlertModal);
     const loading = useObserver(() => dashboardStore.fetchingDashboard);
-    const dashboard: any = dashboardStore.selectedDashboard
+    const dashboards = useObserver(() => dashboardStore.dashboards);
+    const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
     const period = useObserver(() => dashboardStore.period);
     const [showEditModal, setShowEditModal] = React.useState(false);
 
     useEffect(() => {
-        dashboardStore.fetch(dashboardId)
+        if (!dashboard || !dashboard.dashboardId) return;
+        dashboardStore.fetch(dashboard.dashboardId)
+    }, [dashboard]);
+
+    useEffect(() => {
+        if (dashboardId) return;
+        dashboardStore.selectDefaultDashboard();
     }, []);
     
     const onAddWidgets = () => {
@@ -58,11 +67,16 @@ function DashboardView(props: Props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <NoContent
-                show={!dashboard || !dashboard.dashboardId}
-                title="No data available."
+                show={dashboards.length === 0 || !dashboard || !dashboard.dashboardId}
+                icon="no-metrics-chart"
+                title="No dashboards available."
                 size="small"
+                iconSize={180}
+                subtext={
+                    <Button primary size="small" onClick={onAddWidgets}>Create Dashboard</Button>
+                }
             >
-                <div>
+                <div style={{ maxWidth: '1300px', margin: 'auto'}}>
                     <DashboardEditModal
                         show={showEditModal}
                         closeHandler={() => setShowEditModal(false)}
@@ -74,7 +88,7 @@ function DashboardView(props: Props) {
                         </div>
                         <div className="flex items-center">
                             <div className="flex items-center">
-                                <span className="mr-2 color-gray-medium">Time Range</span>
+                                {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
                                 <DateRange
                                     rangeValue={period.rangeName}
                                     startDate={period.start}
@@ -85,18 +99,15 @@ function DashboardView(props: Props) {
                                 />
                             </div>
                             <div className="mx-4" />
-                            <ItemMenu
-                                items={[
-                                    {
-                                        text: 'Edit',
-                                        onClick: onEdit
-                                    },
-                                    {
-                                        text: 'Delete Dashboard',
-                                        onClick: onDelete
-                                    },
-                                ]}
-                            />
+                            <div className="flex items-center">
+                                <ItemMenu
+                                    label="Options"
+                                    items={[
+                                        { text: 'Rename', onClick: onEdit },
+                                        { text: 'Delete', onClick: onDelete },
+                                    ]}
+                                />
+                            </div>
                         </div>
                     </div>
                     <DashboardWidgetGrid
@@ -104,10 +115,14 @@ function DashboardView(props: Props) {
                         dashboardId={dashboardId}
                         onEditHandler={onAddWidgets}
                     />
+                    <AlertFormModal
+                        showModal={showAlertModal}
+                        onClose={() => dashboardStore.updateKey('showAlertModal', false)}
+                    />
                 </div>
             </NoContent>
         </Loader>
     ));
 }
 
-export default withRouter(withModal(observer(DashboardView)));
+export default withRouter(withModal(DashboardView));

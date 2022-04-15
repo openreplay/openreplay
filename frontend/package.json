@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@sentry/browser": "^5.21.1",
+    "@svg-maps/world": "^1.0.1",
     "classnames": "^2.2.6",
     "codemirror": "^5.62.3",
     "copy-to-clipboard": "^3.3.1",
@@ -48,6 +49,7 @@
     "react-redux": "^5.1.2",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
+    "react-svg-map": "^2.2.0",
     "react-tippy": "^1.4.0",
     "react-toastify": "^5.5.0",
     "react-virtualized": "^9.22.2",

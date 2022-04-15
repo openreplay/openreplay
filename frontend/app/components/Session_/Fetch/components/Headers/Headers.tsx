@@ -9,7 +9,7 @@ function Headers(props) {
         title="No data available."
         size="small"
         show={ !props.requestHeaders && !props.responseHeaders }
-        icon="exclamation-circle"
+        animatedIcon="no-results"
       >
         { props.requestHeaders && (
           <>

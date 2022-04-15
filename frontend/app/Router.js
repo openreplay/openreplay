@@ -22,7 +22,7 @@ const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDeta
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
 // import ResultsModal from 'Shared/Results/ResultsModal';
-import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
+import { fetchList as fetchMetadata } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
@@ -80,7 +80,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
 @withStore
 @withRouter
 @connect((state) => {
-  const siteId = state.getIn([ 'user', 'siteId' ]);
+  const siteId = state.getIn([ 'site', 'siteId' ]);
   const jwt = state.get('jwt');
   const changePassword = state.getIn([ 'user', 'account', 'changePassword' ]);
   const userInfoLoading = state.getIn([ 'user', 'fetchUserInfoRequest', 'loading' ]);
@@ -88,7 +88,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     jwt,
     siteId,
     changePassword,
-    sites: state.getIn([ 'user', 'client', 'sites' ]),
+    sites: state.getIn([ 'site', 'list' ]),
     isLoggedIn: jwt !== null && !changePassword,
     loading: siteId === null || userInfoLoading,
     email: state.getIn([ 'user', 'account', 'email' ]),
@@ -103,7 +103,7 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
   fetchUserInfo,
   fetchTenants,
   setSessionPath,
-  fetchIntegrationVariables,
+  fetchMetadata,
   fetchSiteList,
   fetchAnnouncements,
   fetchAlerts,
@@ -124,17 +124,18 @@ class Router extends React.Component {
   fetchInitialData = () => {
     Promise.all([
       this.props.fetchUserInfo().then(() => {
-        const { mstore } = this.props
-        mstore.initClient();
-        this.props.fetchIntegrationVariables() 
-      }),
-      this.props.fetchSiteList().then(() => {
-        setTimeout(() => {
-          this.props.fetchAnnouncements();
-          this.props.fetchAlerts();
-          this.props.fetchWatchdogStatus();
-        }, 100);
-      }),
+        this.props.fetchSiteList().then(() => {
+          const { mstore } = this.props
+          mstore.initClient();
+
+          setTimeout(() => {
+            this.props.fetchMetadata() 
+            this.props.fetchAnnouncements();
+            this.props.fetchAlerts();
+            this.props.fetchWatchdogStatus();
+          }, 100);
+        })
+      })
     ])
   }
 
@@ -197,25 +198,17 @@ class Router extends React.Component {
             { onboarding && 
               <Redirect to={ withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
             }
-            { siteIdList.length === 0 && 
+            {/* { siteIdList.length === 0 && 
               <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
-            }
+            } */}
             
+            {/* DASHBOARD and Metrics */}
             <Route exact strict path={ withSiteId(METRICS_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(METRICS_DETAILS, siteIdList) } component={ Dashboard } />
-
             <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList) } component={ Dashboard } />
-            
-            
-            
-            {/* <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(WIDGET_PATAH, siteIdList) } component={ Dashboard } /> */}
 
             <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
             <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />

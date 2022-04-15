@@ -5,6 +5,7 @@ import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
+import Filter, { IFilter } from "./types/filter";
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -14,6 +15,7 @@ export interface IDashboardSotre {
     startTimestamp: number
     endTimestamp: number
     period: Period
+    drillDownFilter: IFilter
 
     siteId: any
     currentWidget: Widget
@@ -27,7 +29,11 @@ export interface IDashboardSotre {
     isSaving: boolean
     isDeleting: boolean
     fetchingDashboard: boolean
+    sessionsLoading: boolean
 
+    showAlertModal: boolean
+
+    selectWidgetsByCategory: (category: string) => void
     toggleAllSelectedWidgets: (isSelected: boolean) => void
     removeSelectedWidgetByCategory(category: string): void
     toggleWidgetSelection(widget: IWidget): void
@@ -73,6 +79,7 @@ export default class DashboardStore implements IDashboardSotre {
     widgetCategories: any[] = []
     widgets: Widget[] = []
     period: Period = Period({ rangeName: LAST_7_DAYS })
+    drillDownFilter: Filter = new Filter()
     startTimestamp: number = 0
     endTimestamp: number = 0
     
@@ -86,9 +93,13 @@ export default class DashboardStore implements IDashboardSotre {
     isSaving: boolean = false
     isDeleting: boolean = false
     fetchingDashboard: boolean = false
+    sessionsLoading: boolean = false;
+
+    showAlertModal: boolean = false;
 
     constructor() {
         makeAutoObservable(this, {
+            drillDownFilter: observable.ref,
             widgetCategories: observable.ref,
             resetCurrentWidget: action,
             addDashboard: action,
@@ -105,6 +116,7 @@ export default class DashboardStore implements IDashboardSotre {
             editWidget: action,
             updateKey: action,
 
+            selectWidgetsByCategory: action,
             toggleAllSelectedWidgets: action,
             removeSelectedWidgetByCategory: action,
             toggleWidgetSelection: action,
@@ -114,6 +126,10 @@ export default class DashboardStore implements IDashboardSotre {
 
             fetchMetricChartData: action
         })
+
+        const drillDownPeriod = Period({ rangeName: LAST_7_DAYS }).toTimestamps();
+        this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
+        this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {
@@ -126,6 +142,12 @@ export default class DashboardStore implements IDashboardSotre {
         } else {
             this.selectedWidgets = []
         }
+    }
+
+    selectWidgetsByCategory(category: string) {
+        const selectedWidgetIds = this.selectedWidgets.map((widget: any) => widget.metricId);
+        const widgets = this.widgetCategories.find(cat => cat.name === category)?.widgets.filter(widget => !selectedWidgetIds.includes(widget.metricId))
+        this.selectedWidgets = this.selectedWidgets.concat(widgets) || []
     }
 
     removeSelectedWidgetByCategory = (category: any) => {
@@ -169,7 +191,7 @@ export default class DashboardStore implements IDashboardSotre {
         return dashboardService.getDashboards()
             .then((list: any) => {
                 runInAction(() => {
-                    this.dashboards = list.map(d => new Dashboard().fromJson(d)).sort((a, b) => a.position - b.position)
+                    this.dashboards = list.map(d => new Dashboard().fromJson(d))
                 })
             }).finally(() => {
                 runInAction(() => {
@@ -181,7 +203,8 @@ export default class DashboardStore implements IDashboardSotre {
     fetch(dashboardId: string): Promise<any> {
         this.fetchingDashboard = true
         return dashboardService.getDashboard(dashboardId).then(response => {
-            this.selectedDashboard = new Dashboard().fromJson(response)
+            // const widgets =  new Dashboard().fromJson(response).widgets
+            this.selectedDashboard?.update({ 'widgets' : new Dashboard().fromJson(response).widgets})
         }).finally(() => {
             this.fetchingDashboard = false
         })
@@ -300,9 +323,9 @@ export default class DashboardStore implements IDashboardSotre {
 
     selectDashboardById = (dashboardId: any) => {
         this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || new Dashboard();
-        if (this.selectedDashboard.dashboardId) {
-            this.fetch(this.selectedDashboard.dashboardId)
-        }
+        // if (this.selectedDashboard.dashboardId) {
+        //     this.fetch(this.selectedDashboard.dashboardId)
+        // }
     }
 
     setSiteId = (siteId: any) => {
@@ -335,7 +358,8 @@ export default class DashboardStore implements IDashboardSotre {
                     const categories: any[] = []
                     response.forEach(category => {
                         const widgets: any[] = []
-                        category.widgets.forEach(widget => {
+                        // TODO speed_location is not supported yet
+                        category.widgets.filter(w => w.predefinedKey !== 'speed_location').forEach(widget => {
                             const w = new Widget().fromJson(widget)
                             widgets.push(w)
                         })
@@ -412,28 +436,9 @@ export default class DashboardStore implements IDashboardSotre {
                         metric.setData(_data)
                         resolve(_data);
                     } else {
-                        // if (metric.predefinedKey === 'errors_per_domains') {
-                        //     console.log('errors_per_domains', data)
-                        //     data.chart = data
-                        // } else {
-                        //     data.chart = getChartFormatter(this.period)(Array.isArray(data) ? data : data.chart)
-                        // }
-                        data.namesMap = Array.isArray(data) ? data    
-                            .map(i => Object.keys(i))
-                            .flat()
-                            .filter(i => i !== 'time' && i !== 'timestamp')
-                            .reduce((unique: any, item: any) => {
-                                if (!unique.includes(item)) {
-                                    unique.push(item);
-                                }
-                                return unique;
-                            }, []) : data.chart;
-                        //     console.log('map', data.namesMap)
-                        // const _data = { ...data, namesMap: data.namesMap, chart: data.chart }
-                        // metric.setData(_data)
-                        // resolve(_data);
-
-                        const _data = {}
+                        const _data = {
+                            ...data,
+                        }
                         if (data.hasOwnProperty('chart')) {
                             _data['chart'] = getChartFormatter(this.period)(data.chart)
                             _data['namesMap'] = data.chart
@@ -447,9 +452,8 @@ export default class DashboardStore implements IDashboardSotre {
                                     return unique;
                                 }, [])
                         } else {
-                            _data['chart'] = data
-                            _data['namesMap'] = data
-                                .map(i => Object.keys(i))
+                            _data['chart'] =  getChartFormatter(this.period)(Array.isArray(data) ? data : []);
+                            _data['namesMap'] = Array.isArray(data) ? data.map(i => Object.keys(i))
                                 .flat()
                                 .filter(i => i !== 'time' && i !== 'timestamp')
                                 .reduce((unique: any, item: any) => {
@@ -457,14 +461,13 @@ export default class DashboardStore implements IDashboardSotre {
                                         unique.push(item);
                                     }
                                     return unique;
-                                }, [])
+                                }, []) : []
                         }
                         
                         metric.setData(_data)
-                        resolve({ ...data, ..._data });
+                        resolve(_data);
                     }
                 }).catch((err) => {
-                    console.log('err', err)
                     reject(err)
                 })
         })

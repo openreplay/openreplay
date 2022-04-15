@@ -1,6 +1,6 @@
 .wrapper {
   position: relative;    
-  /* margin-left: 25px; */
+  margin-left: 15px;
 
   &:hover .pin {
     border: solid thin rgba(0,0,0,0.2);

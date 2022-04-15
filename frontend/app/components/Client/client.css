@@ -18,7 +18,7 @@
   & .tabContent {    
     background-color: white;
     padding: 25px;
-    margin-top: -30px;
+    /* margin-top: -30px; */
     margin-right: -20px;    
     width: 100%;    
   }
