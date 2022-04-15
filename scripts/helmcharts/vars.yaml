@@ -78,7 +78,7 @@ global:
     # if you're using one node installation, where
     # you're using local s3, make sure these variables
     # are same as minio.global.minio.accesskey and  secretKey
-    accessKey: "YkkPAPYjogRlicqvCuNSHkfsdGtCCq"
+    accessKey: "changeMeMinioAccessKey"
     secretKey: "changeMeMinioPassword"
   email:
     emailHost: ''
@@ -92,7 +92,7 @@ global:
     emailFrom: 'OpenReplay<do-not-reply@openreplay.com>'
 
   enterpriseEditionLicense: ""
-  domainName: "foss.openreplay.com"
+  domainName: ""
 
 # If there is multiple nodes in the kubernetes cluster,
 # we'll have to create a NFS share PVC for both the containers to share data.
