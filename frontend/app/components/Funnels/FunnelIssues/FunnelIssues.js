@@ -44,7 +44,7 @@ function FunnelIssues(props) {
       <NoContent
         title="No Issues Found!"
         subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ !loading && filteredList.size === 0}
       >        
         { filteredList.take(displayedCount).map(issue => (
@@ -73,7 +73,7 @@ export default connect(state => ({
   list: state.getIn(['funnels', 'issues']),
   criticalIssuesCount: state.getIn(['funnels', 'criticalIssuesCount']),
   loading: state.getIn(['funnels', 'fetchIssuesRequest', 'loading']),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
   funnel: state.getIn(['funnels', 'instance']),
   activeStages: state.getIn(['funnels', 'activeStages']),
   funnelFilters: state.getIn(['funnels', 'funnelFilters']),

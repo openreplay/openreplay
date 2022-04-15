@@ -4,7 +4,9 @@ import styles from './noContent.css';
 export default ({
   title = "No data available.",
   subtext,
+  animatedIcon = false,
   icon,
+  iconSize = 100,
   size,
   show = true,
   children = null,
@@ -14,7 +16,8 @@ export default ({
 }) => (!show ? children :
 <div className={ `${ styles.wrapper } ${ size && styles[ size ] }` } style={style}>
   {
-    icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
+    // icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
+    animatedIcon ? <div className={ styles[animatedIcon] } /> : (icon && <Icon name={icon} size={iconSize} />)
   }
   { title && <div className={ styles.title }>{ title }</div> }
   {

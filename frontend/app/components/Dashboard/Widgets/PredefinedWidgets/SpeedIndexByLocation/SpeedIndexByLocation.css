@@ -1,0 +1,21 @@
+.maps {
+    height: auto;
+    width: 110%;
+    stroke: $gray-medium;
+	stroke-width: 1;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+    margin-top: -20px;
+
+}
+
+.location {
+    fill: $gray-light !important;
+    cursor: pointer;
+
+    &:focus,
+    &:hover {
+        fill: #b8e2b3;
+        outline: 0;
+    }
+}

@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 import { Input, Button, Label } from 'UI';
 import { save, edit, update , fetchList } from 'Duck/site';
-import { pushNewSite, setSiteId } from 'Duck/user';
+import { pushNewSite } from 'Duck/user';
+import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import styles from './siteForm.css';
 

@@ -13,7 +13,7 @@ import { confirm } from 'UI/Confirmation';
   fields: state.getIn(['customFields', 'list']).sortBy(i => i.index),
   field: state.getIn(['customFields', 'instance']),
   loading: state.getIn(['customFields', 'fetchRequest', 'loading']),
-  sites: state.getIn([ 'user', 'client', 'sites' ]),
+  sites: state.getIn([ 'site', 'list' ]),
   errors: state.getIn([ 'customFields', 'saveRequest', 'errors' ]),
 }), {
   init,

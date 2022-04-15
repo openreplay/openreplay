@@ -145,7 +145,7 @@ export default connect(state => ({
     loading: state.getIn(['funnels', 'fetchListRequest', 'loading']),
     activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
     activeTab: state.getIn([ 'sessions', 'activeTab' ]),
-    siteId: state.getIn([ 'user', 'siteId' ]),
+    siteId: state.getIn([ 'site', 'siteId' ]),
     events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
     filters: state.getIn([ 'search', 'instance', 'filters' ]),
 }), { 

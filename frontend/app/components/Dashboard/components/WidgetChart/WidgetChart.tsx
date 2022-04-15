@@ -4,27 +4,54 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer, useObserver, useLocalObservable } from 'mobx-react-lite';
+import { useObserver } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
-import CustomMetricOverviewChart from '../../Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
+import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
+import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
 interface Props {
     metric: any;
     isWidget?: boolean
+    onClick?: () => void;
 }
 function WidgetChart(props: Props) {
     const { isWidget = false, metric } = props;
-    // const metric = useObserver(() => props.metric);
     const { dashboardStore } = useStore();
     const period = useObserver(() => dashboardStore.period);
+    const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(false)
-    const [seriesMap, setSeriesMap] = useState<any>([]);
-    const params = { density: 70 } 
-    const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
+    const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
+    const params = { density: isOverviewWidget ? 7 : 70 } 
+    const metricParams = { ...params }
     const prevMetricRef = useRef<any>();
     const [data, setData] = useState<any>(metric.data);
+
+    const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
+    const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
+
+    const onChartClick = (event: any) => {
+        if (event) {
+            if (isTableWidget || isPieChart) {
+                const periodTimestamps = period.toTimestamps()
+                drillDownFilter.merge({
+                    filters: event,
+                    startTimestamp: periodTimestamps.startTimestamp,
+                    endTimestamp: periodTimestamps.endTimestamp,
+                });
+            } else {
+                const payload = event.activePayload[0].payload;
+                const timestamp = payload.timestamp;
+                const periodTimestamps = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
+
+                drillDownFilter.merge({
+                    startTimestamp: periodTimestamps.startTimestamp,
+                    endTimestamp: periodTimestamps.endTimestamp,
+                });
+            }
+        }
+    }
 
     useEffect(() => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
@@ -34,8 +61,8 @@ function WidgetChart(props: Props) {
         prevMetricRef.current = metric;
         
         setLoading(true);
-        const data = isWidget ? {} : { ...metricParams, ...metric.toJson() };
-        dashboardStore.fetchMetricChartData(metric, data, isWidget).then((res: any) => {
+        const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
+        dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
             setData(res);
         }).finally(() => {
             setLoading(false);
@@ -43,29 +70,29 @@ function WidgetChart(props: Props) {
     }, [period]);
 
     const renderChart = () => {
-        const { metricType, viewType, predefinedKey } = metric;
+        const { metricType, viewType } = metric;
 
         if (metricType === 'predefined') {
-            if (viewType === 'overview') {
+            if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
-            return <WidgetPredefinedChart data={data} predefinedKey={metric.predefinedKey} />
+            return <WidgetPredefinedChart metric={metric} data={data} predefinedKey={metric.predefinedKey} />
         }
 
         if (metricType === 'timeseries') {
             if (viewType === 'lineChart') {
                 return (
                     <CustomMetriLineChart
-                        data={metric.data}
-                        seriesMap={seriesMap}
+                        data={data}
                         colors={colors}
                         params={params}
+                        onClick={onChartClick}
                     />
                 )
             } else if (viewType === 'progress') {
                 return (
                     <CustomMetricPercentage
-                        data={metric.data[0]}
+                        data={data[0]}
                         colors={colors}
                         params={params}
                     />
@@ -75,14 +102,18 @@ function WidgetChart(props: Props) {
 
         if (metricType === 'table') {
             if (viewType === 'table') {
-                return <CustomMetricTable  metric={metric} data={metric.data[0]} />;
+                return <CustomMetricTable
+                    metric={metric} data={data[0]}
+                    onClick={onChartClick}
+                />;
             } else if (viewType === 'pieChart') {
                 return (
                     <CustomMetricPieChart
                         metric={metric}
-                        data={metric.data[0]}
+                        data={data[0]}
                         colors={colors}
                         params={params}
+                        onClick={onChartClick}
                     />
                 )
             }

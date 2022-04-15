@@ -9,18 +9,28 @@ const ModalContext = createContext({
 });
 
 export class ModalProvider extends Component {
+
+  handleKeyDown = (e: any) => {
+    if (e.keyCode === 27) {
+      this.hideModal();
+    }
+  }
+
   showModal = (component, props = {}) => {
     this.setState({
       component,
       props
     });
+    document.addEventListener('keydown', this.handleKeyDown);
   };
 
-  hideModal = () =>
+  hideModal = () => {
     this.setState({
       component: null,
       props: {}
     });
+    document.removeEventListener('keydown', this.handleKeyDown);
+  }
 
   state = {
     component: null,

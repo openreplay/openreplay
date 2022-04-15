@@ -136,7 +136,7 @@ function CustomMetricWidget(props: Props) {
                   <CustomMetriLineChart
                       data={ data }
                       params={ params }
-                      seriesMap={ seriesMap }
+                      // seriesMap={ seriesMap }
                       colors={ colors }
                       onClick={ clickHandler }
                   />

@@ -41,7 +41,7 @@ const ASSIST_ROUTE = assistRoute();
     issuesFetched: state.getIn([ 'issues', 'issuesFetched' ]),
     local: state.getIn(['sessions', 'timezone']),
     funnelRef: state.getIn(['funnels', 'navRef']),
-    siteId: state.getIn([ 'user', 'siteId' ]),
+    siteId: state.getIn([ 'site', 'siteId' ]),
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !session.live),
   }

@@ -73,7 +73,7 @@ function FilterModal(props: Props) {
               <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
               <div>
                 {filters[key].map((filter: any) => (
-                  <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick(filter)}>
+                  <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick({ ...filter, value: [''] })}>
                     <Icon name={filter.icon} size="16"/>
                     <span className="ml-2">{filter.label}</span>
                   </div>

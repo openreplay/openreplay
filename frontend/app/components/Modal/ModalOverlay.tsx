@@ -1,5 +1,4 @@
 import React from 'react';
-import { ModalContext } from "App/components/Modal/modalContext";
 import { useModal } from 'App/components/Modal';
 import stl from './ModalOverlay.css'
 
@@ -7,7 +6,7 @@ function ModalOverlay({ children }) {
     let modal = useModal();
  
     return (
-        <div className="fixed w-full h-screen" style={{ zIndex: '99999' }}>
+        <div className="fixed w-full h-screen" style={{ zIndex: '999' }}>
             <div
                 onClick={() => modal.hideModal()}
                 className={stl.overlay}

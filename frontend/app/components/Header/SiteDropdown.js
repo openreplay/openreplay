@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { setSiteId } from 'Duck/user';
+import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import { hasSiteId, siteChangeAvaliable } from 'App/routes';
 import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
@@ -13,11 +13,13 @@ import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
 import {  fetchWatchdogStatus } from 'Duck/watchdogs';
+import { withStore } from 'App/mstore'
 
+@withStore
 @withRouter
 @connect(state => ({  
   sites: state.getIn([ 'site', 'list' ]),
-  siteId: state.getIn([ 'user', 'siteId' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
   account: state.getIn([ 'user', 'account' ]),
 }), {
   setSiteId,
@@ -45,11 +47,16 @@ export default class SiteDropdown extends React.PureComponent {
   }
 
   switchSite = (siteId) => {
+    const { mstore } = this.props
+
+
     this.props.setSiteId(siteId);
     this.props.clearSearch();
     this.props.fetchIntegrationVariables();
     this.props.fetchAlerts();
     this.props.fetchWatchdogStatus();
+
+    mstore.initClient();
   }
 
   render() {

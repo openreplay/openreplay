@@ -143,7 +143,7 @@ export default connect((state, props) => {
     funnelId: props.match.params.funnelId,
     activeStages: state.getIn(['funnels', 'activeStages']),
     funnelFilters: state.getIn(['funnels', 'funnelFilters']),
-    siteId: state.getIn([ 'user', 'siteId' ]),    
+    siteId: state.getIn([ 'site', 'siteId' ]),    
     liveFilters: state.getIn(['funnelFilters', 'appliedFilter']),
   }
 }, { 

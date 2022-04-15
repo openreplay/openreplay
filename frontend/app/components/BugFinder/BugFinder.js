@@ -20,7 +20,7 @@ import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
-import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
+// import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
 import { clearSearch, fetchSessions } from 'Duck/search';
@@ -53,7 +53,7 @@ const allowedQueryKeys = [
   sources: state.getIn([ 'customFields', 'sources' ]),
   filterValues: state.get('filterValues'),
   favoriteList: state.getIn([ 'sessions', 'favoriteList' ]),
-  currentProjectId: state.getIn([ 'user', 'siteId' ]),
+  currentProjectId: state.getIn([ 'site', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ]),
   watchdogs: state.getIn(['watchdogs', 'list']),
   activeFlow: state.getIn([ 'filters', 'activeFlow' ]),
@@ -130,7 +130,7 @@ export default class BugFinder extends React.PureComponent {
             />
           </div>
           <div className={cn("side-menu-margined", stl.searchWrapper) }>
-            <TrackerUpdateMessage />
+            {/* <TrackerUpdateMessage /> */}
             <NoSessionsMessage />
             <div className="mb-5">
               <MainSearchBar />

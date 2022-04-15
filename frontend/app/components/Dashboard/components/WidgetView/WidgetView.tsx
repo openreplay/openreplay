@@ -38,7 +38,7 @@ function WidgetView(props: Props) {
 
     return useObserver(() => (
         <Loader loading={loading}>
-            <div className="relative">
+            <div className="relative pb-10">
                 <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
                 <div className="bg-white rounded border">
                     <div className="p-4 flex justify-between items-center">
@@ -54,7 +54,7 @@ function WidgetView(props: Props) {
                                 onClick={() => setExpanded(!expanded)}
                                 className="flex items-center cursor-pointer select-none"
                             >
-                                <span className="mr-2 color-teal">{expanded ? 'Collapse' : 'Expand'}</span>
+                                <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
                                 <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
                             </div>
                         </div>

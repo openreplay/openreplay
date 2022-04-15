@@ -34,7 +34,7 @@
 }
 
 
-.icon {
+.no-results {
   display: block;
   margin: auto;
   background-image: svg-load(no-results.svg, fill=#CCC);
@@ -46,7 +46,7 @@
   margin-bottom: 20px;
 }
 
-.emptyIcon {
+.empty-state {
   display: block;
   margin: auto;
   background-image: svg-load(empty-state.svg, fill=#CCC);

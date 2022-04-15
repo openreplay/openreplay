@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - dev
+      - api-v1.5.5
     paths:
       - frontend/**
 

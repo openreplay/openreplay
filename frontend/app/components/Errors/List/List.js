@@ -219,7 +219,7 @@ export default class List extends React.PureComponent {
 					<NoContent
 						title="No Errors Found!"
 						subtext="Please try to change your search parameters."
-						icon="exclamation-circle"
+						animatedIcon="empty-state"
 						show={ !loading && list.size === 0}
 					>
 					<Loader loading={ loading }>

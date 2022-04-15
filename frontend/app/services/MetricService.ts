@@ -1,5 +1,6 @@
 import Widget, { IWidget } from "App/mstore/types/widget";
 import APIClient from 'App/api_client';
+import { IFilter } from "App/mstore/types/filter";
 
 export interface IMetricService {
     initClient(client?: APIClient): void;
@@ -11,6 +12,7 @@ export interface IMetricService {
 
     getTemplates(): Promise<any>;
     getMetricChartData(metric: IWidget, data: any, isWidget: boolean): Promise<any>;
+    fetchSessions(metricId: string, filter: any): Promise<any>
 }
 
 export default class MetricService implements IMetricService {
@@ -87,5 +89,16 @@ export default class MetricService implements IMetricService {
         return this.client.post(path, data)
             .then(response => response.json())
             .then(response => response.data || {});
+    }
+
+    /**
+     * Fetch sessions from the server.
+     * @param filter 
+     * @returns 
+     */
+     fetchSessions(metricId: string, filter: any): Promise<any> {
+        return this.client.post(`/metrics/${metricId}/sessions`, filter)
+            .then(response => response.json())
+            .then(response => response.data || []);
     }
 }

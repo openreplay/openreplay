@@ -148,3 +148,10 @@
   overflow-y: hidden;
   padding-right: 15px;
 }
+
+.svg-map {
+  &__location {
+		fill: #ddd !important;
+		cursor: pointer;
+  }
+}

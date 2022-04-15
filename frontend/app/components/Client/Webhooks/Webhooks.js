@@ -59,7 +59,7 @@ class Webhooks extends React.PureComponent {
             title="No webhooks available."
             size="small"
             show={ noSlackWebhooks.size === 0 }
-            icon
+            animatedIcon="no-results"
           >
             <div className={ styles.list }>
               { noSlackWebhooks.map(webhook => (

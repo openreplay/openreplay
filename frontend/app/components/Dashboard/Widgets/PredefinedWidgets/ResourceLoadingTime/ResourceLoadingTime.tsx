@@ -27,16 +27,16 @@ interface Props {
     optionsLoading: any
     fetchOptions: any
     options: any
+    metric?: any
 }
 function ResourceLoadingTime(props: Props) {
-    const { data, optionsLoading } = props;
+    const { data, optionsLoading, metric } = props;
     const gradientDef = Styles.gradientDef();
-    const params = { density: 70 }
     const [autoCompleteSelected, setSutoCompleteSelected] = React.useState('');
     const [type, setType] = React.useState('');
 
     const onSelect = (params) => {
-      const _params = { density: 70 }
+      // const _params = { density: 70 }
       setSutoCompleteSelected(params.value);
       console.log('params', params) // TODO reload the data with new params;
       // this.props.fetchWidget(WIDGET_KEY, dashbaordStore.period, props.platform, { ..._params, url: params.value })
@@ -52,11 +52,11 @@ function ResourceLoadingTime(props: Props) {
     return (
         <NoContent
           size="small"
-          show={ data.chart.length === 0 }
+          show={ metric.data.chart.length === 0 }
         >
           <>
             <div className="flex items-center mb-3">
-              <WidgetAutoComplete
+              {/* <WidgetAutoComplete
                 loading={optionsLoading}
                 fetchOptions={props.fetchOptions}
                 options={props.options}
@@ -75,22 +75,22 @@ function ResourceLoadingTime(props: Props) {
                   top: '12px',
                   left: '170px',
                 }}
-              />
+              /> */}
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.avg)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 200 } width="100%">
               <AreaChart
-                  data={ data.chart }
+                  data={ metric.data.chart }
                   margin={ Styles.chartMargins }
                 >
                   {gradientDef}
                   <CartesianGrid strokeDasharray="3 3" vertical={ false } stroke="#EEEEEE" />
-                  <XAxis {...Styles.xaxis} dataKey="time" interval={(params.density/7)} />
+                  <XAxis {...Styles.xaxis} dataKey="time" interval={(metric.params.density/7)} />
                   <YAxis
                     {...Styles.yaxis}
                     allowDecimals={false}
                     tickFormatter={val => Styles.tickFormatter(val)}
-                    label={{ ...Styles.axisLabelLeft, value: "CPU Load (%)" }}
+                    label={{ ...Styles.axisLabelLeft, value: "Resource Fetch Time (ms)" }}
                   />
                   <Tooltip {...Styles.tooltip} />
                   <Area
