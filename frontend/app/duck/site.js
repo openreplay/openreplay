@@ -53,12 +53,12 @@ const reducer = (state = initialState, action = {}) => {
 			return state.setIn([ 'instance', 'gdpr' ], gdpr);
 		case FETCH_LIST_SUCCESS:
 			let siteId = state.get("siteId");
-			if (!siteId) {
-				siteId = !!action.data.find(s => s.projectId === storedSiteId) 
+			const siteExists = action.data.map(s => s.projectId).includes(siteId);
+			if (!siteId || !siteExists) {
+				siteId = !!action.data.find(s => s.projectId === parseInt(storedSiteId))
 				? storedSiteId 
 				: action.data[0].projectId;
 			}
-			console.log('siteId asd', siteId)
 			return state.set('list', List(action.data.map(Site))).set('siteId', siteId);
 		case SET_SITE_ID:
 			localStorage.setItem(SITE_ID_STORAGE_KEY, action.siteId)

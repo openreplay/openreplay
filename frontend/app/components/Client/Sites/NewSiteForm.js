@@ -39,12 +39,11 @@ export default class NewSiteForm extends React.PureComponent {
 		} else {
 			this.props.save(this.props.site).then(() => {
 				const { sites } = this.props;        
-        const site = sites.last();
-
-        this.props.pushNewSite(site)
-        if (!pathname.includes('/client')) {
-          this.props.setSiteId(site.id)
-        }
+        		const site = sites.last();
+				this.props.pushNewSite(site)
+				if (!pathname.includes('/client')) {
+					this.props.setSiteId(site.id)
+				}
 				this.props.onClose(null, site)
 			});
 		}
@@ -59,17 +58,17 @@ export default class NewSiteForm extends React.PureComponent {
 		const { site, loading } = this.props;
 		return (
 			<form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
-        <div className={ styles.content }>
+        		<div className={ styles.content }>
 					<div className={ styles.formGroup }>
-		        <label>{ 'Name' }</label>
-		        <Input
-		          placeholder="Ex. openreplay"
-		          name="name"
-		          value={ site.name }
-		          onChange={ this.edit }
-		          className={ styles.input }
-		        />
-		      </div>
+						<label>{ 'Name' }</label>
+						<Input
+						placeholder="Ex. openreplay"
+						name="name"
+						value={ site.name }
+						onChange={ this.edit }
+						className={ styles.input }
+						/>
+					</div>
 					<div className="mt-6">
 						<Button							
 							primary
@@ -79,13 +78,13 @@ export default class NewSiteForm extends React.PureComponent {
 							content={site.exists() ? 'Update' : 'Add'}
 						/>
 					</div>		      
-		      { this.state.existsError &&
-		      	<div className={ styles.errorMessage }>
-		      		{ "Site exists already. Please choose another one." }
-		      	</div>
-		      }
-        </div>        
-      </form>
-	  );
+					{ this.state.existsError &&
+						<div className={ styles.errorMessage }>
+							{ "Site exists already. Please choose another one." }
+						</div>
+					}
+	        	</div>
+      		</form>
+	  	);
 	}
 }
