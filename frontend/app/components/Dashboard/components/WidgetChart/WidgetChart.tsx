@@ -28,26 +28,28 @@ function WidgetChart(props: Props) {
     const prevMetricRef = useRef<any>();
     const [data, setData] = useState<any>(metric.data);
 
+    const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
+    const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
+
     const onChartClick = (event: any) => {
         if (event) {
-            const payload = event.activePayload[0].payload;
-            const timestamp = payload.timestamp;
-            const periodTimestamps = metric.metricType === 'timeseries' ?
-              getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density) :
-              period.toTimestamps();
+            if (isTableWidget || isPieChart) {
+                const periodTimestamps = period.toTimestamps()
+                drillDownFilter.merge({
+                    filters: event,
+                    startTimestamp: periodTimestamps.startTimestamp,
+                    endTimestamp: periodTimestamps.endTimestamp,
+                });
+            } else {
+                const payload = event.activePayload[0].payload;
+                const timestamp = payload.timestamp;
+                const periodTimestamps = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
 
-            drillDownFilter.merge({
-                startTimestamp: periodTimestamps.startTimestamp,
-                endTimestamp: periodTimestamps.endTimestamp,
-            });
-            
-            // const activeWidget = {
-            //   widget: metric,
-            //   period: period,
-            //   ...periodTimestamps,
-            //   timestamp: payload.timestamp,
-            //   index,
-            // }
+                drillDownFilter.merge({
+                    startTimestamp: periodTimestamps.startTimestamp,
+                    endTimestamp: periodTimestamps.endTimestamp,
+                });
+            }
         }
     }
 
@@ -100,7 +102,10 @@ function WidgetChart(props: Props) {
 
         if (metricType === 'table') {
             if (viewType === 'table') {
-                return <CustomMetricTable  metric={metric} data={data[0]} />;
+                return <CustomMetricTable
+                    metric={metric} data={data[0]}
+                    onClick={onChartClick}
+                />;
             } else if (viewType === 'pieChart') {
                 return (
                     <CustomMetricPieChart
@@ -108,6 +113,7 @@ function WidgetChart(props: Props) {
                         data={data[0]}
                         colors={colors}
                         params={params}
+                        onClick={onChartClick}
                     />
                 )
             }

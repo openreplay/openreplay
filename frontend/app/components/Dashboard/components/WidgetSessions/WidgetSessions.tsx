@@ -42,7 +42,7 @@ function WidgetSessions(props: Props) {
             console.log('res', res)
             setData(res);
         });
-    }, [filter.startTimestamp, filter.endTimestamp, widget.filter]);
+    }, [filter.startTimestamp, filter.endTimestamp, filter.filters]);
 
     return useObserver(() => (
         <div className={cn(className)}>
