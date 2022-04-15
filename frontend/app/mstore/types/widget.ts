@@ -139,8 +139,7 @@ export default class Widget implements IWidget {
             this.series = json.series ? json.series.map((series: any) => new FilterSeries().fromJson(series)) : [],
             this.dashboards = json.dashboards
             this.owner = json.ownerEmail
-            // this.lastModified = json.editedAt || json.createdAt ? DateTime.fromMillis(json.editedAt || json.createdAt) : null
-            this.lastModified = DateTime.fromMillis(1649319074)
+            this.lastModified = json.editedAt || json.createdAt ? DateTime.fromMillis(json.editedAt || json.createdAt) : null
             this.config = json.config
             this.position = json.config.position
             this.predefinedKey = json.predefinedKey
