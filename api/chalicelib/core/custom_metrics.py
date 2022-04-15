@@ -97,6 +97,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
 

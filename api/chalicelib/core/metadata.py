@@ -273,7 +273,6 @@ def add_edit_delete(tenant_id, project_id, new_metas):
     return {"data": get(project_id)}
 
 
-@dev.timed
 def get_remaining_metadata_with_count(tenant_id):
     all_projects = projects.get_projects(tenant_id=tenant_id)
     results = []
