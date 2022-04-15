@@ -56,8 +56,6 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True, version=True, user_id=r["id"])
     c["smtp"] = helper.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     r["smtp"] = c["smtp"]
