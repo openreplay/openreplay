@@ -79,7 +79,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 			NULLIF($9, 0), NULLIF($10, 0), NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), 
 			NULLIF($14, 0), NULLIF($15, 0), NULLIF($16, 0),
 			NULLIF($17, 0), NULLIF($18, 0),
-			'',
+			''
 		)
 		`,
 		sessionID, e.MessageID, e.Timestamp,
@@ -227,7 +227,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 			session_id, timestamp, seq_index, 
 			url, host, path, query,
 			request_body, response_body, status_code, method,
-			duration, success,
+			duration, success
 		) VALUES (
 			$1, $2, $3, 
 			$4, $5, $6, $7
