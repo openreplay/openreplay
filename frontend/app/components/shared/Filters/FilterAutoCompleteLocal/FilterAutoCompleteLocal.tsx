@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Icon, Loader } from 'UI';
-// import { debounce } from 'App/utils';
+import { Icon } from 'UI';
 import stl from './FilterAutoCompleteLocal.css';
-// import cn from 'classnames';
-
 interface Props {
   showOrButton?: boolean;
   showCloseButton?: boolean;
@@ -15,6 +12,7 @@ interface Props {
   icon?: string;
   type?: string;
   isMultilple?: boolean;
+  allowDecimals?: boolean;
 }
 
 function FilterAutoCompleteLocal(props: Props) {
@@ -28,15 +26,24 @@ function FilterAutoCompleteLocal(props: Props) {
       icon = null,
       type = "text",
       isMultilple = true,
+      allowDecimals = true,
   } = props;
   const [showModal, setShowModal] = useState(true)
   const [query, setQuery] = useState(value);
-  // const debounceOnSelect = debounce(props.onSelect, 500);
 
-  const onInputChange = ({ target: { value } }) => {
-    setQuery(value);
-    props.onSelect(null, { value });
-  }
+  const onInputChange = (e) => {
+    if(allowDecimals) {
+      const value = e.target.value;
+      setQuery(value);
+      props.onSelect(null, { value });
+    } else {
+      const value = e.target.value.replace(/[^\d]/, "");
+      if (+value !== 0) {
+        setQuery(value);
+        props.onSelect(null, { value });
+      }
+    }
+  };
 
   useEffect(() => {
     setQuery(value);
@@ -58,7 +65,7 @@ function FilterAutoCompleteLocal(props: Props) {
       <div className={stl.wrapper}>
         <input
           name="query"
-          onChange={ onInputChange }
+          onInput={ onInputChange }
           // onBlur={ onBlur }
           onFocus={ () => setShowModal(true)}
           value={ query }

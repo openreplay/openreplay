@@ -18,7 +18,7 @@ export const filtersMap = {
     { key: FilterKey.FETCH_URL, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with URL', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_STATUS_CODE, type: FilterType.NUMBER_MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'with status code', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_METHOD, type: FilterType.MULTIPLE_DROPDOWN, category: FilterCategory.PERFORMANCE, label: 'with method', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch', options: filterOptions.methodOptions },
-    { key: FilterKey.FETCH_DURATION, type: FilterType.NUMBER, category: FilterCategory.PERFORMANCE, label: 'with duration', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
+    { key: FilterKey.FETCH_DURATION, type: FilterType.NUMBER, category: FilterCategory.PERFORMANCE, label: 'with duration (ms)', operator: '=', operatorOptions: filterOptions.customOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_REQUEST_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with request body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
     { key: FilterKey.FETCH_RESPONSE_BODY, type: FilterType.STRING, category: FilterCategory.PERFORMANCE, label: 'with response body', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/fetch' },
   ], icon: 'filters/fetch', isEvent: true },
