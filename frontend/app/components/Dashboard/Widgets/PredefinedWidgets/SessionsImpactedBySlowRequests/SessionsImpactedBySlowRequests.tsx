@@ -16,8 +16,6 @@ function SessionsImpactedBySlowRequests(props: Props) {
     const { data, metric } = props;
     const gradientDef = Styles.gradientDef();
 
-    console.log('SessionsImpactedBySlowRequests', metric.data)
-
     return (
         <NoContent
           size="small"

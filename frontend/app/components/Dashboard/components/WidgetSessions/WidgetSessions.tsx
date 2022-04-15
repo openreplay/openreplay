@@ -39,7 +39,6 @@ function WidgetSessions(props: Props) {
 
     useEffect(() => {
         widget.fetchSessions({ ...filter, filter: widget.toJsonDrilldown()}).then(res => {
-            console.log('res', res)
             setData(res);
         });
     }, [filter.startTimestamp, filter.endTimestamp, filter.filters]);

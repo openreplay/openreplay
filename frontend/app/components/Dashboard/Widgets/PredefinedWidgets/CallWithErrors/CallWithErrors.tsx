@@ -52,8 +52,6 @@ function CallWithErrors(props: Props) {
     const test = (value = '', serach) => getRE(serach, 'i').test(value);
     const _data = search ? metric.data.chart.filter(i => test(i.urlHostpath, search)) : metric.data.chart.images;
 
-    console.log('data', metric.data)
-
     const write = ({ target: { name, value } }) => {
       setSearch(value)
     };

@@ -298,7 +298,6 @@ export function fetchErrorStackList(sessionId, errorId) {
 }
 
 export const fetch = (sessionId, isLive = false) => (dispatch, getState) => {
-  console.log('isLive', isLive)
   dispatch({
     types: FETCH.toArray(),
     call: client => client.get(isLive ? `/assist/sessions/${ sessionId }` : `/sessions2/${ sessionId }`),

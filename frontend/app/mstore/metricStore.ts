@@ -76,7 +76,6 @@ export default class MetricStore implements IMetricStore {
         reaction(
             () => this.metricsSearch,
             (metricsSearch) => { // TODO filter the list for View
-                console.log('metricsSearch', metricsSearch)
                 this.page = 1
                 this.paginatedList
             }

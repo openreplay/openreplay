@@ -49,8 +49,6 @@ export default class Player extends React.PureComponent {
       closedLive,
     } = this.props;
 
-    console.log('PlayerControls', PlayerControls)
-
     return (
       <div
         className={ cn(className, stl.playerBody, "flex flex-col relative") }
