@@ -77,8 +77,6 @@ const getPointerIcon = (type) => {
 }), { setTimelinePointer })
 export default class Timeline extends React.PureComponent {
   progressRef = React.createRef()
-  progressWidth = 0
-  seekTime = 0
   wasPlaying = false
 
   seekProgress = (e) => {
@@ -95,9 +93,8 @@ export default class Timeline extends React.PureComponent {
   }
 
   componentDidMount() {
-    const { issues, events, fetchList, skipToIssue } = this.props;
+    const { issues, skipToIssue } = this.props;
     const firstIssue = issues.get(0);
-    this.progressWidth = this.progressRef.current.offsetWidth;
 
     if (firstIssue && skipToIssue) {
       this.props.jump(firstIssue.time);
@@ -105,7 +102,6 @@ export default class Timeline extends React.PureComponent {
   }
 
   onDragEnd = (item, monitor) => {
-    this.props.jump(this.seekTime);
     if (this.wasPlaying) {
       this.props.togglePlay();
     }
@@ -116,7 +112,7 @@ export default class Timeline extends React.PureComponent {
 
     const p = (offset.x - 60) / this.progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
-    this.seekTime = time;
+    this.props.jump(time);
     if (this.props.playing) {
       this.wasPlaying = true;
       this.props.pause();
@@ -137,7 +133,7 @@ export default class Timeline extends React.PureComponent {
       clickRageTime,
       stackList,
       fetchList,
-      issues
+      issues,
     } = this.props;
 
     const scale = 100 / endTime;
