@@ -78,7 +78,6 @@ export default class Session {
       sessionID: this.sessionID,
       metadata: this.metadata,
       userID: this.userID,
-
     }
   }
 }
