@@ -15,7 +15,7 @@ fatal()
     exit 1
 }
 
-version="v1.5.4"
+version="v1.5.5"
 usr=`whoami`
 
 # Installing k3s
