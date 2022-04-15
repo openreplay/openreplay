@@ -57,7 +57,7 @@ interface Props {
     data: any
     metric?: any
 }
-function MissingResources(props: Props) {
+function SlowestResources(props: Props) {
     const { data, metric } = props;
 
     return (
@@ -78,4 +78,4 @@ function MissingResources(props: Props) {
     );
 }
 
-export default MissingResources;
+export default SlowestResources;
