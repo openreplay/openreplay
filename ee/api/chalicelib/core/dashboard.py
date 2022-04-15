@@ -2544,23 +2544,40 @@ def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, en
 
 
 def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                      endTimestamp=TimeUTC.now(), value=None, **args):
-    ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
+                                      endTimestamp=TimeUTC.now(), value=None, density=20, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
+    ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
     meta_condition = __get_meta_constraint(args)
+    ch_sub_query_chart += meta_condition
+    ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
     ch_sub_query += meta_condition
 
     if value is not None:
         ch_sub_query.append("pages.url_path = %(value)s")
+        ch_sub_query_chart.append("pages.url_path = %(value)s")
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT COALESCE(AVG(pages.response_time),0) AS value
                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                        WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.response_time) AND pages.response_time>0;"""
-        rows = ch.execute(query=ch_query,
-                          params={"project_id": project_id,
-                                  "startTimestamp": startTimestamp,
-                                  "endTimestamp": endTimestamp,
-                                  "value": value, **__get_constraint_values(args)})
-    return helper.dict_to_camel_case(rows[0])
+        params = {"step_size": step_size, "project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp,
+                  "value": value, **__get_constraint_values(args)}
+        rows = ch.execute(query=ch_query, params=params)
+        results = rows[0]
+        ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                                      COUNT(pages.response_time) AS value 
+                              FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                              WHERE {" AND ".join(ch_sub_query_chart)} AND isNotNull(pages.response_time) AND pages.response_time>0
+                              GROUP BY timestamp
+                              ORDER BY timestamp;"""
+        rows = ch.execute(query=ch_query, params={**params, **__get_constraint_values(args)})
+        rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                        end_time=endTimestamp,
+                                        density=density, neutral={"value": 0})
+        results["chart"] = rows
+    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    return helper.dict_to_camel_case(results)
 
 
 def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2596,7 +2613,7 @@ def get_top_metrics_count_requests(project_id, startTimestamp=TimeUTC.now(delta_
                                         end_time=endTimestamp,
                                         density=density, neutral={"value": 0})
         result["chart"] = rows
-        result["unit"] = schemas.TemplatePredefinedUnits.count
+    result["unit"] = schemas.TemplatePredefinedUnits.count
     return helper.dict_to_camel_case(result)
 
 
