@@ -35,7 +35,7 @@ function SessionsImpactedBySlowRequests(props: Props) {
                   {...Styles.yaxis}
                   allowDecimals={false}
                   tickFormatter={val => Styles.tickFormatter(val)}
-                  label={{ ...Styles.axisLabelLeft, value: "Number of Requests" }}
+                  label={{ ...Styles.axisLabelLeft, value: "Number of Sessions" }}
                 />
                 <Tooltip {...Styles.tooltip} />
                 <Area

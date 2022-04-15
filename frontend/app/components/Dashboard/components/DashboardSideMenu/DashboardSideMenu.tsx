@@ -62,7 +62,12 @@ function DashboardSideMenu(props: Props) {
                             {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
                             {item.isPinned && <div className="p-1 pointer-events-none"><Icon name="pin-fill" size="16" /></div>}
                             {!item.isPinned && (
-                                <Tooltip delay={500} arrow title="Set as default dashboard" hideOnClick={true}>
+                                <Tooltip
+                                    delay={500}
+                                    arrow
+                                    title="Set as default dashboard"
+                                    hideOnClick={true}
+                                >
                                     <div
                                         className={cn("p-1 invisible group-hover:visible cursor-pointer")}
                                         onClick={() => togglePinned(item)}

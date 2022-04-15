@@ -46,28 +46,27 @@ export default class ItemMenu extends React.PureComponent {
           { items.filter(({ hidden }) => !hidden).map(({ onClick, text, icon, disabled = false, disabledMessage = '' }) => (
             <div
               key={ text }
-              // className={ cn('') }
               onClick={ !disabled ? this.onClick(onClick) : () => {} }
               role="menuitem"
               tabIndex="-1"
             >
-             <Tooltip
-                delay={500}
-                arrow
-                title={ disabledMessage }
-                trigger="mouseenter"
-                position="left"
-                // disabled={ !disabled }
-             >
-                <div className={cn(styles.menuItem, {'disabled' : disabled })}>
-                  { icon && (
-                      <div className={ styles.iconWrapper }>
-                        <Icon name={ icon } size="13" color="gray-dark" />
-                      </div>
-                    )}
-                    <div>{ text }</div>
-                </div>
-             </Tooltip>
+              <Tooltip
+                  delay={500}
+                  arrow
+                  title={ disabledMessage }
+                  trigger="mouseenter"
+                  position="left"
+                  disabled={ !disabled }
+              >
+                  <div className={cn(styles.menuItem, {'disabled' : disabled })}>
+                    { icon && (
+                        <div className={ styles.iconWrapper }>
+                          <Icon name={ icon } size="13" color="gray-dark" />
+                        </div>
+                      )}
+                      <div>{ text }</div>
+                  </div>
+              </Tooltip>
             </div>
           ))}
         </div>
