@@ -57,6 +57,8 @@ def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
 def __merge_metric_with_data(metric, data: Union[schemas.CustomMetricChartPayloadSchema,
                                                  schemas.CustomMetricSessionsPayloadSchema]) \
         -> Union[schemas.CreateCustomMetricsSchema, None]:
+    if data.series is not None and len(data.series) > 0:
+        metric["series"] = data.series
     metric: schemas.CreateCustomMetricsSchema = schemas.CreateCustomMetricsSchema.parse_obj({**data.dict(), **metric})
     if len(data.filters) > 0 or len(data.events) > 0:
         for s in metric.series:
@@ -95,6 +97,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
 

@@ -218,9 +218,9 @@ function extractSessionInfo(socket) {
         socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
         socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || 'desktop';
         socket.handshake.query.sessionInfo.userCountry = null;
-        if (geoip !== null) {
+        if (geoip() !== null) {
             debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
-            let country = geoip.country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+            let country = geoip().country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
             socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
         }
     }
