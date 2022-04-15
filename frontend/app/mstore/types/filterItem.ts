@@ -13,6 +13,7 @@ export default class FilterItem {
     source: string = ''
     filters: FilterItem[] = []
     operatorOptions: any[] = []
+    options: any[] = []
 
     constructor(data: any = {}) {
         makeAutoObservable(this, {
@@ -36,7 +37,9 @@ export default class FilterItem {
     }
 
     fromJson(json, mainFilterKey = '') {
+        console.log('json', json)
         let _filter = filtersMap[json.type] || {}
+        console.log('_filter', _filter)
         if (mainFilterKey) {
             const mainFilter = filtersMap[mainFilterKey];
             const subFilterMap = {}
@@ -49,10 +52,12 @@ export default class FilterItem {
         this.key = _filter.key
         this.label = _filter.label
         this.operatorOptions = _filter.operatorOptions
-        
+        this.options = _filter.options
+        this.isEvent = _filter.isEvent
+
         this.value = json.value.length === 0 || !json.value ? [""] : json.value,
         this.operator = json.operator
-        this.isEvent = _filter.isEvent
+        
         this.filters = _filter.type === FilterType.SUB_FILTERS && json.filters ? json.filters.map(i => new FilterItem().fromJson(i, json.type)) : []
         return this
     }
