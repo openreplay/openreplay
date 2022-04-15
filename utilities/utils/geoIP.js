@@ -13,4 +13,8 @@ if (process.env.MAXMINDDB_FILE !== undefined) {
     console.error("!!! please provide a valid value for MAXMINDDB_FILE env var.");
 }
 
-module.exports = {geoip}
+module.exports = {
+    geoip: () => {
+        return geoip;
+    }
+}

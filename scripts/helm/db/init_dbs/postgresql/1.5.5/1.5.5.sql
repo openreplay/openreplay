@@ -107,7 +107,7 @@ VALUES ('Captured sessions', 'overview', '{"col":1,"row":1,"position":0}', true,
        ('Resources Loaded vs Visually Complete', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'resources_vs_visually_complete', 'predefined', 'areaChart'),
        ('DOM Build Time', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_dom_buildtime', 'predefined', 'areaChart'),
        ('Pages Response Time', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_response_time', 'predefined', 'areaChart'),
-       ('Pages Response Time Distribution', 'performance', '{"col":2,"row":2,"position":0}', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart'),
+       ('Pages Response Time Distribution', 'performance', '{"col":4,"row":2,"position":0}', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart'),
 
        ('Missing Resources', 'resources', '{"col":2,"row":2,"position":0}', true, true, true, 'missing_resources', 'predefined', 'table'),
        ('Slowest Resources', 'resources', '{"col":4,"row":2,"position":0}', true, true, true, 'slowest_resources', 'predefined', 'table'),

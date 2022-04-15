@@ -1474,7 +1474,7 @@ VALUES ('Captured sessions', 'overview', '{
          "position": 0
        }', true, true, true, 'pages_response_time', 'predefined', 'areaChart'),
        ('Pages Response Time Distribution', 'performance', '{
-         "col": 2,
+         "col": 4,
          "row": 2,
          "position": 0
        }', true, true, true, 'pages_response_time_distribution', 'predefined', 'barChart'),
