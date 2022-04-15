@@ -1,5 +1,5 @@
 import type { LocalStream } from './LocalStream.js';
-import attachDND from './dnd';
+import attachDND from './dnd.js';
 
 const SS_START_TS_KEY = "__openreplay_assist_call_start_ts"
 
