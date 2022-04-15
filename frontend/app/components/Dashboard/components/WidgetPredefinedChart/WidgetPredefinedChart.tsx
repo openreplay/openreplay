@@ -26,6 +26,7 @@ import SessionsPerBrowser from 'App/components/Dashboard/Widgets/PredefinedWidge
 import CallWithErrors from '../../Widgets/PredefinedWidgets/CallWithErrors';
 import SpeedIndexByLocation from '../../Widgets/PredefinedWidgets/SpeedIndexByLocation';
 import SlowestResources from '../../Widgets/PredefinedWidgets/SlowestResources';
+import ResponseTimeDistribution from '../../Widgets/PredefinedWidgets/ResponseTimeDistribution';
 
 interface Props {
     data: any;
@@ -54,8 +55,10 @@ function WidgetPredefinedChart(props: Props) {
                 return <CallWithErrors data={data} metric={metric} />
 
             // PERFORMANCE
-            // case 'impacted_sessions_by_slow_pages':
-            // case 'pages_response_time_distribution':
+            case 'impacted_sessions_by_slow_pages':
+                return <SessionsImpactedBySlowRequests data={data} metric={metric} />
+            case 'pages_response_time_distribution':
+                return <ResponseTimeDistribution data={data} metric={metric} />
             case 'speed_location':
                 return <SpeedIndexByLocation metric={metric} />
             case 'cpu':

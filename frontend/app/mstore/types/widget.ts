@@ -72,7 +72,9 @@ export default class Widget implements IWidget {
     position: number = 0
     data: any = {
         chart: [],
-        namesMap: {}
+        namesMap: {},
+        avg: 0,
+        percentiles: [],
     }
     isLoading: boolean = false
     isValid: boolean = false

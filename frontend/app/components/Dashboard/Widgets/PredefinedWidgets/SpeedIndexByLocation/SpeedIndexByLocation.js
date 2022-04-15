@@ -63,11 +63,13 @@ function SpeedIndexByLocation(props) {
       }
     }, [])
 
-    // useEffect(() => {
-    //   if (map) {
-    //     map.updateChoropleth(getSeries(metric.data.chart), { reset: true});
-    //   }
-    // }, [])
+    useEffect(() => {
+      if (map && map.updateChoropleth) {
+        const series = getSeries(metric.data.chart);
+        // console.log('series', series)
+        // map.updateChoropleth(series, {reset: true});
+      }
+    }, [])
 
     const getDataset = () => {
       const { metric } = props;
