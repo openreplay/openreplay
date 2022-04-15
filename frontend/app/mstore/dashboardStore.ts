@@ -358,7 +358,8 @@ export default class DashboardStore implements IDashboardSotre {
                     const categories: any[] = []
                     response.forEach(category => {
                         const widgets: any[] = []
-                        category.widgets.forEach(widget => {
+                        // TODO speed_location is not supported yet
+                        category.widgets.filter(w => w.predefinedKey !== 'speed_location').forEach(widget => {
                             const w = new Widget().fromJson(widget)
                             widgets.push(w)
                         })
