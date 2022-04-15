@@ -2666,6 +2666,9 @@ def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.no
     with pg_client.PostgresClient() as cur:
         row = __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, endTimestamp, **args)
         results = helper.dict_to_camel_case(row)
+        results["chart"] = __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp,
+                                                                          endTimestamp, **args)
+
         diff = endTimestamp - startTimestamp
         endTimestamp = startTimestamp
         startTimestamp = endTimestamp - diff
@@ -2692,8 +2695,38 @@ def __get_user_activity_avg_session_duration(cur, project_id, startTimestamp, en
     return row
 
 
+def __get_user_activity_avg_session_duration_chart(cur, project_id, startTimestamp, endTimestamp, density=20, **args):
+    step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density, factor=1)
+    params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
+              "endTimestamp": endTimestamp}
+    pg_sub_query_subset = __get_constraints(project_id=project_id, data=args)
+    pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=False, project=False,
+                                           chart=True, data=args, main_table="sessions", time_column="start_ts",
+                                           duration=False)
+    pg_sub_query_subset.append("sessions.duration IS NOT NULL")
+    pg_sub_query_subset.append("sessions.duration > 0")
+
+    pg_query = f"""WITH sessions AS(SELECT sessions.duration, sessions.start_ts
+                                        FROM public.sessions
+                                        WHERE {" AND ".join(pg_sub_query_subset)}
+                        )
+                        SELECT generated_timestamp AS timestamp,
+                             COALESCE(AVG(sessions.duration),0) AS value
+                          FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
+                            LEFT JOIN LATERAL (
+                                    SELECT sessions.duration
+                                    FROM sessions
+                                    WHERE {" AND ".join(pg_sub_query_chart)}
+                            ) AS sessions ON (TRUE)
+                          GROUP BY generated_timestamp
+                          ORDER BY generated_timestamp;"""
+    cur.execute(cur.mogrify(pg_query, {**params, **__get_constraint_values(args)}))
+    rows = cur.fetchall()
+    return rows
+
+
 def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                      endTimestamp=TimeUTC.now(), value=None,density=20, **args):
+                                      endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
@@ -2710,10 +2743,10 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
                          AND pages.timestamp >= %(startTimestamp)s
                          AND pages.timestamp < %(endTimestamp)s
                          AND pages.response_time > 0;"""
-        params={"step_size":step_size,"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp,
-                                           "value": value, **__get_constraint_values(args)}
+        params = {"step_size": step_size, "project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp,
+                  "value": value, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
         pg_query = f"""SELECT generated_timestamp AS timestamp,
@@ -2734,7 +2767,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
 
 
 def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
-                                    endTimestamp=TimeUTC.now(), value=None,density=20, **args):
+                                    endTimestamp=TimeUTC.now(), value=None, density=20, **args):
     step_size = __get_step_size(startTimestamp, endTimestamp, density, factor=1)
     pg_sub_query = __get_constraints(project_id=project_id, data=args)
     pg_sub_query_chart = __get_constraints(project_id=project_id, time_constraint=True,
@@ -2751,10 +2784,10 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
                          AND pages.timestamp >= %(startTimestamp)s
                          AND pages.timestamp < %(endTimestamp)s
                          AND pages.first_paint_time > 0;"""
-        params={"step_size":step_size,"project_id": project_id,
-                                           "startTimestamp": startTimestamp,
-                                           "endTimestamp": endTimestamp,
-                                           "value": value, **__get_constraint_values(args)}
+        params = {"step_size": step_size, "project_id": project_id,
+                  "startTimestamp": startTimestamp,
+                  "endTimestamp": endTimestamp,
+                  "value": value, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
         pg_query = f"""SELECT generated_timestamp AS timestamp,
