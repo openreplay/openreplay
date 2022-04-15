@@ -125,6 +125,13 @@ def delete_dashboard(project_id, user_id, dashboard_id):
 
 def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashboardSchema):
     with pg_client.PostgresClient() as cur:
+        pg_query = """SELECT COALESCE(COUNT(*),0) AS count
+                    FROM dashboard_widgets
+                    WHERE dashboard_id = %(dashboard_id)s;"""
+        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
+        cur.execute(cur.mogrify(pg_query, params))
+        row = cur.fetchone()
+        offset = row["count"]
         pg_query = f"""UPDATE dashboards
                       SET name = %(name)s 
                             {", is_public = %(is_public)s" if data.is_public is not None else ""}
@@ -132,7 +139,6 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                         WHERE dashboards.project_id = %(projectId)s
                           AND dashboard_id = %(dashboard_id)s
                           AND (dashboards.user_id = %(userId)s OR is_public)"""
-        params = {"userId": user_id, "projectId": project_id, "dashboard_id": dashboard_id, **data.dict()}
         if data.metrics is not None and len(data.metrics) > 0:
             pg_query = f"""WITH dash AS ({pg_query})
                          INSERT INTO dashboard_widgets(dashboard_id, metric_id, user_id, config)
@@ -143,7 +149,7 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
                 #     .get("properties", {}).get("config", {}).get("default", {})
                 # params[f"config_{i}"]["position"] = i
                 # params[f"config_{i}"] = json.dumps(params[f"config_{i}"])
-                params[f"config_{i}"] = json.dumps({"position": i})
+                params[f"config_{i}"] = json.dumps({"position": i + offset})
 
         cur.execute(cur.mogrify(pg_query, params))
 
