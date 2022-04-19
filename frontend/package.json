@@ -20,7 +20,6 @@
     "classnames": "^2.2.6",
     "codemirror": "^5.62.3",
     "copy-to-clipboard": "^3.3.1",
-    "datamaps": "^0.5.9",
     "deep-diff": "^1.0.2",
     "immutable": "^4.0.0-rc.12",
     "jsbi": "^4.1.0",

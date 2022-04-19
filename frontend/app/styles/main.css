@@ -149,9 +149,11 @@
   padding-right: 15px;
 }
 
-.svg-map {
-  &__location {
-		fill: #ddd !important;
+/* .svg-map__location {
+		fill: #EEE !important;
 		cursor: pointer;
-  }
-}
+
+    &:hover {
+      fill: #fff !important;
+    }
+} */
