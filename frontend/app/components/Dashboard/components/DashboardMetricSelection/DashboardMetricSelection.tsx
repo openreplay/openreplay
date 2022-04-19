@@ -4,7 +4,7 @@ import { useObserver } from 'mobx-react-lite';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 
-function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, unSelectCategory }) {
+function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
     const selectedCategoryWidgetsCount = useObserver(() => {
         return category.widgets.filter(widget => selectedWidgetIds.includes(widget.metricId)).length;
     });
@@ -14,10 +14,9 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds, 
             onClick={() => onClick(category)}
         >
             <div className="font-medium text-lg mb-2 capitalize">{category.name}</div>
-            <div className="mb-2">{category.description}</div>
+            <div className="mb-2 text-sm leading-tight">{category.description}</div>
             {selectedCategoryWidgetsCount > 0 && (
                 <div className="flex items-center">
-                    {/* <input type="checkbox" checked={true} onChange={() => unSelectCategory(category)} /> */}
                     <span className="color-gray-medium text-sm">{`Selected ${selectedCategoryWidgetsCount} of ${category.widgets.length}`}</span>
                 </div>
             )}
@@ -69,7 +68,7 @@ function DashboardMetricSelection(props) {
                             </div>
 
                             <div className="ml-auto flex items-center">
-                                <span className="color-gray-medium">Showing past 7 days data for visual clue</span>
+                                <span className="color-gray-medium">Past 7 days data</span>
                                 <label className="flex items-center ml-3 cursor-pointer select-none">
                                     <input type="checkbox" onChange={toggleAllWidgets} checked={selectAllCheck} />
                                     <div className="ml-2">Select All</div>
@@ -81,7 +80,7 @@ function DashboardMetricSelection(props) {
             </div>
             <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-3">
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-4" style={{ maxHeight: "calc(100vh - 165px)", overflowY: 'auto' }}>
                         {activeCategory && widgetCategories.map((category, index) =>
                             <WidgetCategoryItem
                                 key={category.name}
@@ -89,7 +88,6 @@ function DashboardMetricSelection(props) {
                                 category={category}
                                 isSelected={activeCategory.name === category.name}
                                 selectedWidgetIds={selectedWidgetIds}
-                                unSelectCategory={dashboardStore.removeSelectedWidgetByCategory}
                             />
                         )}
                     </div>
