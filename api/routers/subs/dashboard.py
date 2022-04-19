@@ -1,7 +1,7 @@
 from fastapi import Body
 
 import schemas
-from chalicelib.core import dashboard
+from chalicelib.core import metrics
 from chalicelib.core import metadata
 from chalicelib.utils import helper
 from routers.base import get_routers

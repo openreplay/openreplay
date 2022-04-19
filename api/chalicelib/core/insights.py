@@ -1,5 +1,5 @@
 import schemas
-from chalicelib.core.dashboard import __get_constraints, __get_constraint_values
+from chalicelib.core.metrics import __get_constraints, __get_constraint_values
 from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC

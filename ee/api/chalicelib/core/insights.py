@@ -1,6 +1,6 @@
 import schemas
-from chalicelib.core.dashboard import __get_basic_constraints, __get_meta_constraint
-from chalicelib.core.dashboard import __get_constraint_values, __complete_missing_steps
+from chalicelib.core.metrics import __get_basic_constraints, __get_meta_constraint
+from chalicelib.core.metrics import __get_constraint_values, __complete_missing_steps
 from chalicelib.utils import ch_client
 from chalicelib.utils import helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC

@@ -260,5 +260,5 @@ Pipfile
 /build_alerts.sh
 /routers/subs/metrics.py
 /routers/subs/v1_api.py
-/chalicelib/core/dashboards2.py
+/chalicelib/core/dashboards.py
 entrypoint.sh

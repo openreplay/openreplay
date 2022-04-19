@@ -1,7 +1,7 @@
 import json
 
 import schemas
-from chalicelib.core import dashboard
+from chalicelib.core import metrics
 from chalicelib.core import sourcemaps, sessions
 from chalicelib.utils import ch_client, metrics_helper
 from chalicelib.utils import pg_client, helper
