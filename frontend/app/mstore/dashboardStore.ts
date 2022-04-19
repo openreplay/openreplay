@@ -221,11 +221,10 @@ export default class DashboardStore implements IDashboardSotre {
                 runInAction(() => {
                     if (isCreating) {
                         toast.success('Dashboard created successfully')
-                        this.addDashboard(_dashboard)
-                        console.log('_dashboard', _dashboard)
+                        this.addDashboard(new Dashboard().fromJson(_dashboard))
                     } else {
                         toast.success('Dashboard updated successfully')
-                        this.updateDashboard(_dashboard)
+                        this.updateDashboard(new Dashboard().fromJson(_dashboard))
                     }
                     resolve(_dashboard)
                 })

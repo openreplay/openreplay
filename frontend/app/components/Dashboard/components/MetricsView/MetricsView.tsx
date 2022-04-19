@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, PageTitle, Icon, Link } from 'UI';
-import { withSiteId, metricCreate } from 'App/routes';
+import withPageTitle from 'HOCs/withPageTitle';
 import MetricsList from '../MetricsList';
 import MetricsSearch from '../MetricsSearch';
 import { useStore } from 'App/mstore';
@@ -34,4 +34,4 @@ function MetricsView(props: Props) {
     ));
 }
 
-export default MetricsView;
+export default withPageTitle('Metrics - OpenReplay')(MetricsView);
