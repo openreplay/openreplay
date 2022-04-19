@@ -1,5 +1,5 @@
 import JSBI from 'jsbi';
-import { scale } from "d3";
+// import { scale } from "d3";
 
 export function debounce(callback, wait, context = this) {
   let timeout = null;
@@ -197,10 +197,11 @@ export const hashProjectID = (id) => {
 export const colorScale = (values, colors) => {
   const minValue = Math.min.apply(null, values);
   const maxValue = Math.max.apply(null, values);
+  return []
 
-  return scale.linear()
-              .domain([minValue,maxValue])
-              .range([colors[0], colors[colors.length - 1]]);
+  // return scale.linear()
+  //             .domain([minValue,maxValue])
+  //             .range([colors[0], colors[colors.length - 1]]);
 }
 
 export const truncate = (input, max = 10) => input.length > max ? `${input.substring(0, max)}...` : input;

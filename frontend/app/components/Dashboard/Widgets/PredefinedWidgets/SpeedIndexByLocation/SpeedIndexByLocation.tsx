@@ -3,13 +3,24 @@ import { NoContent } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import Scale from './Scale';
 import { threeLetter } from 'App/constants/countries';
-import { colorScale } from 'App/utils';
+// import { colorScale } from 'App/utils';
 import { observer } from 'mobx-react-lite';
 import { numberWithCommas } from 'App/utils';
 import WorldMap from "@svg-maps/world";
 import { SVGMap } from "react-svg-map";
 import "react-svg-map/lib/index.css";
 import stl from './SpeedIndexByLocation.css';
+import cn from 'classnames';
+
+const getPercentageOfAverage = (data, value: number) => {
+  const avg = data.reduce((acc, item) => acc + item.avg, 0) / data.length;
+  return Math.round((value / avg) * 100);
+}
+
+const numberPartBetweenRange = (value: any, max: number) => {
+  const minPart = value * max / 100
+  return Math.round(minPart);
+}
 
 interface Props {
     metric?: any
@@ -18,56 +29,65 @@ function SpeedIndexByLocation(props: Props) {
     const { metric } = props;
     const wrapper: any = React.useRef(null);
     let map: any = null;
-
-    const getSeries = data => {
-      const series: any[] = [];
-      data.forEach(item => {
-        const d = [threeLetter[item.userCountry], Math.round(item.avg)]
-        series.push(d)
-      })
-
-      return series;
-    }
-
-    useEffect(() => {
-      // if (!wrapper && !wrapper.current) return
-      
+    const [tooltipStyle, setTooltipStyle] = React.useState({ display: 'none' });
+    const [pointedLocation, setPointedLocation] = React.useState<any>(null);
+    const dataMap = React.useMemo(() => {
+        const data = {};
+        metric.data.chart.forEach((item: any) => {
+            item.percentage = getPercentageOfAverage(metric.data.chart, item.avg);
+            item.perNumber = numberPartBetweenRange(item.percentage, 5);
+            data[item.userCountry.toLowerCase()] = item;
+        });
+        return data;
     }, [])
 
-    // useEffect(() => {
-    //   if (map && map.updateChoropleth) {
-    //     const series = getSeries(metric.data.chart);
-    //     // console.log('series', series)
-    //     // map.updateChoropleth(series, {reset: true});
-    //   }
-    // }, [])
+    // const getSeries = data => {
+    //   const series: any[] = [];
+    //   data.forEach(item => {
+    //     const d = [threeLetter[item.userCountry], Math.round(item.avg)]
+    //     series.push(d)
+    //   })
 
-    const getDataset = () => {
-      const { metric } = props;
-      const colors = Styles.colors;
-
-      var dataset = {};
-      const series = getSeries(metric.data.chart);
-      var onlyValues = series.map(function(obj){ return obj[1]; });
-      const paletteScale = colorScale(onlyValues, [...colors].reverse());
-
-      // fill dataset in appropriate format
-      series.forEach(function(item){
-          var iso = item[0], value = item[1];
-          dataset[iso] = { numberOfThings: value, fillColor: paletteScale(value) };
-      });
-      return dataset;
-    }
+    //   return series;
+    // }
 
     const getLocationClassName = (location, index) => {
-      // Generate random heat map
-      return `svg-map__location svg-map__location--heat${index % 4}`;
+      const i = (dataMap[location.id] ? dataMap[location.id].perNumber : 0);
+      const cls = stl["heat_index" + i];
+      return cn(stl.location, cls);
+    }
+
+    const getLocationName = (event) => {
+      if (!event) return null
+      const id = event.target.attributes.id.value;
+      const name = event.target.attributes.name.value;
+      const percentage = dataMap[id] ? dataMap[id].perNumber : 0;
+      return { name, id, percentage }
+    }
+
+    const handleLocationMouseOver = (event) => {
+      const pointedLocation = getLocationName(event);
+      setPointedLocation(pointedLocation);
+    }
+  
+    const handleLocationMouseOut = () => {
+      setTooltipStyle({ display: 'none' });
+      setPointedLocation(null);
+    }
+
+    const handleLocationMouseMove = (event) => {
+      const tooltipStyle = {
+        display: 'block',
+        top: event.clientY + 10,
+        left: event.clientX - 100
+      };
+      setTooltipStyle(tooltipStyle);
     }
 
     return (
         <NoContent
           size="small"
-          show={ metric.data.chart.length === 0 }
+          show={ false }
           style={ { height: '240px' } }
           className="relative"
         >
@@ -88,13 +108,20 @@ function SpeedIndexByLocation(props: Props) {
               <SVGMap 
                 map={WorldMap}
                 className={stl.maps}
-                locationClassName={stl.location}
-                // onLocationMouseOver={(e) => console.log(e.target)}
+                locationClassName={getLocationClassName}
+                onLocationMouseOver={handleLocationMouseOver}
+                onLocationMouseOut={handleLocationMouseOut}
+                onLocationMouseMove={handleLocationMouseMove}
               />
             </div>
-            {/* <div className="examples__block__map__tooltip" style={this.state.tooltipStyle}>
-						  {this.state.pointedLocation}
-					  </div> */}
+            <div className={stl.tooltip} style={tooltipStyle}>
+						  {pointedLocation && (
+                <>
+                  <div>{pointedLocation.name}</div>
+                  <div>Avg: <strong>{dataMap[pointedLocation.id] ? numberWithCommas(parseInt(dataMap[pointedLocation.id].avg)) : 0}</strong></div>
+                </>
+              )}
+					  </div>
         </NoContent>
     );
 }
