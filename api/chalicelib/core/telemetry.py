@@ -27,7 +27,8 @@ def compute():
                     t_projects=COALESCE((SELECT COUNT(*) FROM public.projects WHERE deleted_at ISNULL), 0),
                     t_sessions=COALESCE((SELECT COUNT(*) FROM public.sessions), 0),
                     t_users=COALESCE((SELECT COUNT(*) FROM public.users WHERE deleted_at ISNULL), 0)
-                RETURNING *,(SELECT email FROM public.users WHERE role='owner' LIMIT 1);"""
+                RETURNING t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
+                    (SELECT openreplay_version()) AS version_number,(SELECT email FROM public.users WHERE role = 'owner' LIMIT 1);"""
         )
         data = cur.fetchone()
         requests.post('https://api.openreplay.com/os/telemetry', json={"stats": [process_data(data)]})
