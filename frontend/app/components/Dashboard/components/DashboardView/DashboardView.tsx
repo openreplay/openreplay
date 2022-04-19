@@ -12,6 +12,7 @@ import DashboardModal from '../DashboardModal';
 import DashboardEditModal from '../DashboardEditModal';
 import DateRange from 'Shared/DateRange';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
+import withPageTitle from 'HOCs/withPageTitle';
 
 interface Props {
     siteId: number;
@@ -125,4 +126,4 @@ function DashboardView(props: Props) {
     ));
 }
 
-export default withRouter(withModal(DashboardView));
+export default withPageTitle('Dashboards - OpenReplay')(withRouter(withModal(DashboardView)));

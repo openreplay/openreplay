@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import withPageTitle from 'HOCs/withPageTitle';
-import { observer, useObserver } from "mobx-react-lite";
+import { useObserver } from "mobx-react-lite";
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
 import DashboardSideMenu from './components/DashboardSideMenu';
@@ -36,4 +35,4 @@ function NewDashboard(props) {
     ));
 }
 
-export default withPageTitle('New Dashboard')(withRouter(NewDashboard));
+export default withRouter(NewDashboard);
