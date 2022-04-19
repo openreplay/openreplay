@@ -125,7 +125,7 @@ const socketsList = async function (req, res) {
     }
     respond(res, liveSessions);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list`, socketsList);
+wsRouter.get(`/sockets-list`, socketsList);
 
 const socketsListByProject = async function (req, res) {
     debug && console.log("[WS]looking for available sessions");
@@ -151,7 +151,7 @@ const socketsListByProject = async function (req, res) {
     }
     respond(res, liveSessions[_projectKey] || []);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-list/:projectKey`, socketsListByProject);
+wsRouter.get(`/sockets-list/:projectKey`, socketsListByProject);
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
@@ -179,7 +179,7 @@ const socketsLive = async function (req, res) {
     }
     respond(res, liveSessions);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live`, socketsLive);
+wsRouter.get(`/sockets-live`, socketsLive);
 
 const socketsLiveByProject = async function (req, res) {
     debug && console.log("[WS]looking for available LIVE sessions");
@@ -208,7 +208,7 @@ const socketsLiveByProject = async function (req, res) {
     }
     respond(res, liveSessions[_projectKey] || []);
 }
-wsRouter.get(`/${process.env.S3_KEY}/sockets-live/:projectKey`, socketsLiveByProject);
+wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
