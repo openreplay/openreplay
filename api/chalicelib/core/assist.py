@@ -1,9 +1,7 @@
 import requests
 from decouple import config
 
-import schemas
-from chalicelib.core import projects, sessions
-from chalicelib.utils import pg_client, helper
+from chalicelib.core import projects
 
 SESSION_PROJECTION_COLS = """s.project_id,
                            s.session_id::text AS session_id,

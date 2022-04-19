@@ -82,7 +82,7 @@ def __rearrange_chart_details(start_at, end_at, density, chart):
     chart = list(chart)
     for i in range(len(chart)):
         chart[i] = {"timestamp": chart[i][0], "count": chart[i][1]}
-    chart = dashboard.__complete_missing_steps(rows=chart, start_time=start_at, end_time=end_at, density=density,
+    chart = metrics.__complete_missing_steps(rows=chart, start_time=start_at, end_time=end_at, density=density,
                                                neutral={"count": 0})
     return chart
 
@@ -788,7 +788,7 @@ def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flo
         r["chart"] = list(r["chart"])
         for i in range(len(r["chart"])):
             r["chart"][i] = {"timestamp": r["chart"][i][0], "count": r["chart"][i][1]}
-        r["chart"] = dashboard.__complete_missing_steps(rows=r["chart"], start_time=data.startDate,
+        r["chart"] = metrics.__complete_missing_steps(rows=r["chart"], start_time=data.startDate,
                                                         end_time=data.endDate,
                                                         density=data.density, neutral={"count": 0})
     offset = len(rows)
