@@ -19,7 +19,8 @@ const inputModeOptionsMap = {}
 inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 
 const ProjectCodeSnippet = props  => {
-  const { site, gdpr } = props;
+  const site = props.sites.find(s => s.id === props.siteId);
+  const { gdpr } = site;
   const [changed, setChanged] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -72,7 +73,7 @@ const ProjectCodeSnippet = props  => {
   }
 
   const getOptionValues = () => {
-    const { gdpr } = props.site;
+    // const { gdpr } = site;
     return (!!gdpr.maskEmails)|(!!gdpr.maskNumbers << 1)|(['plain' , 'obscured', 'hidden'].indexOf(gdpr.defaultInputMode) << 5)|28
   }
 
@@ -164,7 +165,8 @@ const ProjectCodeSnippet = props  => {
 }
 
 export default connect(state => ({
-  site: state.getIn([ 'site', 'instance' ]),
-  gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
+  sites: state.getIn([ 'site', 'list' ]),
+  // gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
   saving: state.getIn([ 'site', 'saveGDPR', 'loading' ])
 }), { editGDPR, saveGDPR })(ProjectCodeSnippet)

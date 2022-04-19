@@ -17,7 +17,7 @@ import styles from './siteForm.css';
 	update,
 	pushNewSite,
 	fetchList,
-  setSiteId
+  	setSiteId
 })
 @withRouter
 export default class NewSiteForm extends React.PureComponent {
@@ -38,13 +38,17 @@ export default class NewSiteForm extends React.PureComponent {
 			})
 		} else {
 			this.props.save(this.props.site).then(() => {
-				const { sites } = this.props;        
-        		const site = sites.last();
-				this.props.pushNewSite(site)
-				if (!pathname.includes('/client')) {
-					this.props.setSiteId(site.id)
-				}
-				this.props.onClose(null, site)
+				this.props.fetchList().then(() => {
+					const { sites } = this.props;
+					const site = sites.last();
+					if (!pathname.includes('/client')) {
+						console.log('site', site)
+						this.props.setSiteId(site.get('id'))
+					}
+					this.props.onClose(null, site)
+				})
+        		
+				// this.props.pushNewSite(site)
 			});
 		}
 	}

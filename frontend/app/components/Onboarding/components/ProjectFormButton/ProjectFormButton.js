@@ -3,8 +3,9 @@ import { connect } from 'react-redux'
 import { SlideModal } from 'UI'
 import NewSiteForm from '../../../Client/Sites/NewSiteForm'
 
-const ProjectFormButton = ({ children, site }) => {
+const ProjectFormButton = ({ children, sites, siteId }) => {
   const [showModal, setShowModal] = useState(false)
+  const site = sites.find(({ id }) => id === siteId)
 
   const closeModal = () => setShowModal(!showModal);
 
@@ -27,5 +28,6 @@ const ProjectFormButton = ({ children, site }) => {
 }
 
 export default connect(state => ({
-  site: state.getIn([ 'site', 'instance' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
+  sites: state.getIn([ 'site', 'list' ]),
 }))(ProjectFormButton)
