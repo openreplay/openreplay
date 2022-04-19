@@ -13,7 +13,6 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 interface Props {
     metric: any;
     isWidget?: boolean
-    onClick?: () => void;
 }
 function WidgetChart(props: Props) {
     const { isWidget = false, metric } = props;
