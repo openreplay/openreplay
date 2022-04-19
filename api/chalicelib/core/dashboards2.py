@@ -7,11 +7,11 @@ from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
 CATEGORY_DESCRIPTION = {
-    'overview': 'lorem ipsum',
-    'custom': 'lorem cusipsum',
-    'errors': 'lorem erripsum',
-    'performance': 'lorem perfipsum',
-    'resources': 'lorem resipsum'
+    'overview': 'High-level metrics and web vitals.',
+    'custom': 'Previously created custom metrics by me and my team.',
+    'errors': 'Keep a closer eye on errors and track their type, origin and domain.',
+    'performance': 'Optimize your app’s performance by tracking slow domains, page response times, memory consumption, CPU usage and more.',
+    'resources': 'Find out which resources are missing and those that may be slowing your web app.'
 }
 
 
@@ -28,7 +28,8 @@ def get_templates(project_id, user_id):
                                     AND (project_id ISNULL OR (project_id = %(project_id)s AND (is_public OR user_id= %(userId)s)))
                             ) AS metrics  
                         GROUP BY category
-                        ORDER BY category;""", {"project_id": project_id, "userId": user_id})
+                        ORDER BY ARRAY_POSITION(ARRAY ['custom','overview','errors','performance','resources'], category);""",
+                               {"project_id": project_id, "userId": user_id})
         cur.execute(pg_query)
         rows = cur.fetchall()
     for r in rows:
