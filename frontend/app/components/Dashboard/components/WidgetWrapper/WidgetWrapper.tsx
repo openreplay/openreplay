@@ -69,7 +69,7 @@ function WidgetWrapper(props: Props) {
     const onChartClick = () => {
         if (!isWidget || isPredefined) return;
         
-        props.history.push(withSiteId(dashboardMetricDetails(dashboardId, widget.metricId),siteId));
+        props.history.push(withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId),siteId));
     }
 
     const ref: any = useRef(null)

@@ -23,7 +23,9 @@ function DashboardModal(props) {
 
     const onSave = () => {
         dashboardStore.save(dashboard).then(hideModal).then(() => {
-            dashboardStore.fetch(dashboard.dashboardId)
+            if (dashboard.exists()) {
+                dashboardStore.fetch(dashboard.dashboardId)
+            }
         })
     }
 

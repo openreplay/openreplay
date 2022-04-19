@@ -222,6 +222,7 @@ export default class DashboardStore implements IDashboardSotre {
                     if (isCreating) {
                         toast.success('Dashboard created successfully')
                         this.addDashboard(_dashboard)
+                        console.log('_dashboard', _dashboard)
                     } else {
                         toast.success('Dashboard updated successfully')
                         this.updateDashboard(_dashboard)
@@ -295,7 +296,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     addDashboard(dashboard: Dashboard) {
-        this.dashboards.push(dashboard)
+        this.dashboards.push(new Dashboard().fromJson(dashboard))
     }
 
     removeDashboard(dashboard: Dashboard) {
