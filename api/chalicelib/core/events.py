@@ -88,7 +88,7 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
             ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
         rows += cur.fetchall()
         rows = helper.list_to_camel_case(rows)
-        rows = sorted(rows, key=lambda k: k["messageId"])
+        rows = sorted(rows, key=lambda k: (k["timestamp"], k["messageId"]))
     return rows
 
 
