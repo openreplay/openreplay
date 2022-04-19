@@ -187,6 +187,17 @@ def edit(tenant_id, user_id, project_id, data: schemas.CreateProjectSchema):
                              changes={"name": data.name})}
 
 
+def count_by_tenant(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify("""\
+                    SELECT
+                           count(s.project_id)
+                    FROM public.projects AS s
+                    WHERE s.deleted_at IS NULL
+                     AND tenant_id= %(tenant_id)s;""", {"tenant_id": tenant_id}))
+        return cur.fetchone()["count"]
+
+
 def delete(tenant_id, user_id, project_id):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
