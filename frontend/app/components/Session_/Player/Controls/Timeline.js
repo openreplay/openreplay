@@ -10,6 +10,7 @@ import { TYPES } from 'Types/session/event';
 import { setTimelinePointer } from 'Duck/sessions';
 import DraggableCircle from './DraggableCircle';
 import CustomDragLayer from './CustomDragLayer';
+import { debounce } from 'App/utils';
 
 const getPointerIcon = (type) => {
   // exception, 
@@ -52,6 +53,8 @@ const getPointerIcon = (type) => {
   return 'info';    
 }
 
+
+let deboucneJump = () => null;
 @connectPlayer(state => ({
   playing: state.playing,
   time: state.time,
@@ -95,6 +98,7 @@ export default class Timeline extends React.PureComponent {
   componentDidMount() {
     const { issues, skipToIssue } = this.props;
     const firstIssue = issues.get(0);
+    deboucneJump = debounce(this.props.jump, 500);
 
     if (firstIssue && skipToIssue) {
       this.props.jump(firstIssue.time);
@@ -112,7 +116,7 @@ export default class Timeline extends React.PureComponent {
 
     const p = (offset.x - 60) / this.progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
-    this.props.jump(time);
+    deboucneJump(time);
     if (this.props.playing) {
       this.wasPlaying = true;
       this.props.pause();
