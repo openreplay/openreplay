@@ -46,7 +46,7 @@ function DomBuildingTime(props: Props) {
               /> */}
               <AvgLabel className="ml-auto" text="Avg" count={Math.round(metric.data.avg)} unit="ms" />
             </div>
-            <ResponsiveContainer height={ 200 } width="100%">
+            <ResponsiveContainer height={ 207 } width="100%">
               <AreaChart
                   data={ data.chart }
                   margin={ Styles.chartMargins }

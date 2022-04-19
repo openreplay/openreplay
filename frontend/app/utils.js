@@ -1,5 +1,5 @@
 import JSBI from 'jsbi';
-// import { scale } from "d3";
+import chroma from "chroma-js";
 
 export function debounce(callback, wait, context = this) {
   let timeout = null;
@@ -195,9 +195,10 @@ export const hashProjectID = (id) => {
 
 
 export const colorScale = (values, colors) => {
-  const minValue = Math.min.apply(null, values);
-  const maxValue = Math.max.apply(null, values);
-  return []
+  // const minValue = Math.min.apply(null, values);
+  // const maxValue = Math.max.apply(null, values);
+  // return []
+  return chroma.scale(colors)
 
   // return scale.linear()
   //             .domain([minValue,maxValue])
@@ -239,4 +240,10 @@ export const sliceListPerPage = (list, page, perPage = 10) => {
   const start = page * perPage;
   const end = start + perPage;
   return list.slice(start, end);
+}
+
+export const positionOfTheNumber = (min, max, value, length) => {
+  const interval = (max - min) / length;
+  const position = Math.round((value - min) / interval);
+  return position;
 }

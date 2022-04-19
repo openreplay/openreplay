@@ -1,26 +1,13 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { NoContent } from 'UI';
 import { Styles, AvgLabel } from '../../common';
 import Scale from './Scale';
-import { threeLetter } from 'App/constants/countries';
-// import { colorScale } from 'App/utils';
 import { observer } from 'mobx-react-lite';
-import { numberWithCommas } from 'App/utils';
+import { numberWithCommas, positionOfTheNumber } from 'App/utils';
 import WorldMap from "@svg-maps/world";
 import { SVGMap } from "react-svg-map";
-import "react-svg-map/lib/index.css";
 import stl from './SpeedIndexByLocation.css';
 import cn from 'classnames';
-
-const getPercentageOfAverage = (data, value: number) => {
-  const avg = data.reduce((acc, item) => acc + item.avg, 0) / data.length;
-  return Math.round((value / avg) * 100);
-}
-
-const numberPartBetweenRange = (value: any, max: number) => {
-  const minPart = value * max / 100
-  return Math.round(minPart);
-}
 
 interface Props {
     metric?: any
@@ -33,23 +20,14 @@ function SpeedIndexByLocation(props: Props) {
     const [pointedLocation, setPointedLocation] = React.useState<any>(null);
     const dataMap = React.useMemo(() => {
         const data = {};
+        const max = metric.data.chart.reduce((acc, item) => Math.max(acc, item.avg), 0);
+        const min = metric.data.chart.reduce((acc, item) => Math.min(acc, item.avg), 0);
         metric.data.chart.forEach((item: any) => {
-            item.percentage = getPercentageOfAverage(metric.data.chart, item.avg);
-            item.perNumber = numberPartBetweenRange(item.percentage, 5);
+            item.perNumber = positionOfTheNumber(min, max, item.avg, 5);
             data[item.userCountry.toLowerCase()] = item;
         });
         return data;
     }, [])
-
-    // const getSeries = data => {
-    //   const series: any[] = [];
-    //   data.forEach(item => {
-    //     const d = [threeLetter[item.userCountry], Math.round(item.avg)]
-    //     series.push(d)
-    //   })
-
-    //   return series;
-    // }
 
     const getLocationClassName = (location, index) => {
       const i = (dataMap[location.id] ? dataMap[location.id].perNumber : 0);
@@ -98,7 +76,7 @@ function SpeedIndexByLocation(props: Props) {
             <div className="map-target"></div>
             <div
               style={{
-                height: '220px',
+                height: '234px',
                 width: '100%',
                 margin: '0 auto',
                 display: 'flex',
