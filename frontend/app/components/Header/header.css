@@ -25,9 +25,11 @@ $height: 50px;
   color: $gray-darkest;
   text-transform: uppercase;
   white-space: nowrap;
+  transition: all .2s ease-in-out;
   &:hover, &.active {
     color: $teal;
     border-bottom: 2px solid $teal;
+    transition: all .2s ease-in-out;
   }
   position: relative;
 }
