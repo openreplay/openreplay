@@ -19,6 +19,11 @@ if (process.env.uws !== "true") {
     let wsapp = express();
     wsapp.use(request_logger("[wsapp]"));
     wsapp.use(request_logger("[app]"));
+    wsapp.get([PREFIX, `${PREFIX}/`], (req, res) => {
+            res.statusCode = 200;
+            res.end("ok!");
+        }
+    );
     wsapp.use(`/heapdump/${process.env.S3_KEY}`, dumps.router);
     wsapp.use(`${PREFIX}/${process.env.S3_KEY}`, socket.wsRouter);
     wsapp.enable('trust proxy');
