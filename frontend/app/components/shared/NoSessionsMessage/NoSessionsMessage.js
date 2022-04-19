@@ -35,6 +35,6 @@ const NoSessionsMessage= (props) => {
 }
 
 export default connect(state => ({
-  site: state.getIn([ 'site', 'instance' ]),
+  site: state.getIn([ 'site', 'siteId' ]),
   sites: state.getIn([ 'site', 'list' ])
 }))(withRouter(NoSessionsMessage))

@@ -19,7 +19,7 @@ inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 
 
 const ProjectCodeSnippet = props  => {
-  const { site, gdpr, saving } = props;
+  const { gdpr, site } = props;
   const [changed, setChanged] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -152,6 +152,7 @@ const ProjectCodeSnippet = props  => {
 }
 
 export default connect(state => ({
+  // siteId: state.getIn([ 'site', 'siteId' ]),
   site: state.getIn([ 'site', 'instance' ]),
   gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
   saving: state.getIn([ 'site', 'saveGDPR', 'loading' ])
