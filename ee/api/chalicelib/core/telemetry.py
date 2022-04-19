@@ -50,7 +50,9 @@ def compute():
                          FROM public.tenants
                      ) AS all_tenants
                 WHERE tenants.tenant_id = all_tenants.tenant_id
-                RETURNING *,(SELECT email FROM users_ee WHERE role = 'owner' AND users_ee.tenant_id = tenants.tenant_id LIMIT 1);"""
+                RETURNING t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
+                    (SELECT openreplay_version()) AS version_number,
+                    (SELECT email FROM public.users WHERE role = 'owner' AND users.tenant_id=tenants.tenant_id LIMIT 1);"""
         )
         data = cur.fetchall()
         requests.post('https://api.openreplay.com/os/telemetry',
