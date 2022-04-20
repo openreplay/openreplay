@@ -50,7 +50,7 @@ def compute():
                          FROM public.tenants
                      ) AS all_tenants
                 WHERE tenants.tenant_id = all_tenants.tenant_id
-                RETURNING t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
+                RETURNING name,t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
                     (SELECT openreplay_version()) AS version_number,
                     (SELECT email FROM public.users WHERE role = 'owner' AND users.tenant_id=tenants.tenant_id LIMIT 1);"""
         )
