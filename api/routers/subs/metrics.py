@@ -108,7 +108,7 @@ def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsPayloadSchem
 @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
 def try_custom_metric_sessions(projectId: int,
-                               data: schemas.TryCustomMetricsPayloadSchema = Body(...),
+                               data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
     return {"data": data}
