@@ -51,7 +51,7 @@ export default class Filter implements IFilter {
 
     addFilter(filter: any) {
         filter.value = [""]
-        if (filter.hasOwnProperty('filters')) {
+        if (Array.isArray(filter.filters)) {
             filter.filters = filter.filters.map(i => {
                 i.value = [""]
                 return new FilterItem(i)
