@@ -40,6 +40,7 @@ const initialState = Map({
 	instance: fromJS(),
 	remainingSites: undefined,
 	siteId: null,
+	active: null,
 });
 
 const reducer = (state = initialState, action = {}) => {
@@ -59,10 +60,13 @@ const reducer = (state = initialState, action = {}) => {
 				? storedSiteId 
 				: action.data[0].projectId;
 			}
-			return state.set('list', List(action.data.map(Site))).set('siteId', siteId);
+			return state.set('list', List(action.data.map(Site)))
+				.set('siteId', siteId)
+				.set('active', List(action.data.map(Site)).find(s => s.id === parseInt(siteId)));
 		case SET_SITE_ID:
 			localStorage.setItem(SITE_ID_STORAGE_KEY, action.siteId)
-			return state.set('siteId', action.siteId);
+			const site = state.get('list').find(s => s.id === action.siteId);
+			return state.set('siteId', action.siteId).set('active', site);
 	}
 	return state;
 };

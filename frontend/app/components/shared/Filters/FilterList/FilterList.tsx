@@ -12,9 +12,10 @@ interface Props {
   onChangeEventsOrder: (e, { name, value }) => void;
   hideEventsOrder?: boolean;
   observeChanges?: () => void;
+  saveRequestPayloads?: boolean;
 }
 function FilterList(props: Props) {
-  const { observeChanges = () => {}, filter, hideEventsOrder = false } = props;
+  const { observeChanges = () => {}, filter, hideEventsOrder = false, saveRequestPayloads } = props;
   const filters = List(filter.filters);
   const hasEvents = filters.filter((i: any) => i.isEvent).size > 0;
   const hasFilters = filters.filter((i: any) => !i.isEvent).size > 0;
@@ -66,6 +67,7 @@ function FilterList(props: Props) {
               filter={filter}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
               onRemoveFilter={() => onRemoveFilter(filterIndex) }
+              saveRequestPayloads={saveRequestPayloads}
             />
           ): null)}
           <div className='mb-2' />

@@ -4,7 +4,7 @@ import FilterSelection from '../FilterSelection';
 import FilterValue from '../FilterValue';
 import { Icon } from 'UI';
 import FilterSource from '../FilterSource';
-import { FilterType } from 'App/types/filter/filterType';
+import { FilterKey, FilterType } from 'App/types/filter/filterType';
 import SubFilterItem from '../SubFilterItem';
 
 interface Props {
@@ -13,9 +13,10 @@ interface Props {
   onUpdate: (filter) => void;
   onRemoveFilter: () => void;
   isFilter?: boolean;
+  saveRequestPayloads?: boolean;
 }
 function FilterItem(props: Props) {
-  const { isFilter = false, filterIndex, filter } = props;
+  const { isFilter = false, filterIndex, filter, saveRequestPayloads } = props;
   const canShowValues = !(filter.operator === "isAny" || filter.operator === "onAny" || filter.operator === "isUndefined");
   const isSubFilter = filter.type === FilterType.SUB_FILTERS;
 
@@ -83,7 +84,7 @@ function FilterItem(props: Props) {
         {/* filters */}
         {isSubFilter && (
           <div className="grid grid-col ml-3 w-full">
-            {filter.filters.map((subFilter, subFilterIndex) => (
+            {filter.filters.filter(i => (i.key !== FilterKey.FETCH_REQUEST_BODY && i.key !== FilterKey.FETCH_RESPONSE_BODY) || saveRequestPayloads).map((subFilter, subFilterIndex) => (
               <SubFilterItem
                 filterIndex={subFilterIndex}
                 filter={subFilter}
