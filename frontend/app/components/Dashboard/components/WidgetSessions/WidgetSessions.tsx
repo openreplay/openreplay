@@ -33,12 +33,12 @@ function WidgetSessions(props: Props) {
     const filteredSessions = getListSessionsBySeries(data, activeSeries);
     const { dashboardStore, metricStore } = useStore();
     const filter = useObserver(() => dashboardStore.drillDownFilter);
-    const widget: any = metricStore.instance;
+    const widget: any = useObserver(() => metricStore.instance);
     const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
     const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
 
     useEffect(() => {
-        widget.fetchSessions({ ...filter, filter: widget.toJsonDrilldown()}).then(res => {
+        widget.fetchSessions({ ...filter, series: widget.toJsonDrilldown() }).then(res => {
             setData(res);
         });
     }, [filter.startTimestamp, filter.endTimestamp, filter.filters]);
