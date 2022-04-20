@@ -6,7 +6,7 @@ export const options = [
   { key: 'onAny', text: 'on any', value: 'onAny' },
   { key: 'is', text: 'is', value: 'is' },
   { key: 'isAny', text: 'is any', value: 'isAny' },
-  { key: 'isAnyPage', text: 'is any page', value: 'isAny' },
+  { key: 'inAnyPage', text: 'in any page', value: 'isAny' },
   { key: 'isNot', text: 'is not', value: 'isNot' },
   { key: 'startsWith', text: 'starts with', value: 'startsWith' },
   { key: 'endsWith', text: 'ends with', value: 'endsWith' },
@@ -33,7 +33,7 @@ export const options = [
 
 const filterKeys = ['is', 'isNot'];
 const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
-const stringFilterKeysPerformance = ['is', 'isAnyPage', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
+const stringFilterKeysPerformance = ['is', 'inAnyPage', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const targetFilterKeys = ['on', 'notOn', 'onAny', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
