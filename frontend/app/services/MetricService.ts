@@ -97,7 +97,7 @@ export default class MetricService implements IMetricService {
      * @returns 
      */
      fetchSessions(metricId: string, filter: any): Promise<any> {
-        return this.client.post(`/metrics/${metricId}/sessions`, filter)
+        return this.client.post(metricId ? `/metrics/${metricId}/sessions` : '/metrics/try/sessions', filter)
             .then(response => response.json())
             .then(response => response.data || []);
     }
