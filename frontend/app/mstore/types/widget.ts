@@ -158,9 +158,7 @@ export default class Widget implements IWidget {
     }
 
     toJsonDrilldown() {
-        return {
-            series: this.series.map((series: any) => series.toJson()),
-        }
+        return this.series.map((series: any) => series.toJson())
     }
 
     toJson() {
