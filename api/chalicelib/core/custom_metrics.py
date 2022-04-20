@@ -105,6 +105,19 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     return results
 
 
+def try_sessions(project_id, user_id, data: schemas.TryCustomMetricsPayloadSchema):
+    results = []
+    for s in data.series:
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
+        results.append({"seriesId": None, "seriesName": s.name,
+                        **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
+
+    return results
+
+
 def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboard=False):
     with pg_client.PostgresClient() as cur:
         _data = {}

@@ -33,7 +33,7 @@ def get_dashboard(projectId: int, dashboardId: int, context: schemas.CurrentCont
 def update_dashboard(projectId: int, dashboardId: int, data: schemas.EditDashboardSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.update_dashboard(project_id=projectId, user_id=context.user_id,
-                                                 dashboard_id=dashboardId, data=data)}
+                                                dashboard_id=dashboardId, data=data)}
 
 
 @app.delete('/{projectId}/dashboards/{dashboardId}', tags=["dashboard"])
@@ -52,7 +52,7 @@ def add_widget_to_dashboard(projectId: int, dashboardId: int,
                             data: schemas.AddWidgetToDashboardPayloadSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.add_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                           data=data)}
+                                          data=data)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/metrics', tags=["dashboard"])
@@ -61,7 +61,7 @@ def create_metric_and_add_to_dashboard(projectId: int, dashboardId: int,
                                        data: schemas.CreateCustomMetricsSchema = Body(...),
                                        context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": dashboards.create_metric_add_widget(project_id=projectId, user_id=context.user_id,
-                                                         dashboard_id=dashboardId, data=data)}
+                                                        dashboard_id=dashboardId, data=data)}
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
@@ -70,14 +70,14 @@ def update_widget_in_dashboard(projectId: int, dashboardId: int, widgetId: int,
                                data: schemas.UpdateWidgetPayloadSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.update_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                     widget_id=widgetId, data=data)
+                                    widget_id=widgetId, data=data)
 
 
 @app.delete('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}', tags=["dashboard"])
 def remove_widget_from_dashboard(projectId: int, dashboardId: int, widgetId: int,
                                  context: schemas.CurrentContext = Depends(OR_context)):
     return dashboards.remove_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                     widget_id=widgetId)
+                                    widget_id=widgetId)
 
 
 @app.post('/{projectId}/dashboards/{dashboardId}/widgets/{widgetId}/chart', tags=["dashboard"])
@@ -85,7 +85,7 @@ def get_widget_chart(projectId: int, dashboardId: int, widgetId: int,
                      data: schemas.CustomMetricChartPayloadSchema = Body(...),
                      context: schemas.CurrentContext = Depends(OR_context)):
     data = dashboards.make_chart_widget(project_id=projectId, user_id=context.user_id, dashboard_id=dashboardId,
-                                         widget_id=widgetId, data=data)
+                                        widget_id=widgetId, data=data)
     if data is None:
         return {"errors": ["widget not found"]}
     return {"data": data}
@@ -103,6 +103,15 @@ def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_c
 def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsPayloadSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": custom_metrics.merged_live(project_id=projectId, data=data)}
+
+
+@app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
+@app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
+def try_custom_metric_sessions(projectId: int,
+                               data: schemas.TryCustomMetricsPayloadSchema = Body(...),
+                               context: schemas.CurrentContext = Depends(OR_context)):
+    data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
+    return {"data": data}
 
 
 @app.post('/{projectId}/metrics', tags=["dashboard"])
@@ -145,7 +154,7 @@ def get_custom_metric_sessions(projectId: int, metric_id: int,
 def get_custom_metric_chart(projectId: int, metric_id: int, data: schemas.CustomMetricChartPayloadSchema = Body(...),
                             context: schemas.CurrentContext = Depends(OR_context)):
     data = dashboards.make_chart_metrics(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
-                                          data=data)
+                                         data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
