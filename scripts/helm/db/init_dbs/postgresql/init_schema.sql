@@ -646,7 +646,7 @@ $$
                 status_code   smallint    NULL,
                 method        http_method NULL,
                 host          text        NULL,
-                base_path     text        NULL,
+                path          text        NULL,
                 query         text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
@@ -669,8 +669,8 @@ $$
             CREATE INDEX requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
             CREATE INDEX requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
             CREATE INDEX requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
-            CREATE INDEX requests_base_path_nn_idx ON events_common.requests (base_path) WHERE base_path IS NOT NULL;
-            CREATE INDEX requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
+            CREATE INDEX requests_path_nn_idx ON events_common.requests (path) WHERE path IS NOT NULL;
+            CREATE INDEX requests_path_nn_gin_idx ON events_common.requests USING GIN (path gin_trgm_ops) WHERE path IS NOT NULL;
             CREATE INDEX requests_query_nn_idx ON events_common.requests (query) WHERE query IS NOT NULL;
             CREATE INDEX requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 

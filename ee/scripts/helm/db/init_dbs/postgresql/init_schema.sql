@@ -100,38 +100,36 @@ $$ LANGUAGE plpgsql;
 DO
 $$
     BEGIN
-        IF (with to_check (name) as (
-            values ('alerts'),
-                   ('announcements'),
-                   ('assigned_sessions'),
-                   ('autocomplete'),
-                   ('basic_authentication'),
-                   ('dashboards'),
-                   ('dashboard_widgets'),
-                   ('errors'),
-                   ('funnels'),
-                   ('integrations'),
-                   ('issues'),
-                   ('jira_cloud'),
-                   ('jobs'),
-                   ('metric_series'),
-                   ('metrics'),
-                   ('notifications'),
-                   ('oauth_authentication'),
-                   ('projects'),
-                   ('roles'),
-                   ('roles_projects'),
-                   ('searches'),
-                   ('sessions'),
-                   ('tenants'),
-                   ('traces'),
-                   ('user_favorite_errors'),
-                   ('user_favorite_sessions'),
-                   ('user_viewed_errors'),
-                   ('user_viewed_sessions'),
-                   ('users'),
-                   ('webhooks')
-        )
+        IF (with to_check (name) as (values ('alerts'),
+                                            ('announcements'),
+                                            ('assigned_sessions'),
+                                            ('autocomplete'),
+                                            ('basic_authentication'),
+                                            ('dashboards'),
+                                            ('dashboard_widgets'),
+                                            ('errors'),
+                                            ('funnels'),
+                                            ('integrations'),
+                                            ('issues'),
+                                            ('jira_cloud'),
+                                            ('jobs'),
+                                            ('metric_series'),
+                                            ('metrics'),
+                                            ('notifications'),
+                                            ('oauth_authentication'),
+                                            ('projects'),
+                                            ('roles'),
+                                            ('roles_projects'),
+                                            ('searches'),
+                                            ('sessions'),
+                                            ('tenants'),
+                                            ('traces'),
+                                            ('user_favorite_errors'),
+                                            ('user_favorite_sessions'),
+                                            ('user_viewed_errors'),
+                                            ('user_viewed_sessions'),
+                                            ('users'),
+                                            ('webhooks'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'public'
@@ -914,16 +912,14 @@ LANGUAGE plpgsql;
 DO
 $$
     BEGIN
-        IF (with to_check (name) as (
-            values ('clicks'),
-                   ('errors'),
-                   ('graphql'),
-                   ('inputs'),
-                   ('pages'),
-                   ('performance'),
-                   ('resources'),
-                   ('state_actions')
-        )
+        IF (with to_check (name) as (values ('clicks'),
+                                            ('errors'),
+                                            ('graphql'),
+                                            ('inputs'),
+                                            ('pages'),
+                                            ('performance'),
+                                            ('resources'),
+                                            ('state_actions'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'events'
@@ -1176,11 +1172,9 @@ LANGUAGE plpgsql;
 DO
 $$
     BEGIN
-        IF (with to_check (name) as (
-            values ('customs'),
-                   ('issues'),
-                   ('requests')
-        )
+        IF (with to_check (name) as (values ('customs'),
+                                            ('issues'),
+                                            ('requests'))
             select bool_and(exists(select *
                                    from information_schema.tables t
                                    where table_schema = 'events_common'
@@ -1238,7 +1232,7 @@ $$
                 status_code   smallint    NULL,
                 method        http_method NULL,
                 host          text        NULL,
-                base_path     text        NULL,
+                path          text        NULL,
                 query         text        NULL,
                 PRIMARY KEY (session_id, timestamp, seq_index)
             );
@@ -1263,8 +1257,8 @@ $$
             CREATE INDEX IF NOT EXISTS requests_status_code_nn_idx ON events_common.requests (status_code) WHERE status_code IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_host_nn_idx ON events_common.requests (host) WHERE host IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_host_nn_gin_idx ON events_common.requests USING GIN (host gin_trgm_ops) WHERE host IS NOT NULL;
-            CREATE INDEX IF NOT EXISTS requests_base_path_nn_idx ON events_common.requests (base_path) WHERE base_path IS NOT NULL;
-            CREATE INDEX IF NOT EXISTS requests_base_path_nn_gin_idx ON events_common.requests USING GIN (base_path gin_trgm_ops) WHERE base_path IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_path_nn_idx ON events_common.requests (path) WHERE path IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS requests_path_nn_gin_idx ON events_common.requests USING GIN (path gin_trgm_ops) WHERE path IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_query_nn_idx ON events_common.requests (query) WHERE query IS NOT NULL;
             CREATE INDEX IF NOT EXISTS requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 
