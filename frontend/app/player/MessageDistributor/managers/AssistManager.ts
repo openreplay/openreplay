@@ -59,12 +59,14 @@ export interface State {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
   remoteControl: RemoteControlStatus,
+  annotating: boolean,
 }
 
 export const INITIAL_STATE: State = {
   calling: CallingState.NoCall,
   peerConnectionStatus: ConnectionStatus.Connecting,
   remoteControl: RemoteControlStatus.Disabled,
+  annotating: false,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -371,8 +373,9 @@ export default class AssistManager {
   }
 
   toggleAnnotation(enable?: boolean) {
+    if (getState().calling !== CallingState.OnCall) { return }
     if (typeof enable !== "boolean") {
-      enable = !!this.annot
+      enable = !!getState().annotating
     }
     if (enable && !this.annot) {
       const annot = this.annot = new AnnotationCanvas()
@@ -400,9 +403,11 @@ export default class AssistManager {
         annot.move([ data.x, data.y ])
         this.socket.emit("moveAnnotation", [ data.x, data.y ])
       })
+      update({ annotating: true })
     } else if (!enable && !!this.annot) {
       this.annot.remove()
       this.annot = null
+      update({ annotating: false })
     }
   }
 
