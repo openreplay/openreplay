@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React from 'react';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
 import { Tooltip } from 'react-tippy';

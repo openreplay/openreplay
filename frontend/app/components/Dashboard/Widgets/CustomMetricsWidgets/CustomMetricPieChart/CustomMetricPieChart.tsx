@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React from 'react'
 import { ResponsiveContainer, Tooltip } from 'recharts';
 import { PieChart, Pie, Cell } from 'recharts';
@@ -57,7 +58,6 @@ function CustomMetricPieChart(props: Props) {
                             innerRadius,
                             outerRadius,
                             value,
-                            index
                         }) => {
                             const RADIAN = Math.PI / 180;
                                 let radius1 = 15 + innerRadius + (outerRadius - innerRadius);

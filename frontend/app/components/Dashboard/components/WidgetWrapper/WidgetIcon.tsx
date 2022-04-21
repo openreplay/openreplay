@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React from 'react';
 import { Icon } from 'UI';
 import { Tooltip } from 'react-tippy';
