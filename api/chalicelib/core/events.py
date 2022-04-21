@@ -341,7 +341,7 @@ class event_type:
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
     LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="base_path")
     CUSTOM = Event(ui_type=schemas.EventType.custom, table="events_common.customs", column="name")
-    REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="base_path")
+    REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="path")
     GRAPHQL = Event(ui_type=schemas.EventType.graphql, table="events.graphql", column="name")
     STATEACTION = Event(ui_type=schemas.EventType.state_action, table="events.state_actions", column="name")
     ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",
