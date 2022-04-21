@@ -91,6 +91,7 @@ export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/assist/$
 export const errors = params => queried('/errors', params);
 export const error = (id = ':errorId', hash) => hashed(`/errors/${ id }`, hash);
 
+export const funnels = params => queried('/funnels', params)
 export const funnel = (id = ':funnelId', hash) => hashed(`/funnels/${ id }`, hash);
 export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash) => hashed(`/funnels/${ id }/${ issueId}`, hash);
 
@@ -109,7 +110,6 @@ export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => ha
 export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
-
 
 export const RESULTS_QUERY_KEY = 'results';
 export const METRICS_QUERY_KEY = 'metrics';
@@ -134,6 +134,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     error(''),
     errors(),
     onboarding(''),
+    funnels(''),
     funnel(''),
     funnelIssue(''),
   ];
@@ -161,6 +162,7 @@ export function isRoute(route, path){
 
 const SITE_CHANGE_AVALIABLE_ROUTES = [
   sessions(),
+  funnels(),
   assist(),
   dashboard(),
   metrics(),

@@ -7,6 +7,7 @@ import {
   assist,
   client,
   errors,
+  funnels,
   dashboard,
   withSiteId,
   CLIENT_DEFAULT_TAB,
@@ -30,6 +31,7 @@ const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
 const ERRORS_PATH = errors();
+const FUNNELS_PATH = funnels();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 const AUTOREFRESH_INTERVAL = 30 * 1000;
 
@@ -98,6 +100,13 @@ const Header = (props) => {
       >
         <ErrorsBadge />
         { 'Errors' }
+      </NavLink>
+      <NavLink
+        to={ withSiteId(FUNNELS_PATH, siteId) }
+        className={ styles.nav }
+        activeClassName={ styles.active }
+      >
+        { 'Funnels' }
       </NavLink>
       <NavLink
         to={ withSiteId(DASHBOARD_PATH, siteId) }
