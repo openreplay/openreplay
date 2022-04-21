@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
 import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';

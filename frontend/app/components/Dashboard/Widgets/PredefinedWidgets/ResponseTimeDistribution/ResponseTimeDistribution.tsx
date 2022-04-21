@@ -99,7 +99,7 @@ function ResponseTimeDistribution(props: Props) {
                           label={`${item.percentile}th Percentile (${item.responseTime}ms)`}
                         />
                       }
-                      allowDecimals={false}
+                      // allowDecimals={false}
                       x={item.responseTime}
                       strokeWidth={0}
                       strokeOpacity={1}

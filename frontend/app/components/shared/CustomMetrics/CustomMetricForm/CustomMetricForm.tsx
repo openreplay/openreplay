@@ -98,7 +98,7 @@ function CustomMetricForm(props: Props) {
             autoFocus={ true }
             className="text-lg"
             name="name"
-            style={{ fontSize: '18px', padding: '10px', fontWeight: '600'}}
+            style={{ fontSize: '18px', padding: '10px', fontWeight: 600}}
             value={ metric.name }
             onChange={ write }
             placeholder="Metric Title"
