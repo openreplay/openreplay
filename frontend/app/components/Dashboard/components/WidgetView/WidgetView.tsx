@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { withRouter } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useStore } from 'App/mstore';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
