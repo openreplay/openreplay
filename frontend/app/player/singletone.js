@@ -72,6 +72,7 @@ export const callPeer = initCheck((...args) => instance.assistManager.call(...ar
 export const requestReleaseRemoteControl = initCheck((...args) => instance.assistManager.requestReleaseRemoteControl(...args))
 export const markTargets = initCheck((...args) => instance.markTargets(...args))
 export const activeTarget = initCheck((...args) => instance.activeTarget(...args))
+export const toggleAnnotation = initCheck((...args) => instance.assistManager.toggleAnnotation(...args))
 
 export const Controls = {
   jump,
