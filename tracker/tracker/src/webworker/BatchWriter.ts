@@ -28,9 +28,10 @@ export default class BatchWriter {
     this.beaconSizeLimit = limit
   }
 
+  // TODO: clear workflow
   writeMessage(message: Message) {
     if (message instanceof Timestamp) {
-      this.timestamp = (<any>message).timestamp;
+      this.timestamp = (<any>message).timestamp
     }
 
     if (!message.encode(this.writer)) {
@@ -58,10 +59,11 @@ export default class BatchWriter {
     this.isEmpty = false
   }
 
-  flush(): Uint8Array | null {
-    if (this.isEmpty) { return null }
+  finaliseBatch() {
+    if (this.isEmpty) { return }
+    this.onBatch(this.writer.flush())
+    this.prepareBatchMeta()
     this.isEmpty = true
-    return this.writer.flush()
   }
 
   clean() {

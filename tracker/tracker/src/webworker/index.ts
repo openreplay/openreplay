@@ -2,6 +2,7 @@ import Message from "../messages/message.js";
 import { 
   classes,
   SetPageVisibility,
+  MouseMove,
 } from "../messages/index.js";
 import QueueSender from "./QueueSender.js";
 import BatchWriter from "./BatchWriter.js";
@@ -15,11 +16,10 @@ let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
 
 function send(): void {
-  if (!sender || !writer) {
+  if (!writer) {
     return
   }
-  const batch = writer.flush()
-  batch && sender.push(batch)
+  writer.finaliseBatch()
 }
 
 
@@ -58,6 +58,10 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
   }
 
   if (Array.isArray(data)) {
+    if (!writer) {
+      throw new Error("WebWorker: writer not initialised.")
+    }
+    const w = writer
     // Message[]
     data.forEach((data) => {
       const message: Message = new (<any>classes.get(data._id))();
@@ -68,8 +72,8 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
         } else {
           clearTimeout(restartTimeoutID)
         }
-      }
-      writer && writer.writeMessage(message)
+      }     
+      w.writeMessage(message)
     })
     return
   }
@@ -100,8 +104,14 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
   }
 
   if (data.type === "auth") {
-    sender && sender.authorise(data.token)
-    data.beaconSizeLimit && writer && writer.setBeaconSizeLimit(data.beaconSizeLimit)
+    if (!sender) {
+      throw new Error("WebWorker: sender not initialised. Recieved auth.")
+    }
+    if (!writer) {
+      throw new Error("WebWorker: writer not initialised. Recieved auth.")
+    }
+    sender.authorise(data.token)
+    data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
     return
   }
 };
