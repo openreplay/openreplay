@@ -253,7 +253,7 @@ def get_all(project_id, user_id, include_series=False):
                     WHERE metrics.project_id = %(project_id)s
                       AND metrics.deleted_at ISNULL
                       AND (user_id = %(user_id)s OR metrics.is_public)
-                    ORDER BY metrics.edited_at, metrics.created_at;""",
+                    ORDER BY metrics.edited_at DESC, metrics.created_at DESC;""",
                 {"project_id": project_id, "user_id": user_id}
             )
         )
