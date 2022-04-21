@@ -4,9 +4,8 @@ import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
-import { HelpText, Button, Icon } from 'UI'
+import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { withRouter } from 'react-router-dom';
 import { confirm } from 'UI/Confirmation';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
@@ -28,31 +27,34 @@ function WidgetForm(props: Props) {
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
-    const isTimeSeries = metric.metricType === 'timeseries';
     const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
 
     const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = (e, { value, name }) => {
-        metricStore.merge({ [ name ]: value });
+        const obj = { [ name ]: value };
   
         if (name === 'metricValue') {
-            metricStore.merge({ metricValue: [value] });
+            obj['metricValue'] = [value];
         }
     
         if (name === 'metricOf') {
             if (value === FilterKey.ISSUE) {
-                metricStore.merge({ metricValue: ['all'] });
+                obj['metricValue'] = ['all'];
             }
         }
     
         if (name === 'metricType') {
             if (value === 'timeseries') {
-            metricStore.merge({ metricOf: timeseriesOptions[0].value, viewType: 'lineChart' });
+                obj['metricOf'] = timeseriesOptions[0].value;
+                obj['viewType'] = 'lineChart';
             } else if (value === 'table') {
-            metricStore.merge({ metricOf: tableOptions[0].value, viewType: 'table' });
+                obj['metricOf'] = tableOptions[0].value;
+                obj['viewType'] = 'table';
             }
         }
+
+        metricStore.merge(obj);
     };
 
     const onSave = () => {
@@ -172,7 +174,7 @@ function WidgetForm(props: Props) {
                                 'Filter data using any event or attribute. Use Add Step button below to do so.' :
                                 'Add user event or filter to define the series by clicking Add Step.'
                             }
-                            observeChanges={onObserveChanges}
+                            // observeChanges={onObserveChanges}
                         />
                     </div>
                 ))}

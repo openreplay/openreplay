@@ -33,6 +33,7 @@ function WidgetWrapper(props: Props) {
     const widget: any = useObserver(() => props.widget);    
     const isPredefined = widget.metricType === 'predefined';
     const dashboard = useObserver(() => dashboardStore.selectedDashboard);
+    const isOverviewWidget = widget.widgetType === 'predefined' && widget.viewType === 'overview';
 
     const [{ opacity, isDragging }, dragRef] = useDrag({
         type: 'item',
@@ -117,7 +118,7 @@ function WidgetWrapper(props: Props) {
                 )}
             </div>
 
-            <LazyLoad height={100} offset={120} >
+            <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} >
                 <div className="px-4" onClick={onChartClick}>
                     <WidgetChart metric={widget} isWidget={isWidget} />
                 </div>

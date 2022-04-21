@@ -73,13 +73,13 @@ export default class MetricStore implements IMetricStore {
             paginatedList: computed,
         })
 
-        reaction(
-            () => this.metricsSearch,
-            (metricsSearch) => { // TODO filter the list for View
-                this.page = 1
-                this.paginatedList
-            }
-        )
+        // reaction(
+        //     () => this.metricsSearch,
+        //     (metricsSearch) => { // TODO filter the list for View
+        //         this.page = 1
+        //         this.paginatedList
+        //     }
+        // )
     }
 
     // State Actions
@@ -92,7 +92,7 @@ export default class MetricStore implements IMetricStore {
     }
 
     merge(object: any) {
-        this.instance = Object.assign(this.instance, object)
+        Object.assign(this.instance, object)
     }
 
     reset(id: string) {
