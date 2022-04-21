@@ -83,10 +83,6 @@ function _getTarget(target: Element): Element | null {
 }
 
 export default function (app: App): void {
-  // const options: Options = Object.assign(
-  //   {},
-  //   opts,
-  // );
 
   function getTargetLabel(target: Element): string {
     const dl = getLabelAttribute(target);
