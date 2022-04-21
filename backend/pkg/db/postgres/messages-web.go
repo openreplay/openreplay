@@ -85,7 +85,7 @@ func (conn *Conn) InsertWebPageEvent(sessionID uint64, e *PageEvent) error {
 		host, path, query,
 		e.DomContentLoadedEventEnd, e.LoadEventEnd, e.ResponseEnd, e.FirstPaint, e.FirstContentfulPaint,
 		e.SpeedIndex, e.VisuallyComplete, e.TimeToInteractive,
-		calcResponseTime(e), calcDomBuildingTime(e)
+		calcResponseTime(e), calcDomBuildingTime(e),
 	); err != nil {
 		return err
 	}
