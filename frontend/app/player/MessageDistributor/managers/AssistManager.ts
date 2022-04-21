@@ -323,7 +323,7 @@ export default class AssistManager {
   private handleCallEnd() {
     this.callArgs && this.callArgs.onCallEnd()
     this.callConnection && this.callConnection.close()
-    update({ calling: CallingState.NoCall })
+    update({ calling: CallingState.NoCall, annotating: false })
     this.callArgs = null
     this.annot?.remove()
     this.annot = null
@@ -377,7 +377,7 @@ export default class AssistManager {
     if (typeof enable !== "boolean") {
       enable = !!getState().annotating
     }
-    if (enable && !this.annot) {
+    if (!enable && !this.annot) {
       const annot = this.annot = new AnnotationCanvas()
       annot.mount(this.md.overlay)
       annot.canvas.addEventListener("mousedown", e => {
@@ -404,7 +404,7 @@ export default class AssistManager {
         this.socket.emit("moveAnnotation", [ data.x, data.y ])
       })
       update({ annotating: true })
-    } else if (!enable && !!this.annot) {
+    } else if (enable && !!this.annot) {
       this.annot.remove()
       this.annot = null
       update({ annotating: false })

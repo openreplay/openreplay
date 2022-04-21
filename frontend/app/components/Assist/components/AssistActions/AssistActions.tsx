@@ -5,7 +5,7 @@ import cn from 'classnames'
 import { toggleChatWindow } from 'Duck/sessions';
 import { connectPlayer } from 'Player/store';
 import ChatWindow from '../../ChatWindow';
-import { callPeer, requestReleaseRemoteControl } from 'Player'
+import { callPeer, requestReleaseRemoteControl, toggleAnnotation } from 'Player'
 import { CallingState, ConnectionStatus, RemoteControlStatus } from 'Player/MessageDistributor/managers/AssistManager';
 import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
@@ -31,13 +31,14 @@ interface Props {
   userId: String,
   toggleChatWindow: (state) => void,
   calling: CallingState,
+  annotating: boolean,
   peerConnectionStatus: ConnectionStatus,
   remoteControlStatus: RemoteControlStatus,
   hasPermission: boolean,
   isEnterprise: boolean,
 }
 
-function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus, remoteControlStatus, hasPermission, isEnterprise }: Props) {
+function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConnectionStatus, remoteControlStatus, hasPermission, isEnterprise }: Props) {
   const [ incomeStream, setIncomeStream ] = useState<MediaStream | null>(null);
   const [ localStream, setLocalStream ] = useState<LocalStream | null>(null);
   const [ callObject, setCallObject ] = useState<{ end: ()=>void } | null >(null);
@@ -81,6 +82,23 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
 
   return (
     <div className="flex items-center">
+      {onCall && (
+        <>
+          <div
+            className={
+              cn(
+                'cursor-pointer p-2 flex items-center',
+                {[stl.disabled]: !onCall}
+              )
+            }
+            onClick={ toggleAnnotation }
+            role="button"
+          >
+            <IconButton label={`Annotate`} icon="pencil" primaryText redText={annotating} />
+          </div>
+          <div className={ stl.divider } />
+        </>
+      )}
       <div
         className={
           cn(
@@ -91,8 +109,9 @@ function AssistActions({ toggleChatWindow, userId, calling, peerConnectionStatus
         onClick={ requestReleaseRemoteControl }
         role="button"
       >
-        <IconButton label={`${remoteActive ? 'Stop ' : ''} Remote Control`} icon="remote-control" primaryText redText={remoteActive} />
+        <IconButton label={`Remote Control`} icon="remote-control" primaryText redText={remoteActive} />
       </div>
+      <div className={ stl.divider } />
       
       <Popup
         trigger={
@@ -132,6 +151,7 @@ const con = connect(state => {
 
 export default con(connectPlayer(state => ({
   calling: state.calling,
+  annotating: state.annotating,
   remoteControlStatus: state.remoteControl,
   peerConnectionStatus: state.peerConnectionStatus,
 }))(AssistActions))
