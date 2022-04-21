@@ -24,7 +24,7 @@ ALTER TABLE IF EXISTS metrics
     DROP CONSTRAINT IF EXISTS unique_key;
 
 ALTER TABLE IF EXISTS metrics
-    ADD COLUMN IF NOT EXISTS edited_at      timestamp NULL     DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS edited_at      timestamp NOT NULL DEFAULT timezone('utc'::text, now()),
     ADD COLUMN IF NOT EXISTS is_pinned      boolean   NOT NULL DEFAULT FALSE,
     ADD COLUMN IF NOT EXISTS category       text      NULL     DEFAULT 'custom',
     ADD COLUMN IF NOT EXISTS is_predefined  boolean   NOT NULL DEFAULT FALSE,
