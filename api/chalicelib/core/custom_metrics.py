@@ -107,6 +107,8 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
 
 def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadSchema):
     results = []
+    if data.series is None:
+        return results
     for s in data.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
