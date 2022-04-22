@@ -96,7 +96,7 @@ function WidgetSessions(props: Props) {
                         <div className="w-full flex items-center justify-center py-6">
                             <Pagination
                                 page={metricStore.sessionsPage}
-                                totalPages={filteredSessions.total / metricStore.sessionsPageSize}
+                                totalPages={Math.ceil(filteredSessions.total / metricStore.sessionsPageSize)}
                                 onPageChange={(page) => metricStore.updateKey('sessionsPage', page)}
                                 limit={metricStore.sessionsPageSize}
                                 debounceRequest={500}
