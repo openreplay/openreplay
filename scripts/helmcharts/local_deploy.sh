@@ -8,13 +8,24 @@ set -e
 export DOCKER_REPO="rg.fr-par.scw.cloud/foss"
 export IMAGE_TAG=`grep fromVersion vars.yaml | awk '{print $NF}'|xargs`
 
+
+apps=(
+    api
+    assets
+    db
+    ender
+    http
+    integrations
+    sink
+    storage
+    assist
+    peers
+    all
+)
 help(){
     cat <<EOF
     Valid options are 
-    api
-    backend
-    utilities
-    peers
+    echo ${apps[*]}
 EOF
 }
 
@@ -70,7 +81,7 @@ echo $DOCKER_REPO:$IMAGE_TAG
             source build.sh nil storage
             restart storage
             ;;
-        utilities)
+        assist)
             cd ../../utilities
             source build.sh $@
             restart assist
@@ -79,6 +90,12 @@ echo $DOCKER_REPO:$IMAGE_TAG
             cd ../../peers
             source build.sh $@
             restart peers
+            ;;
+        all)
+            for app in ${apps[*]}
+            do
+                bash local_deploy.sh $app
+            done
             ;;
         *)
             echo "unknown option;"
