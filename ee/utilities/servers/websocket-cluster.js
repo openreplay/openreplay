@@ -18,7 +18,7 @@ const SESSION_RECONNECTED = "SESSION_RECONNECTED";
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 const pubClient = createClient({url: REDIS_URL});
 const subClient = pubClient.duplicate();
-
+console.log(`Using Redis: ${REDIS_URL}`);
 let io;
 const debug = process.env.debug === "1" || false;
 
@@ -389,11 +389,16 @@ module.exports = {
                 console.error(e);
             }
         }, 20000, io);
-        Promise.all([pubClient.connect(), subClient.connect()]).then(() => {
-            io.adapter(createAdapter(pubClient, subClient));
-            console.log("> redis connected.");
-            // io.listen(3000);
-        });
+        Promise.all([pubClient.connect(), subClient.connect()])
+            .then(() => {
+                io.adapter(createAdapter(pubClient, subClient));
+                console.log("> redis connected.");
+            })
+            .catch((err) => {
+                console.log("> redis connection error");
+                console.error(err);
+                process.exit(2);
+            });
     },
     handlers: {
         socketsList,
