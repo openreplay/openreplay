@@ -44,7 +44,7 @@ Vagrant.configure("2") do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+  config.vm.synced_folder "./", "/home/vagrant/openreplay-dev/"
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -67,8 +67,54 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get install -y git curl
+    curl -fsSL https://get.docker.com | sh -
     git clone https://github.com/openreplay/openreplay infra
     cd infra/scripts/helmcharts
     DOMAIN_NAME=openreplay.local bash init.sh
+    cp -rf /root/.kube /home/vagrant/
+    chown -R vagrant:vagrant /home/vagrant
+    IP_ADDR=`ip r | tail -n1 | awk '{print $NF}'`
+    cat <<EOF
+
+      ################################################
+      Openreplay Dev environment preparation completed.
+      ################################################
+
+      Steps to do:
+
+        Add ip address from about output to your local resolver
+
+        ## Mac (Paste the following command in terminal)
+
+        sudo -- sh -c 'grep -q openreplay.local /etc/hosts || echo $IP_ADDR openreplay.local >> /etc/hosts && sudo sed -i "s/.*openreplay.local/${IP_ADDR} openreplay.local/g" /etc/hosts; grep openreplay.local /etc/hosts'
+
+        ## Linux (Paste the following command in terminal)
+
+        sudo -- sh -c 'grep -q openreplay.local /etc/hosts || echo $IP_ADDR openreplay.local >> /etc/hosts && sudo sed -i "s/.*openreplay.local/${IP_ADDR} openreplay.local/g" /etc/hosts; grep openreplay.local /etc/hosts'
+
+        ## Windows
+
+        Use the following instructions if you’re running Windows 10 or Windows 8:
+
+            Press the Windows key.
+
+            Type Notepad in the search field.
+
+            In the search results, right-click Notepad and select Run as administrator.
+
+            From Notepad, open the following file:
+
+            c:\Windows\System32\Drivers\etc\hosts
+
+            add the below line in the hosts file
+
+            $IP_ADDR openreplay.local
+
+            Select File > Save to save your changes.
+
+      To Access Openreplay:
+        - Open your browser and go to "http://openreplay.local"
+
+    EOF
   SHELL
 end
