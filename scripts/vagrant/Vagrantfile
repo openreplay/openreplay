@@ -111,19 +111,12 @@ Vagrant.configure("2") do |config|
         Use the following instructions if you’re running Windows 10 or Windows 8:
 
             Press the Windows key.
-
             Type Notepad in the search field.
-
             In the search results, right-click Notepad and select Run as administrator.
-
             From Notepad, open the following file:
-
             c:\\Windows\\System32\\Drivers\\etc\\hosts
-
             add the below line in the hosts file
-
             $IP_ADDR openreplay.local
-
             Select File > Save to save your changes.
 
       To Access Openreplay:
