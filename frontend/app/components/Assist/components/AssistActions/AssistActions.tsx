@@ -94,7 +94,7 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
             onClick={ toggleAnnotation }
             role="button"
           >
-            <IconButton label={`Annotate`} icon="pencil" primaryText redText={annotating} />
+            <IconButton label={`Annotate`} icon={ annotating ? "pencil-stop" : "pencil"} primaryText redText={annotating} />
           </div>
           <div className={ stl.divider } />
         </>
@@ -109,7 +109,7 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
         onClick={ requestReleaseRemoteControl }
         role="button"
       >
-        <IconButton label={`Remote Control`} icon="remote-control" primaryText redText={remoteActive} />
+        <IconButton label={`Remote Control`} icon={ remoteActive ? "window-x" : "remote-control"} primaryText redText={remoteActive} />
       </div>
       <div className={ stl.divider } />
       
