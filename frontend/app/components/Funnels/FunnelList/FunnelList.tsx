@@ -4,6 +4,7 @@ import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { sliceListPerPage } from 'App/utils';
 import FunnelItem from '../FunnelItem/FunnelItem';
+import FunnelSearch from '../FunnelSearch';
 
 function FunnelList(props) {
     const { funnelStore } = useStore()
@@ -19,8 +20,13 @@ function FunnelList(props) {
     return (
         <Loader loading={loading}>
             <div className="flex items-center">
-                <PageTitle title='Funnels' className="mr-3" />
-                <Button primary size="small" onClick={() => {}}>New Funnel</Button>
+                <div className="flex items-center">
+                    <PageTitle title='Funnels' className="mr-3" />
+                    <Button primary size="small" onClick={() => {}}>New Funnel</Button>
+                </div>
+                <div className="ml-auto w-1/4">
+                    <FunnelSearch />
+                </div>
             </div>
 
             <div className="color-gray-medium mt-2 mb-4">Funnels make it easy to uncover the most significant issues that impacted conversions.</div>

@@ -9,6 +9,7 @@ export default class FunnelStore {
     list: IFunnel[] = []
     instance: IFunnel | null = null
     period: Period = Period({ rangeName: LAST_7_DAYS })
+    search: string = ''
 
     page: number = 1
     pageSize: number = 10

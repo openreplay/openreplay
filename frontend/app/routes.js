@@ -92,6 +92,7 @@ export const errors = params => queried('/errors', params);
 export const error = (id = ':errorId', hash) => hashed(`/errors/${ id }`, hash);
 
 export const funnels = params => queried('/funnels', params)
+export const funnelsCreate = () => `/funnels/create`;
 export const funnel = (id = ':funnelId', hash) => hashed(`/funnels/${ id }`, hash);
 export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash) => hashed(`/funnels/${ id }/${ issueId}`, hash);
 
@@ -135,6 +136,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     errors(),
     onboarding(''),
     funnels(''),
+    funnelsCreate(''),
     funnel(''),
     funnelIssue(''),
   ];
