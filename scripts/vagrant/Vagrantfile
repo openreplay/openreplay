@@ -65,12 +65,16 @@ Vagrant.configure("2") do |config|
   # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
+    set -x
     apt-get update
     apt-get install -y git curl
     curl -fsSL https://get.docker.com | sh -
     usermod -aG docker vagrant
     git clone https://github.com/openreplay/openreplay infra
     cd infra/scripts/helmcharts
+    # changing container runtime for k3s to docker
+    sudo -u vagrant git checkout -- init.sh
+    sed -i 's/INSTALL_K3S_EXEC=\\(.*\\)\\\"/INSTALL_K3S_EXEC=\\1 --docker\\\"/g' init.sh
     DOMAIN_NAME=openreplay.local bash init.sh
     cp -rf /root/.kube /home/vagrant/
     chown -R vagrant:vagrant /home/vagrant
