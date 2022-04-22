@@ -1,4 +1,3 @@
-require('dotenv').config()
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
 const express = require('express');
