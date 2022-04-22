@@ -26,6 +26,7 @@ function build_api(){
         docker tag ${DOCKER_REPO:-'local'}/assist:${git_sha1} ${DOCKER_REPO:-'local'}/assist:latest
         docker push ${DOCKER_REPO:-'local'}/assist:latest
     }
+    echo "build completed for assist"
 }
 
 check_prereq

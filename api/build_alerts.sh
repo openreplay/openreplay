@@ -64,6 +64,7 @@ function build_api(){
         docker tag ${DOCKER_REPO:-'local'}/alerts:${git_sha1} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
         docker push ${DOCKER_REPO:-'local'}/alerts:${tag}latest
     }
+echo "completed alerts build"
 }
 
 check_prereq
