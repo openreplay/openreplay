@@ -29,6 +29,7 @@ function WidgetForm(props: Props) {
     const isTable = metric.metricType === 'table';
     const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
+    const canAddSeries = metric.series.length < 3;
 
     const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = (e, { value, name }) => {
@@ -150,16 +151,17 @@ function WidgetForm(props: Props) {
             </div>
 
             <div className="form-group">
-                <label className="font-medium items-center">
+                <div className="font-medium items-center py-2">
                     {`${isTable ? 'Filter by' : 'Chart Series'}`}
                     {!isTable && (
                         <Button
                             className="ml-2"
                             primary plain size="small"
                             onClick={() => metric.addSeries()}
+                            disabled={!canAddSeries}
                         >Add Series</Button>
                     )}
-                </label>
+                </div>
 
                 {metric.series.length > 0 && metric.series.slice(0, isTable ? 1 : metric.series.length).map((series: any, index: number) => (
                     <div className="mb-2">
