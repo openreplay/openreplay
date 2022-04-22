@@ -68,6 +68,7 @@ Vagrant.configure("2") do |config|
     apt-get update
     apt-get install -y git curl
     curl -fsSL https://get.docker.com | sh -
+    usermod -aG docker vagrant
     git clone https://github.com/openreplay/openreplay infra
     cd infra/scripts/helmcharts
     DOMAIN_NAME=openreplay.local bash init.sh
