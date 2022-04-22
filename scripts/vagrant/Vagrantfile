@@ -109,7 +109,7 @@ Vagrant.configure("2") do |config|
 
             From Notepad, open the following file:
 
-            c:\Windows\System32\Drivers\etc\hosts
+            c:\\Windows\\System32\\Drivers\\etc\\hosts
 
             add the below line in the hosts file
 
