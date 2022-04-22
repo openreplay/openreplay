@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import { IFilter } from "./filter";
 import { metricService } from "App/services";
 import Session, { ISession } from "App/mstore/types/session";
+
 export interface IWidget {
     metricId: any
     widgetId: any
@@ -45,7 +46,7 @@ export interface IWidget {
     exists(): boolean
     toWidget(): any
     setData(data: any): void
-    fetchSessions(filter: any): Promise<any>
+    fetchSessions(metricId: any, filter: any): Promise<any>
 }
 export default class Widget implements IWidget {
     public static get ID_KEY():string { return "metricId" }
@@ -158,9 +159,7 @@ export default class Widget implements IWidget {
     }
 
     toJsonDrilldown() {
-        return {
-            series: this.series.map((series: any) => series.toJson()),
-        }
+        return this.series.map((series: any) => series.toJson())
     }
 
     toJson() {
@@ -197,18 +196,15 @@ export default class Widget implements IWidget {
         })
     }
 
-    fetchSessions(filter: any): Promise<any> {
-        this.sessionsLoading = true
+    fetchSessions(metricId: any, filter: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            metricService.fetchSessions(this.metricId, filter).then(response => {
+            metricService.fetchSessions(metricId, filter).then(response => {
                 resolve(response.map(cat => {
                     return {
                         ...cat,
                         sessions: cat.sessions.map(s => new Session().fromJson(s))
                     }
                 }))
-            }).finally(() => {
-                this.sessionsLoading = false
             })
         })
     }

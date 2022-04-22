@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React, { Component, createContext } from 'react';
 import Modal from './Modal';
 

@@ -344,8 +344,8 @@ def __get_page_metrics(ch, project_id, startTimestamp, endTimestamp, **args):
     ch_sub_query += meta_condition
     ch_sub_query.append("(pages.dom_content_loaded_event_end>0 OR pages.first_contentful_paint>0)")
     # changed dom_content_loaded_event_start to dom_content_loaded_event_end
-    ch_query = f"""SELECT COALESCE(AVG(NULLIF(pages.dom_content_loaded_event_end ,0)),0) AS avg_dom_content_load_start,
-                           COALESCE(AVG(NULLIF(pages.first_contentful_paint,0)),0)  AS avg_first_contentful_pixel
+    ch_query = f"""SELECT COALESCE(avgOrNull(NULLIF(pages.dom_content_loaded_event_end ,0)),0) AS avg_dom_content_load_start,
+                           COALESCE(avgOrNull(NULLIF(pages.first_contentful_paint,0)),0)  AS avg_first_contentful_pixel
                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "type": 'fetch', "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -375,7 +375,7 @@ def __get_application_activity(ch, project_id, startTimestamp, endTimestamp, **a
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
 
-    ch_query = f"""SELECT AVG(pages.load_event_end) AS avg_page_load_time
+    ch_query = f"""SELECT COALESCE(avgOrNull(pages.load_event_end),0) AS avg_page_load_time
                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)} AND pages.load_event_end>0;"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -387,7 +387,7 @@ def __get_application_activity(ch, project_id, startTimestamp, endTimestamp, **a
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("resources.type= %(type)s")
-    ch_query = f"""SELECT AVG(resources.duration) AS avg 
+    ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS avg 
                     FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)} AND resources.duration>0;"""
     row = ch.execute(query=ch_query,
@@ -433,8 +433,8 @@ def __get_user_activity(ch, project_id, startTimestamp, endTimestamp, **args):
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("(sessions.pages_count>0 OR sessions.duration>0)")
-    ch_query = f"""SELECT COALESCE(CEIL(AVG(NULLIF(sessions.pages_count,0))),0) AS avg_visited_pages,
-                           COALESCE(AVG(NULLIF(sessions.duration,0)),0)          AS avg_session_duration
+    ch_query = f"""SELECT COALESCE(CEIL(avgOrNull(NULLIF(sessions.pages_count,0))),0) AS avg_visited_pages,
+                           COALESCE(avgOrNull(NULLIF(sessions.duration,0)),0)          AS avg_session_duration
                     FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -460,7 +460,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT resources.url,
-                              AVG(resources.duration) AS avg,
+                              COALESCE(avgOrNull(resources.duration),0) AS avg,
                               COUNT(resources.session_id) AS count 
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                         WHERE {" AND ".join(ch_sub_query)} AND resources.duration>0
@@ -477,7 +477,7 @@ def get_slowest_images(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         charts = {}
         ch_query = f"""SELECT url, 
                                toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                               AVG(resources.duration) AS avg
+                               COALESCE(avgOrNull(resources.duration),0) AS avg
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)} AND resources.duration>0
                         GROUP BY url, timestamp
@@ -540,7 +540,7 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
               "endTimestamp": endTimestamp}
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(resources.duration) AS avg 
+                              COALESCE(avgOrNull(resources.duration),0) AS avg 
                       FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)}
                           AND resources.type = 'img' AND resources.duration>0 
@@ -553,7 +553,7 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
                                            end_time=endTimestamp,
                                            density=density, neutral={"avg": 0})]
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(resources.duration) AS avg 
+                              COALESCE(avgOrNull(resources.duration),0) AS avg 
                       FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)} 
                           AND resources.type = 'fetch' AND resources.duration>0  
@@ -571,7 +571,7 @@ def get_performance(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTi
         ch_sub_query_chart += meta_condition
 
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(pages.load_event_end) AS avg 
+                              COALESCE(avgOrNull(pages.load_event_end),0) AS avg 
                       FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)} AND pages.load_event_end>0 
                           {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
@@ -896,7 +896,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(resources.duration) AS avg 
+                              COALESCE(avgOrNull(resources.duration),0) AS avg 
                           FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                           WHERE {" AND ".join(ch_sub_query_chart)} 
                           GROUP BY timestamp
@@ -906,7 +906,7 @@ def get_resources_loading_time(project_id, startTimestamp=TimeUTC.now(delta_days
                   "endTimestamp": endTimestamp,
                   "value": url, "type": type, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(resources.duration) AS avg 
+        ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS avg 
                       FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -929,7 +929,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              AVG(pages.dom_building_time) AS value 
+                              COALESCE(avgOrNull(pages.dom_building_time),0) AS value 
                           FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                           WHERE {" AND ".join(ch_sub_query_chart)} 
                           GROUP BY timestamp
@@ -939,7 +939,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
                   "endTimestamp": endTimestamp,
                   "value": url, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(pages.dom_building_time) AS avg 
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.dom_building_time),0) AS avg 
                       FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -970,7 +970,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT any(url) AS url, any(type) AS type,
                               splitByChar('/', resources.url_hostpath)[-1] AS name,
-                              AVG(NULLIF(resources.duration,0)) AS avg 
+                              COALESCE(avgOrNull(NULLIF(resources.duration,0)),0) AS avg 
                           FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                           WHERE {" AND ".join(ch_sub_query)}
                           GROUP BY name
@@ -987,7 +987,7 @@ def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
         names = {f"name_{i}": r["name"] for i, r in enumerate(rows)}
         ch_query = f"""SELECT splitByChar('/', resources.url_hostpath)[-1] AS name,
                             toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                            AVG(resources.duration) AS avg 
+                            COALESCE(avgOrNull(resources.duration),0) AS avg 
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                             AND ({" OR ".join([f"endsWith(resources.url_hostpath, %(name_{i})s)>0" for i in range(len(names.keys()))])})
@@ -1044,7 +1044,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT pages.user_country, AVG(pages.speed_index) AS avg
+        ch_query = f"""SELECT pages.user_country, COALESCE(avgOrNull(pages.speed_index),0) AS avg
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)} 
                         GROUP BY pages.user_country
@@ -1053,7 +1053,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(pages.speed_index) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.speed_index),0) AS avg
                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1073,7 +1073,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
         ch_sub_query_chart.append(f"url_path = %(value)s")
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                        AVG(pages.response_time)                                        AS value
+                        COALESCE(avgOrNull(pages.response_time),0)                                        AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)} 
                         GROUP BY timestamp
@@ -1084,7 +1084,7 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                   "endTimestamp": endTimestamp,
                   "value": url, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(pages.response_time) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.response_time),0) AS avg
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1114,7 +1114,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
                           params={"project_id": project_id,
                                   "startTimestamp": startTimestamp,
                                   "endTimestamp": endTimestamp, **__get_constraint_values(args)})
-        ch_query = f"""SELECT AVG(pages.response_time) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.response_time),0) AS avg
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query,
@@ -1247,12 +1247,12 @@ def get_top_metrics(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     if value is not None:
         ch_sub_query.append("pages.url_path = %(value)s")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT (SELECT COALESCE(AVG(pages.response_time),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.response_time) AND pages.response_time>0) AS avg_response_time,
+        ch_query = f"""SELECT (SELECT COALESCE(avgOrNull(pages.response_time),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.response_time) AND pages.response_time>0) AS avg_response_time,
                             (SELECT COUNT(pages.session_id) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)}) AS count_requests,
-                            (SELECT COALESCE(AVG(pages.first_paint),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.first_paint) AND pages.first_paint>0) AS avg_first_paint,
-                            (SELECT COALESCE(AVG(pages.dom_content_loaded_event_time),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.dom_content_loaded_event_time) AND pages.dom_content_loaded_event_time>0) AS avg_dom_content_loaded,
-                            (SELECT COALESCE(AVG(pages.ttfb),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.ttfb) AND pages.ttfb>0) AS avg_till_first_bit,
-                            (SELECT COALESCE(AVG(pages.time_to_interactive),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.time_to_interactive) AND pages.time_to_interactive >0) AS avg_time_to_interactive;"""
+                            (SELECT COALESCE(avgOrNull(pages.first_paint),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.first_paint) AND pages.first_paint>0) AS avg_first_paint,
+                            (SELECT COALESCE(avgOrNull(pages.dom_content_loaded_event_time),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.dom_content_loaded_event_time) AND pages.dom_content_loaded_event_time>0) AS avg_dom_content_loaded,
+                            (SELECT COALESCE(avgOrNull(pages.ttfb),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.ttfb) AND pages.ttfb>0) AS avg_till_first_bit,
+                            (SELECT COALESCE(avgOrNull(pages.time_to_interactive),0) FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.time_to_interactive) AND pages.time_to_interactive >0) AS avg_time_to_interactive;"""
         rows = ch.execute(query=ch_query,
                           params={"project_id": project_id,
                                   "startTimestamp": startTimestamp,
@@ -1274,7 +1274,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                        AVG(pages.visually_complete) AS value
+                        COALESCE(avgOrNull(pages.visually_complete),0) AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)} 
                         GROUP BY timestamp
@@ -1284,7 +1284,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, "value": url, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(pages.visually_complete) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.visually_complete),0) AS avg
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1311,7 +1311,7 @@ def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(d
                               COUNT(DISTINCT pages.session_id) AS count
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)}
-                            AND (pages.response_time)>(SELECT AVG(pages.response_time) 
+                            AND (pages.response_time)>(SELECT COALESCE(avgOrNull(pages.response_time),0) 
                                                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                                                     WHERE {" AND ".join(sch_sub_query)})*2
                         GROUP BY timestamp
@@ -1337,7 +1337,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(performance.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                              AVG(performance.avg_used_js_heap_size) AS value
+                              COALESCE(avgOrNull(performance.avg_used_js_heap_size),0) AS value
                         FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
@@ -1347,7 +1347,7 @@ def get_memory_consumption(project_id, startTimestamp=TimeUTC.now(delta_days=-1)
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(performance.avg_used_js_heap_size) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(performance.avg_used_js_heap_size),0) AS avg
                         FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1369,7 +1369,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(performance.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                              AVG(performance.avg_cpu) AS value
+                              COALESCE(avgOrNull(performance.avg_cpu),0) AS value
                         FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
@@ -1379,7 +1379,7 @@ def get_avg_cpu(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(performance.avg_cpu) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(performance.avg_cpu),0) AS avg
                         FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1401,7 +1401,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(performance.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                              AVG(performance.avg_fps) AS value
+                              COALESCE(avgOrNull(performance.avg_fps),0) AS value
                         FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
@@ -1411,7 +1411,7 @@ def get_avg_fps(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(performance.avg_fps) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(performance.avg_fps),0) AS avg
                         FROM performance {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1657,7 +1657,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT resources.url_host AS domain,
-                              AVG(resources.duration) AS avg
+                              COALESCE(avgOrNull(resources.duration),0) AS avg
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY resources.url_host
@@ -1667,7 +1667,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
         rows = ch.execute(query=ch_query, params=params)
-        ch_query = f"""SELECT AVG(resources.duration) AS avg
+        ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS avg
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
@@ -1900,7 +1900,7 @@ def resource_type_vs_response_end(project_id, startTimestamp=TimeUTC.now(delta_d
                                            density=density,
                                            neutral={"total": 0, "xhr": 0})
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp, 
-                              AVG(pages.response_end) AS avg_response_end
+                              COALESCE(avgOrNull(pages.response_end),0) AS avg_response_end
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart_response_end)}
                         GROUP BY timestamp
@@ -1963,7 +1963,7 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(s.base_datetime, toIntervalSecond(%(step_size)s))) * 1000 AS timestamp,
-                              AVG(NULLIF(s.count,0)) AS avg,
+                              COALESCE(avgOrNull(NULLIF(s.count,0)),0) AS avg,
                               groupArray([toString(t.type), toString(t.xavg)]) AS types
                         FROM
                         (   SELECT resources.session_id,
@@ -1976,7 +1976,7 @@ def get_resources_vs_visually_complete(project_id, startTimestamp=TimeUTC.now(de
                         INNER JOIN
                         (SELECT session_id,
                                  type,
-                                 AVG(NULLIF(count,0)) AS xavg
+                                 COALESCE(avgOrNull(NULLIF(count,0)),0) AS xavg
                           FROM (SELECT resources.session_id, resources.type, COUNT(resources.url) AS count
                                 FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                                 WHERE {" AND ".join(ch_sub_query)}
@@ -2111,7 +2111,7 @@ def __get_application_activity_avg_page_load_time(ch, project_id, startTimestamp
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("pages.load_event_end>0")
-    ch_query = f"""SELECT AVG(pages.load_event_end) AS value
+    ch_query = f"""SELECT COALESCE(avgOrNull(pages.load_event_end),0) AS value
                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -2148,7 +2148,7 @@ def get_performance_avg_page_load_time(ch, project_id, startTimestamp=TimeUTC.no
     ch_sub_query_chart.append("pages.load_event_end>0")
 
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                          COALESCE(AVG(pages.load_event_end),0) AS value 
+                          COALESCE(avgOrNull(pages.load_event_end),0) AS value 
                   FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                   WHERE {" AND ".join(ch_sub_query_chart)} 
                       {(f' AND ({" OR ".join(location_constraints)})') if len(location_constraints) > 0 else ""}
@@ -2190,7 +2190,7 @@ def __get_application_activity_avg_image_load_time(ch, project_id, startTimestam
     ch_sub_query.append("resources.type= %(type)s")
     ch_sub_query.append("resources.duration>0")
     ch_query = f"""\
-                SELECT COALESCE(AVG(resources.duration),0) AS value 
+                SELECT COALESCE(avgOrNull(resources.duration),0) AS value 
                 FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                 WHERE {" AND ".join(ch_sub_query)};"""
     row = ch.execute(query=ch_query,
@@ -2224,7 +2224,7 @@ def get_performance_avg_image_load_time(ch, project_id, startTimestamp=TimeUTC.n
               "endTimestamp": endTimestamp}
     ch_sub_query_chart.append("resources.duration>0")
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                          COALESCE(AVG(resources.duration),0) AS value 
+                          COALESCE(avgOrNull(resources.duration),0) AS value 
                   FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                   WHERE {" AND ".join(ch_sub_query_chart)}
                       AND resources.type = 'img' 
@@ -2265,7 +2265,7 @@ def __get_application_activity_avg_request_load_time(ch, project_id, startTimest
     ch_sub_query += meta_condition
     ch_sub_query.append("resources.type= %(type)s")
     ch_sub_query.append("resources.duration>0")
-    ch_query = f"""SELECT COALESCE(AVG(resources.duration),0) AS value 
+    ch_query = f"""SELECT COALESCE(avgOrNull(resources.duration),0) AS value 
                     FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     row = ch.execute(query=ch_query,
@@ -2298,7 +2298,7 @@ def get_performance_avg_request_load_time(ch, project_id, startTimestamp=TimeUTC
               "endTimestamp": endTimestamp}
     ch_sub_query_chart.append("resources.duration>0")
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(resources.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                          COALESCE(AVG(resources.duration),0) AS value 
+                          COALESCE(avgOrNull(resources.duration),0) AS value 
                   FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                   WHERE {" AND ".join(ch_sub_query_chart)} 
                       AND resources.type = 'fetch'  
@@ -2343,7 +2343,7 @@ def __get_page_metrics_avg_dom_content_load_start(ch, project_id, startTimestamp
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("pages.dom_content_loaded_event_end>0")
-    ch_query = f"""SELECT COALESCE(AVG(pages.dom_content_loaded_event_end),0) AS value
+    ch_query = f"""SELECT COALESCE(avgOrNull(pages.dom_content_loaded_event_end),0) AS value
                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "type": 'fetch', "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -2363,7 +2363,7 @@ def __get_page_metrics_avg_dom_content_load_start_chart(ch, project_id, startTim
               "endTimestamp": endTimestamp}
     ch_sub_query_chart.append("pages.dom_content_loaded_event_end>0")
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                        COALESCE(AVG(pages.dom_content_loaded_event_end),0) AS value 
+                        COALESCE(avgOrNull(pages.dom_content_loaded_event_end),0) AS value 
                       FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)}
                       GROUP BY timestamp
@@ -2406,7 +2406,7 @@ def __get_page_metrics_avg_first_contentful_pixel(ch, project_id, startTimestamp
     ch_sub_query.append("pages.first_contentful_paint>0")
     # changed dom_content_loaded_event_start to dom_content_loaded_event_end
     ch_query = f"""\
-        SELECT COALESCE(AVG(pages.first_contentful_paint),0)  AS value
+        SELECT COALESCE(avgOrNull(pages.first_contentful_paint),0)  AS value
         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
         WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "type": 'fetch', "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -2426,7 +2426,7 @@ def __get_page_metrics_avg_first_contentful_pixel_chart(ch, project_id, startTim
               "endTimestamp": endTimestamp}
     ch_sub_query_chart.append("pages.first_contentful_paint>0")
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                          COALESCE(AVG(pages.first_contentful_paint),0) AS value 
+                          COALESCE(avgOrNull(pages.first_contentful_paint),0) AS value 
                   FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                   WHERE {" AND ".join(ch_sub_query_chart)}
                   GROUP BY timestamp
@@ -2469,7 +2469,7 @@ def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTim
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
     ch_sub_query.append("sessions.pages_count>0")
-    ch_query = f"""SELECT COALESCE(CEIL(AVG(sessions.pages_count)),0) AS value
+    ch_query = f"""SELECT COALESCE(CEIL(avgOrNull(sessions.pages_count)),0) AS value
                     FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -2490,7 +2490,7 @@ def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, 
               "endTimestamp": endTimestamp}
     ch_sub_query_chart.append("sessions.pages_count>0")
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              COALESCE(AVG(sessions.pages_count),0) AS value 
+                              COALESCE(avgOrNull(sessions.pages_count),0) AS value 
                   FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                   WHERE {" AND ".join(ch_sub_query_chart)}
                   GROUP BY timestamp
@@ -2534,7 +2534,7 @@ def __get_user_activity_avg_session_duration(ch, project_id, startTimestamp, end
     ch_sub_query.append("isNotNull(sessions.duration)")
     ch_sub_query.append("sessions.duration>0")
 
-    ch_query = f"""SELECT COALESCE(AVG(sessions.duration),0) AS value
+    ch_query = f"""SELECT COALESCE(avgOrNull(sessions.duration),0) AS value
                     FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
@@ -2556,7 +2556,7 @@ def __get_user_activity_avg_session_duration_chart(ch, project_id, startTimestam
               "endTimestamp": endTimestamp}
 
     ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                                  COALESCE(AVG(sessions.duration),0) AS value 
+                                  COALESCE(avgOrNull(sessions.duration),0) AS value 
                       FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)}
                       GROUP BY timestamp
@@ -2582,7 +2582,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
         ch_sub_query.append("pages.url_path = %(value)s")
         ch_sub_query_chart.append("pages.url_path = %(value)s")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT COALESCE(AVG(pages.response_time),0) AS value
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.response_time),0) AS value
                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                        WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.response_time) AND pages.response_time>0;"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -2657,7 +2657,7 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
         ch_sub_query.append("pages.url_path = %(value)s")
         ch_sub_query_chart.append("pages.url_path = %(value)s")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT COALESCE(AVG(pages.first_paint),0) AS value
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.first_paint),0) AS value
                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                        WHERE {" AND ".join(ch_sub_query)} AND isNotNull(pages.first_paint) AND pages.first_paint>0;"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -2667,7 +2667,7 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
         rows = ch.execute(query=ch_query, params=params)
         results = rows[0]
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
-                          COALESCE(AVG(pages.first_paint),0) AS value
+                          COALESCE(avgOrNull(pages.first_paint),0) AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)} AND isNotNull(pages.first_paint) AND pages.first_paint>0
                         GROUP BY timestamp
@@ -2700,7 +2700,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
     ch_sub_query_chart.append("isNotNull(pages.dom_content_loaded_event_time)")
     ch_sub_query_chart.append("pages.dom_content_loaded_event_time>0")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT COALESCE(AVG(pages.dom_content_loaded_event_time),0) AS value 
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.dom_content_loaded_event_time),0) AS value 
                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                        WHERE {" AND ".join(ch_sub_query)};"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -2710,7 +2710,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
         rows = ch.execute(query=ch_query, params=params)
         results = helper.dict_to_camel_case(rows[0])
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
-                              COALESCE(AVG(pages.dom_content_loaded_event_time),0) AS value
+                              COALESCE(avgOrNull(pages.dom_content_loaded_event_time),0) AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
@@ -2742,7 +2742,7 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
     ch_sub_query_chart.append("isNotNull(pages.ttfb)")
     ch_sub_query_chart.append("pages.ttfb>0")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT COALESCE(AVG(pages.ttfb),0) AS value 
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.ttfb),0) AS value 
                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                        WHERE {" AND ".join(ch_sub_query)};"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -2752,7 +2752,7 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
         rows = ch.execute(query=ch_query, params=params)
         results = rows[0]
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
-                          COALESCE(AVG(pages.ttfb),0) AS value
+                          COALESCE(avgOrNull(pages.ttfb),0) AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp
@@ -2784,7 +2784,7 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
     ch_sub_query_chart.append("isNotNull(pages.time_to_interactive)")
     ch_sub_query_chart.append("pages.time_to_interactive >0")
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT COALESCE(AVG(pages.time_to_interactive),0) AS value 
+        ch_query = f"""SELECT COALESCE(avgOrNull(pages.time_to_interactive),0) AS value 
                        FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""} 
                        WHERE {" AND ".join(ch_sub_query)};"""
         params = {"step_size": step_size, "project_id": project_id,
@@ -2794,7 +2794,7 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
         rows = ch.execute(query=ch_query, params=params)
         results = rows[0]
         ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second)) * 1000  AS timestamp,
-                          COALESCE(AVG(pages.time_to_interactive),0) AS value
+                          COALESCE(avgOrNull(pages.time_to_interactive),0) AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)}
                         GROUP BY timestamp

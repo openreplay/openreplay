@@ -4,28 +4,31 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { useObserver } from 'mobx-react-lite';
+import { observer, useObserver } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
+import { debounce } from 'App/utils';
 interface Props {
     metric: any;
     isWidget?: boolean
 }
 function WidgetChart(props: Props) {
     const { isWidget = false, metric } = props;
-    const { dashboardStore } = useStore();
+    const { dashboardStore, metricStore } = useStore();
+    const _metric: any = useObserver(() => metricStore.instance);
     const period = useObserver(() => dashboardStore.period);
     const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const colors = Styles.customMetricColors;
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
     const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
     const params = { density: isOverviewWidget ? 7 : 70 } 
     const metricParams = { ...params }
     const prevMetricRef = useRef<any>();
     const [data, setData] = useState<any>(metric.data);
+
 
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
@@ -52,21 +55,28 @@ function WidgetChart(props: Props) {
         }
     }
 
+    const depsString = JSON.stringify(_metric.series);
+
+
+    const fetchMetricChartData = (metric, payload, isWidget) => {
+        setLoading(true)
+        dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
+            setData(res);
+        }).finally(() => {
+            setLoading(false);
+        });
+    }
+    
+    const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
     useEffect(() => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
           prevMetricRef.current = metric;
           return
         };
         prevMetricRef.current = metric;
-        
-        setLoading(true);
         const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
-        dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
-            setData(res);
-        }).finally(() => {
-            setLoading(false);
-        });
-    }, [period]);
+        debounceRequest(metric, payload, isWidget);
+    }, [period, depsString]);
 
     const renderChart = () => {
         const { metricType, viewType } = metric;
@@ -121,10 +131,10 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={loading}>
+        <Loader loading={loading} size="small" style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));
 }
 
-export default WidgetChart;
+export default observer(WidgetChart);

@@ -13,8 +13,7 @@ import { IconButton, Icon } from 'UI';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SeriesName from './SeriesName';
 import cn from 'classnames';
-import { useDashboardStore } from '../../store/store';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 
 interface Props {
   seriesIndex: number;
@@ -37,7 +36,7 @@ function FilterSeries(props: Props) {
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
 
-  useEffect(observeChanges, [series])
+  useEffect(observeChanges, [series.filter]);
 
   const onAddFilter = (filter) => {
     series.filter.addFilter(filter)
@@ -49,12 +48,10 @@ function FilterSeries(props: Props) {
 
   const onChangeEventsOrder = (e, { name, value }) => {
     series.filter.updateKey(name, value)
-    // props.editSeriesFilter(seriesIndex, { eventsOrder: value });
   }
 
   const onRemoveFilter = (filterIndex) => {
     series.filter.removeFilter(filterIndex)
-    // props.removeSeriesFilterFilter(seriesIndex, filterIndex);
   }
 
   return (

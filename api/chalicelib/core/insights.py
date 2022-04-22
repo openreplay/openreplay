@@ -21,7 +21,7 @@ def __transform_journey(rows):
 
 JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
-    "PAGES": {"table": "events.pages", "column": "base_path", "table_id": "message_id"},
+    "PAGES": {"table": "events.pages", "column": "path", "table_id": "message_id"},
     "CLICK": {"table": "events.clicks", "column": "label", "table_id": "message_id"},
     # "VIEW": {"table": "events_ios.views", "column": "name", "table_id": "seq_index"}, TODO: enable this for SAAS only
     "EVENT": {"table": "events_common.customs", "column": "name", "table_id": "seq_index"}

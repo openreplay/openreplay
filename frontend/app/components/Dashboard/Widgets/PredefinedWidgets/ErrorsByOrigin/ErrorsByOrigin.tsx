@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React from 'react';
 import { NoContent } from 'UI';
 import { Styles } from '../../common';
@@ -39,6 +40,8 @@ function ErrorsByOrigin(props: Props) {
               <Tooltip {...Styles.tooltip} />
               <Bar minPointSize={1} name={<span className="float">1<sup>st</sup> Party</span>} dataKey="firstParty" stackId="a" fill={Styles.colors[0]} />
               <Bar name={<span className="float">3<sup>rd</sup> Party</span>} dataKey="thirdParty" stackId="a" fill={Styles.colors[2]} />
+              {/* <Bar minPointSize={1} name={<span className="float">1<sup>st</sup> Party</span>} dataKey="firstParty" stackId="a" fill={Styles.colors[0]} />
+              <Bar name={<span className="float">3<sup>rd</sup> Party</span>} dataKey="thirdParty" stackId="a" fill={Styles.colors[2]} /> */}
             </BarChart>
           </ResponsiveContainer>
         </NoContent>

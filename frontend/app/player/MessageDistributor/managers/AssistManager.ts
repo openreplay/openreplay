@@ -59,12 +59,14 @@ export interface State {
   calling: CallingState,
   peerConnectionStatus: ConnectionStatus,
   remoteControl: RemoteControlStatus,
+  annotating: boolean,
 }
 
 export const INITIAL_STATE: State = {
   calling: CallingState.NoCall,
   peerConnectionStatus: ConnectionStatus.Connecting,
   remoteControl: RemoteControlStatus.Disabled,
+  annotating: false,
 }
 
 const MAX_RECONNECTION_COUNT = 4;
@@ -321,7 +323,7 @@ export default class AssistManager {
   private handleCallEnd() {
     this.callArgs && this.callArgs.onCallEnd()
     this.callConnection && this.callConnection.close()
-    update({ calling: CallingState.NoCall })
+    update({ calling: CallingState.NoCall, annotating: false })
     this.callArgs = null
     this.annot?.remove()
     this.annot = null
@@ -370,6 +372,45 @@ export default class AssistManager {
     }
   }
 
+  toggleAnnotation(enable?: boolean) {
+    if (getState().calling !== CallingState.OnCall) { return }
+    if (typeof enable !== "boolean") {
+      enable = !!getState().annotating
+    }
+    if (!enable && !this.annot) {
+      const annot = this.annot = new AnnotationCanvas()
+      annot.mount(this.md.overlay)
+      annot.canvas.addEventListener("mousedown", e => {
+        if (!this.socket) { return }
+        const data = this.md.getInternalViewportCoordinates(e)
+        annot.start([ data.x, data.y ])
+        this.socket.emit("startAnnotation", [ data.x, data.y ])
+      })
+      annot.canvas.addEventListener("mouseleave", () => {
+        if (!this.socket) { return }
+        annot.stop()
+        this.socket.emit("stopAnnotation")
+      })
+      annot.canvas.addEventListener("mouseup", () => {
+        if (!this.socket) { return }
+        annot.stop()
+        this.socket.emit("stopAnnotation")
+      })
+      annot.canvas.addEventListener("mousemove", e => {
+        if (!this.socket || !annot.isPainting()) { return }
+
+        const data = this.md.getInternalViewportCoordinates(e)
+        annot.move([ data.x, data.y ])
+        this.socket.emit("moveAnnotation", [ data.x, data.y ])
+      })
+      update({ annotating: true })
+    } else if (enable && !!this.annot) {
+      this.annot.remove()
+      this.annot = null
+      update({ annotating: false })
+    }
+  }
+
   private annot: AnnotationCanvas | null = null
 
   private _call() {
@@ -396,34 +437,6 @@ export default class AssistManager {
       call.on('stream', stream => {
         update({ calling: CallingState.OnCall })
         this.callArgs && this.callArgs.onStream(stream)
-
-        if (!this.annot) {
-          const annot = this.annot = new AnnotationCanvas()
-          annot.mount(this.md.overlay)
-          annot.canvas.addEventListener("mousedown", e => {
-            if (!this.socket) { return }
-            const data = this.md.getInternalViewportCoordinates(e)
-            annot.start([ data.x, data.y ])
-            this.socket.emit("startAnnotation", [ data.x, data.y ])
-          })
-          annot.canvas.addEventListener("mouseleave", () => {
-            if (!this.socket) { return }
-            annot.stop()
-            this.socket.emit("stopAnnotation")
-          })
-          annot.canvas.addEventListener("mouseup", () => {
-            if (!this.socket) { return }
-            annot.stop()
-            this.socket.emit("stopAnnotation")
-          })
-          annot.canvas.addEventListener("mousemove", e => {
-            if (!this.socket || !annot.isPainting()) { return }
-
-            const data = this.md.getInternalViewportCoordinates(e)
-            annot.move([ data.x, data.y ])
-            this.socket.emit("moveAnnotation", [ data.x, data.y ])
-          })
-        }
       });
       //call.peerConnection.addEventListener("track", e => console.log('newtrack',e.track))
 

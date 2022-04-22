@@ -353,8 +353,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             full_args[arg_name] = metric_value[i]
                         extra_where = f"WHERE ({' OR '.join(extra_where)})"
                 elif metric_of == schemas.TableMetricOfType.visited_url:
-                    main_col = "base_path"
-                    extra_col = ", base_path"
+                    main_col = "path"
+                    extra_col = ", path"
                 main_query = cur.mogrify(f"""{pre_query}
                                              SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,

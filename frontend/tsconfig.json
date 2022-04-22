@@ -3,7 +3,8 @@
     "target": "es5",
     "module": "es2020",
     "moduleResolution": "node", //?
-    //"allowJs": true,
+    // "allowJs": true,
+    "declaration": true,
     "allowSyntheticDefaultImports": true,
     "downlevelIteration": true,
     //"sourceMap": false,

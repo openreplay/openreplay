@@ -8,7 +8,7 @@
 .divider {
   width: 1px;
   height: 49px;
-  margin: 0 15px;
+  margin: 0 10px;
   background-color: $gray-light;
 }
 

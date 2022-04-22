@@ -5,12 +5,14 @@ import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
 import { observer, useObserver } from 'mobx-react-lite';
 import { DateTime } from 'luxon';
+import { debounce } from 'App/utils';
 interface Props {
     className?: string;
 }
 function WidgetSessions(props: Props) {
     const { className = '' } = props;
     const [data, setData] = useState<any>([]);
+    const [loading, setLoading] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState([
         { text: 'All', value: 'all' },
     ]);
@@ -30,18 +32,27 @@ function WidgetSessions(props: Props) {
         ]);
     }, [data]);
 
+    const fetchSessions = (metricId, filter) => {
+        setLoading(true)
+        widget.fetchSessions(metricId, filter).then(res => {
+            setData(res)
+        }).finally(() => {
+            setLoading(false)
+        });
+    }
+    
     const filteredSessions = getListSessionsBySeries(data, activeSeries);
     const { dashboardStore, metricStore } = useStore();
     const filter = useObserver(() => dashboardStore.drillDownFilter);
-    const widget: any = metricStore.instance;
+    const widget: any = useObserver(() => metricStore.instance);
     const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
     const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+    const debounceRequest: any = React.useCallback(debounce(fetchSessions, 1000), []);
 
+    const depsString = JSON.stringify(widget.series);
     useEffect(() => {
-        widget.fetchSessions({ ...filter, filter: widget.toJsonDrilldown()}).then(res => {
-            setData(res);
-        });
-    }, [filter.startTimestamp, filter.endTimestamp, filter.filters]);
+        debounceRequest(widget.metricId, { ...filter, series: widget.toJsonDrilldown() });
+    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString]);
 
     return useObserver(() => (
         <div className={cn(className)}>
@@ -71,7 +82,7 @@ function WidgetSessions(props: Props) {
             </div>
 
             <div className="mt-3">
-                <Loader loading={widget.sessionsLoading}>
+                <Loader loading={loading}>
                     <NoContent
                         title="No recordings found"
                         show={filteredSessions.length === 0}

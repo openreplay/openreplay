@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React, { useState, FC, useEffect } from 'react'
 import VideoContainer from '../components/VideoContainer'
 import { Icon, Popup, Button } from 'UI'

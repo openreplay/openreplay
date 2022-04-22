@@ -14,6 +14,10 @@ func GetURLParts(rawURL string) (string, string, string, error) {
 	if err != nil {
 		return "", "", "", err
 	}
-	// u.Scheme  ?
-	return u.Host, u.RawPath, u.RawQuery, nil
+	// u.Scheme  u.Fragment / RawFragment ?
+	path := u.Path
+	if u.RawPath != "" {
+		path = u.RawPath
+	}
+	return u.Host, path, u.RawQuery, nil
 }
