@@ -9,14 +9,22 @@ export default class FunnelStore {
     list: IFunnel[] = []
     instance: IFunnel | null = null
     period: Period = Period({ rangeName: LAST_7_DAYS })
+
+    page: number = 1
+    pageSize: number = 10
     
     constructor() {
         makeAutoObservable(this, {
+            updateKey: action,
             fetchFunnels: action,
             fetchFunnel: action,
             saveFunnel: action,
             deleteFunnel: action
         })
+    }
+
+    updateKey(key: string, value: any) {
+        this[key] = value
     }
 
     fetchFunnels(): Promise<any> {

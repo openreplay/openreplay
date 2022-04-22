@@ -4,7 +4,7 @@ import FunnelList from '../FunnelList';
 
 function FunnelPage(props) {
     return (
-        <div className="page-margin container-90">
+        <div className="page-margin container-70">
             <Switch>
                 <Route path="/">
                     <FunnelList />

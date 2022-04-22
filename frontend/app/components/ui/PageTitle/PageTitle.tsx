@@ -1,7 +1,12 @@
 import React from 'react';
 import cn from 'classnames';    
 
-function PageTitle({ title, className = '' }) {
+interface Props {
+    title: string;
+    className?: string;
+}
+function PageTitle(props: Props) {
+    const { title, className = '' } = props;
     return (
         <h1 className={cn("text-2xl", className)}>
             {title}

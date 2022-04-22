@@ -8,6 +8,7 @@ export interface IFunnel {
     conversionRate: number
     totalConversations: number
     lostConversations: number
+    isPublic: boolean
     fromJSON: (json: any) => void
     toJSON: () => any
 }
@@ -20,6 +21,7 @@ export default class Funnel implements IFunnel {
     conversionRate: number = 0
     totalConversations: number = 0
     lostConversations: number = 0
+    isPublic: boolean = false
 
     constructor() {
     }
