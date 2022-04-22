@@ -1,9 +1,9 @@
+require('dotenv').config()
 const dumps = require('./utils/HeapSnapshot');
 const {request_logger} = require('./utils/helper');
 const express = require('express');
 let socket;
 if (process.env.redis === "true") {
-    console.log("Using Redis");
     socket = require("./servers/websocket-cluster");
 } else {
     socket = require("./servers/websocket");

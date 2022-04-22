@@ -16,6 +16,9 @@ export interface IMetricStore {
     pageSize: number
     metricsSearch: string
     sort: any
+
+    sessionsPage: number
+    sessionsPageSize: number
     
     // State Actions
     init(metric?: IWidget|null): void
@@ -45,6 +48,9 @@ export default class MetricStore implements IMetricStore {
     pageSize: number = 15
     metricsSearch: string = ""
     sort: any = {}
+
+    sessionsPage: number = 1
+    sessionsPageSize: number = 10
 
     constructor() {
         makeAutoObservable(this, {
