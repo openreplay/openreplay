@@ -87,6 +87,7 @@ Vagrant.configure("2") do |config|
 
     DOMAIN_NAME=openreplay.local bash init.sh
     cp -rf /root/.kube /home/vagrant/
+    cp -rf /home/vagrant/infra/scripts/helmcharts/vars.yaml /home/vagrant/openreplay-dev/openreplay/scripts/helmcharts/vars.yaml
     chown -R vagrant:vagrant /home/vagrant
 
     cat <<EOF
