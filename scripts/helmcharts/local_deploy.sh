@@ -34,7 +34,6 @@ restart(){
     kubectl rollout status deployment -n app "$1-openreplay"
 }
 
-echo $DOCKER_REPO:$IMAGE_TAG
 [[ -z DOCKER_REPO ]] && {
     echo Set DOCKER_REPO="your docker registry"
     exit 1
