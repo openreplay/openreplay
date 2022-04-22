@@ -600,7 +600,6 @@ $$
 
 -- --- events_common.sql ---
 
-            CREATE SCHEMA IF NOT EXISTS events_common;
 
             CREATE TYPE events_common.custom_level AS ENUM ('info','error');
 
@@ -675,7 +674,6 @@ $$
             CREATE INDEX requests_query_nn_gin_idx ON events_common.requests USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 
 -- --- events.sql ---
-            CREATE SCHEMA IF NOT EXISTS events;
 
             CREATE TABLE events.pages
             (
@@ -684,7 +682,6 @@ $$
                 timestamp                   bigint NOT NULL,
                 host                        text   NOT NULL,
                 path                        text   NOT NULL,
-                base_path                   text   NOT NULL,
                 query                       text   NULL,
                 referrer                    text    DEFAULT NULL,
                 base_referrer               text    DEFAULT NULL,
@@ -702,13 +699,9 @@ $$
                 PRIMARY KEY (session_id, message_id)
             );
             CREATE INDEX pages_session_id_idx ON events.pages (session_id);
-            CREATE INDEX pages_base_path_gin_idx ON events.pages USING GIN (base_path gin_trgm_ops);
             CREATE INDEX pages_base_referrer_gin_idx ON events.pages USING GIN (base_referrer gin_trgm_ops);
             CREATE INDEX pages_timestamp_idx ON events.pages (timestamp);
             CREATE INDEX pages_session_id_timestamp_idx ON events.pages (session_id, timestamp);
-            CREATE INDEX pages_base_path_gin_idx2 ON events.pages USING GIN (RIGHT(base_path, length(base_path) - 1) gin_trgm_ops);
-            CREATE INDEX pages_base_path_idx ON events.pages (base_path);
-            CREATE INDEX pages_base_path_idx2 ON events.pages (RIGHT(base_path, length(base_path) - 1));
             CREATE INDEX pages_base_referrer_idx ON events.pages (base_referrer);
             CREATE INDEX pages_base_referrer_gin_idx2 ON events.pages USING GIN (RIGHT(base_referrer,
                                                                                        length(base_referrer) - (CASE
@@ -739,10 +732,10 @@ $$
                                                                                       time_to_interactive > 0;
             CREATE INDEX pages_session_id_speed_indexgt0nn_idx ON events.pages (session_id, speed_index) WHERE speed_index > 0 AND speed_index IS NOT NULL;
             CREATE INDEX pages_session_id_timestamp_dom_building_timegt0nn_idx ON events.pages (session_id, timestamp, dom_building_time) WHERE dom_building_time > 0 AND dom_building_time IS NOT NULL;
-            CREATE INDEX pages_base_path_session_id_timestamp_idx ON events.pages (base_path, session_id, timestamp);
-            CREATE INDEX pages_base_path_base_pathLNGT2_idx ON events.pages (base_path) WHERE length(base_path) > 2;
-            CREATE INDEX IF NOT EXISTS pages_query_nn_idx ON events.pages (query) WHERE query IS NOT NULL;
-            CREATE INDEX IF NOT EXISTS pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
+            CREATE INDEX pages_path_session_id_timestamp_idx ON events.pages (path, session_id, timestamp);
+            CREATE INDEX pages_path_pathLNGT2_idx ON events.pages (path) WHERE length(path) > 2;
+            CREATE INDEX pages_query_nn_idx ON events.pages (query) WHERE query IS NOT NULL;
+            CREATE INDEX pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
 
 
             CREATE TABLE events.clicks

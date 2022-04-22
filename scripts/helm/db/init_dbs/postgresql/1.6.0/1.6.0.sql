@@ -53,12 +53,36 @@ CREATE TABLE IF NOT EXISTS dashboard_widgets
 );
 
 ALTER TABLE events_common.requests
-    ADD COLUMN IF NOT EXISTS host      text NULL,
-    ADD COLUMN IF NOT EXISTS path text NULL,
-    ADD COLUMN IF NOT EXISTS query     text NULL;
+    ADD COLUMN IF NOT EXISTS host  text NULL,
+    ADD COLUMN IF NOT EXISTS path  text NULL,
+    ADD COLUMN IF NOT EXISTS query text NULL;
 
 ALTER TABLE events.pages
     ADD COLUMN IF NOT EXISTS query text NULL;
+
+DO
+$$
+    BEGIN
+        IF EXISTS(SELECT *
+                  FROM information_schema.columns
+                  WHERE table_schema = 'events'
+                    AND table_name = 'pages'
+                    AND column_name = 'base_path')
+        THEN
+            ALTER TABLE events.pages
+                DROP COLUMN IF EXISTS path;
+            ALTER TABLE events.pages
+                RENAME COLUMN base_path TO path;
+            DROP INDEX IF EXISTS events.pages_base_path_gin_idx2;
+            DROP INDEX IF EXISTS pages_base_path_idx2;
+            ALTER INDEX IF EXISTS events.pages_base_path_gin_idx RENAME TO pages_path_gin_idx;
+            ALTER INDEX IF EXISTS events.pages_base_path_idx RENAME TO pages_path_idx;
+            ALTER INDEX IF EXISTS events.pages_base_path_session_id_timestamp_idx RENAME TO pages_path_session_id_timestamp_idx;
+            ALTER INDEX IF EXISTS events.pages_base_path_base_pathLNGT2_idx RENAME TO pages_path_pathLNGT2_idx;
+        END IF;
+    END
+$$;
+
 COMMIT;
 
 ALTER TYPE metric_view_type ADD VALUE IF NOT EXISTS 'areaChart';
@@ -319,3 +343,6 @@ CREATE INDEX CONCURRENTLY IF NOT EXISTS requests_query_nn_gin_idx ON events_comm
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS pages_query_nn_idx ON events.pages (query) WHERE query IS NOT NULL;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS pages_query_nn_gin_idx ON events.pages USING GIN (query gin_trgm_ops) WHERE query IS NOT NULL;
+
+CREATE INDEX CONCURRENTLY IF NOT EXISTS pages_path_session_id_timestamp_idx ON events.pages (path, session_id, timestamp);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS pages_path_pathLNGT2_idx ON events.pages (path) WHERE length(path) > 2;

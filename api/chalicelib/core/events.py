@@ -339,7 +339,7 @@ def __generic_autocomplete(event: Event):
 class event_type:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
-    LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="base_path")
+    LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="path")
     CUSTOM = Event(ui_type=schemas.EventType.custom, table="events_common.customs", column="name")
     REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="path")
     GRAPHQL = Event(ui_type=schemas.EventType.graphql, table="events.graphql", column="name")
