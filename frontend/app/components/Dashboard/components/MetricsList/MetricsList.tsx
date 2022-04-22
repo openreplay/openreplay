@@ -1,5 +1,5 @@
 import { useObserver } from 'mobx-react-lite';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NoContent, Pagination } from 'UI';
 import { useStore } from 'App/mstore';
 import { getRE } from 'App/utils';
@@ -21,6 +21,10 @@ function MetricsList(props: Props) {
     }
     const list: any = metricsSearch !== '' ? filterList(metrics) : metrics;
     const lenth = list.length;
+
+    useEffect(() => {
+        metricStore.updateKey('sessionsPage', 1);
+    }, [])
 
     return useObserver(() => (
         <NoContent show={lenth === 0} animatedIcon="no-results">

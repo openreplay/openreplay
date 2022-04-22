@@ -23,7 +23,7 @@ export default ({
     className={ classnames(
       className,
       size,
-      { 'disabled' : disabled },
+      { 'btn-disabled' : disabled },
       styles[ plain ? 'plain' : '' ],
       styles[ hover ? 'hover' : '' ],
       styles.button,

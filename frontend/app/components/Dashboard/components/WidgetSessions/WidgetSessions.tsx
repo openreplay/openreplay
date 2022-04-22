@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { NoContent, Dropdown, Icon, Loader } from 'UI';
+import { NoContent, Dropdown, Icon, Loader, Pagination } from 'UI';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
@@ -12,6 +12,7 @@ interface Props {
 function WidgetSessions(props: Props) {
     const { className = '' } = props;
     const [data, setData] = useState<any>([]);
+    
     const [loading, setLoading] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState([
         { text: 'All', value: 'all' },
@@ -51,8 +52,8 @@ function WidgetSessions(props: Props) {
 
     const depsString = JSON.stringify(widget.series);
     useEffect(() => {
-        debounceRequest(widget.metricId, { ...filter, series: widget.toJsonDrilldown() });
-    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString]);
+        debounceRequest(widget.metricId, { ...filter, series: widget.toJsonDrilldown(), page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
+    }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage]);
 
     return useObserver(() => (
         <div className={cn(className)}>
@@ -85,12 +86,22 @@ function WidgetSessions(props: Props) {
                 <Loader loading={loading}>
                     <NoContent
                         title="No recordings found"
-                        show={filteredSessions.length === 0}
+                        show={filteredSessions.sessions.length === 0}
                         animatedIcon="no-results"
                     >
-                        {filteredSessions.map((session: any) => (
+                        {filteredSessions.sessions.map((session: any) => (
                             <SessionItem key={ session.sessionId } session={ session }  />
                         ))}
+
+                        <div className="w-full flex items-center justify-center py-6">
+                            <Pagination
+                                page={metricStore.sessionsPage}
+                                totalPages={filteredSessions.total / metricStore.sessionsPageSize}
+                                onPageChange={(page) => metricStore.updateKey('sessionsPage', page)}
+                                limit={metricStore.sessionsPageSize}
+                                debounceRequest={500}
+                            />
+                        </div>
                     </NoContent>
                 </Loader>
             </div>
@@ -99,14 +110,16 @@ function WidgetSessions(props: Props) {
 }
 
 const getListSessionsBySeries = (data, seriesId) => {
-    const arr: any = []
+    const arr: any = { sessions: [], total: 0 };
     data.forEach(element => {
         if (seriesId === 'all') {
-            const sessionIds = arr.map(i => i.sessionId);
-            arr.push(...element.sessions.filter(i => !sessionIds.includes(i.sessionId)));
+            const sessionIds = arr.sessions.map(i => i.sessionId);
+            arr.sessions.push(...element.sessions.filter(i => !sessionIds.includes(i.sessionId)));
+            arr.total = element.total
         } else {
             if (element.seriesId === seriesId) {
-                arr.push(...element.sessions)
+                arr.sessions.push(...element.sessions)
+                arr.total = element.total
             }
         }
     });
