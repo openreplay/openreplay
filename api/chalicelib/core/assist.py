@@ -25,12 +25,15 @@ def get_live_sessions_ws(project_id, user_id=None):
     if user_id and len(user_id) > 0:
         params["userId"] = user_id
     try:
-        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}", params)
+        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}", params, timeout=6)
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
             return []
         live_peers = connected_peers.json().get("data", [])
+    except requests.exceptions.Timeout:
+        print("Timeout getting Assist response")
+        live_peers = []
     except Exception as e:
         print("issue getting Live-Assist response")
         print(str(e))
@@ -60,12 +63,15 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}")
+        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}", timeout=6)
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
             return False
         connected_peers = connected_peers.json().get("data", [])
+    except requests.exceptions.Timeout:
+        print("Timeout getting Assist response")
+        return False
     except Exception as e:
         print("issue getting Assist response")
         print(str(e))
