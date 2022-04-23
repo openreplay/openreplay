@@ -739,7 +739,7 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                                              event.value, value_key=e_k))
                 if event.source is not None and len(event.source) > 0:
                     event_where.append(_multiple_conditions(f"main.value ILIKE %(custom{i})s", event.source,
-                                                            value_key="custom{i}"))
+                                                            value_key=f"custom{i}"))
                     full_args = {**full_args, **_multiple_values(event.source, f"custom{i}")}
             elif event_type == events.event_type.VIEW_IOS.ui_type:
                 event_from = event_from % f"{events.event_type.VIEW_IOS.table} AS main "

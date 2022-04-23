@@ -36,7 +36,7 @@ try:
 except Exception as e:
     print(repr(e))
     print("Please create the tables with scripts provided in "
-          "'/sql/{DATABASE}_sessions.sql' and '/sql/{DATABASE}_events.sql'")
+          f"'/sql/{DATABASE}_sessions.sql' and '/sql/{DATABASE}_events.sql'")
 
 
 def insert_batch(db: DBConnection, batch, table, level='normal'):
