@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -76,14 +75,14 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			responseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
-		sessionID, err := flaker.Compose(uint64(startTime.UnixMilli()))
+		sessionID, err := flaker.Compose(uint64(startTime.UnixNano() / 1e6))
 		if err != nil {
 			responseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
+		tokenData = &token.TokenData{sessionID, expTime.UnixNano() / 1e6}
 
 		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
 		producer.Produce(TOPIC_RAW_WEB, tokenData.ID, Encode(&SessionStart{
@@ -108,8 +107,8 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	//delayDuration := time.Now().Sub(startTime)
 	responseWithJSON(w, &response{
-		//Timestamp: startTime.UnixMilli(),
-		//Delay:     delayDuration.Milliseconds(),
+		//Timestamp: startTime.UnixNano() / 1e6,
+		//Delay:     delayDuration.Nanoseconds() / 1e6,
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -125,17 +124,8 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	}
 	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
 	defer body.Close()
-	buf, err := ioutil.ReadAll(body)
-	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
-		return
-	}
-	//log.Printf("Sending batch...")
-	//startTime := time.Now()
 
-	//	analyticsMessages := make([]Message, 0, 200)
-
-	rewritenBuf, err := RewriteBatch(buf, func(msg Message) Message {
+	rewritenBuf, err := RewriteBatch(body, func(msg Message) Message {
 		switch m := msg.(type) {
 		case *SetNodeAttributeURLBased:
 			if m.Name == "src" || m.Name == "href" {
