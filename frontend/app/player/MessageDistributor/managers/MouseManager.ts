@@ -34,7 +34,6 @@ export default class MouseManager extends ListWalker<MouseMove> {
 	move(t: number) {
 		const lastMouseMove = this.moveToLast(t);
 		if (!!lastMouseMove){
-      // @ts-ignore TODO
       this.screen.cursor.move(lastMouseMove);
       //window.getComputedStyle(this.screen.getCursorTarget()).cursor === 'pointer' // might nfluence performance though
       this.updateHover();
