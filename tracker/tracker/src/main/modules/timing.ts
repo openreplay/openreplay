@@ -107,18 +107,6 @@ export default function (app: App, opts: Partial<Options>): void {
   }
   if (!options.captureResourceTimings) { return } // Resources are necessary for all timings
 
-  const mQueue: Message[] = []
-  function sendOnStart(m: Message) {
-    if (app.active()) {
-      app.send(m)
-    } else {
-      mQueue.push(m)
-    }
-  }
-  app.attachStartCallback(function() {
-    mQueue.forEach(m => app.send(m))
-  })
-
   let resources: ResourcesTimeMap | null = {}
 
   function resourceTiming(entry: PerformanceResourceTiming): void {
@@ -126,7 +114,7 @@ export default function (app: App, opts: Partial<Options>): void {
     if (resources !== null) {
       resources[entry.name] = entry.startTime + entry.duration;
     }
-    sendOnStart(new 
+    app.send(new 
       ResourceTiming(
         entry.startTime + performance.timing.navigationStart,
         entry.duration,
@@ -147,8 +135,19 @@ export default function (app: App, opts: Partial<Options>): void {
   const observer: PerformanceObserver = new PerformanceObserver(
     (list) => list.getEntries().forEach(resourceTiming),
   )
-  performance.getEntriesByType('resource').forEach(resourceTiming)
-  observer.observe({ entryTypes: ['resource'] })
+
+  let prevSessionID: string | undefined
+  app.attachStartCallback(function({ sessionID }) {
+    if (sessionID !== prevSessionID) { // Send past page resources on a newly started session
+      performance.getEntriesByType('resource').forEach(resourceTiming)
+      prevSessionID = sessionID
+    }
+    observer.observe({ entryTypes: ['resource'] })
+  })
+
+  app.attachStopCallback(function() {
+    observer.disconnect()
+  })
 
 
   let firstPaint = 0,

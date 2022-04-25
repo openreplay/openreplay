@@ -13,15 +13,7 @@ import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
-
-
 import type { Options as WebworkerOptions, WorkerMessageData } from "../../webworker/types.js";
-
-export interface OnStartInfo {
-  sessionID: string, 
-  sessionToken: string, 
-  userUUID: string,
-}
 
 
 // TODO: Unify and clearly describe options logic
@@ -29,6 +21,20 @@ export interface StartOptions {
   userID?: string,
   metadata?: Record<string, string>,
   forceNew?: boolean,
+}
+
+export interface OnStartInfo {
+  sessionID: string, 
+  sessionToken: string, 
+  userUUID: string,
+}
+
+type StartCallback = (i: OnStartInfo) => void
+type CommitCallback = (messages: Array<Message>) => void
+enum ActivityState {
+  NotActive,
+  Starting,
+  Active,
 }
 
 type AppOptions = {
@@ -47,18 +53,10 @@ type AppOptions = {
   __debug__?: LoggerOptions;
 
   // @deprecated
-  onStart?: (info: OnStartInfo) => void;
+  onStart?: StartCallback;
 } & WebworkerOptions;
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
-
-type Callback = () => void
-type CommitCallback = (messages: Array<Message>) => void
-enum ActivityState {
-  NotActive,
-  Starting,
-  Active,
-}
 
 export const CANCELED = "canceled"
 
@@ -75,8 +73,8 @@ export default class App {
   readonly session: Session;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
-  private readonly startCallbacks: Array<Callback> = [];
-  private readonly stopCallbacks: Array<Callback> = [];
+  private readonly startCallbacks: Array<StartCallback> = [];
+  private readonly stopCallbacks: Array<Function> = [];
   private readonly commitCallbacks: Array<CommitCallback> = [];
   private readonly options: AppOptions;
   private readonly revID: string;
@@ -167,20 +165,14 @@ export default class App {
     this.debug.error("OpenReplay error: ", context, e)
   }
 
-  private readonly preStartMessages: Message[] = []
   send(message: Message, urgent = false): void {
-    if (this.activityState === ActivityState.NotActive) {
-      return;
-    }
-    if (this.activityState === ActivityState.Starting) {
-      this.preStartMessages.push(message);
-    }
-    if (this.preStartMessages.length) {
-      this.messages.push(...this.preStartMessages);
-      this.preStartMessages.length = 0
-    }
+    if (this.activityState === ActivityState.NotActive) { return }
     this.messages.push(message);
-    if (urgent) {
+    // TODO: commit on start if there were `urgent` sends; 
+    // Clearify where urgent can be used for;
+    // Clearify workflow for each type of message in case it was sent before start 
+    //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
+    if (this.activityState === ActivityState.Active && urgent) {
       this.commit();
     }
   }
@@ -211,11 +203,10 @@ export default class App {
   attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
   }
-
-  attachStartCallback(cb: Callback): void {
+  attachStartCallback(cb: StartCallback): void {
     this.startCallbacks.push(cb);
   }
-  attachStopCallback(cb: Callback): void {
+  attachStopCallback(cb: Function): void {
     this.stopCallbacks.push(cb);
   }
   attachEventListener(
@@ -394,13 +385,15 @@ export default class App {
         beaconSizeLimit
       }
       this.worker.postMessage(startWorkerMsg)
-      this.startCallbacks.forEach((cb) => cb());
+
+      const onStartInfo = { sessionToken: token, userUUID, sessionID };
+
+      this.startCallbacks.forEach((cb) => cb(onStartInfo));
       this.observer.observe();
       this.ticker.start();
 
       this.notify.log("OpenReplay tracking started.");
       // TODO: get rid of onStart
-      const onStartInfo = { sessionToken: token, userUUID, sessionID };
       if (typeof this.options.onStart === 'function') {
         this.options.onStart(onStartInfo);
       }
