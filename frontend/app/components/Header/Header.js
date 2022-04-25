@@ -96,7 +96,6 @@ const Header = (props) => {
         className={ styles.nav }
         activeClassName={ styles.active }
       >
-        <ErrorsBadge />
         { 'Errors' }
       </NavLink>
       <NavLink
@@ -104,7 +103,7 @@ const Header = (props) => {
         className={ styles.nav }
         activeClassName={ styles.active }
       >         
-        <span>{ 'Metrics' }</span>
+        <span>{ 'Dashboards' }</span>
       </NavLink>
       <div className={ styles.right }>
         <Announcements />
@@ -151,7 +150,7 @@ export default withRouter(connect(
   state => ({
     account: state.getIn([ 'user', 'account' ]),
     appearance: state.getIn([ 'user', 'account', 'appearance' ]),
-    siteId: state.getIn([ 'user', 'siteId' ]),
+    siteId: state.getIn([ 'site', 'siteId' ]),
     sites: state.getIn([ 'site', 'list' ]),
     showAlerts: state.getIn([ 'dashboard', 'showAlerts' ]),
     boardingCompletion: state.getIn([ 'dashboard', 'boardingCompletion' ])

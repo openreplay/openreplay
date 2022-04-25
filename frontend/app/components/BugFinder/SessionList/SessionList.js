@@ -1,12 +1,12 @@
 import { connect } from 'react-redux';
-import { Loader, NoContent, Button, LoadMoreButton, Pagination } from 'UI';
+import { Loader, NoContent, Button, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
-import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage } from 'Duck/search';
+import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
 
-const ALL = 'all';
+// const ALL = 'all';
 const PER_PAGE = 10;
 const AUTOREFRESH_INTERVAL = 3 * 60 * 1000;
 var timeoutId;
@@ -21,6 +21,7 @@ var timeoutId;
   filters: state.getIn([ 'search', 'instance', 'filters' ]),
   metaList: state.getIn(['customFields', 'list']).map(i => i.key),
   currentPage: state.getIn([ 'search', 'currentPage' ]),
+  scrollY: state.getIn([ 'search', 'scrollY' ]),
   lastPlayedSessionId: state.getIn([ 'sessions', 'lastPlayedSessionId' ]),
 }), {
   applyFilter,
@@ -29,23 +30,14 @@ var timeoutId;
   fetchSessions,
   addFilterByKeyAndValue,
   updateCurrentPage,
+  setScrollPosition,
 })
 export default class SessionList extends React.PureComponent {
-  state = {
-    showPages: 1,
-  }
+
   constructor(props) {
     super(props);
     this.timeout();
   }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.loading && !this.props.loading) {
-      this.setState({ showPages: 1 });
-    }
-  }
-
-  addPage = () => this.setState({ showPages: this.state.showPages + 1 })
 
   onUserClick = (userId, userAnonymousId) => {
     if (userId) {
@@ -76,17 +68,21 @@ export default class SessionList extends React.PureComponent {
   }
 
   componentWillUnmount() {
+    this.props.setScrollPosition(window.scrollY)
     clearTimeout(timeoutId)
   }
 
-  
+  componentDidMount() {
+    const { scrollY } = this.props;
+    window.scrollTo(0, scrollY);
+  }
 
   renderActiveTabContent(list) {
     const {
       loading,
       filters,
-      onMenuItemClick,
-      allList,
+      // onMenuItemClick,
+      // allList,
       activeTab,
       metaList,
       currentPage,
@@ -95,19 +91,17 @@ export default class SessionList extends React.PureComponent {
     } = this.props;
     const _filterKeys = filters.map(i => i.key);
     const hasUserFilter = _filterKeys.includes(FilterKey.USERID) || _filterKeys.includes(FilterKey.USERANONYMOUSID);
-    const { showPages } = this.state;
-    const displayedCount = Math.min(showPages * PER_PAGE, list.size);
 
     return (
       <NoContent
         title={this.getNoContentMessage(activeTab)}
         // subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ !loading && list.size === 0}
         subtext={
           <div>
             <div>Please try changing your search parameters.</div>
-            {allList.size > 0 && (
+            {/* {allList.size > 0 && (
               <div className="pt-2">
                 However, we found other sessions based on your search parameters. 
                 <div>
@@ -117,7 +111,7 @@ export default class SessionList extends React.PureComponent {
                   >See All</Button>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         }
       >
@@ -148,23 +142,23 @@ export default class SessionList extends React.PureComponent {
 
   render() {
     const { activeTab, allList, total }  = this.props;
-    var filteredList;
+    // var filteredList;
 
-    if (activeTab.type !== ALL && activeTab.type !== 'bookmark' && activeTab.type !== 'live') { // Watchdog sessions
-      filteredList = allList.filter(session => activeTab.fits(session))
-    } else {
-      filteredList = allList
-    }
+    // if (activeTab.type !== ALL && activeTab.type !== 'bookmark' && activeTab.type !== 'live') { // Watchdog sessions
+    //   filteredList = allList.filter(session => activeTab.fits(session))
+    // } else {
+    //   filteredList = allList
+    // }
 
-    if (activeTab.type === 'bookmark') {
-      filteredList = filteredList.filter(item => item.favorite)
-    }
-    const _total = activeTab.type === 'all' ? total : filteredList.size
+    // if (activeTab.type === 'bookmark') {
+    //   filteredList = filteredList.filter(item => item.favorite)
+    // }
+    // const _total = activeTab.type === 'all' ? total : allList.size
     
     return (
       <div className="">
-        <SessionListHeader activeTab={activeTab} count={_total}/>
-        { this.renderActiveTabContent(filteredList) }
+        <SessionListHeader activeTab={activeTab} count={total}/>
+        { this.renderActiveTabContent(allList) }
       </div>
     );
   }

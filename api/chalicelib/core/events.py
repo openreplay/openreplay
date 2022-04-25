@@ -88,7 +88,7 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
             ORDER BY l.timestamp;""", {"project_id": project_id, "session_id": session_id}))
         rows += cur.fetchall()
         rows = helper.list_to_camel_case(rows)
-        rows = sorted(rows, key=lambda k: k["messageId"])
+        rows = sorted(rows, key=lambda k: (k["timestamp"], k["messageId"]))
     return rows
 
 
@@ -339,9 +339,9 @@ def __generic_autocomplete(event: Event):
 class event_type:
     CLICK = Event(ui_type=schemas.EventType.click, table="events.clicks", column="label")
     INPUT = Event(ui_type=schemas.EventType.input, table="events.inputs", column="label")
-    LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="base_path")
+    LOCATION = Event(ui_type=schemas.EventType.location, table="events.pages", column="path")
     CUSTOM = Event(ui_type=schemas.EventType.custom, table="events_common.customs", column="name")
-    REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="url")
+    REQUEST = Event(ui_type=schemas.EventType.request, table="events_common.requests", column="path")
     GRAPHQL = Event(ui_type=schemas.EventType.graphql, table="events.graphql", column="name")
     STATEACTION = Event(ui_type=schemas.EventType.state_action, table="events.state_actions", column="name")
     ERROR = Event(ui_type=schemas.EventType.error, table="events.errors",

@@ -8,6 +8,9 @@ import { ReduxTime } from './Time';
 import stl from './timeline.css';
 import { TYPES } from 'Types/session/event';
 import { setTimelinePointer } from 'Duck/sessions';
+import DraggableCircle from './DraggableCircle';
+import CustomDragLayer from './CustomDragLayer';
+import { debounce } from 'App/utils';
 
 const getPointerIcon = (type) => {
   // exception, 
@@ -50,7 +53,11 @@ const getPointerIcon = (type) => {
   return 'info';    
 }
 
+
+let deboucneJump = () => null;
 @connectPlayer(state => ({
+  playing: state.playing,
+  time: state.time,
   skipIntervals: state.skipIntervals,
   events: state.eventList,
   skip: state.skip,
@@ -72,6 +79,9 @@ const getPointerIcon = (type) => {
     state.getIn([ 'sessions', 'current', 'returningLocationTime' ]),
 }), { setTimelinePointer })
 export default class Timeline extends React.PureComponent {
+  progressRef = React.createRef()
+  wasPlaying = false
+
   seekProgress = (e) => {
     const { endTime } = this.props;
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
@@ -86,10 +96,30 @@ export default class Timeline extends React.PureComponent {
   }
 
   componentDidMount() {
-    const { issues, events, fetchList, skipToIssue } = this.props;
+    const { issues, skipToIssue } = this.props;
     const firstIssue = issues.get(0);
+    deboucneJump = debounce(this.props.jump, 500);
+
     if (firstIssue && skipToIssue) {
       this.props.jump(firstIssue.time);
+    }
+  }
+
+  onDragEnd = (item, monitor) => {
+    if (this.wasPlaying) {
+      this.props.togglePlay();
+    }
+  }
+
+  onDrag = (offset) => {
+    const { endTime } = this.props;
+
+    const p = (offset.x - 60) / this.progressRef.current.offsetWidth;
+    const time = Math.max(Math.round(p * endTime), 0);
+    deboucneJump(time);
+    if (this.props.playing) {
+      this.wasPlaying = true;
+      this.props.pause();
     }
   }
 
@@ -103,20 +133,27 @@ export default class Timeline extends React.PureComponent {
       live,
       logList,
       exceptionsList,
-      resourceList,      
+      resourceList,
       clickRageTime,
       stackList,
       fetchList,
-      issues
+      issues,
     } = this.props;
 
     const scale = 100 / endTime;
+
     return (
       <div 
         className={ cn("flex items-center") }
       >
         { !live && <ReduxTime name="time" /> }
-        <div className={ stl.progress } onClick={ disabled ? null : this.seekProgress }>
+        <div
+          className={ stl.progress }
+          onClick={ disabled ? null : this.seekProgress }
+          ref={ this.progressRef }
+        >
+            <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
+            <CustomDragLayer onDrag={this.onDrag} minX={70} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + 70} />
             <TimeTracker scale={ scale } />
             { skip && skipIntervals.map(interval =>
               (<div

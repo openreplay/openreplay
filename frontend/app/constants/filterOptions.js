@@ -6,6 +6,7 @@ export const options = [
   { key: 'onAny', text: 'on any', value: 'onAny' },
   { key: 'is', text: 'is', value: 'is' },
   { key: 'isAny', text: 'is any', value: 'isAny' },
+  { key: 'inAnyPage', text: 'in any page', value: 'isAny' },
   { key: 'isNot', text: 'is not', value: 'isNot' },
   { key: 'startsWith', text: 'starts with', value: 'startsWith' },
   { key: 'endsWith', text: 'ends with', value: 'endsWith' },
@@ -32,6 +33,7 @@ export const options = [
 
 const filterKeys = ['is', 'isNot'];
 const stringFilterKeys = ['is', 'isAny', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
+const stringFilterKeysPerformance = ['is', 'inAnyPage', 'isNot', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const targetFilterKeys = ['on', 'notOn', 'onAny', 'contains', 'startsWith', 'endsWith', 'notContains'];
 const signUpStatusFilterKeys = ['isSignedUp', 'notSignedUp'];
 const rangeFilterKeys = ['before', 'after', 'on', 'inRange', 'notInRange', 'withInLast', 'notWithInLast'];
@@ -42,6 +44,7 @@ const getOperatorsByKeys = (keys) => {
 
 export const baseOperators = options.filter(({key}) => filterKeys.includes(key));
 export const stringOperators = options.filter(({key}) => stringFilterKeys.includes(key));
+export const stringOperatorsPerformance = options.filter(({key}) => stringFilterKeysPerformance.includes(key));
 export const targetOperators = options.filter(({key}) => targetFilterKeys.includes(key));
 export const booleanOperators = [
   { key: 'true', text: 'true', value: 'true' },
@@ -114,6 +117,7 @@ export default {
   targetOperators,
   booleanOperators,
   customOperators,
+  stringOperatorsPerformance,
   getOperatorsByKeys,
   metricTypes,
   metricOf,

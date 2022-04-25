@@ -114,7 +114,7 @@ class AutoComplete extends React.PureComponent {
 
   render() {
     const { ddOpen, query, loading, values } = this.state;
-    const {      
+    const {
       optionMapping = defaultOptionMapping,
       valueToText = defaultValueToText,
       placeholder = 'Type to search...',

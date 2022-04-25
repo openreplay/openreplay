@@ -6,41 +6,40 @@ from chalicelib.core import projects
 
 
 def get_state(tenant_id):
-    my_projects = projects.get_projects(tenant_id=tenant_id, recording_state=False)
-    pids = [s["projectId"] for s in my_projects]
+    pids = projects.get_projects_ids(tenant_id=tenant_id)
     with pg_client.PostgresClient() as cur:
         recorded = False
         meta = False
 
         if len(pids) > 0:
             cur.execute(
-                cur.mogrify("""\
-                           SELECT
-                                  COUNT(*)
-                           FROM public.sessions AS s
-                           where s.project_id IN %(ids)s
-                           LIMIT 1;""",
+                cur.mogrify("""SELECT EXISTS((  SELECT 1
+                                                FROM public.sessions AS s
+                                                WHERE s.project_id IN %(ids)s)) AS exists;""",
                             {"ids": tuple(pids)})
             )
-            recorded = cur.fetchone()["count"] > 0
+            recorded = cur.fetchone()["exists"]
             meta = False
             if recorded:
                 cur.execute(
-                    cur.mogrify("""SELECT SUM((SELECT COUNT(t.meta)
-                                                FROM (VALUES (p.metadata_1), (p.metadata_2), (p.metadata_3), (p.metadata_4), (p.metadata_5),
-                                                             (p.metadata_6), (p.metadata_7), (p.metadata_8), (p.metadata_9), (p.metadata_10),
-                                                             (sessions.user_id)) AS t(meta)
-                                                WHERE t.meta NOTNULL))
-                                    FROM public.projects AS p 
-                                        LEFT JOIN LATERAL ( SELECT 'defined'
-                                                            FROM public.sessions 
-                                                            WHERE sessions.project_id=p.project_id AND sessions.user_id IS NOT NULL
-                                                            LIMIT 1) AS sessions(user_id) ON(TRUE) 
-                                    WHERE p.tenant_id = %(tenant_id)s
-                                      AND p.deleted_at ISNULL;"""
+                    cur.mogrify("""SELECT EXISTS((SELECT 1
+                                   FROM public.projects AS p
+                                            LEFT JOIN LATERAL ( SELECT 1
+                                                                FROM public.sessions
+                                                                WHERE sessions.project_id = p.project_id
+                                                                  AND sessions.user_id IS NOT NULL
+                                                                LIMIT 1) AS sessions(user_id) ON (TRUE)
+                                   WHERE p.tenant_id = %(tenant_id)s AND p.deleted_at ISNULL
+                                     AND ( sessions.user_id IS NOT NULL OR p.metadata_1 IS NOT NULL
+                                           OR p.metadata_2 IS NOT NULL OR p.metadata_3 IS NOT NULL
+                                           OR p.metadata_4 IS NOT NULL OR p.metadata_5 IS NOT NULL
+                                           OR p.metadata_6 IS NOT NULL OR p.metadata_7 IS NOT NULL
+                                           OR p.metadata_8 IS NOT NULL OR p.metadata_9 IS NOT NULL
+                                           OR p.metadata_10 IS NOT NULL )
+                                       )) AS exists;"""
                                 , {"tenant_id": tenant_id}))
 
-                meta = cur.fetchone()["sum"] > 0
+                meta = cur.fetchone()["exists"]
 
     return [
         {"task": "Install OpenReplay",
@@ -61,22 +60,18 @@ def get_state(tenant_id):
 
 
 def get_state_installing(tenant_id):
-    my_projects = projects.get_projects(tenant_id=tenant_id, recording_state=False)
-    pids = [s["projectId"] for s in my_projects]
+    pids = projects.get_projects_ids(tenant_id=tenant_id)
     with pg_client.PostgresClient() as cur:
         recorded = False
 
         if len(pids) > 0:
             cur.execute(
-                cur.mogrify("""\
-                           SELECT
-                                  COUNT(*)
-                           FROM public.sessions AS s
-                           where s.project_id IN %(ids)s
-                           LIMIT 1;""",
+                cur.mogrify("""SELECT EXISTS((  SELECT 1
+                                                FROM public.sessions AS s
+                                                WHERE s.project_id IN %(ids)s)) AS exists;""",
                             {"ids": tuple(pids)})
             )
-            recorded = cur.fetchone()["count"] > 0
+            recorded = cur.fetchone()["exists"]
 
     return {"task": "Install OpenReplay",
             "done": recorded,
@@ -86,21 +81,24 @@ def get_state_installing(tenant_id):
 def get_state_identify_users(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
-            cur.mogrify("""SELECT SUM((SELECT COUNT(t.meta)
-                                                FROM (VALUES (p.metadata_1), (p.metadata_2), (p.metadata_3), (p.metadata_4), (p.metadata_5),
-                                                             (p.metadata_6), (p.metadata_7), (p.metadata_8), (p.metadata_9), (p.metadata_10),
-                                                             (sessions.user_id)) AS t(meta)
-                                                WHERE t.meta NOTNULL))
-                                    FROM public.projects AS p 
-                                        LEFT JOIN LATERAL ( SELECT 'defined'
-                                                            FROM public.sessions 
-                                                            WHERE sessions.project_id=p.project_id AND sessions.user_id IS NOT NULL
-                                                            LIMIT 1) AS sessions(user_id) ON(TRUE) 
-                                    WHERE p.tenant_id = %(tenant_id)s
-                                      AND p.deleted_at ISNULL;"""
+            cur.mogrify("""SELECT EXISTS((SELECT 1
+                                           FROM public.projects AS p
+                                                    LEFT JOIN LATERAL ( SELECT 1
+                                                                        FROM public.sessions
+                                                                        WHERE sessions.project_id = p.project_id
+                                                                          AND sessions.user_id IS NOT NULL
+                                                                        LIMIT 1) AS sessions(user_id) ON (TRUE)
+                                           WHERE p.tenant_id = %(tenant_id)s AND p.deleted_at ISNULL
+                                             AND ( sessions.user_id IS NOT NULL OR p.metadata_1 IS NOT NULL
+                                                   OR p.metadata_2 IS NOT NULL OR p.metadata_3 IS NOT NULL
+                                                   OR p.metadata_4 IS NOT NULL OR p.metadata_5 IS NOT NULL
+                                                   OR p.metadata_6 IS NOT NULL OR p.metadata_7 IS NOT NULL
+                                                   OR p.metadata_8 IS NOT NULL OR p.metadata_9 IS NOT NULL
+                                                   OR p.metadata_10 IS NOT NULL )
+                                               )) AS exists;"""
                         , {"tenant_id": tenant_id}))
 
-        meta = cur.fetchone()["sum"] > 0
+        meta = cur.fetchone()["exists"]
 
     return {"task": "Identify Users",
             "done": meta,

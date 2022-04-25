@@ -10,7 +10,7 @@ const Bar = ({ className = '', width = 0, avg, domain, color }) => {
           <span className="font-medium">{`${avg}`}</span>
         </div>
       </div>
-      <div className="text-sm leading-3">{domain}</div>
+      <div className="text-sm leading-3 color-gray-medium">{domain}</div>
     </div>
   )
 }

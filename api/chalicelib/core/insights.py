@@ -1,11 +1,8 @@
 import schemas
-from chalicelib.core import sessions_metas
+from chalicelib.core.metrics import __get_constraints, __get_constraint_values
 from chalicelib.utils import helper, dev
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.utils.metrics_helper import __get_step_size
-import math
-from chalicelib.core.dashboard import __get_constraints, __get_constraint_values
 
 
 def __transform_journey(rows):
@@ -24,14 +21,13 @@ def __transform_journey(rows):
 
 JOURNEY_DEPTH = 5
 JOURNEY_TYPES = {
-    "PAGES": {"table": "events.pages", "column": "base_path", "table_id": "message_id"},
+    "PAGES": {"table": "events.pages", "column": "path", "table_id": "message_id"},
     "CLICK": {"table": "events.clicks", "column": "label", "table_id": "message_id"},
     # "VIEW": {"table": "events_ios.views", "column": "name", "table_id": "seq_index"}, TODO: enable this for SAAS only
     "EVENT": {"table": "events_common.customs", "column": "name", "table_id": "seq_index"}
 }
 
 
-@dev.timed
 def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[], **args):
     pg_sub_query_subset = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
                                             time_constraint=True)
@@ -184,7 +180,6 @@ def __complete_acquisition(rows, start_date, end_date=None):
     return rows
 
 
-@dev.timed
 def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                     **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -232,7 +227,6 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
     }
 
 
-@dev.timed
 def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                       filters=[],
                       **args):
@@ -280,7 +274,6 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     }
 
 
-@dev.timed
 def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                       filters=[],
                       **args):
@@ -370,7 +363,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     }
 
 
-@dev.timed
+
 def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                         filters=[],
                         **args):
@@ -463,7 +456,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
     }
 
 
-@dev.timed
+
 def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[],
                                  **args):
@@ -528,7 +521,7 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
     return popularity
 
 
-@dev.timed
+
 def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                      filters=[],
                      **args):
@@ -598,7 +591,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-@dev.timed
+
 def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -658,7 +651,7 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-@dev.timed
+
 def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -723,7 +716,7 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-@dev.timed
+
 def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                       filters=[],
                       **args):
@@ -760,7 +753,7 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     return rows
 
 
-@dev.timed
+
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                  filters=[],
                  **args):
@@ -802,7 +795,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     return row_users
 
 
-@dev.timed
+
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                 filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, time_constraint=True, chart=False, data=args)
@@ -827,7 +820,7 @@ def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimes
     return helper.dict_to_camel_case(row_users)
 
 
-@dev.timed
+
 def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                    filters=[], **args):
     pg_sub_query = __get_constraints(project_id=project_id, data=args, duration=True, main_table="sessions",
@@ -892,7 +885,7 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
     }
 
 
-@dev.timed
+
 def search(text, feature_type, project_id, platform=None):
     if not feature_type:
         resource_type = "ALL"

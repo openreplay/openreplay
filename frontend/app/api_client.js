@@ -1,5 +1,4 @@
 import store from 'App/store';
-
 import { queried } from './routes';
 
 const siteIdRequiredPaths = [
@@ -24,6 +23,8 @@ const siteIdRequiredPaths = [
   '/assist',
   '/heatmaps',
   '/custom_metrics',
+  '/dashboards',
+  '/metrics'
   // '/custom_metrics/sessions',
 ];
 
@@ -55,7 +56,7 @@ export const clean = (obj, forbidenValues = [ undefined, '' ])  => {
 export default class APIClient {
   constructor() {
     const jwt = store.getState().get('jwt');
-    const siteId = store.getState().getIn([ 'user', 'siteId' ]);
+    const siteId = store.getState().getIn([ 'site', 'siteId' ]);
     this.init = {
       headers: {
         Accept: 'application/json',
@@ -68,10 +69,14 @@ export default class APIClient {
     this.siteId = siteId;
   }
 
-  fetch(path, params, options = { clean: true }) {
+  fetch(path, params, options = { clean: true }) {    
     if (params !== undefined) {
       const cleanedParams = options.clean ? clean(params) : params;
       this.init.body = JSON.stringify(cleanedParams);
+    }
+
+    if (this.init.method === 'GET') {
+      delete this.init.body;
     }
 
 

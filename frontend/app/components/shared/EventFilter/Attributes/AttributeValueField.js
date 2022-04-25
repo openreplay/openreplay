@@ -138,7 +138,6 @@ class AttributeValueField extends React.PureComponent {
     const _showAutoComplete = this.isAutoComplete(filter.type);
     const _params = _showAutoComplete ? this.getParams(filter) : {};    
     let _optionsEndpoint= '/events/search';
-    console.log('value', filter.value)
 
     return (
       <React.Fragment>

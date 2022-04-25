@@ -151,7 +151,7 @@ export default class API {
     return this.app.active();
   }
 
-  start(startOpts?: StartOptions) : Promise<OnStartInfo> {
+  start(startOpts?: Partial<StartOptions>) : Promise<OnStartInfo> {
     if (!IN_BROWSER) {
       console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
       return Promise.reject("Trying to start not in browser.");
@@ -159,7 +159,7 @@ export default class API {
     if (this.app === null) {
       return Promise.reject("Browser doesn't support required api, or doNotTrack is active.");
     }
-    // TODO: check argument typing
+    // TODO: check argument type
     return this.app.start(startOpts);
   }
   stop(): void {

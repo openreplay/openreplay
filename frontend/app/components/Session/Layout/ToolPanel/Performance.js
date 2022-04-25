@@ -151,7 +151,6 @@ const NodesCountTooltip = ({ active, payload } ) => {
 const TICKS_COUNT = 10;
 function generateTicks(data: Array<Timed>): Array<number> {
   if (data.length === 0) return [];
-  console.log(data, data[0])
   const minTime = data[0].time;
   const maxTime = data[data.length-1].time;
 

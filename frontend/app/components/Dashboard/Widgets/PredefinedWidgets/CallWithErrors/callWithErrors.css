@@ -1,0 +1,22 @@
+.topActions {
+  position: absolute;
+  top: -4px;
+  right: 50px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.searchField {
+  padding: 4px 5px;
+  border-bottom: dotted thin $gray-light;
+  border-radius: 3px;
+  &:focus,
+  &:active {
+    border: solid thin transparent !important;
+    box-shadow: none;
+    background-color: $gray-light;
+  }
+  &:hover {
+    border: solid thin $gray-light !important;
+  }
+}

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/messages"
-	"openreplay/backend/pkg/utime"
 )
 
 const MAX_ATTEMPTS_IN_A_ROW = 4
@@ -20,10 +20,10 @@ type requester interface {
 }
 
 type requestData struct {
-	LastMessageTimestamp uint64 // `json:"lastMessageTimestamp, string"`
-	LastMessageId string
+	LastMessageTimestamp       uint64 // `json:"lastMessageTimestamp, string"`
+	LastMessageId              string
 	UnsuccessfullAttemptsCount int
-	LastAttemptTimestamp int64
+	LastAttemptTimestamp       int64
 }
 
 type client struct {
@@ -31,19 +31,19 @@ type client struct {
 	requester
 	integration *postgres.Integration
 	// TODO: timeout ?
-	mux sync.Mutex
+	mux        sync.Mutex
 	updateChan chan<- postgres.Integration
-	evChan chan<- *SessionErrorEvent
-	errChan chan<- error
+	evChan     chan<- *SessionErrorEvent
+	errChan    chan<- error
 }
 
 type SessionErrorEvent struct {
 	SessionID uint64
-	Token string
+	Token     string
 	*messages.RawErrorEvent
 }
 
-type ClientMap map[ string ]*client
+type ClientMap map[string]*client
 
 func NewClient(i *postgres.Integration, updateChan chan<- postgres.Integration, evChan chan<- *SessionErrorEvent, errChan chan<- error) (*client, error) {
 	c := new(client)
@@ -60,15 +60,14 @@ func NewClient(i *postgres.Integration, updateChan chan<- postgres.Integration, 
 	// TODO: RequestData manager
 	if c.requestData.LastMessageTimestamp == 0 {
 		// ?
-		c.requestData.LastMessageTimestamp = uint64(utime.CurrentTimestamp() - 24*60*60*1000)
+		c.requestData.LastMessageTimestamp = uint64(time.Now().Add(-time.Hour * 24).UnixMilli())
 	}
 
 	return c, nil
 }
 
-
 // from outside
-func (c* client) Update(i *postgres.Integration) error {
+func (c *client) Update(i *postgres.Integration) error {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	var r requester
@@ -111,8 +110,8 @@ func (c *client) getLastMessageTimestamp() uint64 {
 }
 func (c *client) setLastMessageId(timestamp uint64, id string) {
 	//if timestamp >= c.requestData.LastMessageTimestamp {
-		c.requestData.LastMessageId = id
-		c.requestData.LastMessageTimestamp = timestamp
+	c.requestData.LastMessageId = id
+	c.requestData.LastMessageTimestamp = timestamp
 	//}
 }
 func (c *client) getLastMessageId() string {
@@ -128,18 +127,18 @@ func (c *client) Request() {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	if c.requestData.UnsuccessfullAttemptsCount >= MAX_ATTEMPTS ||
-			(c.requestData.UnsuccessfullAttemptsCount >= MAX_ATTEMPTS_IN_A_ROW &&
-			utime.CurrentTimestamp() - c.requestData.LastAttemptTimestamp < ATTEMPTS_INTERVAL) {
+		(c.requestData.UnsuccessfullAttemptsCount >= MAX_ATTEMPTS_IN_A_ROW &&
+			time.Now().UnixMilli()-c.requestData.LastAttemptTimestamp < ATTEMPTS_INTERVAL) {
 		return
 	}
 
-	c.requestData.LastAttemptTimestamp = utime.CurrentTimestamp()
+	c.requestData.LastAttemptTimestamp = time.Now().UnixMilli()
 	err := c.requester.Request(c)
 	if err != nil {
 		log.Println("ERRROR L139")
 		log.Println(err)
 		c.handleError(err)
-		c.requestData.UnsuccessfullAttemptsCount++;
+		c.requestData.UnsuccessfullAttemptsCount++
 	} else {
 		c.requestData.UnsuccessfullAttemptsCount = 0
 	}
@@ -152,5 +151,3 @@ func (c *client) Request() {
 	c.integration.RequestData = rd
 	c.updateChan <- *c.integration
 }
-
-

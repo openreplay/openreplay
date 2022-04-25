@@ -6,7 +6,7 @@ export default function BackLink ({
   className, to, onClick, label, vertical = false, style
 }) {
   const children = (
-    <div className={ cn('flex items-center', {'border w-10 h-10 rounded-full bg-white p-3 items-center justify-center' : !label })}> 
+    <div className={ cn('flex items-center', {'border w-10 h-10 rounded-full bg-white p-3 items-center justify-center hover:bg-active-blue' : !label })}>
       <Icon color="gray-dark" className={ cls.icon } name="prev1" size="16" />
       { label && <div className="ml-1">{ label }</div> }
     </div>

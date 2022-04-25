@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { DNDSource, DNDTarget } from 'Components/hocs/dnd';
+// import { DNDSource, DNDTarget } from 'Components/hocs/dnd';
 import Event, { TYPES } from 'Types/filter/event';
 import { operatorOptions } from 'Types/filter';
 import { editEvent, removeEvent, clearEvents, applyFilter } from 'Duck/funnelFilters';
@@ -24,8 +24,8 @@ const getLabel = ({ type }) => {
   return getPlaceholder({ type });
 };
 
-@DNDTarget('event')
-@DNDSource('event')
+// @DNDTarget('event')
+// @DNDSource('event')
 @connect(state => ({
   isLastEvent: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size === 1,
   funnel: state.getIn(['funnels', 'instance']),

@@ -72,7 +72,7 @@ const SessionCaptureRate = props => {
 }
 
 export default connect(state => ({
-  currentProjectId: state.getIn([ 'user', 'siteId' ]),
+  currentProjectId: state.getIn([ 'site', 'siteId' ]),
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   loading: state.getIn(['watchdogs', 'savingCaptureRate', 'loading']),
 }), {

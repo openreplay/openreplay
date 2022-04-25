@@ -1,7 +1,7 @@
-import { List } from 'immutable';
+// import { List } from 'immutable';
 import Record from 'Types/Record';
-import Site from 'Types/site';
-import { DateTime } from 'luxon';
+// import Site from 'Types/site';
+// import { DateTime } from 'luxon';
 import LoggerOptions from './loggerOptions';
 
 export default Record({
@@ -10,7 +10,7 @@ export default Record({
   tenantId: undefined,
   tenantKey: '',
   name: undefined,
-  sites: List(),
+  // sites: List(),
   optOut: true,
   edition: '',
 }, {
@@ -21,6 +21,6 @@ export default Record({
   }) => ({
     ...rest,
     loggerOptions: LoggerOptions(loggerOptions),
-    sites: List(projects).map(Site),
+    // sites: List(projects).map(Site),
   }),
 });

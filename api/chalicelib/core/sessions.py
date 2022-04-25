@@ -3,7 +3,7 @@ from typing import List
 import schemas
 from chalicelib.core import events, metadata, events_ios, \
     sessions_mobs, issues, projects, errors, resources, assist, performance_event
-from chalicelib.utils import pg_client, helper, dev, metrics_helper
+from chalicelib.utils import pg_client, helper, metrics_helper
 
 SESSION_PROJECTION_COLS = """s.project_id,
 s.session_id::text AS session_id,
@@ -39,7 +39,8 @@ def __group_metadata(session, project_metadata):
     return meta
 
 
-def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False):
+def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_viewed=False, group_metadata=False,
+                  live=True):
     with pg_client.PostgresClient() as cur:
         extra_query = []
         if include_fav_viewed:
@@ -93,13 +94,13 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
-                    data['resources'] = resources.get_by_session_id(session_id=session_id)
+                    data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id)
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
                 data['issues'] = issues.get_by_session_id(session_id=session_id)
-                data['live'] = assist.is_live(project_id=project_id,
-                                              session_id=session_id,
-                                              project_key=data["projectKey"])
+                data['live'] = live and assist.is_live(project_id=project_id,
+                                                       session_id=session_id,
+                                                       project_key=data["projectKey"])
             data["inDB"] = True
             return data
         else:
@@ -167,7 +168,6 @@ def _isUndefined_operator(op: schemas.SearchEventOperator):
     return op in [schemas.SearchEventOperator._is_undefined]
 
 
-@dev.timed
 def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, errors_only=False,
                error_status=schemas.ErrorStatus.all, count_only=False, issue=None):
     full_args, query_part = search_query_parts(data=data, error_status=error_status, errors_only=errors_only,
@@ -233,20 +233,19 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
                 data.order = "DESC"
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
-                sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
-            else:
-                sort = 'session_id'
+                # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
+                sort = helper.key_to_snake_case(data.sort)
 
             meta_keys = metadata.get(project_id=project_id)
             main_query = cur.mogrify(f"""SELECT COUNT(full_sessions) AS count, 
                                                 COALESCE(JSONB_AGG(full_sessions) 
                                                     FILTER (WHERE rn>%(sessions_limit_s)s AND rn<=%(sessions_limit_e)s), '[]'::JSONB) AS sessions
-                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY issue_score DESC, {sort} {data.order}, session_id desc) AS rn
+                                            FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY {sort} {data.order}, issue_score DESC) AS rn
                                             FROM (SELECT DISTINCT ON(s.session_id) {SESSION_PROJECTION_COLS}
                                                                 {"," if len(meta_keys) > 0 else ""}{",".join([f'metadata_{m["index"]}' for m in meta_keys])}
                                             {query_part}
                                             ORDER BY s.session_id desc) AS filtred_sessions
-                                            ORDER BY issue_score DESC, {sort} {data.order}) AS full_sessions;""",
+                                            ORDER BY {sort} {data.order}, issue_score DESC) AS full_sessions;""",
                                      full_args)
         # print("--------------------")
         # print(main_query)
@@ -280,9 +279,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         for i, s in enumerate(sessions):
             sessions[i]["metadata"] = {k["key"]: sessions[i][f'metadata_{k["index"]}'] for k in meta_keys \
                                        if sessions[i][f'metadata_{k["index"]}'] is not None}
-    if not data.group_by_user and data.sort is not None and data.sort != "session_id":
-        sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
-                          reverse=data.order.upper() == "DESC")
+    # if not data.group_by_user and data.sort is not None and data.sort != "session_id":
+    #     sessions = sorted(sessions, key=lambda s: s[helper.key_to_snake_case(data.sort)],
+    #                       reverse=data.order.upper() == "DESC")
     return {
         'total': total,
         'sessions': helper.list_to_camel_case(sessions)
@@ -354,8 +353,8 @@ def search2_series(data: schemas.SessionsSearchPayloadSchema, project_id: int, d
                             full_args[arg_name] = metric_value[i]
                         extra_where = f"WHERE ({' OR '.join(extra_where)})"
                 elif metric_of == schemas.TableMetricOfType.visited_url:
-                    main_col = "base_path"
-                    extra_col = ", base_path"
+                    main_col = "path"
+                    extra_col = ", path"
                 main_query = cur.mogrify(f"""{pre_query}
                                              SELECT COUNT(*) AS count, COALESCE(JSONB_AGG(users_sessions) FILTER ( WHERE rn <= 200 ), '[]'::JSONB) AS values
                                                         FROM (SELECT {main_col} AS name,
@@ -659,11 +658,6 @@ def search_query_parts(data, error_status, errors_only, favorite_only, issue, pr
                              **_multiple_values(event.value, value_key=e_k),
                              **_multiple_values(event.source, value_key=s_k)}
 
-            # if event_type not in list(events.SUPPORTED_TYPES.keys()) \
-            #         or event.value in [None, "", "*"] \
-            #         and (event_type != events.event_type.ERROR.ui_type \
-            #              or event_type != events.event_type.ERROR_IOS.ui_type):
-            #     continue
             if event_type == events.event_type.CLICK.ui_type:
                 event_from = event_from % f"{events.event_type.CLICK.table} AS main "
                 if not is_any:

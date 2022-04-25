@@ -148,3 +148,12 @@
   overflow-y: hidden;
   padding-right: 15px;
 }
+
+/* .svg-map__location {
+		fill: #EEE !important;
+		cursor: pointer;
+
+    &:hover {
+      fill: #fff !important;
+    }
+} */

@@ -50,10 +50,12 @@ def compute():
                          FROM public.tenants
                      ) AS all_tenants
                 WHERE tenants.tenant_id = all_tenants.tenant_id
-                RETURNING *,(SELECT email FROM users_ee WHERE role = 'owner' AND users_ee.tenant_id = tenants.tenant_id LIMIT 1);"""
+                RETURNING name,t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
+                    (SELECT openreplay_version()) AS version_number,
+                    (SELECT email FROM public.users WHERE role = 'owner' AND users.tenant_id=tenants.tenant_id LIMIT 1);"""
         )
         data = cur.fetchall()
-        requests.post('https://parrot.asayer.io/os/telemetry',
+        requests.post('https://api.openreplay.com/os/telemetry',
                       json={"stats": [process_data(d, edition='ee') for d in data]})
 
 
@@ -65,4 +67,4 @@ def new_client(tenant_id):
                             FROM public.tenants 
                             WHERE tenant_id=%(tenant_id)s;""", {"tenant_id": tenant_id}))
         data = cur.fetchone()
-        requests.post('https://parrot.asayer.io/os/signup', json=process_data(data, edition='ee'))
+        requests.post('https://api.openreplay.com/os/signup', json=process_data(data, edition='ee'))

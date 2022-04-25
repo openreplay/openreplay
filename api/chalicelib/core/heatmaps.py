@@ -3,7 +3,6 @@ from chalicelib.utils import helper, pg_client
 from chalicelib.utils import dev
 
 
-@dev.timed
 def get_by_url(project_id, data):
     args = {"startDate": data.get('startDate', TimeUTC.now(delta_days=-30)),
             "endDate": data.get('endDate', TimeUTC.now()),

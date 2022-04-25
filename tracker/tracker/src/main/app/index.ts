@@ -13,9 +13,15 @@ import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
+import type { Options as WebworkerOptions, WorkerMessageData } from "../../webworker/types.js";
 
 
-import type { Options as WebworkerOptions, WorkerMessageData } from "../../messages/webworker.js";
+// TODO: Unify and clearly describe options logic
+export interface StartOptions {
+  userID?: string,
+  metadata?: Record<string, string>,
+  forceNew?: boolean,
+}
 
 export interface OnStartInfo {
   sessionID: string, 
@@ -23,10 +29,12 @@ export interface OnStartInfo {
   userUUID: string,
 }
 
-export interface StartOptions {
-  userID?: string,
-  metadata?: Record<string, string>,
-  forceNew: boolean,
+type StartCallback = (i: OnStartInfo) => void
+type CommitCallback = (messages: Array<Message>) => void
+enum ActivityState {
+  NotActive,
+  Starting,
+  Active,
 }
 
 type AppOptions = {
@@ -45,18 +53,10 @@ type AppOptions = {
   __debug__?: LoggerOptions;
 
   // @deprecated
-  onStart?: (info: OnStartInfo) => void;
-} &  WebworkerOptions;
+  onStart?: StartCallback;
+} & WebworkerOptions;
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
-
-type Callback = () => void;
-type CommitCallback = (messages: Array<Message>) => void;
-enum ActivityState {
-  NotActive,
-  Starting,
-  Active,
-}
 
 export const CANCELED = "canceled"
 
@@ -73,8 +73,8 @@ export default class App {
   readonly session: Session;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
-  private readonly startCallbacks: Array<Callback> = [];
-  private readonly stopCallbacks: Array<Callback> = [];
+  private readonly startCallbacks: Array<StartCallback> = [];
+  private readonly stopCallbacks: Array<Function> = [];
   private readonly commitCallbacks: Array<CommitCallback> = [];
   private readonly options: AppOptions;
   private readonly revID: string;
@@ -130,13 +130,13 @@ export default class App {
         this._debug("webworker_error", e)
       }
       this.worker.onmessage = ({ data }: MessageEvent) => {
-        if (data === null) {
+        if (data === "failed") {
           this.stop();
         } else if (data === "restart") {
           this.stop();
           this.start({ forceNew: true });
         }
-      };
+      }
       const alertWorker = () => {
         if (this.worker) {
           this.worker.postMessage(null);
@@ -165,20 +165,14 @@ export default class App {
     this.debug.error("OpenReplay error: ", context, e)
   }
 
-  private readonly preStartMessages: Message[] = []
   send(message: Message, urgent = false): void {
-    if (this.activityState === ActivityState.NotActive) {
-      return;
-    }
-    if (this.activityState === ActivityState.Starting) {
-      this.preStartMessages.push(message);
-    }
-    if (this.preStartMessages.length) {
-      this.messages.push(...this.preStartMessages);
-      this.preStartMessages.length = 0
-    }
+    if (this.activityState === ActivityState.NotActive) { return }
     this.messages.push(message);
-    if (urgent) {
+    // TODO: commit on start if there were `urgent` sends; 
+    // Clearify where urgent can be used for;
+    // Clearify workflow for each type of message in case it was sent before start 
+    //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
+    if (this.activityState === ActivityState.Active && urgent) {
       this.commit();
     }
   }
@@ -209,11 +203,10 @@ export default class App {
   attachCommitCallback(cb: CommitCallback): void {
     this.commitCallbacks.push(cb)
   }
-
-  attachStartCallback(cb: Callback): void {
+  attachStartCallback(cb: StartCallback): void {
     this.startCallbacks.push(cb);
   }
-  attachStopCallback(cb: Callback): void {
+  attachStopCallback(cb: Function): void {
     this.stopCallbacks.push(cb);
   }
   attachEventListener(
@@ -234,10 +227,11 @@ export default class App {
     );
   }
 
+  // TODO: full correct semantic
   checkRequiredVersion(version: string): boolean {
     const reqVer = version.split('.')
     const ver = this.version.split('.')
-    for (let i = 0; i < ver.length; i++) {
+    for (let i = 0; i < 3; i++) {
       if (Number(ver[i]) < Number(reqVer[i]) || isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
         return false
       }
@@ -330,14 +324,15 @@ export default class App {
     sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
 
     const startInfo = this.getStartInfo()
-    const messageData: WorkerMessageData = {
-      ingestPoint: this.options.ingestPoint,
+    const startWorkerMsg: WorkerMessageData = {
+      type: "start",
       pageNo,
-      startTimestamp: startInfo.timestamp,
+      ingestPoint: this.options.ingestPoint,
+      timestamp: startInfo.timestamp,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
     }
-    this.worker.postMessage(messageData); // brings delay of 10th ms?
+    this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
 
     const sReset = sessionStorage.getItem(this.options.session_reset_key);
     sessionStorage.removeItem(this.options.session_reset_key);
@@ -384,14 +379,21 @@ export default class App {
       });
 
       this.activityState = ActivityState.Active
-      this.worker.postMessage({ token, beaconSizeLimit });
-      this.startCallbacks.forEach((cb) => cb());
+      const startWorkerMsg: WorkerMessageData = {
+        type: "auth",
+        token,
+        beaconSizeLimit
+      }
+      this.worker.postMessage(startWorkerMsg)
+
+      const onStartInfo = { sessionToken: token, userUUID, sessionID };
+
+      this.startCallbacks.forEach((cb) => cb(onStartInfo));
       this.observer.observe();
       this.ticker.start();
 
       this.notify.log("OpenReplay tracking started.");
       // TODO: get rid of onStart
-      const onStartInfo = { sessionToken: token, userUUID, sessionID };
       if (typeof this.options.onStart === 'function') {
         this.options.onStart(onStartInfo);
       }
@@ -410,7 +412,7 @@ export default class App {
     })
   }
 
-  start(options: StartOptions = { forceNew: false }): Promise<OnStartInfo> {
+  start(options: StartOptions = {}): Promise<OnStartInfo> {
     if (!document.hidden) {
       return this._start(options);
     } else {

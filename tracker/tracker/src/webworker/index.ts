@@ -1,177 +1,117 @@
-import { classes, BatchMeta, Timestamp, SetPageVisibility, CreateDocument } from "../messages/index.js";
 import Message from "../messages/message.js";
-import Writer from "../messages/writer.js";
+import { 
+  classes,
+  SetPageVisibility,
+  MouseMove,
+} from "../messages/index.js";
+import QueueSender from "./QueueSender.js";
+import BatchWriter from "./BatchWriter.js";
 
-import type { WorkerMessageData } from "../messages/webworker.js";
+import type { WorkerMessageData } from "./types.js";
 
 
-const SEND_INTERVAL = 10 * 1000;
-let BEACON_SIZE_LIMIT = 1e6 // Limit is set in the backend/services/http
-let beaconSize = 2 * 1e5; // Default 400kB
+const AUTO_SEND_INTERVAL = 10 * 1000
 
-
-let writer: Writer = new Writer(beaconSize);
-
-let ingestPoint: string = "";
-let token: string = "";
-let pageNo: number = 0;
-let timestamp: number = 0;
-let timeAdjustment: number = 0;
-let nextIndex: number = 0;
-// TODO: clear logic: isEmpty here means presence of BatchMeta but absence of other  messages
-// BatchWriter should be abstracted
-let isEmpty: boolean = true;
-
-function writeBatchMeta(): boolean { // TODO: move to encoder
-  return new BatchMeta(pageNo, nextIndex, timestamp).encode(writer)
-}
-
-let sendIntervalID: ReturnType<typeof setInterval> | null = null;
-
-const sendQueue: Array<Uint8Array> = [];
-let busy = false;
-let attemptsCount = 0;
-let ATTEMPT_TIMEOUT = 8000;
-let MAX_ATTEMPTS_COUNT = 10;
-
-// TODO?: exploit https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon
-function sendBatch(batch: Uint8Array):void {
-  const req = new XMLHttpRequest();
-  // TODO:  async=false (3d param) instead of sendQueue array ?
-  req.open("POST", ingestPoint + "/v1/web/i", false);  // TODO opaque request?
-  req.setRequestHeader("Authorization", "Bearer " + token);
-  // req.setRequestHeader("Content-Type", "");
-  req.onreadystatechange = function() {
-    if (this.readyState === 4) {
-      if (this.status == 0) {
-        return; // happens simultaneously with onerror TODO: clear codeflow
-      }
-      if (this.status >= 400) { // TODO: test workflow. After 400+ it calls /start for some reason
-        busy = false;
-        reset();
-        sendQueue.length = 0;
-        if (this.status === 401) { // Unauthorised (Token expired)
-          self.postMessage("restart")
-          return
-        }
-        self.postMessage(null);
-        return
-      }
-      //if (this.response == null)
-      const nextBatch = sendQueue.shift();
-      if (nextBatch) {
-        sendBatch(nextBatch);
-      } else {
-        busy = false;
-      }
-    }
-  };
-  req.onerror = function(e) {
-    if (attemptsCount >= MAX_ATTEMPTS_COUNT) {
-      reset();
-      self.postMessage(null);
-      return
-    }
-    attemptsCount++;
-    setTimeout(() => sendBatch(batch), ATTEMPT_TIMEOUT);
-  }
-  // TODO: handle offline exception
-  req.send(batch.buffer);
-}
+let sender: QueueSender | null = null
+let writer: BatchWriter | null = null
 
 function send(): void {
-  if (isEmpty || token === "" || ingestPoint === "") {
-    return;
+  if (!writer) {
+    return
   }
-  const batch = writer.flush();
-  if (busy) {
-    sendQueue.push(batch);
-  } else {
-    busy = true;
-    sendBatch(batch);
-  }
-  isEmpty = true;
-  writeBatchMeta();
+  writer.finaliseBatch()
 }
 
+
 function reset() {
-  ingestPoint = ""
-  token = ""
   if (sendIntervalID !== null) {
     clearInterval(sendIntervalID);
     sendIntervalID = null;
   }
-  writer.reset();
+  if (writer) {
+    writer.clean()
+    writer = null
+  }
 }
 
-let restartTimeoutID: ReturnType<typeof setTimeout>;
-
-function hasTimestamp(msg: any): msg is { timestamp: number } {
-  return typeof msg === 'object' && typeof msg.timestamp === 'number';
+function resetCleanQueue() {
+  if (sender) {
+    sender.clean()
+    sender = null
+  } 
+  reset()  
 }
+
+let sendIntervalID: ReturnType<typeof setInterval> | null = null
+let restartTimeoutID: ReturnType<typeof setTimeout>
 
 self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
-  if (data === null) {
-    send();
-    return;
+  if (data == null) {
+    send() // TODO: sendAll?
+    return
   }
+
   if (data === "stop") {
-    send();
-    reset();
-    return;
+    send()
+    reset()
+    return
   }
-  if (!Array.isArray(data)) {
-    ingestPoint = data.ingestPoint || ingestPoint;
-    token = data.token || token;
-    pageNo = data.pageNo || pageNo;
-    timestamp = data.startTimestamp || timestamp;
-    timeAdjustment = data.timeAdjustment || timeAdjustment;
-    MAX_ATTEMPTS_COUNT = data.connAttemptCount || MAX_ATTEMPTS_COUNT;
-    ATTEMPT_TIMEOUT = data.connAttemptGap || ATTEMPT_TIMEOUT;
-    BEACON_SIZE_LIMIT = data.beaconSizeLimit || BEACON_SIZE_LIMIT;
-    beaconSize = Math.min(BEACON_SIZE_LIMIT, data.beaconSize || beaconSize);
-    if (writer.isEmpty()) {
-      writeBatchMeta();
-    }
-    if (sendIntervalID === null) {
-      sendIntervalID = setInterval(send, SEND_INTERVAL);
-    }
-    return;
-  }
-  data.forEach((data) => {
-    const message: Message = new (<any>classes.get(data._id))();
-    Object.assign(message, data);
 
-    if (message instanceof Timestamp) {
-      timestamp = (<any>message).timestamp;
-    } else if (message instanceof SetPageVisibility) {
-      if ( (<any>message).hidden) {
-        restartTimeoutID = setTimeout(() => self.postMessage("restart"), 30*60*1000);
-      } else {
-        clearTimeout(restartTimeoutID);
-      }
+  if (Array.isArray(data)) {
+    if (!writer) {
+      throw new Error("WebWorker: writer not initialised.")
     }
-
-    writer.checkpoint(); // TODO: encapsulate in writer
-    if (!message.encode(writer)) {
-      send();
-      // writer.reset(); // TODO: semantically clear code
-      if (!message.encode(writer)) { // Try to encode within empty state
-        // MBTODO: tempWriter for one message?
-        while (!message.encode(writer)) {
-          if (beaconSize === BEACON_SIZE_LIMIT) {
-            console.warn("OpenReplay: beacon size overflow.");
-            writer.reset();
-            writeBatchMeta();
-            return
-          }
-          beaconSize = Math.min(beaconSize*2, BEACON_SIZE_LIMIT);
-          writer = new Writer(beaconSize);
-          writeBatchMeta();
+    const w = writer
+    // Message[]
+    data.forEach((data) => {
+      const message: Message = new (<any>classes.get(data._id))();
+      Object.assign(message, data)
+      if (message instanceof SetPageVisibility) {
+        if ( (<any>message).hidden) {
+          restartTimeoutID = setTimeout(() => self.postMessage("restart"), 30*60*1000)
+        } else {
+          clearTimeout(restartTimeoutID)
         }
-      }
-    };
-    nextIndex++; // TODO: encapsulate in writer
-    isEmpty = false;
-  });
+      }     
+      w.writeMessage(message)
+    })
+    return
+  }
+
+  if (data.type === 'start') {
+    sender = new QueueSender(
+      data.ingestPoint,
+      () => { // onUnauthorised
+        self.postMessage("restart")
+      },
+      () => { // onFailure
+        resetCleanQueue()
+        self.postMessage("failed")
+      },
+      data.connAttemptCount,
+      data.connAttemptGap,
+    )
+    writer = new BatchWriter(
+      data.pageNo,
+      data.timestamp,
+      // onBatch
+      batch => sender && sender.push(batch)
+    )
+    if (sendIntervalID === null) {
+      sendIntervalID = setInterval(send, AUTO_SEND_INTERVAL)
+    }
+    return
+  }
+
+  if (data.type === "auth") {
+    if (!sender) {
+      throw new Error("WebWorker: sender not initialised. Recieved auth.")
+    }
+    if (!writer) {
+      throw new Error("WebWorker: writer not initialised. Recieved auth.")
+    }
+    sender.authorise(data.token)
+    data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
+    return
+  }
 };

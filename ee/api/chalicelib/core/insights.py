@@ -1,9 +1,9 @@
-from chalicelib.core import sessions_metas
-from chalicelib.utils import helper, dev
+import schemas
+from chalicelib.core.metrics import __get_basic_constraints, __get_meta_constraint
+from chalicelib.core.metrics import __get_constraint_values, __complete_missing_steps
 from chalicelib.utils import ch_client
+from chalicelib.utils import helper, dev
 from chalicelib.utils.TimeUTC import TimeUTC
-from chalicelib.core.dashboard import __get_constraint_values, __complete_missing_steps
-from chalicelib.core.dashboard import __get_basic_constraints, __get_meta_constraint
 
 
 def __transform_journey(rows):
@@ -29,7 +29,7 @@ JOURNEY_TYPES = {
 }
 
 
-@dev.timed
+
 def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=TimeUTC.now(), filters=[], **args):
     event_start = None
     event_table = JOURNEY_TYPES["CLICK"]["table"]
@@ -42,7 +42,7 @@ def journey(project_id, startTimestamp=TimeUTC.now(delta_days=-1), endTimestamp=
         elif f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append(f"sessions_metadata.project_id = %(project_id)s")
             meta_condition.append(f"sessions_metadata.datetime >= toDateTime(%(startTimestamp)s / 1000)")
@@ -190,7 +190,7 @@ def __complete_acquisition(rows, start_date, end_date=None):
     return rows
 
 
-@dev.timed
+
 def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                     **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -233,7 +233,7 @@ def users_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endT
     }
 
 
-@dev.timed
+
 def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                       filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -286,7 +286,7 @@ def users_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     }
 
 
-@dev.timed
+
 def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                       filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -303,7 +303,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -386,7 +386,7 @@ def feature_retention(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
     }
 
 
-@dev.timed
+
 def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                         filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -404,7 +404,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -497,7 +497,7 @@ def feature_acquisition(project_id, startTimestamp=TimeUTC.now(delta_days=-70), 
     }
 
 
-@dev.timed
+
 def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[], **args):
     startTimestamp = TimeUTC.trunc_week(startTimestamp)
@@ -512,7 +512,7 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -572,7 +572,7 @@ def feature_popularity_frequency(project_id, startTimestamp=TimeUTC.now(delta_da
     return popularity
 
 
-@dev.timed
+
 def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                      filters=[], **args):
     event_type = "CLICK"
@@ -586,7 +586,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.user_id IS NOT NULL")
             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -658,7 +658,7 @@ def feature_adoption(project_id, startTimestamp=TimeUTC.now(delta_days=-70), end
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-@dev.timed
+
 def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                filters=[], **args):
     event_type = "CLICK"
@@ -672,7 +672,7 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("user_id IS NOT NULL")
             meta_condition.append("not empty(sessions_metadata.user_id)")
@@ -728,7 +728,7 @@ def feature_adoption_top_users(project_id, startTimestamp=TimeUTC.now(delta_days
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-@dev.timed
+
 def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(),
                                  filters=[], **args):
     event_type = "CLICK"
@@ -742,7 +742,7 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.project_id = %(project_id)s")
             meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
@@ -796,7 +796,7 @@ def feature_adoption_daily_usage(project_id, startTimestamp=TimeUTC.now(delta_da
             "filters": [{"type": "EVENT_TYPE", "value": event_type}, {"type": "EVENT_VALUE", "value": event_value}]}
 
 
-@dev.timed
+
 def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                       **args):
     event_table = JOURNEY_TYPES["CLICK"]["table"]
@@ -807,7 +807,7 @@ def feature_intensity(project_id, startTimestamp=TimeUTC.now(delta_days=-70), en
         if f["type"] == "EVENT_TYPE" and JOURNEY_TYPES.get(f["value"]):
             event_table = JOURNEY_TYPES[f["value"]]["table"]
             event_column = JOURNEY_TYPES[f["value"]]["column"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.project_id = %(project_id)s")
             meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
@@ -838,7 +838,7 @@ PERIOD_TO_FUNCTION = {
 }
 
 
-@dev.timed
+
 def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                  **args):
     meta_condition = __get_meta_constraint(args)
@@ -847,7 +847,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     for f in filters:
         if f["type"] == "PERIOD" and f["value"] in ["DAY", "WEEK"]:
             period = f["value"]
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             extra_values["user_id"] = f["value"]
     period_function = PERIOD_TO_FUNCTION[period]
@@ -885,7 +885,7 @@ def users_active(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTime
     return {"avg": avg, "chart": rows}
 
 
-@dev.timed
+
 def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[], **args):
     ch_sub_query = __get_basic_constraints(table_name="sessions_metadata", data=args)
     meta_condition = __get_meta_constraint(args)
@@ -925,7 +925,7 @@ def users_power(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimes
     return {"avg": avg, "partition": helper.list_to_camel_case(rows)}
 
 
-@dev.timed
+
 def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTimestamp=TimeUTC.now(), filters=[],
                    **args):
     ch_sub_query = __get_basic_constraints(table_name="feature", data=args)
@@ -940,7 +940,7 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
         elif f["type"] == "EVENT_VALUE":
             event_value = f["value"]
             default = False
-        elif f["type"] in [sessions_metas.meta_type.USERID, sessions_metas.meta_type.USERID_IOS]:
+        elif f["type"] in [schemas.FilterType.user_id, schemas.FilterType.user_id_ios]:
             meta_condition.append(f"sessions_metadata.user_id = %(user_id)s")
             meta_condition.append("sessions_metadata.project_id = %(project_id)s")
             meta_condition.append("sessions_metadata.datetime >= toDateTime(%(startTimestamp)s/1000)")
@@ -1008,7 +1008,7 @@ def users_slipping(project_id, startTimestamp=TimeUTC.now(delta_days=-70), endTi
     }
 
 
-@dev.timed
+
 def search(text, feature_type, project_id, platform=None):
     if not feature_type:
         resource_type = "ALL"

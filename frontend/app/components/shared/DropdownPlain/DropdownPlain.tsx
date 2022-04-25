@@ -8,7 +8,7 @@ interface Props {
     onChange: (e, { name, value }) => void;
     icon?: string;
     direction?: string;
-    value: any;
+    value?: any;
     multiple?: boolean;
 }
 

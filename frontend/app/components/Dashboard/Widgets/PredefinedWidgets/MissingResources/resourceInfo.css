@@ -1,0 +1,10 @@
+.name {
+  letter-spacing: -.04em;
+  font-size: .9rem;
+  cursor: pointer;
+}
+
+.timings {
+  color: $gray-medium;
+  font-size: 12px;
+}

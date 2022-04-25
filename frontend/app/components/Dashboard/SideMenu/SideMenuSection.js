@@ -22,7 +22,7 @@ function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 		  )}
 
 			<div className={stl.divider} />
-			<div className="my-3">				
+			<div className="my-3">
 				<SideMenuitem
 					id="menu-manage-alerts"
 					title="Manage Alerts"
@@ -41,5 +41,5 @@ function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 SideMenuSection.displayName = "SideMenuSection";
 
 export default connect(state => ({
-	siteId: state.getIn([ 'user', 'siteId' ])
+	siteId: state.getIn([ 'site', 'siteId' ])
 }), { setShowAlerts })(SideMenuSection);

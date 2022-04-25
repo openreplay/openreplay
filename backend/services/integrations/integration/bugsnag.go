@@ -1,15 +1,14 @@
 package integration
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
-	"encoding/json"	
 	"net/url"
 	"time"
-	"io"
-  "io/ioutil"
 
-  "openreplay/backend/pkg/utime"
 	"openreplay/backend/pkg/messages"
 )
 
@@ -18,15 +17,14 @@ import (
 */
 
 type bugsnag struct {
-	BugsnagProjectId string // `json:"bugsnag_project_id"`
+	BugsnagProjectId   string // `json:"bugsnag_project_id"`
 	AuthorizationToken string // `json:"auth_token"`
 }
-
 
 type bugsnagEvent struct {
 	MetaData struct {
 		SpecialInfo struct {
-			AsayerSessionId uint64  `json:"asayerSessionId,string"`
+			AsayerSessionId        uint64 `json:"asayerSessionId,string"`
 			OpenReplaySessionToken string `json:"openReplaySessionToken"`
 		} `json:"special_info"`
 	} `json:"metaData"`
@@ -38,7 +36,7 @@ type bugsnagEvent struct {
 
 func (b *bugsnag) Request(c *client) error {
 	sinceTs := c.getLastMessageTimestamp() + 1000 // From next second
-	sinceFormatted := time.Unix(0, int64(sinceTs*1e6)).Format(time.RFC3339)
+	sinceFormatted := time.UnixMilli(int64(sinceTs)).Format(time.RFC3339)
 	requestURL := fmt.Sprintf("https://api.bugsnag.com/projects/%v/events", b.BugsnagProjectId)
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
@@ -47,10 +45,10 @@ func (b *bugsnag) Request(c *client) error {
 	q := req.URL.Query()
 	// q.Add("per_page", "100") // Up to a maximum of 30. Default: 30
 	// q.Add("sort", "timestamp") // Default: timestamp (timestamp == ReceivedAt ??)
-	q.Add("direction", "asc") // Default: desc
+	q.Add("direction", "asc")     // Default: desc
 	q.Add("full_reports", "true") // Default: false
-  q.Add("filters[event.since][][type]", "eq")
-  q.Add("filters[event.since][][value]", sinceFormatted) // seems like inclusively
+	q.Add("filters[event.since][][type]", "eq")
+	q.Add("filters[event.since][][value]", sinceFormatted) // seems like inclusively
 	req.URL.RawQuery = q.Encode()
 
 	authToken := "token " + b.AuthorizationToken
@@ -85,7 +83,7 @@ func (b *bugsnag) Request(c *client) error {
 			}
 			sessionID := e.MetaData.SpecialInfo.AsayerSessionId
 			token := e.MetaData.SpecialInfo.OpenReplaySessionToken
-			if sessionID == 0  && token == "" {
+			if sessionID == 0 && token == "" {
 				// c.errChan <- "No AsayerSessionId found. | Message: %v", e
 				continue
 			}
@@ -94,16 +92,16 @@ func (b *bugsnag) Request(c *client) error {
 				c.errChan <- err
 				continue
 			}
-			timestamp := uint64(utime.ToMilliseconds(parsedTime))
+			timestamp := uint64(parsedTime.UnixMilli())
 			c.setLastMessageTimestamp(timestamp)
 			c.evChan <- &SessionErrorEvent{
 				SessionID: sessionID,
-				Token: token,
+				Token:     token,
 				RawErrorEvent: &messages.RawErrorEvent{
-					Source: "bugsnag",
+					Source:    "bugsnag",
 					Timestamp: timestamp,
-					Name: e.Exceptions[0].Message,
-					Payload: string(jsonEvent),
+					Name:      e.Exceptions[0].Message,
+					Payload:   string(jsonEvent),
 				},
 			}
 		}

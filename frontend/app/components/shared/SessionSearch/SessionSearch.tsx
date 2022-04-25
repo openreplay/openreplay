@@ -11,9 +11,10 @@ interface Props {
   appliedFilter: any;
   edit: typeof edit;
   addFilter: typeof addFilter;
+  saveRequestPayloads: boolean;
 }
 function SessionSearch(props: Props) {
-  const { appliedFilter } = props;
+  const { appliedFilter, saveRequestPayloads = false } = props;
   const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
 
@@ -60,6 +61,7 @@ function SessionSearch(props: Props) {
           onUpdateFilter={onUpdateFilter}
           onRemoveFilter={onRemoveFilter}
           onChangeEventsOrder={onChangeEventsOrder}
+          saveRequestPayloads={saveRequestPayloads}
         />
       </div>
 
@@ -82,5 +84,6 @@ function SessionSearch(props: Props) {
 }
 
 export default connect(state => ({
+  saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'search', 'instance' ]),
 }), { edit, addFilter })(SessionSearch);

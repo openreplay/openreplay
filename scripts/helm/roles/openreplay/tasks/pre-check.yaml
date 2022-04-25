@@ -108,7 +108,7 @@
     - all
 - name: Checking Enterprise Licence
   uri:
-    url: https://parrot.asayer.io/os/license 
+    url: https://api.openreplay.com/os/license
     body:
       mid: "UUID of the machine"
       license: "{{ enterprise_edition_license }}"

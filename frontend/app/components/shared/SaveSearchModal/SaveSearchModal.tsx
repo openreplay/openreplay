@@ -38,7 +38,7 @@ function SaveSearchModal(props: Props) {
   const onDelete = async () => {
     if (await confirm({
       header: 'Confirm',
-      confirmButton: 'Yes, Delete',
+      confirmButton: 'Yes, delete',
       confirmation: `Are you sure you want to permanently delete this Saved search?`,
     })) {
       props.remove(savedSearch.searchId).then(() => {

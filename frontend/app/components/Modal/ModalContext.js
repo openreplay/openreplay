@@ -1,12 +1,13 @@
-const ModalContext = React.createContext({
+import React, { Component, createContext } from 'react';
+
+const ModalContext = createContext({
   component: null,
   props: {},
-  content: null,
   showModal: () => {},
   hideModal: () => {}
 });
 
-export class ModalProvider extends React.PureComponent {
+export class ModalProvider extends Component {
   showModal = (component, props = {}) => {
     this.setState({
       component,
@@ -14,10 +15,11 @@ export class ModalProvider extends React.PureComponent {
     });
   };
 
-  hideModal = () => this.setState({
-    component: null,
-    props: {},
-  });
+  hideModal = () =>
+    this.setState({
+      component: null,
+      props: {}
+    });
 
   state = {
     component: null,

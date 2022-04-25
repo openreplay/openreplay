@@ -4,9 +4,9 @@ import { connect } from 'react-redux';
 import { edit, addFilter, addFilterByKeyAndValue } from 'Duck/liveSearch';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import { IconButton } from 'UI';
-import { FilterKey } from 'App/types/filter/filterType';
 
 interface Props {
+  list: any,
   appliedFilter: any;
   edit: typeof edit;
   addFilter: typeof addFilter;
@@ -42,9 +42,9 @@ function LiveSessionSearch(props: Props) {
     });
 
     props.edit({ filters: newFilters, });
-    if (newFilters.size === 0) {
-      props.addFilterByKeyAndValue(FilterKey.USERID, '');
-    }
+    // if (newFilters.size === 0) {
+    //   props.addFilterByKeyAndValue(FilterKey.USERID, '');
+    // }
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
@@ -53,16 +53,18 @@ function LiveSessionSearch(props: Props) {
     });
   }
 
-  return (hasEvents || hasFilters) ? (
+  return props.list.size > 0 ? (
     <div className="border bg-white rounded mt-4">
-      <div className="p-5">
-        <FilterList
-          filter={appliedFilter}
-          onUpdateFilter={onUpdateFilter}
-          onRemoveFilter={onRemoveFilter}
-          onChangeEventsOrder={onChangeEventsOrder}
-        />
-      </div>
+      { hasEvents || hasFilters && (
+        <div className="p-5">
+          <FilterList
+            filter={appliedFilter}
+            onUpdateFilter={onUpdateFilter}
+            onRemoveFilter={onRemoveFilter}
+            onChangeEventsOrder={onChangeEventsOrder}
+          />
+        </div>
+      )}
 
       <div className="border-t px-5 py-1 flex items-center -mx-2">
         <div>
@@ -80,4 +82,5 @@ function LiveSessionSearch(props: Props) {
 
 export default connect(state => ({
   appliedFilter: state.getIn([ 'liveSearch', 'instance' ]),
+  list: state.getIn(['sessions', 'liveSessions']),
 }), { edit, addFilter, addFilterByKeyAndValue })(LiveSessionSearch);

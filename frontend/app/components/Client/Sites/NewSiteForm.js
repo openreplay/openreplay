@@ -1,7 +1,8 @@
 import { connect } from 'react-redux';
 import { Input, Button, Label } from 'UI';
 import { save, edit, update , fetchList } from 'Duck/site';
-import { pushNewSite, setSiteId } from 'Duck/user';
+import { pushNewSite } from 'Duck/user';
+import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import styles from './siteForm.css';
 
@@ -16,7 +17,7 @@ import styles from './siteForm.css';
 	update,
 	pushNewSite,
 	fetchList,
-  setSiteId
+  	setSiteId
 })
 @withRouter
 export default class NewSiteForm extends React.PureComponent {
@@ -37,14 +38,17 @@ export default class NewSiteForm extends React.PureComponent {
 			})
 		} else {
 			this.props.save(this.props.site).then(() => {
-				const { sites } = this.props;        
-        const site = sites.last();
-
-        this.props.pushNewSite(site)
-        if (!pathname.includes('/client')) {
-          this.props.setSiteId(site.id)
-        }
-				this.props.onClose(null, site)
+				this.props.fetchList().then(() => {
+					const { sites } = this.props;
+					const site = sites.last();
+					if (!pathname.includes('/client')) {
+						console.log('site', site)
+						this.props.setSiteId(site.get('id'))
+					}
+					this.props.onClose(null, site)
+				})
+        		
+				// this.props.pushNewSite(site)
 			});
 		}
 	}
@@ -58,17 +62,17 @@ export default class NewSiteForm extends React.PureComponent {
 		const { site, loading } = this.props;
 		return (
 			<form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
-        <div className={ styles.content }>
+        		<div className={ styles.content }>
 					<div className={ styles.formGroup }>
-		        <label>{ 'Name' }</label>
-		        <Input
-		          placeholder="Ex. openreplay"
-		          name="name"
-		          value={ site.name }
-		          onChange={ this.edit }
-		          className={ styles.input }
-		        />
-		      </div>
+						<label>{ 'Name' }</label>
+						<Input
+						placeholder="Ex. openreplay"
+						name="name"
+						value={ site.name }
+						onChange={ this.edit }
+						className={ styles.input }
+						/>
+					</div>
 					<div className="mt-6">
 						<Button							
 							primary
@@ -78,13 +82,13 @@ export default class NewSiteForm extends React.PureComponent {
 							content={site.exists() ? 'Update' : 'Add'}
 						/>
 					</div>		      
-		      { this.state.existsError &&
-		      	<div className={ styles.errorMessage }>
-		      		{ "Site exists already. Please choose another one." }
-		      	</div>
-		      }
-        </div>        
-      </form>
-	  );
+					{ this.state.existsError &&
+						<div className={ styles.errorMessage }>
+							{ "Site exists already. Please choose another one." }
+						</div>
+					}
+	        	</div>
+      		</form>
+	  	);
 	}
 }

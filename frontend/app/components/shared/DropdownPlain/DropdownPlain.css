@@ -1,6 +1,7 @@
 .dropdown {
   display: flex !important;
-  padding: 4px;
+  justify-content: space-between;
+  padding: 4px 8px;
   border-radius: 3px;
   color: $gray-darkest;
   font-weight: 500;

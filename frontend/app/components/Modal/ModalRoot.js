@@ -1,3 +1,6 @@
+import React from 'react';
+import { ModalConsumer } from './ModalContext';
+
 const ModalRoot = () => (
   <ModalConsumer>
     {({ component: Component, props, hideModal }) =>
@@ -6,4 +9,4 @@ const ModalRoot = () => (
   </ModalConsumer>
 );
 
-export default ModalRoot
+export default ModalRoot;

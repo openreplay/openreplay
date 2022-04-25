@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Icon, BackLink, IconButton, Dropdown, Popup, TextEllipsis, Button } from 'UI';
 import { remove as deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered } from 'Duck/funnels';
-import { editFilter, refresh, addFilter } from 'Duck/funnels';
+import { editFilter, editFunnelFilter, refresh, addFilter } from 'Duck/funnels';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
 import { confirm } from 'UI/Confirmation';
@@ -18,7 +18,7 @@ const Info = ({ label = '', value = '', className = 'mx-4' }) => {
 }
 
 const FunnelHeader = (props) => {
-  const { funnel, insights, funnels, onBack, funnelId, showFilters = false, renameHandler } = props;
+  const { funnel, insights, funnels, onBack, funnelId, showFilters = false, funnelFilters, renameHandler } = props;
   const [showSaveModal, setShowSaveModal] = useState(false)
 
   const writeOption = (e, { name, value }) => {
@@ -40,7 +40,7 @@ const FunnelHeader = (props) => {
   }
   
   const onDateChange = (e) => {
-    props.editFilter(e, funnelId);
+    props.editFunnelFilter(e, funnelId);
   }
 
   const options = funnels.map(({ funnelId, name }) => ({ text: name, value: funnelId })).toJS();
@@ -55,7 +55,7 @@ const FunnelHeader = (props) => {
           show={showSaveModal}
           closeHandler={() => setShowSaveModal(false)}
         />      
-        <div className="flex items-center mr-auto relative">                  
+        <div className="flex items-center mr-auto relative">
           <Dropdown          
             scrolling
             trigger={
@@ -96,9 +96,9 @@ const FunnelHeader = (props) => {
             />            
           </div>
           <DateRange
-            rangeValue={funnel.filter.rangeValue}
-            startDate={funnel.filter.startDate}
-            endDate={funnel.filter.endDate}
+            rangeValue={funnelFilters.rangeValue}
+            startDate={funnelFilters.startDate}
+            endDate={funnelFilters.endDate}
             onDateChange={onDateChange}
             customRangeRight
           />
@@ -109,5 +109,6 @@ const FunnelHeader = (props) => {
 }
 
 export default connect(state => ({
+  funnelFilters: state.getIn([ 'funnels', 'funnelFilters' ]).toJS(),
   funnel: state.getIn([ 'funnels', 'instance' ]),
-}), { editFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered, refresh })(FunnelHeader)
+}), { editFilter, editFunnelFilter, deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetchSessionsFiltered, refresh })(FunnelHeader)

@@ -1,72 +1,42 @@
-var sourcemapsReaderServer = require('./servers/sourcemaps-server');
-var {peerRouter, peerConnection, peerDisconnect, peerError} = require('./servers/peerjs-server');
-var express = require('express');
-const {ExpressPeerServer} = require('peer');
-var socket;
+const dumps = require('./utils/HeapSnapshot');
+const {request_logger} = require('./utils/helper');
+const express = require('express');
+let socket;
 if (process.env.redis === "true") {
-    console.log("Using Redis");
     socket = require("./servers/websocket-cluster");
 } else {
     socket = require("./servers/websocket");
 }
 
 const HOST = '0.0.0.0';
-const PORT = 9000;
-
-var app = express();
+const PORT = 9001;
 
 let debug = process.env.debug === "1" || false;
-const request_logger = (identity) => {
-    return (req, res, next) => {
-        debug && console.log(identity, new Date().toTimeString(), 'REQUEST', req.method, req.originalUrl);
-        res.on('finish', function () {
-            if (this.statusCode !== 200 || debug) {
-                console.log(new Date().toTimeString(), 'RESPONSE', req.method, req.originalUrl, this.statusCode);
-            }
-        })
-
-        next();
-    }
-};
-app.use(request_logger("[app]"));
-
-
-app.use('/sourcemaps', sourcemapsReaderServer);
-app.use('/assist', peerRouter);
-
-const server = app.listen(PORT, HOST, () => {
-    console.log(`App listening on http://${HOST}:${PORT}`);
-    console.log('Press Ctrl+C to quit.');
-});
-
-const peerServer = ExpressPeerServer(server, {
-    debug: true,
-    path: '/',
-    proxied: true,
-    allow_discovery: false
-});
-peerServer.on('connection', peerConnection);
-peerServer.on('disconnect', peerDisconnect);
-peerServer.on('error', peerError);
-app.use('/', peerServer);
-app.enable('trust proxy');
+const PREFIX = process.env.prefix || `/assist`
 
 if (process.env.uws !== "true") {
-    var wsapp = express();
+    let wsapp = express();
     wsapp.use(request_logger("[wsapp]"));
-    wsapp.use('/assist', socket.wsRouter);
-
-    const wsserver = wsapp.listen(PORT + 1, HOST, () => {
-        console.log(`WS App listening on http://${HOST}:${PORT + 1}`);
+    wsapp.use(request_logger("[app]"));
+    wsapp.get([PREFIX, `${PREFIX}/`], (req, res) => {
+            res.statusCode = 200;
+            res.end("ok!");
+        }
+    );
+    wsapp.use(`/heapdump/${process.env.S3_KEY}`, dumps.router);
+    wsapp.use(`${PREFIX}/${process.env.S3_KEY}`, socket.wsRouter);
+    wsapp.enable('trust proxy');
+    const wsserver = wsapp.listen(PORT, HOST, () => {
+        console.log(`WS App listening on http://${HOST}:${PORT}`);
         console.log('Press Ctrl+C to quit.');
     });
-    wsapp.enable('trust proxy');
+
     socket.start(wsserver);
-    module.exports = {wsserver, server};
+    module.exports = {wsserver};
 } else {
     console.log("Using uWebSocket");
     const {App} = require("uWebSockets.js");
-    const PREFIX = process.env.prefix || '/assist'
+
 
     const uapp = new App();
 
@@ -75,6 +45,7 @@ if (process.env.uws !== "true") {
     }
     uapp.get(PREFIX, healthFn);
     uapp.get(`${PREFIX}/`, healthFn);
+    uapp.get(`${PREFIX}/${process.env.S3_KEY}`, healthFn);
 
 
     /* Either onAborted or simply finished request */
@@ -110,11 +81,11 @@ if (process.env.uws !== "true") {
 
     socket.start(uapp);
 
-    uapp.listen(HOST, PORT + 1, (token) => {
+    uapp.listen(HOST, PORT, (token) => {
         if (!token) {
             console.warn("port already in use");
         }
-        console.log(`WS App listening on http://${HOST}:${PORT + 1}`);
+        console.log(`WS App listening on http://${HOST}:${PORT}`);
         console.log('Press Ctrl+C to quit.');
     });
 
@@ -124,5 +95,5 @@ if (process.env.uws !== "true") {
         debug && console.log(err.stack);
         // process.exit(1);
     });
-    module.exports = {uapp, server};
+    module.exports = {uapp};
 }

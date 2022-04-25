@@ -11,7 +11,7 @@ function SessionFlowList({ activeTab, savedFilters, loading }) {
       <NoContent
         title="No Flows Found!"
         subtext="Please try changing your search parameters."
-        icon="exclamation-circle"
+        animatedIcon="no-results"
         show={ !loading && savedFilters.size === 0 }
       >
         <Loader loading={ loading }>

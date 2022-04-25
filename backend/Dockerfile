@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine3.10 AS prepare
+FROM golang:1.18-alpine3.15 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
 
@@ -27,6 +27,7 @@ ENV TZ=UTC \
     HTTP_PORT=80 \
     BEACON_SIZE_LIMIT=7000000 \
     KAFKA_USE_SSL=true \
+    KAFKA_MAX_POLL_INTERVAL_MS=400000 \
     REDIS_STREAMS_MAX_LEN=3000 \
     TOPIC_RAW_WEB=raw \
     TOPIC_RAW_IOS=raw-ios \

@@ -51,8 +51,6 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 
     c = tenants.get_by_tenant_id(tenant_id)
     c.pop("createdAt")
-    c["projects"] = projects.get_projects(tenant_id=tenant_id, recording_state=True, recorded=True,
-                                          stack_integrations=True, version=True)
     c["smtp"] = helper.has_smtp()
     c["iceServers"] = assist.get_ice_servers()
     r["smtp"] = c["smtp"]
@@ -93,10 +91,9 @@ def get_projects_limit(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/projects/{projectId}', tags=['projects'])
-def get_project(projectId: int, last_tracker_version: Optional[str] = None,
-                context: schemas.CurrentContext = Depends(OR_context)):
+def get_project(projectId: int, context: schemas.CurrentContext = Depends(OR_context)):
     data = projects.get_project(tenant_id=context.tenant_id, project_id=projectId, include_last_session=True,
-                                include_gdpr=True, last_tracker_version=last_tracker_version)
+                                include_gdpr=True)
     if data is None:
         return {"errors": ["project not found"]}
     return {"data": data}
@@ -219,15 +216,12 @@ def get_client(context: schemas.CurrentContext = Depends(OR_context)):
     r = tenants.get_by_tenant_id(context.tenant_id)
     if r is not None:
         r.pop("createdAt")
-        r["projects"] = projects.get_projects(tenant_id=context.tenant_id, recording_state=True, recorded=True,
-                                              stack_integrations=True, version=True)
     return {
         'data': r
     }
 
 
 @app.get('/projects', tags=['projects'])
-def get_projects(last_tracker_version: Optional[str] = None, context: schemas.CurrentContext = Depends(OR_context)):
+def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
-                                          stack_integrations=True, version=True,
-                                          last_tracker_version=last_tracker_version)}
+                                          stack_integrations=True)}

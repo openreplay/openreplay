@@ -52,8 +52,6 @@ spec:
               value: {{ .Values.global.s3.recordingsBucket }}
             - name: S3_BUCKET_IOS
               value: {{ .Values.global.s3.recordingsBucket }}
-            - name: REDIS_STRING
-              value: '{{ .Values.global.redis.redisHost }}:{{ .Values.global.redis.redisPort }}'
             - name: LICENSE_KEY
               value: '{{ .Values.global.enterpriseEditionLicense }}'
             - name: REDIS_STRING

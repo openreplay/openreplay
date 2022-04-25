@@ -18,11 +18,7 @@ export const UPDATE_PASSWORD = new RequestTypes('user/UPDATE_PASSWORD');
 const PUT_CLIENT = new RequestTypes('user/PUT_CLIENT');
 
 const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
-const SET_SITE_ID = 'user/SET_SITE_ID';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
-
-const SITE_ID_STORAGE_KEY = "__$user-siteId$__";
-const storedSiteId = localStorage.getItem(SITE_ID_STORAGE_KEY);
 
 const initialState = Map({
   client: Client(),
@@ -32,20 +28,13 @@ const initialState = Map({
   passwordErrors: List(),
   tenants: [],
   authDetails: {},
-  onboarding: false
+  onboarding: false,
+  sites: List()
 });
 
 const setClient = (state, data) => {
   const client = Client(data);
-  let siteId = state.get("siteId");
-  if (!siteId) {
-    siteId = !!client.sites.find(s => s.id === storedSiteId) 
-      ? storedSiteId 
-      : client.getIn([ 'sites', 0, 'id' ]);
-  }
-  return state
-    .set('client', client)
-    .set('siteId', siteId);
+  return state.set('client', client)
 }
 
 const reducer = (state = initialState, action = {}) => {
@@ -80,11 +69,8 @@ const reducer = (state = initialState, action = {}) => {
       return state.mergeIn([ 'client' ], action.params);
     case FETCH_CLIENT.SUCCESS:
       return setClient(state, action.data);
-    case SET_SITE_ID:
-      localStorage.setItem(SITE_ID_STORAGE_KEY, action.siteId)
-      return state.set('siteId', action.siteId);
     case PUSH_NEW_SITE:
-      return state.updateIn([ 'client', 'sites' ], list => 
+      return state.updateIn([ 'site', 'list' ], list =>
         list.push(action.newSite));
     case SET_ONBOARDING:
       return state.set('onboarding', action.state)
@@ -182,13 +168,6 @@ export function updateAppearance(appearance) {
       appearance: Record.isRecord(appearance) ? appearance.toData() : appearance
     }),
     appearance,
-  };
-}
-
-export function setSiteId(siteId) {
-  return {
-    type: SET_SITE_ID,
-    siteId,
   };
 }
 

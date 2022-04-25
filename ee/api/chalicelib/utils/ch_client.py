@@ -25,5 +25,8 @@ class ClickHouseClient:
     def client(self):
         return self.__client
 
+    def format(self, query, params):
+        return self.__client.substitute_params(query, params)
+
     def __exit__(self, *args):
         pass

@@ -21,7 +21,6 @@ function DropdownPlain({ name, label, options, onChange, defaultValue, wrapperSt
         options={ options }
         onChange={ onChange }
         defaultValue={ defaultValue || options[ 0 ].value }
-        // icon={null}
         disabled={disabled}
         icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
       />
