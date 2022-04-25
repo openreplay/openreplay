@@ -58,8 +58,7 @@ ingress-nginx: &ingress-nginx
       forwarded-for-header: "proxy_protocol"
       # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#max-worker-connections
       max-worker-connections: 0
-      # If you want the ssl redirection
-      # Comment the following line
+      # SSL redirection
       ssl-redirect: false
       force-ssl-redirect: false
 
