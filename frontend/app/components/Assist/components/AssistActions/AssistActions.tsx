@@ -23,7 +23,7 @@ function onReject() {
 }
 
 function onError(e) {
-  toast.error(e);
+  toast.error(typeof e === 'string' ? e : e.message);
 }
 
 
