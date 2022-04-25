@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-// TODO: (the problem is during the build time the frontend is isolated, as far as I remember)
+// TODO: (the problem is during the build time the frontend is isolated)
 //const trackerInfo = require('../tracker/tracker/package.json');
 
 const oss = {
