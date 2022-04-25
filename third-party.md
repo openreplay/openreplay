@@ -1,4 +1,4 @@
-## Licenses (as of March 19, 2022)
+## Licenses (as of April 25, 2022)
 
 Below is the list of dependencies used in OpenReplay software. Licenses may change between versions, so please keep this up to date with every new library you use.
 
@@ -108,3 +108,4 @@ Below is the list of dependencies used in OpenReplay software. Licenses may chan
 | nginx | BSD2 | Infrastructure |
 | clickhouse | Apache2 | Infrastructure |
 | redis | BSD3 | Infrastructure |
+| yq | MIT | Infrastructure |
