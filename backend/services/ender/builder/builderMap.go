@@ -6,7 +6,6 @@ import (
 
 type builderMap map[uint64]*builder
 
-
 func NewBuilderMap() builderMap {
 	return make(builderMap)
 }
@@ -28,8 +27,10 @@ func (m builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint6
 }
 
 func (m builderMap) IterateSessionReadyMessages(sessionID uint64, operatingTs int64, iter func(msg Message)) {
-	b, ok := m[ sessionID ]
-	if !ok { return }
+	b, ok := m[sessionID]
+	if !ok {
+		return
+	}
 	sessionEnded := b.checkTimeouts(operatingTs)
 	b.iterateReadyMessage(iter)
 	if sessionEnded {
@@ -48,5 +49,3 @@ func (m builderMap) IterateReadyMessages(operatingTs int64, iter func(sessionID 
 		}
 	}
 }
-
-

@@ -53,14 +53,14 @@ func (es *elasticsearch) Request(c *client) error {
 		"query": map[string]interface{}{
 			"bool": map[string]interface{}{
 				"filter": []map[string]interface{}{
-					map[string]interface{}{
+					{
 						"match": map[string]interface{}{
 							"message": map[string]interface{}{
 								"query": "openReplaySessionToken=", // asayer_session_id=
 							},
 						},
 					},
-					map[string]interface{}{
+					{
 						"range": map[string]interface{}{
 							"utc_time": map[string]interface{}{
 								"gte": strconv.FormatUint(gteTs, 10),
@@ -68,7 +68,7 @@ func (es *elasticsearch) Request(c *client) error {
 							},
 						},
 					},
-					map[string]interface{}{
+					{
 						"term": map[string]interface{}{
 							"tags": "error",
 						},

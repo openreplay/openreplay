@@ -8,7 +8,7 @@ const (
 	TIMESTAMP_MAX   = 1<<TIMESTAMP_SIZE - 1
 	TIMESTAMP_SHIFT = SEQ_ID_SIZE + SHARD_ID_SHIFT
 	SHARD_ID_SHIFT  = SEQ_ID_SIZE
-	EPOCH 					= 1550000000000
+	EPOCH           = 1550000000000
 )
 
 func compose(timestamp uint64, shardID uint16, seqID byte) uint64 {

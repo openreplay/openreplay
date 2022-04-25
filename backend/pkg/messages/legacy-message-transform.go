@@ -1,21 +1,20 @@
 package messages
 
-
 func transformDepricated(msg Message) Message {
 	switch m := msg.(type) {
 	case *MouseClickDepricated:
-		meta :=  m.Meta()
+		meta := m.Meta()
 		meta.TypeID = 33
 		return &MouseClick{
-			meta: meta,
-			ID: m.ID,
+			meta:           meta,
+			ID:             m.ID,
 			HesitationTime: m.HesitationTime,
-			Label: m.Label,
+			Label:          m.Label,
 			// Selector: '',
 		}
 	// case *FetchDepricated:
 	// 	return &Fetch {
- //  		Method: m.Method,
+	//  		Method: m.Method,
 	// 		URL: m.URL,
 	// 		Request: m.Request,
 	// 		Response: m.Response,
@@ -25,8 +24,6 @@ func transformDepricated(msg Message) Message {
 	// 		// Headers: ''
 	// 	}
 	default:
-	 return msg
+		return msg
 	}
 }
-
-

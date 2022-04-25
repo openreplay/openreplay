@@ -2,15 +2,13 @@ package redisstream
 
 import (
 	"log"
-	
+
 	"github.com/go-redis/redis"
 
 	"openreplay/backend/pkg/env"
 )
 
-
-var redisClient  *redis.Client
-
+var redisClient *redis.Client
 
 func getRedisClient() *redis.Client {
 	if redisClient != nil {
