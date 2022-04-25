@@ -254,6 +254,16 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Status:    msg.Status,
 			Duration:  msg.Duration,
 		})
+		if msg.Status >= 300 {
+			b.appendReadyMessage(&IssueEvent{
+				Type:          "bad_request",
+				MessageID:     messageID,
+				Timestamp:     msg.Timestamp,
+				ContextString: msg.URL,
+				Context:       "",
+				Payload:       "",
+			})
+		}
 	case *GraphQL:
 		b.appendReadyMessage(&GraphQLEvent{
 			MessageID:     messageID,
