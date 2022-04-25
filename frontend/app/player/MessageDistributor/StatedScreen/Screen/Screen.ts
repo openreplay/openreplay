@@ -8,7 +8,7 @@ import BaseScreen from './BaseScreen';
 export { INITIAL_STATE, State } from './BaseScreen';
 
 export default class Screen extends BaseScreen {
-  private cursor: Cursor;
+  public readonly cursor: Cursor;
   private substitutor: BaseScreen | null = null;
   private inspector: Inspector | null = null;
   private marker: Marker | null = null;

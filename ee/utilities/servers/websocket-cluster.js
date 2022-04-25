@@ -396,7 +396,7 @@ module.exports = {
             })
             .catch((err) => {
                 console.log("> redis connection error");
-                console.error(err);
+                debug && console.error(err);
                 process.exit(2);
             });
     },

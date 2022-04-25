@@ -79,6 +79,7 @@ import type {
   ConnectionInformation,
   SetViewportSize,
   SetViewportScroll,
+  MouseClick,
 } from './messages';
 
 import type { Timed } from './messages/timed';
@@ -91,7 +92,7 @@ export default class MessageDistributor extends StatedScreen {
   private readonly connectionInfoManger: ListWalker<ConnectionInformation> = new ListWalker();
   private readonly performanceTrackManager: PerformanceTrackManager = new PerformanceTrackManager();
   private readonly windowNodeCounter: WindowNodeCounter = new WindowNodeCounter();
-  private readonly clickManager: ListWalker<Timed> = new ListWalker();
+  private readonly clickManager: ListWalker<MouseClick> = new ListWalker();
 
   private readonly resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
   private readonly pagesManager: PagesManager;
@@ -135,9 +136,6 @@ export default class MessageDistributor extends StatedScreen {
       eventList.forEach(e => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
           this.locationEventManager.add(e);
-        }
-        if (e.type === EVENT_TYPES.CLICK) {
-          this.clickManager.add(e);
         }
       });
       this.session.errors.forEach(e => {
@@ -302,9 +300,9 @@ export default class MessageDistributor extends StatedScreen {
       // Moving mouse and setting :hover classes on ready view
       this.mouseManager.move(t); 
       const lastClick = this.clickManager.moveToLast(t);
-      // if (!!lastClick) {
-      //   this.cursor.click();
-      // }
+      if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
+        this.cursor.click();
+      }
       // After all changes - redraw the marker
       //this.marker.redraw();
     })    
@@ -377,6 +375,9 @@ export default class MessageDistributor extends StatedScreen {
       break;
       case "mouse_move":
         this.mouseManager.add(msg);
+      break;
+      case "mouse_click":
+        this.clickManager.add(msg);
       break;
       case "set_viewport_scroll":
         this.scrollManager.add(msg);

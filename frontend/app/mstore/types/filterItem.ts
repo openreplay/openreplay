@@ -67,7 +67,7 @@ export default class FilterItem {
             value: this.value,
             operator: this.operator,
             source: this.source,
-            filters: this.filters.map(i => i.toJson()),
+            filters: Array.isArray(this.filters) ? this.filters.map(i => i.toJson()) : [],
         }
         return json
     }
