@@ -1,9 +1,8 @@
 package heuristics
 
 import (
-  . "openreplay/backend/pkg/messages"
+	. "openreplay/backend/pkg/messages"
 )
-
 
 type readyMessageStore struct {
 	store []Message

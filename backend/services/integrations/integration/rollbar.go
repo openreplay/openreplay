@@ -1,15 +1,15 @@
 package integration
 
 import (
-	"net/http"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"time"
-	"strings"
-	"strconv"
 	"io"
-  "io/ioutil"
-  "errors"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
 
 	"openreplay/backend/pkg/messages"
 )
@@ -17,42 +17,42 @@ import (
 // Old name: asayerSessionId
 
 // QUERY: what can be modified?
-const RB_QUERY = 
-	"SELECT item.id, item.title,body.message.openReplaySessionToken,item.level,"+
-	" item.counter,item.environment,body.crash_report.raw,body.message.body,timestamp"+
-	" FROM item_occurrence"+
-	" WHERE body.message.openReplaySessionToken != null"+
-	" AND timestamp>= %v"+
-	" AND item.level>30"+
-	" ORDER BY timestamp"+
+const RB_QUERY = "SELECT item.id, item.title,body.message.openReplaySessionToken,item.level," +
+	" item.counter,item.environment,body.crash_report.raw,body.message.body,timestamp" +
+	" FROM item_occurrence" +
+	" WHERE body.message.openReplaySessionToken != null" +
+	" AND timestamp>= %v" +
+	" AND item.level>30" +
+	" ORDER BY timestamp" +
 	" LIMIT 1000"
+
 // ASC by default
 // \n\t symbols can spoil the request body, so it wouldn't work (OR probably it happend because of job hashing)
 
 /*
- 	- `read` Access Token required 
- 	- timstamp in seconds
+	- `read` Access Token required
+	- timstamp in seconds
 */
 
 type rollbar struct {
-	AccessToken string  // `json:"access_token"`
+	AccessToken string // `json:"access_token"`
 }
 
 type rollbarJobResponce struct {
-	Err int
+	Err     int
 	Message string
-	Result struct {
+	Result  struct {
 		Id int
 	}
 }
 
 type rollbarJobStatusResponce struct {
-	Err int
+	Err    int
 	Result struct {
 		Status string
 		Result struct {
-			Rows [][] json.Number
-			Columns[] string
+			Rows    [][]json.Number
+			Columns []string
 		}
 	}
 }
@@ -65,7 +65,7 @@ type rollbarEvent map[string]string
 */
 func (rb *rollbar) Request(c *client) error {
 	fromTs := c.getLastMessageTimestamp() + 1000 // From next second
-	c.setLastMessageTimestamp(fromTs) // anti-job-hashing
+	c.setLastMessageTimestamp(fromTs)            // anti-job-hashing
 	fromTsSec := fromTs / 1e3
 	query := fmt.Sprintf(RB_QUERY, fromTsSec)
 	jsonBody := fmt.Sprintf(`{
@@ -111,7 +111,7 @@ func (rb *rollbar) Request(c *client) error {
 
 	tick := time.Tick(5 * time.Second)
 	for {
-		<- tick
+		<-tick
 		resp, err = http.DefaultClient.Do(req)
 		if err != nil {
 			return err // continue + timeout/maxAttempts
@@ -131,14 +131,14 @@ func (rb *rollbar) Request(c *client) error {
 				e := make(rollbarEvent)
 				for i, col := range jobStatus.Result.Result.Columns {
 					//if len(row) <= i { error }
-					e[ col ] = row[ i ].String() // here I make them all string. That's not good
+					e[col] = row[i].String() // here I make them all string. That's not good
 				}
 				// sessionID, err := strconv.ParseUint(e[ "body.message.asayerSessionId" ], 10, 64)
 				// if err != nil {
 				// 	c.errChan <- err
 				// 	continue
 				// }
-				if e[ "body.message.openReplaySessionToken" ] == "" {
+				if e["body.message.openReplaySessionToken"] == "" {
 					c.errChan <- errors.New("Token is empty!")
 					continue
 				}
@@ -147,7 +147,7 @@ func (rb *rollbar) Request(c *client) error {
 					c.errChan <- err
 					continue
 				}
-				timestampSec, err := strconv.ParseUint(e[ "timestamp" ], 10, 64)
+				timestampSec, err := strconv.ParseUint(e["timestamp"], 10, 64)
 				if err != nil {
 					c.errChan <- err
 					continue
@@ -155,18 +155,18 @@ func (rb *rollbar) Request(c *client) error {
 				timestamp := timestampSec * 1000
 				c.setLastMessageTimestamp(timestamp)
 				c.evChan <- &SessionErrorEvent{
-					Token: e[ "body.message.openReplaySessionToken" ],
+					Token: e["body.message.openReplaySessionToken"],
 					RawErrorEvent: &messages.RawErrorEvent{
-						Source: "rollbar",
+						Source:    "rollbar",
 						Timestamp: timestamp,
-						Name: e[ "item.title" ],
-						Payload: string(payload),
+						Name:      e["item.title"],
+						Payload:   string(payload),
 					},
 				}
 			}
 			break
 		}
-		if jobStatus.Result.Status != "new" && 
+		if jobStatus.Result.Status != "new" &&
 			jobStatus.Result.Status != "running" {
 			// error
 			break

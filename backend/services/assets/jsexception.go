@@ -1,15 +1,13 @@
-package main 
+package main
 
 import (
 	"encoding/json"
 	"strings"
 )
 
-
 type frame struct {
 	FileName string `json:"fileName"`
 }
-
 
 func extractJSExceptionSources(payload *string) ([]string, error) {
 	var frameList []frame
@@ -25,7 +23,7 @@ func extractJSExceptionSources(payload *string) ([]string, error) {
 		fn := strings.Split(f.FileName, "?")[0]
 		if strings.HasPrefix(fn, "http") && !presentedFileName[fn] {
 			fileNamesList = append(fileNamesList, f.FileName)
-			presentedFileName[fn] = true	
+			presentedFileName[fn] = true
 		}
 	}
 	return fileNamesList, nil

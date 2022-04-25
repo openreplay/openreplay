@@ -1,8 +1,8 @@
 package main
 
 import (
-	"openreplay/backend/pkg/url/assets"
 	"openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/url/assets"
 )
 
 func sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {

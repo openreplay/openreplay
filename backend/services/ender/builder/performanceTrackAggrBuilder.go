@@ -3,21 +3,19 @@ package builder
 import (
 	"math"
 
-	"openreplay/backend/pkg/messages/performance"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/messages/performance"
 )
 
-
 type performanceTrackAggrBuilder struct {
-	performanceTrackAggr   *PerformanceTrackAggr
-	lastTimestamp     uint64
-	count              float64
-	sumFrameRate       float64
-	sumTickRate        float64
-	sumTotalJSHeapSize float64
-	sumUsedJSHeapSize  float64
+	performanceTrackAggr *PerformanceTrackAggr
+	lastTimestamp        uint64
+	count                float64
+	sumFrameRate         float64
+	sumTickRate          float64
+	sumTotalJSHeapSize   float64
+	sumUsedJSHeapSize    float64
 }
-
 
 func (b *performanceTrackAggrBuilder) start(timestamp uint64) {
 	b.performanceTrackAggr = &PerformanceTrackAggr{
@@ -39,7 +37,7 @@ func (b *performanceTrackAggrBuilder) HandlePerformanceTrack(msg *PerformanceTra
 	}
 
 	frameRate := performance.FrameRate(msg.Frames, dt)
-	tickRate :=  performance.TickRate(msg.Ticks, dt)
+	tickRate := performance.TickRate(msg.Ticks, dt)
 
 	fps := uint64(math.Round(frameRate))
 	cpu := performance.CPURateFromTickRate(tickRate)
@@ -84,7 +82,7 @@ func (b *performanceTrackAggrBuilder) GetStartTimestamp() uint64 {
 	if b.performanceTrackAggr == nil {
 		return 0
 	}
-	return b.performanceTrackAggr.TimestampStart;
+	return b.performanceTrackAggr.TimestampStart
 }
 
 func (b *performanceTrackAggrBuilder) Build() *PerformanceTrackAggr {
@@ -106,4 +104,3 @@ func (b *performanceTrackAggrBuilder) Build() *PerformanceTrackAggr {
 	b.lastTimestamp = 0
 	return performanceTrackAggr
 }
-

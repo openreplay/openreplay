@@ -1,31 +1,30 @@
 package heuristics
 
 import (
-  . "openreplay/backend/pkg/messages"
+	. "openreplay/backend/pkg/messages"
 )
-
 
 const AGGR_TIME = 15 * 60 * 1000
 
-
 type valueAggregator struct {
-	sum float64
+	sum   float64
 	count float64
 }
+
 func (va *valueAggregator) aggregate() uint64 {
 	if va.count == 0 {
 		return 0
 	}
-	return uint64(va.sum/va.count)
+	return uint64(va.sum / va.count)
 }
 
 type performanceAggregator struct {
 	readyMessageStore
-	pa   *IOSPerformanceAggregated
-	fps         valueAggregator
-	cpu         valueAggregator
-	memory      valueAggregator
-	battery     valueAggregator
+	pa      *IOSPerformanceAggregated
+	fps     valueAggregator
+	cpu     valueAggregator
+	memory  valueAggregator
+	battery valueAggregator
 }
 
 func (h *performanceAggregator) build(timestamp uint64) {
@@ -56,7 +55,7 @@ func (h *performanceAggregator) HandleMessage(msg Message) {
 		if h.pa.TimestampStart == 0 {
 			h.pa.TimestampStart = m.Timestamp
 		}
-		if h.pa.TimestampStart + AGGR_TIME <= m.Timestamp {
+		if h.pa.TimestampStart+AGGR_TIME <= m.Timestamp {
 			h.build(m.Timestamp)
 		}
 		switch m.Name {
@@ -96,7 +95,7 @@ func (h *performanceAggregator) HandleMessage(msg Message) {
 			if m.Value > h.pa.MaxBattery {
 				h.pa.MaxBattery = m.Value
 			}
-		}		
+		}
 	case *IOSSessionEnd:
 		h.build(m.Timestamp)
 	}

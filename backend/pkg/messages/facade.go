@@ -36,6 +36,6 @@ func Encode(msg Message) []byte {
 // }
 
 func GetMessageTypeID(b []byte) (uint64, error) {
-	reader :=	bytes.NewReader(b)
+	reader := bytes.NewReader(b)
 	return ReadUint(reader)
 }
