@@ -1,25 +1,23 @@
 package main
 
 import (
-
-	. "openreplay/backend/pkg/messages"
 	. "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/messages"
 )
 
 func initStats() {
-  // noop
+	// noop
 }
-
 
 func insertStats(session *Session, msg Message) error {
 	switch m := msg.(type) {
-		// Web
-		case *PerformanceTrackAggr:
-			return pg.InsertWebStatsPerformance(session.SessionID, m)
-		case *ResourceEvent:
-			return pg.InsertWebStatsResourceEvent(session.SessionID, m)
-		case *LongTask:
-			return pg.InsertWebStatsLongtask(session.SessionID, m)
+	// Web
+	case *PerformanceTrackAggr:
+		return pg.InsertWebStatsPerformance(session.SessionID, m)
+	case *ResourceEvent:
+		return pg.InsertWebStatsResourceEvent(session.SessionID, m)
+	case *LongTask:
+		return pg.InsertWebStatsLongtask(session.SessionID, m)
 
 		// IOS
 		// case *IOSPerformanceAggregated:

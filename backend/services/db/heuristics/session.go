@@ -1,17 +1,15 @@
 package heuristics
 
 import (
-  . "openreplay/backend/pkg/messages"
-  . "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/messages"
 )
 
-
 type sessHandler struct {
-	session *Session
+	session  *Session
 	handlers []Handler
-	ended bool
+	ended    bool
 }
-
 
 func newSessHandler(session *Session) *sessHandler {
 	return &sessHandler{

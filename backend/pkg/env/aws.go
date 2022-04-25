@@ -19,7 +19,7 @@ func AWSSessionOnRegion(region string) *_session.Session {
 	if AWS_ENDPOINT != "" {
 		config.Endpoint = aws.String(AWS_ENDPOINT)
 		config.DisableSSL = aws.Bool(true)
-    config.S3ForcePathStyle = aws.Bool(true)
+		config.S3ForcePathStyle = aws.Bool(true)
 	}
 	aws_session, err := _session.NewSession(config)
 	if err != nil {

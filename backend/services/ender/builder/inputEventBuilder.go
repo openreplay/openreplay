@@ -7,9 +7,9 @@ import (
 type inputLabels map[uint64]string
 
 type inputEventBuilder struct {
-	inputEvent         *InputEvent
-	inputLabels        inputLabels
-	inputID            uint64
+	inputEvent  *InputEvent
+	inputLabels inputLabels
+	inputID     uint64
 }
 
 func NewInputEventBuilder() *inputEventBuilder {
@@ -17,7 +17,6 @@ func NewInputEventBuilder() *inputEventBuilder {
 	ieBuilder.ClearLabels()
 	return ieBuilder
 }
-
 
 func (b *inputEventBuilder) ClearLabels() {
 	b.inputLabels = make(inputLabels)
@@ -57,11 +56,11 @@ func (b *inputEventBuilder) HasInstance() bool {
 	return b.inputEvent != nil
 }
 
-func (b * inputEventBuilder) GetTimestamp() uint64 {
+func (b *inputEventBuilder) GetTimestamp() uint64 {
 	if b.inputEvent == nil {
 		return 0
 	}
-	return b.inputEvent.Timestamp;
+	return b.inputEvent.Timestamp
 }
 
 func (b *inputEventBuilder) Build() *InputEvent {

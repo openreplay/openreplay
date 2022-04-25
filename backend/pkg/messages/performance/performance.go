@@ -4,7 +4,6 @@ import (
 	"math"
 )
 
-
 func TimeDiff(t1 uint64, t2 uint64) uint64 {
 	if t1 < t2 {
 		return 0
