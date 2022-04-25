@@ -256,7 +256,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Status:    msg.Status,
 			Duration:  msg.Duration,
 		})
-		if msg.Status >= 300 {
+		if msg.Status >= 400 {
 			b.appendReadyMessage(&IssueEvent{
 				Type:          "bad_request",
 				MessageID:     messageID,
