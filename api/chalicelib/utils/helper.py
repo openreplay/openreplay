@@ -1,12 +1,13 @@
+import math
 import random
 import re
 import string
 from typing import Union
 
-import math
 import requests
 
 import schemas
+from chalicelib.utils.TimeUTC import TimeUTC
 
 local_prefix = 'local-'
 from decouple import config
@@ -384,3 +385,20 @@ def custom_alert_to_front(values):
     if values.get("seriesId") is not None and values["query"]["left"] == schemas.AlertColumn.custom:
         values["query"]["left"] = values["seriesId"]
     return values
+
+
+def __time_value(row):
+    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    factor = 1
+    if row["value"] > TimeUTC.MS_MINUTE:
+        row["value"] = row["value"] / TimeUTC.MS_MINUTE
+        row["unit"] = schemas.TemplatePredefinedUnits.minute
+        factor = TimeUTC.MS_MINUTE
+    elif row["value"] > 1 * 1000:
+        row["value"] = row["value"] / 1000
+        row["unit"] = schemas.TemplatePredefinedUnits.second
+        factor = 1000
+
+    if "chart" in row and factor > 1:
+        for r in row["chart"]:
+            r["value"] /= factor
