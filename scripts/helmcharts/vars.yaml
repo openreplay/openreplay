@@ -28,7 +28,6 @@ kafka: &kafka
   kafkaUseSsl: "false"
 
 redis: &redis
-  # For enterpriseEdition
   # enabled: false
   redisHost: "redis-master.db.svc.cluster.local"
   redisPort: "6379"
