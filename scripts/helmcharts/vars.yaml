@@ -55,7 +55,6 @@ ingress-nginx: &ingress-nginx
       default-ssl-certificate: "app/openreplay-ssl"
     config:
       enable-real-ip: true
-      forwarded-for-header: "proxy_protocol"
       # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#max-worker-connections
       max-worker-connections: 0
       # SSL redirection
