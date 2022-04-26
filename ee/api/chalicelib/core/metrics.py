@@ -943,11 +943,13 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
                       FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                       WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"value": avg,
-            "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                              end_time=endTimestamp,
-                                              density=density, neutral={"value": 0}),
-            "unit": schemas.TemplatePredefinedUnits.millisecond}
+
+    results = {"value": avg,
+               "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                                 end_time=endTimestamp,
+                                                 density=density, neutral={"value": 0})}
+    helper.__time_value(results)
+    return results
 
 
 def get_slowest_resources(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1088,11 +1090,12 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"value": avg,
-            "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                              end_time=endTimestamp,
-                                              density=density, neutral={"value": 0}),
-            "unit": schemas.TemplatePredefinedUnits.millisecond}
+    results = {"value": avg,
+               "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                                 end_time=endTimestamp,
+                                                 density=density, neutral={"value": 0})}
+    helper.__time_value(results)
+    return results
 
 
 def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1288,10 +1291,11 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query_chart)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"value": avg, "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
-                                                            end_time=endTimestamp, density=density,
-                                                            neutral={"value": 0}),
-            "unit": schemas.TemplatePredefinedUnits.millisecond}
+    results = {"value": avg, "chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
+                                                               end_time=endTimestamp, density=density,
+                                                               neutral={"value": 0})}
+    helper.__time_value(results)
+    return results
 
 
 def get_impacted_sessions_by_slow_pages(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2102,7 +2106,7 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
         row = __get_application_activity_avg_page_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2179,7 +2183,7 @@ def get_application_activity_avg_image_load_time(project_id, startTimestamp=Time
         row = __get_application_activity_avg_image_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-        results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2255,7 +2259,7 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
         row = __get_application_activity_avg_request_load_time(ch, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2334,7 +2338,7 @@ def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeU
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2395,7 +2399,7 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2523,7 +2527,7 @@ def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.no
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2602,7 +2606,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
                                         end_time=endTimestamp,
                                         density=density, neutral={"value": 0})
         results["chart"] = rows
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return helper.dict_to_camel_case(results)
 
 
@@ -2678,7 +2682,7 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
                                                                               density=density,
                                                                               neutral={"value": 0}))
 
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return helper.dict_to_camel_case(results)
 
 
@@ -2720,7 +2724,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
                                                                               end_time=endTimestamp,
                                                                               density=density,
                                                                               neutral={"value": 0}))
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2762,7 +2766,7 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
                                                                               end_time=endTimestamp,
                                                                               density=density,
                                                                               neutral={"value": 0}))
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return helper.dict_to_camel_case(results)
 
 
@@ -2804,5 +2808,5 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
                                                                               end_time=endTimestamp,
                                                                               density=density,
                                                                               neutral={"value": 0}))
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return helper.dict_to_camel_case(results)

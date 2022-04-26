@@ -966,6 +966,7 @@ class TemplatePredefinedKeys(str, Enum):
 
 class TemplatePredefinedUnits(str, Enum):
     millisecond = "ms"
+    second = "s"
     minute = "min"
     memory = "mb"
     frame = "f/s"
