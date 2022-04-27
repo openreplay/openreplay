@@ -10,9 +10,8 @@ git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
-        exit=1
+        exit 1
     }
-    [[ exit -eq 1 ]] && exit 1
 }
 
 function build_api(){
@@ -27,6 +26,7 @@ function build_api(){
         docker tag ${DOCKER_REPO:-'local'}/peers:${git_sha1} ${DOCKER_REPO:-'local'}/peers:latest
         docker push ${DOCKER_REPO:-'local'}/peers:latest
     }
+    echo "peer docker build complted"
 }
 
 check_prereq
