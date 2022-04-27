@@ -118,11 +118,11 @@ function WidgetWrapper(props: Props) {
                 )}
             </div>
 
-            <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} >
+            {/* <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} > */}
                 <div className="px-4" onClick={onChartClick}>
                     <WidgetChart metric={widget} isWidget={isWidget} />
                 </div>
-            </LazyLoad>
+            {/* </LazyLoad> */}
         </div>
     ));
 }

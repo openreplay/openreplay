@@ -6,7 +6,7 @@ import { Button } from 'UI';
 import { withRouter } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
-import { dashboardMetricCreate, withSiteId } from 'App/routes';
+import { dashboardMetricCreate, withSiteId, dashboardSelected } from 'App/routes';
 
 interface Props {
     history: any
@@ -22,10 +22,11 @@ function DashboardModal(props) {
     const loading = useObserver(() => dashboardStore.isSaving);
 
     const onSave = () => {
-        dashboardStore.save(dashboard).then(hideModal).then(() => {
-            if (dashboard.exists()) {
-                dashboardStore.fetch(dashboard.dashboardId)
-            }
+        dashboardStore.save(dashboard).then((_dashboard: any) => {
+            hideModal();
+            dashboardStore.selectDashboardById(_dashboard.dashboardId).then(() => {
+                history.push(withSiteId(dashboardSelected(_dashboard.dashboardId), siteId));
+            });
         })
     }
 

@@ -55,7 +55,7 @@ export interface IDashboardSotre {
     getDashboard(dashboardId: string): IDashboard|null
     getDashboardCount(): void
     updateDashboard(dashboard: IDashboard): void
-    selectDashboardById(dashboardId: string): void
+    selectDashboardById(dashboardId: string): Promise<any>
     setSiteId(siteId: any): void
     selectDefaultDashboard(): Promise<IDashboard>
 
@@ -219,14 +219,15 @@ export default class DashboardStore implements IDashboardSotre {
         return new Promise((resolve, reject) => {
             dashboardService.saveDashboard(dashboard).then(_dashboard => {
                 runInAction(() => {
+                    const newDashboard = new Dashboard().fromJson(_dashboard)
                     if (isCreating) {
                         toast.success('Dashboard created successfully')
-                        this.addDashboard(new Dashboard().fromJson(_dashboard))
+                        this.addDashboard(newDashboard)
                     } else {
                         toast.success('Dashboard updated successfully')
-                        this.updateDashboard(new Dashboard().fromJson(_dashboard))
+                        this.updateDashboard(newDashboard)
                     }
-                    resolve(_dashboard)
+                    resolve(newDashboard)
                 })
             }).catch(error => {
                 toast.error('Error saving dashboard')
@@ -321,8 +322,11 @@ export default class DashboardStore implements IDashboardSotre {
         }
     }
 
-    selectDashboardById = (dashboardId: any) => {
-        this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || new Dashboard();
+    selectDashboardById(dashboardId: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            this.selectedDashboard = this.dashboards.find(d => d.dashboardId == dashboardId) || new Dashboard();
+            resolve(this.selectedDashboard)
+        })
         // if (this.selectedDashboard.dashboardId) {
         //     this.fetch(this.selectedDashboard.dashboardId)
         // }
