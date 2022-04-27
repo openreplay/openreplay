@@ -13,9 +13,9 @@ ee="false"
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
-        exit=1
+        exit 1
     }
-    [[ exit -eq 1 ]] && exit 1
+    return
 }
 
 function build_api(){
@@ -30,6 +30,7 @@ function build_api(){
         [[ $PUSH_IMAGE -eq 1 ]] && {
             docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
         }
+        echo "build completed for http"
         return
     }
     for image in $(ls services);
@@ -40,6 +41,7 @@ function build_api(){
         }
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${git_sha1}"
     done
+    echo "backend build completed"
 }
 
 check_prereq
