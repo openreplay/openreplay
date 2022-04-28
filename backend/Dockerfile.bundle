@@ -1,4 +1,4 @@
-FROM golang:1.13-alpine3.10 AS prepare
+FROM golang:1.18-alpine3.15 AS prepare
 
 RUN apk add --no-cache git openssh openssl-dev pkgconf gcc g++ make libc-dev bash
 
@@ -13,7 +13,7 @@ FROM prepare AS build
 COPY pkg pkg
 COPY services services
 
-RUN for name in alerts assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
+RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
 
 
 FROM alpine
@@ -26,8 +26,9 @@ ENV TZ=UTC \
     MAXMINDDB_FILE=/root/geoip.mmdb \
     UAPARSER_FILE=/root/regexes.yaml \
     HTTP_PORT=80 \
-    BEACON_SIZE_LIMIT=1000000 \
+    BEACON_SIZE_LIMIT=7000000 \
     KAFKA_USE_SSL=true \
+    KAFKA_MAX_POLL_INTERVAL_MS=400000 \
     REDIS_STREAMS_MAX_LEN=3000 \
     TOPIC_RAW_WEB=raw \
     TOPIC_RAW_IOS=raw-ios \
@@ -42,10 +43,10 @@ ENV TZ=UTC \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
-    CACHE_ASSETS=false \
+    CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
-    FS_CLEAN_HRS=12
-
+    FS_CLEAN_HRS=12 \
+    LOG_QUEUE_STATS_INTERVAL_SEC=60
 
 RUN mkdir $FS_DIR
 #VOLUME [ $FS_DIR ] # Uncomment in case of using Bind mount.
