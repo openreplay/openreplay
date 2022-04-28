@@ -1,34 +1,32 @@
 package builder
 
 import (
-		"encoding/json"
+	"encoding/json"
 
 	. "openreplay/backend/pkg/messages"
 )
-
 
 const CLICK_TIME_DIFF = 300
 const MIN_CLICKS_IN_A_ROW = 3
 
 type clickRageDetector struct {
-	lastTimestamp  uint64
-	lastLabel string
+	lastTimestamp        uint64
+	lastLabel            string
 	firstInARawTimestamp uint64
 	firstInARawMessageId uint64
-	countsInARow int
+	countsInARow         int
 }
-
 
 func (crd *clickRageDetector) Build() *IssueEvent {
 	var i *IssueEvent
 	if crd.countsInARow >= MIN_CLICKS_IN_A_ROW {
-		payload, _ := json.Marshal(struct{Count int }{crd.countsInARow,})
+		payload, _ := json.Marshal(struct{ Count int }{crd.countsInARow})
 		i = &IssueEvent{
-			Type: "click_rage",
+			Type:          "click_rage",
 			ContextString: crd.lastLabel,
-			Payload: string(payload), // TODO: json encoder
-			Timestamp: crd.firstInARawTimestamp,
-			MessageID: crd.firstInARawMessageId,
+			Payload:       string(payload), // TODO: json encoder
+			Timestamp:     crd.firstInARawTimestamp,
+			MessageID:     crd.firstInARawMessageId,
 		}
 	}
 	crd.lastTimestamp = 0
@@ -39,8 +37,8 @@ func (crd *clickRageDetector) Build() *IssueEvent {
 	return i
 }
 
-func (crd *clickRageDetector) HandleMouseClick(msg *MouseClick,  messageID uint64, timestamp uint64) *IssueEvent {
-	if crd.lastTimestamp + CLICK_TIME_DIFF > timestamp && crd.lastLabel == msg.Label {
+func (crd *clickRageDetector) HandleMouseClick(msg *MouseClick, messageID uint64, timestamp uint64) *IssueEvent {
+	if crd.lastTimestamp+CLICK_TIME_DIFF > timestamp && crd.lastLabel == msg.Label {
 		crd.lastTimestamp = timestamp
 		crd.countsInARow += 1
 		return nil

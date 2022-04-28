@@ -2,8 +2,8 @@ package storage
 
 import (
 	"io"
-	"strconv"
 	"sort"
+	"strconv"
 
 	_s3 "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -12,18 +12,17 @@ import (
 )
 
 type S3 struct {
-	uploader  *s3manager.Uploader
-	svc    		*_s3.S3
-	bucket 		*string
+	uploader *s3manager.Uploader
+	svc      *_s3.S3
+	bucket   *string
 }
-
 
 func NewS3(region string, bucket string) *S3 {
 	sess := env.AWSSessionOnRegion(region)
 	return &S3{
 		uploader: s3manager.NewUploader(sess),
-		svc:    _s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
-		bucket: &bucket,
+		svc:      _s3.New(sess), // AWS Docs: "These clients are safe to use concurrently."
+		bucket:   &bucket,
 	}
 }
 
@@ -35,14 +34,14 @@ func (s3 *S3) Upload(reader io.Reader, key string, contentType string, gzipped b
 		contentEncoding = &gzipStr
 	}
 	_, err := s3.uploader.Upload(&s3manager.UploadInput{
-    Body:   				reader,
-    Bucket: 				s3.bucket,
-    Key:          	&key,
-		ContentType:  	&contentType,
-		CacheControl: 	&cacheControl,
+		Body:            reader,
+		Bucket:          s3.bucket,
+		Key:             &key,
+		ContentType:     &contentType,
+		CacheControl:    &cacheControl,
 		ContentEncoding: contentEncoding,
-  })
-  return err
+	})
+	return err
 }
 
 func (s3 *S3) Get(key string) (io.ReadCloser, error) {
@@ -67,8 +66,8 @@ func (s3 *S3) Exists(key string) bool {
 	return false
 }
 
-
 const MAX_RETURNING_COUNT = 40
+
 func (s3 *S3) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 	prefix := strconv.FormatUint(projectID, 10) + "/"
 	output, err := s3.svc.ListObjectsV2(&_s3.ListObjectsV2Input{
@@ -82,7 +81,7 @@ func (s3 *S3) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 
 	list := output.Contents
 	max := len(list)
-	if (max > MAX_RETURNING_COUNT) {
+	if max > MAX_RETURNING_COUNT {
 		max = MAX_RETURNING_COUNT
 		sort.Slice(list, func(i, j int) bool {
 			return list[i].LastModified.After(*(list[j].LastModified))
@@ -91,8 +90,8 @@ func (s3 *S3) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 
 	var keyList []string
 	s := len(prefix)
- 	for _, obj := range list[:max] {
- 		keyList = append(keyList, (*obj.Key)[s:])
- 	}
- 	return keyList, nil
+	for _, obj := range list[:max] {
+		keyList = append(keyList, (*obj.Key)[s:])
+	}
+	return keyList, nil
 }

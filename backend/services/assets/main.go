@@ -66,6 +66,7 @@ func main() {
 			os.Exit(0)
 		case err := <-cacher.Errors:
 			log.Printf("Error while caching: %v", err)
+			// TODO: notify user
 		case <-tick:
 			cacher.UpdateTimeouts()
 		default:
