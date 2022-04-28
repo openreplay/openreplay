@@ -99,7 +99,7 @@ export default Record({
       filters: List(filters)
         .map(i => {
           const filter = NewFilter(i).toData();
-          if (i.hasOwnProperty('filters')) {
+          if (Array.isArray(i.filters)) {
             filter.filters = i.filters.map(f => NewFilter({...f, subFilter: i.type}).toData());
           }
           return filter;
