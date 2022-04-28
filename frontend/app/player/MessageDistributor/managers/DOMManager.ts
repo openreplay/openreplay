@@ -271,7 +271,7 @@ export default class DOMManager extends ListWalker<Message> {
             logger.warn("No iframe doc", msg, node, node.contentDocument);
             return;
           }
-          this.nl[ msg.id ] = doc
+          this.nl[ msg.id ] = doc.documentElement
           return;
         } else if (node instanceof Element) { // shadow DOM
           try {
