@@ -1,23 +1,22 @@
 package heuristics
 
 import (
-  . "openreplay/backend/pkg/messages"
+	. "openreplay/backend/pkg/messages"
 )
-
 
 const MIN_TIME_AFTER_LAST_HEARTBEAT = 60 * 1000
 
 type anr struct {
 	readyMessageStore
-	lastLabel string
+	lastLabel              string
 	lastHeartbeatTimestamp uint64
-	lastHeartbeatIndex uint64
+	lastHeartbeatIndex     uint64
 }
 
 func (h *anr) buildIf(timestamp uint64) {
-	if h.lastHeartbeatTimestamp != 0 && h.lastHeartbeatTimestamp + MIN_TIME_AFTER_LAST_HEARTBEAT <= timestamp  {
+	if h.lastHeartbeatTimestamp != 0 && h.lastHeartbeatTimestamp+MIN_TIME_AFTER_LAST_HEARTBEAT <= timestamp {
 		m := &IOSIssueEvent{
-			Type: "anr",
+			Type:          "anr",
 			ContextString: h.lastLabel,
 			//Context: "{}",
 			//Payload: fmt.SPrint

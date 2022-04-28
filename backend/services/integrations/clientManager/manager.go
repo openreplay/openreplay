@@ -7,38 +7,36 @@ import (
 	"openreplay/backend/services/integrations/integration"
 )
 
-
 type manager struct {
-	clientMap integration.ClientMap
-	Events chan *integration.SessionErrorEvent
-	Errors chan error 
-	RequestDataUpdates chan postgres.Integration  // not pointer because it could change in other thread
+	clientMap          integration.ClientMap
+	Events             chan *integration.SessionErrorEvent
+	Errors             chan error
+	RequestDataUpdates chan postgres.Integration // not pointer because it could change in other thread
 }
 
-
 func NewManager() *manager {
-	return &manager {
-		clientMap: make(integration.ClientMap),
+	return &manager{
+		clientMap:          make(integration.ClientMap),
 		RequestDataUpdates: make(chan postgres.Integration, 100),
-		Events: make(chan *integration.SessionErrorEvent, 100),
-		Errors: make(chan error, 100),
+		Events:             make(chan *integration.SessionErrorEvent, 100),
+		Errors:             make(chan error, 100),
 	}
 
 }
 
-func (m* manager) Update(i *postgres.Integration) error {
+func (m *manager) Update(i *postgres.Integration) error {
 	key := strconv.Itoa(int(i.ProjectID)) + i.Provider
 	if i.Options == nil {
 		delete(m.clientMap, key)
 		return nil
 	}
-	c, exists := m.clientMap[ key ]
+	c, exists := m.clientMap[key]
 	if !exists {
 		c, err := integration.NewClient(i, m.RequestDataUpdates, m.Events, m.Errors)
 		if err != nil {
 			return err
 		}
-		m.clientMap[ key ] = c
+		m.clientMap[key] = c
 		return nil
 	}
 	return c.Update(i)

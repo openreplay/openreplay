@@ -1,9 +1,9 @@
 package messages
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
-	"encoding/json"
 	"log"
 )
 
@@ -37,7 +37,7 @@ func ReadData(reader io.Reader) ([]byte, error) {
 	}
 	return p, nil
 }
- 
+
 func ReadUint(reader io.Reader) (uint64, error) {
 	var x uint64
 	var s uint

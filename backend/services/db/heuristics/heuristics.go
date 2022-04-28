@@ -1,8 +1,8 @@
 package heuristics
 
 import (
-  . "openreplay/backend/pkg/messages"
-  . "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/db/types"
+	. "openreplay/backend/pkg/messages"
 )
 
 type MessageHandler interface {
@@ -18,7 +18,6 @@ type Handler interface {
 }
 
 type mainHandler map[uint64]*sessHandler
-
 
 func NewHandler() mainHandler {
 	return make(mainHandler)
@@ -43,8 +42,10 @@ func (m mainHandler) HandleMessage(session *Session, msg Message) {
 }
 
 func (m mainHandler) IterateSessionReadyMessages(sessionID uint64, iter func(msg Message)) {
-	s, ok := m[ sessionID ]
-	if !ok { return }
+	s, ok := m[sessionID]
+	if !ok {
+		return
+	}
 	s.IterateReadyMessages(iter)
 	if s.IsEnded() {
 		delete(m, sessionID)
@@ -61,5 +62,3 @@ func (m mainHandler) IterateReadyMessages(iter func(sessionID uint64, msg Messag
 		}
 	}
 }
-
-
