@@ -2469,13 +2469,15 @@ def get_user_activity_avg_visited_pages(project_id, startTimestamp=TimeUTC.now(d
 
 
 def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTimestamp, **args):
-    ch_sub_query = __get_basic_constraints(table_name="sessions", data=args)
+    ch_sub_query = __get_basic_constraints(table_name="pages", data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query += meta_condition
-    ch_sub_query.append("sessions.pages_count>0")
-    ch_query = f"""SELECT COALESCE(CEIL(avgOrNull(sessions.pages_count)),0) AS value
-                    FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                    WHERE {" AND ".join(ch_sub_query)};"""
+
+    ch_query = f"""SELECT COALESCE(CEIL(avgOrNull(count)),0) AS value
+                    FROM (SELECT COUNT(session_id) AS count 
+                            FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                            WHERE {" AND ".join(ch_sub_query)}) AS groupped_data
+                    WHERE count>0;"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
 
@@ -2486,19 +2488,22 @@ def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTim
 
 def __get_user_activity_avg_visited_pages_chart(ch, project_id, startTimestamp, endTimestamp, density=20, **args):
     step_size = __get_step_size(endTimestamp=endTimestamp, startTimestamp=startTimestamp, density=density)
-    ch_sub_query_chart = __get_basic_constraints(table_name="sessions", round_start=True, data=args)
+    ch_sub_query_chart = __get_basic_constraints(table_name="pages", round_start=True, data=args)
     meta_condition = __get_meta_constraint(args)
     ch_sub_query_chart += meta_condition
 
     params = {"step_size": step_size, "project_id": project_id, "startTimestamp": startTimestamp,
               "endTimestamp": endTimestamp}
-    ch_sub_query_chart.append("sessions.pages_count>0")
-    ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
-                              COALESCE(avgOrNull(sessions.pages_count),0) AS value 
-                  FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                  WHERE {" AND ".join(ch_sub_query_chart)}
-                  GROUP BY timestamp
-                  ORDER BY timestamp;"""
+    ch_query = f"""SELECT timestamp, COALESCE(avgOrNull(count), 0) AS value
+                    FROM (SELECT toUnixTimestamp(toStartOfInterval(pages.datetime, INTERVAL %(step_size)s second ))*1000 AS timestamp,
+                            session_id, COUNT(pages.session_id) AS count 
+                          FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
+                          WHERE {" AND ".join(ch_sub_query_chart)}
+                          GROUP BY timestamp,session_id
+                          ORDER BY timestamp) AS groupped_data
+                    WHERE count>0
+                    GROUP BY timestamp
+                    ORDER BY timestamp;"""
     rows = ch.execute(query=ch_query, params={**params, **__get_constraint_values(args)})
     rows = __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                     end_time=endTimestamp,
