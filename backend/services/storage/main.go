@@ -37,6 +37,7 @@ func main() {
 			time.AfterFunc(RetryTimeout, func() {
 				uploadKey(key, retryCount-1)
 			})
+			return
 		}
 		defer file.Close()
 
