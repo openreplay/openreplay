@@ -16,6 +16,8 @@ import (
 	"openreplay/backend/pkg/storage"
 )
 
+const RetryTimeout = 2 * time.Minute
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
@@ -28,17 +30,18 @@ func main() {
 		if retryCount <= 0 {
 			return
 		}
+
 		file, err := os.Open(FS_DIR + "/" + key)
-		defer file.Close()
 		if err != nil {
 			log.Printf("File error: %v; Will retry %v more time(s)\n", err, retryCount)
-			time.AfterFunc(2*time.Minute, func() {
+			time.AfterFunc(RetryTimeout, func() {
 				uploadKey(key, retryCount-1)
 			})
-		} else {
-			if err := storage.Upload(gzipFile(file), key, "application/octet-stream", true); err != nil {
-				log.Fatalf("Storage upload error: %v\n", err)
-			}
+		}
+		defer file.Close()
+
+		if err := storage.Upload(gzipFile(file), key, "application/octet-stream", true); err != nil {
+			log.Fatalf("Storage upload error: %v\n", err)
 		}
 	}
 
