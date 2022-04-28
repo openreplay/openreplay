@@ -2472,7 +2472,8 @@ def __get_user_activity_avg_visited_pages(ch, project_id, startTimestamp, endTim
     ch_query = f"""SELECT COALESCE(CEIL(avgOrNull(count)),0) AS value
                     FROM (SELECT COUNT(session_id) AS count 
                             FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
-                            WHERE {" AND ".join(ch_sub_query)}) AS groupped_data
+                            WHERE {" AND ".join(ch_sub_query)}
+                            GROUP BY session_id) AS groupped_data
                     WHERE count>0;"""
     params = {"project_id": project_id, "startTimestamp": startTimestamp, "endTimestamp": endTimestamp,
               **__get_constraint_values(args)}
