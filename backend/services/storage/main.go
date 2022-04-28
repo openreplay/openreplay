@@ -8,7 +8,7 @@ import (
 
 	"bytes"
 	"io"
-	"ioutill"
+	//"io/ioutil"
 
 	"os/signal"
 	"syscall"
@@ -56,7 +56,7 @@ func main() {
 			log.Printf("File read error: %f", err)
 			return
 		}
-		startReader = bytes.NewBuffer(startBytes)
+		startReader := bytes.NewBuffer(startBytes)
 		if err := storage.Upload(gzipFile(startReader), key+"-s", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: start upload failed.  %v\n", err)
 		}

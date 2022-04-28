@@ -5,7 +5,7 @@ import (
 	"io"
 )
 
-func gzipFile(file io.ReadSeeker) io.Reader {
+func gzipFile(file io.Reader) io.Reader {
 	reader, writer := io.Pipe()
 	go func() {
 		gw, _ := gzip.NewWriterLevel(writer, gzip.BestSpeed)
