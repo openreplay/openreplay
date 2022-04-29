@@ -22,7 +22,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		responseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
-	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, cfg.JsonSizeLimit)
 	defer body.Close()
 
 	// Parse request body
@@ -71,7 +71,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixNano() / 1e6}
 
-		producer.Produce(TOPIC_RAW_WEB, tokenData.ID, Encode(&SessionStart{
+		producer.Produce(cfg.TopicRawWeb, tokenData.ID, Encode(&SessionStart{
 			Timestamp:            req.Timestamp,
 			ProjectID:            uint64(p.ProjectID),
 			TrackerVersion:       req.TrackerVersion,
@@ -95,7 +95,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
-		BeaconSizeLimit: BEACON_SIZE_LIMIT,
+		BeaconSizeLimit: cfg.BeaconSizeLimit,
 	})
 }
 
@@ -111,7 +111,7 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		responseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
-	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, cfg.BeaconSizeLimit)
 	defer body.Close()
 
 	var handledMessages bytes.Buffer
@@ -153,7 +153,7 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Send processed messages to queue as array of bytes
-	err = producer.Produce(TOPIC_RAW_WEB, sessionData.ID, handledMessages.Bytes())
+	err = producer.Produce(cfg.TopicRawWeb, sessionData.ID, handledMessages.Bytes())
 	if err != nil {
 		log.Printf("can't send processed messages to queue: %s", err)
 	}
@@ -166,7 +166,7 @@ func notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		responseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
-	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, cfg.JsonSizeLimit)
 	defer body.Close()
 
 	// Parse request body

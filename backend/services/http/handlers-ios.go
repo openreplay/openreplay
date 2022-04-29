@@ -36,7 +36,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	}
 	startTime := time.Now()
 	req := &request{}
-	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, cfg.JsonSizeLimit)
 	defer body.Close()
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
@@ -84,7 +84,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
 
 		// The difference with web is mostly here:
-		producer.Produce(TOPIC_RAW_IOS, tokenData.ID, Encode(&IOSSessionStart{
+		producer.Produce(cfg.TopicRawIOS, tokenData.ID, Encode(&IOSSessionStart{
 			Timestamp:      req.Timestamp,
 			ProjectID:      uint64(p.ProjectID),
 			TrackerVersion: req.TrackerVersion,
@@ -102,7 +102,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
-		BeaconSizeLimit: BEACON_SIZE_LIMIT,
+		BeaconSizeLimit: cfg.BeaconSizeLimit,
 	})
 }
 
@@ -112,7 +112,7 @@ func pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
-	pushMessages(w, r, sessionData.ID, TOPIC_RAW_IOS)
+	pushMessages(w, r, sessionData.ID, cfg.TopicRawIOS)
 }
 
 func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +122,7 @@ func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Check timestamps here?
-	pushMessages(w, r, sessionData.ID, TOPIC_RAW_IOS)
+	pushMessages(w, r, sessionData.ID, cfg.TopicRawIOS)
 }
 
 func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {

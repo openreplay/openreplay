@@ -7,7 +7,7 @@ import (
 
 func sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
 	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL); cacheable {
-		producer.Produce(TOPIC_CACHE, sessionID, messages.Encode(&messages.AssetCache{
+		producer.Produce(cfg.TopicCache, sessionID, messages.Encode(&messages.AssetCache{
 			URL: fullURL,
 		}))
 	}
@@ -20,7 +20,7 @@ func sendAssetsForCacheFromCSS(sessionID uint64, baseURL string, css string) {
 }
 
 func handleURL(sessionID uint64, baseURL string, url string) string {
-	if CACHE_ASSESTS {
+	if cfg.CacheAssets {
 		sendAssetForCache(sessionID, baseURL, url)
 		return rewriter.RewriteURL(sessionID, baseURL, url)
 	}
@@ -28,7 +28,7 @@ func handleURL(sessionID uint64, baseURL string, url string) string {
 }
 
 func handleCSS(sessionID uint64, baseURL string, css string) string {
-	if CACHE_ASSESTS {
+	if cfg.CacheAssets {
 		sendAssetsForCacheFromCSS(sessionID, baseURL, css)
 		return rewriter.RewriteCSS(sessionID, baseURL, css)
 	}
