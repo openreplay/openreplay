@@ -97,6 +97,7 @@ export default class Dashboard implements IDashboard {
         runInAction(() => {
             this.dashboardId = json.dashboardId
             this.name = json.name
+            this.description = json.description
             this.isPublic = json.isPublic
             this.isPinned = json.isPinned
             this.widgets = json.widgets ? json.widgets.map(w => new Widget().fromJson(w)).sort((a, b) => a.position - b.position) : []
