@@ -12,6 +12,7 @@ export default ({ transition = Flip, position = 'bottom-right', autoClose = 3000
     autoClose={ autoClose }
     className={ styles.container }
     toastClassName={ styles.toast }
+    closeButton={false}
     { ...props }
   />
 );

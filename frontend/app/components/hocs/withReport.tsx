@@ -4,6 +4,8 @@ import { jsPDF } from "jspdf";
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { connect } from 'react-redux';
+import { fileNameFormat } from 'App/utils';
+import { toast } from 'react-toastify';
 interface Props {
     site: any
 }
@@ -17,21 +19,32 @@ export default function withReport<P extends Props>(
         const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
         const widgets: any = useObserver(() => dashboard?.widgets);
         const period = useObserver(() => dashboardStore.period);
-        console.log('site', site)
         
         const addFooters = (doc) => {
             const pageCount = doc.internal.getNumberOfPages();
             for(var i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
-                doc.setFontSize(10);
+                doc.setFontSize(8);
                 doc.setTextColor(136,136,136);
-                doc.text('Page ' + String(i) + ' of ' + String(pageCount), 196,285,null,null,"right");
+                doc.text('Page ' + String(i) + ' of ' + String(pageCount), 200,290,null,null,"right");
+                doc.addImage('/logo-open-replay-grey.png', 'png', 10, 288, 20, 0);
             }
         }
+
+        const renderPromise = async (): Promise<any> => {
+            const promise = new Promise((resolve, reject) => {
+                renderReport(resolve);
+            });
+            toast.promise(promise, {
+                pending: 'Generating report...',
+                success: 'Report generated successfully',
+            })
+        }
     
-        const renderReport = async () => {
+        const renderReport = async (cb) => {
             document.body.scrollIntoView();
             const doc = new jsPDF('p', 'mm', 'a4');
+            const now = new Date().toISOString();
             
             doc.addMetadata('Author', 'OpenReplay');
             doc.addMetadata('Title', 'OpenReplay Report');
@@ -39,7 +52,7 @@ export default function withReport<P extends Props>(
             doc.addMetadata('Keywords', 'OpenReplay Report');
             doc.addMetadata('Creator', 'OpenReplay');
             doc.addMetadata('Producer', 'OpenReplay');
-            doc.addMetadata('CreationDate', new Date().toISOString());
+            doc.addMetadata('CreationDate', now);
     
     
             const parentElement = document.getElementById('report') as HTMLElement;
@@ -71,8 +84,12 @@ export default function withReport<P extends Props>(
                 pageDiv.id = `page-${index}`;
                 pageDiv.style.backgroundColor = '#f6f6f6';
                 pageDiv.style.gridAutoRows = 'min-content';
-                pageDiv.style.padding = '30px';
+                pageDiv.style.padding = '50px';
                 pageDiv.style.height = '490mm';
+
+                if (index > 0) {
+                    pageDiv.style.paddingTop = '100px';
+                }
     
                 if (index === 0) {
                     const header = document.getElementById('report-header')?.cloneNode(true) as HTMLElement;
@@ -93,8 +110,9 @@ export default function withReport<P extends Props>(
                     doc.addImage(pageImage, 'PNG', 0, 0, 210, 0);
                     if (i === pages.length - 1) {
                         addFooters(doc);
-                        doc.save('report.pdf');
+                        doc.save(fileNameFormat(dashboard.name + '_Report_' + Date.now(), '.pdf'));
                         rportLayer!.innerHTML = '';
+                        cb();
                     } else {
                         doc.addPage();
                     }
@@ -105,17 +123,18 @@ export default function withReport<P extends Props>(
         return (
             <>
                 <div className="mb-2" id="report-header" style={{ display: 'none' }}>
-                    <div className="flex items-end justify-between" style={{ margin: '-30px', padding: '25px 30px', backgroundColor: 'white' }}>
-                        <div className="">
+                    <div className="flex items-end justify-between" style={{ margin: '-50px', padding: '25px 50px', backgroundColor: 'white' }}>
+                        <div className="flex items-center">
                             <img src="/logo.svg" style={{ height: '30px' }} />
+                            <div className="text-lg color-gray-medium ml-2 mt-1">REPORT</div>
                         </div>
                         <div style={{ whiteSpace: 'nowrap' }}>
-                            Project: <span className="font-medium">{site && site.name}</span>
+                        <span className="font-semibold">Project:</span> {site && site.name}
                         </div>
                     </div>
-                    <div className="flex items-end mt-16 justify-between">
-                        <div className="text-2xl font-medium">{dashboard && dashboard.name}</div>
-                        <div className="font-medium">
+                    <div className="flex items-end mt-20 justify-between">
+                        <div className="text-2xl font-semibold">{dashboard && dashboard.name}</div>
+                        <div className="font-semibold">
                             {period && (period.range.start.format('MMM Do YY') + ' - ' + period.range.end.format('MMM Do YY'))}
                         </div>
                     </div>
@@ -131,7 +150,7 @@ export default function withReport<P extends Props>(
                         opacity: '0',
                     }}
                 ></div>
-                <WrappedComponent {...props} renderReport={renderReport} rendering={rendering} />
+                <WrappedComponent {...props} renderReport={renderPromise} rendering={rendering} />
             </>
         )
     }

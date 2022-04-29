@@ -27,6 +27,11 @@ export function randomInt(a, b) {
   return Math.round(rand);
 }
 
+export const fileNameFormat = (str = '', ext = '') => {
+  const name = str.replace(/[^a-zA-Z0-9]/g, '_');
+  return `${name}${ext}`;
+};
+
 export const toUnderscore = s => s.split(/(?=[A-Z])/).join('_').toLowerCase();
 
 export const getUniqueFilter = keys =>
