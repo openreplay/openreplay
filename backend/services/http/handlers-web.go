@@ -105,10 +105,7 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		}))
 	}
 
-	//delayDuration := time.Now().Sub(startTime)
 	responseWithJSON(w, &response{
-		//Timestamp: startTime.UnixNano() / 1e6,
-		//Delay:     delayDuration.Nanoseconds() / 1e6,
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -154,35 +151,6 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// switch msg.(type) {
-		// case *BatchMeta, // TODO: watchout! Meta().Index'es are changed here (though it is still unique for the topic-session pair)
-		// 	*SetPageLocation,
-		// 	*PageLoadTiming,
-		// 	*PageRenderTiming,
-		// 	*PerformanceTrack,
-		// 	*SetInputTarget,
-		// 	*SetInputValue,
-		// 	*MouseClick,
-		// 	*RawErrorEvent,
-		// 	*JSException,
-		// 	*ResourceTiming,
-		// 	*RawCustomEvent,
-		// 	*CustomIssue,
-		// 	*Fetch,
-		// 	*StateAction,
-		// 	*GraphQL,
-		// 	*CreateElementNode,
-		// 	*CreateTextNode,
-		// 	*RemoveNode,
-		// 	*CreateDocument,
-		// 	*RemoveNodeAttribute,
-		// 	*MoveNode,
-		// 	*SetCSSData,
-		// 	*CSSInsertRule,
-		// 	*CSSDeleteRule:
-		// 	analyticsMessages = append(analyticsMessages, msg)
-		//}
-
 		return msg
 	})
 	if err != nil {
@@ -190,9 +158,6 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	producer.Produce(TOPIC_RAW_WEB, sessionData.ID, rewritenBuf)
-	//producer.Produce(TOPIC_ANALYTICS, sessionData.ID, WriteBatch(analyticsMessages))
-	//duration := time.Now().Sub(startTime)
-	//log.Printf("Sended batch within %v nsec; %v nsek/byte", duration.Nanoseconds(), duration.Nanoseconds()/int64(len(buf)))
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -201,7 +166,6 @@ func notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		ProjectKey     *string `json:"projectKey"`
 		TrackerVersion string  `json:"trackerVersion"`
 		DoNotTrack     bool    `json:"DoNotTrack"`
-		// RevID                string `json:"revID"`
 	}
 	req := &request{}
 	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)

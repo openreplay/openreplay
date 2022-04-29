@@ -23,22 +23,9 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		TrackerVersion string  `json:"trackerVersion"`
 		RevID          string  `json:"revID"`
 		UserUUID       *string `json:"userUUID"`
-		//UserOS string `json"userOS"`  //hardcoded 'MacOS'
-		UserOSVersion string `json:"userOSVersion"`
-		UserDevice    string `json:"userDevice"`
-		Timestamp     uint64 `json:"timestamp"`
-		// UserDeviceType uint  0:phone 1:pad 2:tv 3:carPlay 5:mac
-		// “performances”:{
-		//     “activeProcessorCount”:8,
-		//     “isLowPowerModeEnabled”:0,
-		//     “orientation”:0,
-		//     “systemUptime”:585430,
-		//     “batteryState”:0,
-		//     “thermalState”:0,
-		//     “batteryLevel”:0,
-		//     “processorCount”:8,
-		//     “physicalMemory”:17179869184
-		//  },
+		UserOSVersion  string  `json:"userOSVersion"`
+		UserDevice     string  `json:"userDevice"`
+		Timestamp      uint64  `json:"timestamp"`
 	}
 	type response struct {
 		Token           string   `json:"token"`
@@ -111,14 +98,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		}))
 	}
 
-	// imagesHashList, err :=  s3.GetFrequentlyUsedKeys(*(req.EncodedProjectID)) // TODO: reuse index: ~ frequency * size
-	// if err != nil {
-	// 	responseWithError(w, http.StatusInternalServerError, err)
-	// 	return
-	// }
-
 	responseWithJSON(w, &response{
-		// ImagesHashList: imagesHashList,
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
