@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"openreplay/backend/pkg/db/postgres"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,7 +12,6 @@ import (
 	"golang.org/x/net/http2"
 
 	"openreplay/backend/pkg/db/cache"
-	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/queue"
@@ -47,26 +47,32 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	pprof.StartProfilingServer()
 
+	// Queue
 	producer = queue.NewProducer()
 	defer producer.Close(15000)
+
+	// Database
+	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000*60*20)
+	defer pgconn.Close()
+
+	// Envs
 	TOPIC_RAW_WEB = env.String("TOPIC_RAW_WEB")
 	TOPIC_RAW_IOS = env.String("TOPIC_RAW_IOS")
 	TOPIC_CACHE = env.String("TOPIC_CACHE")
 	TOPIC_TRIGGER = env.String("TOPIC_TRIGGER")
-	//TOPIC_ANALYTICS = env.String("TOPIC_ANALYTICS")
+	CACHE_ASSESTS = env.Bool("CACHE_ASSETS")
+	BEACON_SIZE_LIMIT = int64(env.Uint64("BEACON_SIZE_LIMIT"))
+	HTTP_PORT := env.String("HTTP_PORT")
+
+	// Modules
 	rewriter = assets.NewRewriter(env.String("ASSETS_ORIGIN"))
-	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000*60*20)
-	defer pgconn.Close()
 	s3 = storage.NewS3(env.String("AWS_REGION"), env.String("S3_BUCKET_IOS_IMAGES"))
 	tokenizer = token.NewTokenizer(env.String("TOKEN_SECRET"))
 	uaParser = uaparser.NewUAParser(env.String("UAPARSER_FILE"))
 	geoIP = geoip.NewGeoIP(env.String("MAXMINDDB_FILE"))
 	flaker = flakeid.NewFlaker(env.WorkerID())
-	CACHE_ASSESTS = env.Bool("CACHE_ASSETS")
-	BEACON_SIZE_LIMIT = int64(env.Uint64("BEACON_SIZE_LIMIT"))
 
-	HTTP_PORT := env.String("HTTP_PORT")
-
+	// Server
 	server := &http.Server{
 		Addr: ":" + HTTP_PORT,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -140,6 +146,7 @@ func main() {
 			}
 		}),
 	}
+
 	http2.ConfigureServer(server, nil)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -148,6 +155,7 @@ func main() {
 		}
 	}()
 	log.Printf("Server successfully started on port %v\n", HTTP_PORT)
+
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigchan

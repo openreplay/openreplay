@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"log"
@@ -15,37 +16,23 @@ import (
 )
 
 func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
-	type request struct {
-		Token           string  `json:"token"`
-		UserUUID        *string `json:"userUUID"`
-		RevID           string  `json:"revID"`
-		Timestamp       uint64  `json:"timestamp"`
-		TrackerVersion  string  `json:"trackerVersion"`
-		IsSnippet       bool    `json:"isSnippet"`
-		DeviceMemory    uint64  `json:"deviceMemory"`
-		JsHeapSizeLimit uint64  `json:"jsHeapSizeLimit"`
-		ProjectKey      *string `json:"projectKey"`
-		Reset           bool    `json:"reset"`
-		UserID          string  `json:"userID"`
-	}
-	type response struct {
-		Timestamp       int64  `json:"timestamp"`
-		Delay           int64  `json:"delay"`
-		Token           string `json:"token"`
-		UserUUID        string `json:"userUUID"`
-		SessionID       string `json:"sessionID"`
-		BeaconSizeLimit int64  `json:"beaconSizeLimit"`
-	}
-
 	startTime := time.Now()
-	req := &request{}
-	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT) // what if Body == nil??  // use r.ContentLength to return specific error?
+
+	// Check request body
+	if r.Body == nil {
+		responseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+	}
+	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)
 	defer body.Close()
+
+	// Parse request body
+	req := &startSessionRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
 		return
 	}
 
+	// Handler's logic
 	if req.ProjectKey == nil {
 		responseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
 		return
@@ -82,9 +69,8 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{sessionID, expTime.UnixNano() / 1e6}
+		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixNano() / 1e6}
 
-		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
 		producer.Produce(TOPIC_RAW_WEB, tokenData.ID, Encode(&SessionStart{
 			Timestamp:            req.Timestamp,
 			ProjectID:            uint64(p.ProjectID),
@@ -98,14 +84,14 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 			UserBrowserVersion:   ua.BrowserVersion,
 			UserDevice:           ua.Device,
 			UserDeviceType:       ua.DeviceType,
-			UserCountry:          country,
+			UserCountry:          geoIP.ExtractISOCodeFromHTTPRequest(r),
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
 			UserID:               req.UserID,
 		}))
 	}
 
-	responseWithJSON(w, &response{
+	responseWithJSON(w, &startSessionResponse{
 		Token:           tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -114,15 +100,24 @@ func startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 }
 
 func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
+	// Check authorization
 	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
+
+	// Check request body
+	if r.Body == nil {
+		responseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+	}
 	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
 	defer body.Close()
 
-	rewritenBuf, err := RewriteBatch(body, func(msg Message) Message {
+	var handledMessages bytes.Buffer
+
+	// Process each message in request data
+	err = ReadBatchReader(body, func(msg Message) {
 		switch m := msg.(type) {
 		case *SetNodeAttributeURLBased:
 			if m.Name == "src" || m.Name == "href" {
@@ -150,30 +145,38 @@ func pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) {
 				Rule:  handleCSS(sessionData.ID, m.BaseURL, m.Rule),
 			}
 		}
-
-		return msg
+		handledMessages.Write(msg.Encode())
 	})
 	if err != nil {
 		responseWithError(w, http.StatusForbidden, err)
 		return
 	}
-	producer.Produce(TOPIC_RAW_WEB, sessionData.ID, rewritenBuf)
+
+	// Send processed messages to queue as array of bytes
+	err = producer.Produce(TOPIC_RAW_WEB, sessionData.ID, handledMessages.Bytes())
+	if err != nil {
+		log.Printf("can't send processed messages to queue: %s", err)
+	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
 func notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
-	type request struct {
-		ProjectKey     *string `json:"projectKey"`
-		TrackerVersion string  `json:"trackerVersion"`
-		DoNotTrack     bool    `json:"DoNotTrack"`
+	// Check request body
+	if r.Body == nil {
+		responseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
-	req := &request{}
 	body := http.MaxBytesReader(w, r.Body, JSON_SIZE_LIMIT)
 	defer body.Close()
+
+	// Parse request body
+	req := &notStartedRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
 		return
 	}
+
+	// Handler's logic
 	if req.ProjectKey == nil {
 		responseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
 		return
@@ -201,5 +204,6 @@ func notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Unable to insert Unstarted Session: %v\n", err)
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
