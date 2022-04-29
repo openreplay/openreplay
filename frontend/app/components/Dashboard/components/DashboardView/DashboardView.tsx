@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useObserver } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Button, PageTitle, Loader, NoContent, ItemMenu } from 'UI';
+import { Button, PageTitle, Loader, NoContent } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
@@ -14,6 +14,7 @@ import DateRange from 'Shared/DateRange';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
+import DashboardOptions from '../DashboardOptions';
 
 interface Props {
     siteId: number;
@@ -110,15 +111,10 @@ function DashboardView(props: Props) {
                             </div>
                             <div className="mx-4" />
                             <div className="flex items-center">
-                                <ItemMenu
-                                    label="Options"
-                                    items={[
-                                        { icon: 'pdf-download', text: 'Download Report', onClick: props.renderReport },
-                                        { icon: 'pencil', text: 'Rename', onClick: onEdit },
-                                        { icon: 'text-paragraph', text: 'Add Description', onClick: onEdit },
-                                        { icon: 'users', text: 'Visibility & Access', onClick: onEdit },
-                                        { icon: 'trash', text: 'Delete', onClick: onDelete },
-                                    ]}
+                                <DashboardOptions
+                                    editHandler={onEdit}
+                                    deleteHandler={onDelete}
+                                    renderReport={props.renderReport}
                                 />
                             </div>
                         </div>
