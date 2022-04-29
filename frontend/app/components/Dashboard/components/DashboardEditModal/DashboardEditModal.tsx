@@ -47,6 +47,19 @@ function DashboardEditModal(props: Props) {
                         value={ dashboard.name }
                         onChange={write}
                         placeholder="Title"
+                        maxLength={100}
+                    />
+                </Form.Field>
+
+                <Form.Field>
+                    <label>{'Description:'}</label>
+                    <input
+                        className=""
+                        name="description"
+                        value={ dashboard.description }
+                        onChange={write}
+                        placeholder="Description"
+                        maxLength={300}
                     />
                 </Form.Field>
 

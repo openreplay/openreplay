@@ -138,6 +138,7 @@ export default function withReport<P extends Props>(
                             {period && (period.range.start.format('MMM Do YY') + ' - ' + period.range.end.format('MMM Do YY'))}
                         </div>
                     </div>
+                    {dashboard && dashboard.description && <div className="color-gray-medum whitespace-pre-wrap my-2">{dashboard.description}</div>}
                 </div>
 
                 <div
