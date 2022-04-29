@@ -888,7 +888,7 @@ class SavedSearchSchema(FunnelSchema):
 
 class CreateDashboardSchema(BaseModel):
     name: str = Field(..., min_length=1)
-    description: str = Field(default=None)
+    description: str = Field(default='')
     is_public: bool = Field(default=False)
     is_pinned: bool = Field(default=False)
     metrics: Optional[List[int]] = Field(default=[])
