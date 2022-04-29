@@ -86,8 +86,15 @@ function DashboardView(props: Props) {
                     />
                     <div className="flex items-center mb-4 justify-between">
                         <div className="flex items-center">
-                            <PageTitle title={dashboard?.name} className="mr-3" />
-                            <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
+                            <PageTitle
+                                title={dashboard?.name}
+                                className="mr-3"
+                                subTitle={dashboard?.description}
+                                actionButton={
+                                    <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
+                                }
+                            />
+                            
                         </div>
                         <div className="flex items-center">
                             <div className="flex items-center">

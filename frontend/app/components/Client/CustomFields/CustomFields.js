@@ -100,7 +100,7 @@ class CustomFields extends React.Component {
             title="No data available."
             size="small"
             show={ fields.size === 0 }
-            icon
+            animatedIcon="empty-state"
           >
             <div className={ styles.list }>
               { fields.filter(i => i.index).map(field => (
