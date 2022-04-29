@@ -838,6 +838,7 @@ $$
                 project_id   integer   NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
                 user_id      integer   NOT NULL REFERENCES users (user_id) ON DELETE SET NULL,
                 name         text      NOT NULL,
+                description  text      NOT NULL DEFAULT '',
                 is_public    boolean   NOT NULL DEFAULT TRUE,
                 is_pinned    boolean   NOT NULL DEFAULT FALSE,
                 created_at   timestamp NOT NULL DEFAULT timezone('utc'::text, now()),

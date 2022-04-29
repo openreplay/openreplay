@@ -42,8 +42,8 @@ def get_templates(project_id, user_id):
 
 def create_dashboard(project_id, user_id, data: schemas.CreateDashboardSchema):
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned) 
-                        VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s)
+        pg_query = f"""INSERT INTO dashboards(project_id, user_id, name, is_public, is_pinned, description) 
+                        VALUES(%(projectId)s, %(userId)s, %(name)s, %(is_public)s, %(is_pinned)s, %(description)s)
                         RETURNING *"""
         params = {"userId": user_id, "projectId": project_id, **data.dict()}
         if data.metrics is not None and len(data.metrics) > 0:
@@ -134,7 +134,8 @@ def update_dashboard(project_id, user_id, dashboard_id, data: schemas.EditDashbo
         row = cur.fetchone()
         offset = row["count"]
         pg_query = f"""UPDATE dashboards
-                      SET name = %(name)s 
+                      SET name = %(name)s,
+                          description= %(description)s
                             {", is_public = %(is_public)s" if data.is_public is not None else ""}
                             {", is_pinned = %(is_pinned)s" if data.is_pinned is not None else ""}
                         WHERE dashboards.project_id = %(projectId)s

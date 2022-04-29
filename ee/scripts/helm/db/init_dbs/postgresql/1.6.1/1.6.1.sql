@@ -1,0 +1,12 @@
+BEGIN;
+CREATE OR REPLACE FUNCTION openreplay_version()
+    RETURNS text AS
+$$
+SELECT 'v1.6.1-ee'
+$$ LANGUAGE sql IMMUTABLE;
+
+
+ALTER TABLE IF EXISTS dashboards
+    ADD COLUMN IF NOT EXISTS description text NOT NULL DEFAULT '';
+
+COMMIT;
