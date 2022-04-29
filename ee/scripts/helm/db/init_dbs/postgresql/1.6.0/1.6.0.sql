@@ -305,7 +305,7 @@ VALUES ('Captured sessions', 'overview', '{
          "position": 0
        }', true, true, true, 'missing_resources', 'predefined', 'table'),
        ('Slowest Resources', 'resources', '{
-         "col": 2,
+         "col": 4,
          "row": 2,
          "position": 0
        }', true, true, true, 'slowest_resources', 'predefined', 'table'),
