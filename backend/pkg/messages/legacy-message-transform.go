@@ -10,7 +10,6 @@ func transformDepricated(msg Message) Message {
 			ID:             m.ID,
 			HesitationTime: m.HesitationTime,
 			Label:          m.Label,
-			// Selector: '',
 		}
 	// case *FetchDepricated:
 	// 	return &Fetch {
