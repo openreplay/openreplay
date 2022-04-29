@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { observer, useObserver } from 'mobx-react-lite';
+import { useObserver } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { Button, PageTitle, Link, Loader, NoContent, ItemMenu } from 'UI';
-import { withSiteId, dashboardMetricCreate, dashboardSelected, dashboard } from 'App/routes';
+import { Button, PageTitle, Loader, NoContent, ItemMenu } from 'UI';
+import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import { confirm } from 'UI/Confirmation';
@@ -13,12 +13,14 @@ import DashboardEditModal from '../DashboardEditModal';
 import DateRange from 'Shared/DateRange';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
+import withReport from 'App/components/hocs/withReport';
 
 interface Props {
     siteId: number;
     history: any
     match: any
     dashboardId: any
+    renderReport?: any
 }
 function DashboardView(props: Props) {
     const { siteId, dashboardId } = props;
@@ -104,8 +106,9 @@ function DashboardView(props: Props) {
                                 <ItemMenu
                                     label="Options"
                                     items={[
-                                        { text: 'Rename', onClick: onEdit },
-                                        { text: 'Delete', onClick: onDelete },
+                                        { icon: 'filetype-pdf', text: 'Download Report', onClick: props.renderReport },
+                                        { icon: 'pencil', text: 'Rename', onClick: onEdit },
+                                        { icon: 'trash', text: 'Delete', onClick: onDelete },
                                     ]}
                                 />
                             </div>
@@ -115,6 +118,7 @@ function DashboardView(props: Props) {
                         siteId={siteId}
                         dashboardId={dashboardId}
                         onEditHandler={onAddWidgets}
+                        id="report"
                     />
                     <AlertFormModal
                         showModal={showAlertModal}
@@ -126,4 +130,6 @@ function DashboardView(props: Props) {
     ));
 }
 
-export default withPageTitle('Dashboards - OpenReplay')(withRouter(withModal(DashboardView)));
+export default withPageTitle('Dashboards - OpenReplay')(
+    withReport(withRouter(withModal(DashboardView)))
+);
