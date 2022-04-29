@@ -113,8 +113,10 @@ function DashboardView(props: Props) {
                                 <ItemMenu
                                     label="Options"
                                     items={[
-                                        { icon: 'filetype-pdf', text: 'Download Report', onClick: props.renderReport },
+                                        { icon: 'pdf-download', text: 'Download Report', onClick: props.renderReport },
                                         { icon: 'pencil', text: 'Rename', onClick: onEdit },
+                                        { icon: 'text-paragraph', text: 'Add Description', onClick: onEdit },
+                                        { icon: 'users', text: 'Visibility & Access', onClick: onEdit },
                                         { icon: 'trash', text: 'Delete', onClick: onDelete },
                                     ]}
                                 />
