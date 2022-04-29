@@ -5,11 +5,14 @@ import boto3
 import botocore
 from botocore.client import Config
 
-client = boto3.client('s3', endpoint_url=config("S3_HOST"),
-                      aws_access_key_id=config("S3_KEY"),
-                      aws_secret_access_key=config("S3_SECRET"),
-                      config=Config(signature_version='s3v4'),
-                      region_name=config("sessions_region"))
+if not config("S3_HOST", default=False):
+    client = boto3.client('s3')
+else:
+    client = boto3.client('s3', endpoint_url=config("S3_HOST"),
+                          aws_access_key_id=config("S3_KEY"),
+                          aws_secret_access_key=config("S3_SECRET"),
+                          config=Config(signature_version='s3v4'),
+                          region_name=config("sessions_region"))
 
 
 def exists(bucket, key):
