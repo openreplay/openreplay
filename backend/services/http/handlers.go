@@ -9,10 +9,8 @@ import (
 	gzip "github.com/klauspost/pgzip"
 )
 
-const JSON_SIZE_LIMIT int64 = 1e3 // 1Kb
-
 func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
-	body := http.MaxBytesReader(w, r.Body, BEACON_SIZE_LIMIT)
+	body := http.MaxBytesReader(w, r.Body, cfg.BeaconSizeLimit)
 	defer body.Close()
 	var reader io.ReadCloser
 	var err error

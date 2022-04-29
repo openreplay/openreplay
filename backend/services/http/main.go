@@ -25,6 +25,8 @@ import (
 	"openreplay/backend/pkg/pprof"
 )
 
+// Global variables
+var cfg *config
 var rewriter *assets.Rewriter
 var producer types.Producer
 var pgconn *cache.PGCache
@@ -34,18 +36,12 @@ var geoIP *geoip.GeoIP
 var tokenizer *token.Tokenizer
 var s3 *storage.S3
 
-var TOPIC_RAW_WEB string
-var TOPIC_RAW_IOS string
-var TOPIC_CACHE string
-var TOPIC_TRIGGER string
-
-//var TOPIC_ANALYTICS string
-var CACHE_ASSESTS bool
-var BEACON_SIZE_LIMIT int64
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	pprof.StartProfilingServer()
+
+	// Configs
+	cfg = NewConfig()
 
 	// Queue
 	producer = queue.NewProducer()
@@ -55,26 +51,17 @@ func main() {
 	pgconn = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000*60*20)
 	defer pgconn.Close()
 
-	// Envs
-	TOPIC_RAW_WEB = env.String("TOPIC_RAW_WEB")
-	TOPIC_RAW_IOS = env.String("TOPIC_RAW_IOS")
-	TOPIC_CACHE = env.String("TOPIC_CACHE")
-	TOPIC_TRIGGER = env.String("TOPIC_TRIGGER")
-	CACHE_ASSESTS = env.Bool("CACHE_ASSETS")
-	BEACON_SIZE_LIMIT = int64(env.Uint64("BEACON_SIZE_LIMIT"))
-	HTTP_PORT := env.String("HTTP_PORT")
-
-	// Modules
-	rewriter = assets.NewRewriter(env.String("ASSETS_ORIGIN"))
-	s3 = storage.NewS3(env.String("AWS_REGION"), env.String("S3_BUCKET_IOS_IMAGES"))
-	tokenizer = token.NewTokenizer(env.String("TOKEN_SECRET"))
-	uaParser = uaparser.NewUAParser(env.String("UAPARSER_FILE"))
-	geoIP = geoip.NewGeoIP(env.String("MAXMINDDB_FILE"))
-	flaker = flakeid.NewFlaker(env.WorkerID())
+	// Init modules
+	rewriter = assets.NewRewriter(cfg.AssetsOrigin)
+	s3 = storage.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages)
+	tokenizer = token.NewTokenizer(cfg.TokenSecret)
+	uaParser = uaparser.NewUAParser(cfg.UAParserFile)
+	geoIP = geoip.NewGeoIP(cfg.MaxMinDBFile)
+	flaker = flakeid.NewFlaker(cfg.WorkerID)
 
 	// Server
 	server := &http.Server{
-		Addr: ":" + HTTP_PORT,
+		Addr: ":" + cfg.HTTPPort,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 			// TODO: agree with specification
@@ -154,7 +141,7 @@ func main() {
 			log.Fatal("Server error")
 		}
 	}()
-	log.Printf("Server successfully started on port %v\n", HTTP_PORT)
+	log.Printf("Server successfully started on port %v\n", cfg.HTTPPort)
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
