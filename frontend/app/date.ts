@@ -61,7 +61,7 @@ export const getDateFromMill = date =>
  * @param {Date} Date to be checked.
  * @return {Boolean}
  */
-export const isToday = (date: Date):boolean => date.hasSame(new Date(), 'day');
+export const isToday = (date: DateTime):boolean => date.hasSame(new Date(), 'day');
 
 
 export function formatDateTimeDefault(timestamp: number): string {
@@ -113,4 +113,8 @@ export const formatMs = (ms: number): string => ms < 1000 ? `${ Math.trunc(ms) }
 
 export const convertTimestampToUtcTimestamp = (timestamp: number): number => {
   return DateTime.fromMillis(timestamp).toUTC().toMillis();
+}
+
+export const nowFormatted = (format?: string): string => {
+  return DateTime.local().toFormat(format || 'LLL dd, yyyy, hh:mm a');
 }

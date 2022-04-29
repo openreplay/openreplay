@@ -86,14 +86,15 @@ function WidgetWrapper(props: Props) {
             }}
             ref={dragDropRef}
             onClick={props.onClick ? props.onClick : () => {}}
+            id={`widget-${widget.widgetId}`}
         >
             {isTemplate && <TemplateOverlay />}
             <div
                 className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
             >
-                <h3 className="capitalize">{widget.name}</h3>
+                <div className="capitalize w-full font-medium">{widget.name}</div>
                 {isWidget && (
-                    <div className="flex items-center">
+                    <div className="flex items-center" id="no-print">
                         {!isPredefined && (
                             <>
                                 <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
@@ -118,11 +119,11 @@ function WidgetWrapper(props: Props) {
                 )}
             </div>
 
-            <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} >
+            {/* <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} > */}
                 <div className="px-4" onClick={onChartClick}>
                     <WidgetChart metric={widget} isWidget={isWidget} />
                 </div>
-            </LazyLoad>
+            {/* </LazyLoad> */}
         </div>
     ));
 }

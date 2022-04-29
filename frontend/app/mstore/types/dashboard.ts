@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 export interface IDashboard {
     dashboardId: any
     name: string
+    description: string
     isPublic: boolean
     widgets: IWidget[]
     metrics: any[]
@@ -35,6 +36,7 @@ export default class Dashboard implements IDashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
     name: string = "New Dashboard"
+    description: string = ""
     isPublic: boolean = true
     widgets: IWidget[] = []
     metrics: any[] = []
@@ -46,6 +48,7 @@ export default class Dashboard implements IDashboard {
     constructor() {
         makeAutoObservable(this, {
             name: observable,
+            description: observable,
             isPublic: observable,
             widgets: observable,
             isValid: observable,
