@@ -88,7 +88,8 @@ export default class Dashboard implements IDashboard {
             isPublic: this.isPublic,
             // widgets: this.widgets.map(w => w.toJson())
             // widgets: this.widgets
-            metrics: this.metrics
+            metrics: this.metrics,
+            description: this.description,
         }
     }
 
