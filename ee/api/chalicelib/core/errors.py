@@ -272,6 +272,7 @@ def get_details(project_id, error_id, user_id, **data):
                                          INNER JOIN events.errors AS ee USING (error_id)
                                          INNER JOIN public.sessions USING (session_id)
                                 WHERE pe.project_id = %(project_id)s
+                                  AND sessions.project_id = %(project_id)s
                                   AND error_id = %(error_id)s
                                 ORDER BY start_ts DESC
                                 LIMIT 1;""",
