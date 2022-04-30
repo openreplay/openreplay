@@ -2,13 +2,6 @@
 
 - [Vagrant](../scripts/vagrant/README.md)
 
-### Development environment
-
-```bash
-docker build -f  Dockerfile.bundle . 
-
-```
-
 ### Building and deploying locally
 
 ```bash
