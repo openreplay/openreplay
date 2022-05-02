@@ -39,7 +39,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	p, err := e.services.Pgconn.GetProjectByKey(*req.ProjectKey)
+	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or capture limit has been reached"))
@@ -119,33 +119,7 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	// Process each message in request data
 	err = ReadBatchReader(body, func(msg Message) {
-		switch m := msg.(type) {
-		case *SetNodeAttributeURLBased:
-			if m.Name == "src" || m.Name == "href" {
-				msg = &SetNodeAttribute{
-					ID:    m.ID,
-					Name:  m.Name,
-					Value: e.handleURL(sessionData.ID, m.BaseURL, m.Value),
-				}
-			} else if m.Name == "style" {
-				msg = &SetNodeAttribute{
-					ID:    m.ID,
-					Name:  m.Name,
-					Value: e.handleCSS(sessionData.ID, m.BaseURL, m.Value),
-				}
-			}
-		case *SetCSSDataURLBased:
-			msg = &SetCSSData{
-				ID:   m.ID,
-				Data: e.handleCSS(sessionData.ID, m.BaseURL, m.Data),
-			}
-		case *CSSInsertRuleURLBased:
-			msg = &CSSInsertRule{
-				ID:    m.ID,
-				Index: m.Index,
-				Rule:  e.handleCSS(sessionData.ID, m.BaseURL, m.Rule),
-			}
-		}
+		msg = e.services.Assets.ParseAssets(sessionData.ID, msg)
 		handledMessages.Write(msg.Encode())
 	})
 	if err != nil {
@@ -188,7 +162,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
-	err := e.services.Pgconn.InsertUnstartedSession(postgres.UnstartedSession{
+	err := e.services.Database.InsertUnstartedSession(postgres.UnstartedSession{
 		ProjectKey:         *req.ProjectKey,
 		TrackerVersion:     req.TrackerVersion,
 		DoNotTrack:         req.DoNotTrack,
