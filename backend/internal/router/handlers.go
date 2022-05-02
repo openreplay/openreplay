@@ -1,12 +1,12 @@
-package http
+package router
 
 import (
+	gzip "github.com/klauspost/pgzip"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	gzip "github.com/klauspost/pgzip"
+	http2 "openreplay/backend/internal/http"
 )
 
 func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
@@ -20,7 +20,7 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 
 		reader, err = gzip.NewReader(body)
 		if err != nil {
-			responseWithError(w, http.StatusInternalServerError, err) // TODO: stage-dependent responce
+			http2.ResponseWithError(w, http.StatusInternalServerError, err) // TODO: stage-dependent responce
 			return
 		}
 		log.Println("Gzip reader init", reader)
@@ -31,9 +31,9 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 	log.Println("Reader after switch:", reader)
 	buf, err := ioutil.ReadAll(reader)
 	if err != nil {
-		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+		http2.ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 		return
 	}
-	e.services.producer.Produce(topicName, sessionID, buf) // What if not able to send?
+	e.services.Producer.Produce(topicName, sessionID, buf) // What if not able to send?
 	w.WriteHeader(http.StatusOK)
 }

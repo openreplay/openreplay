@@ -1,11 +1,11 @@
-package http
+package config
 
 import (
 	"openreplay/backend/pkg/env"
 	"time"
 )
 
-type config struct {
+type Config struct {
 	HTTPHost          string
 	HTTPPort          string
 	HTTPTimeout       time.Duration
@@ -25,9 +25,9 @@ type config struct {
 	WorkerID          uint16
 }
 
-func NewConfig() *config {
-	return &config{
-		HTTPHost:          "",
+func New() *Config {
+	return &Config{
+		HTTPHost:          "", // empty by default
 		HTTPPort:          env.String("HTTP_PORT"),
 		HTTPTimeout:       time.Second * 60,
 		TopicRawWeb:       env.String("TOPIC_RAW_WEB"),
