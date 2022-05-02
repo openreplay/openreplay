@@ -1,6 +1,7 @@
 package services
 
 import (
+	"openreplay/backend/internal/assetscache"
 	"openreplay/backend/internal/config"
 	"openreplay/backend/internal/geoip"
 	"openreplay/backend/internal/uaparser"
@@ -13,22 +14,23 @@ import (
 )
 
 type ServicesBuilder struct {
-	Pgconn    *cache.PGCache
+	Database  *cache.PGCache
 	Producer  types.Producer
-	Rewriter  *assets.Rewriter
+	Assets    *assetscache.AssetsCache
 	Flaker    *flakeid.Flaker
 	UaParser  *uaparser.UAParser
 	GeoIP     *geoip.GeoIP
 	Tokenizer *token.Tokenizer
-	S3        *storage.S3
+	Storage   *storage.S3
 }
 
 func New(cfg *config.Config, producer types.Producer, pgconn *cache.PGCache) *ServicesBuilder {
+	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	return &ServicesBuilder{
-		Pgconn:    pgconn,
+		Database:  pgconn,
 		Producer:  producer,
-		Rewriter:  assets.NewRewriter(cfg.AssetsOrigin),
-		S3:        storage.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages),
+		Assets:    assetscache.New(cfg, rewriter, producer),
+		Storage:   storage.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages),
 		Tokenizer: token.NewTokenizer(cfg.TokenSecret),
 		UaParser:  uaparser.NewUAParser(cfg.UAParserFile),
 		GeoIP:     geoip.NewGeoIP(cfg.MaxMinDBFile),

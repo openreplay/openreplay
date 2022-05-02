@@ -16,30 +16,13 @@ import (
 	"openreplay/backend/pkg/token"
 )
 
-const FILES_SIZE_LIMIT int64 = 1e7 // 10Mb
-
 func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
-	type request struct {
-		Token          string  `json:"token"`
-		ProjectKey     *string `json:"projectKey"`
-		TrackerVersion string  `json:"trackerVersion"`
-		RevID          string  `json:"revID"`
-		UserUUID       *string `json:"userUUID"`
-		UserOSVersion  string  `json:"userOSVersion"`
-		UserDevice     string  `json:"userDevice"`
-		Timestamp      uint64  `json:"timestamp"`
-	}
-	type response struct {
-		Token           string   `json:"token"`
-		ImagesHashList  []string `json:"imagesHashList"`
-		UserUUID        string   `json:"userUUID"`
-		BeaconSizeLimit int64    `json:"beaconSizeLimit"`
-		SessionID       string   `json:"sessionID"`
-	}
 	startTime := time.Now()
-	req := &request{}
+	req := &StartIOSSessionRequest{}
+
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
+
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		ResponseWithError(w, http.StatusBadRequest, err)
 		return
@@ -50,7 +33,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	p, err := e.services.Pgconn.GetProjectByKey(*req.ProjectKey)
+	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
@@ -100,7 +83,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		}))
 	}
 
-	ResponseWithJSON(w, &response{
+	ResponseWithJSON(w, &StartIOSSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -136,8 +119,9 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, FILES_SIZE_LIMIT)
+	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
 	defer r.Body.Close()
+
 	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		ResponseWithError(w, http.StatusUnsupportedMediaType, err)
@@ -166,7 +150,7 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			key := prefix + fileHeader.Filename
 			log.Printf("Uploading image... %v", key)
 			go func() { //TODO: mime type from header
-				if err := e.services.S3.Upload(file, key, "image/jpeg", false); err != nil {
+				if err := e.services.Storage.Upload(file, key, "image/jpeg", false); err != nil {
 					log.Printf("Upload ios screen error. %v", err)
 				}
 			}()

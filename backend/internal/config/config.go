@@ -15,6 +15,7 @@ type Config struct {
 	CacheAssets       bool
 	BeaconSizeLimit   int64
 	JsonSizeLimit     int64
+	FileSizeLimit     int64
 	AssetsOrigin      string
 	AWSRegion         string
 	S3BucketIOSImages string
@@ -36,6 +37,7 @@ func New() *Config {
 		CacheAssets:       env.Bool("CACHE_ASSETS"),
 		BeaconSizeLimit:   int64(env.Uint64("BEACON_SIZE_LIMIT")),
 		JsonSizeLimit:     1e3, // 1Kb
+		FileSizeLimit:     1e7, // 10Mb
 		AssetsOrigin:      env.String("ASSETS_ORIGIN"),
 		AWSRegion:         env.String("AWS_REGION"),
 		S3BucketIOSImages: env.String("S3_BUCKET_IOS_IMAGES"),
