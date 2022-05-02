@@ -28,11 +28,12 @@
     display: none;
   }
 
+  white-space: nowrap;
   z-index: 10;
   position: absolute;
   right: 31px;
-  top: 18px;
-  width: 150px;
+  top: 27px;
+  min-width: 150px;
   background-color: $white;
   border-radius: 3px;
   box-shadow: 0px 1px 3px 0 $gray-light;

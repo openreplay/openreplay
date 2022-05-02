@@ -33,7 +33,7 @@ function CustomMetricOverviewChart(props: Props) {
                 <AreaChart
                     data={ data.chart }
                     margin={ {
-                        top: 50, right: 0, left: 0, bottom: 5,
+                        top: 50, right: 0, left: 0, bottom: 1,
                     } }
                 >
                     {gradientDef}
