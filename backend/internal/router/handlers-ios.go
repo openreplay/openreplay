@@ -6,7 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	http2 "openreplay/backend/internal/http"
+	"openreplay/backend/internal/ios"
 	"openreplay/backend/internal/uuid"
 	"strconv"
 	"time"
@@ -41,21 +41,21 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 	if err := json.NewDecoder(body).Decode(req); err != nil {
-		http2.ResponseWithError(w, http.StatusBadRequest, err)
+		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	if req.ProjectKey == nil {
-		http2.ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
 		return
 	}
 
 	p, err := e.services.Pgconn.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			http2.ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
+			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
 		} else {
-			http2.ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 		}
 		return
 	}
@@ -65,18 +65,18 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	if err != nil { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
 		if dice >= p.SampleRate {
-			http2.ResponseWithError(w, http.StatusForbidden, errors.New("cancel"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"))
 			return
 		}
 
 		ua := e.services.UaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			http2.ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
 		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
-			http2.ResponseWithError(w, http.StatusInternalServerError, err)
+			ResponseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
@@ -94,13 +94,13 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 			UserUUID:       userUUID,
 			UserOS:         "IOS",
 			UserOSVersion:  req.UserOSVersion,
-			UserDevice:     http2.MapIOSDevice(req.UserDevice),
-			UserDeviceType: http2.GetIOSDeviceType(req.UserDevice),
+			UserDevice:     ios.MapIOSDevice(req.UserDevice),
+			UserDeviceType: ios.GetIOSDeviceType(req.UserDevice),
 			UserCountry:    country,
 		}))
 	}
 
-	http2.ResponseWithJSON(w, &response{
+	ResponseWithJSON(w, &response{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -111,7 +111,7 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		http2.ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
 	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawIOS)
@@ -120,7 +120,7 @@ func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) 
 func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil && err != token.EXPIRED {
-		http2.ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
 	// Check timestamps here?
@@ -132,7 +132,7 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
-		http2.ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -140,18 +140,18 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	defer r.Body.Close()
 	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
-		http2.ResponseWithError(w, http.StatusUnsupportedMediaType, err)
+		ResponseWithError(w, http.StatusUnsupportedMediaType, err)
 		// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
 	} else if err != nil {
-		http2.ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 	}
 
 	if r.MultipartForm == nil {
-		http2.ResponseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
+		ResponseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
 	}
 
 	if len(r.MultipartForm.Value["projectKey"]) == 0 {
-		http2.ResponseWithError(w, http.StatusBadRequest, errors.New("projectKey parameter missing")) // status for missing/wrong parameter?
+		ResponseWithError(w, http.StatusBadRequest, errors.New("projectKey parameter missing")) // status for missing/wrong parameter?
 		return
 	}
 

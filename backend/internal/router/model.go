@@ -1,4 +1,4 @@
-package http
+package router
 
 type StartSessionRequest struct {
 	Token           string  `json:"token"`

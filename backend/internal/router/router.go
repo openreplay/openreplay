@@ -5,16 +5,16 @@ import (
 	"log"
 	"net/http"
 	"openreplay/backend/internal/config"
-	http2 "openreplay/backend/internal/http"
+	http2 "openreplay/backend/internal/services"
 )
 
 type Router struct {
 	router   *mux.Router
 	cfg      *config.Config
-	services *http2.ServiceBuilder
+	services *http2.ServicesBuilder
 }
 
-func NewRouter(cfg *config.Config, services *http2.ServiceBuilder) (*Router, error) {
+func NewRouter(cfg *config.Config, services *http2.ServicesBuilder) (*Router, error) {
 	e := &Router{
 		cfg:      cfg,
 		services: services,
