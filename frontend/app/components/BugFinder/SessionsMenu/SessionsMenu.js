@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
@@ -7,16 +7,22 @@ import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';
+import { useModal } from 'App/components/Modal';
+import SessionSettings from 'Shared/SessionSettings/SessionSettings'
 
 function SessionsMenu(props) {
   const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel } = props;
+  const { hideModal, showModal } = useModal();
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
   }
-
   
   const capturingAll = props.captureRate && props.captureRate.get('captureAll');
+
+  useEffect(() => {
+    showModal(<SessionSettings />, {});
+  }, [])
 
   return (
     <div className={stl.wrapper}>
