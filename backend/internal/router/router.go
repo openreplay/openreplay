@@ -1,18 +1,20 @@
-package http
+package router
 
 import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"openreplay/backend/internal/config"
+	http2 "openreplay/backend/internal/http"
 )
 
 type Router struct {
 	router   *mux.Router
-	cfg      *config
-	services *ServiceBuilder
+	cfg      *config.Config
+	services *http2.ServiceBuilder
 }
 
-func NewRouter(cfg *config, services *ServiceBuilder) (*Router, error) {
+func NewRouter(cfg *config.Config, services *http2.ServiceBuilder) (*Router, error) {
 	e := &Router{
 		cfg:      cfg,
 		services: services,

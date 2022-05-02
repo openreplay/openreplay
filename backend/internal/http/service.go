@@ -1,6 +1,7 @@
 package http
 
 import (
+	"openreplay/backend/internal/config"
 	"openreplay/backend/internal/http/geoip"
 	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/pkg/db/cache"
@@ -12,25 +13,25 @@ import (
 )
 
 type ServiceBuilder struct {
-	pgconn    *cache.PGCache
-	producer  types.Producer
-	rewriter  *assets.Rewriter
-	flaker    *flakeid.Flaker
-	uaParser  *uaparser.UAParser
-	geoIP     *geoip.GeoIP
-	tokenizer *token.Tokenizer
-	s3        *storage.S3
+	Pgconn    *cache.PGCache
+	Producer  types.Producer
+	Rewriter  *assets.Rewriter
+	Flaker    *flakeid.Flaker
+	UaParser  *uaparser.UAParser
+	GeoIP     *geoip.GeoIP
+	Tokenizer *token.Tokenizer
+	S3        *storage.S3
 }
 
-func NewServiceBuilder(cfg *config, producer types.Producer, pgconn *cache.PGCache) *ServiceBuilder {
+func NewServiceBuilder(cfg *config.Config, producer types.Producer, pgconn *cache.PGCache) *ServiceBuilder {
 	return &ServiceBuilder{
-		pgconn:    pgconn,
-		producer:  producer,
-		rewriter:  assets.NewRewriter(cfg.AssetsOrigin),
-		s3:        storage.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages),
-		tokenizer: token.NewTokenizer(cfg.TokenSecret),
-		uaParser:  uaparser.NewUAParser(cfg.UAParserFile),
-		geoIP:     geoip.NewGeoIP(cfg.MaxMinDBFile),
-		flaker:    flakeid.NewFlaker(cfg.WorkerID),
+		Pgconn:    pgconn,
+		Producer:  producer,
+		Rewriter:  assets.NewRewriter(cfg.AssetsOrigin),
+		S3:        storage.NewS3(cfg.AWSRegion, cfg.S3BucketIOSImages),
+		Tokenizer: token.NewTokenizer(cfg.TokenSecret),
+		UaParser:  uaparser.NewUAParser(cfg.UAParserFile),
+		GeoIP:     geoip.NewGeoIP(cfg.MaxMinDBFile),
+		Flaker:    flakeid.NewFlaker(cfg.WorkerID),
 	}
 }

@@ -1,6 +1,6 @@
 package http
 
-type startSessionRequest struct {
+type StartSessionRequest struct {
 	Token           string  `json:"token"`
 	UserUUID        *string `json:"userUUID"`
 	RevID           string  `json:"revID"`
@@ -14,7 +14,7 @@ type startSessionRequest struct {
 	UserID          string  `json:"userID"`
 }
 
-type startSessionResponse struct {
+type StartSessionResponse struct {
 	Timestamp       int64  `json:"timestamp"`
 	Delay           int64  `json:"delay"`
 	Token           string `json:"token"`
@@ -23,7 +23,7 @@ type startSessionResponse struct {
 	BeaconSizeLimit int64  `json:"beaconSizeLimit"`
 }
 
-type notStartedRequest struct {
+type NotStartedRequest struct {
 	ProjectKey     *string `json:"projectKey"`
 	TrackerVersion string  `json:"trackerVersion"`
 	DoNotTrack     bool    `json:"DoNotTrack"`

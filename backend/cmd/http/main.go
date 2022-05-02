@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/internal/config"
 	"openreplay/backend/internal/http"
+	"openreplay/backend/internal/router"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/pprof"
@@ -17,7 +19,7 @@ func main() {
 	pprof.StartProfilingServer()
 
 	// Load configuration
-	cfg := http.NewConfig()
+	cfg := config.New()
 
 	// Connect to queue
 	producer := queue.NewProducer()
@@ -31,7 +33,7 @@ func main() {
 	services := http.NewServiceBuilder(cfg, producer, dbConn)
 
 	// Init server's routes
-	router, err := http.NewRouter(cfg, services)
+	router, err := router.NewRouter(cfg, services)
 	if err != nil {
 		log.Fatalf("failed while creating engine: %s", err)
 	}
