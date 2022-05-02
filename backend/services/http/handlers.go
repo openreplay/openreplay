@@ -9,8 +9,8 @@ import (
 	gzip "github.com/klauspost/pgzip"
 )
 
-func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
-	body := http.MaxBytesReader(w, r.Body, cfg.BeaconSizeLimit)
+func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topicName string) {
+	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
 	defer body.Close()
 	var reader io.ReadCloser
 	var err error
@@ -34,6 +34,6 @@ func pushMessages(w http.ResponseWriter, r *http.Request, sessionID uint64, topi
 		responseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 		return
 	}
-	producer.Produce(topicName, sessionID, buf) // What if not able to send?
+	e.services.producer.Produce(topicName, sessionID, buf) // What if not able to send?
 	w.WriteHeader(http.StatusOK)
 }

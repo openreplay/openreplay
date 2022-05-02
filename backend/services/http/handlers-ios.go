@@ -16,7 +16,7 @@ import (
 
 const FILES_SIZE_LIMIT int64 = 1e7 // 10Mb
 
-func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
+func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	type request struct {
 		Token          string  `json:"token"`
 		ProjectKey     *string `json:"projectKey"`
@@ -36,7 +36,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	}
 	startTime := time.Now()
 	req := &request{}
-	body := http.MaxBytesReader(w, r.Body, cfg.JsonSizeLimit)
+	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 	if err := json.NewDecoder(body).Decode(req); err != nil {
 		responseWithError(w, http.StatusBadRequest, err)
@@ -48,7 +48,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := pgconn.GetProjectByKey(*req.ProjectKey)
+	p, err := e.services.pgconn.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
 			responseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or is not active"))
@@ -58,7 +58,7 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userUUID := getUUID(req.UserUUID)
-	tokenData, err := tokenizer.Parse(req.Token)
+	tokenData, err := e.services.tokenizer.Parse(req.Token)
 
 	if err != nil { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
@@ -67,12 +67,12 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ua := uaParser.ParseFromHTTPRequest(r)
+		ua := e.services.uaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
 			responseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
-		sessionID, err := flaker.Compose(uint64(startTime.UnixMilli()))
+		sessionID, err := e.services.flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
 			responseWithError(w, http.StatusInternalServerError, err)
 			return
@@ -81,10 +81,10 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{sessionID, expTime.UnixMilli()}
 
-		country := geoIP.ExtractISOCodeFromHTTPRequest(r)
+		country := e.services.geoIP.ExtractISOCodeFromHTTPRequest(r)
 
 		// The difference with web is mostly here:
-		producer.Produce(cfg.TopicRawIOS, tokenData.ID, Encode(&IOSSessionStart{
+		e.services.producer.Produce(e.cfg.TopicRawIOS, tokenData.ID, Encode(&IOSSessionStart{
 			Timestamp:      req.Timestamp,
 			ProjectID:      uint64(p.ProjectID),
 			TrackerVersion: req.TrackerVersion,
@@ -99,36 +99,36 @@ func startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseWithJSON(w, &response{
-		Token:           tokenizer.Compose(*tokenData),
+		Token:           e.services.tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
-		BeaconSizeLimit: cfg.BeaconSizeLimit,
+		BeaconSizeLimit: e.cfg.BeaconSizeLimit,
 	})
 }
 
-func pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
-	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
+func (e *Router) pushMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	sessionData, err := e.services.tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
-	pushMessages(w, r, sessionData.ID, cfg.TopicRawIOS)
+	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawIOS)
 }
 
-func pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
-	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
+func (e *Router) pushLateMessagesHandlerIOS(w http.ResponseWriter, r *http.Request) {
+	sessionData, err := e.services.tokenizer.ParseFromHTTPRequest(r)
 	if err != nil && err != token.EXPIRED {
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
 	// Check timestamps here?
-	pushMessages(w, r, sessionData.ID, cfg.TopicRawIOS)
+	e.pushMessages(w, r, sessionData.ID, e.cfg.TopicRawIOS)
 }
 
-func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
+func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 	log.Printf("recieved imagerequest")
 
-	sessionData, err := tokenizer.ParseFromHTTPRequest(r)
+	sessionData, err := e.services.tokenizer.ParseFromHTTPRequest(r)
 	if err != nil { // Should accept expired token?
 		responseWithError(w, http.StatusUnauthorized, err)
 		return
@@ -164,7 +164,7 @@ func imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) {
 			key := prefix + fileHeader.Filename
 			log.Printf("Uploading image... %v", key)
 			go func() { //TODO: mime type from header
-				if err := s3.Upload(file, key, "image/jpeg", false); err != nil {
+				if err := e.services.s3.Upload(file, key, "image/jpeg", false); err != nil {
 					log.Printf("Upload ios screen error. %v", err)
 				}
 			}()
