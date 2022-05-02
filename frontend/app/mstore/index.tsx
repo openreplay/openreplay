@@ -3,14 +3,17 @@ import DashboardStore, { IDashboardSotre } from './dashboardStore';
 import MetricStore, { IMetricStore } from './metricStore';
 import APIClient from 'App/api_client';
 import { dashboardService, metricService } from 'App/services';
+import SettingsStore from './settingsStore';
 
 export class RootStore {
     dashboardStore: IDashboardSotre;
     metricStore: IMetricStore;
+    settingsStore: SettingsStore;
 
     constructor() {
         this.dashboardStore = new DashboardStore();
         this.metricStore = new MetricStore();
+        this.settingsStore = new SettingsStore();
     }
 
     initClient() {
