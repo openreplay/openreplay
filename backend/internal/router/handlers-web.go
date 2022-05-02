@@ -7,7 +7,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	http2 "openreplay/backend/internal/http"
 	"openreplay/backend/internal/uuid"
 	"strconv"
 	"time"
@@ -22,30 +21,30 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 
 	// Check request body
 	if r.Body == nil {
-		http2.ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 
 	// Parse request body
-	req := &http2.StartSessionRequest{}
+	req := &StartSessionRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
-		http2.ResponseWithError(w, http.StatusBadRequest, err)
+		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		http2.ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
 		return
 	}
 
 	p, err := e.services.Pgconn.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			http2.ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or capture limit has been reached"))
+			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or capture limit has been reached"))
 		} else {
-			http2.ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
 		}
 		return
 	}
@@ -55,18 +54,18 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	if err != nil || req.Reset { // Starting the new one
 		dice := byte(rand.Intn(100)) // [0, 100)
 		if dice >= p.SampleRate {
-			http2.ResponseWithError(w, http.StatusForbidden, errors.New("cancel"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("cancel"))
 			return
 		}
 
 		ua := e.services.UaParser.ParseFromHTTPRequest(r)
 		if ua == nil {
-			http2.ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
+			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
 		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixNano() / 1e6))
 		if err != nil {
-			http2.ResponseWithError(w, http.StatusInternalServerError, err)
+			ResponseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
@@ -93,7 +92,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}))
 	}
 
-	http2.ResponseWithJSON(w, &http2.StartSessionResponse{
+	ResponseWithJSON(w, &StartSessionResponse{
 		Token:           e.services.Tokenizer.Compose(*tokenData),
 		UserUUID:        userUUID,
 		SessionID:       strconv.FormatUint(tokenData.ID, 10),
@@ -105,13 +104,13 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Check authorization
 	sessionData, err := e.services.Tokenizer.ParseFromHTTPRequest(r)
 	if err != nil {
-		http2.ResponseWithError(w, http.StatusUnauthorized, err)
+		ResponseWithError(w, http.StatusUnauthorized, err)
 		return
 	}
 
 	// Check request body
 	if r.Body == nil {
-		http2.ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
 	defer body.Close()
@@ -150,7 +149,7 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		handledMessages.Write(msg.Encode())
 	})
 	if err != nil {
-		http2.ResponseWithError(w, http.StatusForbidden, err)
+		ResponseWithError(w, http.StatusForbidden, err)
 		return
 	}
 
@@ -166,26 +165,26 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	// Check request body
 	if r.Body == nil {
-		http2.ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 
 	// Parse request body
-	req := &http2.NotStartedRequest{}
+	req := &NotStartedRequest{}
 	if err := json.NewDecoder(body).Decode(req); err != nil {
-		http2.ResponseWithError(w, http.StatusBadRequest, err)
+		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		http2.ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
 		return
 	}
 	ua := e.services.UaParser.ParseFromHTTPRequest(r) // TODO?: insert anyway
 	if ua == nil {
-		http2.ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 		return
 	}
 	country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)

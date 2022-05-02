@@ -1,9 +1,9 @@
-package http
+package services
 
 import (
 	"openreplay/backend/internal/config"
-	"openreplay/backend/internal/http/geoip"
-	"openreplay/backend/internal/http/uaparser"
+	"openreplay/backend/internal/geoip"
+	"openreplay/backend/internal/uaparser"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/queue/types"
@@ -12,7 +12,7 @@ import (
 	"openreplay/backend/pkg/url/assets"
 )
 
-type ServiceBuilder struct {
+type ServicesBuilder struct {
 	Pgconn    *cache.PGCache
 	Producer  types.Producer
 	Rewriter  *assets.Rewriter
@@ -23,8 +23,8 @@ type ServiceBuilder struct {
 	S3        *storage.S3
 }
 
-func NewServiceBuilder(cfg *config.Config, producer types.Producer, pgconn *cache.PGCache) *ServiceBuilder {
-	return &ServiceBuilder{
+func New(cfg *config.Config, producer types.Producer, pgconn *cache.PGCache) *ServicesBuilder {
+	return &ServicesBuilder{
 		Pgconn:    pgconn,
 		Producer:  producer,
 		Rewriter:  assets.NewRewriter(cfg.AssetsOrigin),

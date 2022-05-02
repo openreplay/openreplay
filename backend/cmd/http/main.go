@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"openreplay/backend/internal/config"
-	"openreplay/backend/internal/http"
 	"openreplay/backend/internal/router"
 	"openreplay/backend/internal/server"
+	"openreplay/backend/internal/services"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/pprof"
@@ -31,7 +31,7 @@ func main() {
 	defer dbConn.Close()
 
 	// Build all services
-	services := http.NewServiceBuilder(cfg, producer, dbConn)
+	services := services.New(cfg, producer, dbConn)
 
 	// Init server's routes
 	router, err := router.NewRouter(cfg, services)
