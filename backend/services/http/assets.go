@@ -5,32 +5,32 @@ import (
 	"openreplay/backend/pkg/url/assets"
 )
 
-func sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
+func (e *Router) sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
 	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL); cacheable {
-		producer.Produce(cfg.TopicCache, sessionID, messages.Encode(&messages.AssetCache{
+		e.services.producer.Produce(e.cfg.TopicCache, sessionID, messages.Encode(&messages.AssetCache{
 			URL: fullURL,
 		}))
 	}
 }
 
-func sendAssetsForCacheFromCSS(sessionID uint64, baseURL string, css string) {
+func (e *Router) sendAssetsForCacheFromCSS(sessionID uint64, baseURL string, css string) {
 	for _, u := range assets.ExtractURLsFromCSS(css) { // TODO: in one shot with rewriting
-		sendAssetForCache(sessionID, baseURL, u)
+		e.sendAssetForCache(sessionID, baseURL, u)
 	}
 }
 
-func handleURL(sessionID uint64, baseURL string, url string) string {
-	if cfg.CacheAssets {
-		sendAssetForCache(sessionID, baseURL, url)
-		return rewriter.RewriteURL(sessionID, baseURL, url)
+func (e *Router) handleURL(sessionID uint64, baseURL string, url string) string {
+	if e.cfg.CacheAssets {
+		e.sendAssetForCache(sessionID, baseURL, url)
+		return e.services.rewriter.RewriteURL(sessionID, baseURL, url)
 	}
 	return assets.ResolveURL(baseURL, url)
 }
 
-func handleCSS(sessionID uint64, baseURL string, css string) string {
-	if cfg.CacheAssets {
-		sendAssetsForCacheFromCSS(sessionID, baseURL, css)
-		return rewriter.RewriteCSS(sessionID, baseURL, css)
+func (e *Router) handleCSS(sessionID uint64, baseURL string, css string) string {
+	if e.cfg.CacheAssets {
+		e.sendAssetsForCacheFromCSS(sessionID, baseURL, css)
+		return e.services.rewriter.RewriteCSS(sessionID, baseURL, css)
 	}
 	return assets.ResolveCSS(baseURL, css)
 }
