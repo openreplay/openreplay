@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type Server struct {
 	server *http.Server
 }
 
-func NewServer(handler http.Handler, host, port string, timeout time.Duration) (*Server, error) {
+func New(handler http.Handler, host, port string, timeout time.Duration) (*Server, error) {
 	switch {
 	case port == "":
 		return nil, errors.New("empty server port")

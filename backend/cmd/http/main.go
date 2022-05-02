@@ -5,6 +5,7 @@ import (
 	"openreplay/backend/internal/config"
 	"openreplay/backend/internal/http"
 	"openreplay/backend/internal/router"
+	"openreplay/backend/internal/server"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/pprof"
@@ -39,7 +40,7 @@ func main() {
 	}
 
 	// Init server
-	server, err := http.NewServer(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
+	server, err := server.New(router.GetHandler(), cfg.HTTPHost, cfg.HTTPPort, cfg.HTTPTimeout)
 	if err != nil {
 		log.Fatalf("failed while creating server: %s", err)
 	}
