@@ -1,14 +1,14 @@
-package main
+package http
 
 import (
+	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/storage"
 	"openreplay/backend/pkg/token"
 	"openreplay/backend/pkg/url/assets"
-	"openreplay/backend/services/http/geoip"
-	"openreplay/backend/services/http/uaparser"
 )
 
 type ServiceBuilder struct {

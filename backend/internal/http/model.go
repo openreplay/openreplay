@@ -1,4 +1,4 @@
-package main
+package http
 
 type startSessionRequest struct {
 	Token           string  `json:"token"`
