@@ -20,6 +20,10 @@ func (e *Router) startSessionHandlerIOS(w http.ResponseWriter, r *http.Request) 
 	startTime := time.Now()
 	req := &StartIOSSessionRequest{}
 
+	if r.Body == nil {
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		return
+	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
 
@@ -119,19 +123,26 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if r.Body == nil {
+		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		return
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, e.cfg.FileSizeLimit)
 	defer r.Body.Close()
 
 	err = r.ParseMultipartForm(1e6) // ~1Mb
 	if err == http.ErrNotMultipart || err == http.ErrMissingBoundary {
 		ResponseWithError(w, http.StatusUnsupportedMediaType, err)
+		return
 		// } else if err == multipart.ErrMessageTooLarge // if non-files part exceeds 10 MB
 	} else if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+		return
 	}
 
 	if r.MultipartForm == nil {
 		ResponseWithError(w, http.StatusInternalServerError, errors.New("Multipart not parsed"))
+		return
 	}
 
 	if len(r.MultipartForm.Value["projectKey"]) == 0 {

@@ -22,6 +22,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Check request body
 	if r.Body == nil {
 		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		return
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
@@ -111,6 +112,7 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	// Check request body
 	if r.Body == nil {
 		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		return
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
 	defer body.Close()
@@ -140,6 +142,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	// Check request body
 	if r.Body == nil {
 		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
+		return
 	}
 	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
 	defer body.Close()
