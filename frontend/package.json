@@ -49,6 +49,7 @@
     "react-redux": "^5.1.2",
     "react-router": "^4.3.1",
     "react-router-dom": "^4.3.1",
+    "react-select": "^5.3.1",
     "react-svg-map": "^2.2.0",
     "react-tippy": "^1.4.0",
     "react-toastify": "^5.5.0",
