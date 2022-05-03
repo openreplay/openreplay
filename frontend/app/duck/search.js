@@ -9,6 +9,7 @@ import { fetchList as fetchSessionList } from './sessions';
 import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey, IssueType } from 'Types/filter/filterType';
 import { filtersMap, liveFiltersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
+import { DURATION_FILTER  } from 'App/constants/storageKeys'
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -148,6 +149,28 @@ export const reduceThenFetchResource = actionCreator => (...args) => (dispatch, 
   filter.filters = filter.filters.map(filterMap);
   filter.limit = 10;
   filter.page = getState().getIn([ 'search', 'currentPage']);
+
+  // duration filter from local storage
+  if (!filter.filters.find(f => f.type === FilterKey.DURATION)) {
+    const durationFilter = JSON.parse(localStorage.getItem(DURATION_FILTER) || '{"count": 0}');
+    let durationValue = parseInt(durationFilter.count)
+    if (durationValue > 0) {
+      const value = [0];
+      durationValue = durationFilter.countType === 'min' ? durationValue * 60 * 1000 : durationValue * 1000;
+      if (durationFilter.operator === '<') {
+        value[0] = durationValue;
+      } else if (durationFilter.operator === '>') {
+        value[1] = durationValue;
+      }
+      
+      filter.filters = filter.filters.concat({
+        type: FilterKey.DURATION,
+        operator: 'is',
+        value,
+      });
+    }
+  }
+
 
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))

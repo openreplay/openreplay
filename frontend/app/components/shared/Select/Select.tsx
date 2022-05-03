@@ -4,11 +4,11 @@ import Select from 'react-select';
 interface Props {
     options: any[];
     isSearchable?: boolean;
-    defaultValue?: any;
+    defaultValue?: string;
     plain?: boolean;
     [x:string]: any;
 }
-export default function({ plain = false, options, isSearchable = false, defaultValue, ...rest }: Props) {
+export default function({ plain = false, options, isSearchable = false, defaultValue = '', ...rest }: Props) {
     const customStyles = {
         option: (provided, state) => ({
           ...provided,
@@ -39,11 +39,12 @@ export default function({ plain = false, options, isSearchable = false, defaultV
           return { ...provided, opacity, transition };
         }
     }
+    const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : options[0];
     return (
         <Select
             options={options}
             isSearchable={isSearchable}
-            defaultValue={defaultValue ? options.find(i => i.value === defaultValue) : options[0]}
+            defaultValue={defaultSelected}
             components={{
                 IndicatorSeparator: () => null
             }}

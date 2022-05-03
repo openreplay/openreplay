@@ -4,10 +4,10 @@ import { useModal } from '.';
 import ModalOverlay from './ModalOverlay';
 
 export default function Modal({ children }){
-  const { component } = useModal();
+  const { component, props} = useModal();
 
   return component ? ReactDOM.createPortal(
-    <ModalOverlay>
+    <ModalOverlay left={!props.right} right={props.right}>
       {component}
     </ModalOverlay>,
     document.querySelector("#modal-root"),

@@ -20,9 +20,9 @@ function SessionsMenu(props) {
   
   const capturingAll = props.captureRate && props.captureRate.get('captureAll');
 
-  useEffect(() => {
-    showModal(<SessionSettings />, {});
-  }, [])
+  // useEffect(() => {
+  //   showModal(<SessionSettings />, {});
+  // }, [])
 
   return (
     <div className={stl.wrapper}>
@@ -30,8 +30,8 @@ function SessionsMenu(props) {
         <div className={ stl.label }>
           <span>Sessions</span>
         </div>
-        {capturingAll && <span className={ cn(stl.manageButton, 'mr-2') } onClick={ toggleRehydratePanel }>Manage</span>}        
-        { !capturingAll && (
+        <span className={ cn(stl.manageButton, 'mr-2') } onClick={() => showModal(<SessionSettings />, { right: true })}>Manage</span>
+        {/* { !capturingAll && (
           <Popup
             trigger={
               <div
@@ -47,8 +47,11 @@ function SessionsMenu(props) {
             inverted
             position="top right"
           />          
-        )}        
+        )}         */}
       </div>
+      {/* <div className="text-sm color-gray-medium cursor-pointer mb-4" style={{ textDecoration: 'underline dotted'}} onClick={() => showModal(<SessionSettings />, {})}>
+        Capture, Listing, and Timezone Settings
+      </div> */}
       
       <div>
         <SideMenuitem
