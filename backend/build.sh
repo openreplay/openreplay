@@ -38,12 +38,10 @@ function build_api(){
         case "$image" in
             http)
                 echo build http
-                cd cmd
-                docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image -f ../backend .
+                docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image -f ./cmd/Dockerfile .
                 [[ $PUSH_IMAGE -eq 1 ]] && {
                     docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
                 }
-                cd ../
                 ;;
             *)
                 docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
