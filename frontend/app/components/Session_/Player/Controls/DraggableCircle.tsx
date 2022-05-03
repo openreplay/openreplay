@@ -19,7 +19,7 @@ function getStyles(
         // because IE will ignore our custom "empty image" drag preview.
         opacity: isDragging ? 0 : 1,
         height: isDragging ? 0 : '',
-        zIndex: '99',
+        zIndex: 99,
         cursor: 'move'
     }
 }

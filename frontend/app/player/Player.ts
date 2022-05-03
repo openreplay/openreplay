@@ -25,7 +25,7 @@ const HIGHEST_SPEED = 16;
 
 const SPEED_STORAGE_KEY = "__$player-speed$__";
 const SKIP_STORAGE_KEY = "__$player-skip$__";
-const SKIP_TO_ISSUE_STORAGE_KEY = "__$player-skip-to-issue$__";
+const SKIP_TO_ISSUE_STORAGE_KEY = "__$session-skipToIssue$__";
 const AUTOPLAY_STORAGE_KEY = "__$player-autoplay$__";
 const SHOW_EVENTS_STORAGE_KEY = "__$player-show-events$__";
 const storedSpeed: number = parseInt(localStorage.getItem(SPEED_STORAGE_KEY) || "") ;

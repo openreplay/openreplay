@@ -3,20 +3,19 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
 import stl from './sessionMenu.css';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';
+import { useModal } from 'App/components/Modal';
+import SessionSettings from 'Shared/SessionSettings/SessionSettings'
 
 function SessionsMenu(props) {
-  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel } = props;
+  const { activeTab } = props;
+  const { showModal } = useModal();
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
   }
-
-  
-  const capturingAll = props.captureRate && props.captureRate.get('captureAll');
 
   return (
     <div className={stl.wrapper}>
@@ -24,8 +23,8 @@ function SessionsMenu(props) {
         <div className={ stl.label }>
           <span>Sessions</span>
         </div>
-        {capturingAll && <span className={ cn(stl.manageButton, 'mr-2') } onClick={ toggleRehydratePanel }>Manage</span>}        
-        { !capturingAll && (
+        <span className={ cn(stl.manageButton, 'mr-2') } onClick={() => showModal(<SessionSettings />, { right: true })}>Manage</span>
+        {/* { !capturingAll && (
           <Popup
             trigger={
               <div
@@ -41,7 +40,7 @@ function SessionsMenu(props) {
             inverted
             position="top right"
           />          
-        )}        
+        )}         */}
       </div>
       
       <div>
@@ -87,5 +86,5 @@ export default connect(state => ({
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
 }), { 
-  fetchWatchdogStatus, clearEvents, fetchSessionList
+  clearEvents, fetchSessionList
 })(SessionsMenu);

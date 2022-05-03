@@ -6,6 +6,16 @@
   height: 16px;
 }
 
+.label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+
+  & span {
+    padding-left: 10px;
+    color: $gray-medium;
+  }
+}
 .switch input {
   display:none;
 }
@@ -29,18 +39,23 @@
   width: 20px;
   left: 0;
   bottom: -2px;
-  background-color: white;
+  /* background-color: white; */
   transition: .4s;
   border-radius: 50%;
   border: solid 1px rgba(0, 0, 0, 0.2);
+
+  background: #394EFF;
+  box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px rgba(0, 0, 0, 0.14), 0px 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .slider.checked {
-  background-color: $teal !important;
+  /* background-color: $teal !important; */
+  background-color: #b2bcff !important;
 }
 
 .slider.checked:before {
   border: solid 1px $teal;
+  transform: translateX(15px);
 }
 
 .slider.checked:before {
