@@ -33,13 +33,11 @@ function build_api(){
         echo "build completed for http"
         return
     }
-    cwd=$PWD
     for image in $(ls services);
     do
         case "$image" in
             http)
                 echo build http
-                echo "$PWD"
                 cd cmd
                 docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image -f ../backend .
                 [[ $PUSH_IMAGE -eq 1 ]] && {
