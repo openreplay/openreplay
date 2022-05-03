@@ -1,5 +1,5 @@
-import React from 'react';
-import { Icon, Toggler, Button, Input } from 'UI';
+import React, { useEffect } from 'react';
+import { Icon, Toggler, Button, Input, Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 
@@ -7,11 +7,19 @@ function CaptureRate(props) {
     const [changed, setChanged] = React.useState(false);
     const { settingsStore } = useStore();
     const sessionSettings = useObserver(() => settingsStore.sessionSettings)
+    const loading = useObserver(() => settingsStore.loadingCaptureRate)
     const [captureRate, setCaptureRate] = React.useState(sessionSettings.captureRate);
-    const [captureAll, setCaptureAll] = React.useState(captureRate === 100);
+    const [captureAll, setCaptureAll] = React.useState(sessionSettings.captureAll);
 
-    return (
-        <>
+    useEffect(() => {
+        settingsStore.fetchCaptureRate().then(() => {
+            setCaptureRate(sessionSettings.captureRate);
+            setCaptureAll(sessionSettings.captureAll);
+        });
+    }, [])
+
+    return useObserver(() => (
+        <Loader loading={loading}>
             <h3 className="text-lg">Capture Rate</h3>
             <div className="my-1">What percentage of your user sessions do you want to record and monitor?</div>
             <div className="mt-2 mb-4">
@@ -42,10 +50,18 @@ function CaptureRate(props) {
                     <Icon className="absolute right-0 mr-6 top-0 bottom-0 m-auto" name="percent" color="gray-medium" size="18" />
                 </div>
                 <span className="mx-3">of the sessions</span>
-                <Button disabled={!changed} outline size="medium" onClick={settingsStore.updateCaptureRate(captureRate)}>Update</Button>
+                <Button
+                    disabled={!changed}
+                    outline
+                    size="medium"
+                    onClick={() => settingsStore.saveCaptureRate({
+                        rate: captureRate,
+                        captureAll,
+                    }).finally(() => setChanged(false))}
+                >Update</Button>
             </div>
-        </>
-    );
+        </Loader>
+    ));
 }
 
 export default CaptureRate;

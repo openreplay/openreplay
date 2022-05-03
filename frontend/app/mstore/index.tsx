@@ -2,7 +2,7 @@ import React from 'react';
 import DashboardStore, { IDashboardSotre } from './dashboardStore';
 import MetricStore, { IMetricStore } from './metricStore';
 import APIClient from 'App/api_client';
-import { dashboardService, metricService } from 'App/services';
+import { dashboardService, metricService, sessionService } from 'App/services';
 import SettingsStore from './settingsStore';
 
 export class RootStore {
@@ -20,6 +20,7 @@ export class RootStore {
       const client  = new APIClient();
       dashboardService.initClient(client)
       metricService.initClient(client)
+      sessionService.initClient(client)
     }
 }
 

@@ -1,23 +1,7 @@
 
-@import 'icons.css';
-@import 'mixins.css';
-
-@keyframes fade {
-  0%   { opacity: 1}
-  50% { opacity: 0}
-  100%   { opacity: 1}
-}
-
 .sessionItem {
   user-select: none;
-  @mixin defaultHover;
   border-radius: 3px;
-  /* padding: 10px 10px; */
-  /* padding-right: 15px; */
-  /* margin-bottom: 15px; */
-  /* background-color: white; */
-  /* display: flex; */
-  /* align-items: center; */
   border: solid thin #EEEEEE;
 
   & .favorite {
@@ -39,7 +23,7 @@
     }
   }
 
-  & .iconStack {
+  /* & .iconStack {
     min-width: 200px;
     display: flex;
     & .icons {
@@ -48,7 +32,7 @@
       margin-bottom: 5px;
       align-items: center;
     }
-  }
+  } */
 
   & .left {
     & > div {
@@ -114,7 +98,4 @@
   text-transform: uppercase;
   font-size: 10px;
   letter-spacing: 1px;
-  & svg {
-    animation: fade 1s infinite;
-  }
 }

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { 
@@ -18,19 +19,19 @@ import SessionMetaList from './SessionMetaList';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from "App/routes";
 import { capitalize } from 'App/utils';
+import { SKIP_TO_ISSUE, TIMEZONE, DURATION_FILTER  } from 'App/constants/storageKeys'
 
 const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession()
 const SESSIONS_ROUTE = sessionsRoute();
 
-@connect(state => ({
-  timezone: state.getIn(['sessions', 'timezone']),
-  siteId: state.getIn([ 'site', 'siteId' ]),
-}), { toggleFavorite, setSessionPath })
-@withRouter
-export default class SessionItem extends React.PureComponent {
-  // eslint-disable-next-line complexity
-  render() {
+// @connect(state => ({
+//   timezone: state.getIn(['sessions', 'timezone']),
+//   siteId: state.getIn([ 'site', 'siteId' ]),
+// }), { toggleFavorite, setSessionPath })
+// @withRouter
+function SessionItem(props) {
+  // render() {
     const {
       session: {
         sessionId,
@@ -63,11 +64,11 @@ export default class SessionItem extends React.PureComponent {
       metaList = [],
       showActive = false,
       lastPlayedSessionId,
-    } = this.props;
+    } = props;
     const formattedDuration = durationFormatted(duration);
     const hasUserId = userId || userAnonymousId;
-    const isSessions = isRoute(SESSIONS_ROUTE, this.props.location.pathname);
-    const isAssist = isRoute(ASSIST_ROUTE, this.props.location.pathname) || isRoute(ASSIST_LIVE_SESSION, this.props.location.pathname);
+    const isSessions = isRoute(SESSIONS_ROUTE, props.location.pathname);
+    const isAssist = isRoute(ASSIST_ROUTE, props.location.pathname) || isRoute(ASSIST_LIVE_SESSION, props.location.pathname);
     const isLastPlayed = lastPlayedSessionId === sessionId;
 
     const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
@@ -156,4 +157,8 @@ export default class SessionItem extends React.PureComponent {
       </div>
     );
   }
-}
+
+export default connect(state => ({
+  timezone: localStorage.getItem(TIMEZONE) || '',
+  siteId: state.getIn([ 'site', 'siteId' ]),
+}), { toggleFavorite, setSessionPath })(withRouter(SessionItem));

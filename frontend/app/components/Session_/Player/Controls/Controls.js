@@ -276,13 +276,13 @@ export default class Controls extends React.Component {
                     label="Back"
                     icon="replay-10"
                   />
-                  <ControlButton
+                  {/* <ControlButton
                     disabled={ disabled }
                     onClick={ this.props.toggleSkipToIssue }
                     active={ skipToIssue }
                     label="Skip to Issue"
                     icon={skipToIssue ? 'skip-forward-fill' : 'skip-forward'}
-                  />
+                  /> */}
                 </div>
               )}
 

@@ -1,7 +1,10 @@
-import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
+import { makeAutoObservable, observable, action } from "mobx"
 import SessionSettings from "./types/sessionSettings"
+import { sessionService } from "App/services"
+import { toast } from 'react-toastify';
 
 export default class SettingsStore {
+    loadingCaptureRate: boolean = false;
     sessionSettings: SessionSettings = new SessionSettings()
     constructor() {
         makeAutoObservable(this, {
@@ -9,7 +12,29 @@ export default class SettingsStore {
         })
     }
 
-    updateCaptureRate(value: number) {
-        this.sessionSettings.updateKey('captureRate', value);
+    saveCaptureRate(data: any) {
+        return sessionService.saveCaptureRate(data)
+            .then(data => {
+                this.sessionSettings.merge({
+                    captureRate: data.rate,
+                    captureAll: data.captureAll
+                })
+                toast.success("Capture rate saved successfully");
+            }).catch(err => {
+                toast.error("Error saving capture rate");
+            })
+    }
+
+    fetchCaptureRate(): Promise<any> {
+        this.loadingCaptureRate = true;
+        return sessionService.fetchCaptureRate()
+            .then(data => {
+                this.sessionSettings.merge({
+                    captureRate: data.rate,
+                    captureAll: data.captureAll
+                })
+            }).finally(() => {
+                this.loadingCaptureRate = false;
+            })
     }
 }
