@@ -42,7 +42,6 @@ export default class NewSiteForm extends React.PureComponent {
 					const { sites } = this.props;
 					const site = sites.last();
 					if (!pathname.includes('/client')) {
-						console.log('site', site)
 						this.props.setSiteId(site.get('id'))
 					}
 					this.props.onClose(null, site)

@@ -12,7 +12,6 @@ import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { withStore } from 'App/mstore'
 
 @withStore
@@ -28,7 +27,6 @@ import { withStore } from 'App/mstore'
   clearSearch,
   fetchIntegrationVariables,
   fetchAlerts,
-  fetchWatchdogStatus,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
@@ -54,7 +52,6 @@ export default class SiteDropdown extends React.PureComponent {
     this.props.clearSearch();
     this.props.fetchIntegrationVariables();
     this.props.fetchAlerts();
-    this.props.fetchWatchdogStatus();
 
     mstore.initClient();
   }
