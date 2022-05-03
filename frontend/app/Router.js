@@ -26,7 +26,6 @@ import { fetchList as fetchMetadata } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
-import { fetchWatchdogStatus } from 'Duck/watchdogs';
 import { dashboardService } from "App/services";
 import { withStore } from 'App/mstore'
 
@@ -107,7 +106,6 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
   fetchSiteList,
   fetchAnnouncements,
   fetchAlerts,
-  fetchWatchdogStatus,
 })
 class Router extends React.Component {
   state = {
@@ -132,7 +130,6 @@ class Router extends React.Component {
             this.props.fetchMetadata() 
             this.props.fetchAnnouncements();
             this.props.fetchAlerts();
-            this.props.fetchWatchdogStatus();
           }, 100);
         })
       })
