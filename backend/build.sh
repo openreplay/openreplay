@@ -33,12 +33,27 @@ function build_api(){
         echo "build completed for http"
         return
     }
+    cwd=$PWD
     for image in $(ls services);
     do
-        docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
-        [[ $PUSH_IMAGE -eq 1 ]] && {
-            docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
-        }
+        case "$image" in
+            http)
+                echo build http
+                echo "$PWD"
+                cd cmd
+                docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image -f ../backend .
+                [[ $PUSH_IMAGE -eq 1 ]] && {
+                    docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
+                }
+                cd ../
+                ;;
+            *)
+                docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
+                [[ $PUSH_IMAGE -eq 1 ]] && {
+                    docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
+                }
+                ;;
+        esac
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${git_sha1}"
     done
     echo "backend build completed"
