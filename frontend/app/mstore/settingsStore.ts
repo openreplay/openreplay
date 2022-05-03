@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 export default class SettingsStore {
     loadingCaptureRate: boolean = false;
     sessionSettings: SessionSettings = new SessionSettings()
+    captureRateFetched: boolean = false;
     constructor() {
         makeAutoObservable(this, {
             sessionSettings: observable,
@@ -33,6 +34,7 @@ export default class SettingsStore {
                     captureRate: data.rate,
                     captureAll: data.captureAll
                 })
+                this.captureRateFetched = true;
             }).finally(() => {
                 this.loadingCaptureRate = false;
             })

@@ -8,14 +8,10 @@ import DefaultTimezone from './components/DefaultTimezone';
 import CaptureRate from './components/CaptureRate';
 
 function SessionSettings(props) {
-    const { settingsStore } = useStore();
-    const sessionSettings = useObserver(() => settingsStore.sessionSettings)
-
-
     return useObserver(() => (
         <div className="bg-white box-shadow h-screen" style={{ width: '450px'}}>
             <div className="p-6">
-                <h1 className="text-2xl">Session Settings</h1>
+                <h1 className="text-2xl">Sessions Settings</h1>
             </div>
             
             <div className="p-6 border-b py-8">

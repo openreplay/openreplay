@@ -1,9 +1,8 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
 import stl from './sessionMenu.css';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';
@@ -11,18 +10,12 @@ import { useModal } from 'App/components/Modal';
 import SessionSettings from 'Shared/SessionSettings/SessionSettings'
 
 function SessionsMenu(props) {
-  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel } = props;
-  const { hideModal, showModal } = useModal();
+  const { activeTab } = props;
+  const { showModal } = useModal();
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
   }
-  
-  const capturingAll = props.captureRate && props.captureRate.get('captureAll');
-
-  // useEffect(() => {
-  //   showModal(<SessionSettings />, {});
-  // }, [])
 
   return (
     <div className={stl.wrapper}>
@@ -49,9 +42,6 @@ function SessionsMenu(props) {
           />          
         )}         */}
       </div>
-      {/* <div className="text-sm color-gray-medium cursor-pointer mb-4" style={{ textDecoration: 'underline dotted'}} onClick={() => showModal(<SessionSettings />, {})}>
-        Capture, Listing, and Timezone Settings
-      </div> */}
       
       <div>
         <SideMenuitem
@@ -96,5 +86,5 @@ export default connect(state => ({
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
 }), { 
-  fetchWatchdogStatus, clearEvents, fetchSessionList
+  clearEvents, fetchSessionList
 })(SessionsMenu);
