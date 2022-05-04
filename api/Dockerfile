@@ -20,7 +20,7 @@ RUN apt update && apt install -y curl && \
 WORKDIR /work_tmp
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-COPY sourcemap-reader/*.json .
+COPY sourcemap-reader/*.json ./
 RUN npm install
 
 WORKDIR /work
