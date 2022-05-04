@@ -15,6 +15,18 @@ export default class UserStore {
             instance: observable,
             updateUser: action,
             updateKey: action,
+            initUser: action,
+        })
+    }
+
+    initUser(user?: any ): Promise<void> {
+        return new Promise((resolve, reject) => {
+            if (user) {
+                this.instance = user;
+            } else {
+                this.instance = new User();
+            }
+            resolve();
         })
     }
 

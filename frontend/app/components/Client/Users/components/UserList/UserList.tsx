@@ -4,12 +4,15 @@ import React, { useEffect } from 'react';
 import UserListItem from '../UserListItem';
 import { sliceListPerPage, getRE } from 'App/utils';
 import { Pagination, NoContent, Loader } from 'UI';
+import { useModal } from 'App/components/Modal';
+import UserForm from '../UserForm';
 
 function UserList(props) {
     const { userStore } = useStore();
     const loading = useObserver(() => userStore.loading);
     const users = useObserver(() => userStore.list);
     const searchQuery = useObserver(() => userStore.searchQuery);
+    const { showModal } = useModal();
 
     const filterList = (list) => {
         const filterRE = getRE(searchQuery, 'i');
@@ -24,11 +27,18 @@ function UserList(props) {
     
     useEffect(() => {
         userStore.fetchUsers();
+        editHandler(null);
     }, []);
+
+    const editHandler = (user) => {
+        userStore.initUser(user).then(() => {
+            showModal(<UserForm />, { right: true });
+        });
+    }
 
     return useObserver(() => (
         <Loader loading={loading}>
-            <NoContent show={!loading && length === 0}>
+            <NoContent show={!loading && length === 0} animatedIcon="empty-state">
                 <div className="mt-3 rounded bg-white">
                     <div className="grid grid-cols-12 p-3 border-b font-medium">
                         <div className="col-span-5">Name</div>
@@ -38,7 +48,7 @@ function UserList(props) {
 
                     {sliceListPerPage(list, userStore.page - 1, userStore.pageSize).map((user: any) => (
                         <div key={user.id} className="">
-                            <UserListItem user={user} />
+                            <UserListItem user={user} editHandler={() => editHandler(user)} />
                         </div>
                     ))}
                 </div>
