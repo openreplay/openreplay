@@ -20,8 +20,7 @@ func (mi *MessageInserter) insertMessage(sessionID uint64, msg Message) error {
 		return mi.pg.InsertMetadata(sessionID, m)
 	case *IssueEvent:
 		return mi.pg.InsertIssueEvent(sessionID, m)
-		//TODO: message adapter (transformer) (at the level of pkg/message) for types:
-	// case *IOSMetadata, *IOSIssueEvent and others
+	//TODO: message adapter (transformer) (at the level of pkg/message) for types: *IOSMetadata, *IOSIssueEvent and others
 
 	// Web
 	case *SessionStart:
@@ -38,9 +37,8 @@ func (mi *MessageInserter) insertMessage(sessionID uint64, msg Message) error {
 		return mi.pg.InsertWebClickEvent(sessionID, m)
 	case *InputEvent:
 		return mi.pg.InsertWebInputEvent(sessionID, m)
-		// Unique Web messages
-	// case *ResourceEvent:
-	// 	return pg.InsertWebResourceEvent(sessionID, m)
+
+	// Unique Web messages
 	case *PageEvent:
 		return mi.pg.InsertWebPageEvent(sessionID, m)
 	case *ErrorEvent:
