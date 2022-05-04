@@ -16,7 +16,7 @@ function UserForm(props: Props) {
     const { hideModal } = useModal();
     const { userStore, roleStore } = useStore();
     const user: any = useObserver(() => userStore.instance);
-    const roles = useObserver(() => roleStore.list.map(r => ({ label: r.name, value: r.roleId })));
+    const roles = useObserver(() => roleStore.list.filter(r => r.isProtected ? user.isSuperAdmin : true).map(r => ({ label: r.name, value: r.roleId })));
 
     const onChangeCheckbox = (e: any) => {
         user.updateKey('isAdmin', !user.isAdmin);
@@ -70,10 +70,9 @@ function UserForm(props: Props) {
                         <input
                             name="admin"
                             type="checkbox"
-                            value={ user.isAdmin }
-                            checked={ !!user.isAdmin }
+                            checked={ !!user.isAdmin || !!user.isSuperAdmin }
                             onChange={ onChangeCheckbox }
-                            disabled={user.superAdmin}
+                            disabled={user.isSuperAdmin}
                             className="mt-1"
                         />
                         <div className="ml-2 select-none">
@@ -94,6 +93,7 @@ function UserForm(props: Props) {
                             defaultValue={ user.roleId }
                             onChange={({ value }) => user.updateKey('roleId', value)}
                             className="block"
+                            isDisabled={user.isSuperAdmin}
                         />
                     </div>
                 )}

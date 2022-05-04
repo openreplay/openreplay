@@ -77,7 +77,7 @@ export default class User implements IUser {
             name: this.name,
             email: this.email,
             admin: this.isAdmin,
-            isSuperAdmin: this.isSuperAdmin,
+            superAdmin: this.isSuperAdmin,
             roleId: this.roleId,
         }
     }
