@@ -1,9 +1,10 @@
 import React from 'react';
-import { Input, CopyButton, Button, Select } from 'UI'
+import { Input, CopyButton, Button } from 'UI'
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
+import Select from 'Shared/Select';
 
 interface Props {
     isSmtp?: boolean;
@@ -16,18 +17,21 @@ function UserForm(props: Props) {
     const { userStore, roleStore } = useStore();
     const user: any = useObserver(() => userStore.instance);
     const roles = useObserver(() => roleStore.list.map(r => ({ label: r.name, value: r.roleId })));
-    console.log('roles', roles)
 
     const onChangeCheckbox = (e: any) => {
         user.updateKey('isAdmin', !user.isAdmin);
     }
 
     const onSave = () => {
+        userStore.saveUser(user).then(() => {
+            hideModal();
+        });
     }
 
     const write = ({ target: { name, value } }) => {
         user.updateKey(name, value);
     }
+    
     return useObserver(() => (
         <div className="bg-white h-screen p-6" style={{ width: '400px'}}>
             <div className="">
@@ -87,8 +91,8 @@ function UserForm(props: Props) {
                             selection
                             options={ roles }
                             name="roleId"
-                            value={ user.roleId }
-                            onChange={ write }
+                            defaultValue={ user.roleId }
+                            onChange={({ value }) => user.updateKey('roleId', value)}
                             className="block"
                         />
                     </div>
@@ -111,7 +115,7 @@ function UserForm(props: Props) {
                             onClick={ hideModal }
                             outline
                         >
-                        { 'Cancel' }
+                            { 'Cancel' }
                         </Button>
                     </div>
                     { !user.isJoined && user.invitationLink &&

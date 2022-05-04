@@ -1,6 +1,6 @@
 import { runInAction, makeAutoObservable, observable } from 'mobx'
 import { DateTime } from 'luxon';
-import { validateEmail } from 'App/validate';
+import { validateEmail, validateName } from 'App/validate';
 
 export interface IUser {
     userId: string
@@ -16,6 +16,7 @@ export interface IUser {
 
     fromJson(json: any): IUser
     toJson(): any
+    toSave(): any
 }
 
 export default class User implements IUser {
@@ -55,7 +56,7 @@ export default class User implements IUser {
 
     fromJson(json: any) {
         runInAction(() => {
-            this.userId = json.id;
+            this.userId = json.userId || json.id; // TODO api returning id
             this.name = json.name;
             this.email = json.email;
             this.createdAt = json.createdAt && DateTime.fromISO(json.createdAt || 0)
@@ -72,15 +73,26 @@ export default class User implements IUser {
 
     toJson() {
         return {
+            userId: this.userId,
+            name: this.name,
             email: this.email,
-            isAdmin: this.isAdmin,
+            admin: this.isAdmin,
             isSuperAdmin: this.isSuperAdmin,
             roleId: this.roleId,
         }
     }
 
+    toSave() {
+        return {
+            name: this.name,
+            email: this.email,
+            admin: this.isAdmin,
+            roleId: this.roleId,
+        }
+    }
+
     valid() {
-        return validateEmail(this.email) && !!this.roleId;
+        return validateName(this.name, { empty: false }) && validateEmail(this.email) && !!this.roleId;
     }
 
     exists() {
