@@ -7,7 +7,7 @@ export default class UserStore {
     instance: IUser|null = null;
     loading: boolean = false;
     page: number = 1;
-    pageSize: number = 5;
+    pageSize: number = 10;
     searchQuery: string = "";
 
     constructor() {
@@ -20,6 +20,10 @@ export default class UserStore {
 
     updateKey(key: string, value: any) {
         this[key] = value
+
+        if (key === 'searchQuery') {
+            this.page = 1
+        }
     }
 
     updateUser(user: any) {
@@ -47,7 +51,6 @@ export default class UserStore {
         return new Promise((resolve, reject) => {
             userService.all()
                 .then(response => {
-                    console.log('list', response);
                     this.list = response.map(user => new User().fromJson(user));
                     resolve(response);
                 }).catch(error => {
