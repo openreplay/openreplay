@@ -18,10 +18,10 @@ RUN apt update && apt install -y curl && \
     rm -rf /var/lib/apt/lists/* \
 
 WORKDIR /work_tmp
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
-COPY sourcemap-reader/*.json ./
-RUN npm install
+COPY requirements.txt /work_tmp/requirements.txt
+RUN pip install -r /work_tmp/requirements.txt
+COPY sourcemap-reader/*.json /work_tmp/
+RUN cd /work_tmp && npm install
 
 WORKDIR /work
 COPY . .
