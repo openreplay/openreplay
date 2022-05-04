@@ -17,9 +17,9 @@ RUN apt update && apt install -y curl && \
     apt remove --purge -y curl && \
     rm -rf /var/lib/apt/lists/* \
 
+WORKDIR /work_tmp
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
-WORKDIR /work_tmp
 COPY sourcemap-reader/*.json .
 RUN npm install
 
