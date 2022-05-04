@@ -42,4 +42,10 @@ export default class UserService {
             .then(response => response.json())
             .then(response => response.data || {});
     }
+
+    getRoles() {
+        return this.client.get('/client/roles')
+            .then(response => response.json())
+            .then(response => response.data || []);
+    }
 }

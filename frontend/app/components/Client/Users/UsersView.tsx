@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import UserList from './components/UserList';
 import { PageTitle } from 'UI';
 import { useStore } from 'App/mstore';
@@ -6,8 +6,15 @@ import { useObserver } from 'mobx-react-lite';
 import UserSearch from './components/UserSearch';
 
 function UsersView(props) {
-    const { userStore } = useStore();
+    const { userStore, roleStore } = useStore();
     const userCount = useObserver(() => userStore.list.length);
+    const roles = useObserver(() => roleStore.list);
+
+    useEffect(() => {
+        if (roles.length === 0) {
+            roleStore.fetchRoles();
+        }
+    }, []);
 
     return (
         <div>
