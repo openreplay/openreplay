@@ -18,16 +18,17 @@ import (
 	"openreplay/backend/services/db/heuristics"
 )
 
-var pg *cache.PGCache
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	initStats()
-	pg = cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000*60*20)
+	// Init database
+	pg := cache.NewPGCache(postgres.NewConn(env.String("POSTGRES_STRING")), 1000*60*20)
 	defer pg.Close()
 
+	// Init modules
 	heurFinder := heuristics.NewHandler()
+	mi := NewMessageInserter(pg)
+	si := NewStatsInserter(pg)
 
 	statsLogger := logger.NewQueueStats(env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"))
 
@@ -40,7 +41,7 @@ func main() {
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			statsLogger.HandleAndLog(sessionID, meta)
 
-			if err := insertMessage(sessionID, msg); err != nil {
+			if err := mi.insertMessage(sessionID, msg); err != nil {
 				if !postgres.IsPkeyViolation(err) {
 					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 				}
@@ -54,7 +55,7 @@ func main() {
 				return
 			}
 
-			err = insertStats(session, msg)
+			err = si.insertStats(session, msg)
 			if err != nil {
 				log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
 			}
@@ -62,14 +63,14 @@ func main() {
 			heurFinder.HandleMessage(session, msg)
 			heurFinder.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
 				// TODO: DRY code (carefully with the return statement logic)
-				if err := insertMessage(sessionID, msg); err != nil {
+				if err := mi.insertMessage(sessionID, msg); err != nil {
 					if !postgres.IsPkeyViolation(err) {
 						log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 					}
 					return
 				}
 
-				if err := insertStats(session, msg); err != nil {
+				if err := si.insertStats(session, msg); err != nil {
 					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 				}
 			})

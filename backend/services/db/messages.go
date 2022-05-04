@@ -1,68 +1,77 @@
 package main
 
 import (
+	"openreplay/backend/pkg/db/cache"
 	. "openreplay/backend/pkg/messages"
 )
 
-func insertMessage(sessionID uint64, msg Message) error {
+type MessageInserter struct {
+	pg *cache.PGCache
+}
+
+func NewMessageInserter(pg *cache.PGCache) *MessageInserter {
+	return &MessageInserter{pg: pg}
+}
+
+func (mi *MessageInserter) insertMessage(sessionID uint64, msg Message) error {
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:
-		return pg.InsertMetadata(sessionID, m)
+		return mi.pg.InsertMetadata(sessionID, m)
 	case *IssueEvent:
-		return pg.InsertIssueEvent(sessionID, m)
+		return mi.pg.InsertIssueEvent(sessionID, m)
 		//TODO: message adapter (transformer) (at the level of pkg/message) for types:
 	// case *IOSMetadata, *IOSIssueEvent and others
 
 	// Web
 	case *SessionStart:
-		return pg.InsertWebSessionStart(sessionID, m)
+		return mi.pg.InsertWebSessionStart(sessionID, m)
 	case *SessionEnd:
-		return pg.InsertWebSessionEnd(sessionID, m)
+		return mi.pg.InsertWebSessionEnd(sessionID, m)
 	case *UserID:
-		return pg.InsertWebUserID(sessionID, m)
+		return mi.pg.InsertWebUserID(sessionID, m)
 	case *UserAnonymousID:
-		return pg.InsertWebUserAnonymousID(sessionID, m)
+		return mi.pg.InsertWebUserAnonymousID(sessionID, m)
 	case *CustomEvent:
-		return pg.InsertWebCustomEvent(sessionID, m)
+		return mi.pg.InsertWebCustomEvent(sessionID, m)
 	case *ClickEvent:
-		return pg.InsertWebClickEvent(sessionID, m)
+		return mi.pg.InsertWebClickEvent(sessionID, m)
 	case *InputEvent:
-		return pg.InsertWebInputEvent(sessionID, m)
+		return mi.pg.InsertWebInputEvent(sessionID, m)
 		// Unique Web messages
 	// case *ResourceEvent:
 	// 	return pg.InsertWebResourceEvent(sessionID, m)
 	case *PageEvent:
-		return pg.InsertWebPageEvent(sessionID, m)
+		return mi.pg.InsertWebPageEvent(sessionID, m)
 	case *ErrorEvent:
-		return pg.InsertWebErrorEvent(sessionID, m)
+		return mi.pg.InsertWebErrorEvent(sessionID, m)
 	case *FetchEvent:
-		return pg.InsertWebFetchEvent(sessionID, m)
+		return mi.pg.InsertWebFetchEvent(sessionID, m)
 	case *GraphQLEvent:
-		return pg.InsertWebGraphQLEvent(sessionID, m)
+		return mi.pg.InsertWebGraphQLEvent(sessionID, m)
 
 		// IOS
 	case *IOSSessionStart:
-		return pg.InsertIOSSessionStart(sessionID, m)
+		return mi.pg.InsertIOSSessionStart(sessionID, m)
 	case *IOSSessionEnd:
-		return pg.InsertIOSSessionEnd(sessionID, m)
+		return mi.pg.InsertIOSSessionEnd(sessionID, m)
 	case *IOSUserID:
-		return pg.InsertIOSUserID(sessionID, m)
+		return mi.pg.InsertIOSUserID(sessionID, m)
 	case *IOSUserAnonymousID:
-		return pg.InsertIOSUserAnonymousID(sessionID, m)
+		return mi.pg.InsertIOSUserAnonymousID(sessionID, m)
 	case *IOSCustomEvent:
-		return pg.InsertIOSCustomEvent(sessionID, m)
+		return mi.pg.InsertIOSCustomEvent(sessionID, m)
 	case *IOSClickEvent:
-		return pg.InsertIOSClickEvent(sessionID, m)
+		return mi.pg.InsertIOSClickEvent(sessionID, m)
 	case *IOSInputEvent:
-		return pg.InsertIOSInputEvent(sessionID, m)
+		return mi.pg.InsertIOSInputEvent(sessionID, m)
 		// Unique IOS messages
 	case *IOSNetworkCall:
-		return pg.InsertIOSNetworkCall(sessionID, m)
+		return mi.pg.InsertIOSNetworkCall(sessionID, m)
 	case *IOSScreenEnter:
-		return pg.InsertIOSScreenEnter(sessionID, m)
+		return mi.pg.InsertIOSScreenEnter(sessionID, m)
 	case *IOSCrash:
-		return pg.InsertIOSCrash(sessionID, m)
+		return mi.pg.InsertIOSCrash(sessionID, m)
 	}
 	return nil // "Not implemented"
 }

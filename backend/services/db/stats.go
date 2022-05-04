@@ -1,23 +1,28 @@
 package main
 
 import (
+	"openreplay/backend/pkg/db/cache"
 	. "openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 )
 
-func initStats() {
-	// noop
+type StatsInserter struct {
+	pg *cache.PGCache
 }
 
-func insertStats(session *Session, msg Message) error {
+func NewStatsInserter(pg *cache.PGCache) *StatsInserter {
+	return &StatsInserter{pg: pg}
+}
+
+func (si *StatsInserter) insertStats(session *Session, msg Message) error {
 	switch m := msg.(type) {
 	// Web
 	case *PerformanceTrackAggr:
-		return pg.InsertWebStatsPerformance(session.SessionID, m)
+		return si.pg.InsertWebStatsPerformance(session.SessionID, m)
 	case *ResourceEvent:
-		return pg.InsertWebStatsResourceEvent(session.SessionID, m)
+		return si.pg.InsertWebStatsResourceEvent(session.SessionID, m)
 	case *LongTask:
-		return pg.InsertWebStatsLongtask(session.SessionID, m)
+		return si.pg.InsertWebStatsLongtask(session.SessionID, m)
 
 		// IOS
 		// case *IOSPerformanceAggregated:
