@@ -1,10 +1,10 @@
-package main
+package uuid
 
 import (
 	"github.com/google/uuid"
 )
 
-func getUUID(u *string) string {
+func GetUUID(u *string) string {
 	if u != nil {
 		_, err := uuid.Parse(*u)
 		if err == nil {

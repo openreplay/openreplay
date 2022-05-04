@@ -1,4 +1,4 @@
-package main
+package router
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func responseWithJSON(w http.ResponseWriter, res interface{}) {
+func ResponseWithJSON(w http.ResponseWriter, res interface{}) {
 	body, err := json.Marshal(res)
 	if err != nil {
 		log.Println(err)
@@ -15,10 +15,10 @@ func responseWithJSON(w http.ResponseWriter, res interface{}) {
 	w.Write(body)
 }
 
-func responseWithError(w http.ResponseWriter, code int, err error) {
+func ResponseWithError(w http.ResponseWriter, code int, err error) {
 	type response struct {
 		Error string `json:"error"`
 	}
 	w.WriteHeader(code)
-	responseWithJSON(w, &response{err.Error()})
+	ResponseWithJSON(w, &response{err.Error()})
 }
