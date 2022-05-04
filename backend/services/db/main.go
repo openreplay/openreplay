@@ -29,52 +29,58 @@ func main() {
 	heurFinder := heuristics.NewHandler()
 	mi := NewMessageInserter(pg)
 	si := NewStatsInserter(pg)
-
 	statsLogger := logger.NewQueueStats(env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"))
 
+	// Handler logic
+	handler := func(sessionID uint64, msg messages.Message, meta *types.Meta) {
+		statsLogger.Collect(sessionID, meta)
+
+		// Just insert message into db without additional checks
+		if err := mi.insertMessage(sessionID, msg); err != nil {
+			if !postgres.IsPkeyViolation(err) {
+				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
+			}
+			return
+		}
+
+		// Try to get session from db
+		session, err := pg.GetSession(sessionID)
+		if err != nil {
+			// Might happen due to the assets-related message TODO: log only if session is necessary for this kind of message
+			log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
+			return
+		}
+
+		// Insert statistics
+		err = si.insertStats(session, msg)
+		if err != nil {
+			log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
+		}
+
+		heurFinder.HandleMessage(session, msg)
+		heurFinder.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
+			// TODO: DRY code (carefully with the return statement logic)
+			if err := mi.insertMessage(sessionID, msg); err != nil {
+				if !postgres.IsPkeyViolation(err) {
+					log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+				}
+				return
+			}
+
+			if err := si.insertStats(session, msg); err != nil {
+				log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
+			}
+		})
+	}
+
+	// Init consumer
 	consumer := queue.NewMessageConsumer(
 		env.String("GROUP_DB"),
 		[]string{
 			env.String("TOPIC_RAW_IOS"),
 			env.String("TOPIC_TRIGGER"),
 		},
-		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			statsLogger.HandleAndLog(sessionID, meta)
-
-			if err := mi.insertMessage(sessionID, msg); err != nil {
-				if !postgres.IsPkeyViolation(err) {
-					log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				}
-				return
-			}
-
-			session, err := pg.GetSession(sessionID)
-			if err != nil {
-				// Might happen due to the assets-related message TODO: log only if session is necessary for this kind of message
-				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
-				return
-			}
-
-			err = si.insertStats(session, msg)
-			if err != nil {
-				log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
-			}
-
-			heurFinder.HandleMessage(session, msg)
-			heurFinder.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
-				// TODO: DRY code (carefully with the return statement logic)
-				if err := mi.insertMessage(sessionID, msg); err != nil {
-					if !postgres.IsPkeyViolation(err) {
-						log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-					}
-					return
-				}
-
-				if err := si.insertStats(session, msg); err != nil {
-					log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
-				}
-			})
-		},
+		handler,
 		false,
 	)
 
