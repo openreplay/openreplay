@@ -55,6 +55,7 @@ module.exports = {
 		'height',
 		'inset',
 		'justifyContent',
+		'justifySelf',
 		'letterSpacing',
 		'lineHeight',
 		// 'listStylePosition',
