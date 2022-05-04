@@ -1,14 +1,17 @@
 import { makeAutoObservable, observable, action } from "mobx"
 import User, { IUser } from "./types/user";
 import { userService } from "App/services";
+import { toast } from 'react-toastify';
 
 export default class UserStore {
     list: IUser[] = [];
     instance: IUser|null = null;
-    loading: boolean = false;
     page: number = 1;
     pageSize: number = 10;
     searchQuery: string = "";
+
+    loading: boolean = false;
+    saving: boolean = false;
 
     constructor() {
         makeAutoObservable(this, {
@@ -22,7 +25,7 @@ export default class UserStore {
     initUser(user?: any ): Promise<void> {
         return new Promise((resolve, reject) => {
             if (user) {
-                this.instance = user;
+                this.instance = new User().fromJson(user.toJson());
             } else {
                 this.instance = new User();
             }
@@ -38,8 +41,11 @@ export default class UserStore {
         }
     }
 
-    updateUser(user: any) {
-        Object.assign(this.instance, user);
+    updateUser(user: IUser) {
+        const index = this.list.findIndex(u => u.userId === user.userId);
+        if (index > -1) {
+            this.list[index] = user;
+        }
     }
 
     fetchUser(userId: string): Promise<any> {
@@ -75,22 +81,24 @@ export default class UserStore {
     }
 
     saveUser(user: IUser): Promise<any> {
-        this.loading = true;
+        this.saving = true;
         const wasCreating = !user.userId;
         return new Promise((resolve, reject) => {
-            userService.save(user)
-                .then(response => {
+            userService.save(user).then(response => {
+                    const newUser = new User().fromJson(response);
                     if (wasCreating) {
-                        this.list.push(new User().fromJson(response.data));
+                        this.list.push(new User().fromJson(newUser));
+                        toast.success('User created successfully');
                     } else {
-                        this.updateUser(response.data);
+                        this.updateUser(newUser);
+                        toast.success('User updated successfully');
                     }
                     resolve(response);
                 }).catch(error => {
-                    this.loading = false;
+                    this.saving = false;
                     reject(error);
                 }).finally(() => {
-                    this.loading = false;
+                    this.saving = false;
                 });
         });
     }

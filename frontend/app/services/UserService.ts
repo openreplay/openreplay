@@ -24,14 +24,14 @@ export default class UserService {
             .then(response => response.data || {});
     }
 
-    save(user: IUser) {
-        const data = user.toJson();
+    save(user: IUser): Promise<any> {
+        const data = user.toSave();
         if (user.userId) {
-            return this.client.put('/users/' + user.userId, data)
+            return this.client.put('/client/members/' + user.userId, data)
                 .then(response => response.json())
-                .then(response => response.data || {});
+                .then(response => response.data || {})
         } else {
-            return this.client.post('/users', data)
+            return this.client.post('/client/members', data)
                 .then(response => response.json())
                 .then(response => response.data || {});
         }

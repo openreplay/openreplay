@@ -25,7 +25,7 @@ export default class Role implements IRole {
 
     fromJson(json: any) {
         runInAction(() => {
-            this.roleId = json.id;
+            this.roleId = json.roleId;
             this.name = json.name;
             this.description = json.description;
         })
