@@ -5,14 +5,23 @@ from chalicelib.utils.s3 import client
 
 
 def get_web(sessionId):
-    return client.generate_presigned_url(
-        'get_object',
-        Params={
-            'Bucket': config("sessions_bucket"),
-            'Key': str(sessionId)
-        },
-        ExpiresIn=100000
-    )
+    return [
+        client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': config("sessions_bucket"),
+                'Key': str(sessionId)
+            },
+            ExpiresIn=100000
+        ),
+        client.generate_presigned_url(
+            'get_object',
+            Params={
+                'Bucket': config("sessions_bucket"),
+                'Key': str(sessionId) + "e"
+            },
+            ExpiresIn=100000
+        )]
 
 
 def get_ios(sessionId):
