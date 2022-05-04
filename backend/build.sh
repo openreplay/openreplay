@@ -37,6 +37,7 @@ function build_service() {
             }
             ;;
     esac
+    return
 }
 
 function build_api(){
