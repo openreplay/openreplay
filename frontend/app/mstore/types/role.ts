@@ -4,8 +4,9 @@ export interface IRole {
     roleId: string;
     name: string;
     description: string;
+    isProtected: boolean;
 
-    fromJson(json: any): IRole;
+    fromJson(json: any);
     toJson(): any;
 }
 
@@ -13,6 +14,7 @@ export default class Role implements IRole {
     roleId: string = '';
     name: string = '';
     description: string = '';   
+    isProtected: boolean = false;
 
 
     constructor() {
@@ -28,6 +30,7 @@ export default class Role implements IRole {
             this.roleId = json.roleId;
             this.name = json.name;
             this.description = json.description;
+            this.isProtected = json.protected;
         })
         return this;
     }

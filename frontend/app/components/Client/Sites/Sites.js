@@ -170,43 +170,51 @@ class Sites extends React.PureComponent {
           <div className={ stl.list }>
             {
               sites.map(_site => (
-                <div key={ _site.key } className={ stl.site } data-inactive={ _site.status === RED }>
-                  <div className="flex items-center">
-                    <Popup
-                      trigger={
-                        <div style={ { width: '10px' } }>
-                          <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
+                // <div key={ _site.key } data-inactive={ _site.status === RED }>
+                  <div key={ _site.key } className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b py-3">
+                    <div className="col-span-4">
+                        <div className="flex items-center">
+                          <Popup
+                            trigger={
+                              <div style={ { width: '10px' } }>
+                                <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
+                              </div>
+                            }
+                            content={ STATUS_MESSAGE_MAP[ _site.status ] }
+                            inverted
+                            position="top center"
+                          />
+                          <span className="ml-2">{ _site.host }</span>
                         </div>
-                      }
-                      content={ STATUS_MESSAGE_MAP[ _site.status ] }
-                      inverted
-                      position="top center"
-                    />
-                    <div className="ml-3 flex items-center">
+                    </div>
+                    <div className="col-span-4">
+                      <span className="px-2 py-1 bg-gray-lightest rounded border color-teal text-sm">{_site.projectKey}</span>
+                    </div>
+                    {/* <div className="ml-3 flex items-center">
                       <div>{ _site.host }</div>
                       <div className={ stl.label}>{_site.projectKey}</div>
+                    </div> */}
+                    <div className="col-span-4 justify-self-end flex items-center invisible group-hover:visible">
+                      <button
+                        className={cn({'hidden' : !canDeleteSites})}                      
+                        disabled={ !canDeleteSites }
+                        onClick={ () => canDeleteSites && this.remove(_site) }
+                      >
+                        <Icon name="trash" size="16" color="teal" />
+                      </button>
+                      <button
+                        className={cn({'hidden' : !isAdmin})}
+                        disabled={ !isAdmin }
+                        onClick={ () => isAdmin && this.edit(_site) }
+                        data-clickable
+                      >
+                        <Icon name="edit" size="16" color="teal"/>
+                      </button>
+                      <div><Button size="small" outline primary onClick={ () => this.showTrackingCode(_site) }>{ 'Tracking Code' }</Button></div>
+                      {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
                     </div>
                   </div>
-                  <div className={ stl.actions }>
-                    <button
-                      className={cn({'hidden' : !canDeleteSites})}                      
-                      disabled={ !canDeleteSites }
-                      onClick={ () => canDeleteSites && this.remove(_site) }
-                    >
-                      <Icon name="trash" size="16" color="teal" />
-                    </button>
-                    <button
-                      className={cn({'hidden' : !isAdmin})}
-                      disabled={ !isAdmin }
-                      onClick={ () => isAdmin && this.edit(_site) }
-                      data-clickable
-                    >
-                      <Icon name="edit" size="16" color="teal"/>
-                    </button>
-                    <div><Button size="small" outline primary onClick={ () => this.showTrackingCode(_site) }>{ 'Tracking Code' }</Button></div>
-                    {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
-                  </div>
-                </div>
+                // </div>
               ))
             }
           </div>
