@@ -8,7 +8,6 @@ import (
 
 	"bytes"
 	"io"
-	//"io/ioutil"
 
 	"os/signal"
 	"syscall"
@@ -47,27 +46,20 @@ func main() {
 		}
 		defer file.Close()
 
-		fileR2 := new(bytes.Buffer)
-		fileR1 := io.TeeReader(file, fileR2)
-
 		startBytes := make([]byte, SESSION_FILE_SPLIT_SIZE)
-		nRead, err := fileR1.Read(startBytes)
+		nRead, err := file.Read(startBytes)
 		if err != nil {
 			log.Printf("File read error: %f", err)
 			return
 		}
 		startReader := bytes.NewBuffer(startBytes)
-		if err := storage.Upload(gzipFile(startReader), key+"-s", "application/octet-stream", true); err != nil {
+		if err := storage.Upload(gzipFile(startReader), key, "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: start upload failed.  %v\n", err)
 		}
 		if nRead == SESSION_FILE_SPLIT_SIZE {
-			if err := storage.Upload(gzipFile(fileR1), key+"-e", "application/octet-stream", true); err != nil {
+			if err := storage.Upload(gzipFile(file), key + "e", "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage: end upload failed. %v\n", err)
 			}
-		}
-
-		if err := storage.Upload(gzipFile(fileR2), key, "application/octet-stream", true); err != nil {
-			log.Fatalf("Storage: upload failed.  %v\n", err)
 		}
 	}
 
