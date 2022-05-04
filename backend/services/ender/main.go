@@ -35,7 +35,7 @@ func main() {
 			env.String("TOPIC_RAW_IOS"),
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			statsLogger.HandleAndLog(sessionID, meta)
+			statsLogger.Collect(sessionID, meta)
 			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
 		},
 		false,
