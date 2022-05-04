@@ -48,8 +48,7 @@ func main() {
 	// Run server
 	go func() {
 		if err := server.Start(); err != nil {
-			log.Printf("Server error: %v\n", err)
-			log.Fatal("Server error")
+			log.Fatalf("Server error: %v\n", err)
 		}
 	}()
 	log.Printf("Server successfully started on port %v\n", cfg.HTTPPort)
