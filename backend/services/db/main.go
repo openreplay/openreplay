@@ -92,9 +92,6 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			pg.CommitBatches()
-			if err := commitStats(); err != nil {
-				log.Printf("Error on stats commit: %v", err)
-			}
 			// TODO?: separate stats & regular messages
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)

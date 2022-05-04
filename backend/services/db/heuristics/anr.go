@@ -18,8 +18,6 @@ func (h *anr) buildIf(timestamp uint64) {
 		m := &IOSIssueEvent{
 			Type:          "anr",
 			ContextString: h.lastLabel,
-			//Context: "{}",
-			//Payload: fmt.SPrint
 		}
 		m.Timestamp = h.lastHeartbeatTimestamp
 		m.Index = h.lastHeartbeatIndex // Associated Index/ MessageID ?
