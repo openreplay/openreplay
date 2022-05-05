@@ -21,8 +21,6 @@ func (h *clickrage) build() {
 		m := &IOSIssueEvent{
 			Type:          "click_rage",
 			ContextString: h.lastLabel,
-			//Context: "{}",
-			//Payload: fmt.SPrint
 		}
 		m.Timestamp = h.firstInARawTimestamp
 		m.Index = h.firstInARawSeqIndex // Associated Index/ MessageID ?
