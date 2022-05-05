@@ -31,7 +31,7 @@ function UserList(props) {
 
     const editHandler = (user) => {
         userStore.initUser(user).then(() => {
-            showModal(<UserForm />, { right: true });
+            showModal(<UserForm />, { });
         });
     }
 
@@ -42,12 +42,18 @@ function UserList(props) {
                     <div className="grid grid-cols-12 p-3 border-b font-medium">
                         <div className="col-span-5">Name</div>
                         <div className="col-span-3">Role</div>
-                        <div className="col-span-"></div>
+                        <div className="col-span-2">Created On</div>
+                        <div className="col-span-2"></div>
                     </div>
 
                     {sliceListPerPage(list, userStore.page - 1, userStore.pageSize).map((user: any) => (
                         <div key={user.id} className="">
-                            <UserListItem user={user} editHandler={() => editHandler(user)} />
+                            <UserListItem
+                                user={user}
+                                editHandler={() => editHandler(user)}
+                                generateInvite={() => userStore.generateInviteCode(user.userId)}
+                                copyInviteCode={() => userStore.copyInviteCode(user.userId)}
+                            />
                         </div>
                     ))}
                 </div>

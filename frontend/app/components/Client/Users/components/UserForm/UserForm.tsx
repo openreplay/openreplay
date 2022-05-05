@@ -12,9 +12,9 @@ interface Props {
 }
 function UserForm(props: Props) {
     const { isSmtp = false, isEnterprise = false } = props;
-    const isSaving = false;
     const { hideModal } = useModal();
     const { userStore, roleStore } = useStore();
+    const isSaving = useObserver(() => userStore.saving);
     const user: any = useObserver(() => userStore.instance);
     const roles = useObserver(() => roleStore.list.filter(r => r.isProtected ? user.isSuperAdmin : true).map(r => ({ label: r.name, value: r.roleId })));
 
@@ -98,7 +98,7 @@ function UserForm(props: Props) {
                     <div className="form-group">
                         <label htmlFor="role">{ 'Role' }</label>
                         <Select
-                            placeholder="Role"
+                            placeholder="Selct Role"
                             selection
                             options={ roles }
                             name="roleId"
@@ -115,12 +115,12 @@ function UserForm(props: Props) {
                     <div className="flex items-center mr-auto">
                         <Button
                             onClick={ onSave }
-                            disabled={ !user.valid() }
+                            disabled={ !user.valid() || isSaving }
                             loading={ isSaving }
                             primary
                             marginRight
                         >
-                        { user.exists() ? 'Update' : 'Invite' }
+                            { user.exists() ? 'Update' : 'Invite' }
                         </Button>
                         <Button
                             data-hidden={ !user.exists() }
@@ -143,7 +143,7 @@ function UserForm(props: Props) {
                 { !user.isJoined && user.invitationLink &&
                     <CopyButton
                         content={user.invitationLink}
-                        className="link"
+                        className="link mt-4"
                         btnText="Copy invite link"
                     />
                 }

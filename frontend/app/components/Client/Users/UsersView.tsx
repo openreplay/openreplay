@@ -8,23 +8,26 @@ import { useModal } from 'App/components/Modal';
 import UserForm from './components/UserForm';
 import { connect } from 'react-redux';
 
+const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
+const LIMIT_WARNING = 'You have reached users limit.';
 interface Props {
     account: any;
     isEnterprise: boolean;
+    limits: any;
 }
 function UsersView(props: Props) {
-    const { account, isEnterprise } = props;
+    const { account, limits, isEnterprise } = props;
     const { userStore, roleStore } = useStore();
     const userCount = useObserver(() => userStore.list.length);
     const roles = useObserver(() => roleStore.list);
     const { showModal } = useModal();
     
+    const reachedLimit = (limits.remaining + userStore.modifiedCount) <= 0;
     const isAdmin = account.admin || account.superAdmin;
-    // const canAddUsers = isAdmin && userCount !== 0; // TODO fetch limits and disable button if limit reached
 
     const editHandler = (user = null) => {
         userStore.initUser(user).then(() => {
-            showModal(<UserForm />, { right: true });
+            showModal(<UserForm />, {});
         });
     }
 
@@ -33,6 +36,8 @@ function UsersView(props: Props) {
             roleStore.fetchRoles();
         }
     }, []);
+
+    console.log('remaining', limits, reachedLimit)
 
     return (
         <div>
@@ -45,7 +50,7 @@ function UsersView(props: Props) {
                             <div>
                                 <IconButton
                                     id="add-button"
-                                    // disabled={ !canAddUsers }
+                                    disabled={ reachedLimit || !isAdmin }
                                     circle
                                     icon="plus"
                                     outline
@@ -54,8 +59,7 @@ function UsersView(props: Props) {
                                 />
                             </div>
                             }
-                            // disabled={ canAddUsers }
-                            // content={ `${ !canAddUsers ? (!isAdmin ? PERMISSION_WARNING : LIMIT_WARNING) : 'Add team member' }` }
+                            content={ `${ !isAdmin ? PERMISSION_WARNING : (reachedLimit ? LIMIT_WARNING : 'Add team member') }` }
                             size="tiny"
                             inverted
                             position="top left"
@@ -74,4 +78,6 @@ function UsersView(props: Props) {
 export default connect(state => ({
     account: state.getIn([ 'user', 'account' ]),
     isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    limits: state.getIn([ 'user', 'account', 'limits', 'teamMember' ]),
+    // remaining: this.props.account.limits.teamMember.remaining
 }))(UsersView);

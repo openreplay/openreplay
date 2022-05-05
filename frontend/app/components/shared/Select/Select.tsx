@@ -39,7 +39,7 @@ export default function({ plain = false, options, isSearchable = false, defaultV
           return { ...provided, opacity, transition };
         }
     }
-    const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : options[0];
+    const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : null;
     return (
         <Select
             options={options}
