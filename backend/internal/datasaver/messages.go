@@ -1,4 +1,4 @@
-package main
+package datasaver
 
 import (
 	"openreplay/backend/pkg/db/cache"
@@ -13,7 +13,7 @@ func NewMessageInserter(pg *cache.PGCache) *MessageInserter {
 	return &MessageInserter{pg: pg}
 }
 
-func (mi *MessageInserter) insertMessage(sessionID uint64, msg Message) error {
+func (mi *MessageInserter) InsertMessage(sessionID uint64, msg Message) error {
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:
