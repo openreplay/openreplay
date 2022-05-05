@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/internal/datasaver"
+	"openreplay/backend/internal/heuristics"
 	"time"
 
 	"os"
@@ -15,7 +17,6 @@ import (
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
-	"openreplay/backend/services/db/heuristics"
 )
 
 func main() {
@@ -27,8 +28,8 @@ func main() {
 
 	// Init modules
 	heurFinder := heuristics.NewHandler()
-	mi := NewMessageInserter(pg)
-	si := NewStatsInserter(pg)
+	mi := datasaver.NewMessageInserter(pg)
+	si := datasaver.NewStatsInserter(pg)
 	statsLogger := logger.NewQueueStats(env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"))
 
 	// Handler logic
@@ -36,14 +37,14 @@ func main() {
 		statsLogger.Collect(sessionID, meta)
 
 		// Just insert message into db without additional checks
-		if err := mi.insertMessage(sessionID, msg); err != nil {
+		if err := mi.InsertMessage(sessionID, msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
 				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 			}
 			return
 		}
 
-		// Try to get session from db
+		// Try to get session from db for the following handlers
 		session, err := pg.GetSession(sessionID)
 		if err != nil {
 			// Might happen due to the assets-related message TODO: log only if session is necessary for this kind of message
@@ -52,22 +53,25 @@ func main() {
 		}
 
 		// Insert statistics
-		err = si.insertStats(session, msg)
+		err = si.InsertStats(session, msg)
 		if err != nil {
 			log.Printf("Stats Insertion Error %v; Session: %v, Message: %v", err, session, msg)
 		}
 
+		// Insert heuristics
 		heurFinder.HandleMessage(session, msg)
+
+		// TODO: ???
 		heurFinder.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
 			// TODO: DRY code (carefully with the return statement logic)
-			if err := mi.insertMessage(sessionID, msg); err != nil {
+			if err := mi.InsertMessage(sessionID, msg); err != nil {
 				if !postgres.IsPkeyViolation(err) {
 					log.Printf("Message Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 				}
 				return
 			}
 
-			if err := si.insertStats(session, msg); err != nil {
+			if err := si.InsertStats(session, msg); err != nil {
 				log.Printf("Stats Insertion Error %v; Session: %v,  Message %v", err, session, msg)
 			}
 		})

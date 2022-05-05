@@ -1,4 +1,4 @@
-package main
+package datasaver
 
 import (
 	"openreplay/backend/pkg/db/cache"
@@ -14,7 +14,7 @@ func NewStatsInserter(pg *cache.PGCache) *StatsInserter {
 	return &StatsInserter{pg: pg}
 }
 
-func (si *StatsInserter) insertStats(session *Session, msg Message) error {
+func (si *StatsInserter) InsertStats(session *Session, msg Message) error {
 	switch m := msg.(type) {
 	// Web
 	case *PerformanceTrackAggr:
