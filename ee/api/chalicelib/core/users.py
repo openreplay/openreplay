@@ -414,6 +414,7 @@ def get_members(tenant_id):
                         users.email, 
                         users.role, 
                         users.name, 
+                        users.created_at, 
                         basic_authentication.generated_password,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
@@ -435,6 +436,7 @@ def get_members(tenant_id):
         if len(r):
             r = helper.list_to_camel_case(r)
             for u in r:
+                r["createdAt"] = TimeUTC.datetime_to_timestamp(r["createdAt"])
                 if u["invitationToken"]:
                     u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
                 else:
