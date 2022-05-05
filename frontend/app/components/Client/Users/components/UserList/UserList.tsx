@@ -27,7 +27,6 @@ function UserList(props) {
     
     useEffect(() => {
         userStore.fetchUsers();
-        editHandler(null);
     }, []);
 
     const editHandler = (user) => {
