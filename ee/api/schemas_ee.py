@@ -3,6 +3,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 import schemas
+from chalicelib.utils.TimeUTC import TimeUTC
 
 
 class RolePayloadSchema(BaseModel):
@@ -22,3 +23,12 @@ class CreateMemberSchema(schemas.CreateMemberSchema):
 
 class EditMemberSchema(schemas.EditMemberSchema):
     roleId: int = Field(...)
+
+
+class TrailSearchPayloadSchema(schemas._PaginatedSchema):
+    startDate: int = Field(default=TimeUTC.now(-7))
+    endDate: int = Field(default=TimeUTC.now(1))
+    user_id: Optional[int] = Field(default=None)
+
+    class Config:
+        alias_generator = schemas.attribute_to_camel_case
