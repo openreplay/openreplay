@@ -26,7 +26,7 @@ import Roles from './Roles';
 export default class Client extends React.PureComponent {
   constructor(props){
     super(props);
-    props.fetchMemberList();    
+    // props.fetchMemberList();    
   } 
 
   setTab = (tab) => {

@@ -32,7 +32,7 @@ function UsersView(props: Props) {
     }
 
     useEffect(() => {
-        if (roles.length === 0) {
+        if (roles.length === 0 && isEnterprise) {
             roleStore.fetchRoles();
         }
     }, []);
@@ -68,7 +68,7 @@ function UsersView(props: Props) {
                     <UserSearch />
                 </div>
             </div>
-            <UserList />
+            <UserList isEnterprise={isEnterprise} />
         </div>
     );
 }
@@ -77,5 +77,4 @@ export default connect(state => ({
     account: state.getIn([ 'user', 'account' ]),
     isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
     limits: state.getIn([ 'user', 'account', 'limits', 'teamMember' ]),
-    // remaining: this.props.account.limits.teamMember.remaining
 }))(UsersView);
