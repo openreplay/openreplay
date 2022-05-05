@@ -59,7 +59,12 @@ function reducer(state = initialState, action = {}) {
 		case EDIT_OPTIONS:
 			return state.mergeIn(["options"], action.instance);
 		case success(FETCH):
-			return state.set("instance", ErrorInfo(action.data));
+			if (state.get("list").find(e => e.get("errorId") === action.id)) {
+				return updateItemInList(state, { errorId: action.data.errorId, viewed: true })
+					.set("instance", ErrorInfo(action.data));
+			} else {
+				return state.set("instance", ErrorInfo(action.data));
+			}
 		case success(FETCH_TRACE):
 			return state.set("instanceTrace", List(action.data.trace)).set('sourcemapUploaded', action.data.sourcemapUploaded);
 		case success(FETCH_LIST):
