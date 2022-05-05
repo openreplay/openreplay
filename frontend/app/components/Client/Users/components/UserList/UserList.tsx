@@ -7,7 +7,11 @@ import { Pagination, NoContent, Loader } from 'UI';
 import { useModal } from 'App/components/Modal';
 import UserForm from '../UserForm';
 
-function UserList(props) {
+interface Props {
+    isEnterprise?: boolean;
+}
+function UserList(props: Props) {
+    const { isEnterprise  = false } = props;
     const { userStore } = useStore();
     const loading = useObserver(() => userStore.loading);
     const users = useObserver(() => userStore.list);
@@ -53,6 +57,7 @@ function UserList(props) {
                                 editHandler={() => editHandler(user)}
                                 generateInvite={() => userStore.generateInviteCode(user.userId)}
                                 copyInviteCode={() => userStore.copyInviteCode(user.userId)}
+                                // isEnterprise={isEnterprise}
                             />
                         </div>
                     ))}

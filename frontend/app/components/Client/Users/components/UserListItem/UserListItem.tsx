@@ -4,11 +4,21 @@ import { Icon } from 'UI';
 import { checkForRecent } from 'App/date';
 import { Tooltip } from 'react-tippy';
 
+
+const AdminPrivilegeLabel = ({ user }) => {
+    return (
+        <>
+            {user.isAdmin && <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Admin</span>}
+            {user.isSuperAdmin && <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Owner</span>}
+        </>
+    )
+}
 interface Props {
     user: any;
     editHandler?: any;
     generateInvite?: any;
     copyInviteCode?: any;
+    isEnterprise?: boolean;
 }
 function UserListItem(props: Props) {
     const {
@@ -16,18 +26,21 @@ function UserListItem(props: Props) {
         editHandler = () => {},
         generateInvite = () => {},
         copyInviteCode = () => {},
+        isEnterprise = false,
     } = props;
     return (
         <div className="grid grid-cols-12 p-3 py-4 border-b items-center select-none hover:bg-active-blue group">
             <div className="col-span-5">
-                {user.name}
-                {user.isAdmin && <span className="ml-2 px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Admin</span>}
-                {user.isSuperAdmin && <span className="ml-2 px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">Owner</span>}
+                <span className="mr-2">{user.name}</span>
+                {isEnterprise && <AdminPrivilegeLabel user={user} />}
             </div>
             <div className="col-span-3">
-                <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
-                    {user.roleName}
-                </span>
+                {!isEnterprise && <AdminPrivilegeLabel user={user} />}
+                {isEnterprise && (
+                    <span className="px-2 py-1 bg-gray-lightest rounded border text-sm capitalize">
+                        {user.roleName}
+                    </span>
+                )}
             </div>
             <div className="col-span-2">
                 <span>{user.createdAt && checkForRecent(user.createdAt, 'LLL dd, yyyy, hh:mm a')}</span>
