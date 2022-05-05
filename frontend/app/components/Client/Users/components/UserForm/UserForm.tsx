@@ -1,11 +1,11 @@
 import React from 'react';
-import { Input, CopyButton, Button } from 'UI'
+import { Input, CopyButton, Button, Icon } from 'UI'
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import Select from 'Shared/Select';
-
+import { confirm } from 'UI/Confirmation';
 interface Props {
     isSmtp?: boolean;
     isEnterprise?: boolean;
@@ -30,6 +30,18 @@ function UserForm(props: Props) {
 
     const write = ({ target: { name, value } }) => {
         user.updateKey(name, value);
+    }
+
+    const deleteHandler = async () => {
+        if (await confirm({
+            header: 'Confirm',
+            confirmButton: 'Yes, delete',
+            confirmation: `Are you sure you want to permanently delete this user?`
+          })) {
+            userStore.deleteUser(user.userId).then(() => {
+                hideModal();
+            });
+        }
     }
     
     return useObserver(() => (
@@ -118,14 +130,23 @@ function UserForm(props: Props) {
                             { 'Cancel' }
                         </Button>
                     </div>
-                    { !user.isJoined && user.invitationLink &&
-                        <CopyButton
-                            content={user.invitationLink}
-                            className="link"
-                            btnText="Copy invite link"
-                        />
-                    }
+                    <div>
+                        <Button
+                            data-hidden={ !user.exists() }
+                            onClick={ deleteHandler }
+                        >
+                            <Icon name="trash" size="16" />
+                        </Button>
+                    </div>
                 </div>
+
+                { !user.isJoined && user.invitationLink &&
+                    <CopyButton
+                        content={user.invitationLink}
+                        className="link"
+                        btnText="Copy invite link"
+                    />
+                }
         </div>
     ));
 }

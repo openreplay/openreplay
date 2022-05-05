@@ -104,17 +104,17 @@ export default class UserStore {
     }
 
     deleteUser(userId: string): Promise<any> {
-        this.loading = true;
+        this.saving = true;
         return new Promise((resolve, reject) => {
             userService.delete(userId)
                 .then(response => {
-                    this.instance = null;
+                    this.list = this.list.filter(user => user.userId !== userId);
                     resolve(response);
                 }).catch(error => {
-                    this.loading = false;
+                    this.saving = false;
                     reject(error);
                 }).finally(() => {
-                    this.loading = false;
+                    this.saving = false;
                 });
         });
     }

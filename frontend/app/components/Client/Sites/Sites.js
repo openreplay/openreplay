@@ -168,10 +168,13 @@ class Sites extends React.PureComponent {
           </div>
 
           <div className={ stl.list }>
+            <div key={ _site.key } className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3">
+              <div>Name</div>
+            </div>
             {
               sites.map(_site => (
                 // <div key={ _site.key } data-inactive={ _site.status === RED }>
-                  <div key={ _site.key } className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b py-3">
+                  <div key={ _site.key } className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3">
                     <div className="col-span-4">
                         <div className="flex items-center">
                           <Popup
@@ -195,22 +198,22 @@ class Sites extends React.PureComponent {
                       <div className={ stl.label}>{_site.projectKey}</div>
                     </div> */}
                     <div className="col-span-4 justify-self-end flex items-center invisible group-hover:visible">
-                      <button
-                        className={cn({'hidden' : !canDeleteSites})}                      
+                      <div className="mr-4"><Button size="small" primary onClick={ () => this.showTrackingCode(_site) }>{ 'Installation' }</Button></div>
+                      {/* <button
+                        className={cn('mx-3', {'hidden' : !canDeleteSites})}
                         disabled={ !canDeleteSites }
                         onClick={ () => canDeleteSites && this.remove(_site) }
                       >
                         <Icon name="trash" size="16" color="teal" />
-                      </button>
+                      </button> */}
                       <button
-                        className={cn({'hidden' : !isAdmin})}
+                        className={cn('mx-3', {'hidden' : !isAdmin})}
                         disabled={ !isAdmin }
                         onClick={ () => isAdmin && this.edit(_site) }
                         data-clickable
                       >
                         <Icon name="edit" size="16" color="teal"/>
                       </button>
-                      <div><Button size="small" outline primary onClick={ () => this.showTrackingCode(_site) }>{ 'Tracking Code' }</Button></div>
                       {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
                     </div>
                   </div>

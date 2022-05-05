@@ -38,7 +38,7 @@ export default class UserService {
     }
 
     delete(userId: string) {
-        return this.client.delete('/users/' + userId)
+        return this.client.delete('/client/members/' + userId)
             .then(response => response.json())
             .then(response => response.data || {});
     }
