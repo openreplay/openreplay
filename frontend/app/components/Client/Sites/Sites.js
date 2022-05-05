@@ -85,7 +85,7 @@ class Sites extends React.PureComponent {
   getModalTitle() {
     switch (this.state.modalContent) {
       case NEW_SITE_FORM:
-        return 'New Project';
+        return this.props.site.exists() ? 'Update Project' : 'New Project';
       case GDPR_FORM:
         return 'Project Settings';
       default:
