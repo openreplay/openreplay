@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"bytes"
-	"io"
 
 	"os/signal"
 	"syscall"
@@ -57,7 +56,7 @@ func main() {
 			log.Fatalf("Storage: start upload failed.  %v\n", err)
 		}
 		if nRead == SESSION_FILE_SPLIT_SIZE {
-			if err := storage.Upload(gzipFile(file), key + "e", "application/octet-stream", true); err != nil {
+			if err := storage.Upload(gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
 				log.Fatalf("Storage: end upload failed. %v\n", err)
 			}
 		}
