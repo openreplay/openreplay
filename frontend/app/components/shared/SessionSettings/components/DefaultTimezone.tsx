@@ -16,7 +16,6 @@ function DefaultTimezone(props) {
     const { settingsStore } = useStore();
     const [timezone, setTimezone] = React.useState(settingsStore.sessionSettings.timezone);
     const sessionSettings = useObserver(() => settingsStore.sessionSettings)
-    console.log('timezone', timezone)
 
     return (
         <>
