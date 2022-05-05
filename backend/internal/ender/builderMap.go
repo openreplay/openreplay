@@ -29,9 +29,6 @@ func (m builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint6
 func (m builderMap) IterateReadyMessages(operatingTs int64, iter func(sessionID uint64, msg Message)) {
 	for sessionID, b := range m {
 		sessionEnded := b.checkTimeouts(operatingTs)
-		b.iterateReadyMessage(func(msg Message) {
-			iter(sessionID, msg)
-		})
 		if sessionEnded {
 			delete(m, sessionID)
 		}

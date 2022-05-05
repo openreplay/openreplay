@@ -44,9 +44,9 @@ type builder struct {
 	readyMsgs              []Message
 	timestamp              uint64
 	lastProcessedTimestamp int64
-	peBuilder              *pageEventBuilder
+	peBuilder              *pageEventBuilder // TODO: DB
 	ptaBuilder             *performanceTrackAggrBuilder
-	ieBuilder              *inputEventBuilder
+	ieBuilder              *inputEventBuilder // TODO: DB
 	ciFinder               *cpuIssueFinder
 	miFinder               *memoryIssueFinder
 	ddDetector             *domDropDetector
@@ -117,6 +117,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	b.lastProcessedTimestamp = time.Now().UnixMilli()
 
 	// Might happen before  the first timestamp.
+	// TODO: to DB
 	switch msg := message.(type) {
 	case *SessionStart,
 		*Metadata,
@@ -137,7 +138,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		return
 	}
 	switch msg := message.(type) {
-	case *SetPageLocation:
+	case *SetPageLocation: // TODO: DB
 		if msg.NavigationStart == 0 {
 			b.appendReadyMessage(&PageEvent{
 				URL:       msg.URL,
@@ -154,11 +155,11 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			b.miFinder.HandleSetPageLocation(msg)
 			b.ciFinder.HandleSetPageLocation(msg)
 		}
-	case *PageLoadTiming:
+	case *PageLoadTiming: // TODO: DB
 		if rm := b.peBuilder.HandlePageLoadTiming(msg); rm != nil {
 			b.appendReadyMessage(rm)
 		}
-	case *PageRenderTiming:
+	case *PageRenderTiming: // TODO: DB
 		if rm := b.peBuilder.HandlePageRenderTiming(msg); rm != nil {
 			b.appendReadyMessage(rm)
 		}
@@ -172,20 +173,20 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		if rm := b.miFinder.HandlePerformanceTrack(msg, messageID, b.timestamp); rm != nil {
 			b.appendReadyMessage(rm)
 		}
-	case *SetInputTarget:
+	case *SetInputTarget: // TODO: DB
 		if rm := b.ieBuilder.HandleSetInputTarget(msg); rm != nil {
 			b.appendReadyMessage(rm)
 		}
-	case *SetInputValue:
+	case *SetInputValue: // TODO: DB
 		if rm := b.ieBuilder.HandleSetInputValue(msg, messageID, b.timestamp); rm != nil {
 			b.appendReadyMessage(rm)
 		}
-	case *MouseClick:
+	case *MouseClick: // TODO: DB
 		b.buildInputEvent()
 		if rm := b.crDetector.HandleMouseClick(msg, messageID, b.timestamp); rm != nil {
 			b.appendReadyMessage(rm)
 		}
-		if msg.Label != "" {
+		if msg.Label != "" { // TODO: DB
 			b.appendReadyMessage(&ClickEvent{
 				MessageID:      messageID,
 				Label:          msg.Label,
@@ -195,7 +196,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			})
 		}
 	case *JSException:
-		b.appendReadyMessage(&ErrorEvent{
+		b.appendReadyMessage(&ErrorEvent{ // TODO: DB
 			MessageID: messageID,
 			Timestamp: b.timestamp,
 			Source:    "js_exception",
@@ -206,7 +207,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	case *ResourceTiming:
 		tp := getResourceType(msg.Initiator, msg.URL)
 		success := msg.Duration != 0
-		b.appendReadyMessage(&ResourceEvent{
+		b.appendReadyMessage(&ResourceEvent{ // TODO: DB
 			MessageID:       messageID,
 			Timestamp:       msg.Timestamp,
 			Duration:        msg.Duration,
@@ -231,14 +232,14 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			})
 		}
 	case *RawCustomEvent:
-		b.appendReadyMessage(&CustomEvent{
+		b.appendReadyMessage(&CustomEvent{ // TODO: DB
 			MessageID: messageID,
 			Timestamp: b.timestamp,
 			Name:      msg.Name,
 			Payload:   msg.Payload,
 		})
 	case *CustomIssue:
-		b.appendReadyMessage(&IssueEvent{
+		b.appendReadyMessage(&IssueEvent{ // TODO: DB
 			Type:          "custom",
 			Timestamp:     b.timestamp,
 			MessageID:     messageID,
@@ -246,7 +247,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Payload:       msg.Payload,
 		})
 	case *Fetch:
-		b.appendReadyMessage(&FetchEvent{
+		b.appendReadyMessage(&FetchEvent{ // TODO: DB
 			MessageID: messageID,
 			Timestamp: msg.Timestamp,
 			Method:    msg.Method,
@@ -265,7 +266,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			})
 		}
 	case *GraphQL:
-		b.appendReadyMessage(&GraphQLEvent{
+		b.appendReadyMessage(&GraphQLEvent{ // TODO: DB
 			MessageID:     messageID,
 			Timestamp:     b.timestamp,
 			OperationKind: msg.OperationKind,
@@ -274,7 +275,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Response:      msg.Response,
 		})
 	case *StateAction:
-		b.appendReadyMessage(&StateActionEvent{
+		b.appendReadyMessage(&StateActionEvent{ // TODO: DB
 			MessageID: messageID,
 			Timestamp: b.timestamp,
 			Type:      msg.Type,

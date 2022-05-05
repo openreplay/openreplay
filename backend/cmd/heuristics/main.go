@@ -2,19 +2,17 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/internal/builder"
 	"openreplay/backend/internal/config/ender"
-	builder "openreplay/backend/internal/ender"
-	"time"
-
-	"os"
-	"os/signal"
-	"syscall"
-
 	"openreplay/backend/pkg/intervals"
 	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -49,7 +47,7 @@ func main() {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			producer.Close(cfg.ProducerTimeout)
-			consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP)
+			consumer.Commit()
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
@@ -57,11 +55,14 @@ func main() {
 				producer.Produce(cfg.TopicTrigger, sessionID, messages.Encode(readyMsg))
 			})
 			producer.Flush(cfg.ProducerTimeout)
-			consumer.CommitBack(intervals.EVENTS_BACK_COMMIT_GAP)
+			consumer.Commit()
 		default:
 			if err := consumer.ConsumeNext(); err != nil {
 				log.Fatalf("Error on consuming: %v", err)
 			}
 		}
 	}
+
+	// Config
+
 }
