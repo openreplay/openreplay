@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
 import app as main_app
-from chalicelib.utils import pg_client
+import schemas_ee
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import CurrentContext
 
@@ -149,6 +150,29 @@ async def process_traces_queue():
         traces.append(obj)
     if len(traces) > 0:
         await write_traces_batch(traces)
+
+
+def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(
+            cur.mogrify(
+                """SELECT COUNT(*) AS count,
+                           COALESCE(JSONB_AGG(full_traces) 
+                                    FILTER (WHERE rn > %(p_start)s AND rn <= %(p_end)s), '[]'::JSONB) AS sessions
+                    FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY created_at) AS rn 
+                            FROM traces 
+                            WHERE tenant_id=%(tenant_id)s
+                                AND created_at>=%(startDate)s 
+                                AND created_at<=%(endDate)s
+                            ORDER BY created_at) AS full_traces;""",
+                {"tenant_id": tenant_id,
+                 "startDate": data.startDate,
+                 "endDate": data.endDate,
+                 "p_start": (data.page - 1) * data.limit,
+                 "p_end": data.page * data.limit})
+        )
+        rows = cur.fetchall()
+    return helper.list_to_camel_case(rows)
 
 
 cron_jobs = [
