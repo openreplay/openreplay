@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"os"
 
 	"github.com/pkg/errors"
 
@@ -63,13 +64,23 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, conte
 	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("Cookie", "ABv=3;") // Hack for rueducommerce
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
+
+	// Set Custom Headers
+	for _, e := range os.Environ() {
+        pair := strings.SplitN(e, "=", 2)
+		pair[0] = strings.ToLower(pair[0])
+		if (strings.HasPrefix(pair[0], "x-")) {
+			req.Header.Set(pair[0], pair[1])
+		}
+    }
+
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		c.Errors <- errors.Wrap(err, context)
 		return
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode >= 400 {
 		// TODO: retry
 		c.Errors <- errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), context)
 		return
