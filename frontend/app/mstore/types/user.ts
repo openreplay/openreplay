@@ -14,6 +14,8 @@ export interface IUser {
     roleName: string
     invitationLink: string
 
+
+    updateKey(key: string, value: any): void
     fromJson(json: any): IUser
     toJson(): any
     toSave(): any
@@ -79,6 +81,9 @@ export default class User implements IUser {
             admin: this.isAdmin,
             superAdmin: this.isSuperAdmin,
             roleId: this.roleId,
+            joined: this.isJoined,
+            invitationLink: this.invitationLink,
+            expiredInvitation: this.isExpiredInvite,
         }
     }
 

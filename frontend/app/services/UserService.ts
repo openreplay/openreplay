@@ -37,6 +37,12 @@ export default class UserService {
         }
     }
 
+    generateInviteCode(userId: any): Promise<any> {
+        return this.client.get(`/client/members/${userId}/reset`)
+            .then(response => response.json())
+            .then(response => response.data || {});
+    }
+
     delete(userId: string) {
         return this.client.delete('/client/members/' + userId)
             .then(response => response.json())

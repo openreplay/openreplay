@@ -168,8 +168,11 @@ class Sites extends React.PureComponent {
           </div>
 
           <div className={ stl.list }>
-            <div key={ _site.key } className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3">
-              <div>Name</div>
+            <div className="grid grid-cols-12 gap-2 w-full items-center border-b px-2 py-3 font-medium">
+              <div className="col-span-4">Name</div>
+              <div className="col-span-4">Key</div>
+              <div className="col-span-4"></div>
+              
             </div>
             {
               sites.map(_site => (
@@ -191,7 +194,7 @@ class Sites extends React.PureComponent {
                         </div>
                     </div>
                     <div className="col-span-4">
-                      <span className="px-2 py-1 bg-gray-lightest rounded border color-teal text-sm">{_site.projectKey}</span>
+                      <span className="px-2 py-1 bg-gray-lightest rounded border text-sm">{_site.projectKey}</span>
                     </div>
                     {/* <div className="ml-3 flex items-center">
                       <div>{ _site.host }</div>

@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, action } from "mobx"
 import User, { IUser } from "./types/user";
 import { userService } from "App/services";
 import { toast } from 'react-toastify';
+import copy from 'copy-to-clipboard';
 
 export default class UserStore {
     list: IUser[] = [];
@@ -9,6 +10,7 @@ export default class UserStore {
     page: number = 1;
     pageSize: number = 10;
     searchQuery: string = "";
+    modifiedCount: number = 0;
 
     loading: boolean = false;
     saving: boolean = false;
@@ -87,6 +89,7 @@ export default class UserStore {
             userService.save(user).then(response => {
                     const newUser = new User().fromJson(response);
                     if (wasCreating) {
+                        this.modifiedCount -= 1;
                         this.list.push(new User().fromJson(newUser));
                         toast.success('User created successfully');
                     } else {
@@ -108,6 +111,7 @@ export default class UserStore {
         return new Promise((resolve, reject) => {
             userService.delete(userId)
                 .then(response => {
+                    this.modifiedCount += 1;
                     this.list = this.list.filter(user => user.userId !== userId);
                     resolve(response);
                 }).catch(error => {
@@ -117,5 +121,42 @@ export default class UserStore {
                     this.saving = false;
                 });
         });
+    }
+
+    copyInviteCode(userId: string): void {
+        const content = this.list.find(u => u.userId === userId)?.invitationLink;
+        if (content) {
+            copy(content);
+            toast.success('Invite code copied successfully');
+        } else {
+            toast.error('Invite code not found');
+        }
+    }
+
+    generateInviteCode(userId: string): Promise<any> {
+        this.saving = true;
+        const promise = new Promise((resolve, reject) => {
+            userService.generateInviteCode(userId)
+                .then(response => {
+                    const index = this.list.findIndex(u => u.userId === userId);
+                    if (index > -1) {
+                        this.list[index].updateKey('isExpiredInvite', false);
+                        this.list[index].updateKey('invitationLink', response.invitationLink);
+                    }
+                    resolve(response);
+                }).catch(error => {
+                    this.saving = false;
+                    reject(error);
+                }).finally(() => {
+                    this.saving = false;
+                });
+        });
+
+        toast.promise(promise, {
+            pending: 'Generating an invite code...',
+            success: 'Invite code generated successfully',
+        })
+
+        return promise;
     }
 }
