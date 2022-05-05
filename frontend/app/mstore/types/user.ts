@@ -50,7 +50,6 @@ export default class User implements IUser {
     }
 
     updateKey(key: string, value: any) {
-        console.log(key, value)
         runInAction(() => {
             this[key] = value
         })
