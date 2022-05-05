@@ -37,8 +37,6 @@ function UsersView(props: Props) {
         }
     }, []);
 
-    console.log('remaining', limits, reachedLimit)
-
     return (
         <div>
             <div className="flex items-center justify-between">
