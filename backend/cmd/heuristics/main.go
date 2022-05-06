@@ -36,12 +36,12 @@ func main() {
 		false,
 	)
 
-	tick := time.Tick(intervals.EVENTS_COMMIT_INTERVAL * time.Millisecond)
+	log.Printf("Ender service started\n")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("Ender service started\n")
+	tick := time.Tick(intervals.EVENTS_COMMIT_INTERVAL * time.Millisecond)
 	for {
 		select {
 		case sig := <-sigchan:
@@ -62,7 +62,4 @@ func main() {
 			}
 		}
 	}
-
-	// Config
-
 }
