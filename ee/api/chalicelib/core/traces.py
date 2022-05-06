@@ -154,25 +154,41 @@ async def process_traces_queue():
 
 def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
     with pg_client.PostgresClient() as cur:
+        conditions = ["tenant_id=%(tenant_id)s", "created_at>=%(startDate)s", "created_at<=%(endDate)s"]
+        if data.user_id is not None:
+            conditions.append("user_id=%(user_id)s")
+        if data.action is not None:
+            conditions.append("action=%(action)s")
         cur.execute(
             cur.mogrify(
-                """SELECT COUNT(*) AS count,
+                f"""SELECT COUNT(*) AS count,
                            COALESCE(JSONB_AGG(full_traces) 
                                     FILTER (WHERE rn > %(p_start)s AND rn <= %(p_end)s), '[]'::JSONB) AS sessions
                     FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY created_at) AS rn 
                             FROM traces 
-                            WHERE tenant_id=%(tenant_id)s
-                                AND created_at>=%(startDate)s 
-                                AND created_at<=%(endDate)s
+                            WHERE {" AND ".join(conditions)}
                             ORDER BY created_at) AS full_traces;""",
                 {"tenant_id": tenant_id,
                  "startDate": data.startDate,
                  "endDate": data.endDate,
                  "p_start": (data.page - 1) * data.limit,
-                 "p_end": data.page * data.limit})
+                 "p_end": data.page * data.limit,
+                 **data.dict()})
         )
         rows = cur.fetchall()
     return helper.list_to_camel_case(rows)
+
+
+def get_available_actions(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify(
+            f"""SELECT DISTINCT action
+                FROM traces 
+                WHERE tenant_id=%(tenant_id)s
+                ORDER BY 1""",
+            {"tenant_id": tenant_id}))
+        rows = cur.fetchall()
+    return [r["action"] for r in rows]
 
 
 cron_jobs = [

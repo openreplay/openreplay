@@ -786,6 +786,7 @@ $$
             CREATE INDEX IF NOT EXISTS traces_user_id_idx ON traces (user_id);
             CREATE INDEX IF NOT EXISTS traces_tenant_id_idx ON traces (tenant_id);
             CREATE INDEX IF NOT EXISTS traces_created_at_idx ON traces (created_at);
+            CREATE INDEX IF NOT EXISTS traces_action_idx ON traces (action);
 
             CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined');
             CREATE TYPE metric_view_type AS ENUM ('lineChart','progress','table','pieChart','areaChart','barChart','stackedBarChart','stackedBarLineChart','overview','map');
