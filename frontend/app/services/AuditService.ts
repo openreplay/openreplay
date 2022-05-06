@@ -14,7 +14,7 @@ export default class AuditService {
     all(data: any): Promise<any> {
         return this.client.post('/trails', data)
             .then(response => response.json())
-            .then(response => response.data[0] || []);
+            .then(response => response.data || []);
     }
 
     one(id: string): Promise<any> {

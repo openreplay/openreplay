@@ -3,7 +3,7 @@ import { unserscoreToSpaceAndCapitalize } from 'App/utils';
 
 export default class Audit {
     id: string = '';
-    userName: string = '';
+    username: string = '';
     action: string = '';
     createdAt: any = null;
     endPoint: string = '';
@@ -17,7 +17,7 @@ export default class Audit {
     static fromJson(json: any): Audit {
         const audit = new Audit();
         audit.id = json.rn;
-        audit.userName = json.userName;
+        audit.username = json.username;
         audit.action = unserscoreToSpaceAndCapitalize(json.action);
         audit.createdAt = json.createdAt && DateTime.fromMillis(json.createdAt || 0);
         audit.endPoint = json.endPoint;
@@ -30,7 +30,7 @@ export default class Audit {
     toJson(): any {
         return {
             id: this.id,
-            userName: this.userName
+            username: this.username
         };
     }
 }
