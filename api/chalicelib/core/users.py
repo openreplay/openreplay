@@ -394,7 +394,7 @@ def get_members(tenant_id):
         if len(r):
             r = helper.list_to_camel_case(r)
             for u in r:
-                r["createdAt"] = TimeUTC.datetime_to_timestamp(r["createdAt"])
+                u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
                 if u["invitationToken"]:
                     u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
                 else:
