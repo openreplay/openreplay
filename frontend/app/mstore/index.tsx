@@ -4,8 +4,9 @@ import MetricStore, { IMetricStore } from './metricStore';
 import UserStore from './userStore';
 import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
-import { dashboardService, metricService, sessionService, userService } from 'App/services';
+import { dashboardService, metricService, sessionService, userService, auditService } from 'App/services';
 import SettingsStore from './settingsStore';
+import AuditStore from './auditStore';
 
 export class RootStore {
     dashboardStore: IDashboardSotre;
@@ -13,6 +14,7 @@ export class RootStore {
     settingsStore: SettingsStore;
     userStore: UserStore; 
     roleStore: RoleStore;
+    auditStore: AuditStore;
 
     constructor() {
         this.dashboardStore = new DashboardStore();
@@ -20,6 +22,7 @@ export class RootStore {
         this.settingsStore = new SettingsStore();
         this.userStore = new UserStore();
         this.roleStore = new RoleStore();
+        this.auditStore = new AuditStore();
     }
 
     initClient() {

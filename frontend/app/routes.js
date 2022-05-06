@@ -61,10 +61,11 @@ export const CLIENT_TABS = {
   PROFILE: 'account',
   MANAGE_USERS: 'team',
   MANAGE_ROLES: 'roles',
-  SITES: 'projects',  
+  SITES: 'projects',
   CUSTOM_FIELDS: 'metadata',
   WEBHOOKS: 'webhooks',
   NOTIFICATIONS: 'notifications',
+  AUDIT: 'audit',
 };
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${ Object.values(CLIENT_TABS).join('|') })`;

@@ -60,7 +60,7 @@ export default class User implements IUser {
             this.userId = json.userId || json.id; // TODO api returning id
             this.name = json.name;
             this.email = json.email;
-            this.createdAt = json.createdAt && DateTime.fromISO(json.createdAt || 0)
+            this.createdAt = json.createdAt && DateTime.fromMillis(json.createdAt || 0)
             this.isAdmin = json.admin
             this.isSuperAdmin = json.superAdmin
             this.isJoined = json.joined

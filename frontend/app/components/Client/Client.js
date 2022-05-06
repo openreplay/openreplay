@@ -8,6 +8,7 @@ import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
 import ManageUsers from './ManageUsers';
 import UserView from './Users/UsersView';
+import AuditView from './Audit/AuditView';
 import Sites from './Sites';
 import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
@@ -43,6 +44,7 @@ export default class Client extends React.PureComponent {
       <Route exact strict path={ clientRoute(CLIENT_TABS.WEBHOOKS) } component={ Webhooks } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.NOTIFICATIONS) } component={ Notifications } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.MANAGE_ROLES) } component={ Roles } />
+      <Route exact strict path={ clientRoute(CLIENT_TABS.AUDIT) } component={ AuditView } />
       <Redirect to={ clientRoute(CLIENT_TABS.PROFILE) } />
     </Switch>
   )

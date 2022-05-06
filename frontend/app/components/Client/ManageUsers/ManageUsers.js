@@ -236,7 +236,7 @@ class ManageUsers extends React.PureComponent {
               title="No users are available."              
               size="small"
               show={ members.size === 0 }
-              icon
+              animatedIcon="empty-state"
             >
               <div className={ styles.list }>
                 {
