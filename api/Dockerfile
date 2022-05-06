@@ -15,7 +15,7 @@ RUN apt update && apt install -y curl && \
     curl -fsSL https://deb.nodesource.com/setup_12.x | bash - && \
     apt install -y nodejs && \
     apt remove --purge -y curl && \
-    rm -rf /var/lib/apt/lists/* \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work_tmp
 COPY requirements.txt /work_tmp/requirements.txt
