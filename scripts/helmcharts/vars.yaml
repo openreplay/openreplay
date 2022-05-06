@@ -61,12 +61,19 @@ ingress-nginx: &ingress-nginx
       ssl-redirect: false
       force-ssl-redirect: false
 
+assets: &assets
+  env:
+    CUSTOM_HEADERS: |
+      AUTHORIZATION: Bearer xyz... |
+      X-Test: 12345
+
 # Application specific variables
 global:
   ingress: *ingress-nginx
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
+  assets: *assets
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"
