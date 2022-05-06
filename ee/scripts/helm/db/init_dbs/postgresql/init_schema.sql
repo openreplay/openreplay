@@ -257,6 +257,7 @@ $$
                 internal_id   text                        NULL     DEFAULT NULL
             );
             CREATE INDEX IF NOT EXISTS users_tenant_id_deleted_at_N_idx ON users (tenant_id) WHERE deleted_at ISNULL;
+            CREATE INDEX IF NOT EXISTS users_name_gin_idx ON users USING GIN (name gin_trgm_ops);
 
 
             CREATE TABLE IF NOT EXISTS basic_authentication
