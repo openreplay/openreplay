@@ -23,6 +23,13 @@ Object.keys(DATE_RANGE_LABELS).forEach((key) => { DATE_RANGE_VALUES[ key ] = key
 export { DATE_RANGE_VALUES };
 export const dateRangeValues = Object.keys(DATE_RANGE_VALUES);
 
+export const DATE_RANGE_OPTIONS = Object.keys(DATE_RANGE_LABELS).map((key) => {
+  return {
+    label: DATE_RANGE_LABELS[ key ],
+    value: key,
+  };
+});
+
 export function getDateRangeFromTs(start, end) {
   return moment.range(
     moment(start),

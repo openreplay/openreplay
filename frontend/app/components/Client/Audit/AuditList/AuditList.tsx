@@ -15,6 +15,7 @@ function AuditList(props: Props) {
     const list = useObserver(() => auditStore.list);
     const searchQuery = useObserver(() => auditStore.searchQuery);
     const page = useObserver(() => auditStore.page);
+    const order = useObserver(() => auditStore.order);
     const { showModal } = useModal();
     
     useEffect(() => {
@@ -22,8 +23,9 @@ function AuditList(props: Props) {
             page: auditStore.page,
             limit: auditStore.pageSize,
             query: auditStore.searchQuery,
+            order: auditStore.order,
         });
-    }, [page, searchQuery]);
+    }, [page, searchQuery, order]);
 
     return useObserver(() => (
         <Loader loading={loading}>
