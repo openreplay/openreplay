@@ -64,7 +64,7 @@ func NewCacher(region string, bucket string, origin string, sizeLimit int) *cach
 	if envHeaders != "" {
 		headers := strings.Split(envHeaders, " | ")
 		for header := range headers {
-			pair := strings.Split(headers[header], ":")
+			pair := strings.SplitN(headers[header], ":", 2)
 			customHeaders[strings.TrimSpace(pair[0])] = strings.TrimSpace(pair[1])
 		}
 	}
