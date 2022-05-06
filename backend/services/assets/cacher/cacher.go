@@ -10,15 +10,41 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"os"
 
 	"github.com/pkg/errors"
 
 	"openreplay/backend/pkg/storage"
 	"openreplay/backend/pkg/url/assets"
+	"openreplay/backend/pkg/env"
 )
 
 const MAX_CACHE_DEPTH = 5
+
+type AddHeaders struct {
+	headers 	map[string]string
+	transport 	http.RoundTripper
+}
+
+func (adt *AddHeaders) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.Header.Set("Cookie", "ABv=3;") // Hack for rueducommerce
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
+	if len(adt.headers) > 0 {
+		for header, value := range adt.headers {
+			req.Header.Set(header, value)
+		}
+	}
+	return adt.transport.RoundTrip(req)
+}
+
+func TransportInterceptor(transport http.RoundTripper, customHeaders map[string]string) *AddHeaders {
+	if transport == nil {
+		transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
+	return &AddHeaders{transport: transport, headers: customHeaders}
+}
+
 
 type cacher struct {
 	timeoutMap *timeoutMap      // Concurrency implemented
@@ -27,18 +53,28 @@ type cacher struct {
 	rewriter   *assets.Rewriter // Read only
 	Errors     chan error
 	sizeLimit  int
+	headers	   map[string]string
 }
 
 func NewCacher(region string, bucket string, origin string, sizeLimit int) *cacher {
 	rewriter := assets.NewRewriter(origin)
+	customHeaders := make(map[string]string)
+	envHeaders := env.StringOptional("CUSTOM_HEADERS")
+
+	if envHeaders != "" {
+		headers := strings.Split(envHeaders, " | ")
+		for header := range headers {
+			pair := strings.Split(headers[header], ":")
+			customHeaders[strings.TrimSpace(pair[0])] = strings.TrimSpace(pair[1])
+		}
+	}
+
 	return &cacher{
 		timeoutMap: newTimeoutMap(),
 		s3:         storage.NewS3(region, bucket),
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			},
+			Transport: TransportInterceptor(nil, customHeaders),
 		},
 		rewriter:  rewriter,
 		Errors:    make(chan error),
@@ -62,17 +98,6 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, conte
 	}
 
 	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Cookie", "ABv=3;") // Hack for rueducommerce
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
-
-	// Set Custom Headers
-	for _, e := range os.Environ() {
-        pair := strings.SplitN(e, "=", 2)
-		pair[0] = strings.ToLower(pair[0])
-		if (strings.HasPrefix(pair[0], "x-")) {
-			req.Header.Set(pair[0], pair[1])
-		}
-    }
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
