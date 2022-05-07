@@ -1,19 +1,21 @@
 package heuristics
 
 import (
-	. "openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 )
 
+type Handler interface {
+	HandleMessage(Message)
+	IterateReadyMessages(func(Message))
+}
+
 type sessHandler struct {
-	session  *Session
 	handlers []Handler
 	ended    bool
 }
 
-func newSessHandler(session *Session) *sessHandler {
+func newSessHandler() *sessHandler {
 	return &sessHandler{
-		session: session,
 		handlers: []Handler{
 			new(clickrage),
 			new(performanceAggregator),

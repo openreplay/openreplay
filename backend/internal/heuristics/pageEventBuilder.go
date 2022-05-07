@@ -1,4 +1,4 @@
-package builder
+package heuristics
 
 import (
 	. "openreplay/backend/pkg/messages"

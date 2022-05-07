@@ -1,21 +1,8 @@
 package heuristics
 
 import (
-	. "openreplay/backend/pkg/db/types"
 	. "openreplay/backend/pkg/messages"
 )
-
-type MessageHandler interface {
-	HandleMessage(Message)
-}
-type ReadyMessagesIterator interface {
-	IterateReadyMessages(func(Message))
-}
-
-type Handler interface {
-	MessageHandler
-	ReadyMessagesIterator
-}
 
 type mainHandler map[uint64]*sessHandler
 
@@ -23,21 +10,17 @@ func NewHandler() mainHandler {
 	return make(mainHandler)
 }
 
-func (m mainHandler) getSessHandler(session *Session) *sessHandler {
-	if session == nil {
-		//AAAA
-		return nil
-	}
-	s := m[session.SessionID]
+func (m mainHandler) getSessHandler(sessionID uint64) *sessHandler {
+	s := m[sessionID]
 	if s == nil {
-		s = newSessHandler(session)
-		m[session.SessionID] = s
+		s = newSessHandler()
+		m[sessionID] = s
 	}
 	return s
 }
 
-func (m mainHandler) HandleMessage(session *Session, msg Message) {
-	s := m.getSessHandler(session)
+func (m mainHandler) HandleMessage(sessionID uint64, msg Message) {
+	s := m.getSessHandler(sessionID)
 	s.HandleMessage(msg)
 }
 
@@ -49,16 +32,5 @@ func (m mainHandler) IterateSessionReadyMessages(sessionID uint64, iter func(msg
 	s.IterateReadyMessages(iter)
 	if s.IsEnded() {
 		delete(m, sessionID)
-	}
-}
-
-func (m mainHandler) IterateReadyMessages(iter func(sessionID uint64, msg Message)) {
-	for sessionID, s := range m {
-		s.IterateReadyMessages(func(msg Message) {
-			iter(sessionID, msg)
-		})
-		if s.IsEnded() {
-			delete(m, sessionID)
-		}
 	}
 }

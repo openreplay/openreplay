@@ -60,7 +60,7 @@ func main() {
 		}
 
 		// Handle heuristics and save to temporary queue in memory
-		heurFinder.HandleMessage(session, msg)
+		heurFinder.HandleMessage(sessionID, msg)
 
 		// Process saved heuristics messages as usual messages above in the code
 		heurFinder.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
