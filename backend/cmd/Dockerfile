@@ -18,7 +18,7 @@ COPY cmd cmd
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
 
-FROM alpine
+FROM alpine AS entrypoint
 RUN apk add --no-cache ca-certificates
 
 ENV TZ=UTC \
