@@ -25,13 +25,13 @@ function build_service() {
     case "$image" in
         http | db)
             echo build http
-            docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image -f ./cmd/Dockerfile .
+            docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image -f ./cmd/Dockerfile .
             [[ $PUSH_IMAGE -eq 1 ]] && {
                 docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
             }
             ;;
         *)
-            docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
+            docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1}  --platform linux/amd64 --build-arg SERVICE_NAME=$image .
             [[ $PUSH_IMAGE -eq 1 ]] && {
                 docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
             }
