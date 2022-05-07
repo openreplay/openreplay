@@ -34,12 +34,7 @@ func main() {
 			env.String("TOPIC_RAW_IOS"),
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
-			//typeID, err := GetMessageTypeID(value)
-			// if err != nil {
-			// 	log.Printf("Message type decoding error: %v", err)
-			// 	return
-			// }
-			typeID := message.Meta().TypeID
+			typeID := message.TypeID()
 			if !IsReplayerType(typeID) {
 				return
 			}
