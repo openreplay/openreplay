@@ -9,37 +9,6 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-func getURLExtention(URL string) string {
-	u, err := url.Parse(URL)
-	if err != nil {
-		return ""
-	}
-	i := strings.LastIndex(u.Path, ".")
-	return u.Path[i+1:]
-}
-
-func getResourceType(initiator string, URL string) string {
-	switch initiator {
-	case "xmlhttprequest", "fetch":
-		return "fetch"
-	case "img":
-		return "img"
-	default:
-		switch getURLExtention(URL) {
-		case "css":
-			return "stylesheet"
-		case "js":
-			return "script"
-		case "png", "gif", "jpg", "jpeg", "svg":
-			return "img"
-		case "mp4", "mkv", "ogg", "webm", "avi", "mp3":
-			return "media"
-		default:
-			return "other"
-		}
-	}
-}
-
 type builder struct {
 	readyMsgs              []Message
 	timestamp              uint64
@@ -50,20 +19,16 @@ type builder struct {
 	ddDetector             *domDropDetector
 	crDetector             *clickRageDetector
 	dcDetector             *deadClickDetector
-	integrationsWaiting    bool
-
-	sid uint64
 }
 
 func NewBuilder() *builder {
 	return &builder{
-		ptaBuilder:          &performanceTrackAggrBuilder{},
-		ciFinder:            &cpuIssueFinder{},
-		miFinder:            &memoryIssueFinder{},
-		ddDetector:          &domDropDetector{},
-		crDetector:          &clickRageDetector{},
-		dcDetector:          &deadClickDetector{},
-		integrationsWaiting: true,
+		ptaBuilder: &performanceTrackAggrBuilder{},
+		ciFinder:   &cpuIssueFinder{},
+		miFinder:   &memoryIssueFinder{},
+		ddDetector: &domDropDetector{},
+		crDetector: &clickRageDetector{},
+		dcDetector: &deadClickDetector{},
 	}
 }
 
@@ -76,12 +41,6 @@ func (b *builder) iterateReadyMessage(iter func(msg Message)) {
 		iter(readyMsg)
 	}
 	b.readyMsgs = nil
-}
-
-func (b *builder) buildPerformanceTrackAggr() {
-	if msg := b.ptaBuilder.Build(); msg != nil {
-		b.appendReadyMessage(msg)
-	}
 }
 
 func (b *builder) handleMessage(message Message, messageID uint64) {
@@ -127,7 +86,9 @@ func (b *builder) checkTimeouts(ts int64) bool {
 	}
 
 	if b.ptaBuilder.HasInstance() && int64(b.ptaBuilder.GetStartTimestamp())+intervals.EVENTS_PERFORMANCE_AGGREGATION_TIMEOUT < ts {
-		b.buildPerformanceTrackAggr()
+		if msg := b.ptaBuilder.Build(); msg != nil {
+			b.appendReadyMessage(msg)
+		}
 	}
 
 	lastTsGap := ts - int64(b.timestamp)
