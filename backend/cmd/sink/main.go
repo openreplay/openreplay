@@ -9,7 +9,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/config/sink"
+	"openreplay/backend/internal/oswriter"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
@@ -18,20 +19,21 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	FS_DIR := env.String("FS_DIR")
-	if _, err := os.Stat(FS_DIR); os.IsNotExist(err) {
-		log.Fatalf("%v doesn't exist. %v", FS_DIR, err)
+	cfg := sink.New()
+
+	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
+		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := NewWriter(env.Uint16("FS_ULIMIT"), FS_DIR)
+	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
 
 	count := 0
 
 	consumer := queue.NewMessageConsumer(
-		env.String("GROUP_SINK"),
+		cfg.GroupSink,
 		[]string{
-			env.String("TOPIC_RAW_WEB"),
-			env.String("TOPIC_RAW_IOS"),
+			cfg.TopicRawIOS,
+			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
 			typeID := message.TypeID()
