@@ -19,7 +19,7 @@ type memoryIssueFinder struct {
 	contextString  string
 }
 
-func (f *memoryIssueFinder) Build() *IssueEvent {
+func (f *memoryIssueFinder) Build() Message {
 	if f.startTimestamp == 0 {
 		return nil
 	}
@@ -37,34 +37,34 @@ func (f *memoryIssueFinder) Build() *IssueEvent {
 	return i
 }
 
-func (f *memoryIssueFinder) HandleSetPageLocation(msg *SetPageLocation) {
-	f.contextString = msg.URL
-}
+func (f *memoryIssueFinder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	switch msg := message.(type) {
+	case *PerformanceTrack:
+		if f.count < MIN_COUNT {
+			f.sum += float64(msg.UsedJSHeapSize)
+			f.count++
+			return nil
+		}
 
-func (f *memoryIssueFinder) HandlePerformanceTrack(msg *PerformanceTrack, messageID uint64, timestamp uint64) *IssueEvent {
-	if f.count < MIN_COUNT {
+		average := f.sum / f.count
+		rate := int(math.Round(float64(msg.UsedJSHeapSize) / average * 100))
+
 		f.sum += float64(msg.UsedJSHeapSize)
 		f.count++
-		return nil
-	}
 
-	average := f.sum / f.count
-	rate := int(math.Round(float64(msg.UsedJSHeapSize) / average * 100))
-
-	f.sum += float64(msg.UsedJSHeapSize)
-	f.count++
-
-	if rate >= MEM_RATE_THRESHOLD {
-		if f.startTimestamp == 0 {
-			f.startTimestamp = timestamp
-			f.startMessageID = messageID
+		if rate >= MEM_RATE_THRESHOLD {
+			if f.startTimestamp == 0 {
+				f.startTimestamp = timestamp
+				f.startMessageID = messageID
+			}
+			if f.rate < rate {
+				f.rate = rate
+			}
+		} else {
+			return f.Build()
 		}
-		if f.rate < rate {
-			f.rate = rate
-		}
-	} else {
-		return f.Build()
+	case *SetPageLocation:
+		f.contextString = msg.URL
 	}
-
 	return nil
 }

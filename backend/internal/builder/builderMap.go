@@ -15,8 +15,6 @@ func (m builderMap) GetBuilder(sessionID uint64) *builder {
 	if b == nil {
 		b = NewBuilder()
 		m[sessionID] = b
-		b.sid = sessionID
-
 	}
 	return b
 }

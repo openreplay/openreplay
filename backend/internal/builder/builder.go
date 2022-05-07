@@ -1,39 +1,32 @@
 package builder
 
 import (
-	"net/url"
-	"strings"
-	"time"
-
 	"openreplay/backend/pkg/intervals"
 	. "openreplay/backend/pkg/messages"
 )
 
+type messageProcessor interface {
+	Handle(message Message, messageID uint64, timestamp uint64) Message
+	Build() Message
+}
+
 type builder struct {
-	readyMsgs              []Message
-	timestamp              uint64
-	lastProcessedTimestamp int64
-	ptaBuilder             *performanceTrackAggrBuilder
-	ciFinder               *cpuIssueFinder
-	miFinder               *memoryIssueFinder
-	ddDetector             *domDropDetector
-	crDetector             *clickRageDetector
-	dcDetector             *deadClickDetector
+	readyMsgs  []Message
+	timestamp  uint64
+	processors []messageProcessor
 }
 
 func NewBuilder() *builder {
 	return &builder{
-		ptaBuilder: &performanceTrackAggrBuilder{},
-		ciFinder:   &cpuIssueFinder{},
-		miFinder:   &memoryIssueFinder{},
-		ddDetector: &domDropDetector{},
-		crDetector: &clickRageDetector{},
-		dcDetector: &deadClickDetector{},
+		processors: []messageProcessor{
+			&performanceTrackAggrBuilder{},
+			&cpuIssueFinder{},
+			&memoryIssueFinder{},
+			// &domDropDetector{},
+			&clickRageDetector{},
+			&deadClickDetector{},
+		},
 	}
-}
-
-func (b *builder) appendReadyMessage(msg Message) { // interface is never nil even if it holds nil value
-	b.readyMsgs = append(b.readyMsgs, msg)
 }
 
 func (b *builder) iterateReadyMessage(iter func(msg Message)) {
@@ -48,65 +41,38 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	if b.timestamp < timestamp {
 		b.timestamp = timestamp
 	}
-
-	b.lastProcessedTimestamp = time.Now().UnixMilli()
-
 	if b.timestamp == 0 {
+		// in case of SessionStart. TODO: make timestamp system transparent
 		return
 	}
-	switch msg := message.(type) {
-	case *PerformanceTrack:
-		if rm := b.ptaBuilder.HandlePerformanceTrack(msg, b.timestamp); rm != nil {
-			b.appendReadyMessage(rm)
+
+	for _, p := range b.processors {
+		/* If nil is not returned explicitely by Handle, but as the typed nil
+		("var i *IssueEvent; return i;")
+		The `rm != nil` will be true.
+		TODO: enforce nil to be nil(?) or add `isNil() bool` to the Message types
+			because this part is expected to be etendable by user with custom messageProcessor's.
+			Use of reflrction will be probably bad on millions of messages?
+		*/
+		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
+			b.readyMsgs = append(b.readyMsgs, rm)
 		}
-		if rm := b.ciFinder.HandlePerformanceTrack(msg, messageID, b.timestamp); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-		if rm := b.miFinder.HandlePerformanceTrack(msg, messageID, b.timestamp); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-	case *CreateElementNode,
-		*CreateTextNode:
-		b.ddDetector.HandleNodeCreation()
-	case *RemoveNode:
-		b.ddDetector.HandleNodeRemoval(b.timestamp)
-	case *CreateDocument:
-		if rm := b.ddDetector.Build(); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-	}
-	if rm := b.dcDetector.HandleMessage(message, messageID, b.timestamp); rm != nil {
-		b.appendReadyMessage(rm)
 	}
 }
 
 func (b *builder) checkTimeouts(ts int64) bool {
 	if b.timestamp == 0 {
-		return false // There was no timestamp events yet
-	}
-
-	if b.ptaBuilder.HasInstance() && int64(b.ptaBuilder.GetStartTimestamp())+intervals.EVENTS_PERFORMANCE_AGGREGATION_TIMEOUT < ts {
-		if msg := b.ptaBuilder.Build(); msg != nil {
-			b.appendReadyMessage(msg)
-		}
+		return false // SessionStart happened only
 	}
 
 	lastTsGap := ts - int64(b.timestamp)
+	// Maybe listen for `trigger` and react on SessionEnd instead (less reliable)
 	if lastTsGap > intervals.EVENTS_SESSION_END_TIMEOUT {
-		if rm := b.ddDetector.Build(); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-		if rm := b.ciFinder.Build(); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-		if rm := b.miFinder.Build(); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-		if rm := b.crDetector.Build(); rm != nil {
-			b.appendReadyMessage(rm)
-		}
-		if rm := b.dcDetector.HandleReaction(b.timestamp); rm != nil {
-			b.appendReadyMessage(rm)
+		for _, p := range b.processors {
+			// TODO: same as above
+			if rm := p.Build(); rm != nil {
+				b.readyMsgs = append(b.readyMsgs, rm)
+			}
 		}
 		return true
 	}

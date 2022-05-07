@@ -7,50 +7,61 @@ import (
 const CLICK_RELATION_TIME = 1400
 
 type deadClickDetector struct {
-	lastMouseClick *MouseClick
-	lastTimestamp  uint64
-	lastMessageID  uint64
-	inputIDSet     map[uint64]bool
+	lastTimestamp      uint64
+	lastMouseClick     *MouseClick
+	lastClickTimestamp uint64
+	lastMessageID      uint64
+	inputIDSet         map[uint64]bool
 }
 
-func (d *deadClickDetector) HandleReaction(timestamp uint64) *IssueEvent {
-	var i *IssueEvent
-	if d.lastMouseClick != nil && d.lastTimestamp+CLICK_RELATION_TIME < timestamp {
-		i = &IssueEvent{
-			Type:          "dead_click",
-			ContextString: d.lastMouseClick.Label,
-			Timestamp:     d.lastTimestamp,
-			MessageID:     d.lastMessageID,
-		}
-	}
+func (d *deadClickDetector) reset() {
 	d.inputIDSet = nil
 	d.lastMouseClick = nil
-	d.lastTimestamp = 0
+	d.lastClickTimestamp = 0
 	d.lastMessageID = 0
+}
+
+func (d *deadClickDetector) handleReaction(timestamp uint64) Message {
+	if d.lastMouseClick == nil || d.lastClickTimestamp+CLICK_RELATION_TIME > timestamp { // riaction is instant
+		d.reset()
+		return nil
+	}
+	i := &IssueEvent{
+		Type:          "dead_click",
+		ContextString: d.lastMouseClick.Label,
+		Timestamp:     d.lastClickTimestamp,
+		MessageID:     d.lastMessageID,
+	}
+	d.reset()
 	return i
 }
 
-func (d *deadClickDetector) HandleMessage(msg Message, messageID uint64, timestamp uint64) *IssueEvent {
-	var i *IssueEvent
-	switch m := msg.(type) {
+func (d *deadClickDetector) Build() Message {
+	return d.handleReaction(d.lastTimestamp)
+}
+
+func (d *deadClickDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	d.lastTimestamp = timestamp
+	switch msg := message.(type) {
 	case *SetInputTarget:
 		if d.inputIDSet == nil {
 			d.inputIDSet = make(map[uint64]bool)
 		}
-		d.inputIDSet[m.ID] = true
+		d.inputIDSet[msg.ID] = true
 	case *CreateDocument:
 		d.inputIDSet = nil
 	case *MouseClick:
-		if m.Label == "" {
+		if msg.Label == "" {
 			return nil
 		}
-		i = d.HandleReaction(timestamp)
-		if d.inputIDSet[m.ID] { // ignore if input
+		i := d.handleReaction(timestamp)
+		if d.inputIDSet[msg.ID] { // ignore if input
 			return i
 		}
-		d.lastMouseClick = m
-		d.lastTimestamp = timestamp
+		d.lastMouseClick = msg
+		d.lastClickTimestamp = timestamp
 		d.lastMessageID = messageID
+		return i
 	case *SetNodeAttribute,
 		*RemoveNodeAttribute,
 		*CreateElementNode,
@@ -60,7 +71,7 @@ func (d *deadClickDetector) HandleMessage(msg Message, messageID uint64, timesta
 		*SetCSSData,
 		*CSSInsertRule,
 		*CSSDeleteRule:
-		i = d.HandleReaction(timestamp)
+		return d.handleReaction(timestamp)
 	}
-	return i
+	return nil
 }

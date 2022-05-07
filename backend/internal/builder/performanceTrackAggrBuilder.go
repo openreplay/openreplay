@@ -7,100 +7,105 @@ import (
 	"openreplay/backend/pkg/messages/performance"
 )
 
+const AGGREGATION_WINDOW = 2 * 60 * 1000
+
 type performanceTrackAggrBuilder struct {
-	performanceTrackAggr *PerformanceTrackAggr
-	lastTimestamp        uint64
-	count                float64
-	sumFrameRate         float64
-	sumTickRate          float64
-	sumTotalJSHeapSize   float64
-	sumUsedJSHeapSize    float64
+	*PerformanceTrackAggr
+	lastTimestamp      uint64
+	count              float64
+	sumFrameRate       float64
+	sumTickRate        float64
+	sumTotalJSHeapSize float64
+	sumUsedJSHeapSize  float64
 }
 
 func (b *performanceTrackAggrBuilder) start(timestamp uint64) {
-	b.performanceTrackAggr = &PerformanceTrackAggr{
+	b.PerformanceTrackAggr = &PerformanceTrackAggr{
 		TimestampStart: timestamp,
 	}
 	b.lastTimestamp = timestamp
 }
 
-func (b *performanceTrackAggrBuilder) HandlePerformanceTrack(msg *PerformanceTrack, timestamp uint64) *PerformanceTrackAggr {
-	if msg.Frames == -1 || msg.Ticks == -1 || !b.HasInstance() {
-		performanceTrackAggr := b.Build()
-		b.start(timestamp)
-		return performanceTrackAggr
-	}
-
-	dt := performance.TimeDiff(timestamp, b.lastTimestamp)
-	if dt == 0 {
-		return nil // TODO: handle error
-	}
-
-	frameRate := performance.FrameRate(msg.Frames, dt)
-	tickRate := performance.TickRate(msg.Ticks, dt)
-
-	fps := uint64(math.Round(frameRate))
-	cpu := performance.CPURateFromTickRate(tickRate)
-	if fps < b.performanceTrackAggr.MinFPS || b.performanceTrackAggr.MinFPS == 0 {
-		b.performanceTrackAggr.MinFPS = fps
-	}
-	if fps > b.performanceTrackAggr.MaxFPS {
-		b.performanceTrackAggr.MaxFPS = fps
-	}
-	if cpu < b.performanceTrackAggr.MinCPU || b.performanceTrackAggr.MinCPU == 0 {
-		b.performanceTrackAggr.MinCPU = cpu
-	}
-	if cpu > b.performanceTrackAggr.MaxCPU {
-		b.performanceTrackAggr.MaxCPU = cpu
-	}
-	if msg.TotalJSHeapSize < b.performanceTrackAggr.MinTotalJSHeapSize || b.performanceTrackAggr.MinTotalJSHeapSize == 0 {
-		b.performanceTrackAggr.MinTotalJSHeapSize = msg.TotalJSHeapSize
-	}
-	if msg.TotalJSHeapSize > b.performanceTrackAggr.MaxTotalJSHeapSize {
-		b.performanceTrackAggr.MaxTotalJSHeapSize = msg.TotalJSHeapSize
-	}
-	if msg.UsedJSHeapSize < b.performanceTrackAggr.MinUsedJSHeapSize || b.performanceTrackAggr.MinUsedJSHeapSize == 0 {
-		b.performanceTrackAggr.MinUsedJSHeapSize = msg.UsedJSHeapSize
-	}
-	if msg.UsedJSHeapSize > b.performanceTrackAggr.MaxUsedJSHeapSize {
-		b.performanceTrackAggr.MaxUsedJSHeapSize = msg.UsedJSHeapSize
-	}
-	b.sumFrameRate += frameRate
-	b.sumTickRate += tickRate
-	b.sumTotalJSHeapSize += float64(msg.TotalJSHeapSize)
-	b.sumUsedJSHeapSize += float64(msg.UsedJSHeapSize)
-	b.count += 1
-	b.lastTimestamp = timestamp
-	return nil
-}
-
-func (b *performanceTrackAggrBuilder) HasInstance() bool {
-	return b.performanceTrackAggr != nil
-}
-
-func (b *performanceTrackAggrBuilder) GetStartTimestamp() uint64 {
-	if b.performanceTrackAggr == nil {
-		return 0
-	}
-	return b.performanceTrackAggr.TimestampStart
-}
-
-func (b *performanceTrackAggrBuilder) Build() *PerformanceTrackAggr {
-	var performanceTrackAggr *PerformanceTrackAggr
-	if b.HasInstance() && b.GetStartTimestamp() != b.lastTimestamp && b.count != 0 {
-		performanceTrackAggr = b.performanceTrackAggr
-		performanceTrackAggr.TimestampEnd = b.lastTimestamp
-		performanceTrackAggr.AvgFPS = uint64(math.Round(b.sumFrameRate / b.count))
-		performanceTrackAggr.AvgCPU = 100 - uint64(math.Round(b.sumTickRate*100/b.count))
-		performanceTrackAggr.AvgTotalJSHeapSize = uint64(math.Round(b.sumTotalJSHeapSize / b.count))
-		performanceTrackAggr.AvgUsedJSHeapSize = uint64(math.Round(b.sumUsedJSHeapSize / b.count))
-	}
-	b.performanceTrackAggr = nil
+func (b *performanceTrackAggrBuilder) reset() {
+	b.PerformanceTrackAggr = nil
 	b.count = 0
 	b.sumFrameRate = 0
 	b.sumTickRate = 0
 	b.sumTotalJSHeapSize = 0
 	b.sumUsedJSHeapSize = 0
 	b.lastTimestamp = 0
-	return performanceTrackAggr
+}
+
+func (b *performanceTrackAggrBuilder) Handle(message Message, _ uint64, timestamp uint64) Message {
+	switch msg := message.(type) {
+	case *PerformanceTrack:
+		if b.PerformanceTrackAggr == nil || msg.Frames == -1 || msg.Ticks == -1 {
+			pta := b.Build()
+			b.start(timestamp)
+			return pta
+		}
+
+		dt := performance.TimeDiff(timestamp, b.lastTimestamp)
+		if dt == 0 {
+			return nil // shouldn't happen
+		}
+
+		frameRate := performance.FrameRate(msg.Frames, dt)
+		tickRate := performance.TickRate(msg.Ticks, dt)
+
+		fps := uint64(math.Round(frameRate))
+		cpu := performance.CPURateFromTickRate(tickRate)
+		if fps < b.MinFPS || b.MinFPS == 0 {
+			b.MinFPS = fps
+		}
+		if fps > b.MaxFPS {
+			b.MaxFPS = fps
+		}
+		if cpu < b.MinCPU || b.MinCPU == 0 {
+			b.MinCPU = cpu
+		}
+		if cpu > b.MaxCPU {
+			b.MaxCPU = cpu
+		}
+		if msg.TotalJSHeapSize < b.MinTotalJSHeapSize || b.MinTotalJSHeapSize == 0 {
+			b.MinTotalJSHeapSize = msg.TotalJSHeapSize
+		}
+		if msg.TotalJSHeapSize > b.MaxTotalJSHeapSize {
+			b.MaxTotalJSHeapSize = msg.TotalJSHeapSize
+		}
+		if msg.UsedJSHeapSize < b.MinUsedJSHeapSize || b.MinUsedJSHeapSize == 0 {
+			b.MinUsedJSHeapSize = msg.UsedJSHeapSize
+		}
+		if msg.UsedJSHeapSize > b.MaxUsedJSHeapSize {
+			b.MaxUsedJSHeapSize = msg.UsedJSHeapSize
+		}
+		b.sumFrameRate += frameRate
+		b.sumTickRate += tickRate
+		b.sumTotalJSHeapSize += float64(msg.TotalJSHeapSize)
+		b.sumUsedJSHeapSize += float64(msg.UsedJSHeapSize)
+		b.count += 1
+		b.lastTimestamp = timestamp
+	}
+	if b.PerformanceTrackAggr != nil &&
+		timestamp-b.PerformanceTrackAggr.TimestampStart >= AGGREGATION_WINDOW {
+		return b.Build()
+	}
+	return nil
+}
+
+func (b *performanceTrackAggrBuilder) Build() Message {
+	if b.PerformanceTrackAggr == nil {
+		return nil
+	}
+	if b.count != 0 && b.PerformanceTrackAggr.TimestampStart < b.lastTimestamp { // the last one shouldn't happen
+		b.PerformanceTrackAggr.TimestampEnd = b.lastTimestamp
+		b.PerformanceTrackAggr.AvgFPS = uint64(math.Round(b.sumFrameRate / b.count))
+		b.PerformanceTrackAggr.AvgCPU = 100 - uint64(math.Round(b.sumTickRate*100/b.count))
+		b.PerformanceTrackAggr.AvgTotalJSHeapSize = uint64(math.Round(b.sumTotalJSHeapSize / b.count))
+		b.PerformanceTrackAggr.AvgUsedJSHeapSize = uint64(math.Round(b.sumUsedJSHeapSize / b.count))
+		b.reset()
+		return b.PerformanceTrackAggr
+	}
+	b.reset()
+	return nil
 }

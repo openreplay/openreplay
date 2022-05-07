@@ -4,36 +4,45 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+const DROP_WINDOW = 200  //ms
+const CRITICAL_COUNT = 1 // Our login page contains 20. But on crush it removes only roots (1-3 nodes).
+// TODO: smart detection (making whole DOM tree would eat all memory)
+
 type domDropDetector struct {
 	removedCount      int
 	lastDropTimestamp uint64
 }
 
-const DROP_WINDOW = 200  //ms
-const CRITICAL_COUNT = 1 // Our login page contains 20. But on crush it removes only roots (1-3 nodes).
-
-func (dd *domDropDetector) HandleNodeCreation() {
+func (dd *domDropDetector) reset() {
 	dd.removedCount = 0
 	dd.lastDropTimestamp = 0
 }
 
-func (dd *domDropDetector) HandleNodeRemoval(ts uint64) {
-	if dd.lastDropTimestamp+DROP_WINDOW > ts {
-		dd.removedCount += 1
-	} else {
-		dd.removedCount = 1
+func (dd *domDropDetector) Handle(message Message, _ uint64, timestamp uint64) Message {
+	switch message.(type) {
+	case *CreateElementNode,
+		*CreateTextNode:
+		dd.removedCount = 0
+		dd.lastDropTimestamp = 0
+	case *RemoveNode:
+		if dd.lastDropTimestamp+DROP_WINDOW > timestamp {
+			dd.removedCount += 1
+		} else {
+			dd.removedCount = 1
+		}
+		dd.lastDropTimestamp = timestamp
 	}
-	dd.lastDropTimestamp = ts
+	return nil
 }
 
-func (dd *domDropDetector) Build() *DOMDrop {
-	var domDrop *DOMDrop
+func (dd *domDropDetector) Build() Message {
 	if dd.removedCount >= CRITICAL_COUNT {
-		domDrop = &DOMDrop{
+		domDrop := &DOMDrop{
 			Timestamp: dd.lastDropTimestamp,
 		}
+		dd.reset()
+		return domDrop
 	}
-	dd.removedCount = 0
-	dd.lastDropTimestamp = 0
-	return domDrop
+	dd.reset()
+	return nil
 }

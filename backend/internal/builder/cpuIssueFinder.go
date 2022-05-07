@@ -18,7 +18,7 @@ type cpuIssueFinder struct {
 	contextString  string
 }
 
-func (f *cpuIssueFinder) Build() *IssueEvent {
+func (f *cpuIssueFinder) Build() Message {
 	if f.startTimestamp == 0 {
 		return nil
 	}
@@ -47,35 +47,35 @@ func (f *cpuIssueFinder) Build() *IssueEvent {
 	}
 }
 
-func (f *cpuIssueFinder) HandleSetPageLocation(msg *SetPageLocation) {
-	f.contextString = msg.URL
-}
-
-func (f *cpuIssueFinder) HandlePerformanceTrack(msg *PerformanceTrack, messageID uint64, timestamp uint64) *IssueEvent {
-	dt := performance.TimeDiff(timestamp, f.lastTimestamp)
-	if dt == 0 {
-		return nil // TODO: handle error
-	}
-
-	f.lastTimestamp = timestamp
-
-	if msg.Frames == -1 || msg.Ticks == -1 {
-		return f.Build()
-	}
-
-	cpuRate := performance.CPURate(msg.Ticks, dt)
-
-	if cpuRate >= CPU_THRESHOLD {
-		if f.startTimestamp == 0 {
-			f.startTimestamp = timestamp
-			f.startMessageID = messageID
+func (f *cpuIssueFinder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	switch msg := message.(type) {
+	case *PerformanceTrack:
+		dt := performance.TimeDiff(timestamp, f.lastTimestamp)
+		if dt == 0 {
+			return nil // TODO: handle error
 		}
-		if f.maxRate < cpuRate {
-			f.maxRate = cpuRate
-		}
-	} else {
-		return f.Build()
-	}
 
+		f.lastTimestamp = timestamp
+
+		if msg.Frames == -1 || msg.Ticks == -1 {
+			return f.Build()
+		}
+
+		cpuRate := performance.CPURate(msg.Ticks, dt)
+
+		if cpuRate >= CPU_THRESHOLD {
+			if f.startTimestamp == 0 {
+				f.startTimestamp = timestamp
+				f.startMessageID = messageID
+			}
+			if f.maxRate < cpuRate {
+				f.maxRate = cpuRate
+			}
+		} else {
+			return f.Build()
+		}
+	case *SetPageLocation:
+		f.contextString = msg.URL
+	}
 	return nil
 }
