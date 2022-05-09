@@ -16,16 +16,21 @@ function AuditList(props: Props) {
     const searchQuery = useObserver(() => auditStore.searchQuery);
     const page = useObserver(() => auditStore.page);
     const order = useObserver(() => auditStore.order);
+    const period = useObserver(() => auditStore.period);
     const { showModal } = useModal();
+    console.log('AuditList', period.toTimestamps());
     
     useEffect(() => {
+        const { startTimestamp, endTimestamp } = period.toTimestamps();
         auditStore.fetchAudits({
             page: auditStore.page,
             limit: auditStore.pageSize,
             query: auditStore.searchQuery,
             order: auditStore.order,
+            startDate: startTimestamp,
+            endDate: endTimestamp,
         });
-    }, [page, searchQuery, order]);
+    }, [page, searchQuery, order, period]);
 
     return useObserver(() => (
         <Loader loading={loading}>
@@ -40,7 +45,7 @@ function AuditList(props: Props) {
                     <div className="px-2 border-t hover:bg-active-blue" key={index}>
                         <AuditListItem
                             audit={item}
-                            onShowDetails={() => showModal(<AuditDetailModal />, { right: true })}
+                            onShowDetails={() => showModal(<AuditDetailModal audit={item} />, { right: true })}
                         />
                     </div>
                 ))}

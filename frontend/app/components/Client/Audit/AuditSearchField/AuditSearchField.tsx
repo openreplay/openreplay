@@ -18,7 +18,7 @@ function AuditSearchField(props: Props) {
     }
 
     return (
-        <div className="relative" style={{ width: '300px'}}>
+        <div className="relative" style={{ width: '220px'}}>
             <Icon name="search" className="absolute top-0 bottom-0 ml-3 m-auto" size="16" />
             <input
                 name="searchQuery"

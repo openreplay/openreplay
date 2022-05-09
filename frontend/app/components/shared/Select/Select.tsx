@@ -8,9 +8,10 @@ interface Props {
     isSearchable?: boolean;
     defaultValue?: string;
     plain?: boolean;
+    components?: any;
     [x:string]: any;
 }
-export default function({ plain = false, options, isSearchable = false, defaultValue = '', ...rest }: Props) {
+export default function({ plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const customStyles = {
         option: (provided, state) => ({
           ...provided,
@@ -19,6 +20,7 @@ export default function({ plain = false, options, isSearchable = false, defaultV
         menu: (provided, state) => ({
             ...provided,
             top: 31,
+            minWidth: 'fit-content',
         }),
         control: (provided) => {
             const obj = {
@@ -61,6 +63,7 @@ export default function({ plain = false, options, isSearchable = false, defaultV
             components={{
                 IndicatorSeparator: () => null,
                 DropdownIndicator,
+                ...components,
             }}
             styles={customStyles}
             theme={(theme) => ({
