@@ -16,11 +16,7 @@ type sessHandler struct {
 
 func newSessHandler() *sessHandler {
 	return &sessHandler{
-		handlers: []Handler{
-			new(clickrage),
-			new(performanceAggregator),
-			new(anr),
-		},
+		handlers: []Handler{},
 	}
 }
 

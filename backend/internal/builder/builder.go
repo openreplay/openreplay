@@ -1,31 +1,20 @@
 package builder
 
 import (
+	"openreplay/backend/internal/handlers"
 	"openreplay/backend/pkg/intervals"
 	. "openreplay/backend/pkg/messages"
 )
 
-type messageProcessor interface {
-	Handle(message Message, messageID uint64, timestamp uint64) Message
-	Build() Message
-}
-
 type builder struct {
 	readyMsgs  []Message
 	timestamp  uint64
-	processors []messageProcessor
+	processors []handlers.MessageProcessor
 }
 
-func NewBuilder() *builder {
+func NewBuilder(handlers ...handlers.MessageProcessor) *builder {
 	return &builder{
-		processors: []messageProcessor{
-			&performanceTrackAggrBuilder{},
-			&cpuIssueFinder{},
-			&memoryIssueFinder{},
-			// &domDropDetector{},
-			&clickRageDetector{},
-			&deadClickDetector{},
-		},
+		processors: handlers,
 	}
 }
 

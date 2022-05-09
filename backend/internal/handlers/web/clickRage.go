@@ -1,4 +1,4 @@
-package builder
+package web
 
 import (
 	"encoding/json"
@@ -6,10 +6,12 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+// TODO: Description of click rage detector
+
 const MAX_TIME_DIFF = 300
 const MIN_CLICKS_IN_A_ROW = 3
 
-type clickRageDetector struct {
+type ClickRageDetector struct {
 	lastTimestamp        uint64
 	lastLabel            string
 	firstInARawTimestamp uint64
@@ -17,7 +19,7 @@ type clickRageDetector struct {
 	countsInARow         int
 }
 
-func (crd *clickRageDetector) reset() {
+func (crd *ClickRageDetector) reset() {
 	crd.lastTimestamp = 0
 	crd.lastLabel = ""
 	crd.firstInARawTimestamp = 0
@@ -25,7 +27,7 @@ func (crd *clickRageDetector) reset() {
 	crd.countsInARow = 0
 }
 
-func (crd *clickRageDetector) Build() Message {
+func (crd *ClickRageDetector) Build() Message {
 	if crd.countsInARow >= MIN_CLICKS_IN_A_ROW {
 		payload, _ := json.Marshal(struct{ Count int }{crd.countsInARow})
 		i := &IssueEvent{
@@ -42,7 +44,7 @@ func (crd *clickRageDetector) Build() Message {
 	return nil
 }
 
-func (crd *clickRageDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (crd *ClickRageDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *MouseClick:
 		// TODO: check if we it is ok to capture clickrages without the connected CleckEvent in db.

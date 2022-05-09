@@ -1,4 +1,4 @@
-package builder
+package web
 
 import (
 	"encoding/json"
@@ -7,10 +7,12 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+// TODO: Description of memory issue detector
+
 const MIN_COUNT = 3
 const MEM_RATE_THRESHOLD = 300 // % to average
 
-type memoryIssueFinder struct {
+type MemoryIssueDetector struct {
 	startMessageID uint64
 	startTimestamp uint64
 	rate           int
@@ -19,7 +21,7 @@ type memoryIssueFinder struct {
 	contextString  string
 }
 
-func (f *memoryIssueFinder) Build() Message {
+func (f *MemoryIssueDetector) Build() Message {
 	if f.startTimestamp == 0 {
 		return nil
 	}
@@ -37,7 +39,7 @@ func (f *memoryIssueFinder) Build() Message {
 	return i
 }
 
-func (f *memoryIssueFinder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (f *MemoryIssueDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *PerformanceTrack:
 		if f.count < MIN_COUNT {

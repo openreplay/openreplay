@@ -1,4 +1,4 @@
-package builder
+package web
 
 import (
 	"encoding/json"
@@ -7,10 +7,12 @@ import (
 	"openreplay/backend/pkg/messages/performance"
 )
 
+// TODO: Description of cpu issue detector
+
 const CPU_THRESHOLD = 70 // % out of 100
 const CPU_MIN_DURATION_TRIGGER = 6 * 1000
 
-type cpuIssueFinder struct {
+type CpuIssueDetector struct {
 	startTimestamp uint64
 	startMessageID uint64
 	lastTimestamp  uint64
@@ -18,7 +20,7 @@ type cpuIssueFinder struct {
 	contextString  string
 }
 
-func (f *cpuIssueFinder) Build() Message {
+func (f *CpuIssueDetector) Build() Message {
 	if f.startTimestamp == 0 {
 		return nil
 	}
@@ -47,7 +49,7 @@ func (f *cpuIssueFinder) Build() Message {
 	}
 }
 
-func (f *cpuIssueFinder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (f *CpuIssueDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *PerformanceTrack:
 		dt := performance.TimeDiff(timestamp, f.lastTimestamp)

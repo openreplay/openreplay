@@ -1,8 +1,10 @@
-package builder
+package web
 
 import (
 	. "openreplay/backend/pkg/messages"
 )
+
+// TODO: Description of dom drop detector
 
 const DROP_WINDOW = 200  //ms
 const CRITICAL_COUNT = 1 // Our login page contains 20. But on crush it removes only roots (1-3 nodes).

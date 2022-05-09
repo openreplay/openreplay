@@ -1,12 +1,14 @@
-package builder
+package web
 
 import (
 	. "openreplay/backend/pkg/messages"
 )
 
+// TODO: Description of dead click detector
+
 const CLICK_RELATION_TIME = 1400
 
-type deadClickDetector struct {
+type DeadClickDetector struct {
 	lastTimestamp      uint64
 	lastMouseClick     *MouseClick
 	lastClickTimestamp uint64
@@ -14,14 +16,14 @@ type deadClickDetector struct {
 	inputIDSet         map[uint64]bool
 }
 
-func (d *deadClickDetector) reset() {
+func (d *DeadClickDetector) reset() {
 	d.inputIDSet = nil
 	d.lastMouseClick = nil
 	d.lastClickTimestamp = 0
 	d.lastMessageID = 0
 }
 
-func (d *deadClickDetector) handleReaction(timestamp uint64) Message {
+func (d *DeadClickDetector) handleReaction(timestamp uint64) Message {
 	if d.lastMouseClick == nil || d.lastClickTimestamp+CLICK_RELATION_TIME > timestamp { // riaction is instant
 		d.reset()
 		return nil
@@ -36,11 +38,11 @@ func (d *deadClickDetector) handleReaction(timestamp uint64) Message {
 	return i
 }
 
-func (d *deadClickDetector) Build() Message {
+func (d *DeadClickDetector) Build() Message {
 	return d.handleReaction(d.lastTimestamp)
 }
 
-func (d *deadClickDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+func (d *DeadClickDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	d.lastTimestamp = timestamp
 	switch msg := message.(type) {
 	case *SetInputTarget:

@@ -1,4 +1,4 @@
-package builder
+package web
 
 import (
 	"math"
@@ -9,7 +9,7 @@ import (
 
 const AGGREGATION_WINDOW = 2 * 60 * 1000
 
-type performanceTrackAggrBuilder struct {
+type PerformanceAggregator struct {
 	*PerformanceTrackAggr
 	lastTimestamp      uint64
 	count              float64
@@ -19,14 +19,14 @@ type performanceTrackAggrBuilder struct {
 	sumUsedJSHeapSize  float64
 }
 
-func (b *performanceTrackAggrBuilder) start(timestamp uint64) {
+func (b *PerformanceAggregator) start(timestamp uint64) {
 	b.PerformanceTrackAggr = &PerformanceTrackAggr{
 		TimestampStart: timestamp,
 	}
 	b.lastTimestamp = timestamp
 }
 
-func (b *performanceTrackAggrBuilder) reset() {
+func (b *PerformanceAggregator) reset() {
 	b.PerformanceTrackAggr = nil
 	b.count = 0
 	b.sumFrameRate = 0
@@ -36,7 +36,7 @@ func (b *performanceTrackAggrBuilder) reset() {
 	b.lastTimestamp = 0
 }
 
-func (b *performanceTrackAggrBuilder) Handle(message Message, _ uint64, timestamp uint64) Message {
+func (b *PerformanceAggregator) Handle(message Message, _ uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *PerformanceTrack:
 		if b.PerformanceTrackAggr == nil || msg.Frames == -1 || msg.Ticks == -1 {
@@ -93,7 +93,7 @@ func (b *performanceTrackAggrBuilder) Handle(message Message, _ uint64, timestam
 	return nil
 }
 
-func (b *performanceTrackAggrBuilder) Build() Message {
+func (b *PerformanceAggregator) Build() Message {
 	if b.PerformanceTrackAggr == nil {
 		return nil
 	}

@@ -4,6 +4,10 @@ import (
 	"log"
 	"openreplay/backend/internal/builder"
 	"openreplay/backend/internal/config/ender"
+	"openreplay/backend/internal/handlers"
+	"openreplay/backend/internal/handlers/custom"
+	"openreplay/backend/internal/handlers/ios"
+	"openreplay/backend/internal/handlers/web"
 	"openreplay/backend/pkg/intervals"
 	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
@@ -18,10 +22,32 @@ import (
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
+	// Load service configuration
 	cfg := ender.New()
 
-	builderMap := builder.NewBuilderMap()
+	// Declare message handlers we want to apply for each incoming message
+	msgHandlers := []handlers.MessageProcessor{
+		// web handlers
+		&web.ClickRageDetector{},
+		&web.CpuIssueDetector{},
+		&web.DeadClickDetector{},
+		&web.MemoryIssueDetector{},
+		&web.PerformanceAggregator{},
+		// iOS handlers
+		&ios.AppNotResponding{},
+		&ios.ClickRageDetector{},
+		&ios.PerformanceAggregator{},
+		// Other handlers (you can add your custom handlers here)
+		&custom.CustomHandler{},
+	}
+
+	// Create handler's aggregator
+	builderMap := builder.NewBuilderMap(msgHandlers...)
+
+	// Init logger
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
+
+	// Init producer and consumer for data bus
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupEvents,
@@ -36,7 +62,7 @@ func main() {
 		false,
 	)
 
-	log.Printf("Ender service started\n")
+	log.Printf("Heuristics service started\n")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
