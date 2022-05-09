@@ -4,6 +4,8 @@ import Audit from './types/audit'
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { toast } from 'react-toastify';
 import { exportCSVFile } from 'App/utils';
+import { formatDateTimeDefault } from 'App/date';
+import { DateTime, Duration } from 'luxon'; // TODO
 
 export default class AuditStore {
     list: any[] = [];
@@ -60,11 +62,13 @@ export default class AuditStore {
                     { label: 'Method', key: 'method' },
                     { label: 'Action', key: 'action' },
                     { label: 'Endpoint', key: 'endpoint' },
-                    // { label: 'Status', key: 'status' },
                     { label: 'Created At', key: 'createdAt' },
                 ]
-                // console.log('data', data)
-                exportCSVFile(headers, data.sessions, `audit-${new Date().toLocaleDateString()}.csv`);
+                data = data.sessions.map(item => ({
+                    ...item,
+                    createdAt: DateTime.fromMillis(item.createdAt).toFormat('LLL dd yyyy hh:mm a')
+                }))
+                exportCSVFile(headers, data, `audit-${new Date().toLocaleDateString()}`);
                 resolve(data)
             }).catch(error => {
                 reject(error)

@@ -279,10 +279,7 @@ export const convertToCSV = (headers, objArray) => {
     acc[curr.key] = curr;
     return acc;
   }, {});
-  console.log('headersMap', headersMap)
 
-  // csv header line
-  // comma seprated header line from array
   str += headers.map(h => h.label).join(',') + '\r\n';
 
   for (var i = 0; i < array.length; i++) {
@@ -299,10 +296,6 @@ export const convertToCSV = (headers, objArray) => {
 }
 
 export const exportCSVFile = (headers, items, fileTitle) => {
-  // if (headers) {
-  //     items.unshift(headers);
-  // }
-
   var jsonObject = JSON.stringify(items);
   var csv = convertToCSV(headers, jsonObject);
   var exportedFilenmae = fileTitle + '.csv' || 'export.csv';
@@ -312,8 +305,7 @@ export const exportCSVFile = (headers, items, fileTitle) => {
       navigator.msSaveBlob(blob, exportedFilenmae);
   } else {
       var link = document.createElement("a");
-      if (link.download !== undefined) { // feature detection
-          // Browsers that support HTML5 download attribute
+      if (link.download !== undefined) {
           var url = URL.createObjectURL(blob);
           link.setAttribute("href", url);
           link.setAttribute("download", exportedFilenmae);
