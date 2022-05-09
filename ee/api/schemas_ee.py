@@ -26,6 +26,7 @@ class EditMemberSchema(schemas.EditMemberSchema):
 
 
 class TrailSearchPayloadSchema(schemas._PaginatedSchema):
+    limit: int = Field(default=200, gt=0)
     startDate: int = Field(default=TimeUTC.now(-7))
     endDate: int = Field(default=TimeUTC.now(1))
     user_id: Optional[int] = Field(default=None)
