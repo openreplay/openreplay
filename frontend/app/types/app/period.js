@@ -103,6 +103,10 @@ export default Record({
 				endTimestamp: this.end,
 			};
 		},
+		rangeFormatted(format = 'MMM Do YY, hh:mm A') {
+			console.log('period', this)
+			return this.range.start.format(format) + ' - ' + this.range.end.format(format);
+		},
 		toTimestampstwo() {
 			return {
 				startTimestamp: this.start / 1000,

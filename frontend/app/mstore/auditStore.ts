@@ -2,6 +2,8 @@ import { makeAutoObservable, runInAction, observable, action, reaction } from "m
 import { auditService } from "App/services"
 import Audit from './types/audit'
 import Period, { LAST_7_DAYS } from 'Types/app/period';
+import { toast } from 'react-toastify';
+import { exportCSVFile } from 'App/utils';
 
 export default class AuditStore {
     list: any[] = [];
@@ -11,18 +13,20 @@ export default class AuditStore {
     searchQuery: string = '';
     isLoading: boolean = false;
     order: string = 'desc';
-    period: Period = Period({ rangeName: LAST_7_DAYS })
+    period: Period|null = Period({ rangeName: LAST_7_DAYS })
 
     constructor() {
         makeAutoObservable(this, {
             searchQuery: observable,
+            period: observable,
             updateKey: action,
             fetchAudits: action,
+            setDateRange: action,
         })
     }
 
     setDateRange(data: any) {
-        this.period = new Period(data);
+        this['period'] = data;
     }
 
     updateKey(key: string, value: any) {
@@ -43,6 +47,36 @@ export default class AuditStore {
             }).finally(() => {
                 this.isLoading = false;
             })
+        })
+    }
+
+    fetchAllAudits = async (data: any): Promise<any> => {
+        return new Promise((resolve, reject) => {
+            auditService.all(data).then((data) => {
+                const headers = [
+                    { label: 'User', key: 'username' },
+                    { label: 'Email', key: 'email' },
+                    { label: 'UserID', key: 'userId' },
+                    { label: 'Method', key: 'method' },
+                    { label: 'Action', key: 'action' },
+                    { label: 'Endpoint', key: 'endpoint' },
+                    // { label: 'Status', key: 'status' },
+                    { label: 'Created At', key: 'createdAt' },
+                ]
+                // console.log('data', data)
+                exportCSVFile(headers, data.sessions, `audit-${new Date().toLocaleDateString()}.csv`);
+                resolve(data)
+            }).catch(error => {
+                reject(error)
+            })
+        })
+    }
+
+    exportToCsv = async (): Promise<void> => {
+        const promise = this.fetchAllAudits({ limit: this.total })
+        toast.promise(promise, {
+            pending: 'Exporting...',
+            success: 'Export successful',
         })
     }
 }

@@ -4,12 +4,14 @@ import { unserscoreToSpaceAndCapitalize } from 'App/utils';
 export default class Audit {
     id: string = '';
     username: string = '';
+    email: string = '';
     action: string = '';
     createdAt: any = null;
     endPoint: string = '';
     parameters: any = {};
     method: string = '';
     status: string = '';
+    payload: any = {}
     
     constructor() {
     }
@@ -20,10 +22,12 @@ export default class Audit {
         audit.username = json.username;
         audit.action = unserscoreToSpaceAndCapitalize(json.action);
         audit.createdAt = json.createdAt && DateTime.fromMillis(json.createdAt || 0);
-        audit.endPoint = json.endPoint;
+        audit.endPoint = json.endpoint;
         audit.parameters = json.parameters;
         audit.method = json.method;
-        audit.status = json.status;
+        audit.status = json.status
+        audit.email = json.email
+        audit.payload = typeof json.payload === 'string' ? JSON.parse(json.payload) : json.payload
         return audit;
     }
 
