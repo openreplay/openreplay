@@ -42,3 +42,14 @@ func (m *builderMap) IterateReadyMessages(operatingTs int64, iter func(sessionID
 		}
 	}
 }
+
+func (m *builderMap) IterateSessionReadyMessages(sessionID uint64, iter func(msg Message)) {
+	session, ok := m.sessions[sessionID]
+	if !ok {
+		return
+	}
+	session.iterateReadyMessage(iter)
+	if session.ended {
+		delete(m.sessions, sessionID)
+	}
+}

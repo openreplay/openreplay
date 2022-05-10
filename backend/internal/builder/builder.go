@@ -10,6 +10,7 @@ type builder struct {
 	readyMsgs  []Message
 	timestamp  uint64
 	processors []handlers.MessageProcessor
+	ended      bool
 }
 
 func NewBuilder(handlers ...handlers.MessageProcessor) *builder {
@@ -33,6 +34,13 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	if b.timestamp == 0 {
 		// in case of SessionStart. TODO: make timestamp system transparent
 		return
+	}
+
+	if _, isEnd := message.(*IOSSessionEnd); isEnd {
+		b.ended = true
+	}
+	if _, isEnd := message.(*SessionEnd); isEnd {
+		b.ended = true
 	}
 
 	for _, p := range b.processors {

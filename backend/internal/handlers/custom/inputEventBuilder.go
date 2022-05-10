@@ -1,4 +1,4 @@
-package heuristics
+package custom
 
 import (
 	. "openreplay/backend/pkg/messages"
@@ -10,6 +10,17 @@ type inputEventBuilder struct {
 	inputEvent  *InputEvent
 	inputLabels inputLabels
 	inputID     uint64
+}
+
+func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (b *inputEventBuilder) Build() Message {
+	// b.build()
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewInputEventBuilder() *inputEventBuilder {
@@ -25,7 +36,7 @@ func (b *inputEventBuilder) ClearLabels() {
 func (b *inputEventBuilder) HandleSetInputTarget(msg *SetInputTarget) *InputEvent {
 	var inputEvent *InputEvent
 	if b.inputID != msg.ID {
-		inputEvent = b.Build()
+		inputEvent = b.build()
 		b.inputID = msg.ID
 	}
 	b.inputLabels[msg.ID] = msg.Label
@@ -35,7 +46,7 @@ func (b *inputEventBuilder) HandleSetInputTarget(msg *SetInputTarget) *InputEven
 func (b *inputEventBuilder) HandleSetInputValue(msg *SetInputValue, messageID uint64, timestamp uint64) *InputEvent {
 	var inputEvent *InputEvent
 	if b.inputID != msg.ID {
-		inputEvent = b.Build()
+		inputEvent = b.build()
 		b.inputID = msg.ID
 	}
 	if b.inputEvent == nil {
@@ -63,7 +74,7 @@ func (b *inputEventBuilder) GetTimestamp() uint64 {
 	return b.inputEvent.Timestamp
 }
 
-func (b *inputEventBuilder) Build() *InputEvent {
+func (b *inputEventBuilder) build() *InputEvent {
 	if b.inputEvent == nil {
 		return nil
 	}

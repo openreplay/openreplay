@@ -54,6 +54,7 @@ func main() {
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,
+			cfg.TopicTrigger, // to receive SessionEnd events
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			statsLogger.Collect(sessionID, meta)

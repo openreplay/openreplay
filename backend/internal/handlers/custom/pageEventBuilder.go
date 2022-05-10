@@ -1,4 +1,4 @@
-package heuristics
+package custom
 
 import (
 	. "openreplay/backend/pkg/messages"
@@ -9,9 +9,25 @@ type pageEventBuilder struct {
 	firstTimingHandled bool
 }
 
+func (b *pageEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (b *pageEventBuilder) Build() Message {
+	// b.build()
+	//TODO implement me
+	panic("implement me")
+}
+
+func NewPageEventBuilder() *pageEventBuilder {
+	ieBuilder := &pageEventBuilder{}
+	return ieBuilder
+}
+
 func (b *pageEventBuilder) buildIfTimingsComplete() *PageEvent {
 	if b.firstTimingHandled {
-		return b.Build()
+		return b.build()
 	}
 	b.firstTimingHandled = true
 	return nil
@@ -83,7 +99,7 @@ func (b *pageEventBuilder) GetTimestamp() uint64 {
 	return b.pageEvent.Timestamp
 }
 
-func (b *pageEventBuilder) Build() *PageEvent {
+func (b *pageEventBuilder) build() *PageEvent {
 	pageEvent := b.pageEvent
 	b.pageEvent = nil
 	b.firstTimingHandled = false
