@@ -1,10 +1,11 @@
 import { connect } from 'react-redux';
-import { Input, Button, Label } from 'UI';
-import { save, edit, update , fetchList } from 'Duck/site';
+import { Input, Button, Icon } from 'UI';
+import { save, edit, update , fetchList, remove } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import styles from './siteForm.css';
+import { confirm } from 'UI/Confirmation';
 
 @connect(state => ({
 	site: state.getIn([ 'site', 'instance' ]),
@@ -13,6 +14,7 @@ import styles from './siteForm.css';
 	loading: state.getIn([ 'site', 'save', 'loading' ]),
 }), {
 	save,
+	remove,
 	edit,
 	update,
 	pushNewSite,
@@ -42,7 +44,6 @@ export default class NewSiteForm extends React.PureComponent {
 					const { sites } = this.props;
 					const site = sites.last();
 					if (!pathname.includes('/client')) {
-						console.log('site', site)
 						this.props.setSiteId(site.get('id'))
 					}
 					this.props.onClose(null, site)
@@ -52,6 +53,17 @@ export default class NewSiteForm extends React.PureComponent {
 			});
 		}
 	}
+
+	remove = async (site) => {
+		if (await confirm({
+		  header: 'Projects',
+		  confirmation: `Are you sure you want to delete this Project? We won't be able to record anymore sessions.`
+		})) {
+		  this.props.remove(site.id).then(() => {
+			this.props.onClose(null)
+		  });
+		}
+	};
 
 	edit = ({ target: { name, value } }) => {
 		this.setState({ existsError: false });
@@ -73,7 +85,7 @@ export default class NewSiteForm extends React.PureComponent {
 						className={ styles.input }
 						/>
 					</div>
-					<div className="mt-6">
+					<div className="mt-6 flex justify-between">
 						<Button							
 							primary
 							type="submit"							
@@ -81,7 +93,10 @@ export default class NewSiteForm extends React.PureComponent {
 							loading={ loading }
 							content={site.exists() ? 'Update' : 'Add'}
 						/>
-					</div>		      
+						<Button type="button" plain onClick={() => this.remove(site)}>
+							<Icon name="trash" size="16" />
+						</Button>
+					</div>
 					{ this.state.existsError &&
 						<div className={ styles.errorMessage }>
 							{ "Site exists already. Please choose another one." }

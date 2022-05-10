@@ -21,7 +21,7 @@ function DashboardForm(props: Props) {
         <div className="mb-8 grid grid-cols-2 gap-8">
             <div className="form-field flex flex-col">
                 <label htmlFor="name" className="font-medium mb-2">Title</label>
-                <Input type="text" name="name" onChange={write} value={dashboard.name} />
+                <Input type="text" name="name" onChange={write} value={dashboard.name} maxLength={100} />
             </div>
 
             <div className="form-field flex flex-col">

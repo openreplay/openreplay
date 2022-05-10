@@ -6,7 +6,7 @@ import MetaMoreButton from '../MetaMoreButton';
 
 interface Props {
   className?: string,
-  metaList: [],
+  metaList: any[],
   maxLength?: number,
 }
 

@@ -270,8 +270,13 @@ function extractSessionInfo(socket) {
         socket.handshake.query.sessionInfo.userCountry = null;
         if (geoip() !== null) {
             debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
-            let country = geoip().country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
-            socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
+            try {
+                let country = geoip().country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+                socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
+            } catch (e) {
+                debug && console.log("geoip-country failed");
+                debug && console.log(e);
+            }
         }
     }
 }

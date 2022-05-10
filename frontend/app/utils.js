@@ -1,5 +1,6 @@
 import JSBI from 'jsbi';
 import chroma from "chroma-js";
+import * as htmlToImage from 'html-to-image';
 
 export function debounce(callback, wait, context = this) {
   let timeout = null;
@@ -25,6 +26,11 @@ export function randomInt(a, b) {
   const rand = min - 0.5 + (Math.random() * (max - min + 1));
   return Math.round(rand);
 }
+
+export const fileNameFormat = (str = '', ext = '') => {
+  const name = str.replace(/[^a-zA-Z0-9]/g, '_');
+  return `${name}${ext}`;
+};
 
 export const toUnderscore = s => s.split(/(?=[A-Z])/).join('_').toLowerCase();
 
@@ -246,4 +252,16 @@ export const positionOfTheNumber = (min, max, value, length) => {
   const interval = (max - min) / length;
   const position = Math.round((value - min) / interval);
   return position;
+}
+
+export const convertElementToImage = async (el) => {
+  const fontEmbedCss = await htmlToImage.getFontEmbedCSS(el);
+  const image = await htmlToImage.toJpeg(el, { 
+    pixelRatio: 2,
+    fontEmbedCss,
+    filter: function (node) {
+      return node.id !== 'no-print';
+    },
+  });
+  return image;
 }

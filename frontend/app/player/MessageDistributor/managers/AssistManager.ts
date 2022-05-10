@@ -172,8 +172,20 @@ export default class AssistManager {
       socket.on('SESSION_RECONNECTED', () => {
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
       })
+
+      socket.on('UPDATE_SESSION', ({ active }) => {
+        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
+        // if (typeof active === "boolean") {
+        //   if (active) {
+        //     
+        //   } else {
+        //     this.setStatus(ConnectionStatus.Inactive)
+        //   }
+        // }
+      })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
+        showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
         showDisconnectTimeout = setTimeout(() => {
           if (this.cleaned) { return }
           this.setStatus(ConnectionStatus.Disconnected)

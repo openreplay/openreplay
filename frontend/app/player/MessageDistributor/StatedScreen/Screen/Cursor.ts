@@ -27,7 +27,6 @@ export default class Cursor {
   }
 
   click() {
-    console.log("clickong ", styles.clicked)
     this.cursor.classList.add(styles.clicked)
     setTimeout(() => {
       this.cursor.classList.remove(styles.clicked)

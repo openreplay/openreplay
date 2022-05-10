@@ -5,8 +5,8 @@ import (
 )
 
 type pageEventBuilder struct {
-	pageEvent                   *PageEvent
-	firstTimingHandled      bool
+	pageEvent          *PageEvent
+	firstTimingHandled bool
 }
 
 func (b *pageEventBuilder) buildIfTimingsComplete() *PageEvent {
@@ -28,7 +28,7 @@ func (b *pageEventBuilder) HandleSetPageLocation(msg *SetPageLocation, messageID
 	}
 }
 
-func (b * pageEventBuilder) HandlePageLoadTiming(msg *PageLoadTiming) *PageEvent {
+func (b *pageEventBuilder) HandlePageLoadTiming(msg *PageLoadTiming) *PageEvent {
 	if !b.HasInstance() {
 		return nil
 	}
@@ -62,7 +62,7 @@ func (b * pageEventBuilder) HandlePageLoadTiming(msg *PageLoadTiming) *PageEvent
 	return b.buildIfTimingsComplete()
 }
 
-func (b * pageEventBuilder) HandlePageRenderTiming(msg *PageRenderTiming) *PageEvent {
+func (b *pageEventBuilder) HandlePageRenderTiming(msg *PageRenderTiming) *PageEvent {
 	if !b.HasInstance() {
 		return nil
 	}
@@ -76,14 +76,14 @@ func (b *pageEventBuilder) HasInstance() bool {
 	return b.pageEvent != nil
 }
 
-func (b * pageEventBuilder) GetTimestamp() uint64 {
+func (b *pageEventBuilder) GetTimestamp() uint64 {
 	if b.pageEvent == nil {
 		return 0
 	}
-	return b.pageEvent.Timestamp;
+	return b.pageEvent.Timestamp
 }
 
-func (b * pageEventBuilder) Build() *PageEvent {
+func (b *pageEventBuilder) Build() *PageEvent {
 	pageEvent := b.pageEvent
 	b.pageEvent = nil
 	b.firstTimingHandled = false

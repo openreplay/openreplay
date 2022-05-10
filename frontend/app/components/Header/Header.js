@@ -98,7 +98,6 @@ const Header = (props) => {
         className={ styles.nav }
         activeClassName={ styles.active }
       >
-        <ErrorsBadge />
         { 'Errors' }
       </NavLink>
       <NavLink

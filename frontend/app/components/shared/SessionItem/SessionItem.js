@@ -23,9 +23,6 @@ const ASSIST_ROUTE = assistRoute();
 const ASSIST_LIVE_SESSION = liveSession()
 const SESSIONS_ROUTE = sessionsRoute();
 
-// const Label = ({ label = '', color = 'color-gray-medium'}) => (
-//   <div className={ cn('font-light text-sm', color)}>{label}</div>
-// )
 @connect(state => ({
   timezone: state.getIn(['sessions', 'timezone']),
   siteId: state.getIn([ 'site', 'siteId' ]),

@@ -7,6 +7,7 @@ import { fetchList as fetchMemberList } from 'Duck/member';
 import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
 import ManageUsers from './ManageUsers';
+import UserView from './Users/UsersView';
 import Sites from './Sites';
 import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
@@ -25,7 +26,7 @@ import Roles from './Roles';
 export default class Client extends React.PureComponent {
   constructor(props){
     super(props);
-    props.fetchMemberList();    
+    // props.fetchMemberList();    
   } 
 
   setTab = (tab) => {
@@ -36,7 +37,7 @@ export default class Client extends React.PureComponent {
     <Switch>
       <Route exact strict path={ clientRoute(CLIENT_TABS.PROFILE) } component={ ProfileSettings } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.INTEGRATIONS) } component={ Integrations } />
-      <Route exact strict path={ clientRoute(CLIENT_TABS.MANAGE_USERS) } component={ ManageUsers } />
+      <Route exact strict path={ clientRoute(CLIENT_TABS.MANAGE_USERS) } component={ UserView } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.SITES) } component={ Sites } />      
       <Route exact strict path={ clientRoute(CLIENT_TABS.CUSTOM_FIELDS) } component={ CustomFields } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.WEBHOOKS) } component={ Webhooks } />

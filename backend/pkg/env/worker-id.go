@@ -5,9 +5,9 @@ import (
 )
 
 func hashHostname(hostname string) uint16 {
-	var h uint16 ;
+	var h uint16
 	for i, b := range hostname {
-		h += uint16(i+1)*uint16(b)
+		h += uint16(i+1) * uint16(b)
 	}
 	return h
 }

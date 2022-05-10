@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"bytes"
+
 	"os/signal"
 	"syscall"
 
@@ -15,6 +17,10 @@ import (
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/storage"
 )
+
+const RetryTimeout = 2 * time.Minute
+
+const SESSION_FILE_SPLIT_SIZE = 200000 // ~200 kB
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
@@ -28,16 +34,30 @@ func main() {
 		if retryCount <= 0 {
 			return
 		}
+
 		file, err := os.Open(FS_DIR + "/" + key)
-		defer file.Close()
 		if err != nil {
 			log.Printf("File error: %v; Will retry %v more time(s)\n", err, retryCount)
-			time.AfterFunc(2*time.Minute, func() {
+			time.AfterFunc(RetryTimeout, func() {
 				uploadKey(key, retryCount-1)
 			})
-		} else {
-			if err := storage.Upload(gzipFile(file), key, "application/octet-stream", true); err != nil {
-				log.Fatalf("Storage upload error: %v\n", err)
+			return
+		}
+		defer file.Close()
+
+		startBytes := make([]byte, SESSION_FILE_SPLIT_SIZE)
+		nRead, err := file.Read(startBytes)
+		if err != nil {
+			log.Printf("File read error: %f", err)
+			return
+		}
+		startReader := bytes.NewBuffer(startBytes)
+		if err := storage.Upload(gzipFile(startReader), key, "application/octet-stream", true); err != nil {
+			log.Fatalf("Storage: start upload failed.  %v\n", err)
+		}
+		if nRead == SESSION_FILE_SPLIT_SIZE {
+			if err := storage.Upload(gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
+				log.Fatalf("Storage: end upload failed. %v\n", err)
 			}
 		}
 	}

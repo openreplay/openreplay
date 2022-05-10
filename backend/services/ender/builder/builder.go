@@ -218,14 +218,16 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Type:            tp,
 			Success:         success,
 		})
-		if !success && tp == "fetch" {
+		if !success {
+			issueType := "missing_resource"
+			if tp == "fetch" {
+				issueType = "bad_request"
+			}
 			b.appendReadyMessage(&IssueEvent{
-				Type:          "bad_request",
+				Type:          issueType,
 				MessageID:     messageID,
 				Timestamp:     msg.Timestamp,
 				ContextString: msg.URL,
-				Context:       "",
-				Payload:       "",
 			})
 		}
 	case *RawCustomEvent:
@@ -254,6 +256,14 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 			Status:    msg.Status,
 			Duration:  msg.Duration,
 		})
+		if msg.Status >= 400 {
+			b.appendReadyMessage(&IssueEvent{
+				Type:          "bad_request",
+				MessageID:     messageID,
+				Timestamp:     msg.Timestamp,
+				ContextString: msg.URL,
+			})
+		}
 	case *GraphQL:
 		b.appendReadyMessage(&GraphQLEvent{
 			MessageID:     messageID,

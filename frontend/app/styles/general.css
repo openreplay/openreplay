@@ -261,8 +261,6 @@ p {
   }
 }
 
-
-
 .tippy-tooltip.openreplay-theme {
   background-color: $tealx;
   color: white;
@@ -274,4 +272,29 @@ p {
 
 .tippy-tooltip.openreplay-theme .tippy-backdrop {
   background-color: $tealx;
+}
+
+@media print {
+  .no-print {
+    display:none !important;
+  }
+}
+
+.printable-report * {
+  white-space: nowrap !important;
+}
+.recharts-default-legend {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.recharts-legend-item {
+  display: flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+}
+
+.recharts-legend-item-text {
+  white-space: nowrap !important;
 }
