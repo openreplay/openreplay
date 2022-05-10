@@ -64,7 +64,7 @@ function reducer(state = initialState, action = {}) {
       return state.set('filterList', generateFilterOptions(filtersMap))
                   .set('filterListLive', generateLiveFilterOptions(liveFiltersMap));
     case EDIT:
-      return state.mergeIn(['instance'], action.instance);
+      return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
     case APPLY:
       return action.fromUrl 
         ? state.set('instance', Filter(action.filter))
