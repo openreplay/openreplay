@@ -27,6 +27,7 @@ function WidgetForm(props: Props) {
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
+    const isFunnel = metric.metricType === 'funnel';
     const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
@@ -87,7 +88,7 @@ function WidgetForm(props: Props) {
     }
     
     return useObserver(() => (
-        <div className="p-4">
+        <div className="p-6">
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
@@ -152,8 +153,8 @@ function WidgetForm(props: Props) {
 
             <div className="form-group">
                 <div className="font-medium items-center py-2">
-                    {`${isTable ? 'Filter by' : 'Chart Series'}`}
-                    {!isTable && (
+                    {`${(isTable || isFunnel) ? 'Filter by' : 'Chart Series'}`}
+                    {!isTable && !isFunnel && (
                         <Button
                             className="ml-2"
                             primary plain size="small"
@@ -163,7 +164,7 @@ function WidgetForm(props: Props) {
                     )}
                 </div>
 
-                {metric.series.length > 0 && metric.series.slice(0, isTable ? 1 : metric.series.length).map((series: any, index: number) => (
+                {metric.series.length > 0 && metric.series.slice(0, (isTable || isFunnel) ? 1 : metric.series.length).map((series: any, index: number) => (
                     <div className="mb-2">
                         <FilterSeries
                             hideHeader={ isTable }

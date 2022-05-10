@@ -33,6 +33,7 @@ function WidgetChart(props: Props) {
 
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
+    const isFunnel = metric.metricType === 'funnel';
 
     const onChartClick = (event: any) => {
         if (event) {
@@ -82,7 +83,7 @@ function WidgetChart(props: Props) {
     const renderChart = () => {
         const { metricType, viewType } = metric;
 
-        if (metricType === 'funnel') {
+        if (isFunnel) {
             return <FunnelWidget metric={metric} />
         }
 
@@ -136,7 +137,7 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={loading} size="small" style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
+        <Loader loading={!isFunnel && loading} size="small" style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));

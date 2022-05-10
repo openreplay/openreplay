@@ -10,16 +10,7 @@ interface Props {
 function FunnelBar(props: Props) {
     const { filter } = props;
     const { completed, dropped } = filter;
-
-    const calculatePercentage = (completed: number, dropped: number) => {
-        const total = completed + dropped;
-        if (total === 0) {
-            return 0;
-        }
-        return Math.round((completed / total) * 100);
-    }
     const completedPercentage = calculatePercentage(completed, dropped);
-    console.log('completedPercentage', completedPercentage)
 
     return (
         <div className="w-full mb-4">
@@ -62,3 +53,11 @@ function FunnelBar(props: Props) {
 }
 
 export default FunnelBar;
+
+const calculatePercentage = (completed: number, dropped: number) => {
+    const total = completed + dropped;
+    if (total === 0) {
+        return 0;
+    }
+    return Math.round((completed / total) * 100);
+}

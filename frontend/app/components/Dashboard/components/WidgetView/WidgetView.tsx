@@ -40,7 +40,7 @@ function WidgetView(props: Props) {
             <div className="relative pb-10">
                 <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
                 <div className="bg-white rounded border">
-                    <div className="p-4 flex justify-between items-center">
+                    <div className="px-6 py-4 flex justify-between items-center">
                         <h1 className="mb-0 text-2xl">
                             <WidgetName
                                 name={widget.name}
