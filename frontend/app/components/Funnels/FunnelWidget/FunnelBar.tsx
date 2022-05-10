@@ -22,7 +22,7 @@ function FunnelBar(props: Props) {
                 borderRadius: '3px',
                 overflow: 'hidden',
             }}>
-                <div style={{
+                <div className="flex items-center" style={{
                     width: `${completed * 100 / (completed + dropped)}px`,
                     position: 'absolute',
                     top: 0,
@@ -30,7 +30,9 @@ function FunnelBar(props: Props) {
                     bottom: 0,
                     // height: '10px',
                     backgroundColor: '#00b5ad',
-                }} />
+                }}>
+                    <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">10%</div>
+                </div>
             </div>
             <div className="flex justify-between py-2">
                 <div className="flex items-center">
@@ -39,7 +41,7 @@ function FunnelBar(props: Props) {
                     <span>completed</span>
                 </div>
                 <div className="flex items-center">
-                    <Icon name="caret-down-fill" color="red" size={18} />
+                    <Icon name="caret-down-fill" color="red" size={16} />
                     <span className="font-medium mx-1 color-red">20</span>
                     <span>Dropped off</span>
                 </div>
