@@ -4,7 +4,22 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-// TODO: Description of dead click detector
+/*
+	Handler name: DeadClick
+	Input events: SetInputTarget,
+				  CreateDocument,
+				  MouseClick,
+				  SetNodeAttribute,
+				  RemoveNodeAttribute,
+				  CreateElementNode,
+				  CreateTextNode,
+				  MoveNode,
+				  RemoveNode,
+				  SetCSSData,
+				  CSSInsertRule,
+				  CSSDeleteRule
+	Output event: IssueEvent
+*/
 
 const CLICK_RELATION_TIME = 1400
 
@@ -23,23 +38,22 @@ func (d *DeadClickDetector) reset() {
 	d.lastMessageID = 0
 }
 
-func (d *DeadClickDetector) handleReaction(timestamp uint64) Message {
-	if d.lastMouseClick == nil || d.lastClickTimestamp+CLICK_RELATION_TIME > timestamp { // riaction is instant
-		d.reset()
+func (d *DeadClickDetector) build(timestamp uint64) Message {
+	defer d.reset()
+	if d.lastMouseClick == nil || d.lastClickTimestamp+CLICK_RELATION_TIME > timestamp { // reaction is instant
 		return nil
 	}
-	i := &IssueEvent{
+	event := &IssueEvent{
 		Type:          "dead_click",
 		ContextString: d.lastMouseClick.Label,
 		Timestamp:     d.lastClickTimestamp,
 		MessageID:     d.lastMessageID,
 	}
-	d.reset()
-	return i
+	return event
 }
 
 func (d *DeadClickDetector) Build() Message {
-	return d.handleReaction(d.lastTimestamp)
+	return d.build(d.lastTimestamp)
 }
 
 func (d *DeadClickDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
@@ -56,14 +70,14 @@ func (d *DeadClickDetector) Handle(message Message, messageID uint64, timestamp 
 		if msg.Label == "" {
 			return nil
 		}
-		i := d.handleReaction(timestamp)
+		event := d.build(timestamp)
 		if d.inputIDSet[msg.ID] { // ignore if input
-			return i
+			return event
 		}
 		d.lastMouseClick = msg
 		d.lastClickTimestamp = timestamp
 		d.lastMessageID = messageID
-		return i
+		return event
 	case *SetNodeAttribute,
 		*RemoveNodeAttribute,
 		*CreateElementNode,
@@ -73,7 +87,7 @@ func (d *DeadClickDetector) Handle(message Message, messageID uint64, timestamp 
 		*SetCSSData,
 		*CSSInsertRule,
 		*CSSDeleteRule:
-		return d.handleReaction(timestamp)
+		return d.build(timestamp)
 	}
 	return nil
 }

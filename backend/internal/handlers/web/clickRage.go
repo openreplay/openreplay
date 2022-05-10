@@ -2,11 +2,16 @@ package web
 
 import (
 	"encoding/json"
+	"log"
 
 	. "openreplay/backend/pkg/messages"
 )
 
-// TODO: Description of click rage detector
+/*
+	Handler name: ClickRage
+	Input event:  MouseClick
+	Output event: IssueEvent
+*/
 
 const MAX_TIME_DIFF = 300
 const MIN_CLICKS_IN_A_ROW = 3
@@ -28,26 +33,28 @@ func (crd *ClickRageDetector) reset() {
 }
 
 func (crd *ClickRageDetector) Build() Message {
+	defer crd.reset()
 	if crd.countsInARow >= MIN_CLICKS_IN_A_ROW {
-		payload, _ := json.Marshal(struct{ Count int }{crd.countsInARow})
-		i := &IssueEvent{
+		payload, err := json.Marshal(struct{ Count int }{crd.countsInARow})
+		if err != nil {
+			log.Printf("can't marshal ClickRage payload to json: %s", err)
+		}
+		event := &IssueEvent{
 			Type:          "click_rage",
 			ContextString: crd.lastLabel,
-			Payload:       string(payload), // TODO: json message field type
+			Payload:       string(payload),
 			Timestamp:     crd.firstInARawTimestamp,
 			MessageID:     crd.firstInARawMessageId,
 		}
-		crd.reset()
-		return i
+		return event
 	}
-	crd.reset()
 	return nil
 }
 
 func (crd *ClickRageDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
 	case *MouseClick:
-		// TODO: check if we it is ok to capture clickrages without the connected CleckEvent in db.
+		// TODO: check if we it is ok to capture clickRage event without the connected ClickEvent in db.
 		if msg.Label == "" {
 			return crd.Build()
 		}
@@ -56,13 +63,13 @@ func (crd *ClickRageDetector) Handle(message Message, messageID uint64, timestam
 			crd.countsInARow += 1
 			return nil
 		}
-		i := crd.Build()
+		event := crd.Build()
 		crd.lastTimestamp = timestamp
 		crd.lastLabel = msg.Label
 		crd.firstInARawTimestamp = timestamp
 		crd.firstInARawMessageId = messageID
 		crd.countsInARow = 1
-		return i
+		return event
 	}
 	return nil
 }

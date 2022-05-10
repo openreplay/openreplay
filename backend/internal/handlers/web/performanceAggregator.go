@@ -7,6 +7,12 @@ import (
 	"openreplay/backend/pkg/messages/performance"
 )
 
+/*
+	Handler name: PerformanceAggregator
+	Input event:  PerformanceTrack
+	Output event: PerformanceTrackAggr
+*/
+
 const AGGREGATION_WINDOW = 2 * 60 * 1000
 
 type PerformanceAggregator struct {

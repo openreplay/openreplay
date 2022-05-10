@@ -4,7 +4,13 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-// TODO: Description of dom drop detector
+/*
+	Handler name: DomDrop
+	Input events: CreateElementNode,
+				  CreateTextNode,
+				  RemoveNode
+	Output event: DOMDrop
+*/
 
 const DROP_WINDOW = 200  //ms
 const CRITICAL_COUNT = 1 // Our login page contains 20. But on crush it removes only roots (1-3 nodes).
@@ -38,13 +44,12 @@ func (dd *domDropDetector) Handle(message Message, _ uint64, timestamp uint64) M
 }
 
 func (dd *domDropDetector) Build() Message {
+	defer dd.reset()
 	if dd.removedCount >= CRITICAL_COUNT {
 		domDrop := &DOMDrop{
 			Timestamp: dd.lastDropTimestamp,
 		}
-		dd.reset()
 		return domDrop
 	}
-	dd.reset()
 	return nil
 }

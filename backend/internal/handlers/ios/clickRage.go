@@ -6,9 +6,14 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
-const CLICK_TIME_DIFF = 200
+/*
+	Handler name: ClickRage
+	Input events: IOSClickEvent,
+				  IOSSessionEnd
+	Output event: IOSIssueEvent
+*/
 
-//const MIN_CLICKS_IN_A_ROW = 3
+const CLICK_TIME_DIFF = 200
 
 type ClickRageDetector struct {
 	handlers.ReadyMessageStore
@@ -20,6 +25,7 @@ type ClickRageDetector struct {
 }
 
 func (h *ClickRageDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	var event Message = nil
 	switch m := message.(type) {
 	case *IOSClickEvent:
 		if h.lastTimestamp+CLICK_TIME_DIFF < m.Timestamp && h.lastLabel == m.Label {
@@ -27,7 +33,7 @@ func (h *ClickRageDetector) Handle(message Message, messageID uint64, timestamp 
 			h.countsInARow += 1
 			return nil
 		}
-		h.build()
+		event = h.Build()
 		if m.Label != "" {
 			h.lastTimestamp = m.Timestamp
 			h.lastLabel = m.Label
@@ -36,33 +42,25 @@ func (h *ClickRageDetector) Handle(message Message, messageID uint64, timestamp 
 			h.countsInARow = 1
 		}
 	case *IOSSessionEnd:
-		h.build()
+		event = h.Build()
 	}
-	return nil
+	return event
 }
 
 func (h *ClickRageDetector) Build() Message {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (h *ClickRageDetector) build() {
 	if h.countsInARow >= web.MIN_CLICKS_IN_A_ROW {
-		m := &IOSIssueEvent{
+		event := &IOSIssueEvent{
 			Type:          "click_rage",
 			ContextString: h.lastLabel,
 		}
-		m.Timestamp = h.firstInARawTimestamp
-		m.Index = h.firstInARawSeqIndex // Associated Index/ MessageID ?
-		h.Append(m)
+		event.Timestamp = h.firstInARawTimestamp
+		event.Index = h.firstInARawSeqIndex // Associated Index/ MessageID ?
+		return event
 	}
 	h.lastTimestamp = 0
 	h.lastLabel = ""
 	h.firstInARawTimestamp = 0
 	h.firstInARawSeqIndex = 0
 	h.countsInARow = 0
-}
-
-func (h *ClickRageDetector) HandleMessage(msg Message) {
-	// TODO: delete it
+	return nil
 }

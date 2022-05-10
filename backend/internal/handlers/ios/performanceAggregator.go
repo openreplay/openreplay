@@ -3,7 +3,15 @@ package ios
 import (
 	"openreplay/backend/internal/handlers"
 	. "openreplay/backend/pkg/messages"
+	"time"
 )
+
+/*
+	Handler name: PerformanceAggregator
+	Input events: IOSPerformanceEvent,
+				  IOSSessionEnd
+	Output event: IssueEvent
+*/
 
 const AGGR_TIME = 15 * 60 * 1000
 
@@ -32,13 +40,14 @@ func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timest
 	if h.pa == nil {
 		h.pa = &IOSPerformanceAggregated{} // TODO: struct type in messages
 	}
-	switch m := message.(type) { // TODO: All Timestampe messages
+	var event Message = nil
+	switch m := message.(type) { // TODO: All Timestamp messages
 	case *IOSPerformanceEvent:
 		if h.pa.TimestampStart == 0 {
 			h.pa.TimestampStart = m.Timestamp
 		}
 		if h.pa.TimestampStart+AGGR_TIME <= m.Timestamp {
-			h.build(m.Timestamp)
+			event = h.build(m.Timestamp)
 		}
 		switch m.Name {
 		case "fps":
@@ -79,35 +88,32 @@ func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timest
 			}
 		}
 	case *IOSSessionEnd:
-		h.build(m.Timestamp)
+		event = h.build(m.Timestamp)
 	}
-	return nil
+	return event
 }
 
 func (h *PerformanceAggregator) Build() Message {
-	//TODO implement me
-	panic("implement me")
+	return h.build(uint64(time.Now().Unix()))
 }
 
-func (h *PerformanceAggregator) build(timestamp uint64) {
+func (h *PerformanceAggregator) build(timestamp uint64) Message {
 	if h.pa == nil {
-		return
+		return nil
 	}
+
 	h.pa.TimestampEnd = timestamp
 	h.pa.AvgFPS = h.fps.aggregate()
 	h.pa.AvgCPU = h.cpu.aggregate()
 	h.pa.AvgMemory = h.memory.aggregate()
 	h.pa.AvgBattery = h.battery.aggregate()
 
-	h.Append(h.pa)
+	event := h.pa
 
 	h.pa = &IOSPerformanceAggregated{}
 	for _, agg := range []valueAggregator{h.fps, h.cpu, h.memory, h.battery} {
 		agg.sum = 0
 		agg.count = 0
 	}
-}
-
-func (h *PerformanceAggregator) HandleMessage(msg Message) {
-	// TODO: delete it
+	return event
 }

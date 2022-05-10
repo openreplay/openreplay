@@ -2,12 +2,18 @@ package web
 
 import (
 	"encoding/json"
+	"log"
 	"math"
 
 	. "openreplay/backend/pkg/messages"
 )
 
-// TODO: Description of memory issue detector
+/*
+	Handler name: MemoryIssue
+	Input events: PerformanceTrack,
+				  SetPageLocation
+	Output event: IssueEvent
+*/
 
 const MIN_COUNT = 3
 const MEM_RATE_THRESHOLD = 300 // % to average
@@ -21,22 +27,29 @@ type MemoryIssueDetector struct {
 	contextString  string
 }
 
+func (f *MemoryIssueDetector) reset() {
+	f.startTimestamp = 0
+	f.startMessageID = 0
+	f.rate = 0
+}
+
 func (f *MemoryIssueDetector) Build() Message {
 	if f.startTimestamp == 0 {
 		return nil
 	}
-	payload, _ := json.Marshal(struct{ Rate int }{f.rate - 100})
-	i := &IssueEvent{
+	payload, err := json.Marshal(struct{ Rate int }{f.rate - 100})
+	if err != nil {
+		log.Printf("can't marshal MemoryIssue payload to json: %s", err)
+	}
+	event := &IssueEvent{
 		Type:          "memory",
 		Timestamp:     f.startTimestamp,
 		MessageID:     f.startMessageID,
 		ContextString: f.contextString,
 		Payload:       string(payload),
 	}
-	f.startTimestamp = 0
-	f.startMessageID = 0
-	f.rate = 0
-	return i
+	f.reset()
+	return event
 }
 
 func (f *MemoryIssueDetector) Handle(message Message, messageID uint64, timestamp uint64) Message {

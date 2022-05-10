@@ -2,12 +2,18 @@ package web
 
 import (
 	"encoding/json"
+	"log"
 
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/messages/performance"
 )
 
-// TODO: Description of cpu issue detector
+/*
+	Handler name: CpuIssue
+	Input events: PerformanceTrack,
+				  SetPageLocation
+	Output event: IssueEvent
+*/
 
 const CPU_THRESHOLD = 70 // % out of 100
 const CPU_MIN_DURATION_TRIGGER = 6 * 1000
@@ -36,10 +42,14 @@ func (f *CpuIssueDetector) Build() Message {
 		return nil
 	}
 
-	payload, _ := json.Marshal(struct {
+	payload, err := json.Marshal(struct {
 		Duration uint64
 		Rate     uint64
 	}{duration, maxRate})
+	if err != nil {
+		log.Printf("can't marshal CpuIssue payload to json: %s", err)
+	}
+
 	return &IssueEvent{
 		Type:          "cpu",
 		Timestamp:     timestamp,
