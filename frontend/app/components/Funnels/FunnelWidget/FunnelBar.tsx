@@ -8,7 +8,18 @@ interface Props {
     filter: any;
 }``
 function FunnelBar(props: Props) {
-    const { completed, dropped, filter } = props;
+    const { filter } = props;
+    const { completed, dropped } = filter;
+
+    const calculatePercentage = (completed: number, dropped: number) => {
+        const total = completed + dropped;
+        if (total === 0) {
+            return 0;
+        }
+        return Math.round((completed / total) * 100);
+    }
+    const completedPercentage = calculatePercentage(completed, dropped);
+    console.log('completedPercentage', completedPercentage)
 
     return (
         <div className="w-full mb-4">
@@ -23,7 +34,7 @@ function FunnelBar(props: Props) {
                 overflow: 'hidden',
             }}>
                 <div className="flex items-center" style={{
-                    width: `${completed * 100 / (completed + dropped)}px`,
+                    width: `${completedPercentage}%`,
                     position: 'absolute',
                     top: 0,
                     left: 0,
@@ -31,18 +42,18 @@ function FunnelBar(props: Props) {
                     // height: '10px',
                     backgroundColor: '#00b5ad',
                 }}>
-                    <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">10%</div>
+                    <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">{completedPercentage}%</div>
                 </div>
             </div>
             <div className="flex justify-between py-2">
                 <div className="flex items-center">
                     <Icon name="arrow-right-short" size="20" color="green" />
-                    <span className="mx-1 font-medium">{13}</span>
+                    <span className="mx-1 font-medium">{completed}</span>
                     <span>completed</span>
                 </div>
                 <div className="flex items-center">
                     <Icon name="caret-down-fill" color="red" size={16} />
-                    <span className="font-medium mx-1 color-red">20</span>
+                    <span className="font-medium mx-1 color-red">{dropped}</span>
                     <span>Dropped off</span>
                 </div>
             </div>

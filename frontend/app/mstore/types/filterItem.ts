@@ -15,6 +15,8 @@ export default class FilterItem {
     operatorOptions: any[] = []
     options: any[] = []
     isActive: boolean = true
+    completed: number = 0
+    dropped: number = 0
 
     constructor(data: any = {}) {
         makeAutoObservable(this, {
@@ -65,6 +67,9 @@ export default class FilterItem {
         this.operator = json.operator
         
         this.filters = _filter.type === FilterType.SUB_FILTERS && json.filters ? json.filters.map(i => new FilterItem().fromJson(i, json.type)) : []
+
+        this.completed = json.completed
+        this.dropped = json.dropped
         return this
     }
 
