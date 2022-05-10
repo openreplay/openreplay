@@ -62,6 +62,8 @@ export const customOperators = [
 export const metricTypes = [
   { text: 'Timeseries', value: 'timeseries' },
   { text: 'Table', value: 'table' },
+  { text: 'Funnel', value: 'funnel' },
+  { text: 'Error', value: 'error' },
 ];
 
 export const tableColumnName = {

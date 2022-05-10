@@ -11,6 +11,7 @@ import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
 import { debounce } from 'App/utils';
+import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 interface Props {
     metric: any;
     isWidget?: boolean
@@ -80,6 +81,10 @@ function WidgetChart(props: Props) {
 
     const renderChart = () => {
         const { metricType, viewType } = metric;
+
+        if (metricType === 'funnel') {
+            return <FunnelWidget metric={metric} />
+        }
 
         if (metricType === 'predefined') {
             if (isOverviewWidget) {

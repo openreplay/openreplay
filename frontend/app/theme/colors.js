@@ -27,6 +27,7 @@ module.exports = {
   "green-dark": "#2C9848",
   red: "#cc0000",
   red2: "#F5A623",
+  "red-lightest": 'rgba(204, 0, 0, 0.1)',
   blue: "#366CD9",
   blue2: "#0076FF",
   "active-blue": "#F6F7FF",

@@ -90,7 +90,10 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
-        this.instance.update(metric || new Widget())
+        const _metric = new Widget().fromJson(sampleJson)
+        this.instance.update(metric || _metric)
+
+        // this.instance.update(metric || new Widget())
     }
 
     updateKey(key: string, value: any) {
@@ -186,4 +189,35 @@ export default class MetricStore implements IMetricStore {
                 this.isSaving = false
             })
     }
+}
+
+const sampleJson = {
+    metricId: 1,
+    name: "Funnel Sample",
+    metricType: 'funnel',
+    series: [
+        {
+            name: 'Series 1',
+            filter: {
+                filters: [
+                    {
+                        type: 'LOCATION',
+                        operator: 'is',
+                        value: ['/sessions', '/errors', '/users'],
+                        percent: 100,
+                        completed: 60,
+                        dropped: 0,
+                    },
+                    {
+                        type: 'LOCATION',
+                        operator: 'is',
+                        value: ['/sessions', '/errors', '/users'],
+                        percent: 80,
+                        completed: 40,
+                        dropped: 20,
+                    }
+                ]
+            }
+        }
+    ],
 }

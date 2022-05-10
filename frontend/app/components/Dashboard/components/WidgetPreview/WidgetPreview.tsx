@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
-import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
+import { SegmentSelection } from 'UI';
 import DateRange from 'Shared/DateRange';
 import { useObserver } from 'mobx-react-lite';
 
