@@ -1,7 +1,6 @@
 import React from 'react';
-import Funnel from 'App/mstore/types/funnel';
 import Widget from 'App/mstore/types/widget';
-import Funnelbar from './FunnelBar'
+import Funnelbar from './FunnelBar';
 import cn from 'classnames';
 import stl from './FunnelWidget.css';
 import { Icon } from 'UI';
@@ -16,13 +15,15 @@ function FunnelWidget(props: Props) {
         <>
             <div className="w-full">
                 {metric.series[0].filter.filters.filter(f => f.isEvent).map((filter, index) => (
-                    <div className={cn("flex items-start mb-4", stl.step)}>
+                    <div className={cn("flex items-start mb-4", stl.step, { [stl['step-disabled']] : !filter.isActive })}>
                         <div className="z-10 w-6 h-6 border mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
                             {index + 1}
                         </div>
-                        <Funnelbar key={index} completed={90} dropped={10} filter={filter}/>
-                        <div className="self-end flex items-center justify-center ml-4" style={{ marginBottom: '50px'}}>
-                            <Icon name="eye-slash" size="22" />
+                        <Funnelbar key={index} completed={90} dropped={10} filter={filter} />
+                        <div className="self-end flex items-center justify-center ml-4" style={{ marginBottom: '49px'}}>
+                            <button onClick={() => filter.updateKey('isActive', !filter.isActive)}>
+                                <Icon name="eye-slash-fill" color={filter.isActive ? "gray-light" : "gray-darkest"} size="22" />
+                            </button>
                         </div>
                     </div>
                 ))}

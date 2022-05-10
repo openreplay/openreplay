@@ -14,6 +14,7 @@ export default class FilterItem {
     filters: FilterItem[] = []
     operatorOptions: any[] = []
     options: any[] = []
+    isActive: boolean = true
 
     constructor(data: any = {}) {
         makeAutoObservable(this, {
@@ -23,17 +24,18 @@ export default class FilterItem {
             operator: observable,
             source: observable,
             filters: observable,
+            isActive: observable,
 
             merge: action
         })
 
-        if (Array.isArray(data.filters)) {
-            data.filters = data.filters.map(function (i) {
-                return new FilterItem(i);
-            });
-        }
+        
 
         this.merge(data)
+    }
+
+    updateKey(key: string, value: any) {
+        this[key] = value
     }
 
     merge(data) {
