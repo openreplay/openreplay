@@ -8,7 +8,7 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
-} from "../../../messages/index.js";
+} from "../../../common/messages.js";
 import App from "../index.js";
 import { isInstance, inDocument } from "../context.js";
 

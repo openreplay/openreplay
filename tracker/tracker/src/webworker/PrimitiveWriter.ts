@@ -59,7 +59,7 @@ const textEncoder: { encode(str: string): Uint8Array } =
         },
       };
 
-export default class Writer {
+export default class PrimitiveWriter {
   private offset: number = 0;
   private checkpointOffset: number = 0;
   private readonly data: Uint8Array;
