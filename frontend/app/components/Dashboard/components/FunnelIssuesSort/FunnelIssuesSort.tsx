@@ -9,12 +9,19 @@ const sortOptions = [
     { value: 'lostConversions-desc', label: 'Lost Conversions (High)' },
     { value: 'lostConversions-asc', label: 'Lost Conversions (Low)' },
 ]
-function FunnelIssuesSort(props) {
+
+interface Props {
+    onChange?: (value: string) => void;
+}
+function FunnelIssuesSort(props: Props) {
     return (
         <div>
             <Select
                 plain
+                defaultValue={sortOptions[0].value}
                 options={sortOptions}
+                alignRight={true}
+                onChange={props.onChange}
             />
         </div>
     );
