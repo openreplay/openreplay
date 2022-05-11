@@ -48,7 +48,7 @@ func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timest
 			h.pa.TimestampStart = m.Timestamp
 		}
 		if h.pa.TimestampStart+AGGR_TIME <= m.Timestamp {
-			event = h.build(m.Timestamp)
+			event = h.Build()
 		}
 		switch m.Name {
 		case "fps":
@@ -89,21 +89,17 @@ func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timest
 			}
 		}
 	case *IOSSessionEnd:
-		event = h.build(m.Timestamp)
+		event = h.Build()
 	}
 	return event
 }
 
 func (h *PerformanceAggregator) Build() Message {
-	return h.build(h.lastTimestamp)
-}
-
-func (h *PerformanceAggregator) build(timestamp uint64) Message {
 	if h.pa == nil {
 		return nil
 	}
 
-	h.pa.TimestampEnd = timestamp
+	h.pa.TimestampEnd = h.lastTimestamp
 	h.pa.AvgFPS = h.fps.aggregate()
 	h.pa.AvgCPU = h.cpu.aggregate()
 	h.pa.AvgMemory = h.memory.aggregate()

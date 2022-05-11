@@ -33,9 +33,9 @@ func main() {
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() {
 		return []handlers.MessageProcessor{
-			custom.NewMainHandler(), // TODO: separate to several handler
-			//custom.NewInputEventBuilder(),
-			//custom.NewPageEventBuilder(),
+			custom.EventMapper{},
+			custom.NewInputEventBuilder(),
+			custom.NewPageEventBuilder(),
 		}
 	}
 

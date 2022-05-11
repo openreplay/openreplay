@@ -4,6 +4,8 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+const INPUT_EVENT_TIMEOUT = 1 * 60 * 1000
+
 type inputLabels map[uint64]string
 
 type inputEventBuilder struct {
@@ -12,78 +14,63 @@ type inputEventBuilder struct {
 	inputID     uint64
 }
 
-func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b *inputEventBuilder) Build() Message {
-	// b.build()
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewInputEventBuilder() *inputEventBuilder {
 	ieBuilder := &inputEventBuilder{}
-	ieBuilder.ClearLabels()
+	ieBuilder.clearLabels()
 	return ieBuilder
 }
 
-func (b *inputEventBuilder) ClearLabels() {
+func (b *inputEventBuilder) clearLabels() {
 	b.inputLabels = make(inputLabels)
 }
 
-func (b *inputEventBuilder) HandleSetInputTarget(msg *SetInputTarget) *InputEvent {
-	var inputEvent *InputEvent
-	if b.inputID != msg.ID {
-		inputEvent = b.build()
-		b.inputID = msg.ID
-	}
-	b.inputLabels[msg.ID] = msg.Label
-	return inputEvent
-}
-
-func (b *inputEventBuilder) HandleSetInputValue(msg *SetInputValue, messageID uint64, timestamp uint64) *InputEvent {
-	var inputEvent *InputEvent
-	if b.inputID != msg.ID {
-		inputEvent = b.build()
-		b.inputID = msg.ID
-	}
-	if b.inputEvent == nil {
-		b.inputEvent = &InputEvent{
-			MessageID:   messageID,
-			Timestamp:   timestamp,
-			Value:       msg.Value,
-			ValueMasked: msg.Mask > 0,
+func (b *inputEventBuilder) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	var inputEvent Message = nil
+	switch msg := message.(type) {
+	case *SetInputTarget:
+		if b.inputID != msg.ID {
+			inputEvent = b.Build()
+			b.inputID = msg.ID
 		}
-	} else {
-		b.inputEvent.Value = msg.Value
-		b.inputEvent.ValueMasked = msg.Mask > 0
+		b.inputLabels[msg.ID] = msg.Label
+		return inputEvent
+	case *SetInputValue:
+		if b.inputID != msg.ID {
+			inputEvent = b.Build()
+			b.inputID = msg.ID
+		}
+		if b.inputEvent == nil {
+			b.inputEvent = &InputEvent{
+				MessageID:   messageID,
+				Timestamp:   timestamp,
+				Value:       msg.Value,
+				ValueMasked: msg.Mask > 0,
+			}
+		} else {
+			b.inputEvent.Value = msg.Value
+			b.inputEvent.ValueMasked = msg.Mask > 0
+		}
+		return inputEvent
+	case *CreateDocument:
+		inputEvent = b.Build()
+		b.clearLabels()
+		return inputEvent
+	case *MouseClick:
+		return b.Build()
 	}
-	return inputEvent
-}
 
-func (b *inputEventBuilder) HasInstance() bool {
-	return b.inputEvent != nil
-}
-
-func (b *inputEventBuilder) GetTimestamp() uint64 {
-	if b.inputEvent == nil {
-		return 0
+	if b.inputEvent != nil && b.inputEvent.Timestamp+INPUT_EVENT_TIMEOUT < timestamp {
+		return b.Build()
 	}
-	return b.inputEvent.Timestamp
+	return nil
 }
 
-func (b *inputEventBuilder) build() *InputEvent {
+func (b *inputEventBuilder) Build() Message {
 	if b.inputEvent == nil {
 		return nil
 	}
 	inputEvent := b.inputEvent
-	label, exists := b.inputLabels[b.inputID]
-	if !exists {
-		return nil
-	}
-	inputEvent.Label = label
+	inputEvent.Label = b.inputLabels[b.inputID] // might be empty string
 
 	b.inputEvent = nil
 	return inputEvent

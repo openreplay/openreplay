@@ -33,6 +33,7 @@ func main() {
 			&web.CpuIssueDetector{},
 			&web.DeadClickDetector{},
 			&web.MemoryIssueDetector{},
+			&web.NetworkIssueDetector{},
 			&web.PerformanceAggregator{},
 			// iOS handlers
 			&ios.AppNotResponding{},
