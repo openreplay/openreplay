@@ -1,6 +1,6 @@
 // Auto-generated, do not edit
-import Message from "./message.js";
-import Writer from "./writer.js";
+import type { Writer, Message }from "./types.js";
+export default Message
 
 function bindNew<C extends { new(...args: A): T }, A extends any[], T>(
   Class: C & { new(...args: A): T }

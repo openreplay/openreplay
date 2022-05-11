@@ -1,8 +1,8 @@
 import App, { DEFAULT_INGEST_POINT } from "./app/index.js";
 export { default as App } from './app/index.js';
 
-import { UserID, UserAnonymousID, Metadata, RawCustomEvent, CustomIssue } from "../messages/index.js";
-import * as _Messages from "../messages/index.js";
+import { UserID, UserAnonymousID, Metadata, RawCustomEvent, CustomIssue } from "../common/messages.js";
+import * as _Messages from "../common/messages.js";
 export const Messages = _Messages;
 
 import Connection from "./modules/connection.js";

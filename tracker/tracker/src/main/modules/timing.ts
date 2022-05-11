@@ -1,7 +1,7 @@
+import type Message from "../../common/messages.js";
 import { isURL } from "../utils.js";
 import App from "../app/index.js";
-import { ResourceTiming, PageLoadTiming, PageRenderTiming } from "../../messages/index.js";
-import type Message from "../../messages/message.js";
+import { ResourceTiming, PageLoadTiming, PageRenderTiming } from "../../common/messages.js";
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 

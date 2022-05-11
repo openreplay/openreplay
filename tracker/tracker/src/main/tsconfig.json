@@ -5,7 +5,7 @@
     "lib": ["es6", "dom"],
   },
   "references": [
-    { "path": "../messages" }
+    { "path": "../common" }
   ],
   "exclude": ["app/observer"]
 }

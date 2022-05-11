@@ -1,5 +1,5 @@
 import App from "../app/index.js";
-import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from "../../messages/index.js";
+import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from "../../common/messages.js";
 
 export default function(app: App | null) {
   if (app === null) {

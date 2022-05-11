@@ -3,7 +3,7 @@ import {
   SetPageLocation,
   SetViewportSize,
   SetPageVisibility,
-} from "../../messages/index.js";
+} from "../../common/messages.js";
 
 export default function (app: App): void {
   let url: string, width: number, height: number;
