@@ -78,6 +78,17 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
           />
         </div> 
       )}
+
+      { isEnterprise && (
+        <div className="mb-4">
+          <SideMenuitem
+            active={ activeTab === CLIENT_TABS.AUDIT }
+            title="Audit"
+            iconName="list-ul"
+            onClick={() => setTab(CLIENT_TABS.AUDIT) }
+          />
+        </div>
+      )}
       
       <div className="mb-4">
         <SideMenuitem
@@ -95,7 +106,7 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
           iconName="bell"
           onClick={() => setTab(CLIENT_TABS.NOTIFICATIONS) }
         />
-      </div>      
+      </div>
     </div>
   )
 }

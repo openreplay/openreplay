@@ -265,3 +265,54 @@ export const convertElementToImage = async (el) => {
   });
   return image;
 }
+
+export const unserscoreToSpaceAndCapitalize = (str) => {
+  return str.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  });
+}
+
+export const convertToCSV = (headers, objArray) => {
+  var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+  var str = '';
+  const headersMap = headers.reduce((acc, curr) => {
+    acc[curr.key] = curr;
+    return acc;
+  }, {});
+
+  str += headers.map(h => h.label).join(',') + '\r\n';
+
+  for (var i = 0; i < array.length; i++) {
+    var line = '';
+    for (var index in headersMap) {
+      if (line !== '') line += ',';
+      line += array[i][index];
+    }
+    str += line + '\r\n';
+  }
+
+
+  return str;
+}
+
+export const exportCSVFile = (headers, items, fileTitle) => {
+  var jsonObject = JSON.stringify(items);
+  var csv = convertToCSV(headers, jsonObject);
+  var exportedFilenmae = fileTitle + '.csv' || 'export.csv';
+
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  if (navigator.msSaveBlob) { // IE 10+
+      navigator.msSaveBlob(blob, exportedFilenmae);
+  } else {
+      var link = document.createElement("a");
+      if (link.download !== undefined) {
+          var url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", exportedFilenmae);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+      }
+  }
+}

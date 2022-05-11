@@ -1,14 +1,17 @@
 import React from 'react';
-import Select from 'react-select';
+import Select, { components, DropdownIndicatorProps } from 'react-select';
+import { Icon } from 'UI';
+import colors from 'App/theme/colors';
 
 interface Props {
     options: any[];
     isSearchable?: boolean;
     defaultValue?: string;
     plain?: boolean;
+    components?: any;
     [x:string]: any;
 }
-export default function({ plain = false, options, isSearchable = false, defaultValue = '', ...rest }: Props) {
+export default function({ plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const customStyles = {
         option: (provided, state) => ({
           ...provided,
@@ -17,15 +20,27 @@ export default function({ plain = false, options, isSearchable = false, defaultV
         menu: (provided, state) => ({
             ...provided,
             top: 31,
+            minWidth: 'fit-content',
         }),
         control: (provided) => {
             const obj = {
                 ...provided,
-                border: 'solid thin #ddd'
+                border: 'solid thin #ddd',
+                cursor: 'pointer',
             }
             if (plain) {
                 obj['border'] = '1px solid transparent'
                 obj['backgroundColor'] = 'transparent'
+                obj['&:hover'] = {
+                    borderColor: 'transparent',
+                    backgroundColor: colors['gray-light']
+                }
+                obj['&:focus'] = {
+                    borderColor: 'transparent'
+                }
+                obj['&:active'] = {
+                    borderColor: 'transparent'
+                }
             }
             return obj;
         },
@@ -47,7 +62,9 @@ export default function({ plain = false, options, isSearchable = false, defaultV
             isSearchable={isSearchable}
             defaultValue={defaultSelected}
             components={{
-                IndicatorSeparator: () => null
+                IndicatorSeparator: () => null,
+                DropdownIndicator,
+                ...components,
             }}
             styles={customStyles}
             theme={(theme) => ({
@@ -57,9 +74,18 @@ export default function({ plain = false, options, isSearchable = false, defaultV
                     primary: '#394EFF',
                 }
             })}
+            blurInputOnSelect={true}
             {...rest}
         />
     );
 }
 
-// export default Select;
+const DropdownIndicator = (
+    props: DropdownIndicatorProps<true>
+  ) => {
+    return (
+      <components.DropdownIndicator {...props}>
+        <Icon name="chevron-down" size="18" />
+      </components.DropdownIndicator>
+    );
+  };
