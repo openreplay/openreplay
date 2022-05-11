@@ -19,8 +19,8 @@ export default (countryName) => {
       return 'BRN';
     case 'Central African Republic':
       return 'CAF';
-    case 'Democratic Republic of the Congo':
-    case 'Republic of the Congo':
+    case 'Congo':
+    case 'Congo':
       return 'Congo';
     case 'Dominican Republic':
       return 'DOM';
@@ -40,18 +40,18 @@ export default (countryName) => {
       return 'NMI';
     case 'New Caledonia':
       return 'NCL';
-    case 'Micronesia, Federated States Of':
+    case 'Micronesia':
       return 'FSM';
-    case 'Moldova, Republic Of':
+    case 'Moldova':
       return 'MDA';
-    case 'Macedonia, The Former Yugoslav Republic Of':
+    case 'Macedonia':
       return 'Macedonia';
-    case 'Lao People\'s Democratic Republic':
+    case 'Laos':
       return 'LAO';
-    case 'Korea, Republic Of':
-    case 'Korea, Democratic People\'s Republic Of':
+    case 'Korea':
+    case 'Korea':
       return 'PRK';
-    case 'Iran, Islamic Republic Of':
+    case 'Iran':
       return 'Iran';
     case 'Heard Island and McDonald Islands':
       return 'HMD';
@@ -65,7 +65,7 @@ export default (countryName) => {
       return 'ASM';
     case 'Brunei Darussalam':
       return 'BRN';
-    case 'Palestine, State Of':
+    case 'Palestine':
       return 'PSE';
     case 'Saint Kitts and Nevis':
       return 'KNA';
@@ -75,8 +75,8 @@ export default (countryName) => {
       return 'STP';
     case 'Svalbard and Jan Mayen':
       return 'SJM';
-    case 'United Republic of Tanzania':
-    case 'Tanzania, United Republic Of':
+    case 'Tanzania':
+    case 'Tanzania':
       return 'TZA';
     case 'United States Minor Outlying Islands':
       return 'UMI';
@@ -84,9 +84,9 @@ export default (countryName) => {
       return 'WLF';
     case 'US Virgin Islands':
       return 'VIR';
-    case 'Venezuela, Bolivarian Republic Of':
+    case 'Venezuela':
       return 'Venezuela';
-    case 'Bolivia, Plurinational State Of':
+    case 'Bolivia':
       return 'Bolivia';
     case 'French Polynesia':
       return 'PYF';
