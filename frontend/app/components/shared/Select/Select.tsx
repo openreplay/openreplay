@@ -25,6 +25,7 @@ export default function({ plain = false, options, isSearchable = false, defaultV
             }
             if (plain) {
                 obj['border'] = '1px solid transparent'
+                obj['backgroundColor'] = 'transparent'
             }
             return obj;
         },

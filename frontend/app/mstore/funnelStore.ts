@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
 import { funnelService } from "App/services"
 import Funnel, { IFunnel } from "./types/funnel";
+import FunnelIssue from './types/funnelIssue';
 import Period, { LAST_7_DAYS } from 'Types/app/period';
 
 export default class FunnelStore {
@@ -13,6 +14,9 @@ export default class FunnelStore {
 
     page: number = 1
     pageSize: number = 10
+
+    issues: any[] = []
+    isLoadingIssues: boolean = false
     
     constructor() {
         makeAutoObservable(this, {
@@ -94,6 +98,22 @@ export default class FunnelStore {
                     this.isSaving = false
                 }
             )
+        })
+    }
+
+    fetchIssues(funnelId?: string): Promise<any> {
+        this.isLoadingIssues = true
+        return new Promise((resolve, reject) => {
+            funnelService.fetchIssues(funnelId, this.period)
+                .then(response => {
+                    this.issues = response.map(i => new FunnelIssue().fromJSON(i))
+                    resolve(this.issues)
+                }).catch(error => {
+                    reject(error)
+                }
+            ).finally(() => {
+                this.isLoadingIssues = false
+            })
         })
     }
 }

@@ -9,7 +9,7 @@ export interface IFunnelService {
     delete(funnelId: string): Promise<any>
 
     fetchInsights(funnelId: string, payload: any): Promise<any>
-    fetchIssues(funnelId: string, payload: any): Promise<any>
+    fetchIssues(funnelId?: string, payload?: any): Promise<any>
     fetchIssue(funnelId: string, issueId: string): Promise<any>
 }
 
@@ -50,8 +50,9 @@ export default class FunnelService implements IFunnelService {
             .then(response => response.json())
     }
 
-    fetchIssues(funnelId: string, payload: any): Promise<any> {
-        return this.client.post(`/funnels/${funnelId}/issues`, payload)
+    fetchIssues(funnelId?: string, payload?: any): Promise<any> {
+        const path = funnelId ? `/funnels/${funnelId}/issues` : '/funnels/issues';
+        return this.client.post(path, payload)
             .then(response => response.json())
     }
 

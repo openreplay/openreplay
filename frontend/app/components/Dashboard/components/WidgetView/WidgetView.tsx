@@ -7,6 +7,7 @@ import { Icon, BackLink, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
 import WidgetName from '../WidgetName';
+import FunnelIssues from '../FunnelIssues/FunnelIssues';
 interface Props {
     history: any;
     match: any
@@ -17,6 +18,7 @@ function WidgetView(props: Props) {
     const { metricStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
+    const isFunnel = widget.metricType === 'funnel';
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
 
     React.useEffect(() => {
@@ -63,7 +65,8 @@ function WidgetView(props: Props) {
                 </div>
 
                 <WidgetPreview  className="mt-8" />
-                <WidgetSessions className="mt-8" />
+                { !isFunnel && <WidgetSessions className="mt-8" /> }
+                { isFunnel && <FunnelIssues /> }
             </div>
         </Loader>
     ));
