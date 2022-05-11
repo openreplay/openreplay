@@ -18,7 +18,7 @@ func NewBuilder(handlers ...handlers.MessageProcessor) *builder {
 	}
 }
 
-func (b *builder) iterateReadyMessage(iter func(msg Message)) {
+func (b *builder) iterateReadyMessages(iter func(msg Message)) {
 	for _, readyMsg := range b.readyMsgs {
 		iter(readyMsg)
 	}
@@ -44,10 +44,10 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		return
 	}
 
-	b.checkSessionEnd(message)
 	for _, p := range b.processors {
 		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
 			b.readyMsgs = append(b.readyMsgs, rm)
 		}
 	}
+	b.checkSessionEnd(message)
 }
