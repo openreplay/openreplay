@@ -6,10 +6,12 @@ import (
 )
 
 type builder struct {
-	readyMsgs  []Message
-	timestamp  uint64
-	processors []handlers.MessageProcessor
-	ended      bool
+	readyMsgs           []Message
+	timestamp           uint64
+	lastMessageID       uint64
+	lastSystemTimestamp int64
+	processors          []handlers.MessageProcessor
+	ended               bool
 }
 
 func NewBuilder(handlers ...handlers.MessageProcessor) *builder {
@@ -35,15 +37,25 @@ func (b *builder) checkSessionEnd(message Message) {
 }
 
 func (b *builder) handleMessage(message Message, messageID uint64) {
-	timestamp := GetTimestamp(message)
-	if b.timestamp < timestamp {
-		b.timestamp = timestamp
+	if messageID < b.lastMessageID {
+		// May happen in case of duplicated messages in kafka (if  `idempotence: false`)
+		return
 	}
-	if b.timestamp == 0 {
-		// in case of SessionStart. TODO: make timestamp system transparent
+	timestamp := GetTimestamp(message)
+	if timestamp == 0 {
+		//  May happen in case of messages that are single-in-batch,
+		// 		e.g. SessionStart or RawErrorEvent (emitted by `integrations`).
+
+		// TODO: make timestamp system transparent;
+		return
+	}
+	if timestamp < b.timestamp {
+		// Shouldn't happen after messageID check  which is done above. TODO: log this case.
 		return
 	}
 
+	b.timestamp = timestamp
+	b.lastSystemTimestamp = time.Now().UnixMilli()
 	for _, p := range b.processors {
 		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
 			b.readyMsgs = append(b.readyMsgs, rm)

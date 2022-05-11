@@ -1,9 +1,13 @@
 package builder
 
 import (
+	"time"
+
 	"openreplay/backend/internal/handlers"
 	. "openreplay/backend/pkg/messages"
 )
+
+const FORCE_DELETE_TIMEOUT = 4 * time.Hour
 
 type builderMap struct {
 	handlersFabric func() []handlers.MessageProcessor
@@ -32,7 +36,7 @@ func (m *builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint
 }
 
 func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, iter func(msg Message)) {
-	if b.ended {
+	if b.ended || b.lastSystemTimestamp+FORCE_DELETE_TIMEOUT < time.Now().UnixMilli() {
 		for _, p := range b.processors {
 			if rm := p.Build(); rm != nil {
 				b.readyMsgs = append(b.readyMsgs, rm)
