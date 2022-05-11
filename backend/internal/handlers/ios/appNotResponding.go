@@ -3,7 +3,6 @@ package ios
 import (
 	"openreplay/backend/internal/handlers"
 	. "openreplay/backend/pkg/messages"
-	"time"
 )
 
 /*
@@ -22,9 +21,11 @@ type AppNotResponding struct {
 	lastLabel              string
 	lastHeartbeatTimestamp uint64
 	lastHeartbeatIndex     uint64
+	lastTimestamp          uint64
 }
 
 func (h *AppNotResponding) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	h.lastTimestamp = timestamp
 	var event Message = nil
 	switch m := message.(type) {
 	case *IOSClickEvent:
@@ -48,7 +49,7 @@ func (h *AppNotResponding) Handle(message Message, messageID uint64, timestamp u
 }
 
 func (h *AppNotResponding) Build() Message {
-	return h.build(uint64(time.Now().Unix()))
+	return h.build(h.lastTimestamp)
 }
 
 func (h *AppNotResponding) build(timestamp uint64) Message {

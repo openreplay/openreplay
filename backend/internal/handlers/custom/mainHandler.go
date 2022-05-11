@@ -125,9 +125,6 @@ func (b *builder) Handle(message Message, messageID uint64, timestamp uint64) Me
 			b.buildInputEvent()
 			b.ieBuilder.ClearLabels()
 			b.peBuilder.HandleSetPageLocation(msg, messageID, b.timestamp)
-			// TODO: what to do with this code?
-			//b.miFinder.HandleSetPageLocation(msg)
-			//b.ciFinder.HandleSetPageLocation(msg)
 		}
 	case *PageLoadTiming:
 		if rm := b.peBuilder.HandlePageLoadTiming(msg); rm != nil {
@@ -137,17 +134,6 @@ func (b *builder) Handle(message Message, messageID uint64, timestamp uint64) Me
 		if rm := b.peBuilder.HandlePageRenderTiming(msg); rm != nil {
 			b.appendReadyMessage(rm)
 		}
-	case *PerformanceTrack:
-		// TODO: what to do with this code?
-		//if rm := b.ptaBuilder.HandlePerformanceTrack(msg, b.timestamp); rm != nil {
-		//	b.appendReadyMessage(rm)
-		//}
-		//if rm := b.ciFinder.HandlePerformanceTrack(msg, messageID, b.timestamp); rm != nil {
-		//	b.appendReadyMessage(rm)
-		//}
-		//if rm := b.miFinder.HandlePerformanceTrack(msg, messageID, b.timestamp); rm != nil {
-		//	b.appendReadyMessage(rm)
-		//}
 	case *SetInputTarget:
 		if rm := b.ieBuilder.HandleSetInputTarget(msg); rm != nil {
 			b.appendReadyMessage(rm)
@@ -158,10 +144,6 @@ func (b *builder) Handle(message Message, messageID uint64, timestamp uint64) Me
 		}
 	case *MouseClick:
 		b.buildInputEvent()
-		// TODO: what to do with this code?
-		//if rm := b.crDetector.HandleMouseClick(msg, messageID, b.timestamp); rm != nil {
-		//	b.appendReadyMessage(rm)
-		//}
 		if msg.Label != "" {
 			b.appendReadyMessage(&ClickEvent{
 				MessageID:      messageID,
@@ -256,20 +238,7 @@ func (b *builder) Handle(message Message, messageID uint64, timestamp uint64) Me
 			Timestamp: b.timestamp,
 			Type:      msg.Type,
 		})
-		// TODO: what to do with this code?
-		//case *CreateElementNode, *CreateTextNode:
-		//	b.ddDetector.HandleNodeCreation()
-		//case *RemoveNode:
-		//	b.ddDetector.HandleNodeRemoval(b.timestamp)
-		//case *CreateDocument:
-		//	if rm := b.ddDetector.Build(); rm != nil {
-		//		b.appendReadyMessage(rm)
-		//	}
 	}
-	// TODO: what to do with this code?
-	//if rm := b.dcDetector.HandleMessage(message, messageID, b.timestamp); rm != nil {
-	//	b.appendReadyMessage(rm)
-	//}
 	return nil
 }
 

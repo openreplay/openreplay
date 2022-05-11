@@ -78,7 +78,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
-			builderMap.IterateReadyMessages(time.Now().UnixMilli(), func(sessionID uint64, readyMsg messages.Message) {
+			builderMap.IterateReadyMessages(func(sessionID uint64, readyMsg messages.Message) {
 				producer.Produce(cfg.TopicTrigger, sessionID, messages.Encode(readyMsg))
 			})
 			producer.Flush(cfg.ProducerTimeout)

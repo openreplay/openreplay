@@ -3,7 +3,6 @@ package ios
 import (
 	"openreplay/backend/internal/handlers"
 	. "openreplay/backend/pkg/messages"
-	"time"
 )
 
 /*
@@ -29,14 +28,16 @@ func (va *valueAggregator) aggregate() uint64 {
 
 type PerformanceAggregator struct {
 	handlers.ReadyMessageStore
-	pa      *IOSPerformanceAggregated
-	fps     valueAggregator
-	cpu     valueAggregator
-	memory  valueAggregator
-	battery valueAggregator
+	pa            *IOSPerformanceAggregated
+	fps           valueAggregator
+	cpu           valueAggregator
+	memory        valueAggregator
+	battery       valueAggregator
+	lastTimestamp uint64
 }
 
 func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timestamp uint64) Message {
+	h.lastTimestamp = timestamp
 	if h.pa == nil {
 		h.pa = &IOSPerformanceAggregated{} // TODO: struct type in messages
 	}
@@ -94,7 +95,7 @@ func (h *PerformanceAggregator) Handle(message Message, messageID uint64, timest
 }
 
 func (h *PerformanceAggregator) Build() Message {
-	return h.build(uint64(time.Now().Unix()))
+	return h.build(h.lastTimestamp)
 }
 
 func (h *PerformanceAggregator) build(timestamp uint64) Message {

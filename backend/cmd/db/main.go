@@ -7,7 +7,6 @@ import (
 	"openreplay/backend/internal/datasaver"
 	"openreplay/backend/internal/handlers"
 	"openreplay/backend/internal/handlers/custom"
-	"openreplay/backend/pkg/intervals"
 	"time"
 
 	"os"
@@ -33,9 +32,9 @@ func main() {
 
 	// Declare message handlers we want to apply for each incoming message
 	msgHandlers := []handlers.MessageProcessor{
-		custom.NewMainHandler(),
-		custom.NewInputEventBuilder(),
-		custom.NewPageEventBuilder(),
+		custom.NewMainHandler(), // TODO: separate to several handler
+		//custom.NewInputEventBuilder(),
+		//custom.NewPageEventBuilder(),
 	}
 
 	// Create handler's aggregator
@@ -54,7 +53,6 @@ func main() {
 			if !postgres.IsPkeyViolation(err) {
 				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 			}
-			// TODO: can we lose data here because of db error?
 			return
 		}
 
@@ -95,7 +93,7 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupDB,
 		[]string{
-			cfg.TopicRawWeb, // TODO: is it necessary or not?
+			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,
 			cfg.TopicTrigger, // to receive SessionEnd events
 		},
@@ -109,7 +107,6 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	commitTick := time.Tick(cfg.CommitBatchTimeout)
-	checkTick := time.Tick(intervals.EVENTS_COMMIT_INTERVAL * time.Millisecond)
 	for {
 		select {
 		case sig := <-sigchan:
@@ -118,12 +115,14 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			pg.CommitBatches()
+			// TODO: ee commit stats !!!
+			//if err := commitStats(); err != nil {
+			//	log.Printf("Error on stats commit: %v", err)
+			//}
 			// TODO?: separate stats & regular messages
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)
 			}
-		case <-checkTick:
-			// checkTimeout
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {

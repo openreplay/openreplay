@@ -2,7 +2,6 @@ package builder
 
 import (
 	"openreplay/backend/internal/handlers"
-	"openreplay/backend/pkg/intervals"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -26,6 +25,15 @@ func (b *builder) iterateReadyMessage(iter func(msg Message)) {
 	b.readyMsgs = nil
 }
 
+func (b *builder) checkSessionEnd(message Message) {
+	if _, isEnd := message.(*IOSSessionEnd); isEnd {
+		b.ended = true
+	}
+	if _, isEnd := message.(*SessionEnd); isEnd {
+		b.ended = true
+	}
+}
+
 func (b *builder) handleMessage(message Message, messageID uint64) {
 	timestamp := GetTimestamp(message)
 	if b.timestamp < timestamp {
@@ -36,42 +44,10 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		return
 	}
 
-	if _, isEnd := message.(*IOSSessionEnd); isEnd {
-		b.ended = true
-	}
-	if _, isEnd := message.(*SessionEnd); isEnd {
-		b.ended = true
-	}
-
+	b.checkSessionEnd(message)
 	for _, p := range b.processors {
-		/* If nil is not returned explicitely by Handle, but as the typed nil
-		("var i *IssueEvent; return i;")
-		The `rm != nil` will be true.
-		TODO: enforce nil to be nil(?) or add `isNil() bool` to the Message types
-			because this part is expected to be etendable by user with custom messageProcessor's.
-			Use of reflrction will be probably bad on millions of messages?
-		*/
 		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
 			b.readyMsgs = append(b.readyMsgs, rm)
 		}
 	}
-}
-
-func (b *builder) checkTimeouts(ts int64) bool {
-	if b.timestamp == 0 {
-		return false // SessionStart happened only
-	}
-
-	lastTsGap := ts - int64(b.timestamp)
-	// Maybe listen for `trigger` and react on SessionEnd instead (less reliable)
-	if lastTsGap > intervals.EVENTS_SESSION_END_TIMEOUT {
-		for _, p := range b.processors {
-			// TODO: same as above
-			if rm := p.Build(); rm != nil {
-				b.readyMsgs = append(b.readyMsgs, rm)
-			}
-		}
-		return true
-	}
-	return false
 }

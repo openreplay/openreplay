@@ -31,13 +31,19 @@ func (m *builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint
 	b.handleMessage(msg, messageID)
 }
 
-func (m *builderMap) IterateReadyMessages(operatingTs int64, iter func(sessionID uint64, msg Message)) {
+func (m *builderMap) IterateReadyMessages(iter func(sessionID uint64, msg Message)) {
 	for sessionID, b := range m.sessions {
-		sessionEnded := b.checkTimeouts(operatingTs)
+		if b.ended {
+			for _, p := range b.processors {
+				if rm := p.Build(); rm != nil {
+					b.readyMsgs = append(b.readyMsgs, rm)
+				}
+			}
+		}
 		b.iterateReadyMessage(func(msg Message) {
 			iter(sessionID, msg)
 		})
-		if sessionEnded {
+		if b.ended {
 			delete(m.sessions, sessionID)
 		}
 	}
