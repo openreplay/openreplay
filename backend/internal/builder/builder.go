@@ -1,17 +1,19 @@
 package builder
 
 import (
+	"time"
+
 	"openreplay/backend/internal/handlers"
 	. "openreplay/backend/pkg/messages"
 )
 
 type builder struct {
-	readyMsgs           []Message
-	timestamp           uint64
-	lastMessageID       uint64
-	lastSystemTimestamp int64
-	processors          []handlers.MessageProcessor
-	ended               bool
+	readyMsgs      []Message
+	timestamp      uint64
+	lastMessageID  uint64
+	lastSystemTime time.Time
+	processors     []handlers.MessageProcessor
+	ended          bool
 }
 
 func NewBuilder(handlers ...handlers.MessageProcessor) *builder {
@@ -55,7 +57,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	}
 
 	b.timestamp = timestamp
-	b.lastSystemTimestamp = time.Now().UnixMilli()
+	b.lastSystemTime = time.Now()
 	for _, p := range b.processors {
 		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {
 			b.readyMsgs = append(b.readyMsgs, rm)

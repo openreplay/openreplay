@@ -24,7 +24,7 @@ func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) *builderMa
 func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 	b := m.sessions[sessionID]
 	if b == nil {
-		b = NewBuilder(m.handlersFabric()) // Should create new instances
+		b = NewBuilder(m.handlersFabric()...) // Should create new instances
 		m.sessions[sessionID] = b
 	}
 	return b
@@ -36,14 +36,14 @@ func (m *builderMap) HandleMessage(sessionID uint64, msg Message, messageID uint
 }
 
 func (m *builderMap) iterateSessionReadyMessages(sessionID uint64, b *builder, iter func(msg Message)) {
-	if b.ended || b.lastSystemTimestamp+FORCE_DELETE_TIMEOUT < time.Now().UnixMilli() {
+	if b.ended || b.lastSystemTime.Add(FORCE_DELETE_TIMEOUT).Before(time.Now()) {
 		for _, p := range b.processors {
 			if rm := p.Build(); rm != nil {
 				b.readyMsgs = append(b.readyMsgs, rm)
 			}
 		}
 	}
-	b.iterateReadyMessage(iter)
+	b.iterateReadyMessages(iter)
 	if b.ended {
 		delete(m.sessions, sessionID)
 	}
@@ -69,6 +69,6 @@ func (m *builderMap) IterateSessionReadyMessages(sessionID uint64, iter func(msg
 	m.iterateSessionReadyMessages(
 		sessionID,
 		session,
-		inter,
+		iter,
 	)
 }
