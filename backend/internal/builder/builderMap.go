@@ -6,21 +6,21 @@ import (
 )
 
 type builderMap struct {
-	handlers []handlers.MessageProcessor
-	sessions map[uint64]*builder
+	handlersFabric func() []handlers.MessageProcessor
+	sessions       map[uint64]*builder
 }
 
-func NewBuilderMap(handlers ...handlers.MessageProcessor) *builderMap {
+func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) *builderMap {
 	return &builderMap{
-		handlers: handlers,
-		sessions: make(map[uint64]*builder),
+		handlersFabric: handlersFabric,
+		sessions:       make(map[uint64]*builder),
 	}
 }
 
 func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 	b := m.sessions[sessionID]
 	if b == nil {
-		b = NewBuilder(m.handlers...) // Should create new instances
+		b = NewBuilder(m.handlersFabric()) // Should create new instances
 		m.sessions[sessionID] = b
 	}
 	return b

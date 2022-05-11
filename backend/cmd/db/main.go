@@ -30,15 +30,17 @@ func main() {
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
-	// Declare message handlers we want to apply for each incoming message
-	msgHandlers := []handlers.MessageProcessor{
-		custom.NewMainHandler(), // TODO: separate to several handler
-		//custom.NewInputEventBuilder(),
-		//custom.NewPageEventBuilder(),
+	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
+	handlersFabric := func() {
+		return []handlers.MessageProcessor{
+			custom.NewMainHandler(), // TODO: separate to several handler
+			//custom.NewInputEventBuilder(),
+			//custom.NewPageEventBuilder(),
+		}
 	}
 
 	// Create handler's aggregator
-	builderMap := builder.NewBuilderMap(msgHandlers...)
+	builderMap := builder.NewBuilderMap(handlersFabric)
 
 	// Init modules
 	saver := datasaver.New(pg)

@@ -25,24 +25,26 @@ func main() {
 	// Load service configuration
 	cfg := ender.New()
 
-	// Declare message handlers we want to apply for each incoming message
-	msgHandlers := []handlers.MessageProcessor{
-		// web handlers
-		&web.ClickRageDetector{},
-		&web.CpuIssueDetector{},
-		&web.DeadClickDetector{},
-		&web.MemoryIssueDetector{},
-		&web.PerformanceAggregator{},
-		// iOS handlers
-		&ios.AppNotResponding{},
-		&ios.ClickRageDetector{},
-		&ios.PerformanceAggregator{},
-		// Other handlers (you can add your custom handlers here)
-		&custom.CustomHandler{},
+	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
+	handlersFabric := func() {
+		return []handlers.MessageProcessor{
+			// web handlers
+			&web.ClickRageDetector{},
+			&web.CpuIssueDetector{},
+			&web.DeadClickDetector{},
+			&web.MemoryIssueDetector{},
+			&web.PerformanceAggregator{},
+			// iOS handlers
+			&ios.AppNotResponding{},
+			&ios.ClickRageDetector{},
+			&ios.PerformanceAggregator{},
+			// Other handlers (you can add your custom handlers here)
+			&custom.CustomHandler{},
+		}
 	}
 
 	// Create handler's aggregator
-	builderMap := builder.NewBuilderMap(msgHandlers...)
+	builderMap := builder.NewBuilderMap(handlersFabric)
 
 	// Init logger
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
