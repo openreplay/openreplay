@@ -2,6 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"openreplay/backend/internal/config"
 	"openreplay/backend/internal/router"
 	"openreplay/backend/internal/server"
@@ -10,9 +14,6 @@ import (
 	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {

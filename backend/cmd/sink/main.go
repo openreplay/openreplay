@@ -9,11 +9,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"openreplay/backend/internal/assetscache"
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/internal/oswriter"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/url/assets"
 )
 
 func main() {
@@ -27,6 +29,11 @@ func main() {
 
 	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
 
+	producer := queue.NewProducer()
+	defer producer.Close(15000)
+	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
+	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
+
 	count := 0
 
 	consumer := queue.NewMessageConsumer(
@@ -36,12 +43,14 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
+			count++
+
 			typeID := message.TypeID()
 			if !IsReplayerType(typeID) {
 				return
 			}
 
-			count++
+			message = assetMessageHandler.ParseAssets(sessionID, message)
 
 			value := message.Encode()
 			var data []byte
