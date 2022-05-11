@@ -64,14 +64,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			ResponseWithError(w, http.StatusForbidden, errors.New("browser not recognized"))
 			return
 		}
-		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixNano() / 1e6))
+		sessionID, err := e.services.Flaker.Compose(uint64(startTime.UnixMilli()))
 		if err != nil {
 			ResponseWithError(w, http.StatusInternalServerError, err)
 			return
 		}
 		// TODO: if EXPIRED => send message for two sessions association
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
-		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixNano() / 1e6}
+		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixMilli()}
 
 		e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(&SessionStart{
 			Timestamp:            req.Timestamp,
