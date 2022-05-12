@@ -14,7 +14,7 @@ const SOME_ERROR_MSG = "Some error occured.";
 const defaultValueToText = value => value;
 const defaultOptionMapping = (values, valueToText) => values.map(value => ({ text: valueToText(value), value }));
 
-const hiddenStyle = { 
+const hiddenStyle = {
   whiteSpace: 'pre-wrap',
   opacity: 0, position: 'fixed', left: '-3000px'
 };
@@ -32,10 +32,10 @@ class AutoComplete extends React.PureComponent {
     values: [],
     noResultsMessage: TYPE_TO_SEARCH_MSG,
     ddOpen: false,
-    query: this.props.value,    
+    query: this.props.value,
     loading: false,
     error: false
-  }  
+  }
 
   componentWillReceiveProps(newProps) {
     if (this.props.value !== newProps.value) {
@@ -49,8 +49,8 @@ class AutoComplete extends React.PureComponent {
 
   requestValues = (q) => {
     const { params, endpoint, method } = this.props;
-    this.setState({ 
-      loading: true, 
+    this.setState({
+      loading: true,
       error: false,
     });
     return new APIClient()[ method.toLowerCase() ](endpoint, { ...params, q })
@@ -72,7 +72,7 @@ class AutoComplete extends React.PureComponent {
 
   debouncedRequestValues = debounce(this.requestValues, 1000)
 
-  setError = () => this.setState({ 
+  setError = () => this.setState({
     loading: false,
     error: true,
     noResultsMessage: SOME_ERROR_MSG,
@@ -98,7 +98,7 @@ class AutoComplete extends React.PureComponent {
       const _value = value.trim();
       onSelect(null, {name, value: _value});
     }
-    
+
     changed = false;
     pasted = false;
   }
@@ -126,10 +126,10 @@ class AutoComplete extends React.PureComponent {
     } = this.props;
 
     const options = optionMapping(values, valueToText)
-    
+
     return (
-      <OutsideClickDetectingDiv 
-        className={ cn("relative flex items-center", { "flex-1" : fullWidth }) } 
+      <OutsideClickDetectingDiv
+        className={ cn("relative flex items-center", { "flex-1" : fullWidth }) }
         onClickOutside={this.onClickOutside}
       >
         {/* <EventSearchInput /> */}
@@ -140,7 +140,6 @@ class AutoComplete extends React.PureComponent {
             onFocus={ () => this.setState({ddOpen: true})}
             onChange={ this.onInputChange }
             onBlur={ this.onBlur }
-            onFocus={ () => this.setState({ddOpen: true})}
             value={ query }
             autoFocus={ true }
             type="text"
@@ -150,6 +149,7 @@ class AutoComplete extends React.PureComponent {
               this.hiddenInput.value = text;
               pasted = true; // to use only the hidden input
             } }
+            autocomplete="do-not-autofill-bad-chrome"
           />
           <div className={stl.right} onClick={showCloseButton ? onRemoveValue : onAddValue}>
             { showCloseButton ? <Icon name="close" size="14" /> : <span className="px-1">or</span>}
@@ -182,11 +182,11 @@ class AutoComplete extends React.PureComponent {
             { headerText && headerText }
             {
               options.map(item => (
-                <FilterItem 
+                <FilterItem
                   label={ item.value }
                   icon={ item.icon }
-                  onClick={ (e) => this.onItemClick(e, item) } 
-                />                
+                  onClick={ (e) => this.onItemClick(e, item) }
+                />
               ))
             }
           </div>
