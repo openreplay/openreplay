@@ -119,7 +119,7 @@ export default class FilterModal extends React.PureComponent {
     
 
     return (!displayed ? null :
-      <div  className={ stl.modal }>                
+      <div  className={ stl.modal }>
         <div className={ stl.filterListStatic }>
           {
             filteredList.map(category => (
