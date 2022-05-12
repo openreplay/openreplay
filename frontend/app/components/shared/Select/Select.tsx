@@ -9,26 +9,43 @@ interface Props {
     defaultValue?: string;
     plain?: boolean;
     components?: any;
+    styles?: any; 
     [x:string]: any;
 }
-export default function({ alignRight = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
+export default function({ styles= {}, alignRight = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : null;
 
     const customStyles = {
         option: (provided, state) => ({
-          ...provided,
-          whiteSpace: 'nowrap',
+            ...provided,
+            whiteSpace: 'nowrap',
+            transition: 'all 0.3s',
+            backgroundColor: state.isFocused ? colors['active-blue'] : 'transparent',
+            color: state.isFocused ? colors.teal : 'black',
+            '&:hover': {
+                transition: 'all 0.2s',
+                backgroundColor: colors['active-blue'],
+            },
+            '&:focus': {
+                transition: 'all 0.2s',
+                backgroundColor: colors['active-blue'],
+            }
         }),
         menu: (provided, state) => ({
             ...provided,
             top: 31,
-            border: 'solid thin #ccc',
+            border: `1px solid ${colors['gray-light']}`,
             borderRadius: '3px',
             backgroundColor: '#fff',
-            boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
+            boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.1)',
             position: 'absolute',
             minWidth: 'fit-content',
+            overflow: 'hidden',
             ...(alignRight && { right: 0 })
+        }),
+        menuList: (provided, state) => ({
+            ...provided,
+            padding: 0,
         }),
         control: (provided) => {
             const obj = {
@@ -63,7 +80,12 @@ export default function({ alignRight = false, plain = false, options, isSearchab
           const transition = 'opacity 300ms';
       
           return { ...provided, opacity, transition };
-        }
+        },
+        noOptionsMessage: (provided) => ({
+            ...provided,
+            whiteSpace: 'nowrap !important',
+            // minWidth: 'fit-content',
+        }),
     }
     
 
@@ -77,7 +99,7 @@ export default function({ alignRight = false, plain = false, options, isSearchab
                 DropdownIndicator,
                 ...components,
             }}
-            styles={customStyles}
+            styles={{ ...customStyles, ...styles }}
             theme={(theme) => ({
                 ...theme,
                 colors: {

@@ -2,6 +2,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { NoContent, Loader } from 'UI';
+import FunnelIssuesDropdown from '../FunnelIssuesDropdown';
 import FunnelIssuesSort from '../FunnelIssuesSort';
 
 function FunnelIssues(props) {
@@ -18,7 +19,12 @@ function FunnelIssues(props) {
         <div className="my-8">
             <div className="flex justify-between">
                 <h1 className="font-medium text-2xl">Most significant issues <span className="font-normal">identified in this funnel</span></h1>
-                <FunnelIssuesSort />
+            </div>
+            <div className="my-6 flex justify-between items-start">
+                <FunnelIssuesDropdown />
+                <div className="flex-shrink-0">
+                    <FunnelIssuesSort />
+                </div>
             </div>
             <Loader loading={loading}>
                 <NoContent
