@@ -15,6 +15,7 @@ import stl from './sessionItem.css';
 import Counter from './Counter'
 import { withRouter } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
+import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
 import { assist as assistRoute, liveSession, sessions as sessionsRoute, isRoute } from "App/routes";
 import { capitalize } from 'App/utils';
@@ -76,7 +77,7 @@ export default class SessionItem extends React.PureComponent {
     });
 
     return (
-      <div className={ cn(stl.sessionItem, "flex flex-col bg-white p-3 mb-3") } id="session-item" >
+      <div className={ cn(stl.sessionItem, "flex flex-col p-3 mb-3") } id="session-item" >
         <div className="flex items-start">
           <div className={ cn('flex items-center w-full')}>
             <div className="flex items-center pr-2" style={{ width: "30%"}}>
@@ -144,9 +145,11 @@ export default class SessionItem extends React.PureComponent {
                   )}
                 </div>
               )}
-              <Link to={ isAssist ? liveSessionRoute(sessionId) : sessionRoute(sessionId) }>
-                <Icon name={ !viewed && !isAssist ? 'play-fill' : 'play-circle-light' } size="42" color={isAssist ? "tealx" : "teal"} />
-              </Link>
+              <PlayLink
+                isAssist={isAssist}
+                sessionId={sessionId}
+                viewed={viewed}
+              />
             </div>
           </div>
         </div>

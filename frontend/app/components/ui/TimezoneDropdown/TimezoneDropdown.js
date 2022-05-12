@@ -5,8 +5,13 @@ import stl from './timezoneDropdown.css';
 import { connect } from 'react-redux';
 import { setTimezone } from 'Duck/sessions';
 
+const localMachineFormat = new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)[1]
+const middlePoint = localMachineFormat.length - 2
+const readableLocalTimezone = 
+  `${localMachineFormat.substring(0, 3)} ${localMachineFormat.substring(3, middlePoint)}:${localMachineFormat.substring(middlePoint)}`
+
 const timezoneOptions = {
-  'local': new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)[1],
+  'local': readableLocalTimezone,
   'UTC': 'UTC'
 };
 
