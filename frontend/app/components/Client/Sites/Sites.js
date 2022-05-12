@@ -10,6 +10,7 @@ import GDPRForm from './GDPRForm';
 import TrackingCodeModal from 'Shared/TrackingCodeModal';
 import BlockedIps from './BlockedIps';
 import { confirm } from 'UI/Confirmation';
+import SiteSearch from './SiteSearch';
 
 const STATUS_MESSAGE_MAP = {
   [ RED ]: ' There seems to be an issue (please verify your installation)',
@@ -43,6 +44,7 @@ class Sites extends React.PureComponent {
     showTrackingCode: false, 
     modalContent: NONE,
     detailContent: NONE,
+    searchQuery: '',
   };
 
   toggleBlockedIp = () => {
@@ -85,7 +87,7 @@ class Sites extends React.PureComponent {
   getModalTitle() {
     switch (this.state.modalContent) {
       case NEW_SITE_FORM:
-        return 'New Project';
+        return this.props.site.exists() ? 'Update Project' : 'New Project';
       case GDPR_FORM:
         return 'Project Settings';
       default:
@@ -119,6 +121,7 @@ class Sites extends React.PureComponent {
     const isAdmin = user.admin || user.superAdmin;
     const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
     const canDeleteSites = sites.size > 1 && isAdmin;
+    const filteredSites = sites.filter(site => site.name.toLowerCase().includes(this.state.searchQuery.toLowerCase()));
 
     return (
       <Loader loading={ loading }>
@@ -159,54 +162,71 @@ class Sites extends React.PureComponent {
               position="top left"
             />
 
-          <TextLink
-            icon="book"
-            className="ml-auto"
-            href="https://docs.openreplay.com/installation"
-            label="Documentation"
-          />
+           <div className="flex ml-auto items-center">
+              <TextLink
+                icon="book"
+                className="mr-4"
+                href="https://docs.openreplay.com/installation"
+                label="Documentation"
+              />
+              <SiteSearch onChange={(value) => this.setState({ searchQuery: value })} />
+           </div>
           </div>
 
           <div className={ stl.list }>
+            <div className="grid grid-cols-12 gap-2 w-full items-center border-b px-2 py-3 font-medium">
+              <div className="col-span-4">Name</div>
+              <div className="col-span-4">Key</div>
+              <div className="col-span-4"></div>
+              
+            </div>
             {
-              sites.map(_site => (
-                <div key={ _site.key } className={ stl.site } data-inactive={ _site.status === RED }>
-                  <div className="flex items-center">
-                    <Popup
-                      trigger={
-                        <div style={ { width: '10px' } }>
-                          <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
+              filteredSites.map(_site => (
+                // <div key={ _site.key } data-inactive={ _site.status === RED }>
+                  <div key={ _site.key } className="grid grid-cols-12 gap-2 w-full group hover:bg-active-blue items-center border-b px-2 py-3">
+                    <div className="col-span-4">
+                        <div className="flex items-center">
+                          <Popup
+                            trigger={
+                              <div style={ { width: '10px' } }>
+                                <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
+                              </div>
+                            }
+                            content={ STATUS_MESSAGE_MAP[ _site.status ] }
+                            inverted
+                            position="top center"
+                          />
+                          <span className="ml-2">{ _site.host }</span>
                         </div>
-                      }
-                      content={ STATUS_MESSAGE_MAP[ _site.status ] }
-                      inverted
-                      position="top center"
-                    />
-                    <div className="ml-3 flex items-center">
+                    </div>
+                    <div className="col-span-4">
+                      <span className="px-2 py-1 bg-gray-lightest rounded border text-sm">{_site.projectKey}</span>
+                    </div>
+                    {/* <div className="ml-3 flex items-center">
                       <div>{ _site.host }</div>
                       <div className={ stl.label}>{_site.projectKey}</div>
+                    </div> */}
+                    <div className="col-span-4 justify-self-end flex items-center invisible group-hover:visible">
+                      <div className="mr-4"><Button size="small" primary onClick={ () => this.showTrackingCode(_site) }>{ 'Installation' }</Button></div>
+                      {/* <button
+                        className={cn('mx-3', {'hidden' : !canDeleteSites})}
+                        disabled={ !canDeleteSites }
+                        onClick={ () => canDeleteSites && this.remove(_site) }
+                      >
+                        <Icon name="trash" size="16" color="teal" />
+                      </button> */}
+                      <button
+                        className={cn('mx-3', {'hidden' : !isAdmin})}
+                        disabled={ !isAdmin }
+                        onClick={ () => isAdmin && this.edit(_site) }
+                        data-clickable
+                      >
+                        <Icon name="edit" size="16" color="teal"/>
+                      </button>
+                      {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
                     </div>
                   </div>
-                  <div className={ stl.actions }>
-                    <button
-                      className={cn({'hidden' : !canDeleteSites})}                      
-                      disabled={ !canDeleteSites }
-                      onClick={ () => canDeleteSites && this.remove(_site) }
-                    >
-                      <Icon name="trash" size="16" color="teal" />
-                    </button>
-                    <button
-                      className={cn({'hidden' : !isAdmin})}
-                      disabled={ !isAdmin }
-                      onClick={ () => isAdmin && this.edit(_site) }
-                      data-clickable
-                    >
-                      <Icon name="edit" size="16" color="teal"/>
-                    </button>
-                    <div><Button size="small" outline primary onClick={ () => this.showTrackingCode(_site) }>{ 'Tracking Code' }</Button></div>
-                    {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
-                  </div>
-                </div>
+                // </div>
               ))
             }
           </div>

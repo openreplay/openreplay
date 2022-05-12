@@ -1,14 +1,14 @@
-import Writer from "../messages/writer.js";
-import Message from "../messages/message.js";
+import type Message from "../common/messages.js";
+import PrimitiveWriter from "./PrimitiveWriter.js";
 import { 
   BatchMeta,
   Timestamp,
-} from "../messages/index.js";
+} from "../common/messages.js";
 
 export default class BatchWriter {
   private nextIndex = 0
   private beaconSize = 2 * 1e5 // Default 200kB
-  private writer = new Writer(this.beaconSize)
+  private writer = new PrimitiveWriter(this.beaconSize)
   private isEmpty = true
 
   constructor(
@@ -50,7 +50,7 @@ export default class BatchWriter {
         }
         // MBTODO: tempWriter for one message?
         this.beaconSize = Math.min(this.beaconSize*2, this.beaconSizeLimit)
-        this.writer = new Writer(this.beaconSize)
+        this.writer = new PrimitiveWriter(this.beaconSize)
         this.prepareBatchMeta()
       }
     }

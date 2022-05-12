@@ -11,12 +11,9 @@ type Config struct {
 	HTTPTimeout       time.Duration
 	TopicRawWeb       string
 	TopicRawIOS       string
-	TopicCache        string
-	CacheAssets       bool
 	BeaconSizeLimit   int64
 	JsonSizeLimit     int64
 	FileSizeLimit     int64
-	AssetsOrigin      string
 	AWSRegion         string
 	S3BucketIOSImages string
 	Postgres          string
@@ -33,12 +30,9 @@ func New() *Config {
 		HTTPTimeout:       time.Second * 60,
 		TopicRawWeb:       env.String("TOPIC_RAW_WEB"),
 		TopicRawIOS:       env.String("TOPIC_RAW_IOS"),
-		TopicCache:        env.String("TOPIC_CACHE"),
-		CacheAssets:       env.Bool("CACHE_ASSETS"),
 		BeaconSizeLimit:   int64(env.Uint64("BEACON_SIZE_LIMIT")),
 		JsonSizeLimit:     1e3, // 1Kb
 		FileSizeLimit:     1e7, // 10Mb
-		AssetsOrigin:      env.String("ASSETS_ORIGIN"),
 		AWSRegion:         env.String("AWS_REGION"),
 		S3BucketIOSImages: env.String("S3_BUCKET_IOS_IMAGES"),
 		Postgres:          env.String("POSTGRES_STRING"),

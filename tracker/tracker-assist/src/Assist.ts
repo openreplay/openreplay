@@ -11,6 +11,7 @@ import AnnotationCanvas from './AnnotationCanvas.js';
 import ConfirmWindow, { callConfirmDefault, controlConfirmDefault } from './ConfirmWindow.js';
 import type { Options as ConfirmOptions } from './ConfirmWindow.js';
 
+// TODO: fully specified  strict check (everywhere)
 
 //@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
 Peer = Peer.default || Peer;

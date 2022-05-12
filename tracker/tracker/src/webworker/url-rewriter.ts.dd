@@ -1,9 +1,0 @@
-
-
-
-
-function getFullURL(baseURL: string, relativeURL: string) {
-	if (isRelative(relativeURL)) {
-
-	} 
-}

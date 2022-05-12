@@ -4,7 +4,7 @@ import type { Window } from "../context.js";
 import IFrameObserver from "./iframe_observer.js";
 import ShadowRootObserver from "./shadow_root_observer.js";
 
-import { CreateDocument } from "../../../messages/index.js";
+import { CreateDocument } from "../../../common/messages.js";
 import App from "../index.js";
 import { IN_BROWSER, hasOpenreplayAttribute } from '../../utils.js'
 

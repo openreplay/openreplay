@@ -9,42 +9,48 @@ import (
 	"os/signal"
 	"syscall"
 
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/assetscache"
+	"openreplay/backend/internal/config/sink"
+	"openreplay/backend/internal/oswriter"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/url/assets"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	FS_DIR := env.String("FS_DIR")
-	if _, err := os.Stat(FS_DIR); os.IsNotExist(err) {
-		log.Fatalf("%v doesn't exist. %v", FS_DIR, err)
+	cfg := sink.New()
+
+	if _, err := os.Stat(cfg.FsDir); os.IsNotExist(err) {
+		log.Fatalf("%v doesn't exist. %v", cfg.FsDir, err)
 	}
 
-	writer := NewWriter(env.Uint16("FS_ULIMIT"), FS_DIR)
+	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
+
+	producer := queue.NewProducer()
+	defer producer.Close(cfg.ProducerCloseTimeout)
+	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
+	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
 
 	count := 0
 
 	consumer := queue.NewMessageConsumer(
-		env.String("GROUP_SINK"),
+		cfg.GroupSink,
 		[]string{
-			env.String("TOPIC_RAW_WEB"),
-			env.String("TOPIC_RAW_IOS"),
+			cfg.TopicRawIOS,
+			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
-			//typeID, err := GetMessageTypeID(value)
-			// if err != nil {
-			// 	log.Printf("Message type decoding error: %v", err)
-			// 	return
-			// }
-			typeID := message.Meta().TypeID
+			count++
+
+			typeID := message.TypeID()
 			if !IsReplayerType(typeID) {
 				return
 			}
 
-			count++
+			message = assetMessageHandler.ParseAssets(sessionID, message)
 
 			value := message.Encode()
 			var data []byte

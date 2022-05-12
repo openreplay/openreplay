@@ -20,7 +20,7 @@ export default class RemoteControl {
 
   reconnect(ids: string[]) {
     const storedID = sessionStorage.getItem(this.options.session_control_peer_key)
-    if (storedID !== null && ids.includes(storedID)) {
+    if (storedID !== null &&  ids.indexOf(storedID) !== -1) {
       this.grantControl(storedID)
     } else {
       sessionStorage.removeItem(this.options.session_control_peer_key)
