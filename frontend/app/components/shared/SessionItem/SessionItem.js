@@ -84,7 +84,7 @@ export default class SessionItem extends React.PureComponent {
               <div><Avatar seed={ userNumericHash } isAssist={isAssist} /></div>
               <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center">
                 <div
-                  className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
+                  className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, [stl.userName]: !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
                   onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
                 >
                   <TextEllipsis text={userDisplayName} maxWidth={200} popupProps={{ inverted: true, size: 'tiny' }} />

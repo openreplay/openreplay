@@ -26,7 +26,7 @@ const IconButton = React.forwardRef(({
   name,
   disabled = false,
   tooltip = false,
-  tooltipPosition = 'top',
+  tooltipPosition = 'top center',
   compact = false,
   ...rest
 }, ref) => (

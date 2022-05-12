@@ -3,8 +3,8 @@ export enum FilterCategory {
   GEAR = "Gear",
   RECORDING_ATTRIBUTES = "Recording Attributes",
   JAVASCRIPT = "Javascript",
-  USER = "User",
-  METADATA = "Metadata",
+  USER = "User Identification",
+  METADATA = "Session & User Metadata",
   PERFORMANCE = "Performance",
 };
 
