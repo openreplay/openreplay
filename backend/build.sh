@@ -23,7 +23,7 @@ function build_service() {
     image="$1"
     echo "BUILDING $image"
     case "$image" in
-        http | db)
+        http | db | sink)
             echo build http
             docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image -f ./cmd/Dockerfile .
             [[ $PUSH_IMAGE -eq 1 ]] && {

@@ -1,19 +1,19 @@
 package assetscache
 
 import (
-	"openreplay/backend/internal/config"
+	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
 )
 
 type AssetsCache struct {
-	cfg      *config.Config
+	cfg      *sink.Config
 	rewriter *assets.Rewriter
 	producer types.Producer
 }
 
-func New(cfg *config.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
+func New(cfg *sink.Config, rewriter *assets.Rewriter, producer types.Producer) *AssetsCache {
 	return &AssetsCache{
 		cfg:      cfg,
 		rewriter: rewriter,
