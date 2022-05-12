@@ -1,7 +1,8 @@
+@import 'mixins.css';
 
 .sessionItem {
-  @mixin defaultHover;
   background-color: #fff;
+  @mixin defaultHover;
   user-select: none;
   border-radius: 3px;
   border: solid thin #EEEEEE;
