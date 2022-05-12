@@ -5,7 +5,7 @@ import { debounce } from 'App/utils';
 import stl from './FilterAutoComplete.css';
 import cn from 'classnames';
 
-const hiddenStyle = { 
+const hiddenStyle = {
   whiteSpace: 'pre-wrap',
   opacity: 0, position: 'fixed', left: '-3000px'
 };
@@ -43,8 +43,8 @@ function FilterAutoComplete(props: Props) {
   const [loading, setLoading] = useState(false)
   const [options, setOptions] = useState<any>([]);
   const [query, setQuery] = useState(value);
-  
-  const requestValues = (q) => {    
+
+  const requestValues = (q) => {
     setLoading(true);
 
     return new APIClient()[method?.toLocaleLowerCase()](endpoint, { ...params, q })
@@ -90,7 +90,7 @@ function FilterAutoComplete(props: Props) {
     e.preventDefault();
 
     if (query !== item.value) {
-      setQuery(item.value); 
+      setQuery(item.value);
     }
 
     props.onSelect(e, item);
@@ -107,6 +107,7 @@ function FilterAutoComplete(props: Props) {
           autoFocus={ true }
           type="text"
           placeholder={ placeholder }
+          autoComplete="do-not-autofill-bad-chrome"
           // onPaste={(e) => {
           //   const text = e.clipboardData.getData('Text');
           //   // this.hiddenInput.value = text;
@@ -139,11 +140,11 @@ function FilterAutoComplete(props: Props) {
                     >
                       { icon && <Icon name={ icon } size="16" marginRight="8" /> }
                       <span className={ stl.label }>{ item.value }</span>
-                    </div>             
+                    </div>
                   ))
                 }
               </div>
-            )} 
+            )}
           </Loader>
         </div>
       )}
