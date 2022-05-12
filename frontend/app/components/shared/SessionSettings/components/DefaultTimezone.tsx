@@ -6,8 +6,15 @@ import { useObserver } from 'mobx-react-lite';
 
 const str = new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)
 const d = str && str[1] || 'UTC';
+
+const localMachineFormat = new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)
+const middlePoint = localMachineFormat && localMachineFormat[1].length - 2
+const readableLocalTimezone = localMachineFormat && middlePoint ?
+  `${localMachineFormat[1].substring(0, 3)} ${localMachineFormat[1].substring(3, middlePoint)}:${localMachineFormat[1].substring(middlePoint)}`
+    : null
+
 const timezoneOptions = [
-    { label: d, value: 'local' },
+    { label: readableLocalTimezone, value: 'local' },
     { label: 'UTC', value: 'UTC' },
 ]
 
@@ -38,7 +45,7 @@ function DefaultTimezone(props) {
                     }}>Update</Button>
                 </div>
             </div>
-            <div className="text-sm mt-3">This change will impact the timestamp on session card and player.</div>  
+            <div className="text-sm mt-3">This change will impact the timestamp on session card and player.</div>
         </>
     );
 }
