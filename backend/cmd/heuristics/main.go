@@ -26,7 +26,7 @@ func main() {
 	cfg := ender.New()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
-	handlersFabric := func() {
+	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
 			// web handlers
 			&web.ClickRageDetector{},

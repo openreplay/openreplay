@@ -31,9 +31,9 @@ func main() {
 	defer pg.Close()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
-	handlersFabric := func() {
+	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
-			custom.EventMapper{},
+			&custom.EventMapper{},
 			custom.NewInputEventBuilder(),
 			custom.NewPageEventBuilder(),
 		}
