@@ -62,7 +62,6 @@ const TextEllipsis = ({
 		const fontSize = window.getComputedStyle(element, null).getPropertyValue('font-size');
 		
 		const textWidth = findTextWidth(element.innerText, fontSize)
-		console.log(textWidth, element.clientWidth)
 		if (textWidth > element.clientWidth) setShowPopup(true)
 		else setShowPopup(false)
 	}, [textRef.current])

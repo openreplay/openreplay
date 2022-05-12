@@ -102,3 +102,8 @@
   font-size: 10px;
   letter-spacing: 1px;
 }
+
+.userName:hover {
+  text-decoration: underline;
+  text-decoration-color: $teal;
+}
