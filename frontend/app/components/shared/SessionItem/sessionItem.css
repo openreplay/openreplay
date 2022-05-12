@@ -1,5 +1,7 @@
 
 .sessionItem {
+  @mixin defaultHover;
+  background-color: #fff;
   user-select: none;
   border-radius: 3px;
   border: solid thin #EEEEEE;
