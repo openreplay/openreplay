@@ -21,7 +21,7 @@ module.exports = {
 		'borderColor',
 		'borderOpacity',
 		'borderRadius',
-		// 'borderStyle',
+		'borderStyle',
 		'borderWidth',
 		// 'boxSizing',
 		// 'boxShadow',
