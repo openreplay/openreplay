@@ -26,6 +26,6 @@ CREATE TABLE IF NOT EXISTS performance
     avg_used_js_heap_size  UInt64,
     max_used_js_heap_size  UInt64
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;

@@ -16,6 +16,6 @@ CREATE TABLE IF NOT EXISTS clicks
     label                String,
     hesitation_time      Nullable(UInt32)
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;
