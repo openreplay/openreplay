@@ -41,6 +41,7 @@ export default function({ styles= {}, alignRight = false, plain = false, options
             position: 'absolute',
             minWidth: 'fit-content',
             overflow: 'hidden',
+            zIndex: 100,
             ...(alignRight && { right: 0 })
         }),
         menuList: (provided, state) => ({

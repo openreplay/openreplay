@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { NoContent, Loader } from 'UI';
 import FunnelIssuesDropdown from '../FunnelIssuesDropdown';
 import FunnelIssuesSort from '../FunnelIssuesSort';
+import FunnelIssuesList from './components/FunnelIssuesList';
 
 function FunnelIssues(props) {
     const { funnelStore } = useStore();
@@ -12,7 +13,7 @@ function FunnelIssues(props) {
     const loading = useObserver(() => funnelStore.isLoadingIssues);
 
     useEffect(() => {
-        funnelStore.fetchIssues(funnel?.funnelId);
+        // funnelStore.fetchIssues(funnel?.funnelId);
     }, []);
 
     return (
@@ -32,7 +33,7 @@ function FunnelIssues(props) {
                     title="No issues found."
                     animatedIcon="empty-state"
                 >
-                    Issues
+                    <FunnelIssuesList />
                 </NoContent>
             </Loader>
         </div>

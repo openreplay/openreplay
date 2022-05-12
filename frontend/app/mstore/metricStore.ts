@@ -192,7 +192,7 @@ export default class MetricStore implements IMetricStore {
 }
 
 const sampleJson = {
-    // metricId: 1,
+    metricId: 1,
     name: "Funnel Sample",
     metricType: 'funnel',
     series: [
