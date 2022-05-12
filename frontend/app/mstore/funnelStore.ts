@@ -17,6 +17,7 @@ export default class FunnelStore {
 
     issues: any[] = []
     isLoadingIssues: boolean = false
+    issuesFilter: any = []
     
     constructor() {
         makeAutoObservable(this, {

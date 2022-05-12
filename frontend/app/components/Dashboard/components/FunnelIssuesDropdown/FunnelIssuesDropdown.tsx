@@ -1,8 +1,9 @@
-import React, { Component, ReactNode, FunctionComponent } from 'react';
+import React, { Component, ReactNode, FunctionComponent, useEffect } from 'react';
 import Select from 'Shared/Select'
 import { components } from 'react-select';
 import { Icon } from 'UI';
 import FunnelIssuesSelectedFilters from '../FunnelIssuesSelectedFilters';
+import { useStore } from 'App/mstore';
 
 const options = [
       { value: "click_rage", label: "Click Rage" },
@@ -20,14 +21,20 @@ const options = [
 ]
 
 function FunnelIssuesDropdown(props) {
+    const { funnelStore } = useStore();
     const [isOpen, setIsOpen] = React.useState(false);
-    const [selectedValues, setSelectedValues] = React.useState<any>(options.map(option => option.value));
+    const [selectedValues, setSelectedValues] = React.useState<any>([]);
     const filteredOptions = options.filter((option: any) => {
         return !selectedValues.includes(option.value);
     });
+
     const selectedOptions = options.filter((option: any) => {
         return selectedValues.includes(option.value);
     });
+
+    useEffect(() => {
+        funnelStore.updateKey('issuesFilter', selectedOptions);
+    }, [selectedOptions]);
 
     const handleChange = ({ value }: any) => {
         toggleSelectedValue(value);
@@ -81,7 +88,7 @@ function FunnelIssuesDropdown(props) {
                     SingleValue: () => null,
                 }}
             />
-            <FunnelIssuesSelectedFilters options={selectedOptions} removeSelectedValue={toggleSelectedValue} />
+            <FunnelIssuesSelectedFilters removeSelectedValue={toggleSelectedValue} />
         </div>
     );
 }
