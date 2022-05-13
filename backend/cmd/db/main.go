@@ -44,6 +44,7 @@ func main() {
 
 	// Init modules
 	saver := datasaver.New(pg)
+	saver.InitStats()
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	// Handler logic
@@ -117,10 +118,9 @@ func main() {
 			os.Exit(0)
 		case <-commitTick:
 			pg.CommitBatches()
-			// TODO: ee commit stats !!!
-			//if err := commitStats(); err != nil {
-			//	log.Printf("Error on stats commit: %v", err)
-			//}
+			if err := saver.CommitStats(); err != nil {
+				log.Printf("Error on stats commit: %v", err)
+			}
 			// TODO?: separate stats & regular messages
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)

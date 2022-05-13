@@ -5,6 +5,10 @@ import (
 	. "openreplay/backend/pkg/messages"
 )
 
+func (si *Saver) InitStats() {
+	// noop
+}
+
 func (si *Saver) InsertStats(session *Session, msg Message) error {
 	switch m := msg.(type) {
 	// Web
@@ -15,5 +19,9 @@ func (si *Saver) InsertStats(session *Session, msg Message) error {
 	case *LongTask:
 		return si.pg.InsertWebStatsLongtask(session.SessionID, m)
 	}
+	return nil
+}
+
+func (si *Saver) CommitStats() error {
 	return nil
 }
