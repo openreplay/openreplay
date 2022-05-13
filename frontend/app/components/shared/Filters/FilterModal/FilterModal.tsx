@@ -15,7 +15,7 @@ interface Props {
   searchQuery?: string,
 }
 function FilterModal(props: Props) {
-  const { 
+  const {
     filters,
     metaOptions,
     onFilterClick = () => null,
@@ -32,13 +32,20 @@ function FilterModal(props: Props) {
     _filter.value = [filter.value];
     onFilterClick(_filter);
   }
-  
+
+  const isResultEmpty = !filterSearchList || Object.keys(filterSearchList).length === 0
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
+
       { showSearchList && (
         <Loader size="small" loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">
-            { filterSearchList && Object.keys(filterSearchList).map((key, index) => {
+            {isResultEmpty && !fetchingFilterSearchList ? (
+              <div className="flex items-center">
+                <Icon className="color-gray-medium" name="binoculars" size="24" />
+                <div className="color-gray-medium font-medium px-3"> No Suggestions Found </div>
+              </div>
+            ) : Object.keys(filterSearchList).map((key, index) => {
               const filter = filterSearchList[key];
               const option = filtersMap[key];
               return option ? (
@@ -65,7 +72,7 @@ function FilterModal(props: Props) {
           </div>
         </Loader>
       )}
-      
+
       { !hasSearchQuery && (
         <div className="" style={{ columns: "auto 200px" }}>
           {filters && Object.keys(filters).map((key) => (

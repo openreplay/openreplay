@@ -18,7 +18,7 @@ function ListingVisibility(props) {
     const { settingsStore } = useStore();
     const sessionSettings = useObserver(() => settingsStore.sessionSettings)
     const [durationSettings, setDurationSettings] = React.useState(sessionSettings.durationFilter);
-    
+
     return (
         <>
             <h3 className="text-lg">Listing Visibility</h3>
@@ -27,7 +27,7 @@ function ListingVisibility(props) {
                 <div className="col-span-4">
                     <Select
                         options={numberOptions}
-                        defaultValue={durationSettings.operator}
+                        defaultValue={numberOptions[0].value}
                         onChange={({ value }) => {
                             setDurationSettings({ ...durationSettings, operator: value });
                             setChanged(true);
@@ -39,6 +39,7 @@ function ListingVisibility(props) {
                         value={durationSettings.count}
                         type="number"
                         name="count"
+                        placeholder="E.g 10"
                         style={{ height: '38px', width: '100%'}}
                         onChange={(e, { value }) => {
                             setDurationSettings({ ...durationSettings, count: value });
@@ -48,7 +49,7 @@ function ListingVisibility(props) {
                 </div>
                 <div className="col-span-3">
                     <Select
-                        defaultValue={durationSettings.countType}
+                        defaultValue={periodOptions[1].value}
                         options={periodOptions}
                         onChange={({ value }) => {
                             setDurationSettings({ ...durationSettings, countType: value });

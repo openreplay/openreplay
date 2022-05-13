@@ -13,7 +13,7 @@ const sortOptionsMap = {
   'startTs-desc': 'Newest',
   'startTs-asc': 'Oldest',
   'eventsCount-asc': 'Events Ascending',
-  'eventsCount-desc': 'Events Descending',  
+  'eventsCount-desc': 'Events Descending',
 };
 const sortOptions = Object.entries(sortOptionsMap)
   .map(([ value, text ]) => ({ value, text }));
@@ -50,10 +50,6 @@ function SessionListHeader({
             value='list'
           />
         </div> */}
-        <div className="flex items-center">
-          <span className="mr-2 color-gray-medium">Timezone</span>
-          <TimezoneDropdown />
-        </div>
         <div className="flex items-center ml-6">
           <span className="mr-2 color-gray-medium">Sort By</span>
           <SortDropdown options={ sortOptions }/>

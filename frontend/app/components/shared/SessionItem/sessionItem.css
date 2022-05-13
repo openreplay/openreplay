@@ -1,8 +1,9 @@
-
 .sessionItem {
+  background-color: #fff;
   user-select: none;
   border-radius: 3px;
   border: solid thin #EEEEEE;
+  transition: all 0.4s;
 
   & .favorite {
     opacity: 0;
@@ -12,6 +13,10 @@
   }
 
   &:hover {
+    background-color: $active-blue;
+    border: solid thin $active-blue-border;
+    transition: all 0.2s;
+
     & .playLink {
       transition: all 0.4s;
       opacity: 1;
@@ -98,4 +103,13 @@
   text-transform: uppercase;
   font-size: 10px;
   letter-spacing: 1px;
+}
+
+.userName {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    text-decoration-color: $teal;
+  }
 }

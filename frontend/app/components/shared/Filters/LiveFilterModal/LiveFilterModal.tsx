@@ -15,7 +15,7 @@ interface Props {
   searchQuery?: string,
 }
 function LiveFilterModal(props: Props) {
-  const { 
+  const {
     filters,
     metaOptions,
     onFilterClick = () => null,
@@ -32,7 +32,9 @@ function LiveFilterModal(props: Props) {
     _filter.value = [filter.value];
     onFilterClick(_filter);
   }
-  
+
+  const isResultEmpty = !filterSearchList || Object.keys(filterSearchList).filter(i => filtersMap[i].isLive).length === 0
+
   return (
     <div className={stl.wrapper} style={{ width: '490px', maxHeight: '400px', overflowY: 'auto'}}>
       { showSearchList && (
@@ -62,10 +64,39 @@ function LiveFilterModal(props: Props) {
                 </div>
               );
             })}
+            {isResultEmpty && !fetchingFilterSearchList ? (
+              <div className="flex items-center">
+                <Icon className="color-gray-medium" name="binoculars" size="24" />
+                <div className="color-gray-medium font-medium px-3"> No Suggestions Found </div>
+              </div>
+            ) : Object.keys(filterSearchList).filter(i => filtersMap[i].isLive).map((key, index) => {
+              const filter = filterSearchList[key];
+              const option = filtersMap[key];
+              return (
+                <div
+                  key={index}
+                  className={cn('mb-3')}
+                >
+                  <div className="font-medium uppercase color-gray-medium text-sm mb-2">{option.label}</div>
+                  <div>
+                    {filter.map((f, i) => (
+                      <div
+                        key={i}
+                        className={cn(stl.filterSearchItem, "cursor-pointer px-3 py-1 text-sm flex items-center")}
+                        onClick={() => onFilterSearchClick({ type: key, value: f.value })}
+                      >
+                        <Icon className="mr-2" name={option.icon} size="16" />
+                        <div className="whitespace-nowrap text-ellipsis overflow-hidden">{f.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </Loader>
       )}
-      
+
       { !hasSearchQuery && (
         <div className="">
           {filters && Object.keys(filters).map((key) =>  (
