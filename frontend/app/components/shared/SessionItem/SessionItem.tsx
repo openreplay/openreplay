@@ -46,13 +46,13 @@ interface Props {
     userSessionsCount: number
     issueTypes: [];
     active: boolean;
-    onUserClick: (userId: string, userAnonymousId: string) => null;
-    hasUserFilter: boolean;
-    disableUser: boolean;
-    metaList: Array<any>;
-    showActive: boolean;
-    lastPlayedSessionId: string;
   },
+  onUserClick: (userId: string, userAnonymousId: string) => null;
+  hasUserFilter: boolean;
+  disableUser: boolean;
+  metaList: Array<any>;
+  showActive: boolean;
+  lastPlayedSessionId: string;
 }
 
 function SessionItem(props: Props) {
@@ -60,25 +60,7 @@ function SessionItem(props: Props) {
   const { timezone } = settingsStore.sessionSettings;
 
   const {
-    session: {
-      sessionId,
-      userBrowser,
-      userOs,
-      userId,
-      userAnonymousId,
-      userDisplayName,
-      userCountry,
-      startedAt,
-      duration,
-      eventsCount,
-      viewed,
-      userDeviceType,
-      userNumericHash,
-      live,
-      metadata,
-      issueTypes,
-      active,
-    },
+    session,
     onUserClick = () => null,
     hasUserFilter = false,
     disableUser = false,
@@ -87,6 +69,25 @@ function SessionItem(props: Props) {
     lastPlayedSessionId,
   } = props;
 
+  const {
+    sessionId,
+    userBrowser,
+    userOs,
+    userId,
+    userAnonymousId,
+    userDisplayName,
+    userCountry,
+    startedAt,
+    duration,
+    eventsCount,
+    viewed,
+    userDeviceType,
+    userNumericHash,
+    live,
+    metadata,
+    issueTypes,
+    active,
+  } = session;
   const location = useLocation();
 
   console.log(location.pathname);
