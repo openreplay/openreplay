@@ -11,7 +11,7 @@ import { observer } from 'mobx-react-lite';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
 import Counter from './Counter'
-import { useLocation, RouteComponentProps } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
 import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
@@ -47,15 +47,16 @@ interface Props {
     issueTypes: [];
     active: boolean;
   },
-  onUserClick: (userId: string, userAnonymousId: string) => null;
-  hasUserFilter: boolean;
-  disableUser: boolean;
-  metaList: Array<any>;
-  showActive: boolean;
-  lastPlayedSessionId: string;
+  onUserClick?: (userId: string, userAnonymousId: string) => void;
+  hasUserFilter?: boolean;
+  disableUser?: boolean;
+  metaList?: Array<any>;
+  showActive?: boolean;
+  lastPlayedSessionId?: string;
+  live?: boolean;
 }
 
-function SessionItem(props: Props) {
+function SessionItem(props: RouteComponentProps<Props>) {
   const { settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
@@ -88,9 +89,8 @@ function SessionItem(props: Props) {
     issueTypes,
     active,
   } = session;
-  const location = useLocation();
 
-  console.log(location.pathname);
+  const location = props.location;
 
   const formattedDuration = durationFormatted(duration);
   const hasUserId = userId || userAnonymousId;
@@ -187,4 +187,4 @@ function SessionItem(props: Props) {
   )
 }
 
-export default observer<Props>(SessionItem)
+export default withRouter<Props>(observer<Props>(SessionItem))
