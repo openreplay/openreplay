@@ -21,6 +21,10 @@ export default class FunnelStore {
     issuesFilter: any = []
 
     issueInstance: FunnelIssue | null = null
+    issuesSort = {
+        sort: "afectedUsers",
+        order: 'desc',
+    }
     
     constructor() {
         makeAutoObservable(this, {

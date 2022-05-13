@@ -25,8 +25,6 @@ function FunnelIssueDetails(props: Props) {
         funnelStore.fetchIssue(funnelId, issueId);
     }, []);
 
-    console.log('funnelIssue', funnelIssue)
-
     return (
         <Loader loading={loading}>
             { funnelIssue && <FunnelIssuesListItem

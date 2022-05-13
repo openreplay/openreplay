@@ -1,3 +1,4 @@
+import { useStore } from 'App/mstore';
 import React from 'react';
 import Select from 'Shared/Select';
   
@@ -11,9 +12,16 @@ const sortOptions = [
 ]
 
 interface Props {
-    onChange?: (value: string) => void;
+    // onChange?: (value: string) => void;
 }
 function FunnelIssuesSort(props: Props) {
+    const { funnelStore } = useStore();
+    
+    const onSortChange = (opt) => {
+        const [ sort, order ] = opt.value.split('-');
+        funnelStore.updateKey('issuesSort', { sort, order });
+    }
+
     return (
         <div>
             <Select
@@ -21,7 +29,7 @@ function FunnelIssuesSort(props: Props) {
                 defaultValue={sortOptions[0].value}
                 options={sortOptions}
                 alignRight={true}
-                onChange={props.onChange}
+                onChange={onSortChange}
             />
         </div>
     );

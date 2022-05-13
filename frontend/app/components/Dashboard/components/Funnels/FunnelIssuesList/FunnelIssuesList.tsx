@@ -5,11 +5,14 @@ import FunnelIssuesListItem from '../FunnelIssuesListItem';
 
 function FunnelIssuesList(props) {
     const { funnelStore } = useStore();
+    const issuesSort = useObserver(() => funnelStore.issuesSort);
     const issuesFilter = useObserver(() => funnelStore.issuesFilter.map((issue: any) => issue.value));
     const issues = useObserver(() => funnelStore.issues);
-    const filteredIssues = useObserver(() => issuesFilter.length > 0 ? issues.filter((issue: any) => issuesFilter.includes(issue.type)) : issues);
+    let filteredIssues = useObserver(() => issuesFilter.length > 0 ? issues.filter((issue: any) => issuesFilter.includes(issue.type)) : issues);
+    filteredIssues = useObserver(() => issuesSort.sort ? filteredIssues.slice().sort((a, b) => a[issuesSort.sort] - b[issuesSort.sort]): filteredIssues);
+    filteredIssues = useObserver(() => issuesSort.order === 'desc' ? filteredIssues.reverse() : filteredIssues);
 
-    return (
+    return useObserver(() => (
         <div>
             {filteredIssues.map((issue, index) => (
                 <div key={index} className="mb-4">
@@ -17,7 +20,7 @@ function FunnelIssuesList(props) {
                 </div>
             ))}
         </div>
-    );
+    ));
 }
 
 export default FunnelIssuesList;
