@@ -20,7 +20,7 @@ export const durationFormatted = (duration: Duration):string => {
 
 export function durationFromMsFormatted(ms: number): string {
   return durationFormatted(Duration.fromMillis(ms || 0));
-} 
+}
 
 export const durationFormattedFull = (duration: Duration): string => {
   if (duration.as('minutes') < 1) { // show in seconds
@@ -35,7 +35,7 @@ export const durationFormattedFull = (duration: Duration): string => {
   } else if (duration.as('months') < 1) { // show in days and hours
     let d = duration.toFormat('d');
     duration = d + (d > 1 ? ' days' : ' day');
-  } else { 
+  } else {
     let d = Math.trunc(duration.as('months'));
     duration = d + (d > 1 ? ' months' : ' month');;
   }
@@ -49,7 +49,7 @@ export const msToSec = (ms:number): number => Math.round(ms / 1000);
 export const diffFromNowString = (ts:number): string =>
   durationFormattedFull(DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)));
 
-export const diffFromNowShortString = (ts: number): string => 
+export const diffFromNowShortString = (ts: number): string =>
   durationFormatted(DateTime.fromMillis(Date.now()).diff(DateTime.fromMillis(ts)));
 
 export const getDateFromMill = date =>
@@ -69,11 +69,19 @@ export function formatDateTimeDefault(timestamp: number): string {
   return isToday(date) ? 'Today' : date.toFormat('LLL dd, yyyy') + ', ' + date.toFormat('hh:mm a')
 }
 
+/**
+ * Formats timestamps into readable date
+ * @param {Number} timestamp
+ * @param {String} timezone fixed offset like UTC+6
+ * @returns {String} formatted date (or time if its today)
+ */
 export function formatTimeOrDate(timestamp: number, timezone: string): string {
   var date = DateTime.fromMillis(timestamp)
-  if (timezone === 'UTC')
-    date = date.toUTC();
-  
+  if (timezone) {
+    if (timezone === 'UTC') date = date.toUTC();
+    date = date.setZone(timezone)
+  }
+
   return isToday(date) ? date.toFormat('hh:mm a') : date.toFormat('LLL dd, yyyy, hh:mm a');
 }
 
