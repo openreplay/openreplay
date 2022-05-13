@@ -11,7 +11,7 @@ import { observer } from 'mobx-react-lite';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
 import stl from './sessionItem.css';
 import Counter from './Counter'
-import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useLocation, RouteComponentProps } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';
 import PlayLink from './PlayLink';
 import ErrorBars from './ErrorBars';
@@ -55,7 +55,7 @@ interface Props {
   },
 }
 
-function SessionItem(props: RouteComponentProps<Props>) {
+function SessionItem(props: Props) {
   const { settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
@@ -87,10 +87,14 @@ function SessionItem(props: RouteComponentProps<Props>) {
     lastPlayedSessionId,
   } = props;
 
+  const location = useLocation();
+
+  console.log(location.pathname);
+
   const formattedDuration = durationFormatted(duration);
   const hasUserId = userId || userAnonymousId;
-  const isSessions = isRoute(SESSIONS_ROUTE, props.location.pathname);
-  const isAssist = isRoute(ASSIST_ROUTE, props.location.pathname) || isRoute(ASSIST_LIVE_SESSION, props.location.pathname);
+  const isSessions = isRoute(SESSIONS_ROUTE, location.pathname);
+  const isAssist = isRoute(ASSIST_ROUTE, location.pathname) || isRoute(ASSIST_LIVE_SESSION, location.pathname);
   const isLastPlayed = lastPlayedSessionId === sessionId;
 
   const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
@@ -182,4 +186,4 @@ function SessionItem(props: RouteComponentProps<Props>) {
   )
 }
 
-export default withRouter(observer(SessionItem))
+export default observer<Props>(SessionItem)
