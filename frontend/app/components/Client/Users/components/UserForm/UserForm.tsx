@@ -6,6 +6,8 @@ import { useObserver } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import Select from 'Shared/Select';
 import { confirm } from 'UI/Confirmation';
+import { connect } from 'react-redux';
+
 interface Props {
     isSmtp?: boolean;
     isEnterprise?: boolean;
@@ -151,4 +153,6 @@ function UserForm(props: Props) {
     ));
 }
 
-export default UserForm;
+export default connect(state => ({
+    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+}))(UserForm);
