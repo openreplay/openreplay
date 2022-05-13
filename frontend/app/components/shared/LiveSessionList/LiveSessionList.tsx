@@ -20,14 +20,14 @@ const PER_PAGE = 10;
 
 interface Props {
   loading: Boolean,
-  list: List<any>,  
+  list: List<any>,
   fetchLiveList: () => Promise<void>,
   applyFilter: () => void,
   filters: any,
   addAttribute: (obj) => void,
   addFilterByKeyAndValue: (key: FilterKey, value: string) => void,
   updateCurrentPage: (page: number) => void,
-  currentPage: number, 
+  currentPage: number,
   metaList: any,
   updateSort: (sort: any) => void,
   sort: any,
@@ -41,7 +41,7 @@ function LiveSessionList(props: Props) {
   const sortOptions = metaList.map(i => ({
     text: capitalize(i), value: i
   })).toJS();
-  
+
   // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
   // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
@@ -69,7 +69,7 @@ function LiveSessionList(props: Props) {
         if (filter.key === FilterKey.USERID) {
           const _userId = session.userId ? session.userId.toLowerCase() : '';
           hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
-        } 
+        }
         if (filter.category === FilterCategory.METADATA) {
           const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
           hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
@@ -80,7 +80,7 @@ function LiveSessionList(props: Props) {
     setSessions(filteredSessions);
   }, [filters, list]);
 
-  useEffect(() => {     
+  useEffect(() => {
     props.fetchLiveList();
     timeout();
     return () => {
@@ -88,7 +88,7 @@ function LiveSessionList(props: Props) {
     }
   }, [])
 
-  const onUserClick = (userId, userAnonymousId) => {
+  const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
       props.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
@@ -183,7 +183,7 @@ export default withPermissions(['ASSIST_LIVE'])(connect(
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
     sort: state.getIn(['liveSearch', 'sort']),
   }),
-  { 
+  {
     fetchLiveList,
     applyFilter,
     addAttribute,
