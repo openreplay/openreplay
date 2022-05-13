@@ -55,6 +55,7 @@ const withObTab = routes.withObTab;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
+const METRICS_DETAILS_SUB = routes.metricDetailsSub();
 
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
@@ -204,6 +205,7 @@ class Router extends React.Component {
             {/* DASHBOARD and Metrics */}
             <Route exact strict path={ withSiteId(METRICS_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(METRICS_DETAILS, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(METRICS_DETAILS_SUB, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />

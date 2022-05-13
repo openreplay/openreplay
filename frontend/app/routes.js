@@ -127,6 +127,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     
     metrics(),
     metricDetails(''),
+    metricDetailsSub(''),
 
     dashboard(''),
     dashboardSelected(''),

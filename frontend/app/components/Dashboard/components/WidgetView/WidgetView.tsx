@@ -23,9 +23,11 @@ function WidgetView(props: Props) {
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
 
     React.useEffect(() => {
-        if (metricId && metricId !== 'create') {
+        if (metricId && metricId !== 'create' && (!widget || !widget.exists())) {
             metricStore.fetch(metricId);
-        } else {
+        }
+
+        if (metricId === 'create') {
             metricStore.init();
         }
     }, [])
