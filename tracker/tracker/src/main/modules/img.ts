@@ -1,6 +1,6 @@
 import { timestamp, isURL } from "../utils.js";
 import App from "../app/index.js";
-import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../../messages/index.js";
+import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../../common/messages.js";
 
 const PLACEHOLDER_SRC = "https://static.openreplay.com/tracker/placeholder.jpeg";
 

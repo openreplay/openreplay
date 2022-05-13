@@ -94,7 +94,7 @@ function UserForm(props: Props) {
                     </label>
                 </div>
                 
-                { !isEnterprise && (
+                { isEnterprise && (
                     <div className="form-group">
                         <label htmlFor="role">{ 'Role' }</label>
                         <Select
@@ -115,7 +115,7 @@ function UserForm(props: Props) {
                     <div className="flex items-center mr-auto">
                         <Button
                             onClick={ onSave }
-                            disabled={ !user.valid() || isSaving }
+                            disabled={ !user.valid(isEnterprise) || isSaving }
                             loading={ isSaving }
                             primary
                             marginRight

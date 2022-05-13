@@ -1,5 +1,5 @@
 import App from "../app/index.js";
-import { SetViewportScroll, SetNodeScroll } from "../../messages/index.js";
+import { SetViewportScroll, SetNodeScroll } from "../../common/messages.js";
 
 export default function (app: App): void {
   let documentScroll = false;

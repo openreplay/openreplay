@@ -1,13 +1,14 @@
-import Message from "../messages/message.js";
+import type Message from "../common/messages.js";
+import type { WorkerMessageData } from "../common/webworker.js";
+
 import { 
   classes,
   SetPageVisibility,
   MouseMove,
-} from "../messages/index.js";
+} from "../common/messages.js";
 import QueueSender from "./QueueSender.js";
 import BatchWriter from "./BatchWriter.js";
 
-import type { WorkerMessageData } from "./types.js";
 
 
 const AUTO_SEND_INTERVAL = 10 * 1000

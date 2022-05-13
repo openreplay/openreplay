@@ -1,6 +1,6 @@
+import type Message from "../../common/messages.js";
+import { Timestamp, Metadata } from "../../common/messages.js";
 import { timestamp, deprecationWarn } from "../utils.js";
-import { Timestamp, Metadata } from "../../messages/index.js";
-import Message from "../../messages/message.js";
 import Nodes from "./nodes.js";
 import Observer from "./observer/top_observer.js";
 import Sanitizer from "./sanitizer.js";
@@ -13,7 +13,7 @@ import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
-import type { Options as WebworkerOptions, WorkerMessageData } from "../../webworker/types.js";
+import type { Options as WebworkerOptions, WorkerMessageData } from "../../common/webworker.js";
 
 
 // TODO: Unify and clearly describe options logic

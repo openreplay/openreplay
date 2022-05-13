@@ -4,7 +4,7 @@ import {
   getLabelAttribute,
 } from "../utils.js";
 import App from "../app/index.js";
-import { MouseMove, MouseClick } from "../../messages/index.js";
+import { MouseMove, MouseClick } from "../../common/messages.js";
 import { getInputLabel } from "./input.js";
 
 function _getSelector(target: Element): string {

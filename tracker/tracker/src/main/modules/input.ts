@@ -5,7 +5,7 @@ import {
   hasOpenreplayAttribute,
 } from "../utils.js";
 import App from "../app/index.js";
-import { SetInputTarget, SetInputValue, SetInputChecked } from "../../messages/index.js";
+import { SetInputTarget, SetInputValue, SetInputChecked } from "../../common/messages.js";
 
 // TODO: take into consideration "contenteditable" attribute
 type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
