@@ -4,7 +4,7 @@ import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { withSiteId } from 'App/routes';
 import { Loader } from 'UI';
-// import FunnelSubDetailsView from './FunnelSubDetailsView';
+import FunnelIssueDetails from '../Funnels/FunnelIssueDetails';
 
 interface Props {
     history: any;
@@ -12,11 +12,13 @@ interface Props {
     siteId: any
 }
 function WidgetSubDetailsView(props: Props) {
-    const { match: { params: { siteId, dashboardId, metricId } } } = props;
-    const { metricStore } = useStore();
+    const { match: { params: { siteId, dashboardId, metricId, subId } } } = props;
+    const { metricStore, funnelStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
+    const issueInstance = useObserver(() => funnelStore.issueInstance);
     const loadingWidget = useObserver(() => metricStore.isLoading);
-    const isFunnel = widget.metricType === 'funnel';
+    // const isFunnel = widget.metricType === 'funnel'; // TODO uncomment this line
+    const isFunnel = widget.metricType === 'table'; // TODO remove this line
 
     useEffect(() => {
         if (!widget || !widget.exists()) {
@@ -30,12 +32,12 @@ function WidgetSubDetailsView(props: Props) {
                 items={[
                     { label: dashboardId ? 'Dashboard' : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
                     { label: widget.name, to: withSiteId(`/metrics/${widget.metricId}`, siteId) },
-                    { label: 'Sub Details' }
+                    { label: issueInstance ? issueInstance.title : 'Sub Details' }
                 ]}
             />
 
             <Loader loading={loadingWidget}>
-                {/* {isFunnel && <FunnelSubDetailsView widget={widget} />} */}
+                {isFunnel && <FunnelIssueDetails funnelId={metricId} issueId={subId} />}
             </Loader>
         </div>
     );

@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { NoContent, Loader } from 'UI';
 import FunnelIssuesDropdown from '../FunnelIssuesDropdown';
 import FunnelIssuesSort from '../FunnelIssuesSort';
-import FunnelIssuesList from './components/FunnelIssuesList';
+import FunnelIssuesList from '../FunnelIssuesList';
 
 function FunnelIssues(props) {
     const { funnelStore } = useStore();

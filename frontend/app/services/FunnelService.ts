@@ -54,10 +54,12 @@ export default class FunnelService implements IFunnelService {
         const path = funnelId ? `/funnels/${funnelId}/issues` : '/funnels/issues';
         return this.client.post(path, payload)
             .then(response => response.json())
+            .then(response => response.data || []);
     }
 
     fetchIssue(funnelId: string, issueId: string): Promise<any> {
-        return this.client.get(`/funnels/${funnelId}/issues/${issueId}`)
+        return this.client.post(`/funnels/${funnelId}/issues/${issueId}/sessions`, {})
             .then(response => response.json())
+            .then(response => response.data || {});
     }
 }

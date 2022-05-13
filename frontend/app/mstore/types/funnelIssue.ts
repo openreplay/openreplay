@@ -12,6 +12,7 @@ export default class FunnelIssue {
     affectedSessionsPer: number = 0
     unaffectedSessionsPer: number = 0
     icon: any = {}
+    sessions: any[] = []
 
     constructor() {
     }
