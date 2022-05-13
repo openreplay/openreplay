@@ -95,8 +95,8 @@ export default class User implements IUser {
         }
     }
 
-    valid() {
-        return validateName(this.name, { empty: false }) && validateEmail(this.email) && !!this.roleId;
+    valid(isEnterprise: boolean = false) {
+        return validateName(this.name, { empty: false }) && validateEmail(this.email) && (isEnterprise ? !!this.roleId : true);
     }
 
     exists() {
