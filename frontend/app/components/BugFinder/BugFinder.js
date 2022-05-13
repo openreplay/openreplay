@@ -23,7 +23,8 @@ import NoSessionsMessage from 'Shared/NoSessionsMessage';
 // import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
-import { clearSearch, fetchSessions } from 'Duck/search';
+import { clearSearch, fetchSessions, addFilterByKeyAndValue } from 'Duck/search';
+import { FilterCategory, FilterKey, IssueType } from 'Types/filter/filterType';
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -72,6 +73,7 @@ const allowedQueryKeys = [
   setFunnelPage,
   clearSearch,
   fetchSessions,
+  addFilterByKeyAndValue,
 })
 @withPageTitle("Sessions - OpenReplay")
 export default class BugFinder extends React.PureComponent {
@@ -101,7 +103,8 @@ export default class BugFinder extends React.PureComponent {
 
     const queryFilter = this.props.query.all(allowedQueryKeys);
     if (queryFilter.hasOwnProperty('userId')) {
-      props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
+      // props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
+      props.addFilterByKeyAndValue(FilterKey.USERID, queryFilter.userId);
     }
   }
 
