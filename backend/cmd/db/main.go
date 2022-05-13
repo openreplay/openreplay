@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/internal/builder"
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/datasaver"
-	"openreplay/backend/internal/heuristics"
+	"openreplay/backend/internal/handlers"
+	"openreplay/backend/internal/handlers/custom"
 	"time"
 
 	"os"
@@ -28,9 +30,21 @@ func main() {
 	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
+	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
+	handlersFabric := func() []handlers.MessageProcessor {
+		return []handlers.MessageProcessor{
+			&custom.EventMapper{},
+			custom.NewInputEventBuilder(),
+			custom.NewPageEventBuilder(),
+		}
+	}
+
+	// Create handler's aggregator
+	builderMap := builder.NewBuilderMap(handlersFabric)
+
 	// Init modules
-	heurFinder := heuristics.NewHandler()
 	saver := datasaver.New(pg)
+	saver.InitStats()
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	// Handler logic
@@ -60,10 +74,10 @@ func main() {
 		}
 
 		// Handle heuristics and save to temporary queue in memory
-		heurFinder.HandleMessage(session, msg)
+		builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
 
 		// Process saved heuristics messages as usual messages above in the code
-		heurFinder.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
+		builderMap.IterateSessionReadyMessages(sessionID, func(msg messages.Message) {
 			// TODO: DRY code (carefully with the return statement logic)
 			if err := saver.InsertMessage(sessionID, msg); err != nil {
 				if !postgres.IsPkeyViolation(err) {
@@ -82,8 +96,9 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupDB,
 		[]string{
+			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,
-			cfg.TopicTrigger,
+			cfg.TopicTrigger, // to receive SessionEnd events
 		},
 		handler,
 		false,
@@ -94,15 +109,18 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	tick := time.Tick(cfg.CommitBatchTimeout)
+	commitTick := time.Tick(cfg.CommitBatchTimeout)
 	for {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
 			consumer.Close()
 			os.Exit(0)
-		case <-tick:
+		case <-commitTick:
 			pg.CommitBatches()
+			if err := saver.CommitStats(); err != nil {
+				log.Printf("Error on stats commit: %v", err)
+			}
 			// TODO?: separate stats & regular messages
 			if err := consumer.Commit(); err != nil {
 				log.Printf("Error on consumer commit: %v", err)

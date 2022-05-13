@@ -1396,7 +1396,7 @@ type IssueEvent struct {
 	Type          string
 	ContextString string
 	Context       string
-	Payload       string
+	Payload       string // TODO: check, maybe it's better to use empty interface here
 }
 
 func (msg *IssueEvent) Encode() []byte {
