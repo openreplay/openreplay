@@ -17,7 +17,7 @@ const generateGMTZones = (): TimezonesDropdown => {
 
     const positiveNumbers = [...Array(12).keys()];
     const negativeNumbers = [...Array(12).keys()].reverse();
-    negativeNumbers.pop(); // remove trailing zero since we have on in positive numbers array
+    negativeNumbers.pop(); // remove trailing zero since we have one in positive numbers array
 
     const combinedArray = [...negativeNumbers, ...positiveNumbers];
 
