@@ -154,7 +154,7 @@ export default class MessageDistributor extends StatedScreen {
 
     const r = new MFileReader(new Uint8Array(), this.sessionStart)
     const msgs: Array<Message> = []
-    loadFiles(this.session.mobsUrl,
+    loadFiles([this.session.mobsUrl],
       b => {
         r.append(b)
         let next: ReturnType<MFileReader['next']>

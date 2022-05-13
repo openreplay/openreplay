@@ -8,6 +8,7 @@ import { useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
 import WidgetName from '../WidgetName';
 import FunnelIssues from '../FunnelIssues/FunnelIssues';
+import Breadcrumb from 'Shared/Breadcrumb';
 interface Props {
     history: any;
     match: any
@@ -40,7 +41,12 @@ function WidgetView(props: Props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <div className="relative pb-10">
-                <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
+                <Breadcrumb
+                    items={[
+                        { label: dashboardId ? 'Dashboard' : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
+                        { label: widget.name, }
+                    ]}
+                />
                 <div className="bg-white rounded border">
                     <div className="px-6 py-4 flex justify-between items-center">
                         <h1 className="mb-0 text-2xl">

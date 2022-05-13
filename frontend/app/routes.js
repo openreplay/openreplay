@@ -112,6 +112,7 @@ export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => ha
 export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
+export const metricDetailsSub = (id = ':metricId', subId = ':subId', hash) => hashed(`/metrics/${ id }/details/${subId}`, hash);
 
 export const RESULTS_QUERY_KEY = 'results';
 export const METRICS_QUERY_KEY = 'metrics';
