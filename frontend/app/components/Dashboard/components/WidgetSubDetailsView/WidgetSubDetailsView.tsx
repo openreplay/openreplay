@@ -3,6 +3,8 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import React, { useEffect } from 'react';
 import { withSiteId } from 'App/routes';
+import { Loader } from 'UI';
+// import FunnelSubDetailsView from './FunnelSubDetailsView';
 
 interface Props {
     history: any;
@@ -14,6 +16,7 @@ function WidgetSubDetailsView(props: Props) {
     const { metricStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
     const loadingWidget = useObserver(() => metricStore.isLoading);
+    const isFunnel = widget.metricType === 'funnel';
 
     useEffect(() => {
         if (!widget || !widget.exists()) {
@@ -30,6 +33,10 @@ function WidgetSubDetailsView(props: Props) {
                     { label: 'Sub Details' }
                 ]}
             />
+
+            <Loader loading={loadingWidget}>
+                {/* {isFunnel && <FunnelSubDetailsView widget={widget} />} */}
+            </Loader>
         </div>
     );
 }

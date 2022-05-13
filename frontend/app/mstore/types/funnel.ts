@@ -11,6 +11,7 @@ export interface IFunnel {
     isPublic: boolean
     fromJSON: (json: any) => void
     toJSON: () => any
+    exists: () => boolean
 }
 
 export default class Funnel implements IFunnel {
@@ -43,5 +44,9 @@ export default class Funnel implements IFunnel {
             sessionsCount: this.sessionsCount,
             conversionRate: this.conversionRate,
         }
+    }
+
+    exists(): boolean {
+        return this.funnelId !== ''
     }
 }

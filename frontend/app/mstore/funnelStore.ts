@@ -18,6 +18,8 @@ export default class FunnelStore {
     issues: any[] = []
     isLoadingIssues: boolean = false
     issuesFilter: any = []
+
+    issueInstance: FunnelIssue | null = null
     
     constructor() {
         makeAutoObservable(this, {
@@ -110,6 +112,22 @@ export default class FunnelStore {
                 .then(response => {
                     this.issues = response.map(i => new FunnelIssue().fromJSON(i))
                     resolve(this.issues)
+                }).catch(error => {
+                    reject(error)
+                }
+            ).finally(() => {
+                this.isLoadingIssues = false
+            })
+        })
+    }
+
+    fetchIssue(funnelId: string, issueId: string): Promise<any> {
+        this.isLoadingIssues = true
+        return new Promise((resolve, reject) => {
+            funnelService.fetchIssue(funnelId, issueId)
+                .then(response => {
+                    this.issueInstance = new FunnelIssue().fromJSON(response)
+                    resolve(this.issueInstance)
                 }).catch(error => {
                     reject(error)
                 }

@@ -7,7 +7,7 @@ import { Icon, BackLink, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
 import WidgetName from '../WidgetName';
-import FunnelIssues from '../FunnelIssues/FunnelIssues';
+import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
 interface Props {
     history: any;
