@@ -37,7 +37,7 @@ const Section = ({ index, title, description, content }) => (
         { description && <div className="text-sm color-gray-medium">{description}</div>}
       </div>
     </div>
-    
+
     <div className="ml-10">
       {content}
     </div>
@@ -122,7 +122,7 @@ const AlertForm = props => {
                   <Dropdown
                     className="w-4/6"
                     placeholder="change"
-                    selection                    
+                    selection
                     options={ changeOptions }
                     name="change"
                     value={ instance.change }
@@ -145,7 +145,7 @@ const AlertForm = props => {
                   onChange={ writeQueryOption }
                 />
               </div>
-              
+
               <div className="flex items-center my-3">
                 <label className="w-2/6 flex-shrink-0 font-normal">{'is'}</label>
                 <div className="w-4/6 flex items-center">
@@ -172,7 +172,7 @@ const AlertForm = props => {
                   )}
                   { !unit && (
                       <Input
-                      className="pl-4"                      
+                      className="pl-4"
                       name="right"
                       value={ instance.query.right }
                       onChange={ writeQuery }
@@ -242,7 +242,7 @@ const AlertForm = props => {
                   name="webhook"
                   type="checkbox"
                   checked={ instance.webhook }
-                  onClick={ onChangeOption }                  
+                  onClick={ onChangeOption }
                   label="Webhook"
                 />
               </div>
@@ -266,7 +266,7 @@ const AlertForm = props => {
                 <div className="flex items-start my-4">
                   <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Email'}</label>
                   <div className="w-4/6">
-                    <DropdownChips 
+                    <DropdownChips
                       textFiled
                       validate={validateEmail}
                       selected={instance.emailInput}
@@ -277,7 +277,7 @@ const AlertForm = props => {
                 </div>
               )}
 
-              
+
               {instance.webhook && (
                 <div className="flex items-start my-4">
                   <label className="w-2/6 flex-shrink-0 font-normal pt-2">{'Webhook'}</label>
@@ -294,8 +294,8 @@ const AlertForm = props => {
           }
         />
       </div>
-    
-      
+
+
       <div className="flex items-center justify-between absolute bottom-0 left-0 right-0 p-6 border-t z-10 bg-white">
         <div className="flex items-center">
           <Button
