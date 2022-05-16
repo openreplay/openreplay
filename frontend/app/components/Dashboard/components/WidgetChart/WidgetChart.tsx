@@ -13,6 +13,7 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import ErrorsWidget from '../Errors/ErrorsWidget';
+import SessionWidget from '../Sessions/SessionWidget';
 interface Props {
     metric: any;
     isWidget?: boolean
@@ -83,6 +84,10 @@ function WidgetChart(props: Props) {
 
     const renderChart = () => {
         const { metricType, viewType } = metric;
+
+        if (metricType === 'sessions') {
+            return <SessionWidget metric={metric} />
+        }
 
         if (metricType === 'errors') {
             return <ErrorsWidget metric={metric} />

@@ -5,9 +5,18 @@ import UserStore from './userStore';
 import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
 import FunnelStore from './funnelStore';
-import { dashboardService, metricService, funnelService, sessionService, userService, auditService } from 'App/services';
+import {
+  dashboardService,
+  metricService,
+  funnelService,
+  sessionService,
+  userService,
+  auditService,
+  errorService,
+} from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
+import ErrorStore from './errorStore';
 
 export class RootStore {
     dashboardStore: IDashboardSotre;
@@ -17,6 +26,7 @@ export class RootStore {
     userStore: UserStore; 
     roleStore: RoleStore;
     auditStore: AuditStore;
+    errorStore: ErrorStore;
 
     constructor() {
         this.dashboardStore = new DashboardStore();
@@ -26,6 +36,7 @@ export class RootStore {
         this.userStore = new UserStore();
         this.roleStore = new RoleStore();
         this.auditStore = new AuditStore();
+        this.errorStore = new ErrorStore();
     }
 
     initClient() {
@@ -36,6 +47,7 @@ export class RootStore {
       sessionService.initClient(client)
       userService.initClient(client)
       auditService.initClient(client)
+      errorService.initClient(client)
     }
 }
 
