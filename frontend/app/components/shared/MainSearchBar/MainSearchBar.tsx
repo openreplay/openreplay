@@ -4,6 +4,8 @@ import SavedSearch from 'Shared/SavedSearch';
 import { Button, Popup } from 'UI';
 import { clearSearch } from 'Duck/search';
 import { connect } from 'react-redux';
+import stl from './mainSearchBar.css';
+import cn from 'classnames';
 
 interface Props {
     clearSearch: () => void;
@@ -17,23 +19,13 @@ const MainSearchBar = (props: Props) => {
     <div className="flex items-center">
         <div style={{ width: "60%", marginRight: "10px"}}><SessionSearchField /></div>
         <div className="flex items-center" style={{ width: "40%"}}>
-        {optionsReady && <SavedSearch /> }  
-        <Popup
-            trigger={
-                <Button
-                    plain
-                    disabled={!hasFilters}
-                    className="ml-auto"
-                    onClick={() => props.clearSearch()}
-                >
-                    <span className="font-medium">Clear</span>
-                </Button>
-            }
-            content={'Clear Steps'}
-            size="tiny"
-            inverted
-            position="top right"
-        />
+        {optionsReady && <SavedSearch /> }
+            <span
+                className={cn("ml-auto", stl.button, { [stl.disabled]: !hasFilters })}
+                onClick={() => props.clearSearch()}
+            >
+                <span className="font-medium">Clear search</span>
+            </span>
         </div>
     </div>
   )

@@ -23,8 +23,8 @@ function SavedSearch(props) {
   }, [])
 
   return (
-    <OutsideClickDetectingDiv 
-      // className={ cn("relative", { "flex-1" : fullWidth }) } 
+    <OutsideClickDetectingDiv
+      // className={ cn("relative", { "flex-1" : fullWidth }) }
       onClickOutside={() => setShowMenu(false)}
     >
       <div className="relative">
@@ -33,7 +33,8 @@ function SavedSearch(props) {
             className="flex items-center"
             onClick={() => setShowMenu(true)}
           >
-            <span className="mr-2">{`Saved Search (${list.size})`}</span>
+            <span className="mr-1">Saved Search</span>
+            <span className="font-bold mr-2">{list.size}</span>
             <Icon name="ellipsis-v" color="teal" size="14" />
           </Button>
           { savedSearch.exists() && (
