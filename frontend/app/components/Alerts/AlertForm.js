@@ -71,7 +71,7 @@ const AlertForm = props => {
   const isThreshold = instance.detectionMethod === 'threshold';
 
   return (
-    <Form className={ cn("p-6", stl.wrapper)} style={style} onSubmit={() => props.onSubmit(instance)} id="alert-form">
+    <Form className={ cn("p-6 pb-10", stl.wrapper)} style={style} onSubmit={() => props.onSubmit(instance)} id="alert-form">
        <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>
         <input
           autoFocus={ true }
@@ -296,7 +296,7 @@ const AlertForm = props => {
       </div>
     
       
-      <div className="flex items-center justify-between absolute bottom-0 left-0 right-0 p-6 border-t">
+      <div className="flex items-center justify-between absolute bottom-0 left-0 right-0 p-6 border-t z-10 bg-white">
         <div className="flex items-center">
           <Button
             loading={loading}
