@@ -26,7 +26,7 @@ export default class ItemMenu extends React.PureComponent {
 
     return (
       <div className={ styles.wrapper }>
-        <OutsideClickDetectingDiv 
+        <OutsideClickDetectingDiv
           onClickOutside={ this.closeMenu }
         >
           <div
@@ -36,7 +36,7 @@ export default class ItemMenu extends React.PureComponent {
             {label && <span className="mr-1 color-gray-medium ">{label}</span>}
             <div
               ref={ (ref) => { this.menuBtnRef = ref; } }
-              className={cn("rounded-full flex items-center justify-center hover:bg-gray-light", { 'bg-gray-light' : displayed, "w-10 h-10" : !label })}
+              className={cn("rounded-full flex items-center justify-center", { 'bg-gray-light' : displayed, "w-10 h-10" : !label })}
               role="button"
             >
               <Icon name="ellipsis-v" size="16" />
