@@ -7,13 +7,13 @@ import { NavLink } from 'react-router-dom';
 import { withSiteId } from 'App/routes';
 import CustomMetrics from 'Shared/CustomMetrics';
 
-function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
+function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId, activeSection }) {
 	return (
 		<>
 			<SideMenuHeader className="mb-4" text={ title }/>
 		  { items.filter(i => i.section === 'metrics').map(item =>
 		      <SideMenuitem
-		      	key={ item.key }		      	
+		      	key={ item.key }
 		        active={ item.active }
 		        title={ item.label }
 		        iconName={ item.icon }
@@ -28,10 +28,10 @@ function SideMenuSection({ title, items, onItemClick, setShowAlerts, siteId }) {
 					title="Manage Alerts"
 					iconName="bell-plus"
 					onClick={() => setShowAlerts(true)}
-				/>				
+				/>
 			</div>
 			<div className={stl.divider} />
-			<div className="my-3">		
+			<div className="my-3">
 				<CustomMetrics />
 			</div>
 		</>
