@@ -39,7 +39,9 @@ function MetricsList(props: Props) {
                 </div>
 
                 {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
-                    <MetricListItem metric={metric} />
+                    <React.Fragment key={metric.metricId}>
+                        <MetricListItem metric={metric} />
+                    </React.Fragment>
                 ))}
             </div>
 

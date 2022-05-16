@@ -24,7 +24,7 @@ function MetricsView(props: Props) {
                     <PageTitle title="Metrics" className="" />
                     <span className="text-2xl color-gray-medium ml-2">{metricsCount}</span>
                 </div>
-                <Link to={'/metrics/create'}><Button primary size="small">Add Metric</Button></Link>
+                <Link to={'/metrics/create'}><Button primary size="small">Create Metric</Button></Link>
                 <div className="ml-auto w-1/3">
                     <MetricsSearch />
                 </div>

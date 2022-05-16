@@ -34,17 +34,17 @@ function WidgetForm(props: Props) {
     const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = (e, { value, name }) => {
         const obj = { [ name ]: value };
-  
+
         if (name === 'metricValue') {
             obj['metricValue'] = [value];
         }
-    
+
         if (name === 'metricOf') {
             if (value === FilterKey.ISSUE) {
                 obj['metricValue'] = ['all'];
             }
         }
-    
+
         if (name === 'metricType') {
             if (value === 'timeseries') {
                 obj['metricOf'] = timeseriesOptions[0].value;
@@ -67,7 +67,7 @@ function WidgetForm(props: Props) {
                 } else {
                     history.push(withSiteId(metricDetails(metric.metricId), siteId));
                 }
-                
+
             }
         });
     }
@@ -85,7 +85,7 @@ function WidgetForm(props: Props) {
     const onObserveChanges = () => {
         // metricStore.fetchMetricChartData(metric);
     }
-    
+
     return useObserver(() => (
         <div className="p-4">
             <div className="form-group">
