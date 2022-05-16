@@ -2,35 +2,34 @@ package main
 
 import (
 	"log"
-	"time"
-
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/assets"
+	"openreplay/backend/internal/assets/cacher"
+	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
-	"openreplay/backend/services/assets/cacher"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
-	GROUP_CACHE := env.String("GROUP_CACHE")
-	TOPIC_CACHE := env.String("TOPIC_CACHE")
+	cfg := config.New()
 
 	cacher := cacher.NewCacher(
-		env.String("AWS_REGION"),
-		env.String("S3_BUCKET_ASSETS"),
-		env.String("ASSETS_ORIGIN"),
-		env.Int("ASSETS_SIZE_LIMIT"),
+		cfg.AWSRegion,
+		cfg.S3BucketAssets,
+		cfg.AssetsOrigin,
+		cfg.AssetsSizeLimit,
 	)
 
 	consumer := queue.NewMessageConsumer(
-		GROUP_CACHE,
-		[]string{TOPIC_CACHE},
+		cfg.GroupCache,
+		[]string{cfg.TopicCache},
 		func(sessionID uint64, message messages.Message, e *types.Meta) {
 			switch msg := message.(type) {
 			case *messages.AssetCache:
@@ -39,7 +38,7 @@ func main() {
 				if msg.Source != "js_exception" {
 					return
 				}
-				sourceList, err := extractJSExceptionSources(&msg.Payload)
+				sourceList, err := assets.ExtractJSExceptionSources(&msg.Payload)
 				if err != nil {
 					log.Printf("Error on source extraction: %v", err)
 					return
@@ -52,12 +51,12 @@ func main() {
 		true,
 	)
 
-	tick := time.Tick(20 * time.Minute)
+	log.Printf("Cacher service started\n")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Printf("Cacher service started\n")
+	tick := time.Tick(20 * time.Minute)
 	for {
 		select {
 		case sig := <-sigchan:
