@@ -1,4 +1,4 @@
-package main
+package assets
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ type frame struct {
 	FileName string `json:"fileName"`
 }
 
-func extractJSExceptionSources(payload *string) ([]string, error) {
+func ExtractJSExceptionSources(payload *string) ([]string, error) {
 	var frameList []frame
 	err := json.Unmarshal([]byte(*payload), &frameList)
 	if err != nil {
