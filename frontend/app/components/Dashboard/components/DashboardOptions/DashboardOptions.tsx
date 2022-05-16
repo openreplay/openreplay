@@ -19,10 +19,10 @@ function DashboardOptions(props: Props) {
     if (isEnterprise) {
         menuItems.unshift({ icon: 'pdf-download', text: 'Download Report', onClick: renderReport });
     }
-        
+
     return (
         <ItemMenu
-            label="Options"
+            label="More Options"
             items={menuItems}
         />
     );
