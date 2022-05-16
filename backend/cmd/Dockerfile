@@ -11,7 +11,6 @@ RUN go mod download
 
 FROM prepare AS build
 COPY pkg pkg
-COPY services services
 COPY internal internal
 COPY cmd cmd
 
