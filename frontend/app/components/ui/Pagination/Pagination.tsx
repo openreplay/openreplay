@@ -4,6 +4,7 @@ import { Icon } from 'UI'
 import cn from 'classnames'
 import { debounce } from 'App/utils';
 import { Tooltip } from 'react-tippy';
+import { numberWithCommas } from 'App/utils';
 interface Props {
     page: number
     totalPages: number
@@ -57,7 +58,7 @@ export default function Pagination(props: Props) {
                 onChange={(e) => changePage(parseInt(e.target.value))}
             />
             <span className="mx-3 color-gray-medium">of</span>
-            <span >{totalPages}</span>
+            <span >{numberWithCommas(totalPages)}</span>
             <Tooltip
                 arrow
                 sticky

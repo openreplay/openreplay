@@ -33,6 +33,7 @@ function BreakdownOfLoadedResources(props: Props) {
                   {...Styles.yaxis}
                   allowDecimals={false}
                   label={{ ...Styles.axisLabelLeft, value: "Number of Resources" }}
+                  tickFormatter={val => Styles.tickFormatter(val)}
                 />
                 <Legend />
                 <Tooltip {...Styles.tooltip} />
