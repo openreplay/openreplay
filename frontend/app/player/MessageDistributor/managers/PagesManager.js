@@ -25,13 +25,13 @@ export default class PagesManager extends ListWalker<TimedMessage> {
 	*/
 	add(m: TimedMessage): void {
 		if (m.tp === "create_document") {
-			super.add(new DOMManager(this.#screen, this.#isMobile, m.time))
+			super.append(new DOMManager(this.#screen, this.#isMobile, m.time))
 		}
 		if (this.last === null) {
 			// Log wrong
 			return;
 		}
-		this.last.add(m);
+		this.last.append(m);
 	}
 
 	sort(comparator) {
@@ -39,7 +39,7 @@ export default class PagesManager extends ListWalker<TimedMessage> {
 	}
 
 	moveReady(t: number): Promise<void> {
-		const requiredPage = this.moveToLast(t);
+		const requiredPage = this.moveGetLast(t);
 		if (!!requiredPage) {
 			this.#currentPage = requiredPage;
 			this.#currentPage.reset(); // Otherwise it won't apply create_document

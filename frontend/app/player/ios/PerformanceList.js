@@ -27,8 +27,8 @@ export default class PerformanceList {
 		return this._list.count;
 	}
 
-	moveToLast(t) {
-		this._list.moveToLast(t);
+	moveGetLast(t) {
+		this._list.moveGetLast(t);
 	}
 
 	append(m) {

@@ -34,8 +34,8 @@ export default class ScreenList {
 		this._walker._list.splice(p, 0, m);
 	}
 
-	moveToLast(time) {
-		return this._walker.moveToLast(time);
+	moveGetLast(time) {
+		return this._walker.moveGetLast(time);
 	}
 
 	insertScreen(time, width, height, arrayBuffer): void {

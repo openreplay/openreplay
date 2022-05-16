@@ -207,12 +207,12 @@ export default class MessageDistributor extends StatedScreen {
   move(t: number, index?: number): void {
     const stateToUpdate: Partial<State> = {};
     /* == REFACTOR_ME ==  */
-    const lastLoadedLocationMsg = this.loadedLocationManager.moveToLast(t, index);
+    const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
       setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
-    const llEvent = this.locationEventManager.moveToLast(t, index);
+    const llEvent = this.locationEventManager.moveGetLast(t, index);
     if (!!llEvent) {
       if (llEvent.domContentLoadedTime != null) {
         stateToUpdate.domContentLoadedTime = {
@@ -231,22 +231,22 @@ export default class MessageDistributor extends StatedScreen {
       }
     }
     /* === */
-    const lastLocationMsg = this.locationManager.moveToLast(t, index);
+    const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
       stateToUpdate.location = lastLocationMsg.url;
     }
-    const lastConnectionInfoMsg = this.connectionInfoManger.moveToLast(t, index);
+    const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
     if (!!lastConnectionInfoMsg) {
       stateToUpdate.connType = lastConnectionInfoMsg.type;
       stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
     }
-    const lastPerformanceTrackMessage = this.performanceTrackManager.moveToLast(t, index);
+    const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
     if (!!lastPerformanceTrackMessage) {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
     LIST_NAMES.forEach(key => {
-      const lastMsg = this.lists[key].moveToLast(t, key === 'exceptions' ? undefined : index);
+      const lastMsg = this.lists[key].moveGetLast(t, key === 'exceptions' ? undefined : index);
       if (lastMsg != null) {
         stateToUpdate[`${key}ListNow`] = this.lists[key].listNow;
       }
@@ -256,19 +256,19 @@ export default class MessageDistributor extends StatedScreen {
 
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
-    const lastResize = this.resizeManager.moveToLast(t, index);
+    const lastResize = this.resizeManager.moveGetLast(t, index);
     if (!!lastResize) {
       this.setSize(lastResize)
     }
     this.pagesManager.moveReady(t).then(() => {
 
-      const lastScroll = this.scrollManager.moveToLast(t, index);
+      const lastScroll = this.scrollManager.moveGetLast(t, index);
       if (!!lastScroll && this.window) {
         this.window.scrollTo(lastScroll.x, lastScroll.y);
       }
       // Moving mouse and setting :hover classes on ready view
       this.mouseMoveManager.move(t);
-      const lastClick = this.clickManager.moveToLast(t);
+      const lastClick = this.clickManager.moveGetLast(t);
       if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
         this.cursor.click();
       }

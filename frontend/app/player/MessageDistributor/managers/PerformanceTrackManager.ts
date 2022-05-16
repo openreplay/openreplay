@@ -62,7 +62,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 			time: msg.time,
 			nodesCount: this.prevNodesCount,
 		});
-		super.add(msg);
+		super.append(msg);
 	}
 
 	setCurrentNodesCount(count: number) {
