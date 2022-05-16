@@ -5,6 +5,20 @@ import cn from 'classnames';
 import stl from './FilterModal.css';
 import { filtersMap } from 'Types/filter/newFilter';
 
+export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
+  const matchingCategories: string[] = [];
+  const matchingFilters: [] = []
+  Object.keys(filters).forEach(name => {
+    if (name.includes(searchQuery)) matchingCategories.push(name);
+    const filtersQuery: [] = filters[name]
+      .filter(filterOption => filterOption.label.includes(searchQuery))
+
+    matchingFilters.push(...filtersQuery)
+  })
+
+  return { matchingCategories, matchingFilters }
+}
+
 interface Props {
   filters: any,
   onFilterClick?: (filter) => void,
@@ -33,10 +47,39 @@ function FilterModal(props: Props) {
     onFilterClick(_filter);
   }
 
-  const isResultEmpty = !filterSearchList || Object.keys(filterSearchList).length === 0
+  const { matchingCategories, matchingFilters } = getMatchingEntries(searchQuery, filters);
+
+  const isResultEmpty = (!filterSearchList || Object.keys(filterSearchList).length === 0)
+    && matchingCategories.length === 0 && matchingFilters.length === 0
+
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
+      <div className={searchQuery && !isResultEmpty ? 'mb-6' : ''} style={{ columns: "auto 200px" }}>
+          {matchingCategories.map((key) => {
+            return (
+              <div className="mb-6" key={key}>
+                <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
+                <div>
+                  {filters[key].map((filter: any) => {
+                    if (hasSearchQuery) {
+                      const matchingFilters = filters[key].filter(filter => filter.label.includes(searchQuery));
+                      const hasMatchingSubstring = matchingFilters.length > 0 || key.includes(searchQuery);
 
+                      if (hasSearchQuery && !hasMatchingSubstring) return null;
+                    }
+                    return (
+                      <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick({ ...filter, value: [''] })}>
+                        <Icon name={filter.icon} size="16"/>
+                        <span className="ml-2">{filter.label}</span>
+                      </div>
+                    )
+                  }
+                  )}
+                </div>
+              </div>
+            )}
+          )}
+        </div>
       { showSearchList && (
         <Loader size="small" loading={fetchingFilterSearchList}>
           <div className="-mx-6 px-6">
@@ -71,24 +114,6 @@ function FilterModal(props: Props) {
             })}
           </div>
         </Loader>
-      )}
-
-      { !hasSearchQuery && (
-        <div className="" style={{ columns: "auto 200px" }}>
-          {filters && Object.keys(filters).map((key) => (
-            <div className="mb-6" key={key}>
-              <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
-              <div>
-                {filters[key].map((filter: any) => (
-                  <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick({ ...filter, value: [''] })}>
-                    <Icon name={filter.icon} size="16"/>
-                    <span className="ml-2">{filter.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       )}
     </div>
   );
