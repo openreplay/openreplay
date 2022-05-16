@@ -6,10 +6,10 @@ import ListWalker from './ListWalker';
 const HOVER_CLASS = "-openreplay-hover";
 const HOVER_CLASS_DEPR = "-asayer-hover";
 
-export default class MouseManager extends ListWalker<MouseMove> {
+export default class MouseMoveManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = [];
 
-	constructor(private screen: StatedScreen) {super();}
+	constructor(private screen: StatedScreen) {super()}
 
 	private updateHover(): void {
     // @ts-ignore TODO
