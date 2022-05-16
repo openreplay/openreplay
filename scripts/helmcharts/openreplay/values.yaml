@@ -114,3 +114,5 @@ assist:
   fullnameOverride: assist-openreplay
 peers:
   fullnameOverride: peers-openreplay
+ingress-nginx:
+  enabled: true
