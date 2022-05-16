@@ -10,11 +10,12 @@ RUN go mod download
 
 
 FROM prepare AS build
+COPY cmd cmd
 COPY pkg pkg
-COPY services services
+COPY internal internal
 
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/services/$SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
 
 FROM alpine
 RUN apk add --no-cache ca-certificates

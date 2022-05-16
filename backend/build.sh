@@ -21,7 +21,7 @@ check_prereq() {
 function build_service() {
     image="$1"
     echo "BUILDING $image"
-    docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image -f ./cmd/Dockerfile .
+    docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image .
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
     }
