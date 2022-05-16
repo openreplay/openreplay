@@ -12,6 +12,7 @@ import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMe
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
 import { debounce } from 'App/utils';
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
+import ErrorsWidget from '../Errors/ErrorsWidget';
 interface Props {
     metric: any;
     isWidget?: boolean
@@ -83,7 +84,11 @@ function WidgetChart(props: Props) {
     const renderChart = () => {
         const { metricType, viewType } = metric;
 
-        if (isFunnel) {
+        if (metricType === 'errors') {
+            return <ErrorsWidget metric={metric} />
+        }
+
+        if (metricType === 'funnel') {
             return <FunnelWidget metric={metric} />
         }
 
