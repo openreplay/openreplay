@@ -1,10 +1,10 @@
 package clientManager
 
 import (
+	"openreplay/backend/internal/integrations/integration"
 	"strconv"
 
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/services/integrations/integration"
 )
 
 type manager struct {

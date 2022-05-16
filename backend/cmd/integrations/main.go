@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	config "openreplay/backend/internal/config/integrations"
+	"openreplay/backend/internal/integrations/clientManager"
 	"time"
 
 	"os"
@@ -9,23 +11,21 @@ import (
 	"syscall"
 
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/env"
 	"openreplay/backend/pkg/intervals"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/token"
-	"openreplay/backend/services/integrations/clientManager"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	TOPIC_RAW_WEB := env.String("TOPIC_RAW_WEB")
-	POSTGRES_STRING := env.String("POSTGRES_STRING")
 
-	pg := postgres.NewConn(POSTGRES_STRING)
+	cfg := config.New()
+
+	pg := postgres.NewConn(cfg.PostgresURI)
 	defer pg.Close()
 
-	tokenizer := token.NewTokenizer(env.String("TOKEN_SECRET"))
+	tokenizer := token.NewTokenizer(cfg.TokenSecret)
 
 	manager := clientManager.NewManager()
 
@@ -45,7 +45,7 @@ func main() {
 	producer := queue.NewProducer()
 	defer producer.Close(15000)
 
-	listener, err := postgres.NewIntegrationsListener(POSTGRES_STRING)
+	listener, err := postgres.NewIntegrationsListener(cfg.PostgresURI)
 	if err != nil {
 		log.Printf("Postgres listener error: %v\n", err)
 		log.Fatalf("Postgres listener error")
@@ -81,7 +81,7 @@ func main() {
 				sessionID = sessData.ID
 			}
 			// TODO: send to ready-events topic. Otherwise it have to go through the events worker.
-			producer.Produce(TOPIC_RAW_WEB, sessionID, messages.Encode(event.RawErrorEvent))
+			producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(event.RawErrorEvent))
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:
