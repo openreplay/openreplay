@@ -1,11 +1,11 @@
-package main
+package storage
 
 import (
 	gzip "github.com/klauspost/pgzip"
 	"io"
 )
 
-func gzipFile(file io.Reader) io.Reader {
+func (s *Storage) gzipFile(file io.Reader) io.Reader {
 	reader, writer := io.Pipe()
 	go func() {
 		gw, _ := gzip.NewWriterLevel(writer, gzip.BestSpeed)

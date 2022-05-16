@@ -1,4 +1,4 @@
-package main
+package storage
 
 import (
 	"io/ioutil"
@@ -10,9 +10,7 @@ import (
 	"openreplay/backend/pkg/flakeid"
 )
 
-const DELETE_TIMEOUT = 48 * time.Hour
-
-func cleanDir(dirname string) {
+func (s *Storage) CleanDir(dirname string) {
 	files, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		log.Printf("Cannot read file directory. %v", err)
@@ -27,8 +25,8 @@ func cleanDir(dirname string) {
 			continue
 		}
 		ts := int64(flakeid.ExtractTimestamp(id))
-		if time.UnixMilli(ts).Add(DELETE_TIMEOUT).Before(time.Now()) {
-			// returns a error. Don't log it sinse it can be race condition between worker instances
+		if time.UnixMilli(ts).Add(s.cfg.DeleteTimeout).Before(time.Now()) {
+			// returns an error. Don't log it since it can be race condition between worker instances
 			os.Remove(dirname + "/" + name)
 		}
 	}

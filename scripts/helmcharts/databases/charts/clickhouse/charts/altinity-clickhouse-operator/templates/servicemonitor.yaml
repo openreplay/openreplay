@@ -1,0 +1,18 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "altinity-clickhouse-operator.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "altinity-clickhouse-operator.labels" . | nindent 4 }}
+  {{- if .Values.serviceMonitor.additionalLabels }}
+    {{- toYaml .Values.serviceMonitor.additionalLabels | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+    - port: clickhouse-operator-metrics
+  selector:
+    matchLabels:
+      {{- include "altinity-clickhouse-operator.selectorLabels" . | nindent 6 }}
+{{- end }}

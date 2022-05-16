@@ -1,0 +1,284 @@
+# Template Parameters:
+#
+# NONE
+#
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clickhouseoperatorconfigurations.clickhouse.altinity.com
+  labels:
+    clickhouse.altinity.com/chop: 0.18.1
+spec:
+  group: clickhouse.altinity.com
+  scope: Namespaced
+  names:
+    kind: ClickHouseOperatorConfiguration
+    singular: clickhouseoperatorconfiguration
+    plural: clickhouseoperatorconfigurations
+    shortNames:
+      - chopconf
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: namespaces
+          type: string
+          description: Watch namespaces
+          priority: 0 # show in standard view
+          jsonPath: .status
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: "allows customize `clickhouse-operator` settings, need restart clickhouse-operator pod after adding, more details https://github.com/Altinity/clickhouse-operator/blob/master/docs/operator_configuration.md"
+          x-kubernetes-preserve-unknown-fields: true
+          properties:
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+            spec:
+              type: object
+              description: |
+                Allows to define settings of the clickhouse-operator.
+                More info: https://github.com/Altinity/clickhouse-operator/blob/master/config/config.yaml
+                Check into etc-clickhouse-operator* ConfigMaps if you need more control
+              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                watch:
+                  type: object
+                  properties:
+                    namespaces:
+                      type: array
+                      description: "List of namespaces where clickhouse-operator watches for events."
+                      items:
+                        type: string
+                clickhouse:
+                  type: object
+                  properties:
+                    configuration:
+                      type: object
+                      properties:
+                        file:
+                          type: object
+                          properties:
+                            path:
+                              type: object
+                              properties:
+                                common:
+                                  type: string
+                                  description: "Path to the folder where ClickHouse configuration files common for all instances within a CHI are located. Default - config.d"
+                                host:
+                                  type: string
+                                  description: "Path to the folder where ClickHouse configuration files unique for each instance (host) within a CHI are located. Default - conf.d"
+                                user:
+                                  type: string
+                                  description: "Path to the folder where ClickHouse configuration files with users settings are located. Files are common for all instances within a CHI."
+                        user:
+                          type: object
+                          properties:
+                            default:
+                              type: object
+                              properties:
+                                profile:
+                                  type: string
+                                  description: "ClickHouse server configuration `<profile>...</profile>` for any <user>"
+                                quota:
+                                  type: string
+                                  description: "ClickHouse server configuration `<quota>...</quota>` for any <user>"
+                                networksIP:
+                                  type: array
+                                  description: "ClickHouse server configuration `<networks><ip>...</ip></networks>` for any <user>"
+                                  items:
+                                    type: string
+                                password:
+                                  type: string
+                                  description: "ClickHouse server configuration `<password>...</password>` for any <user>"
+                        network:
+                          type: object
+                          properties:
+                            hostRegexpTemplate:
+                              type: string
+                              description: "ClickHouse server configuration `<host_regexp>...</host_regexp>` for any <user>"
+                    access:
+                      type: object
+                      properties:
+                        username:
+                          type: string
+                          description: "ClickHouse username to be used by operator to connect to ClickHouse instances, deprecated, use chCredentialsSecretName"
+                        password:
+                          type: string
+                          description: "ClickHouse password to be used by operator to connect to ClickHouse instances, deprecated, use chCredentialsSecretName"
+                        secret:
+                          type: object
+                          properties:
+                            namespace:
+                              type: string
+                              description: "Location of k8s Secret with username and password to be used by operator to connect to ClickHouse instances"
+                            name:
+                              type: string
+                              description: "Name of k8s Secret with username and password to be used by operator to connect to ClickHouse instances"
+                        port:
+                          type: integer
+                          minimum: 1
+                          maximum: 65535
+                          description: "port to be used by operator to connect to ClickHouse instances"
+                template:
+                  type: object
+                  properties:
+                    chi:
+                      type: object
+                      properties:
+                        path:
+                          type: string
+                          description: "Path to folder where ClickHouseInstallationTemplate .yaml manifests are located."
+                reconcile:
+                  type: object
+                  properties:
+                    runtime:
+                      type: object
+                      properties:
+                        threadsNumber:
+                          type: integer
+                          minimum: 1
+                          maximum: 65535
+                          description: "How many goroutines will be used to reconcile in parallel, 10 by default"
+                    statefulSet:
+                      type: object
+                      properties:
+                        create:
+                          type: object
+                          properties:
+                            onFailure:
+                              type: string
+                              description: |
+                                What to do in case created StatefulSet is not in Ready after `statefulSetUpdateTimeout` seconds
+                                Possible options:
+                                1. abort - do nothing, just break the process and wait for admin.
+                                2. delete - delete newly created problematic StatefulSet.
+                                3. ignore (default) - ignore error, pretend nothing happened and move on to the next StatefulSet.
+                        update:
+                          type: object
+                          properties:
+                            timeout:
+                              type: integer
+                              description: "How many seconds to wait for created/updated StatefulSet to be Ready"
+                            pollInterval:
+                              type: integer
+                              description: "How many seconds to wait between checks for created/updated StatefulSet status"
+                            onFailure:
+                              type: string
+                              description: |
+                                What to do in case updated StatefulSet is not in Ready after `statefulSetUpdateTimeout` seconds
+                                Possible options:
+                                1. abort - do nothing, just break the process and wait for admin.
+                                2. rollback (default) - delete Pod and rollback StatefulSet to previous Generation. Pod would be recreated by StatefulSet based on rollback-ed configuration.
+                                3. ignore - ignore error, pretend nothing happened and move on to the next StatefulSet.
+                    host:
+                      type: object
+                      properties:
+                        wait:
+                          type: object
+                          properties:
+                            exclude:
+                              type: boolean
+                            include:
+                              type: boolean
+                annotation:
+                  type: object
+                  properties:
+                    include:
+                      type: array
+                      items:
+                        type: string
+                    exclude:
+                      type: array
+                      items:
+                        type: string
+                label:
+                  type: object
+                  properties:
+                    include:
+                      type: array
+                      items:
+                        type: string
+                    exclude:
+                      type: array
+                      items:
+                        type: string
+                      description: |
+                        When propagating labels from the chi's `metadata.labels` section to child objects' `metadata.labels`,
+                        exclude labels from the following list
+                    appendScope:
+                      type: string
+                      description: |
+                        Whether to append *Scope* labels to StatefulSet and Pod
+                        - "LabelShardScopeIndex"
+                        - "LabelReplicaScopeIndex"
+                        - "LabelCHIScopeIndex"
+                        - "LabelCHIScopeCycleSize"
+                        - "LabelCHIScopeCycleIndex"
+                        - "LabelCHIScopeCycleOffset"
+                        - "LabelClusterScopeIndex"
+                        - "LabelClusterScopeCycleSize"
+                        - "LabelClusterScopeCycleIndex"
+                        - "LabelClusterScopeCycleOffset"
+                      enum:
+                        # List StringBoolXXX constants from model
+                        - ""
+                        - "0"
+                        - "1"
+                        - "False"
+                        - "false"
+                        - "True"
+                        - "true"
+                        - "No"
+                        - "no"
+                        - "Yes"
+                        - "yes"
+                        - "Off"
+                        - "off"
+                        - "On"
+                        - "on"
+                        - "Disable"
+                        - "disable"
+                        - "Enable"
+                        - "enable"
+                        - "Disabled"
+                        - "disabled"
+                        - "Enabled"
+                        - "enabled"
+                statefulSet:
+                  type: object
+                  properties:
+                    revisionHistoryLimit:
+                      type: integer
+                pod:
+                  type: object
+                  properties:
+                    terminationGracePeriod:
+                      type: integer
+                logger:
+                  type: object
+                  properties:
+                    logtostderr:
+                      type: string
+                      description: "boolean, allows logs to stderr"
+                    alsologtostderr:
+                      type: string
+                      description: "boolean allows logs to stderr and files both"
+                    v:
+                      type: string
+                      description: "verbosity level of clickhouse-operator log, default - 1 max - 9"
+                    stderrthreshold:
+                      type: string
+                    vmodule:
+                      type: string
+                      description: |
+                        Comma-separated list of filename=N, where filename (can be a pattern) must have no .go ext, and N is a V level.
+                        Ex.: file*=2 sets the 'V' to 2 in all files with names like file*.
+                    log_backtrace_at:
+                      type: string
+                      description: |
+                        It can be set to a file and line number with a logging line.
+                        Ex.: file.go:123
+                        Each time when this line is being executed, a stack trace will be written to the Info log.
