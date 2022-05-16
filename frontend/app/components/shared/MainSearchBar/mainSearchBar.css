@@ -1,0 +1,17 @@
+.button {
+    color: $teal;
+    cursor: pointer;
+    padding: 4px 8px;
+    border: solid thin transparent;
+    border-radius: 3px;
+    margin-bottom: -3px;
+    &:hover {
+      background-color: $gray-light;
+      color: $gray-darkest;
+    }
+  }
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
