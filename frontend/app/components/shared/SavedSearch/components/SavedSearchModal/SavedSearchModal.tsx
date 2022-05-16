@@ -65,7 +65,7 @@ function SavedSearchModal(props: Props) {
     }
 
     const shownItems = props.list.filter(item => item.name.includes(filterQuery))
-    console.log(shownItems, filterQuery)
+
     return (
         <div className="bg-white box-shadow h-screen" style={{ width: '450px' }}>
             <div className="p-6">
