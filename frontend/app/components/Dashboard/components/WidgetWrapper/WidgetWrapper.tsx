@@ -30,7 +30,7 @@ interface Props {
 function WidgetWrapper(props: Props) {
     const { dashboardStore } = useStore();
     const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
-    const widget: any = useObserver(() => props.widget);    
+    const widget: any = useObserver(() => props.widget);
     const isPredefined = widget.metricType === 'predefined';
     const dashboard = useObserver(() => dashboardStore.selectedDashboard);
     const isOverviewWidget = widget.widgetType === 'predefined' && widget.viewType === 'overview';
@@ -69,13 +69,13 @@ function WidgetWrapper(props: Props) {
 
     const onChartClick = () => {
         if (!isWidget || isPredefined) return;
-        
+
         props.history.push(withSiteId(dashboardMetricDetails(dashboard?.dashboardId, widget.metricId),siteId));
     }
 
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
-    
+
     return useObserver(() => (
         <div
             className={cn("relative rounded bg-white border", 'col-span-' + widget.config.col, { "cursor-pointer" : isTemplate })}
@@ -101,20 +101,22 @@ function WidgetWrapper(props: Props) {
                                 <div className='mx-2'/>
                             </>
                         )}
-                        
-                        <ItemMenu
-                            items={[
-                                {
-                                    text: 'Edit', onClick: onChartClick,
-                                    disabled: widget.metricType === 'predefined',
-                                    disabledMessage: 'Cannot edit system generated metrics'
-                                },
-                                {
-                                    text: 'Remove from view',
-                                    onClick: onDelete
-                                },
-                            ]}
-                        />
+
+                        {!isTemplate && (
+                            <ItemMenu
+                                items={[
+                                    {
+                                        text: widget.metricType === 'predefined' ? 'Cannot edit system generated metrics' : 'Edit',
+                                        onClick: onChartClick,
+                                        disabled: widget.metricType === 'predefined',
+                                    },
+                                    {
+                                        text: 'Remove from view',
+                                        onClick: onDelete
+                                    },
+                                ]}
+                            />
+                        )}
                     </div>
                 )}
             </div>

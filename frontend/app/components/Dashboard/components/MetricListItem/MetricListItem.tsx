@@ -9,12 +9,14 @@ interface Props {
 function DashboardLink({ dashboards}) {
     return (
         dashboards.map(dashboard => (
+            <React.Fragment key={dashboard.dashboardId}>
             <Link to={`/dashboard/${dashboard.dashboardId}`} className="">
                 <div className="flex items-center mb-1">
                     <div className="mr-2 text-4xl no-underline" style={{ textDecoration: 'none'}}>·</div>
                     <span className="link leading-4">{dashboard.name}</span>
                 </div>
             </Link>
+            </React.Fragment>
         ))
     );
 }
