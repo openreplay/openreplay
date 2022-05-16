@@ -40,7 +40,7 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 	}
 	defer file.Close()
 
-	startBytes := make([]byte, s.cfg.SessionFileSplitSize)
+	startBytes := make([]byte, s.cfg.FileSplitSize)
 	nRead, err := file.Read(startBytes)
 	if err != nil {
 		log.Printf("File read error: %f", err)
@@ -50,7 +50,7 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
 		log.Fatalf("Storage: start upload failed.  %v\n", err)
 	}
-	if nRead == s.cfg.SessionFileSplitSize {
+	if nRead == s.cfg.FileSplitSize {
 		if err := s.s3.Upload(s.gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
