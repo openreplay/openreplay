@@ -64,6 +64,7 @@ ingress-nginx: &ingress-nginx
       # SSL redirection
       ssl-redirect: false
       force-ssl-redirect: false
+      proxy-body-size: 10m
 
 # Application specific variables
 global:
