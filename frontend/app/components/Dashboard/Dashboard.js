@@ -9,7 +9,7 @@ import { WIDGET_KEYS, WIDGET_LIST } from 'Types/dashboard';
 import CustomMetricsModal from 'Shared/CustomMetrics/CustomMetricsModal';
 import SessionListModal from 'Shared/CustomMetrics/SessionListModal';
 
-import { 
+import {
   MissingResources,
   SlowestResources,
   DomBuildingTime,
@@ -34,7 +34,7 @@ import {
   SpeedIndexLocation,
   SessionsPerBrowser,
   CallsErrors5xx,
-  CallsErrors4xx  
+  CallsErrors4xx
 } from './Widgets';
 
 import SideMenuSection from './SideMenu/SideMenuSection';
@@ -66,7 +66,7 @@ const menuList = [
     icon: "sliders",
     label: getStatusLabel(CUSTOM_METRICS),
     active: status === CUSTOM_METRICS,
-  },  
+  },
   {
     key: ERRORS_N_CRASHES,
     section: 'metrics',
@@ -103,7 +103,7 @@ function getStatusLabel(status) {
       return "Errors";
     case RESOURCES:
       return "Resources";
-    default: 
+    default:
 			return "";
 	}
 }
@@ -136,12 +136,12 @@ export default class Dashboard extends React.PureComponent {
     menuList.forEach(item => {
       this.list[item.key] = React.createRef();
     });
-    props.fetchMetadataOptions();  
+    props.fetchMetadataOptions();
   }
-  
+
   state = {
     rangeName: this.props.period.rangeName,
-    startDate: null, 
+    startDate: null,
     endDate: null,
     pageSection: 'metrics',
   };
@@ -151,8 +151,8 @@ export default class Dashboard extends React.PureComponent {
   }
 
   componentDidMount() {
-    const { history, location } = this.props;        
-    // TODO check the hash navigato it    
+    const { history, location } = this.props;
+    // TODO check the hash navigato it
   }
 
   onMenuItemClick = ({section, key}) => {
@@ -190,7 +190,7 @@ export default class Dashboard extends React.PureComponent {
     const noWidgets = WIDGET_KEYS
       .filter(key => dashboardAppearance[ key ])
       .length === 0;
-    
+
     return (
       <div className="page-margin container-90">
         <div className="side-menu">
@@ -198,19 +198,20 @@ export default class Dashboard extends React.PureComponent {
 						title="Metrics"
 						onItemClick={this.onMenuItemClick}
 						items={menuList}
+            activeSection={this.state.pageSection}
 					/>
         </div>
         <div className="side-menu-margined">
           <div>
-            <div className={ cn(styles.header, "flex items-center w-full") }>            
+            <div className={ cn(styles.header, "flex items-center w-full") }>
               <MetricsFilters />
-              
+
               { activeWidget && <SessionListModal activeWidget={activeWidget} /> }
             </div>
             <div className="">
               <NoContent
                 show={ noWidgets }
-                title="You haven't added any insights widgets!"
+                title="You haven't added any insights metrics!"
                 subtext="Add new to keep track of Processed Sessions, Application Activity, Errors and lot more."
                 animatedIcon="empty-state"
               >
@@ -226,7 +227,7 @@ export default class Dashboard extends React.PureComponent {
                   </div>
                 </WidgetSection>
 
-                <WidgetSection 
+                <WidgetSection
                   title="Custom Metrics"
                   type={CUSTOM_METRICS}
                   className="mb-4"
@@ -255,7 +256,7 @@ export default class Dashboard extends React.PureComponent {
                     { dashboardAppearance.resourcesByParty && <WidgetHolder Component={ErrorsByOrigin} /> }
                     { dashboardAppearance.domainsErrors_4xx && <WidgetHolder Component={CallsErrors4xx} /> }
                     { dashboardAppearance.domainsErrors_5xx && <WidgetHolder Component={CallsErrors5xx} /> }
-                    { dashboardAppearance.callsErrors && 
+                    { dashboardAppearance.callsErrors &&
                       <div className="col-span-2"><WidgetHolder fullWidth Component={CallWithErrors} /></div>
                     }
                   </div>
@@ -267,7 +268,7 @@ export default class Dashboard extends React.PureComponent {
                     { dashboardAppearance.crashes && <WidgetHolder Component={Crashes} /> }
                     { dashboardAppearance.pagesResponseTime && <WidgetHolder Component={ResponseTime} /> }
                     { dashboardAppearance.impactedSessionsBySlowPages && <WidgetHolder Component={SessionsImpactedBySlowRequests} /> }
-                    { dashboardAppearance.pagesResponseTimeDistribution && 
+                    { dashboardAppearance.pagesResponseTimeDistribution &&
                       <div className="col-span-2"><WidgetHolder fullWidth Component={ResponseTimeDistribution} /></div>
                     }
                     { dashboardAppearance.pagesDomBuildtime && <WidgetHolder Component={DomBuildingTime} /> }
@@ -287,7 +288,7 @@ export default class Dashboard extends React.PureComponent {
                     { dashboardAppearance.resourcesLoadingTime && <WidgetHolder Component={ResourceLoadingTime} /> }
                     { dashboardAppearance.resourceTypeVsResponseEnd && <WidgetHolder Component={ResourceLoadedVsResponseEnd} /> }
                     { dashboardAppearance.missingResources && <WidgetHolder Component={MissingResources} /> }
-                    { dashboardAppearance.slowestResources && 
+                    { dashboardAppearance.slowestResources &&
                       <div className="col-span-2"><WidgetHolder fullWidth Component={SlowestResources} /></div>
                     }
                   </div>
