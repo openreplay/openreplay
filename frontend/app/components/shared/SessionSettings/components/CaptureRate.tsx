@@ -18,48 +18,57 @@ function CaptureRate(props) {
         });
     }, [])
 
+    const toggleRate = () => {
+            if (captureAll === false) {
+                settingsStore.saveCaptureRate({ captureAll: true })
+            }
+            setCaptureAll(!captureAll)
+            setChanged(true)
+    }
+
     return useObserver(() => (
         <Loader loading={loading}>
-            <h3 className="text-lg">Capture Rate</h3>
-            <div className="my-1">What percentage of your user sessions do you want to record and monitor?</div>
-            <div className="mt-2 mb-4">
+            <h3 className="text-lg">Recordings</h3>
+            <div className="my-1">What percentage of user sessions do you want to Capture?</div>
+            <div className="mt-2 mb-4 mr-1 flex items-center">
                 <Toggler
                     checked={captureAll}
                     name="test"
-                    onChange={() => {
-                        setCaptureAll(!captureAll)
-                        setChanged(true)
-                    }}
-                    label="Capture 100% of the sessions"
+                    onChange={toggleRate}
                 />
+                <span style={{ color: captureAll ? '#000000' : '#999' }}>100%</span>
             </div>
+           {!captureAll && (
             <div className="flex items-center">
-                <div className="relative">
-                    <Input
-                        type="number"
-                        value={captureRate}
-                        style={{ height: '38px', width: '100px'}}
-                        onChange={(e, { value }) => {
-                            setCaptureRate(value)
-                            setChanged(true);
-                        }}
-                        disabled={captureAll}
-                        min={0}
-                        minValue={0}
-                    />
-                    <Icon className="absolute right-0 mr-6 top-0 bottom-0 m-auto" name="percent" color="gray-medium" size="18" />
+                    <div className="relative">
+                        <Input
+                            type="number"
+                            value={captureRate}
+                            style={{ height: '38px', width: '100px'}}
+                            onChange={(e, { value }) => {
+                                setCaptureRate(value)
+                                setChanged(true);
+                            }}
+                            disabled={captureAll}
+                            min={0}
+                            minValue={0}
+                        />
+                        <Icon className="absolute right-0 mr-6 top-0 bottom-0 m-auto" name="percent" color="gray-medium" size="18" />
+                    </div>
+                    <span className="mx-3">of the sessions</span>
+                    <Button
+                        disabled={!changed}
+                        outline
+                        size="medium"
+                        onClick={() => settingsStore.saveCaptureRate({
+                            rate: captureRate,
+                            captureAll,
+                        }).finally(() => setChanged(false))}
+                    >
+                        Update
+                    </Button>
                 </div>
-                <span className="mx-3">of the sessions</span>
-                <Button
-                    disabled={!changed}
-                    outline
-                    size="medium"
-                    onClick={() => settingsStore.saveCaptureRate({
-                        rate: captureRate,
-                        captureAll,
-                    }).finally(() => setChanged(false))}
-                >Update</Button>
-            </div>
+            )}
         </Loader>
     ));
 }
