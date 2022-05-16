@@ -7,6 +7,7 @@ import { useObserver } from 'mobx-react-lite';
 import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
 import { confirm } from 'UI/Confirmation';
+import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
@@ -22,18 +23,20 @@ function WidgetForm(props: Props) {
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
     const isSaving = useObserver(() => metricStore.isSaving);
-    const metric: any = useObserver(() => metricStore.instance);
+    const metric: any = useObserver(() => metricStore.instance)
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
     const isFunnel = metric.metricType === 'funnel';
-    const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
+    const isErrors = metric.metricType === 'errors';
+    const isSessions = metric.metricType === 'sessions';
+    const _issueOptions = [{ label: 'All', value: 'all' }].concat(issueOptions);
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
 
-    const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
-    const writeOption = (e, { value, name }) => {
+    // const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
+    const writeOption = ({ value: { value }, name }) => {
         const obj = { [ name ]: value };
   
         if (name === 'metricValue') {
@@ -86,66 +89,98 @@ function WidgetForm(props: Props) {
     const onObserveChanges = () => {
         // metricStore.fetchMetricChartData(metric);
     }
-    
+
     return useObserver(() => (
         <div className="p-6">
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <DropdownPlain
+                    <Select
+                        name="metricType"
+                        options={metricTypes}
+                        value={metricTypes.find(i => i.value === metric.metricType) || metricTypes[0]}
+                        onChange={ writeOption }
+                    />
+                    {/* <DropdownPlain
                         name="metricType"
                         options={metricTypes}
                         value={ metric.metricType }
                         onChange={ writeOption }
-                    />
+                    /> */}
 
                     {metric.metricType === 'timeseries' && (
                         <>
                             <span className="mx-3">of</span>
-                            <DropdownPlain
+                            <Select
+                                name="metricOf"
+                                options={timeseriesOptions}
+                                defaultValue={metric.metricOf}
+                                onChange={ writeOption }
+                            />
+                            {/* <DropdownPlain
                                 name="metricOf"
                                 options={timeseriesOptions}
                                 value={ metric.metricOf }
                                 onChange={ writeOption }
-                            />
+                            /> */}
                         </>
                     )}
 
                     {metric.metricType === 'table' && (
                         <>
                             <span className="mx-3">of</span>
-                            <DropdownPlain
+                            <Select
+                                name="metricOf"
+                                options={tableOptions}
+                                defaultValue={metric.metricOf}
+                                onChange={ writeOption }
+                            />
+                            {/* <DropdownPlain
                                 name="metricOf"
                                 options={tableOptions}
                                 value={ metric.metricOf }
                                 onChange={ writeOption }
-                            />
+                            /> */}
                         </>
                     )}
 
                     {metric.metricOf === FilterKey.ISSUE && (
                         <>
                             <span className="mx-3">issue type</span>
-                            <DropdownPlain
+                            <Select
+                                name="metricValue"
+                                options={_issueOptions}
+                                defaultValue={metric.metricValue[0]}
+                                onChange={ writeOption }
+                            />
+                            {/* <DropdownPlain
                                 name="metricValue"
                                 options={_issueOptions}
                                 value={ metric.metricValue[0] }
                                 onChange={ writeOption }
-                            />
+                            /> */}
                         </>
                     )}
 
                     {metric.metricType === 'table' && (
                     <>
                         <span className="mx-3">showing</span>
-                        <DropdownPlain
+                        <Select
+                            name="metricFormat"
+                            options={[
+                                { value: 'sessionCount', label: 'Session Count' },
+                            ]}
+                            defaultValue={ metric.metricFormat }
+                            onChange={ writeOption }
+                        />
+                        {/* <DropdownPlain
                             name="metricFormat"
                             options={[
                                 { value: 'sessionCount', text: 'Session Count' },
                             ]}
                             value={ metric.metricFormat }
                             onChange={ writeOption }
-                        />
+                        /> */}
                     </>
                     )}
                 </div>

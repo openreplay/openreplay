@@ -10,9 +10,11 @@ interface Props {
     plain?: boolean;
     components?: any;
     styles?: any; 
+    onChange: (value: any) => void;
+    name?: string; 
     [x:string]: any;
 }
-export default function({ styles= {}, alignRight = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
+export default function({ name = '', onChange, styles= {}, alignRight = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : null;
 
     const customStyles = {
@@ -54,6 +56,10 @@ export default function({ styles= {}, alignRight = false, plain = false, options
                 border: 'solid thin #ddd',
                 cursor: 'pointer',
                 transition: 'all 0.5s',
+                ['&:hover']: {
+                    backgroundColor: colors['gray-lightest'],
+                    transition: 'all 0.2s ease-in-out'
+                }
             }
             if (plain) {
                 obj['border'] = '1px solid transparent'
@@ -100,6 +106,7 @@ export default function({ styles= {}, alignRight = false, plain = false, options
                 DropdownIndicator,
                 ...components,
             }}
+            onChange={(value) => onChange({ name, value: value })}
             styles={{ ...customStyles, ...styles }}
             theme={(theme) => ({
                 ...theme,

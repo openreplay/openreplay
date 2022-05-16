@@ -60,10 +60,11 @@ export const customOperators = [
 ]
 
 export const metricTypes = [
-  { text: 'Timeseries', value: 'timeseries' },
-  { text: 'Table', value: 'table' },
-  { text: 'Funnel', value: 'funnel' },
-  { text: 'Error', value: 'error' },
+  { label: 'Timeseries', value: 'timeseries' },
+  { label: 'Table', value: 'table' },
+  { label: 'Funnel', value: 'funnel' },
+  { label: 'Errors', value: 'errors' },
+  { label: 'Sessions', value: 'sessions' },
 ];
 
 export const tableColumnName = {
@@ -76,13 +77,13 @@ export const tableColumnName = {
 }
 
 export const metricOf = [
-  { text: 'Session Count', value: 'sessionCount', type: 'timeseries' },
-  { text: 'Users', value: FilterKey.USERID, type: 'table' },
-  { text: 'Issues', value: FilterKey.ISSUE, type: 'table' },
-  { text: 'Browsers', value: FilterKey.USER_BROWSER, type: 'table' },
-  { text: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
-  { text: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
-  { text: 'URLs', value: FilterKey.LOCATION, type: 'table' },
+  { label: 'Session Count', value: 'sessionCount', type: 'timeseries' },
+  { label: 'Users', value: FilterKey.USERID, type: 'table' },
+  { label: 'Issues', value: FilterKey.ISSUE, type: 'table' },
+  { label: 'Browsers', value: FilterKey.USER_BROWSER, type: 'table' },
+  { label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
+  { label: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
+  { label: 'URLs', value: FilterKey.LOCATION, type: 'table' },
 ]
 
 export const methodOptions = [
@@ -98,18 +99,18 @@ export const methodOptions = [
 ]
 
 export const issueOptions = [
-  { text: 'Click Rage', value: IssueType.CLICK_RAGE },
-  { text: 'Dead Click', value: IssueType.DEAD_CLICK },
-  { text: 'Excessive Scrolling', value: IssueType.EXCESSIVE_SCROLLING },
-  { text: 'Bad Request', value: IssueType.BAD_REQUEST },
-  { text: 'Missing Resource', value: IssueType.MISSING_RESOURCE },
-  { text: 'Memory', value: IssueType.MEMORY },
-  { text: 'CPU', value: IssueType.CPU },
-  { text: 'Slow Resource', value: IssueType.SLOW_RESOURCE },
-  { text: 'Slow Page Load', value: IssueType.SLOW_PAGE_LOAD },
-  { text: 'Crash', value: IssueType.CRASH },
-  { text: 'Custom', value: IssueType.CUSTOM },
-  { text: 'Error', value: IssueType.JS_EXCEPTION },
+  { label: 'Click Rage', value: IssueType.CLICK_RAGE },
+  { label: 'Dead Click', value: IssueType.DEAD_CLICK },
+  { label: 'Excessive Scrolling', value: IssueType.EXCESSIVE_SCROLLING },
+  { label: 'Bad Request', value: IssueType.BAD_REQUEST },
+  { label: 'Missing Resource', value: IssueType.MISSING_RESOURCE },
+  { label: 'Memory', value: IssueType.MEMORY },
+  { label: 'CPU', value: IssueType.CPU },
+  { label: 'Slow Resource', value: IssueType.SLOW_RESOURCE },
+  { label: 'Slow Page Load', value: IssueType.SLOW_PAGE_LOAD },
+  { label: 'Crash', value: IssueType.CRASH },
+  { label: 'Custom', value: IssueType.CUSTOM },
+  { label: 'Error', value: IssueType.JS_EXCEPTION },
 ]
 
 export default {

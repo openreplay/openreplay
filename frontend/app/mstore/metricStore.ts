@@ -90,7 +90,7 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
-        const _metric = new Widget().fromJson(sampleJson)
+        const _metric = new Widget().fromJson(sampleJsonErrors)
         this.instance.update(metric || _metric)
 
         // this.instance.update(metric || new Widget())
@@ -191,7 +191,7 @@ export default class MetricStore implements IMetricStore {
     }
 }
 
-const sampleJson = {
+const sampleJsonFunnel = {
     // metricId: 1,
     name: "Funnel Sample",
     metricType: 'funnel',
@@ -199,31 +199,31 @@ const sampleJson = {
         {
             name: 'Series 1',
             filter: {
+                eventsOrder: 'then',
                 filters: [
-                    {
-                        type: 'LOCATION',
-                        operator: 'is',
-                        value: ['/sessions', '/errors', '/users'],
-                        percent: 100,
-                        completed: 60,
-                        dropped: 40,
-                    },
-                    {
-                        type: 'LOCATION',
-                        operator: 'is',
-                        value: ['/sessions'],
-                        percent: 80,
-                        completed: 40,
-                        dropped: 60,
-                    },
-                    {
-                        type: 'CLICK',
-                        operator: 'on',
-                        value: ['DASHBOARDS'],
-                        percent: 80,
-                        completed: 10,
-                        dropped: 90,
-                    }
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions', '/errors', '/users'], percent: 100, completed: 60, dropped: 40, },
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions'], percent: 80, completed: 40, dropped: 60, },
+                    { type: 'CLICK', operator: 'on', value: ['DASHBOARDS'], percent: 80, completed: 10, dropped: 90, }
+                ]
+            }
+        }
+    ],
+}
+
+const sampleJsonErrors = {
+    // metricId: 1,
+    name: "Errors Sample",
+    metricType: 'errors',
+    metricFormat: 'sessionCount',
+    series: [
+        {
+            name: 'Series 1',
+            filter: {
+                eventsOrder: 'then',
+                filters: [
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions', '/errors', '/users'], percent: 100, completed: 60, dropped: 40, },
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions'], percent: 80, completed: 40, dropped: 60, },
+                    { type: 'CLICK', operator: 'on', value: ['DASHBOARDS'], percent: 80, completed: 10, dropped: 90, }
                 ]
             }
         }
