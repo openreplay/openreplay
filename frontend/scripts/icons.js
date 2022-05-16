@@ -8,7 +8,8 @@ const ICONS_DIRNAME = 'app/svg/icons';
 const UI_DIRNAME = 'app/components/ui';
 
 const svgo = new SVGO({ plugins: [
-  { removeAttrs: { attrs: [ "width", "height", "class", "data-name", "dataName" ] } }, 
+  //"width", "height",
+  { removeAttrs: { attrs: [ "class", "data-name", "dataName" ] } },
   { addAttributesToSVGElement: { attributes: [ "width={ `${ width }px` }", "height={ `${ height }px` }" ] } },
   { convertPathData: true }, // ?
   { removeViewBox: false },  // ?
@@ -20,7 +21,7 @@ const svgo = new SVGO({ plugins: [
       item.eachAttr(attr => {
         attr.name = attr.name.replace(/-([a-z])/g, gr => gr[1].toUpperCase())
       })
-    } 
+    }
   }}
 ]});
 
@@ -41,7 +42,7 @@ ${ icons.map(name => `    case '${ name.slice(0, -4) }': return ${
     .replace(/xlink\:href/g, 'xlinkHref')
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
   }`).join('\n') }
-    default: 
+    default:
       if (window.ENV.PRODUCTION) return null;
       throw "unknown icon name " + name;
   }
