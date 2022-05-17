@@ -8,8 +8,7 @@ const ICONS_DIRNAME = 'app/svg/icons';
 const UI_DIRNAME = 'app/components/ui';
 
 const svgo = new SVGO({ plugins: [
-  //"width", "height", <- sometimes eating useful attrs from icons and break them
-  { removeAttrs: { attrs: [ "class", "data-name", "dataName" ] } },
+  { removeAttrs: { attrs: [ "class", "data-name", "dataName", "svg:width", "svg:height" ] } },
   { addAttributesToSVGElement: { attributes: [ "width={ `${ width }px` }", "height={ `${ height }px` }" ] } },
   { convertPathData: true }, // ?
   { removeViewBox: false },  // ?
