@@ -11,7 +11,7 @@ interface Props {
 function DashboardForm(props: Props) {
     const { dashboardStore } = useStore();
     const dashboard = dashboardStore.dashboardInstance;
-    
+
     const write = ({ target: { value, name } }) => dashboard.update({ [ name ]: value })
     const writeRadio = ({ target: { value, name } }) => {
         dashboard.update({ [name]: value === 'team' });
@@ -21,12 +21,12 @@ function DashboardForm(props: Props) {
         <div className="mb-8 grid grid-cols-2 gap-8">
             <div className="form-field flex flex-col">
                 <label htmlFor="name" className="font-medium mb-2">Title</label>
-                <Input type="text" name="name" onChange={write} value={dashboard.name} maxLength={100} />
+                <Input type="text" autoFocus name="name" onChange={write} value={dashboard.name} maxLength={100} />
             </div>
 
             <div className="form-field flex flex-col">
                 <label htmlFor="name" className="font-medium mb-2">Visibility and Editing</label>
-                
+
                 <div className="flex items-center py-2">
                     <label className="inline-flex items-center mr-6">
                         <input
@@ -35,7 +35,7 @@ function DashboardForm(props: Props) {
                             name="isPublic"
                             value="team"
                             checked={dashboard.isPublic}
-                            onChange={writeRadio}  
+                            onChange={writeRadio}
                         />
                         <span className={cn("ml-2", { 'color-teal' : dashboard.isPublic})}>Team</span>
                     </label>

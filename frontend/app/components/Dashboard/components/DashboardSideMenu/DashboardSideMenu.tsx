@@ -46,7 +46,8 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
         showModal(<DashboardModal siteId={siteId} />, { right: true })
     }
 
-    const togglePinned = (dashboard) => {
+    const togglePinned = (dashboard, e) => {
+        e.stopPropagation();
         dashboardStore.updatePinned(dashboard.dashboardId);
     }
 
@@ -66,7 +67,7 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                     </span>
                 }
             />
-            {dashboardsPicked.sort((a: any, b: any) => a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1 ).map((item: any) => (
+            {dashboardsPicked.map((item: any) => (
                 <SideMenuitem
                     key={ item.dashboardId }
                     active={item.dashboardId === dashboardId && !isMetric}
@@ -87,7 +88,7 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                                 >
                                     <div
                                         className={cn("p-1 invisible group-hover:visible cursor-pointer")}
-                                        onClick={() => togglePinned(item)}
+                                        onClick={(e) => togglePinned(item, e)}
                                     >
                                         <Icon name="pin-fill" size="16" color="gray-light" />
                                     </div>
