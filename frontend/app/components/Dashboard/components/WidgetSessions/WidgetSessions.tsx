@@ -6,13 +6,15 @@ import SessionItem from 'Shared/SessionItem';
 import { observer, useObserver } from 'mobx-react-lite';
 import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
+import useIsMounted from 'App/hooks/useIsMounted'
+
 interface Props {
     className?: string;
 }
 function WidgetSessions(props: Props) {
     const { className = '' } = props;
     const [data, setData] = useState<any>([]);
-    
+    const isMounted = useIsMounted()
     const [loading, setLoading] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState([
         { text: 'All', value: 'all' },
@@ -34,6 +36,7 @@ function WidgetSessions(props: Props) {
     }, [data]);
 
     const fetchSessions = (metricId, filter) => {
+        if (!isMounted()) return;
         setLoading(true)
         widget.fetchSessions(metricId, filter).then(res => {
             setData(res)
@@ -41,7 +44,7 @@ function WidgetSessions(props: Props) {
             setLoading(false)
         });
     }
-    
+
     const filteredSessions = getListSessionsBySeries(data, activeSeries);
     const { dashboardStore, metricStore } = useStore();
     const filter = useObserver(() => dashboardStore.drillDownFilter);
