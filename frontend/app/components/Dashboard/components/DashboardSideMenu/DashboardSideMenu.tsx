@@ -109,7 +109,6 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                 )}
             </div>
             <div className="border-t w-full my-2" />
-            <div className="border-t w-full my-2" />
             <div className="w-full">
 				<SideMenuitem
                     active={isMetric}
