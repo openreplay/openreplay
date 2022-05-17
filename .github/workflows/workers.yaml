@@ -38,7 +38,7 @@ jobs:
       # Ignore the failure of a step and avoid terminating the job.
       continue-on-error: true
 
-    - name: Build, tag, and Deploy to k8s
+    - name: Build, tag
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
@@ -73,10 +73,32 @@ jobs:
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
 
+    - name: Creating old image input
+      run: |
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            tag: ${image_array[1]}
+        EOF
+        done
+
+    - name: Deploying to kuberntes
+      run: |
         #
         # Deploying image to environment.
         #
-        cd ../scripts/helmcharts/
+        cd scripts/helmcharts/
 
         ## Update secerts
         sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
@@ -87,15 +109,11 @@ jobs:
         ## Update images
         for image in $(cat ../../backend/images_to_build.txt);
         do
-          #sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-          cat <<EOF >> image_override.yaml
-        ${image}:
-          image:
-            tag: ${IMAGE_TAG}
-        EOF
+            sed -i "/${image}/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
         done
+
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f image_override.yaml
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml
 
     # - name: Debug Job
     #   if: ${{ failure() }}

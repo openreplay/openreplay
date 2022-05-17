@@ -47,6 +47,26 @@ jobs:
       run: |
         cd api
         PUSH_IMAGE=1 bash build.sh
+    - name: Creating old image input
+      run: |
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            tag: ${image_array[1]}
+        EOF
+        done
+
     - name: Deploy to kubernetes
       run: |
         cd scripts/helmcharts/
@@ -58,13 +78,11 @@ jobs:
         sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
 
-        cat <<EOF >> image_override.yaml
-        chalice:
-          image:
-            tag: ${IMAGE_TAG}
-        EOF
+        # Update changed image tag
+        sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f image_override.yaml
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.sha }}
