@@ -111,7 +111,7 @@ function WidgetWrapper(props: Props) {
                                         disabled: widget.metricType === 'predefined',
                                     },
                                     {
-                                        text: 'Remove from view',
+                                        text: 'Hide',
                                         onClick: onDelete
                                     },
                                 ]}
