@@ -3,6 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - dev
       - api-v1.5.5
     paths:
       - api/**
@@ -32,6 +33,12 @@ jobs:
         kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
 
+    # Caching docker images
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      # Ignore the failure of a step and avoid terminating the job.
+      continue-on-error: true
+
+
     - name: Building and Pusing api image
       id: build-image
       env:
@@ -41,15 +48,42 @@ jobs:
       run: |
         cd api
         PUSH_IMAGE=1 bash build.sh
+    - name: Creating old image input
+      run: |
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            tag: ${image_array[1]}
+        EOF
+        done
+
     - name: Deploy to kubernetes
       run: |
-        cd scripts/helm/
-        sed -i "s#minio_access_key.*#minio_access_key: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\" #g" vars.yaml
-        sed -i "s#minio_secret_key.*#minio_secret_key: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\" #g" vars.yaml
-        sed -i "s#domain_name.*#domain_name: \"foss.openreplay.com\" #g" vars.yaml
-        sed -i "s#kubeconfig.*#kubeconfig_path: ${KUBECONFIG}#g" vars.yaml
-        sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-        bash kube-install.sh --app chalice
+        cd scripts/helmcharts/
+
+        ## Update secerts
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
+
+        # Update changed image tag
+        sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+
+        # Deploy command
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.sha }}
