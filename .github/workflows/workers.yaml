@@ -83,15 +83,14 @@ jobs:
         for image in $(cat ../../backend/images_to_build.txt);
         do
           #sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
-          cat <<EOF >> vars.yaml
-        ---
+          cat <<EOF >> image_override.yaml
         ${image}:
           image:
             tag: ${IMAGE_TAG}
         EOF
         done
         # Deploy command
-        bash openreplay-cli -I
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f image_override.yaml
 
     # - name: Debug Job
     #   if: ${{ failure() }}
