@@ -19,9 +19,10 @@ export default class Table extends React.PureComponent {
       compare = false,
       maxHeight = 200,
       onRowClick = null,
+      isTemplate,
     } = this.props;
     const { showAll } = this.state;
-    
+
     return (
       <div className="w-full">
         <div className="flex">
@@ -47,9 +48,9 @@ export default class Table extends React.PureComponent {
                 </div>
               )) }
             </div>
-          )) }          
+          )) }
         </div>
-        { rows.size > (small ? 3 : 5) && !showAll &&
+        { !isTemplate && rows.size > (small ? 3 : 5) && !showAll &&
             <div className="w-full flex justify-center">
               <Button
                 onClick={ this.onLoadMoreClick }

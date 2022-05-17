@@ -53,6 +53,7 @@ export default class MostImpactfulErrors extends React.PureComponent {
             cols={ cols }
             rows={ errors }
             rowProps={ { findJourneys: this.findJourneys } }
+            isTemplate={this.props.isTemplate}
           />
         </NoContent>
       </Loader>

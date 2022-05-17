@@ -45,6 +45,7 @@ const cols = [
 interface Props {
     data: any
     metric?: any
+    isTemplate?: boolean
 }
 function CallWithErrors(props: Props) {
     const { data, metric } = props;
@@ -57,7 +58,7 @@ function CallWithErrors(props: Props) {
     };
 
     return (
-        
+
         <NoContent
           size="small"
           show={ metric.data.chart.length === 0 }
@@ -70,6 +71,7 @@ function CallWithErrors(props: Props) {
             <Table
               cols={ cols }
               rows={ _data }
+              isTemplate={props.isTemplate}
             />
           </div>
         </NoContent>

@@ -5,7 +5,7 @@ import { Styles } from '../../common';
 import { ResponsiveContainer } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import stl from './CustomMetricWidget.css';
-import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
+import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { init, edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
 import APIClient from 'App/api_client';
 import { setShowAlerts } from 'Duck/dashboard';
@@ -21,7 +21,7 @@ const customParams = rangeName => {
   // if (rangeName === LAST_30_MINUTES) params.density = 70
   // if (rangeName === YESTERDAY) params.density = 70
   // if (rangeName === LAST_7_DAYS) params.density = 70
-  
+
   return params
 }
 
@@ -41,9 +41,10 @@ interface Props {
   edit: (setDefault?) => void;
   setActiveWidget: (widget) => void;
   updateActiveState: (metricId, state) => void;
+  isTemplate?: boolean;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync, compare, period } = props;
+  const { metric, showSync, compare, period, isTemplate } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>([]);
   const [seriesMap, setSeriesMap] = useState<any>([]);
@@ -97,7 +98,7 @@ function CustomMetricWidget(props: Props) {
       const periodTimestamps = metric.metricType === 'timeseries' ?
         getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density) :
         period.toTimestamps();
-      
+
       const activeWidget = {
         widget: metric,
         period: period,
@@ -166,6 +167,7 @@ function CustomMetricWidget(props: Props) {
                     metric={ metric }
                     data={ data[0] }
                     onClick={ clickHandlerTable }
+                    isTemplate={isTemplate}
                   />
                 )}
               </>

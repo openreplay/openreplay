@@ -35,7 +35,7 @@ const cols = [
 @widgetHOC('slowestImages', { fitContent: true })
 export default class SlowestImages extends React.PureComponent {
   render() {
-    const { data: images, loading } = this.props;
+    const { data: images, loading, isTemplate } = this.props;
     return (
       <Loader loading={ loading } size="small">
         <NoContent
@@ -45,6 +45,7 @@ export default class SlowestImages extends React.PureComponent {
           <Table
             cols={ cols }
             rows={ images }
+            isTemplate={isTemplate}
           />
         </NoContent>
       </Loader>

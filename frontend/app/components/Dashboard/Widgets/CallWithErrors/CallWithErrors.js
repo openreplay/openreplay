@@ -68,6 +68,7 @@ export default class CallWithErrors extends React.PureComponent {
           <Table
             cols={ cols }
             rows={ _data }
+            isTemplate={this.props.isTemplate}
           />
         </NoContent>
       </Loader>
