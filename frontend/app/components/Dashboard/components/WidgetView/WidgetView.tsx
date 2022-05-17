@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from 'App/mstore';
+import { Icon, Loader, Link } from 'UI';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
-import { Icon, BackLink, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
 import WidgetName from '../WidgetName';
+
 interface Props {
     history: any;
     match: any
@@ -29,7 +30,7 @@ function WidgetView(props: Props) {
 
     const onBackHandler = () => {
         if (dashboardId) {
-            props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));    
+            props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
         } else {
             props.history.push(withSiteId(`/metrics`, siteId));
         }
@@ -37,8 +38,17 @@ function WidgetView(props: Props) {
 
     return useObserver(() => (
         <Loader loading={loading}>
+            <div className="mb-2 flex items-center">
+                <Icon name="chevron-left" size="12" />
+                <div className="ml-2 text-xl">
+                    <Link className="mx-1 color-gray-dark" to={withSiteId("/dashboard", siteId)}>Dashboards</Link>
+                    /
+                    <Link className="mx-1 color-primary" to={withSiteId("/metrics", siteId)}>Metrics</Link>
+                    /
+                    <span className="mx-1 disabled">{widget.name}</span>
+                </div>
+            </div>
             <div className="relative pb-10">
-                <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
                 <div className="bg-white rounded border">
                     <div className="p-4 flex justify-between items-center">
                         <h1 className="mb-0 text-2xl">

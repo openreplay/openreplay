@@ -44,7 +44,7 @@ export default class Dashboard implements IDashboard {
     isPinned: boolean = false
     currentWidget: IWidget = new Widget()
     config: any = {}
-    
+
     constructor() {
         makeAutoObservable(this, {
             name: observable,
@@ -158,7 +158,7 @@ export default class Dashboard implements IDashboard {
                 dashboardService.saveWidget(this.dashboardId, widgetA),
                 dashboardService.saveWidget(this.dashboardId, widgetB)
             ]).then(() => {
-                toast.success("Widget position updated")
+                toast.success("Dashboard updated successfully")
                 resolve()
             }).catch(() => {
                 toast.error("Error updating widget position")
