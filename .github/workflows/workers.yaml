@@ -59,14 +59,14 @@ jobs:
           git diff --name-only HEAD HEAD~1 | grep -E "backend/pkg|backend/internal" | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
             grep -rl "pkg/$pkg_name" backend/services backend/cmd | cut -d '/' -f3 
           done
-        } | uniq > backend/images_to_build.txt
+        } | uniq > /tmp/images_to_build.txt
 
-        [[ $(cat backend/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
+        [[ $(cat /tmp/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
         #
         # Pushing image to registry
         #
         cd backend
-        for image in $(cat images_to_build.txt);
+        for image in $(cat /tmp/images_to_build.txt);
         do
           echo "Bulding $image"
           PUSH_IMAGE=1 bash -x ./build.sh skip $image
@@ -74,6 +74,8 @@ jobs:
         done
 
     - name: Creating old image input
+      env:
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         #
         # Create yaml with existing image tags
@@ -94,6 +96,8 @@ jobs:
         done
 
     - name: Deploying to kuberntes
+      env:
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         #
         # Deploying image to environment.
@@ -107,7 +111,7 @@ jobs:
         sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
         ## Update images
-        for image in $(cat ../../backend/images_to_build.txt);
+        for image in $(cat /tmp/images_to_build.txt);
         do
             sed -i "/${image}/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
         done
