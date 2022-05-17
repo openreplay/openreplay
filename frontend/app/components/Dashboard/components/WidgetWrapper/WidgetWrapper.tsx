@@ -13,6 +13,7 @@ import TemplateOverlay from './TemplateOverlay';
 import WidgetIcon from './WidgetIcon';
 import AlertButton from './AlertButton';
 import { Tooltip } from 'react-tippy';
+import stl from './widgetWrapper.css';
 
 interface Props {
     className?: string;
@@ -59,13 +60,6 @@ function WidgetWrapper(props: Props) {
 
     const onDelete = async () => {
         dashboardStore.deleteDashboardWidget(dashboard?.dashboardId, widget.widgetId);
-        // if (await confirm({
-        //   header: 'Confirm',
-        //   confirmButton: 'Yes, delete',
-        //   confirmation: `Are you sure you want to permanently delete the widget from this dashboard?`
-        // })) {
-        //     dashboardStore.deleteDashboardWidget(dashboardId!, widget.widgetId);
-        // }
     }
 
     const onChartClick = () => {
@@ -77,13 +71,19 @@ function WidgetWrapper(props: Props) {
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
 
+    const addOverlay = isTemplate || !isPredefined
+
+    console.log(widget, isTemplate, addOverlay)
+
     return useObserver(() => (
             <div
                 className={
                     cn(
                         "relative rounded bg-white border",
                         'col-span-' + widget.config.col,
-                        { "cursor-pointer" : isTemplate }
+                        stl.hoverableWidget,
+                        { [stl.hoverGray]: !isTemplate },
+                        { [stl.hoverBlue]: isTemplate }
                     )
                 }
                 style={{
@@ -95,19 +95,20 @@ function WidgetWrapper(props: Props) {
                 onClick={props.onClick ? props.onClick : () => {}}
                 id={`widget-${widget.widgetId}`}
             >
+                <div className={cn(stl.drillDownMessage, 'disabled text-gray')}> {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'} </div>
                 {/* @ts-ignore */}
                 <Tooltip
-                    title="Click to select"
+                    // title="Click to select"
                     hideOnClick={true}
-                    position="top"
+                    position="bottom"
                     delay={300}
                     followCursor
                     disabled={!isTemplate}
                     boundary="viewport"
                     flip={["top"]}
-                    transitionFlip={false}
+                    html={<span>Click to select</span>}
                 >
-                    {isTemplate && <TemplateOverlay />}
+                    {addOverlay && <TemplateOverlay isTemplate={isTemplate} />}
                     <div
                         className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
                     >
