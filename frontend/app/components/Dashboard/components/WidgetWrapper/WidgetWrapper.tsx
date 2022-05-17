@@ -12,6 +12,7 @@ import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
 import WidgetIcon from './WidgetIcon';
 import AlertButton from './AlertButton';
+import { Tooltip } from 'react-tippy';
 
 interface Props {
     className?: string;
@@ -77,57 +78,78 @@ function WidgetWrapper(props: Props) {
     const dragDropRef: any = dragRef(dropRef(ref))
 
     return useObserver(() => (
-        <div
-            className={cn("relative rounded bg-white border", 'col-span-' + widget.config.col, { "cursor-pointer" : isTemplate })}
-            style={{
-                userSelect: 'none',
-                opacity: isDragging ? 0.5 : 1,
-                borderColor: (canDrop && isOver) || active ? '#394EFF' : (isPreview ? 'transparent' : '#EEEEEE'),
-            }}
-            ref={dragDropRef}
-            onClick={props.onClick ? props.onClick : () => {}}
-            id={`widget-${widget.widgetId}`}
-        >
-            {isTemplate && <TemplateOverlay />}
             <div
-                className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
+                className={
+                    cn(
+                        "relative rounded bg-white border",
+                        'col-span-' + widget.config.col,
+                        { "cursor-pointer" : isTemplate }
+                    )
+                }
+                style={{
+                    userSelect: 'none',
+                    opacity: isDragging ? 0.5 : 1,
+                    borderColor: (canDrop && isOver) || active ? '#394EFF' : (isPreview ? 'transparent' : '#EEEEEE'),
+                }}
+                ref={dragDropRef}
+                onClick={props.onClick ? props.onClick : () => {}}
+                id={`widget-${widget.widgetId}`}
             >
-                <div className="capitalize w-full font-medium">{widget.name}</div>
-                {isWidget && (
-                    <div className="flex items-center" id="no-print">
-                        {!isPredefined && (
-                            <>
-                                <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
-                                <div className='mx-2'/>
-                            </>
-                        )}
+                {/* @ts-ignore */}
+                <Tooltip
+                    title="Click to select"
+                    hideOnClick={true}
+                    position="top"
+                    delay={300}
+                    followCursor
+                    disabled={!isTemplate}
+                    boundary="viewport"
+                    flip={["top"]}
+                    transitionFlip={false}
+                >
+                    {isTemplate && <TemplateOverlay />}
+                    <div
+                        className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
+                    >
+                        <div className="capitalize w-full font-medium">{widget.name}</div>
+                        {isWidget && (
+                            <div className="flex items-center" id="no-print">
+                                {!isPredefined && (
+                                    <>
+                                        <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
+                                        <div className='mx-2'/>
+                                    </>
+                                )}
 
-                        {!isTemplate && (
-                            <ItemMenu
-                                items={[
-                                    {
-                                        text: widget.metricType === 'predefined' ? 'Cannot edit system generated metrics' : 'Edit',
-                                        onClick: onChartClick,
-                                        disabled: widget.metricType === 'predefined',
-                                    },
-                                    {
-                                        text: 'Hide',
-                                        onClick: onDelete
-                                    },
-                                ]}
-                            />
+                                {!isTemplate && (
+                                    <ItemMenu
+                                        items={[
+                                            {
+                                                text: widget.metricType === 'predefined' ? 'Cannot edit system generated metrics' : 'Edit',
+                                                onClick: onChartClick,
+                                                disabled: widget.metricType === 'predefined',
+                                            },
+                                            {
+                                                text: 'Hide',
+                                                onClick: onDelete
+                                            },
+                                        ]}
+                                    />
+                                )}
+                            </div>
                         )}
                     </div>
-                )}
+
+                    {/* <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} > */}
+                        <div className="px-4" onClick={onChartClick}>
+                            <WidgetChart metric={widget} isWidget={isWidget} />
+                        </div>
+                    {/* </LazyLoad> */}
+                </Tooltip>
             </div>
 
-            {/* <LazyLoad height={!isTemplate ? 300 : 10} offset={!isTemplate ? 100 : 10} > */}
-                <div className="px-4" onClick={onChartClick}>
-                    <WidgetChart metric={widget} isWidget={isWidget} />
-                </div>
-            {/* </LazyLoad> */}
-        </div>
     ));
 }
+
 
 export default withRouter(WidgetWrapper);
