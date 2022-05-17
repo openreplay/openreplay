@@ -7,9 +7,10 @@ interface Props {
     show: boolean;
     // dashboard: any;
     closeHandler?: () => void;
+    focusTitle?: boolean;
 }
 function DashboardEditModal(props: Props) {
-    const { show, closeHandler } = props;
+    const { show, closeHandler, focusTitle } = props;
     const { dashboardStore } = useStore();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
 
@@ -26,7 +27,7 @@ function DashboardEditModal(props: Props) {
         <Modal size="tiny" open={ show }>
             <Modal.Header className="flex items-center justify-between">
                 <div>{ 'Edit Dashboard' }</div>
-                <Icon 
+                <Icon
                     role="button"
                     tabIndex="-1"
                     color="gray-dark"
@@ -41,13 +42,13 @@ function DashboardEditModal(props: Props) {
                 <Form.Field>
                     <label>{'Title:'}</label>
                     <input
-                        autoFocus={ true }
                         className=""
                         name="name"
                         value={ dashboard.name }
                         onChange={write}
                         placeholder="Title"
                         maxLength={100}
+                        autoFocus={focusTitle}
                     />
                 </Form.Field>
 
@@ -60,6 +61,7 @@ function DashboardEditModal(props: Props) {
                         onChange={write}
                         placeholder="Description"
                         maxLength={300}
+                        autoFocus={!dashboard.description || !focusTitle}
                     />
                 </Form.Field>
 

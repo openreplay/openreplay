@@ -33,6 +33,7 @@ function DashboardView(props: Props) {
     const dashboard: any = dashboardStore.selectedDashboard;
     const period = dashboardStore.period;
     const [showEditModal, setShowEditModal] = React.useState(false);
+    const [focusTitle, setFocusedInput] = React.useState(true);
 
     useEffect(() => {
         if (!dashboard || !dashboard.dashboardId) return;
@@ -49,8 +50,9 @@ function DashboardView(props: Props) {
         showModal(<DashboardModal siteId={siteId} dashboardId={dashboardId} />, { right: true })
     }
 
-    const onEdit = () => {
+    const onEdit = (isTitle) => {
         dashboardStore.initDashboard(dashboard)
+        setFocusedInput(isTitle);
         setShowEditModal(true)
     }
 
@@ -86,9 +88,10 @@ function DashboardView(props: Props) {
                     <DashboardEditModal
                         show={showEditModal}
                         closeHandler={() => setShowEditModal(false)}
+                        focusTitle={focusTitle}
                     />
                     <div className="flex items-center mb-4 justify-between">
-                        <div className="flex items-center">
+                        <div className="flex items-center" style={{ flex: 4 }}>
                             <PageTitle
                                 title={dashboard?.name}
                                 className="mr-3"
@@ -99,7 +102,7 @@ function DashboardView(props: Props) {
                             />
 
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
                             <div className="flex items-center">
                                 {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
                                 <DateRange
@@ -117,6 +120,7 @@ function DashboardView(props: Props) {
                                     editHandler={onEdit}
                                     deleteHandler={onDelete}
                                     renderReport={props.renderReport}
+                                    isTitlePresent={!!dashboard?.description}
                                 />
                             </div>
                         </div>

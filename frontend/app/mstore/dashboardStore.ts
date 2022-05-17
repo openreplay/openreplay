@@ -99,8 +99,10 @@ export default class DashboardStore implements IDashboardSotre {
 
     constructor() {
         makeAutoObservable(this, {
+            dashboards: observable.ref,
             drillDownFilter: observable.ref,
             widgetCategories: observable.ref,
+            selectedDashboard: observable.ref,
             resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
@@ -115,6 +117,7 @@ export default class DashboardStore implements IDashboardSotre {
             setSiteId: action,
             editWidget: action,
             updateKey: action,
+            save: action,
 
             selectWidgetsByCategory: action,
             toggleAllSelectedWidgets: action,
@@ -318,6 +321,9 @@ export default class DashboardStore implements IDashboardSotre {
         const index = this.dashboards.findIndex(d => d.dashboardId === dashboard.dashboardId)
         if (index >= 0) {
             this.dashboards[index] = dashboard
+            if (this.selectedDashboard?.dashboardId === dashboard.dashboardId) {
+                this.selectDashboardById(dashboard.dashboardId)
+            }
         }
     }
 
