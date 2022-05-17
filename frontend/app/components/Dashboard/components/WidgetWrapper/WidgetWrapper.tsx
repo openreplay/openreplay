@@ -73,8 +73,6 @@ function WidgetWrapper(props: Props) {
 
     const addOverlay = isTemplate || !isPredefined
 
-    console.log(widget, isTemplate, addOverlay)
-
     return useObserver(() => (
             <div
                 className={
@@ -108,7 +106,7 @@ function WidgetWrapper(props: Props) {
                     flip={["top"]}
                     html={<span>Click to select</span>}
                 >
-                    {addOverlay && <TemplateOverlay isTemplate={isTemplate} />}
+                    {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
                     <div
                         className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
                     >
