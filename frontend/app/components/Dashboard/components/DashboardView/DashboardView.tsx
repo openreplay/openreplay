@@ -62,8 +62,10 @@ function DashboardView(props: Props) {
         })) {
             dashboardStore.deleteDashboard(dashboard).then(() => {
                 dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
-                    props.history.push(withSiteId(dashboard(), siteId));
-                });
+                    props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
+                }, () => {
+                    props.history.push(withSiteId('/dashboard', siteId));
+                })
             });
         }
     }

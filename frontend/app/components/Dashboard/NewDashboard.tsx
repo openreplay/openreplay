@@ -6,6 +6,7 @@ import DashboardSideMenu from './components/DashboardSideMenu';
 import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
 import cn from 'classnames';
+import { withSiteId } from 'App/routes';
 
 function NewDashboard(props: RouteComponentProps<{}>) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
@@ -20,18 +21,26 @@ function NewDashboard(props: RouteComponentProps<{}>) {
                 dashboardStore.selectDashboardById(dashboardId);
             }
         });
+        if (!dashboardId) {
+            dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
+                props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
+            }, () => {
+                props.history.push(withSiteId('/dashboard', siteId));
+            })
+        }
+
     }, [siteId]);
 
     return useObserver(() => (
         <Loader loading={loading}>
              <div className="page-margin container-90">
-                <div className={cn("side-menu", { 'hidden' : isMetricDetails || dashboardsNumber === 0 })}>
+                <div className={cn("side-menu", { 'hidden' : isMetricDetails })}>
                     <DashboardSideMenu siteId={siteId} />
                 </div>
                 <div
                     className={cn({
-                        "side-menu-margined" : !isMetricDetails || dashboardsNumber !== 0,
-                        "container-70" : isMetricDetails || dashboardsNumber === 0
+                        "side-menu-margined" : !isMetricDetails,
+                        "container-70" : isMetricDetails
                     })}
                 >
                     <DashboardRouter siteId={siteId} />

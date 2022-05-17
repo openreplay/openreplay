@@ -43,7 +43,7 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
 
     const onAddDashboardClick = (e) => {
         dashboardStore.initDashboard();
-        showModal(<DashboardModal />, { right: true })
+        showModal(<DashboardModal siteId={siteId} />, { right: true })
     }
 
     const togglePinned = (dashboard) => {

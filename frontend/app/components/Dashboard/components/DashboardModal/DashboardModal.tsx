@@ -22,11 +22,15 @@ function DashboardModal(props) {
     const loading = useObserver(() => dashboardStore.isSaving);
 
     const onSave = () => {
-        dashboardStore.save(dashboard).then(hideModal).then(() => {
+        dashboardStore.save(dashboard).then(async (syncedDashboard) => {
             if (dashboard.exists()) {
-                dashboardStore.fetch(dashboard.dashboardId)
+               await dashboardStore.fetch(dashboard.dashboardId)
             }
+            console.log(syncedDashboard, history, siteId, withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
+            dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
+            history.push(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
         })
+        .then(hideModal)
     }
 
     const handleCreateNew = () => {
