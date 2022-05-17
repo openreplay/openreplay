@@ -341,11 +341,10 @@ export default class DashboardStore implements IDashboardSotre {
                 } else {
                     this.selectedDashboard = this.dashboards[0]
                 }
-            }
-            if (this.selectedDashboard) {
+
                 resolve(this.selectedDashboard)
             }
-            // reject(new Error("No dashboards found"))
+            reject(new Error("No dashboards found"))
         })
     }
 
