@@ -91,11 +91,10 @@ function DashboardView(props: Props) {
                         focusTitle={focusTitle}
                     />
                     <div className="flex items-center mb-4 justify-between">
-                        <div className="flex items-center" style={{ flex: 4 }}>
+                        <div className="flex items-center" style={{ flex: 3 }}>
                             <PageTitle
                                 title={dashboard?.name}
                                 className="mr-3"
-                                subTitle={dashboard?.description}
                                 actionButton={
                                     <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
                                 }
@@ -124,6 +123,9 @@ function DashboardView(props: Props) {
                                 />
                             </div>
                         </div>
+                    </div>
+                    <div>
+                        <h2 className="my-4 font-normal color-gray-dark">{dashboard?.description}</h2>
                     </div>
                     <DashboardWidgetGrid
                         siteId={siteId}

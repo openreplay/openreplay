@@ -4,10 +4,11 @@ import stl from './widgetWrapper.css';
 
 interface IProps {
     isTemplate?: boolean;
+    onClick: () => void;
 }
 function TemplateOverlay(props: IProps) {
     return (
-        <div className={cn('absolute cursor-pointer z-10', stl.overlay, { [stl.overlayDashboard]: !props.isTemplate } )} />
+        <div onClick={props.onClick} className={cn('absolute cursor-pointer z-10', stl.overlay, { [stl.overlayDashboard]: !props.isTemplate } )} />
     );
 }
 
