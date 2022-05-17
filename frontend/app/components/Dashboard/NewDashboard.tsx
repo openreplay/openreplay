@@ -12,7 +12,6 @@ function NewDashboard(props: RouteComponentProps<{}>) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
-    const dashboardsNumber = useObserver(() => dashboardStore.dashboards.length);
     const isMetricDetails = history.location.pathname.includes('/metrics/') || history.location.pathname.includes('/metric/');
 
     useEffect(() => {
@@ -21,7 +20,7 @@ function NewDashboard(props: RouteComponentProps<{}>) {
                 dashboardStore.selectDashboardById(dashboardId);
             }
         });
-        if (!dashboardId) {
+        if (!dashboardId && location.pathname.includes('dashboard')) {
             dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
                 props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
             }, () => {
