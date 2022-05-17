@@ -56,9 +56,10 @@ const cols = [
 interface Props {
     data: any
     metric?: any
+    isTemplate?: boolean
 }
 function SlowestResources(props: Props) {
-    const { data, metric } = props;
+    const { data, metric, isTemplate } = props;
 
     return (
         <NoContent
@@ -72,6 +73,7 @@ function SlowestResources(props: Props) {
               cols={ cols }
               rows={ List(metric.data.chart) }
               rowClass="group"
+              isTemplate={isTemplate}
             />
           </div>
         </NoContent>
