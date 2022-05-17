@@ -29,7 +29,7 @@
   }
 
   white-space: nowrap;
-  z-index: 10;
+  z-index: 20;
   position: absolute;
   right: 31px;
   top: 27px;
@@ -40,7 +40,7 @@
 
   & .menuItem {
     cursor: pointer;
-    padding: 20px;
+    padding: 10px;
     display: flex;
     align-items: center;
     border-bottom: 1px solid $gray-light;
