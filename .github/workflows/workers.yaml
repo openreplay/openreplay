@@ -84,10 +84,10 @@ jobs:
         do
           #sed -i "s/image_tag:.*/image_tag: \"$IMAGE_TAG\"/g" vars.yaml
           cat <<EOF >> vars.yaml
-          ---
-          ${image}:
-            image:
-              tag: ${IMAGE_TAG}
+        ---
+        ${image}:
+          image:
+            tag: ${IMAGE_TAG}
         EOF
         done
         # Deploy command
