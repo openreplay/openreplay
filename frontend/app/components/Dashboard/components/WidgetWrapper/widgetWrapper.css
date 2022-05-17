@@ -1,0 +1,39 @@
+.hoverableWidget {
+    transition: all 0.2s;
+}
+
+.hoverGray {
+    &:hover {
+        box-shadow: 0 0 0 1px #999;
+
+        & .drillDownMessage {
+            display: unset;
+        }
+    }
+}
+
+.hoverBlue {
+    &:hover {
+        box-shadow: 0 0 0 1px $main;
+    }
+}
+
+.drillDownMessage {
+    display: none;
+    position: absolute;
+    top: 35px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+}
+
+.overlay {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+.overlayDashboard {
+    top: 20%!important;
+}

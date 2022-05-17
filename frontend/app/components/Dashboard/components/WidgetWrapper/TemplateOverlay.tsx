@@ -1,9 +1,13 @@
-//@ts-nocheck
 import React from 'react';
+import cn from 'classnames';
+import stl from './widgetWrapper.css';
 
-function TemplateOverlay() {
+interface IProps {
+    isTemplate?: boolean;
+}
+function TemplateOverlay(props: IProps) {
     return (
-            <div className="absolute inset-0 cursor-pointer z-10" />
+        <div className={cn('absolute cursor-pointer z-10', stl.overlay, { [stl.overlayDashboard]: !props.isTemplate } )} />
     );
 }
 
