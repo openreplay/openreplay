@@ -15,6 +15,7 @@ export default ({
   error = false,
   minWidth,
   disabled = false,
+  plainText = false,
   ...props
 }) => (
   <Button
@@ -33,6 +34,7 @@ export default ({
       styles[ success ? 'success' : '' ],
       styles[ error ? 'error' : '' ],
       styles[ marginRight ? 'margin-right' : '' ],
+      styles[ plainText ? 'plainText' : '' ],
     ) }
   />
 );

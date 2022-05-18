@@ -1,0 +1,14 @@
+.hoverableTitle {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    padding: 0 10px !important;
+
+    &:hover {
+      background-color: $active-blue !important;
+      box-shadow: 0 0 0 1px $active-blue-border!important;
+    }
+
+    &.hover:hover {
+      background-color: $teal !important;
+    }
+  }
