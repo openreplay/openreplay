@@ -262,6 +262,7 @@ export default class AssistManager {
       this.md.overlay.removeEventListener("click", this.onMouseClick)
       this.md.overlay.removeEventListener("wheel", this.onWheel)
       update({ remoteControl: RemoteControlStatus.Disabled })
+      this.toggleAnnotation(false)
     }
   }
 
@@ -335,10 +336,9 @@ export default class AssistManager {
   private handleCallEnd() {
     this.callArgs && this.callArgs.onCallEnd()
     this.callConnection && this.callConnection.close()
-    update({ calling: CallingState.NoCall, annotating: false })
+    update({ calling: CallingState.NoCall })
     this.callArgs = null
-    this.annot?.remove()
-    this.annot = null
+    this.toggleAnnotation(false)
   }
 
   private initiateCallEnd = () => {
@@ -352,6 +352,7 @@ export default class AssistManager {
       this.callConnection && this.callConnection.close()
       update({ calling: CallingState.NoCall })
       this.callArgs = null
+      this.toggleAnnotation(false)
     } else {
       this.handleCallEnd()
     }
@@ -389,7 +390,7 @@ export default class AssistManager {
     if (typeof enable !== "boolean") {
       enable = !!getState().annotating
     }
-    if (!enable && !this.annot) {
+    if (enable && !this.annot) {
       const annot = this.annot = new AnnotationCanvas()
       annot.mount(this.md.overlay)
       annot.canvas.addEventListener("mousedown", e => {
@@ -416,7 +417,7 @@ export default class AssistManager {
         this.socket.emit("moveAnnotation", [ data.x, data.y ])
       })
       update({ annotating: true })
-    } else if (enable && !!this.annot) {
+    } else if (!enable && !!this.annot) {
       this.annot.remove()
       this.annot = null
       update({ annotating: false })
