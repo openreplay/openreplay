@@ -37,6 +37,7 @@ function DashboardModal(props) {
         history.push(path);
         hideModal();
     }
+    const isDashboardExists = dashboard.exists()
 
     return useObserver(() => (
         <div style={{ width: '85vw' }}>
@@ -47,20 +48,20 @@ function DashboardModal(props) {
                 <div className="mb-6 flex items-end justify-between">
                     <div>
                         <h1 className="text-2xl">
-                            { dashboard.exists() ? "Add metrics to dashboard" : "Create Dashboard" }
+                            { isDashboardExists ? "Add metrics to dashboard" : "Create Dashboard" }
                         </h1>
                     </div>
                     <div>
-                        {dashboard.exists() && <Button outline size="small" onClick={handleCreateNew}>Create New</Button>}
+                        {isDashboardExists && <Button outline size="small" onClick={handleCreateNew}>Create New</Button>}
                     </div>
                 </div>
-                { !dashboard.exists() && (
+                { !isDashboardExists && (
                     <>
                         <DashboardForm />
                         <p>Create new dashboard by choosing from the range of predefined metrics that you care about. You can always add your custom metrics later.</p>
                     </>
                 )}
-                <DashboardMetricSelection />
+                <DashboardMetricSelection isDashboardExists={isDashboardExists} />
 
                 <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                     <Button
@@ -69,7 +70,7 @@ function DashboardModal(props) {
                         disabled={!dashboard.isValid || loading}
                         onClick={onSave}
                     >
-                        { dashboard.exists() ? "Add Selected to Dashboard" : "Create" }
+                        {isDashboardExists ? "Add Selected to Dashboard" : "Create" }
                     </Button>
                     <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Metrics</span>
                 </div>
