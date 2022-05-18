@@ -40,12 +40,12 @@ export default class DOMManager extends ListWalker<Message> {
       if (!this.nodeScrollManagers[ m.id ]) {
         this.nodeScrollManagers[ m.id ] = new ListWalker();
       }
-      this.nodeScrollManagers[ m.id ].add(m);
+      this.nodeScrollManagers[ m.id ].append(m);
       return;
     //case "css_insert_rule": // ||   //set_css_data ???
     //case "css_delete_rule":
     // (m.tp === "set_node_attribute" && this.isLink[ m.id ] && m.key === "href")) {
-    //  this.stylesManager.add(m);
+    //  this.stylesManager.append(m);
     //  return;
     default:
       if (m.tp === "create_element_node") {
@@ -62,7 +62,7 @@ export default class DOMManager extends ListWalker<Message> {
         logger.log("Ignorring message: ", m)
         return; // Ignoring...
       }
-      super.add(m);
+      super.append(m);
     }
 
   }
@@ -299,7 +299,7 @@ export default class DOMManager extends ListWalker<Message> {
   moveReady(t: number): Promise<void> {
     this.moveApply(t, this.applyMessage); // This function autoresets pointer if necessary (better name?)
     this.nodeScrollManagers.forEach(manager => {
-      const msg = manager.moveToLast(t); // TODO: reset (?)
+      const msg = manager.moveGetLast(t); // TODO: reset (?)
       
       if (!!msg && !!this.nl[msg.id]) {
         const node = this.nl[msg.id] as HTMLElement;

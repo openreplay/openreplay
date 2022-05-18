@@ -27,14 +27,14 @@ export default class ActivityManager extends ListWalker<SkipInterval> {
 
 	updateAcctivity(time: number) {
 		if (time - this.lastActivity >= this.minInterval) {
-			this.add(new SkipIntervalCls(this.lastActivity, time));
+			this.append(new SkipIntervalCls(this.lastActivity, time));
 		}
 		this.lastActivity = time;
 	}
 
 	end() {
 		if (this.endTime - this.lastActivity >= this.minInterval) {
-			this.add(new SkipIntervalCls(this.lastActivity, this.endTime));
+			this.append(new SkipIntervalCls(this.lastActivity, this.endTime));
 		}
 
 	}
