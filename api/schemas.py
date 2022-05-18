@@ -638,6 +638,7 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
     def transform_order(cls, values):
         if values.get("order") is not None:
             values["order"] = values["order"].upper()
+        return values
 
     class Config:
         alias_generator = attribute_to_camel_case
