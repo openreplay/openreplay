@@ -6,7 +6,7 @@ import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
 import { confirm } from 'UI/Confirmation';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import DashboardModal from '../DashboardModal';
 import DashboardEditModal from '../DashboardEditModal';
@@ -18,36 +18,52 @@ import DashboardOptions from '../DashboardOptions';
 
 interface Props {
     siteId: number;
-    history: any
-    match: any
     dashboardId: any
     renderReport?: any
 }
-function DashboardView(props: Props) {
+function DashboardView(props: RouteComponentProps<Props>) {
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
+    const [focusTitle, setFocusedInput] = React.useState(true);
+    const [showEditModal, setShowEditModal] = React.useState(false);
     const { showModal } = useModal();
+
     const showAlertModal = dashboardStore.showAlertModal;
     const loading = dashboardStore.fetchingDashboard;
     const dashboards = dashboardStore.dashboards;
     const dashboard: any = dashboardStore.selectedDashboard;
     const period = dashboardStore.period;
-    const [showEditModal, setShowEditModal] = React.useState(false);
-    const [focusTitle, setFocusedInput] = React.useState(true);
+
+    const queryParams = new URLSearchParams(props.location.search)
 
     useEffect(() => {
         if (!dashboard || !dashboard.dashboardId) return;
         dashboardStore.fetch(dashboard.dashboardId)
     }, [dashboard]);
 
+    const trimQuery = () => {
+        if (!queryParams.has('modal')) return;
+        queryParams.delete('modal')
+        props.history.replace({
+            search: queryParams.toString(),
+        })
+    }
+    const pushQuery = () => {
+        if (!queryParams.has('modal')) props.history.push('?modal=addMetric')
+    }
+
     useEffect(() => {
-        if (dashboardId) return;
-        dashboardStore.selectDefaultDashboard();
+        if (!dashboardId) dashboardStore.selectDefaultDashboard();
+        console.log(dashboardId)
+        if (queryParams.has('modal')) {
+            onAddWidgets();
+            trimQuery();
+        }
     }, []);
 
     const onAddWidgets = () => {
         dashboardStore.initDashboard(dashboard)
-        showModal(<DashboardModal siteId={siteId} dashboardId={dashboardId} />, { right: true })
+        showModal(<DashboardModal siteId={siteId} onMetricAdd={pushQuery} dashboardId={dashboardId} />, { right: true })
     }
 
     const onEdit = (isTitle) => {
