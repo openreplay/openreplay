@@ -18,6 +18,7 @@ apps=(
     integrations
     sink
     storage
+    heuristics
     assist
     peers
     all
@@ -79,6 +80,11 @@ restart(){
             cd ../../backend
             source build.sh nil storage
             restart storage
+            ;;
+        heuristics)
+            cd ../../backend
+            source build.sh nil heuristics
+            restart heuristics
             ;;
         assist)
             cd ../../utilities
