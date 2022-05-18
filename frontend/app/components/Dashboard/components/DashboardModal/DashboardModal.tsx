@@ -12,6 +12,7 @@ interface Props {
     history: any
     siteId?: string
     dashboardId?: string
+    onMetricAdd?: () => void;
 }
 function DashboardModal(props) {
     const { history, siteId, dashboardId } = props;
@@ -34,6 +35,7 @@ function DashboardModal(props) {
 
     const handleCreateNew = () => {
         const path = withSiteId(dashboardMetricCreate(dashboardId), siteId);
+        props.onMetricAdd();
         history.push(path);
         hideModal();
     }
@@ -52,7 +54,7 @@ function DashboardModal(props) {
                         </h1>
                     </div>
                     <div>
-                        {isDashboardExists && <Button outline size="small" onClick={handleCreateNew}>Create New</Button>}
+                        <span className="text-xl">Past 7 days data</span>
                     </div>
                 </div>
                 { !isDashboardExists && (
@@ -61,7 +63,7 @@ function DashboardModal(props) {
                         <p>Create new dashboard by choosing from the range of predefined metrics that you care about. You can always add your custom metrics later.</p>
                     </>
                 )}
-                <DashboardMetricSelection isDashboardExists={isDashboardExists} />
+                <DashboardMetricSelection handleCreateNew={handleCreateNew} isDashboardExists={isDashboardExists} />
 
                 <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                     <Button

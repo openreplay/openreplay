@@ -31,11 +31,7 @@ function WidgetView(props: Props) {
     }, [])
 
     const onBackHandler = () => {
-        if (dashboardId) {
-            props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
-        } else {
-            props.history.push(withSiteId(`/metrics`, siteId));
-        }
+        props.history.goBack();
     }
 
     const openEdit = () => {

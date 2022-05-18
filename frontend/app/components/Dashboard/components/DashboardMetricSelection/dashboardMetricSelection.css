@@ -1,0 +1,11 @@
+.addNew {
+    text-align: center;
+    color: $teal;
+    cursor: pointer;
+    background-color: white;
+
+    &:hover {
+        background-color: $active-blue;
+        transition: all 0.2s;
+    }
+}

@@ -3,6 +3,8 @@ import WidgetWrapper from '../WidgetWrapper';
 import { useObserver } from 'mobx-react-lite';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
+import stl from 'App/components/Dashboard/components/WidgetWrapper/widgetWrapper.css';
+import ownStl from './dashboardMetricSelection.css';
 
 function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
     const selectedCategoryWidgetsCount = useObserver(() => {
@@ -24,7 +26,12 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }
     );
 }
 
-function DashboardMetricSelection(props) {
+interface IProps {
+    handleCreateNew?: () => void;
+    isDashboardExists?: boolean;
+}
+
+function DashboardMetricSelection(props: IProps) {
     const { dashboardStore } = useStore();
     let widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
     const [activeCategory, setActiveCategory] = React.useState<any>();
@@ -67,8 +74,7 @@ function DashboardMetricSelection(props) {
                                 <span className="text-2xl color-gray-medium ml-2">{activeCategory.widgets.length}</span>
                             </div>
 
-                            <div className="ml-auto flex items-center">
-                                <span className="color-gray-medium">Past 7 days data</span>
+                            <div className="ml-auto">
                                 <label className="flex items-center ml-3 cursor-pointer select-none">
                                     <input type="checkbox" onChange={toggleAllWidgets} checked={selectAllCheck} />
                                     <div className="ml-2">Select All</div>
@@ -107,6 +113,22 @@ function DashboardMetricSelection(props) {
                                 onClick={() => dashboardStore.toggleWidgetSelection(widget)}
                             />
                         ))}
+                        {props.isDashboardExists && activeCategory?.name === 'custom' && (
+                             <div
+                                className={
+                                    cn(
+                                        "relative rounded border col-span-1 flex items-center justify-center",
+                                        stl.hoverableWidget,
+                                        stl.hoverBlue,
+                                        ownStl.addNew,
+                                    )
+                                }
+                                style={{ height: '100%', textAlign: 'center' }}
+                                onClick={props.handleCreateNew}
+                            >
+                                Create Metric
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
