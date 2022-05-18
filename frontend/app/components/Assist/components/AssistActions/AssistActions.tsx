@@ -82,23 +82,19 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
 
   return (
     <div className="flex items-center">
-      {onCall && (
-        <>
-          <div
-            className={
-              cn(
-                'cursor-pointer p-2 flex items-center',
-                {[stl.disabled]: !onCall}
-              )
-            }
-            onClick={ toggleAnnotation }
-            role="button"
-          >
-            <IconButton label={`Annotate`} icon={ annotating ? "pencil-stop" : "pencil"} primaryText redText={annotating} />
-          </div>
-          <div className={ stl.divider } />
-        </>
-      )}
+      <div
+        className={
+          cn(
+            'cursor-pointer p-2 flex items-center',
+            {[stl.disabled]: cannotCall}
+          )
+        }
+        onClick={ toggleAnnotation }
+        role="button"
+      >
+        <IconButton label={`Annotate`} icon={ annotating ? "pencil-stop" : "pencil"} primaryText redText={annotating} />
+      </div>
+      <div className={ stl.divider } />
       <div
         className={
           cn(
