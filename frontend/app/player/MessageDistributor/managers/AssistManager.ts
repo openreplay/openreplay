@@ -251,8 +251,8 @@ export default class AssistManager {
     this.socket.emit("click",  [ data.x, data.y ]);
   }
 
-  private toggleRemoteControl(newState: boolean){
-    if (newState) {
+  private toggleRemoteControl(enable: boolean){
+    if (enable) {
       this.md.overlay.addEventListener("mousemove", this.onMouseMove)
       this.md.overlay.addEventListener("click", this.onMouseClick)
       this.md.overlay.addEventListener("wheel", this.onWheel)
