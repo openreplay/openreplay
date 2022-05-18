@@ -35,9 +35,8 @@ function WidgetWrapper(props: Props) {
     const widget: any = useObserver(() => props.widget);
     const isPredefined = widget.metricType === 'predefined';
     const dashboard = useObserver(() => dashboardStore.selectedDashboard);
-    const isOverviewWidget = widget.widgetType === 'predefined' && widget.viewType === 'overview';
 
-    const [{ opacity, isDragging }, dragRef] = useDrag({
+    const [{ isDragging }, dragRef] = useDrag({
         type: 'item',
         item: { index },
         collect: (monitor) => ({
@@ -80,7 +79,7 @@ function WidgetWrapper(props: Props) {
                         "relative rounded bg-white border",
                         'col-span-' + widget.config.col,
                         stl.hoverableWidget,
-                        { [stl.hoverGray]: !isTemplate },
+                        { [stl.hoverGray]: !isTemplate && isWidget },
                         { [stl.hoverBlue]: isTemplate }
                     )
                 }
@@ -93,10 +92,9 @@ function WidgetWrapper(props: Props) {
                 onClick={props.onClick ? props.onClick : () => {}}
                 id={`widget-${widget.widgetId}`}
             >
-                <div className={cn(stl.drillDownMessage, 'disabled text-gray')}> {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'} </div>
+                {isWidget && <div className={cn(stl.drillDownMessage, 'disabled text-gray')}> {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'} </div>}
                 {/* @ts-ignore */}
                 <Tooltip
-                    // title="Click to select"
                     hideOnClick={true}
                     position="bottom"
                     delay={300}
@@ -106,9 +104,9 @@ function WidgetWrapper(props: Props) {
                     flip={["top"]}
                     html={<span>Click to select</span>}
                 >
-                    {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
+                    {isWidget && addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
                     <div
-                        className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
+                        className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
                     >
                         <div className="capitalize w-full font-medium">{widget.name}</div>
                         {isWidget && (
