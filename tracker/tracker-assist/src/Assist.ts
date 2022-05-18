@@ -146,17 +146,24 @@ export default class Assist {
     socket.onAny((...args) => app.debug.log("Socket:", ...args))
 
 
+
     const remoteControl = new RemoteControl(
       this.options,
       id => {
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit("control_granted", id)
+        annot = new AnnotationCanvas()
+        annot.mount()
       },
       id => {
         const cb = this.agents[id].onControlReleased
         delete this.agents[id].onControlReleased
         typeof cb === "function" && cb()
         this.emit("control_rejected", id)
+        if (annot != null) {
+          annot.remove()
+          annot = null
+        }
       },
     )
 
