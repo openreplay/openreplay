@@ -11,7 +11,7 @@ import { useModal } from 'App/components/Modal';
 import SessionSettings from 'Shared/SessionSettings/SessionSettings'
 
 function SessionsMenu(props) {
-  const { activeTab } = props;
+  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel, isEnterprise } = props;
   const { showModal } = useModal();
 
   const onMenuItemClick = (filter) => {
@@ -76,8 +76,8 @@ function SessionsMenu(props) {
       <div className={stl.divider} />
       <div className="my-3">
         <SideMenuitem
-          title="Bookmarks"
-          iconName="star"
+          title={ isEnterprise ? "Vault" : "Bookmarks" }
+          iconName={ isEnterprise ? "safe" : "star" }
           active={activeTab.type === 'bookmark'}
           onClick={() => onMenuItemClick({ name: 'Bookmarks', type: 'bookmark' })}
         />
@@ -96,6 +96,7 @@ export default connect(state => ({
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
+  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }), {
   clearEvents, fetchSessionList
 })(SessionsMenu);

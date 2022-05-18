@@ -12,6 +12,7 @@ import SharePopup from '../shared/SharePopup/SharePopup';
 import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import { countries } from 'App/constants';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
+import Bookmark from 'Shared/Bookmark'
 
 import stl from './playerBlockHeader.css';
 import Issues from './Issues/Issues';
@@ -162,7 +163,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
               <>
                 <Autoplay />
                 <div className={ stl.divider } />
-                <IconButton
+                <Bookmark sessionId={sessionId} favorite={favorite} />
+                {/* <IconButton
                   // className="mr-2"
                   tooltip="Bookmark"
                   tooltipPosition="top right"
@@ -170,7 +172,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
                   loading={ loading }
                   icon={ favorite ? 'star-solid' : 'star' }                  
                   plain
-                />
+                /> */}
                 <div className={ stl.divider } />
                 <SharePopup
                   entity="sessions"
