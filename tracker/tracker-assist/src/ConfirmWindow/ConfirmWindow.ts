@@ -1,12 +1,6 @@
 import type { Properties } from 'csstype';
 
-import { declineCall, acceptCall, cross, remoteControl } from './icons.js'
-
-const TEXT_GRANT_REMORTE_ACCESS = "Grant Remote Access";
-const TEXT_REJECT = "Reject";
-const TEXT_ANSWER_CALL = `${acceptCall} &#xa0 Answer`;
-
-type ButtonOptions =
+export type ButtonOptions =
   | HTMLButtonElement
   | string
   | {
@@ -15,48 +9,15 @@ type ButtonOptions =
     };
 
 // TODO: common strategy for InputOptions/defaultOptions merging
-interface ConfirmWindowOptions {
+export interface ConfirmWindowOptions {
   text: string;
   style?: Properties;
   confirmBtn: ButtonOptions;
   declineBtn: ButtonOptions;
 }
 
-export type Options = string | Partial<ConfirmWindowOptions>;
 
-function confirmDefault(
-  opts: Options,
-  confirmBtn: ButtonOptions,
-  declineBtn: ButtonOptions,
-  text: string
-): ConfirmWindowOptions {
-  const isStr = typeof opts === "string";
-  return Object.assign(
-    {
-      text: isStr ? opts : text,
-      confirmBtn,
-      declineBtn
-    },
-    isStr ? undefined : opts
-  );
-}
-
-export const callConfirmDefault = (opts: Options) =>
-  confirmDefault(
-    opts,
-    TEXT_ANSWER_CALL,
-    TEXT_REJECT,
-    "You have an incoming call. Do you want to answer?"
-  );
-export const controlConfirmDefault = (opts: Options) =>
-  confirmDefault(
-    opts,
-    TEXT_GRANT_REMORTE_ACCESS,
-    TEXT_REJECT,
-    "Allow remote control?"
-  );
-
-function makeButton(options: ButtonOptions): HTMLButtonElement {
+function makeButton(options: ButtonOptions, defaultStyle?: Properties): HTMLButtonElement {
   if (options instanceof HTMLButtonElement) {
     return options;
   }
@@ -71,7 +32,7 @@ function makeButton(options: ButtonOptions): HTMLButtonElement {
     alignItems: "center",
     textTransform: "uppercase",
     marginRight: "10px"
-  });
+  }, defaultStyle);
   if (typeof options === "string") {
     btn.innerHTML = options;
   } else {
@@ -90,22 +51,19 @@ export default class ConfirmWindow {
     const p = document.createElement("p");
     p.innerText = options.text;
     const buttons = document.createElement("div");
-    const confirmBtn = makeButton(options.confirmBtn);
-    const declineBtn = makeButton(options.declineBtn);
-    buttons.appendChild(confirmBtn);
-    buttons.appendChild(declineBtn);
-    popup.appendChild(p);
-    popup.appendChild(buttons);
-
-    Object.assign(confirmBtn.style, {
+    const confirmBtn = makeButton(options.confirmBtn, {
       background: "rgba(0, 167, 47, 1)",
       color: "white"
-    });
-
-    Object.assign(declineBtn.style, {
+    })
+    const declineBtn = makeButton(options.declineBtn, {
       background: "#FFE9E9",
       color: "#CC0000"
-    });
+    })
+    buttons.appendChild(confirmBtn)
+    buttons.appendChild(declineBtn)
+    popup.appendChild(p)
+    popup.appendChild(buttons)
+
 
     Object.assign(buttons.style, {
       marginTop: "10px",

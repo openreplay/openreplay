@@ -8,8 +8,9 @@ import RequestLocalStream from './LocalStream.js';
 import RemoteControl from './RemoteControl.js';
 import CallWindow from './CallWindow.js';
 import AnnotationCanvas from './AnnotationCanvas.js';
-import ConfirmWindow, { callConfirmDefault, controlConfirmDefault } from './ConfirmWindow.js';
-import type { Options as ConfirmOptions } from './ConfirmWindow.js';
+import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js';
+import { callConfirmDefault } from './ConfirmWindow/defaults.js';
+import type { Options as ConfirmOptions } from './ConfirmWindow/defaults.js';
 
 // TODO: fully specified  strict check (everywhere)
 
@@ -231,7 +232,7 @@ export default class Assist {
       peerOptions['config'] = this.options.config
     }
     const peer = this.peer = new Peer(peerID, peerOptions);
-    app.debug.log('Peer created: ', peer)
+    // app.debug.log('Peer created: ', peer)
     peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
     peer.on('disconnect', () => peer.reconnect())
     peer.on('call', (call) => {
