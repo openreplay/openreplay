@@ -12,7 +12,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: "peers"
-fullnameOverride: "peers"
+fullnameOverride: "peers-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created
