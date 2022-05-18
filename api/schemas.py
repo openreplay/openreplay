@@ -629,7 +629,7 @@ class SessionsSearchPayloadSchema(_PaginatedSchema):
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
-    order: Literal[SortOrderType] = Field(default=SortOrderType.desc)
+    order: SortOrderType = Field(default=SortOrderType.desc)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
     bookmarked: bool = Field(default=False)
