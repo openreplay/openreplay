@@ -109,8 +109,9 @@ func (b *PerformanceAggregator) Build() Message {
 		b.PerformanceTrackAggr.AvgCPU = 100 - uint64(math.Round(b.sumTickRate*100/b.count))
 		b.PerformanceTrackAggr.AvgTotalJSHeapSize = uint64(math.Round(b.sumTotalJSHeapSize / b.count))
 		b.PerformanceTrackAggr.AvgUsedJSHeapSize = uint64(math.Round(b.sumUsedJSHeapSize / b.count))
+		msg := b.PerformanceTrackAggr
 		b.reset()
-		return b.PerformanceTrackAggr
+		return msg
 	}
 	b.reset()
 	return nil
