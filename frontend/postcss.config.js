@@ -13,9 +13,10 @@ module.exports = ({ file, options, env }) => ({
     'postcss-mixins': {},
     'postcss-simple-vars': { variables: colors },
     'postcss-nesting': {},
-    'postcss-inline-svg': {
-      path: path.join(__dirname, 'app/svg'),
-    },
+    // 'postcss-inline-svg': {
+    //   path: path.join(__dirname, 'app/svg'),
+    // },
+    'tailwindcss/nesting': {},
     'tailwindcss': true,
     autoprefixer: {},
     //'postcss-preset-env': {}, //includes autoprefixer

@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "es2020",
-    "moduleResolution": "node", //?
-    // "allowJs": true,
-    "declaration": true,
+    "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "downlevelIteration": true,
-    //"sourceMap": false,
-    "lib": [ "es2020", "dom" ],
+    "noImplicitAny": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    // "module": "es6",
+    // "target": "es5",
+    "allowJs": true,
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    "noEmit": true,
     "jsx": "react",
-    "strict": true,
-    "noImplicitAny": false, // TODO: set true for the strict check
-    "incremental": true,
     "baseUrl": ".",
     "paths": { // TODO: one-source truth
       "App": ["./app"],
@@ -31,9 +32,5 @@
       "Player/*": ["./app/player/*"],
     }
   },
-  "exclude": [
-    "node_modules",
-    ".storybook",
-    "scripts"
-  ]
+  "include": ["app"]
 }

@@ -1,4 +1,3 @@
-//@flow
 import type StatedScreen from '../StatedScreen';
 import type { Message } from '../messages';
 import type { Timed } from '../Timed';

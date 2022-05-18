@@ -2,7 +2,7 @@
 
 class NodeCounter {
 	_id: number;
-	_parent: NodeCount | null = null;
+	_parent: NodeCounter | null = null;
 	_count: number = 0;
 	_children: Array<NodeCounter> = [];
 
