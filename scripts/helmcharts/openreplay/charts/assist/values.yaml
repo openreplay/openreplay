@@ -12,7 +12,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: "assist"
-fullnameOverride: "assist"
+fullnameOverride: "assist-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created

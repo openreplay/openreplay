@@ -12,7 +12,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: "db"
-fullnameOverride: "db"
+fullnameOverride: "db-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created

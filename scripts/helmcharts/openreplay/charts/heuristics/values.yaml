@@ -12,7 +12,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: "heuristics"
-fullnameOverride: "heuristics"
+fullnameOverride: "heuristics-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created
