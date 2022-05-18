@@ -457,7 +457,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   getFirstMessageTime(): number {
-    return 0; //this.pagesManager.minTime;
+    return this.pagesManager.minTime;
   }
 
   // TODO: clean managers?
