@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from 'App/mstore';
+import cn from 'classnames'
 import { Icon, BackLink, Loader } from 'UI';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
@@ -7,6 +8,7 @@ import WidgetSessions from '../WidgetSessions';
 import { useObserver } from 'mobx-react-lite';
 import { withSiteId } from 'App/routes';
 import WidgetName from '../WidgetName';
+import stl from './widgetView.css';
 
 interface Props {
     history: any;
@@ -36,12 +38,17 @@ function WidgetView(props: Props) {
         }
     }
 
+    const openEdit = () => {
+        if (expanded) return;
+        setExpanded(true)
+    }
+
     return useObserver(() => (
         <Loader loading={loading}>
             <div className="relative pb-10">
                 <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
                 <div className="bg-white rounded border">
-                    <div className="p-4 flex justify-between items-center">
+                    <div className={cn("p-4 flex justify-between items-center", { 'cursor-pointer': !expanded, [stl.hoverableTitle]: !expanded })} onClick={openEdit}>
                         <h1 className="mb-0 text-2xl">
                             <WidgetName
                                 name={widget.name}
