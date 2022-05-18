@@ -80,7 +80,7 @@ export default class ImagePlayer {
           logger.error(e);
         }
       });
-      Object.values(this.lists).forEach(list => list.moveToLast(0)); // In case of negative values
+      Object.values(this.lists).forEach(list => list.moveGetLast(0)); // In case of negative values
     })
 
     if (session.socket == null || typeof session.socket.jwt !== "string" || typeof session.socket.url !== "string") {
@@ -190,8 +190,8 @@ export default class ImagePlayer {
   _setTime(ts) {
     ts = Math.max(Math.min(ts, this.state.endTime), 0);
     this.state.setTime(ts);
-    Object.values(this.lists).forEach(list => list.moveToLast(ts));
-    const screen = this._screens.moveToLast(ts);
+    Object.values(this.lists).forEach(list => list.moveGetLast(ts));
+    const screen = this._screens.moveGetLast(ts);
     if (screen != null) {
       const { dataURL, width, height } = screen;
       this.state.setSize(width, height);
@@ -199,7 +199,7 @@ export default class ImagePlayer {
       //this._screen.style.backgroundImage = `url(${screen.dataURL})`;
       screen.loadImage.then(() => this._screen.style.backgroundImage = `url(${screen.dataURL})`);
     }
-    const lastClick = this._clicks.moveToLast(ts);
+    const lastClick = this._clicks.moveGetLast(ts);
     if (lastClick != null && lastClick.time > ts - 600) {
       this._animateClick(lastClick);
     }

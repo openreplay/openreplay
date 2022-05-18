@@ -4,8 +4,6 @@ import logger from 'App/logger';
 import Resource, { TYPES } from 'Types/session/resource'; // MBTODO: player types?
 import { TYPES as EVENT_TYPES } from 'Types/session/event';
 import Log from 'Types/session/log';
-import Profile from 'Types/session/profile';
-import ReduxAction from 'Types/session/reduxAction';
 
 import { update } from '../store';
 import {
@@ -18,7 +16,7 @@ import StatedScreen from './StatedScreen/StatedScreen';
 
 import ListWalker from './managers/ListWalker';
 import PagesManager from './managers/PagesManager';
-import MouseManager from './managers/MouseManager';
+import MouseMoveManager from './managers/MouseMoveManager';
 
 import PerformanceTrackManager from './managers/PerformanceTrackManager';
 import WindowNodeCounter from './managers/WindowNodeCounter';
@@ -30,16 +28,11 @@ import loadFiles from './network/loadFiles';
 
 import { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState } from './StatedScreen/StatedScreen';
 import { INITIAL_STATE as ASSIST_INITIAL_STATE, State as AssistState } from './managers/AssistManager';
+import { INITIAL_STATE as LISTS_INITIAL_STATE , LIST_NAMES, initLists } from './Lists';
 
 import type { PerformanceChartPoint } from './managers/PerformanceTrackManager';
 import type { SkipInterval } from './managers/ActivityManager';
 
-const LIST_NAMES = ["redux", "mobx", "vuex", "ngrx", "graphql", "exceptions", "profiles", "longtasks"] as const;
-const LISTS_INITIAL_STATE = {};
-LIST_NAMES.forEach(name => {
-  LISTS_INITIAL_STATE[`${name}ListNow`] = [];
-  LISTS_INITIAL_STATE[`${name}List`] = [];
-})
 
 export interface State extends SuperState, AssistState {
   performanceChartData: PerformanceChartPoint[],
@@ -60,18 +53,6 @@ export const INITIAL_STATE: State = {
   performanceChartData: [],
   skipIntervals: [],
 };
-
-type ListsObject = {
-  [key in typeof LIST_NAMES[number]]: ListWalker<any> //
-}
-
-function initLists(): ListsObject {
-  const lists: Partial<ListsObject> = {};
-  for (var i = 0; i < LIST_NAMES.length; i++) {
-    lists[LIST_NAMES[i]] = new ListWalker();
-  }
-  return lists as ListsObject;
-}
 
 
 import type {
@@ -97,7 +78,7 @@ export default class MessageDistributor extends StatedScreen {
 
   private readonly resizeManager: ListWalker<SetViewportSize> = new ListWalker([]);
   private readonly pagesManager: PagesManager;
-  private readonly mouseManager: MouseManager;
+  private readonly mouseMoveManager: MouseMoveManager;
   private readonly assistManager: AssistManager;
 
   private readonly scrollManager: ListWalker<SetViewportScroll> = new ListWalker();
@@ -114,7 +95,7 @@ export default class MessageDistributor extends StatedScreen {
   constructor(private readonly session: any /*Session*/, jwt: string, config, live: boolean) {
     super();
     this.pagesManager = new PagesManager(this, this.session.isMobile)
-    this.mouseManager = new MouseManager(this);
+    this.mouseMoveManager = new MouseMoveManager(this);
     this.assistManager = new AssistManager(session, this, config);
 
     this.sessionStart = this.session.startedAt;
@@ -136,11 +117,11 @@ export default class MessageDistributor extends StatedScreen {
 
       eventList.forEach(e => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
-          this.locationEventManager.add(e);
+          this.locationEventManager.append(e);
         }
       });
       this.session.errors.forEach(e => {
-        this.lists.exceptions.add(e);
+        this.lists.exceptions.append(e);
       });
       /* === */
       this.loadMessages();
@@ -226,12 +207,12 @@ export default class MessageDistributor extends StatedScreen {
   move(t: number, index?: number): void {
     const stateToUpdate: Partial<State> = {};
     /* == REFACTOR_ME ==  */
-    const lastLoadedLocationMsg = this.loadedLocationManager.moveToLast(t, index);
+    const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
       setListsStartTime(lastLoadedLocationMsg.time)
       this.navigationStartOffset = lastLoadedLocationMsg.navigationStart - this.sessionStart;
     }
-    const llEvent = this.locationEventManager.moveToLast(t, index);
+    const llEvent = this.locationEventManager.moveGetLast(t, index);
     if (!!llEvent) {
       if (llEvent.domContentLoadedTime != null) {
         stateToUpdate.domContentLoadedTime = {
@@ -250,22 +231,22 @@ export default class MessageDistributor extends StatedScreen {
       }
     }
     /* === */
-    const lastLocationMsg = this.locationManager.moveToLast(t, index);
+    const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
       stateToUpdate.location = lastLocationMsg.url;
     }
-    const lastConnectionInfoMsg = this.connectionInfoManger.moveToLast(t, index);
+    const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
     if (!!lastConnectionInfoMsg) {
       stateToUpdate.connType = lastConnectionInfoMsg.type;
       stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
     }
-    const lastPerformanceTrackMessage = this.performanceTrackManager.moveToLast(t, index);
+    const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
     if (!!lastPerformanceTrackMessage) {
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
     LIST_NAMES.forEach(key => {
-      const lastMsg = this.lists[key].moveToLast(t, key === 'exceptions' ? undefined : index);
+      const lastMsg = this.lists[key].moveGetLast(t, key === 'exceptions' ? undefined : index);
       if (lastMsg != null) {
         stateToUpdate[`${key}ListNow`] = this.lists[key].listNow;
       }
@@ -275,19 +256,19 @@ export default class MessageDistributor extends StatedScreen {
 
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
-    const lastResize = this.resizeManager.moveToLast(t, index);
+    const lastResize = this.resizeManager.moveGetLast(t, index);
     if (!!lastResize) {
       this.setSize(lastResize)
     }
     this.pagesManager.moveReady(t).then(() => {
 
-      const lastScroll = this.scrollManager.moveToLast(t, index);
+      const lastScroll = this.scrollManager.moveGetLast(t, index);
       if (!!lastScroll && this.window) {
         this.window.scrollTo(lastScroll.x, lastScroll.y);
       }
       // Moving mouse and setting :hover classes on ready view
-      this.mouseManager.move(t);
-      const lastClick = this.clickManager.moveToLast(t);
+      this.mouseMoveManager.move(t);
+      const lastClick = this.clickManager.moveGetLast(t);
       if (!!lastClick && t - lastClick.time < 600) { // happend during last 600ms
         this.cursor.click();
       }
@@ -300,7 +281,7 @@ export default class MessageDistributor extends StatedScreen {
     }
   }
 
-  _decodeMessage(msg, keys: Array<string>) {
+  private decodeMessage(msg, keys: Array<string>) {
     const decoded = {};
     try {
       keys.forEach(key => {
@@ -314,7 +295,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   /* Binded */
-  distributeMessage = (msg: Message, index: number): void => {
+  distributeMessage(msg: Message, index: number): void {
     if ([
       "mouse_move",
       "mouse_click",
@@ -355,74 +336,72 @@ export default class MessageDistributor extends StatedScreen {
         break;
       /* */
       case "set_page_location":
-        this.locationManager.add(msg);
+        this.locationManager.append(msg);
         if (msg.navigationStart > 0) {
-          this.loadedLocationManager.add(msg);
+          this.loadedLocationManager.append(msg);
         }
         break;
       case "set_viewport_size":
-        this.resizeManager.add(msg);
+        this.resizeManager.append(msg);
         break;
       case "mouse_move":
-        this.mouseManager.add(msg);
+        this.mouseMoveManager.append(msg);
         break;
       case "mouse_click":
-        this.clickManager.add(msg);
+        this.clickManager.append(msg);
         break;
       case "set_viewport_scroll":
-        this.scrollManager.add(msg);
+        this.scrollManager.append(msg);
         break;
       case "performance_track":
-        this.performanceTrackManager.add(msg);
+        this.performanceTrackManager.append(msg);
         break;
       case "set_page_visibility":
         this.performanceTrackManager.handleVisibility(msg)
         break;
       case "connection_information":
-        this.connectionInfoManger.add(msg);
+        this.connectionInfoManger.append(msg);
         break;
       case "o_table":
         this.decoder.set(msg.key, msg.value);
         break;
       case "redux":
-        decoded = this._decodeMessage(msg, ["state", "action"]);
+        decoded = this.decodeMessage(msg, ["state", "action"]);
         logger.log(decoded)
         if (decoded != null) {
-          this.lists.redux.add(decoded);
+          this.lists.redux.append(decoded);
         }
         break;
       case "ng_rx":
-        decoded = this._decodeMessage(msg, ["state", "action"]);
+        decoded = this.decodeMessage(msg, ["state", "action"]);
         logger.log(decoded)
         if (decoded != null) {
-          this.lists.ngrx.add(decoded);
+          this.lists.ngrx.append(decoded);
         }
         break;
       case "vuex":
-        decoded = this._decodeMessage(msg, ["state", "mutation"]);
+        decoded = this.decodeMessage(msg, ["state", "mutation"]);
         logger.log(decoded)
         if (decoded != null) {
-          this.lists.vuex.add(decoded);
+          this.lists.vuex.append(decoded);
         }
         break;
       case "mob_x":
-        decoded = this._decodeMessage(msg, ["payload"]);
+        decoded = this.decodeMessage(msg, ["payload"]);
         logger.log(decoded)
 
         if (decoded != null) {
-          this.lists.mobx.add(decoded);
+          this.lists.mobx.append(decoded);
         }
         break;
       case "graph_ql":
-        // @ts-ignore some hack? TODO: remove
-        msg.duration = 0;
-        this.lists.graphql.add(msg);
+        this.lists.graphql.append(msg);
         break;
       case "profiler":
-        this.lists.profiles.add(msg);
+        this.lists.profiles.append(msg);
         break;
       case "long_task":
-        this.lists.longtasks.add({
+        this.lists.longtasks.append({
           ...msg,
           time: msg.timestamp - this.sessionStart,
         });
@@ -447,7 +426,7 @@ export default class MessageDistributor extends StatedScreen {
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
         }
-        this.pagesManager.add(msg);
+        this.pagesManager.append(msg);
         break;
     }
   }
@@ -457,7 +436,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   getFirstMessageTime(): number {
-    return 0; //this.pagesManager.minTime;
+    return 0;
   }
 
   // TODO: clean managers?

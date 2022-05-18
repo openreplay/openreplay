@@ -6,10 +6,10 @@ import ListWalker from './ListWalker';
 const HOVER_CLASS = "-openreplay-hover";
 const HOVER_CLASS_DEPR = "-asayer-hover";
 
-export default class MouseManager extends ListWalker<MouseMove> {
+export default class MouseMoveManager extends ListWalker<MouseMove> {
 	private hoverElements: Array<Element> = [];
 
-	constructor(private screen: StatedScreen) {super();}
+	constructor(private screen: StatedScreen) {super()}
 
 	private updateHover(): void {
     // @ts-ignore TODO
@@ -32,7 +32,7 @@ export default class MouseManager extends ListWalker<MouseMove> {
   }
 
 	move(t: number) {
-		const lastMouseMove = this.moveToLast(t);
+		const lastMouseMove = this.moveGetLast(t);
 		if (!!lastMouseMove){
       this.screen.cursor.move(lastMouseMove);
       //window.getComputedStyle(this.screen.getCursorTarget()).cursor === 'pointer' // might nfluence performance though

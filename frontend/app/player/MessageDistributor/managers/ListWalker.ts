@@ -1,26 +1,19 @@
 import type { Timed } from '../messages/timed';
 
 export default class ListWalker<T extends Timed> {
-	// Optimisation: #prop compiles to method that costs mor than strict property call.
-	_p = 0;
-	_list: Array<T>;
-	constructor(list: Array<T> = []) {
-		this._list = list;
-	}
-
-	add(m: T): void {
-		return this.append(m);
-	}
+	private p = 0
+	constructor(private _list: Array<T> = []) {}
 
 	append(m: T): void {
 		if (this.length > 0 && this.last && m.time < this.last.time) {
-			console.error("Trying to append message with the less time then the list tail: ", m);
+			console.error("Trying to append message with the less time then the list tail: ", m)
+			return
 		}
 		this._list.push(m);
 	}
 
 	reset(): void {
-		this._p = 0;
+		this.p = 0
 	}
 
 	sort(comparator): void {
@@ -32,14 +25,6 @@ export default class ListWalker<T extends Timed> {
 		this._list.forEach(f);
 	}
 
-	// set pointer(p: number): void {
-	// 	if (p >= this.length || p < 0) {
-	// 		// console.error("Trying to set wrong pointer")
-	// 		return;
-	// 	}
-	// 	this._p = p;
-	// }
-
 	get last(): T | null {
 		if (this._list.length === 0) {
 			return null;
@@ -48,17 +33,17 @@ export default class ListWalker<T extends Timed> {
 	}
 
 	get current(): T | null {
-		if (this._p === 0) {
+		if (this.p === 0) {
 			return null;
 		}
-		return this._list[ this._p - 1 ];
+		return this._list[ this.p - 1 ];
 	}
 
 	get timeNow(): number {
-		if (this._p === 0) {
+		if (this.p === 0) {
 			return 0;
 		}
-		return this._list[ this._p - 1 ].time;
+		return this._list[ this.p - 1 ].time;
 	}
 
 	get length(): number {
@@ -79,7 +64,7 @@ export default class ListWalker<T extends Timed> {
 	}
 
 	get listNow(): Array<T> {
-		return this._list.slice(0, this._p);
+		return this._list.slice(0, this.p);
 	}
 
 	get list(): Array<T> {
@@ -91,15 +76,15 @@ export default class ListWalker<T extends Timed> {
 	}
 
 	get countNow(): number {
-		return this._p;
+		return this.p;
 	}
 
 	/*
 		Returns last message with the time <= t.
 		Assumed that the current message is already handled so 
-		if pointer doesn't cahnge <undefined> is returned.
+		if pointer doesn't cahnge <null> is returned.
 	*/
-	moveToLast(t: number, index?: number): T | null {
+	moveGetLast(t: number, index?: number): T | null {
 		let key: string = "time"; //TODO
 		let val = t;
 		if (index) {
@@ -108,42 +93,29 @@ export default class ListWalker<T extends Timed> {
 		}
 
 		let changed = false;
-		while (this._p < this.length && this._list[this._p][key] <= val) {
-			this._p++;
+		while (this.p < this.length && this._list[this.p][key] <= val) {
+			this.p++;
 			changed = true;
 		}
-		while (this._p > 0 && this._list[ this._p - 1 ][key] > val) {
-			this._p--;
+		while (this.p > 0 && this._list[ this.p - 1 ][key] > val) {
+			this.p--;
 			changed = true;
 		}
-		return changed ? this._list[ this._p - 1 ] : null;
+		return changed ? this._list[ this.p - 1 ] : null;
 	}
 
-	// moveToLastByIndex(i: number): ?T {
-	// 	let changed = false;
-	// 	while (!!this._list[this._p] && this._list[this._p]._index <= i) {
-	// 		this._p++;
-	// 		changed = true;
-	// 	}
-	// 	while (this._p > 0 && this._list[ this._p - 1 ]._index > i) {
-	// 		this._p--;
-	// 		changed = true;
-	// 	}
-	// 	return changed ? this._list[ this._p - 1 ] : undefined;
-	// }
-
-	moveApply(t: number, fn: (T) => void): void {
+	moveApply(t: number, fn: (T) => void, fnBack?: (T) => void): void {
 		// Applying only in increment order for now
 		if (t < this.timeNow) {
 			this.reset();
 		}
 
-		while (!!this._list[this._p] && this._list[this._p].time <= t) {
-			fn(this._list[ this._p++ ]);
+		while (!!this._list[this.p] && this._list[this.p].time <= t) {
+			fn(this._list[ this.p++ ]);
 		}
-		//while (this._p > 0 && this._list[ this._p - 1 ].time > t) {
-		//	fnBack(this._list[ --this._p ]);
-		//}
+		while (fnBack && this.p > 0 && this._list[ this.p - 1 ].time > t) {
+			fnBack(this._list[ --this.p ]);
+		}
 	}
 
 }
