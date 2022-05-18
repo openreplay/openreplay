@@ -618,16 +618,26 @@ class _PaginatedSchema(BaseModel):
     page: int = Field(default=1, gt=0)
 
 
+class SortOrderType(str, Enum):
+    asc = "ASC"
+    desc = "DESC"
+
+
 class SessionsSearchPayloadSchema(_PaginatedSchema):
     events: List[_SessionSearchEventSchema] = Field([])
     filters: List[SessionSearchFilterSchema] = Field([])
     startDate: int = Field(None)
     endDate: int = Field(None)
     sort: str = Field(default="startTs")
-    order: Literal["asc", "desc"] = Field(default="desc")
+    order: Literal[SortOrderType] = Field(default=SortOrderType.desc)
     events_order: Optional[SearchEventOrder] = Field(default=SearchEventOrder._then)
     group_by_user: bool = Field(default=False)
     bookmarked: bool = Field(default=False)
+
+    @root_validator(pre=True)
+    def transform_order(cls, values):
+        if values.get("order") is not None:
+            values["order"] = values["order"].upper()
 
     class Config:
         alias_generator = attribute_to_camel_case

@@ -201,12 +201,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             else:
                 data.order = data.order.upper()
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
-                g_sort = f"{'MIN' if data.order == 'DESC' else 'MAX'}({sort})"
+                g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
             else:
                 sort = 'start_ts'
 
@@ -230,7 +230,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
                                      full_args)
         else:
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
