@@ -8,8 +8,9 @@ import RequestLocalStream from './LocalStream.js';
 import RemoteControl from './RemoteControl.js';
 import CallWindow from './CallWindow.js';
 import AnnotationCanvas from './AnnotationCanvas.js';
-import ConfirmWindow, { callConfirmDefault, controlConfirmDefault } from './ConfirmWindow.js';
-import type { Options as ConfirmOptions } from './ConfirmWindow.js';
+import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js';
+import { callConfirmDefault } from './ConfirmWindow/defaults.js';
+import type { Options as ConfirmOptions } from './ConfirmWindow/defaults.js';
 
 // TODO: fully specified  strict check (everywhere)
 
@@ -145,17 +146,24 @@ export default class Assist {
     socket.onAny((...args) => app.debug.log("Socket:", ...args))
 
 
+
     const remoteControl = new RemoteControl(
       this.options,
       id => {
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit("control_granted", id)
+        annot = new AnnotationCanvas()
+        annot.mount()
       },
       id => {
         const cb = this.agents[id].onControlReleased
         delete this.agents[id].onControlReleased
         typeof cb === "function" && cb()
         this.emit("control_rejected", id)
+        if (annot != null) {
+          annot.remove()
+          annot = null
+        }
       },
     )
 
@@ -231,7 +239,7 @@ export default class Assist {
       peerOptions['config'] = this.options.config
     }
     const peer = this.peer = new Peer(peerID, peerOptions);
-    app.debug.log('Peer created: ', peer)
+    // app.debug.log('Peer created: ', peer)
     peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
     peer.on('disconnect', () => peer.reconnect())
     peer.on('call', (call) => {

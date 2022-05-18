@@ -82,16 +82,16 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
 
   return (
     <div className="flex items-center">
-      {onCall && (
+      {(onCall || remoteActive) && (
         <>
           <div
             className={
               cn(
                 'cursor-pointer p-2 flex items-center',
-                {[stl.disabled]: !onCall}
+                {[stl.disabled]: cannotCall}
               )
             }
-            onClick={ toggleAnnotation }
+            onClick={ () => toggleAnnotation(!annotating) }
             role="button"
           >
             <IconButton label={`Annotate`} icon={ annotating ? "pencil-stop" : "pencil"} primaryText redText={annotating} />
