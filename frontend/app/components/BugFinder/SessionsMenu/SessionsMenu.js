@@ -9,7 +9,7 @@ import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';
 
 function SessionsMenu(props) {
-  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel, isEnterprise } = props;
+  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel } = props;
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
@@ -66,11 +66,10 @@ function SessionsMenu(props) {
       <div className={stl.divider} />
       <div className="my-3">
         <SideMenuitem
-          title={ isEnterprise ? "Vault" : "Bookmarks" }
-          iconName={ isEnterprise ? "safe" : "star" }
+          title="Bookmarks"
+          iconName="star"
           active={activeTab.type === 'bookmark'}
-          onClick={() => onMenuItemClick({ name: isEnterprise ? 'Vault' : 'Bookmarks', type: 'bookmark', description: isEnterprise ? 'Sessions saved to vault never get\'s deleted from records.' : '' })}
-          // TODO show the description in header
+          onClick={() => onMenuItemClick({ name: 'Bookmarks', type: 'bookmark' })}
         />
       </div>      
       
@@ -87,7 +86,6 @@ export default connect(state => ({
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }), { 
   fetchWatchdogStatus, clearEvents, fetchSessionList
 })(SessionsMenu);
