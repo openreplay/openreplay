@@ -79,7 +79,8 @@ function SessionsMenu(props) {
           title={ isEnterprise ? "Vault" : "Bookmarks" }
           iconName={ isEnterprise ? "safe" : "star" }
           active={activeTab.type === 'bookmark'}
-          onClick={() => onMenuItemClick({ name: 'Bookmarks', type: 'bookmark' })}
+          onClick={() => onMenuItemClick({ name: isEnterprise ? 'Vault' : 'Bookmarks', type: 'bookmark', description: isEnterprise ? 'Sessions saved to vault never get\'s deleted from records.' : '' })}
+          // TODO show the description in header
         />
       </div>
 

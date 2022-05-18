@@ -33,10 +33,12 @@ function SessionListHeader({
           <span>{ activeTab.name }</span>
           <span className="ml-2 font-normal color-gray-medium">{ count ? numberWithCommas(count) : 0 }</span>
         </h3>
-        <div className="ml-3 flex items-center">
-          <span className="mr-2 color-gray-medium">Sessions Captured in</span>
-          <DateRange />
-        </div>
+        { activeTab.type !== 'bookmark' && (
+          <div className="ml-3 flex items-center">
+            <span className="mr-2 color-gray-medium">Sessions Captured in</span>
+            <DateRange />
+          </div>
+        )}
       </div>
       <div className="flex items-center">
         {/* <div className="flex items-center">
