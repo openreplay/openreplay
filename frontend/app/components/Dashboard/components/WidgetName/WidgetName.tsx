@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import cn from 'classnames';
 import { Icon } from 'UI';
-import stl from './widgetName.css'
 
 interface Props {
   name: string;
@@ -42,7 +40,7 @@ function WidgetName(props: Props) {
         <input
           ref={ ref }
           name="name"
-          className={cn('rounded fluid border-0', stl.input)}
+          className="rounded fluid border-0 -mx-2 px-2 h-8"
           value={name}
           onChange={write}
           onBlur={onBlur}
