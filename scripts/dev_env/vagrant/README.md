@@ -1,7 +1,3 @@
-<aside>
-💡 As of today, VirtualBox is not supported on Mac M1. You can try with VMWare as the Vagrant backend, but this has not been tested.
-</aside>
-
 ### Installation
 
 - Vagrant: [https://www.vagrantup.com/downloads](https://www.vagrantup.com/downloads)
@@ -41,12 +37,6 @@ Use the following instructions if you’re running Windows 10 or Windows 8:
 **Open the below URL and create an account**
 http://openreplay.local/signup
 ```
-
-### To start developing
-
-- [Frontend](../../frontend/development.md)
-- [API](../../api/development.md)
-- [Backend](../../backend/development.md)
 
 ### Notes
 
