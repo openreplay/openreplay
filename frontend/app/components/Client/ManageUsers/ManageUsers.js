@@ -9,7 +9,7 @@ import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink
 import { fetchList as fetchRoles } from 'Duck/roles';
 import styles from './manageUsers.module.css';
 import UserItem from './UserItem';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import BannerMessage from 'Shared/BannerMessage';
 

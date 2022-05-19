@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from "classnames";
 
 function Label({ className, topValue, topValueSize = 'text-base', bottomValue, topMuted = false, bottomMuted = false }) {

@@ -1,3 +1,4 @@
+import React from 'react';
 import { resentOrDate } from 'App/date';
 
 function DateAgo({ className, title, timestamp }) {

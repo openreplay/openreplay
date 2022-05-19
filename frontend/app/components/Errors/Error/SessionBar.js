@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { capitalize } from 'App/utils';
 import { session as sessionRoute } from 'App/routes';

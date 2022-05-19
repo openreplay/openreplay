@@ -11,7 +11,7 @@ import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
 
 import { toast } from 'react-toastify';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import stl from './AassistActions.module.css'
 
 function onClose(stream) {

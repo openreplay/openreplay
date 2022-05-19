@@ -4,7 +4,7 @@ import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save, addSeries, removeSeries, remove } from 'Duck/customMetrics';
 import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
 import DropdownPlain from '../../DropdownPlain';

@@ -4,7 +4,7 @@ import cn from 'classnames';
 import { Icon } from 'UI';
 import { applySavedSearch, remove, edit } from 'Duck/search'
 import { connect } from 'react-redux';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 interface Props {
   list: Array<any>

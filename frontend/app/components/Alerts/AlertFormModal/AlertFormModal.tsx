@@ -6,7 +6,7 @@ import AlertForm from '../AlertForm';
 import { connect } from 'react-redux';
 import { setShowAlerts } from 'Duck/dashboard';
 import { EMAIL, SLACK, WEBHOOK } from 'App/constants/schedule';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 interface Props {
   showModal?: boolean;

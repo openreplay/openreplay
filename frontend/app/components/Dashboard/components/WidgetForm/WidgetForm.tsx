@@ -6,7 +6,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 

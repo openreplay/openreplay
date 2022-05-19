@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { Popup, TextEllipsis } from 'UI';
 import { Styles } from '../../Dashboard/Widgets/common';

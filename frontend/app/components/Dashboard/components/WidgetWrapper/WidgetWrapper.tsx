@@ -4,7 +4,7 @@ import { ItemMenu } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
-// import { confirm } from 'UI/Confirmation';
+// import { confirm } from 'UI';
 import { useStore } from 'App/mstore';
 import LazyLoad from 'react-lazyload';
 import { withRouter } from 'react-router-dom';

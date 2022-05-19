@@ -6,7 +6,7 @@ import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
 import styles from './siteForm.module.css';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 @connect(state => ({
 	site: state.getIn([ 'site', 'instance' ]),

@@ -10,7 +10,7 @@ import NewSiteForm from './NewSiteForm';
 import GDPRForm from './GDPRForm';
 import TrackingCodeModal from 'Shared/TrackingCodeModal';
 import BlockedIps from './BlockedIps';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import SiteSearch from './SiteSearch';
 
 const STATUS_MESSAGE_MAP = {

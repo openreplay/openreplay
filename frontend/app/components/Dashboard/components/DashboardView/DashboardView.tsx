@@ -5,7 +5,7 @@ import { Button, PageTitle, Loader, NoContent } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { withRouter } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import DashboardModal from '../DashboardModal';

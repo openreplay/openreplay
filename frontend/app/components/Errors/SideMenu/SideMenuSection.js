@@ -1,3 +1,4 @@
+import React from 'react';
 import { SideMenuitem } from 'UI';
 import SideMenuHeader from './SideMenuHeader';
 

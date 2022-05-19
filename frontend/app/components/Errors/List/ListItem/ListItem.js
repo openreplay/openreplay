@@ -1,3 +1,4 @@
+import React from 'react';
 import { BarChart, Bar, YAxis, Tooltip, XAxis } from 'recharts';
 import cn from 'classnames';
 import moment from 'moment';

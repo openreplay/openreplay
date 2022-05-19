@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { edit, save, init, update } from 'Duck/integrations/slack'
 import { Form, Input, Button, Message } from 'UI'
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { remove } from 'Duck/integrations/slack'
 
 class SlackAddForm extends React.PureComponent {

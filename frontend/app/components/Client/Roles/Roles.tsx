@@ -6,7 +6,7 @@ import stl from './roles.module.css'
 import RoleForm from './components/RoleForm'
 import { init, edit, fetchList, remove as deleteRole, resetErrors } from 'Duck/roles';
 import RoleItem from './components/RoleItem'
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import withPageTitle from 'HOCs/withPageTitle';
 

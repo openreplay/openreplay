@@ -5,7 +5,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { useModal } from 'App/components/Modal';
 import Select from 'Shared/Select';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { connect } from 'react-redux';
 
 interface Props {

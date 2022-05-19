@@ -8,7 +8,7 @@ import SiteDropdown from 'Shared/SiteDropdown';
 import styles from './customFields.module.css';
 import CustomFieldForm from './CustomFieldForm';
 import ListItem from './ListItem';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 @connect(state => ({
   fields: state.getIn(['customFields', 'list']).sortBy(i => i.index),

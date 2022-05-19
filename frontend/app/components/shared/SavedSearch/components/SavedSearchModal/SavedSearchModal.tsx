@@ -4,7 +4,7 @@ import { Icon as SemIcon } from 'semantic-ui-react';
 import { Icon, Input } from 'UI';
 import { List } from 'immutable';
 import { Tooltip } from 'react-tippy'
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { applySavedSearch, remove, editSavedSearch } from 'Duck/search'
 import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';

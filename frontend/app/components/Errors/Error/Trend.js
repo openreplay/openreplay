@@ -1,3 +1,4 @@
+import React from 'react';
 import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar } from 'recharts';
 import domain from "Components/Dashboard/Widgets/common/domain";
 import moment from 'moment';

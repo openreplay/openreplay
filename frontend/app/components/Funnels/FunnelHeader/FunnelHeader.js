@@ -4,7 +4,7 @@ import { remove as deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetc
 import { editFilter, editFunnelFilter, refresh, addFilter } from 'Duck/funnels';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import FunnelSaveModal from 'Components/Funnels/FunnelSaveModal';
 import stl from './funnelHeader.module.css';
 
