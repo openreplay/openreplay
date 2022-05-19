@@ -1,9 +1,10 @@
 import React from 'react';
-import stl from './notifications.css';
+import stl from './notifications.module.css';
 import ListItem from './ListItem';
 import { connect } from 'react-redux';
-import { Button, SlideModal, Icon, Popup, NoContent, SegmentSelection } from 'UI';
-import { fetchList, setViewed, setLastRead, clearAll } from 'Duck/notifications';
+import { Button, SlideModal, Icon, Popup, NoContent } from 'UI';
+import { fetchList, setViewed, clearAll } from 'Duck/notifications';
+import { setLastRead } from 'Duck/announcements';
 import withToggle from 'Components/hocs/withToggle';
 import { withRouter } from 'react-router-dom';
 import { fetchList as fetchAlerts, init as initAlert } from 'Duck/alerts';

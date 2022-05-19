@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import stl from './attributeItem.css'
+import stl from './attributeItem.module.css'
 import { Dropdown } from 'semantic-ui-react';
 import { LinkStyledInput, CircularLoader } from 'UI';
 import { KEYS } from 'Types/filter/customFilter';

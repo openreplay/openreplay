@@ -3,7 +3,7 @@ import { Dropdown } from 'semantic-ui-react';
 import { Icon } from 'UI';
 import { sort } from 'Duck/sessions';
 import { applyIssueFilter } from 'Duck/funnels';
-import stl from './sortDropdown.css';
+import stl from './sortDropdown.module.css';
 
 const sortOptionsMap = {
   'afectedUsers-desc': 'Affected Users (High)',

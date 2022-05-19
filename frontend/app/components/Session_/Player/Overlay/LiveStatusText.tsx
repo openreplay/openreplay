@@ -1,6 +1,6 @@
 import React from 'react';
-import stl from './LiveStatusText.css';
-import ovStl from './overlay.css';
+import stl from './LiveStatusText.module.css';
+import ovStl from './overlay.module.css';
 import { ConnectionStatus } from 'Player/MessageDistributor/managers/AssistManager';
 import { Loader } from 'UI';
 

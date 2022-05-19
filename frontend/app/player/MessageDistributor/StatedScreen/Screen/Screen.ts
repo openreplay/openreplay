@@ -1,11 +1,12 @@
 import Marker from './Marker';
 import Cursor from './Cursor';
 import Inspector from './Inspector'; 
-import styles from './screen.css';
-import { getState } from '../../../store';
+// import styles from './screen.module.css';
+// import { getState } from '../../../store';
 import BaseScreen from './BaseScreen';
 
-export { INITIAL_STATE, State } from './BaseScreen';
+export { INITIAL_STATE } from './BaseScreen';
+export type { State } from './BaseScreen';
 
 export default class Screen extends BaseScreen {
   public readonly cursor: Cursor;

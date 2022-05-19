@@ -4,8 +4,8 @@ import { connect } from 'react-redux'
 import { withRouter } from 'react-router-dom';
 import { Button, Link } from 'UI'
 import { session as sessionRoute, withSiteId } from 'App/routes'
-import stl from './AutoplayTimer.css';
-import clsOv from './overlay.css';
+import stl from './AutoplayTimer.module.css';
+import clsOv from './overlay.module.css';
 
 function AutoplayTimer({ nextId, siteId, history }) {
   let timer

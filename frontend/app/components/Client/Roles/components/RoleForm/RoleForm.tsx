@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
-import stl from './roleForm.css'
+import stl from './roleForm.module.css'
 import { save, edit } from 'Duck/roles'
 import { Input, Button, Checkbox, Dropdown, Icon } from 'UI'
 

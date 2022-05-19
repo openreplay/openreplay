@@ -1,5 +1,5 @@
 import { Button } from 'UI';
-import styles from './activeFilterDetails.css';
+import styles from './activeFilterDetails.module.css';
 import cn from 'classnames';
 import { BrowserIcon, OsIcon } from 'UI';
 import TypeBadge from '../EventFilter/TypeBadge';

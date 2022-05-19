@@ -6,7 +6,7 @@ import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
 import { Icon, SlideModal } from 'UI';
 import { pushNewSite } from 'Duck/user'
 import { init } from 'Duck/site';
-import styles from './siteDropdown.css';
+import styles from './siteDropdown.module.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';

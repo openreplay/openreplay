@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
-import stl from './filterItem.css';
+import stl from './filterItem.module.css';
 import cn from 'classnames';
 
 const FilterItem = ({ className = '', icon, label, onClick }) => {

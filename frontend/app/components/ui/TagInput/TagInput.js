@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Button } from 'UI';
 import { validateKeyCode } from 'App/validate';
-import styles from './tagInput.css';
+import styles from './tagInput.module.css';
 
 class TagInput extends React.Component {
   constructor(props) {

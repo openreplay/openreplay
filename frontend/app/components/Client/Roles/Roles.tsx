@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import cn from 'classnames'
 import { Loader, IconButton, Popup, NoContent, SlideModal } from 'UI'
 import { connect } from 'react-redux'
-import stl from './roles.css'
+import stl from './roles.module.css'
 import RoleForm from './components/RoleForm'
 import { init, edit, fetchList, remove as deleteRole, resetErrors } from 'Duck/roles';
 import RoleItem from './components/RoleItem'

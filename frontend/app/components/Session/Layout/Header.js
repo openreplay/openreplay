@@ -12,7 +12,7 @@ import SharePopup from 'Shared/SharePopup/SharePopup';
 import Section from './Header/Section';
 import Resolution from './Header/Resolution';
 import Issues from 'Components/Session_/Issues/Issues'; //TODO replace folder
-import cls from './header.css';
+import cls from './header.module.css';
 
 
 const SESSIONS_ROUTE = sessionsRoute();

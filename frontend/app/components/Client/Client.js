@@ -12,7 +12,7 @@ import AuditView from './Audit/AuditView';
 import Sites from './Sites';
 import CustomFields from './CustomFields';
 import Webhooks from './Webhooks';
-import styles from './client.css';
+import styles from './client.module.css';
 import cn from 'classnames';
 import PreferencesMenu from './PreferencesMenu';
 import Notifications from './Notifications';

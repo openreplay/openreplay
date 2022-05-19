@@ -9,7 +9,7 @@ import { formatMs } from 'App/date';
 import TimeTable from '../TimeTable';
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';
-import stl from './network.css';
+import stl from './network.module.css';
 
 const ALL = 'ALL';
 const XHR = 'xhr';

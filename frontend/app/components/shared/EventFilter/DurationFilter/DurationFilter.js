@@ -1,5 +1,5 @@
 import { Input, Label } from 'semantic-ui-react';
-import styles from './durationFilter.css';
+import styles from './durationFilter.module.css';
 
 const fromMs = value => value ? `${ value / 1000 / 60 }` : ''
 const toMs = value => value !== '' ? value * 1000 * 60 : null

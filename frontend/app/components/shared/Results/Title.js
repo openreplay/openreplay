@@ -1,5 +1,5 @@
 import { BackLink } from 'UI';
-import styles from './title.css';
+import styles from './title.module.css';
 
 const Title = ({ goBack }) => (!!goBack ?
   <div className={ styles.title }>

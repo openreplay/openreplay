@@ -8,7 +8,7 @@ import { LAST_24_HOURS, LAST_30_MINUTES, LAST_7_DAYS, LAST_30_DAYS } from 'Types
 import { fetchPerformanseSearch } from 'Duck/dashboard';
 import { widgetHOC } from '../common';
 
-import styles from './performance.css';
+import styles from './performance.module.css';
 
 const BASE_KEY = 'resource';
 

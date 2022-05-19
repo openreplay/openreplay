@@ -1,7 +1,7 @@
 import { JSONTree, NoContent, Button, Tabs } from 'UI'
 import cn from 'classnames';
 import copy from 'copy-to-clipboard';
-import stl from './fetchDetails.css';
+import stl from './fetchDetails.module.css';
 import Headers from './components/Headers'
 
 const HEADERS = 'HEADERS';

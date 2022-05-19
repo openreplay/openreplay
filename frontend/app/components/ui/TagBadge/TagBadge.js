@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import styles from './tagBadge.css';
+import styles from './tagBadge.module.css';
 
 export default class TagBadge extends React.PureComponent {
 

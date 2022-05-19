@@ -5,7 +5,7 @@ import { connectPlayer } from 'Player';
 import { testBuilderNew as testBuilderNewRoute } from 'App/routes';
 import { generateTest } from 'Duck/tests';
 import { FRAMEWORKS } from 'App/constants';
-import styles from './automateButton.css';
+import styles from './automateButton.module.css';
 
 @withRouter
 @connectPlayer(state => ({

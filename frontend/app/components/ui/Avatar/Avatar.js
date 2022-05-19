@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { avatarIconName } from 'App/iconNames';
-import stl from './avatar.css';
+import stl from './avatar.module.css';
 import { Icon } from 'UI';
 
 const ICON_LIST = ['icn_chameleon', 'icn_fox', 'icn_gorilla', 'icn_hippo', 'icn_horse', 'icn_hyena',

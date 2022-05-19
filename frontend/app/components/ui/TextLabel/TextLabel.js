@@ -1,7 +1,7 @@
 import { Popup } from 'semantic-ui-react';
 import cn from 'classnames';
 import { Icon } from 'UI';
-import styles from './textLabel.css';
+import styles from './textLabel.module.css';
 
 export default function TextLabel({
   icon,

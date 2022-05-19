@@ -4,7 +4,7 @@ import { Modal, Icon, SlideModal, IconButton } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import Sentry from './Sentry';
 import JsonViewer from './JsonViewer';
-import stl from './userEvent.css';
+import stl from './userEvent.module.css';
 
 // const modalSources = [ SENTRY, DATADOG ];
 

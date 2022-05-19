@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { Button, Select, Input, Icon } from 'UI';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import { validateNumber } from 'App/validate';
-import styles from './siteForm.css';
+import styles from './siteForm.module.css';
 
 const inputModeOptions = [
   { text: 'Record all inputs', value: 'plain' },

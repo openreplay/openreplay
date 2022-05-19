@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input, Dropdown, Button } from 'UI';
-import styles from './alertForm.css';
+import styles from './alertForm.module.css';
 
 const periodOptions = [
   {

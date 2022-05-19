@@ -8,7 +8,7 @@ import { show as showTargetDefiner } from 'Duck/components/targetDefiner';
 import AutomateButton from './AutomateButton';
 import UserCard from './UserCard';
 import EventGroupWrapper from './EventGroupWrapper';
-import styles from './eventsBlock.css';
+import styles from './eventsBlock.module.css';
 import EventSearch from './EventSearch/EventSearch';
 
 @connect(state => ({  

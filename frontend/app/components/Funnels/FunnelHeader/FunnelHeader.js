@@ -6,7 +6,7 @@ import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
 import { confirm } from 'UI/Confirmation';
 import FunnelSaveModal from 'Components/Funnels/FunnelSaveModal';
-import stl from './funnelHeader.css';
+import stl from './funnelHeader.module.css';
 
 const Info = ({ label = '', value = '', className = 'mx-4' }) => {
   return (

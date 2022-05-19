@@ -3,7 +3,7 @@ import TimePicker from 'rc-time-picker';
 import { Button } from 'UI';
 import { getDateRangeFromValue, getDateRangeLabel, dateRangeValues, CUSTOM_RANGE, moment, DATE_RANGE_VALUES } from 'App/dateRange';
 
-import styles from './dateRangePopup.css';
+import styles from './dateRangePopup.module.css';
 
 export default class DateRangePopup extends React.PureComponent {
   state = {

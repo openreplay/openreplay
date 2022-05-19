@@ -27,7 +27,7 @@ import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
-import styles from './playerBlock.css';
+import styles from './playerBlock.module.css';
 
 
 @connect(state => ({

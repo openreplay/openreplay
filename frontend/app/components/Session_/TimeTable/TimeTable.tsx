@@ -1,23 +1,22 @@
-// @flow
+import React from 'react';
 import { List, AutoSizer } from "react-virtualized";
-
 import cn from 'classnames';
 import { NoContent, IconButton } from 'UI';
-import { percentOf } from 'App/utils'; 
+import { percentOf } from 'App/utils';
 import { formatMs } from 'App/date';
 
 import BarRow from './BarRow';
-import stl from './timeTable.css';
+import stl from './timeTable.module.css';
 
-import autoscrollStl from '../autoscroll.css'; //aaa
+import autoscrollStl from '../autoscroll.module.css'; //aaa
 
 
 type Timed = {
-  +time: number,
+  time: number,
 }
 
 type Durationed = {
-  +duration: number,
+  duration: number,
 }
 
 type CanBeRed = {
@@ -30,18 +29,24 @@ type Row = Timed & Durationed & CanBeRed
 type Line = {
   color: string,  // Maybe use typescript?
   hint?: string,
-  onClick?: Line => any,
+  onClick?: any,
 } & Timed
 
 type Column = {
   label: string,
   width: number,
-  referenceLines: ?Array<Line>,
+  referenceLines?: Array<Line>,
   style?: Object,
 } & RenderOrKey
 
-type RenderOrKey = { // Disjoint?
-  render: Row => React.Node 
+// type RenderOrKey = { // Disjoint?
+//   render: Row => React.Node 
+// } | {
+//   dataKey: string,
+// }
+type RenderOrKey = {
+  render?: (row: Row) => React.ReactNode,
+  key?: string,
 } | {
   dataKey: string,
 }
@@ -50,7 +55,6 @@ type RenderOrKey = { // Disjoint?
 type Props = {
   className?: string,
   rows: Array<Row>,
-
   children: Array<Column>
 }
 
@@ -123,7 +127,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
   //   }   
   // }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps: any, prevState: any) {
     // if (prevProps.rows.length !== this.props.rows.length && 
     //     this.autoScroll && 
     //     this.scroller.current != null) {
@@ -150,7 +154,7 @@ export default class TimeTable extends React.PureComponent<Props, State> {
     }
   }
 
-  renderRow = ({ index, key, style: rowStyle }) => {
+  renderRow = ({ index, key, style: rowStyle }: any) => {
     const { activeIndex } = this.props;
     const { 
       children: columns,

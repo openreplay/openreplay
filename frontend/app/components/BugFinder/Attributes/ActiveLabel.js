@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './activeLabel.css';
+import stl from './activeLabel.module.css';
 
 const ActiveLabel = ({ item, onRemove }) => {
   return (

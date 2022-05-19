@@ -1,6 +1,6 @@
 import React from 'react'
 import cn from 'classnames'
-import stl from './funnelMenuItem.css'
+import stl from './funnelMenuItem.module.css'
 import { Icon, ItemMenu, Popup } from 'UI'
 
 function FunnelMenuItem({

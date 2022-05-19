@@ -7,7 +7,7 @@ import { prorata } from 'App/utils';
 // import { TYPES } from 'Types/session/event';
 import withOverlay from 'Components/hocs/withOverlay';
 import LoadInfo from './LoadInfo';
-import cls from './event.css';
+import cls from './event.module.css';
 import { numberWithCommas } from 'App/utils';
 
 @withOverlay()

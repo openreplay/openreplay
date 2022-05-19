@@ -4,7 +4,7 @@ import SavedSearch from 'Shared/SavedSearch';
 import { Button, Popup } from 'UI';
 import { clearSearch } from 'Duck/search';
 import { connect } from 'react-redux';
-import stl from './mainSearchBar.css';
+import stl from './mainSearchBar.module.css';
 import cn from 'classnames';
 
 interface Props {

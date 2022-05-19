@@ -13,7 +13,7 @@ import TemplateOverlay from './TemplateOverlay';
 import WidgetIcon from './WidgetIcon';
 import AlertButton from './AlertButton';
 import { Tooltip } from 'react-tippy';
-import stl from './widgetWrapper.css';
+import stl from './widgetWrapper.module.css';
 
 interface Props {
     className?: string;

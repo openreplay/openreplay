@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Controlled as CodeMirror } from 'react-codemirror2'
 import cn from 'classnames'
-import stl from './snippet.css'
+import stl from './snippet.module.css'
 
 export default function Snippet({ text }) {
   const [copied, setCopied] = useState(false)

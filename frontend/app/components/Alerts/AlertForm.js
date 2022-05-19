@@ -4,7 +4,7 @@ import { alertMetrics as metrics } from 'App/constants';
 import { alertConditions as conditions } from 'App/constants';
 import { client, CLIENT_TABS } from 'App/routes';
 import { connect } from 'react-redux';
-import stl from './alertForm.css';
+import stl from './alertForm.module.css';
 import DropdownChips from './DropdownChips';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';

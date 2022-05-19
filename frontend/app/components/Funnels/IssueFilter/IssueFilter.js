@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Icon, Dropdown, TagBadge } from 'UI'
 import { applyIssueFilter, removeIssueFilter } from 'Duck/funnels';
 import cn from 'classnames';
-import stl from './issueFilter.css';
+import stl from './issueFilter.module.css';
 import { List } from 'immutable';
 
 function IssueFilter(props) {

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Controlled as CodeMirror } from 'react-codemirror2'
-import stl from './installDocs.css'
+import stl from './installDocs.module.css'
 import cn from 'classnames'
 import { CopyButton } from 'UI';
 

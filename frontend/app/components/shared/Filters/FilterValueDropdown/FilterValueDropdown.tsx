@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Dropdown, Icon } from 'UI';
-import stl from './FilterValueDropdown.css';
+import stl from './FilterValueDropdown.module.css';
 
 interface Props {
   filter: any; // event/filter

@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
-import styles from './funnelSaveModal.css';
+import styles from './funnelSaveModal.module.css';
 import { edit, save, fetchList as fetchFunnelsList } from 'Duck/funnels';
 
 @connect(state => ({

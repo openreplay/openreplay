@@ -4,7 +4,7 @@ import { Popup } from 'UI';
 import { CRASHES, EVENTS } from 'Player/ios/state';
 import TimeTracker from './TimeTracker';
 import PlayerTime from './PlayerTime';
-import cls from './timeline.css';
+import cls from './timeline.module.css';
 
 export default function Timeline({ player }) {
 

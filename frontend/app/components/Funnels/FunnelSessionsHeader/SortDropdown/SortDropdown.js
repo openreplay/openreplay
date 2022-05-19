@@ -3,7 +3,7 @@ import { Dropdown } from 'semantic-ui-react';
 import { Icon } from 'UI';
 import { setSessionsSort as sort } from 'Duck/funnels';
 import { setSessionsSort } from 'Duck/funnels';
-import stl from './sortDropdown.css';
+import stl from './sortDropdown.module.css';
 
 @connect(state => ({
   sessionsSort: state.getIn(['funnels','sessionsSort'])

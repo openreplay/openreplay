@@ -4,7 +4,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, SlideModal, IconButton, Icon, Button, Popup, TextLink } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
 import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
-import stl from './sites.css';
+import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
 import GDPRForm from './GDPRForm';
 import TrackingCodeModal from 'Shared/TrackingCodeModal';

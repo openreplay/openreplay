@@ -6,7 +6,7 @@ import {
   NoContent, Popup, CopyButton, Dropdown } from 'UI';
 import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import { fetchList as fetchRoles } from 'Duck/roles';
-import styles from './manageUsers.css';
+import styles from './manageUsers.module.css';
 import UserItem from './UserItem';
 import { confirm } from 'UI/Confirmation';
 import { toast } from 'react-toastify';

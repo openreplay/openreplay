@@ -16,7 +16,7 @@ import { jump } from 'Player';
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock/index';
 
-import stl from './storage.css';
+import stl from './storage.module.css';
 
 // const STATE = 'STATE';
 // const DIFF = 'DIFF';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Popup } from 'UI';
 import cn from 'classnames';
-import stl from './sideMenuItem.css';
+import stl from './sideMenuItem.module.css';
 
 function SideMenuitem({
     iconBg = false,

@@ -5,7 +5,7 @@ import { fetchWidget } from 'Duck/dashboard';
 import { updateAppearance } from 'Duck/user';
 import { WIDGET_MAP } from 'Types/dashboard';
 import Title from './Title';
-import stl from './widgetHOC.css';
+import stl from './widgetHOC.module.css';
 
 export default (
 	widgetKey,

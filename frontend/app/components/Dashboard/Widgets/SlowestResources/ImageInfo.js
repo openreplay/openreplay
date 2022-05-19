@@ -1,6 +1,6 @@
 import { Popup } from 'UI';
 import cn from 'classnames';
-import styles from './imageInfo.css';
+import styles from './imageInfo.module.css';
 
 const supportedTypes = ['png', 'jpg', 'jpeg', 'svg'];
 

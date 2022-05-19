@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Tooltip } from 'react-tippy'
 import cn from 'classnames';
 import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
-import stl from './sessionMenu.css';
+import stl from './sessionMenu.module.css';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';

@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { edit, save } from 'Duck/webhook';
 import { Form, Button } from 'UI';
-import styles from './webhookForm.css';
+import styles from './webhookForm.module.css';
 
 @connect(state => ({
   webhook: state.getIn(['webhooks', 'instance']),

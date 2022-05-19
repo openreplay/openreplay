@@ -1,5 +1,5 @@
 import ConsoleContent from '../../Session_/Console/ConsoleContent';
-import styles from './consoleTab.css';
+import styles from './consoleTab.module.css';
 
 const HEEADER_HEIGHT = 550;
 

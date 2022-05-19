@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 // import { DNDContext } from 'Components/hocs/dnd';
 import {
   addEvent, applyFilter, moveEvent, clearEvents,
-  addCustomFilter, addAttribute, setSearchQuery, setActiveFlow, setFilterOption
+  addCustomFilter, addAttribute, setSearchQuery, setActiveFlow
 } from 'Duck/funnelFilters';
 import { updateFunnelFilters, refresh as refreshFunnel  } from 'Duck/funnels';
 import { fetchList as fetchEventList } from 'Duck/events';
@@ -11,7 +11,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import EventEditor from './EventEditor';
 import ListHeader from '../../BugFinder/ListHeader';
 import { IconButton } from 'UI';
-import stl from './eventFilter.css';
+import stl from './eventFilter.module.css';
 import Attributes from './Attributes';
 import CustomFilters from './CustomFilters';
 
@@ -35,7 +35,6 @@ import CustomFilters from './CustomFilters';
   addAttribute,
   setSearchQuery,
   setActiveFlow,
-  setFilterOption,
   updateFunnelFilters,
   refreshFunnel
 })

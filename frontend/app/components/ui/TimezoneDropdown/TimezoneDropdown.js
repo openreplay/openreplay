@@ -1,7 +1,7 @@
 import React from 'react'
 import { Dropdown } from 'semantic-ui-react';
 import { Icon } from 'UI';
-import stl from './timezoneDropdown.css';
+import stl from './timezoneDropdown.module.css';
 import { connect } from 'react-redux';
 import { setTimezone } from 'Duck/sessions';
 

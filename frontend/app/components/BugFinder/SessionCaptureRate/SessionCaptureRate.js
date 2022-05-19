@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Input, Slider, Button, Popup, CircularLoader } from 'UI';
 import { saveCaptureRate, editCaptureRate } from 'Duck/watchdogs';
 import { connect } from 'react-redux';
-import stl from './sessionCaptureRate.css';
+import stl from './sessionCaptureRate.module.css';
 
 function isPercent(val) {
   if (isNaN(+val)) return false;

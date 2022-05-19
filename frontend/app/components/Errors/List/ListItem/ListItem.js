@@ -8,7 +8,7 @@ import { diffFromNowShortString } from 'App/date';
 import { Checkbox, Link } from 'UI'; 
 import ErrorName from 'Components/Errors/ui/ErrorName';
 import Label from 'Components/Errors/ui/Label';
-import stl from './listItem.css';
+import stl from './listItem.module.css';
 import { Styles } from '../../../Dashboard/Widgets/common';
 
 

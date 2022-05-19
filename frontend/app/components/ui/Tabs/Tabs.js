@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import stl from './tabs.css';
+import stl from './tabs.module.css';
 
 const Tabs = ({ tabs, active, onClick, border = true, className }) => (
   <div className={  cn(stl.tabs, className, { [ stl.bordered ]: border }) } role="tablist" >

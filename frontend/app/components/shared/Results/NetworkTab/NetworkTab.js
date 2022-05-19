@@ -4,7 +4,7 @@ import { connect } from 'react-redux'
 import cn from 'classnames';
 import NetworkContent from '../../../Session_/Network/NetworkContent'
 import FetchDetails from '../../../Session_/Fetch/FetchDetails';
-import stl from './networkTab.css';
+import stl from './networkTab.module.css';
 
 const HEEADER_HEIGHT = 590;
 

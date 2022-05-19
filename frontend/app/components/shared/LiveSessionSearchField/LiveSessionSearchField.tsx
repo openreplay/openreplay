@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import stl from './LiveSessionSearchField.css';
+import stl from './LiveSessionSearchField.module.css';
 import { Input } from 'UI';
 import LiveFilterModal from 'Shared/Filters/LiveFilterModal';
 import { fetchFilterSearch } from 'Duck/search';

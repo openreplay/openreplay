@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './information.css'
+import stl from './information.module.css'
 import cn from 'classnames'
 
 function Information({ primary = true, content = '' }) {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon, CopyButton, Popup } from 'UI';
-import styles from './userItem.css';
+import styles from './userItem.module.css';
 
 const UserItem = ({ user, adminLabel, deleteHandler, editHandler, generateInviteLink }) => (
   <div className={ styles.wrapper } id="user-row">

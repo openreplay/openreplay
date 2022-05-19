@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames'
 import { Icon } from 'UI';
-import styles from './listItem.css';
+import styles from './listItem.module.css';
 
 const ListItem = ({ field, onEdit, onDelete, disabled }) => {
   return (

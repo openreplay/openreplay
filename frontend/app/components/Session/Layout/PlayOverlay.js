@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { useCallback, useState } from 'react';
 import { Icon } from 'UI';
-import cls from './PlayOverlay.css';
+import cls from './PlayOverlay.module.css';
 
 export default function PlayOverlay({ player }) {
 	const [ iconVisible, setIconVisible ] = useState(false);

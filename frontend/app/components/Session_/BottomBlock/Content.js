@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import stl from './content.css';
+import stl from './content.module.css';
 
 const Content = ({
   children,

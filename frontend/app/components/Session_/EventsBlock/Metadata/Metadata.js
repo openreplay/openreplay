@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { NoContent, IconButton, Popup } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import MetadataItem from './MetadataItem';
-import stl from './metadata.css';
+import stl from './metadata.module.css';
 import cn from 'classnames';
 
 export default connect(state => ({

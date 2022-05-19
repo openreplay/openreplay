@@ -38,7 +38,7 @@ import {
 } from './Widgets';
 
 import SideMenuSection from './SideMenu/SideMenuSection';
-import styles from './dashboard.css';
+import styles from './dashboard.module.css';
 import WidgetSection from 'Shared/WidgetSection/WidgetSection';
 import OverviewWidgets from './Widgets/OverviewWidgets/OverviewWidgets';
 import CustomMetricsWidgets from './Widgets/CustomMetricsWidgets/CustomMetricsWidgets';

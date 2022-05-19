@@ -15,7 +15,7 @@ import {
 import { logout } from 'Duck/user';
 import { Icon, Popup } from 'UI';
 import SiteDropdown from './SiteDropdown';
-import styles from './header.css';
+import styles from './header.module.css';
 import Discover from './Discover/Discover';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore'
 import Announcements from '../Announcements';

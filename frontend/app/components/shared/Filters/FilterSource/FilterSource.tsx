@@ -1,6 +1,6 @@
 import { FilterType } from 'App/types/filter/filterType';
 import React, { useState, useEffect } from 'react';
-import stl from './FilterSource.css';
+import stl from './FilterSource.module.css';
 
 interface Props {
   filter: any,

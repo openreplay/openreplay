@@ -1,4 +1,4 @@
-@import "icons.css";
+@import 'icons.css';
 .form {
   /* position: absolute; */
   /* top: 50%; */
@@ -54,9 +54,9 @@
 
 .email, .password {
   display: block;
-  margin: 10px auto;
+  /* margin: 10px auto; */
   width: 100%;
-  height: 45px;
+  height: 38px;
   line-height: 45px;
   border: $gray-light solid 1px;
   border-radius: 3px;
@@ -102,12 +102,11 @@
 
 .inputWithIcon {
   position: relative;
-  width: 400px;
-  margin: 0 auto;
+  margin: 10px auto;
 
-  & input {
+  /* & input {
     padding-left: 45px;
-  }
+  } */
 }
 
 @define-mixin inputIcon $name {
@@ -128,11 +127,8 @@
 
 
 .left {
-  /* background: rgb(57,78,255); */
+  background: rgb(57,78,255);
   background: linear-gradient(135deg, rgba(57,78,255,1) 0%, rgba(58,89,245,1) 21%, rgba(62,161,183,1) 69%, rgba(62,170,175,1) 100%);
-  background-image: svg-load(pattern-login.svg), linear-gradient(135deg, rgba(57,78,255,1) 0%, rgba(58,89,245,1) 21%, rgba(62,161,183,1) 69%, rgba(62,170,175,1) 100%);
-  background-size: cover;
-  background-position: center center;
   position: relative;
   & .bottom {
     background-color: black;
@@ -144,8 +140,4 @@
   > & label {
     margin-bottom: 10px !important;
   }
-}
-
-.sso {
-  border-top: solid thin $gray-light;
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import stl from './LiveFilterModal.css';
+import stl from './LiveFilterModal.module.css';
 import { filtersMap } from 'Types/filter/newFilter';
 import { getMatchingEntries } from 'Shared/Filters/FilterModal'
 

@@ -1,7 +1,7 @@
 import { diffFromNowString } from 'App/date';
 import { TextEllipsis } from 'UI';
 
-import styles from './resourceInfo.css';
+import styles from './resourceInfo.module.css';
 
 export default class ResourceInfo extends React.PureComponent {
   render() {

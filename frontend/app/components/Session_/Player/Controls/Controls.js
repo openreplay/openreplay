@@ -30,7 +30,7 @@ import { ReduxTime } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 
-import styles from './controls.css';
+import styles from './controls.module.css';
 
 
 function getStorageIconName(type) {

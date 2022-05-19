@@ -1,7 +1,7 @@
 // TODO this can be deleted
 import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
 
 @connect(state => ({
   tenantKey: state.getIn([ 'user', 'client', 'tenantKey' ]),

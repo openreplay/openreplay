@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SlideModal, NoContent, Dropdown, Icon, TimezoneDropdown, Loader } from 'UI';
 import SessionItem from 'Shared/SessionItem';
-import stl from './SessionListModal.css';
+import stl from './SessionListModal.module.css';
 import { connect } from 'react-redux';
 import { fetchSessionList, setActiveWidget } from 'Duck/customMetrics';
 import { DateTime } from 'luxon';

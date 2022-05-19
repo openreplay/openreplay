@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Dropdown, Icon } from 'UI';
-import stl from './attributeItem.css'
+import stl from './attributeItem.module.css'
 
 const OperatorDropdown = ({ options, value, onChange }) => {
   return (

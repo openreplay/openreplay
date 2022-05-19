@@ -1,4 +1,4 @@
-import { filter } from 'App/components/BugFinder/ManageFilters/savedFilterList.css'
+// import { filter } from 'App/components/BugFinder/ManageFilters/savedFilterList.module.css'
 import React from 'react'
 import FilterOperator from '../FilterOperator';
 import FilterValue from '../FilterValue';
@@ -6,7 +6,7 @@ import FilterValue from '../FilterValue';
 interface Props {
     filterIndex: number;
     filter: any; // event/filter
-    onUpdate: (filter) => void;
+    onUpdate: (filter: any) => void;
     onRemoveFilter: () => void;
     isFilter?: boolean;
 }

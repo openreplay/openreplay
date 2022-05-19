@@ -2,7 +2,7 @@ import React from 'react';
 import { Button} from 'UI';
 import { confirmable } from 'react-confirm';
 import { Confirm } from 'semantic-ui-react';
-import stl from './confirmation.css';
+import stl from './confirmation.module.css';
  
 const Confirmation = ({
   show,

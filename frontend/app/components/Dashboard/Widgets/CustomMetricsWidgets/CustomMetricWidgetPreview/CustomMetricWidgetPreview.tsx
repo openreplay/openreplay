@@ -4,7 +4,7 @@ import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
 import { Styles } from '../../common';
 // import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
 import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
-import stl from './CustomMetricWidgetPreview.css';
+import stl from './CustomMetricWidgetPreview.module.css';
 import { getChartFormatter } from 'Types/dashboard/helper'; 
 import { remove } from 'Duck/customMetrics';
 import DateRange from 'Shared/DateRange';

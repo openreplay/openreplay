@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { Button, Message } from 'UI';
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
 import { updatePassword } from 'Duck/user';
 
 const ERROR_DOESNT_MATCH = "Passwords doesn't match";

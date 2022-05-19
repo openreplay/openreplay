@@ -14,7 +14,7 @@ import { countries } from 'App/constants';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import Bookmark from 'Shared/Bookmark'
 
-import stl from './playerBlockHeader.css';
+import stl from './playerBlockHeader.module.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';

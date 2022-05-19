@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { editSavedSearch as edit, save, remove } from 'Duck/search';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
 import { confirm } from 'UI/Confirmation';
-import stl from './SaveSearchModal.css';
+import stl from './SaveSearchModal.module.css';
 import cn from 'classnames';
 import { toast } from 'react-toastify';
 

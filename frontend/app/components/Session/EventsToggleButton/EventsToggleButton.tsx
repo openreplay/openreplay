@@ -2,7 +2,7 @@ import React from 'react'
 import { Icon, Popup } from 'UI'
 import { connectPlayer, toggleEvents, scale } from 'Player';
 import cn from 'classnames'
-import stl from './EventsToggleButton.css'
+import stl from './EventsToggleButton.module.css'
 
 function EventsToggleButton({ showEvents, toggleEvents }) {
   const toggle = () => {

@@ -11,7 +11,7 @@ import {
 import { Icon } from 'UI';
 import DateRangePopup from './DateRangePopup';
 import DateOptionLabel from './DateOptionLabel';
-import styles from './dateRangeDropdown.css';
+import styles from './dateRangeDropdown.module.css';
 
 const getDateRangeOptions = (customRange = getDateRangeFromValue(CUSTOM_RANGE)) => dateRangeValues.map(value => ({
   value,

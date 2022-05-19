@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from 'UI';
-import stl from './listItem.css';
+import stl from './listItem.module.css';
 import cn from 'classnames';
 import AlertTypeLabel from '../../AlertTypeLabel';
 

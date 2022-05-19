@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import { Icon } from 'UI';
-import stl from './controlButton.css';
+import stl from './controlButton.module.css';
 
 const ControlButton = ({ label, icon, disabled=false, onClick, count = 0, hasErrors=false, active=false }) => (
 	<button

@@ -1,21 +1,14 @@
-@import "icons.css";
-
+@import 'icons.css';
 .form {
-  position: absolute;
-  top: 50%;
-  margin-top: -300px;
-  width: 520px;
-  left: 50%;
-  margin-left: -260px;
-
-  & .passwordPolicy {
-    color: $gray-medium;
-    padding: 5px 0 10px;
-    font-size: 13px;
-  }
+  /* position: absolute; */
+  /* top: 50%; */
+  /* margin-top: -300px; */
+  /* width: 520px; */
+  /* left: 50%; */
+  /* margin-left: -260px; */
   
   & form {
-    padding: 10px 70px;
+    padding: 10px 0;    
     border: solid 2px $gray-light;
     border-radius: 2px;
     background-color: white;
@@ -25,7 +18,7 @@
     font-size: 20px;
     color: #555555;
     margin: 35px 0;
-    font-weight: 300;
+    font-weight: 500;
   }
 }
 
@@ -54,13 +47,14 @@
   background-repeat: no-repeat;
   background-size: contain;
   background-position: center center;
-  height: 50px;
+  height: 40px;
   margin-bottom: 20px;
 }
 
 
-.input {
+.email, .password {
   display: block;
+  margin: 10px auto;
   width: 100%;
   height: 45px;
   line-height: 45px;
@@ -69,7 +63,6 @@
   font-size: 14px;
   padding: 0 10px;
   transition: all 0.2s;
-  margin-top: 15px;
 
   &::placeholder {
     color: #AAA;
@@ -85,9 +78,14 @@
   border-radius: 5px;
   width: 400px;
   margin: auto;
-  border: 2px solid $red;
+  /* border: 1px solid $red; */
   padding: 15px;
-  background-color: $white;
+  background-color: rgba(204, 0, 0, 0.1);
+  & .errorItem {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .submit {
@@ -103,7 +101,9 @@
 }
 
 .inputWithIcon {
-  position: relative;  
+  position: relative;
+  width: 400px;
+  margin: 0 auto;
 
   & input {
     padding-left: 45px;
@@ -125,27 +125,11 @@
   @mixin inputIcon lock-alt;
 }
 
-.recaptcha {
-  display: flex;
-  justify-content: center;
-}
 
-.success {
-  padding: 10px;
-  text-align: center;
-  display: flex;
-  flex-flow: column;
-  justify-content: center;
-  align-items: center;
-  line-height: 45px;
-}
 
 .left {
   background: rgb(57,78,255);
   background: linear-gradient(135deg, rgba(57,78,255,1) 0%, rgba(58,89,245,1) 21%, rgba(62,161,183,1) 69%, rgba(62,170,175,1) 100%);
-  background-image: svg-load(pattern-login.svg), linear-gradient(135deg, rgba(57,78,255,1) 0%, rgba(58,89,245,1) 21%, rgba(62,161,183,1) 69%, rgba(62,170,175,1) 100%);
-  background-size: cover;
-  background-position: center center;
   position: relative;
   & .bottom {
     background-color: black;

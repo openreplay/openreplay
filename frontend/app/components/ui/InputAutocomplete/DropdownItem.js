@@ -1,4 +1,4 @@
-import stl from './dropdownItem.css';
+import stl from './dropdownItem.module.css';
 
 const DropdownItem = ({ event }) => (
   <div className={ stl.wrapper }>

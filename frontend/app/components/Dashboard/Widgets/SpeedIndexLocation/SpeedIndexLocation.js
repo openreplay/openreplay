@@ -3,7 +3,7 @@ import * as DataMap from "datamaps";
 import { threeLetter } from 'App/constants/countries';
 import Scale from './Scale';
 import { numberWithCommas } from 'App/utils';
-import stl from './speedIndexLocation.css';
+import stl from './speedIndexLocation.module.css';
 import { colorScale } from 'App/utils';
 
 @widgetHOC('speedLocation', { fitContent: false })

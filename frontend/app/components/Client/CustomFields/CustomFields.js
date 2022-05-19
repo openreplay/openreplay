@@ -4,7 +4,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import { IconButton, SlideModal, Loader, NoContent, Icon, TextLink } from 'UI';
 import { init, fetchList, save, remove } from 'Duck/customField';
 import SiteDropdown from 'Shared/SiteDropdown';
-import styles from './customFields.css';
+import styles from './customFields.module.css';
 import CustomFieldForm from './CustomFieldForm';
 import ListItem from './ListItem';
 import { confirm } from 'UI/Confirmation';

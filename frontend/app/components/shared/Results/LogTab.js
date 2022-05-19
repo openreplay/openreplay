@@ -1,5 +1,5 @@
 import { Loader } from 'UI';
-import styles from './logTab.css';
+import styles from './logTab.module.css';
 
 const REQUEST = '[REQUEST]';
 const RESPONSE = '[RESPONSE]';

@@ -4,7 +4,7 @@ import Event, { TYPES } from 'Types/filter/event';
 import { operatorOptions } from 'Types/filter';
 import { editEvent, removeEvent, clearEvents, applyFilter } from 'Duck/filters';
 import { Icon } from 'UI';
-import stl from './eventEditor.css';
+import stl from './eventEditor.module.css';
 import { debounce } from 'App/utils';
 import AttributeValueField from '../Attributes/AttributeValueField';
 import OperatorDropdown from '../Attributes/OperatorDropdown';

@@ -4,7 +4,7 @@ import { session as sessionRoute } from 'App/routes';
 import { Icon, Avatar, Link } from 'UI';
 import { deviceTypeIcon, osIcon, browserIcon } from 'App/iconNames';
 import IconCard from './IconCard';
-import stl from './sessionBar.css';
+import stl from './sessionBar.module.css';
 
 function SessionBar({ 
 	className,

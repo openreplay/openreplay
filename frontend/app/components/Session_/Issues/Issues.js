@@ -10,7 +10,7 @@ import SessionIssuesPanel from './SessionIssuesPanel';
 import IssueDetails from './IssueDetails';
 import withToggle from 'HOCs/withToggle';
 // import { withRequest } from 'HOCs';
-import stl from './issues.css';
+import stl from './issues.module.css';
 
 @connect(state => ({
   issues: state.getIn(['assignments', 'list']),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { RandomElement } from 'UI';
-import stl from './randomPlaceholder.css';
+import stl from './randomPlaceholder.module.css';
 import Event, { TYPES } from 'Types/filter/event';
 import CustomFilter, { KEYS } from 'Types/filter/customFilter';
 import { defaultFilters } from 'Types/filter';

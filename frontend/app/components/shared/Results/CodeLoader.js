@@ -1,6 +1,6 @@
 import copy from 'copy-to-clipboard';
 import { Loader, CodeEditor } from 'UI';
-import styles from './codeLoader.css';
+import styles from './codeLoader.module.css';
 
 export default class CodeLoader extends React.PureComponent {
   static defaultProps = { onOpenResults: Function }

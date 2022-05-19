@@ -5,7 +5,7 @@ import { jump } from 'Player';
 import { LEVEL } from 'Types/session/log'; 
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
-import stl from './console.css';
+import stl from './console.module.css';
 
 
 const ALL = 'ALL';

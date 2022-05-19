@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './SavedSearchDropdown.css';
+import stl from './SavedSearchDropdown.module.css';
 import cn from 'classnames';
 import { Icon } from 'UI';
 import { applySavedSearch, remove, edit } from 'Duck/search'

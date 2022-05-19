@@ -1,4 +1,4 @@
-import styles from './slideModal.css';
+import styles from './slideModal.module.css';
 import cn from 'classnames';
 export default class SlideModal extends React.PureComponent {
   // componentDidMount() {

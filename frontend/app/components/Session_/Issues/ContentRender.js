@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './contentRender.css';
+import stl from './contentRender.module.css';
 import {UnControlled as CodeMirror} from 'react-codemirror2'
 
 const elType = {

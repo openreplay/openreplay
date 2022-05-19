@@ -10,7 +10,7 @@ import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
 import { SavedSearch } from 'Types/ts/search'
 import SaveSearchModal from 'Shared/SaveSearchModal'
-import stl from './savedSearchModal.css'
+import stl from './savedSearchModal.module.css'
 
 
 interface ITooltipIcon {

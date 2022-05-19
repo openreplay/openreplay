@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import stl from './widgetWrapper.css';
+import stl from './widgetWrapper.module.css';
 
 interface IProps {
     isTemplate?: boolean;

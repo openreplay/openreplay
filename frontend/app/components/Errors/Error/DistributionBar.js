@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { Popup, TextEllipsis } from 'UI';
 import { Styles } from '../../Dashboard/Widgets/common';
-import cls from './distributionBar.css';
+import cls from './distributionBar.module.css';
 import { colorScale } from 'App/utils';
 
 function DistributionBar({ className, title, partitions }) {

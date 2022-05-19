@@ -3,7 +3,7 @@ import { TYPES } from 'Types/filter/event';
 import { LEVEL } from 'Types/session/log';
 import { Icon } from 'UI';
 
-import styles from './typeBadge.css';
+import styles from './typeBadge.module.css';
 
 function getText(type, source) {
   if (type === TYPES.CLICK) return 'Click';

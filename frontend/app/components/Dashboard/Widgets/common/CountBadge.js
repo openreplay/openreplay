@@ -1,5 +1,5 @@
 import { Icon } from 'UI';
-import styles from './countBadge.css';
+import styles from './countBadge.module.css';
 import cn from 'classnames';
 
 const getFixedValue = (val) => {

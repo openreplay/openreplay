@@ -4,7 +4,7 @@ import withToggle from 'HOCs/withToggle';
 import { IconButton, SlideModal, NoContent } from 'UI';
 import { updateAppearance } from 'Duck/user';
 import { WIDGET_LIST } from 'Types/dashboard';
-import stl from './addWidgets.css';
+import stl from './addWidgets.module.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 @connect(state => ({

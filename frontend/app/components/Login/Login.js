@@ -5,7 +5,7 @@ import { login } from 'Duck/user';
 import { forgotPassword, signup } from 'App/routes';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { withRouter } from 'react-router-dom';
-import stl from './login.css';
+import stl from './login.module.css';
 import cn from 'classnames';
 import { setJwt } from 'Duck/jwt';
 

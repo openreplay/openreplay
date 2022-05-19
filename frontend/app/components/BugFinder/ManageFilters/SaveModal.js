@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
-import styles from './saveModal.css';
+import styles from './saveModal.module.css';
 
 @connect(state => ({
   loading: state.getIn([ 'funnels', 'saveRequest', 'loading' ]) || state.getIn([ 'funnels', 'updateRequest', 'loading' ]),

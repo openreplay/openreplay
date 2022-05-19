@@ -13,7 +13,7 @@ import withPermissions from 'HOCs/withPermissions';
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
-import styles from '../Session_/session.css';
+import styles from '../Session_/session.module.css';
 
 
 const InitLoader = connectPlayer(state => ({ 

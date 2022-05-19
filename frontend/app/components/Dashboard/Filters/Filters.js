@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button } from 'UI';
-import stl from './filters.css';
+import stl from './filters.module.css';
 import { LAST_24_HOURS, LAST_30_MINUTES, LAST_7_DAYS, LAST_30_DAYS, CUSTOM_RANGE } from 'Types/app/period';
 import FilterItem from './FilterItem';
 import { setComparing, setFilters, clearFilters, removeFilter } from 'Duck/dashboard';

@@ -1,7 +1,7 @@
 import { TYPES } from 'Types/filter/event';
 import cn from 'classnames';
 import { Icon } from 'UI';
-import cls from './eventDropdownItem.css';
+import cls from './eventDropdownItem.module.css';
 
 
 const getText = (event) => {

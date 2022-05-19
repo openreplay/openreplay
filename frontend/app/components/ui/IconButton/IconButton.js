@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import { CircularLoader, Icon, Tooltip } from 'UI';
-import stl from './iconButton.css';
+import stl from './iconButton.module.css';
 
 const IconButton = React.forwardRef(({
   icon,

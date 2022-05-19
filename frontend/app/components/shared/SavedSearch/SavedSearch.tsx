@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { fetchList as fetchListSavedSearch } from 'Duck/search';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import cn from 'classnames';
-import stl from './SavedSearch.css';
+import stl from './SavedSearch.module.css';
 import { useModal } from 'App/components/Modal';
 import SavedSearchModal from './components/SavedSearchModal'
 

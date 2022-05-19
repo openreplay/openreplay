@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import stl from './installDocs.css'
+import stl from './installDocs.module.css'
 import cn from 'classnames'
 import Highlight from 'react-highlight'
 import CircleNumber from '../../CircleNumber'

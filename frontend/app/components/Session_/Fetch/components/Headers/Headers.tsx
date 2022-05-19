@@ -1,6 +1,6 @@
 import React from 'react'
 import { NoContent, TextEllipsis } from 'UI'
-import stl from './headers.css'
+import stl from './headers.module.css'
 
 function Headers(props) {
   return (

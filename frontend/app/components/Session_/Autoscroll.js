@@ -1,6 +1,6 @@
 import { IconButton } from 'UI';
 import cn from 'classnames';
-import stl from './autoscroll.css';
+import stl from './autoscroll.module.css';
 
 export default class Autoscroll extends React.PureComponent {
   static defaultProps = {

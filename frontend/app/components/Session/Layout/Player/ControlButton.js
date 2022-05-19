@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import { Icon } from 'UI';
-import stl from './controlButton.css';
+import stl from './controlButton.module.css';
 
 export default function ControlButton({ label, icon, onClick, disabled=false, count = 0, hasErrors=false, active=false }) {
 	return (

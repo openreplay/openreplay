@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { applyFilter } from 'Duck/filters';
-import styles from './findBlock.css';
+import styles from './findBlock.module.css';
 
 @connect(state => ({
   eventsCount: state.getIn([ 'filters', 'appliedFilter', 'events' ]).size,

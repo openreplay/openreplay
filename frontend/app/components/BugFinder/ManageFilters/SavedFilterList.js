@@ -1,4 +1,4 @@
-import styles from './savedFilterList.css';
+import styles from './savedFilterList.module.css';
 
 export default ({ savedFilters, activeFilter, onFilterClick }) => (
   <div className={ styles.filtersContainer }>

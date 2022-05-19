@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import stl from './ChatControls.css'
+import stl from './ChatControls.module.css'
 import cn from 'classnames'
 import { Button, Icon } from 'UI'
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';

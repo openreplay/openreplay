@@ -1,4 +1,4 @@
-import styles from './videoTab.css';
+import styles from './videoTab.module.css';
 
 export default ({ src, className }) => (
   <div className={ className }>

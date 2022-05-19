@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import styles from './insights.css';
+import styles from './insights.module.css';
 
 const Insights = ({ insights }) => (
   <div className={ styles.notes }>

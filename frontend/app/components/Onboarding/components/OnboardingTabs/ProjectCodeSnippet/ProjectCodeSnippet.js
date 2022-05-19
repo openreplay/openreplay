@@ -5,7 +5,7 @@ import copy from 'copy-to-clipboard';
 import { Select, Checkbox } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
-import stl from './projectCodeSnippet.css'
+import stl from './projectCodeSnippet.module.css'
 import CircleNumber from '../../CircleNumber';
 import Highlight from 'react-highlight'
 

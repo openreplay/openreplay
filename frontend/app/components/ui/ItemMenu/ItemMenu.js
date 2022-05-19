@@ -1,5 +1,5 @@
 import { Icon } from 'UI';
-import styles from './itemMenu.css';
+import styles from './itemMenu.module.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import cn from 'classnames';
 import { Tooltip } from 'react-tippy';

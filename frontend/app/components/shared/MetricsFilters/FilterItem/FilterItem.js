@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Icon, Dropdown, Button } from 'UI';
 import { LAST_24_HOURS, LAST_30_MINUTES, LAST_7_DAYS, LAST_30_DAYS, CUSTOM_RANGE } from 'Types/app/period';
-import stl from './filterItem.css';
+import stl from './filterItem.module.css';
 import cn from 'classnames';
 import { setPeriod } from 'Duck/dashboard';
 import { connect } from 'react-redux';

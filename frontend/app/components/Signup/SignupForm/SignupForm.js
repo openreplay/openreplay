@@ -2,7 +2,7 @@ import React from 'react'
 import { Icon, Button, Link, Dropdown, CircularLoader } from 'UI'
 import { login } from 'App/routes'
 import ReCAPTCHA from 'react-google-recaptcha'
-import stl from './signup.css'
+import stl from './signup.module.css'
 import { signup } from 'Duck/user';
 import { connect } from 'react-redux'
 

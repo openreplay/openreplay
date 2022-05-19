@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './NoSessionPermission.css'
+import stl from './NoSessionPermission.module.css'
 import { Icon, Button, Link } from 'UI';
 import { connect } from 'react-redux';
 

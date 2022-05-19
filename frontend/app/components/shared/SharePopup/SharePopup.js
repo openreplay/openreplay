@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import withRequest from 'HOCs/withRequest';
 import { Popup, Dropdown, Icon, IconButton } from 'UI';
 import { pause } from 'Player';
-import styles from './sharePopup.css';
+import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
 

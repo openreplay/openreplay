@@ -4,7 +4,7 @@ import { SENTRY, DATADOC } from 'Types/session/stackEvent';
 import { LEVEL } from 'Types/session/log';      // TODO: no types mess
 import { Icon } from 'UI';
 
-import styles from './typeBadge.css';
+import styles from './typeBadge.module.css';
 
 function getText(type, source) {
   if (type === TYPES.CLICK) return 'Click';

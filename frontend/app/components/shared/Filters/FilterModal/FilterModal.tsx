@@ -2,7 +2,7 @@ import React from 'react';
 import { Icon, Loader } from 'UI';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import stl from './FilterModal.css';
+import stl from './FilterModal.module.css';
 import { filtersMap } from 'Types/filter/newFilter';
 
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {

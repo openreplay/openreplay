@@ -5,7 +5,7 @@ import { Icon } from 'UI';
 import { editAttribute, removeAttribute, applyFilter, fetchFilterOptions } from 'Duck/funnelFilters';
 import { debounce } from 'App/utils';
 import { KEYS } from 'Types/filter/customFilter';
-import stl from './attributeItem.css'
+import stl from './attributeItem.module.css'
 import AttributeValueField from './AttributeValueField';
 import OperatorDropdown from './OperatorDropdown';
 import CustomFilters from '../CustomFilters';

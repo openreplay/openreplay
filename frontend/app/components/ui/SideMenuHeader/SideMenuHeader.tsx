@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import stl from './sideMenuHeader.css';
+import stl from './sideMenuHeader.module.css';
 
 function SideMenuHeader(props) {
   const { text, className, button } = props;

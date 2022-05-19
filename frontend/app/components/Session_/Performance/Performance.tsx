@@ -17,7 +17,7 @@ import { Checkbox } from 'UI';
 import { durationFromMsFormatted } from 'App/date';
 import { formatBytes } from 'App/utils';
 
-import stl from './performance.css';
+import stl from './performance.module.css';
 
 import BottomBlock from '../BottomBlock';
 import InfoLine from '../BottomBlock/InfoLine';

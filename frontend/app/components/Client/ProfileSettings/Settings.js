@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { updateAccount, updateClient } from 'Duck/user';
 
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
 
 @connect(state => ({
   accountName: state.getIn([ 'user', 'account', 'name' ]),

@@ -1,7 +1,7 @@
 import { Popup } from 'UI';
 import { percentOf } from 'App/utils'; 
-import styles from './barRow.css'
-import tableStyles from './timeTable.css';
+import styles from './barRow.module.css'
+import tableStyles from './timeTable.module.css';
 
 const formatTime = time => time < 1000 ? `${ time.toFixed(2) }ms` : `${ time / 1000 }s`;
 

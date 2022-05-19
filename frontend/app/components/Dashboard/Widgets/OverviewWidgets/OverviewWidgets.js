@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { updateAppearance } from 'Duck/user';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
 import cn from 'classnames';
-import stl from './overviewWidgets.css';
+import stl from './overviewWidgets.module.css';
 
 const customParams = rangeName => {
   const params = { density: 16 }

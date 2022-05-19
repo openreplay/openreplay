@@ -5,7 +5,7 @@ import { connectPlayer } from 'Player';
 import { Popup, TimelinePointer } from 'UI';
 import TimeTracker from './TimeTracker';
 import { ReduxTime } from './Time';
-import stl from './timeline.css';
+import stl from './timeline.module.css';
 import { TYPES } from 'Types/session/event';
 import { setTimelinePointer } from 'Duck/sessions';
 import DraggableCircle from './DraggableCircle';

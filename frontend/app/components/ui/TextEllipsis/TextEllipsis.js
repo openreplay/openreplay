@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, forwardRef } from 'react';
 import cn from 'classnames';
 import { Popup } from 'UI';
-import styles from './textEllipsis.css';
+import styles from './textEllipsis.module.css';
 
 /** calculates text width in pixels 
 + * by creating a hidden element with t

@@ -1,4 +1,4 @@
-import styles from './toggler.css';
+import styles from './toggler.module.css';
 
 export default ({
   onChange,

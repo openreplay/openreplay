@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Label } from 'UI';
-import stl from './listItem.css';
+import stl from './listItem.module.css';
 
 const ListItem = ({ announcement, onButtonClick }) => {
   return (

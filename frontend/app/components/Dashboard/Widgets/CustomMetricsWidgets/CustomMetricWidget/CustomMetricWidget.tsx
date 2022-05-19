@@ -4,7 +4,7 @@ import { Loader, NoContent, Icon, Popup } from 'UI';
 import { Styles } from '../../common';
 import { ResponsiveContainer } from 'recharts';
 import { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
-import stl from './CustomMetricWidget.css';
+import stl from './CustomMetricWidget.module.css';
 import { getChartFormatter, getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { init, edit, remove, setAlertMetricId, setActiveWidget, updateActiveState } from 'Duck/customMetrics';
 import APIClient from 'App/api_client';

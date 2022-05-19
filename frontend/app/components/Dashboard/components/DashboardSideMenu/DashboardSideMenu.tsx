@@ -13,7 +13,7 @@ import { Tooltip } from 'react-tippy';
 import { connect } from 'react-redux';
 import { compose } from 'redux'
 import { setShowAlerts } from 'Duck/dashboard';
-import stl from 'Shared/MainSearchBar/mainSearchBar.css';
+import stl from 'Shared/MainSearchBar/mainSearchBar.module.css';
 
 const SHOW_COUNT = 8;
 

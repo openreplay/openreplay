@@ -5,7 +5,7 @@ import copy from 'copy-to-clipboard';
 import { Select, Checkbox } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
-import styles from './projectCodeSnippet.css'
+import styles from './projectCodeSnippet.module.css'
 import Highlight from 'react-highlight'
 
 const inputModeOptions = [

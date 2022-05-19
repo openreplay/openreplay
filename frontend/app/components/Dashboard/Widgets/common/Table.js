@@ -1,6 +1,6 @@
 import cn from 'classnames';
 import { Button } from 'UI';
-import stl from './table.css';
+import stl from './table.module.css';
 
 export default class Table extends React.PureComponent {
   state = { showAll: false };

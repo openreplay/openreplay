@@ -1,4 +1,4 @@
-@import "icons.css";
+@import 'icons.css';
 .form {
   /* position: absolute; */
   /* top: 50%; */
@@ -128,8 +128,11 @@
 
 
 .left {
-  background: rgb(57,78,255);
+  /* background: rgb(57,78,255); */
   background: linear-gradient(135deg, rgba(57,78,255,1) 0%, rgba(58,89,245,1) 21%, rgba(62,161,183,1) 69%, rgba(62,170,175,1) 100%);
+  background-image: svg-load(pattern-login.svg), linear-gradient(135deg, rgba(57,78,255,1) 0%, rgba(58,89,245,1) 21%, rgba(62,161,183,1) 69%, rgba(62,170,175,1) 100%);
+  background-size: cover;
+  background-position: center center;
   position: relative;
   & .bottom {
     background-color: black;
@@ -141,4 +144,8 @@
   > & label {
     margin-bottom: 10px !important;
   }
+}
+
+.sso {
+  border-top: solid thin $gray-light;
 }

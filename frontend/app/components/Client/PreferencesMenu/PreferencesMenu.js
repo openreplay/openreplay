@@ -2,7 +2,7 @@ import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem } from 'UI'
-import stl from './preferencesMenu.css';
+import stl from './preferencesMenu.module.css';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 

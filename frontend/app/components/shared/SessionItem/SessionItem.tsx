@@ -9,7 +9,7 @@ import {
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { durationFormatted, formatTimeOrDate } from 'App/date';
-import stl from './sessionItem.css';
+import stl from './sessionItem.module.css';
 import Counter from './Counter'
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import SessionMetaList from './SessionMetaList';

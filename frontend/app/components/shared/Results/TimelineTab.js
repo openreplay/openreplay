@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Popup, Icon, Label } from 'UI';
 import typeToIcon from './typeToIcon';
 import cn from 'classnames';
-import styles from './timelineTab.css';
+import styles from './timelineTab.module.css';
 import ImageViewer from '../ImageViewer/ImageViewer';
 
 const formatExecutionTime = ({ milliseconds }) => (milliseconds >= 1000

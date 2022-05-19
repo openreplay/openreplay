@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import cn from 'classnames'
-import stl from './notifications.css'
+import stl from './notifications.module.css'
 import { Checkbox } from 'UI'
 import { connect } from 'react-redux'
 import { withRequest } from 'HOCs'

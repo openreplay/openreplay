@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './announcements.css';
+import stl from './announcements.module.css';
 import ListItem from './ListItem';
 import { connect } from 'react-redux';
 import { SlideModal, Icon, NoContent, Popup } from 'UI';

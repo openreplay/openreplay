@@ -4,7 +4,7 @@ import { getRE } from 'App/utils';
 import ImageInfo from './ImageInfo';
 import MethodType from './MethodType';
 import cn from 'classnames';
-import stl from './callWithErrors.css';
+import stl from './callWithErrors.module.css';
 
 const cols = [
   {

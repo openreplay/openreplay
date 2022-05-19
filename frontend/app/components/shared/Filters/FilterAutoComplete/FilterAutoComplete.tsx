@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Icon, Loader } from 'UI';
 import APIClient from 'App/api_client';
 import { debounce } from 'App/utils';
-import stl from './FilterAutoComplete.css';
+import stl from './FilterAutoComplete.module.css';
 import cn from 'classnames';
 
 const hiddenStyle = {

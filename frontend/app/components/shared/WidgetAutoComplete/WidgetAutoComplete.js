@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Icon, CircularLoader, Button, TextEllipsis } from 'UI';
 import cn from 'classnames';
-import stl from './widgetAutoComplete.css';
+import stl from './widgetAutoComplete.module.css';
 import { debounce } from 'App/utils';
 
 const WidgetAutoComplete = props => {

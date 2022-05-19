@@ -1,6 +1,6 @@
 import React from 'react'
 import { Icon, Popup } from 'UI'
-import stl from './timelinePointer.css'
+import stl from './timelinePointer.module.css'
 import cn from 'classnames'
 
 function TimelinePointer({ icon, content }) {

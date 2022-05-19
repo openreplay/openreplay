@@ -7,7 +7,7 @@ import { fullscreenOff } from 'Duck/components/player';
 import { attach as attachPlayer, Controls as PlayerControls, connectPlayer } from 'Player';
 import Controls from './Controls';
 import Overlay from './Overlay';
-import stl from './player.css';
+import stl from './player.module.css';
 import EventsToggleButton from '../../Session/EventsToggleButton';
 import { updateLastPlayedSession } from 'Duck/sessions';
 

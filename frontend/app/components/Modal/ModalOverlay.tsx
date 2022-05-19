@@ -1,6 +1,6 @@
 import React from 'react';
 import { useModal } from 'App/components/Modal';
-import stl from './ModalOverlay.css'
+import stl from './ModalOverlay.module.css'
 import cn from 'classnames';
 
 function ModalOverlay({ children, left = false, right = false }) {

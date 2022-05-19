@@ -1,6 +1,6 @@
 //@ts-nocheck
 import React, { useEffect, useState } from 'react'
-import stl from './bookmark.css'
+import stl from './bookmark.module.css'
 import { Icon } from 'UI'
 import { toggleFavorite } from 'Duck/sessions'
 import { connect } from 'react-redux'

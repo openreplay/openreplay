@@ -1,6 +1,6 @@
 import { Duration } from 'luxon';
 import { connectPlayer } from 'Player';
-import styles from './time.css';
+import styles from './time.module.css';
 
 const Time = ({ time }) => (
   <div className={ styles.time }>

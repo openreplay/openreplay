@@ -3,7 +3,7 @@ import cn from 'classnames';
 import withToggle from 'HOCs/withToggle';
 import { IconButton, Popup } from 'UI';
 import { updateAppearance } from 'Duck/user';
-import stl from './addWidgets.css';
+import stl from './addWidgets.module.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { updateActiveState } from 'Duck/customMetrics';
 

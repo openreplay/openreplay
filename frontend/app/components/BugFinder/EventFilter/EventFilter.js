@@ -12,7 +12,7 @@ import EventEditor from './EventEditor';
 import ListHeader from '../ListHeader';
 import FilterModal from '../CustomFilters/FilterModal';
 import { IconButton, SegmentSelection } from 'UI';
-import stl from './eventFilter.css';
+import stl from './eventFilter.module.css';
 import Attributes from '../Attributes/Attributes';
 import RandomPlaceholder from './RandomPlaceholder';
 import CustomFilters from '../CustomFilters';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import stl from './savedSearchList.css';
+import stl from './savedSearchList.module.css';
 import cn from 'classnames';
 import { Icon, IconButton, Loader, Button } from 'UI';
 import { confirm } from 'UI/Confirmation';
@@ -8,7 +8,6 @@ import { withRouter } from 'react-router-dom';
 import { addFilterByKeyAndValue } from 'Duck/search';
 import {
     fetchList as fetchFunnelsList,
-    applySavedFilter,
     remove as deleteSearch,
     setActiveFlow,
     clearEvents,
@@ -149,7 +148,6 @@ export default connect(state => ({
     events: state.getIn([ 'filters', 'appliedFilter', 'events' ]),
     filters: state.getIn([ 'search', 'instance', 'filters' ]),
 }), { 
-    applySavedFilter,
     deleteSearch, setActiveTab,
     setActiveFlow, clearEvents,
     addFilterByKeyAndValue,

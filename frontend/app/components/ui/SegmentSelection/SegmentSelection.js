@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Popup } from 'UI';
 import cn from 'classnames';
-import styles from './segmentSelection.css';
+import styles from './segmentSelection.module.css';
 
 class SegmentSelection extends React.Component {
   setActiveItem = (item) => {

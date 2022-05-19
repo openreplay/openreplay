@@ -1,5 +1,5 @@
 import { Popup, Icon, TextEllipsis } from 'UI';
-import styles from './imageInfo.css';
+import styles from './imageInfo.module.css';
 
 const ImageInfo = ({ data }) => (
   <div className={ styles.name }>

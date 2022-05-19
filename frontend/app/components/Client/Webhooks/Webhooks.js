@@ -5,7 +5,7 @@ import { IconButton, SlideModal, Loader, NoContent } from 'UI';
 import { init, fetchList, remove } from 'Duck/webhook';
 import WebhookForm from './WebhookForm';
 import ListItem from './ListItem';
-import styles from './webhooks.css';
+import styles from './webhooks.module.css';
 
 @connect(state => ({
   webhooks: state.getIn(['webhooks', 'list']),

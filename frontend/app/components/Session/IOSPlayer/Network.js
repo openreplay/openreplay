@@ -4,7 +4,7 @@ import { Popup, SlideModal } from 'UI';
 
 import { NETWORK } from 'Player/ios/state';
 
-import cls from './Network.css';
+import cls from './Network.module.css';
 
 import TimeTable from 'Components/Session_/TimeTable';
 import FetchDetails from 'Components/Session_/Fetch/FetchDetails';

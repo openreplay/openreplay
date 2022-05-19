@@ -3,7 +3,7 @@ import { Icon, SlideModal } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import { save, edit } from 'Duck/alerts';
 
-import styles from './alertManager.css';
+import styles from './alertManager.module.css';
 import AlertForm from './AlertForm';
 
 @connect(state => ({

@@ -8,7 +8,7 @@ import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
-import stl from './bugFinder.css';
+import stl from './bugFinder.module.css';
 import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchSources } from 'Duck/customField';

@@ -1,7 +1,7 @@
 import { SideMenuitem } from 'UI';
 import SideMenuHeader from './SideMenuHeader';
 import { setShowAlerts } from 'Duck/dashboard';
-import stl from './sideMenuSection.css';
+import stl from './sideMenuSection.module.css';
 import { connect } from 'react-redux';
 import { NavLink } from 'react-router-dom';
 import { withSiteId } from 'App/routes';

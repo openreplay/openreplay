@@ -1,5 +1,5 @@
 import { Icon } from 'UI';
-import styles from './noContent.css';
+import styles from './noContent.module.css';
 
 export default ({
   title = "No data available.",

@@ -1,4 +1,4 @@
-import styles from './dateOptionLabel.css';
+import styles from './dateOptionLabel.module.css';
 
 export default ({ range }) => (
   <div className={ styles.wrapper }>

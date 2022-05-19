@@ -8,7 +8,7 @@ import { Popup, Icon } from 'UI';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 
-import cls from './Controls.css';
+import cls from './Controls.module.css';
 
 
 

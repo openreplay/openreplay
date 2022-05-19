@@ -1,5 +1,5 @@
 import cn from 'classnames';
-import styles from './loader.css';
+import styles from './loader.module.css';
 
 const Loader = React.memo(({ className = '', loading = true, children = null, size, style = { minHeight: '150px' } }) => (!loading ? children :
 	<div className={ cn(styles.wrapper, className) } style={style}>

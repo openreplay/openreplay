@@ -1,6 +1,6 @@
 import { Button } from 'semantic-ui-react';
 import classnames from 'classnames';
-import styles from './button.css';
+import styles from './button.module.css';
 
 export default ({
   className,

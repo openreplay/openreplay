@@ -1,7 +1,7 @@
 import withPageTitle from 'HOCs/withPageTitle';
 import { Icon } from 'UI';
 
-import stl from './signup.css';
+import stl from './signup.module.css';
 import cn from 'classnames';
 import SignupForm from './SignupForm';
 

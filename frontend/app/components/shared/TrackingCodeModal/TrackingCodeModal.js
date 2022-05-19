@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Icon, Tabs } from 'UI';
-import styles from './trackingCodeModal.css';
+import styles from './trackingCodeModal.module.css';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import { connect } from 'react-redux';
 import  ProjectCodeSnippet from './ProjectCodeSnippet';

@@ -3,7 +3,7 @@ import { connectPlayer, jump, pause } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
-import stl from './network.css';
+import stl from './network.module.css';
 import NetworkContent from './NetworkContent';
 import { connect } from 'react-redux';
 import { setTimelinePointer } from 'Duck/sessions';

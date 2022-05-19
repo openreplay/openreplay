@@ -2,7 +2,7 @@ import { List } from 'immutable';
 import cn from 'classnames';
 import { withRequest, withToggle } from 'HOCs';
 import { Button, Icon, SlideModal, TextEllipsis } from 'UI';
-import stl from './metadataItem.css';
+import stl from './metadataItem.module.css';
 import SessionList from './SessionList';
 
 @withToggle()

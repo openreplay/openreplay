@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Popup } from 'UI';
-import stl from './issueListItem.css';
+import stl from './issueListItem.module.css';
 
 const IssueListItem = ({ issue, onClick, icon, user, active }) => {
   return (

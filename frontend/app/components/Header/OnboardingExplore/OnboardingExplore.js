@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import React from 'react';
 import withToggle from 'Components/hocs/withToggle';
-import stl from './onboardingExplore.css';
+import stl from './onboardingExplore.module.css';
 import FeatureItem from './FeatureItem';
 import { getOnboard } from 'Duck/dashboard';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';

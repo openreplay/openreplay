@@ -12,7 +12,7 @@ import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream
 
 import { toast } from 'react-toastify';
 import { confirm } from 'UI/Confirmation';
-import stl from './AassistActions.css'
+import stl from './AassistActions.module.css'
 
 function onClose(stream) {
   stream.getTracks().forEach(t=>t.stop());

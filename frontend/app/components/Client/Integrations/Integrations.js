@@ -19,7 +19,7 @@ import CloudwatchForm from './CloudwatchForm';
 import ElasticsearchForm from './ElasticsearchForm';
 import SumoLogicForm from './SumoLogicForm';
 import JiraForm from './JiraForm';
-import styles from './integrations.css';
+import styles from './integrations.module.css';
 import ReduxDoc from './ReduxDoc';
 import VueDoc from './VueDoc';
 import GraphQLDoc from './GraphQLDoc';

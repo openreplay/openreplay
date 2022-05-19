@@ -4,7 +4,7 @@ import { save, edit, update , fetchList, remove } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
-import styles from './siteForm.css';
+import styles from './siteForm.module.css';
 import { confirm } from 'UI/Confirmation';
 
 @connect(state => ({

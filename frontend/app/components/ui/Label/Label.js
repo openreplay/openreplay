@@ -1,5 +1,5 @@
 import { Label } from 'semantic-ui-react';
-import styles from './label.css';
+import styles from './label.module.css';
 import cn from 'classnames';
 
 export default ({

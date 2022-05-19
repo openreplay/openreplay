@@ -50,7 +50,7 @@ const Errors = withSiteIdUpdater(ErrorsPure);
 const Funnels = withSiteIdUpdater(FunnelDetails);
 const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
 const withSiteId = routes.withSiteId;
-const withObTab = routes.withObTab;
+// const withObTab = routes.withObTab;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();

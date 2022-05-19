@@ -12,7 +12,7 @@ import { debounce } from 'App/utils';
 import FilterItem from './FilterItem';
 import logger from 'App/logger';
 
-import stl from './filterModal.css';
+import stl from './filterModal.module.css';
 
 const customFilterAutoCompleteKeys = ['METADATA', KEYS.CLICK, KEYS.USER_BROWSER, KEYS.USER_OS, KEYS.USER_DEVICE, KEYS.REFERRER]
 

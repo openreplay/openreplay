@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { Icon, NoContent, QuestionMarkHint } from 'UI'
 import cn from 'classnames'
 import { withRequest } from 'HOCs'
-import stl from './metricsTab.css'
+import stl from './metricsTab.module.css'
 
 const IconRed = () => <div className="h-2 w-2 bg-red mr-2" />
 const IconOrange = () => <div className="mr-2" style={{ borderWidth: "0 5px 7px 5px", borderColor: "transparent transparent #007bff transparent" }} />

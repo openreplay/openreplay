@@ -7,7 +7,7 @@ import { login as loginRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
-import stl from './forgotPassword.css';
+import stl from './forgotPassword.module.css';
 
 const LOGIN = loginRoute();
 const recaptchaRef = React.createRef();

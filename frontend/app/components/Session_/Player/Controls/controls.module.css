@@ -1,4 +1,4 @@
-@import "icons.css";
+@import 'icons.css';
 
 @keyframes fade {
   0%   { opacity: 1}

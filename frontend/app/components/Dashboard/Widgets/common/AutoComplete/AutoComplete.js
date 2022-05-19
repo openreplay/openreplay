@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Icon, CircularLoader, Button } from 'UI';
 import cn from 'classnames';
-import stl from './autoComplete.css';
+import stl from './autoComplete.module.css';
 import { debounce } from 'App/utils';
 
 const AutoComplete = props => {

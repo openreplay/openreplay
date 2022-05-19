@@ -3,7 +3,7 @@ import { Dropdown } from 'semantic-ui-react';
 import { Icon } from 'UI';
 import { sort } from 'Duck/sessions';
 import { applyFilter } from 'Duck/filters';
-import stl from './sortDropdown.css';
+import stl from './sortDropdown.module.css';
 
 @connect(null, { sort, applyFilter })
 export default class SortDropdown extends React.PureComponent {

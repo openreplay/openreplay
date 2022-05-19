@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { Modal, Button, Form, Dropdown, Icon } from 'UI';
 import { save as saveSchedule, edit as editSchedule } from 'Duck/schedules';
-import styles from './scheduleUpdater.css';
+import styles from './scheduleUpdater.module.css';
 
 const HOURS = [ ...Array(24).keys() ].map(i => ({ value: i, text: `${ i > 9 ? '' : '0' }${ i }:00` }));
 
