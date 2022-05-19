@@ -386,7 +386,7 @@ export default class AssistManager {
   }
 
   toggleAnnotation(enable?: boolean) {
-    if (getState().calling !== CallingState.OnCall) { return }
+    // if (getState().calling !== CallingState.OnCall) { return }
     if (typeof enable !== "boolean") {
       enable = !!getState().annotating
     }
