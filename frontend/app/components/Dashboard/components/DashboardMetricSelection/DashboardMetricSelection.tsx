@@ -3,8 +3,7 @@ import WidgetWrapper from '../WidgetWrapper';
 import { useObserver } from 'mobx-react-lite';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
-import stl from 'App/components/Dashboard/components/WidgetWrapper/widgetWrapper.css';
-import ownStl from './dashboardMetricSelection.css';
+import stl from '../WidgetWrapper/widgetWrapper.css'
 
 function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
     const selectedCategoryWidgetsCount = useObserver(() => {
@@ -50,7 +49,6 @@ function DashboardMetricSelection(props: IProps) {
     };
 
     const toggleAllWidgets = ({ target: { checked }}) => {
-        // dashboardStore.toggleAllSelectedWidgets(checked);
         setSelectAllCheck(checked);
         if (checked) {
             dashboardStore.selectWidgetsByCategory(activeCategory.name);
@@ -60,7 +58,7 @@ function DashboardMetricSelection(props: IProps) {
     }
 
     return useObserver(() => (
-        <div >
+        <div>
             <div className="grid grid-cols-12 gap-4 my-3 items-end">
                 <div className="col-span-3">
                     <div className="uppercase color-gray-medium text-lg">Categories</div>
@@ -117,13 +115,12 @@ function DashboardMetricSelection(props: IProps) {
                              <div
                                 className={
                                     cn(
-                                        "relative rounded border col-span-1 flex items-center justify-center",
-                                        stl.hoverableWidget,
+                                        "relative rounded border col-span-1 cursor-pointer",
+                                        "flex items-center justify-center bg-white",
+                                        "hover:bg-active-blue text-center h-full",
                                         stl.hoverBlue,
-                                        ownStl.addNew,
                                     )
                                 }
-                                style={{ height: '100%', textAlign: 'center' }}
                                 onClick={props.handleCreateNew}
                             >
                                 Create Metric
