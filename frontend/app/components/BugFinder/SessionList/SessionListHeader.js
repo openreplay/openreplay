@@ -5,7 +5,6 @@ import SortDropdown from '../Filters/SortDropdown';
 import DateRange from '../DateRange';
 import { TimezoneDropdown } from 'UI';
 import { numberWithCommas } from 'App/utils';
-import DropdownPlain from 'Shared/DropdownPlain';
 
 const DEFAULT_SORT = 'startTs';
 const DEFAULT_ORDER = 'desc';
@@ -16,7 +15,7 @@ const sortOptionsMap = {
   'eventsCount-desc': 'Events Descending',
 };
 const sortOptions = Object.entries(sortOptionsMap)
-  .map(([ value, text ]) => ({ value, text }));
+  .map(([ value, label ]) => ({ value, label }));
 
 
 function SessionListHeader({
@@ -41,17 +40,6 @@ function SessionListHeader({
         )}
       </div>
       <div className="flex items-center">
-        {/* <div className="flex items-center">
-          <span className="mr-2 color-gray-medium">Session View</span>
-          <DropdownPlain
-            options={[
-              { text: 'List', value: 'list' },
-              { text: 'Grouped', value: 'grouped' }
-            ]}
-            onChange={() => {}}
-            value='list'
-          />
-        </div> */}
         <div className="flex items-center ml-6">
           <span className="mr-2 color-gray-medium">Sort By</span>
           <SortDropdown options={ sortOptions }/>

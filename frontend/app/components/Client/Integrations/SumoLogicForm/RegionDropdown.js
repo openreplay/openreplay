@@ -1,3 +1,4 @@
+import React from 'react';
 import { regionLabels as labels } from 'Types/integrations/sumoLogicConfig';
 import { Dropdown } from 'UI';
 

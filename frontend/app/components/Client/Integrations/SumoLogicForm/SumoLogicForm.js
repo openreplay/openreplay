@@ -1,3 +1,4 @@
+import React from 'react';
 import IntegrationForm from '../IntegrationForm';
 import RegionDropdown from './RegionDropdown';
 import DocLink from 'Shared/DocLink/DocLink';
