@@ -54,7 +54,7 @@
     "react-svg-map": "^2.2.0",
     "react-tippy": "^1.4.0",
     "react-toastify": "^8.2.0",
-    "react-virtualized": "^9.22.2",
+    "react-virtualized": "^9.22.3",
     "recharts": "^2.1.9",
     "redux": "^4.0.5",
     "redux-immutable": "^4.0.0",
