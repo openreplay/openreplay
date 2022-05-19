@@ -2,7 +2,7 @@
   "name": "openreplay",
   "version": "1.3.6",
   "scripts": {
-    "start": "webpack serve --config=webpack.config.ts",
+    "start": "webpack serve --config=webpack.config.ts --stats-error-details",
     "build:oss": "npm run gen:icons && npm run gen:css-types && rm -rf public && webpack --env=oss",
     "upload:minio": "node ./scripts/upload-minio.js",
     "deploy:minio": "npm run build:minio && npm run upload:minio",

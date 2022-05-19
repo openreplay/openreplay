@@ -8,8 +8,9 @@ import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 // import CompressionPlugin from "compression-webpack-plugin";
 const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
 const isDevelopment = process.env.NODE_ENV !== 'production'
-
 const stylesHandler = MiniCssExtractPlugin.loader;
+const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
+console.log('ENV_VARIABLES', ENV_VARIABLES);
 
 interface Configuration extends WebpackConfiguration {
   devServer?: WebpackDevServerConfiguration;
@@ -99,8 +100,9 @@ const config: Configuration = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': JSON.stringify(dotenv.parsed),
-      'process.env.NODE_ENV': JSON.stringify(isDevelopment ? 'development' : 'production'),
+      'process.env': ENV_VARIABLES,
+      'window.env': ENV_VARIABLES,
+      // 'process.env.NODE_ENV': JSON.stringify(isDevelopment ? 'development' : 'production'),
     }),
     new HtmlWebpackPlugin({
         template: 'app/assets/index.html'
