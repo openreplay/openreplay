@@ -41,7 +41,7 @@ jobs:
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ee-${{ github.sha }}
+        IMAGE_TAG: ${{ github.sha }}-ee
         ENVIRONMENT: staging
       run: |
         cd api
@@ -76,15 +76,18 @@ jobs:
         sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
         sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
+        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
 
         # Update changed image tag
         sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
+        cat /tmp/image_override.yaml
         # Deploy command
         helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-        IMAGE_TAG: ee-${{ github.sha }}
+        # We're not passing -ee flag, because helm will add that.
+        IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: staging
 
     # - name: Debug Job
@@ -92,6 +95,6 @@ jobs:
     #   uses: mxschmitt/action-tmate@v3
     #   env:
     #     DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
-    #     IMAGE_TAG: ee-${{ github.sha }}
+    #     IMAGE_TAG: ${{ github.sha }}-ee
     #     ENVIRONMENT: staging
     #
