@@ -16,19 +16,21 @@ import stl from './savedSearchModal.css'
 interface ITooltipIcon {
     title: string;
     name: string;
-    onClick: (item: any, e: MouseEvent<HTMLButtonElement>) => void;
+    onClick: (e: MouseEvent<HTMLDivElement>) => void;
 }
 function TooltipIcon(props: ITooltipIcon) {
     return (
-        // @ts-ignore - problem with react-tippy types TODO: remove after fix
-        <Tooltip
-            delay={250}
-            title={props.title}
-            hideOnClick={true}
-            position="bottom"
-        >
-            <Icon size="24" name={props.name} color="main" onClick={props.onClick} />
-        </Tooltip>
+        <div onClick={(e) => props.onClick(e)} >
+            {/* @ts-ignore - problem with react-tippy types TODO: remove after fix */}
+            <Tooltip
+                delay={250}
+                title={props.title}
+                hideOnClick={true}
+                position="bottom"
+            >
+                <Icon size="24" name={props.name} color="main" />
+            </Tooltip>
+        </div>
     )
 }
 
@@ -43,11 +45,12 @@ function SavedSearchModal(props: Props) {
     const [showModal, setshowModal] = useState(false)
     const [filterQuery, setFilterQuery] = useState('')
 
-    const onClick = (item: SavedSearch) => {
+    const onClick = (item: SavedSearch, e) => {
+        e.stopPropagation();
         props.applySavedSearch(item);
         hideModal();
     }
-    const onDelete = async (item: SavedSearch, e: MouseEvent<HTMLButtonElement>) => {
+    const onDelete = async (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         const confirmation = await confirm({
             header: 'Confirm',
@@ -58,7 +61,7 @@ function SavedSearchModal(props: Props) {
             props.remove(item.searchId)
         }
     }
-    const onEdit = (item: SavedSearch, e: MouseEvent<HTMLButtonElement>) => {
+    const onEdit = (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         props.editSavedSearch(item);
         setTimeout(() => setshowModal(true), 0);
@@ -83,7 +86,7 @@ function SavedSearchModal(props: Props) {
                 </div>
             )}
             {shownItems.map(item => (
-                <div key={item.key} className={cn('px-6 py-4 cursor-pointer flex items-start', stl.rowItem)} onClick={() => onClick(item)}>
+                <div key={item.key} className={cn('px-6 py-4 cursor-pointer flex items-start', stl.rowItem)} onClick={(e) => onClick(item, e)}>
                     <Icon name="search" color="gray-medium" size="24" />
                     <div className="ml-4">
                         <div className="text-xl">{item.name} </div>
@@ -96,10 +99,10 @@ function SavedSearchModal(props: Props) {
                     </div>
                     <div className="flex items-center ml-auto self-center">
                         <div className={stl.iconCircle}>
-                            <TooltipIcon name="pencil" onClick={onEdit} title="Rename" />
+                            <TooltipIcon name="pencil" onClick={(e) => onEdit(item, e)} title="Rename" />
                         </div>
                         <div className={stl.iconCircle}>
-                            <TooltipIcon name="trash" onClick={onEdit} title="Delete" />
+                            <TooltipIcon name="trash" onClick={(e) => onDelete(item, e)} title="Delete" />
                         </div>
                     </div>
                 </div>
