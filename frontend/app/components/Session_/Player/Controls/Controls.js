@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { 
@@ -7,8 +8,6 @@ import {
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
-
-import { Popup, Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,

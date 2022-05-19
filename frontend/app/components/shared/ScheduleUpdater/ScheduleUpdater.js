@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Modal, Button, Form, Dropdown, Icon } from 'UI';
 import { save as saveSchedule, edit as editSchedule } from 'Duck/schedules';

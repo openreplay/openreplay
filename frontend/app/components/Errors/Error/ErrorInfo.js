@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';
 import { errors as errorsRoute, error as errorRoute } from 'App/routes';

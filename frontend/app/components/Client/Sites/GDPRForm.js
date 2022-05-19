@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Button, Select, Input, Icon } from 'UI';
 import { editGDPR, saveGDPR } from 'Duck/site';

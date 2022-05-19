@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { getRE } from 'App/utils';
 import { NoContent, Loader, Input, ErrorItem, SlideModal, ErrorDetails, ErrorHeader,Link, QuestionMarkHint } from 'UI';

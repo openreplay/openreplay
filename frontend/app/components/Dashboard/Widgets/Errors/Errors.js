@@ -1,3 +1,4 @@
+import React from 'react';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area } from 'recharts';
 import { Loader, NoContent } from 'UI';
 import { CountBadge, domain, widgetHOC } from '../common';

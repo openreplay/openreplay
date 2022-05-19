@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Input, Button, Icon } from 'UI';
 import { save, edit, update , fetchList, remove } from 'Duck/site';

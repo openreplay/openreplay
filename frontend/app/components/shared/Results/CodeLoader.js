@@ -1,3 +1,4 @@
+import React from 'react';
 import copy from 'copy-to-clipboard';
 import { Loader, CodeEditor } from 'UI';
 import styles from './codeLoader.module.css';

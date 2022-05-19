@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';

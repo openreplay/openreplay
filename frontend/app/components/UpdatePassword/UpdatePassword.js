@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, Button, Message } from 'UI';

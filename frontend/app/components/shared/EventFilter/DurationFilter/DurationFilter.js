@@ -1,3 +1,4 @@
+import React from 'react';
 import { Input, Label } from 'semantic-ui-react';
 import styles from './durationFilter.module.css';
 

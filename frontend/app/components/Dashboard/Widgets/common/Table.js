@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { Button } from 'UI';
 import stl from './table.module.css';

@@ -1,3 +1,4 @@
+import React from 'react';
 import { widgetHOC } from '../common';
 import { TrendChart } from '../TrendChart';
 import { OVERVIEW_WIDGET_MAP } from 'Types/dashboard';

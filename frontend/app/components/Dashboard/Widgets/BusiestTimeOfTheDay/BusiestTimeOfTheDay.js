@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { Table, widgetHOC, domain } from '../common';
 import { 

@@ -9,7 +9,7 @@ import { options } from "../console";
 
 export default function ErrorGenPanel() {
 	const [show, setShow] =  useState(false);
-	if (window.ENV.PRODUCTION && !options.enableCrash) return null;
+	if (window.env.PRODUCTION && !options.enableCrash) return null;
 	return (
 		<div  style={{ position: 'relative' }}>
 			<button style={{ background: 'coral', height: '100%' }} onClick={() => setShow(!show)}>Show buttons</button>

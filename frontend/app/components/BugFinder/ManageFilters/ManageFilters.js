@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { IconButton } from 'UI';
 import Funnel from 'Types/funnel';

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { edit, save } from 'Duck/customField';
 import { Form, Button, Message } from 'UI';

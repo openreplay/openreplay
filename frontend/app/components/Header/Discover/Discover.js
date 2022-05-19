@@ -1,5 +1,5 @@
-import { connect } from 'react-redux';
 import React from 'react';
+import { connect } from 'react-redux';
 import withToggle from 'Components/hocs/withToggle';
 import stl from './discover.module.css';
 import FeatureItem from './FeatureItem';
@@ -69,7 +69,7 @@ class Discover extends React.PureComponent {
 
   onClick = task => {
     if (task.URL) {
-      if (task.URL.includes(window.ENV.ORIGIN)) {
+      if (task.URL.includes(window.env.ORIGIN)) {
         const { history } = this.props;
         var path = new URL(task.URL).pathname
         history.push(path)

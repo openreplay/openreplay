@@ -1,3 +1,4 @@
+import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import Settings from './Settings';
 import ChangePassword from './ChangePassword';

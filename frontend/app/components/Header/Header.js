@@ -71,7 +71,7 @@ const Header = (props) => {
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
         <div className="relative">
           <div className={ styles.logo } />
-          <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.ENV.VERSION}</div>
+          <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>
         </div>
       </NavLink>
       <SiteDropdown />

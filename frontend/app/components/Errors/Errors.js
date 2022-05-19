@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';
 import withPermissions from 'HOCs/withPermissions'

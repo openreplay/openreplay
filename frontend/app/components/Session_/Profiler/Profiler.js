@@ -1,5 +1,6 @@
+import React from 'react';
 import { connectPlayer } from 'Player';
-import { Icon, SlideModal, TextEllipsis, Input } from 'UI';
+import { SlideModal, TextEllipsis, Input } from 'UI';
 import { getRE } from 'App/utils';
 
 import ProfileInfo from './ProfileInfo';

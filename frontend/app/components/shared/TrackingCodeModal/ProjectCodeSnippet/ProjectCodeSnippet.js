@@ -46,7 +46,7 @@ const ProjectCodeSnippet = props  => {
     r.issue=function(k,p){r.push([6,k,p])};
     r.isActive=function(){return false};
     r.getSessionToken=function(){};
-  })("//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
+  })("//static.openreplay.com/${window.env.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
 </script>`;
 
   const saveGDPR = (value) => {

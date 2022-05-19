@@ -13,7 +13,7 @@ class Announcements extends React.Component {
   
   navigateToUrl = url => {
     if (url) {
-      if (url.startsWith(window.ENV.ORIGIN)) {
+      if (url.startsWith(window.env.ORIGIN)) {
         const { history } = this.props;
         var path = new URL(url).pathname
         if (path.includes('/metrics')) {

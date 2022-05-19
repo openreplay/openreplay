@@ -1,4 +1,4 @@
-import { connect } from 'react-redux';
+import React from 'react';
 import { Loader } from 'UI';
 import { CountBadge, Divider, widgetHOC } from './common';
 

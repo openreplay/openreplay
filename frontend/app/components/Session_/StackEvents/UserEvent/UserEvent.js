@@ -1,6 +1,7 @@
+import React from 'react';
 import cn from 'classnames';
 import { OPENREPLAY, SENTRY, DATADOG, STACKDRIVER } from 'Types/session/stackEvent'; 
-import { Modal, Icon, SlideModal, IconButton } from 'UI';
+import { Icon, SlideModal, IconButton } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import Sentry from './Sentry';
 import JsonViewer from './JsonViewer';

@@ -1,3 +1,4 @@
+import React from 'react';
 import { widgetHOC, AvgLabel, Styles } from '../common';
 import * as DataMap from "datamaps";
 import { threeLetter } from 'App/constants/countries';

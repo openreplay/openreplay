@@ -184,7 +184,7 @@ export default class DOMManager extends ListWalker<Message> {
         if (!node) { logger.error("Node not found", msg); break; }
         if (this.isLink[ id ] && name === "href") {
           // @ts-ignore TODO: global ENV type
-          if (value.startsWith(window.ENV.ASSETS_HOST)) { // Hack for queries in rewrited urls
+          if (value.startsWith(window.env.ASSETS_HOST)) { // Hack for queries in rewrited urls
             value = value.replace("?", "%3F");
           }
           this.stylesManager.setStyleHandlers(node, value);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { JSONTree, NoContent, Button, Tabs } from 'UI'
 import cn from 'classnames';
 import copy from 'copy-to-clipboard';

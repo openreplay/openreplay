@@ -1,4 +1,4 @@
-import cn from 'classnames';
+import React from 'react';
 import { connect } from 'react-redux';
 import { Set, List as ImmutableList } from "immutable";
 import { NoContent, Loader, Checkbox, LoadMoreButton, IconButton, Input, DropdownPlain, Pagination } from 'UI';

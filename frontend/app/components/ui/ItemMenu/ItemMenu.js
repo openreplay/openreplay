@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon } from 'UI';
 import styles from './itemMenu.module.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';

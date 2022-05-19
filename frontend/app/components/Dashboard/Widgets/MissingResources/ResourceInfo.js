@@ -1,3 +1,4 @@
+import React from 'react';
 import { diffFromNowString } from 'App/date';
 import { TextEllipsis } from 'UI';
 

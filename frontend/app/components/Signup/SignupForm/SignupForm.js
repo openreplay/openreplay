@@ -51,9 +51,9 @@ export default class SignupForm extends React.Component {
 
   onSubmit = (e) => {
     e.preventDefault();
-    if (window.ENV.CAPTCHA_ENABLED && recaptchaRef.current) {
+    if (window.env.CAPTCHA_ENABLED && recaptchaRef.current) {
       recaptchaRef.current.execute();      
-    } else if (!window.ENV.CAPTCHA_ENABLED) {
+    } else if (!window.env.CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
   }
@@ -67,11 +67,11 @@ export default class SignupForm extends React.Component {
           <div className="text-center text-xl">Already having an account? <span className="link"><Link to={ LOGIN_ROUTE }>Sign in</Link></span></div>
         </div>
         <>
-          { window.ENV.CAPTCHA_ENABLED && (
+          { window.env.CAPTCHA_ENABLED && (
             <ReCAPTCHA
               ref={ recaptchaRef }
               size="invisible"
-              sitekey={ window.ENV.CAPTCHA_SITE_KEY }
+              sitekey={ window.env.CAPTCHA_SITE_KEY }
               onChange={ token => this.handleSubmit(token) }
             />
           )}

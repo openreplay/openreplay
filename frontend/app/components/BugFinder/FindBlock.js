@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { applyFilter } from 'Duck/filters';

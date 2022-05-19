@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { edit } from 'Duck/integrations/actions';
 import { Dropdown } from 'UI';

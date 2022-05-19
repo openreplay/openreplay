@@ -1,3 +1,4 @@
+import React from 'react';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 
 class CodeEditor extends React.PureComponent {

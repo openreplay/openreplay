@@ -1,3 +1,4 @@
+import React from 'react';
 import { IconButton } from 'UI';
 import cn from 'classnames';
 import stl from './autoscroll.module.css';

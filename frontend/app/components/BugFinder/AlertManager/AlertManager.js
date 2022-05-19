@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Icon, SlideModal } from 'UI';
 import withToggle from 'HOCs/withToggle';

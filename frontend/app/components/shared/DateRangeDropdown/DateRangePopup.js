@@ -1,3 +1,4 @@
+import React from 'react';
 // import DateRangePicker from 'react-daterange-picker'; // TODO replace with other date range pickers
 import TimePicker from 'rc-time-picker';
 import { Button } from 'UI';

@@ -1,6 +1,7 @@
+import React from 'react';
 import cn from 'classnames';
 import { connectPlayer, jump, pause } from 'Player';
-import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
+import { Popup } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
 import stl from './network.module.css';

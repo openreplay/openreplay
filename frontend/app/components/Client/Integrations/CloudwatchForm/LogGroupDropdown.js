@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { ACCESS_KEY_ID_LENGTH, SECRET_ACCESS_KEY_LENGTH } from 'Types/integrations/cloudwatchConfig';
 import { edit } from 'Duck/integrations/actions';

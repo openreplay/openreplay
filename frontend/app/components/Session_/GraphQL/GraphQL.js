@@ -1,4 +1,5 @@
-import { Label, Icon, NoContent, Input, SlideModal, CloseButton } from 'UI';
+import React from 'react';
+import { NoContent, Input, SlideModal, CloseButton } from 'UI';
 import { getRE } from 'App/utils';
 import { connectPlayer, pause, jump } from 'Player';
 import BottomBlock from '../BottomBlock';

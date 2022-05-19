@@ -1,3 +1,4 @@
+import React from 'react';
 export default (propNames) => BaseComponent => class extends React.PureComponent {
 	state = {
 		obj: this.getObjFromProps(),

@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import cn from 'classnames';
 
 import { TextEllipsis } from 'UI';

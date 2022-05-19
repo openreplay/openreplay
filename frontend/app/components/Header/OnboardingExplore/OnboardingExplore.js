@@ -1,5 +1,5 @@
-import { connect } from 'react-redux';
 import React from 'react';
+import { connect } from 'react-redux';
 import withToggle from 'Components/hocs/withToggle';
 import stl from './onboardingExplore.module.css';
 import FeatureItem from './FeatureItem';
@@ -89,7 +89,7 @@ class OnboardingExplore extends React.PureComponent {
     history.push(withSiteId(onboardingRoute(tab), siteId)); 
 
     // if (task.URL) {
-    //   if (task.URL.includes(window.ENV.ORIGIN)) {        
+    //   if (task.URL.includes(window.env.ORIGIN)) {        
     //     const { history } = props;
     //     var path = new URL(task.URL).pathname
     //     history.push(path)        

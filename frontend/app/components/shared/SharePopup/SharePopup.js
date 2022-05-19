@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import withRequest from 'HOCs/withRequest';

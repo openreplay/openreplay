@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader } from 'UI';
 import styles from './logTab.module.css';
 

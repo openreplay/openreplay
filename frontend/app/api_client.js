@@ -83,7 +83,7 @@ export default class APIClient {
 
     let fetch = window.fetch;
 
-    let edp = window.ENV.API_EDP;
+    let edp = window.env.API_EDP;
     if (
       path !== '/targets_temp' &&
       !path.includes('/metadata/session_search') &&

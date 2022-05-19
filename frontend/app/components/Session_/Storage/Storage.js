@@ -1,5 +1,4 @@
-//import cn from 'classnames';
-//import withEnumToggle from 'HOCs/withEnumToggle';
+import React from 'react';
 import { connect } from 'react-redux';
 import { hideHint } from 'Duck/components/player';
 import { 
@@ -9,7 +8,7 @@ import {
 	selectStorageListNow,
 	selectStorageList,
 } from 'Player/store';
-import { JSONTree, IconButton, Icon, Popup, Tabs, NoContent } from 'UI';
+import { JSONTree, NoContent } from 'UI';
 import { formatMs } from 'App/date';
 
 import { jump } from 'Player';

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';

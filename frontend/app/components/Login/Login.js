@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Icon, Loader, Button, Link } from 'UI';
@@ -48,9 +49,9 @@ export default class Login extends React.Component {
 
   onSubmit = (e) => {    
     e.preventDefault();
-    if (window.ENV.CAPTCHA_ENABLED && recaptchaRef.current) {
+    if (window.env.CAPTCHA_ENABLED && recaptchaRef.current) {
       recaptchaRef.current.execute();      
-    } else if (!window.ENV.CAPTCHA_ENABLED) {
+    } else if (!window.env.CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
   }
@@ -80,11 +81,11 @@ export default class Login extends React.Component {
                 { !authDetails.tenants && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
               </div>
               <Loader loading={ loading }>
-                { window.ENV.CAPTCHA_ENABLED && (
+                { window.env.CAPTCHA_ENABLED && (
                   <ReCAPTCHA
                     ref={ recaptchaRef }
                     size="invisible"
-                    sitekey={ window.ENV.CAPTCHA_SITE_KEY }
+                    sitekey={ window.env.CAPTCHA_SITE_KEY }
                     onChange={ token => this.handleSubmit(token) }
                   />
                 )}            

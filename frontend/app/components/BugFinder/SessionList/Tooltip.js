@@ -1,3 +1,4 @@
+import React from 'react';
 import { Popup } from 'UI';
 
 export default class Tooltip extends React.PureComponent {

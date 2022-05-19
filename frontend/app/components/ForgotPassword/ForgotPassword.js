@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import ReCAPTCHA from 'react-google-recaptcha';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -79,9 +80,9 @@ export default class ForgotPassword extends React.PureComponent {
 
   onSubmit = e => {
     e.preventDefault();
-    if (window.ENV.CAPTCHA_ENABLED && recaptchaRef.current) {
+    if (window.env.CAPTCHA_ENABLED && recaptchaRef.current) {
       recaptchaRef.current.execute()
-    } else if (!window.ENV.CAPTCHA_ENABLED) {
+    } else if (!window.env.CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
   }
@@ -115,13 +116,13 @@ export default class ForgotPassword extends React.PureComponent {
             </div>
             <Loader loading={ loading }>
               <div data-hidden={ updated }>
-                { window.ENV.CAPTCHA_ENABLED && (
+                { window.env.CAPTCHA_ENABLED && (
                   <div className={ stl.recaptcha }>
                     <ReCAPTCHA
                       ref={ recaptchaRef }
                       size="invisible"
                       data-hidden={ requested }
-                      sitekey={ window.ENV.CAPTCHA_SITE_KEY }
+                      sitekey={ window.env.CAPTCHA_SITE_KEY }
                       onChange={ token => this.handleSubmit(token) }
                     />
                   </div>

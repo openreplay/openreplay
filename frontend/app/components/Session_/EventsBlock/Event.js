@@ -1,3 +1,4 @@
+import React from 'react';
 import copy from 'copy-to-clipboard';
 // import { Checkbox } from 'semantic-ui-react';
 import cn from 'classnames';

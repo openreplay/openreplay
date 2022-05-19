@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon } from 'UI';
 import styles from './noContent.module.css';
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 // import { DNDSource, DNDTarget } from 'Components/hocs/dnd';
 import Event, { TYPES } from 'Types/filter/event';

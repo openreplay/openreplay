@@ -1,3 +1,4 @@
+import React from 'react';
 // import cn from 'classnames';
 // import { getRE } from 'App/utils';
 // import { Icon, NoContent, Tabs, Input } from 'UI';

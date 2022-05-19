@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Select, Form, Button, Checkbox } from 'UI';
 import SiteDropdown from 'Shared/SiteDropdown';

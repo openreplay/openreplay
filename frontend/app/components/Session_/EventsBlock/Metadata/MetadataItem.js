@@ -1,3 +1,4 @@
+import React from 'react';
 import { List } from 'immutable';
 import cn from 'classnames';
 import { withRequest, withToggle } from 'HOCs';

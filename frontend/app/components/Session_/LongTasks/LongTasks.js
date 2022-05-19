@@ -1,5 +1,5 @@
-//import cn from 'classnames';
-import { Icon, NoContent, Input, SlideModal, QuestionMarkHint } from 'UI';
+import React from 'react';
+import { NoContent, Input, QuestionMarkHint } from 'UI'
 import { getRE } from 'App/utils';
 import { connectPlayer, jump } from 'Player';
 import BottomBlock from '../BottomBlock';

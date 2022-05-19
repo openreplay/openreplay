@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 // import { connectPlayer } from 'Player';
 import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';

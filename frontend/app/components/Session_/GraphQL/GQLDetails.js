@@ -1,3 +1,4 @@
+import React from 'react';
 import { JSONTree, Button } from 'UI'
 import cn from 'classnames';
 

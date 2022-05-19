@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { CircularLoader, Icon, Tooltip } from 'UI';
 import stl from './iconButton.module.css';

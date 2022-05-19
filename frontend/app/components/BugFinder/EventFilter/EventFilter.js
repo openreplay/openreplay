@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Input } from 'semantic-ui-react';
 // import { DNDContext } from 'Components/hocs/dnd';

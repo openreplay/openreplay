@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Button, Modal, Form, Icon, Checkbox } from 'UI';
 import styles from './funnelSaveModal.module.css';

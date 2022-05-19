@@ -1,3 +1,4 @@
+import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Icon } from 'UI';
 

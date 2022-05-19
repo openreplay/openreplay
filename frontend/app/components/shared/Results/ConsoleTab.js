@@ -1,3 +1,4 @@
+import React from 'react';
 import ConsoleContent from '../../Session_/Console/ConsoleContent';
 import styles from './consoleTab.module.css';
 
