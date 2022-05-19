@@ -81,12 +81,31 @@ randomPass() {
 fatal 'DOMAIN_NAME variable is empty. Rerun the script `DOMAIN_NAME=openreplay.mycomp.org bash init.sh `'
 }
 
+# Mac os doesn't have gnu sed, which will cause compatibility issues.
+# This wrapper will help to check the sed, and use the correct version.
+# Ref: https://stackoverflow.com/questions/37639496/how-can-i-check-the-version-of-sed-in-os-x
+function is_gnu_sed(){
+  sed --version >/dev/null 2>&1
+}
+
+function sed_i_wrapper(){
+  if is_gnu_sed; then
+    $(which sed) "$@"
+  else
+    a=()
+    for b in "$@"; do
+      [[ $b == '-i' ]] && a=("${a[@]}" "$b" "") || a=("${a[@]}" "$b")
+    done
+    $(which sed) "${a[@]}"
+  fi
+}
+
 info "Creating dynamic passwords"
-sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
-sed -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
+sed_i_wrapper -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"$(randomPass)\"/g" vars.yaml
+sed_i_wrapper -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"$(randomPass)\"/g" vars.yaml
+sed_i_wrapper -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"$(randomPass)\"/g" vars.yaml
+sed_i_wrapper -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"$(randomPass)\"/g" vars.yaml
+sed_i_wrapper -i "s/domainName: \"\"/domainName: \"${DOMAIN_NAME}\"/g" vars.yaml
 
 ## Installing OpenReplay
 info "Installing databases"
