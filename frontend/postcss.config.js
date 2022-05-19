@@ -1,7 +1,5 @@
 const path = require('path');
-
 const colors = require('./app/theme/colors');
-
 const cssnanoOptions = { zindex: false };
 
 module.exports = ({ file, options, env }) => ({

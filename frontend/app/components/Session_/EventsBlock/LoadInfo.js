@@ -1,3 +1,4 @@
+import React from 'react';
 import styles from './loadInfo.module.css';
 import { numberWithCommas } from 'App/utils'
 

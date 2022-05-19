@@ -1,3 +1,4 @@
+import React from 'react';
 import { Duration } from 'luxon';
 import { connectPlayer } from 'Player';
 import styles from './time.module.css';

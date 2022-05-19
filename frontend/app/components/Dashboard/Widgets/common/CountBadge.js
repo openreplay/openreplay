@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon } from 'UI';
 import styles from './countBadge.module.css';
 import cn from 'classnames';

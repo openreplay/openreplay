@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 import stl from './controlButton.module.css';

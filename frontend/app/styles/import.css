@@ -1,0 +1,8 @@
+@import 'react-toastify/dist/ReactToastify.css';
+/* @import 'react-circular-progressbar/dist/styles.css'; */
+@import 'highlight.js/styles/github-gist.css';
+@import 'react-tippy/dist/tippy.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connectPlayer } from 'Player';
 import styles from './timeTracker.module.css';
 

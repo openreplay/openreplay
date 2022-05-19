@@ -7,26 +7,25 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 // import CompressionPlugin from "compression-webpack-plugin";
 const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
-const isDevelopment = process.env.NODE_ENV !== 'production'
+// const isDevelopment = process.env.NODE_ENV !== 'production'
 const stylesHandler = MiniCssExtractPlugin.loader;
 const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
-console.log('ENV_VARIABLES', ENV_VARIABLES);
 
 interface Configuration extends WebpackConfiguration {
-  devServer?: WebpackDevServerConfiguration;
+  devServer?: WebpackDevServerConfiguration
 }
 
 const config: Configuration = {
-  mode: "production",
+  mode: "development",
   output: {
     path: path.resolve(__dirname, 'public'),
   },
   entry: "./app/initialize.js",
-  // optimization: {
-  //   splitChunks: {
-  //     chunks: 'all',
-  //   },
-  // },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+    },
+  },
   module: {
     rules: [
       {
@@ -71,6 +70,14 @@ const config: Configuration = {
             'postcss-loader'
         ],
       },
+      {
+        test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+        type: 'asset',
+      },
+      { 
+        test: /\.(jpg|jpeg|png|gif|mp3|svg)$/,
+        use: ["file-loader"] 
+      },
     ],
   },
   resolve: {
@@ -109,26 +116,27 @@ const config: Configuration = {
     }),
     new CopyWebpackPlugin({
       patterns: [
-        { from: "app/assets", to: "assets" },
+        { from: "./app/assets", to: "assets" },
       ],
     }),
     new MiniCssExtractPlugin(),
     new HotModuleReplacementPlugin(),
-    new webpack.ProvidePlugin({
-      $: "jquery",
-      jQuery: "jquery"
-    }),
+    // new webpack.ProvidePlugin({
+    //   $: "jquery",
+    //   jQuery: "jquery"
+    // }),
   ],
   devtool: "inline-source-map",
   performance: {
     hints: false,
   },
   devServer: {
-    static: path.join(__dirname, "public"),
+    // static: path.join(__dirname, "public"),
     historyApiFallback: true,
     host: 'localhost',
-    // port: 4000,
     open: true,
+    port: 3333,
+    hot: true,
   },
 };
 
