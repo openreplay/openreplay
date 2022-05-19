@@ -82,6 +82,7 @@ jobs:
         # Update changed image tag
         sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
+        cat /tmp/image_override.yaml
         # Deploy command
         helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml
       env:
