@@ -1,25 +1,4 @@
-.hoverableWidget {
-    transition: all 0.2s;
-}
-
-.hoverGray {
-    &:hover {
-        box-shadow: 0 0 0 1px #999;
-
-        & .drillDownMessage {
-            display: unset;
-        }
-    }
-}
-
-.hoverBlue {
-    &:hover {
-        box-shadow: 0 0 0 1px $main;
-    }
-}
-
 .drillDownMessage {
-    display: none;
     position: absolute;
     top: 35px;
     left: 0;

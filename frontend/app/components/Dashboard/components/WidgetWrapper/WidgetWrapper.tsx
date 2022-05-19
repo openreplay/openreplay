@@ -76,11 +76,10 @@ function WidgetWrapper(props: Props) {
             <div
                 className={
                     cn(
-                        "relative rounded bg-white border",
+                        "relative rounded bg-white border group",
                         'col-span-' + widget.config.col,
-                        stl.hoverableWidget,
-                        { [stl.hoverGray]: !isTemplate && isWidget },
-                        { [stl.hoverBlue]: isTemplate }
+                        { "hover:shadow-border-gray": !isTemplate && isWidget },
+                        { "hover:shadow-border-main": isTemplate }
                     )
                 }
                 style={{
@@ -92,7 +91,15 @@ function WidgetWrapper(props: Props) {
                 onClick={props.onClick ? props.onClick : () => {}}
                 id={`widget-${widget.widgetId}`}
             >
-                {isWidget && <div className={cn(stl.drillDownMessage, 'disabled text-gray')}> {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'} </div>}
+                {!isTemplate && isWidget &&
+                    <div
+                        className={cn(
+                            stl.drillDownMessage,
+                            'disabled text-gray invisible group-hover:visible')}
+                        >
+                            {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'}
+                    </div>
+                }
                 {/* @ts-ignore */}
                 <Tooltip
                     hideOnClick={true}

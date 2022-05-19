@@ -117,8 +117,7 @@ function DashboardMetricSelection(props: IProps) {
                                     cn(
                                         "relative rounded border col-span-1 cursor-pointer",
                                         "flex items-center justify-center bg-white",
-                                        "hover:bg-active-blue text-center h-full",
-                                        stl.hoverBlue,
+                                        "hover:bg-active-blue hover:shadow-border-main text-center h-full",
                                     )
                                 }
                                 onClick={props.handleCreateNew}

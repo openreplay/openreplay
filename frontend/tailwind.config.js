@@ -24,7 +24,7 @@ module.exports = {
 		// 'borderStyle',
 		'borderWidth',
 		// 'boxSizing',
-		// 'boxShadow',
+		'boxShadow',
 		// 'clear',
 		'cursor',
 		'display',
@@ -108,7 +108,13 @@ module.exports = {
 			default: '#DDDDDD',
 			"gray-light-shade": colors["gray-light-shade"],
 		},
-    extend: {},
+    extend: {
+		boxShadow: {
+			'border-blue': `0 0 0 1px ${colors['active-blue-border']}`,
+			'border-main': `0 0 0 1px ${colors['main']}`,
+			'border-gray': '0 0 0 1px #999',
+		}
+	},
   },
   content: [],
   variants: {
