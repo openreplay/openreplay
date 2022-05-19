@@ -62,7 +62,8 @@ jobs:
             cat <<EOF >> /tmp/image_override.yaml
         ${image_array[0]}:
           image:
-            tag: ${image_array[1]}
+            # We've to strip off the -ee, as helm will append it.
+            tag: `echo ${image_array[1]} | cut -d '-' -f 1`
         EOF
         done
 
