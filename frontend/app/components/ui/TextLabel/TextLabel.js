@@ -1,3 +1,4 @@
+import React from 'react';
 import { Popup } from 'semantic-ui-react';
 import cn from 'classnames';
 import { Icon } from 'UI';

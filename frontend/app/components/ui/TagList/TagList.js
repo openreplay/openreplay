@@ -1,3 +1,4 @@
+import React from 'react';
 import { TagInput, TagBadge } from 'UI';
 import styles from './tagList.module.css';
 import cn from 'classnames';

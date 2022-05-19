@@ -1,3 +1,4 @@
+import React from 'react';
 import stl from './dropdownItem.module.css';
 
 const DropdownItem = ({ event }) => (

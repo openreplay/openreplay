@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link, Icon } from 'UI';
 import cls from './backLink.module.css';
 import cn from 'classnames';

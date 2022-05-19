@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import stl from './tabs.module.css';
 

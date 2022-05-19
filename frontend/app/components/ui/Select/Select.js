@@ -1,3 +1,4 @@
+import React from 'react';
 import { Select } from 'semantic-ui-react';
 
 export default ({

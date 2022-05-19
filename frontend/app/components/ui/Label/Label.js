@@ -1,3 +1,4 @@
+import React from 'react';
 import { Label } from 'semantic-ui-react';
 import styles from './label.module.css';
 import cn from 'classnames';

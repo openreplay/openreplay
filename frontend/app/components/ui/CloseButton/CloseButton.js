@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon } from 'UI';
 
 export default function CloseButton({ size, onClick, className = '', style }){

@@ -1,3 +1,4 @@
+import React from 'react';
 import styles from './toggler.module.css';
 
 export default ({
