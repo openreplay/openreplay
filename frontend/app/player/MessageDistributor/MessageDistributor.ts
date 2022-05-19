@@ -426,7 +426,7 @@ export default class MessageDistributor extends StatedScreen {
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
         }
-        this.pagesManager.append(msg);
+        this.pagesManager.appendMessage(msg);
         break;
     }
   }

@@ -20,7 +20,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 	/*
 		Assumed that messages added in a correct time sequence.
 	*/
-	add(m: Message): void {
+	appendMessage(m: Message): void {
 		if (m.tp === "create_document") {
 			super.append(new DOMManager(this.screen, this.isMobile, m.time))
 		}
