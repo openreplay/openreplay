@@ -8,6 +8,7 @@ import { filtersMap } from 'Types/filter/newFilter';
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
   const matchingCategories: string[] = [];
   const matchingFilters: Record<string, any> = {};
+
   if (searchQuery.length === 0) return {
     matchingCategories: Object.keys(filters),
     matchingFilters: filters,

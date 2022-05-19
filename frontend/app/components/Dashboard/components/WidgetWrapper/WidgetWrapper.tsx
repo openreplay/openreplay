@@ -95,7 +95,7 @@ function WidgetWrapper(props: Props) {
                     <div
                         className={cn(
                             stl.drillDownMessage,
-                            'disabled text-gray invisible group-hover:visible')}
+                            'disabled text-gray text-sm invisible group-hover:visible')}
                         >
                             {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'}
                     </div>
