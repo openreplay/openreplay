@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { useCallback, useState } from 'react';
 import { Icon } from 'UI';

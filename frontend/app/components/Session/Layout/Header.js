@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { useEffect } from 'react';
 import { connect } from 'react-redux';

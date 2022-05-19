@@ -4,7 +4,7 @@ import { connectPlayer, toggleEvents, scale } from 'Player';
 import cn from 'classnames'
 import stl from './EventsToggleButton.module.css'
 
-function EventsToggleButton({ showEvents, toggleEvents }) {
+function EventsToggleButton({ showEvents, toggleEvents }: any) {
   const toggle = () => {
     toggleEvents()
     scale()

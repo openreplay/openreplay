@@ -1,3 +1,4 @@
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Duration } from 'luxon';
 import styles from './playerTime.module.css';
