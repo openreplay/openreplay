@@ -17,7 +17,7 @@ module.exports = ({ file, options, env }) => ({
     //   path: path.join(__dirname, 'app/svg'),
     // },
     'tailwindcss/nesting': {},
-    'tailwindcss': true,
+    tailwindcss: {},
     autoprefixer: {},
     //'postcss-preset-env': {}, //includes autoprefixer
     cssnano: env === 'production' ? cssnanoOptions : false,

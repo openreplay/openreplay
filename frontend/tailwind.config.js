@@ -2,7 +2,9 @@ const colors = require('./app/theme/colors');
 
 module.exports = {
   important: true,
-  purge: [],
+  content: [
+	  './app/**/*.{html,js,tsx',
+  ],
   corePlugins: [
 		'preflight',
 		'container',
@@ -110,7 +112,6 @@ module.exports = {
 		},
     extend: {},
   },
-  content: [],
   variants: {
 		visibility: ['responsive', 'hover', 'focus', 'group-hover']
 	},
