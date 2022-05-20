@@ -13,7 +13,7 @@ interface Props {
 function SelectDateRange(props: Props) {
     const [isCustom, setIsCustom] = React.useState(false);
     const { period } = props;
-    const selectedValue = DATE_RANGE_OPTIONS.find(obj => obj.value === period.rangeName)
+    const selectedValue = DATE_RANGE_OPTIONS.find((obj: any) => obj.value === period.rangeName)
 
     const onChange = (value: any) => {
         if (value === CUSTOM_RANGE) {
@@ -34,7 +34,7 @@ function SelectDateRange(props: Props) {
                 plain
                 value={selectedValue}
                 options={DATE_RANGE_OPTIONS}
-                onChange={({ value }) => onChange(value)}
+                onChange={({ value }: any) => onChange(value)}
                 components={{ SingleValue: ({ children, ...props} : any) => {
                     return (
                         <components.SingleValue {...props}>

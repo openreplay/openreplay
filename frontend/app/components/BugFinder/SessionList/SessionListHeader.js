@@ -5,6 +5,7 @@ import SortDropdown from '../Filters/SortDropdown';
 import DateRange from '../DateRange';
 import { TimezoneDropdown } from 'UI';
 import { numberWithCommas } from 'App/utils';
+import SelectDateRange from 'Shared/SelectDateRange';
 
 const DEFAULT_SORT = 'startTs';
 const DEFAULT_ORDER = 'desc';
@@ -36,6 +37,10 @@ function SessionListHeader({
           <div className="ml-3 flex items-center">
             <span className="mr-2 color-gray-medium">Sessions Captured in</span>
             <DateRange />
+            {/* <SelectDateRange
+                period={period}
+                onChange={onChange}
+            /> */}
           </div>
         )}
       </div>

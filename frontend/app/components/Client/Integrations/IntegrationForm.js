@@ -33,7 +33,7 @@ export default class IntegrationForm extends React.PureComponent {
       this.props.edit(this.props.name, { [ key ]: value })
   };
 
-  onChangeSelect = (event, { value }) => {
+  onChangeSelect = ({ value }) => {
     const { sites, list, name } = this.props;
     const site = sites.find(s => s.id === value);
     this.setState({ currentSiteId: site.id })

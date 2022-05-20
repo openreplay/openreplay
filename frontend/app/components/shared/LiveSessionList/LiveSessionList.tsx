@@ -119,10 +119,10 @@ function LiveSessionList(props: Props) {
           <LiveSessionReloadButton />
         </div>
         <div className="flex items-center">
-          <div className="flex items-center">
+          {/* <div className="flex items-center">
             <span className="mr-2 color-gray-medium">Timezone</span>
             <TimezoneDropdown />
-          </div>
+          </div> */}
           <div className="flex items-center ml-6 mr-4">
             <span className="mr-2 color-gray-medium">Sort By</span>
             <DropdownPlain
@@ -131,7 +131,7 @@ function LiveSessionList(props: Props) {
               value={sort.field}
             />
           </div>
-          <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
+          <SortOrderButton onChange={(state: any) => props.updateSort({ order: state })} sortOrder={sort.order} />
         </div>
       </div>
 

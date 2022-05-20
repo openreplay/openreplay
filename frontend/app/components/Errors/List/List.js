@@ -9,6 +9,7 @@ import SortDropdown from 'Components/BugFinder/Filters/SortDropdown';
 import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
 import { debounce } from 'App/utils';
+import Select from 'Shared/Select';
 
 const PER_PAGE = 10;
 const sortOptionsMap = {
@@ -20,7 +21,7 @@ const sortOptionsMap = {
 	'users-desc': 'Users Descending',
 };
 const sortOptions = Object.entries(sortOptionsMap)
-  .map(([ value, text ]) => ({ value, text }));
+  .map(([ value, label ]) => ({ value, label }));
 
 @connect(state => ({
 	loading: state.getIn([ "errors", "loading" ]),
@@ -118,7 +119,7 @@ export default class List extends React.PureComponent {
 
 	addPage = () => this.props.updateCurrentPage(this.props.currentPage + 1)
 
-	writeOption = (e, { name, value }) => {
+	writeOption = ({ name, value }) => {
 		const [ sort, order ] = value.split('-');
 		if (name === 'sort') {
 			this.props.editOptions({ sort, order });
@@ -197,9 +198,10 @@ export default class List extends React.PureComponent {
 					</div>
 					<div className="flex items-center ml-6">
 						<span className="mr-2 color-gray-medium">Sort By</span>	          
-						<DropdownPlain
+						<Select
 							defaultValue={ `${sort}-${order}` }
 							name="sort"
+							plain
 							options={ sortOptions }
 							onChange={ this.writeOption }
 						/>

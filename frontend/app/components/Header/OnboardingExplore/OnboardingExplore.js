@@ -87,17 +87,6 @@ class OnboardingExplore extends React.PureComponent {
     const { siteId, history } = this.props;
     const tab = this.getOnboardingTab(task.task)    
     history.push(withSiteId(onboardingRoute(tab), siteId)); 
-
-    // if (task.URL) {
-    //   if (task.URL.includes(window.env.ORIGIN)) {        
-    //     const { history } = props;
-    //     var path = new URL(task.URL).pathname
-    //     history.push(path)        
-    //   } else {
-    //     window.open(task.URL, "_blank")
-    //   }
-    //   this.props.toggleModal();
-    // }
   }
 
   render() {
