@@ -16,102 +16,102 @@ CREATE INDEX IF NOT EXISTS users_name_gin_idx ON users USING GIN (name gin_trgm_
 
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)
-VALUES ('Captured sessions', 'Monitoring Essentials', '{
+VALUES ('Captured sessions', 'web vitals', '{
   "col": 1,
   "row": 1,
   "position": 0
 }', true, true, true, 'count_sessions', 'predefined', 'overview'),
-       ('Request Load Time', 'Monitoring Essentials', '{
+       ('Request Load Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_request_load_time', 'predefined', 'overview'),
-       ('Page Load Time', 'Monitoring Essentials', '{
+       ('Page Load Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_page_load_time', 'predefined', 'overview'),
-       ('Image Load Time', 'Monitoring Essentials', '{
+       ('Image Load Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_image_load_time', 'predefined', 'overview'),
-       ('DOM Content Load Start', 'Monitoring Essentials', '{
+       ('DOM Content Load Start', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_dom_content_load_start', 'predefined', 'overview'),
-       ('First Meaningful paint', 'Monitoring Essentials', '{
+       ('First Meaningful paint', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_first_contentful_pixel', 'predefined', 'overview'),
-       ('No. of Visited Pages', 'Monitoring Essentials', '{
+       ('No. of Visited Pages', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_visited_pages', 'predefined', 'overview'),
-       ('Session Duration', 'Monitoring Essentials', '{
+       ('Session Duration', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_session_duration', 'predefined', 'overview'),
-       ('DOM Build Time', 'Monitoring Essentials', '{
+       ('DOM Build Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_pages_dom_buildtime', 'predefined', 'overview'),
-       ('Pages Response Time', 'Monitoring Essentials', '{
+       ('Pages Response Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_pages_response_time', 'predefined', 'overview'),
-       ('Response Time', 'Monitoring Essentials', '{
+       ('Response Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_response_time', 'predefined', 'overview'),
-       ('First Paint', 'Monitoring Essentials', '{
+       ('First Paint', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_first_paint', 'predefined', 'overview'),
-       ('DOM Content Loaded', 'Monitoring Essentials', '{
+       ('DOM Content Loaded', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_dom_content_loaded', 'predefined', 'overview'),
-       ('Time Till First byte', 'Monitoring Essentials', '{
+       ('Time Till First byte', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_till_first_byte', 'predefined', 'overview'),
-       ('Time To Interactive', 'Monitoring Essentials', '{
+       ('Time To Interactive', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_time_to_interactive', 'predefined', 'overview'),
-       ('Captured requests', 'Monitoring Essentials', '{
+       ('Captured requests', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'count_requests', 'predefined', 'overview'),
-       ('Time To Render', 'Monitoring Essentials', '{
+       ('Time To Render', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_time_to_render', 'predefined', 'overview'),
-       ('Memory Consumption', 'Monitoring Essentials', '{
+       ('Memory Consumption', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_used_js_heap_size', 'predefined', 'overview'),
-       ('CPU Load', 'Monitoring Essentials', '{
+       ('CPU Load', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_cpu', 'predefined', 'overview'),
-       ('Frame rate', 'Monitoring Essentials', '{
+       ('Frame rate', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0

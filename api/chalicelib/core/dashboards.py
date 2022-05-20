@@ -6,8 +6,9 @@ from chalicelib.utils import helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
+# category name should be lower cased
 CATEGORY_DESCRIPTION = {
-    'overview': 'High-level metrics and web vitals.',
+    'web vitals': 'A set of metrics that assess app performance on criteria such as load time, load performance, and stability.',
     'custom': 'Previously created custom metrics by me and my team.',
     'errors': 'Keep a closer eye on errors and track their type, origin and domain.',
     'performance': 'Optimize your app’s performance by tracking slow domains, page response times, memory consumption, CPU usage and more.',
@@ -33,7 +34,7 @@ def get_templates(project_id, user_id):
         cur.execute(pg_query)
         rows = cur.fetchall()
     for r in rows:
-        r["description"] = CATEGORY_DESCRIPTION.get(r["category"], "")
+        r["description"] = CATEGORY_DESCRIPTION.get(r["category"].lower(), "")
         for w in r["widgets"]:
             w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
             w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
