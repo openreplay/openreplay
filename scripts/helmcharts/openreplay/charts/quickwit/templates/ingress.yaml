@@ -1,0 +1,35 @@
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "quickwit.fullname" . -}}
+{{- $socketioSvcPort := .Values.service.ports.socketio -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "quickwit.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $socketioSvcPort }}
+            path: /ws-quickwit/(.*)
+{{- end }}

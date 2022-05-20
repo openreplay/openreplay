@@ -21,6 +21,10 @@ clickhouse:
   # For enterpriseEdition
   enabled: false
 
+quickwit:
+  # For enterpriseEdition
+  enabled: false
+
 kafka: &kafka
   # For enterpriseEdition
   # enabled: true
