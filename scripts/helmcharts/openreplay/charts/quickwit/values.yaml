@@ -46,7 +46,7 @@ service:
     search: 7280
 
 ingress:
-  enabled: true
+  enabled: false
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
   annotations: {}
     # kubernetes.io/ingress.class: nginx
