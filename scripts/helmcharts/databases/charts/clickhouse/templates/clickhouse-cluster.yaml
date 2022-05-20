@@ -19,8 +19,8 @@ spec:
     clusters:
       - name: replicated
         layout:
-          shardsCount: 1
-          replicasCount: 2
+          shardsCount: {{ .Values.clickhouse.replicaCount }}
+          replicasCount: {{ .Values.clickhouse.shardsCount }}
 
   templates:
     volumeClaimTemplates:
