@@ -246,7 +246,16 @@ export default class AssistManager {
           this.socket && this.socket.emit("input", el.innerText)
         }
       }
-      //el.onkeydown = e => e.preventDefault()
+      // TODO: send "focus" event to assist with the nodeID
+      el.onkeydown = e => {
+        if (e.key == "Tab") {
+          e.preventDefault()
+        }
+      }
+      el.onblur = () => {
+        el.oninput = null
+        el.onblur = null
+      }
     }
     this.socket.emit("click",  [ data.x, data.y ]);
   }
