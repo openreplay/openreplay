@@ -13,7 +13,7 @@ function DashboardEditModal(props: Props) {
     const { show, closeHandler, focusTitle } = props;
     const { dashboardStore } = useStore();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
-    console.log(props.focusTitle);
+
     const onSave = () => {
         dashboardStore.save(dashboard).then(closeHandler);
     }
