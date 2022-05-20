@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import WidgetWrapper from '../WidgetWrapper';
 import { useObserver } from 'mobx-react-lite';
+import { Icon } from 'UI';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
-import stl from '../WidgetWrapper/widgetWrapper.css'
 
 function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
     const selectedCategoryWidgetsCount = useObserver(() => {
@@ -116,13 +116,14 @@ function DashboardMetricSelection(props: IProps) {
                                 className={
                                     cn(
                                         "relative rounded border col-span-1 cursor-pointer",
-                                        "flex items-center justify-center bg-white",
-                                        "hover:bg-active-blue hover:shadow-border-main text-center h-full",
+                                        "flex flex-col items-center justify-center bg-white",
+                                        "hover:bg-active-blue hover:shadow-border-main text-center h-full py-12",
                                     )
                                 }
                                 onClick={props.handleCreateNew}
                             >
-                                Create Metric
+                                <Icon name="plus" size="16" />
+                                <span className="mt-2">Create Metric</span>
                             </div>
                         )}
                     </div>
