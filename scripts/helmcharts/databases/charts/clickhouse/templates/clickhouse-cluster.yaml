@@ -91,4 +91,16 @@ spec:
             - name: client
               port: 9000
           type: ClusterIP
+      - name: cluster-template
+        generateName: "clickhouse"
+        metadata:
+          labels:
+            installation: "openreplay"
+        spec:
+          ports:
+            - name: http
+              port: 8123
+            - name: client
+              port: 9000
+          type: ClusterIP
 
