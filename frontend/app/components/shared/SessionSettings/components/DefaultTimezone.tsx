@@ -64,7 +64,7 @@ function DefaultTimezone(props) {
         <>
             <h3 className="text-lg">Default Timezone</h3>
             <div className="my-1">Session Time</div>
-            <div className="mt-2 flex items-center" style={{ width: "230px"}}>
+            <div className="mt-2 flex items-center" style={{ width: "265px"}}>
                 <Select
                     options={timezoneOptions}
                     defaultValue={timezone}

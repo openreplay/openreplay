@@ -36,7 +36,7 @@ function CaptureRate(props) {
                     name="test"
                     onChange={toggleRate}
                 />
-                <span style={{ color: captureAll ? '#000000' : '#999' }}>100%</span>
+                <span className="ml-2" style={{ color: captureAll ? '#000000' : '#999' }}>100%</span>
             </div>
            {!captureAll && (
             <div className="flex items-center">
