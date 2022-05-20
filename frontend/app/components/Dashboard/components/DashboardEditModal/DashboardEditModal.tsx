@@ -13,7 +13,7 @@ function DashboardEditModal(props: Props) {
     const { show, closeHandler, focusTitle } = props;
     const { dashboardStore } = useStore();
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
-
+    console.log(props.focusTitle);
     const onSave = () => {
         dashboardStore.save(dashboard).then(closeHandler);
     }
@@ -61,7 +61,7 @@ function DashboardEditModal(props: Props) {
                         onChange={write}
                         placeholder="Description"
                         maxLength={300}
-                        autoFocus={!dashboard.description || !focusTitle}
+                        autoFocus={!focusTitle}
                     />
                 </Form.Field>
 
