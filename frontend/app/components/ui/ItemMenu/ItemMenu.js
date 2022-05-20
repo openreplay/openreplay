@@ -20,7 +20,7 @@ export default class ItemMenu extends React.PureComponent {
   closeMenu = () => this.setState({ displayed: false })
 
   render() {
-    const { items, label = "" } = this.props;
+    const { items, label = "", bold } = this.props;
     const { displayed } = this.state;
     const parentStyles = label ? 'rounded px-2 py-1 hover:bg-gray-light' : '';
 
@@ -33,7 +33,7 @@ export default class ItemMenu extends React.PureComponent {
             onClick={ this.toggleMenu }
             className={cn("flex items-center cursor-pointer select-none", parentStyles, { 'bg-gray-light' : displayed && label })}
           >
-            {label && <span className="mr-1 color-gray-medium ">{label}</span>}
+            {label && <span className={cn('mr-1', bold ? 'font-medium color-gray-darkest' : 'color-gray-medium')}>{label}</span>}
             <div
               ref={ (ref) => { this.menuBtnRef = ref; } }
               className={cn("rounded-full flex items-center justify-center", { 'bg-gray-light' : displayed, "w-10 h-10" : !label })}
@@ -53,6 +53,7 @@ export default class ItemMenu extends React.PureComponent {
               onClick={ !disabled ? this.onClick(onClick) : () => {} }
               role="menuitem"
               tabIndex="-1"
+              className=""
             >
               <Tooltip
                   delay={500}
