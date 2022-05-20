@@ -29,9 +29,9 @@
 // 				this.state = JSON.parse(JSON.stringify(action.state)); // Deep clone :(
 // 			} else {
 //         action.diff.forEach(d => {
-//         	try { 
+//         	try {
 //         		applyChange(this.state, d);
-//         	} catch (e) { 
+//         	} catch (e) {
 //         		//console.warn("Deepdiff error")
 //         	}
 //         });
@@ -41,7 +41,7 @@
 // 				this.state = this.finalStates.pop();
 // 			} else {
 // 				action.diff.forEach(d => {
-// 					try { 
+// 					try {
 //         		revertChange(this.state, 1, d); // bad lib :( TODO: write our own diff
 //         	} catch (e) {
 //         		//console.warn("Deepdiff error")

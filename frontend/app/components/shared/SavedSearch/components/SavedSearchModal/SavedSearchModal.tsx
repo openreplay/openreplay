@@ -23,12 +23,11 @@ function TooltipIcon(props: ITooltipIcon) {
         <div onClick={(e) => props.onClick(e)} >
             {/* @ts-ignore - problem with react-tippy types TODO: remove after fix */}
             <Tooltip
-                delay={250}
                 title={props.title}
                 hideOnClick={true}
                 position="bottom"
             >
-                <Icon size="24" name={props.name} color="main" />
+                <Icon size="16" name={props.name} color="main" />
             </Tooltip>
         </div>
     )
@@ -72,12 +71,12 @@ function SavedSearchModal(props: Props) {
     return (
         <div className="bg-white box-shadow h-screen" style={{ width: '450px' }}>
             <div className="p-6">
-                <h1 className="text-2xl">Saved Search  <span className={stl.secondary}>{props.list.size}</span></h1>
+                <h1 className="text-2xl">Saved Search  <span className="color-gray-medium">{props.list.size}</span></h1>
             </div>
-            {props.list.size > 9 && (
-                <div className={cn(stl.inputContainer, 'mb-6')}>
+            {props.list.size > 1 && (
+                <div className="mb-6 w-full px-4">
                     <Input
-                        className={stl.inputComponent}
+                        className="w-full"
                         iconPosition="left"
                         icon={<SemIcon name="search" />}
                         onChange={(_, v) => setFilterQuery(v.value)}
@@ -86,22 +85,22 @@ function SavedSearchModal(props: Props) {
                 </div>
             )}
             {shownItems.map(item => (
-                <div key={item.key} className={cn('px-6 py-4 cursor-pointer flex items-start', stl.rowItem)} onClick={(e) => onClick(item, e)}>
-                    <Icon name="search" color="gray-medium" size="24" />
+                <div key={item.key} className="p-4 pb-8 cursor-pointer border-b flex items-center group hover:bg-active-blue" onClick={(e) => onClick(item, e)}>
+                    <Icon name="search" color="gray-medium" size="16" />
                     <div className="ml-4">
-                        <div className="text-xl">{item.name} </div>
+                        <div className="text-lg">{item.name} </div>
                         {item.isPublic && (
-                            <div className={cn(stl.iconContainer, stl.secondary, 'flex items-center px-2 mt-2')}>
+                            <div className={cn(stl.iconContainer, 'absolute color-gray-medium flex items-center px-2 mt-2')}>
                                 <Icon name="user-friends" size="11" />
                                 <div className="ml-1 text-sm"> Team </div>
                             </div>
                         )}
                     </div>
                     <div className="flex items-center ml-auto self-center">
-                        <div className={stl.iconCircle}>
+                        <div className={cn(stl.iconCircle, 'mr-2 invisible group-hover:visible')}>
                             <TooltipIcon name="pencil" onClick={(e) => onEdit(item, e)} title="Rename" />
                         </div>
-                        <div className={stl.iconCircle}>
+                        <div className={cn(stl.iconCircle, 'invisible group-hover:visible')}>
                             <TooltipIcon name="trash" onClick={(e) => onDelete(item, e)} title="Delete" />
                         </div>
                     </div>

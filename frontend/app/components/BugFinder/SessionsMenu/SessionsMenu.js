@@ -26,11 +26,10 @@ function SessionsMenu(props) {
         </div>
         <span className={ cn(stl.manageButton, 'mr-2') } onClick={() => showModal(<SessionSettings />, { right: true })}>
           <Tooltip
-            delay={500}
-            title="Configure the percentage of sessions to be captured, timezone and more."
             hideOnClick={true}
-            position="bottom-end"
-            tiny
+            position="bottom"
+            size="small"
+            html={<span>Configure the percentage of sessions <br /> to be captured, timezone and more.</span>}
           >
             Settings
           </Tooltip>

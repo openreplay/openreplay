@@ -113,7 +113,7 @@ function WidgetWrapper(props: Props) {
                 >
                     {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
                     <div
-                        className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
+                        className={cn("p-3 pb-4 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
                     >
                         <div className="capitalize w-full font-medium">{widget.name}</div>
                         {isWidget && (
