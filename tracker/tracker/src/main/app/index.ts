@@ -61,6 +61,8 @@ type AppOptions = {
   __is_snippet: boolean;
   __debug_report_edp: string | null;
   __debug__?: LoggerOptions;
+  localStorage: Storage;
+  sessionStorage: Storage;
 
   // @deprecated
   onStart?: StartCallback;
@@ -80,6 +82,8 @@ export default class App {
   readonly debug: Logger;
   readonly notify: Logger;
   readonly session: Session;
+  readonly localStorage: Storage;
+  readonly sessionStorage: Storage;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
   private readonly startCallbacks: Array<StartCallback> = [];
@@ -114,12 +118,12 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
+        localStorage: window.localStorage,
+        sessionStorage: window.sessionStorage,
       },
       options,
     );
-    if (sessionToken != null) {
-      sessionStorage.setItem(this.options.session_token_key, sessionToken);
-    }
+
     this.revID = this.options.revID;
     this.sanitizer = new Sanitizer(this, options);
     this.nodes = new Nodes(this.options.node_id);
@@ -129,6 +133,13 @@ export default class App {
     this.debug = new Logger(this.options.__debug__);
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent);
     this.session = new Session(this);
+    this.localStorage = this.options.localStorage;
+    this.sessionStorage = this.options.sessionStorage;
+
+    if (sessionToken != null) {
+      this.sessionStorage.setItem(this.options.session_token_key, sessionToken);
+    }
+
     try {
       this.worker = new Worker(
         URL.createObjectURL(
@@ -250,7 +261,7 @@ export default class App {
 
   private getStartInfo() {
     return {
-      userUUID: localStorage.getItem(this.options.local_uuid_key),
+      userUUID: this.localStorage.getItem(this.options.local_uuid_key),
       projectKey: this.projectKey,
       revID: this.revID,
       timestamp: timestamp(),
@@ -265,7 +276,7 @@ export default class App {
     }
   }
   getSessionToken(): string | undefined {
-    const token = sessionStorage.getItem(this.options.session_token_key);
+    const token = this.sessionStorage.getItem(this.options.session_token_key);
     if (token !== null) {
       return token;
     }
@@ -310,9 +321,9 @@ export default class App {
 
   resetNextPageSession(flag: boolean) {
     if (flag) {
-      sessionStorage.setItem(this.options.session_reset_key, 't');
+      this.sessionStorage.setItem(this.options.session_reset_key, 't');
     } else {
-      sessionStorage.removeItem(this.options.session_reset_key);
+      this.sessionStorage.removeItem(this.options.session_reset_key);
     }
   }
   private _start(startOpts: StartOptions): Promise<StartPromiseReturn> {
@@ -325,12 +336,12 @@ export default class App {
     this.activityState = ActivityState.Starting;
 
     let pageNo: number = 0;
-    const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
+    const pageNoStr = this.sessionStorage.getItem(this.options.session_pageno_key);
     if (pageNoStr != null) {
       pageNo = parseInt(pageNoStr);
       pageNo++;
     }
-    sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
+    this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
 
     const startInfo = this.getStartInfo()
     const startWorkerMsg: WorkerMessageData = {
@@ -343,8 +354,8 @@ export default class App {
     }
     this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
 
-    const sReset = sessionStorage.getItem(this.options.session_reset_key);
-    sessionStorage.removeItem(this.options.session_reset_key);
+    const sReset = this.sessionStorage.getItem(this.options.session_reset_key);
+    this.sessionStorage.removeItem(this.options.session_reset_key);
 
     return window.fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
@@ -354,7 +365,7 @@ export default class App {
       body: JSON.stringify({
         ...startInfo,
         userID: startOpts.userID || this.session.getInfo().userID,
-        token: sessionStorage.getItem(this.options.session_token_key),
+        token: this.sessionStorage.getItem(this.options.session_token_key),
         deviceMemory,
         jsHeapSizeLimit,
         reset: startOpts.forceNew || sReset !== null,
@@ -380,8 +391,8 @@ export default class App {
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
         return Promise.reject(`Incorrect server response: ${ JSON.stringify(r) }`);
       }
-      sessionStorage.setItem(this.options.session_token_key, token);
-      localStorage.setItem(this.options.local_uuid_key, userUUID);
+      this.sessionStorage.setItem(this.options.session_token_key, token);
+      this.localStorage.setItem(this.options.local_uuid_key, userUUID);
       this.session.update({
         sessionID, // any. TODO check
         ...startOpts
@@ -409,7 +420,7 @@ export default class App {
       return SuccessfulStart(onStartInfo)
     })
     .catch(reason => {        
-      sessionStorage.removeItem(this.options.session_token_key)
+      this.sessionStorage.removeItem(this.options.session_token_key)
       this.stop()
       if (reason === CANCELED) { return UnsuccessfulStart(CANCELED) }
 
