@@ -11,7 +11,7 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }
     });
     return (
         <div
-            className={cn("rounded p-4 border cursor-pointer", { 'bg-active-blue border-color-teal':isSelected, 'bg-white': !isSelected })}
+            className={cn("rounded p-4 border cursor-pointer", { 'bg-active-blue border-blue':isSelected, 'bg-white': !isSelected })}
             onClick={() => onClick(category)}
         >
             <div className="font-medium text-lg mb-2 capitalize">{category.name}</div>
@@ -32,14 +32,14 @@ interface IProps {
 
 function DashboardMetricSelection(props: IProps) {
     const { dashboardStore } = useStore();
-    let widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
+    const widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
     const [activeCategory, setActiveCategory] = React.useState<any>();
     const [selectAllCheck, setSelectAllCheck] = React.useState(false);
     const selectedWidgetIds = useObserver(() => dashboardStore.selectedWidgets.map((widget: any) => widget.metricId));
 
     useEffect(() => {
-        dashboardStore?.fetchTemplates().then(templates => {
-            setActiveCategory(dashboardStore.widgetCategories[0]);
+        dashboardStore?.fetchTemplates(true).then((categories) => {
+            setActiveCategory(categories[0]);
         });
     }, []);
 
@@ -61,7 +61,7 @@ function DashboardMetricSelection(props: IProps) {
         <div>
             <div className="grid grid-cols-12 gap-4 my-3 items-end">
                 <div className="col-span-3">
-                    <div className="uppercase color-gray-medium text-lg">Categories</div>
+                    <div className="uppercase color-gray-medium text-lg">Type</div>
                 </div>
 
                 <div className="col-span-9 flex items-center">
@@ -117,7 +117,7 @@ function DashboardMetricSelection(props: IProps) {
                                     cn(
                                         "relative rounded border col-span-1 cursor-pointer",
                                         "flex flex-col items-center justify-center bg-white",
-                                        "hover:bg-active-blue hover:shadow-border-main text-center h-full py-12",
+                                        "hover:bg-active-blue hover:shadow-border-main text-center py-16",
                                     )
                                 }
                                 onClick={props.handleCreateNew}

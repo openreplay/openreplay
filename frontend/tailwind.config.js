@@ -107,6 +107,7 @@ module.exports = {
 		borderColor: {
 			default: '#DDDDDD',
 			"gray-light-shade": colors["gray-light-shade"],
+			"blue": colors["active-blue-border"],
 		},
     extend: {
 		boxShadow: {

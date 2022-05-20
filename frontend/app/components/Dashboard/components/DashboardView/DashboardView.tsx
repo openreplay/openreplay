@@ -54,7 +54,7 @@ function DashboardView(props: RouteComponentProps<Props>) {
 
     useEffect(() => {
         if (!dashboardId) dashboardStore.selectDefaultDashboard();
-        console.log(dashboardId)
+
         if (queryParams.has('modal')) {
             onAddWidgets();
             trimQuery();
