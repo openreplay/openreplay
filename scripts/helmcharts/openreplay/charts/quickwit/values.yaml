@@ -8,7 +8,7 @@ image:
   repository: quickwit/quickwit
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "0.2.1"
+  tag: "v0.2.1 "
 
 imagePullSecrets: []
 nameOverride: "quickwit"
