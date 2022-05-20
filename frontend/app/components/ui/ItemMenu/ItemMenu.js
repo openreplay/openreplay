@@ -3,10 +3,20 @@ import styles from './itemMenu.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import cn from 'classnames';
 import { Tooltip } from 'react-tippy';
+
 export default class ItemMenu extends React.PureComponent {
   state = {
     displayed: false,
   };
+
+  handleEsc = (e) => e.key === 'Escape' && this.closeMenu()
+
+  componentDidMount() {
+    document.addEventListener("keydown", this.handleEsc, false);
+  }
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.handleEsc, false);
+  }
 
   onClick = callback => (e) => {
     e.stopPropagation();
@@ -44,7 +54,7 @@ export default class ItemMenu extends React.PureComponent {
           </div>
         </OutsideClickDetectingDiv>
         <div
-          className={ styles.menu }
+          className={ cn(styles.menu, { [styles.menuDim]: !bold }) }
           data-displayed={ displayed }
         >
           { items.filter(({ hidden }) => !hidden).map(({ onClick, text, icon, disabled = false, disabledMessage = '' }) => (
@@ -63,7 +73,7 @@ export default class ItemMenu extends React.PureComponent {
                   position="left"
                   disabled={ !disabled }
               >
-                  <div className={cn(styles.menuItem, {'disabled' : disabled })}>
+                  <div className={cn(styles.menuItem, 'text-neutral-700', {'disabled' : disabled })}>
                     { icon && (
                         <div className={ styles.iconWrapper }>
                           <Icon name={ icon } size="13" color="gray-dark" />

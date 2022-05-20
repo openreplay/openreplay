@@ -23,6 +23,16 @@
     background-color: #fff;
   }
 }
+
+.menuDim {
+  border: none!important;
+  box-shadow: 0 1px 3px 0 $gray-light!important;
+
+  & .menuItem {
+    color: $gray-dark!important;
+  }
+}
+
 .menu {
   &[data-displayed=false] {
     display: none;
@@ -36,7 +46,9 @@
   min-width: 150px;
   background-color: $white;
   border-radius: 3px;
-  box-shadow: 0px 1px 3px 0 $gray-light;
+  border: 1px solid rgba(34,36,38,.15);
+  box-shadow: 0 2px 3px 0 rgb(34 36 38 / 15%);
+
 
   & .menuItem {
     cursor: pointer;
@@ -44,7 +56,6 @@
     display: flex;
     align-items: center;
     border-bottom: 1px solid $gray-light;
-    color: $gray-dark;
 
     & .iconWrapper {
       width: 13px;
