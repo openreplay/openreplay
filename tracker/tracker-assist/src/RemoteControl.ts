@@ -9,6 +9,14 @@ enum RCStatus {
   Enabled,
 }
 
+
+let setInputValue = function(this: HTMLInputElement | HTMLTextAreaElement,  value: string) { this.value = value }
+const nativeInputValueDescriptor = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")
+if (nativeInputValueDescriptor && nativeInputValueDescriptor.set) {
+  setInputValue = nativeInputValueDescriptor.set
+}
+
+
 export default class RemoteControl {
   private mouse: Mouse | null
   private status: RCStatus = RCStatus.Disabled
@@ -77,11 +85,16 @@ export default class RemoteControl {
     if (id !== this.agentID || !this.mouse) { return }
     this.focused = this.mouse.click(xy) 
   }
-  input = (id, value) => {
+  focus = (id, el: HTMLElement) => {
+    this.focused = el
+  }
+  input = (id, value: string) => {
     if (id !== this.agentID || !this.mouse || !this.focused) { return }
     if (this.focused instanceof HTMLTextAreaElement 
       || this.focused instanceof HTMLInputElement) {
-      this.focused.value = value
+      setInputValue.call(this.focused, value)
+      const ev = new Event('input', { bubbles: true})
+      this.focused.dispatchEvent(ev)
     } else if (this.focused.isContentEditable) {
       this.focused.innerText = value
     }

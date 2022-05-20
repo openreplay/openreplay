@@ -173,6 +173,12 @@ export default class Assist {
     socket.on("scroll", remoteControl.scroll)
     socket.on("click", remoteControl.click)
     socket.on("move", remoteControl.move)
+    socket.on("focus", (clientID, nodeID) => {
+      const el = app.nodes.getNode(nodeID)
+      if (el instanceof HTMLElement) {
+        remoteControl.focus(clientID, el)
+      }
+    })
     socket.on("input", remoteControl.input)
 
     let annot: AnnotationCanvas | null = null
