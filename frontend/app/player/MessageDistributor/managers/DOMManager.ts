@@ -34,7 +34,7 @@ export default class DOMManager extends ListWalker<Message> {
     return this.startTime;
   }
 
-  add(m: Message): void {
+  append(m: Message): void {
     switch (m.tp) {
     case "set_node_scroll":
       if (!this.nodeScrollManagers[ m.id ]) {
@@ -155,13 +155,12 @@ export default class DOMManager extends ListWalker<Message> {
         this.insertNode(msg);
         return
       case "create_element_node":
-      // console.log('elementnode', msg)
         if (msg.svg) {
           this.nl[ msg.id ] = document.createElementNS('http://www.w3.org/2000/svg', msg.tag);
         } else {
           this.nl[ msg.id ] = document.createElement(msg.tag);
         }
-        if (this.bodyId === msg.id) {
+        if (this.bodyId === msg.id) { // there are several bodies in iframes TODO: optimise & cache prebuild
           this.postponedBodyMessage = msg;
         } else {
           this.insertNode(msg);

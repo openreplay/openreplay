@@ -142,8 +142,6 @@ export default class MessageDistributor extends StatedScreen {
         while (next = r.next()) {
           const [msg, index] = next
           this.distributeMessage(msg, index)
-          this.lastMessageTime = Math.max(msg.time, this.lastMessageTime)
-
           msgs.push(msg)
         }
 
@@ -296,6 +294,7 @@ export default class MessageDistributor extends StatedScreen {
 
   /* Binded */
   distributeMessage(msg: Message, index: number): void {
+    this.lastMessageTime = Math.max(msg.time, this.lastMessageTime)
     if ([
       "mouse_move",
       "mouse_click",
