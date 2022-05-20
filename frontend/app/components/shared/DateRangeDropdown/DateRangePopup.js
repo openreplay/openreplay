@@ -1,5 +1,6 @@
 import React from 'react';
-// import DateRangePicker from 'react-daterange-picker'; // TODO replace with other date range pickers
+import DateRangePicker from 'react-daterange-picker'; // TODO replace with other date range pickers
+// import { DateRangePicker } from 'react-date-range';
 import TimePicker from 'rc-time-picker';
 import { Button } from 'UI';
 import { getDateRangeFromValue, getDateRangeLabel, dateRangeValues, CUSTOM_RANGE, moment, DATE_RANGE_VALUES } from 'App/dateRange';
@@ -60,6 +61,12 @@ export default class DateRangePopup extends React.PureComponent {
     rangeForDisplay.start.startOf('day');
     rangeForDisplay.end.startOf('day');
 
+    const selectionRange = {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection',
+    }
+
     return (
       <div className={ styles.wrapper }>
         <div className={ styles.body }>
@@ -74,17 +81,22 @@ export default class DateRangePopup extends React.PureComponent {
               ))
             }
           </div>
-          // TODO replace with other date range pickers
           {/* <DateRangePicker
+            ranges={[selectionRange]}
+            onChange={(e) => console.log(e)}
+            showMonthAndYearPickers={false}
+            scroll={{ enabled: true }}
+          /> */}
+          <DateRangePicker
             name="dateRangePicker"
             onSelect={ this.selectCustomRange }
             numberOfCalendars={ 2 }
-            singleDateRange
+            // singleDateRange
             selectionType="range"
             maximumDate={ new Date() }
             singleDateRange={true}
             value={ rangeForDisplay }
-          /> */}
+          />
         </div>
         <div className="flex items-center justify-between py-2 px-3">
           <div>

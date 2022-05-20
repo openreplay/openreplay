@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Button } from 'UI';
 import { connect } from 'react-redux';
 import { save, edit } from 'Duck/rehydrate';
-import DatePicker from 'react-datepicker';
+// import DatePicker from 'react-datepicker';
 
 class JobForm extends React.PureComponent {
   constructor(props) {
@@ -51,7 +51,7 @@ class JobForm extends React.PureComponent {
           <div className="flex -mx-2">
             <div className="w-1/2 px-2">
                 <label htmlFor="startDate">Start</label>
-                <DatePicker
+                {/* <DatePicker
                   selected={ startAt }
                   name="startAt"
                   onChange={ this.handleStartDateChange }
@@ -62,11 +62,11 @@ class JobForm extends React.PureComponent {
                   timeCaption="Time"
                   maxDate={ now }                  
                   placeholderText="Start"
-                />
+                /> */}
             </div>
             <div className="w-1/2 px-2">
               <label htmlFor="endDate">To</label>
-                <DatePicker
+                {/* <DatePicker
                   selected={ endAt }
                   name="endAt"
                   onChange={ this.handleEndDateChange }
@@ -77,7 +77,7 @@ class JobForm extends React.PureComponent {
                   timeCaption="Time"
                   maxDate={ now }                  
                   placeholderText="To"
-                />
+                /> */}
             </div>
           </div>
         </Form.Field>
