@@ -32,7 +32,7 @@ function SavedSearch(props) {
         <div className={cn("flex items-center", { [stl.disabled] : list.size === 0})}>
           <Button outline size="small"
             className="flex items-center"
-            onClick={() => showModal(<SavedSearchModal list={list} />, { right: true })}
+            onClick={() => showModal(<SavedSearchModal />, { right: true })}
           >
             <span className="mr-1">Saved Search</span>
             <span className="font-bold mr-2">{list.size}</span>

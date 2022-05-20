@@ -85,7 +85,7 @@ function SavedSearchModal(props: Props) {
                 </div>
             )}
             {shownItems.map(item => (
-                <div key={item.key} className="p-4 pb-8 cursor-pointer border-b flex items-center group hover:bg-active-blue" onClick={(e) => onClick(item, e)}>
+                <div key={item.key} className="p-4 pb-10 cursor-pointer border-b flex items-center group hover:bg-active-blue" onClick={(e) => onClick(item, e)}>
                     <Icon name="search" color="gray-medium" size="16" />
                     <div className="ml-4">
                         <div className="text-lg">{item.name} </div>
@@ -111,4 +111,4 @@ function SavedSearchModal(props: Props) {
     )
 }
 
-export default React.memo(connect(null, { applySavedSearch, remove, editSavedSearch })(SavedSearchModal))
+export default connect(state => ({ list: state.getIn([ 'search', 'list' ]) }), { applySavedSearch, remove, editSavedSearch })(SavedSearchModal)
