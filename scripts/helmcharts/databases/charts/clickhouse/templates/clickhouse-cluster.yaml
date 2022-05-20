@@ -12,6 +12,9 @@ spec:
       serviceTemplate: chi-service-template
  
   configuration:
+    # Ref: https://github.com/Altinity/clickhouse-operator/issues/823
+    users:
+      default/networks/ip: "::/0"
     zookeeper:
       nodes:
       - host: "{{ .Values.global.kafka.zookeeperHost }}"
