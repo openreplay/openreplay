@@ -54,7 +54,7 @@ function DashboardModal(props) {
                         </h1>
                     </div>
                     <div>
-                        <span className="text-xl">Past 7 days data</span>
+                        <span className="text-md">Past 7 days data</span>
                     </div>
                 </div>
                 { !isDashboardExists && (

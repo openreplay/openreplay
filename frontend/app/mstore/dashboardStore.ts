@@ -60,7 +60,7 @@ export interface IDashboardSotre {
     selectDefaultDashboard(): Promise<IDashboard>
 
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
-    fetchTemplates(): Promise<any>
+    fetchTemplates(hardRefresh: boolean): Promise<any>
     deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>
     addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>
 
@@ -354,9 +354,9 @@ export default class DashboardStore implements IDashboardSotre {
         })
     }
 
-    fetchTemplates(): Promise<any> {
+    fetchTemplates(hardRefresh): Promise<any> {
         return new Promise((resolve, reject) => {
-            if (this.widgetCategories.length > 0) {
+            if (this.widgetCategories.length > 0 && !hardRefresh) {
                 resolve(this.widgetCategories)
             } else {
                 metricService.getTemplates().then(response => {
