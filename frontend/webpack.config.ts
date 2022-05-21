@@ -7,7 +7,7 @@ import HtmlWebpackPlugin from "html-webpack-plugin";
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 // import CompressionPlugin from "compression-webpack-plugin";
 const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
-// const isDevelopment = process.env.NODE_ENV !== 'production'
+const isDevelopment = process.env.NODE_ENV !== 'production'
 const stylesHandler = MiniCssExtractPlugin.loader;
 const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
 
@@ -16,8 +16,10 @@ interface Configuration extends WebpackConfiguration {
 }
 
 const config: Configuration = {
-  mode: "development",
+  // mode: isDevelopment ? "development" : "production",
   output: {
+    publicPath: "/",
+    // filename: "bundled.js",
     path: path.resolve(__dirname, 'public'),
   },
   entry: "./app/initialize.js",
@@ -72,10 +74,12 @@ const config: Configuration = {
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+        exclude: /node_modules/,
         type: 'asset',
       },
       { 
         test: /\.(jpg|jpeg|png|gif|mp3|svg)$/,
+        exclude: /node_modules/,
         use: ["file-loader"] 
       },
     ],
@@ -109,6 +113,7 @@ const config: Configuration = {
     new webpack.DefinePlugin({
       'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
+      'window.env.PRODUCTION': isDevelopment ? false : true,
       // 'process.env.NODE_ENV': JSON.stringify(isDevelopment ? 'development' : 'production'),
     }),
     new HtmlWebpackPlugin({
@@ -121,12 +126,8 @@ const config: Configuration = {
     }),
     new MiniCssExtractPlugin(),
     new HotModuleReplacementPlugin(),
-    // new webpack.ProvidePlugin({
-    //   $: "jquery",
-    //   jQuery: "jquery"
-    // }),
   ],
-  devtool: "inline-source-map",
+  devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
     hints: false,
   },
