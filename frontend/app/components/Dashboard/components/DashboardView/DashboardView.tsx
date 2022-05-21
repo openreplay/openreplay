@@ -15,6 +15,7 @@ import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import DashboardOptions from '../DashboardOptions';
+import SelectDateRange from 'Shared/SelectDateRange';
 
 interface Props {
     siteId: number;
@@ -102,19 +103,26 @@ function DashboardView(props: Props) {
 
                         </div>
                         <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
-                            <div className="flex items-center">
+                            <div className="flex items-center flex-shrink-0 justify-end" style={{ width: '300px'}}>
                                 {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
-                                <DateRange
+                                {/* <DateRange
                                     rangeValue={period.rangeName}
                                     startDate={period.start}
                                     endDate={period.end}
                                     onDateChange={(period) => dashboardStore.setPeriod(period)}
                                     customRangeRight
                                     direction="left"
+                                /> */}
+                                <SelectDateRange
+                                    style={{ width: '300px'}}
+                                    fluid
+                                    plain
+                                    period={period}
+                                    onChange={(period: any) => dashboardStore.setPeriod(period)}
                                 />
                             </div>
                             <div className="mx-4" />
-                            <div className="flex items-center">
+                            <div className="flex items-center flex-shrink-0">
                                 <DashboardOptions
                                     editHandler={onEdit}
                                     deleteHandler={onDelete}
