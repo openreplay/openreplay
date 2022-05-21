@@ -37,6 +37,9 @@ def get_templates(project_id, user_id):
         for w in r["widgets"]:
             w["created_at"] = TimeUTC.datetime_to_timestamp(w["created_at"])
             w["edited_at"] = TimeUTC.datetime_to_timestamp(w["edited_at"])
+            for s in w["series"]:
+                s["created_at"] = TimeUTC.datetime_to_timestamp(s["created_at"])
+                s["filter"] = helper.old_search_payload_to_flat(s["filter"])
     return helper.list_to_camel_case(rows)
 
 
