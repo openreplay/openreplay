@@ -25,6 +25,7 @@ export interface IDashboardSotre {
     metricsPageSize: number
     metricsSearch: string
     
+    loadingTemplates: boolean
     isLoading: boolean
     isSaving: boolean
     isDeleting: boolean
@@ -92,9 +93,9 @@ export default class DashboardStore implements IDashboardSotre {
     isLoading: boolean = true
     isSaving: boolean = false
     isDeleting: boolean = false
+    loadingTemplates: boolean = false
     fetchingDashboard: boolean = false
     sessionsLoading: boolean = false;
-
     showAlertModal: boolean = false;
 
     constructor() {
@@ -354,6 +355,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     fetchTemplates(): Promise<any> {
+        this.loadingTemplates = true
         return new Promise((resolve, reject) => {
             metricService.getTemplates().then(response => {
                 const categories: any[] = []
@@ -373,6 +375,8 @@ export default class DashboardStore implements IDashboardSotre {
                 resolve(this.widgetCategories)
             }).catch(error => {
                 reject(error)
+            }).finally(() => {
+                this.loadingTemplates = false
             })
         })
     }
