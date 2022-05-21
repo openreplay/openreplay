@@ -18,6 +18,7 @@ function DashboardModal(props) {
     const { dashboardStore } = useStore();
     const selectedWidgetsCount = useObserver(() => dashboardStore.selectedWidgets.length);
     const { hideModal } = useModal();
+    const loadingTemplates = useObserver(() => dashboardStore.loadingTemplates);
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
     const loading = useObserver(() => dashboardStore.isSaving);
 
@@ -61,18 +62,20 @@ function DashboardModal(props) {
                 </>
             )}
             <DashboardMetricSelection />
-
-            <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
-                <Button
-                    primary
-                    className=""
-                    disabled={!dashboard.isValid || loading}
-                    onClick={onSave}
-                >
-                    { dashboard.exists() ? "Add Selected to Dashboard" : "Create" }
-                </Button>
-                <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Widgets</span>
-            </div>
+            
+            {!loadingTemplates && (
+                <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
+                    <Button
+                        primary
+                        className=""
+                        disabled={!dashboard.isValid || loading}
+                        onClick={onSave}
+                    >
+                        { dashboard.exists() ? "Add Selected to Dashboard" : "Create" }
+                    </Button>
+                    <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Widgets</span>
+                </div>
+            )}
         </div>
     ));
 }
