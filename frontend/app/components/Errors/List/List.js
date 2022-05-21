@@ -10,7 +10,6 @@ import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
 import { debounce } from 'App/utils';
 
-const PER_PAGE = 10;
 const sortOptionsMap = {
 	'occurrence-desc': 'Last Occurrence',
 	'occurrence-desc': 'First Occurrence',
@@ -29,6 +28,7 @@ const sortOptions = Object.entries(sortOptionsMap)
 	ignoreLoading: state.getIn([ "errors", "ignore", "loading" ]),
 	mergeLoading: state.getIn([ "errors", "merge", "loading" ]),
 	currentPage: state.getIn(["errors", "currentPage"]),
+	limit: state.getIn(["errors", "limit"]),
 	total: state.getIn([ 'errors', 'totalCount' ]),
 	sort: state.getIn([ 'errors', 'options', 'sort' ]),
 	order: state.getIn([ 'errors', 'options', 'order' ]),
@@ -142,6 +142,7 @@ export default class List extends React.PureComponent {
 		  	total,
 			sort,
 			order,
+			limit,
 		} = this.props;
 		const {
 			checkedAll,
@@ -224,9 +225,9 @@ export default class List extends React.PureComponent {
 					>
 					<Loader loading={ loading }>
 						{ list.map(e =>
-							<div key={e.errorId}>
+							<div key={e.errorId} style={{ opacity: e.disabled ? 0.5 : 1}}>
 								<ListItem
-									disabled={someLoading}
+									disabled={someLoading || e.disabled}
 									key={e.errorId}
 									error={e}
 									checked={ checkedIds.contains(e.errorId) }
@@ -238,9 +239,9 @@ export default class List extends React.PureComponent {
 						<div className="w-full flex items-center justify-center mt-4">
 							<Pagination
 								page={currentPage}
-								totalPages={Math.ceil(total / PER_PAGE)}
+								totalPages={Math.ceil(total / limit)}
 								onPageChange={(page) => this.props.updateCurrentPage(page)}
-								limit={PER_PAGE}
+								limit={limit}
 								debounceRequest={500}
 							/>
 						</div>

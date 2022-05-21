@@ -355,30 +355,25 @@ export default class DashboardStore implements IDashboardSotre {
 
     fetchTemplates(): Promise<any> {
         return new Promise((resolve, reject) => {
-            if (this.widgetCategories.length > 0) {
-                resolve(this.widgetCategories)
-            } else {
-                metricService.getTemplates().then(response => {
-                    const categories: any[] = []
-                    response.forEach(category => {
-                        const widgets: any[] = []
-                        // TODO speed_location is not supported yet
-                        category.widgets.filter(w => w.predefinedKey !== 'speed_locations').forEach(widget => {
-                            const w = new Widget().fromJson(widget)
-                            widgets.push(w)
-                        })
-                        const c: any = {}
-                        c.widgets = widgets
-                        c.name = category.category
-                        c.description = category.description
-                        categories.push(c)
+            metricService.getTemplates().then(response => {
+                const categories: any[] = []
+                response.forEach(category => {
+                    const widgets: any[] = []
+                    category.widgets.filter(w => w.predefinedKey !== 'speed_locations').forEach(widget => {
+                        const w = new Widget().fromJson(widget)
+                        widgets.push(w)
                     })
-                    this.widgetCategories = categories
-                    resolve(this.widgetCategories)
-                }).catch(error => {
-                    reject(error)
+                    const c: any = {}
+                    c.widgets = widgets
+                    c.name = category.category
+                    c.description = category.description
+                    categories.push(c)
                 })
-            }
+                this.widgetCategories = categories
+                resolve(this.widgetCategories)
+            }).catch(error => {
+                reject(error)
+            })
         })
     }
 
