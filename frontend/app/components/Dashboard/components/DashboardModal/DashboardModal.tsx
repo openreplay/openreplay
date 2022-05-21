@@ -22,11 +22,14 @@ function DashboardModal(props) {
     const loading = useObserver(() => dashboardStore.isSaving);
 
     const onSave = () => {
-        dashboardStore.save(dashboard).then((_dashboard: any) => {
-            hideModal();
+        dashboardStore.save(dashboard).then(async (_dashboard: any) => {
+            if (dashboard.exists()) {
+                await dashboardStore.fetch(dashboard.dashboardId)
+            }
             dashboardStore.selectDashboardById(_dashboard.dashboardId).then(() => {
                 history.push(withSiteId(dashboardSelected(_dashboard.dashboardId), siteId));
             });
+            hideModal();
         })
     }
 
