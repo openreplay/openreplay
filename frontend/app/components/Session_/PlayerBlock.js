@@ -28,8 +28,9 @@ import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
-import styles from './playerBlock.css';
 import SubHeader from './SubHeader';
+
+import styles from './playerBlock.css';
 
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
