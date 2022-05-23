@@ -4,6 +4,7 @@ import (
 	"log"
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 
 	"os"
@@ -18,6 +19,8 @@ import (
 )
 
 func main() {
+	metrics := monitoring.New("ender")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	// Load service configuration
@@ -25,10 +28,14 @@ func main() {
 
 	// Init all modules
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-	sessions := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT)
+	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT)
+	if err != nil {
+		log.Printf("can't init ender service: %s", err)
+		return
+	}
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
-		cfg.GroupEvents,
+		cfg.GroupEnder,
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,
