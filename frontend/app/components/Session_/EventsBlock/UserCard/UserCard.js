@@ -8,6 +8,7 @@ import { Avatar, TextEllipsis, SlideModal, Popup, CountryFlag, Icon } from 'UI'
 import cn from 'classnames'
 import { withRequest } from 'HOCs'
 import SessionInfoItem from '../../SessionInfoItem'
+import SessionList from '../Metadata/SessionList';
 
 function UserCard({
   className,
@@ -15,6 +16,8 @@ function UserCard({
   session,
   width,
   height,
+  similarSessions,
+  loading,
  }) {
   const [showUserSessions, setShowUserSessions] = useState(false)
   const {
@@ -93,12 +96,12 @@ function UserCard({
         </div>
       )}
 
-      {/* <SlideModal
+      <SlideModal
         title={ <div>User Sessions</div> }
         isDisplayed={ showUserSessions }
         content={ showUserSessions && <SessionList similarSessions={ similarSessions } loading={ loading } /> }
         onClose={ () => showUserSessions ? setShowUserSessions(false) : null }
-      /> */}
+      />
     </div>
   )
 }
