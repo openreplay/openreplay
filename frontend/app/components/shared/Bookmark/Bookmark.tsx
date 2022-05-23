@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Popup, Button } from 'UI'
+import { Popup, Button, Icon } from 'UI'
 import { toggleFavorite } from 'Duck/sessions'
 import { connect } from 'react-redux'
 import { toast } from 'react-toastify';
@@ -10,11 +10,11 @@ interface Props {
   sessionId: any,
   isEnterprise: Boolean
 }
-function Bookmark(props : Props ) {  
+function Bookmark(props : Props ) {
   const { sessionId, favorite, isEnterprise } = props;
   const [isFavorite, setIsFavorite] = useState(favorite);
   const ADDED_MESSAGE = isEnterprise ? 'Session added to vault' : 'Session added to your favorites';
-  const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your favorites';  
+  const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your favorites';
   const TOOLTIP_TEXT_ADD = isEnterprise ? 'Add to vault' : 'Add to favorites';
   const TOOLTIP_TEXT_REMOVE = isEnterprise ? 'Remove from vault' : 'Remove from favorites';
 
@@ -34,7 +34,7 @@ function Bookmark(props : Props ) {
   }
 
   return (
-    <Popup 
+    <Popup
       delay={500}
       content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
       hideOnClick={true}
@@ -42,9 +42,11 @@ function Bookmark(props : Props ) {
     >
       <Button
         onClick={ toggleFavorite }
-        variant="text-primary"
-        icon={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
-      />
+        data-favourite={ isFavorite }
+      >
+        <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
+        <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+      </Button>
     </Popup>
   )
 }

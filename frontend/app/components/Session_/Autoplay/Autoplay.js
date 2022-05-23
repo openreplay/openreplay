@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import { setAutoplayValues } from 'Duck/sessions'
 import { session as sessionRoute } from 'App/routes';
-import { Link, Icon, Toggler, Popup } from 'UI';
+import { Link, Icon, Slider, Toggler } from 'UI';
 import { connectPlayer } from 'Player/store';
 import { Controls as PlayerControls } from 'Player';
 
@@ -15,20 +15,21 @@ function Autoplay(props) {
 
   return (
     <div className="flex items-center">
-      <Link to={ sessionRoute(previousId) } disabled={!previousId}>
-		  	<Icon name="prev1" size="20" color="teal" />
-		  </Link>
-      <Popup content={'Autoplay'} distance={22} >
+      <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2">
         <Toggler
-            name="sessionsLive"
-            onChange={ props.toggleAutoplay }
-            checked={ autoplay }
-            style={{ margin: '0px 10px 0px 12px'}}
+          name="sessionsLive"
+          onChange={ props.toggleAutoplay }
+          checked={ autoplay }
+          plain
         />
-      </Popup>
-      
+        <span className="ml-2">Auto-Play</span>
+      </div>
+
+      <Link to={ sessionRoute(previousId) } disabled={!previousId}>
+		  	<Icon name="prev1" size="16" color="teal" />
+		  </Link>
       <Link to={ sessionRoute(nextId) } disabled={!nextId}>
-		  	<Icon name="next1" size="20" color="teal" />
+		  	<Icon name="next1" size="16" color="teal" />
 		  </Link>
     </div>
   )
@@ -41,6 +42,6 @@ const connectAutoplay = connect(state => ({
 
 export default connectAutoplay(connectPlayer(state => ({
   autoplay: state.autoplay,
-}), { 
-  toggleAutoplay: PlayerControls.toggleAutoplay 
+}), {
+  toggleAutoplay: PlayerControls.toggleAutoplay
 })(Autoplay))

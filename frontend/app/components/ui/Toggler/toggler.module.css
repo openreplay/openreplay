@@ -59,3 +59,39 @@
 .slider.checked:before {
   /* transform: translateX(15px); */
 }
+
+.switchPlain {
+  position: relative;
+  display: inline-block;
+  width: 25px;
+  height: 12px;
+}
+.switchPlain input {
+  display:none;
+}
+.sliderPlain {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc !important; /*  postss reset is bad  */
+  transition: .4s;
+  border-radius: 34px !important;
+}
+.sliderPlain:before {
+  position: absolute;
+  content: "";
+  height: 10px;
+  width: 10px;
+  left: 2px;
+  bottom: 1px;
+  background: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+.sliderPlain.checked:before {
+  transform: translateX(11px);
+  background: $teal;
+}

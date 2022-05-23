@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from "classnames";
 import { connect } from 'react-redux';
-import { scale as scalePlayerScreen } from 'Player'; 
-import { 
+import { scale as scalePlayerScreen } from 'Player';
+import {
   NONE,
   CONSOLE,
   NETWORK,
@@ -28,26 +28,32 @@ import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
-import styles from './playerBlock.module.css';
-
+import styles from './playerBlock.css';
+import SubHeader from "./SubHeader";
 
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
+  sessionId: state.getIn([ 'sessions', 'current', 'sessionId' ]),
+  disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]),
 }))
 export default class PlayerBlock extends React.PureComponent {
   componentDidUpdate(prevProps) {
-    if ([ prevProps.bottomBlock, this.props.bottomBlock ].includes(NONE) || 
+    if ([ prevProps.bottomBlock, this.props.bottomBlock ].includes(NONE) ||
         prevProps.fullscreen !== this.props.fullscreen) {
       scalePlayerScreen();
     }
   }
 
   render() {
-    const { fullscreen, bottomBlock } = this.props;
+    const { fullscreen, bottomBlock, sessionId, disabled } = this.props;
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
+        <SubHeader
+          sessionId={sessionId}
+          disabled={disabled}
+        />
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
@@ -60,7 +66,7 @@ export default class PlayerBlock extends React.PureComponent {
             { bottomBlock === NETWORK &&
               <Network />
             }
-            { bottomBlock === STACKEVENTS && 
+            { bottomBlock === STACKEVENTS &&
               <StackEvents />
             }
             { bottomBlock === STORAGE &&
@@ -72,10 +78,10 @@ export default class PlayerBlock extends React.PureComponent {
             { bottomBlock === PERFORMANCE &&
               <ConnectedPerformance />
             }
-            { bottomBlock === GRAPHQL && 
+            { bottomBlock === GRAPHQL &&
               <GraphQL />
             }
-            { bottomBlock === FETCH && 
+            { bottomBlock === FETCH &&
               <Fetch />
             }
             { bottomBlock === EXCEPTIONS &&

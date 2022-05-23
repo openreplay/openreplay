@@ -190,20 +190,20 @@ export default class EventsBlock extends React.PureComponent {
 
     return (
       <>
-        <div className={ cn(styles.header, 'p-3') }>
+        <div className={ cn(styles.header, 'p-4') }>
           <div className={ cn(styles.hAndProgress, 'mt-3') }>
             <EventSearch
               onChange={this.write}
               clearSearch={this.clearSearch}
               value={query}
               header={
-                <div className="text-lg">{ `User Events (${ events.size })` }</div>
+                <div className="text-xl">User Events <span className="color-gray-medium">{ events.size }</span></div>
               }
             />
           </div>
         </div>
         <div
-          className={ cn("flex-1 px-3 pb-3", styles.eventsList) }
+          className={ cn("flex-1 px-4 pb-4", styles.eventsList) }
           id="eventList"
           data-openreplay-masked
           onMouseOver={ this.onMouseOver }
