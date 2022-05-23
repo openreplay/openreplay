@@ -29,7 +29,7 @@ import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
 import styles from './playerBlock.css';
-import SubHeader from "./SubHeader";
+import SubHeader from './SubHeader';
 
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
