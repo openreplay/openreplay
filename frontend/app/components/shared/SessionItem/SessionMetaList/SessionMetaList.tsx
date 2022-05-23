@@ -13,7 +13,7 @@ interface Props {
 export default function SessionMetaList(props: Props) {
   const { className = '', metaList, maxLength = 4 } = props
   return (
-    <div className={cn("text-sm flex items-start", className)}>
+    <div className={cn("text-sm flex items-center", className)}>
       {metaList.slice(0, maxLength).map(({ label, value }, index) => (
         <MetaItem key={index} label={label} value={''+value} className="mr-3" />
       ))}
