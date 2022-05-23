@@ -28,7 +28,7 @@ import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
-import SubHeader from './SubHeader';
+import SubHeader from './Subheader';
 
 import styles from './playerBlock.css';
 
