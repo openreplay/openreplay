@@ -95,7 +95,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
       const value = metadata[key];
       return { label: key, value };
     });
-    console.log(session.toJS())
 
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>

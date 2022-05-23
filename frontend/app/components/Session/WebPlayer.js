@@ -38,10 +38,8 @@ function PlayerContent({ live, fullscreen }) {
 }
 
 function RightMenu({ showEvents, live, fullscreen }) {
-  console.log(!live, !fullscreen, showEvents)
   return showEvents && !live && !fullscreen && <RightBlock />
 }
-
 const ConnectedMenu = connectPlayer(state => ({
   showEvents: !state.showEvents}))(RightMenu)
 
