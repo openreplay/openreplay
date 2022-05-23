@@ -1,15 +1,11 @@
 .eventsBlock {
   width: 270px;
-  /* padding: 0 10px; */
   margin-bottom: 5px;
 }
 
 .header {
-  /* height: 40px; */
-  /* margin-bottom: 15px; */
   padding-left: 2px;
-  /* padding-right: 0px; */
-  
+
   & .hAndProgress {
     display:flex;
     justify-content: space-between;
@@ -23,7 +19,7 @@
         background: #ffcc99;
       }
       & :global(.progress) {
-        font-size: 9px; 
+        font-size: 9px;
       }
     }
   }
@@ -70,5 +66,3 @@
   color: $gray-medium;
   justify-content: space-between;
 }
-
-

@@ -5,48 +5,44 @@ export default function EventSearch(props) {
   const { onChange, clearSearch, value, header } = props;
   const [showSearch, setShowSearch] = useState(false)
 
-  useEffect(() => {    
+  useEffect(() => {
     return () => {
       clearSearch()
     }
   }, [])
+
+  const toggleSearch = () => {
+    setShowSearch(!showSearch)
+    clearSearch();
+  }
   return (
-    <div className="flex items-center w-full">
-      <div className="flex flex-1 relative items-center" style={{ height: '32px' }}>
-        { showSearch ? 
-          <div className="flex items-center">
+    <div className="flex items-center w-full relative">
+      <div className="flex flex-1 flex-col">
+        <div className='flex flex-center justify-between'>
+          <span>{header}</span>
+          <div
+            onClick={() => toggleSearch()}
+            className=" flex items-center justify-center bg-white cursor-pointer"
+          >
+            <Icon name={ showSearch ? 'close' : 'search'} size="18" />
+          </div>
+        </div>
+        {showSearch && (
+          <div className="flex items-center mt-2">
             <Input
               autoFocus
               type="text"
               placeholder="Filter Events"
-              className="absolute inset-0 w-full"
+              className="inset-0 w-full"
               name="query"
               value={value}
               onChange={onChange}
               style={{ height: '32px' }}
               autocomplete="off"
             />
-            <div
-              onClick={() => { setShowSearch(!showSearch); clearSearch() }}
-              className="flex items-center justify-center cursor-pointer absolute right-0"
-              style={{ height: '30px', width: '32px' }}
-            >
-              <Icon name={'close'} size="16" color="teal" />
-            </div>
           </div>
-        :
-          header
-        }
+        )}
       </div>
-      { !showSearch &&
-        <div
-          onClick={() => setShowSearch(!showSearch)}
-          className="border rounded flex items-center justify-center bg-white cursor-pointer"
-          style={{ height: '32px', width: '32px' }}
-        >
-          <Icon name={ showSearch ? 'close' : 'search'} size="12" color="teal" />
-        </div>
-      }
     </div>
   )
 }

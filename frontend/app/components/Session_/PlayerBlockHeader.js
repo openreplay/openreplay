@@ -124,33 +124,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
             <SessionMetaList className="" metaList={_metaList} maxLength={2} />
 
-            <div className={ stl.divider } />
             { isAssist && <AssistActions userId={userId} /> }
-            { !isAssist && (
-              <>
-                <Autoplay />
-                <div className={ stl.divider } />
-                <Bookmark sessionId={sessionId} favorite={favorite} />
-                <div className={ stl.divider } />
-                <SharePopup
-                  entity="sessions"
-                  id={ sessionId }
-                  showCopyLink={true}
-                  trigger={
-                    <Button
-                      // className="mr-2"
-                      // tooltip="Share Session"
-                      // tooltipPosition="top right"
-                      disabled={ disabled }
-                      icon={ 'share-alt' }
-                      variant="text-primary"
-                    />
-                  }
-                />
-              </>
-            )}
-            {/* { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> } */}
-            { <Issues sessionId={ sessionId } /> }
+            { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>
       </div>

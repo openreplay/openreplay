@@ -59,9 +59,9 @@ export default class Player extends React.PureComponent {
         {!live && !fullscreen && <EventsToggleButton /> }
         <div className="relative flex-1 overflow-hidden">
           <Overlay nextId={nextId} togglePlay={PlayerControls.togglePlay} closedLive={closedLive} />
-          <div 
+          <div
             className={ stl.screenWrapper }
-            ref={ this.screenWrapper } 
+            ref={ this.screenWrapper }
           />
         </div>
         <Controls

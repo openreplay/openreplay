@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import EventsBlock from '../Session_/EventsBlock';
 import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel'
 import { Controls as PlayerControls } from 'Player';
-import { Tabs } from 'UI';
+import Tabs from './Tabs';
 import { connectPlayer } from 'Player';
 import NewBadge from 'Shared/NewBadge';
 
@@ -29,7 +29,7 @@ export default function RightBlock() {
     }
   }
   return (
-    <div style={{ width: '270px', height: 'calc(100vh- 50px)'}} className="flex flex-col">
+    <div style={{ width: '270px', height: 'calc(100vh- 50px)'}} className="flex flex-col bg-white border-l">
       <div className="relative">
         <Tabs
           tabs={ TABS }
@@ -40,8 +40,8 @@ export default function RightBlock() {
         <div className="absolute" style={{ left: '160px', top: '13px' }}>{ <NewBadge />}</div>
       </div>
       {
-        renderActiveTab(activeTab)       
-      }            
+        renderActiveTab(activeTab)
+      }
     </div>
-  ) 
+  )
 }

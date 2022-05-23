@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
-import { 
+import {
   PlayerProvider,
   connectPlayer,
   init as initPlayer,
@@ -20,26 +20,33 @@ import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
 
 
-const InitLoader = connectPlayer(state => ({ 
+const InitLoader = connectPlayer(state => ({
   loading: !state.initialized
 }))(Loader);
 
-const PlayerContentConnected = connectPlayer(state => ({ 
+const PlayerContentConnected = connectPlayer(state => ({
   showEvents: !state.showEvents
 }))(PlayerContent);
 
 
-function PlayerContent({ live, fullscreen, showEvents }) {
+function PlayerContent({ live, fullscreen }) {
   return (
     <div className={ cn(styles.session, 'relative') } data-fullscreen={fullscreen}>
-      <PlayerBlock />      
-      { showEvents && !live && !fullscreen && <RightBlock /> }      
+      <PlayerBlock />
     </div>
   )
 }
 
+function RightMenu({ showEvents, live, fullscreen }) {
+  console.log(!live, !fullscreen, showEvents)
+  return showEvents && !live && !fullscreen && <RightBlock />
+}
+
+const ConnectedMenu = connectPlayer(state => ({
+  showEvents: !state.showEvents}))(RightMenu)
+
 function WebPlayer (props) {
-  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt} = props;
+  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config, showEvents } = props;
 
   useEffect(() => {
     initPlayer(session, jwt);
@@ -60,8 +67,13 @@ function WebPlayer (props) {
   return (
     <PlayerProvider>
       <InitLoader className="flex-1">
-        <PlayerBlockHeader fullscreen={fullscreen}/>
-        <PlayerContentConnected fullscreen={fullscreen} live={live} />
+        <div className="flex">
+          <div className="w-full">
+            <PlayerBlockHeader fullscreen={fullscreen}/>
+            <PlayerContentConnected fullscreen={fullscreen} live={live} />
+          </div>
+          <ConnectedMenu fullscreen={fullscreen} live={live} />
+        </div>
       </InitLoader>
     </PlayerProvider>
   );
@@ -72,6 +84,7 @@ export default connect(state => ({
   jwt: state.get('jwt'),
   // config: state.getIn([ 'user', 'account', 'iceServers' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
+  showEvents: state.get('showEvents'),
 }), {
   toggleFullscreen,
   closeBottomBlock,
