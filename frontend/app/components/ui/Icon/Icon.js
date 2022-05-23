@@ -4,29 +4,32 @@ import SVG from 'UI/SVG';
 import styles from './icon.module.css';
 
 const Icon = ({
-  name, 
-  size = 12, 
+  name,
+  size = 12,
   height = size,
   width = size,
-  color = 'gray-medium', 
+  color = 'gray-medium',
   className = '',
   style={},
-  marginRight, 
+  marginRight,
   inline = false,
   ...props
 }) => {
-  const _style = { 
-    width: `${ width }px`, 
+  const _style = {
+    width: `${ width }px`,
     height: `${ height }px`,
     ...style,
   };
   if (marginRight){
     _style.marginRight = `${ marginRight }px`;
   }
+
+  const additionalStyles = color === 'inherit' ? { fill: 'currentcolor' } : {}
+
   return (
     <span
       { ...props }
-      style={ _style }
+      style={{..._style, ...additionalStyles }}
       className={ cn(className, styles.wrapper, `fill-${ color }`) }
       data-inline={ inline }
     >

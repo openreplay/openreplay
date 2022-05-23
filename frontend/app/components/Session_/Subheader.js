@@ -1,15 +1,37 @@
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, TextEllipsis, Tooltip } from 'UI';
 import Autoplay from './Autoplay';
 import Bookmark from 'Shared/Bookmark'
 import SharePopup from '../shared/SharePopup/SharePopup';
+import { connectPlayer } from 'Player';
+import copy from 'copy-to-clipboard';
 
 function SubHeader(props) {
-    const isAssist = window.location.pathname.includes('/assist/');
+    const [isCopied, setCopied] = React.useState(false);
 
+    const isAssist = window.location.pathname.includes('/assist/');
     if (isAssist) return null;
+
+    const location = props.currentLocation && props.currentLocation.length > 60 ? `${props.currentLocation.slice(0, 60)}...` : props.currentLocation
     return (
-        <div className="w-full p-4">
+        <div className="w-full px-4 py-2 flex items-center">
+            {location && (
+                <div
+                    className="flex items-center cursor-pointer color-gray-medium text-lg"
+                    onClick={() => {
+                        copy(props.currentLocation);
+                        setCopied(true)
+                    }}
+                >
+                    <Icon size="20" name="event/link" className="mr-1" />
+                    <Tooltip
+                        maxWidth={500}
+                        position="bottom center"
+                        trigger={location}
+                        tooltip={isCopied ? 'URL Copied to clipboard' : undefined}
+                    />
+                </div>
+            )}
             <div className="ml-auto flex items-center color-gray-medium" style={{ width: 'max-content' }}>
                 <div className="cursor-pointer">
                     <SharePopup
@@ -43,4 +65,6 @@ function SubHeader(props) {
     )
 }
 
-export default React.memo(SubHeader)
+const SubH = connectPlayer(state => ({ currentLocation: state.location }))(SubHeader)
+
+export default React.memo(SubH)
