@@ -1,28 +1,25 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
-import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
-import { formatTimeOrDate } from 'App/date';
 import { sessions as sessionsRoute, assist as assistRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
-import { Button, Icon, CountryFlag, IconButton, BackLink, Popup, Link } from 'UI';
+import { Button, Icon, BackLink, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
-// import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
-import { countries } from 'App/constants';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import Bookmark from 'Shared/Bookmark'
+import UserCard from './EventsBlock/UserCard';
 
 import stl from './playerBlockHeader.module.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';
 import AssistTabs from '../Assist/components/AssistTabs';
-import SessionInfoItem from './SessionInfoItem'
 
 const SESSIONS_ROUTE = sessionsRoute();
 const ASSIST_ROUTE = assistRoute();
+
 @connectPlayer(state => ({
   width: state.width,
   height: state.height,
@@ -75,23 +72,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
     const {
       width,
       height,
-      session: {
-        sessionId,
-        userCountry,
-        userId,
-        userNumericHash,
-        favorite,
-        startedAt,
-        userBrowser,
-        userOs,
-        userOsVersion,
-        userDevice,
-        userBrowserVersion,
-        userDeviceType,
-        live,
-        metadata,
-      },
-      loading,
+      session,
       disabled,
       jiraConfig,
       fullscreen,
@@ -102,17 +83,31 @@ export default class PlayerBlockHeader extends React.PureComponent {
     } = this.props;
     // const _live = isAssist;
 
-    const _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
+    const {
+      sessionId,
+      userId,
+      userNumericHash,
+      favorite,
+      live,
+      metadata,
+    } = session;
+    let _metaList = Object.keys(metadata).filter(i => metaList.includes(i)).map(key => {
       const value = metadata[key];
       return { label: key, value };
     });
+    console.log(session.toJS())
 
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
         <div className="flex w-full items-center">
+
           <BackLink	onClick={this.backHandler} label="Back" />
-          
           <div className={ stl.divider } />
+          <UserCard
+            className=""
+            width={width}
+            height={height}
+          />
           { isAssist && <AssistTabs userId={userId} userNumericHash={userNumericHash} />}
 
           <div className={cn("ml-auto flex items-center", { 'hidden' : closedLive })}>
@@ -126,31 +121,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 <div className={ stl.divider } />
               </>
             )}
-            
-            { isAssist && (
-              <>
-                <SessionMetaList className="" metaList={_metaList} maxLength={2} />
-                <div className={ stl.divider } />
-              </>
-            )}
-            
-            <Popup
-                theme="tippy-light"
-                multiple={false}
-                unmountHTMLWhenHide={true}
-                content={(
-                  <div className=''>
-                    <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={ formatTimeOrDate(startedAt) } />
-                    <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={ `v${ userBrowserVersion }` } />
-                    <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={ userOsVersion } />
-                    <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ this.getDimension(width, height) } isLast />
-                  </div>
-                )}
-                // trigger="click"
-                hideOnClick={true}
-            >
-              <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
-            </Popup>
+
+            <SessionMetaList className="" metaList={_metaList} maxLength={2} />
+
             <div className={ stl.divider } />
             { isAssist && <AssistActions userId={userId} /> }
             { !isAssist && (
@@ -184,4 +157,3 @@ export default class PlayerBlockHeader extends React.PureComponent {
     );
   }
 }
-
