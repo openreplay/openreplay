@@ -25,7 +25,7 @@ const InitLoader = connectPlayer(state => ({
 }))(Loader);
 
 const PlayerContentConnected = connectPlayer(state => ({
-  showEvents: !state.showEvents
+  showEvents: !state.showEvents,
 }))(PlayerContent);
 
 

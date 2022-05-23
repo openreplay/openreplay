@@ -16,7 +16,6 @@ import {
   LONGTASKS,
   INSPECTOR,
 } from 'Duck/components/player';
-import { setAutoplayValues } from 'Duck/sessions'
 import Player from './Player';
 import Network from './Network';
 import Console from './Console/Console';
@@ -52,10 +51,10 @@ export default class PlayerBlock extends React.PureComponent {
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
-        <SubHeader
-          sessionId={sessionId}
-          disabled={disabled}
-        />
+          <SubHeader
+            sessionId={sessionId}
+            disabled={disabled}
+          />
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }

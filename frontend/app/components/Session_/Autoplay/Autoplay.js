@@ -12,7 +12,7 @@ function Autoplay(props) {
   useEffect(() => {
     props.setAutoplayValues()
   }, [])
-  console.log(previousId, nextId)
+
   return (
     <div className="flex items-center">
       <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2">
@@ -25,11 +25,12 @@ function Autoplay(props) {
         <span className="ml-2">Auto-Play</span>
       </div>
 
-      <Link to={ sessionRoute(previousId) } disabled={!previousId}>
-		  	<Icon name="prev1" size="16" color="teal" />
+      <Link className="mr-1 cursor-pointer p-2 bg-tealx-light rounded-full color-tealx font-medium" to={ sessionRoute(previousId) } disabled={!previousId}>
+		  	<Icon name="prev1" className="hover:fill-teal" color="inherit" size="16" />
 		  </Link>
-      <Link to={ sessionRoute(nextId) } disabled={!nextId}>
-		  	<Icon name="next1" size="16" color="teal" />
+
+      <Link className="cursor-pointer p-2 bg-tealx-light rounded-full color-tealx font-medium" to={ sessionRoute(nextId) } disabled={!nextId}>
+		  	<Icon name="next1" className="hover:fill-teal" color="inherit" size="16" />
 		  </Link>
     </div>
   )
