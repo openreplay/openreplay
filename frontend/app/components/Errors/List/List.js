@@ -54,9 +54,7 @@ export default class List extends React.PureComponent {
 	}
 	
 	componentDidMount() {
-		if (this.props.list.size === 0) {
-	 		this.props.applyFilter({ });
-		}
+		this.props.applyFilter({ });
 	}
 
 	check = ({ errorId }) => {
