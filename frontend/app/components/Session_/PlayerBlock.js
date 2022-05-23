@@ -28,6 +28,7 @@ import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
+import SubHeader from './Subheader';
 
 import styles from './playerBlock.css';
 
@@ -50,7 +51,10 @@ export default class PlayerBlock extends React.PureComponent {
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
-
+        <SubHeader
+          sessionId={sessionId}
+          disabled={disabled}
+        />
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
