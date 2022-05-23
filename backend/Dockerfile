@@ -41,6 +41,7 @@ ENV TZ=UTC \
     GROUP_DB=db \
     GROUP_ENDER=ender \
     GROUP_CACHE=cache \
+    GROUP_HEURISTICS=heuristics \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
