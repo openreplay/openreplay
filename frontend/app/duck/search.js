@@ -159,6 +159,11 @@ export const edit = reduceThenFetchResource((instance) => ({
     instance,
 }));
 
+export const editDefault = (instance) => ({
+  type: EDIT,
+  instance,
+});
+
 export const setActiveTab = reduceThenFetchResource((tab) => ({
   type: SET_ACTIVE_TAB,
   tab
@@ -188,8 +193,9 @@ export const updateCurrentPage = reduceThenFetchResource((page) => ({
     page,
 }));
 
-export const applySavedSearch = (filter) => (dispatch, getState) => {
-  dispatch(edit({ filters: filter ? filter.filter.filters : [] }));
+export const applySavedSearch = (filter, reload = true) => (dispatch, getState) => {
+  const params = { filters: filter ? filter.filter.filters : [] };
+  dispatch(reload ? edit(params) : editDefault(params));
   return dispatch({
     type: APPLY_SAVED_SEARCH,
     filter,
@@ -256,9 +262,9 @@ export function fetchFilterSearch(params) {
   };
 }
 
-export const clearSearch = () => (dispatch, getState) => {
-  dispatch(applySavedSearch(new SavedFilter({})));
-  dispatch(edit(new Filter({ filters: [] })));
+export const clearSearch = (reload = true) => (dispatch, getState) => {
+  dispatch(applySavedSearch(new SavedFilter({}), false));
+  dispatch(reload ? edit(new Filter({ filters: [] })) : editDefault(new Filter({ filters: [] })));
   return dispatch({
     type: CLEAR_SEARCH,
   });

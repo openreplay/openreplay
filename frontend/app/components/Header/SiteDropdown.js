@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
-import { hasSiteId, siteChangeAvaliable } from 'App/routes';
+import { hasSiteId, siteChangeAvaliable, isRoute, sessions as sessionsRoute } from 'App/routes';
 import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
 import { Icon, SlideModal } from 'UI';
 import { pushNewSite } from 'Duck/user'
@@ -15,6 +15,7 @@ import { fetchList as fetchAlerts } from 'Duck/alerts';
 import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { withStore } from 'App/mstore'
 
+const SESSIONS_PATH = sessionsRoute();
 @withStore
 @withRouter
 @connect(state => ({  
@@ -47,11 +48,11 @@ export default class SiteDropdown extends React.PureComponent {
   }
 
   switchSite = (siteId) => {
-    const { mstore } = this.props
+    const { mstore, location } = this.props
 
 
     this.props.setSiteId(siteId);
-    this.props.clearSearch();
+    this.props.clearSearch(isRoute(SESSIONS_PATH, location.pathname));
     this.props.fetchIntegrationVariables();
     this.props.fetchAlerts();
     this.props.fetchWatchdogStatus();
