@@ -12,7 +12,7 @@ function Autoplay(props) {
   useEffect(() => {
     props.setAutoplayValues()
   }, [])
-
+  console.log(previousId, nextId)
   return (
     <div className="flex items-center">
       <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2">
