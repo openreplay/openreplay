@@ -182,6 +182,7 @@ export default class Timeline extends React.PureComponent {
                     top: '-30px'
                     //width: `${ 2000 * scale }%`
                   } } 
+                  key={iss.key}
                   className={ stl.clickRage }
                   onClick={ this.createEventClickHandler(iss) }
                 >
@@ -203,6 +204,7 @@ export default class Timeline extends React.PureComponent {
                   top: '-30px'
                   //width: `${ 2000 * scale }%`
                 } } 
+                key={e.key}
                 className={ stl.clickRage }
                 onClick={ this.createEventClickHandler(e) }
               >

@@ -3,7 +3,7 @@ import stl from './issuesModal.module.css';
 import IssueForm from './IssueForm';
 import { Icon } from 'UI';
 
-const IssuesModal = React.forwardRef(({
+const IssuesModal = ({
   sessionId,
   closeHandler,
   provider
@@ -17,6 +17,6 @@ const IssuesModal = React.forwardRef(({
       <IssueForm sessionId={ sessionId } closeHandler={ closeHandler } />
     </div>
   );
-})
+}
 
 export default IssuesModal;

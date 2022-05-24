@@ -58,7 +58,6 @@ class EventGroupWrapper extends React.PureComponent {
       >
         { isFirst && isLocation && event.referrer &&
           <div className={ stl.referrer }>
-            {/* Referrer: <span className={stl.url}>{ event.referrer }</span> */}
             <TextEllipsis>
               Referrer: <span className={stl.url}>{ event.referrer }</span>
             </TextEllipsis>
