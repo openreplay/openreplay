@@ -5,26 +5,6 @@ import MetadataItem from './MetadataItem';
 export default connect(state => ({
   metadata: state.getIn([ 'sessions', 'current', 'metadata' ]),
 }))(function Metadata ({ metadata }) {
-  metadata = {
-    test: 'a',
-    dealership: 'very test wow',
-    "bklajsdlkas-123": 123123,
-    test: 'a',
-    dealership: 'very test wow',
-    "bklajsdlkas-123": 123123,
-    test: 'a',
-    dealership: 'very test wow',
-    "bklajsdlkas-123": 123123,
-    test: 'a',
-    dealership: 'very test wow',
-    "bklajsdlkas-123": 123123,
-    test: 'a',
-    dealership: 'very test wow',
-    "bklajsdlkas-123": 123123,
-    test: 'a',
-    dealership: 'very test wow',
-    "bklajsdlkas-123": 123123,
-  }
 
   const metaLenth = Object.keys(metadata).length;
 
