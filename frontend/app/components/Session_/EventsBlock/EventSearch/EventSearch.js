@@ -32,7 +32,7 @@ export default function EventSearch(props) {
             <Input
               autoFocus
               type="text"
-              placeholder="Filter Events"
+              placeholder="Filter Events by value, URL or type"
               className="inset-0 w-full"
               name="query"
               value={value}

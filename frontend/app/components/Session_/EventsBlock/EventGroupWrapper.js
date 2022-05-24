@@ -26,7 +26,7 @@ class EventGroupWrapper extends React.PureComponent {
     this.props.mesureHeight();
   }
 
-  onEventClick = (e) => this.props.onEventClick(e, this.props.event); 
+  onEventClick = (e) => this.props.onEventClick(e, this.props.event);
 
   onCheckboxClick = e => this.props.onCheckboxClick(e, this.props.event);
 
@@ -41,18 +41,19 @@ class EventGroupWrapper extends React.PureComponent {
       showSelection,
       showLoadInfo,
       isFirst,
-      presentInSearch
+      presentInSearch,
     } = this.props;
-    const isLocation = event.type === TYPES.LOCATION;    
+    const isLocation = event.type === TYPES.LOCATION;
 
-    return ( 
-      <div 
-        className={ 
-          cn(stl.container, {
+    const whiteBg = isLastInGroup && event.type !== TYPES.LOCATION || (!isLastEvent && event.type !== TYPES.LOCATION)
+    return (
+      <div
+        className={
+          cn(stl.container, "py-1", {
             [stl.last]: isLastInGroup,
             [stl.first]: event.type === TYPES.LOCATION,
             [stl.dashAfter]: isLastInGroup && !isLastEvent,
-          })
+          }, isLastInGroup && 'pb-2', event.type === TYPES.LOCATION && "pt-2 pb-2")
         }
       >
         { isFirst && isLocation && event.referrer &&
@@ -74,6 +75,8 @@ class EventGroupWrapper extends React.PureComponent {
               toggleLoadInfo={ this.toggleLoadInfo }
               isCurrent={ isCurrent }
               presentInSearch={presentInSearch}
+              isLastInGroup={isLastInGroup}
+              whiteBg={whiteBg}
             />
           : <Event
               key={ event.key }
@@ -83,8 +86,10 @@ class EventGroupWrapper extends React.PureComponent {
               selected={ isSelected }
               isCurrent={ isCurrent }
               showSelection={ showSelection }
-              overlayed={ isEditing }              
+              overlayed={ isEditing }
               presentInSearch={presentInSearch}
+              isLastInGroup={isLastInGroup}
+              whiteBg={whiteBg}
             />
         }
       </div>

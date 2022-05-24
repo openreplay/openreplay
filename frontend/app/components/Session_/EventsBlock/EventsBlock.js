@@ -141,6 +141,8 @@ export default class EventsBlock extends React.PureComponent {
     const isSelected = selectedEvents.includes(event);
     const isCurrent = index === currentTimeEventIndex;
     const isEditing = this.state.editingEvent === event;
+
+    const heightBug = index === 0 && event.type === TYPES.LOCATION && event.referrer ? { top: 2 } : {}
     return (
       <CellMeasurer
         key={key}
@@ -149,7 +151,7 @@ export default class EventsBlock extends React.PureComponent {
         rowIndex={index}
       >
         {({measure, registerChild}) => (
-          <div style={style} ref={registerChild}>
+          <div style={{ ...style, ...heightBug }} ref={registerChild}>
             <EventGroupWrapper
               query={query}
               presentInSearch={eventsIndex.includes(index)}

@@ -21,7 +21,7 @@ interface Props {
   host: string
 }
 
-function PageInsightsPanel({ 
+function PageInsightsPanel({
   filters, fetchInsights, events = [], insights, urlOptions, host, loading = true
 }: Props) {
   const [insightsFilters, setInsightsFilters] = useState(filters)
@@ -32,13 +32,13 @@ function PageInsightsPanel({
     end: insightsFilters.endDate,
     rangeName: insightsFilters.rangeValue
   });
-  
+
   const onDateChange = (e) => {
     const { startDate, endDate, rangeValue } = e.toJSON();
     setInsightsFilters({ ...insightsFilters, startDate, endDate, rangeValue })
   }
 
-  useEffect(() => {     
+  useEffect(() => {
     markTargets(insights.toJS());
     return () => {
       markTargets(null)
@@ -53,15 +53,15 @@ function PageInsightsPanel({
     }
   }, [insightsFilters])
 
-  const onPageSelect = ({ value }: any) => {
-    const event = events.find(item => item.url === value)    
+  const onPageSelect = (e, { name, value }) => {
+    const event = events.find(item => item.url === value)
     Player.jump(event.time + JUMP_OFFSET)
     setInsightsFilters({ ...insightsFilters, url: host + value })
     markTargets([])
   };
 
   return (
-    <div className="px-4 bg-gray-lightest">
+    <div className="px-4 bg-white" style={{ width: 270 }}>
       <div className="my-3 flex -ml-2">
         {/* <DateRange
           rangeValue={insightsFilters.rangeValue}
@@ -89,7 +89,7 @@ function PageInsightsPanel({
       </div>
       <Loader loading={ loading }>
         <SelectorsList />
-      </Loader>            
+      </Loader>
     </div>
   )
 }
