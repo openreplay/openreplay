@@ -10,6 +10,7 @@ const dotenv = require('dotenv').config({ path: __dirname + '/.env' })
 const isDevelopment = process.env.NODE_ENV !== 'production'
 const stylesHandler = MiniCssExtractPlugin.loader;
 const ENV_VARIABLES = JSON.stringify(dotenv.parsed);
+import pathAlias from './path-alias';
 
 interface Configuration extends WebpackConfiguration {
   devServer?: WebpackDevServerConfiguration
@@ -19,7 +20,6 @@ const config: Configuration = {
   // mode: isDevelopment ? "development" : "production",
   output: {
     publicPath: "/",
-    // filename: "bundled.js",
     path: path.resolve(__dirname, 'public'),
   },
   entry: "./app/initialize.js",
@@ -93,27 +93,7 @@ const config: Configuration = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
-    alias: {
-        "@": path.resolve(__dirname, "app"),
-        "App": path.resolve(__dirname, "app"),
-        "App/*": path.resolve(__dirname, "app/*"),
-        "SVG": path.resolve(__dirname, "app/svg"),
-        "SVG/*": path.resolve(__dirname, "app/svg/*"),
-        "Components": path.resolve(__dirname, "app/components"),
-        "Components/*": path.resolve(__dirname, "app/components/*"),
-        "Types": path.resolve(__dirname, "app/types" ),
-        "Types/*": path.resolve(__dirname, "app/types/*"),
-        "UI": path.resolve(__dirname, "app/components/ui"),
-        "UI/*": path.resolve(__dirname, "app/components/ui/*"),
-        "Duck": path.resolve(__dirname, "app/duck"),
-        "Duck/*": path.resolve(__dirname, "app/duck/*"),
-        "HOCs": path.resolve(__dirname, "app/components/hocs"),
-        "HOCs/*": path.resolve(__dirname, "app/components/hocs/*"),
-        "Shared": path.resolve(__dirname, "app/components/shared"),
-        "Shared/*": path.resolve(__dirname, "app/components/shared/*"),
-        "Player": path.resolve(__dirname, "app/player"),
-        "Player/*": path.resolve(__dirname, "app/player/*"),
-    },
+    alias: pathAlias,
     fallback: {
       assert: false,
     },

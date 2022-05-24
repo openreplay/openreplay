@@ -1,10 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Dropdown } from 'semantic-ui-react';
-import { Icon } from 'UI';
+import Select from 'Shared/Select'
 import { sort } from 'Duck/sessions';
 import { applyIssueFilter } from 'Duck/funnels';
-import stl from './sortDropdown.module.css';
 
 const sortOptionsMap = {
   'afectedUsers-desc': 'Affected Users (High)',
@@ -16,14 +14,14 @@ const sortOptionsMap = {
 };
 
 const sortOptions = Object.entries(sortOptionsMap)
-  .map(([ value, text ]) => ({ value, text }));
+  .map(([ value, label ]) => ({ value, label }));
 
 @connect(state => ({
   sorts: state.getIn(['funnels', 'issueFilters', 'sort'])
 }), { sort, applyIssueFilter })
 export default class SortDropdown extends React.PureComponent {
   state = { value: null }
-  sort = (e, { value }) => {
+  sort = ({ value }) => {
     this.setState({ value: value })
     const [ sort, order ] = value.split('-');
     const sign = order === 'desc' ? -1 : 1;
@@ -37,15 +35,13 @@ export default class SortDropdown extends React.PureComponent {
     const { sorts } = this.props;        
 
     return (
-      <Dropdown
+      <Select
+        plain
+        right
         name="sortSessions"
-        className={ stl.dropdown }        
-        direction="left"
-        options={ sortOptions }
-        onChange={ this.sort }
         defaultValue={sorts.sort + '-' + sorts.order}
-        icon={null}
-        icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
+        options={sortOptions}
+        onChange={ this.sort }
       />
     );
   }
