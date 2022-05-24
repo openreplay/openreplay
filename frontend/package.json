@@ -20,7 +20,6 @@
     "@svgr/webpack": "^6.2.1",
     "chroma-js": "^2.4.2",
     "classnames": "^2.3.1",
-    "codemirror": "^5.62.3",
     "copy-to-clipboard": "^3.3.1",
     "deep-diff": "^1.0.2",
     "html-to-image": "^1.9.0",
