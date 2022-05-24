@@ -1,17 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Dropdown } from 'semantic-ui-react';
-import { Icon } from 'UI';
+import Select from 'Shared/Select';
 import { setSessionsSort as sort } from 'Duck/funnels';
 import { setSessionsSort } from 'Duck/funnels';
-import stl from './sortDropdown.module.css';
 
 @connect(state => ({
   sessionsSort: state.getIn(['funnels','sessionsSort'])
 }), { sort, setSessionsSort })
 export default class SortDropdown extends React.PureComponent {
   state = { value: null }
-  sort = (e, { value }) => {
+  sort = ({ value }) => {
     this.setState({ value: value })
     const [ sort, order ] = value.split('-');
     const sign = order === 'desc' ? -1 : 1;    
@@ -20,17 +18,14 @@ export default class SortDropdown extends React.PureComponent {
 
   render() {
     const { options, issuesSort } = this.props;    
-    const { value = 'startTs-desc' } = this.state;
     return (
-      <Dropdown
+      <Select
+        right
+        plain
         name="sortSessions"
-        className={ stl.dropdown }        
-        direction="left"
-        options={ options }
-        onChange={ this.sort }
+        options={options}
         defaultValue={ options[ 0 ].value }
-        icon={null}
-        icon={ <Icon name="chevron-down" color="gray-dark" size="14" className={stl.dropdownIcon} /> }
+        onChange={ this.sort }
       />
     );
   }
