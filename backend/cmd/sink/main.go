@@ -67,7 +67,6 @@ func main() {
 		},
 		false,
 	)
-
 	log.Printf("Sink service started\n")
 
 	sigchan := make(chan os.Signal, 1)
