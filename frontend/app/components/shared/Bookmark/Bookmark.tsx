@@ -3,12 +3,15 @@ import { Popup, Button, Icon } from 'UI'
 import { toggleFavorite } from 'Duck/sessions'
 import { connect } from 'react-redux'
 import { toast } from 'react-toastify';
+import { Tooltip } from 'react-tippy';
+import cn from 'classnames';
 
 interface Props {
-  toggleFavorite: (sessionId: string) => Promise<void>,
-  favorite: Boolean,
-  sessionId: any,
-  isEnterprise: Boolean
+  toggleFavorite: (sessionId: string) => Promise<void>;
+  favorite: Boolean;
+  sessionId: any;
+  isEnterprise: Boolean;
+  noMargin?: boolean;
 }
 function Bookmark(props : Props ) {
   const { sessionId, favorite, isEnterprise } = props;
