@@ -40,6 +40,18 @@ securityContext: {}
 #  type: ClusterIP
 #  port: 9000
 
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: monitoring
+  scrapeConfigs:
+    - port: metrics
+      honorLabels: true
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
+
 service:
   type: ClusterIP
   ports:

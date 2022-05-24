@@ -97,9 +97,11 @@ spec:
               value: '{{ $val }}'
             {{- end}}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.port }}
+            {{- range $key, $val := .Values.service.ports }}
+            - name: {{ $key }}
+              containerPort: {{ $val }}
               protocol: TCP
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
