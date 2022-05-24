@@ -46,17 +46,6 @@ func (b *EventMapper) Build() Message {
 
 func (b *EventMapper) Handle(message Message, messageID uint64, timestamp uint64) Message {
 	switch msg := message.(type) {
-	case *RawErrorEvent:
-		// !!! This won't be handled because the Meta() timestamp emitted by `integrations` will be 0
-		// TODO: move to db directly
-		return &ErrorEvent{
-			MessageID: messageID,
-			Timestamp: msg.Timestamp,
-			Source:    msg.Source,
-			Name:      msg.Name,
-			Message:   msg.Message,
-			Payload:   msg.Payload,
-		}
 	case *MouseClick:
 		if msg.Label != "" {
 			return &ClickEvent{

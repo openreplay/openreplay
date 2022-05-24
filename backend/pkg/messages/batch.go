@@ -40,6 +40,9 @@ func ReadBatchReader(reader io.Reader, messageHandler func(Message)) error {
 			timestamp = int64(m.Timestamp) // TODO(?): replace timestamp type to int64 everywhere (including encoding part in tracker)
 			// No skipping here for making it easy to encode back the same sequence of message
 			// continue readLoop
+		case *SessionStart:
+			// Save session start timestamp for collecting "empty" sessions
+			timestamp = int64(m.Timestamp)
 		}
 		msg.Meta().Index = index
 		msg.Meta().Timestamp = timestamp
