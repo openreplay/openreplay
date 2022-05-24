@@ -64,19 +64,19 @@ function UserCard({
             { userDisplayName }
           </TextEllipsis>
 
-          <div className="text-sm color-gray-medium">
-            <span>{formatDateTimeDefault(startedAt)}</span>
-            <span className="mx-1">·</span>
-            <span>{userBrowser}, {userDevice}</span>
-            <span className="mx-1">·</span>
+          <div className="text-sm color-gray-medium flex items-center">
+            <span style={{ whiteSpace: 'nowrap' }}>{formatDateTimeDefault(startedAt)}</span>
+            <span className="mx-1 font-bold text-xl">&#183;</span>
             <span>{countries[userCountry]}</span>
-            <span className="mx-1">·</span>
+            <span className="mx-1 font-bold text-xl">&#183;</span>
+            <span className='capitalize'>{userBrowser}, {userOs}, {userDevice}</span>
+            <span className="mx-1 font-bold text-xl">&#183;</span>
             <Popup
                 trigger={<span className="color-teal cursor-pointer">More</span>}
 
                 content={(
                   <div className=''>
-                    <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={ formatTimeOrDate(startedAt) } />
+                    <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={<span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt)}</span> } />
                     <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={ `v${ userBrowserVersion }` } />
                     <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={ userOsVersion } />
                     <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ getDimension(width, height) } isLast />

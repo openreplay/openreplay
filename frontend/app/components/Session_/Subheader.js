@@ -18,7 +18,7 @@ function SubHeader(props) {
         <div className="w-full px-4 py-2 flex items-center">
             {location && (
                 <div
-                    className="flex items-center cursor-pointer color-gray-medium text-lg"
+                    className="flex items-center cursor-pointer color-gray-medium text-xs p-2 hover:bg-gray-light-shade rounded-md"
                     onClick={() => {
                         copy(props.currentLocation);
                         setCopied(true)
@@ -38,14 +38,14 @@ function SubHeader(props) {
                     </Tooltip>
                 </div>
             )}
-            <div className="ml-auto flex items-center color-gray-medium" style={{ width: 'max-content' }}>
+            <div className="ml-auto text-xs flex items-center color-gray-medium" style={{ width: 'max-content' }}>
                 <div className="cursor-pointer">
                     <SharePopup
                         entity="sessions"
                         id={ props.sessionId }
                         showCopyLink={true}
                         trigger={
-                            <div className="flex items-center">
+                            <div className="flex items-center hover:bg-gray-light-shade rounded-md p-2">
                                 <Icon
                                     className="mr-2"
                                     disabled={ props.disabled }
@@ -58,8 +58,8 @@ function SubHeader(props) {
                         }
                     />
                 </div>
-                <div className="mx-4">
-                    <Bookmark />
+                <div className="mx-2 hover:bg-gray-light-shade rounded-md p-2">
+                    <Bookmark noMargin />
                 </div>
                 <div>
                     <Autoplay />
