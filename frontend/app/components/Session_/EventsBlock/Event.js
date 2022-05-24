@@ -1,11 +1,9 @@
 import React from 'react';
 import copy from 'copy-to-clipboard';
-// import { Checkbox } from 'semantic-ui-react';
 import cn from 'classnames';
 import { Icon, TextEllipsis } from 'UI';
 import { TYPES } from 'Types/session/event';
 import { prorata } from 'App/utils';
-// import { TYPES } from 'Types/session/event';
 import withOverlay from 'Components/hocs/withOverlay';
 import LoadInfo from './LoadInfo';
 import cls from './event.module.css';

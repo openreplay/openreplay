@@ -1,15 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
-// import cn from 'classnames';
 import { SlideModal, Popup, Button, Icon, SplitButton } from 'UI';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import IssuesModal from './IssuesModal';
-// import { fetchIssue } from 'Duck/issues';
 import { fetchProjects, fetchAssignments, fetchMeta, fetchAssigment } from 'Duck/assignments';
 import SessionIssuesPanel from './SessionIssuesPanel';
 import IssueDetails from './IssueDetails';
 import withToggle from 'HOCs/withToggle';
-// import { withRequest } from 'HOCs';
 import stl from './issues.module.css';
 
 @connect(state => ({
