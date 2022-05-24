@@ -61,6 +61,16 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 		return mi.pg.InsertIOSScreenEnter(sessionID, m)
 	case *IOSCrash:
 		return mi.pg.InsertIOSCrash(sessionID, m)
+
+	case *RawErrorEvent:
+		return mi.pg.InsertWebErrorEvent(sessionID, &ErrorEvent{
+			MessageID: m.Meta().Index, // TODO: is it possible to catch panic here???
+			Timestamp: m.Timestamp,
+			Source:    m.Source,
+			Name:      m.Name,
+			Message:   m.Message,
+			Payload:   m.Payload,
+		})
 	}
 	return nil // "Not implemented"
 }
