@@ -9,9 +9,8 @@ import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
 import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/liveSearch';
-import DropdownPlain from 'Shared/DropdownPlain';
+import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { TimezoneDropdown } from 'UI';
 import { capitalize, sliceListPerPage } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
@@ -39,7 +38,7 @@ function LiveSessionList(props: Props) {
   const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
   const [sessions, setSessions] = React.useState(list);
   const sortOptions = metaList.map(i => ({
-    text: capitalize(i), value: i
+    text: capitalize(i), label: i
   })).toJS();
 
   // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
@@ -119,14 +118,13 @@ function LiveSessionList(props: Props) {
           <LiveSessionReloadButton />
         </div>
         <div className="flex items-center">
-          {/* <div className="flex items-center">
-            <span className="mr-2 color-gray-medium">Timezone</span>
-            <TimezoneDropdown />
-          </div> */}
           <div className="flex items-center ml-6 mr-4">
             <span className="mr-2 color-gray-medium">Sort By</span>
-            <DropdownPlain
+            <Select
+              plain
+              right
               options={sortOptions}
+              defaultValue={sort.field}
               onChange={onSortChange}
               value={sort.field}
             />
