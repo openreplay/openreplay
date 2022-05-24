@@ -110,8 +110,15 @@ module.exports = {
 		borderColor: {
 			default: '#DDDDDD',
 			"gray-light-shade": colors["gray-light-shade"],
+			"blue": colors["active-blue-border"],
 		},
-    	extend: {},
+    	extend: {
+			boxShadow: {
+				'border-blue': `0 0 0 1px ${colors['active-blue-border']}`,
+				'border-main': `0 0 0 1px ${colors['main']}`,
+				'border-gray': '0 0 0 1px #999',
+			}
+		},
   	},
   	variants: {
 		visibility: ['responsive', 'hover', 'focus', 'group-hover']

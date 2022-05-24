@@ -65,6 +65,7 @@ export default class Mouse {
     const [dX, dY] = delta
 
     let el = this.lastScrEl
+
     // Scroll the same one 
     if (el instanceof Element) {
       el.scrollLeft += dX
@@ -81,17 +82,28 @@ export default class Mouse {
       mouseY-this.pScrEl.scrollTop,
     )
     while (el) {
-      //if(el.scrollWidth > el.clientWidth)  // - This check doesn't work in common case
-      const esl = el.scrollLeft
-      el.scrollLeft += dX
-      const est = el.scrollTop
-      el.scrollTop += dY
-      if (esl !== el.scrollLeft || est !== el.scrollTop) {
-        this.lastScrEl = el
-        return
-      } else {
-        el = el.parentElement
-      }   
+      // const esl = el.scrollLeft
+      // el.scrollLeft += dX
+      // const est = el.scrollTop
+      // el.scrollTop += dY
+      // if (esl !== el.scrollLeft || est !== el.scrollTop) { // doesn't work if the scroll-behavior is "smooth"
+      //   this.lastScrEl = el
+      //   return
+      // } else {
+      //   el = el.parentElement
+      // }   
+      
+      // el.scrollTopMax > 0 // available in firefox
+      if (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) { 
+        const styles = getComputedStyle(el)
+        if (styles.overflow.indexOf("scroll") >= 0 || styles.overflow.indexOf("auto") >= 0) {
+          el.scrollLeft += dX
+          el.scrollTop += dY
+          this.lastScrEl = el
+          return
+        }
+      }
+      el = el.parentElement
     }
 
     // If not scrolled

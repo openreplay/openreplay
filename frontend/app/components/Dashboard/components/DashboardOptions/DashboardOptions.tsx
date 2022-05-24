@@ -23,6 +23,7 @@ function DashboardOptions(props: Props) {
 
     return (
         <ItemMenu
+            bold
             label="More Options"
             items={menuItems}
         />

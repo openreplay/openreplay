@@ -18,6 +18,14 @@ function DashboardEditModal(props: Props) {
         dashboardStore.save(dashboard).then(closeHandler);
     }
 
+    React.useEffect(() => {
+        const handleEsc = (e) => e.key === 'Escape' && closeHandler?.()
+        document.addEventListener("keydown", handleEsc, false);
+        return () => {
+            document.removeEventListener("keydown", handleEsc, false);
+        }
+    }, [])
+
     const write = ({ target: { value, name } }) => dashboard.update({ [ name ]: value })
     const writeOption = (e, { checked, name }) => {
         dashboard.update({ [name]: checked });
@@ -61,7 +69,7 @@ function DashboardEditModal(props: Props) {
                         onChange={write}
                         placeholder="Description"
                         maxLength={300}
-                        autoFocus={!dashboard.description || !focusTitle}
+                        autoFocus={!focusTitle}
                     />
                 </Form.Field>
 

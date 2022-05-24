@@ -1,11 +1,11 @@
-package ender
+package heuristics
 
 import (
 	"openreplay/backend/pkg/env"
 )
 
 type Config struct {
-	GroupEnder      string
+	GroupHeuristics string
 	TopicTrigger    string
 	LoggerTimeout   int
 	TopicRawWeb     string
@@ -15,7 +15,7 @@ type Config struct {
 
 func New() *Config {
 	return &Config{
-		GroupEnder:      env.String("GROUP_ENDER"),
+		GroupHeuristics: env.String("GROUP_HEURISTICS"),
 		TopicTrigger:    env.String("TOPIC_TRIGGER"),
 		LoggerTimeout:   env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
 		TopicRawWeb:     env.String("TOPIC_RAW_WEB"),

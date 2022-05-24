@@ -24,7 +24,7 @@ func NewBuilderMap(handlersFabric func() []handlers.MessageProcessor) *builderMa
 func (m *builderMap) GetBuilder(sessionID uint64) *builder {
 	b := m.sessions[sessionID]
 	if b == nil {
-		b = NewBuilder(m.handlersFabric()...) // Should create new instances
+		b = NewBuilder(sessionID, m.handlersFabric()...) // Should create new instances
 		m.sessions[sessionID] = b
 	}
 	return b

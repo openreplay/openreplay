@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"openreplay/backend/internal/builder"
-	"openreplay/backend/internal/config/ender"
+	"openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/internal/handlers"
 	"openreplay/backend/internal/handlers/custom"
 	"openreplay/backend/internal/handlers/ios"
@@ -23,7 +23,7 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	// Load service configuration
-	cfg := ender.New()
+	cfg := heuristics.New()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
@@ -53,7 +53,7 @@ func main() {
 	// Init producer and consumer for data bus
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
-		cfg.GroupEvents,
+		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,

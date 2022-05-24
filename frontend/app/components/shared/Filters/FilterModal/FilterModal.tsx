@@ -7,16 +7,27 @@ import { filtersMap } from 'Types/filter/newFilter';
 
 export const getMatchingEntries = (searchQuery: string, filters: Record<string, any>) => {
   const matchingCategories: string[] = [];
-  const matchingFilters: [] = []
-  Object.keys(filters).forEach(name => {
-    if (name.includes(searchQuery)) matchingCategories.push(name);
-    const filtersQuery: [] = filters[name]
-      .filter(filterOption => filterOption.label.includes(searchQuery))
+  const matchingFilters: Record<string, any> = {};
 
-    matchingFilters.push(...filtersQuery)
+  if (searchQuery.length === 0) return {
+    matchingCategories: Object.keys(filters),
+    matchingFilters: filters,
+  };
+
+  Object.keys(filters).forEach(name => {
+    if (name.toLocaleLowerCase().includes(searchQuery)) {
+      matchingCategories.push(name);
+      matchingFilters[name] = filters[name];
+    } else {
+        const filtersQuery = filters[name]
+        .filter(filterOption => filterOption.label.toLocaleLowerCase().includes(searchQuery))
+
+        matchingFilters[name] = filtersQuery
+        filtersQuery.length > 0 && matchingCategories.push(name);
+      }
   })
 
-  return { matchingCategories, matchingFilters }
+  return { matchingCategories, matchingFilters };
 }
 
 interface Props {
@@ -60,20 +71,12 @@ function FilterModal(props: Props) {
               <div className="mb-6" key={key}>
                 <div className="uppercase font-medium mb-1 color-gray-medium tracking-widest text-sm">{key}</div>
                 <div>
-                  {filters[key].map((filter: any) => {
-                    if (hasSearchQuery) {
-                      const matchingFilters = filters[key].filter(filter => filter.label.includes(searchQuery));
-                      const hasMatchingSubstring = matchingFilters.length > 0 || key.includes(searchQuery);
-
-                      if (hasSearchQuery && !hasMatchingSubstring) return null;
-                    }
-                    return (
+                  {matchingFilters[key].map((filter: any) => (
                       <div key={filter.label} className={cn(stl.optionItem, "flex items-center py-2 cursor-pointer -mx-2 px-2")} onClick={() => onFilterClick({ ...filter, value: [''] })}>
                         <Icon name={filter.icon} size="16"/>
                         <span className="ml-2">{filter.label}</span>
                       </div>
                     )
-                  }
                   )}
                 </div>
               </div>

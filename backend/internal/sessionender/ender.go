@@ -1,7 +1,11 @@
 package sessionender
 
 import (
+	"context"
+	"fmt"
+	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 )
 
@@ -16,15 +20,25 @@ type session struct {
 
 // SessionEnder updates timestamp of last message for each session
 type SessionEnder struct {
-	timeout  int64
-	sessions map[uint64]*session // map[sessionID]session
+	timeout        int64
+	sessions       map[uint64]*session // map[sessionID]session
+	activeSessions syncfloat64.UpDownCounter
 }
 
-func New(timeout int64) *SessionEnder {
-	return &SessionEnder{
-		timeout:  timeout,
-		sessions: make(map[uint64]*session),
+func New(metrics *monitoring.Metrics, timeout int64) (*SessionEnder, error) {
+	if metrics == nil {
+		return nil, fmt.Errorf("metrics module is empty")
 	}
+	activeSessions, err := metrics.RegisterUpDownCounter("active_sessions")
+	if err != nil {
+		return nil, fmt.Errorf("can't register active_session metric: %s", err)
+	}
+
+	return &SessionEnder{
+		timeout:        timeout,
+		sessions:       make(map[uint64]*session),
+		activeSessions: activeSessions,
+	}, nil
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
@@ -40,6 +54,7 @@ func (se *SessionEnder) UpdateSession(sessionID, timestamp uint64) {
 			lastTimestamp: currTS,
 			isEnded:       false,
 		}
+		se.activeSessions.Add(context.Background(), 1)
 		return
 	}
 	if currTS > sess.lastTimestamp {
@@ -56,6 +71,7 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 			sess.isEnded = true
 			if handler(sessID, sess.lastTimestamp) {
 				delete(se.sessions, sessID)
+				se.activeSessions.Add(context.Background(), -1)
 			}
 		}
 	}

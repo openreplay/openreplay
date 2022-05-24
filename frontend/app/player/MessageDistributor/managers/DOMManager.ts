@@ -34,7 +34,7 @@ export default class DOMManager extends ListWalker<Message> {
     return this.startTime;
   }
 
-  add(m: Message): void {
+  append(m: Message): void {
     switch (m.tp) {
     case "set_node_scroll":
       if (!this.nodeScrollManagers[ m.id ]) {
@@ -149,39 +149,38 @@ export default class DOMManager extends ListWalker<Message> {
         
         //this.screen.setDisconnected(false);
         this.stylesManager.reset();
-      break;
+        return
       case "create_text_node":
         this.nl[ msg.id ] = document.createTextNode('');
         this.insertNode(msg);
-      break;
+        return
       case "create_element_node":
-      // console.log('elementnode', msg)
         if (msg.svg) {
           this.nl[ msg.id ] = document.createElementNS('http://www.w3.org/2000/svg', msg.tag);
         } else {
           this.nl[ msg.id ] = document.createElement(msg.tag);
         }
-        if (this.bodyId === msg.id) {
+        if (this.bodyId === msg.id) { // there are several bodies in iframes TODO: optimise & cache prebuild
           this.postponedBodyMessage = msg;
         } else {
           this.insertNode(msg);
         }
         this.removeBodyScroll(msg.id);
         this.removeAutocomplete(msg);
-      break;
+        return
       case "move_node":
         this.insertNode(msg);
-      break;
+        return
       case "remove_node":
         node = this.nl[ msg.id ]
-        if (!node) { logger.error("Node not found", msg); break; }
-        if (!node.parentElement) { logger.error("Parent node not found", msg); break; }
+        if (!node) { logger.error("Node not found", msg); return }
+        if (!node.parentElement) { logger.error("Parent node not found", msg); return }
         node.parentElement.removeChild(node);
-      break;
+        return
       case "set_node_attribute":
         let { id, name, value } = msg;
         node = this.nl[ id ];
-        if (!node) { logger.error("Node not found", msg); break; }
+        if (!node) { logger.error("Node not found", msg); return }
         if (this.isLink[ id ] && name === "href") {
           // @ts-ignore TODO: global ENV type
           if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) { // Hack for queries in rewrited urls
@@ -198,43 +197,54 @@ export default class DOMManager extends ListWalker<Message> {
           logger.error(e, msg);
         }
         this.removeBodyScroll(msg.id);
-      break;
+        return
       case "remove_node_attribute":
-        if (!this.nl[ msg.id ]) { logger.error("Node not found", msg); break; }
+        if (!this.nl[ msg.id ]) { logger.error("Node not found", msg); return }
         try {
           (this.nl[ msg.id ] as HTMLElement).removeAttribute(msg.name);
         } catch(e) {
           logger.error(e, msg);
         }
-      break;
+        return
       case "set_input_value":
-        if (!this.nl[ msg.id ]) { logger.error("Node not found", msg); break; }
-        const val = msg.mask > 0 ? '*'.repeat(msg.mask) : msg.value;
-        (this.nl[ msg.id ] as HTMLInputElement).value = val;
-      break;
+        node = this.nl[ msg.id ]
+        if (!node) { logger.error("Node not found", msg); return }
+        if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement)) { 
+          logger.error("Trying to set value of non-Input element", msg) 
+          return 
+        }
+        const val = msg.mask > 0 ? '*'.repeat(msg.mask) : msg.value
+        doc = this.screen.document
+        if (doc && node === doc.activeElement) {
+          // For the case of Remote Control
+          node.onblur = () => { node.value = val }
+          return
+        }
+        node.value = val
+        return
       case "set_input_checked":
         node = this.nl[ msg.id ];
-        if (!node) { logger.error("Node not found", msg); break; }
+        if (!node) { logger.error("Node not found", msg); return }
         (node as HTMLInputElement).checked = msg.checked;
-      break;
+        return
       case "set_node_data":
       case "set_css_data":
         node = this.nl[ msg.id ]
-        if (!node) { logger.error("Node not found", msg); break; }
+        if (!node) { logger.error("Node not found", msg); return }
         // @ts-ignore
         node.data = msg.data;
         if (node instanceof HTMLStyleElement) {
           doc = this.screen.document
           doc && rewriteNodeStyleSheet(doc, node)
         }
-      break;
+        return
       case "css_insert_rule":
         node = this.nl[ msg.id ];
-        if (!node) { logger.error("Node not found", msg); break; }
+        if (!node) { logger.error("Node not found", msg); return }
         if (!(node instanceof HTMLStyleElement) // link or null
           || node.sheet == null) { 
           logger.warn("Non-style node in  CSS rules message (or sheet is null)", msg);
-          break;
+          return
         }
         try {
           node.sheet.insertRule(msg.rule, msg.index)
@@ -246,21 +256,21 @@ export default class DOMManager extends ListWalker<Message> {
             logger.warn("Cannot insert rule.", e, msg)
           }
         }
-      break;
+        return
       case "css_delete_rule":
         node = this.nl[ msg.id ];
-        if (!node) { logger.error("Node not found", msg); break; }
+        if (!node) { logger.error("Node not found", msg); return }
         if (!(node instanceof HTMLStyleElement) // link or null
           || node.sheet == null) { 
           logger.warn("Non-style node in  CSS rules message (or sheet is null)", msg);
-          break;
+          return
         }
         try {
           node.sheet.deleteRule(msg.index)
         } catch (e) {
           logger.warn(e, msg)
         }
-      break;
+        return
       case "create_i_frame_document":
         node = this.nl[ msg.frameID ];
         // console.log('ifr', msg, node)
@@ -282,17 +292,7 @@ export default class DOMManager extends ListWalker<Message> {
         } else {
           logger.warn("Context message host is not Element", msg)
         }
-        
-      break;
-        //not sure what to do with this one
-      //case "disconnected":
-        //setTimeout(() => {
-          // if last one
-          //if (this.msgs[ this.msgs.length - 1 ] === msg) {
-          //  this.setDisconnected(true);
-         // }
-        //}, 10000);
-      //break;
+        return
     } 
   }
 

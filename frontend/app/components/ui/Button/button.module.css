@@ -62,6 +62,22 @@
   }
 }
 
+.plainText {
+  background-color: transparent !important;
+  color: $gray-darkest !important;
+  box-shadow: none !important;
+  padding: 0 10px !important;
+
+  &:hover {
+    background-color: $active-blue !important;
+    color: $teal !important;
+  }
+
+  &.hover:hover {
+    background-color: $teal !important;
+  }
+}
+
 .margin-right {
   margin-right: 10px !important;
 }

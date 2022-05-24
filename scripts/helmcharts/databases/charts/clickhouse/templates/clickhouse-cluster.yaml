@@ -14,7 +14,8 @@ spec:
   configuration:
     zookeeper:
       nodes:
-      - host: zookeeper
+      - host: "{{ .Values.global.kafka.zookeeperHost }}"
+        port: "{{ .Values.global.kafka.zookeeperNonTLSPort }}"
     clusters:
       - name: replicated
         layout:

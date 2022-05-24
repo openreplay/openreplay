@@ -142,21 +142,19 @@ export default class MessageDistributor extends StatedScreen {
         while (next = r.next()) {
           const [msg, index] = next
           this.distributeMessage(msg, index)
-          this.lastMessageTime = Math.max(msg.time, this.lastMessageTime)
-
           msgs.push(msg)
         }
 
         logger.info("Messages count: ", msgs.length, msgs)
 
-        // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))  
+        // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
         const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
         this.pagesManager.sort((m1, m2) => {
           if (m1.time === m2.time) {
             if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
               if (headChildrenIds.includes(m1.id)) {
                 return -1;
-              }  
+              }
             } else if (m2.tp === "remove_node" && m1.tp !== "remove_node") {
               if (headChildrenIds.includes(m2.id)) {
                 return 1;
@@ -177,7 +175,7 @@ export default class MessageDistributor extends StatedScreen {
         const stateToUpdate: {[key:string]: any} = {
           performanceChartData: this.performanceTrackManager.chartData,
           performanceAvaliability: this.performanceTrackManager.avaliability,
-        } 
+        }
         LIST_NAMES.forEach(key => {
           stateToUpdate[ `${ key }List` ] = this.lists[ key ].list
         })
@@ -189,7 +187,7 @@ export default class MessageDistributor extends StatedScreen {
       this.windowNodeCounter.reset()
       if (this.activirtManager) {
         this.activirtManager.end()
-        update({ 
+        update({
           skipIntervals: this.activirtManager.list
         })
       }
@@ -296,6 +294,7 @@ export default class MessageDistributor extends StatedScreen {
 
   /* Binded */
   distributeMessage(msg: Message, index: number): void {
+    this.lastMessageTime = Math.max(msg.time, this.lastMessageTime)
     if ([
       "mouse_move",
       "mouse_click",
@@ -426,7 +425,7 @@ export default class MessageDistributor extends StatedScreen {
             this.performanceTrackManager.setCurrentNodesCount(this.windowNodeCounter.count);
             break;
         }
-        this.pagesManager.append(msg);
+        this.pagesManager.appendMessage(msg);
         break;
     }
   }
@@ -436,7 +435,7 @@ export default class MessageDistributor extends StatedScreen {
   }
 
   getFirstMessageTime(): number {
-    return 0;
+    return this.pagesManager.minTime;
   }
 
   // TODO: clean managers?

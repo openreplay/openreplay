@@ -12,6 +12,7 @@ interface Props {
     history: any
     siteId?: string
     dashboardId?: string
+    onMetricAdd?: () => void;
 }
 function DashboardModal(props) {
     const { history, siteId, dashboardId } = props;
@@ -34,9 +35,11 @@ function DashboardModal(props) {
 
     const handleCreateNew = () => {
         const path = withSiteId(dashboardMetricCreate(dashboardId), siteId);
+        props.onMetricAdd();
         history.push(path);
         hideModal();
     }
+    const isDashboardExists = dashboard.exists()
 
     return useObserver(() => (
         <div style={{ width: '85vw' }}>
@@ -47,20 +50,20 @@ function DashboardModal(props) {
                 <div className="mb-6 flex items-end justify-between">
                     <div>
                         <h1 className="text-2xl">
-                            { dashboard.exists() ? "Add metrics to dashboard" : "Create Dashboard" }
+                            { isDashboardExists ? "Add metrics to dashboard" : "Create Dashboard" }
                         </h1>
                     </div>
                     <div>
-                        {dashboard.exists() && <Button outline size="small" onClick={handleCreateNew}>Create New</Button>}
+                        <span className="text-md">Past 7 days data</span>
                     </div>
                 </div>
-                { !dashboard.exists() && (
+                { !isDashboardExists && (
                     <>
                         <DashboardForm />
                         <p>Create new dashboard by choosing from the range of predefined metrics that you care about. You can always add your custom metrics later.</p>
                     </>
                 )}
-                <DashboardMetricSelection />
+                <DashboardMetricSelection handleCreateNew={handleCreateNew} isDashboardExists={isDashboardExists} />
 
                 <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                     <Button
@@ -69,7 +72,7 @@ function DashboardModal(props) {
                         disabled={!dashboard.isValid || loading}
                         onClick={onSave}
                     >
-                        { dashboard.exists() ? "Add Selected to Dashboard" : "Create" }
+                        {isDashboardExists ? "Add Selected to Dashboard" : "Create" }
                     </Button>
                     <span className="ml-2 color-gray-medium">{selectedWidgetsCount} Metrics</span>
                 </div>

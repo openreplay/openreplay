@@ -63,9 +63,9 @@ function WidgetForm(props: Props) {
         metricStore.save(metric, dashboardId).then((metric) => {
             if (wasCreating) {
                 if (parseInt(dashboardId) > 0) {
-                    history.push(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                    history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
                 } else {
-                    history.push(withSiteId(metricDetails(metric.metricId), siteId));
+                    history.replace(withSiteId(metricDetails(metric.metricId), siteId));
                 }
 
             }

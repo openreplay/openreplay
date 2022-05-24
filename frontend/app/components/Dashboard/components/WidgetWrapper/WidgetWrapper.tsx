@@ -35,9 +35,8 @@ function WidgetWrapper(props: Props) {
     const widget: any = useObserver(() => props.widget);
     const isPredefined = widget.metricType === 'predefined';
     const dashboard = useObserver(() => dashboardStore.selectedDashboard);
-    const isOverviewWidget = widget.widgetType === 'predefined' && widget.viewType === 'overview';
 
-    const [{ opacity, isDragging }, dragRef] = useDrag({
+    const [{ isDragging }, dragRef] = useDrag({
         type: 'item',
         item: { index },
         collect: (monitor) => ({
@@ -71,17 +70,16 @@ function WidgetWrapper(props: Props) {
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
 
-    const addOverlay = isTemplate || !isPredefined
+    const addOverlay = isTemplate || (!isPredefined && isWidget)
 
     return useObserver(() => (
             <div
                 className={
                     cn(
-                        "relative rounded bg-white border",
+                        "relative rounded bg-white border group",
                         'col-span-' + widget.config.col,
-                        stl.hoverableWidget,
-                        { [stl.hoverGray]: !isTemplate },
-                        { [stl.hoverBlue]: isTemplate }
+                        { "hover:shadow-border-gray": !isTemplate && isWidget },
+                        { "hover:shadow-border-main": isTemplate }
                     )
                 }
                 style={{
@@ -93,10 +91,17 @@ function WidgetWrapper(props: Props) {
                 onClick={props.onClick ? props.onClick : () => {}}
                 id={`widget-${widget.widgetId}`}
             >
-                <div className={cn(stl.drillDownMessage, 'disabled text-gray')}> {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'} </div>
+                {!isTemplate && isWidget &&
+                    <div
+                        className={cn(
+                            stl.drillDownMessage,
+                            'disabled text-gray text-sm invisible group-hover:visible')}
+                        >
+                            {isPredefined ? 'Cannot drill down system provided metrics' : 'Click to drill down'}
+                    </div>
+                }
                 {/* @ts-ignore */}
                 <Tooltip
-                    // title="Click to select"
                     hideOnClick={true}
                     position="bottom"
                     delay={300}
@@ -108,7 +113,7 @@ function WidgetWrapper(props: Props) {
                 >
                     {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
                     <div
-                        className={cn("p-3 flex items-center justify-between", { "cursor-move" : !isTemplate })}
+                        className={cn("p-3 pb-4 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
                     >
                         <div className="capitalize w-full font-medium">{widget.name}</div>
                         {isWidget && (
