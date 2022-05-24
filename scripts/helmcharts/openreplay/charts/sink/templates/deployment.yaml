@@ -54,7 +54,7 @@ spec:
             # 4. Using AWS itself.
             # AWS uses bucketname.endpoint/object while others use endpoint/bucketname/object
             - name: ASSETS_ORIGIN
-            {{ - if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
+            {{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
             {{- range $key, $val := .Values.env }}
             - name: {{ $key }}
               value: '{{ $val }}'

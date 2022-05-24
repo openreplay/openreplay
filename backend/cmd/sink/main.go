@@ -78,18 +78,20 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			consumer.Commit()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
 			if err := writer.SyncAll(); err != nil {
 				log.Fatalf("Sync error: %v\n", err)
 			}
-
 			log.Printf("%v messages during 30 sec", count)
 			count = 0
-
-			consumer.Commit()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
