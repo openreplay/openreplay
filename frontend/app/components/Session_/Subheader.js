@@ -1,10 +1,11 @@
 import React from 'react';
-import { Icon, TextEllipsis, Tooltip } from 'UI';
+import { Icon } from 'UI';
 import Autoplay from './Autoplay';
 import Bookmark from 'Shared/Bookmark'
 import SharePopup from '../shared/SharePopup/SharePopup';
 import { connectPlayer } from 'Player';
 import copy from 'copy-to-clipboard';
+import { Tooltip } from 'react-tippy';
 
 function SubHeader(props) {
     const [isCopied, setCopied] = React.useState(false);
@@ -21,15 +22,20 @@ function SubHeader(props) {
                     onClick={() => {
                         copy(props.currentLocation);
                         setCopied(true)
+                        setTimeout(() => setCopied(false), 5000)
                     }}
                 >
                     <Icon size="20" name="event/link" className="mr-1" />
                     <Tooltip
-                        maxWidth={500}
+                        delay={0}
+                        arrow
+                        animation="fade"
+                        hideOnClick={false}
                         position="bottom center"
-                        trigger={location}
-                        tooltip={isCopied ? 'URL Copied to clipboard' : undefined}
-                    />
+                        title={isCopied ? 'URL Copied to clipboard' : 'Click to copy'}
+                    >
+                        {location}
+                    </Tooltip>
                 </div>
             )}
             <div className="ml-auto flex items-center color-gray-medium" style={{ width: 'max-content' }}>
