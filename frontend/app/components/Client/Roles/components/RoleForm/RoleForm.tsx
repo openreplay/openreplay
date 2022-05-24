@@ -2,7 +2,8 @@ import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import stl from './roleForm.module.css'
 import { save, edit } from 'Duck/roles'
-import { Input, Button, Checkbox, Dropdown, Icon } from 'UI'
+import { Input, Button, Checkbox, Icon } from 'UI'
+import Select from 'Shared/Select';
 
 interface Permission {
   name: string,
@@ -47,7 +48,8 @@ const RoleForm = (props: Props) => {
     edit({ projects: _projects })
   }
 
-  const writeOption = (e, { name, value }) => {
+  const writeOption = ({ name, value }: any) => {
+    console.log('name', name);
     if (name === 'permissions') {
       onChangePermissions(value)
     } else if (name === 'projects') {
@@ -101,18 +103,12 @@ const RoleForm = (props: Props) => {
           </div>
           { !role.allProjects && (
             <>
-              <Dropdown
-                search
-                className="fluid"
-                placeholder="Select"
-                selection
-                options={ projectOptions }
+              <Select
+                isSearchable
                 name="projects"
+                options={ projectOptions }
+                onChange={ ({ value }: any) => writeOption({ name: 'projects', value }) }
                 value={null}
-                onChange={ writeOption }
-                id="change-dropdown"
-                selectOnBlur={false}
-                selectOnNavigation={false}
               />
               { role.projects.size > 0 && (
                 <div className="flex flex-row items-start flex-wrap mt-4">
@@ -127,18 +123,12 @@ const RoleForm = (props: Props) => {
 
         <div className="form-group flex flex-col">
           <label>{ 'Capability Access' }</label>
-          <Dropdown
-            search
-            className="fluid"
-            placeholder="Select"
-            selection
-            options={ permissions }
+          <Select
+            isSearchable
             name="permissions"
+            options={ permissions }
+            onChange={ ({ value }: any) => writeOption({ name: 'permissions', value }) }
             value={null}
-            onChange={ writeOption }
-            id="change-dropdown"
-            selectOnBlur={false}
-            selectOnNavigation={false}
           />
           { role.permissions.size > 0 && (
             <div className="flex flex-row items-start flex-wrap mt-4">
@@ -186,21 +176,21 @@ const RoleForm = (props: Props) => {
   );
 }
 
-export default connect(state => {
+export default connect((state: any) => {
   const role = state.getIn(['roles', 'instance'])
   const projects = state.getIn([ 'site', 'list' ])
   return {
     role,
-    projectOptions: projects.map(p => ({
+    projectOptions: projects.map((p: any) => ({
       key: p.get('id'),
       value: p.get('id'),
-      text: p.get('name'),
-      disabled: role.projects.includes(p.get('id')),
+      label: p.get('name'),
+      isDisabled: role.projects.includes(p.get('id')),
     })).toJS(),
     permissions: state.getIn(['roles', 'permissions'])
-      .map(({ text, value }) => ({ text, value, disabled: role.permissions.includes(value) })).toJS(),
+      .map(({ text, value }: any) => ({ label: text, value, isDisabled: role.permissions.includes(value) })).toJS(),
     saving: state.getIn([ 'roles', 'saveRequest', 'loading' ]),
-    projectsMap: projects.reduce((acc, p) => {
+    projectsMap: projects.reduce((acc: any, p: any) => {
       acc[ p.get('id') ] = p.get('name')
       return acc
     }
