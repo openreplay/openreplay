@@ -1,0 +1,5 @@
+.panel {
+    width: 270px;
+    height: calc(100vh - 50px);
+    align-self: flex-end;
+}

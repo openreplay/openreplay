@@ -56,7 +56,6 @@ export default class Player extends React.PureComponent {
         data-bottom-block={ bottomBlockIsActive }
       >
         {fullscreen && <EscapeButton onClose={ fullscreenOff } />}
-        {!live && !fullscreen && <EventsToggleButton /> }
         <div className="relative flex-1 overflow-hidden">
           <Overlay nextId={nextId} togglePlay={PlayerControls.togglePlay} closedLive={closedLive} />
           <div

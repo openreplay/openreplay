@@ -1,5 +1,4 @@
-import React from 'react';
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
@@ -9,16 +8,15 @@ import {
   init as initPlayer,
   clean as cleanPlayer,
   Controls,
+  toggleEvents,
 } from 'Player';
 import cn from 'classnames'
 import RightBlock from './RightBlock'
 import withLocationHandlers from "HOCs/withLocationHandlers";
 
-
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
-
 
 const InitLoader = connectPlayer(state => ({
   loading: !state.initialized
@@ -37,14 +35,21 @@ function PlayerContent({ live, fullscreen }) {
   )
 }
 
-function RightMenu({ showEvents, live, fullscreen }) {
-  return showEvents && !live && !fullscreen && <RightBlock />
+function RightMenu({ showEvents, live, tabs, activeTab, setActiveTab, fullscreen }) {
+  return showEvents && !live && !fullscreen && <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} />
 }
 const ConnectedMenu = connectPlayer(state => ({
-  showEvents: !state.showEvents}))(RightMenu)
+  showEvents: state.showEvents}), { toggleEvents })(RightMenu)
 
 function WebPlayer (props) {
   const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config, showEvents } = props;
+
+  const TABS = {
+    EVENTS: 'Events',
+    HEATMAPS: 'Click Map',
+  }
+
+  const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {
     initPlayer(session, jwt);
@@ -60,18 +65,17 @@ function WebPlayer (props) {
   // LAYOUT (TODO: local layout state - useContext or something..)
   useEffect(() => () => {
     toggleFullscreen(false);
+
     closeBottomBlock();
   }, [])
   return (
     <PlayerProvider>
       <InitLoader className="flex-1">
-        <div className="flex">
-          <div className="w-full">
-            <PlayerBlockHeader fullscreen={fullscreen}/>
-            <PlayerContentConnected fullscreen={fullscreen} live={live} />
-          </div>
-          <ConnectedMenu fullscreen={fullscreen} live={live} />
-        </div>
+          <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
+            <div className="flex">
+              <div className="w-full"><PlayerContentConnected fullscreen={fullscreen} live={live} /></div>
+              {activeTab !== '' && <ConnectedMenu activeTab={activeTab} setActiveTab={setActiveTab} fullscreen={fullscreen} tabs={TABS} live={live} />}
+            </div>
       </InitLoader>
     </PlayerProvider>
   );

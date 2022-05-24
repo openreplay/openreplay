@@ -25,27 +25,25 @@ import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 
 
-const tabs = [
-  {
-    key: CONSOLE,
-    Component: Console,
-  },
-  {
-    key: NETWORK,
-    Component: Network,
-  },
-  {
-    key: STORAGE,
-    Component: 
-  }
-]
+// const tabs = [
+//   {
+//     key: CONSOLE,
+//     Component: Console,
+//   },
+//   {
+//     key: NETWORK,
+//     Component: Network,
+//   },
+//   {
+//     key: STORAGE,
+//     Component: 
+//   }
+// ]
 
 const tabsByKey = {};
-tabs.map()
+// tabs.map()
 
 
 export function switchTab(tabKey) {
   tabKey
 }
-
-
