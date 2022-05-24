@@ -78,7 +78,7 @@ export default class Event extends React.PureComponent {
               <div className="flex items-center w-full" style={{ minWidth: '0'}}>
                 <span className={cls.title}>{ title }</span>
                 {/* { body && !isLocation && <div className={ cls.data }>{ body }</div> } */}
-                { body && !isLocation && 
+                { body && !isLocation &&
                   <TextEllipsis maxWidth="60%" className="w-full ml-2 text-sm color-gray-medium" text={body} />
                 }
               </div>
@@ -96,7 +96,7 @@ export default class Event extends React.PureComponent {
         </div>
         { isLocation &&
           <div className="mt-1">
-              <span className="text-sm font-normal color-gray-medium">{ body }</span> 
+              <span className="text-sm font-normal color-gray-medium">{ body }</span>
           </div>
         }
       </div>
@@ -105,18 +105,20 @@ export default class Event extends React.PureComponent {
 
   render() {
     const {
-      event, 
-      selected, 
-      isCurrent, 
-      onClick, 
-      showSelection, 
-      onCheckboxClick, 
+      event,
+      selected,
+      isCurrent,
+      onClick,
+      showSelection,
+      onCheckboxClick,
       showLoadInfo,
       toggleLoadInfo,
       isRed,
       extended,
       highlight = false,
-      presentInSearch=false
+      presentInSearch = false,
+      isLastInGroup,
+      whiteBg,
     } = this.props;
     const { menuOpen } = this.state;
     return (
@@ -125,7 +127,7 @@ export default class Event extends React.PureComponent {
         onMouseLeave={ this.onMouseLeave }
         data-openreplay-label="Event"
         data-type={event.type}
-        className={ cn(cls.event, { 
+        className={ cn(cls.event, {
           [ cls.menuClosed ]: !menuOpen,
           [ cls.highlighted ]: showSelection ? selected : isCurrent,
           [ cls.selected ]: selected,
@@ -134,11 +136,12 @@ export default class Event extends React.PureComponent {
           [ cls.clickType ]: event.type === TYPES.CLICK,
           [ cls.inputType ]: event.type === TYPES.INPUT,
           [ cls.clickrageType ]: event.type === TYPES.CLICKRAGE,
-          [cls.highlight] : presentInSearch
+          [ cls.highlight ] : presentInSearch,
+          [ cls.lastInGroup ]: whiteBg,
         }) }
         onClick={ onClick }
       >
-        { menuOpen && 
+        { menuOpen &&
           <button onClick={ this.copyHandler } className={ cls.contextMenu }>
             { event.target ? 'Copy CSS' : 'Copy URL' }
           </button>
