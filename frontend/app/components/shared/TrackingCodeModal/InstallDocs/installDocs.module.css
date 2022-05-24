@@ -4,8 +4,8 @@
   position: relative;
   & .codeCopy {
     position: absolute;
-    right: 10px;
-    top: 10px;
+    right: 0px;
+    top: -3px;
     z-index: $codeSnippet;
     padding: 5px 10px; 
     color: $teal;

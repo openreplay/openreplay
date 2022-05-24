@@ -1,3 +1,3 @@
-import './codemirror';
+// import './codemirror';
 import './immutable';
 import './sentry';
