@@ -1,4 +1,5 @@
-import { Popup, Icon, TextEllipsis } from 'UI';
+import React from 'react';
+import { TextEllipsis } from 'UI';
 import styles from './imageInfo.module.css';
 
 const ImageInfo = ({ data }) => (

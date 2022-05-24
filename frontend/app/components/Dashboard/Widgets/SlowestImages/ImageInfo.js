@@ -1,3 +1,4 @@
+import React from 'react';
 import { Popup, Icon } from 'UI';
 import styles from './imageInfo.module.css';
 

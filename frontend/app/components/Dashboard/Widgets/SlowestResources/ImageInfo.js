@@ -1,3 +1,4 @@
+import React from 'react';
 import { Popup } from 'UI';
 import cn from 'classnames';
 import styles from './imageInfo.module.css';
