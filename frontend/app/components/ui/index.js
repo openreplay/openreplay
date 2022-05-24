@@ -11,7 +11,6 @@ export { default as NoContent } from './NoContent';
 export { default as LinkStyledInput } from './LinkStyledInput';
 export { default as IconButton } from './IconButton';
 export { default as ItemMenu } from './ItemMenu';
-export { default as InputAutocomplete } from './InputAutocomplete';
 export { default as TagBadge } from './TagBadge';
 export { default as TagList } from './TagList';
 export { default as CircularLoader } from './CircularLoader';
