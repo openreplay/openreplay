@@ -3,7 +3,7 @@ import { Input, Icon } from 'UI'
 
 export default function EventSearch(props) {
   const { onChange, clearSearch, value, header } = props;
-  const [showSearch, setShowSearch] = useState(false)
+  const [showSearch, setShowSearch] = useState(true)
 
   useEffect(() => {
     return () => {
