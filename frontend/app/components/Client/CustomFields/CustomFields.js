@@ -49,7 +49,7 @@ class CustomFields extends React.Component {
     this.setState({ showModal: true });    
   }
 
-  onChangeSelect = (event, { value }) => {
+  onChangeSelect = ({ value }) => {
     const site = this.props.sites.find(s => s.id === value);
     this.setState({ currentSite: site })
     this.props.fetchList(site.id);

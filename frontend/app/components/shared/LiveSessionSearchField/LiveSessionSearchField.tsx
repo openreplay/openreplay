@@ -44,7 +44,7 @@ function LiveSessionSearchField(props: Props) {
       />
 
       { showModal && (
-        <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
+        <div className="absolute left-0 border shadow rounded bg-white z-50">
           <LiveFilterModal
             searchQuery={searchQuery}
             isMainSearch={true}

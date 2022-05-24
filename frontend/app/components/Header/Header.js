@@ -20,6 +20,7 @@ import OnboardingExplore from './OnboardingExplore/OnboardingExplore'
 import Announcements from '../Announcements';
 import Notifications from '../Alerts/Notifications';
 import { init as initSite, fetchList as fetchSiteList } from 'Duck/site';
+import Logo from '../../svg/logo-small.svg';
 
 import ErrorGenPanel from 'App/dev/components';
 import ErrorsBadge from 'Shared/ErrorsBadge';
@@ -40,6 +41,8 @@ const Header = (props) => {
     onLogoutClick, siteId,
     boardingCompletion = 100, fetchSiteList, showAlerts = false
   } = props;
+
+  // console.log('Header props', ReactLogo);
   
   const name = account.get('name').split(" ")[0];
   const [hideDiscover, setHideDiscover] = useState(false)
@@ -69,7 +72,12 @@ const Header = (props) => {
     <div className={ cn(styles.header, showTrackingModal ? styles.placeOnTop : '') }>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
         <div className="relative">
-          <div className={ styles.logo } />
+          {/* <img src={ Logo } alt="React Logo" /> */}
+          {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
+          <div className="p-2">
+            <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } />
+            {/* <Logo width={30} /> */}
+          </div>
           <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>
         </div>
       </NavLink>

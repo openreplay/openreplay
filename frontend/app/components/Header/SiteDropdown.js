@@ -14,6 +14,8 @@ import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
 import { withStore } from 'App/mstore'
+import SignalGreenSvg from '../../svg/signal-green.svg';
+import SignalRedSvg from '../../svg/signal-red.svg';
 
 @withStore
 @withRouter
@@ -65,11 +67,14 @@ export default class SiteDropdown extends React.PureComponent {
     const disabled = !siteChangeAvaliable(pathname);
     const showCurrent = hasSiteId(pathname) || siteChangeAvaliable(pathname);
     const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
+  
+    // const signslGreenSvg = <object data={SignalGreenSvg} type="image/svg+xml" className={styles.signalGreen} />
+    // const signslRedSvg = <object data={SignalRedSvg} type="image/svg+xml" className={styles.signalRed} />
     return (
       <div className={ styles.wrapper }>
         {
           showCurrent ?
-            <div className={ activeSite && activeSite.status === GREEN ? styles.statusGreenIcon : styles.statusRedIcon }></div> :
+            <div className={ activeSite && activeSite.status === GREEN ? <object style={{ width: '20px' }}  data={SignalGreenSvg} type="image/svg+xml" /> : <object style={{ width: '20px' }} data={SignalRedSvg} type="image/svg+xml" className={styles.signalRed} /> }></div> :
             <Icon name="window-alt" size="14" marginRight="10" />
         }
         <div className={ styles.currentSite }>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>

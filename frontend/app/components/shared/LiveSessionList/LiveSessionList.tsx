@@ -142,7 +142,7 @@ function LiveSessionList(props: Props) {
             See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> and ensure you're using tracker-assist <span className="font-medium">v3.5.0</span> or higher.
           </span>
         }
-        image={<img src="/img/live-sessions.png"
+        image={<img src="/assets/img/live-sessions.png"
         style={{ width: '70%', marginBottom: '30px' }}/>}
         show={ !loading && sessions && sessions.size === 0}
       >

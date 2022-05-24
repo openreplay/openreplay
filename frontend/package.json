@@ -17,6 +17,7 @@
   "dependencies": {
     "@sentry/browser": "^5.21.1",
     "@svg-maps/world": "^1.0.1",
+    "@svgr/webpack": "^6.2.1",
     "chroma-js": "^2.4.2",
     "classnames": "^2.3.1",
     "codemirror": "^5.62.3",
@@ -119,6 +120,7 @@
     "sass": "^1.51.0",
     "sass-loader": "^13.0.0",
     "style-loader": "^3.3.1",
+    "svg-inline-loader": "^0.8.2",
     "svgo": "^2.8.0",
     "tailwindcss": "^3.0.23",
     "ts-node": "^10.7.0",

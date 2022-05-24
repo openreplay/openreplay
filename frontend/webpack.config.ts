@@ -72,15 +72,22 @@ const config: Configuration = {
             'postcss-loader'
         ],
       },
+      // {
+      //   test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
+      //   exclude: /node_modules/,
+      //   type: 'asset',
+      // },
+      // {
+      //   test: /\.svg/,
+      //   use: ["@svgr/webpack"],
+      // },
       {
-        test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
-        exclude: /node_modules/,
-        type: 'asset',
-      },
-      { 
-        test: /\.(jpg|jpeg|png|gif|mp3|svg)$/,
-        exclude: /node_modules/,
-        use: ["file-loader"] 
+        test: /\.(svg)$/i,
+        use: [
+          {
+            loader: 'file-loader',
+          },
+        ],
       },
     ],
   },
@@ -90,6 +97,8 @@ const config: Configuration = {
         "@": path.resolve(__dirname, "app"),
         "App": path.resolve(__dirname, "app"),
         "App/*": path.resolve(__dirname, "app/*"),
+        "SVG": path.resolve(__dirname, "app/svg"),
+        "SVG/*": path.resolve(__dirname, "app/svg/*"),
         "Components": path.resolve(__dirname, "app/components"),
         "Components/*": path.resolve(__dirname, "app/components/*"),
         "Types": path.resolve(__dirname, "app/types" ),

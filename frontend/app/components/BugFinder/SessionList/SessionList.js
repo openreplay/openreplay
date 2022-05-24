@@ -6,6 +6,8 @@ import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosi
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
+// import NoResultIconSvg from '../../../svg/logo.svg';
+import NoResultIconSvg from '../../../svg/no-results.svg';
 
 // const ALL = 'all';
 const PER_PAGE = 10;
@@ -95,9 +97,13 @@ export default class SessionList extends React.PureComponent {
 
     return (
       <NoContent
-        title={this.getNoContentMessage(activeTab)}
+        title={<div className="flex items-center justify-center flex-col">
+          <object style={{ width: '170px' }} type="image/svg+xml" data={NoResultIconSvg} className="no-result-icon" />
+          {/* <NoResultIconSvg width={50} /> */}
+          {this.getNoContentMessage(activeTab)}
+        </div>}
         // subtext="Please try changing your search parameters."
-        animatedIcon="no-results"
+        // animatedIcon="no-results"
         show={ !loading && list.size === 0}
         subtext={
           <div>

@@ -60,4 +60,4 @@ export { default as PageTitle } from './PageTitle';
 export { default as Pagination } from './Pagination';
 export { default as Toggler } from './Toggler';
 
-export { Input, Modal, Form, Message, Card } from 'semantic-ui-react';
+export { Input, Modal, Form, Message } from 'semantic-ui-react';

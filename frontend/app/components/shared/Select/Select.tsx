@@ -20,6 +20,7 @@ export default function({ plain = false, options, isSearchable = false, componen
         menu: (provided, state) => ({
             ...provided,
             top: 31,
+            right: 0,
             minWidth: 'fit-content',
         }),
         control: (provided) => {
@@ -29,6 +30,7 @@ export default function({ plain = false, options, isSearchable = false, componen
                 cursor: 'pointer',
             }
             if (plain) {
+                obj['backgroundColor'] = 'transparent';
                 obj['border'] = '1px solid transparent'
                 obj['&:hover'] = {
                     borderColor: 'transparent',

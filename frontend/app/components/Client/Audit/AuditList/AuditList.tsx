@@ -18,7 +18,6 @@ function AuditList(props: Props) {
     const order = useObserver(() => auditStore.order);
     const period = useObserver(() => auditStore.period);
     const { showModal } = useModal();
-    console.log('AuditList', period.toTimestamps());
     
     useEffect(() => {
         const { startTimestamp, endTimestamp } = period.toTimestamps();

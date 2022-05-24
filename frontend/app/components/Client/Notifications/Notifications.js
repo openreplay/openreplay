@@ -35,7 +35,7 @@ function Notifications(props) {
           className="mr-8"
           label="Send me a weekly report for each project."
         />
-        <img src="/img/img-newsletter.png" style={{ width: '400px'}}/>
+        <img src="/assets/img/img-newsletter.png" style={{ width: '400px'}}/>
       </div>
     </div>
   )

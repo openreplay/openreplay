@@ -16,6 +16,7 @@ import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import DashboardOptions from '../DashboardOptions';
 import SelectDateRange from 'Shared/SelectDateRange';
+import DashboardIcon from '../../../../svg/dashboard-icn.svg';
 
 interface Props {
     siteId: number;
@@ -77,10 +78,16 @@ function DashboardView(props: Props) {
         <Loader loading={loading}>
             <NoContent
                 show={dashboards.length === 0 || !dashboard || !dashboard.dashboardId}
-                icon="dashboard-icn"
-                title={<span>Gather and analyze <br /> important metrics in one place.</span>}
+                // icon="dashboard-icn"
+                title={
+                    <div className="flex items-center justify-center flex-col">
+                        {/* <DashboardIcon width={180} height={180} /> */}
+                        <object style={{ width: '180px' }} type="image/svg+xml" data={DashboardIcon} className="no-result-icon" />
+                        <span>Gather and analyze <br /> important metrics in one place.</span>
+                    </div>
+                }
                 size="small"
-                iconSize={180}
+                // iconSize={180}
                 subtext={
                     <Button primary size="small" onClick={onAddWidgets}>+ Create Dashboard</Button>
                 }

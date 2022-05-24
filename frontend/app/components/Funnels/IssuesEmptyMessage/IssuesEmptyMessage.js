@@ -17,7 +17,7 @@ function IssuesEmptyMessage(props) {
           <div className="mb-4 text-xl">Add events to your funnel to identify potential issues that are causing conversion loss.</div>
           <Button primary size="small" onClick={ createHandler }>+ ADD EVENTS</Button>
         </div>
-        <img src="/img/funnel_intro.png" />
+        <img src="/assets/img/funnel_intro.png" />
       </div>
     ) : children
   )  
