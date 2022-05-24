@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { Input, Icon } from 'UI'
+import { connectPlayer, toggleEvents, scale } from 'Player';
 
-export default function EventSearch(props) {
-  const { onChange, clearSearch, value, header } = props;
-  const [showSearch, setShowSearch] = useState(true)
+function EventSearch(props) {
+  const { onChange, clearSearch, value, header, toggleEvents, setActiveTab } = props;
 
   useEffect(() => {
     return () => {
@@ -11,23 +11,18 @@ export default function EventSearch(props) {
     }
   }, [])
 
-  const toggleSearch = () => {
-    setShowSearch(!showSearch)
-    clearSearch();
-  }
   return (
     <div className="flex items-center w-full relative">
       <div className="flex flex-1 flex-col">
         <div className='flex flex-center justify-between'>
           <span>{header}</span>
           <div
-            onClick={() => toggleSearch()}
+            onClick={() => { toggleEvents(); setActiveTab('')}}
             className=" flex items-center justify-center bg-white cursor-pointer"
           >
-            <Icon name={ showSearch ? 'close' : 'search'} size="18" />
+            <Icon name="close" size="18" />
           </div>
         </div>
-        {showSearch && (
           <div className="flex items-center mt-2">
             <Input
               autoFocus
@@ -41,8 +36,9 @@ export default function EventSearch(props) {
               autocomplete="off"
             />
           </div>
-        )}
       </div>
     </div>
   )
 }
+
+export default connectPlayer(() => null, { toggleEvents })(EventSearch)

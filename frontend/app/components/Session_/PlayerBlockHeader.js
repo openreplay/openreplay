@@ -5,15 +5,17 @@ import { sessions as sessionsRoute, assist as assistRoute, liveSession as liveSe
 import { Button, Icon, BackLink, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
-import { connectPlayer } from 'Player';
 import SharePopup from '../shared/SharePopup/SharePopup';
+import { Icon, BackLink, Link } from 'UI';
+import { connectPlayer, showEvents, toggleEvents } from 'Player';
+import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
-import Bookmark from 'Shared/Bookmark'
 import UserCard from './EventsBlock/UserCard';
+import Tabs from 'Components/Session/Tabs';
+import NewBadge from 'Shared/NewBadge';
 
 import stl from './playerBlockHeader.module.css';
 import Issues from './Issues/Issues';
-import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';
 import AssistTabs from '../Assist/components/AssistTabs';
 
@@ -25,10 +27,12 @@ const ASSIST_ROUTE = assistRoute();
   height: state.height,
   live: state.live,
   loading: state.cssLoading || state.messagesLoading,
-}))
+  showEvents: state.showEvents,
+}), { toggleEvents })
 @connect((state, props) => {
   const isAssist = window.location.pathname.includes('/assist/');
   const session = state.getIn([ 'sessions', 'current' ]);
+
   return {
     isAssist,
     session,
@@ -80,6 +84,10 @@ export default class PlayerBlockHeader extends React.PureComponent {
       closedLive = false,
       siteId,
       isAssist,
+      setActiveTab,
+      activeTab,
+      showEvents,
+      toggleEvents,
     } = this.props;
     // const _live = isAssist;
 
@@ -96,6 +104,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
       return { label: key, value };
     });
 
+    const TABS = [ this.props.tabs.EVENTS, this.props.tabs.HEATMAPS ].map(tab => ({ text: tab, key: tab }));
+    console.log(showEvents, activeTab)
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
         <div className="flex w-full items-center">
@@ -126,6 +136,15 @@ export default class PlayerBlockHeader extends React.PureComponent {
             { isAssist && <AssistActions userId={userId} /> }
             { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
+        </div>
+        <div className="relative" style={{ minWidth: '270px' }}>
+          <Tabs
+            tabs={ TABS }
+            active={ activeTab }
+            onClick={ (tab) => { setActiveTab(tab); !showEvents && toggleEvents(true) } }
+            border={ true }
+          />
+          <div className="absolute" style={{ left: '160px', top: '13px' }}>{ <NewBadge />}</div>
         </div>
       </div>
     );

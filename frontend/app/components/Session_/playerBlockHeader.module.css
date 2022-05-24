@@ -1,7 +1,8 @@
 .header {
   height: 50px;
   border-bottom: solid thin $gray-light;
-  padding: 0px 15px;
+  padding-left: 15px;
+  padding-right: 0;
   background-color: white;
 }
 

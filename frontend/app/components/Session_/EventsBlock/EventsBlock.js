@@ -6,7 +6,6 @@ import { TYPES } from 'Types/session/event';
 import { setSelected } from 'Duck/events';
 import { setEventFilter } from 'Duck/sessions';
 import { show as showTargetDefiner } from 'Duck/components/targetDefiner';
-import UserCard from './UserCard';
 import EventGroupWrapper from './EventGroupWrapper';
 import styles from './eventsBlock.module.css';
 import EventSearch from './EventSearch/EventSearch';
@@ -185,7 +184,8 @@ export default class EventsBlock extends React.PureComponent {
         revId,
         userAnonymousId
       },
-      filteredEvents
+      filteredEvents,
+      setActiveTab,
     } = this.props;
 
     const _events = filteredEvents || events;
@@ -197,6 +197,7 @@ export default class EventsBlock extends React.PureComponent {
             <EventSearch
               onChange={this.write}
               clearSearch={this.clearSearch}
+              setActiveTab={setActiveTab}
               value={query}
               header={
                 <div className="text-xl">User Events <span className="color-gray-medium">{ events.size }</span></div>

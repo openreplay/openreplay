@@ -213,8 +213,8 @@ export default class Player extends MessageDistributor {
     update({ autoplay });
   }
   
-  toggleEvents() {
-    const showEvents = !getState().showEvents;
+  toggleEvents(shouldShow = undefined) {
+    const showEvents = shouldShow || !getState().showEvents;
     localStorage.setItem(SHOW_EVENTS_STORAGE_KEY, `${showEvents}`);
     update({ showEvents });
   }
