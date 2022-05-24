@@ -36,7 +36,6 @@
     "rc-time-picker": "^3.7.3",
     "react": "^16.13.1",
     "react-circular-progressbar": "^2.0.3",
-    "react-codemirror2": "^5.1.0",
     "react-confirm": "^0.1.20",
     "react-date-range": "^1.4.0",
     "react-datepicker": "^4.8.0",

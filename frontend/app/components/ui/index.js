@@ -16,7 +16,6 @@ export { default as TagBadge } from './TagBadge';
 export { default as TagList } from './TagList';
 export { default as CircularLoader } from './CircularLoader';
 export { default as TextLabel } from './TextLabel';
-export { default as CodeEditor } from './CodeEditor';
 export { default as BackLink } from './BackLink';
 export { default as PopMenu } from './PopMenu';
 export { default as Icon } from './Icon';

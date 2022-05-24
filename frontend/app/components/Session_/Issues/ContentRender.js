@@ -1,6 +1,6 @@
 import React from 'react';
 import stl from './contentRender.module.css';
-import {UnControlled as CodeMirror} from 'react-codemirror2'
+import Highlight from 'react-highlight'
 
 const elType = {
     PARAGRAPH: 'paragraph',
@@ -22,18 +22,19 @@ const renderElement = (el, provider) => {
         case elType.QUOTE:
             return <blockquote className={ stl.quote }><ContentRender message={ el } /></blockquote>;
         case elType.CODE_BLOCK:
-            return <CodeMirror
-                className={ stl.codeMirror }
-                value={ codeRender(el.content)[0] }
-                options={{
-                    mode: el.attrs.language || '',
-                    theme: 'material',
-                    lineNumbers: true,
-                    readOnly: true,
-                    showCursorWhenSelecting: false,
-                    scroll: true
-                }}
-            />
+            return <Highlight className={ stl.codeMirror } language={ el.attrs.language || '' }>{ codeRender(el.content)[0] }</Highlight>;
+            // return <CodeMirror
+            //     className={ stl.codeMirror }
+            //     value={ codeRender(el.content)[0] }
+            //     options={{
+            //         mode: el.attrs.language || '',
+            //         theme: 'material',
+            //         lineNumbers: true,
+            //         readOnly: true,
+            //         showCursorWhenSelecting: false,
+            //         scroll: true
+            //     }}
+            // />
         case elType.MENTION:
             return <span className={ stl.mention }>{ `@${el.attrs.text}` }</span>;
         case elType.RULE:
