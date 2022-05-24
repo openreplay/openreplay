@@ -12,7 +12,6 @@ import {
 import { applyFilter, setFilterOptions, resetFunnelFilters, setInitialFilters } from 'Duck/funnelFilters';
 import { withRouter } from 'react-router';
 import { sessions as sessionsRoute, funnel as funnelRoute, withSiteId } from 'App/routes';
-import EventFilter from 'Shared/EventFilter';
 import FunnelSearch from 'Shared/FunnelSearch';
 import cn from 'classnames';
 import IssuesEmptyMessage from 'Components/Funnels/IssuesEmptyMessage'
@@ -92,10 +91,6 @@ const FunnelDetails = (props) => {
       <div className="my-3" />
       {showFilters && (
         <FunnelSearch />
-        // <EventFilter
-        //   funnel={funnel}
-        //   onHide={() => setShowFilters(!showFilters)}
-        // />
       )
       }
       <div className="my-3" />  
