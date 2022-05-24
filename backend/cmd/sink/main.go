@@ -68,12 +68,12 @@ func main() {
 		false,
 	)
 
+	log.Printf("Sink service started\n")
+
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	tick := time.Tick(30 * time.Second)
-
-	log.Printf("Sink service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
