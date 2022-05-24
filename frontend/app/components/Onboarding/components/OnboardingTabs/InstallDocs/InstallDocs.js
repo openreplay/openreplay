@@ -5,6 +5,7 @@ import cn from 'classnames'
 import Highlight from 'react-highlight'
 import CircleNumber from '../../CircleNumber'
 import { Slider, CopyButton } from 'UI'
+import { Toggler } from 'UI';
 
 const installationCommand = 'npm i @openreplay/tracker'
 const usageCode = `import Tracker from '@openreplay/tracker';
@@ -56,13 +57,11 @@ function InstallDocs({ site }) {
 
         <div className="flex items-center ml-10 cursor-pointer">
           <div className="mr-2" onClick={() => setIsSpa(!isSpa)}>Server-Side-Rendered (SSR)?</div>
-          <Slider
+          <Toggler
+            checked={!isSpa}
             name="sessionsLive"
             onChange={ () => setIsSpa(!isSpa) }
-            checked={ !isSpa }
-            // className={stl.customSlider}
-            style={{ lineHeight: '23px' }}
-            // label="Server-Side-Rendered (SSR)?"
+            // style={{ lineHeight: '23px' }}
           />
         </div>
         

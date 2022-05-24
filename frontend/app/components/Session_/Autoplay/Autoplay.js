@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 import { setAutoplayValues } from 'Duck/sessions'
 import { session as sessionRoute } from 'App/routes';
-import { Link, Icon, Slider, Tooltip } from 'UI';
+import { Link, Icon, Toggler, Tooltip } from 'UI';
 import { connectPlayer } from 'Player/store';
 import { Controls as PlayerControls } from 'Player';
 
@@ -20,7 +20,7 @@ function Autoplay(props) {
 		  </Link>
       <Tooltip        
         trigger={
-          <Slider
+          <Toggler
             name="sessionsLive"
             onChange={ props.toggleAutoplay }
             checked={ autoplay }

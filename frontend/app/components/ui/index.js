@@ -26,7 +26,6 @@ export { default as CloseButton } from './CloseButton';
 export { default as SegmentSelection } from './SegmentSelection';
 export { default as TextEllipsis } from './TextEllipsis';
 export { default as Tabs } from './Tabs';
-export { default as Slider } from './Slider';
 export { default as Notification } from './Notification';
 export { default as JSONTree } from './JSONTree';
 export { default as Tooltip } from './Tooltip';
