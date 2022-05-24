@@ -11,7 +11,7 @@ interface Props {
     components?: any;
     [x:string]: any;
 }
-export default function({ plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
+export default function({ right = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const customStyles = {
         option: (provided, state) => ({
           ...provided,
@@ -20,7 +20,7 @@ export default function({ plain = false, options, isSearchable = false, componen
         menu: (provided, state) => ({
             ...provided,
             top: 31,
-            right: 0,
+            right: right ? 0 : undefined,
             minWidth: 'fit-content',
         }),
         control: (provided) => {

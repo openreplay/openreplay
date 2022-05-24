@@ -27,7 +27,7 @@ export default function withReport<P extends Props>(
                 doc.setFontSize(8);
                 doc.setTextColor(136,136,136);
                 doc.text('Page ' + String(i) + ' of ' + String(pageCount), 200,290,null,null,"right");
-                doc.addImage('/logo-open-replay-grey.png', 'png', 10, 288, 20, 0);
+                doc.addImage('/assets/img/logo-open-replay-grey.png', 'png', 10, 288, 20, 0);
             }
         }
 
@@ -125,7 +125,7 @@ export default function withReport<P extends Props>(
                 <div className="mb-2" id="report-header" style={{ display: 'none' }}>
                     <div className="flex items-end justify-between" style={{ margin: '-50px', padding: '25px 50px', backgroundColor: 'white' }}>
                         <div className="flex items-center">
-                            <img src="/logo.svg" style={{ height: '30px' }} />
+                            <img src="/img/logo.svg" style={{ height: '30px' }} />
                             <div className="text-lg color-gray-medium ml-2 mt-1">REPORT</div>
                         </div>
                         <div style={{ whiteSpace: 'nowrap' }}>

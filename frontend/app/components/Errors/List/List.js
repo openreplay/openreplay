@@ -10,6 +10,7 @@ import Divider from 'Components/Errors/ui/Divider';
 import ListItem from './ListItem/ListItem';
 import { debounce } from 'App/utils';
 import Select from 'Shared/Select';
+import EmptyStateSvg from '../../../svg/no-results.svg';
 
 const PER_PAGE = 10;
 const sortOptionsMap = {
@@ -219,9 +220,14 @@ export default class List extends React.PureComponent {
 					</div>
 					<Divider />
 					<NoContent
-						title="No Errors Found!"
+						title={
+							<div className="flex flex-col items-center justify-center">
+								<object style={{ width: "180px"}} type="image/svg+xml" data={EmptyStateSvg} />
+								<span className="mr-2">No Errors Found!</span>
+							</div>
+						}
 						subtext="Please try to change your search parameters."
-						animatedIcon="empty-state"
+						// animatedIcon="empty-state"
 						show={ !loading && list.size === 0}
 					>
 					<Loader loading={ loading }>
