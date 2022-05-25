@@ -22,12 +22,14 @@ export default function({ right = false, plain = false, options, isSearchable = 
             top: 31,
             right: right ? 0 : undefined,
             minWidth: 'fit-content',
+            zIndex: 99,
         }),
         control: (provided: any) => {
             const obj = {
                 ...provided,
                 border: 'solid thin #ddd',
                 cursor: 'pointer',
+                minHeight: '36px',
             }
             if (plain) {
                 obj['backgroundColor'] = 'transparent';
@@ -45,6 +47,10 @@ export default function({ right = false, plain = false, options, isSearchable = 
             }
             return obj;
         },
+        indicatorsContainer: (provided: any) => ({
+            ...provided,
+            padding: 0,
+        }),
         valueContainer: (provided: any) => ({
             ...provided,
             paddingRight: '0px',

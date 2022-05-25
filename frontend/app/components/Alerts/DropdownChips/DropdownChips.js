@@ -1,5 +1,6 @@
 import React from 'react'
 import { Dropdown, TagBadge } from 'UI';
+import Select from 'Shared/Select';
 
 const DropdownChips = ({ 
   textFiled = false,
@@ -15,7 +16,7 @@ const DropdownChips = ({
     onChange(selected.filter(i => i !== id))
   }
 
-  const onSelect = (e, { name, value }) => {
+  const onSelect = ({ value }) => {
     const newSlected = selected.concat(value);
     onChange(newSlected)
   };
@@ -36,7 +37,7 @@ const DropdownChips = ({
 
   const renderBadge = item => {
     const val = typeof item === 'string' ? item : item.value;
-    const text = typeof item === 'string' ? item : item.text;
+    const text = typeof item === 'string' ? item : item.label;
     return (
       <TagBadge
         className={badgeClassName}
@@ -54,13 +55,12 @@ const DropdownChips = ({
       {textFiled ? (
         <input type="text" onKeyPress={onKeyPress} placeholder={placeholder} />
       ) : (
-        <Dropdown
+        <Select
           placeholder={placeholder}
-          search
-          selection
+          isSearchable={true}
           options={ _options }
           name="webhookInput"
-          value={ '' }
+          value={null}
           onChange={ onSelect }
           {...props}
         />
