@@ -116,7 +116,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
           />
           { isAssist && <AssistTabs userId={userId} userNumericHash={userNumericHash} />}
 
-          <div className={cn("ml-auto flex items-center", { 'hidden' : closedLive })}>
+          <div className={cn("ml-auto flex items-center h-full", { 'hidden' : closedLive })}>
             { live && !isAssist && (
               <>
                 <div className={stl.liveSwitchButton}>
@@ -128,13 +128,17 @@ export default class PlayerBlockHeader extends React.PureComponent {
               </>
             )}
 
-            <SessionMetaList className="" metaList={_metaList} maxLength={2} />
+            {_metaList.length > 0 && (
+              <div className="border-l h-full flex items-center px-2">
+                <SessionMetaList className="" metaList={_metaList} maxLength={2} />
+              </div>
+            )}
 
             { isAssist && <AssistActions userId={userId} /> }
             { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>
-        <div className="relative" style={{ minWidth: '270px' }}>
+        <div className="relative border-l" style={{ minWidth: '270px' }}>
           <Tabs
             tabs={ TABS }
             active={ activeTab }

@@ -19,7 +19,7 @@ export default function RightBlock(props) {
       case props.tabs.EVENTS:
         return <EventsBlockConnected setActiveTab={props.setActiveTab} player={PlayerControls}/>
       case props.tabs.HEATMAPS:
-        return <PageInsightsPanel />
+        return <PageInsightsPanel setActiveTab={props.setActiveTab} />
     }
   }
   return (

@@ -16,10 +16,10 @@ interface Props {
 function Bookmark(props : Props ) {
   const { sessionId, favorite, isEnterprise } = props;
   const [isFavorite, setIsFavorite] = useState(favorite);
-  const ADDED_MESSAGE = isEnterprise ? 'Session added to vault' : 'Session added to your favorites';
-  const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your favorites';
-  const TOOLTIP_TEXT_ADD = isEnterprise ? 'Add to vault' : 'Add to favorites';
-  const TOOLTIP_TEXT_REMOVE = isEnterprise ? 'Remove from vault' : 'Remove from favorites';
+  const ADDED_MESSAGE = isEnterprise ? 'Session added to vault' : 'Session added to your bookmarks';
+  const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your bookmarks';
+  const TOOLTIP_TEXT_ADD = isEnterprise ? 'Add to vault' : 'Add to bookmarks';
+  const TOOLTIP_TEXT_REMOVE = isEnterprise ? 'Remove from vault' : 'Remove from bookmarks';
 
   const ACTIVE_ICON = isEnterprise ? 'safe-fill' : 'star-solid';
   const INACTIVE_ICON = isEnterprise ? 'safe' : 'star';
