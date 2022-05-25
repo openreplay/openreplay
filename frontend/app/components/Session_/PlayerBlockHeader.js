@@ -12,7 +12,6 @@ import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import UserCard from './EventsBlock/UserCard';
 import Tabs from 'Components/Session/Tabs';
-import NewBadge from 'Shared/NewBadge';
 
 import stl from './playerBlockHeader.module.css';
 import Issues from './Issues/Issues';
@@ -145,7 +144,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
             onClick={ (tab) => { setActiveTab(tab); !showEvents && toggleEvents(true) } }
             border={ true }
           />
-          <div className="absolute" style={{ left: '160px', top: '13px' }}>{ <NewBadge />}</div>
         </div>
       </div>
     );
