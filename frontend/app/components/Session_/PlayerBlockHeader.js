@@ -77,7 +77,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
       width,
       height,
       session,
-      disabled,
       jiraConfig,
       fullscreen,
       metaList,
@@ -95,7 +94,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
       sessionId,
       userId,
       userNumericHash,
-      favorite,
       live,
       metadata,
     } = session;
@@ -105,7 +103,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
     });
 
     const TABS = [ this.props.tabs.EVENTS, this.props.tabs.HEATMAPS ].map(tab => ({ text: tab, key: tab }));
-    console.log(showEvents, activeTab)
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
         <div className="flex w-full items-center">

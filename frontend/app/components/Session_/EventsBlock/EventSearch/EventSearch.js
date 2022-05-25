@@ -17,7 +17,7 @@ function EventSearch(props) {
         <div className='flex flex-center justify-between'>
           <span>{header}</span>
           <div
-            onClick={() => { toggleEvents(); setActiveTab('')}}
+            onClick={() => { setActiveTab(''); toggleEvents(); }}
             className=" flex items-center justify-center bg-white cursor-pointer"
           >
             <Icon name="close" size="18" />
