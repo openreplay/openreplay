@@ -3,6 +3,7 @@ import stl from './SelectorCard.module.css'
 import cn from 'classnames';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
 import { activeTarget } from 'Player';
+import { Tooltip } from 'react-tippy';
 
 interface Props {
   index?: number,
@@ -14,7 +15,8 @@ export default function SelectorCard({ index = 1, target, showContent } : Props)
   return (
     <div className={cn(stl.wrapper, { [stl.active]: showContent })} onClick={() => activeTarget(index)}>
       <div className={stl.top}>
-        <div className={stl.index}>{index + 1}</div>
+        {/* @ts-ignore */}
+        <Tooltip position='top' title="Rank of the most clicked element"><div className={stl.index}>{index + 1}</div></Tooltip>
         <div className="truncate">{target.selector}</div>
       </div>
       { showContent && (
