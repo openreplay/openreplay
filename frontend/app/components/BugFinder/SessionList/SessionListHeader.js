@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import SortDropdown from '../Filters/SortDropdown';
-import DateRange from '../DateRange';
-import { TimezoneDropdown } from 'UI';
 import { numberWithCommas } from 'App/utils';
 import SelectDateRange from 'Shared/SelectDateRange';
-import { setPeriod } from 'Duck/search';
+import { applyFilter } from 'Duck/search';
+import Period from 'Types/app/period';
 
 const sortOptionsMap = {
   'startTs-desc': 'Newest',
@@ -20,10 +19,16 @@ const sortOptions = Object.entries(sortOptionsMap)
 function SessionListHeader({
   activeTab,
   count,
-  period,
-  setPeriod,
-  ...props
+  applyFilter,
+  filter,
 }) {
+  const { startDate, endDate, rangeValue } = filter;
+  const period = new Period({ start: startDate, end: endDate, rangeName: rangeValue });
+
+  const onDateChange = (e) => {
+    const dateValues = e.toJSON();
+    applyFilter(dateValues);
+  };
   return (
     <div className="flex mb-6 justify-between items-end">
       <div className="flex items-baseline">
@@ -34,10 +39,9 @@ function SessionListHeader({
         { activeTab.type !== 'bookmark' && (
           <div className="ml-3 flex items-center">
             <span className="mr-2 color-gray-medium">Sessions Captured in</span>
-            {/* <DateRange /> */}
             <SelectDateRange
                 period={period}
-                onChange={setPeriod}
+                onChange={onDateChange}
             />
           </div>
         )}
@@ -55,4 +59,5 @@ function SessionListHeader({
 export default connect(state => ({
   activeTab: state.getIn([ 'search', 'activeTab' ]),
   period: state.getIn([ 'search', 'period' ]),
-}), { setPeriod })(SessionListHeader);
+  filter: state.getIn([ 'search', 'instance' ]),
+}), { applyFilter })(SessionListHeader);
