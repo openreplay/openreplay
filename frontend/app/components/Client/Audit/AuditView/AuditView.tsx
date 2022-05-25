@@ -50,7 +50,7 @@ function AuditView(props) {
                     <AuditSearchField onChange={(value) => auditStore.updateKey('searchQuery', value) }/>
                     <div>
                         <button className="color-teal flex items-center ml-3" onClick={exportToCsv}>
-                            <Icon name="grid-3x3" color="fill-gray-medium" />
+                            <Icon name="grid-3x3" color="teal" />
                             <span className="ml-2">Export to CSV</span>
                         </button>
                     </div>
