@@ -135,7 +135,7 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={loading} size="small" style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
+        <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));
