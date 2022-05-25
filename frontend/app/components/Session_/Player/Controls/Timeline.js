@@ -87,6 +87,7 @@ export default class Timeline extends React.PureComponent {
     const { endTime } = this.props;
     const p = e.nativeEvent.offsetX / e.target.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
+    console.log(p, time, e, endTime)
     this.props.jump(time);
   }
 

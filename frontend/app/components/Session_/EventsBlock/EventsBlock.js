@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
+import { Icon } from 'UI';
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 import { TYPES } from 'Types/session/event';
 import { setSelected } from 'Duck/events';
@@ -185,6 +186,7 @@ export default class EventsBlock extends React.PureComponent {
 
     const _events = filteredEvents || events;
 
+    const isEmptySearch = query && (_events.size === 0 || !_events)
     return (
       <>
         <div className={ cn(styles.header, 'p-4') }>
@@ -207,6 +209,12 @@ export default class EventsBlock extends React.PureComponent {
           onMouseOver={ this.onMouseOver }
           onMouseLeave={ this.onMouseLeave }
         >
+          {isEmptySearch && (
+            <div className='flex items-center'> 
+              <Icon name="binoculars" size={18} />
+              <span className='ml-2'>No Matching Results</span>
+            </div>
+          )}
           <AutoSizer disableWidth>
             {({ height }) => (
               <List
