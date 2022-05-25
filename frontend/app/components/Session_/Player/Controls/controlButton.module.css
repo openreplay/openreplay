@@ -19,15 +19,15 @@
     height: 6px;
     border-radius: 3px;
     background-color: red;
-    top: 12px;
-    left: 23px;
+    bottom: 0px;
+    right: 0px;
     position: absolute;
   }
   
   & .countLabel {
     position: absolute;
     top: -6px;
-    left: 12px;
+    right: -6px;
     background-color: $gray-dark;
     color: white;
     font-size: 9px;

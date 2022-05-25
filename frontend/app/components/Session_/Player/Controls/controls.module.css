@@ -7,17 +7,15 @@
 }
 
 .controls {
-  /* margin-top: 10px; */
-  border-top: solid thin $gray-light;
-  padding-top: 36px;
-  padding-bottom: 10px;
+  padding-top: 10px;
+  position: relative;
 }
 
 .buttons {
   display: flex;
   justify-content: space-between;
-  margin-top: 7px;
   align-items: center;
+  height: 65px;
   padding: 0 30px;
   &[data-is-live=true] {
     padding: 0;

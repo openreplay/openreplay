@@ -50,15 +50,15 @@ function getStorageIconName(type) {
 function getStorageName(type) {
   switch(type) {
     case STORAGE_TYPES.REDUX:
-      return "Redux";
+      return "REDUX";
     case STORAGE_TYPES.MOBX:
-      return "MobX";
+      return "MOBX";
     case STORAGE_TYPES.VUEX:
-      return "Vuex";
+      return "VUEX";
     case STORAGE_TYPES.NGRX:
-      return "NgRx";
+      return "NGRX";
     case STORAGE_TYPES.NONE:
-      return "State";
+      return "STATE";
   }
 }
 
@@ -204,24 +204,31 @@ export default class Controls extends React.Component {
     let label;
     let icon;
     if (completed) {
-      label = 'Replay';
       icon = 'redo';
     } else if (playing) {
-      label = 'Pause';
-      icon = 'pause';
+      icon = 'play-fill-new';
     } else {
-      label = 'Play';
-      icon = 'play';
+      icon = 'pause-fill';
     }
+
     return (
-      <ControlButton
-        disabled={ disabled }
-        onClick={ this.props.togglePlay }
-        icon={ icon }
-        label={ label }
-      />
-    );
+      <div 
+        onClick={this.props.togglePlay}
+        className="mr-2 hover-main color-gray-medium cursor-pointer rounded hover:bg-gray-light-shade"
+      >
+          <Icon name={icon} size="36" color="inherit" />
+      </div>
+    )
   }
+
+  controlIcon = (icon, size, action, isBackwards, additionalClasses) => 
+    <div 
+        onClick={ action } 
+        className={cn("py-1 px-2 color-gray-medium hover-main cursor-pointer", additionalClasses)}
+        style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
+      >
+        <Icon name={icon} size={size} color="inherit" />
+    </div>
 
   render() {
     const {      
@@ -267,21 +274,42 @@ export default class Controls extends React.Component {
           <div className={ styles.buttons } data-is-live={ live }>
             <div>
               { !live && (
-                <div className={ styles.buttonsLeft }>
+                <div className="flex items-center">
                   { this.renderPlayBtn() }
-                  <ControlButton
-                    onClick={ this.backTenSeconds }
-                    disabled={ disabled }
-                    label="Back"
-                    icon="replay-10"
-                  />
-                  {/* <ControlButton
-                    disabled={ disabled }
-                    onClick={ this.props.toggleSkipToIssue }
-                    active={ skipToIssue }
-                    label="Skip to Issue"
-                    icon={skipToIssue ? 'skip-forward-fill' : 'skip-forward'}
-                  /> */}
+                  { !live && (
+                    <div className="flex items-center font-semibold">
+                      <ReduxTime isCustom name="time" />
+                      <span className="px-1">/</span>
+                      <ReduxTime isCustom name="endTime" />
+                    </div>
+                  )}
+
+                  <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
+                    {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border')}
+                    <div className='p-1 border-l border-r bg-active-blue-border border-active-blue-border'>10s</div>
+                    {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border')}
+                  </div>
+
+                  {!live &&
+                    <div className='flex items-center mx-4'>
+                      <button
+                        className={ styles.speedButton }
+                        onClick={ this.props.toggleSpeed }
+                        data-disabled={ disabled }
+                      >
+                        <div>{ speed + 'x' }</div>
+                      </button>
+                      
+                      <button
+                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip }) }
+                        onClick={ this.props.toggleSkip }
+                        data-disabled={ disabled }
+                      >
+                        <span className={ styles.checkIcon } />
+                        { 'Skip Inactivity' }
+                      </button>
+                    </div>
+                  }
                 </div>
               )}
 
@@ -294,50 +322,59 @@ export default class Controls extends React.Component {
               )}
             </div>
 
-            <div className={ styles.butonsRight }>
-              {!live &&
-                <React.Fragment>
-                  <button
-                    className={ styles.speedButton }
-                    onClick={ this.props.toggleSpeed }
-                    data-disabled={ disabled }
-                  >
-                    <div>{ speed + 'x' }</div>
-                  </button>
-                  
-                  <button
-                    className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip }) }
-                    onClick={ this.props.toggleSkip }
-                    data-disabled={ disabled }
-                  >
-                    <span className={ styles.checkIcon } />
-                    { 'Skip Inactivity' }
-                  </button>
-                </React.Fragment>
-              }
-
-              { !live && <div className={ styles.divider } /> }
-              
+            <div className="flex items-center h-full">
+              { !live && <div className={cn(styles.divider, 'h-full')} /> }
+              {!live && (
+                <ControlButton
+                  disabled={ disabled && !inspectorMode }
+                  active={ bottomBlock === INSPECTOR }
+                  onClick={ toggleInspectorMode }
+                  noIcon
+                  labelClassName="text-base font-semibold"
+                  label="INSPECT"
+                />
+              )}
+              <ControlButton
+                disabled={ disabled }
+                onClick={ () => toggleBottomBlock(CONSOLE) }
+                active={ bottomBlock === CONSOLE }
+                label="CONSOLE"
+                noIcon
+                labelClassName="text-base font-semibold"
+                count={ logCount }
+                hasErrors={ logRedCount > 0 }
+              />
               { !live &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(NETWORK) }
                   active={ bottomBlock === NETWORK }
-                  label="Network"
-                  // count={ redResourceCount }
+                  label="NETWORK"
                   hasErrors={ resourceRedCount > 0 }
-                  icon="wifi"
+                  noIcon
+                  labelClassName="text-base font-semibold"
                 />
               }
-              { showFetch &&
+              {!live && 
+                <ControlButton
+                  disabled={ disabled }
+                  onClick={ () => toggleBottomBlock(PERFORMANCE) }
+                  active={ bottomBlock === PERFORMANCE }
+                  label="PERFORMANCE"
+                  noIcon
+                  labelClassName="text-base font-semibold"
+                />
+              }
+              {showFetch &&
                 <ControlButton
                   disabled={disabled}
                   onClick={ ()=> toggleBottomBlock(FETCH) }
                   active={ bottomBlock === FETCH }
                   hasErrors={ fetchRedCount > 0 }
                   count={ fetchCount }
-                  label="Fetch"
-                  icon="fetch"
+                  label="FETCH"
+                  noIcon
+                  labelClassName="text-base font-semibold"
                 />
               }
               { !live && showGraphql &&
@@ -346,8 +383,9 @@ export default class Controls extends React.Component {
                   onClick={ ()=> toggleBottomBlock(GRAPHQL) }
                   active={ bottomBlock === GRAPHQL }
                   count={ graphqlCount }
-                  label="GraphQL"
-                  icon="vendors/graphql"
+                  label="GRAPHQL"
+                  noIcon
+                  labelClassName="text-base font-semibold"
                 />
               }
               { !live && showStorage &&
@@ -357,18 +395,8 @@ export default class Controls extends React.Component {
                   active={ bottomBlock === STORAGE }
                   count={ storageCount }
                   label={ getStorageName(storageType) }
-                  icon={ getStorageIconName(storageType) }
-                />
-              }
-              { 
-                <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(CONSOLE) }
-                  active={ bottomBlock === CONSOLE }
-                  label="Console"
-                  icon="console"
-                  count={ logCount }
-                  hasErrors={ logRedCount > 0 }
+                  noIcon
+                  labelClassName="text-base font-semibold"
                 />
               }
               { showExceptions &&
@@ -376,8 +404,9 @@ export default class Controls extends React.Component {
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(EXCEPTIONS) }
                   active={ bottomBlock === EXCEPTIONS }
-                  label="Exceptions"
-                  icon="console/error"
+                  label="EXCEPTIONS"
+                  noIcon
+                  labelClassName="text-base font-semibold"
                   count={ exceptionsCount }
                   hasErrors={ exceptionsCount > 0 }
                 />
@@ -387,8 +416,9 @@ export default class Controls extends React.Component {
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STACKEVENTS) }
                   active={ bottomBlock === STACKEVENTS }
-                  label="Events"
-                  icon="puzzle-piece"
+                  label="EVENTS"
+                  noIcon
+                  labelClassName="text-base font-semibold"
                   count={ stackCount }
                   hasErrors={ stackRedCount > 0 }
                 />
@@ -399,51 +429,15 @@ export default class Controls extends React.Component {
                   onClick={ () => toggleBottomBlock(PROFILER) }
                   active={ bottomBlock === PROFILER }
                   count={ profilesCount }
-                  label="Profiler"
-                  icon="code"
+                  label="PROFILER"
+                  noIcon
+                  labelClassName="text-base font-semibold"
                 />
               }              
-              {
-                !live && 
-                <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(PERFORMANCE) }
-                  active={ bottomBlock === PERFORMANCE }
-                  label="Performance"
-                  icon="tachometer-slow"
-                />
-              }
-              {/* { !live && showLongtasks &&
-                <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(LONGTASKS) }
-                  active={ bottomBlock === LONGTASKS }
-                  label="Long Tasks"
-                  icon="business-time"
-                />
-              } */}
-              
+              { !live && <div className={cn(styles.divider, 'h-full')} /> }
               { !live && 
-                <React.Fragment>
-                  <ControlButton
-                    disabled={ fullscreenDisabled }
-                    onClick={ this.props.fullscreenOn }
-                    label="Full Screen"
-                    icon="fullscreen"
-                  />
-                </React.Fragment>
+                  this.controlIcon("arrows-angle-extend", 18, this.props.fullscreenOn, false, "rounded hover:bg-gray-light-shade")
               }
-                         
-
-              {!live && (
-                <ControlButton
-                  disabled={ disabled && !inspectorMode }
-                  active={ bottomBlock === INSPECTOR }
-                  onClick={ toggleInspectorMode }
-                  icon={ inspectorMode ? 'close' : 'inspect' }
-                  label="Inspect"
-                />
-              )}
             </div>
           </div>
         }

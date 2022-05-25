@@ -16,9 +16,8 @@
 .playedTimeline {
   display: block;
   height: 100%;
-  border-radius: 4px;
-  background-color: $teal;
+  background-color: $active-blue-border;
   pointer-events: none;
-  height: 2px;
+  height: 10px;
   z-index: 1;
 }
