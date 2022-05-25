@@ -3,8 +3,8 @@ import { Duration } from 'luxon';
 import { connectPlayer } from 'Player';
 import styles from './time.module.css';
 
-const Time = ({ time }) => (
-  <div className={ styles.time }>
+const Time = ({ time, isCustom }) => (
+  <div className={ !isCustom && styles.time }>
     { Duration.fromMillis(time).toFormat('m:ss') }
   </div>
 )

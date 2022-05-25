@@ -119,12 +119,12 @@ export default class PlayerBlockHeader extends React.PureComponent {
           <div className={cn("ml-auto flex items-center h-full", { 'hidden' : closedLive })}>
             { live && !isAssist && (
               <>
-                <div className={stl.liveSwitchButton}>
+                <div className={cn(stl.liveSwitchButton, 'pr-4')}>
                   <Link to={withSiteId(liveSessionRoute(sessionId), siteId)}>
                       This Session is Now Continuing Live
                   </Link>
                 </div>
-                <div className={ stl.divider } />
+                {_metaList.length > 0 && <div className={ stl.divider } />}
               </>
             )}
 

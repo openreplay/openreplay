@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
-import { TimelinePointer } from 'UI';
+import { Popup, TimelinePointer, Icon } from 'UI';
 import TimeTracker from './TimeTracker';
 import { ReduxTime } from './Time';
 import stl from './timeline.module.css';
@@ -11,20 +11,21 @@ import { setTimelinePointer } from 'Duck/sessions';
 import DraggableCircle from './DraggableCircle';
 import CustomDragLayer from './CustomDragLayer';
 import { debounce } from 'App/utils';
+import { Tooltip } from 'react-tippy';
 
 const getPointerIcon = (type) => {
-  // exception, 
+  // exception,
   switch(type) {
     case 'fetch':
       return 'funnel/file-earmark-minus-fill';
     case 'exception':
-      return 'funnel/exclamation-circle';
+      return 'funnel/exclamation-circle-fill';
     case 'log':
-      return 'funnel/exclamation-circle';
+      return 'funnel/exclamation-circle-fill';
     case 'stack':
       return 'funnel/patch-exclamation-fill';
     case 'resource':
-      return 'funnel/file-medical-alt';
+      return 'funnel/file-earmark-minus-fill';
 
     case 'dead_click':
       return 'funnel/dizzy';
@@ -47,10 +48,10 @@ const getPointerIcon = (type) => {
     case 'crash':
       return 'funnel/file-exclamation';
     case 'js_exception':
-      return 'funnel/exclamation-circle';
+      return 'funnel/exclamation-circle-fill';
   }
 
-  return 'info';    
+  return 'info';
 }
 
 
@@ -72,7 +73,7 @@ let deboucneJump = () => null;
   fetchList: state.fetchList,
 }))
 @connect(state => ({
-  issues: state.getIn([ 'sessions', 'current', 'issues' ]),  
+  issues: state.getIn([ 'sessions', 'current', 'issues' ]),
   clickRageTime: state.getIn([ 'sessions', 'current', 'clickRage' ]) &&
     state.getIn([ 'sessions', 'current', 'clickRageTime' ]),
   returningLocationTime: state.getIn([ 'sessions', 'current', 'returningLocation' ]) &&
@@ -143,10 +144,10 @@ export default class Timeline extends React.PureComponent {
     const scale = 100 / endTime;
 
     return (
-      <div 
-        className={ cn("flex items-center") }
+      <div
+        className={ cn("flex items-center absolute w-full") }
+        style={{ top: '-5px', zIndex: 100}}
       >
-        { !live && <ReduxTime name="time" /> }
         <div
           className={ stl.progress }
           onClick={ disabled ? null : this.seekProgress }
@@ -176,219 +177,98 @@ export default class Timeline extends React.PureComponent {
             }
             {
               issues.map(iss => (
-                <div 
-                  style={ { 
+                <div
+                  style={ {
                     left: `${ iss.time * scale }%`,
-                    top: '-30px'
-                    //width: `${ 2000 * scale }%`
-                  } } 
+                    top: '0px',
+                    zIndex: 11, width: 16, height: 16
+                  } }
                   key={iss.key}
                   className={ stl.clickRage }
                   onClick={ this.createEventClickHandler(iss) }
                 >
-                  <TimelinePointer
-                    icon={iss.icon}
-                    content={
+                  <Tooltip
+                    delay={0}
+                    position="top"
+                    html={
                       <div className={ stl.popup }>
                         <b>{ iss.name }</b>
-                      </div> 
-                    } 
-                  />
+                      </div>
+                    }
+                  >
+                    <Icon className="rounded-full p-px bg-white" name={iss.icon} size="16" />
+                  </Tooltip>
                 </div>
               ))
             }
             { events.filter(e => e.type === TYPES.CLICKRAGE).map(e => (
-              <div 
-                style={ { 
+              <div
+                style={ {
                   left: `${ e.time * scale }%`,
-                  top: '-30px'
-                  //width: `${ 2000 * scale }%`
-                } } 
+                  top: '0px',
+                  zIndex: 11, width: 16, height: 16
+                } }
                 key={e.key}
                 className={ stl.clickRage }
                 onClick={ this.createEventClickHandler(e) }
               >
-                <TimelinePointer
-                  icon={getPointerIcon('click_rage')}
-                  content={
+                <Tooltip
+                  delay={0}
+                  position="top"
+                  html={
                     <div className={ stl.popup }>
                       <b>{ "Click Rage" }</b>
-                    </div> 
-                  } 
-                />
+                    </div>
+                  }
+                >
+                  <Icon className="rounded-full p-px bg-white" name={getPointerIcon('click_rage')} size="16" />
+                </Tooltip>
               </div>
-              // <Popup
-              //   pinned
-              //   offset="-19"
-              //   trigger={
-              //     <div 
-              //       style={ { 
-              //         left: `${ e.time * scale }%`,
-              //         //width: `${ 2000 * scale }%`
-              //       } } 
-              //       className={ stl.clickRage }
-              //     />
-              //   }
-              //   content={ 
-              //     <div className={ stl.popup }>
-              //       <b>{ "Click Rage" }</b>
-              //     </div> 
-              //   }
-              // />
             ))}
-            { typeof clickRageTime === 'number' &&
-              <div 
-                style={ { 
+            {typeof clickRageTime === 'number' &&
+              <div
+                style={{
                   left: `${ clickRageTime * scale }%`,
-                  top: '-30px'
-                  //width: `${ 2000 * scale }%`
-                } } 
-                className={ stl.clickRage }
+                  top: '-0px',
+                  zIndex: 11, width: 16, height: 16
+                }}
+                className={stl.clickRage}
               >
-                <TimelinePointer
-                  icon={getPointerIcon('click_rage')}
-                  content={
+                <Tooltip
+                  delay={0}
+                  position="top"
+                  html={
                     <div className={ stl.popup }>
                       <b>{ "Click Rage" }</b>
-                    </div> 
-                  } 
-                />
+                    </div>
+                  }
+                >
+                  <Icon className="rounded-full p-px bg-white" name={getPointerIcon('click_rage')} size="16" />
+                </Tooltip>
               </div>
-              // <Popup
-              //   pinned
-              //   offset="-19"
-              //   trigger={
-              //     <div 
-              //       style={ { 
-              //         left: `${ clickRageTime * scale }%`,
-              //         //width: `${ 2000 * scale }%`
-              //       } } 
-              //       className={ stl.clickRage }
-              //     />
-              //   }
-              //   content={ 
-              //     <div className={ stl.popup }>
-              //       <b>{ "Click Rage" }</b>
-              //     </div> 
-              //   }
-              // />
             }
-            { /* typeof returningLocationTime === 'number' &&
-              <Popup
-                pinned
-                offset="-19"
-                trigger={
-                  <div 
-                    style={ { 
-                      left: `${ returningLocationTime * scale }%`,
-                      //width: `${ 2000 * scale }%`
-                    } } 
-                    className={ stl.returningLocation }
-                    onClick={ this.createEventClickHandler(returningLocationTime) }
-                  />
-                }
-                content={ 
-                  <div className={ stl.popup }>
-                    <b>{ "Returning Location" }</b>
-                  </div> 
-                }
-              />
-             */ }
             { exceptionsList
               .map(e => (
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '-30px' } }
+                  style={ { left: `${ e.time * scale }%`, top: '0px', zIndex: 10, width: 16, height: 16 } }
                   onClick={ this.createEventClickHandler(e) }
                 >
-                  <TimelinePointer
-                    icon={getPointerIcon('exception')}
-                    content={ 
+                  <Tooltip
+                    delay={0}
+                    position="top"
+                    html={
                       <div className={ stl.popup } >
                         <b>{ "Exception" }</b>
                         <br/>
                         <span>{ e.message }</span>
-                      </div>  
-                    }
-                  />
+                      </div>
+                  }
+                  >
+                    <Icon className="rounded-full p-px bg-white" name={getPointerIcon('exception')} size="16" />
+                  </Tooltip>
                 </div>
-                // <Popup
-                //   key={ e.key }
-                //   offset="-19"
-                //   pinned
-                //   className="error"
-                //   trigger={
-                //     <div
-                //       key={ e.key }
-                //       className={ cn(stl.markup, stl.error) }
-                //       style={ { left: `${ e.time * scale }%` } }
-                //       onClick={ this.createEventClickHandler(e.time) }
-                //     />
-                //   }
-                //   content={ 
-                //     <div className={ stl.popup } >
-                //       <b>{ "Exception:" }</b>
-                //       <br/>
-                //       <span>{ e.message }</span>
-                //     </div>  
-                //   }
-                // />
-              ))
-            }
-            { logList
-              .map(l => l.isRed() && (
-                <div
-                  key={ l.key }
-                  className={ cn(stl.markup, {
-                    [ stl.error ]: l.isRed(),
-                    //[ stl.warning ]: l.isYellow(),
-                    //[ stl.info ]: !l.isYellow() && !l.isRed(),
-                  }) }
-                  style={ { left: `${ l.time * scale }%`, top: '-30px' } }
-                  onClick={ this.createEventClickHandler(l) }
-                >
-                  <TimelinePointer
-                    icon={getPointerIcon('log')}
-                    content={ 
-                      <div className={ stl.popup } >
-                        <b>{ "Console" }</b>
-                        <br/>
-                        <span>{ l.value }</span>
-                      </div> 
-                    }
-                  />
-                </div>
-                // <Popup
-                //   //on="click"
-                //   key={ l.key }
-                //   offset="-19"
-                //   pinned
-                //   className={ cn({
-                //     "info": !l.isYellow() && !l.isRed(),
-                //     "warn": l.isYellow(),
-                //     "error": l.isRed(),
-                //   })}
-                //   trigger={
-                //     <div
-                //       key={ l.key }
-                //       className={ cn(stl.markup, {
-                //         [ stl.error ]: l.isRed(),
-                //         //[ stl.warning ]: l.isYellow(),
-                //         //[ stl.info ]: !l.isYellow() && !l.isRed(),
-                //       }) }
-                //       style={ { left: `${ l.time * scale }%` } }
-                //       onClick={ this.createEventClickHandler(l.time) }
-                //     />
-                //   }
-                //   content={ 
-                //     <div className={ stl.popup } >
-                //       <b>{ "Console:" }</b>
-                //       <br/>
-                //       <span>{ l.value }</span>
-                //     </div>  
-                //   }
-                // />
               ))
             }
             { resourceList
@@ -396,49 +276,27 @@ export default class Timeline extends React.PureComponent {
               .map(r => (
                 <div
                   key={ r.key }
-                  className={ cn(stl.markup, { 
+                  className={ cn(stl.markup, {
                     [ stl.error ]: r.isRed(),
                     [ stl.warning ]: r.isYellow(),
                   }) }
-                  style={ { left: `${ r.time * scale }%`, top: '-30px' } }
+                  style={ { left: `${ r.time * scale }%`, top: '0px', zIndex: 10, width: 16, height: 16 } }
                   onClick={ this.createEventClickHandler(r) }
                 >
-                  <TimelinePointer
-                    icon={getPointerIcon('resource')}
-                    content={ 
+                  <Tooltip
+                    delay={0}
+                    position="top"
+                    html={
                       <div className={ stl.popup }>
                         <b>{ r.success ? "Slow resource: " : "Missing resource:" }</b>
                         <br/>
                         { r.name }
-                      </div> 
-                    }
-                  />
+                      </div>
+                  }
+                  >
+                    <Icon className="rounded-full p-px bg-white" name={getPointerIcon('resource')} size="16" />
+                  </Tooltip>
                 </div>
-                // <Popup
-                //   key={ r.key }
-                //   offset="-19"
-                //   pinned
-                //   trigger={
-                //     <div
-                //       key={ r.key }
-                //       className={ cn(stl.markup, { 
-                //         [ stl.error ]: r.isRed(),
-                //         [ stl.warning ]: r.isYellow(),
-                //       }) }
-                //       style={ { left: `${ r.time * scale }%` } }
-                //       onClick={ this.createEventClickHandler(r.time) }
-                //     >
-                      
-                //     </div>
-                //   }
-                //   content={ 
-                //     <div className={ stl.popup }>
-                //       <b>{ r.success ? "Slow resource: " : "Missing resource:" }</b>
-                //       <br/>
-                //       { r.name }
-                //     </div> 
-                //   }
-                // />
               ))
             }
             { fetchList
@@ -447,39 +305,20 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '-30px' } }
+                  style={ { left: `${ e.time * scale }%`, top: '-5px' } }
                   onClick={ this.createEventClickHandler(e) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('fetch')}
-                    content={ 
+                    content={
                       <div className={ stl.popup }>
                         <b>{ "Failed Fetch" }</b>
                         <br/>
                         { e.name }
-                      </div> 
+                      </div>
                     }
                   />
-                </div>                
-                // <Popup
-                //   offset="-19"
-                //   pinned
-                //   trigger={
-                //     <div
-                //       key={ e.key }
-                //       className={ cn(stl.markup, stl.error) }
-                //       style={ { left: `${ e.time * scale }%` } }
-                //       onClick={ this.createEventClickHandler(e.time) }
-                //     />
-                //   }
-                //   content={ 
-                //     <div className={ stl.popup }>
-                //       <b>{ "Failed Fetch:" }</b>
-                //       <br/>
-                //       { e.name }
-                //     </div> 
-                //   }
-                // />
+                </div>
               ))
             }
             { stackList
@@ -488,43 +327,23 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '-30px' } }
+                  style={ { left: `${ e.time * scale }%`, top: '-5px' } }
                   onClick={ this.createEventClickHandler(e) }
                 >
                   <TimelinePointer
                     icon={getPointerIcon('stack')}
-                    content={ 
+                    content={
                       <div className={ stl.popup }>
                         <b> { "Stack Event" }</b>
                         <br/>
                         { e.name }
-                      </div> 
+                      </div>
                     }
                   />
                 </div>
-                // <Popup
-                //   offset="-19"
-                //   pinned
-                //   trigger={
-                //     <div
-                //       key={ e.key }
-                //       className={ cn(stl.markup, stl.error) }
-                //       style={ { left: `${ e.time * scale }%` } }
-                //       onClick={ this.createEventClickHandler(e.time) }
-                //     />
-                //   }
-                //   content={ 
-                //     <div className={ stl.popup }>
-                //       <b> { "Stack Event:" }</b>
-                //       <br/>
-                //       { e.name }
-                //     </div> 
-                //   }
-                // />
               ))
             }
         </div>
-        { !live && <ReduxTime name="endTime" /> }
       </div>
     );
   }
