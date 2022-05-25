@@ -311,7 +311,7 @@ export default class DOMManager extends ListWalker<Message> {
     return this.stylesManager.moveReady(t).then(() => {
       // Apply all scrolls after the styles got applied
       this.nodeScrollManagers.forEach(manager => {
-        const msg = manager.moveGetLast(t)
+        const msg = manager.moveToLast(t)
         if (!!msg && !!this.nl[msg.id]) {
           const node = this.nl[msg.id] as HTMLElement
           node.scrollLeft = msg.x
