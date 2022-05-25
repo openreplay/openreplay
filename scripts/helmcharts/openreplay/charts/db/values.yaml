@@ -90,7 +90,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
+  CLICKHOUSE_STRING: tcp://clickhouse-openreplay-clickhouse.db.svc.cluster.local:9000/default
 
 
 nodeSelector: {}
