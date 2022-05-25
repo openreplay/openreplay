@@ -17,7 +17,7 @@ function Autoplay(props) {
 
   return (
     <div className="flex items-center">
-      <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-2">
+      <div onClick={props.toggleAutoplay} className="cursor-pointer flex items-center mr-2 hover:bg-gray-light-shade rounded-md p-1">
         <Toggler
           name="sessionsLive"
           onChange={ props.toggleAutoplay }
@@ -39,7 +39,7 @@ function Autoplay(props) {
         )}
       >
         <Link to={ sessionRoute(previousId) } disabled={!previousId}> 
-          <Icon name="prev1" className="group-hover:fill-blue" color="inherit" size="16" />
+          <Icon name="prev1" className="group-hover:fill-main group-hover:bg-bg-blue" color="inherit" size="16" />
         </Link>
       </Tooltip>
 
@@ -56,7 +56,7 @@ function Autoplay(props) {
         )}
       >
         <Link to={ sessionRoute(nextId) } disabled={!nextId} >
-          <Icon name="next1" className="group-hover:fill-blue" color="inherit" size="16" />
+          <Icon name="next1" className="group-hover:fill-main group-hover:bg-bg-blue" color="inherit" size="16" />
         </Link>
       </Tooltip>
     </div>

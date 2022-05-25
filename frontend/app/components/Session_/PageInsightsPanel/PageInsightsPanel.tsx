@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Dropdown, Loader } from 'UI';
+import { Dropdown, Loader, Icon } from 'UI';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
 import { fetchInsights } from 'Duck/sessions';
@@ -19,10 +19,11 @@ interface Props {
   urlOptions: Array<any>
   loading: boolean
   host: string
+  setActiveTab: (tab) => void
 }
 
 function PageInsightsPanel({
-  filters, fetchInsights, events = [], insights, urlOptions, host, loading = true
+  filters, fetchInsights, events = [], insights, urlOptions, host, loading = true, setActiveTab
 }: Props) {
   const [insightsFilters, setInsightsFilters] = useState(filters)
   const defaultValue = (urlOptions && urlOptions[0]) ? urlOptions[0].value : ''
@@ -61,16 +62,23 @@ function PageInsightsPanel({
   };
 
   return (
-    <div className="px-4 bg-white" style={{ width: 270 }}>
-      <div className="my-3 flex -ml-2">
-        {/* <DateRange
-          rangeValue={insightsFilters.rangeValue}
-          startDate={insightsFilters.startDate}
-          endDate={insightsFilters.endDate}
-          onDateChange={onDateChange}
-          customHidden
-        /> */}
-        <SelectDateRange period={period} onChange={onDateChange} disableCustom />
+    <div className="p-4 bg-white" style={{ width: 270 }}>
+      <div className="pt-2 pb-3 flex items-center" style={{ maxWidth: '241px' }}>
+        <div className="-ml-1 text-lg">
+          <DateRange
+            rangeValue={insightsFilters.rangeValue}
+            startDate={insightsFilters.startDate}
+            endDate={insightsFilters.endDate}
+            onDateChange={onDateChange}
+            customHidden
+          />
+        </div>
+        <div
+            onClick={() => { setActiveTab('');  }}
+            className="ml-auto flex items-center justify-center bg-white cursor-pointer"
+          >
+            <Icon name="close" size="18" />
+          </div>
       </div>
       <div className="mb-4 flex items-center">
         <div className="mr-2 flex-shrink-0">In Page</div>

@@ -9,6 +9,7 @@ import cn from 'classnames'
 import { withRequest } from 'HOCs'
 import SessionInfoItem from '../../SessionInfoItem'
 import SessionList from '../Metadata/SessionList';
+import { Tooltip } from 'react-tippy'
 
 function UserCard({
   className,
@@ -71,11 +72,12 @@ function UserCard({
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <span className='capitalize'>{userBrowser}, {userOs}, {userDevice}</span>
             <span className="mx-1 font-bold text-xl">&#183;</span>
-            <Popup
-                trigger={<span className="color-teal cursor-pointer">More</span>}
-
-                content={(
-                  <div className=''>
+            <Tooltip
+                theme='light'
+                arrow
+                interactive
+                html={(
+                  <div className='text-left'>
                     <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={<span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt)}</span> } />
                     <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={ `v${ userBrowserVersion }` } />
                     <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={ userOsVersion } />
@@ -86,7 +88,9 @@ function UserCard({
                 hoverable
                 disabled={false}
                 on="hover"
-            />
+            >
+              <span className="color-teal cursor-pointer">More</span>
+            </Tooltip>
           </div>
         </div>
       </div>
