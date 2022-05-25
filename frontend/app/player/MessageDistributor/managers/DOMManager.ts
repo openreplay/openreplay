@@ -297,25 +297,26 @@ export default class DOMManager extends ListWalker<Message> {
   }
 
   moveReady(t: number): Promise<void> {
-    this.moveApply(t, this.applyMessage); // This function autoresets pointer if necessary (better name?)
-    this.nodeScrollManagers.forEach(manager => {
-      const msg = manager.moveGetLast(t); // TODO: reset (?)
-      
-      if (!!msg && !!this.nl[msg.id]) {
-        const node = this.nl[msg.id] as HTMLElement;
-        node.scrollLeft = msg.x;
-        node.scrollTop = msg.y;
-      }
-    });
+    this.moveApply(t, this.applyMessage) // This function autoresets pointer if necessary (better name?)
 
     /* Mount body as late as possible */
     if (this.postponedBodyMessage != null) {
       this.insertNode(this.postponedBodyMessage)
-      this.postponedBodyMessage = null;
+      this.postponedBodyMessage = null
     }
 
     // Thinkabout (read): css preload
     // What if we go back before it is ready? We'll have two handlres?
-    return this.stylesManager.moveReady(t);
+    return this.stylesManager.moveReady(t).then(() => {
+      // Apply all scrolls after the styles got applied
+      this.nodeScrollManagers.forEach(manager => {
+        const msg = manager.moveGetLast(t)
+        if (!!msg && !!this.nl[msg.id]) {
+          const node = this.nl[msg.id] as HTMLElement
+          node.scrollLeft = msg.x
+          node.scrollTop = msg.y
+        }
+      })
+    })
   }
 }
