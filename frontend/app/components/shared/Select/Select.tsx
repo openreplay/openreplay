@@ -86,7 +86,7 @@ const DropdownIndicator = (
   ) => {
     return (
       <components.DropdownIndicator {...props}>
-        <Icon name="chevron-down" size="18" />
+        <Icon name="chevron-down" size="16" />
       </components.DropdownIndicator>
     );
   };
