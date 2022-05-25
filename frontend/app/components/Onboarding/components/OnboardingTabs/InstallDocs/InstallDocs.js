@@ -30,7 +30,8 @@ function MyApp() {
 }`
 
 
-function InstallDocs({ site }) {  
+function InstallDocs({ sites, siteId }) {  
+  const site = sites.find(s => s.id === siteId);
   const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey)
   const _usageCodeSST = usageCodeSST.replace('PROJECT_KEY', site.projectKey)
   const [isSpa, setIsSpa] = useState(true)
@@ -102,5 +103,6 @@ function InstallDocs({ site }) {
 // export default InstallDocs
 
 export default connect(state => ({
-  site: state.getIn([ 'site', 'instance' ]),
+  siteId: state.getIn([ 'site', 'siteId' ]),
+  sites: state.getIn([ 'site', 'list' ]),
 }))(InstallDocs)
