@@ -7,6 +7,24 @@ const svgRE = /\.svg$/;
 const ICONS_DIRNAME = 'app/svg/icons';
 const UI_DIRNAME = 'app/components/ui';
 const icons = collectFilenames(ICONS_DIRNAME, n => svgRE.test(n));
+const basePlugins = {
+    plugins: [
+        // { name: 'preset-default' },
+        {
+            name: 'removeAttrs',
+            params: {
+                attrs: ['fill-rule', 'clip-rule', 'fill'],
+            },
+        },
+        'removeTitle',
+        'removeComments',
+        'removeXMLProcInst',
+        'removeXMLNS',
+        'mergeStyles',
+        'inlineStyles',
+        'removeStyleElement',
+    ]
+}
 const plugins = (removeFill = true) => { 
     return {
         plugins: [
@@ -23,13 +41,13 @@ const plugins = (removeFill = true) => {
             {
                 name: 'removeAttrs',
                 params: {
-                    attrs: ['xml', 'style', 'data-name', 'dataName', 'svg:width', 'svg:height', removeFill ? 'svg:fill' : ''],
+                    attrs: ['xml', 'style', 'data-name', 'dataName', 'svg:width', 'svg:height', 'fill-rule', removeFill ? 'svg:fill' : ''],
                 }
             },
             {
                 name: 'addAttributesToSVGElement',
                 params: {
-                    attributes: [ "width={ `${ width }px` }", "height={ `${ height }px` }", "fill={ `${ fill }` }" ]
+                    attributes: [ "width={ `${ width }px` }", "height={ `${ height }px` }", !removeFill ? "fill={ `${ fill }` }" : '' ],
                 }
             },
             { name: 'removeXMLNS' },
@@ -64,7 +82,8 @@ const SVG = (props: Props) => {
     switch (name) {
 ${icons.map(icon => {
     const svg = fs.readFileSync(`${ICONS_DIRNAME}/${icon}`, 'utf-8');
-    const { data } = optimize(svg, plugins(!icon.includes('integrations')));
+    const canOptimize = !icon.includes('integrations');
+    const { data } = optimize(svg, plugins(canOptimize));
     return `    case '${icon.slice(0, -4)}': return ${data.replace(/xlink\:href/g, 'xlinkHref')
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
     .replace(/xml:space="preserve"/g, '')};`

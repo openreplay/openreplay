@@ -5,6 +5,7 @@ import DateRange from '../DateRange';
 import { TimezoneDropdown } from 'UI';
 import { numberWithCommas } from 'App/utils';
 import SelectDateRange from 'Shared/SelectDateRange';
+import { setPeriod } from 'Duck/search';
 
 const sortOptionsMap = {
   'startTs-desc': 'Newest',
@@ -19,6 +20,8 @@ const sortOptions = Object.entries(sortOptionsMap)
 function SessionListHeader({
   activeTab,
   count,
+  period,
+  setPeriod,
   ...props
 }) {
   return (
@@ -32,10 +35,10 @@ function SessionListHeader({
           <div className="ml-3 flex items-center">
             <span className="mr-2 color-gray-medium">Sessions Captured in</span>
             {/* <DateRange /> */}
-            {/* <SelectDateRange
+            <SelectDateRange
                 period={period}
-                onChange={onChange}
-            /> */}
+                onChange={setPeriod}
+            />
           </div>
         )}
       </div>
@@ -51,4 +54,5 @@ function SessionListHeader({
 
 export default connect(state => ({
   activeTab: state.getIn([ 'search', 'activeTab' ]),
-}))(SessionListHeader);
+  period: state.getIn([ 'search', 'period' ]),
+}), { setPeriod })(SessionListHeader);

@@ -15,13 +15,14 @@
 .count {
   font-size: 20px;
   font-weight: 500;
+  line-height: initial;
 }
 
 .unit {
   font-size: 15px;
   align-self: flex-end;
   margin-left: 5px;
-  margin-bottom: 3px;
+  /* margin-bottom: 3px; */
 }
 
 .change {

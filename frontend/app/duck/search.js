@@ -10,6 +10,7 @@ import { fetchList as fetchErrorsList } from './errors';
 import { FilterCategory, FilterKey, IssueType } from 'Types/filter/filterType';
 import { filtersMap, liveFiltersMap, generateFilterOptions, generateLiveFilterOptions } from 'Types/filter/newFilter';
 import { DURATION_FILTER  } from 'App/constants/storageKeys'
+import Period, { LAST_7_DAYS } from 'Types/app/period';
 
 const ERRORS_ROUTE = errorsRoute();
 
@@ -32,6 +33,7 @@ const SET_ALERT_METRIC_ID = `${name}/SET_ALERT_METRIC_ID`;
 const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
 const SET_ACTIVE_TAB = `${name}/SET_ACTIVE_TAB`;
 const SET_SCROLL_POSITION = `${name}/SET_SCROLL_POSITION`;
+const SET_PERIOD = `${name}/SET_PERIOD`;
 
 const REFRESH_FILTER_OPTIONS = 'filters/REFRESH_FILTER_OPTIONS';
 
@@ -56,6 +58,7 @@ const initialState = Map({
   currentPage: 1,
   activeTab: {name: 'All', type: 'all' },
   scrollY: 0,
+  period: new Period({ rangeName: LAST_7_DAYS }),
 });
 
 // Metric - Series - [] - filters
@@ -96,6 +99,8 @@ function reducer(state = initialState, action = {}) {
       return state.set('activeTab', action.tab).set('currentPage', 1);
     case SET_SCROLL_POSITION:
       return state.set('scrollY', action.scrollPosition);
+    case SET_PERIOD:
+      return state.set('period', action.period);
 	}
 	return state;
 }
@@ -333,5 +338,12 @@ export const setScrollPosition = (scrollPosition) => {
   return {
     type: SET_SCROLL_POSITION,
     scrollPosition,
+  }
+}
+
+export const setPeriod = (period) => {
+  return {
+    type: SET_PERIOD,
+    period,
   }
 }
