@@ -5,7 +5,8 @@ const dropdownStyles = {
   control: (provided: any) => {
     const obj = {
       ...provided,
-      border: 'solid thin #ddd',
+      border: 'solid thin #ddd !important',
+      boxShadow: 'none !important',
       cursor: 'pointer',
       height: '26px',
       minHeight: '26px',

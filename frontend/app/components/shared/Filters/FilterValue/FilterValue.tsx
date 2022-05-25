@@ -84,7 +84,7 @@ function FilterValue(props: Props) {
             value={value}
             filter={filter}
             options={filter.options}
-            onChange={(e, { name, value }) => onChange(e, { value }, valueIndex)}
+            onChange={({ value }) => onChange(null, { value }, valueIndex)}
           />
         )
       case FilterType.ISSUE:
@@ -96,7 +96,7 @@ function FilterValue(props: Props) {
             value={value}
             filter={filter}
             options={filter.options}
-            onChange={(e, { name, value }) => onChange(e, { value }, valueIndex)}
+            onChange={({ value }) => onChange(null, { value }, valueIndex)}
             onAddValue={onAddValue}
             onRemoveValue={() => onRemoveValue(valueIndex)}
             showCloseButton={showCloseButton}

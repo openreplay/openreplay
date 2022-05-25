@@ -2,11 +2,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import withRequest from 'HOCs/withRequest';
-import { Popup, Dropdown, Icon, IconButton } from 'UI';
+import { Popup, Icon } from 'UI';
 import { pause } from 'Player';
 import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
+import Select from 'Shared/Select';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
@@ -45,13 +46,13 @@ export default class SharePopup extends React.PureComponent {
     this.handleClose();
   }
 
-  changeChannel = (e, { value }) => this.setState({ channelId: value })
+  changeChannel = ({ value }) => this.setState({ channelId: value })
 
   render() {
     const { trigger, loading, channels, showCopyLink = false } = this.props;
     const { comment, isOpen, channelId } = this.state;
 
-    const options = channels.map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
+    const options = channels.map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
     return (
       <Popup
         open={ isOpen }
@@ -90,10 +91,9 @@ export default class SharePopup extends React.PureComponent {
                   />
 
                   <div className="flex items-center justify-between">
-                    <Dropdown
-                      selection
+                    <Select
                       options={ options } 
-                      value={ channelId } 
+                      defaultValue={ channelId } 
                       onChange={ this.changeChannel }
                       className="mr-4"
                     />

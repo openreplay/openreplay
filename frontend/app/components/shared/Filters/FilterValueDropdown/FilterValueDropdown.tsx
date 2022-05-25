@@ -1,8 +1,71 @@
 import React from 'react';
-import cn from 'classnames';
-import { Dropdown, Icon } from 'UI';
+import { Icon } from 'UI';
 import stl from './FilterValueDropdown.module.css';
+import Select from 'Shared/Select';
 
+
+const dropdownStyles = {
+  control: (provided: any) => {
+    const obj = {
+      ...provided,
+      border: 'solid thin transparent !important',
+      backgroundColor: 'transparent',
+      cursor: 'pointer',
+      height: '26px',
+      minHeight: '26px',
+      borderRadius: '3px',
+      boxShadow: 'none !important',
+    }
+    return obj;
+  },
+  valueContainer: (provided: any) => ({
+    ...provided,
+    // paddingRight: '0px',
+    width: 'fit-content',
+    alignItems: 'center',
+    height: '26px',
+    padding: '0 3px'
+  }),
+  // placeholder: (provided: any) => ({
+  //   ...provided,
+  // }),
+  indicatorsContainer: (provided: any) => ({
+    ...provided,
+    padding: '0px',
+    height: '26px',
+  }),
+  option: (provided: any, state: any) => ({
+    ...provided,
+    whiteSpace: 'nowrap',
+  }),
+  menu: (provided: any, state: any) => ({
+      ...provided,
+      top: 20,
+      left: 0,
+      minWidth: 'fit-content',
+  }),
+  container: (provided: any) => ({
+      ...provided,
+    width: '100%',
+  }),
+  input: (provided: any) => ({
+    ...provided,
+    // padding: '0px',
+    // margin: '0px',
+    height: '22px',
+  }),
+  singleValue: (provided: any, state: { isDisabled: any; }) => {
+    const opacity = state.isDisabled ? 0.5 : 1;
+    const transition = 'opacity 300ms';
+
+    return {
+      ...provided, opacity, transition,
+      display: 'flex',
+      alignItems: 'center',
+      height: '26px',
+    };
+  }
+}
 interface Props {
   filter: any; // event/filter
   // options: any[];
@@ -25,16 +88,15 @@ function FilterValueDropdown(props: Props) {
   return (
     <div className="relative flex items-center w-full">
       <div className={stl.wrapper}>      
-        <Dropdown
-          search={search}
-          className={ cn(stl.operatorDropdown, className, "filterDropdown") }
+        <Select
+          isSearchable={search}
+          // className={ cn(stl.operatorDropdown, className, "filterDropdown") }
           options={ options }
           name="issue_type"
-          value={ value }
+          defaultValue={ value }
           onChange={ onChange }
           placeholder="Select"
-          fluid
-          icon={ <Icon className="absolute right-0 mr-2" name="chevron-down" size="12" /> }
+          styles={dropdownStyles}
         />
         <div
           className={stl.right}
