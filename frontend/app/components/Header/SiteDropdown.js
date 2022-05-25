@@ -14,8 +14,7 @@ import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
 import { withStore } from 'App/mstore'
-import SignalGreenSvg from '../../svg/signal-green.svg';
-import SignalRedSvg from '../../svg/signal-red.svg';
+import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 
 @withStore
 @withRouter
@@ -74,10 +73,10 @@ export default class SiteDropdown extends React.PureComponent {
       <div className={ styles.wrapper }>
         {
           showCurrent ?
-            <div className={ activeSite && activeSite.status === GREEN ? <object style={{ width: '20px' }}  data={SignalGreenSvg} type="image/svg+xml" /> : <object style={{ width: '20px' }} data={SignalRedSvg} type="image/svg+xml" className={styles.signalRed} /> }></div> :
+            (activeSite && activeSite.status === GREEN) ? <AnimatedSVG name={ICONS.SIGNAL_GREEN} size="10" /> : <AnimatedSVG name={ICONS.SIGNAL_RED} size="10" /> :
             <Icon name="window-alt" size="14" marginRight="10" />
         }
-        <div className={ styles.currentSite }>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>
+        <div className={ cn(styles.currentSite, 'ml-2')}>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>
         <Icon className={ styles.drodownIcon } color="gray-light" name="chevron-down" size="16" />
         <div className={styles.menu}>
           <ul data-can-disable={ disabled }>
