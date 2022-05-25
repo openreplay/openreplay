@@ -103,7 +103,6 @@ const config: Configuration = {
       'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
       'window.env.PRODUCTION': isDevelopment ? false : true,
-      // 'process.env.NODE_ENV': JSON.stringify(isDevelopment ? 'development' : 'production'),
     }),
     new HtmlWebpackPlugin({
         template: 'app/assets/index.html'
