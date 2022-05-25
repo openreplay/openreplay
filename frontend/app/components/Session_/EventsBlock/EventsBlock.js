@@ -178,11 +178,6 @@ export default class EventsBlock extends React.PureComponent {
       testsAvaliable,
       session: {
         events,
-        userNumericHash,
-        userDisplayName,
-        userId,
-        revId,
-        userAnonymousId
       },
       filteredEvents,
       setActiveTab,

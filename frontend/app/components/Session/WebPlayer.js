@@ -42,7 +42,7 @@ const ConnectedMenu = connectPlayer(state => ({
   showEvents: state.showEvents}), { toggleEvents })(RightMenu)
 
 function WebPlayer (props) {
-  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config, showEvents } = props;
+  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config } = props;
 
   const TABS = {
     EVENTS: 'Events',
