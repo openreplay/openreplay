@@ -5,6 +5,7 @@ import { fetchSessions, fetchSessionsFiltered } from 'Duck/funnels'
 import { setFunnelPage } from 'Duck/sessions'
 import { LoadMoreButton, NoContent, Loader } from 'UI'
 import FunnelSessionsHeader from '../FunnelSessionsHeader'
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const PER_PAGE = 10;
 
@@ -28,9 +29,14 @@ function FunnelSessionList(props) {
       <FunnelSessionsHeader sessionsCount={inDetails ? sessionsTotal : list.size} inDetails={inDetails} />
       <div className="mb-4" />
       <NoContent
-        title="No recordings found!"
+        title={
+          <div className="flex flex-col items-center justify-center">
+            <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+            <div className="mt-6 text-2xl">No recordings found!</div>
+          </div>
+        }
         subtext="Please try changing your search parameters."
-        animatedIcon="no-results"
+        // animatedIcon="no-results"
         show={ list.size === 0}
       >
         { list.take(displayedCount).map(session => (

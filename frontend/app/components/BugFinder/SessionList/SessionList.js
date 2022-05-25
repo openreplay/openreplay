@@ -1,13 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, Button, Pagination } from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
-// import NoResultIconSvg from '../../../svg/logo.svg';
-import NoResultIconSvg from '../../../svg/no-results.svg';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 // const ALL = 'all';
 const PER_PAGE = 10;
@@ -98,8 +97,7 @@ export default class SessionList extends React.PureComponent {
     return (
       <NoContent
         title={<div className="flex items-center justify-center flex-col">
-          <object style={{ width: '170px' }} type="image/svg+xml" data={NoResultIconSvg} className="no-result-icon" />
-          {/* <NoResultIconSvg width={50} /> */}
+          <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
           {this.getNoContentMessage(activeTab)}
         </div>}
         // subtext="Please try changing your search parameters."

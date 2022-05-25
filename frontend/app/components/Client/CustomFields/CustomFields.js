@@ -9,6 +9,7 @@ import styles from './customFields.module.css';
 import CustomFieldForm from './CustomFieldForm';
 import ListItem from './ListItem';
 import { confirm } from 'UI';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 @connect(state => ({
   fields: state.getIn(['customFields', 'list']).sortBy(i => i.index),
@@ -98,10 +99,15 @@ class CustomFields extends React.Component {
         
         <Loader loading={ loading }>
           <NoContent
-            title="No data available."
+            title={
+              <div className="flex flex-col items-center justify-center">
+                <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                <div className="mt-6 text-2xl">No data available.</div>
+              </div>
+            }
             size="small"
             show={ fields.size === 0 }
-            animatedIcon="empty-state"
+            // animatedIcon="empty-state"
           >
             <div className={ styles.list }>
               { fields.filter(i => i.index).map(field => (

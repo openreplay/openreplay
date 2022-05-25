@@ -1,14 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button, Select, Input, Icon } from 'UI';
+import { Button, Input, Icon } from 'UI';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import { validateNumber } from 'App/validate';
 import styles from './siteForm.module.css';
+import Select from 'Shared/Select';
 
 const inputModeOptions = [
-  { text: 'Record all inputs', value: 'plain' },
-  { text: 'Ignore all inputs', value: 'obscured' },
-  { text: 'Obscure all inputs', value: 'hidden' },
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 @connect(state => ({
@@ -36,7 +37,7 @@ export default class GDPRForm extends React.PureComponent {
     }
   }
 
-  onChangeSelect = (event, { name, value }) => {
+  onChangeSelect = ({ name, value }) => {
     this.props.editGDPR({ [ name ]: value });
   };
 
@@ -82,7 +83,7 @@ export default class GDPRForm extends React.PureComponent {
               onChange={ this.onChangeSelect }
               placeholder="Default Input Mode"
               value={ gdpr.defaultInputMode }
-              className={ styles.dropdown }
+              // className={ styles.dropdown }
             />
           </div>
 

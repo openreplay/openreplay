@@ -5,6 +5,7 @@ import React, { useEffect } from 'react';
 import { Loader, Pagination, NoContent } from 'UI';
 import AuditDetailModal from '../AuditDetailModal';
 import AuditListItem from '../AuditListItem';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
 
@@ -33,7 +34,15 @@ function AuditList(props: Props) {
 
     return useObserver(() => (
         <Loader loading={loading}>
-            <NoContent show={list.length === 0} animatedIcon="empty-state">
+            <NoContent
+                show={list.length === 0}
+                title={
+                    <div className="flex flex-col items-center justify-center">
+                        <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                        <div className="mt-6 text-2xl">No data available.</div>
+                    </div>
+                }
+            >
                 <div className="px-2 grid grid-cols-12 gap-4 items-center py-3 font-medium">
                     <div className="col-span-5">Name</div>
                     <div className="col-span-4">Status</div>

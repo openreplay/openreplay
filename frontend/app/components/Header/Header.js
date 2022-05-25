@@ -25,6 +25,7 @@ import Logo from '../../svg/logo-small.svg';
 import ErrorGenPanel from 'App/dev/components';
 import ErrorsBadge from 'Shared/ErrorsBadge';
 import Alerts from '../Alerts/Alerts';
+import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
@@ -75,7 +76,8 @@ const Header = (props) => {
           {/* <img src={ Logo } alt="React Logo" /> */}
           {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
           <div className="p-2">
-            <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } />
+            <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
+            {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
             {/* <Logo width={30} /> */}
           </div>
           <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>

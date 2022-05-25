@@ -5,6 +5,7 @@ import stl from './SessionListModal.module.css';
 import { connect } from 'react-redux';
 import { fetchSessionList, setActiveWidget } from 'Duck/customMetrics';
 import { DateTime } from 'luxon';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 interface Props {
     loading: boolean;
     list: any;
@@ -100,8 +101,13 @@ function SessionListModal(props: Props) {
                     <Loader loading={loading}>
                         <NoContent 
                             show={ !loading && (filteredSessions.length === 0 )}
-                            title="No recordings found!"
-                            animatedIcon="no-results"
+                            title={
+                                <div className="flex flex-col items-center justify-center">
+                                    <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                                    <div className="mt-6 text-2xl">No recordings found!</div>
+                                </div>
+                            }
+                            // animatedIcon="no-results"
                         >
                             { filteredSessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
                         </NoContent> 

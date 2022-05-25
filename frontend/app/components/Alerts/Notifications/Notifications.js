@@ -9,6 +9,7 @@ import withToggle from 'Components/hocs/withToggle';
 import { withRouter } from 'react-router-dom';
 import { fetchList as fetchAlerts, init as initAlert } from 'Duck/alerts';
 import cn from 'classnames';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const AUTOREFRESH_INTERVAL = 5 * 60 * 1000;
 
@@ -112,9 +113,12 @@ class Notifications extends React.Component {
           content={ 
             <div className="">
               <NoContent
-                title=""
+                title={
+                  <div className="flex items-center justify-between">
+                    <AnimatedSVG name={ICONS.EMPTY_STATE} size="100" />
+                  </div>
+                }
                 subtext="There are no alerts to show."
-                animatedIcon="no-results"
                 show={ !loading && notifications.size === 0 }
                 size="small"
               >

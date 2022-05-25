@@ -1,9 +1,9 @@
 import React from 'react';
 import { JSONTree, NoContent, Button, Tabs } from 'UI'
 import cn from 'classnames';
-import copy from 'copy-to-clipboard';
 import stl from './fetchDetails.module.css';
 import Headers from './components/Headers'
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -42,10 +42,15 @@ export default class FetchDetails extends React.PureComponent {
 			case REQUEST:
 				return (
           <NoContent
-            title="Body is Empty."
+            title={
+				<div className="flex flex-col items-center justify-center">
+					<AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+					<div className="mt-6 text-2xl">Body is Empty.</div>
+				</div>
+			}
             size="small"
             show={ !payload }
-            animatedIcon="no-results"
+            // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
@@ -61,10 +66,15 @@ export default class FetchDetails extends React.PureComponent {
 			case RESPONSE:
 				return (
           <NoContent
-            title="Body is Empty."
+            title={
+				<div className="flex flex-col items-center justify-center">
+					<AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+					<div className="mt-6 text-2xl">Body is Empty.</div>
+				</div>
+			}
             size="small"
             show={ !response }
-            animatedIcon="no-results"
+            // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">

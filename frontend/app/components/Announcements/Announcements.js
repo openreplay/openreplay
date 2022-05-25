@@ -6,6 +6,7 @@ import { SlideModal, Icon, NoContent, Popup } from 'UI';
 import { fetchList, setLastRead } from 'Duck/announcements';
 import withToggle from 'Components/hocs/withToggle';
 import { withRouter } from 'react-router-dom';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 @withToggle('visible', 'toggleVisisble')
 @withRouter
@@ -69,9 +70,13 @@ class Announcements extends React.Component {
           content={ 
             <div className="mx-4">
               <NoContent
-                title=""
+                title={
+                  <div className="flex items-center justify-between">
+                    <AnimatedSVG name={ICONS.EMPTY_STATE} size="100" />
+                  </div>
+                }
                 subtext="There are no announcements to show."
-                animatedIcon="no-results"
+                // animatedIcon="no-results"
                 show={ !loading && announcements.size === 0 }
                 size="small"
               >

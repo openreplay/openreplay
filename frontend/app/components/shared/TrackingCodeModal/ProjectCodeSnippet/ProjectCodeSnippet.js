@@ -2,16 +2,17 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import copy from 'copy-to-clipboard';
-import { Select, Checkbox } from 'UI';
+import { Checkbox } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
 import styles from './projectCodeSnippet.module.css'
 import Highlight from 'react-highlight'
+import Select from 'Shared/Select'
 
 const inputModeOptions = [
-  { text: 'Record all inputs', value: 'plain' },
-  { text: 'Ignore all inputs', value: 'obscured' },
-  { text: 'Obscure all inputs', value: 'hidden' },
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 const inputModeOptionsMap = {}
@@ -54,7 +55,7 @@ const ProjectCodeSnippet = props  => {
     props.saveGDPR(site.id, GDPR({...value}));
   }
 
-  const onChangeSelect = (event, { name, value }) => {
+  const onChangeSelect = ({ name, value }) => {
     const { gdpr } = site;
     // const _gdpr = { ...gdpr.toData() };
     // props.editGDPR({ [ name ]: value });
@@ -105,9 +106,9 @@ const ProjectCodeSnippet = props  => {
           <Select
             name="defaultInputMode"
             options={ inputModeOptions }
-            onChange={ onChangeSelect }
+            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value }) }
             placeholder="Default Input Mode"
-            value={ gdpr.defaultInputMode }
+            value={ inputModeOptions.find(o => o.value === gdpr.defaultInputMode) }
           />
 
           <Checkbox

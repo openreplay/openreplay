@@ -5,6 +5,7 @@ import { percentOf } from 'App/utils';
 import SectionWrapper from './SectionWrapper';
 import Barwrapper from './Barwrapper';
 import { NoContent } from 'UI';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function ResultTimings({ duration, timing }) {
   const { blocked, connect, dns, queued, receive, send, ssl, wait } = timing;
@@ -23,8 +24,13 @@ function ResultTimings({ duration, timing }) {
   const receiveStart = waitSrart + wait;
   return (
     <NoContent
-      title="No Data!"
-      animatedIcon="no-results"
+      title={
+        <div className="flex flex-col items-center justify-center">
+          <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+          <div className="mt-6 text-2xl">No Data!</div>
+        </div>
+      }
+      // animatedIcon="no-results"
       show={ List.isList(timing)}
       size="small"
     >

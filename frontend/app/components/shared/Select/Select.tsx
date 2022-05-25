@@ -13,17 +13,17 @@ interface Props {
 }
 export default function({ right = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const customStyles = {
-        option: (provided, state) => ({
+        option: (provided: any, state: any) => ({
           ...provided,
           whiteSpace: 'nowrap',
         }),
-        menu: (provided, state) => ({
+        menu: (provided: any, state: any) => ({
             ...provided,
             top: 31,
             right: right ? 0 : undefined,
             minWidth: 'fit-content',
         }),
-        control: (provided) => {
+        control: (provided: any) => {
             const obj = {
                 ...provided,
                 border: 'solid thin #ddd',
@@ -45,11 +45,11 @@ export default function({ right = false, plain = false, options, isSearchable = 
             }
             return obj;
         },
-        valueContainer: (provided) => ({
+        valueContainer: (provided: any) => ({
             ...provided,
             paddingRight: '0px',
         }),
-        singleValue: (provided, state) => {
+        singleValue: (provided: any, state: { isDisabled: any; }) => {
           const opacity = state.isDisabled ? 0.5 : 1;
           const transition = 'opacity 300ms';
       

@@ -11,7 +11,7 @@ import styles from './manageUsers.module.css';
 import UserItem from './UserItem';
 import { confirm } from 'UI';
 import { toast } from 'react-toastify';
-import BannerMessage from 'Shared/BannerMessage';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
 const LIMIT_WARNING = 'You have reached users limit.';
@@ -234,10 +234,15 @@ class ManageUsers extends React.PureComponent {
             </div>
 
             <NoContent
-              title="No users are available."              
+              title={
+                <div className="flex flex-col items-center justify-center">
+                  <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                  <div className="mt-6 text-2xl">No data available.</div>
+                </div>
+              }
               size="small"
               show={ members.size === 0 }
-              animatedIcon="empty-state"
+              // animatedIcon="empty-state"
             >
               <div className={ styles.list }>
                 {

@@ -6,6 +6,7 @@ import { NoContent , Loader, IconButton, Icon, Popup, BackLink, } from 'UI';
 import { fetch, fetchTrace } from 'Duck/errors';
 import MainSection from './MainSection';
 import SideSection from './SideSection';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 @connect(state =>({
 	errorIdInStore: state.getIn(["errors", "instance"]).errorId,
@@ -66,11 +67,16 @@ export default class ErrorInfo extends React.PureComponent {
 
 		return (
 			<NoContent
-        title="No Error Found!"
-        subtext="Please try to find existing one."
-        animatedIcon="no-results"
-        show={ !loading && errorIdInStore == null }
-      >
+				title={
+					<div className="flex flex-col items-center justify-center">
+						<AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+						<div className="mt-6 text-2xl">No Error Found!</div>
+					</div>
+				}
+				subtext="Please try to find existing one."
+				// animatedIcon="no-results"
+				show={ !loading && errorIdInStore == null }
+			>
 				<div className="w-9/12 mb-4 flex justify-between">
 					<BackLink	to={ errorsRoute() } label="Back" />
 					<div className="flex items-center">
