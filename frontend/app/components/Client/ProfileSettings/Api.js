@@ -3,6 +3,7 @@ import React from 'react';
 import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
 import styles from './profileSettings.module.css';
+import { Input } from 'UI'
 
 @connect(state => ({
   apiKey: state.getIn([ 'user', 'client', 'apiKey' ]),
@@ -29,8 +30,8 @@ export default class Api extends React.PureComponent {
       <form onSubmit={ this.handleSubmit } className={ styles.form }>
         <div className={ styles.formGroup }>
           <label htmlFor="apiKey">{ 'Organization API Key' }</label>
-          <div className="ui action input">
-            <input
+          <div className="flex items-center">
+            <Input
               name="apiKey"
               id="apiKey"
               type="text"

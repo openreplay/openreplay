@@ -127,7 +127,9 @@ export default class List extends React.PureComponent {
 		}
 	}
 
-	onQueryChange = (e, { value }) => {
+	// onQueryChange = ({ target: { value, name } }) => props.edit({ [ name ]: value })
+
+	onQueryChange = ({ target: { value, name } }) => {
 		this.setState({ query: value });
 		this.debounceFetch({ query: value });
 	}
