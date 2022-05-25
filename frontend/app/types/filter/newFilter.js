@@ -4,7 +4,7 @@ import filterOptions, { countries, platformOptions } from 'App/constants';
 import { capitalize } from 'App/utils';
 
 const countryOptions = Object.keys(countries).map(i => ({ text: countries[i], value: i }));
-const containsFilters = [{ key: 'contains', text: 'contains', value: 'contains' }]
+const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }]
 
 export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' };
 export const filtersMap = {
