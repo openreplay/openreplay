@@ -1,4 +1,3 @@
-// import { filter } from "App/components/BugFinder/ManageFilters/savedFilterList.module.css"
 import { makeAutoObservable, runInAction, observable, action, reaction } from "mobx"
 import { FilterKey, FilterType } from 'Types/filter/filterType'
 import { filtersMap } from 'Types/filter/newFilter'

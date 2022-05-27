@@ -1,4 +1,3 @@
-// import { filter } from 'App/components/BugFinder/ManageFilters/savedFilterList.module.css'
 import React from 'react'
 import FilterOperator from '../FilterOperator';
 import FilterValue from '../FilterValue';
