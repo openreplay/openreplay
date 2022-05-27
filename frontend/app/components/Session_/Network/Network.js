@@ -29,12 +29,9 @@ const TAB_TO_TYPE_MAP = {
 export function renderName(r) { 
   return (
     <div className="flex w-full relative items-center">
-      <Popup
-        trigger={ <div className={ stl.popupNameTrigger }>{ r.name }</div> }
-        content={ <div className={ stl.popupNameContent }>{ r.url }</div> }
-        size="mini"
-        position="right center"
-      />
+      <Popup content={ <div className={ stl.popupNameContent }>{ r.url }</div> } >
+        <div className={ stl.popupNameTrigger }>{ r.name }</div>
+      </Popup>
       <div
         className="absolute right-0 text-xs uppercase p-2 color-gray-500 hover:color-black"
         onClick={ (e) => {
@@ -63,13 +60,9 @@ export function renderDuration(r) {
   }
 
   return (
-    <Popup
-      content={ tooltipText }
-      inverted
-      trigger={ 
-        <div className={ cn(className, stl.duration) } > { text } </div>
-      }
-    />
+    <Popup content={ tooltipText } >
+      <div className={ cn(className, stl.duration) } > { text } </div>
+    </Popup>
   );
 }
 

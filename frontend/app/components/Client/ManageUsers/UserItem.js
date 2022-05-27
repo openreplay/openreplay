@@ -12,33 +12,25 @@ const UserItem = ({ user, adminLabel, deleteHandler, editHandler, generateInvite
     <div className={ styles.actions }>
       { user.expiredInvitation && !user.joined &&
         <Popup
-          trigger={
-            <div className={ styles.button } onClick={ () => generateInviteLink(user) } id="trash">
+          content={ `Generate Invitation Link` }
+        >
+          <div className={ styles.button } onClick={ () => generateInviteLink(user) } id="trash">
               <Icon name="link-45deg" size="16" color="red"/>
             </div>
-          }
-          content={ `Generate Invitation Link` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+        </Popup>
       }
       { !user.expiredInvitation && !user.joined && user.invitationLink &&
         <Popup
-          trigger={
-            <div className={ styles.button }>
+          content={ `Copy Invitation Link` }  
+        >
+          <div className={ styles.button }>
               <CopyButton
                 content={user.invitationLink}
                 className="link"
                 btnText={<Icon name="link-45deg" size="16" color="teal"/>}
               />
             </div>
-          }
-          content={ `Copy Invitation Link` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+        </Popup>
       }
       { !!deleteHandler &&
         <div className={ styles.button } onClick={ () => deleteHandler(user) } id="trash">

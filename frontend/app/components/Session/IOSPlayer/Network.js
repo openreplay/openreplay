@@ -23,11 +23,12 @@ const COLUMNS = [
 	  width: 130,
 	  render: (r) => 
 	  	<Popup
-	      trigger={ <div className={ cls.popupNameTrigger }>{ r.url }</div> }
 	      content={ <div className={ cls.popupNameContent }>{ r.url }</div> }
 	      size="mini"
 	      position="right center"
-	    />,
+	    >
+			<div className={ cls.popupNameTrigger }>{ r.url }</div>
+		</Popup>
 	},
 	{
 	  label: "Size",

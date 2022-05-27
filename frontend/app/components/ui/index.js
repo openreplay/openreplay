@@ -55,6 +55,6 @@ export { default as SideMenuHeader } from './SideMenuHeader';
 export { default as PageTitle } from './PageTitle';
 export { default as Pagination } from './Pagination';
 export { default as Toggler } from './Toggler';
-// export { default as Input } from './Input';
+export { default as Input } from './Input';
 
-export { Input, Modal, Form, Message } from 'semantic-ui-react';
+export { Modal, Form, Message } from 'semantic-ui-react';

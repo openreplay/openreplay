@@ -11,22 +11,21 @@ function EventsToggleButton({ showEvents, toggleEvents }: any) {
   }
   return (
     <Popup
-      trigger={
-        <button
-          className={cn("absolute right-0 z-50", stl.wrapper)}
-          onClick={toggle}
-        >
-          <Icon
-            name={ showEvents ? 'chevron-double-right' : 'chevron-double-left' }
-            size="12"
-          />      
-        </button>
-      }
       content={ showEvents ? 'Hide Events' : 'Show Events' }
       size="tiny"
       inverted
       position="bottom right"
-    />
+    >
+      <button
+        className={cn("absolute right-0 z-50", stl.wrapper)}
+        onClick={toggle}
+      >
+        <Icon
+          name={ showEvents ? 'chevron-double-right' : 'chevron-double-left' }
+          size="12"
+        />      
+      </button>
+    </Popup>
   )
 }
 

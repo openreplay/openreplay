@@ -1,3 +1,4 @@
+import React from 'react';
 import { Popup } from 'UI';
 import { percentOf } from 'App/utils'; 
 import styles from './barRow.module.css'
@@ -38,7 +39,7 @@ const BarRow = ({ resource: { time, ttfb = 0, duration, key }, popup=false, time
     <div key={ key } className={ tableStyles.row } >
       <Popup
         basic
-        trigger={ trigger }
+        unmountHTMLWhenHide
         content={ 
           <React.Fragment>
             { ttfb != null &&
@@ -71,9 +72,9 @@ const BarRow = ({ resource: { time, ttfb = 0, duration, key }, popup=false, time
             </div>
           </React.Fragment> 
         }
-        size="mini"
-        position="top center"
-      /> 
+      >
+        {trigger}
+      </Popup> 
     </div>
   );  
 }

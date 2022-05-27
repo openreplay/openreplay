@@ -9,12 +9,14 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 interface Props {
     period: any,
     onChange: (data: any) => void;
+    disableCustom?: boolean;
     [x: string]: any;
 }
 function SelectDateRange(props: Props) {
     const [isCustom, setIsCustom] = React.useState(false);
-    const { period, ...rest } = props;
-    const selectedValue = DATE_RANGE_OPTIONS.find((obj: any) => obj.value === period.rangeName)
+    const { period, disableCustom = false, ...rest } = props;
+    let selectedValue = DATE_RANGE_OPTIONS.find((obj: any) => obj.value === period.rangeName)
+    const options = DATE_RANGE_OPTIONS.filter((obj: any) => disableCustom ? obj.value !== CUSTOM_RANGE : true);
 
     const onChange = (value: any) => {
         if (value === CUSTOM_RANGE) {
@@ -34,7 +36,7 @@ function SelectDateRange(props: Props) {
             <Select
                 plain
                 value={selectedValue}
-                options={DATE_RANGE_OPTIONS}
+                options={options}
                 onChange={({ value }: any) => onChange(value)}
                 components={{ SingleValue: ({ children, ...props} : any) => {
                     return (

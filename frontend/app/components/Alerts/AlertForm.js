@@ -59,7 +59,6 @@ const AlertForm = props => {
   }, [])
 
   const writeQueryOption = (e, { name, value }) => {
-    console.log(name, value)
     const { query } = instance;
     props.edit({ query: { ...query, [name] : value } });
   }
@@ -78,7 +77,7 @@ const AlertForm = props => {
        <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>
         <input
           autoFocus={ true }
-          className="text-lg"
+          className="text-lg border border-gray-light rounded w-full"
           name="name"
           style={{ fontSize: '18px', padding: '10px', fontWeight: '600'}}
           value={ instance && instance.name }
@@ -173,12 +172,13 @@ const AlertForm = props => {
                   )}
                   { !unit && (
                       <Input
-                      className="pl-4"
-                      name="right"
-                      value={ instance.query.right }
-                      onChange={ writeQuery }
-                      placeholder="Specify Value"
-                    />
+                        wrapperClassName="ml-2"
+                        // className="pl-4"
+                        name="right"
+                        value={ instance.query.right }
+                        onChange={ writeQuery }
+                        placeholder="Specify Value"
+                      />
                   )}
                 </div>
               </div>

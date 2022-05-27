@@ -1,5 +1,5 @@
 import React from 'react'
-import { Dropdown, TagBadge } from 'UI';
+import { Input, TagBadge } from 'UI';
 import Select from 'Shared/Select';
 
 const DropdownChips = ({ 
@@ -24,13 +24,13 @@ const DropdownChips = ({
   const onKeyPress = e => {
     const val = e.target.value;
     if (e.key !== 'Enter' || selected.includes(val)) return;
+    e.preventDefault();
+    e.stopPropagation();
     if (validate && !validate(val)) return;
 
     const newSlected = selected.concat(val);
     e.target.value = '';
     onChange(newSlected);
-    e.preventDefault();
-    e.stopPropagation();
   }
 
   const _options = options.filter(item => !selected.includes(item.value))
@@ -53,7 +53,7 @@ const DropdownChips = ({
   return (
     <div className="w-full">
       {textFiled ? (
-        <input type="text" onKeyPress={onKeyPress} placeholder={placeholder} />
+        <Input type="text" onKeyPress={onKeyPress} placeholder={placeholder} />
       ) : (
         <Select
           placeholder={placeholder}

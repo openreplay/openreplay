@@ -30,11 +30,12 @@ function SessionSearchField(props: Props) {
     <div className="relative">
       <Input
         // inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
-        className={stl.searchField}
+        // className={stl.searchField}
+        icon="search"
         onFocus={ () => setShowModal(true) }
         onBlur={ () => setTimeout(setShowModal, 200, false) }
         onChange={ onSearchChange }
-        icon="search"
+        // icon="search"
         iconPosition="left"
         placeholder={ 'Search sessions using any captured event (click, input, page, error...)'}
         fluid

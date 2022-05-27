@@ -1,11 +1,9 @@
-//@ts-nocheck
 import React, { useEffect, useState } from 'react'
 import stl from './bookmark.module.css'
-import { Icon } from 'UI'
+import { Icon, Popup } from 'UI'
 import { toggleFavorite } from 'Duck/sessions'
 import { connect } from 'react-redux'
 import { toast } from 'react-toastify';
-import { Tooltip } from 'react-tippy';
 
 interface Props {
   toggleFavorite: (sessionId: string) => Promise<void>,
@@ -37,11 +35,11 @@ function Bookmark(props : Props ) {
   }
 
   return (
-    <Tooltip 
+    <Popup 
       delay={500}
-      arrow
-      title={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
+      content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
       hideOnClick={true}
+      distance={20}
     >
       <div
         className={ stl.favoriteWrapper }
@@ -50,7 +48,7 @@ function Bookmark(props : Props ) {
       >
         <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color="teal" size="20" />
       </div>
-    </Tooltip>
+    </Popup>
   )
 }
 

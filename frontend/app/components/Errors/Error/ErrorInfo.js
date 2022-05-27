@@ -82,39 +82,33 @@ export default class ErrorInfo extends React.PureComponent {
 					<div className="flex items-center">
 						<Popup
 							pinned
-							position="bottom center"
-							inverted
-							trigger={
-								<IconButton
-									// className="mr-3"
-									outline
-									compact
-									size="small"
-									icon="prev1"
-									disabled={ prevDisabled }
-									onClick={this.prev}
-								/>
-							}
 							content="Prev Error"
-						/>
+						>
+							<IconButton
+								// className="mr-3"
+								outline
+								compact
+								size="small"
+								icon="prev1"
+								disabled={ prevDisabled }
+								onClick={this.prev}
+							/>
+						</Popup>
 						<div className="mr-3" />
 
 						<Popup
 							pinned
-							inverted
-							position="bottom center"
-							trigger={
-								<IconButton
-									outline
-									compact
-									size="small"
-									icon="next1"
-									disabled={ nextDisabled }
-									onClick={this.next}
-								/>
-							}
 							content="Next Error"
-						/>
+						>
+							<IconButton
+								outline
+								compact
+								size="small"
+								icon="next1"
+								disabled={ nextDisabled }
+								onClick={this.next}
+							/>
+						</Popup>
 					</div>
 				</div>
 				<div className="flex" >

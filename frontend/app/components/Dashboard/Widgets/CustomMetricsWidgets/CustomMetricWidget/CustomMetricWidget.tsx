@@ -195,13 +195,10 @@ export default connect(state => ({
 const WidgetIcon = ({ className = '', tooltip = '', icon, onClick }) => (
   <Popup
     size="small"
-    trigger={
-      <div className={className} onClick={onClick}>
-        <Icon name={icon} size="14" />
-      </div>
-    }
     content={tooltip}
-    position="top center"
-    inverted
-  />
+  >
+    <div className={className} onClick={onClick}>
+        <Icon name={icon} size="14" />
+    </div>
+  </Popup>
 )

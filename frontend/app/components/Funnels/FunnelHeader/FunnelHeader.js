@@ -81,19 +81,13 @@ const FunnelHeader = (props) => {
         <div className="flex items-center">   
           <div className="flex items-center invisible group-hover:visible">
             <Popup
-              trigger={<IconButton icon="edit" onClick={() => setShowSaveModal(true)} />}
               content={ `Edit Funnel` }
-              size="tiny"
-              inverted
-              position="top center"
-            />
-            <Popup
-              trigger={<IconButton icon="trash" onClick={(e) => deleteFunnel(e, funnel)} className="ml-2 mr-2" />}
-              content={ `Remove Funnel` }
-              size="tiny"
-              inverted
-              position="top center"
-            />            
+            >
+                <IconButton icon="edit" onClick={() => setShowSaveModal(true)} />
+            </Popup>
+            <Popup content={ `Remove Funnel` } >
+                <IconButton icon="trash" onClick={(e) => deleteFunnel(e, funnel)} className="ml-2 mr-2" />
+            </Popup>
           </div>
           <DateRange
             rangeValue={funnelFilters.rangeValue}

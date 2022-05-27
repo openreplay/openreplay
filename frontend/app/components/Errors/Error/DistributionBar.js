@@ -30,25 +30,22 @@ function DistributionBar({ className, title, partitions }) {
 				{ partitions.map((p, index) => 
 					<Popup
 						key={p.label}
-						inverted
-						size="mini"
-						trigger={ 
-							<div 
-								className="h-full bg-tealx" 
-								style={{
-									marginLeft: '1px',
-									width: `${ p.prc }%`,									
-									backgroundColor: colors(index)
-								}} 
-							/>
-						}
 						content={
 							<div className="text-center">
 								<span className="capitalize">{ p.label }</span><br/>
 								{`${ Math.round(p.prc) }%`}
 							</div>
 						}
-					/>
+					>
+						<div 
+							className="h-full bg-tealx" 
+							style={{
+								marginLeft: '1px',
+								width: `${ p.prc }%`,									
+								backgroundColor: colors(index)
+							}} 
+						/>
+					</Popup>
 				)}
 			</div>
 		</div>

@@ -3,8 +3,7 @@ import cn from 'classnames';
 import { Icon as SemIcon } from 'semantic-ui-react';
 import { Icon, Input } from 'UI';
 import { List } from 'immutable';
-import { Tooltip } from 'react-tippy'
-import { confirm } from 'UI';
+import { confirm, Popup } from 'UI';
 import { applySavedSearch, remove, editSavedSearch } from 'Duck/search'
 import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
@@ -22,13 +21,12 @@ function TooltipIcon(props: ITooltipIcon) {
     return (
         <div onClick={(e) => props.onClick(e)} >
             {/* @ts-ignore - problem with react-tippy types TODO: remove after fix */}
-            <Tooltip
+            <Popup
                 title={props.title}
                 hideOnClick={true}
-                position="bottom"
             >
                 <Icon size="16" name={props.name} color="main" />
-            </Tooltip>
+            </Popup>
         </div>
     )
 }
@@ -76,10 +74,10 @@ function SavedSearchModal(props: Props) {
             {props.list.size > 1 && (
                 <div className="mb-6 w-full px-4">
                     <Input
-                        className="w-full"
-                        iconPosition="left"
-                        icon={<SemIcon name="search" />}
-                        onChange={(_, v) => setFilterQuery(v.value)}
+                        // className="w-full"
+                        // iconPosition="left"
+                        icon="search"
+                        onChange={({ target: { value }}: any) => setFilterQuery(value)}
                         placeholder="Filter by name"
                     />
                 </div>

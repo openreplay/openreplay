@@ -19,8 +19,13 @@ function SideMenuitem({
   }) {
   return (
     <Popup
-      trigger={
-        <div
+      disabled={ !disabled }
+      content={ 'No recordings' }
+      size="tiny"
+      inverted
+      position="left center"
+    >
+      <div
           className={ cn(
             className,
             stl.menuItem,
@@ -46,13 +51,7 @@ function SideMenuitem({
             <div onClick={deleteHandler} className={stl.actions}><Icon name="trash" size="14" /></div>
           }
         </div>
-      }
-      disabled={ !disabled }
-      content={ 'No recordings' }
-      size="tiny"
-      inverted
-      position="left center"
-    />
+    </Popup>
   )
 }
 

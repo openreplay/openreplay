@@ -24,7 +24,7 @@ export default class Exceptions extends React.PureComponent {
     currentError: null
   }
 
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
 
   setCurrentError = (err) => {
     const { session } = this.props;
@@ -74,7 +74,7 @@ export default class Exceptions extends React.PureComponent {
         <BottomBlock>
           <BottomBlock.Header>
             <Input
-              className="input-small"
+              // className="input-small"
               placeholder="Filter by name or message"
               icon="search"
               iconPosition="left"

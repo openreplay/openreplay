@@ -14,6 +14,7 @@ import {
 } from 'App/routes';
 import { logout } from 'Duck/user';
 import { Icon, Popup } from 'UI';
+// import { Tooltip } from 'react-tippy'
 import SiteDropdown from './SiteDropdown';
 import styles from './header.module.css';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore'
@@ -42,8 +43,6 @@ const Header = (props) => {
     onLogoutClick, siteId,
     boardingCompletion = 100, fetchSiteList, showAlerts = false
   } = props;
-
-  // console.log('Header props', ReactLogo);
   
   const name = account.get('name').split(" ")[0];
   const [hideDiscover, setHideDiscover] = useState(false)
@@ -128,14 +127,12 @@ const Header = (props) => {
         <Notifications />
         <div className={ styles.divider } />
         <Popup
-          trigger={
-            <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
-          }
-          content={ `Preferences` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+          title={ `Preferences` }
+          // position="bottom"
+          // hideOnScroll
+        >
+          <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
+        </Popup>
         
         <div className={ styles.divider } />
         <div className={ styles.userDetails }>

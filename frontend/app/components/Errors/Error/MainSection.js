@@ -148,15 +148,15 @@ export default class MainSection extends React.PureComponent {
 					<SharePopup
 						entity="errors"
 						id={ error.errorId }
-            trigger={
-              <IconButton
-              	primaryText
-              	label="Share"
-              	size="small"
-                icon="share-alt"
-              />
-            }
-          />
+						trigger={
+							<IconButton
+							primaryText
+							label="Share"
+							size="small"
+							icon="share-alt"
+							/>
+						}
+					/>
 				</div>
 				<Divider />
 				<div className="m-4">

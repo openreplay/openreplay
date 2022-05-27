@@ -45,20 +45,14 @@ class Announcements extends React.Component {
 
     return (
       <div>
-        <Popup
-          trigger={
-            <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
+        <Popup content={ `Announcements` } >
+          <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
             <div className={ stl.counter } data-hidden={ unReadNotificationsCount === 0 }>
               { unReadNotificationsCount }
             </div>
             <Icon name="bullhorn" size="18" />
           </div>
-          }
-          content={ `Announcements` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+        </Popup>
         
         <SlideModal
           title="Announcements"

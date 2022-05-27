@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';
+import { SideMenuitem, SideMenuHeader, Icon, Popup } from 'UI';
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
 import { withSiteId, dashboardSelected, metrics } from 'App/routes';
@@ -9,7 +9,6 @@ import { useModal } from 'App/components/Modal';
 import DashbaordListModal from '../DashbaordListModal';
 import DashboardModal from '../DashboardModal';
 import cn from 'classnames';
-import { Tooltip } from 'react-tippy';
 import { connect } from 'react-redux';
 import { compose } from 'redux'
 import { setShowAlerts } from 'Duck/dashboard';
@@ -80,9 +79,8 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                             {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
                             {item.isPinned && <div className="p-1 pointer-events-none"><Icon name="pin-fill" size="16" /></div>}
                             {!item.isPinned && (
-                                <Tooltip
+                                <Popup
                                     delay={500}
-                                    arrow
                                     title="Set as default dashboard"
                                     hideOnClick={true}
                                 >
@@ -92,7 +90,7 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                                     >
                                         <Icon name="pin-fill" size="16" color="gray-light" />
                                     </div>
-                                </Tooltip>
+                                </Popup>
                             )}
                         </div>
                     )}

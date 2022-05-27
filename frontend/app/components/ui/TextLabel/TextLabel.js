@@ -19,13 +19,12 @@ export default function TextLabel({
       <Icon name={ icon } size="16" color={ iconColor } />
       { popupLabel ?
         <Popup
-          trigger={
-            <div style={ { maxWidth: `${ maxWidth }px` } } className={textTransform}>{ label }</div>
-          }
           content={ popupLabel }
           size="mini"
           inverted
-        />
+        >
+          <div style={ { maxWidth: `${ maxWidth }px` } } className={textTransform}>{ label }</div>
+        </Popup>
         :
         <div
           style={ { maxWidth: `${ maxWidth }px`, lineHeight: '16px' } }

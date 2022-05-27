@@ -24,7 +24,7 @@ export default class GraphQL extends React.PureComponent {
     hasPreviousError: false,
 	}
 
-  onFilterChange = (e, { value }) => {
+  onFilterChange = ({ target: { value } }) => {
     const { list } = this.props;
     const filterRE = getRE(value, 'i');
     const filtered = list
@@ -88,7 +88,7 @@ export default class GraphQL extends React.PureComponent {
             <h4 className="text-lg">GraphQL</h4>
             <div className="flex items-center">
               <Input
-                className="input-small"
+                // className="input-small"
                 placeholder="Filter by Name or Type"
                 icon="search"
                 iconPosition="left"

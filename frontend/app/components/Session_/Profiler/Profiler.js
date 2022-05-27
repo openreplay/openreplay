@@ -18,7 +18,7 @@ export default class Profiler extends React.PureComponent {
     filter: '',
     modalProfile: null,
   }
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
 
   onProfileClick = resource => {
     this.setState({ modalProfile: resource });
@@ -44,10 +44,9 @@ export default class Profiler extends React.PureComponent {
           <BottomBlock.Header>
             <h4 className="text-lg">Profiler</h4>
             <Input
-              className="input-small"
+              // className="input-small"
               placeholder="Filter by Name"
               icon="search"
-              iconPosition="left"
               name="filter"
               onChange={ this.onFilterChange }
             />

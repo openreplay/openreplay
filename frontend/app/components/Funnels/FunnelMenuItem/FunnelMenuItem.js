@@ -30,17 +30,11 @@ function FunnelMenuItem({
       </div>
       <div className="flex items-center">
         <div className={cn("mx-2", { 'invisible': !isPublic })}>
-          <Popup
-            trigger={
+          <Popup content={ `Shared with team` } >
               <div className={cn("bg-gray-light h-8 w-8 rounded-full flex items-center justify-center", stl.teamIcon)} style={{ opacity: '0.3'}}>
                 <Icon name="user-friends" color="gray-dark" size={16} />
               </div>
-            }
-            content={ `Shared with team` }
-            size="tiny"
-            inverted
-            position="top right"
-          />          
+          </Popup>
         </div>        
       </div>      
     </div>

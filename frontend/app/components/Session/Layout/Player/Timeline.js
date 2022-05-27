@@ -37,14 +37,6 @@ export default function Timeline({ player }) {
             offset="-19"
             pinned
             className="error"
-            trigger={
-              <div
-                key={ e.key }
-                className={ cn(cls.markup, cls.error) }
-                style={ { left: `${ e.time * scale }%` } }
-                // onClick={ }
-              />
-            }
             content={ 
               <div className={ cls.popup } >
                 <b>{ `Crash ${e.name}:` }</b>
@@ -52,7 +44,13 @@ export default function Timeline({ player }) {
                 <span>{ e.reason }</span>
               </div>  
             }
-          />
+          >
+            <div
+                key={ e.key }
+                className={ cn(cls.markup, cls.error) }
+                style={ { left: `${ e.time * scale }%` } }
+            />
+          </Popup>
 	      ))}
 	    </div>
 	    <PlayerTime player={player}  timeKey="endTime"/>

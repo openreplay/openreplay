@@ -114,16 +114,15 @@ export default class Performance extends React.PureComponent {
       const resourceIndex = Number.parseInt(value.substr(BASE_KEY.length));
       return (
         <Popup
-          trigger={
-            <TextEllipsis
+          wide
+          content={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
+        >
+          <TextEllipsis
               maxWidth="200px"
               style={ { verticalAlign: 'middle' } }
               text={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
             />
-          }
-          wide
-          content={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
-        />
+        </Popup>
       );
     }
   }

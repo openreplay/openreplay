@@ -27,15 +27,14 @@ export default class Tooltip extends React.PureComponent {
 				open={ open }
 				content={ tooltip }
 				inverted
-				trigger={
-					<span 
-						onMouseEnter={ this.onMouseEnter }
-						onMouseLeave={ this.onMouseLeave }
-					>
-						{ trigger }
-					</span>
-				}
-			/>
+			>
+				<span 
+					onMouseEnter={ this.onMouseEnter }
+					onMouseLeave={ this.onMouseLeave }
+				>
+					{ trigger }
+				</span>
+			</Popup>
 		);
 	}
 }

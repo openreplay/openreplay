@@ -1,8 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux';
-import { Tooltip } from 'react-tippy'
 import cn from 'classnames';
-import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
+import { SideMenuitem, SavedSearchList, Popup } from 'UI'
 import stl from './sessionMenu.module.css';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
@@ -25,32 +24,13 @@ function SessionsMenu(props) {
           <span>Sessions</span>
         </div>
         <span className={ cn(stl.manageButton, 'mr-2') } onClick={() => showModal(<SessionSettings />, { right: true })}>
-          <Tooltip
+          <Popup
             hideOnClick={true}
-            position="bottom"
-            size="small"
-            html={<span>Configure the percentage of sessions <br /> to be captured, timezone and more.</span>}
+            content={<span>Configure the percentage of sessions <br /> to be captured, timezone and more.</span>}
           >
             Settings
-          </Tooltip>
+          </Popup>
         </span>
-        {/* { !capturingAll && (
-          <Popup
-            trigger={
-              <div
-                style={{ width: '120px' }}
-                className="ml-6 cursor-pointer"
-                onClick={ toggleRehydratePanel }
-              >
-                <Progress success percent={ props.captureRate.get('rate') } indicating size="tiny" />
-              </div>
-            }
-            content={ `Capturing ${props.captureRate.get('rate')}% of all sessions. Click to manage capture rate. ` }
-            size="tiny"
-            inverted
-            position="top right"
-          />
-        )}         */}
       </div>
 
       <div>

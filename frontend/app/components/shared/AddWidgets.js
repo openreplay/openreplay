@@ -45,21 +45,20 @@ export default class AddWidgets extends React.PureComponent {
 		return (
 			<div className="relative">
 				<Popup
-					trigger={
-						<IconButton 
-							circle
-							size="small"
-							icon="plus" 
-							outline 
-							onClick={ this.props.switchOpen } 
-							disabled={ filteredWidgets.length === 0 }
-						/>
-					}
 					content={ `Add a metric to this section.` }
 					size="tiny"
 					inverted
 					position="top center"
-				/>
+				>
+					<IconButton 
+						circle
+						size="small"
+						icon="plus" 
+						outline 
+						onClick={ this.props.switchOpen } 
+						disabled={ filteredWidgets.length === 0 }
+					/>
+				</Popup>
 				<OutsideClickDetectingDiv onClickOutside={() => this.props.switchOpen(false)}>
 					{this.props.open && 
 						<div

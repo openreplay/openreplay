@@ -145,8 +145,10 @@ class Sites extends React.PureComponent {
           <div className={ stl.tabHeader }>
             <h3 className={ cn(stl.tabTitle, "text-2xl") }>{ 'Projects' }</h3>
             <Popup
-              trigger={
-                <div>
+              disabled={ canAddSites }
+              content={ `${ !isAdmin ? PERMISSION_WARNING : LIMIT_WARNING }` }
+            >
+              <div>
                   <IconButton
                       disabled={ !canAddSites }
                       circle
@@ -155,13 +157,7 @@ class Sites extends React.PureComponent {
                       onClick={ this.showNewSiteForm }
                   />
                 </div>
-              }
-              disabled={ canAddSites }
-              content={ `${ !isAdmin ? PERMISSION_WARNING : LIMIT_WARNING }` }
-              size="tiny"
-              inverted
-              position="top left"
-            />
+            </Popup>
 
            <div className="flex ml-auto items-center">
               <TextLink
@@ -188,15 +184,14 @@ class Sites extends React.PureComponent {
                     <div className="col-span-4">
                         <div className="flex items-center">
                           <Popup
-                            trigger={
-                              <div style={ { width: '10px' } }>
-                                <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
-                              </div>
-                            }
                             content={ STATUS_MESSAGE_MAP[ _site.status ] }
                             inverted
                             position="top center"
-                          />
+                          >
+                            <div style={ { width: '10px' } }>
+                                <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
+                              </div>
+                          </Popup>
                           <span className="ml-2">{ _site.host }</span>
                         </div>
                     </div>

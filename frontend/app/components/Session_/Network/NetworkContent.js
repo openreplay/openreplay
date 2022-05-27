@@ -38,23 +38,17 @@ const LOAD_TIME_COLOR = "red";
 
 export function renderType(r) { 
   return (
-    <Popup
-      trigger={ <div className={ stl.popupNameTrigger }>{ r.type }</div> }
-      content={ <div className={ stl.popupNameContent }>{ r.type }</div> }
-      size="mini"
-      position="right center"
-    />
+    <Popup content={ <div className={ stl.popupNameContent }>{ r.type }</div> } >
+      <div className={ stl.popupNameTrigger }>{ r.type }</div>
+    </Popup>
   );
 }
 
 export function renderName(r) { 
   return (
-    <Popup
-      trigger={ <div className={ stl.popupNameTrigger }>{ r.name }</div> }
-      content={ <div className={ stl.popupNameContent }>{ r.url }</div> }
-      size="mini"
-      position="right center"
-    />
+    <Popup content={ <div className={ stl.popupNameContent }>{ r.url }</div> } >
+      <div className={ stl.popupNameTrigger }>{ r.name }</div> 
+    </Popup>
   );
 }
 
@@ -100,12 +94,9 @@ function renderSize(r) {
   }
 
   return (
-    <Popup
-      trigger={ <div>{ triggerText }</div> }
-      content={ content }
-      size="mini"
-      position="right center"
-    />
+    <Popup content={ content } >
+      <div>{ triggerText }</div>
+    </Popup>
   );
 }
 
@@ -128,11 +119,9 @@ export function renderDuration(r) {
   return (
     <Popup
       content={ tooltipText }
-      inverted
-      trigger={ 
-        <div className={ cn(className, stl.duration) } > { text } </div>
-      }
-    />
+    >
+      <div className={ cn(className, stl.duration) } > { text } </div>
+    </Popup>
   );
 }
 
@@ -143,7 +132,7 @@ export default class NetworkContent extends React.PureComponent {
   }
 
   onTabClick = activeTab => this.setState({ activeTab })
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
 
   render() {
     const { 
@@ -208,7 +197,7 @@ export default class NetworkContent extends React.PureComponent {
               border={ false }
             />
             <Input
-              className="input-small"
+              // className="input-small"
               placeholder="Filter by Name"
               icon="search"
               iconPosition="left"

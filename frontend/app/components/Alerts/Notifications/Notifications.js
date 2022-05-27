@@ -68,19 +68,15 @@ class Notifications extends React.Component {
     return (
       <div>       
         <Popup
-          trigger={
-            <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
+          title={ `Alerts` }
+        >
+           <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
             <div className={ stl.counter } data-hidden={ unReadNotificationsCount === 0 }>
               { unReadNotificationsCount }
             </div>
             <Icon name="bell" size="18" />
           </div>
-          }
-          content={ `Alerts` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+        </Popup>
         <SlideModal
           title={
             <div className="flex items-center justify-between">

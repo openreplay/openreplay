@@ -212,24 +212,20 @@ class ManageUsers extends React.PureComponent {
                 { !hideHeader && <h3 className={ cn(styles.tabTitle, "text-2xl") }>{ (isAdmin ? 'Manage ' : '') + `Users (${members.size})` }</h3> }
                 { hideHeader && <h3 className={ cn(styles.tabTitle, "text-xl") }>{ `Users (${members.size})` }</h3>}
                 <Popup
-                  trigger={
-                    <div>
-                      <IconButton
-                          id="add-button"
-                          disabled={ !canAddUsers }
-                          circle
-                          icon="plus"
-                          outline
-                          onClick={ () => this.init() }
-                      />
-                    </div>
-                  }
                   disabled={ canAddUsers }
                   content={ `${ !canAddUsers ? (!isAdmin ? PERMISSION_WARNING : LIMIT_WARNING) : 'Add team member' }` }
-                  size="tiny"
-                  inverted
-                  position="top left"
-                />
+                >
+                  <div>
+                    <IconButton
+                        id="add-button"
+                        disabled={ !canAddUsers }
+                        circle
+                        icon="plus"
+                        outline
+                        onClick={ () => this.init() }
+                    />
+                  </div>
+                </Popup>
               </div>              
             </div>
 

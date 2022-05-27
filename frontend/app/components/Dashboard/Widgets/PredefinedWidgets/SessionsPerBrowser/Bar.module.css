@@ -4,8 +4,8 @@
   border-radius: 3px;
   display: flex;
   align-items: center;
-  & div {
-    padding: 0 5px;
+  & > div {
+    padding: 3px !important;
     height: 20px;
     color: #FFF;
   }

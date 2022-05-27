@@ -8,6 +8,7 @@ import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
 import Select from 'Shared/Select';
+import { Tooltip } from 'react-tippy';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
@@ -21,7 +22,7 @@ import Select from 'Shared/Select';
 export default class SharePopup extends React.PureComponent {
   state = {
     comment: '',
-    isOpen: false,
+    isOpen: true,
     channelId: this.props.channels.getIn([ 0, 'webhookId' ]),
   }
 
@@ -54,11 +55,11 @@ export default class SharePopup extends React.PureComponent {
 
     const options = channels.map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
     return (
-      <Popup
+      <Tooltip
         open={ isOpen }
-        onOpen={ this.handleOpen }
-        onClose={ this.handleClose }
-        trigger={ trigger }
+        interactive
+        // onOpen={ this.handleOpen }
+        // onClose={ this.handleClose }
         content={ 
           <div className={ styles.wrapper }>
             <div className={ styles.header }>
@@ -116,11 +117,13 @@ export default class SharePopup extends React.PureComponent {
             }
           </div>
         }
-        on="click"
-        position="top right"
-        className={ styles.popup }
-        hideOnScroll
-      />
+        // trigger="click"
+        // position="top right"
+        // className={ styles.popup }
+        // hideOnScroll
+      >
+        {trigger}
+      </Tooltip>
     );
   }
 }

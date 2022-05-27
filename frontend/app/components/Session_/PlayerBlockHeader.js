@@ -143,9 +143,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
             )}
             
             <Popup
-                trigger={(
-                  <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
-                )}
                 content={(
                   <div className=''>
                     <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={ formatTimeOrDate(startedAt) } />
@@ -154,10 +151,14 @@ export default class PlayerBlockHeader extends React.PureComponent {
                     <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ this.getDimension(width, height) } isLast />
                   </div>
                 )}
-                on="click"
+                style={{ backgroundColor: '#fff !important' }}
+                className="bg-white"
+                trigger="click"
                 position="top center"
-                hideOnScroll
-            />
+                // hideOnScroll
+            >
+              <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
+            </Popup>
             <div className={ stl.divider } />
             { isAssist && <AssistActions userId={userId} /> }
             { !isAssist && (
@@ -165,15 +166,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
                 <Autoplay />
                 <div className={ stl.divider } />
                 <Bookmark sessionId={sessionId} favorite={favorite} />
-                {/* <IconButton
-                  // className="mr-2"
-                  tooltip="Bookmark"
-                  tooltipPosition="top right"
-                  onClick={ this.toggleFavorite }
-                  loading={ loading }
-                  icon={ favorite ? 'star-solid' : 'star' }                  
-                  plain
-                /> */}
                 <div className={ stl.divider } />
                 <SharePopup
                   entity="sessions"
