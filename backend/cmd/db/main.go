@@ -51,19 +51,20 @@ func main() {
 	handler := func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 		statsLogger.Collect(sessionID, meta)
 
+		// Check if session in db and get session info for the following stats insertion (actually for CH case only)
+		session, err := pg.GetSession(sessionID)
+		if session == nil {
+			if err != nil {
+				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
+			}
+			return
+		}
+
 		// Just save session data into db without additional checks
 		if err := saver.InsertMessage(sessionID, msg); err != nil {
 			if !postgres.IsPkeyViolation(err) {
 				log.Printf("Message Insertion Error %v, SessionID: %v, Message: %v", err, sessionID, msg)
 			}
-			return
-		}
-
-		// Try to get session from db for the following handlers
-		session, err := pg.GetSession(sessionID)
-		if err != nil {
-			// Might happen due to the assets-related message TODO: log only if session is necessary for this kind of message
-			log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
 			return
 		}
 

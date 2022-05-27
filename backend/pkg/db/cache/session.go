@@ -8,10 +8,7 @@ import (
 
 func (c *PGCache) GetSession(sessionID uint64) (*Session, error) {
 	if s, inCache := c.sessions[sessionID]; inCache {
-		// TODO: review. Might cause bugs in case of multiple instances
-		if s == nil {
-			return nil, pgx.ErrNoRows
-		}
+		// TODO: review. Might cause bugs in case of multiple PG instances
 		return s, nil
 	}
 	s, err := c.Conn.GetSession(sessionID)
