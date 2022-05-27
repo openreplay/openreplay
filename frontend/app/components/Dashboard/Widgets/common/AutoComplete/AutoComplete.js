@@ -42,7 +42,7 @@ const AutoComplete = props => {
         { !focused && selected && (
           <div className={cn(stl.selected, 'flex items-center justify-between')}>
             <span>{selected.value}</span>
-            <Button plain onClick={onClearHandle}><Icon name="close" size="14"/></Button>
+            <Button variant="text" onClick={onClearHandle}><Icon name="close" size="14"/></Button>
           </div>
         )}
         { (focused || !selected) && (

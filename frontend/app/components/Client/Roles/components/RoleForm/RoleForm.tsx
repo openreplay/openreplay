@@ -146,30 +146,26 @@ const RoleForm = (props: Props) => {
             onClick={ _save }
             disabled={ !role.validate() }
             loading={ saving }
-            primary
-            marginRight
+            variant="primary"
+            className="float-left mr-2"
           >
             { role.exists() ? 'Update' : 'Add' }
           </Button>
-          <Button
-            data-hidden={ !role.exists() }
-            onClick={ closeModal }
-            outline
-          >
-            { 'Cancel' }
-          </Button>
+          { role.exists() && (
+            <Button
+              onClick={ closeModal }
+            >
+              { 'Cancel' }
+            </Button>
+          )}
         </div>
         { role.exists() && (
-          <div>
-            <Button
-              data-hidden={ !role.exists() }
-              onClick={ () => props.deleteHandler(role) }
-              hover
-              noPadding
-            >
-              <Icon name="trash" size="18"/>
-            </Button>
-          </div>
+          <Button
+            variant="text"
+            onClick={ () => props.deleteHandler(role) }
+          >
+            <Icon name="trash" size="18"/>
+          </Button>
         )}
       </div>
     </div>

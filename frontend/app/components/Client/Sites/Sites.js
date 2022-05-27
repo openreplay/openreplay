@@ -211,14 +211,15 @@ class Sites extends React.PureComponent {
                       >
                         <Icon name="trash" size="16" color="teal" />
                       </button> */}
-                      <button
+                      <Button
+                        variant="text"
                         className={cn('mx-3', {'hidden' : !isAdmin})}
                         disabled={ !isAdmin }
                         onClick={ () => isAdmin && this.edit(_site) }
                         data-clickable
                       >
                         <Icon name="edit" size="16" color="teal"/>
-                      </button>
+                      </Button>
                       {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
                     </div>
                   </div>

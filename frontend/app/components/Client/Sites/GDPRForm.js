@@ -122,14 +122,12 @@ export default class GDPRForm extends React.PureComponent {
 
         <div className={ styles.footer }>
           <Button
-            outline
-            primary
-            //onClick={ this.saveGdpr }
-            marginRight
+            variant="outline"
+            className="float-left mr-2"
             loading={ saving }
             content="Update"
           />
-          <Button plain primary onClick={ onClose } content="Cancel" />
+          <Button onClick={ onClose } content="Cancel" />
         </div>
       </form>
     );

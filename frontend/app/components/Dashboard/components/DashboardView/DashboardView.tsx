@@ -105,7 +105,7 @@ function DashboardView(props: RouteComponentProps<Props>) {
                 size="small"
                 // iconSize={180}
                 subtext={
-                    <Button primary size="small" onClick={onAddWidgets}>+ Create Dashboard</Button>
+                    <Button variant="primary" size="small" onClick={onAddWidgets}>+ Create Dashboard</Button>
                 }
             >
                 <div style={{ maxWidth: '1300px', margin: 'auto'}}>

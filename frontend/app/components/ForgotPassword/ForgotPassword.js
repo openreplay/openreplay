@@ -210,18 +210,20 @@ export default class ForgotPassword extends React.PureComponent {
               </div>
             </div>
             <div className={ stl.formFooter }>
-              <Button
-                data-hidden={ updated || requested }
-                type="submit" primary
-                loading={loading}
-                disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
-              >
-                { resetting ? 'Create' : 'Reset' }
-              </Button>
+              {!(updated || requested) && (
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={loading}
+                  disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
+                >
+                  { resetting ? 'Create' : 'Reset' }
+                </Button>
+              )}
 
               <div className={ stl.links }>
                 <Link to={ LOGIN }>
-                  <Button data-hidden={ !updated } type="submit" primary >{ 'Login' }</Button>
+                  { updated && (<Button variant="primary" type="submit" primary >{ 'Login' }</Button>)}
                   <div data-hidden={ updated }>{'Back to Login'}</div>
                 </Link>
               </div>

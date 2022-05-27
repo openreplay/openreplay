@@ -77,7 +77,7 @@ export default class Settings extends React.PureComponent {
           />
         </div>
 
-        <Button outline loading={ loading } disabled={ !changed } type="submit">{ 'Update' }</Button>
+        <Button variant="outline" loading={ loading } disabled={ !changed } type="submit">{ 'Update' }</Button>
       </form>
     );
   }

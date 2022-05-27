@@ -90,12 +90,12 @@ export default class NewSiteForm extends React.PureComponent {
 						<Button							
 							variant="primary"
 							type="submit"							
-							marginRight
+							className="float-left mr-2"
 							loading={ loading }
 						>
 							{site.exists() ? 'Update' : 'Add'}
 						</Button>
-						<Button type="button" plain onClick={() => this.remove(site)}>
+						<Button variant="text" type="button" plain onClick={() => this.remove(site)}>
 							<Icon name="trash" size="16" />
 						</Button>
 					</div>

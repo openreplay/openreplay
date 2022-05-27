@@ -119,18 +119,16 @@ function UserForm(props: Props) {
                             onClick={ onSave }
                             disabled={ !user.valid(isEnterprise) || isSaving }
                             loading={ isSaving }
-                            primary
-                            marginRight
+                            variant="primary"
+                            className="float-left mr-2"
                         >
                             { user.exists() ? 'Update' : 'Invite' }
                         </Button>
-                        <Button
-                            data-hidden={ !user.exists() }
-                            onClick={ hideModal }
-                            outline
-                        >
-                            { 'Cancel' }
-                        </Button>
+                        {user.exists() && (
+                            <Button onClick={ hideModal }>
+                                { 'Cancel' }
+                            </Button>
+                        )}
                     </div>
                     <div>
                         <Button

@@ -43,15 +43,14 @@ class CustomFieldForm extends React.PureComponent {
           onClick={ () => this.props.onSave(field) }
           disabled={ !field.validate() }
           loading={ this.props.saving }
-          primary
-          marginRight
+          variant="primary"
+          className="float-left mr-2"
         >
           { exists ? 'Update' : 'Add' }
         </Button>
         <Button
           data-hidden={ !exists }
           onClick={ this.props.onClose }
-          outline
         >
           { 'Cancel' }
         </Button>

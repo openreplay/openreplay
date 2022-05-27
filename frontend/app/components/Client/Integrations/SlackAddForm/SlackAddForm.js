@@ -62,18 +62,14 @@ class SlackAddForm extends React.PureComponent {
                 onClick={ this.save }
                 disabled={ !instance.validate() }
                 loading={ saving }
-                primary
-                marginRight
+                variant="primary"
+                className="float-left mr-2"
               >
                 { instance.exists() ? 'Update' : 'Add' }
               </Button>
 
               <Button
                 onClick={ onClose }
-                // disabled={ !instance.validate() }
-                // loading={ saving }
-                outline
-                plain
               >
                 { 'Cancel' }
               </Button>
@@ -82,8 +78,6 @@ class SlackAddForm extends React.PureComponent {
             <Button
               onClick={ () => this.remove(instance.webhookId) }
               disabled={ !instance.exists() }
-              // loading={ saving }
-              plain
             >
               { 'Delete' }
             </Button>

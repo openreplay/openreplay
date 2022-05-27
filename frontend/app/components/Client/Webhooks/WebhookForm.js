@@ -63,18 +63,18 @@ class WebhookForm extends React.PureComponent {
           onClick={ this.save }    
           disabled={ !webhook.validate() }
           loading={ loading }
-          primary
-          marginRight
+          variant="primary"
+          className="float-left mr-2"
         >
           { webhook.exists() ? 'Update' : 'Add' }
         </Button>
-        <Button
-          data-hidden={ !webhook.exists() }
-          onClick={ this.props.onClose }
-          outline
-        >
-          { 'Cancel' }
-        </Button>
+        { webhook.exists() && (
+          <Button
+            onClick={ this.props.onClose }
+          >
+            { 'Cancel' }
+          </Button>
+        )}
       </Form>
     );
   }

@@ -93,13 +93,13 @@ function DashboardEditModal(props: Props) {
             <Modal.Actions>
                 <div className="-mx-2 px-2">
                     <Button
-                        primary
+                        variant="primary"
                         onClick={ onSave }
-                        // loading={ loading }
+                        className="float-left mr-2"
                     >
                         Save
                     </Button>
-                    <Button className="" marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+                    <Button className="mr-2" onClick={ closeHandler }>{ 'Cancel' }</Button>
                 </div>
             </Modal.Actions>
       </Modal>

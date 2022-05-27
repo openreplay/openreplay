@@ -84,16 +84,15 @@ class JobForm extends React.PureComponent {
 
         <Button
           loading={ saving }
-          primary
+          variant="primary"
           disabled={ !instance.validate() }
-          marginRight
+          className="float-left mr-2"
         >
           {'Rehydrate'}
         </Button>
         
         <Button
           type="button"
-          outline
           onClick={ onCancel }
         >
           {'Cancel'}

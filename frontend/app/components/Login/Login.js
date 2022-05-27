@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Icon, Loader, Button, Link } from 'UI';
+import { Icon, Loader, Button, Link, Input } from 'UI';
 import { login } from 'Duck/user';
 import { forgotPassword, signup } from 'App/routes';
 import ReCAPTCHA from 'react-google-recaptcha';
@@ -89,12 +89,12 @@ export default class Login extends React.Component {
                     onChange={ token => this.handleSubmit(token) }
                   />
                 )}            
-                <div>
+                <div style={{ width: '350px'}}>
                   <div className="mb-6">
                     <label>Email</label>
-                    <div className={ stl.inputWithIcon }>
-                      <i className={ stl.inputIconUser } />
-                      <input
+                    {/* <div className={ stl.inputWithIcon }> */}
+                      {/* <i className={ stl.inputIconUser } /> */}
+                      <Input
                         autoFocus={true}
                         autoComplete="username"
                         type="text"
@@ -103,14 +103,15 @@ export default class Login extends React.Component {
                         onChange={ this.write }
                         className={ stl.email }
                         required="true"
+                        icon="user-alt"
                       />
-                    </div>
+                    {/* </div> */}
                   </div>
                   <div className="mb-6">
                     <label className="mb-2">Password</label>
-                    <div className={ stl.inputWithIcon }>
-                      <i className={ stl.inputIconPassword } />
-                      <input
+                    {/* <div className={ stl.inputWithIcon }> */}
+                      {/* <i className={ stl.inputIconPassword } /> */}
+                      <Input
                         autoComplete="current-password"
                         type="password"
                         placeholder="Password"
@@ -118,8 +119,9 @@ export default class Login extends React.Component {
                         onChange={ this.write }
                         className={ stl.password }
                         required="true"
+                        icon="lock-alt"
                       />
-                    </div>
+                    {/* </div> */}
                   </div>
                 </div>
               </Loader>
@@ -134,7 +136,7 @@ export default class Login extends React.Component {
                 </div>
               }
               <div className={ stl.formFooter }>
-                <Button type="submit" primary >{ 'Login' }</Button>
+                <Button type="submit" variant="primary" >{ 'Login' }</Button>
 
                 <div className={ cn(stl.links, 'text-lg') }>
                   <Link to={ FORGOT_PASSWORD }>{'Forgot your password?'}</Link>
@@ -145,7 +147,7 @@ export default class Login extends React.Component {
               <div className={cn(stl.sso, "py-2 flex flex-col items-center")}>
                 <div className="mb-4">or</div>
                 <a href="/api/sso/saml2" rel="noopener noreferrer">
-                  <Button type="button" outline type="submit" primary >{ `Login with SSO (${authDetails.ssoProvider})` }</Button>
+                  <Button variant="outline" type="submit" >{ `Login with SSO (${authDetails.ssoProvider})` }</Button>
                 </a>
               </div>
             )}

@@ -156,18 +156,18 @@ class ManageUsers extends React.PureComponent {
               onClick={ this.save }    
               disabled={ !member.validate() }
               loading={ this.props.saving }
-              primary
-              marginRight
+              variant="primary"
+              className="float-left mr-2"
             >
               { member.exists() ? 'Update' : 'Invite' }
             </Button>
-            <Button
-              data-hidden={ !member.exists() }
-              onClick={ this.closeModal }
-              outline
-            >
-              { 'Cancel' }
-            </Button>
+            {member.exists() && (
+              <Button
+                onClick={ this.closeModal }
+              >
+                { 'Cancel' }
+              </Button>
+            )}
           </div>
           { !member.joined && member.invitationLink &&
             <CopyButton

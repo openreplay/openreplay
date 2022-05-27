@@ -123,20 +123,20 @@ export default class IntegrationForm extends React.PureComponent {
             onClick={ this.save }
             disabled={ !config.validate() }
             loading={ saving || loading }
-            variant="outline"
+            variant="primary"
             className="float-left mr-2"
           >
             { config.exists() ? 'Update' : 'Add' }
           </Button>
 
-          <Button
-            data-hidden={ !config.exists() }
-            loading={ removing }
-            onClick={ this.remove }
-            outline
-          >
-            { 'Delete' }
-          </Button>
+          {config.exists() && (
+            <Button
+              loading={ removing }
+              onClick={ this.remove }
+            >
+              { 'Delete' }
+            </Button>
+          )}
         </Form>
       </div>
     );

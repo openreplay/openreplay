@@ -151,12 +151,12 @@ function WidgetForm(props: Props) {
             </div>
 
             <div className="form-group">
-                <div className="font-medium items-center py-2">
+                <div className="flex items-center font-medium items-center py-2">
                     {`${isTable ? 'Filter by' : 'Chart Series'}`}
                     {!isTable && (
                         <Button
                             className="ml-2"
-                            primary plain size="small"
+                            variant="text-primary"
                             onClick={() => metric.addSeries()}
                             disabled={!canAddSeries}
                         >Add Series</Button>
@@ -184,8 +184,7 @@ function WidgetForm(props: Props) {
 
             <div className="form-groups flex items-center justify-between">
                 <Button
-                    primary
-                    size="small"
+                    variant="primary"
                     onClick={onSave}
                     disabled={isSaving}
                 >
@@ -194,13 +193,13 @@ function WidgetForm(props: Props) {
                 <div className="flex items-center">
                     {metric.exists() && (
                         <>
-                            <Button plain size="small" onClick={onDelete} className="flex items-center">
+                            <Button variant="text-primary" onClick={onDelete}>
                                 <Icon name="trash" size="14" className="mr-2" color="teal"/>
                                 Delete
                             </Button>
                             <Button
-                                plain size="small"
-                                className="flex items-center ml-2"
+                                variant="text-primary"
+                                className="ml-2"
                                 onClick={() => setShowDashboardSelectionModal(true)}
                                 disabled={!canAddToDashboard}
                             >

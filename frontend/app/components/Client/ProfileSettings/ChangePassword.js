@@ -119,12 +119,13 @@ export default class ChangePassword extends React.PureComponent {
           { ERROR_DOESNT_MATCH }
         </Message>
         <Button
-          outline
-          content="Change Password"
           type="submit"
+          variant="outline"
           disabled={ this.isSubmitDisabled() }
           loading={ loading }
-        />        
+        >        
+          Change Password
+        </Button>
         <Message success hidden={ !success }>
           { 'Successfully changed the password!' }
         </Message>
