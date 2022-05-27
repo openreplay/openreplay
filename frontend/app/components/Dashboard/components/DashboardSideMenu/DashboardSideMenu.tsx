@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { SideMenuitem, SideMenuHeader, Icon, Popup } from 'UI';
+import { SideMenuitem, SideMenuHeader, Icon, Popup, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
 import { withSiteId, dashboardSelected, metrics } from 'App/routes';
@@ -12,7 +12,7 @@ import cn from 'classnames';
 import { connect } from 'react-redux';
 import { compose } from 'redux'
 import { setShowAlerts } from 'Duck/dashboard';
-import stl from 'Shared/MainSearchBar/mainSearchBar.module.css';
+// import stl from 'Shared/MainSearchBar/mainSearchBar.module.css';
 
 const SHOW_COUNT = 8;
 
@@ -56,14 +56,12 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                 className="mb-4 flex items-center"
                 text="DASHBOARDS"
                 button={
-                    <span
-                        className={cn("ml-1 flex items-center", stl.button)}
-                        onClick={onAddDashboardClick}
-                        style={{ marginBottom: 0 }}
-                    >
-                        <Icon name="plus" size="16" color="main" />
-                        <span className="ml-1" style={{ textTransform: 'none' }}>Create</span>
-                    </span>
+                    <Button onClick={onAddDashboardClick} variant="text-primary">
+                        <>
+                            <Icon name="plus" size="16" color="main" />
+                            <span className="ml-1" style={{ textTransform: 'none' }}>Create</span>
+                        </>
+                    </Button>
                 }
             />
             {dashboardsPicked.map((item: any) => (
@@ -81,7 +79,7 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                             {!item.isPinned && (
                                 <Popup
                                     delay={500}
-                                    title="Set as default dashboard"
+                                    content="Set as default dashboard"
                                     hideOnClick={true}
                                 >
                                     <div

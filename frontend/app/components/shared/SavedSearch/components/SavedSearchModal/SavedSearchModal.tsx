@@ -1,6 +1,5 @@
 import React, { MouseEvent, useState } from 'react'
 import cn from 'classnames';
-import { Icon as SemIcon } from 'semantic-ui-react';
 import { Icon, Input } from 'UI';
 import { List } from 'immutable';
 import { confirm, Popup } from 'UI';
@@ -20,9 +19,8 @@ interface ITooltipIcon {
 function TooltipIcon(props: ITooltipIcon) {
     return (
         <div onClick={(e) => props.onClick(e)} >
-            {/* @ts-ignore - problem with react-tippy types TODO: remove after fix */}
             <Popup
-                title={props.title}
+                content={props.title}
                 hideOnClick={true}
             >
                 <Icon size="16" name={props.name} color="main" />

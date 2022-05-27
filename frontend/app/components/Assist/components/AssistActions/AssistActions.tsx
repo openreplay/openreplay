@@ -114,7 +114,7 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
       <div className={ stl.divider } />
       
       <Popup
-        title={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
+        content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
       >
         <div
           className={

@@ -68,7 +68,7 @@ class Notifications extends React.Component {
     return (
       <div>       
         <Popup
-          title={ `Alerts` }
+          content={ `Alerts` }
         >
            <div className={ stl.button } onClick={ this.toggleModal } data-active={ visible }>
             <div className={ stl.counter } data-hidden={ unReadNotificationsCount === 0 }>
@@ -85,11 +85,9 @@ class Notifications extends React.Component {
                 <div className="">
                   <Button
                     loading={clearingAll}
-                    plain
-                    simple
+                    variant="text"
                     onClick={this.props.setLastRead}
                     disabled={unReadNotificationsCount === 0}
-                    noPadding
                   >
                     <span
                       className={ cn("text-sm color-gray-medium", { 'invisible' : clearingAll })}

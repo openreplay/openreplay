@@ -123,8 +123,8 @@ export default class IntegrationForm extends React.PureComponent {
             onClick={ this.save }
             disabled={ !config.validate() }
             loading={ saving || loading }
-            primary
-            marginRight
+            variant="outline"
+            className="float-left mr-2"
           >
             { config.exists() ? 'Update' : 'Add' }
           </Button>

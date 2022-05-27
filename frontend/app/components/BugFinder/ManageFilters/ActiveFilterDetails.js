@@ -51,10 +51,9 @@ export default ({
       </div>
     </div>
     <div className={ styles.footer }>
-      <Button primary marginRight onClick={ () => applyFiltersHandler(activeFilter) }>{ 'Apply' }</Button>
+      <Button variant="primary" onClick={ () => applyFiltersHandler(activeFilter) }>{ 'Apply' }</Button>
       <Button
         onClick={ () => removeFilter(activeFilter.id) }
-        basic
         loading={ loading }
       >
         { 'Delete' }

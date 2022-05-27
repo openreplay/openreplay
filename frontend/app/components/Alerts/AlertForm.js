@@ -300,7 +300,7 @@ const AlertForm = props => {
         <div className="flex items-center">
           <Button
             loading={loading}
-            primary
+            variant="primary"
             type="submit"
             disabled={loading || !instance.validate()}
             id="submit-button"
@@ -314,9 +314,9 @@ const AlertForm = props => {
           {instance.exists() && (
             <Button
               hover
+              variant="text"
               loading={deleting}
               type="button"
-              outline plain
               onClick={() => onDelete(instance)}
               id="trash-button"
             >

@@ -55,9 +55,7 @@ export default class Table extends React.PureComponent {
             <div className="w-full flex justify-center">
               <Button
                 onClick={ this.onLoadMoreClick }
-                plain
-                small
-                className="text-center"
+                variant="text-primary"
               >
                 { rows.size + ' More' }
               </Button>

@@ -17,7 +17,7 @@ const ListItem = ({ announcement, onButtonClick }) => {
         <div className="mb-2 text-sm text-justify">{announcement.description}</div>
         {announcement.buttonUrl &&           
           <Button
-            primary outline size="small"
+            variant="outline"
             onClick={() => onButtonClick(announcement.buttonUrl) }
           >
             <span className="capitalize">{announcement.buttonText}</span>

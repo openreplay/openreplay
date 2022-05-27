@@ -120,7 +120,7 @@ function DashboardView(props: RouteComponentProps<Props>) {
                                 title={dashboard?.name}
                                 className="mr-3"
                                 actionButton={
-                                    <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
+                                    <Button variant="primary" onClick={onAddWidgets}>Add Metric</Button>
                                 }
                             />
 

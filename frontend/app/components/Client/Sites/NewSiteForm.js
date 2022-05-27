@@ -79,21 +79,22 @@ export default class NewSiteForm extends React.PureComponent {
 					<div className={ styles.formGroup }>
 						<label>{ 'Name' }</label>
 						<Input
-						placeholder="Ex. openreplay"
-						name="name"
-						value={ site.name }
-						onChange={ this.edit }
-						className={ styles.input }
+							placeholder="Ex. openreplay"
+							name="name"
+							value={ site.name }
+							onChange={ this.edit }
+							className={ styles.input }
 						/>
 					</div>
 					<div className="mt-6 flex justify-between">
 						<Button							
-							primary
+							variant="primary"
 							type="submit"							
 							marginRight
 							loading={ loading }
-							content={site.exists() ? 'Update' : 'Add'}
-						/>
+						>
+							{site.exists() ? 'Update' : 'Add'}
+						</Button>
 						<Button type="button" plain onClick={() => this.remove(site)}>
 							<Icon name="trash" size="16" />
 						</Button>

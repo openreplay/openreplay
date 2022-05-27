@@ -29,6 +29,7 @@ const config: Configuration = {
     },
   },
   module: {
+    exprContextCritical: false,
     rules: [
       {
         test: /\.(ts|js)x?$/i,

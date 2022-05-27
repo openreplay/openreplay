@@ -126,11 +126,7 @@ const Header = (props) => {
       
         <Notifications />
         <div className={ styles.divider } />
-        <Popup
-          title={ `Preferences` }
-          // position="bottom"
-          // hideOnScroll
-        >
+        <Popup content={ `Preferences` } >
           <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
         </Popup>
         
