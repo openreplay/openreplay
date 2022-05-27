@@ -22,7 +22,7 @@ func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 	case s3 == nil:
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
-	return &Storage{s3: s3}, nil
+	return &Storage{cfg: cfg, s3: s3}, nil
 }
 
 func (s *Storage) UploadKey(key string, retryCount int) {
