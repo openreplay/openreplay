@@ -38,7 +38,7 @@ export default ({
   }
 
   if (variant === 'outline') {
-    classes.push('bg-transparent color-teal border border-teal hover:bg-teal-light')
+    classes.push('bg-white color-teal border border-teal hover:bg-teal-light')
   }
 
   return (

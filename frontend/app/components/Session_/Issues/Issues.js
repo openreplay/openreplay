@@ -75,10 +75,9 @@ class Issues extends React.Component {
             onClose={ this.handleClose }
             trigger={ issues.size === 0 ?
               <Button
-                outline
+                variant="outline"
                 onClick={ this.props.toggleModal }
                 className={ stl.button }
-                size="small"
                 disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}
               >
                 <div className="h-full flex items-center">

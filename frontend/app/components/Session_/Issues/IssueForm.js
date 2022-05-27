@@ -131,14 +131,12 @@ class IssueForm extends React.PureComponent {
 
         <Button
           loading={ creating }
-          primary
+          variant="primary"
           disabled={ !instance.validate() }
-          marginRight
-          // outline
+          className="float-left mr-2"
         >{'Create'}</Button>
         <Button
           type="button"
-          outline
           onClick={ closeHandler }
         >{'Cancel'}</Button>
       </Form>

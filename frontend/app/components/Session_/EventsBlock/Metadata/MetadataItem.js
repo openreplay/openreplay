@@ -61,13 +61,13 @@ export default class extends React.PureComponent {
 						</TextEllipsis>
 					</div>
 	        <Button
-            onClick={ this.switchOpen }
-						plain
-						className={ stl.searchButton }
-						id="metadata-item"
-          >
-						<Icon name="search" size="16" color="teal" />
-					</Button>
+            	onClick={ this.switchOpen }
+				variant="text"
+				className={ stl.searchButton }
+				id="metadata-item"
+			>
+				<Icon name="search" size="16" color="teal" />
+			</Button>
 	      </div>
 	     </div>
 		);

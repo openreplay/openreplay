@@ -74,7 +74,7 @@ const FunnelHeader = (props) => {
           />
           <Info label="Events" value={eventsCount} />
           <span>-</span>
-          <Button plain onClick={props.toggleFilters}>{ showFilters ? 'HIDE' : 'EDIT FUNNEL' }</Button>
+          <Button variant="text-primary" onClick={props.toggleFilters}>{ showFilters ? 'HIDE' : 'EDIT FUNNEL' }</Button>
           <Info label="Sessions" value={insights.sessionsCount} />          
           <Info label="Conversion" value={`${insights.conversions}%`} />
         </div>

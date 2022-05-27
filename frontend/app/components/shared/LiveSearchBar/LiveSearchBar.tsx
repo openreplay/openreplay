@@ -19,12 +19,12 @@ const LiveSearchBar = (props: Props) => {
         <div className="flex items-center" style={{ width: "40%"}}>
             <Popup content={'Clear Steps'} >
                 <Button
-                    plain
+                    variant="text-primary"
                     disabled={!hasFilters}
-                    className="ml-auto"
+                    className="ml-auto font-medium"
                     onClick={() => props.clearSearch()}
                 >
-                    <span className="font-medium">Clear</span>
+                    Clear
                 </Button>
             </Popup>
         </div>

@@ -34,7 +34,7 @@ const MetadataList = (props) => {
 
   return (
     <div className="py-2 flex">
-      <Button primary outline size="small" onClick={() => openModal(true)}>Add Metadata</Button>
+      <Button variant="outline" onClick={() => openModal(true)}>Add Metadata</Button>
       <div className="flex ml-2">
         { fields.map((f, index) => (
           <TagBadge

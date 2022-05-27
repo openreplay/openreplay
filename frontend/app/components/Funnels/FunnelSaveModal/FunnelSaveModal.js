@@ -93,13 +93,14 @@ export default class FunnelSaveModal extends React.PureComponent {
         </Modal.Content>
         <Modal.Actions className="">          
           <Button
-            primary
+            variant="primary"
             onClick={ this.onSave }
             loading={ loading }
+            className="float-left mr-2"
           >
             { funnel.exists() ? 'Modify' : 'Save' }
           </Button>
-          <Button className={ styles.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+          <Button onClick={ closeHandler }>{ 'Cancel' }</Button>
         </Modal.Actions>
       </Modal>
     );

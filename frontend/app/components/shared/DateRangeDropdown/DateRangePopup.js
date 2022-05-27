@@ -119,9 +119,9 @@ export default class DateRangePopup extends React.PureComponent {
               className="w-24"
             />
           </div>
-          <div>
-            <Button plain onClick={ onCancel } marginRight>{ 'Cancel' }</Button>
-            <Button primary onClick={ this.onApply } disabled={ !range }>{ 'Apply' }</Button>
+          <div className="flex items-center">
+            <Button onClick={ onCancel } marginRight>{ 'Cancel' }</Button>
+            <Button variant="primary" className="ml-2" onClick={ this.onApply } disabled={ !range }>{ 'Apply' }</Button>
           </div>
         </div>
       </div>
