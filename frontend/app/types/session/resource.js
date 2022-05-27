@@ -37,7 +37,7 @@ const TYPES_MAP = {
 }
 
 function getResourceStatus(status, success) {
-  if (status !== undefined) return status;
+  if (status != null) return String(status);
   if (typeof success === 'boolean' || typeof success === 'number') {
     return !!success 
       ? '2xx-3xx'
@@ -47,8 +47,9 @@ function getResourceStatus(status, success) {
 }
 
 function getResourceSuccess(success, status) {
-  if (success !== undefined) return !!success;
-  if (status !== undefined) return status >= 200 && status < 300;
+  if (success != null) { return !!success }
+  if (status != null) { return status < 400 }
+  return true
 }
 
 export const TYPES = {
