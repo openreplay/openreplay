@@ -58,7 +58,7 @@ function SubHeader(props) {
                         }
                     />
                 </div>
-                <div className="mx-2 hover:bg-gray-light-shade rounded-md p-1">
+                <div className="mx-4 hover:bg-gray-light-shade rounded-md p-1">
                     <Bookmark noMargin />
                 </div>
                 <div>

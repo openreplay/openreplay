@@ -74,11 +74,11 @@ function PageInsightsPanel({
           />
         </div>
         <div
-            onClick={() => { setActiveTab('');  }}
-            className="ml-auto flex items-center justify-center bg-white cursor-pointer"
-          >
-            <Icon name="close" size="18" />
-          </div>
+          onClick={() => { setActiveTab('');  }}
+          className="ml-auto flex items-center justify-center bg-white cursor-pointer"
+        >
+          <Icon name="close" size="18" />
+        </div>
       </div>
       <div className="mb-4 flex items-center">
         <div className="mr-2 flex-shrink-0">In Page</div>

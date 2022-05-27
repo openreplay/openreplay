@@ -18,7 +18,7 @@ const ControlButton = ({
   noIcon,
  }) => (
 	<button
-    className={ cn(stl.controlButton, { [stl.disabled]: disabled, [stl.active]: active }, "relative", containerClassName) }
+    className={ cn(stl.controlButton, { [stl.disabled]: disabled }, "relative", active ? 'border-b-2 border-main' : 'rounded',containerClassName) }
     onClick={ onClick }
     id={"control-button-" + label.toLowerCase()}
     disabled={disabled}
@@ -26,7 +26,7 @@ const ControlButton = ({
       { count > 0 && <div className={ stl.countLabel }>{ count }</div>}
       { hasErrors && <div className={ stl.errorSymbol } /> }
 	    {!noIcon && <Icon name={ icon } size={size} color="gray-dark"/>}
-    {!noLabel && <span className={ cn(stl.label, labelClassName) }>{ label }</span>}
+    {!noLabel && <span className={ cn(stl.label, labelClassName, active ? 'color-main' : 'color-gray-darkest') }>{ label }</span>}
   </button>
 );
 

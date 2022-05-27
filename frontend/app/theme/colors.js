@@ -31,7 +31,7 @@ module.exports = {
   "bg-blue": "#e3e6ff",
   "active-blue-border": "#D0D4F2",
   pink: "#ffb9b9",
-
+  "light-blue-bg": "#E5F7F7",
 
   white: "#fff",
   borderColor: {
