@@ -106,16 +106,17 @@ function SaveSearchModal(props: Props) {
         { savedSearch.exists() && <div className="mt-4">Changes in filters will be updated.</div> }
       </Modal.Content>
       <Modal.Actions className="flex items-center px-6">
-        <div className="mr-auto">
+        <div className="mr-auto flex items-center">
           <Button
-              primary
+              variant="primary"
               onClick={ onSave }
               loading={ loading }
               disabled={!savedSearch.validate()}
+              className="mr-2"
             >
               { savedSearch.exists() ? 'Update' : 'Create' }
             </Button>
-            <Button className={ stl.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+            <Button onClick={ closeHandler }>{ 'Cancel' }</Button>
         </div>
         { savedSearch && <Button noPadding className={ stl.cancelButton } marginRight onClick={ onDelete }>
           <Icon name="trash" size="18" />

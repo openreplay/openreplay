@@ -115,8 +115,8 @@ export default class ScheduleUpdater extends React.PureComponent {
           </Form>
         </Modal.Content>
         <Modal.Actions>
-          <Button onClick={ onClose } basic>{ 'Cancel' }</Button>
-          <Button onClick={ this.onSave } primary loading={ loading }>{ isNew ? 'Add' : 'Schedule' }</Button>
+          <Button onClick={ onClose }>{ 'Cancel' }</Button>
+          <Button onClick={ this.onSave } variant="primary" loading={ loading }>{ isNew ? 'Add' : 'Schedule' }</Button>
         </Modal.Actions>
       </Modal>
     );

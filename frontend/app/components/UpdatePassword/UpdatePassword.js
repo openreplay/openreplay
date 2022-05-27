@@ -102,7 +102,7 @@ export default class UpdatePassword extends React.Component {
             </div>
           }
           <div className={ styles.formFooter }>
-            <Button type="submit" primary >{ 'Update' }</Button>
+            <Button type="submit" variant="primary" >{ 'Update' }</Button>
           </div>
         </form>
       </div>

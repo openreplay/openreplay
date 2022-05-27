@@ -55,8 +55,6 @@ class TagInput extends React.Component {
 
         { tagEditorDisplayed &&
           <Button
-            plain
-            size="small"
             onClick={ toggleTagEditor }
           >
             { 'Cancel' }

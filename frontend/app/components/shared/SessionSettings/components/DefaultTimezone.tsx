@@ -72,7 +72,7 @@ function DefaultTimezone(props) {
                     onChange={onSelectChange}
                 />
                 <div className="col-span-3 ml-3">
-                    <Button disabled={!changed} outline size="medium" onClick={onTimezoneSave}>Update</Button>
+                    <Button disabled={!changed} variant="outline" size="medium" onClick={onTimezoneSave}>Update</Button>
                 </div>
             </div>
             <div className="text-sm mt-3">This change will impact the timestamp on session card and player.</div>

@@ -58,8 +58,7 @@ function CaptureRate(props) {
                     <span className="mx-3">of the sessions</span>
                     <Button
                         disabled={!changed}
-                        outline
-                        size="medium"
+                        variant="outline"
                         onClick={() => settingsStore.saveCaptureRate({
                             rate: captureRate,
                             captureAll,

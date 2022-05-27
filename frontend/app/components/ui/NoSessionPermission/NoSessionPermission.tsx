@@ -16,7 +16,7 @@ function NoSessionPermission({ session }: Props) {
         <span>You don’t have the necessary permissions to access this feature. Please check with your admin.</span>
       }
       <Link to="/">
-        <Button primary className="mt-6">GO BACK</Button>
+        <Button variant="primary" className="mt-6">GO BACK</Button>
       </Link>
     </div>
   );
