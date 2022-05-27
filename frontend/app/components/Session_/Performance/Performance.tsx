@@ -224,30 +224,33 @@ export default class Performance extends React.PureComponent {
     return (
       <BottomBlock>
         <BottomBlock.Header>
-          <InfoLine>
-            <InfoLine.Point
-              label="Device Heap Size"
-              value={ formatBytes(userDeviceHeapSize) }
-              display={ userDeviceHeapSize != null }
-            />
-            {/* <InfoLine.Point */}
-            {/*   label="Device Memory Size" */}
-            {/*   value={ formatBytes(userDeviceMemorySize*1e6) } */}
-            {/* /> */}
-            <InfoLine.Point
-              label="Connection Type"
-              value={ connType }
-              display={ connType != null && connType !== "unknown" }
-            />
-            <InfoLine.Point
-              label="Connection Speed"
-              value={ connBandwidth >= 1000 
-                ? `${ connBandwidth / 1000 } Mbps`
-                : `${ connBandwidth } Kbps`
-              }
-              display={ connBandwidth != null }
-            />
-          </InfoLine>
+          <div className="flex items-center">
+            <span className="font-semibold color-gray-medium mr-4">Performance</span>
+            <InfoLine>
+              <InfoLine.Point
+                label="Device Heap Size"
+                value={ formatBytes(userDeviceHeapSize) }
+                display={ userDeviceHeapSize != null }
+              />
+              {/* <InfoLine.Point */}
+              {/*   label="Device Memory Size" */}
+              {/*   value={ formatBytes(userDeviceMemorySize*1e6) } */}
+              {/* /> */}
+              <InfoLine.Point
+                label="Connection Type"
+                value={ connType }
+                display={ connType != null && connType !== "unknown" }
+              />
+              <InfoLine.Point
+                label="Connection Speed"
+                value={ connBandwidth >= 1000 
+                  ? `${ connBandwidth / 1000 } Mbps`
+                  : `${ connBandwidth } Kbps`
+                }
+                display={ connBandwidth != null }
+              />
+            </InfoLine>
+          </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
           { fps &&

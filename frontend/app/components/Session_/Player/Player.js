@@ -5,11 +5,40 @@ import cn from 'classnames';
 import { EscapeButton } from 'UI';
 import { hide as hideTargetDefiner } from 'Duck/components/targetDefiner';
 import { fullscreenOff } from 'Duck/components/player';
-import { attach as attachPlayer, Controls as PlayerControls, connectPlayer } from 'Player';
+import {
+  NONE,
+  CONSOLE,
+  NETWORK,
+  STACKEVENTS,
+  STORAGE,
+  PROFILER,
+  PERFORMANCE,
+  GRAPHQL,
+  FETCH,
+  EXCEPTIONS,
+  LONGTASKS,
+  INSPECTOR,
+} from 'Duck/components/player';
+import Network from '../Network';
+import Console from '../Console/Console';
+import StackEvents from '../StackEvents/StackEvents';
+import Storage from '../Storage';
+import Profiler from '../Profiler';
+import { ConnectedPerformance } from '../Performance';
+import GraphQL from '../GraphQL';
+import Fetch from '../Fetch';
+import Exceptions from '../Exceptions/Exceptions';
+import LongTasks from '../LongTasks';
+import Inspector from '../Inspector';
+import {
+  attach as attachPlayer,
+  Controls as PlayerControls,
+  scale as scalePlayerScreen,
+  connectPlayer,
+} from 'Player';
 import Controls from './Controls';
 import Overlay from './Overlay';
 import stl from './player.module.css';
-import EventsToggleButton from '../../Session/EventsToggleButton';
 import { updateLastPlayedSession } from 'Duck/sessions';
 
 @connectPlayer(state => ({
@@ -31,6 +60,13 @@ import { updateLastPlayedSession } from 'Duck/sessions';
 export default class Player extends React.PureComponent {
   screenWrapper = React.createRef();
 
+  componentDidUpdate(prevProps) {
+    if ([ prevProps.bottomBlock, this.props.bottomBlock ].includes(NONE) ||
+        prevProps.fullscreen !== this.props.fullscreen) {
+      scalePlayerScreen();
+    }
+  }
+
   componentDidMount() {
     this.props.updateLastPlayedSession(this.props.sessionId);
     if (this.props.closedLive) return;
@@ -48,6 +84,7 @@ export default class Player extends React.PureComponent {
       nextId,
       live,
       closedLive,
+      bottomBlock,
     } = this.props;
 
     return (
@@ -63,6 +100,43 @@ export default class Player extends React.PureComponent {
             ref={ this.screenWrapper }
           />
         </div>
+        { !fullscreen && !!bottomBlock &&
+          <div className="">
+            { bottomBlock === CONSOLE &&
+              <Console />
+            }
+            { bottomBlock === NETWORK &&
+              <Network />
+            }
+            { bottomBlock === STACKEVENTS &&
+              <StackEvents />
+            }
+            { bottomBlock === STORAGE &&
+              <Storage />
+            }
+            { bottomBlock === PROFILER &&
+              <Profiler />
+            }
+            { bottomBlock === PERFORMANCE &&
+              <ConnectedPerformance />
+            }
+            { bottomBlock === GRAPHQL &&
+              <GraphQL />
+            }
+            { bottomBlock === FETCH &&
+              <Fetch />
+            }
+            { bottomBlock === EXCEPTIONS &&
+              <Exceptions />
+            }
+            { bottomBlock === LONGTASKS &&
+              <LongTasks />
+            }
+            { bottomBlock === INSPECTOR &&
+              <Inspector />
+            }
+          </div>
+        }
         <Controls
           { ...PlayerControls }
         />

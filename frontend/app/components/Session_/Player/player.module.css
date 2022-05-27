@@ -15,7 +15,8 @@
   /* border: solid thin $gray-light; */
   /* border-radius: 3px; */
   overflow: hidden;
-  background: $gray-lightest;
+  background: repeating-conic-gradient($gray-lightest 0% 25%, transparent 0% 50%) 
+              50% / 10px 10px;
 }
 
 .disconnected {
