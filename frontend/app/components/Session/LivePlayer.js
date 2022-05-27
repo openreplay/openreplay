@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
@@ -17,7 +17,7 @@ import PlayerBlock from '../Session_/PlayerBlock';
 import styles from '../Session_/session.module.css';
 
 
-const InitLoader = connectPlayer(state => ({ 
+const InitLoader = connectPlayer(state => ({
   loading: !state.initialized
 }))(Loader);
 
@@ -41,12 +41,19 @@ function LivePlayer ({ session, toggleFullscreen, closeBottomBlock, fullscreen, 
     }
   }, [])
 
+  const TABS = {
+    EVENTS: 'Events',
+    HEATMAPS: 'Click Map',
+  }
+  const [activeTab, setActiveTab] = useState('');
+
+
   return (
     <PlayerProvider>
       <InitLoader className="flex-1 p-3">
-        <PlayerBlockHeader fullscreen={fullscreen} />
+      <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
         <div className={ styles.session } data-fullscreen={fullscreen}>
-          <PlayerBlock />
+            <PlayerBlock />
         </div>
       </InitLoader>
     </PlayerProvider>

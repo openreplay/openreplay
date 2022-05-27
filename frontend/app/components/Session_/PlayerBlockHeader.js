@@ -137,14 +137,16 @@ export default class PlayerBlockHeader extends React.PureComponent {
             { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>
-        <div className="relative border-l" style={{ minWidth: '270px' }}>
-          <Tabs
-            tabs={ TABS }
-            active={ activeTab }
-            onClick={ (tab) => { setActiveTab(tab); !showEvents && toggleEvents(true) } }
-            border={ true }
-          />
-        </div>
+        {!isAssist && (
+          <div className="relative border-l" style={{ minWidth: '270px' }}>
+            <Tabs
+              tabs={ TABS }
+              active={ activeTab }
+              onClick={ (tab) => { setActiveTab(tab); !showEvents && toggleEvents(true) } }
+              border={ true }
+            />
+          </div>
+        )}
       </div>
     );
   }
