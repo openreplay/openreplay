@@ -4,12 +4,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 5px 10px;
+  padding: 10px 5px;
   cursor: pointer;
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
   min-width: 60px;
   position: relative;
-  border-radius: 3px;
-  &.active, &:hover {
+  &:hover {
     background-color: $gray-lightest;
     transition: all 0.2s;
   }
@@ -19,7 +21,7 @@
     height: 6px;
     border-radius: 3px;
     background-color: red;
-    bottom: 0px;
+    bottom: 2px;
     right: 0px;
     position: absolute;
   }
@@ -44,7 +46,6 @@
   & .label {
     /* padding-top: 5px; */
     font-size: 10px;
-    color: $gray-darkest;
     height: 16px;
   }
 

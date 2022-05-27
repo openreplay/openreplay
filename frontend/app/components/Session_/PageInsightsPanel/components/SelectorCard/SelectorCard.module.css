@@ -2,7 +2,7 @@
   padding: 10px;
   box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.2);
   border-radius: 3px;  
-  background-color: white;
+  background-color: $gray-lightest;
   margin-bottom: 15px;
 
   & .top {
@@ -40,5 +40,5 @@
 }
 
 .active {
-  background-color: #f9ffff;
+  background-color: $light-blue-bg;
 }

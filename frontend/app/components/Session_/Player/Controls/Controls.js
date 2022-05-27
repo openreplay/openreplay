@@ -1,13 +1,15 @@
 import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
-import { 
+import {
   connectPlayer,
   STORAGE_TYPES,
   selectStorageType,
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
+
+import { Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
@@ -22,7 +24,6 @@ import {
   GRAPHQL,
   FETCH,
   EXCEPTIONS,
-  LONGTASKS,
   INSPECTOR,
 } from 'Duck/components/player';
 import { ReduxTime } from './Time';
@@ -30,6 +31,7 @@ import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 
 import styles from './controls.module.css';
+import { Tooltip } from 'react-tippy';
 
 
 function getStorageIconName(type) {
@@ -96,7 +98,7 @@ function getStorageName(type) {
   showExceptions: state.exceptionsList.length > 0,
   showLongtasks: state.longtasksList.length > 0,
 }))
-@connect((state, props) => {  
+@connect((state, props) => {
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
   const isEnterprise = state.getIn([ 'user', 'account', 'edition' ]) === 'ee';
   return {
@@ -131,9 +133,9 @@ export default class Controls extends React.Component {
       nextProps.live !== this.props.live ||
       nextProps.livePlay !== this.props.livePlay ||
       nextProps.playing !== this.props.playing ||
-      nextProps.completed !== this.props.completed || 
-      nextProps.skip !== this.props.skip || 
-      nextProps.skipToIssue !== this.props.skipToIssue || 
+      nextProps.completed !== this.props.completed ||
+      nextProps.skip !== this.props.skip ||
+      nextProps.skipToIssue !== this.props.skipToIssue ||
       nextProps.speed !== this.props.speed ||
       nextProps.disabled !== this.props.disabled ||
       nextProps.fullscreenDisabled !== this.props.fullscreenDisabled ||
@@ -149,7 +151,7 @@ export default class Controls extends React.Component {
       nextProps.storageCount !== this.props.storageCount ||
       nextProps.storageType !== this.props.storageType ||
       nextProps.showStorage !== this.props.showStorage ||
-      nextProps.showProfiler !== this.props.showProfiler || 
+      nextProps.showProfiler !== this.props.showProfiler ||
       nextProps.showGraphql !== this.props.showGraphql ||
       nextProps.showFetch !== this.props.showFetch ||
       nextProps.fetchCount !== this.props.fetchCount ||
@@ -162,14 +164,19 @@ export default class Controls extends React.Component {
   }
 
   onKeyDown = (e) => {
+    console.log(e.key, e.target)
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
       return;
     }
-    if (this.props.inspectorMode) return;
+    if (this.props.inspectorMode) {
+      if (e.key === 'Esc' || e.key === 'Escape') {
+        toggleInspectorMode();
+      }
+    };
     // if (e.key === ' ') {
     //   document.activeElement.blur();
     //   this.props.togglePlay();
-    // } 
+    // }
     if (e.key === 'Esc' || e.key === 'Escape') {
       this.props.fullscreenOff();
     }
@@ -204,34 +211,46 @@ export default class Controls extends React.Component {
     let label;
     let icon;
     if (completed) {
-      icon = 'redo';
+      icon = 'arrow-clockwise';
+      label = 'Replay this session'
     } else if (playing) {
-      icon = 'play-fill-new';
-    } else {
       icon = 'pause-fill';
+      label = 'Pause';
+    } else {
+      icon = 'play-fill-new';
+      label = 'Pause';
+      label = 'Play'
     }
 
     return (
-      <div 
-        onClick={this.props.togglePlay}
-        className="mr-2 hover-main color-gray-medium cursor-pointer rounded hover:bg-gray-light-shade"
+      <Tooltip
+        delay={0}
+        position="top"
+        title={label}
+        interactive
+        hideOnClick="persistent"
       >
-          <Icon name={icon} size="36" color="inherit" />
-      </div>
+        <div
+          onClick={this.props.togglePlay}
+          className="mr-2 hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
+        >
+            <Icon name={icon} size="36" color="inherit" />
+        </div>
+      </Tooltip>
     )
   }
 
-  controlIcon = (icon, size, action, isBackwards, additionalClasses) => 
-    <div 
-        onClick={ action } 
-        className={cn("py-1 px-2 color-gray-medium hover-main cursor-pointer", additionalClasses)}
+  controlIcon = (icon, size, action, isBackwards, additionalClasses) =>
+    <div
+        onClick={ action }
+        className={cn("py-1 px-2 hover-main cursor-pointer", additionalClasses)}
         style={{ transform: isBackwards ? 'rotate(180deg)' : '' }}
       >
         <Icon name={icon} size={size} color="inherit" />
     </div>
 
   render() {
-    const {      
+    const {
       bottomBlock,
       toggleBottomBlock,
       live,
@@ -239,7 +258,6 @@ export default class Controls extends React.Component {
       skip,
       speed,
       disabled,
-      fullscreenDisabled,
       logCount,
       logRedCount,
       resourceRedCount,
@@ -256,11 +274,9 @@ export default class Controls extends React.Component {
       showFetch,
       fetchCount,
       graphqlCount,
-      showLongtasks,
       exceptionsCount,
       showExceptions,
-      fullscreen,      
-      skipToIssue,
+      fullscreen,
       inspectorMode,
       closedLive,
     } = this.props;
@@ -285,23 +301,41 @@ export default class Controls extends React.Component {
                   )}
 
                   <div className="rounded ml-4 bg-active-blue border border-active-blue-border flex items-stretch">
-                    {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border')}
+                    <Tooltip
+                        title='Rewind 10s'
+                        delay={0}
+                        position="top"
+                      >
+                        {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border color-main h-full')}
+                      </Tooltip>
                     <div className='p-1 border-l border-r bg-active-blue-border border-active-blue-border'>10s</div>
-                    {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border')}
+                    <Tooltip
+                        title='Forward 10s'
+                        delay={0}
+                        position="top"
+                      >
+                        {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border color-main h-full')}
+                    </Tooltip>
                   </div>
 
                   {!live &&
                     <div className='flex items-center mx-4'>
-                      <button
-                        className={ styles.speedButton }
-                        onClick={ this.props.toggleSpeed }
-                        data-disabled={ disabled }
+                      <Tooltip
+                        title='Playback speed'
+                        delay={0}
+                        position="top"
                       >
-                        <div>{ speed + 'x' }</div>
-                      </button>
-                      
+                        <button
+                          className={ styles.speedButton }
+                          onClick={ this.props.toggleSpeed }
+                          data-disabled={ disabled }
+                        >
+                          <div>{ speed + 'x' }</div>
+                        </button>
+                      </Tooltip>
+
                       <button
-                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip }) }
+                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip, [styles.active]: skip }) }
                         onClick={ this.props.toggleSkip }
                         data-disabled={ disabled }
                       >
@@ -327,86 +361,94 @@ export default class Controls extends React.Component {
               {!live && (
                 <ControlButton
                   disabled={ disabled && !inspectorMode }
-                  active={ bottomBlock === INSPECTOR }
+                  active={ inspectorMode }
                   onClick={ toggleInspectorMode }
                   noIcon
                   labelClassName="text-base font-semibold"
                   label="INSPECT"
+                  containerClassName="mx-2"
                 />
               )}
               <ControlButton
                 disabled={ disabled }
                 onClick={ () => toggleBottomBlock(CONSOLE) }
-                active={ bottomBlock === CONSOLE }
+                active={ bottomBlock === CONSOLE && !inspectorMode}
                 label="CONSOLE"
                 noIcon
                 labelClassName="text-base font-semibold"
                 count={ logCount }
                 hasErrors={ logRedCount > 0 }
+                containerClassName="mx-2"
               />
               { !live &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(NETWORK) }
-                  active={ bottomBlock === NETWORK }
+                  active={ bottomBlock === NETWORK && !inspectorMode }
                   label="NETWORK"
                   hasErrors={ resourceRedCount > 0 }
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                 />
               }
-              {!live && 
+              {!live &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(PERFORMANCE) }
-                  active={ bottomBlock === PERFORMANCE }
+                  active={ bottomBlock === PERFORMANCE && !inspectorMode }
                   label="PERFORMANCE"
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                 />
               }
               {showFetch &&
                 <ControlButton
                   disabled={disabled}
                   onClick={ ()=> toggleBottomBlock(FETCH) }
-                  active={ bottomBlock === FETCH }
+                  active={ bottomBlock === FETCH && !inspectorMode }
                   hasErrors={ fetchRedCount > 0 }
                   count={ fetchCount }
                   label="FETCH"
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                 />
               }
               { !live && showGraphql &&
                 <ControlButton
                   disabled={disabled}
                   onClick={ ()=> toggleBottomBlock(GRAPHQL) }
-                  active={ bottomBlock === GRAPHQL }
+                  active={ bottomBlock === GRAPHQL && !inspectorMode }
                   count={ graphqlCount }
                   label="GRAPHQL"
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                 />
               }
               { !live && showStorage &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STORAGE) }
-                  active={ bottomBlock === STORAGE }
+                  active={ bottomBlock === STORAGE && !inspectorMode }
                   count={ storageCount }
                   label={ getStorageName(storageType) }
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                 />
               }
               { showExceptions &&
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(EXCEPTIONS) }
-                  active={ bottomBlock === EXCEPTIONS }
+                  active={ bottomBlock === EXCEPTIONS && !inspectorMode }
                   label="EXCEPTIONS"
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                   count={ exceptionsCount }
                   hasErrors={ exceptionsCount > 0 }
                 />
@@ -415,10 +457,11 @@ export default class Controls extends React.Component {
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(STACKEVENTS) }
-                  active={ bottomBlock === STACKEVENTS }
+                  active={ bottomBlock === STACKEVENTS && !inspectorMode }
                   label="EVENTS"
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                   count={ stackCount }
                   hasErrors={ stackRedCount > 0 }
                 />
@@ -427,16 +470,24 @@ export default class Controls extends React.Component {
                 <ControlButton
                   disabled={ disabled }
                   onClick={ () => toggleBottomBlock(PROFILER) }
-                  active={ bottomBlock === PROFILER }
+                  active={ bottomBlock === PROFILER && !inspectorMode }
                   count={ profilesCount }
                   label="PROFILER"
                   noIcon
                   labelClassName="text-base font-semibold"
+                  containerClassName="mx-2"
                 />
-              }              
+              }
               { !live && <div className={cn(styles.divider, 'h-full')} /> }
-              { !live && 
-                  this.controlIcon("arrows-angle-extend", 18, this.props.fullscreenOn, false, "rounded hover:bg-gray-light-shade")
+              { !live && (
+                <Tooltip
+                  title="Fullscreen"
+                  delay={0}
+                  position="top"
+                >
+                  {this.controlIcon("arrows-angle-extend", 18, this.props.fullscreenOn, false, "rounded hover:bg-gray-light-shade color-gray-medium")}
+                </Tooltip>
+              )
               }
             </div>
           </div>

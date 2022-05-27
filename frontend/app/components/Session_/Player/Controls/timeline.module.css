@@ -38,7 +38,7 @@
   top: 3px;
   height: 10px;
   bottom: 0;
-  background-color: $gray-light;
+  background: repeating-linear-gradient( 125deg, #efefef, #efefef 3px, #ddd 3px, #efefef 5px );
   pointer-events: none;
   z-index: 2;
 }
@@ -49,6 +49,7 @@
   width: 2px;
   height: 10px;
   background: $main;
+  z-index: 3;
   pointer-events: none;
   /* top: 0; */
   /* bottom: 0; */

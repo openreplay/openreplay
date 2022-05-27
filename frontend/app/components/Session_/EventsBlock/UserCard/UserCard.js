@@ -74,6 +74,8 @@ function UserCard({
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <Tooltip
                 theme='light'
+                delay={0}
+                hideOnClick="persistent"
                 arrow
                 interactive
                 html={(
@@ -89,7 +91,11 @@ function UserCard({
                 disabled={false}
                 on="hover"
             >
-              <span className="color-teal cursor-pointer">More</span>
+              <span 
+                className="color-teal cursor-pointer" 
+              >
+                More
+              </span>
             </Tooltip>
           </div>
         </div>
