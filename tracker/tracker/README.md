@@ -25,7 +25,11 @@ tracker.start({
     balance: "10M",
     role: "admin",
   }
-});
+}).then(startedSession => {
+  if (startedSession.success) {
+    console.log(startedSession) 
+  }
+})
 ```
 
 Then you can use OpenReplay JavaScript API anywhere in your code.

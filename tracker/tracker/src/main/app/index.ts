@@ -23,11 +23,21 @@ export interface StartOptions {
   forceNew?: boolean,
 }
 
-export interface OnStartInfo {
+interface OnStartInfo {
   sessionID: string, 
   sessionToken: string, 
   userUUID: string,
 }
+const CANCELED = "canceled" as const
+const START_ERROR = ":(" as const
+type SuccessfulStart = OnStartInfo & { success: true }
+type UnsuccessfulStart = {
+  reason: typeof CANCELED | string
+  success: false
+}
+const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason,  success: false})
+const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body,  success: true})
+export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
 
 type StartCallback = (i: OnStartInfo) => void
 type CommitCallback = (messages: Array<Message>) => void
@@ -58,7 +68,6 @@ type AppOptions = {
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
-export const CANCELED = "canceled"
 
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
@@ -306,12 +315,12 @@ export default class App {
       sessionStorage.removeItem(this.options.session_reset_key);
     }
   }
-  private _start(startOpts: StartOptions): Promise<OnStartInfo> {
+  private _start(startOpts: StartOptions): Promise<StartPromiseReturn> {
     if (!this.worker) {
-      return Promise.reject("No worker found: perhaps, CSP is not set.");
+      return Promise.resolve(UnsuccessfulStart("No worker found: perhaps, CSP is not set."))
     }
     if (this.activityState !== ActivityState.NotActive) { 
-      return Promise.reject("OpenReplay: trying to call `start()` on the instance that has been started already.") 
+      return Promise.resolve(UnsuccessfulStart("OpenReplay: trying to call `start()` on the instance that has been started already.")) 
     }
     this.activityState = ActivityState.Starting;
 
@@ -395,24 +404,22 @@ export default class App {
       this.notify.log("OpenReplay tracking started.");
       // TODO: get rid of onStart
       if (typeof this.options.onStart === 'function') {
-        this.options.onStart(onStartInfo);
+        this.options.onStart(onStartInfo)
       }
-      return onStartInfo;
+      return SuccessfulStart(onStartInfo)
     })
     .catch(reason => {        
       sessionStorage.removeItem(this.options.session_token_key)
       this.stop()
-      //if (reason === CANCELED) { return Promise.resolve(CANCELED) } // TODO: what to return ????? Throwing is baad
+      if (reason === CANCELED) { return UnsuccessfulStart(CANCELED) }
 
-      if (reason !== CANCELED) {
-        this.notify.log("OpenReplay was unable to start. ", reason)
-        this._debug("session_start", reason)
-      }
-      return Promise.reject(reason)
+      this.notify.log("OpenReplay was unable to start. ", reason)
+      this._debug("session_start", reason)
+      return UnsuccessfulStart(START_ERROR)
     })
   }
 
-  start(options: StartOptions = {}): Promise<OnStartInfo> {
+  start(options: StartOptions = {}): Promise<StartPromiseReturn> {
     if (!document.hidden) {
       return this._start(options);
     } else {
@@ -420,11 +427,11 @@ export default class App {
         const onVisibilityChange = () => {
           if (!document.hidden) {
             document.removeEventListener("visibilitychange", onVisibilityChange);
-            resolve(this._start(options));
+            resolve(this._start(options))
           }
         }
         document.addEventListener("visibilitychange", onVisibilityChange);
-      });
+      })
     }
   }
   stop(): void {
