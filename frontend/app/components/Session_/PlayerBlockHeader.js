@@ -106,7 +106,7 @@ export default class PlayerBlockHeader extends React.PureComponent {
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
         <div className="flex w-full items-center">
 
-          <BackLink	onClick={this.backHandler} label="Back" />
+            <BackLink label="Back" onClick={this.backHandler} className="h-full" />
           <div className={ stl.divider } />
           <UserCard
             className=""
