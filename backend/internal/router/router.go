@@ -26,7 +26,7 @@ func NewRouter(cfg *config.Config, services *http2.ServicesBuilder) (*Router, er
 func (e *Router) init() {
 	e.router = mux.NewRouter()
 	// Root path
-	e.router.HandleFunc("/", e.root).Methods("POST")
+	e.router.HandleFunc("/", e.root)
 
 	// Web handlers
 	e.router.HandleFunc("/v1/web/not-started", e.notStartedHandlerWeb).Methods("POST")
@@ -49,6 +49,12 @@ func (e *Router) root(w http.ResponseWriter, r *http.Request) {
 
 func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip cors politics for health check request
+		if r.URL.Path == "/" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Prepare headers for preflight requests
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST")
