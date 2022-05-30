@@ -21,15 +21,17 @@
     height: 6px;
     border-radius: 3px;
     background-color: red;
-    bottom: 2px;
-    right: 0px;
+    margin-right: 3px;
+  }
+  & .labels {
     position: absolute;
+    top: -3px;
+    right: -6px;
+    display: flex;
+    align-items: center;
   }
   
   & .countLabel {
-    position: absolute;
-    top: -6px;
-    right: -6px;
     background-color: $gray-dark;
     color: white;
     font-size: 9px;

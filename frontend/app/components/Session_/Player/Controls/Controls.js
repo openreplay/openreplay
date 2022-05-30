@@ -229,10 +229,11 @@ export default class Controls extends React.Component {
         title={label}
         interactive
         hideOnClick="persistent"
+        className="mr-4"
       >
         <div
           onClick={this.props.togglePlay}
-          className="mr-2 hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
+          className="hover-main color-main cursor-pointer rounded hover:bg-gray-light-shade"
         >
             <Icon name={icon} size="36" color="inherit" />
         </div>
@@ -300,10 +301,10 @@ export default class Controls extends React.Component {
                 <div className="flex items-center">
                   { this.renderPlayBtn() }
                   { !live && (
-                    <div className="flex items-center font-semibold">
-                      <ReduxTime isCustom name="time" />
+                    <div className="flex items-center font-semibold text-center" style={{ minWidth: 85 }}>
+                      <ReduxTime isCustom name="time" format="mm:ss" />
                       <span className="px-1">/</span>
-                      <ReduxTime isCustom name="endTime" />
+                      <ReduxTime isCustom name="endTime" format="mm:ss" />
                     </div>
                   )}
 
@@ -342,7 +343,7 @@ export default class Controls extends React.Component {
                       </Tooltip>
 
                       <button
-                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip, [styles.active]: skip }) }
+                        className={ cn(styles.skipIntervalButton, { [styles.withCheckIcon]: skip, [styles.active]: skip }, 'ml-4') }
                         onClick={ this.props.toggleSkip }
                         data-disabled={ disabled }
                       >
@@ -491,6 +492,7 @@ export default class Controls extends React.Component {
                   title="Fullscreen"
                   delay={0}
                   position="top"
+                  className="mx-4"
                 >
                   {this.controlIcon("arrows-angle-extend", 18, this.props.fullscreenOn, false, "rounded hover:bg-gray-light-shade color-gray-medium")}
                 </Tooltip>

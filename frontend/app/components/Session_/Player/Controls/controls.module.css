@@ -16,7 +16,8 @@
   justify-content: space-between;
   align-items: center;
   height: 65px;
-  padding: 0 30px;
+  padding-left: 30px;
+  padding-right: 0;
   &[data-is-live=true] {
     padding: 0;
   }
@@ -85,8 +86,8 @@
 }
 
 .checkIcon {
-  @mixin icon check, $gray-dark, 12px;
-  margin-right: 8px;
+  @mixin icon check, $gray-dark, 24px;
+  margin-right: 2px;
   display: none;
 }
 

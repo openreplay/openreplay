@@ -23,8 +23,10 @@ const ControlButton = ({
     id={"control-button-" + label.toLowerCase()}
     disabled={disabled}
   >
-      { count > 0 && <div className={ stl.countLabel }>{ count }</div>}
-      { hasErrors && <div className={ stl.errorSymbol } /> }
+      <div className={stl.labels}>
+        { hasErrors && <div className={ stl.errorSymbol } /> }
+        { count > 0 && <div className={ stl.countLabel }>{ count }</div>}
+      </div>
 	    {!noIcon && <Icon name={ icon } size={size} color="gray-dark"/>}
     {!noLabel && <span className={ cn(stl.label, labelClassName, active ? 'color-main' : 'color-gray-darkest') }>{ label }</span>}
   </button>
