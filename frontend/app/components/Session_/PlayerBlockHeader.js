@@ -104,9 +104,11 @@ export default class PlayerBlockHeader extends React.PureComponent {
     const TABS = [ this.props.tabs.EVENTS, this.props.tabs.HEATMAPS ].map(tab => ({ text: tab, key: tab }));
     return (
       <div className={ cn(stl.header, "flex justify-between", { "hidden" : fullscreen}) }>
-        <div className="flex w-full items-center" onClick={this.backHandler} >
+        <div className="flex w-full items-center" >
+          <div className='flex items-center h-full'  onClick={this.backHandler}>
             <BackLink label="Back" className="h-full" />
-          <div className={ stl.divider } />
+            <div className={ stl.divider } />
+          </div>
           <UserCard
             className=""
             width={width}

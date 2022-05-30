@@ -85,8 +85,10 @@ export default class Player extends React.PureComponent {
       live,
       closedLive,
       bottomBlock,
+      activeTab
     } = this.props;
 
+    const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw'
     return (
       <div
         className={ cn(className, stl.playerBody, "flex flex-col relative") }
@@ -101,7 +103,7 @@ export default class Player extends React.PureComponent {
           />
         </div>
         { !fullscreen && !!bottomBlock &&
-          <div className="">
+          <div style={{ maxWidth, width: '100%' }}>
             { bottomBlock === CONSOLE &&
               <Console />
             }
