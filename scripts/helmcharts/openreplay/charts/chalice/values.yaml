@@ -111,3 +111,11 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+healthCheck:
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 8000
+    initialDelaySeconds: 100
+    periodSeconds: 3
