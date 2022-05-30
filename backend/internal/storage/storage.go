@@ -46,7 +46,7 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 		log.Printf("File read error: %f", err)
 		return
 	}
-	startReader := bytes.NewBuffer(startBytes)
+	startReader := bytes.NewBuffer(startBytes[:nRead])
 	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
 		log.Fatalf("Storage: start upload failed.  %v\n", err)
 	}
