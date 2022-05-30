@@ -6,7 +6,6 @@ import {
 } from 'Duck/sessions';
 import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
-import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
 import stl from './bugFinder.css';
 import withLocationHandlers from "HOCs/withLocationHandlers";
@@ -20,11 +19,10 @@ import { LAST_7_DAYS } from 'Types/app/period';
 import { resetFunnel } from 'Duck/funnels';
 import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
-// import TrackerUpdateMessage from 'Shared/TrackerUpdateMessage';
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
 import { clearSearch, fetchSessions, addFilterByKeyAndValue } from 'Duck/search';
-import { FilterCategory, FilterKey, IssueType } from 'Types/filter/filterType';
+import { FilterKey } from 'Types/filter/filterType';
 
 const weakEqual = (val1, val2) => {
   if (!!val1 === false && !!val2 === false) return true;
@@ -80,32 +78,18 @@ export default class BugFinder extends React.PureComponent {
   state = {showRehydratePanel: false}
   constructor(props) {
     super(props);
-
-    // TODO should cache the response
-    // props.fetchSources().then(() => {
-    //   defaultFilters[6] = {
-    //     category: 'Collaboration',
-    //     type: 'CUSTOM',
-    //     keys: this.props.sources.filter(({type}) => type === 'collaborationTool').map(({ label, key }) => ({ type: 'CUSTOM', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
-    //   };
-    //   defaultFilters[7] = {
-    //     category: 'Logging Tools',
-    //     type: 'ERROR',
-    //     keys: this.props.sources.filter(({type}) => type === 'logTool').map(({ label, key }) => ({ type: 'ERROR', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
-    //   };
-    // });
-    if (props.sessions.size === 0) {
-      props.fetchSessions();
-    }
     props.resetFunnel();
     props.resetFunnelFilters();
     props.fetchFunnelsList(LAST_7_DAYS)
 
     const queryFilter = this.props.query.all(allowedQueryKeys);
     if (queryFilter.hasOwnProperty('userId')) {
-      // props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
       props.addFilterByKeyAndValue(FilterKey.USERID, queryFilter.userId);
-    }
+    } else {
+      if (props.sessions.size === 0) {
+        props.fetchSessions();
+      }
+    }    
   }
 
   componentDidMount() {
@@ -133,7 +117,6 @@ export default class BugFinder extends React.PureComponent {
             />
           </div>
           <div className={cn("side-menu-margined", stl.searchWrapper) }>
-            {/* <TrackerUpdateMessage /> */}
             <NoSessionsMessage />
             <div className="mb-5">
               <MainSearchBar />
