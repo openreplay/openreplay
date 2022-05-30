@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import { 
-  IconButton, SlideModal, Input, Button, Loader,
+  Form, IconButton, SlideModal, Input, Button, Loader,
   NoContent, Popup, CopyButton, Dropdown } from 'UI';
 import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import { fetchList as fetchRoles } from 'Duck/roles';
@@ -92,7 +92,7 @@ class ManageUsers extends React.PureComponent {
 
     return (
       <div className={ styles.form }>
-        <form onSubmit={ this.save } >
+        <Form onSubmit={ this.save } >
           <div className={ styles.formGroup }>
             <label>{ 'Full Name' }</label>
             <Input
@@ -105,7 +105,7 @@ class ManageUsers extends React.PureComponent {
             />
           </div>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>{ 'Email Address' }</label>
             <Input
               disabled={member.exists()}
@@ -114,13 +114,13 @@ class ManageUsers extends React.PureComponent {
               onChange={ this.onChange }
               className={ styles.input }
             />
-          </div>
+          </Form.Field>
           { !account.smtp &&
             <div className={cn("mb-4 p-2", styles.smtpMessage)}>
               SMTP is not configured (see <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">here</a> how to set it up).  You can still add new users, but you’d have to manually copy then send them the invitation link.
             </div>
           }
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label className={ styles.checkbox }>
               <input
                 name="admin"
@@ -133,10 +133,10 @@ class ManageUsers extends React.PureComponent {
               <span>{ 'Admin Privileges' }</span>
             </label>
             <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
-          </div>
+          </Form.Field>
           
           { isEnterprise && (
-            <div className={ styles.formGroup }>
+            <Form.Field>
               <label htmlFor="role">{ 'Role' }</label>
               <Dropdown
                 placeholder="Role"
@@ -146,9 +146,9 @@ class ManageUsers extends React.PureComponent {
                 value={ member.roleId }
                 onChange={ this.onChange }
               />
-            </div>
+            </Form.Field>
           )}
-        </form>
+        </Form>
 
         <div className="flex items-center">
           <div className="flex items-center mr-auto">

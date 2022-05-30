@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Select, Form, Button, Checkbox } from 'UI';
+import { Input, Form, Button, Checkbox } from 'UI';
 import SiteDropdown from 'Shared/SiteDropdown';
 import { save, init, edit, remove, fetchList } from 'Duck/integrations/actions';
 
@@ -107,7 +107,7 @@ export default class IntegrationForm extends React.PureComponent {
               :
                 <Form.Field key={ key }>
                   <label>{ label }</label>
-                  <Component
+                  <Input
                     name={ key }
                     value={ config[ key ] }
                     onChange={ this.write }

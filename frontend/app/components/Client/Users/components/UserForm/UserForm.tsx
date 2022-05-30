@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input, CopyButton, Button, Icon } from 'UI'
+import { Form, Input, CopyButton, Button, Icon } from 'UI'
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
@@ -52,7 +52,7 @@ function UserForm(props: Props) {
                 <h1 className="text-2xl mb-4">{`${user.exists() ? 'Update' : 'Invite'} User`}</h1>
             </div>
             <form onSubmit={ onSave } >
-                <div className="form-group">
+                <Form.Field>
                     <label>{ 'Full Name' }</label>
                     <Input
                         name="name"
@@ -62,7 +62,7 @@ function UserForm(props: Props) {
                         className="w-full"
                         id="name-field"
                     />
-                </div>
+                </Form.Field>
 
                 <div className="form-group">
                     <label>{ 'Email Address' }</label>
@@ -79,7 +79,7 @@ function UserForm(props: Props) {
                         SMTP is not configured (see <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">here</a> how to set it up).  You can still add new users, but you’d have to manually copy then send them the invitation link.
                     </div>
                 }
-                <div className="form-group">
+                <Form.Field>
                     <label className="flex items-start cursor-pointer">
                         <input
                             name="admin"
@@ -94,10 +94,10 @@ function UserForm(props: Props) {
                             <div className="text-sm color-gray-medium -mt-1">{ 'Can manage Projects and team members.' }</div>
                         </div>
                     </label>
-                </div>
+                </Form.Field>
                 
                 { isEnterprise && (
-                    <div className="form-group">
+                    <Form.Field>
                         <label htmlFor="role">{ 'Role' }</label>
                         <Select
                             placeholder="Selct Role"
@@ -109,7 +109,7 @@ function UserForm(props: Props) {
                             className="block"
                             isDisabled={user.isSuperAdmin}
                         />
-                    </div>
+                    </Form.Field>
                 )}
                 </form>
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { edit, save } from 'Duck/customField';
-import { Form, Button, Message } from 'UI';
+import { Form, Input, Button, Message } from 'UI';
 import styles from './customFieldForm.module.css';
 
 @connect(state => ({
@@ -24,7 +24,7 @@ class CustomFieldForm extends React.PureComponent {
       <Form className={ styles.wrapper }>
         <Form.Field>
           <label>{'Field Name'}</label>
-          <input
+          <Input
             ref={ (ref) => { this.focusElement = ref; } }
             name="key"
             value={ field.key }

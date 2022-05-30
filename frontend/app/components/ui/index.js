@@ -56,5 +56,6 @@ export { default as PageTitle } from './PageTitle';
 export { default as Pagination } from './Pagination';
 export { default as Toggler } from './Toggler';
 export { default as Input } from './Input';
+export { default as Form } from './Form';
 
-export { Modal, Form, Message } from 'semantic-ui-react';
+export { Modal, Message } from 'semantic-ui-react';
