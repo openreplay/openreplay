@@ -170,7 +170,7 @@ export default class Controls extends React.Component {
     }
     if (this.props.inspectorMode) {
       if (e.key === 'Esc' || e.key === 'Escape') {
-        toggleInspectorMode();
+        toggleInspectorMode(false);
       }
     };
     // if (e.key === ' ') {
@@ -281,8 +281,15 @@ export default class Controls extends React.Component {
       closedLive,
     } = this.props;
 
-    // const inspectorMode = bottomBlock === INSPECTOR;
-
+    const toggleBottomTools = (blockName) => {
+      if (blockName === INSPECTOR) {
+        toggleInspectorMode();
+        bottomBlock && toggleBottomBlock();
+      } else {
+        toggleInspectorMode(false);
+        toggleBottomBlock(blockName);
+      }
+    }
     return (
       <div className={ cn(styles.controls, {'px-5 pt-0' : live}) }>
         { !live && <Timeline jump={ this.props.jump } pause={this.props.pause} togglePlay={this.props.togglePlay} /> }
@@ -362,7 +369,7 @@ export default class Controls extends React.Component {
                 <ControlButton
                   disabled={ disabled && !inspectorMode }
                   active={ inspectorMode }
-                  onClick={ toggleInspectorMode }
+                  onClick={ () => toggleBottomTools(INSPECTOR) }
                   noIcon
                   labelClassName="text-base font-semibold"
                   label="INSPECT"
@@ -370,8 +377,8 @@ export default class Controls extends React.Component {
                 />
               )}
               <ControlButton
-                disabled={ disabled }
-                onClick={ () => toggleBottomBlock(CONSOLE) }
+                disabled={ disabled && !inspectorMode }
+                onClick={ () => toggleBottomTools(CONSOLE) }
                 active={ bottomBlock === CONSOLE && !inspectorMode}
                 label="CONSOLE"
                 noIcon
@@ -382,8 +389,8 @@ export default class Controls extends React.Component {
               />
               { !live &&
                 <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(NETWORK) }
+                  disabled={ disabled && !inspectorMode }
+                  onClick={ () => toggleBottomTools(NETWORK) }
                   active={ bottomBlock === NETWORK && !inspectorMode }
                   label="NETWORK"
                   hasErrors={ resourceRedCount > 0 }
@@ -394,8 +401,8 @@ export default class Controls extends React.Component {
               }
               {!live &&
                 <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(PERFORMANCE) }
+                  disabled={ disabled && !inspectorMode }
+                  onClick={ () => toggleBottomTools(PERFORMANCE) }
                   active={ bottomBlock === PERFORMANCE && !inspectorMode }
                   label="PERFORMANCE"
                   noIcon
@@ -405,8 +412,8 @@ export default class Controls extends React.Component {
               }
               {showFetch &&
                 <ControlButton
-                  disabled={disabled}
-                  onClick={ ()=> toggleBottomBlock(FETCH) }
+                  disabled={disabled && !inspectorMode}
+                  onClick={ ()=> toggleBottomTools(FETCH) }
                   active={ bottomBlock === FETCH && !inspectorMode }
                   hasErrors={ fetchRedCount > 0 }
                   count={ fetchCount }
@@ -418,8 +425,8 @@ export default class Controls extends React.Component {
               }
               { !live && showGraphql &&
                 <ControlButton
-                  disabled={disabled}
-                  onClick={ ()=> toggleBottomBlock(GRAPHQL) }
+                  disabled={disabled && !inspectorMode}
+                  onClick={ ()=> toggleBottomTools(GRAPHQL) }
                   active={ bottomBlock === GRAPHQL && !inspectorMode }
                   count={ graphqlCount }
                   label="GRAPHQL"
@@ -430,8 +437,8 @@ export default class Controls extends React.Component {
               }
               { !live && showStorage &&
                 <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(STORAGE) }
+                  disabled={ disabled && !inspectorMode }
+                  onClick={ () => toggleBottomTools(STORAGE) }
                   active={ bottomBlock === STORAGE && !inspectorMode }
                   count={ storageCount }
                   label={ getStorageName(storageType) }
@@ -442,8 +449,8 @@ export default class Controls extends React.Component {
               }
               { showExceptions &&
                 <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(EXCEPTIONS) }
+                  disabled={ disabled && !inspectorMode }
+                  onClick={ () => toggleBottomTools(EXCEPTIONS) }
                   active={ bottomBlock === EXCEPTIONS && !inspectorMode }
                   label="EXCEPTIONS"
                   noIcon
@@ -455,8 +462,8 @@ export default class Controls extends React.Component {
               }
               { !live && showStack &&
                 <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(STACKEVENTS) }
+                  disabled={ disabled && !inspectorMode }
+                  onClick={ () => toggleBottomTools(STACKEVENTS) }
                   active={ bottomBlock === STACKEVENTS && !inspectorMode }
                   label="EVENTS"
                   noIcon
@@ -468,8 +475,8 @@ export default class Controls extends React.Component {
               }
               { !live && showProfiler &&
                 <ControlButton
-                  disabled={ disabled }
-                  onClick={ () => toggleBottomBlock(PROFILER) }
+                  disabled={ disabled && !inspectorMode }
+                  onClick={ () => toggleBottomTools(PROFILER) }
                   active={ bottomBlock === PROFILER && !inspectorMode }
                   count={ profilesCount }
                   label="PROFILER"
