@@ -118,4 +118,5 @@ healthCheck:
       path: /
       port: 8000
     initialDelaySeconds: 100
-    periodSeconds: 3
+    periodSeconds: 15
+    timeoutSeconds: 10
