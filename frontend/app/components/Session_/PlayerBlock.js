@@ -18,7 +18,7 @@ import styles from './playerBlock.css';
 }))
 export default class PlayerBlock extends React.PureComponent {
   render() {
-    const { fullscreen, bottomBlock, sessionId, disabled, previousId, nextId, setAutoplayValues } = this.props;
+    const { fullscreen, bottomBlock, sessionId, disabled, previousId, nextId, setAutoplayValues, activeTab } = this.props;
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
@@ -31,6 +31,7 @@ export default class PlayerBlock extends React.PureComponent {
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
           bottomBlock={bottomBlock}
           fullscreen={fullscreen}
+          activeTab={activeTab}
         />
       </div>
     );

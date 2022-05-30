@@ -27,10 +27,10 @@ const PlayerContentConnected = connectPlayer(state => ({
 }))(PlayerContent);
 
 
-function PlayerContent({ live, fullscreen }) {
+function PlayerContent({ live, fullscreen, activeTab }) {
   return (
     <div className={ cn(styles.session, 'relative') } data-fullscreen={fullscreen}>
-      <PlayerBlock />
+      <PlayerBlock activeTab={activeTab} />
     </div>
   )
 }
@@ -73,7 +73,7 @@ function WebPlayer (props) {
       <InitLoader className="flex-1">
           <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
             <div className="flex">
-              <div className="w-full"><PlayerContentConnected fullscreen={fullscreen} live={live} /></div>
+              <div className="w-full"><PlayerContentConnected activeTab={activeTab} fullscreen={fullscreen} live={live} /></div>
               {activeTab !== '' && <ConnectedMenu activeTab={activeTab} setActiveTab={setActiveTab} fullscreen={fullscreen} tabs={TABS} live={live} />}
             </div>
       </InitLoader>
