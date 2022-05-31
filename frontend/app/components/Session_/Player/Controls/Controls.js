@@ -366,6 +366,7 @@ export default class Controls extends React.Component {
 
             <div className="flex items-center h-full">
               { !live && <div className={cn(styles.divider, 'h-full')} /> }
+              {/* ! TEMP DISABLED !
               {!live && (
                 <ControlButton
                   disabled={ disabled && !inspectorMode }
@@ -376,7 +377,7 @@ export default class Controls extends React.Component {
                   label="INSPECT"
                   containerClassName="mx-2"
                 />
-              )}
+              )} */}
               <ControlButton
                 disabled={ disabled && !inspectorMode }
                 onClick={ () => toggleBottomTools(CONSOLE) }

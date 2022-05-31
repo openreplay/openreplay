@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import withRequest from 'HOCs/withRequest';
-import { Popup, Icon } from 'UI';
+import { Popup, Dropdown, Icon, Button } from 'UI';
 import { pause } from 'Player';
 import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
@@ -15,7 +15,7 @@ import { Tooltip } from 'react-tippy';
   tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
 }))
 @withRequest({
-  endpoint: ({ id, entity }, integrationId) => 
+  endpoint: ({ id, entity }, integrationId) =>
     `/integrations/slack/notify/${ integrationId }/${entity}/${ id }`,
   method: "POST",
 })
@@ -38,12 +38,12 @@ export default class SharePopup extends React.PureComponent {
     }, 100)
   }
 
-  handleClose = () => { 
+  handleClose = () => {
     this.setState({ isOpen: false, comment: '' });
   }
 
   handleSuccess = () => {
-    toast.success('Your comment is shared.');
+    toast.success('Sent to Slack.');
     this.handleClose();
   }
 
@@ -60,10 +60,10 @@ export default class SharePopup extends React.PureComponent {
         interactive
         // onOpen={ this.handleOpen }
         // onClose={ this.handleClose }
-        content={ 
+        content={
           <div className={ styles.wrapper }>
             <div className={ styles.header }>
-              <div className={ styles.title }>{ 'Comment' }</div>
+              <div className={ styles.title }>Share this session link to Slack</div>
             </div>
             { options.length === 0 ?
               <>
@@ -72,7 +72,7 @@ export default class SharePopup extends React.PureComponent {
                 </div>
                 { showCopyLink && (
                   <div className={styles.footer}>
-                    <SessionCopyLink /> 
+                    <SessionCopyLink />
                   </div>
                 )}
               </>
@@ -87,32 +87,34 @@ export default class SharePopup extends React.PureComponent {
                     resize="none"
                     onChange={ this.editMessage }
                     value={ comment }
-                    placeholder="Type here..."
+                    placeholder="Add Message (Optional)"
                     className="p-4"
                   />
 
                   <div className="flex items-center justify-between">
                     <Select
-                      options={ options } 
-                      defaultValue={ channelId } 
+                      options={ options }
+                      defaultValue={ channelId }
                       onChange={ this.changeChannel }
                       className="mr-4"
                     />
                     <div>
-                      <button
-                        className={ styles.shareButton }
+                      <Button
                         onClick={ this.share }
+                        primary
                       >
-                        <Icon name="integrations/slack" size="18" marginRight="10" />
-                        { loading ? 'Sharing...' : 'Share' }
-                      </button>
+                        <div className='flex items-center'>
+                          <Icon name="integrations/slack-bw" size="18" marginRight="10" />
+                          { loading ? 'Sending...' : 'Send' }
+                        </div>
+                      </Button>
                     </div>
                   </div>
                 </div>
                 <div className={ styles.footer }>
-                  <SessionCopyLink /> 
+                  <SessionCopyLink />
                 </div>
-               
+
               </div>
             }
           </div>
