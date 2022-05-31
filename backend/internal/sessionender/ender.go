@@ -66,13 +66,16 @@ func (se *SessionEnder) UpdateSession(sessionID, timestamp uint64) {
 // HandleEndedSessions runs handler for each ended session and delete information about session in successful case
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 	deadLine := time.Now().UnixMilli() - se.timeout
+	allSessions, removedSessions := len(se.sessions), 0
 	for sessID, sess := range se.sessions {
 		if sess.isEnded || sess.lastTimestamp < deadLine {
 			sess.isEnded = true
 			if handler(sessID, sess.lastTimestamp) {
 				delete(se.sessions, sessID)
 				se.activeSessions.Add(context.Background(), -1)
+				removedSessions++
 			}
 		}
 	}
+	log.Printf("Removed %d of %d sessions", removedSessions, allSessions)
 }
