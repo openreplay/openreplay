@@ -31,7 +31,6 @@ rm -rf ./chalicelib/core/metadata.py
 rm -rf ./chalicelib/core/mobile.py
 rm -rf ./chalicelib/core/sessions.py
 rm -rf ./chalicelib/core/sessions_assignments.py
-rm -rf ./chalicelib/core/sessions_favorite_viewed.py
 rm -rf ./chalicelib/core/sessions_metas.py
 rm -rf ./chalicelib/core/sessions_mobs.py
 rm -rf ./chalicelib/core/significance.py
