@@ -51,8 +51,9 @@ const AlertForm = props => {
   const { instance, slackChannels, webhooks, loading, onDelete, deleting, triggerOptions, metricId, style={ width: '580px', height: '100vh' } } = props;
   const write = ({ target: { value, name } }) => props.edit({ [ name ]: value })
   const writeOption = (e, { name, value }) => props.edit({ [ name ]: value });
-  const onChangeCheck = (e, { checked, name }) => props.edit({ [ name ]: checked })
-  const onChangeOption = ({ checked, name }) => props.edit({ [ name ]: checked })
+  const onChangeCheck = ({ target: { checked, name }}) => props.edit({ [ name ]: checked })
+  // const onChangeOption = ({ checked, name }) => props.edit({ [ name ]: checked })
+  // const onChangeCheck = (e) => { console.log(e) }
 
   useEffect(() => {
     props.fetchTriggerOptions();

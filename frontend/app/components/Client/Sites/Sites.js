@@ -203,7 +203,7 @@ class Sites extends React.PureComponent {
                       <div className={ stl.label}>{_site.projectKey}</div>
                     </div> */}
                     <div className="col-span-4 justify-self-end flex items-center invisible group-hover:visible">
-                      <div className="mr-4"><Button size="small" primary onClick={ () => this.showTrackingCode(_site) }>{ 'Installation' }</Button></div>
+                      <div className="mr-4"><Button size="small" variant="primary" onClick={ () => this.showTrackingCode(_site) }>{ 'Installation' }</Button></div>
                       {/* <button
                         className={cn('mx-3', {'hidden' : !canDeleteSites})}
                         disabled={ !canDeleteSites }

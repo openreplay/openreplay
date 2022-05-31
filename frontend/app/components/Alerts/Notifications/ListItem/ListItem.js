@@ -10,7 +10,7 @@ const ListItem = ({ alert, onClear, loading, onNavigate }) => {
       <div className="flex justify-between items-center">
         <div className="text-sm">{alert.createdAt && alert.createdAt.toFormat('LLL dd, yyyy, hh:mm a')}</div>
         <div className={ cn("invisible", { 'group-hover:visible' : !alert.viewed})} >
-          <Button plain simple loading={loading} noPadding>
+          <Button variant="text" loading={loading} noPadding>
             <span className={ cn("text-sm color-gray-medium", { 'invisible' : loading })} onClick={onClear}>{'IGNORE'}</span>
           </Button>
         </div>

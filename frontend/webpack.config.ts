@@ -101,7 +101,7 @@ const config: Configuration = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': ENV_VARIABLES,
+      // 'process.env': ENV_VARIABLES,
       'window.env': ENV_VARIABLES,
       'window.env.PRODUCTION': isDevelopment ? false : true,
     }),

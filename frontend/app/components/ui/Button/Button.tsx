@@ -1,18 +1,25 @@
 import React from 'react';
-// import { Button } from 'semantic-ui-react';
 import cn from 'classnames';
-// import styles from './button.module.css';
 
-export default ({
-  className,
-  variant = "default",
-  type = "button",
-  size = '',
-  noPadding = false,
-  minWidth,
-  disabled = false,
-  ...props
-}) => {
+interface Props {
+  className?: string;
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  [x: string]: any
+}
+export default (props: Props) => {
+  const {
+    className = '',
+    variant = "default",
+    type = "button",
+    size = '',
+    disabled = false,
+    children,
+    ...rest
+  } = props;
+
   const classes = ['flex items-center h-10 px-3 rounded tracking-wide'];
   if (variant === 'default') {
     classes.push('bg-white hover:bg-gray-lightest border border-gray-light')
@@ -40,10 +47,11 @@ export default ({
 
   return (
     <button
-      { ...props }
+      { ...rest }
       type={type}
-      style={{ minWidth: minWidth}}
       className={ cn(classes, className ) }
-    />
+    >
+      {children}
+    </button>
   );
 }
