@@ -16,7 +16,7 @@ func (s *Storage) CleanDir(dirname string) {
 		log.Printf("Cannot read file directory. %v", err)
 		return
 	}
-
+	removedFiles := 0
 	for _, f := range files {
 		name := f.Name()
 		id, err := strconv.ParseUint(name, 10, 64)
@@ -27,7 +27,10 @@ func (s *Storage) CleanDir(dirname string) {
 		ts := int64(flakeid.ExtractTimestamp(id))
 		if time.UnixMilli(ts).Add(s.cfg.DeleteTimeout).Before(time.Now()) {
 			// returns an error. Don't log it since it can be race condition between worker instances
-			os.Remove(dirname + "/" + name)
+			if err := os.Remove(dirname + "/" + name); err == nil {
+				removedFiles++
+			}
 		}
 	}
+	log.Printf("Removed %d of %d session files", removedFiles, len(files))
 }

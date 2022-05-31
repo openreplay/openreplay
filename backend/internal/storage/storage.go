@@ -11,8 +11,9 @@ import (
 )
 
 type Storage struct {
-	cfg *config.Config
-	s3  *storage.S3
+	cfg        *config.Config
+	s3         *storage.S3
+	startBytes []byte
 }
 
 func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
@@ -22,7 +23,11 @@ func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
 	case s3 == nil:
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
-	return &Storage{cfg: cfg, s3: s3}, nil
+	return &Storage{
+		cfg:        cfg,
+		s3:         s3,
+		startBytes: make([]byte, cfg.FileSplitSize),
+	}, nil
 }
 
 func (s *Storage) UploadKey(key string, retryCount int) {
@@ -32,7 +37,7 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
-		log.Printf("File error: %v; Will retry %v more time(s)\n", err, retryCount)
+		log.Printf("File error: %v; Will retry %v more time(s); sessID: %s\n", err, retryCount, key)
 		time.AfterFunc(s.cfg.RetryTimeout, func() {
 			s.UploadKey(key, retryCount-1)
 		})
@@ -40,13 +45,12 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 	}
 	defer file.Close()
 
-	startBytes := make([]byte, s.cfg.FileSplitSize)
-	nRead, err := file.Read(startBytes)
+	nRead, err := file.Read(s.startBytes)
 	if err != nil {
-		log.Printf("File read error: %f", err)
+		log.Printf("File read error: %s; sessID: %s", err, key)
 		return
 	}
-	startReader := bytes.NewBuffer(startBytes[:nRead])
+	startReader := bytes.NewBuffer(s.startBytes[:nRead])
 	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
 		log.Fatalf("Storage: start upload failed.  %v\n", err)
 	}
