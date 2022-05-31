@@ -6,6 +6,7 @@ import SharePopup from '../shared/SharePopup/SharePopup';
 import { connectPlayer } from 'Player';
 import copy from 'copy-to-clipboard';
 import { Tooltip } from 'react-tippy';
+import Issues from './Issues/Issues';
 
 function SubHeader(props) {
     const [isCopied, setCopied] = React.useState(false);
@@ -39,6 +40,9 @@ function SubHeader(props) {
                 </div>
             )}
             <div className="ml-auto text-sm flex items-center color-gray-medium" style={{ width: 'max-content' }}>
+                <div className="cursor-pointer mr-4 hover:bg-gray-light-shade rounded-md p-1">
+                {!isAssist && props.jiraConfig && props.jiraConfig.token && <Issues sessionId={props.sessionId} />}
+                </div>
                 <div className="cursor-pointer">
                     <SharePopup
                         entity="sessions"

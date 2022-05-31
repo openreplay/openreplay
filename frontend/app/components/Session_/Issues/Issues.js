@@ -35,7 +35,7 @@ class Issues extends React.Component {
     super(props);
     this.state = { showModal: false };
   }
-  
+
   closeModal = () => {
     this.setState({ showModal: false });
   }
@@ -64,7 +64,7 @@ class Issues extends React.Component {
   }
 
   render() {
-    const { 
+    const {
       sessionId, isModalDisplayed, projectsLoading, metaLoading, fetchIssuesLoading, issuesIntegration
     } = this.props;
     const { showModal } = this.state;
@@ -74,15 +74,18 @@ class Issues extends React.Component {
       <div className="relative">
         <div className={ stl.buttonWrapper}>
           <Popup
-            interactive={true}
-            hideOnClick={false}
-            useContext
-            multiple={false}
-            unmountHTMLWhenHide={true}
-            open={ showModal }
-            // onOpen={ this.handleOpen }
-            // onClose={ this.handleClose }
-            content = {
+            open={ isModalDisplayed }
+            onOpen={ this.handleOpen }
+            onClose={ this.handleClose }
+            trigger={
+                <div className="flex items-center" onClick={this.props.toggleModal} disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}>
+                  <Icon name={ `integrations/${ provider === 'jira' ? 'jira' : 'github'}` } size="16" />
+                  <span className="ml-2">Create Issue</span>
+                </div>
+            }
+            on="click"
+            position="top right"
+            content={
               <OutsideClickDetectingDiv onClickOutside={this.closeModal}>
                 <IssuesModal
                   provider={provider}
@@ -94,7 +97,7 @@ class Issues extends React.Component {
             // trigger="click"
             theme="tippy-light"
           >
-            { 
+            {
               <Button
                 variant="outline"
                 onClick={ () => this.setState({ showModal: true }) }

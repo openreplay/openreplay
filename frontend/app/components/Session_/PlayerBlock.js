@@ -15,16 +15,25 @@ import styles from './playerBlock.css';
   bottomBlock: state.getIn([ 'components', 'player', 'bottomBlock' ]),
   sessionId: state.getIn([ 'sessions', 'current', 'sessionId' ]),
   disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]),
+  jiraConfig: state.getIn([ 'issues', 'list' ]).first(),
 }))
 export default class PlayerBlock extends React.PureComponent {
   render() {
-    const { fullscreen, bottomBlock, sessionId, disabled, previousId, nextId, setAutoplayValues, activeTab } = this.props;
+    const { 
+      fullscreen, 
+      bottomBlock, 
+      sessionId, 
+      disabled, 
+      activeTab,
+      jiraConfig,
+     } = this.props;
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
           <SubHeader
             sessionId={sessionId}
             disabled={disabled}
+            jiraConfig={jiraConfig}
           />
         <Player
           className="flex-1"
