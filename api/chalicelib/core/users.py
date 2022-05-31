@@ -564,13 +564,13 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                 {"userId": user_id})
         )
         r = cur.fetchone()
-        return r is not None \
-               and r.get("jwt_iat") is not None \
-               and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-                    or (jwt_aud.startswith("plugin") \
-                        and (r["changed_at"] is None \
-                             or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-                    )
+    return r is not None \
+           and r.get("jwt_iat") is not None \
+           and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
+                or (jwt_aud.startswith("plugin") \
+                    and (r["changed_at"] is None \
+                         or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
+                )
 
 
 def authenticate(email, password, for_change_password=False, for_plugin=False):
