@@ -23,7 +23,7 @@ function Modal(props: Props) {
     } else if (size === 'small') {
         style.width = '400px';
     } else if (size === 'large') {
-        style.width = '500px';
+        style.width = '700px';
     } else if (size === 'fullscreen') {
         style.width = '100%';
     }

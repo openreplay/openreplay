@@ -37,7 +37,7 @@ class TrackingCodeModal extends React.PureComponent {
     const { activeTab } = this.state;
     return (
       displayed &&
-      <Modal size="small" onClose={ onClose } open={ displayed } style={{ top: "85px" }} >
+      <Modal size="large" onClose={ onClose } open={ displayed } style={{ top: "85px" }} >
         <Modal.Header className={ styles.modalHeader }>
           <div>{ title } { subTitle && <span className="text-sm color-gray-dark">{subTitle}</span>}</div>
           <div className={ cn(styles.closeButton, { 'hidden' : !onClose }) } role="button" tabIndex="-1" onClick={ onClose }>
