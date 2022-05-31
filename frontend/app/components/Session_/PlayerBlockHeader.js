@@ -76,7 +76,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
       width,
       height,
       session,
-      jiraConfig,
       fullscreen,
       metaList,
       closedLive = false,
@@ -135,7 +134,6 @@ export default class PlayerBlockHeader extends React.PureComponent {
             )}
 
             { isAssist && <AssistActions userId={userId} /> }
-            { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
           </div>
         </div>
         {!isAssist && (
