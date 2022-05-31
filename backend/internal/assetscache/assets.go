@@ -1,6 +1,7 @@
 package assetscache
 
 import (
+	"log"
 	"openreplay/backend/internal/config/sink"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue/types"
@@ -54,9 +55,13 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 
 func (e *AssetsCache) sendAssetForCache(sessionID uint64, baseURL string, relativeURL string) {
 	if fullURL, cacheable := assets.GetFullCachableURL(baseURL, relativeURL); cacheable {
-		e.producer.Produce(e.cfg.TopicCache, sessionID, messages.Encode(&messages.AssetCache{
-			URL: fullURL,
-		}))
+		if err := e.producer.Produce(
+			e.cfg.TopicCache,
+			sessionID,
+			messages.Encode(&messages.AssetCache{URL: fullURL}),
+		); err != nil {
+			log.Printf("can't send asset to cache topic, sessID: %d, err: %s", sessionID, err)
+		}
 	}
 }
 
