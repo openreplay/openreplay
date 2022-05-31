@@ -1,8 +1,9 @@
 import React from 'react';
-import { Checkbox } from 'semantic-ui-react';
+// import { Checkbox } from 'semantic-ui-react';
 
 export default ({ className = '', ...props }) => (
-  <Checkbox 
+  <input
+    type="checkbox" 
     className={`${ className } customCheckbox`} 
     { ...props }
   />

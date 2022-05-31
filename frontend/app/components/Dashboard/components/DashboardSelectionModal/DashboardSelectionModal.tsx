@@ -27,7 +27,7 @@ function DashboardSelectionModal(props: Props) {
     }
 
     return useObserver(() => (
-        <Modal size="tiny" open={ show }>
+        <Modal size="small" open={ show }>
             <Modal.Header className="flex items-center justify-between">
                 <div>{ 'Add to selected dashboard' }</div>
                 <Icon 
@@ -41,29 +41,25 @@ function DashboardSelectionModal(props: Props) {
             </Modal.Header>
 
             <Modal.Content>
-                <div className="py-4">
-                        <Form.Field>
-                            <label className="mb-2">{'Dashbaord:'}</label>
-                            <Select
-                                options={dashboardOptions}
-                                defaultValue={dashboardOptions[0].value}
-                                onChange={({ value }: any) => setSelectedId(value)}
-                            />
-                        </Form.Field>
-                </div>
+                <Form.Field>
+                    <label className="mb-2">{'Dashbaord:'}</label>
+                    <Select
+                        options={dashboardOptions}
+                        defaultValue={dashboardOptions[0].value}
+                        onChange={({ value }: any) => setSelectedId(value)}
+                    />
+                </Form.Field>
             </Modal.Content>
-            <Modal.Actions>
-                <div className="-mx-2 px-2">
-                    <Button
-                        variant="primary"
-                        onClick={ onSave }
-                        className="float-left mr-2"
-                    >
-                        Add
-                    </Button>
-                    <Button className="mr-2" onClick={ closeHandler }>{ 'Cancel' }</Button>
-                </div>
-            </Modal.Actions>
+            <Modal.Footer>
+                <Button
+                    variant="primary"
+                    onClick={ onSave }
+                    className="float-left mr-2"
+                >
+                    Add
+                </Button>
+                <Button className="mr-2" onClick={ closeHandler }>{ 'Cancel' }</Button>
+            </Modal.Footer>
       </Modal>
     ));
 }

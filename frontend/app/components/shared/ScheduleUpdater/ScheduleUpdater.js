@@ -114,10 +114,10 @@ export default class ScheduleUpdater extends React.PureComponent {
             </Form.Field>
           </Form>
         </Modal.Content>
-        <Modal.Actions>
+        <Modal.Footer>
           <Button onClick={ onClose }>{ 'Cancel' }</Button>
           <Button onClick={ this.onSave } variant="primary" loading={ loading }>{ isNew ? 'Add' : 'Schedule' }</Button>
-        </Modal.Actions>
+        </Modal.Footer>
       </Modal>
     );
   }

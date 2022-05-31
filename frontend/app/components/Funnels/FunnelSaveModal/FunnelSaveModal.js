@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button, Modal, Form, Icon, Checkbox } from 'UI';
+import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
 import styles from './funnelSaveModal.module.css';
 import { edit, save, fetchList as fetchFunnelsList } from 'Duck/funnels';
 
@@ -46,7 +46,7 @@ export default class FunnelSaveModal extends React.PureComponent {
     } = this.props;
     
     return (
-      <Modal size="tiny" open={ show }>
+      <Modal size="small" open={ show }>
         <Modal.Header className={ styles.modalHeader }>
           <div>{ 'Save Funnel' }</div>
           <Icon 
@@ -63,7 +63,7 @@ export default class FunnelSaveModal extends React.PureComponent {
           <Form onSubmit={this.onSave}>
             <Form.Field>
               <label>{'Title:'}</label>
-              <input
+              <Input
                 autoFocus={ true }
                 className={ styles.name }
                 name="name"
@@ -91,7 +91,7 @@ export default class FunnelSaveModal extends React.PureComponent {
             </Form.Field>
           </Form>
         </Modal.Content>
-        <Modal.Actions className="">          
+        <Modal.Footer className="">          
           <Button
             variant="primary"
             onClick={ this.onSave }
@@ -101,7 +101,7 @@ export default class FunnelSaveModal extends React.PureComponent {
             { funnel.exists() ? 'Modify' : 'Save' }
           </Button>
           <Button onClick={ closeHandler }>{ 'Cancel' }</Button>
-        </Modal.Actions>
+        </Modal.Footer>
       </Modal>
     );
   }

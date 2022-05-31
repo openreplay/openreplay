@@ -20,6 +20,7 @@ export default function({ right = false, plain = false, options, isSearchable = 
         menu: (provided: any, state: any) => ({
             ...provided,
             top: 31,
+            borderRadius: '3px',
             right: right ? 0 : undefined,
             minWidth: 'fit-content',
             zIndex: 99,

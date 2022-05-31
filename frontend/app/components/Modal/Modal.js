@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { useModal } from '.';
 import ModalOverlay from './ModalOverlay';
 
-export default function Modal({ children }){
+export default function Modal({ children }) {
   const { component, props} = useModal();
 
   return component ? ReactDOM.createPortal(

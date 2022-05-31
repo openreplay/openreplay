@@ -117,7 +117,22 @@ module.exports = {
 				'border-blue': `0 0 0 1px ${colors['active-blue-border']}`,
 				'border-main': `0 0 0 1px ${colors['main']}`,
 				'border-gray': '0 0 0 1px #999',
-			}
+			},
+			keyframes: {
+                'fade-in': {
+                    '0%': {
+                        opacity: '0',
+                        // transform: 'translateY(-10px)'
+                    },
+                    '100%': {
+                        opacity: '1',
+                        // transform: 'translateY(0)'
+                    },
+                }
+            },
+            animation: {
+                'fade-in': 'fade-in 0.2s ease-out'
+            }
 		},
   	},
   	variants: {
