@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
+import { CircularLoader } from 'UI';
 
 interface Props {
   className?: string;
@@ -7,6 +8,7 @@ interface Props {
   onClick?: () => void;
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
+  loading?: boolean;
   [x: string]: any
 }
 export default (props: Props) => {
@@ -17,10 +19,11 @@ export default (props: Props) => {
     size = '',
     disabled = false,
     children,
+    loading = false,
     ...rest
   } = props;
 
-  const classes = ['flex items-center h-10 px-3 rounded tracking-wide'];
+  const classes = ['relative flex items-center h-10 px-3 rounded tracking-wide'];
   if (variant === 'default') {
     classes.push('bg-white hover:bg-gray-lightest border border-gray-light')
   }
@@ -51,7 +54,10 @@ export default (props: Props) => {
       type={type}
       className={ cn(classes, className ) }
     >
-      {children}
+      { loading && <div className="absolute flex items-center justify-center inset-0 z-1 rounded">
+        <CircularLoader />
+      </div> }
+      <div className={cn({ 'opacity-0' : loading }, 'flex items-center')}>{children}</div>
     </button>
   );
 }
