@@ -91,7 +91,7 @@ export default class Player extends React.PureComponent {
     const maxWidth = activeTab ? 'calc(100vw - 270px)' : '100vw'
     return (
       <div
-        className={ cn(className, stl.playerBody, "flex flex-col relative") }
+        className={ cn(className, stl.playerBody, "flex flex-col relative", fullscreen && 'pb-2') }
         data-bottom-block={ bottomBlockIsActive }
       >
         {fullscreen && <EscapeButton onClose={ fullscreenOff } />}

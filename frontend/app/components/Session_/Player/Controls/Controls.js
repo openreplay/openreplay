@@ -492,7 +492,7 @@ export default class Controls extends React.Component {
                 <Tooltip
                   title="Fullscreen"
                   delay={0}
-                  position="top"
+                  position="top-end"
                   className="mx-4"
                 >
                   {this.controlIcon("arrows-angle-extend", 18, this.props.fullscreenOn, false, "rounded hover:bg-gray-light-shade color-gray-medium")}

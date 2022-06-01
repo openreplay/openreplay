@@ -30,11 +30,11 @@ export default class PlayerBlock extends React.PureComponent {
 
     return (
       <div className={ cn(styles.playerBlock, "flex flex-col") }>
-          <SubHeader
+          {!fullscreen && <SubHeader
             sessionId={sessionId}
             disabled={disabled}
             jiraConfig={jiraConfig}
-          />
+          />}
         <Player
           className="flex-1"
           bottomBlockIsActive={ !fullscreen && bottomBlock !== NONE }
