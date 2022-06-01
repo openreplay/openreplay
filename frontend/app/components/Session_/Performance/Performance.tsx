@@ -59,7 +59,7 @@ const NODES_COUNT = "Nodes Сount";
 
 
 const FPSTooltip = ({ active, payload }) => {
-  if (!active || payload.length < 3) {
+  if (!active || !payload || payload.length < 3) {
     return null;
   }
   if (payload[0].value === null) {

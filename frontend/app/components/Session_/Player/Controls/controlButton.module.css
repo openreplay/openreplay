@@ -11,16 +11,12 @@
   border-right: 0px;
   min-width: 60px;
   position: relative;
-  &:hover {
-    background-color: $gray-lightest;
-    transition: all 0.2s;
-  }
 
   & .errorSymbol {
     width: 6px;
     height: 6px;
     border-radius: 3px;
-    background-color: red;
+    background-color: #CC0000;
     margin-right: 3px;
   }
   & .labels {
@@ -29,6 +25,7 @@
     right: -6px;
     display: flex;
     align-items: center;
+    height: 16px;
   }
   
   & .countLabel {
@@ -49,6 +46,11 @@
     /* padding-top: 5px; */
     font-size: 10px;
     height: 16px;
+
+    &:hover {
+      color: $main!important;
+      transition: all 0.2s;
+    }
   }
 
   &.disabled {
