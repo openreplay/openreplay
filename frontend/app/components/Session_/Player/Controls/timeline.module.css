@@ -114,8 +114,7 @@
   left: 0;
   right: 0;
   height: 10px;
-  border-top: 1px solid $gray-light;
-  border-bottom: 1px solid $gray-light;
+  border: 1px solid $gray-light;
   display: flex;
   align-items: center;
 }

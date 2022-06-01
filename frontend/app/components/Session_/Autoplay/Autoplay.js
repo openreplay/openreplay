@@ -7,6 +7,7 @@ import { connectPlayer } from 'Player/store';
 import { Controls as PlayerControls } from 'Player';
 import { Tooltip } from 'react-tippy';
 import cn from 'classnames';
+import { disabled } from '../Player/Controls/controlButton.css';
 
 function Autoplay(props) {
   const { previousId, nextId, autoplay } = props
@@ -34,12 +35,13 @@ function Autoplay(props) {
         title="Play Previous Session"
         disabled={!previousId}
         className={cn(
-          "p-1 bg-active-blue group rounded-full color-teal-light font-medium", 
-          previousId && 'cursor-pointer'
+          "p-1 bg-gray-bg group rounded-full color-gray-darkest font-medium", 
+          previousId && 'cursor-pointer',
+          !disabled && 'hover:bg-bg-blue'
         )}
       >
         <Link to={ sessionRoute(previousId) } disabled={!previousId}> 
-          <Icon name="prev1" className="group-hover:fill-main group-hover:bg-bg-blue" color="inherit" size="16" />
+          <Icon name="prev1" className="group-hover:fill-main" color="inherit" size="16" />
         </Link>
       </Tooltip>
 
@@ -51,12 +53,13 @@ function Autoplay(props) {
         title="Play Next Session"
         disabled={!nextId}
         className={cn(
-          "p-1 bg-active-blue group ml-1 rounded-full color-teal-light font-medium", 
-          nextId && 'cursor-pointer'
+          "p-1 bg-gray-bg group ml-1 rounded-full color-gray-darkest font-medium", 
+          nextId && 'cursor-pointer',
+          !disabled && 'hover:bg-bg-blue'
         )}
       >
         <Link to={ sessionRoute(nextId) } disabled={!nextId} >
-          <Icon name="next1" className="group-hover:fill-main group-hover:bg-bg-blue" color="inherit" size="16" />
+          <Icon name="next1" className="group-hover:fill-main" color="inherit" size="16" />
         </Link>
       </Tooltip>
     </div>

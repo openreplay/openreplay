@@ -17,7 +17,9 @@ $padding: 23px;
   flex-direction: column;
   cursor: pointer;
   transition: all 0.3s ease-out;
-  opacity: 0.5;
+  color: #333;
+  border: 1px solid #ddd;
+  opacity: 0.7;
   &:hover {
     opacity: 1
   }
