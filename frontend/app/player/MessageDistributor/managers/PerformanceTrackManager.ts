@@ -6,8 +6,8 @@ export type PerformanceChartPoint = {
 	time: number,
 	usedHeap: number,
 	totalHeap: number,
-	fps?: number,
-	cpu?: number,
+	fps: number | null,
+	cpu: number | null,
 	nodesCount: number,
 }
 
@@ -23,8 +23,8 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 
 
 	append(msg: PerformanceTrack):void {
-		let fps: number | undefined;
-		let cpu: number | undefined;
+		let fps: number | null = null;
+		let cpu: number | null = null;
 		if (!this.isHidden && this.prevTime != null) {
 			let timePassed = msg.time - this.prevTime + this.timeCorrection;
 
