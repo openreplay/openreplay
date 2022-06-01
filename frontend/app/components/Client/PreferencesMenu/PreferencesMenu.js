@@ -6,7 +6,7 @@ import stl from './preferencesMenu.module.css';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
-function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
+function PreferencesMenu({ activeTab, history, isEnterprise }) {
 
   const setTab = (tab) => {
     history.push(clientRoute(tab));
@@ -112,6 +112,5 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
 }
 
 export default connect(state => ({
-  appearance: state.getIn([ 'user', 'account', 'appearance' ]),
   isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }))(withRouter(PreferencesMenu));

@@ -7,7 +7,6 @@ import { fetchList as fetchMemberList } from 'Duck/member';
 
 import ProfileSettings from './ProfileSettings';
 import Integrations from './Integrations';
-import ManageUsers from './ManageUsers';
 import UserView from './Users/UsersView';
 import AuditView from './Audit/AuditView';
 import Sites from './Sites';
@@ -19,23 +18,18 @@ import PreferencesMenu from './PreferencesMenu';
 import Notifications from './Notifications';
 import Roles from './Roles';
 
-@connect((state) => ({
-  appearance: state.getIn([ 'user', 'account', 'appearance' ]),
-}), {
-  fetchMemberList,
-})
+@connect(null, { fetchMemberList, })
 @withRouter
 export default class Client extends React.PureComponent {
   constructor(props){
     super(props);
-    // props.fetchMemberList();    
   } 
 
   setTab = (tab) => {
     this.props.history.push(clientRoute(tab));
   }
 
-  renderActiveTab = (appearance) => (
+  renderActiveTab = () => (
     <Switch>
       <Route exact strict path={ clientRoute(CLIENT_TABS.PROFILE) } component={ ProfileSettings } />
       <Route exact strict path={ clientRoute(CLIENT_TABS.INTEGRATIONS) } component={ Integrations } />
@@ -51,7 +45,7 @@ export default class Client extends React.PureComponent {
   )
 
   render() {
-    const { match: { params: { activeTab } }, appearance } = this.props;
+    const { match: { params: { activeTab } } } = this.props;
     return (
       <div className={ cn(styles.wrapper, 'page-margin container-90') }>
         <div className={ styles.main }>
@@ -59,7 +53,7 @@ export default class Client extends React.PureComponent {
             <PreferencesMenu activeTab={activeTab} />
           </div>
           <div className={ styles.tabContent }>
-            { activeTab && this.renderActiveTab(appearance) }
+            { activeTab && this.renderActiveTab() }
           </div>
         </div>
       </div>
