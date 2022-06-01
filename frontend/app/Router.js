@@ -34,7 +34,6 @@ import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
-import ModalRoot from './components/Modal/ModalRoot';
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
@@ -169,7 +168,6 @@ class Router extends React.Component {
         
         <Suspense fallback={<Loader loading={true} className="flex-1" />}>
           <ModalProvider>
-            <ModalRoot />
           <Switch key="content" >
             <Route path={ CLIENT_PATH } component={ Client } />
             <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />

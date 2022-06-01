@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import { useModal } from '.';
 import ModalOverlay from './ModalOverlay';
 
-export default function Modal({ children }) {
+export default function Modal() {
   const { component, props} = useModal();
 
   return component ? ReactDOM.createPortal(

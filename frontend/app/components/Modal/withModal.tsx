@@ -1,5 +1,5 @@
 import React from 'react';
-import { ModalConsumer } from './ModalContext';
+import { ModalConsumer } from './';
 
 
 export default BaseComponent => React.memo(props => (
