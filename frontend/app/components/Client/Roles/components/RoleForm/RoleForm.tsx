@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import stl from './roleForm.module.css'
 import { save, edit } from 'Duck/roles'
-import { Input, Button, Checkbox, Icon } from 'UI'
+import { Form, Input, Button, Checkbox, Icon } from 'UI'
 import Select from 'Shared/Select';
 
 interface Permission {
@@ -68,8 +68,8 @@ const RoleForm = (props: Props) => {
 
   return (
     <div className={ stl.form }>
-      <form onSubmit={ _save } >
-        <div className="form-group">
+      <Form onSubmit={ _save } >
+        <Form.Field>
           <label>{ 'Title' }</label>
           <Input
             ref={ focusElement }
@@ -80,9 +80,9 @@ const RoleForm = (props: Props) => {
             id="name-field"
             placeholder="Ex. Admin"
           />
-        </div>
+        </Form.Field>
 
-        <div className="form-group flex flex-col">
+        <Form.Field>
           <label>{ 'Project Access' }</label>
 
           <div className="flex my-3">
@@ -119,9 +119,9 @@ const RoleForm = (props: Props) => {
               )}
             </>
           )}
-        </div>
+        </Form.Field>
 
-        <div className="form-group flex flex-col">
+        <Form.Field>
           <label>{ 'Capability Access' }</label>
           <Select
             isSearchable
@@ -137,8 +137,8 @@ const RoleForm = (props: Props) => {
               )) }
             </div>
           )}
-        </div>
-      </form>
+        </Form.Field>
+      </Form>
 
       <div className="flex items-center">
         <div className="flex items-center mr-auto">

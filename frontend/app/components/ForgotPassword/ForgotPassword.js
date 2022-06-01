@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import ReCAPTCHA from 'react-google-recaptcha';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, Button, Link, Icon, Message } from 'UI';
+import { Form, Loader, Button, Link, Icon, Message } from 'UI';
 import { requestResetPassword, resetPassword } from 'Duck/user';
 import { login as loginRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
@@ -110,7 +110,7 @@ export default class ForgotPassword extends React.PureComponent {
           </div>
         </div>
         <div className="w-6/12 flex items-center justify-center">
-          <form onSubmit={ this.onSubmit } style={{ minWidth: '50%', textAlign: 'center'}}>
+          <Form onSubmit={ this.onSubmit } style={{ minWidth: '50%', textAlign: 'center'}}>
             <div className="mb-8">
               <h2 className="text-center text-3xl mb-6">{`${resetting ? 'Create' : 'Reset'} Password`}</h2>
             </div>
@@ -228,7 +228,7 @@ export default class ForgotPassword extends React.PureComponent {
                 </Link>
               </div>
             </div>
-          </form>
+          </Form>
         </div>
       </div>
     );

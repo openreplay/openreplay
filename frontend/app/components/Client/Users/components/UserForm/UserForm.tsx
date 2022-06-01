@@ -51,7 +51,7 @@ function UserForm(props: Props) {
             <div className="">
                 <h1 className="text-2xl mb-4">{`${user.exists() ? 'Update' : 'Invite'} User`}</h1>
             </div>
-            <form onSubmit={ onSave } >
+            <Form onSubmit={ onSave } >
                 <Form.Field>
                     <label>{ 'Full Name' }</label>
                     <Input
@@ -111,7 +111,7 @@ function UserForm(props: Props) {
                         />
                     </Form.Field>
                 )}
-                </form>
+                </Form>
 
                 <div className="flex items-center">
                     <div className="flex items-center mr-auto">

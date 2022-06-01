@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Input, Button, Icon } from 'UI';
+import { Form, Input, Button, Icon } from 'UI';
 import { save, edit, update , fetchList, remove } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
@@ -74,9 +74,9 @@ export default class NewSiteForm extends React.PureComponent {
 	render() {
 		const { site, loading } = this.props;
 		return (
-			<form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
+			<Form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
         		<div className={ styles.content }>
-					<div className={ styles.formGroup }>
+					<Form.Field>
 						<label>{ 'Name' }</label>
 						<Input
 							placeholder="Ex. openreplay"
@@ -85,7 +85,7 @@ export default class NewSiteForm extends React.PureComponent {
 							onChange={ this.edit }
 							className={ styles.input }
 						/>
-					</div>
+					</Form.Field>
 					<div className="mt-6 flex justify-between">
 						<Button							
 							variant="primary"
@@ -105,7 +105,7 @@ export default class NewSiteForm extends React.PureComponent {
 						</div>
 					}
 	        	</div>
-      		</form>
+      		</Form>
 	  	);
 	}
 }

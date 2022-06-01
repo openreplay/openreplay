@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Button, Input, Icon } from 'UI';
+import { Form, Button, Input, Icon } from 'UI';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import { validateNumber } from 'App/validate';
 import styles from './siteForm.module.css';
@@ -57,13 +57,13 @@ export default class GDPRForm extends React.PureComponent {
     } = this.props;
 
     return (
-      <form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
+      <Form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
         <div className={ styles.content }>
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>{ 'Name' }</label>
             <div>{ site.host }</div>
-          </div>
-          <div className={ styles.formGroup }>
+          </Form.Field>
+          <Form.Field>
             <label>{ 'Session Capture Rate' }</label>
             <Input
               icon="percent"
@@ -73,9 +73,9 @@ export default class GDPRForm extends React.PureComponent {
               onBlur={ this.onSampleRateBlur }
               className={ styles.sampleRate }
             />
-          </div>
+          </Form.Field>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label htmlFor="defaultInputMode">{ 'Data Recording Options' }</label>
             <Select
               name="defaultInputMode"
@@ -85,9 +85,9 @@ export default class GDPRForm extends React.PureComponent {
               value={ gdpr.defaultInputMode }
               // className={ styles.dropdown }
             />
-          </div>
+          </Form.Field>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>
               <input
                 name="maskNumbers"
@@ -98,9 +98,9 @@ export default class GDPRForm extends React.PureComponent {
               { 'Do not record any numeric text' }
               <div className={ styles.controlSubtext }>{ 'If enabled, OpenReplay will not record or store any numeric text for all sessions.' }</div>
             </label>
-          </div>
+          </Form.Field>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>
               <input
                 name="maskEmails"
@@ -111,7 +111,7 @@ export default class GDPRForm extends React.PureComponent {
               { 'Do not record email addresses ' }
               <div className={ styles.controlSubtext }>{ 'If enabled, OpenReplay will not record or store any email address for all sessions.' }</div>
             </label>
-          </div>
+          </Form.Field>
 
           <div className={ styles.blockIpWarapper }>
             <div className={ styles.button } onClick={ this.props.toggleBlockedIp }>
@@ -129,7 +129,7 @@ export default class GDPRForm extends React.PureComponent {
           />
           <Button onClick={ onClose } content="Cancel" />
         </div>
-      </form>
+      </Form>
     );
   }
 }

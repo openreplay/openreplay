@@ -22,7 +22,7 @@ export default class Signup extends React.Component {
      <div className="flex" style={{ height: '100vh'}}>
        <div className={cn("w-6/12", stl.left)}>
           <div className="px-6 pt-10">
-           <img src="/logo-white.svg" />
+           <img src="/assets/logo-white.svg" />
           </div>
          <div className="color-white text-lg flex items-center px-20 pt-32">
           <div>
