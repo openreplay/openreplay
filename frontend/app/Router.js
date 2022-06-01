@@ -21,12 +21,10 @@ const FunnelDetails = lazy(() => import('Components/Funnels/FunnelDetails'));
 const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDetails'));
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
-// import ResultsModal from 'Shared/Results/ResultsModal';
 import { fetchList as fetchMetadata } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
-import { dashboardService } from "App/services";
 import { withStore } from 'App/mstore'
 
 import APIClient from './api_client';
