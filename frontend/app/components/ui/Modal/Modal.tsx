@@ -72,7 +72,7 @@ interface ModalFooterProps {
 function ModalFooter (props: ModalFooterProps) {
     const { children, className = '' } = props;
     return (
-        <div className={cn("p-5", className)}>
+        <div className={cn("p-5 flex items-center", className)}>
             {children}
         </div>
     );
