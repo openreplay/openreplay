@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import { CircularLoader } from 'UI';
+import { CircularLoader, Icon } from 'UI';
 
 interface Props {
   className?: string;
@@ -9,10 +9,12 @@ interface Props {
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   loading?: boolean;
+  icon?: string;
   [x: string]: any
 }
 export default (props: Props) => {
   const {
+    icon = '',
     className = '',
     variant = "default",
     type = "button",
@@ -48,12 +50,15 @@ export default (props: Props) => {
     classes.push('opacity-40 pointer-events-none')
   }
 
+  const iconColor = variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
+
   return (
     <button
       { ...rest }
       type={type}
       className={ cn(classes, className ) }
     >
+      { icon && <Icon className="mr-2" name={icon} color={iconColor} size="16" /> }
       { loading && <div className="absolute flex items-center justify-center inset-0 z-1 rounded">
         <CircularLoader />
       </div> }
