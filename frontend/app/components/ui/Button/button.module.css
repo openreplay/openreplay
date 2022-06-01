@@ -42,7 +42,7 @@
     transition: all 0.2s;
   }
   &.disabled {
-    color: red !important;
+    color: #CC0000 !important;
   }
 }
 
