@@ -223,3 +223,25 @@ AS
 SELECT *, now() AS _timestamp
 FROM massive_split.events_s
 WHERE datetime >= now() - INTERVAL 7 DAY;
+
+CREATE MATERIALIZED VIEW metadata_l24h_mv
+            ENGINE = ReplacingMergeTree(_timestamp)
+                PARTITION BY toYYYYMMDD(datetime)
+                ORDER BY (project_id, datetime, session_id)
+                TTL datetime + INTERVAL 1 DAY
+            POPULATE
+AS
+SELECT *
+FROM massive_split.metadata_s
+WHERE datetime >= now() - INTERVAL 1 DAY;
+
+CREATE MATERIALIZED VIEW metadata_l7d_mv
+            ENGINE = ReplacingMergeTree(_timestamp)
+                PARTITION BY toYYYYMMDD(datetime)
+                ORDER BY (project_id, datetime, session_id)
+                TTL datetime + INTERVAL 7 DAY
+            POPULATE
+AS
+SELECT *
+FROM massive_split.metadata_s
+WHERE datetime >= now() - INTERVAL 7 DAY;
