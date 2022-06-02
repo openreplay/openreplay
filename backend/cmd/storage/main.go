@@ -28,6 +28,8 @@ func main() {
 		return
 	}
 
+	counter := storage.NewLogCounter()
+
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupStorage,
 		[]string{
@@ -37,6 +39,8 @@ func main() {
 			switch msg.(type) {
 			case *messages.SessionEnd:
 				srv.UploadKey(strconv.FormatUint(sessionID, 10), 5)
+				// Log timestamp of last processed session
+				counter.Update(time.UnixMilli(msg.Meta().Timestamp))
 			}
 		},
 		true,
@@ -48,6 +52,7 @@ func main() {
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	cleanTick := time.Tick(time.Duration(cfg.FSCleanHRS) * time.Hour)
+	counterTick := time.Tick(time.Second * 30)
 	for {
 		select {
 		case sig := <-sigchan:
@@ -56,6 +61,8 @@ func main() {
 			os.Exit(0)
 		case <-cleanTick:
 			go srv.CleanDir(cfg.FSDir)
+		case <-counterTick:
+			counter.Print()
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
