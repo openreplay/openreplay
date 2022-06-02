@@ -49,12 +49,6 @@ func (e *Router) root(w http.ResponseWriter, r *http.Request) {
 
 func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip cors politics for health check request
-		if r.URL.Path == "/" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		// Prepare headers for preflight requests
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST")
