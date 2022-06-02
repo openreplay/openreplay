@@ -118,7 +118,7 @@ function SaveSearchModal(props: Props) {
             </Button>
             <Button onClick={ closeHandler }>{ 'Cancel' }</Button>
         </div>
-        { savedSearch && <Button noPadding className={ stl.cancelButton } onClick={ onDelete }>
+        { savedSearch && <Button variant="text" onClick={ onDelete }>
           <Icon name="trash" size="18" />
         </Button> }
       </Modal.Footer>

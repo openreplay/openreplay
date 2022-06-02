@@ -2,9 +2,9 @@ import React from 'react';
 import { Button } from 'UI';
 import stl from './listItem.module.css';
 import cn from 'classnames';
-import AlertTypeLabel from '../../AlertTypeLabel';
+import AlertTypeLabel from '../AlertTypeLabel';
 
-const ListItem = ({ alert, onClear, loading, onNavigate }) => {
+const ListItem = ({ alert, onClear, loading }: any) => {
   return (
     <div className={cn(stl.wrapper, 'group', { [stl.viewed] : alert.viewed })}>
       <div className="flex justify-between items-center">
