@@ -112,8 +112,9 @@ class Router extends React.Component {
     super(props);
     if (props.isLoggedIn) {
       this.fetchInitialData();
+    } else {
+      props.fetchTenants();
     }
-    props.fetchTenants();
   }
 
   fetchInitialData = () => {
@@ -123,11 +124,11 @@ class Router extends React.Component {
           const { mstore } = this.props
           mstore.initClient();
 
-          setTimeout(() => {
-            this.props.fetchMetadata() 
-            this.props.fetchAnnouncements();
-            this.props.fetchAlerts();
-          }, 100);
+          // setTimeout(() => {
+          //   this.props.fetchMetadata() 
+          //   this.props.fetchAnnouncements();
+          //   this.props.fetchAlerts();
+          // }, 100);
         })
       })
     ])

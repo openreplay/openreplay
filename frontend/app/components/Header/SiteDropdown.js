@@ -12,7 +12,6 @@ import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
-import { fetchList as fetchAlerts } from 'Duck/alerts';
 import { withStore } from 'App/mstore'
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 
@@ -28,14 +27,9 @@ import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
   init,
   clearSearch,
   fetchIntegrationVariables,
-  fetchAlerts,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
-
-  // componentDidMount() {
-  //   this.props.fetchIntegrationVariables();
-  // }
 
   closeModal = (e, newSite) => {
     this.setState({ showProductModal: false })    
@@ -49,11 +43,9 @@ export default class SiteDropdown extends React.PureComponent {
   switchSite = (siteId) => {
     const { mstore } = this.props
 
-
     this.props.setSiteId(siteId);
     this.props.clearSearch();
     this.props.fetchIntegrationVariables();
-    this.props.fetchAlerts();
 
     mstore.initClient();
   }
