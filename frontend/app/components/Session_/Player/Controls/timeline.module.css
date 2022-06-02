@@ -72,7 +72,7 @@
   position: absolute;
   width: 2px;
   height: 8px;
-  margin-left: -15px;
+  margin-left: -8px;
   &:hover {
     z-index: 9999;
   }
