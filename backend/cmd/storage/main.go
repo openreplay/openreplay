@@ -40,7 +40,7 @@ func main() {
 			case *messages.SessionEnd:
 				srv.UploadKey(strconv.FormatUint(sessionID, 10), 5)
 				// Log timestamp of last processed session
-				counter.Update(time.UnixMilli(msg.Meta().Timestamp))
+				counter.Update(time.UnixMilli(meta.Timestamp))
 			}
 		},
 		true,
@@ -62,7 +62,7 @@ func main() {
 		case <-cleanTick:
 			go srv.CleanDir(cfg.FSDir)
 		case <-counterTick:
-			counter.Print()
+			go counter.Print()
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {
