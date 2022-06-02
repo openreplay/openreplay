@@ -25,6 +25,8 @@ func NewRouter(cfg *config.Config, services *http2.ServicesBuilder) (*Router, er
 
 func (e *Router) init() {
 	e.router = mux.NewRouter()
+	// CORS middleware
+	e.router.Use(e.corsMiddleware)
 	// Root path
 	e.router.HandleFunc("/", e.root)
 
@@ -39,8 +41,6 @@ func (e *Router) init() {
 	e.router.HandleFunc("/v1/ios/late", e.pushLateMessagesHandlerIOS).Methods("POST")
 	e.router.HandleFunc("/v1/ios/images", e.imagesUploadHandlerIOS).Methods("POST")
 
-	// CORS middleware
-	e.router.Use(e.corsMiddleware)
 }
 
 func (e *Router) root(w http.ResponseWriter, r *http.Request) {
