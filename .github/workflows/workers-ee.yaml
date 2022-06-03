@@ -1,6 +1,7 @@
 # Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions
 
 on:
+  workflow_dispatch:
   push:
     branches:
     - dev
