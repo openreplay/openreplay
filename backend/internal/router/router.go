@@ -41,8 +41,8 @@ func (e *Router) init() {
 	prefix := "/ingest"
 
 	for path, handler := range handlers {
-		e.router.HandleFunc(path, handler).Methods("POST")
-		e.router.HandleFunc(prefix+path, handler).Methods("POST")
+		e.router.HandleFunc(path, handler).Methods("POST", "OPTIONS")
+		e.router.HandleFunc(prefix+path, handler).Methods("POST", "OPTIONS")
 	}
 
 	// CORS middleware
