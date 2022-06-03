@@ -1,5 +1,6 @@
 # This action will push the utilities changes to aws
 on:
+  workflow_dispatch:
   push:
     branches:
       - dev
