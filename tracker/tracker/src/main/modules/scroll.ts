@@ -35,11 +35,11 @@ export default function (app: App): void {
     nodeScroll.clear();
   });
 
-  // app.nodes.attachNodeCallback(node => {
-  //   if (isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
-  //     nodeScroll.set(node, [node.scrollLeft, node.scrollTop]);
-  //   }
-  // })
+  app.nodes.attachNodeCallback(node => {
+    if (isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
+      nodeScroll.set(node, [node.scrollLeft, node.scrollTop]);
+    }
+  })
 
   app.attachEventListener(window, 'scroll', (e: Event): void => {
     const target = e.target;
