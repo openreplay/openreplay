@@ -3,16 +3,16 @@
   "version": "1.3.6",
   "scripts": {
     "start": "webpack serve",
-    "build": "npm run gen:icons && rm -rf public && webpack",
+    "build": "npm run gen:icons && npm run gen:colors && rm -rf public && webpack",
     "upload:minio": "node ./scripts/upload-minio.js",
     "deploy:minio": "npm run build:minio && npm run upload:minio",
     "lint": "eslint --fix app; exit 0",
-    "gen:css-types": "tcm app/components && tcm app/player",
     "gen:constants": "node ./scripts/constants.js",
     "gen:icons": "node ./scripts/icons.ts",
     "gen:colors": "node ./scripts/colors.js",
     "storybook": "start-storybook",
-    "flow": "flow"
+    "flow": "flow",
+    "postinstall": "npm run gen:icons && npm run gen:colors"
   },
   "dependencies": {
     "@sentry/browser": "^5.21.1",

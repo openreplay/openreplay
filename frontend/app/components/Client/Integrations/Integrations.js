@@ -368,7 +368,7 @@ export default class Integrations extends React.PureComponent {
 												title="Github"
 												description="Easily share issues on GitHub directly from any session replay."
 												icon="integrations/github"
-												url={ `https://auth.openreplay.com/oauth/login?provider=github&back_url=${window.env.ORIGIN}` }
+												url={ `https://auth.openreplay.com/oauth/login?provider=github&back_url=${window.env.ORIGIN || window.location.origin}` }
 												onClick={ () => this.showIntegrationConfig(GITHUB) }
 												integrated={ issuesIntegrated }
 												deleteHandler={issuesIntegrated ? () => this.deleteHandler('issues') : null}

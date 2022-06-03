@@ -69,7 +69,7 @@ class Discover extends React.PureComponent {
 
   onClick = task => {
     if (task.URL) {
-      if (task.URL.includes(window.env.ORIGIN)) {
+      if (task.URL.includes(window.env.ORIGIN || window.location.origin)) {
         const { history } = this.props;
         var path = new URL(task.URL).pathname
         history.push(path)
