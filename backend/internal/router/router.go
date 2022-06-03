@@ -25,22 +25,28 @@ func NewRouter(cfg *config.Config, services *http2.ServicesBuilder) (*Router, er
 
 func (e *Router) init() {
 	e.router = mux.NewRouter()
-	// CORS middleware
-	e.router.Use(e.corsMiddleware)
+
 	// Root path
 	e.router.HandleFunc("/", e.root)
 
-	// Web handlers
-	e.router.HandleFunc("/v1/web/not-started", e.notStartedHandlerWeb).Methods("POST")
-	e.router.HandleFunc("/v1/web/start", e.startSessionHandlerWeb).Methods("POST")
-	e.router.HandleFunc("/v1/web/i", e.pushMessagesHandlerWeb).Methods("POST")
+	handlers := map[string]func(http.ResponseWriter, *http.Request){
+		"/v1/web/not-started": e.notStartedHandlerWeb,
+		"/v1/web/start":       e.startSessionHandlerWeb,
+		"/v1/web/i":           e.pushMessagesHandlerWeb,
+		"/v1/ios/start":       e.startSessionHandlerIOS,
+		"/v1/ios/i":           e.pushMessagesHandlerIOS,
+		"/v1/ios/late":        e.pushLateMessagesHandlerIOS,
+		"/v1/ios/images":      e.imagesUploadHandlerIOS,
+	}
+	prefix := "/ingest"
 
-	// iOS handlers
-	e.router.HandleFunc("/v1/ios/start", e.startSessionHandlerIOS).Methods("POST")
-	e.router.HandleFunc("/v1/ios/i", e.pushMessagesHandlerIOS).Methods("POST")
-	e.router.HandleFunc("/v1/ios/late", e.pushLateMessagesHandlerIOS).Methods("POST")
-	e.router.HandleFunc("/v1/ios/images", e.imagesUploadHandlerIOS).Methods("POST")
+	for path, handler := range handlers {
+		e.router.HandleFunc(path, handler).Methods("POST")
+		e.router.HandleFunc(prefix+path, handler).Methods("POST")
+	}
 
+	// CORS middleware
+	e.router.Use(e.corsMiddleware)
 }
 
 func (e *Router) root(w http.ResponseWriter, r *http.Request) {
