@@ -17,16 +17,15 @@ const MainSearchBar = (props: Props) => {
     <div className="flex items-center">
         <div style={{ width: "60%", marginRight: "10px"}}><SessionSearchField /></div>
         <div className="flex items-center" style={{ width: "40%"}}>
-        {optionsReady && <SavedSearch /> }
-            {/* <span
-                className={cn("ml-auto", stl.button, { [stl.disabled]: !hasFilters })}
-                onClick={() => props.clearSearch()}
-            >
-                <span className="font-medium">Clear search</span>
-            </span> */}
-            <Button variant="text-primary" className="ml-auto font-medium" disabled={!hasFilters} onClick={() => props.clearSearch()}>
-                Clear Search
-            </Button>
+        <SavedSearch />
+        <Button
+            variant="text-primary"
+            className="ml-auto font-medium"
+            disabled={!hasFilters}
+            onClick={() => props.clearSearch()}
+        >
+            Clear Search
+        </Button>
         </div>
     </div>
   )

@@ -14,7 +14,6 @@ import {
 } from 'App/routes';
 import { logout } from 'Duck/user';
 import { Icon, Popup } from 'UI';
-// import { Tooltip } from 'react-tippy'
 import SiteDropdown from './SiteDropdown';
 import styles from './header.module.css';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore'

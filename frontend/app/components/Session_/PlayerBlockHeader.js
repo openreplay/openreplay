@@ -4,13 +4,12 @@ import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
 import { sessions as sessionsRoute, assist as assistRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
-import { Icon, CountryFlag, IconButton, BackLink, Popup, Link } from 'UI';
+import { Button, Icon, CountryFlag, IconButton, BackLink, Popup, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
 // import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
-import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import { countries } from 'App/constants';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import Bookmark from 'Shared/Bookmark'
@@ -39,8 +38,6 @@ const ASSIST_ROUTE = assistRoute();
     sessionPath: state.getIn([ 'sessions', 'sessionPath' ]),
     loading: state.getIn([ 'sessions', 'toggleFavoriteRequest', 'loading' ]),
     disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]) || props.loading,
-    jiraConfig: state.getIn([ 'issues', 'list' ]).first(),
-    issuesFetched: state.getIn([ 'issues', 'issuesFetched' ]),
     local: state.getIn(['sessions', 'timezone']),
     funnelRef: state.getIn(['funnels', 'navRef']),
     siteId: state.getIn([ 'site', 'siteId' ]),
@@ -48,15 +45,10 @@ const ASSIST_ROUTE = assistRoute();
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !session.live),
   }
 }, {
-  toggleFavorite, fetchListIntegration, setSessionPath
+  toggleFavorite, setSessionPath
 })
 @withRouter
 export default class PlayerBlockHeader extends React.PureComponent {
-  componentDidMount() {
-    if (!this.props.issuesFetched)
-      this.props.fetchListIntegration('issues')
-  }
-
   getDimension = (width, height) => {
     return width && height ? (
       <div className="flex items-center">
@@ -143,6 +135,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
             )}
             
             <Popup
+                theme="tippy-light"
+                multiple={false}
+                unmountHTMLWhenHide={true}
                 content={(
                   <div className=''>
                     <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={ formatTimeOrDate(startedAt) } />
@@ -151,11 +146,8 @@ export default class PlayerBlockHeader extends React.PureComponent {
                     <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ this.getDimension(width, height) } isLast />
                   </div>
                 )}
-                style={{ backgroundColor: '#fff !important' }}
-                className="bg-white"
-                trigger="click"
-                position="top center"
-                // hideOnScroll
+                // trigger="click"
+                hideOnClick={true}
             >
               <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
             </Popup>
@@ -172,19 +164,20 @@ export default class PlayerBlockHeader extends React.PureComponent {
                   id={ sessionId }
                   showCopyLink={true}
                   trigger={
-                    <IconButton
+                    <Button
                       // className="mr-2"
-                      tooltip="Share Session"
-                      tooltipPosition="top right"
+                      // tooltip="Share Session"
+                      // tooltipPosition="top right"
                       disabled={ disabled }
                       icon={ 'share-alt' }
-                      plain
+                      variant="text-primary"
                     />
                   }
                 />
               </>
             )}
-            { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
+            {/* { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> } */}
+            { <Issues sessionId={ sessionId } /> }
           </div>
         </div>
       </div>

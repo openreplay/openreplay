@@ -1,7 +1,6 @@
 //@ts-nocheck
 import React from 'react';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
-import { Tooltip } from 'react-tippy';
 import cn from 'classnames';
 import stl from './Marker.module.css';
 import { activeTarget } from 'Player';

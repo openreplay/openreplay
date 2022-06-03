@@ -21,9 +21,9 @@ function Session({
   	fetchSlackList,
  }) {
  	usePageTitle("OpenReplay Session Player");
- 	useEffect(() => {
- 		fetchSlackList()
- 	}, []);
+ 	// useEffect(() => {
+ 	// 	fetchSlackList()
+ 	// }, []);
 	useEffect(() => {
 		if (sessionId != null) {
 			fetchSession(sessionId)

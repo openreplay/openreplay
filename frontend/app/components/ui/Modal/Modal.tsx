@@ -29,7 +29,10 @@ function Modal(props: Props) {
     }
 
     return open ? (
-        <div className="fixed inset-0 flex items-center justify-center box-shadow animate-fade-in" style={{ zIndex: '999', backgroundColor: 'rgba(0, 0, 0, 0.2)'}}>
+        <div
+            className="fixed inset-0 flex items-center justify-center box-shadow animate-fade-in"
+            style={{ zIndex: '999', backgroundColor: 'rgba(0, 0, 0, 0.2)'}}
+        >
             <div className="absolute z-10 bg-white rounded border" style={style}>
                 {children}
             </div>
@@ -45,7 +48,7 @@ interface ModalContentProps {
 function ModalContent (props: ModalContentProps) {
     const { children, className } = props;
     return (
-        <div className={cn("p-5", className)}>
+        <div className={cn("p-5 overflow-y-auto", className)} style={{ maxHeight: 'calc(100vh - 100px)'}}>
             {children}
         </div>
     );
@@ -59,7 +62,7 @@ interface ModalHeaderProps {
 function ModalHeader (props: ModalHeaderProps) {
     const { children, className = '' } = props;
     return (
-        <div className={cn("p-5 flex items-center justify-between text-2xl border-b", className)}>
+        <div className={cn("px-5 py-3 flex items-center justify-between text-2xl border-b", className)}>
             {children}
         </div>
     );

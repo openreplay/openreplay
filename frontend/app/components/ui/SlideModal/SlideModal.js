@@ -14,10 +14,10 @@ export default class SlideModal extends React.PureComponent {
     if (prevProps.isDisplayed !== this.props.isDisplayed) {
       if (this.props.isDisplayed) {
         document.addEventListener('keydown', this.keyPressHandler);
-        document.body.classList.add('no-scroll');
+        // document.body.classList.add('no-scroll');
       } else {
         document.removeEventListener('keydown', this.keyPressHandler);
-        document.body.classList.remove('no-scroll');
+        // document.body.classList.remove('no-scroll');
       }
     }
   }

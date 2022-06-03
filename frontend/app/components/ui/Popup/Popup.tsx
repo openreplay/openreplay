@@ -1,5 +1,4 @@
 import React from 'react';
-// import { Popup } from 'semantic-ui-react';
 import { Tooltip } from 'react-tippy';
 
 interface Props {
@@ -7,21 +6,22 @@ interface Props {
   title?: any;
   trigger?: any
   position?: any
+  className?: string
   [x:string]: any;
 }
 export default ({
   position = 'top',
   title='',
+  className='',
+  trigger = 'mouseenter',
   ...props
 }: Props) => (
   <Tooltip
     { ...props }
-    trigger="mouseenter"
+    className={className}
+    trigger={trigger}
     html={props.content || props.title}
     arrow
-    // title={ props.content }
-    // position={ position }
-    // html={ props.children }
   >
     { props.children }
   </Tooltip>

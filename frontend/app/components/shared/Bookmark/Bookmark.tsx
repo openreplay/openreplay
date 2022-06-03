@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import stl from './bookmark.module.css'
-import { Icon, Popup } from 'UI'
+import { Popup, Button } from 'UI'
 import { toggleFavorite } from 'Duck/sessions'
 import { connect } from 'react-redux'
 import { toast } from 'react-toastify';
@@ -41,13 +40,11 @@ function Bookmark(props : Props ) {
       hideOnClick={true}
       distance={20}
     >
-      <div
-        className={ stl.favoriteWrapper }
+      <Button
         onClick={ toggleFavorite }
-        data-favourite={ isFavorite }
-      >
-        <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color="teal" size="20" />
-      </div>
+        variant="text-primary"
+        icon={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
+      />
     </Popup>
   )
 }

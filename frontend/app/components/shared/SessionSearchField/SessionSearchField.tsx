@@ -36,9 +36,9 @@ function SessionSearchField(props: Props) {
         onBlur={ () => setTimeout(setShowModal, 200, false) }
         onChange={ onSearchChange }
         // icon="search"
-        iconPosition="left"
+        // iconPosition="left"
         placeholder={ 'Search sessions using any captured event (click, input, page, error...)'}
-        fluid
+        // fluid
         id="search"
         type="search"
         autoComplete="off"

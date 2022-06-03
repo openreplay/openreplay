@@ -5,7 +5,6 @@ import withPermissions from 'HOCs/withPermissions'
 import { UNRESOLVED, RESOLVED, IGNORED, BOOKMARK } from "Types/errorInfo";
 import { fetchBookmarks, editOptions } from "Duck/errors";
 import { applyFilter } from 'Duck/search';
-import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
 import { errors as errorsRoute, isRoute } from "App/routes";
 import withPageTitle from 'HOCs/withPageTitle';
 import cn from 'classnames';
@@ -42,7 +41,6 @@ function getStatusLabel(status) {
 }), {
 	fetchBookmarks,
 	applyFilter,
-	fetchSlackList,
 	editOptions,
 })
 @withPageTitle("Errors - OpenReplay")
@@ -52,10 +50,6 @@ export default class Errors extends React.PureComponent {
 		this.state = {
 			filter: '',
 		}
-	}
-
-	componentDidMount() {
-		this.props.fetchSlackList(); // Delete after implementing cache
 	}
 
 	ensureErrorsPage() {

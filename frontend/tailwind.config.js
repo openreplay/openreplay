@@ -1,7 +1,7 @@
 const colors = require('./app/theme/colors');
 
 module.exports = {
-	important: true,
+	// important: true,
   	content: [
 		'./app/**/*.tsx',
 		'./app/**/*.js',

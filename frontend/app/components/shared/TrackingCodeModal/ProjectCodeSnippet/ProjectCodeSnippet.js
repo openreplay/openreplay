@@ -64,7 +64,7 @@ const ProjectCodeSnippet = props  => {
     saveGDPR({ ...gdpr, [ name ]: value });
   };
 
-  const onChangeOption = (event, { name, checked }) => {
+  const onChangeOption = ({ target: { name, checked }}) => {
     const { gdpr } = props.site;
     const _gdpr = { ...gdpr.toData() };
     _gdpr[name] = checked;
@@ -115,7 +115,7 @@ const ProjectCodeSnippet = props  => {
             name="maskNumbers"
             type="checkbox"
             checked={ gdpr.maskNumbers }
-            onClick={ onChangeOption }
+            onChange={ onChangeOption }
             className="mr-2"
             label="Do not record any numeric text"
           />
@@ -124,7 +124,7 @@ const ProjectCodeSnippet = props  => {
             name="maskEmails"
             type="checkbox"
             checked={ gdpr.maskEmails }
-            onClick={ onChangeOption }
+            onChange={ onChangeOption }
             className="mr-2"
             label="Do not record email addresses"
           />

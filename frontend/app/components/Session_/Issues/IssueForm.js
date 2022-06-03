@@ -1,8 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Form, Input, Button, Dropdown, CircularLoader } from 'UI';
+import { Form, Input, Button, CircularLoader } from 'UI';
 //import {  } from 'Duck/issues';
 import { addActivity, init, edit, fetchAssignments, fetchMeta } from 'Duck/assignments';
+import Select from 'Shared/Select'
 
 const SelectedValue = ({ icon, text }) => {
   return(
@@ -67,8 +68,7 @@ class IssueForm extends React.PureComponent {
             <span className="mr-2">Project</span>
             <CircularLoader loading={ metaLoading } />
           </label>
-          <Dropdown
-            selection
+          <Select
             name="projectId"
             options={ projectOptions }
             value={ instance.projectId }
@@ -79,7 +79,7 @@ class IssueForm extends React.PureComponent {
         </Form.Field>
         <Form.Field className="mb-15-imp">
           <label htmlFor="issueType">Issue Type</label>
-          <Dropdown
+          <Select
             selection
             name="issueType"
             labeled
@@ -94,7 +94,7 @@ class IssueForm extends React.PureComponent {
 
         <Form.Field className="mb-15-imp">
           <label htmlFor="assignee">Assignee</label>
-          <Dropdown
+          <Select
             selection
             name="assignee"
             options={ userOptions }

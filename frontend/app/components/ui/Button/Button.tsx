@@ -51,6 +51,7 @@ export default (props: Props) => {
   }
 
   const iconColor = variant === 'text' || variant === 'default' ? 'gray-dark' : 'teal';
+  // console.log('children', children)
 
   return (
     <button
@@ -58,7 +59,7 @@ export default (props: Props) => {
       type={type}
       className={ cn(classes, className ) }
     >
-      { icon && <Icon className="mr-2" name={icon} color={iconColor} size="16" /> }
+      { icon && <Icon className={cn({ "mr-2" : children })} name={icon} color={iconColor} size="16" /> }
       { loading && <div className="absolute flex items-center justify-center inset-0 z-1 rounded">
         <CircularLoader />
       </div> }

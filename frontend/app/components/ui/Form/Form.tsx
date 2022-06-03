@@ -13,7 +13,7 @@ interface FormFieldProps {
 function FormField (props: FormFieldProps) {
     const { children, ...rest } = props;
     return (
-        <div {...rest} className="flex flex-col mb-4">
+        <div {...rest} className="flex flex-col mb-4 form-field">
             {children}
         </div>
     );
