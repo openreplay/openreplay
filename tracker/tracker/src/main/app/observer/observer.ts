@@ -1,5 +1,5 @@
-import { 
-  RemoveNodeAttribute, 
+import {
+  RemoveNodeAttribute,
   SetNodeAttribute,
   SetNodeAttributeURLBased,
   SetCSSDataURLBased,
@@ -220,9 +220,10 @@ export default abstract class Observer {
     }
     const parent = node.parentNode;
     let parentID: number | undefined;
+
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
-    // TODO: Clean the logic (though now it workd fine) 
+    // TODO: Clean the logic (though now it workd fine)
     if (!isInstance(node, HTMLHtmlElement) || !this.isTopContext) {
       if (parent === null) {
         this.unbindNode(node);
@@ -238,6 +239,11 @@ export default abstract class Observer {
         return false;
       }
       this.app.sanitizer.handleNode(id, parentID, node);
+    }
+    if (parentID) {
+      if (this.app.sanitizer.isMaskedContainer(parentID)) {
+        return false;
+      }
     }
     let sibling = node.previousSibling;
     while (sibling !== null) {
@@ -259,20 +265,31 @@ export default abstract class Observer {
     }
     if (isNew === true) {
       if (isInstance(node, Element)) {
+        let el: Element = node
         if (parentID !== undefined) {
-          this.app.send(new 
+          if (this.app.sanitizer.isMaskedContainer(id)) {
+            const width = el.clientWidth;
+            const height = el.clientHeight;
+            console.log(width, height);
+            el = node.cloneNode() as Element;
+            (el as HTMLElement | SVGElement).style.width = width + 'px';
+            (el as HTMLElement | SVGElement).style.height = height + 'px';
+            console.log(el)
+          }
+
+          this.app.send(new
             CreateElementNode(
               id,
               parentID,
               index,
-              node.tagName,
+              el.tagName,
               isSVGElement(node),
             ),
           );
         }
-        for (let i = 0; i < node.attributes.length; i++) {
-          const attr = node.attributes[i];
-          this.sendNodeAttribute(id, node, attr.nodeName, attr.value);
+        for (let i = 0; i < el.attributes.length; i++) {
+          const attr = el.attributes[i];
+          this.sendNodeAttribute(id, el, attr.nodeName, attr.value);
         }
       } else if (isInstance(node, Text)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
