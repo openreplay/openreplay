@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 import { Button } from 'UI';
-import styles from './sessionListFooter.css';
+import styles from './sessionListFooter.module.css';
 
 const SessionListFooter = ({
   displayedCount, totalCount, loading, onLoadMoreClick,

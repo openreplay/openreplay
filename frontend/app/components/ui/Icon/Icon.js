@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import SVG from 'UI/SVG';
-import styles from './icon.css';
+import styles from './icon.module.css';
 
 const Icon = ({
   name, 

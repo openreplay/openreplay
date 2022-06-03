@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from "classnames";
 import { connect } from 'react-redux';
 import { scale as scalePlayerScreen } from 'Player'; 
@@ -27,7 +28,7 @@ import Fetch from './Fetch';
 import Exceptions from './Exceptions/Exceptions';
 import LongTasks from './LongTasks';
 import Inspector from './Inspector';
-import styles from './playerBlock.css';
+import styles from './playerBlock.module.css';
 
 
 @connect(state => ({

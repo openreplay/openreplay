@@ -5,16 +5,17 @@ import { Button, PageTitle, Loader, NoContent } from 'UI';
 import { withSiteId } from 'App/routes';
 import withModal from 'App/components/Modal/withModal';
 import DashboardWidgetGrid from '../DashboardWidgetGrid';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
 import DashboardModal from '../DashboardModal';
 import DashboardEditModal from '../DashboardEditModal';
-import DateRange from 'Shared/DateRange';
 import AlertFormModal from 'App/components/Alerts/AlertFormModal';
 import withPageTitle from 'HOCs/withPageTitle';
 import withReport from 'App/components/hocs/withReport';
 import DashboardOptions from '../DashboardOptions';
+import SelectDateRange from 'Shared/SelectDateRange';
+import DashboardIcon from '../../../../svg/dashboard-icn.svg';
 
 interface Props {
     siteId: number;
@@ -92,12 +93,15 @@ function DashboardView(props: RouteComponentProps<Props>) {
         <Loader loading={loading}>
             <NoContent
                 show={dashboards.length === 0 || !dashboard || !dashboard.dashboardId}
-                icon="dashboard-icn"
-                title={<span>Gather and analyze <br /> important metrics in one place.</span>}
+                title={
+                    <div className="flex items-center justify-center flex-col">
+                        <object style={{ width: '180px' }} type="image/svg+xml" data={DashboardIcon} className="no-result-icon" />
+                        <span>Gather and analyze <br /> important metrics in one place.</span>
+                    </div>
+                }
                 size="small"
-                iconSize={180}
                 subtext={
-                    <Button primary size="small" onClick={onAddWidgets}>+ Create Dashboard</Button>
+                    <Button variant="primary" size="small" onClick={onAddWidgets}>+ Create Dashboard</Button>
                 }
             >
                 <div style={{ maxWidth: '1300px', margin: 'auto'}}>
@@ -112,25 +116,32 @@ function DashboardView(props: RouteComponentProps<Props>) {
                                 title={dashboard?.name}
                                 className="mr-3"
                                 actionButton={
-                                    <Button primary size="small" onClick={onAddWidgets}>Add Metric</Button>
+                                    <Button variant="primary" onClick={onAddWidgets}>Add Metric</Button>
                                 }
                             />
 
                         </div>
                         <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
-                            <div className="flex items-center">
+                            <div className="flex items-center flex-shrink-0 justify-end" style={{ width: '300px'}}>
                                 {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
-                                <DateRange
+                                {/* <DateRange
                                     rangeValue={period.rangeName}
                                     startDate={period.start}
                                     endDate={period.end}
                                     onDateChange={(period) => dashboardStore.setPeriod(period)}
                                     customRangeRight
                                     direction="left"
+                                /> */}
+                                <SelectDateRange
+                                    style={{ width: '300px'}}
+                                    fluid
+                                    plain
+                                    period={period}
+                                    onChange={(period: any) => dashboardStore.setPeriod(period)}
                                 />
                             </div>
                             <div className="mx-4" />
-                            <div className="flex items-center">
+                            <div className="flex items-center flex-shrink-0">
                                 <DashboardOptions
                                     editHandler={onEdit}
                                     deleteHandler={onDelete}

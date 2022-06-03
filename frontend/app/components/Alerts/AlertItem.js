@@ -1,6 +1,6 @@
 import React from 'react'
 import cn from 'classnames';
-import stl from './alertItem.css';
+import stl from './alertItem.module.css';
 import AlertTypeLabel from './AlertTypeLabel';
 
 const AlertItem = props => {

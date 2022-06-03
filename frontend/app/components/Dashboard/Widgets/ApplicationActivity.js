@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader } from 'UI';
 import { msToSec } from 'App/date';
 import { CountBadge, Divider, widgetHOC } from './common';

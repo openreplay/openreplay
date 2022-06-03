@@ -17,22 +17,16 @@ const LiveSearchBar = (props: Props) => {
             <LiveSessionSearchField />
         </div>
         <div className="flex items-center" style={{ width: "40%"}}>
-            <Popup
-                trigger={
-                    <Button
-                        plain
-                        disabled={!hasFilters}
-                        className="ml-auto"
-                        onClick={() => props.clearSearch()}
-                    >
-                        <span className="font-medium">Clear</span>
-                    </Button>
-                }
-                content={'Clear Steps'}
-                size="tiny"
-                inverted
-                position="top right"
-            />
+            <Popup content={'Clear Steps'} >
+                <Button
+                    variant="text-primary"
+                    disabled={!hasFilters}
+                    className="ml-auto font-medium"
+                    onClick={() => props.clearSearch()}
+                >
+                    Clear
+                </Button>
+            </Popup>
         </div>
     </div>
   )

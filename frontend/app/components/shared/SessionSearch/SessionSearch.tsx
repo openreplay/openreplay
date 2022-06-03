@@ -3,7 +3,7 @@ import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
 import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
-import { IconButton, Button } from 'UI';
+import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/search';
 import SaveFunnelButton from '../SaveFunnelButton';
 
@@ -71,7 +71,14 @@ function SessionSearch(props: Props) {
             filter={undefined}
             onFilterClick={onAddFilter}
           >
-            <IconButton primaryText label="ADD STEP" icon="plus" />
+            {/* <IconButton primaryText label="ADD STEP" icon="plus" /> */}
+            <Button
+              variant="text-primary"
+              className="mr-2"
+              // onClick={() => setshowModal(true)}
+              icon="plus">
+                ADD STEP
+            </Button>
           </FilterSelection>
         </div>
         <div className="ml-auto flex items-center">

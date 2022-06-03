@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './issuesModal.css';
+import stl from './issuesModal.module.css';
 import IssueForm from './IssueForm';
 import { Icon } from 'UI';
 

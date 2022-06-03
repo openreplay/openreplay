@@ -1,6 +1,7 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Button, Message } from 'UI';
-import styles from './profileSettings.css';
+import { Button, Message, Form, Input } from 'UI';
+import styles from './profileSettings.module.css';
 import { updatePassword } from 'Duck/user';
 
 const ERROR_DOESNT_MATCH = "Passwords doesn't match";
@@ -67,12 +68,12 @@ export default class ChangePassword extends React.PureComponent {
 
     const doesntMatch = checkDoesntMatch(newPassword, newPasswordRepeat);
     return (
-      <form onSubmit={ this.handleSubmit } className={ styles.form } >
-        <div className={ styles.formGroup }>
+      <Form onSubmit={ this.handleSubmit } className={ styles.form } >
+        <Form.Field>
           <label htmlFor="oldPassword">
             { 'Old Password: ' }
           </label>
-          <input
+          <Input
             // label="Old Password: "
             id="oldPassword"
             name="oldPassword"
@@ -81,12 +82,12 @@ export default class ChangePassword extends React.PureComponent {
             // error={ wrongPassword }
             onChange={ this.write }
           />
-        </div>
-        <div className={ styles.formGroup }>
+        </Form.Field>
+        <Form.Field>
           <label htmlFor="newPassword">
             { 'New Password: ' }
           </label>
-          <input
+          <Input
             id="newPassword"            
             name="newPassword"
             value={ newPassword }
@@ -96,19 +97,19 @@ export default class ChangePassword extends React.PureComponent {
           <div className={ styles.passwordPolicy } >
             { PASSWORD_POLICY }
           </div>
-        </div>
-        <div className={ styles.formGroup }>
+        </Form.Field>
+        <Form.Field>
           <label htmlFor="newPasswordRepeat">
             { 'Repeat New Password: ' }
           </label>
-          <input
+          <Input
             id="newPasswordRepeat"            
             name="newPasswordRepeat"
             value={ newPasswordRepeat }
             type="password"
             onChange={ this.write }
           />
-        </div>
+        </Form.Field>
         { passwordErrors.map(err => (
           <Message error>
             { err }
@@ -118,16 +119,17 @@ export default class ChangePassword extends React.PureComponent {
           { ERROR_DOESNT_MATCH }
         </Message>
         <Button
-          outline
-          content="Change Password"
           type="submit"
+          variant="outline"
           disabled={ this.isSubmitDisabled() }
           loading={ loading }
-        />        
+        >        
+          Change Password
+        </Button>
         <Message success hidden={ !success }>
           { 'Successfully changed the password!' }
         </Message>
-      </form>
+      </Form>
     );
   }
 }

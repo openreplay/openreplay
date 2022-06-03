@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { widgetHOC, Styles } from '../common';
 import { ComposedChart, Bar, CartesianGrid, Line, Legend, ResponsiveContainer, 

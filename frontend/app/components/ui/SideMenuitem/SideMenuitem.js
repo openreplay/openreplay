@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon, Popup } from 'UI';
 import cn from 'classnames';
-import stl from './sideMenuItem.css';
+import stl from './sideMenuItem.module.css';
 
 function SideMenuitem({
     iconBg = false,
@@ -19,8 +19,13 @@ function SideMenuitem({
   }) {
   return (
     <Popup
-      trigger={
-        <div
+      disabled={ !disabled }
+      content={ 'No recordings' }
+      size="tiny"
+      inverted
+      position="left center"
+    >
+      <div
           className={ cn(
             className,
             stl.menuItem,
@@ -46,13 +51,7 @@ function SideMenuitem({
             <div onClick={deleteHandler} className={stl.actions}><Icon name="trash" size="14" /></div>
           }
         </div>
-      }
-      disabled={ !disabled }
-      content={ 'No recordings' }
-      size="tiny"
-      inverted
-      position="left center"
-    />
+    </Popup>
   )
 }
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SlideModal, Avatar, TextEllipsis, Icon } from 'UI';
 import SessionList from '../SessionList';
-import stl from './assistTabs.css'
+import stl from './assistTabs.module.css'
 
 interface Props {
   userId: any,

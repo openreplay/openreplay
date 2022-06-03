@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
@@ -16,7 +17,7 @@ import withLocationHandlers from "HOCs/withLocationHandlers";
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
-import styles from '../Session_/session.css';
+import styles from '../Session_/session.module.css';
 
 
 const InitLoader = connectPlayer(state => ({ 

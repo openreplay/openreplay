@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { NoContent, IconButton, Popup } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import MetadataItem from './MetadataItem';
-import stl from './metadata.css';
+import stl from './metadata.module.css';
 import cn from 'classnames';
 
 export default connect(state => ({
@@ -16,19 +16,6 @@ export default connect(state => ({
   return (
     <>
       <Popup
-        trigger={
-          <IconButton
-            className={cn("w-full", { 'opacity-25' : metaLenth === 0 })}
-            onClick={ toggle }
-            icon="id-card"
-            plain
-            label="Metadata"
-            primaryText
-            active={ visible }
-            id="metadata-button"
-            // disabled={ metadata.length === 0 }
-          />
-        }
         content={
           <div className="p-2">
             Check <a href="https://docs.openreplay.com/installation/metadata" target="_blank" className="link">how to use Metadata</a> if you haven’t yet done so.
@@ -39,7 +26,19 @@ export default connect(state => ({
         size="tiny"
         inverted
         position="top center"
-      />
+      >
+        <IconButton
+            className={cn("w-full", { 'opacity-25' : metaLenth === 0 })}
+            onClick={ toggle }
+            icon="id-card"
+            plain
+            label="Metadata"
+            primaryText
+            active={ visible }
+            id="metadata-button"
+            // disabled={ metadata.length === 0 }
+        />
+      </Popup>
       { visible && 
         <div className={ stl.modal } >
           <NoContent show={ metaLenth === 0 } size="small">

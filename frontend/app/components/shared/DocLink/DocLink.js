@@ -8,11 +8,9 @@ export default function DocLink({ className = '', url, label }) {
   
   return (
     <div className={className}>
-      <Button outline onClick={openLink}>
-        <div className="flex items-center">
+      <Button variant="outline" onClick={openLink}>
           <span className="mr-2">{ label }</span>
           <Icon name="external-link-alt" color="teal" />
-        </div>
       </Button>
     </div>
   )

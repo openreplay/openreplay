@@ -1,7 +1,7 @@
 import React from 'react'
 import cn from 'classnames'
 import { IconButton } from 'UI'
-import stl from './errorItem.css';
+import stl from './errorItem.module.css';
 
 function ErrorItem({ error = {}, onErrorClick, onJump }) {
   return (

@@ -4,7 +4,7 @@ import VideoContainer from '../components/VideoContainer'
 import { Icon, Popup, Button } from 'UI'
 import cn from 'classnames'
 import Counter from 'App/components/shared/SessionItem/Counter'
-import stl from './chatWindow.css'
+import stl from './chatWindow.module.css'
 import ChatControls from '../ChatControls/ChatControls'
 import Draggable from 'react-draggable';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';

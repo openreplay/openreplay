@@ -3,7 +3,7 @@ import cn from 'classnames';
 import useToggle from 'App/hooks/useToggle';
 import useForceUpdate from 'App/hooks/useForceUpdate';
 import { Icon } from 'UI';
-import stl from './inspector.css';
+import stl from './inspector.module.css';
 
 import AttrView from './AttrView';
 import TextView from './TextView';

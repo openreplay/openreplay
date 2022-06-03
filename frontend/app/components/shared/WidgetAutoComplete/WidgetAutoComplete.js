@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Icon, CircularLoader, Button, TextEllipsis } from 'UI';
 import cn from 'classnames';
-import stl from './widgetAutoComplete.css';
+import stl from './widgetAutoComplete.module.css';
 import { debounce } from 'App/utils';
 
 const WidgetAutoComplete = props => {
@@ -42,7 +42,7 @@ const WidgetAutoComplete = props => {
         { !focused && selected && (
           <div className={cn(stl.selected, 'flex items-center justify-between')}>
             <span>{selected.value}</span>
-            <Button plain onClick={onClearHandle}><Icon name="close" size="14"/></Button>
+            <Button varient="text" onClick={onClearHandle}><Icon name="close" size="14"/></Button>
           </div>
         )}
         { (focused || !selected) && (

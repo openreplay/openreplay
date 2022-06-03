@@ -1,3 +1,4 @@
+import React from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import cn from 'classnames';
 import {
@@ -11,7 +12,7 @@ import {
 import { Icon } from 'UI';
 import DateRangePopup from './DateRangePopup';
 import DateOptionLabel from './DateOptionLabel';
-import styles from './dateRangeDropdown.css';
+import styles from './dateRangeDropdown.module.css';
 
 const getDateRangeOptions = (customRange = getDateRangeFromValue(CUSTOM_RANGE)) => dateRangeValues.map(value => ({
   value,

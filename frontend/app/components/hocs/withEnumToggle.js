@@ -1,3 +1,4 @@
+import React from 'react';
 const withEnumToggle = (stateName = 'active', handlerName = 'setActive', initial) => BaseComponent =>
   class extends React.Component {
     state = {

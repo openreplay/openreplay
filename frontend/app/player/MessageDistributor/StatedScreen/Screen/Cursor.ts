@@ -1,5 +1,5 @@
 import type { Point } from './types';
-import styles from './cursor.css';
+import styles from './cursor.module.css';
 
 
 export default class Cursor {

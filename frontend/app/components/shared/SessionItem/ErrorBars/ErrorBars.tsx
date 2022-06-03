@@ -1,6 +1,6 @@
 import React from 'react'
 import cn from 'classnames'
-import stl from './ErrorBars.css'
+import stl from './ErrorBars.module.css'
 
 const GOOD = 'Good'
 const LESS_CRITICAL = 'Few Issues'

@@ -3,7 +3,7 @@ import { NoContent } from 'UI'
 import { connectPlayer } from 'Player/store';
 import SelectorCard from '../SelectorCard/SelectorCard';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
-import stl from './selectorList.css'
+import stl from './selectorList.module.css'
 
 interface Props {
   targets: Array<MarkedTarget>,

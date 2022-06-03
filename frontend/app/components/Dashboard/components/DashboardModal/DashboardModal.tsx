@@ -67,10 +67,10 @@ function DashboardModal(props) {
 
                 <div className="flex items-center absolute bottom-0 left-0 right-0 bg-white border-t p-3">
                     <Button
-                        primary
-                        className=""
+                        variant="primary"
                         disabled={!dashboard.isValid || loading}
                         onClick={onSave}
+                        className="flaot-left mr-2"
                     >
                         {isDashboardExists ? "Add Selected to Dashboard" : "Create" }
                     </Button>

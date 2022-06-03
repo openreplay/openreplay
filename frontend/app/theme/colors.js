@@ -7,10 +7,10 @@ module.exports = {
   "gray-medium": "#888",
   "gray-dark": "#666",
   "gray-darkest": "#333",
-
+  
   teal: "#394EFF", /* blue */
   "teal-dark": "#2331A8", /* "blue-dark" */
-  "teal-light": "#D0D4F2",
+  "teal-light": "rgba(57, 78, 255, 0.1)", /* "blue-light" */
 
   tealx: "#3EAAAF",
   "tealx-light": "#E2F0EE",

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Icon } from 'UI';
+import { Icon, Input } from 'UI';
 import { debounce } from 'App/utils';
 
 let debounceUpdate: any = () => {}
@@ -20,11 +20,12 @@ function AuditSearchField(props: Props) {
     return (
         <div className="relative" style={{ width: '220px'}}>
             <Icon name="search" className="absolute top-0 bottom-0 ml-3 m-auto" size="16" />
-            <input
+            <Input
                 name="searchQuery"
-                className="bg-white p-2 border border-gray-light rounded w-full pl-10"
+                // className="bg-white p-2 border border-gray-light rounded w-full pl-10"
                 placeholder="Filter by Name"
                 onChange={write}
+                icon="search"
             />
         </div>
     );

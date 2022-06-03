@@ -1,11 +1,12 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Icon, Loader, Button, Link } from 'UI';
+import { Icon, Loader, Button, Link, Input, Form } from 'UI';
 import { login } from 'Duck/user';
 import { forgotPassword, signup } from 'App/routes';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { withRouter } from 'react-router-dom';
-import stl from './login.css';
+import stl from './login.module.css';
 import cn from 'classnames';
 import { setJwt } from 'Duck/jwt';
 
@@ -28,6 +29,7 @@ export default class Login extends React.Component {
   state = {
     email: '',
     password: '',
+    CAPTCHA_ENABLED: window.env.CAPTCHA_ENABLED === 'true',
   };
 
   componentDidMount() {
@@ -48,23 +50,27 @@ export default class Login extends React.Component {
 
   onSubmit = (e) => {    
     e.preventDefault();
-    if (window.ENV.CAPTCHA_ENABLED && recaptchaRef.current) {
+    const { CAPTCHA_ENABLED } = this.state;
+    if (CAPTCHA_ENABLED && recaptchaRef.current) {
       recaptchaRef.current.execute();      
-    } else if (!window.ENV.CAPTCHA_ENABLED) {
+    } else if (!CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
   }
 
   write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
 
+  
+
   render() {
     const { errors, loading, authDetails } = this.props;
+    const { CAPTCHA_ENABLED } = this.state;
 
     return (
-      <div className="flex" style={{ height: '100vh'}}>
-        <div className={cn("w-6/12", stl.left)}>
+      <div className="flex flex-col md:flex-row" style={{ height: '100vh'}}>
+        <div className={cn("md:w-6/12", stl.left)}>
           <div className="px-6 pt-10">
-            <img src="/logo-white.svg" />
+            <img src="/assets/logo-white.svg" />
           </div>
           <div className="color-white text-lg flex items-center">
             <div className="flex items-center justify-center w-full" style={{ height: 'calc(100vh - 130px)'}}>
@@ -72,28 +78,28 @@ export default class Login extends React.Component {
             </div>
           </div>
         </div>
-        <div className="w-6/12 flex items-center justify-center">
+        <div className="md:w-6/12 flex items-center justify-center py-10">
           <div className="">
-            <form onSubmit={ this.onSubmit }>
+            <Form onSubmit={ this.onSubmit }>
               <div className="mb-8">
                 <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
                 { !authDetails.tenants && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
               </div>
               <Loader loading={ loading }>
-                { window.ENV.CAPTCHA_ENABLED && (
+                { CAPTCHA_ENABLED && (
                   <ReCAPTCHA
                     ref={ recaptchaRef }
                     size="invisible"
-                    sitekey={ window.ENV.CAPTCHA_SITE_KEY }
+                    sitekey={ window.env.CAPTCHA_SITE_KEY }
                     onChange={ token => this.handleSubmit(token) }
                   />
                 )}            
-                <div>
+                <div style={{ width: '350px'}}>
                   <div className="mb-6">
                     <label>Email</label>
-                    <div className={ stl.inputWithIcon }>
-                      <i className={ stl.inputIconUser } />
-                      <input
+                    {/* <div className={ stl.inputWithIcon }> */}
+                      {/* <i className={ stl.inputIconUser } /> */}
+                      <Input
                         autoFocus={true}
                         autoComplete="username"
                         type="text"
@@ -102,14 +108,15 @@ export default class Login extends React.Component {
                         onChange={ this.write }
                         className={ stl.email }
                         required="true"
+                        icon="user-alt"
                       />
-                    </div>
+                    {/* </div> */}
                   </div>
                   <div className="mb-6">
                     <label className="mb-2">Password</label>
-                    <div className={ stl.inputWithIcon }>
-                      <i className={ stl.inputIconPassword } />
-                      <input
+                    {/* <div className={ stl.inputWithIcon }> */}
+                      {/* <i className={ stl.inputIconPassword } /> */}
+                      <Input
                         autoComplete="current-password"
                         type="password"
                         placeholder="Password"
@@ -117,8 +124,9 @@ export default class Login extends React.Component {
                         onChange={ this.write }
                         className={ stl.password }
                         required="true"
+                        icon="lock-alt"
                       />
-                    </div>
+                    {/* </div> */}
                   </div>
                 </div>
               </Loader>
@@ -133,18 +141,18 @@ export default class Login extends React.Component {
                 </div>
               }
               <div className={ stl.formFooter }>
-                <Button type="submit" primary >{ 'Login' }</Button>
+                <Button type="submit" variant="primary" >{ 'Login' }</Button>
 
                 <div className={ cn(stl.links, 'text-lg') }>
                   <Link to={ FORGOT_PASSWORD }>{'Forgot your password?'}</Link>
                 </div>
               </div>
-            </form>
+            </Form>
             { authDetails.sso && (
               <div className={cn(stl.sso, "py-2 flex flex-col items-center")}>
                 <div className="mb-4">or</div>
                 <a href="/api/sso/saml2" rel="noopener noreferrer">
-                  <Button type="button" outline type="submit" primary >{ `Login with SSO (${authDetails.ssoProvider})` }</Button>
+                  <Button variant="outline" type="submit" >{ `Login with SSO (${authDetails.ssoProvider})` }</Button>
                 </a>
               </div>
             )}

@@ -1,3 +1,4 @@
+import React from 'react';
 import { browserIcon } from 'App/iconNames';
 import { Icon } from 'UI';
 

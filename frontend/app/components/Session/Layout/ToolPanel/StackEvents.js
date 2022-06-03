@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { useState } from 'react';
 import { NoContent, Tabs } from 'UI';

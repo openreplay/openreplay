@@ -1,6 +1,6 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { Button, Modal, Form, Icon, Checkbox } from 'UI';
+import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
 import { useStore } from 'App/mstore'
 
 interface Props {
@@ -32,7 +32,7 @@ function DashboardEditModal(props: Props) {
     }
 
     return useObserver(() => (
-        <Modal size="tiny" open={ show }>
+        <Modal open={ show }>
             <Modal.Header className="flex items-center justify-between">
                 <div>{ 'Edit Dashboard' }</div>
                 <Icon
@@ -49,7 +49,7 @@ function DashboardEditModal(props: Props) {
             <Form onSubmit={onSave}>
                 <Form.Field>
                     <label>{'Title:'}</label>
-                    <input
+                    <Input
                         className=""
                         name="name"
                         value={ dashboard.name }
@@ -62,7 +62,7 @@ function DashboardEditModal(props: Props) {
 
                 <Form.Field>
                     <label>{'Description:'}</label>
-                    <input
+                    <Input
                         className=""
                         name="description"
                         value={ dashboard.description }
@@ -83,25 +83,25 @@ function DashboardEditModal(props: Props) {
                             onClick={ writeOption }
                         />
                         <div className="flex items-center cursor-pointer" onClick={ () => dashboard.update({ 'isPublic': !dashboard.isPublic }) }>
-                        <Icon name="user-friends" size="16" />
-                        <span className="ml-2"> Team can see and edit the dashboard.</span>
+                            <Icon name="user-friends" size="16" />
+                            <span className="ml-2"> Team can see and edit the dashboard.</span>
                         </div>
                     </div>
                 </Form.Field>
             </Form>
             </Modal.Content>
-            <Modal.Actions>
+            <Modal.Footer>
                 <div className="-mx-2 px-2">
                     <Button
-                        primary
+                        variant="primary"
                         onClick={ onSave }
-                        // loading={ loading }
+                        className="float-left mr-2"
                     >
                         Save
                     </Button>
-                    <Button className="" marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+                    <Button className="mr-2" onClick={ closeHandler }>{ 'Cancel' }</Button>
                 </div>
-            </Modal.Actions>
+            </Modal.Footer>
       </Modal>
     ));
 }

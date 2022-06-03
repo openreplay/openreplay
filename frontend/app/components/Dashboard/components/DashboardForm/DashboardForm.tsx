@@ -1,7 +1,6 @@
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
 import { Input } from 'UI';
-import { useDashboardStore } from '../../store/store';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 

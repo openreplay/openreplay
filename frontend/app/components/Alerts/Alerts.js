@@ -8,7 +8,7 @@ import AlertForm from './AlertForm';
 import { connect } from 'react-redux';
 import { setShowAlerts } from 'Duck/dashboard';
 import { EMAIL, SLACK, WEBHOOK } from 'App/constants/schedule';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 const Alerts = props => {
   const { webhooks, setShowAlerts } = props;
@@ -18,8 +18,8 @@ const Alerts = props => {
     props.fetchWebhooks();
   }, [])
 
-  const slackChannels = webhooks.filter(hook => hook.type === SLACK).map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
-  const hooks = webhooks.filter(hook => hook.type === WEBHOOK).map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
+  const slackChannels = webhooks.filter(hook => hook.type === SLACK).map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
+  const hooks = webhooks.filter(hook => hook.type === WEBHOOK).map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
 
   const saveAlert = instance => {
     const wasUpdating = instance.exists();

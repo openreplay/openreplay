@@ -1,6 +1,4 @@
-import { JSONTree } from 'UI'
-import cn from 'classnames';
-
+import React from 'react';
 export default class ProfileInfo extends React.PureComponent {
 	render() {
 		const { 
@@ -11,14 +9,6 @@ export default class ProfileInfo extends React.PureComponent {
 			}
 		} = this.props;
 
-		// let jsonPayload = undefined;
-		// let jsonResponse = undefined;
-		// try {
-		// 	jsonPayload = JSON.parse(payload);
-		// } catch (e) {}
-		// try {
-		// 	jsonResponse = JSON.parse(response);
-		// } catch (e) {}
 		return (
 			<div className="px-6" >
 				<h5 className="py-3">{"Arguments"}</h5>

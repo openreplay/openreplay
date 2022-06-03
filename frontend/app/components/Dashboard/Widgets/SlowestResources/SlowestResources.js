@@ -1,10 +1,11 @@
+import React from 'react';
 import { Loader, NoContent, DropdownPlain } from 'UI';
 import { Table, widgetHOC } from '../common';
 import Chart from './Chart';
 import ImageInfo from './ImageInfo';
 import { getRE } from 'App/utils';
 import cn from 'classnames';
-import stl from './SlowestResources.css';
+import stl from './SlowestResources.module.css';
 import ResourceType from './ResourceType';
 import CopyPath from './CopyPath';
 import { numberWithCommas } from 'App/utils';

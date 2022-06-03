@@ -111,12 +111,6 @@ export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
 
-
-export const RESULTS_QUERY_KEY = 'results';
-export const METRICS_QUERY_KEY = 'metrics';
-export const SOURCE_QUERY_KEY = 'source';
-export const WIDGET_QUERY_KEY = 'widget';
-
 const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),
     session(''),

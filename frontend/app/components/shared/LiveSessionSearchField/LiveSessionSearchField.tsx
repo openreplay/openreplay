@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import stl from './LiveSessionSearchField.css';
+import stl from './LiveSessionSearchField.module.css';
 import { Input } from 'UI';
 import LiveFilterModal from 'Shared/Filters/LiveFilterModal';
 import { fetchFilterSearch } from 'Duck/search';
@@ -44,7 +44,7 @@ function LiveSessionSearchField(props: Props) {
       />
 
       { showModal && (
-        <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
+        <div className="absolute left-0 border shadow rounded bg-white z-50">
           <LiveFilterModal
             searchQuery={searchQuery}
             isMainSearch={true}

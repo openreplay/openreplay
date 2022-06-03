@@ -11,24 +11,29 @@ interface Props {
     components?: any;
     [x:string]: any;
 }
-export default function({ plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
+export default function({ right = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const customStyles = {
-        option: (provided, state) => ({
+        option: (provided: any, state: any) => ({
           ...provided,
           whiteSpace: 'nowrap',
         }),
-        menu: (provided, state) => ({
+        menu: (provided: any, state: any) => ({
             ...provided,
             top: 31,
+            borderRadius: '3px',
+            right: right ? 0 : undefined,
             minWidth: 'fit-content',
+            zIndex: 99,
         }),
-        control: (provided) => {
+        control: (provided: any) => {
             const obj = {
                 ...provided,
                 border: 'solid thin #ddd',
                 cursor: 'pointer',
+                minHeight: '36px',
             }
             if (plain) {
+                obj['backgroundColor'] = 'transparent';
                 obj['border'] = '1px solid transparent'
                 obj['&:hover'] = {
                     borderColor: 'transparent',
@@ -43,11 +48,15 @@ export default function({ plain = false, options, isSearchable = false, componen
             }
             return obj;
         },
-        valueContainer: (provided) => ({
+        indicatorsContainer: (provided: any) => ({
+            ...provided,
+            padding: 0,
+        }),
+        valueContainer: (provided: any) => ({
             ...provided,
             paddingRight: '0px',
         }),
-        singleValue: (provided, state) => {
+        singleValue: (provided: any, state: { isDisabled: any; }) => {
           const opacity = state.isDisabled ? 0.5 : 1;
           const transition = 'opacity 300ms';
       
@@ -84,7 +93,7 @@ const DropdownIndicator = (
   ) => {
     return (
       <components.DropdownIndicator {...props}>
-        <Icon name="chevron-down" size="18" />
+        <Icon name="chevron-down" size="16" />
       </components.DropdownIndicator>
     );
   };

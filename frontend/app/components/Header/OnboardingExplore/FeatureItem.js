@@ -1,7 +1,7 @@
 import React from 'react';
 import { Checkbox, Icon } from 'UI';
 import cn from 'classnames';
-import stl from './featureItem.css';
+import stl from './featureItem.module.css';
 
 const FeatureItem = ({ label, completed = false, subText, onClick }) => {
   return (

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { widgetHOC, AvgLabel, Styles } from '../common';
 import Bar from './Bar';

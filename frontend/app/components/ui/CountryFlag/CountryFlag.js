@@ -1,7 +1,8 @@
+import React from 'react';
 import cn from 'classnames';
 import { countries } from 'App/constants';
-import { Popup, Icon } from 'UI';
-import stl from './countryFlag.css';
+import { Icon } from 'UI';
+import stl from './countryFlag.module.css';
 
 const CountryFlag = React.memo(({ country, className, style = {}, label = false }) => {
 	const knownCountry = !!country && country !== 'UN';

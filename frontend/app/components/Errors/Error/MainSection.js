@@ -1,7 +1,8 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';
-import { ErrorDetails, IconButton, Icon, Loader } from 'UI';
+import { ErrorDetails, IconButton, Icon, Loader, Button } from 'UI';
 import { sessions as sessionsRoute } from 'App/routes';
 import { TYPES as EV_FILER_TYPES } from 'Types/filter/event';
 import { UNRESOLVED, RESOLVED, IGNORED } from "Types/errorInfo";
@@ -147,15 +148,15 @@ export default class MainSection extends React.PureComponent {
 					<SharePopup
 						entity="errors"
 						id={ error.errorId }
-            trigger={
-              <IconButton
-              	primaryText
-              	label="Share"
-              	size="small"
-                icon="share-alt"
-              />
-            }
-          />
+						trigger={
+							<IconButton
+							primaryText
+							label="Share"
+							size="small"
+							icon="share-alt"
+							/>
+						}
+					/>
 				</div>
 				<Divider />
 				<div className="m-4">
@@ -165,13 +166,13 @@ export default class MainSection extends React.PureComponent {
 						className="my-4"
 						session={ error.lastHydratedSession }
 					/>
-					<button
-						className="color-teal cursor-pointer flex items-center"
+					<Button
+						variant="text-primary"
 						onClick={ this.findSessions }
 					>
 						Find all sessions with this error
 						<Icon className="ml-1" name="next1" color="teal" />
-					</button>
+					</Button>
 				</div>
 				<Divider />
 				<div className="m-4">

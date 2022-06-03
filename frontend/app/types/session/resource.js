@@ -1,7 +1,6 @@
 import { List } from 'immutable';
 import Record from 'Types/Record';
 import { getResourceName } from 'App/utils';
-// import { List } from 'semantic-ui-react';
 
 const XHR = 'xhr';
 const JS = 'script';

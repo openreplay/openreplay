@@ -33,16 +33,16 @@ function FilterSelection(props: Props) {
         }}) : (
           <div
             className="rounded py-1 px-3 flex items-center cursor-pointer bg-gray-lightest text-ellipsis hover:bg-gray-light-shade"
-            style={{ width: '140px', height: '26px', border: 'solid thin #e9e9e9' }}
+            style={{ width: '150px', height: '26px', border: 'solid thin #e9e9e9' }}
             onClick={() => setShowModal(true)}
           >
-            <span className="mr-auto truncate">{filter.label}</span>
+            <div className="overflow-hidden whitespace-nowrap text-ellipsis mr-auto truncate" style={{ textOverflow: 'ellipsis'}}>{filter.label}</div>
             <Icon name="chevron-down" size="14" />
           </div>
         ) }
       </OutsideClickDetectingDiv>
       {showModal && (
-        <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
+        <div className="absolute left-0 border shadow rounded bg-white z-50">
           { isRoute(ASSIST_ROUTE, window.location.pathname) ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> }
         </div>
       )}

@@ -97,6 +97,14 @@ export default Record({
 	  }
 	},
 	methods: {
+		toJSON() {
+			return {
+				startDate: this.start,
+				endDate: this.end,
+				rangeName: this.rangeName,
+				rangeValue: this.rangeName,
+			}
+		},
 		toTimestamps() {
 			return {
 				startTimestamp: this.start,
@@ -104,7 +112,6 @@ export default Record({
 			};
 		},
 		rangeFormatted(format = 'MMM Do YY, hh:mm A') {
-			console.log('period', this)
 			return this.range.start.format(format) + ' - ' + this.range.end.format(format);
 		},
 		toTimestampstwo() {

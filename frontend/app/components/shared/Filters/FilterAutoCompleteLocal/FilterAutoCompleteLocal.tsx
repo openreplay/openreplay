@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon } from 'UI';
-import stl from './FilterAutoCompleteLocal.css';
+import stl from './FilterAutoCompleteLocal.module.css';
 interface Props {
   showOrButton?: boolean;
   showCloseButton?: boolean;

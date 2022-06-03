@@ -1,3 +1,4 @@
+import React from 'react';
 import { AreaChart, Area } from 'recharts';
 
 const Chart = ({ data }) => {

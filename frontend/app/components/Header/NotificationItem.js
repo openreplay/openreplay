@@ -1,6 +1,6 @@
 import { checkForRecent } from 'App/dateRange';
 
-import styles from './notificationItem.css';
+import styles from './notificationItem.module.css';
 
 const NotificationItem = ({
   notification: {

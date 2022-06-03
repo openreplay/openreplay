@@ -15,7 +15,8 @@ export default Member.extend({
   license: '',
   expirationDate: undefined,
   permissions: [],
-  iceServers: undefined
+  iceServers: undefined,
+  hasPassword: false, // to check if it's SSO
 }, {
   fromJS: ({ current = {}, ...account})=> ({
     ...account,

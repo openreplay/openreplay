@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { NoContent, Icon, Loader } from 'UI';
 import Session from 'Types/session';
 import SessionItem from 'Shared/SessionItem';
-import stl from './sessionList.css';
+import stl from './sessionList.module.css';
 
 @connect(state => ({ 
 	currentSessionId: state.getIn([ 'sessions', 'current', 'sessionId' ])

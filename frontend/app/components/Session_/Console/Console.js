@@ -1,3 +1,4 @@
+import React from 'react';
 // import cn from 'classnames';
 // import { getRE } from 'App/utils';
 // import { Icon, NoContent, Tabs, Input } from 'UI';
@@ -5,7 +6,7 @@ import { connectPlayer, jump } from 'Player';
 // import { LEVEL } from 'Types/session/log'; 
 // import Autoscroll from '../Autoscroll';
 // import BottomBlock from '../BottomBlock';
-// import stl from './console.css';
+// import stl from './console.module.css';
 import ConsoleContent from './ConsoleContent';
 
 

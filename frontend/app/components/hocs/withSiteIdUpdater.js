@@ -1,5 +1,5 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import  { withSiteId } from 'App/routes';
 import { setSiteId } from 'Duck/site';
 
 export default BaseComponent =>

@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Popup } from 'UI';
-import stl from './issueListItem.css';
+import stl from './issueListItem.module.css';
 
 const IssueListItem = ({ issue, onClick, icon, user, active }) => {
   return (
@@ -17,15 +17,9 @@ const IssueListItem = ({ issue, onClick, icon, user, active }) => {
         </div>
         <div className="flex items-center">
           { user && 
-            <Popup
-              trigger={ 
-                <img src={ user.avatarUrls['24x24'] } width="24" height="24" />
-              }
-              content={ 'Assignee ' + user.name }
-              size="small"
-              position="top right"
-              inverted
-            />
+            <Popup content={ 'Assignee ' + user.name } >
+              <img src={ user.avatarUrls['24x24'] } width="24" height="24" />
+            </Popup>
           }
         </div>
       </div>

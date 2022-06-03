@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { getRE } from 'App/utils';
 import { Label, NoContent, Input, SlideModal, CloseButton } from 'UI';
 import { connectPlayer, pause, jump } from 'Player';

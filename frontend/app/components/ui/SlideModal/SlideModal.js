@@ -1,4 +1,5 @@
-import styles from './slideModal.css';
+import React from 'react';
+import styles from './slideModal.module.css';
 import cn from 'classnames';
 export default class SlideModal extends React.PureComponent {
   // componentDidMount() {
@@ -13,10 +14,10 @@ export default class SlideModal extends React.PureComponent {
     if (prevProps.isDisplayed !== this.props.isDisplayed) {
       if (this.props.isDisplayed) {
         document.addEventListener('keydown', this.keyPressHandler);
-        document.body.classList.add('no-scroll');
+        // document.body.classList.add('no-scroll');
       } else {
         document.removeEventListener('keydown', this.keyPressHandler);
-        document.body.classList.remove('no-scroll');
+        // document.body.classList.remove('no-scroll');
       }
     }
   }

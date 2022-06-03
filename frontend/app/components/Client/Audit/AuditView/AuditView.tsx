@@ -1,5 +1,5 @@
 import React from 'react';
-import { PageTitle, Icon } from 'UI';
+import { PageTitle, Icon, Button } from 'UI';
 import AuditList from '../AuditList';
 import AuditSearchField from '../AuditSearchField';
 import { useStore } from 'App/mstore';
@@ -49,10 +49,10 @@ function AuditView(props) {
                     </div>
                     <AuditSearchField onChange={(value) => auditStore.updateKey('searchQuery', value) }/>
                     <div>
-                        <button className="color-teal flex items-center ml-3" onClick={exportToCsv}>
-                            <Icon name="grid-3x3" />
+                        <Button variant="text-primary" className="ml-3" onClick={exportToCsv}>
+                            <Icon name="grid-3x3" color="teal" />
                             <span className="ml-2">Export to CSV</span>
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

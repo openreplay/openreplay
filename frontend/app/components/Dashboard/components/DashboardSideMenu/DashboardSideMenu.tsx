@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';
+import { SideMenuitem, SideMenuHeader, Icon, Popup, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
 import { withSiteId, dashboardSelected, metrics } from 'App/routes';
@@ -9,11 +9,10 @@ import { useModal } from 'App/components/Modal';
 import DashbaordListModal from '../DashbaordListModal';
 import DashboardModal from '../DashboardModal';
 import cn from 'classnames';
-import { Tooltip } from 'react-tippy';
 import { connect } from 'react-redux';
 import { compose } from 'redux'
 import { setShowAlerts } from 'Duck/dashboard';
-import stl from 'Shared/MainSearchBar/mainSearchBar.css';
+// import stl from 'Shared/MainSearchBar/mainSearchBar.module.css';
 
 const SHOW_COUNT = 8;
 
@@ -57,14 +56,12 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                 className="mb-4 flex items-center"
                 text="DASHBOARDS"
                 button={
-                    <span
-                        className={cn("ml-1 flex items-center", stl.button)}
-                        onClick={onAddDashboardClick}
-                        style={{ marginBottom: 0 }}
-                    >
-                        <Icon name="plus" size="16" color="main" />
-                        <span className="ml-1" style={{ textTransform: 'none' }}>Create</span>
-                    </span>
+                    <Button onClick={onAddDashboardClick} variant="text-primary">
+                        <>
+                            <Icon name="plus" size="16" color="main" />
+                            <span className="ml-1" style={{ textTransform: 'none' }}>Create</span>
+                        </>
+                    </Button>
                 }
             />
             {dashboardsPicked.map((item: any) => (
@@ -80,10 +77,9 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                             {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
                             {item.isPinned && <div className="p-1 pointer-events-none"><Icon name="pin-fill" size="16" /></div>}
                             {!item.isPinned && (
-                                <Tooltip
+                                <Popup
                                     delay={500}
-                                    arrow
-                                    title="Set as default dashboard"
+                                    content="Set as default dashboard"
                                     hideOnClick={true}
                                 >
                                     <div
@@ -92,7 +88,7 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                                     >
                                         <Icon name="pin-fill" size="16" color="gray-light" />
                                     </div>
-                                </Tooltip>
+                                </Popup>
                             )}
                         </div>
                     )}

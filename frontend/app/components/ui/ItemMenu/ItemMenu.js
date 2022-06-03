@@ -1,8 +1,8 @@
-import { Icon } from 'UI';
-import styles from './itemMenu.css';
+import React from 'react';
+import { Icon, Popup } from 'UI';
+import styles from './itemMenu.module.css';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import cn from 'classnames';
-import { Tooltip } from 'react-tippy';
 
 export default class ItemMenu extends React.PureComponent {
   state = {
@@ -65,11 +65,10 @@ export default class ItemMenu extends React.PureComponent {
               tabIndex="-1"
               className=""
             >
-              <Tooltip
+              <Popup
                   delay={500}
                   arrow
                   title={ disabledMessage }
-                  trigger="mouseenter"
                   position="left"
                   disabled={ !disabled }
               >
@@ -81,7 +80,7 @@ export default class ItemMenu extends React.PureComponent {
                       )}
                       <div>{ text }</div>
                   </div>
-              </Tooltip>
+              </Popup>
             </div>
           ))}
         </div>

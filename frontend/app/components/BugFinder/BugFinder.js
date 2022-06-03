@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -8,11 +9,10 @@ import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
 import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
-import stl from './bugFinder.css';
+import stl from './bugFinder.module.css';
 import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchSources } from 'Duck/customField';
-import { RehydrateSlidePanel } from './WatchDogs/components';
 import { setFunnelPage } from 'Duck/sessions';
 import { setActiveTab } from 'Duck/search';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
@@ -137,10 +137,6 @@ export default class BugFinder extends React.PureComponent {
             <SessionList onMenuItemClick={this.setActiveTab} />
           </div>
         </div>
-        <RehydrateSlidePanel
-          isModalDisplayed={ showRehydratePanel }
-          onClose={ () => this.setState({ showRehydratePanel: false })}
-        />
       </div>
     );
   }

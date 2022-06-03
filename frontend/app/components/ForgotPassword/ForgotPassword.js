@@ -1,13 +1,14 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import ReCAPTCHA from 'react-google-recaptcha';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, Button, Link, Icon, Message } from 'UI';
+import { Form, Input, Loader, Button, Link, Icon, Message } from 'UI';
 import { requestResetPassword, resetPassword } from 'Duck/user';
 import { login as loginRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
-import stl from './forgotPassword.css';
+import stl from './forgotPassword.module.css';
 
 const LOGIN = loginRoute();
 const recaptchaRef = React.createRef();
@@ -37,6 +38,7 @@ export default class ForgotPassword extends React.PureComponent {
     passwordRepeat: '',
     requested: false,
     updated: false,
+    CAPTCHA_ENABLED: window.env.CAPTCHA_ENABLED === 'true',
   };
 
   handleSubmit = (token) => {
@@ -79,14 +81,16 @@ export default class ForgotPassword extends React.PureComponent {
 
   onSubmit = e => {
     e.preventDefault();
-    if (window.ENV.CAPTCHA_ENABLED && recaptchaRef.current) {
+    const { CAPTCHA_ENABLED } = this.state;
+    if (CAPTCHA_ENABLED && recaptchaRef.current) {
       recaptchaRef.current.execute()
-    } else if (!window.ENV.CAPTCHA_ENABLED) {
+    } else if (!CAPTCHA_ENABLED) {
       this.handleSubmit();
     }
   }
 
   render() {
+    const { CAPTCHA_ENABLED } = this.state;
     const { errors, loading, params } = this.props;
     const { requested, updated, password, passwordRepeat, email } = this.state;
     const dontMatch = checkDontMatch(password, passwordRepeat);    
@@ -100,7 +104,7 @@ export default class ForgotPassword extends React.PureComponent {
       <div className="flex" style={{ height: '100vh'}}>
         <div className={cn("w-6/12", stl.left)}>
           <div className="px-6 pt-10">
-            <img src="/logo-white.svg" />
+            <img src="/assets/logo-white.svg" />
           </div>
           <div className="color-white text-lg flex items-center">
             <div className="flex items-center justify-center w-full" style={{ height: 'calc(100vh - 130px)'}}>
@@ -109,37 +113,38 @@ export default class ForgotPassword extends React.PureComponent {
           </div>
         </div>
         <div className="w-6/12 flex items-center justify-center">
-          <form onSubmit={ this.onSubmit } style={{ minWidth: '50%', textAlign: 'center'}}>
+          <Form onSubmit={ this.onSubmit } style={{ minWidth: '50%' }} className="flex flex-col items-center justify-center">
             <div className="mb-8">
               <h2 className="text-center text-3xl mb-6">{`${resetting ? 'Create' : 'Reset'} Password`}</h2>
             </div>
             <Loader loading={ loading }>
-              <div data-hidden={ updated }>
-                { window.ENV.CAPTCHA_ENABLED && (
+              <div data-hidden={ updated } className="w-full">
+                { CAPTCHA_ENABLED && (
                   <div className={ stl.recaptcha }>
                     <ReCAPTCHA
                       ref={ recaptchaRef }
                       size="invisible"
                       data-hidden={ requested }
-                      sitekey={ window.ENV.CAPTCHA_SITE_KEY }
+                      sitekey={ window.env.CAPTCHA_SITE_KEY }
                       onChange={ token => this.handleSubmit(token) }
                     />
                   </div>
                 )}              
 
                 { !resetting && !requested &&
-                  <div className={ stl.inputWithIcon }>
+                  <Form.Field>
                     <i className={ stl.inputIconUser } />
-                    <input
+                    <Input
                       autoFocus={true}
                       autocomplete="email"
                       type="text"
                       placeholder="Email"
                       name="email"
                       onChange={ this.write }
-                      className={ stl.input }
+                      className="w-full"
+                      icon="user-alt"
                     />
-                  </div>                
+                  </Form.Field>
                 }
 
                 {
@@ -151,43 +156,31 @@ export default class ForgotPassword extends React.PureComponent {
                 {
                   resetting && (
                     <React.Fragment>
-                      {/* <div className={ stl.inputWithIcon } >
+                      <Form.Field>
                         <i className={ stl.inputIconPassword } />
-                        <input
-                          autocomplete="new-password"
-                          type="text"
-                          placeholder="Code"
-                          name="code"
-                          onChange={ this.write }
-                          className={ stl.input }
-                        />
-                      </div> */}
-
-                      <div className={ stl.inputWithIcon } >
-                        <i className={ stl.inputIconPassword } />
-                        <input
+                        <Input
                           autocomplete="new-password"
                           type="password"
                           placeholder="Password"
                           name="password"
                           onChange={ this.write }
-                          className={ stl.input }
+                          className="w-full"
                         />
-                      </div>
+                      </Form.Field>
                       <div className={ stl.passwordPolicy } data-hidden={ !this.shouldShouwPolicy() }>
                         { PASSWORD_POLICY }
                       </div>
-                      <div className={ stl.inputWithIcon } >
+                      <Form.Field>
                         <i className={ stl.inputIconPassword } />
-                        <input
+                        <Input
                           autocomplete="new-password"
                           type="password"
                           placeholder="Confirm Password"
                           name="passwordRepeat"
                           onChange={ this.write }
-                          className={ stl.input }
+                          className="w-full"
                         />
-                      </div>
+                      </Form.Field>
                     </React.Fragment>
                   )
                 }
@@ -208,24 +201,26 @@ export default class ForgotPassword extends React.PureComponent {
                 { 'Your password has been updated sucessfully.' }
               </div>
             </div>
-            <div className={ stl.formFooter }>
-              <Button
-                data-hidden={ updated || requested }
-                type="submit" primary
-                loading={loading}
-                disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
-              >
-                { resetting ? 'Create' : 'Reset' }
-              </Button>
+            {/* <div className={ stl.formFooter }> */}
+              {!(updated || requested) && (
+                <Button
+                  type="submit"
+                  variant="primary"
+                  loading={loading}
+                  disabled={ (resetting && this.isSubmitDisabled()) || (!resetting && !validEmail)}
+                >
+                  { resetting ? 'Create' : 'Reset' }
+                </Button>
+              )}
 
               <div className={ stl.links }>
                 <Link to={ LOGIN }>
-                  <Button data-hidden={ !updated } type="submit" primary >{ 'Login' }</Button>
+                  { updated && (<Button variant="primary" type="submit" primary >{ 'Login' }</Button>)}
                   <div data-hidden={ updated }>{'Back to Login'}</div>
                 </Link>
               </div>
-            </div>
-          </form>
+            {/* </div> */}
+          </Form>
         </div>
       </div>
     );

@@ -1,11 +1,11 @@
-import React from 'react'
+import React from 'react';
 import cn from 'classnames';
 
 import { TextEllipsis } from 'UI';
 import withToggle from 'HOCs/withToggle';
 import { TYPES } from 'Types/session/event';
 import Event from './Event'
-import stl from './eventGroupWrapper.css';
+import stl from './eventGroupWrapper.module.css';
 
 // TODO: incapsulate toggler in LocationEvent
 @withToggle("showLoadInfo", "toggleLoadInfo")

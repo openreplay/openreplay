@@ -24,9 +24,9 @@ function DashboardWidgetGrid(props) {
                 icon="no-metrics-chart"
                 title="No metrics added to this dashboard"
                 subtext={
-                    <div>
+                    <div className="flex items-center justify-center flex-col">
                         <p>Metrics helps you visualize trends from sessions captured by OpenReplay</p>
-                        <Button size="small" primary onClick={props.onEditHandler}>Add Metric</Button>
+                        <Button variant="primary" onClick={props.onEditHandler}>Add Metric</Button>
                     </div>
                 }
             >

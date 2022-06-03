@@ -66,7 +66,7 @@ function ListingVisibility(props) {
                     />
                 </div>
                 <div className="col-span-3">
-                    <Button outline size="medium" disabled={!changed} onClick={saveSettings}>Update</Button>
+                    <Button variant="outline" size="medium" disabled={!changed} onClick={saveSettings}>Update</Button>
                 </div>
             </div>
         </>

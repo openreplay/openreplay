@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 
-import cls from './PlayIconLayer.css';
-import clsOv from './overlay.css';
+import cls from './PlayIconLayer.module.css';
+import clsOv from './overlay.module.css';
 
 interface Props {
   togglePlay: () => void,

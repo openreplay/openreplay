@@ -1,6 +1,6 @@
 export default [
-  { value: '>', text: 'above' },
-  { value: '>=', text: 'above or equal to' },
-  { value: '<', text: 'below' },
-  { value: '<=', text: 'below or equal to' },
+  { value: '>', label: 'above' },
+  { value: '>=', label: 'above or equal to' },
+  { value: '<', label: 'below' },
+  { value: '<=', label: 'below or equal to' },
 ];

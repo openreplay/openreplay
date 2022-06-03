@@ -1,19 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import cn from 'classnames';
-import { ItemMenu } from 'UI';
+import { ItemMenu, Popup } from 'UI';
 import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
-// import { confirm } from 'UI/Confirmation';
 import { useStore } from 'App/mstore';
-import LazyLoad from 'react-lazyload';
 import { withRouter } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
-import WidgetIcon from './WidgetIcon';
 import AlertButton from './AlertButton';
-import { Tooltip } from 'react-tippy';
-import stl from './widgetWrapper.css';
+import stl from './widgetWrapper.module.css';
 
 interface Props {
     className?: string;
@@ -101,7 +97,7 @@ function WidgetWrapper(props: Props) {
                     </div>
                 }
                 {/* @ts-ignore */}
-                <Tooltip
+                <Popup
                     hideOnClick={true}
                     position="bottom"
                     delay={300}
@@ -109,7 +105,7 @@ function WidgetWrapper(props: Props) {
                     disabled={!isTemplate}
                     boundary="viewport"
                     flip={["top"]}
-                    html={<span>Click to select</span>}
+                    content={<span>Click to select</span>}
                 >
                     {addOverlay && <TemplateOverlay onClick={onChartClick} isTemplate={isTemplate} />}
                     <div
@@ -149,7 +145,7 @@ function WidgetWrapper(props: Props) {
                             <WidgetChart metric={widget} isTemplate={isTemplate} isWidget={isWidget} />
                         </div>
                     {/* </LazyLoad> */}
-                </Tooltip>
+                </Popup>
             </div>
 
     ));

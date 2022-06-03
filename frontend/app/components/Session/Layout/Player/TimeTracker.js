@@ -1,6 +1,7 @@
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { connectPlayer } from 'Player';
-import cls from './timeTracker.css';
+import cls from './timeTracker.module.css';
 
 
 function TimeTracker({ player, scale }) {

@@ -14,7 +14,7 @@ const TrackerUpdateMessage= (props) => {
   useEffect(() => {
     if (!activeSite || !activeSite.trackerVersion) return;
 
-    const isLatest = isGreaterOrEqualVersion(activeSite.trackerVersion, window.ENV.TRACKER_VERSION);
+    const isLatest = isGreaterOrEqualVersion(activeSite.trackerVersion, window.env.TRACKER_VERSION);
     if (!isLatest && activeSite.recorded) {
       setNeedUpdate(true)
     }
@@ -33,7 +33,7 @@ const TrackerUpdateMessage= (props) => {
                 <Icon name="info-circle" size="14" color="gray-darkest" />
               </div>
               <div className="ml-2color-gray-darkest mr-auto">
-                There might be a mismatch between the tracker and the backend versions. Please make sure to <a href="#" className="link" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>update</a> the tracker to latest version (<a href="https://www.npmjs.com/package/@openreplay/tracker" target="_blank">{window.ENV.TRACKER_VERSION}</a>).
+                There might be a mismatch between the tracker and the backend versions. Please make sure to <a href="#" className="link" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>update</a> the tracker to latest version (<a href="https://www.npmjs.com/package/@openreplay/tracker" target="_blank">{window.env.TRACKER_VERSION}</a>).
               </div>
             </div>
           </div>

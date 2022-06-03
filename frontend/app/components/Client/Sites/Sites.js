@@ -1,15 +1,16 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, SlideModal, IconButton, Icon, Button, Popup, TextLink } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
 import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
-import stl from './sites.css';
+import stl from './sites.module.css';
 import NewSiteForm from './NewSiteForm';
 import GDPRForm from './GDPRForm';
 import TrackingCodeModal from 'Shared/TrackingCodeModal';
 import BlockedIps from './BlockedIps';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import SiteSearch from './SiteSearch';
 
 const STATUS_MESSAGE_MAP = {
@@ -144,8 +145,10 @@ class Sites extends React.PureComponent {
           <div className={ stl.tabHeader }>
             <h3 className={ cn(stl.tabTitle, "text-2xl") }>{ 'Projects' }</h3>
             <Popup
-              trigger={
-                <div>
+              disabled={ canAddSites }
+              content={ `${ !isAdmin ? PERMISSION_WARNING : LIMIT_WARNING }` }
+            >
+              <div>
                   <IconButton
                       disabled={ !canAddSites }
                       circle
@@ -154,13 +157,7 @@ class Sites extends React.PureComponent {
                       onClick={ this.showNewSiteForm }
                   />
                 </div>
-              }
-              disabled={ canAddSites }
-              content={ `${ !isAdmin ? PERMISSION_WARNING : LIMIT_WARNING }` }
-              size="tiny"
-              inverted
-              position="top left"
-            />
+            </Popup>
 
            <div className="flex ml-auto items-center">
               <TextLink
@@ -187,15 +184,14 @@ class Sites extends React.PureComponent {
                     <div className="col-span-4">
                         <div className="flex items-center">
                           <Popup
-                            trigger={
-                              <div style={ { width: '10px' } }>
-                                <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
-                              </div>
-                            }
                             content={ STATUS_MESSAGE_MAP[ _site.status ] }
                             inverted
                             position="top center"
-                          />
+                          >
+                            <div style={ { width: '10px' } }>
+                                <Icon name="circle" size="10" color={ STATUS_COLOR_MAP[ _site.status ] } />
+                              </div>
+                          </Popup>
                           <span className="ml-2">{ _site.host }</span>
                         </div>
                     </div>
@@ -207,7 +203,7 @@ class Sites extends React.PureComponent {
                       <div className={ stl.label}>{_site.projectKey}</div>
                     </div> */}
                     <div className="col-span-4 justify-self-end flex items-center invisible group-hover:visible">
-                      <div className="mr-4"><Button size="small" primary onClick={ () => this.showTrackingCode(_site) }>{ 'Installation' }</Button></div>
+                      <div className="mr-4"><Button size="small" variant="primary" onClick={ () => this.showTrackingCode(_site) }>{ 'Installation' }</Button></div>
                       {/* <button
                         className={cn('mx-3', {'hidden' : !canDeleteSites})}
                         disabled={ !canDeleteSites }
@@ -215,14 +211,15 @@ class Sites extends React.PureComponent {
                       >
                         <Icon name="trash" size="16" color="teal" />
                       </button> */}
-                      <button
+                      <Button
+                        variant="text"
                         className={cn('mx-3', {'hidden' : !isAdmin})}
                         disabled={ !isAdmin }
                         onClick={ () => isAdmin && this.edit(_site) }
                         data-clickable
                       >
                         <Icon name="edit" size="16" color="teal"/>
-                      </button>
+                      </Button>
                       {/* <button disabled={ !isAdmin } onClick={ () => this.showGDPRForm(_site) } ><Icon name="cog" size="16" color="teal" /></button> */}
                     </div>
                   </div>

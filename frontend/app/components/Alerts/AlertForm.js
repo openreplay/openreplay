@@ -1,27 +1,28 @@
 import React, { useEffect } from 'react'
-import { Button, Dropdown, Form, Input, SegmentSelection, Checkbox, Message, Link, Icon } from 'UI';
+import { Button, Form, Input, SegmentSelection, Checkbox, Message, Link, Icon } from 'UI';
 import { alertMetrics as metrics } from 'App/constants';
 import { alertConditions as conditions } from 'App/constants';
 import { client, CLIENT_TABS } from 'App/routes';
 import { connect } from 'react-redux';
-import stl from './alertForm.css';
+import stl from './alertForm.module.css';
 import DropdownChips from './DropdownChips';
 import { validateEmail } from 'App/validate';
 import cn from 'classnames';
 import { fetchTriggerOptions } from 'Duck/alerts';
+import Select from 'Shared/Select'
 
 const thresholdOptions = [
-  { text: '15 minutes', value: 15 },
-  { text: '30 minutes', value: 30 },
-  { text: '1 hour', value: 60 },
-  { text: '2 hours', value: 120 },
-  { text: '4 hours', value: 240 },
-  { text: '1 day', value: 1440 },
+  { label: '15 minutes', value: 15 },
+  { label: '30 minutes', value: 30 },
+  { label: '1 hour', value: 60 },
+  { label: '2 hours', value: 120 },
+  { label: '4 hours', value: 240 },
+  { label: '1 day', value: 1440 },
 ];
 
 const changeOptions = [
-  { text: 'change', value: 'change' },
-  { text: '% change', value: 'percent' },
+  { label: 'change', value: 'change' },
+  { label: '% change', value: 'percent' },
 ];
 
 const Circle = ({ text }) => (
@@ -50,7 +51,9 @@ const AlertForm = props => {
   const { instance, slackChannels, webhooks, loading, onDelete, deleting, triggerOptions, metricId, style={ width: '580px', height: '100vh' } } = props;
   const write = ({ target: { value, name } }) => props.edit({ [ name ]: value })
   const writeOption = (e, { name, value }) => props.edit({ [ name ]: value });
-  const onChangeOption = (e, { checked, name }) => props.edit({ [ name ]: checked })
+  const onChangeCheck = ({ target: { checked, name }}) => props.edit({ [ name ]: checked })
+  // const onChangeOption = ({ checked, name }) => props.edit({ [ name ]: checked })
+  // const onChangeCheck = (e) => { console.log(e) }
 
   useEffect(() => {
     props.fetchTriggerOptions();
@@ -75,7 +78,7 @@ const AlertForm = props => {
        <div className={cn(stl.content, '-mx-6 px-6 pb-12')}>
         <input
           autoFocus={ true }
-          className="text-lg"
+          className="text-lg border border-gray-light rounded w-full"
           name="name"
           style={{ fontSize: '18px', padding: '10px', fontWeight: '600'}}
           value={ instance && instance.name }
@@ -119,14 +122,13 @@ const AlertForm = props => {
               {!isThreshold && (
                 <div className="flex items-center my-3">
                   <label className="w-2/6 flex-shrink-0 font-normal">{'Trigger when'}</label>
-                  <Dropdown
+                  <Select
                     className="w-4/6"
                     placeholder="change"
-                    selection
                     options={ changeOptions }
                     name="change"
-                    value={ instance.change }
-                    onChange={ writeOption }
+                    defaultValue={ instance.change }
+                    onChange={ ({ value }) => writeOption(null , { name: 'change', value }) }
                     id="change-dropdown"
                   />
                 </div>
@@ -134,29 +136,28 @@ const AlertForm = props => {
 
               <div className="flex items-center my-3">
                 <label className="w-2/6 flex-shrink-0 font-normal">{isThreshold ? 'Trigger when' : 'of'}</label>
-                <Dropdown
+                <Select
                   className="w-4/6"
                   placeholder="Select Metric"
-                  selection
-                  search
+                  isSearchable={true}
                   options={ triggerOptions }
                   name="left"
-                  value={ instance.query.left }
-                  onChange={ writeQueryOption }
+                  value={ triggerOptions.find(i => i.value === instance.query.left) }
+                  // onChange={ writeQueryOption }
+                  onChange={ ({ value }) => writeQueryOption(null, { name: 'left', value }) }
                 />
               </div>
 
               <div className="flex items-center my-3">
                 <label className="w-2/6 flex-shrink-0 font-normal">{'is'}</label>
                 <div className="w-4/6 flex items-center">
-                  <Dropdown
-                    className="px-4"
+                  <Select
                     placeholder="Select Condition"
-                    selection
                     options={ conditions }
                     name="operator"
-                    value={ instance.query.operator }
-                    onChange={ writeQueryOption }
+                    defaultValue={ instance.query.operator }
+                    // onChange={ writeQueryOption }
+                    onChange={ ({ value }) => writeQueryOption(null, { name: 'operator', value }) }
                   />
                   { unit && (
                       <Input
@@ -172,39 +173,40 @@ const AlertForm = props => {
                   )}
                   { !unit && (
                       <Input
-                      className="pl-4"
-                      name="right"
-                      value={ instance.query.right }
-                      onChange={ writeQuery }
-                      placeholder="Specify Value"
-                    />
+                        wrapperClassName="ml-2"
+                        // className="pl-4"
+                        name="right"
+                        value={ instance.query.right }
+                        onChange={ writeQuery }
+                        placeholder="Specify Value"
+                      />
                   )}
                 </div>
               </div>
 
               <div className="flex items-center my-3">
                 <label className="w-2/6 flex-shrink-0 font-normal">{'over the past'}</label>
-                <Dropdown
+                <Select
                   className="w-2/6"
                   placeholder="Select timeframe"
-                  selection
                   options={ thresholdOptions }
                   name="currentPeriod"
-                  value={ instance.currentPeriod }
-                  onChange={ writeOption }
+                  defaultValue={ instance.currentPeriod }
+                  // onChange={ writeOption }
+                  onChange={ ({ value }) => writeOption(null, { name: 'currentPeriod', value }) }
                 />
               </div>
               {!isThreshold && (
                   <div className="flex items-center my-3">
                   <label className="w-2/6 flex-shrink-0 font-normal">{'compared to previous'}</label>
-                  <Dropdown
+                  <Select
                     className="w-2/6"
                     placeholder="Select timeframe"
-                    selection
                     options={ thresholdOptions }
                     name="previousPeriod"
-                    value={ instance.previousPeriod }
-                    onChange={ writeOption }
+                    defaultValue={ instance.previousPeriod }
+                    // onChange={ writeOption }
+                    onChange={ ({ value }) => writeOption(null, { name: 'previousPeriod', value }) }
                   />
                 </div>
               )}
@@ -223,18 +225,17 @@ const AlertForm = props => {
               <div className="flex items-center my-4">
                 <Checkbox
                   name="slack"
-                  className="font-medium"
+                  className="mr-8"
                   type="checkbox"
                   checked={ instance.slack }
-                  onClick={ onChangeOption }
-                  className="mr-8"
+                  onClick={ onChangeCheck }
                   label="Slack"
                 />
                 <Checkbox
                   name="email"
                   type="checkbox"
                   checked={ instance.email }
-                  onClick={ onChangeOption }
+                  onClick={ onChangeCheck }
                   className="mr-8"
                   label="Email"
                 />
@@ -242,7 +243,7 @@ const AlertForm = props => {
                   name="webhook"
                   type="checkbox"
                   checked={ instance.webhook }
-                  onClick={ onChangeOption }
+                  onClick={ onChangeCheck }
                   label="Webhook"
                 />
               </div>
@@ -300,7 +301,7 @@ const AlertForm = props => {
         <div className="flex items-center">
           <Button
             loading={loading}
-            primary
+            variant="primary"
             type="submit"
             disabled={loading || !instance.validate()}
             id="submit-button"
@@ -314,9 +315,9 @@ const AlertForm = props => {
           {instance.exists() && (
             <Button
               hover
+              variant="text"
               loading={deleting}
               type="button"
-              outline plain
               onClick={() => onDelete(instance)}
               id="trash-button"
             >

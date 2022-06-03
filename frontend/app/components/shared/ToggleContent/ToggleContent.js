@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Slider } from 'UI'
+import { Toggler } from 'UI'
 
 function ToggleContent({ label = '', first, second }) {
   const [switched, setSwitched] = useState(true)
@@ -7,7 +7,7 @@ function ToggleContent({ label = '', first, second }) {
     <div>
       <div className="flex items-center cursor-pointer mb-4">
         <div className="mr-2" onClick={() => setSwitched(!switched)}>{ label }</div>
-        <Slider
+        <Toggler
           name="sessionsLive"
           onChange={ () => setSwitched(!switched) }
           checked={ !switched }

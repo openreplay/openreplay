@@ -1,7 +1,8 @@
+import React from 'react';
 import { useState, useRef, useEffect, forwardRef } from 'react';
 import cn from 'classnames';
 import { Popup } from 'UI';
-import styles from './textEllipsis.css';
+import styles from './textEllipsis.module.css';
 
 /** calculates text width in pixels 
 + * by creating a hidden element with t
@@ -79,20 +80,19 @@ const TextEllipsis = ({
 
 	return (
 		<Popup
-			trigger={ 
-				<Trigger
-					className={className} 
-					maxWidth={maxWidth} 
-					style={style} 
-					textOrChildren={textOrChildren} 
-					id={popupId}
-					ref={textRef}
-					{...props}  
-				/> 
-			}
 			content={ <div className="customPopupText" { ...hintProps } >{ hintText || textOrChildren }</div> }
 			{ ...popupProps }
-   		/>
+		>
+			<Trigger
+				className={className} 
+				maxWidth={maxWidth} 
+				style={style} 
+				textOrChildren={textOrChildren} 
+				id={popupId}
+				ref={textRef}
+				{...props}  
+			/> 	
+		</Popup>
 	);
 };
 

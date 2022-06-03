@@ -36,7 +36,7 @@ class IssueCommentForm extends React.PureComponent {
             />
             <Button
               disabled={ comment.length === 0 }
-              primary
+              variant="primary"
               loading={ loading }>{'Comment'}</Button>
           </div>
         </Form>

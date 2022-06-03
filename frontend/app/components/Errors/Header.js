@@ -1,3 +1,4 @@
+import React from 'react';
 function Header({ text, count }) {
   return (
     <h3 className="text-2xl capitalize">

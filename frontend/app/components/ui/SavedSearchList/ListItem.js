@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from 'UI';
 import cn from "classnames";
-import stl from './listItem.css';
+import stl from './listItem.module.css';
 
 const ListItem = ({icon, label, onClick, onRemove }) => {
     return (
