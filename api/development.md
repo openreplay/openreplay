@@ -7,7 +7,6 @@
 ### Development environment
 
 ```bash
-**FOSS:**
 cd openreplay/api
 # Make your own copy of .env file and edit it as you want
 cp .env.dev .env
@@ -17,18 +16,6 @@ mkdir .venv
 
 # Installing dependencies (pipenv will detect the .venv folder and use it as a target)
 pipenv install -r requirements.txt [--skip-lock]
-
-# Create a .venv folder to contain all you dependencies
-mkdir .venv
-
-# Installing dependencies (pipenv will detect the .venv folder and use it as a target)
-pipenv install -r requirements.txt [--skip-lock]
-
-# These commands must bu used everytime you make changes to FOSS.
-# To clean the unused files before getting new ones
-bash clean.sh
-# To copy commun files from FOSS
-bash prepare-dev.sh
 ```
 
 ### Building and deploying locally

@@ -5,7 +5,7 @@ import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import WidgetAutoComplete from 'Shared/WidgetAutoComplete';
 import { getRE } from 'App/utils';
 import cn from 'classnames';
-import stl from './filterDropdown.css';
+import stl from './filterDropdown.module.css';
 import { countries } from 'App/constants';
 import { regionLabels } from 'Types/integrations/cloudwatchConfig';
 

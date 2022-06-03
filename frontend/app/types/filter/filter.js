@@ -121,9 +121,8 @@ export const defaultFilters = [
       { label: 'Time Between Events', key: KEYS.TIME_BETWEEN_EVENTS, type: KEYS.TIME_BETWEEN_EVENTS, filterKey: KEYS.TIME_BETWEEN_EVENTS, icon: 'filters/click', isFilter: false },
       { label: 'Avg CPU Load', key: KEYS.AVG_CPU_LOAD, type: KEYS.AVG_CPU_LOAD, filterKey: KEYS.AVG_CPU_LOAD, icon: 'filters/click', isFilter: false },
       { label: 'Memory Usage', key: KEYS.AVG_MEMORY_USAGE, type: KEYS.AVG_MEMORY_USAGE, filterKey: KEYS.AVG_MEMORY_USAGE, icon: 'filters/click', isFilter: false },
-
       { label: 'Input', key: KEYS.INPUT, type: KEYS.INPUT, filterKey: KEYS.INPUT, icon: 'event/input', isFilter: false },
-      { label: 'Page', key: KEYS.LOCATION, type: KEYS.LOCATION, filterKey: KEYS.LOCATION, icon: 'event/link', isFilter: false },
+      { label: 'Path', key: KEYS.LOCATION, type: KEYS.LOCATION, filterKey: KEYS.LOCATION, icon: 'event/link', isFilter: false },
       // { label: 'View', key: KEYS.VIEW, type: KEYS.VIEW, filterKey: KEYS.VIEW, icon: 'event/view', isFilter: false }
 		]
 	},

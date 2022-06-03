@@ -1,4 +1,5 @@
-import styles from './loadInfo.css';
+import React from 'react';
+import styles from './loadInfo.module.css';
 import { numberWithCommas } from 'App/utils'
 
 const LoadInfo = ({ showInfo = false, onClick, event: { fcpTime, visuallyComplete, timeToInteractive }, prorata: { a, b, c } }) => (

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { widgetHOC, domain, Styles } from '../common';
 import { numberWithCommas} from 'App/utils';

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import WidgetWrapper from '../WidgetWrapper';
 import { useObserver } from 'mobx-react-lite';
+import { Icon } from 'UI';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 
@@ -10,7 +11,7 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }
     });
     return (
         <div
-            className={cn("rounded p-4 shadow border cursor-pointer", { 'bg-active-blue border-color-teal':isSelected, 'bg-white': !isSelected })}
+            className={cn("rounded p-4 border cursor-pointer", { 'bg-active-blue border-blue':isSelected, 'bg-white': !isSelected })}
             onClick={() => onClick(category)}
         >
             <div className="font-medium text-lg mb-2 capitalize">{category.name}</div>
@@ -24,16 +25,21 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }
     );
 }
 
-function DashboardMetricSelection(props) {
+interface IProps {
+    handleCreateNew?: () => void;
+    isDashboardExists?: boolean;
+}
+
+function DashboardMetricSelection(props: IProps) {
     const { dashboardStore } = useStore();
-    let widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
+    const widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
     const [activeCategory, setActiveCategory] = React.useState<any>();
     const [selectAllCheck, setSelectAllCheck] = React.useState(false);
     const selectedWidgetIds = useObserver(() => dashboardStore.selectedWidgets.map((widget: any) => widget.metricId));
 
     useEffect(() => {
-        dashboardStore?.fetchTemplates().then(templates => {
-            setActiveCategory(dashboardStore.widgetCategories[0]);
+        dashboardStore?.fetchTemplates(true).then((categories) => {
+            setActiveCategory(categories[0]);
         });
     }, []);
 
@@ -43,7 +49,6 @@ function DashboardMetricSelection(props) {
     };
 
     const toggleAllWidgets = ({ target: { checked }}) => {
-        // dashboardStore.toggleAllSelectedWidgets(checked);
         setSelectAllCheck(checked);
         if (checked) {
             dashboardStore.selectWidgetsByCategory(activeCategory.name);
@@ -53,10 +58,10 @@ function DashboardMetricSelection(props) {
     }
 
     return useObserver(() => (
-        <div >
+        <div>
             <div className="grid grid-cols-12 gap-4 my-3 items-end">
                 <div className="col-span-3">
-                    <div className="uppercase color-gray-medium text-lg">Categories</div>
+                    <div className="uppercase color-gray-medium text-lg">Type</div>
                 </div>
 
                 <div className="col-span-9 flex items-center">
@@ -67,8 +72,7 @@ function DashboardMetricSelection(props) {
                                 <span className="text-2xl color-gray-medium ml-2">{activeCategory.widgets.length}</span>
                             </div>
 
-                            <div className="ml-auto flex items-center">
-                                <span className="color-gray-medium">Past 7 days data</span>
+                            <div className="ml-auto">
                                 <label className="flex items-center ml-3 cursor-pointer select-none">
                                     <input type="checkbox" onChange={toggleAllWidgets} checked={selectAllCheck} />
                                     <div className="ml-2">Select All</div>
@@ -80,7 +84,7 @@ function DashboardMetricSelection(props) {
             </div>
             <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-3">
-                    <div className="grid grid-cols-1 gap-4" style={{ maxHeight: "calc(100vh - 165px)", overflowY: 'auto' }}>
+                    <div className="grid grid-cols-1 gap-4 py-1 pr-2" style={{ maxHeight: `calc(100vh - ${props.isDashboardExists ? 175 : 300}px)`, overflowY: 'auto' }}>
                         {activeCategory && widgetCategories.map((category, index) =>
                             <WidgetCategoryItem
                                 key={category.name}
@@ -94,8 +98,8 @@ function DashboardMetricSelection(props) {
                 </div>
                 <div className="col-span-9">
                     <div
-                        className="grid grid-cols-4 gap-4 -mx-4 px-4 pb-40 items-start"
-                        style={{ maxHeight: "calc(100vh - 165px)", overflowY: 'auto' }}
+                        className="grid grid-cols-4 gap-4 -mx-4 px-4 pb-40 items-start py-1"
+                        style={{ maxHeight: "calc(100vh - 170px)", overflowY: 'auto' }}
                     >
                         {activeCategory && activeCategory.widgets.map((widget: any) => (
                             <WidgetWrapper
@@ -107,6 +111,21 @@ function DashboardMetricSelection(props) {
                                 onClick={() => dashboardStore.toggleWidgetSelection(widget)}
                             />
                         ))}
+                        {props.isDashboardExists && activeCategory?.name === 'custom' && (
+                             <div
+                                className={
+                                    cn(
+                                        "relative rounded border col-span-1 cursor-pointer",
+                                        "flex flex-col items-center justify-center bg-white",
+                                        "hover:bg-active-blue hover:shadow-border-main text-center py-16",
+                                    )
+                                }
+                                onClick={props.handleCreateNew}
+                            >
+                                <Icon name="plus" size="16" />
+                                <span className="mt-2">Create Metric</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

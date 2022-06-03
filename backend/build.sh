@@ -18,6 +18,16 @@ check_prereq() {
     return
 }
 
+function build_service() {
+    image="$1"
+    echo "BUILDING $image"
+    docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image .
+    [[ $PUSH_IMAGE -eq 1 ]] && {
+        docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
+    }
+    return
+}
+
 function build_api(){
     # Copy enterprise code
     [[ $1 == "ee" ]] && {
@@ -25,20 +35,12 @@ function build_api(){
         ee="true"
     }
     [[ $2 != "" ]] && {
-        image="$2"
-        docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
-        [[ $PUSH_IMAGE -eq 1 ]] && {
-            docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
-        }
-        echo "build completed for http"
+        build_service $2
         return
     }
-    for image in $(ls services);
+    for image in $(ls cmd);
     do
-        docker build -t ${DOCKER_REPO:-'local'}/$image:${git_sha1} --build-arg SERVICE_NAME=$image .
-        [[ $PUSH_IMAGE -eq 1 ]] && {
-            docker push ${DOCKER_REPO:-'local'}/$image:${git_sha1}
-        }
+        build_service $image
         echo "::set-output name=image::${DOCKER_REPO:-'local'}/$image:${git_sha1}"
     done
     echo "backend build completed"

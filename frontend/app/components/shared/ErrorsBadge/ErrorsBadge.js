@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { fetchNewErrorsCount } from 'Duck/errors'
 import { connect } from 'react-redux'
-import stl from './errorsBadge.css'
+import stl from './errorsBadge.module.css'
 import {
   getDateRangeFromValue,
   DATE_RANGE_VALUES,

@@ -2,11 +2,11 @@ import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem } from 'UI'
-import stl from './preferencesMenu.css';
+import stl from './preferencesMenu.module.css';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
-function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
+function PreferencesMenu({ activeTab, history, isEnterprise }) {
 
   const setTab = (tab) => {
     history.push(clientRoute(tab));
@@ -78,6 +78,17 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
           />
         </div> 
       )}
+
+      { isEnterprise && (
+        <div className="mb-4">
+          <SideMenuitem
+            active={ activeTab === CLIENT_TABS.AUDIT }
+            title="Audit"
+            iconName="list-ul"
+            onClick={() => setTab(CLIENT_TABS.AUDIT) }
+          />
+        </div>
+      )}
       
       <div className="mb-4">
         <SideMenuitem
@@ -95,12 +106,11 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
           iconName="bell"
           onClick={() => setTab(CLIENT_TABS.NOTIFICATIONS) }
         />
-      </div>      
+      </div>
     </div>
   )
 }
 
 export default connect(state => ({
-  appearance: state.getIn([ 'user', 'account', 'appearance' ]),
   isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
 }))(withRouter(PreferencesMenu));

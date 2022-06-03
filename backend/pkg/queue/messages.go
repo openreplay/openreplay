@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"bytes"
 	"log"
 
 	"openreplay/backend/pkg/messages"
@@ -9,7 +10,7 @@ import (
 
 func NewMessageConsumer(group string, topics []string, handler types.DecodedMessageHandler, autoCommit bool) types.Consumer {
 	return NewConsumer(group, topics, func(sessionID uint64, value []byte, meta *types.Meta) {
-		if err := messages.ReadBatch(value, func(msg messages.Message) {
+		if err := messages.ReadBatchReader(bytes.NewReader(value), func(msg messages.Message) {
 			handler(sessionID, msg, meta)
 		}); err != nil {
 			log.Printf("Decode error: %v\n", err)

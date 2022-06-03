@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './NoSessionPermission.css'
+import stl from './NoSessionPermission.module.css'
 import { Icon, Button, Link } from 'UI';
 import { connect } from 'react-redux';
 
@@ -16,7 +16,7 @@ function NoSessionPermission({ session }: Props) {
         <span>You don’t have the necessary permissions to access this feature. Please check with your admin.</span>
       }
       <Link to="/">
-        <Button primary className="mt-6">GO BACK</Button>
+        <Button variant="primary" className="mt-6">GO BACK</Button>
       </Link>
     </div>
   );

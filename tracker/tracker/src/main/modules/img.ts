@@ -1,6 +1,8 @@
+import type App from "../app/index.js";
 import { timestamp, isURL } from "../utils.js";
-import App from "../app/index.js";
-import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../../messages/index.js";
+import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../../common/messages.js";
+import { hasTag } from "../app/guards.js";
+
 
 const PLACEHOLDER_SRC = "https://static.openreplay.com/tracker/placeholder.jpeg";
 
@@ -51,7 +53,7 @@ export default function (app: App): void {
   });
 
   app.nodes.attachNodeCallback((node: Node): void => {
-    if (!(node instanceof HTMLImageElement)) {
+    if (!hasTag(node, "IMG")) {
       return;
     }
     app.nodes.attachElementListener('error', node, sendImgSrc);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
@@ -6,14 +7,13 @@ import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
 import { Icon, SlideModal } from 'UI';
 import { pushNewSite } from 'Duck/user'
 import { init } from 'Duck/site';
-import styles from './siteDropdown.css';
+import styles from './siteDropdown.module.css';
 import cn from 'classnames';
 import NewSiteForm from '../Client/Sites/NewSiteForm';
 import { clearSearch } from 'Duck/search';
 import { fetchList as fetchIntegrationVariables } from 'Duck/customField';
-import { fetchList as fetchAlerts } from 'Duck/alerts';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
 import { withStore } from 'App/mstore'
+import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 
 @withStore
 @withRouter
@@ -27,15 +27,9 @@ import { withStore } from 'App/mstore'
   init,
   clearSearch,
   fetchIntegrationVariables,
-  fetchAlerts,
-  fetchWatchdogStatus,
 })
 export default class SiteDropdown extends React.PureComponent {
   state = { showProductModal: false }
-
-  // componentDidMount() {
-  //   this.props.fetchIntegrationVariables();
-  // }
 
   closeModal = (e, newSite) => {
     this.setState({ showProductModal: false })    
@@ -49,12 +43,9 @@ export default class SiteDropdown extends React.PureComponent {
   switchSite = (siteId) => {
     const { mstore } = this.props
 
-
     this.props.setSiteId(siteId);
     this.props.clearSearch();
     this.props.fetchIntegrationVariables();
-    this.props.fetchAlerts();
-    this.props.fetchWatchdogStatus();
 
     mstore.initClient();
   }
@@ -67,14 +58,17 @@ export default class SiteDropdown extends React.PureComponent {
     const disabled = !siteChangeAvaliable(pathname);
     const showCurrent = hasSiteId(pathname) || siteChangeAvaliable(pathname);
     const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
+  
+    // const signslGreenSvg = <object data={SignalGreenSvg} type="image/svg+xml" className={styles.signalGreen} />
+    // const signslRedSvg = <object data={SignalRedSvg} type="image/svg+xml" className={styles.signalRed} />
     return (
       <div className={ styles.wrapper }>
         {
           showCurrent ?
-            <div className={ activeSite && activeSite.status === GREEN ? styles.statusGreenIcon : styles.statusRedIcon }></div> :
+            (activeSite && activeSite.status === GREEN) ? <AnimatedSVG name={ICONS.SIGNAL_GREEN} size="10" /> : <AnimatedSVG name={ICONS.SIGNAL_RED} size="10" /> :
             <Icon name="window-alt" size="14" marginRight="10" />
         }
-        <div className={ styles.currentSite }>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>
+        <div className={ cn(styles.currentSite, 'ml-2')}>{ showCurrent && activeSite ? activeSite.host : 'All Projects' }</div>
         <Icon className={ styles.drodownIcon } color="gray-light" name="chevron-down" size="16" />
         <div className={styles.menu}>
           <ul data-can-disable={ disabled }>

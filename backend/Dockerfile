@@ -10,13 +10,15 @@ RUN go mod download
 
 
 FROM prepare AS build
+COPY cmd cmd
 COPY pkg pkg
-COPY services services
+COPY internal internal
 
 ARG SERVICE_NAME
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/services/$SERVICE_NAME
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
 
-FROM alpine
+
+FROM alpine AS entrypoint
 RUN apk add --no-cache ca-certificates
 
 ENV TZ=UTC \
@@ -28,7 +30,7 @@ ENV TZ=UTC \
     BEACON_SIZE_LIMIT=7000000 \
     KAFKA_USE_SSL=true \
     KAFKA_MAX_POLL_INTERVAL_MS=400000 \
-    REDIS_STREAMS_MAX_LEN=3000 \
+    REDIS_STREAMS_MAX_LEN=5000 \
     TOPIC_RAW_WEB=raw \
     TOPIC_RAW_IOS=raw-ios \
     TOPIC_CACHE=cache \
@@ -39,12 +41,14 @@ ENV TZ=UTC \
     GROUP_DB=db \
     GROUP_ENDER=ender \
     GROUP_CACHE=cache \
+    GROUP_HEURISTICS=heuristics \
     AWS_REGION_WEB=eu-central-1 \
     AWS_REGION_IOS=eu-west-1 \
     AWS_REGION_ASSETS=eu-central-1 \
     CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
     FS_CLEAN_HRS=72 \
+    FILE_SPLIT_SIZE=300000 \
     LOG_QUEUE_STATS_INTERVAL_SEC=60
 
 

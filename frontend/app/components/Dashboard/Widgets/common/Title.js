@@ -1,4 +1,4 @@
-import styles from './title.css';
+import styles from './title.module.css';
 
 const Title = ({ title, sub }) => (
   <div className={ styles.title } >

@@ -5,7 +5,7 @@ import { Loader } from 'UI';
 import IssueHeader from './IssueHeader';
 import IssueCommentForm from './IssueCommentForm';
 import IssueComment from './IssueComment';
-import stl from './issueDetails.css';
+import stl from './issueDetails.module.css';
 import IssueDescription from './IssueDescription';
 
 class IssueDetails extends React.PureComponent {

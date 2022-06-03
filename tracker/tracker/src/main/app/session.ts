@@ -1,5 +1,5 @@
 import App, { StartOptions } from "./index.js";
-import { UserID, UserAnonymousID, Metadata } from "../../messages/index.js";
+import { UserID, UserAnonymousID, Metadata } from "../../common/messages.js";
 
 
 enum ActivityState {

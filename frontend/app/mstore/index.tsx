@@ -1,22 +1,36 @@
 import React from 'react';
 import DashboardStore, { IDashboardSotre } from './dashboardStore';
 import MetricStore, { IMetricStore } from './metricStore';
+import UserStore from './userStore';
+import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
-import { dashboardService, metricService } from 'App/services';
+import { dashboardService, metricService, sessionService, userService, auditService } from 'App/services';
+import SettingsStore from './settingsStore';
+import AuditStore from './auditStore';
 
 export class RootStore {
     dashboardStore: IDashboardSotre;
     metricStore: IMetricStore;
+    settingsStore: SettingsStore;
+    userStore: UserStore; 
+    roleStore: RoleStore;
+    auditStore: AuditStore;
 
     constructor() {
         this.dashboardStore = new DashboardStore();
         this.metricStore = new MetricStore();
+        this.settingsStore = new SettingsStore();
+        this.userStore = new UserStore();
+        this.roleStore = new RoleStore();
+        this.auditStore = new AuditStore();
     }
 
     initClient() {
       const client  = new APIClient();
       dashboardService.initClient(client)
       metricService.initClient(client)
+      sessionService.initClient(client)
+      userService.initClient(client)
     }
 }
 

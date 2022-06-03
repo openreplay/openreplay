@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import CustomMetriLineChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetriLineChart';
 import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPercentage';
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
@@ -9,14 +9,17 @@ import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
 import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricOverviewChart';
-import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper'; 
+import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
+import useIsMounted from 'App/hooks/useIsMounted'
+
 interface Props {
     metric: any;
-    isWidget?: boolean
+    isWidget?: boolean;
+    isTemplate?: boolean;
 }
 function WidgetChart(props: Props) {
-    const { isWidget = false, metric } = props;
+    const { isWidget = false, metric, isTemplate } = props;
     const { dashboardStore, metricStore } = useStore();
     const _metric: any = useObserver(() => metricStore.instance);
     const period = useObserver(() => dashboardStore.period);
@@ -24,11 +27,11 @@ function WidgetChart(props: Props) {
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
     const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
-    const params = { density: isOverviewWidget ? 7 : 70 } 
+    const params = { density: isOverviewWidget ? 7 : 70 }
     const metricParams = { ...params }
     const prevMetricRef = useRef<any>();
+    const isMounted = useIsMounted();
     const [data, setData] = useState<any>(metric.data);
-
 
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
@@ -57,16 +60,16 @@ function WidgetChart(props: Props) {
 
     const depsString = JSON.stringify(_metric.series);
 
-
     const fetchMetricChartData = (metric, payload, isWidget) => {
+        if (!isMounted()) return;
         setLoading(true)
         dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
-            setData(res);
+            if (isMounted()) setData(res);
         }).finally(() => {
             setLoading(false);
         });
     }
-    
+
     const debounceRequest: any = React.useCallback(debounce(fetchMetricChartData, 500), []);
     useEffect(() => {
         if (prevMetricRef.current && prevMetricRef.current.name !== metric.name) {
@@ -85,7 +88,7 @@ function WidgetChart(props: Props) {
             if (isOverviewWidget) {
                 return <CustomMetricOverviewChart data={data} />
             }
-            return <WidgetPredefinedChart metric={metric} data={data} predefinedKey={metric.predefinedKey} />
+            return <WidgetPredefinedChart isTemplate={isTemplate} metric={metric} data={data} predefinedKey={metric.predefinedKey} />
         }
 
         if (metricType === 'timeseries') {
@@ -114,6 +117,7 @@ function WidgetChart(props: Props) {
                 return <CustomMetricTable
                     metric={metric} data={data[0]}
                     onClick={onChartClick}
+                    isTemplate={isTemplate}
                 />;
             } else if (viewType === 'pieChart') {
                 return (
@@ -131,7 +135,7 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={loading} size="small" style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
+        <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));

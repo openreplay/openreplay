@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent, DropdownPlain } from 'UI';
 import { widgetHOC, Styles, AvgLabel } from '../common';
 import { withRequest } from 'HOCs';

@@ -1,8 +1,6 @@
-import { connect } from 'react-redux';
+import React from 'react';
 import { Dropdown } from 'semantic-ui-react';
 import { IconButton } from 'UI';
-import { sort } from 'Duck/sessions';
-import { applyFilter } from 'Duck/filters';
 
 const sessionSortOptions = {
 //   '': 'All',

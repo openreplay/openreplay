@@ -10,13 +10,13 @@ RUN go mod download
 
 
 FROM prepare AS build
+COPY cmd cmd
 COPY pkg pkg
-COPY services services
+COPY internal internal
 
-RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/services/$name; done
+RUN for name in assets db ender http integrations sink storage;do CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o bin/$name -tags musl openreplay/backend/cmd/$name; done
 
-
-FROM alpine
+FROM alpine AS entrypoint
 #FROM pygmy/alpine-tini:latest
 RUN apk add --no-cache ca-certificates
 
@@ -46,6 +46,7 @@ ENV TZ=UTC \
     CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
     FS_CLEAN_HRS=12 \
+    FILE_SPLIT_SIZE=300000 \
     LOG_QUEUE_STATS_INTERVAL_SEC=60
 
 RUN mkdir $FS_DIR

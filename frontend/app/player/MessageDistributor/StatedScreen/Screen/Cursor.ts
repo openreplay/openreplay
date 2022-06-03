@@ -1,5 +1,5 @@
 import type { Point } from './types';
-import styles from './cursor.css';
+import styles from './cursor.module.css';
 
 
 export default class Cursor {
@@ -27,7 +27,6 @@ export default class Cursor {
   }
 
   click() {
-    console.log("clickong ", styles.clicked)
     this.cursor.classList.add(styles.clicked)
     setTimeout(() => {
       this.cursor.classList.remove(styles.clicked)

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Input, Button, Icon } from 'UI';
-import styles from './blockedIps.css';
+import styles from './blockedIps.module.css';
 
 class BlockedIps extends React.PureComponent {
   render() {

@@ -1,24 +1,8 @@
 // Auto-generated, do not edit
 package messages
 
-type Message interface {
-	Encode() []byte
-	Meta() *meta
-}
-
-type meta struct {
-	Timestamp int64
-	Index     uint64
-	TypeID    uint64
-}
-
-// Might also implement Encode() here (?)
-func (m *meta) Meta() *meta {
-	return m
-}
-
 type BatchMeta struct {
-	*meta
+	message
 	PageNo     uint64
 	FirstIndex uint64
 	Timestamp  int64
@@ -34,8 +18,12 @@ func (msg *BatchMeta) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *BatchMeta) TypeID() int {
+	return 80
+}
+
 type Timestamp struct {
-	*meta
+	message
 	Timestamp uint64
 }
 
@@ -47,8 +35,12 @@ func (msg *Timestamp) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *Timestamp) TypeID() int {
+	return 0
+}
+
 type SessionStart struct {
-	*meta
+	message
 	Timestamp            uint64
 	ProjectID            uint64
 	TrackerVersion       string
@@ -90,8 +82,12 @@ func (msg *SessionStart) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SessionStart) TypeID() int {
+	return 1
+}
+
 type SessionDisconnect struct {
-	*meta
+	message
 	Timestamp uint64
 }
 
@@ -103,8 +99,12 @@ func (msg *SessionDisconnect) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SessionDisconnect) TypeID() int {
+	return 2
+}
+
 type SessionEnd struct {
-	*meta
+	message
 	Timestamp uint64
 }
 
@@ -116,8 +116,12 @@ func (msg *SessionEnd) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SessionEnd) TypeID() int {
+	return 3
+}
+
 type SetPageLocation struct {
-	*meta
+	message
 	URL             string
 	Referrer        string
 	NavigationStart uint64
@@ -133,8 +137,12 @@ func (msg *SetPageLocation) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetPageLocation) TypeID() int {
+	return 4
+}
+
 type SetViewportSize struct {
-	*meta
+	message
 	Width  uint64
 	Height uint64
 }
@@ -148,8 +156,12 @@ func (msg *SetViewportSize) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetViewportSize) TypeID() int {
+	return 5
+}
+
 type SetViewportScroll struct {
-	*meta
+	message
 	X int64
 	Y int64
 }
@@ -163,8 +175,12 @@ func (msg *SetViewportScroll) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetViewportScroll) TypeID() int {
+	return 6
+}
+
 type CreateDocument struct {
-	*meta
+	message
 }
 
 func (msg *CreateDocument) Encode() []byte {
@@ -175,8 +191,12 @@ func (msg *CreateDocument) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CreateDocument) TypeID() int {
+	return 7
+}
+
 type CreateElementNode struct {
-	*meta
+	message
 	ID       uint64
 	ParentID uint64
 	index    uint64
@@ -196,8 +216,12 @@ func (msg *CreateElementNode) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CreateElementNode) TypeID() int {
+	return 8
+}
+
 type CreateTextNode struct {
-	*meta
+	message
 	ID       uint64
 	ParentID uint64
 	Index    uint64
@@ -213,8 +237,12 @@ func (msg *CreateTextNode) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CreateTextNode) TypeID() int {
+	return 9
+}
+
 type MoveNode struct {
-	*meta
+	message
 	ID       uint64
 	ParentID uint64
 	Index    uint64
@@ -230,8 +258,12 @@ func (msg *MoveNode) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *MoveNode) TypeID() int {
+	return 10
+}
+
 type RemoveNode struct {
-	*meta
+	message
 	ID uint64
 }
 
@@ -243,8 +275,12 @@ func (msg *RemoveNode) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *RemoveNode) TypeID() int {
+	return 11
+}
+
 type SetNodeAttribute struct {
-	*meta
+	message
 	ID    uint64
 	Name  string
 	Value string
@@ -260,8 +296,12 @@ func (msg *SetNodeAttribute) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetNodeAttribute) TypeID() int {
+	return 12
+}
+
 type RemoveNodeAttribute struct {
-	*meta
+	message
 	ID   uint64
 	Name string
 }
@@ -275,8 +315,12 @@ func (msg *RemoveNodeAttribute) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *RemoveNodeAttribute) TypeID() int {
+	return 13
+}
+
 type SetNodeData struct {
-	*meta
+	message
 	ID   uint64
 	Data string
 }
@@ -290,8 +334,12 @@ func (msg *SetNodeData) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetNodeData) TypeID() int {
+	return 14
+}
+
 type SetCSSData struct {
-	*meta
+	message
 	ID   uint64
 	Data string
 }
@@ -305,8 +353,12 @@ func (msg *SetCSSData) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetCSSData) TypeID() int {
+	return 15
+}
+
 type SetNodeScroll struct {
-	*meta
+	message
 	ID uint64
 	X  int64
 	Y  int64
@@ -322,8 +374,12 @@ func (msg *SetNodeScroll) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetNodeScroll) TypeID() int {
+	return 16
+}
+
 type SetInputTarget struct {
-	*meta
+	message
 	ID    uint64
 	Label string
 }
@@ -337,8 +393,12 @@ func (msg *SetInputTarget) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetInputTarget) TypeID() int {
+	return 17
+}
+
 type SetInputValue struct {
-	*meta
+	message
 	ID    uint64
 	Value string
 	Mask  int64
@@ -354,8 +414,12 @@ func (msg *SetInputValue) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetInputValue) TypeID() int {
+	return 18
+}
+
 type SetInputChecked struct {
-	*meta
+	message
 	ID      uint64
 	Checked bool
 }
@@ -369,8 +433,12 @@ func (msg *SetInputChecked) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetInputChecked) TypeID() int {
+	return 19
+}
+
 type MouseMove struct {
-	*meta
+	message
 	X uint64
 	Y uint64
 }
@@ -384,8 +452,12 @@ func (msg *MouseMove) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *MouseMove) TypeID() int {
+	return 20
+}
+
 type MouseClickDepricated struct {
-	*meta
+	message
 	ID             uint64
 	HesitationTime uint64
 	Label          string
@@ -401,8 +473,12 @@ func (msg *MouseClickDepricated) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *MouseClickDepricated) TypeID() int {
+	return 21
+}
+
 type ConsoleLog struct {
-	*meta
+	message
 	Level string
 	Value string
 }
@@ -416,8 +492,12 @@ func (msg *ConsoleLog) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *ConsoleLog) TypeID() int {
+	return 22
+}
+
 type PageLoadTiming struct {
-	*meta
+	message
 	RequestStart               uint64
 	ResponseStart              uint64
 	ResponseEnd                uint64
@@ -445,8 +525,12 @@ func (msg *PageLoadTiming) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *PageLoadTiming) TypeID() int {
+	return 23
+}
+
 type PageRenderTiming struct {
-	*meta
+	message
 	SpeedIndex        uint64
 	VisuallyComplete  uint64
 	TimeToInteractive uint64
@@ -462,8 +546,12 @@ func (msg *PageRenderTiming) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *PageRenderTiming) TypeID() int {
+	return 24
+}
+
 type JSException struct {
-	*meta
+	message
 	Name    string
 	Message string
 	Payload string
@@ -479,8 +567,12 @@ func (msg *JSException) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *JSException) TypeID() int {
+	return 25
+}
+
 type RawErrorEvent struct {
-	*meta
+	message
 	Timestamp uint64
 	Source    string
 	Name      string
@@ -500,8 +592,12 @@ func (msg *RawErrorEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *RawErrorEvent) TypeID() int {
+	return 26
+}
+
 type RawCustomEvent struct {
-	*meta
+	message
 	Name    string
 	Payload string
 }
@@ -515,8 +611,12 @@ func (msg *RawCustomEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *RawCustomEvent) TypeID() int {
+	return 27
+}
+
 type UserID struct {
-	*meta
+	message
 	ID string
 }
 
@@ -528,8 +628,12 @@ func (msg *UserID) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *UserID) TypeID() int {
+	return 28
+}
+
 type UserAnonymousID struct {
-	*meta
+	message
 	ID string
 }
 
@@ -541,8 +645,12 @@ func (msg *UserAnonymousID) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *UserAnonymousID) TypeID() int {
+	return 29
+}
+
 type Metadata struct {
-	*meta
+	message
 	Key   string
 	Value string
 }
@@ -556,8 +664,12 @@ func (msg *Metadata) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *Metadata) TypeID() int {
+	return 30
+}
+
 type PageEvent struct {
-	*meta
+	message
 	MessageID                  uint64
 	Timestamp                  uint64
 	URL                        string
@@ -601,8 +713,12 @@ func (msg *PageEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *PageEvent) TypeID() int {
+	return 31
+}
+
 type InputEvent struct {
-	*meta
+	message
 	MessageID   uint64
 	Timestamp   uint64
 	Value       string
@@ -622,8 +738,12 @@ func (msg *InputEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *InputEvent) TypeID() int {
+	return 32
+}
+
 type ClickEvent struct {
-	*meta
+	message
 	MessageID      uint64
 	Timestamp      uint64
 	HesitationTime uint64
@@ -643,8 +763,12 @@ func (msg *ClickEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *ClickEvent) TypeID() int {
+	return 33
+}
+
 type ErrorEvent struct {
-	*meta
+	message
 	MessageID uint64
 	Timestamp uint64
 	Source    string
@@ -666,8 +790,12 @@ func (msg *ErrorEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *ErrorEvent) TypeID() int {
+	return 34
+}
+
 type ResourceEvent struct {
-	*meta
+	message
 	MessageID       uint64
 	Timestamp       uint64
 	Duration        uint64
@@ -701,8 +829,12 @@ func (msg *ResourceEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *ResourceEvent) TypeID() int {
+	return 35
+}
+
 type CustomEvent struct {
-	*meta
+	message
 	MessageID uint64
 	Timestamp uint64
 	Name      string
@@ -720,8 +852,12 @@ func (msg *CustomEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CustomEvent) TypeID() int {
+	return 36
+}
+
 type CSSInsertRule struct {
-	*meta
+	message
 	ID    uint64
 	Rule  string
 	Index uint64
@@ -737,8 +873,12 @@ func (msg *CSSInsertRule) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CSSInsertRule) TypeID() int {
+	return 37
+}
+
 type CSSDeleteRule struct {
-	*meta
+	message
 	ID    uint64
 	Index uint64
 }
@@ -752,8 +892,12 @@ func (msg *CSSDeleteRule) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CSSDeleteRule) TypeID() int {
+	return 38
+}
+
 type Fetch struct {
-	*meta
+	message
 	Method    string
 	URL       string
 	Request   string
@@ -777,8 +921,12 @@ func (msg *Fetch) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *Fetch) TypeID() int {
+	return 39
+}
+
 type Profiler struct {
-	*meta
+	message
 	Name     string
 	Duration uint64
 	Args     string
@@ -796,8 +944,12 @@ func (msg *Profiler) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *Profiler) TypeID() int {
+	return 40
+}
+
 type OTable struct {
-	*meta
+	message
 	Key   string
 	Value string
 }
@@ -811,8 +963,12 @@ func (msg *OTable) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *OTable) TypeID() int {
+	return 41
+}
+
 type StateAction struct {
-	*meta
+	message
 	Type string
 }
 
@@ -824,8 +980,12 @@ func (msg *StateAction) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *StateAction) TypeID() int {
+	return 42
+}
+
 type StateActionEvent struct {
-	*meta
+	message
 	MessageID uint64
 	Timestamp uint64
 	Type      string
@@ -841,8 +1001,12 @@ func (msg *StateActionEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *StateActionEvent) TypeID() int {
+	return 43
+}
+
 type Redux struct {
-	*meta
+	message
 	Action   string
 	State    string
 	Duration uint64
@@ -858,8 +1022,12 @@ func (msg *Redux) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *Redux) TypeID() int {
+	return 44
+}
+
 type Vuex struct {
-	*meta
+	message
 	Mutation string
 	State    string
 }
@@ -873,8 +1041,12 @@ func (msg *Vuex) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *Vuex) TypeID() int {
+	return 45
+}
+
 type MobX struct {
-	*meta
+	message
 	Type    string
 	Payload string
 }
@@ -888,8 +1060,12 @@ func (msg *MobX) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *MobX) TypeID() int {
+	return 46
+}
+
 type NgRx struct {
-	*meta
+	message
 	Action   string
 	State    string
 	Duration uint64
@@ -905,8 +1081,12 @@ func (msg *NgRx) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *NgRx) TypeID() int {
+	return 47
+}
+
 type GraphQL struct {
-	*meta
+	message
 	OperationKind string
 	OperationName string
 	Variables     string
@@ -924,8 +1104,12 @@ func (msg *GraphQL) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *GraphQL) TypeID() int {
+	return 48
+}
+
 type PerformanceTrack struct {
-	*meta
+	message
 	Frames          int64
 	Ticks           int64
 	TotalJSHeapSize uint64
@@ -943,8 +1127,12 @@ func (msg *PerformanceTrack) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *PerformanceTrack) TypeID() int {
+	return 49
+}
+
 type GraphQLEvent struct {
-	*meta
+	message
 	MessageID     uint64
 	Timestamp     uint64
 	OperationKind string
@@ -966,8 +1154,12 @@ func (msg *GraphQLEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *GraphQLEvent) TypeID() int {
+	return 50
+}
+
 type FetchEvent struct {
-	*meta
+	message
 	MessageID uint64
 	Timestamp uint64
 	Method    string
@@ -993,8 +1185,12 @@ func (msg *FetchEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *FetchEvent) TypeID() int {
+	return 51
+}
+
 type DOMDrop struct {
-	*meta
+	message
 	Timestamp uint64
 }
 
@@ -1006,8 +1202,12 @@ func (msg *DOMDrop) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *DOMDrop) TypeID() int {
+	return 52
+}
+
 type ResourceTiming struct {
-	*meta
+	message
 	Timestamp       uint64
 	Duration        uint64
 	TTFB            uint64
@@ -1033,8 +1233,12 @@ func (msg *ResourceTiming) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *ResourceTiming) TypeID() int {
+	return 53
+}
+
 type ConnectionInformation struct {
-	*meta
+	message
 	Downlink uint64
 	Type     string
 }
@@ -1048,8 +1252,12 @@ func (msg *ConnectionInformation) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *ConnectionInformation) TypeID() int {
+	return 54
+}
+
 type SetPageVisibility struct {
-	*meta
+	message
 	hidden bool
 }
 
@@ -1061,8 +1269,12 @@ func (msg *SetPageVisibility) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetPageVisibility) TypeID() int {
+	return 55
+}
+
 type PerformanceTrackAggr struct {
-	*meta
+	message
 	TimestampStart     uint64
 	TimestampEnd       uint64
 	MinFPS             uint64
@@ -1100,8 +1312,12 @@ func (msg *PerformanceTrackAggr) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *PerformanceTrackAggr) TypeID() int {
+	return 56
+}
+
 type LongTask struct {
-	*meta
+	message
 	Timestamp     uint64
 	Duration      uint64
 	Context       uint64
@@ -1125,8 +1341,12 @@ func (msg *LongTask) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *LongTask) TypeID() int {
+	return 59
+}
+
 type SetNodeAttributeURLBased struct {
-	*meta
+	message
 	ID      uint64
 	Name    string
 	Value   string
@@ -1144,8 +1364,12 @@ func (msg *SetNodeAttributeURLBased) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetNodeAttributeURLBased) TypeID() int {
+	return 60
+}
+
 type SetCSSDataURLBased struct {
-	*meta
+	message
 	ID      uint64
 	Data    string
 	BaseURL string
@@ -1161,14 +1385,18 @@ func (msg *SetCSSDataURLBased) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *SetCSSDataURLBased) TypeID() int {
+	return 61
+}
+
 type IssueEvent struct {
-	*meta
+	message
 	MessageID     uint64
 	Timestamp     uint64
 	Type          string
 	ContextString string
 	Context       string
-	Payload       string
+	Payload       string // TODO: check, maybe it's better to use empty interface here
 }
 
 func (msg *IssueEvent) Encode() []byte {
@@ -1184,8 +1412,12 @@ func (msg *IssueEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IssueEvent) TypeID() int {
+	return 62
+}
+
 type TechnicalInfo struct {
-	*meta
+	message
 	Type  string
 	Value string
 }
@@ -1199,8 +1431,12 @@ func (msg *TechnicalInfo) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *TechnicalInfo) TypeID() int {
+	return 63
+}
+
 type CustomIssue struct {
-	*meta
+	message
 	Name    string
 	Payload string
 }
@@ -1214,8 +1450,12 @@ func (msg *CustomIssue) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CustomIssue) TypeID() int {
+	return 64
+}
+
 type PageClose struct {
-	*meta
+	message
 }
 
 func (msg *PageClose) Encode() []byte {
@@ -1226,8 +1466,12 @@ func (msg *PageClose) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *PageClose) TypeID() int {
+	return 65
+}
+
 type AssetCache struct {
-	*meta
+	message
 	URL string
 }
 
@@ -1239,8 +1483,12 @@ func (msg *AssetCache) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *AssetCache) TypeID() int {
+	return 66
+}
+
 type CSSInsertRuleURLBased struct {
-	*meta
+	message
 	ID      uint64
 	Rule    string
 	Index   uint64
@@ -1258,8 +1506,12 @@ func (msg *CSSInsertRuleURLBased) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CSSInsertRuleURLBased) TypeID() int {
+	return 67
+}
+
 type MouseClick struct {
-	*meta
+	message
 	ID             uint64
 	HesitationTime uint64
 	Label          string
@@ -1277,8 +1529,12 @@ func (msg *MouseClick) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *MouseClick) TypeID() int {
+	return 69
+}
+
 type CreateIFrameDocument struct {
-	*meta
+	message
 	FrameID uint64
 	ID      uint64
 }
@@ -1292,8 +1548,12 @@ func (msg *CreateIFrameDocument) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *CreateIFrameDocument) TypeID() int {
+	return 70
+}
+
 type IOSBatchMeta struct {
-	*meta
+	message
 	Timestamp  uint64
 	Length     uint64
 	FirstIndex uint64
@@ -1309,8 +1569,12 @@ func (msg *IOSBatchMeta) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSBatchMeta) TypeID() int {
+	return 107
+}
+
 type IOSSessionStart struct {
-	*meta
+	message
 	Timestamp      uint64
 	ProjectID      uint64
 	TrackerVersion string
@@ -1340,8 +1604,12 @@ func (msg *IOSSessionStart) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSSessionStart) TypeID() int {
+	return 90
+}
+
 type IOSSessionEnd struct {
-	*meta
+	message
 	Timestamp uint64
 }
 
@@ -1353,8 +1621,12 @@ func (msg *IOSSessionEnd) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSSessionEnd) TypeID() int {
+	return 91
+}
+
 type IOSMetadata struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Key       string
@@ -1372,8 +1644,12 @@ func (msg *IOSMetadata) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSMetadata) TypeID() int {
+	return 92
+}
+
 type IOSCustomEvent struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Name      string
@@ -1391,8 +1667,12 @@ func (msg *IOSCustomEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSCustomEvent) TypeID() int {
+	return 93
+}
+
 type IOSUserID struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Value     string
@@ -1408,8 +1688,12 @@ func (msg *IOSUserID) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSUserID) TypeID() int {
+	return 94
+}
+
 type IOSUserAnonymousID struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Value     string
@@ -1425,8 +1709,12 @@ func (msg *IOSUserAnonymousID) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSUserAnonymousID) TypeID() int {
+	return 95
+}
+
 type IOSScreenChanges struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	X         uint64
@@ -1448,8 +1736,12 @@ func (msg *IOSScreenChanges) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSScreenChanges) TypeID() int {
+	return 96
+}
+
 type IOSCrash struct {
-	*meta
+	message
 	Timestamp  uint64
 	Length     uint64
 	Name       string
@@ -1469,8 +1761,12 @@ func (msg *IOSCrash) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSCrash) TypeID() int {
+	return 97
+}
+
 type IOSScreenEnter struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Title     string
@@ -1488,8 +1784,12 @@ func (msg *IOSScreenEnter) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSScreenEnter) TypeID() int {
+	return 98
+}
+
 type IOSScreenLeave struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Title     string
@@ -1507,8 +1807,12 @@ func (msg *IOSScreenLeave) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSScreenLeave) TypeID() int {
+	return 99
+}
+
 type IOSClickEvent struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Label     string
@@ -1528,8 +1832,12 @@ func (msg *IOSClickEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSClickEvent) TypeID() int {
+	return 100
+}
+
 type IOSInputEvent struct {
-	*meta
+	message
 	Timestamp   uint64
 	Length      uint64
 	Value       string
@@ -1549,8 +1857,12 @@ func (msg *IOSInputEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSInputEvent) TypeID() int {
+	return 101
+}
+
 type IOSPerformanceEvent struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Name      string
@@ -1568,8 +1880,12 @@ func (msg *IOSPerformanceEvent) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSPerformanceEvent) TypeID() int {
+	return 102
+}
+
 type IOSLog struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Severity  string
@@ -1587,8 +1903,12 @@ func (msg *IOSLog) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSLog) TypeID() int {
+	return 103
+}
+
 type IOSInternalError struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Content   string
@@ -1604,8 +1924,12 @@ func (msg *IOSInternalError) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSInternalError) TypeID() int {
+	return 104
+}
+
 type IOSNetworkCall struct {
-	*meta
+	message
 	Timestamp uint64
 	Length    uint64
 	Duration  uint64
@@ -1633,8 +1957,12 @@ func (msg *IOSNetworkCall) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSNetworkCall) TypeID() int {
+	return 105
+}
+
 type IOSPerformanceAggregated struct {
-	*meta
+	message
 	TimestampStart uint64
 	TimestampEnd   uint64
 	MinFPS         uint64
@@ -1672,8 +2000,12 @@ func (msg *IOSPerformanceAggregated) Encode() []byte {
 	return buf[:p]
 }
 
+func (msg *IOSPerformanceAggregated) TypeID() int {
+	return 110
+}
+
 type IOSIssueEvent struct {
-	*meta
+	message
 	Timestamp     uint64
 	Type          string
 	ContextString string
@@ -1691,4 +2023,8 @@ func (msg *IOSIssueEvent) Encode() []byte {
 	p = WriteString(msg.Context, buf, p)
 	p = WriteString(msg.Payload, buf, p)
 	return buf[:p]
+}
+
+func (msg *IOSIssueEvent) TypeID() int {
+	return 111
 }

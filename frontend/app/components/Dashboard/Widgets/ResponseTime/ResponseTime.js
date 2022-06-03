@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { widgetHOC, domain, Styles, AvgLabel } from '../common';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';

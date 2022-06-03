@@ -97,11 +97,22 @@ export default Record({
 	  }
 	},
 	methods: {
+		toJSON() {
+			return {
+				startDate: this.start,
+				endDate: this.end,
+				rangeName: this.rangeName,
+				rangeValue: this.rangeName,
+			}
+		},
 		toTimestamps() {
 			return {
 				startTimestamp: this.start,
 				endTimestamp: this.end,
 			};
+		},
+		rangeFormatted(format = 'MMM Do YY, hh:mm A') {
+			return this.range.start.format(format) + ' - ' + this.range.end.format(format);
 		},
 		toTimestampstwo() {
 			return {

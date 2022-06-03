@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { editSavedSearch as edit, save, remove } from 'Duck/search';
-import { Button, Modal, Form, Icon, Checkbox } from 'UI';
-import { confirm } from 'UI/Confirmation';
-import stl from './SaveSearchModal.css';
+import { Button, Modal, Form, Icon, Checkbox, Input } from 'UI';
+import { confirm } from 'UI';
+import stl from './SaveSearchModal.module.css';
 import cn from 'classnames';
+import { toast } from 'react-toastify';
 
 interface Props {
   filter: any;
@@ -20,7 +21,7 @@ interface Props {
 function SaveSearchModal(props: Props) {
   const { savedSearch, filter, loading, show, closeHandler } = props;
   const [name, setName] = useState(savedSearch ? savedSearch.name : '');
-  
+
   const onNameChange = ({ target: { value } }) => {
     props.edit({ name: value });
     // setName(value);
@@ -29,9 +30,14 @@ function SaveSearchModal(props: Props) {
   const onSave = () => {
     const { filter, closeHandler } = props;
     // if (name.trim() === '') return;
-    props.save(savedSearch.exists() ? savedSearch.searchId : null).then(function() {
+    props.save(savedSearch.exists() ? savedSearch.searchId : null)
+    .then(() => {
       // this.props.fetchFunnelsList();
+      toast.success(`${savedSearch.exists() ? 'Updated' : 'Saved'} Successfully`);
       closeHandler();
+    })
+    .catch(e => {
+      toast.error('Something went wrong, please try again');
     });
   }
 
@@ -48,13 +54,13 @@ function SaveSearchModal(props: Props) {
   }
 
   const onChangeOption = (e, { checked, name }) => props.edit({ [ name ]: checked })
-    
+
 
   return (
-    <Modal size="tiny" open={ show }>
+    <Modal size="small" open={ show }>
       <Modal.Header className={ stl.modalHeader }>
         <div>{ 'Save Search' }</div>
-        <Icon 
+        <Icon
           role="button"
           tabIndex="-1"
           color="gray-dark"
@@ -68,7 +74,7 @@ function SaveSearchModal(props: Props) {
         <Form onSubmit={onSave}>
           <Form.Field>
             <label>{'Title:'}</label>
-            <input
+            <Input
               autoFocus={ true }
               // className={ stl.name }
               name="name"
@@ -78,7 +84,7 @@ function SaveSearchModal(props: Props) {
             />
           </Form.Field>
 
-          <Form.Field>              
+          <Form.Field>
             <div className={cn("flex items-center", { 'disabled': savedSearch.exists() && savedSearch.userId !== props.userId })}>
               <Checkbox
                 name="isPublic"
@@ -99,22 +105,23 @@ function SaveSearchModal(props: Props) {
         </Form>
         { savedSearch.exists() && <div className="mt-4">Changes in filters will be updated.</div> }
       </Modal.Content>
-      <Modal.Actions className="flex items-center px-6">
-        <div className="mr-auto">
+      <Modal.Footer className="flex items-center px-6">
+        <div className="mr-auto flex items-center">
           <Button
-              primary
+              variant="primary"
               onClick={ onSave }
               loading={ loading }
               disabled={!savedSearch.validate()}
+              className="mr-2"
             >
               { savedSearch.exists() ? 'Update' : 'Create' }
             </Button>
-            <Button className={ stl.cancelButton } marginRight onClick={ closeHandler }>{ 'Cancel' }</Button>
+            <Button onClick={ closeHandler }>{ 'Cancel' }</Button>
         </div>
-        { savedSearch && <Button noPadding className={ stl.cancelButton } marginRight onClick={ onDelete }>
+        { savedSearch && <Button variant="text" onClick={ onDelete }>
           <Icon name="trash" size="18" />
         </Button> }
-      </Modal.Actions>
+      </Modal.Footer>
     </Modal>
   );
 }
@@ -123,6 +130,6 @@ export default connect(state => ({
   userId: state.getIn([ 'user', 'account', 'id' ]),
   savedSearch: state.getIn([ 'search', 'savedSearch' ]),
   filter: state.getIn(['search', 'instance']),
-  loading: state.getIn([ 'search', 'saveRequest', 'loading' ]) || 
+  loading: state.getIn([ 'search', 'saveRequest', 'loading' ]) ||
     state.getIn([ 'search', 'updateRequest', 'loading' ]),
 }), { edit, save, remove })(SaveSearchModal);

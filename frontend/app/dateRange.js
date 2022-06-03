@@ -6,7 +6,7 @@ export const moment = extendMoment(origMoment);
 export const CUSTOM_RANGE = 'CUSTOM_RANGE';
 
 const DATE_RANGE_LABELS = {
-  LAST_30_MINUTES: '30 Minutes',
+  // LAST_30_MINUTES: '30 Minutes',
   TODAY: 'Today',
   YESTERDAY: 'Yesterday',
   LAST_7_DAYS: 'Past 7 Days',
@@ -22,6 +22,13 @@ Object.keys(DATE_RANGE_LABELS).forEach((key) => { DATE_RANGE_VALUES[ key ] = key
 
 export { DATE_RANGE_VALUES };
 export const dateRangeValues = Object.keys(DATE_RANGE_VALUES);
+
+export const DATE_RANGE_OPTIONS = Object.keys(DATE_RANGE_LABELS).map((key) => {
+  return {
+    label: DATE_RANGE_LABELS[ key ],
+    value: key,
+  };
+});
 
 export function getDateRangeFromTs(start, end) {
   return moment.range(

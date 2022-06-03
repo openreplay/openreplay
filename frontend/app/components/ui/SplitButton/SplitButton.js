@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Icon } from 'UI';
 import cn from 'classnames';
-import stl from './splitButton.css';
+import stl from './splitButton.module.css';
 
 const SplitButton = ({primary, label, icon, onButtonClick, onIconClick, disabled = false }) => {
   return (

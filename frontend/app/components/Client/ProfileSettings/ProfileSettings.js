@@ -1,7 +1,8 @@
+import React from 'react';
 import withPageTitle from 'HOCs/withPageTitle';
 import Settings from './Settings';
 import ChangePassword from './ChangePassword';
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
 import Api from './Api';
 import TenantKey from './TenantKey';
 import OptOut from './OptOut';
@@ -28,15 +29,20 @@ export default class ProfileSettings extends React.PureComponent {
 
         <div className="divider-h" />
 
-        <div className="flex items-center">
-          <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Change Password' }</h4>
-            <div className={ styles.info }>{ 'Updating your password from time to time enhances your account’s security.' }</div>
-          </div>
-          <div><ChangePassword /></div>
-        </div>
+        { account.hasPassword && (
+          <>
+            <div className="flex items-center">
+              <div className={ styles.left }>
+                <h4 className="text-lg mb-4">{ 'Change Password' }</h4>
+                <div className={ styles.info }>{ 'Updating your password from time to time enhances your account’s security.' }</div>
+              </div>
+              <div><ChangePassword /></div>
+            </div>
+          
 
-        <div className="divider-h" />
+            <div className="divider-h" />
+          </>
+        )}
 
         <div className="flex items-center">
           <div className={ styles.left }>

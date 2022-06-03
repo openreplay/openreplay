@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Icon } from 'UI';
 import cn from 'classnames';
-import stl from './errorFrame.css';
+import stl from './errorFrame.module.css';
 
 function ErrorFrame({ frame = {}, showRaw, isFirst }) {
   const [open, setOpen] = useState(isFirst)

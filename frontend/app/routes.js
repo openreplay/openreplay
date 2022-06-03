@@ -61,10 +61,11 @@ export const CLIENT_TABS = {
   PROFILE: 'account',
   MANAGE_USERS: 'team',
   MANAGE_ROLES: 'roles',
-  SITES: 'projects',  
+  SITES: 'projects',
   CUSTOM_FIELDS: 'metadata',
   WEBHOOKS: 'webhooks',
   NOTIFICATIONS: 'notifications',
+  AUDIT: 'audit',
 };
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${ Object.values(CLIENT_TABS).join('|') })`;
@@ -109,12 +110,6 @@ export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => ha
 export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
-
-
-export const RESULTS_QUERY_KEY = 'results';
-export const METRICS_QUERY_KEY = 'metrics';
-export const SOURCE_QUERY_KEY = 'source';
-export const WIDGET_QUERY_KEY = 'widget';
 
 const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),

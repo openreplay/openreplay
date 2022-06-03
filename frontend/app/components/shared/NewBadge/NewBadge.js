@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './newBadge.css'
+import stl from './newBadge.module.css'
 
 function NewBadge() {
   return (

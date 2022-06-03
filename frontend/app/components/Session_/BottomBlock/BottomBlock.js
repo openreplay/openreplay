@@ -1,5 +1,6 @@
+import React from 'react';
 import cn from 'classnames';
-import stl from './bottomBlock.css';
+import stl from './bottomBlock.module.css';
 
 const BottomBlock = ({
   children,

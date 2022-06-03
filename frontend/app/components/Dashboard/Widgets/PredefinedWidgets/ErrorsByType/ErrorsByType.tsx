@@ -32,6 +32,7 @@ function ErrorsByType(props: Props) {
               />
               <YAxis
                 {...Styles.yaxis}
+                tickFormatter={val => Styles.tickFormatter(val)}
                 label={{ ...Styles.axisLabelLeft, value: "Number of Errors" }}
                 allowDecimals={false}
               />

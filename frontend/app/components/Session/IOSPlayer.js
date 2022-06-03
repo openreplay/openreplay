@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect } from 'react';
 import ImagePlayer from 'Player/ios/ImagePlayer';
 import { CRASHES, NETWORK, LOGS, PERFORMANCE, CUSTOM } from 'Player/ios/state';

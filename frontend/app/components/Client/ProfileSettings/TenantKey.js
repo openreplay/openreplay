@@ -1,7 +1,9 @@
 // TODO this can be deleted
+import React from 'react';
 import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
+import { Form, Input, Button } from "UI";
 
 @connect(state => ({
   tenantKey: state.getIn([ 'user', 'client', 'tenantKey' ]),
@@ -23,27 +25,27 @@ export default class TenantKey extends React.PureComponent {
     const { copied } = this.state;
 
     return (
-      <form onSubmit={ this.handleSubmit } className={ styles.form }>
-        <div className={ styles.formGroup }>
+      <Form onSubmit={ this.handleSubmit } className={ styles.form }>
+        <Form.Field>
           <label htmlFor="tenantKey">{ 'Tenant Key' }</label>
-          <div className="ui action input">
-            <input
+            <Input
               name="tenantKey"
               id="tenantKey"
               type="text"
               readOnly={ true }
               value={ tenantKey }
+              leadingButton={
+                <Button
+                  variant="text-primary"
+                  role="button"
+                  onClick={ this.copyHandler }
+                >
+                  { copied ? 'copied' : 'copy' }
+                </Button>
+              }
             />
-            <div
-              className="ui button copy-button"
-              role="button"
-              onClick={ this.copyHandler }
-            >
-              { copied ? 'copied' : 'copy' }
-            </div>
-          </div>
-        </div>
-      </form>
+        </Form.Field>
+      </Form>
     );
   }
 }

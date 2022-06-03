@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
@@ -20,9 +21,9 @@ function Session({
   	fetchSlackList,
  }) {
  	usePageTitle("OpenReplay Session Player");
- 	useEffect(() => {
- 		fetchSlackList()
- 	}, []);
+ 	// useEffect(() => {
+ 	// 	fetchSlackList()
+ 	// }, []);
 	useEffect(() => {
 		if (sessionId != null) {
 			fetchSession(sessionId)

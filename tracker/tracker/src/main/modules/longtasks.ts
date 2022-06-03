@@ -1,5 +1,5 @@
-import App from "../app/index.js";
-import { LongTask } from "../../messages/index.js";
+import type App from "../app/index.js";
+import { LongTask } from "../../common/messages.js";
 
 // https://w3c.github.io/performance-timeline/#the-performanceentry-interface
 interface TaskAttributionTiming extends PerformanceEntry {

@@ -7,7 +7,7 @@ const ActiveIssueClose = ({ resetActiveIsue }) => {
     return (
         <div className="absolute right-0 top-0 mr-4 mt-4">
             <Button
-                plain
+                variant="text"
                 onClick={ resetActiveIsue }
             >
                 Close

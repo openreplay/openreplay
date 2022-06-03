@@ -1,9 +1,10 @@
+import React from 'react';
 import { getIn, get } from 'immutable';
 import cn from 'classnames';
 import { withRequest } from 'HOCs';
-import { Loader, Modal, Icon, JSONTree } from 'UI';
+import { Loader, Icon, JSONTree } from 'UI';
 import { Accordion } from 'semantic-ui-react'
-import stl from './sentry.css';
+import stl from './sentry.module.css';
 
 @withRequest({
 	endpoint: props => `/integrations/sentry/events/${ props.event.id }`,

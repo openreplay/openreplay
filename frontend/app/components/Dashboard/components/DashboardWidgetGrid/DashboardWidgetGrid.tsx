@@ -8,13 +8,14 @@ interface Props {
     siteId: string,
     dashboardId: string;
     onEditHandler: () => void;
+    id?: string;
 }
 function DashboardWidgetGrid(props) {
     const { dashboardId, siteId } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
-    const dashbaord: any = dashboardStore.selectedDashboard;
-    const list: any = useObserver(() => dashbaord?.widgets);
+    const dashboard: any = dashboardStore.selectedDashboard;
+    const list: any = useObserver(() => dashboard?.widgets);
 
     return useObserver(() => (
         <Loader loading={loading}>
@@ -23,19 +24,19 @@ function DashboardWidgetGrid(props) {
                 icon="no-metrics-chart"
                 title="No metrics added to this dashboard"
                 subtext={
-                    <div>
+                    <div className="flex items-center justify-center flex-col">
                         <p>Metrics helps you visualize trends from sessions captured by OpenReplay</p>
-                        <Button size="small" primary onClick={props.onEditHandler}>Add Metric</Button>
+                        <Button variant="primary" onClick={props.onEditHandler}>Add Metric</Button>
                     </div>
                 }
             >
-                <div className="grid gap-4 grid-cols-4 items-start pb-10">
+                <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
                     {list && list.map((item, index) => (
                         <WidgetWrapper
                             index={index}
                             widget={item}
                             key={item.widgetId}
-                            moveListItem={(dragIndex, hoverIndex) => dashbaord.swapWidgetPosition(dragIndex, hoverIndex)}
+                            moveListItem={(dragIndex, hoverIndex) => dashboard.swapWidgetPosition(dragIndex, hoverIndex)}
                             dashboardId={dashboardId}
                             siteId={siteId}
                             isWidget={true}

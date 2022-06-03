@@ -4,7 +4,7 @@ import Widget, { IWidget } from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
-import { getChartFormatter } from 'Types/dashboard/helper'; 
+import { getChartFormatter } from 'Types/dashboard/helper';
 import Filter, { IFilter } from "./types/filter";
 
 export interface IDashboardSotre {
@@ -24,7 +24,7 @@ export interface IDashboardSotre {
     metricsPage: number
     metricsPageSize: number
     metricsSearch: string
-    
+
     isLoading: boolean
     isSaving: boolean
     isDeleting: boolean
@@ -37,7 +37,7 @@ export interface IDashboardSotre {
     toggleAllSelectedWidgets: (isSelected: boolean) => void
     removeSelectedWidgetByCategory(category: string): void
     toggleWidgetSelection(widget: IWidget): void
-    
+
     initDashboard(dashboard?: IDashboard): void
     updateKey(key: string, value: any): void
     resetCurrentWidget(): void
@@ -60,7 +60,7 @@ export interface IDashboardSotre {
     selectDefaultDashboard(): Promise<IDashboard>
 
     saveMetric(metric: IWidget, dashboardId?: string): Promise<any>
-    fetchTemplates(): Promise<any>
+    fetchTemplates(hardRefresh: boolean): Promise<any>
     deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>
     addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>
 
@@ -82,12 +82,12 @@ export default class DashboardStore implements IDashboardSotre {
     drillDownFilter: Filter = new Filter()
     startTimestamp: number = 0
     endTimestamp: number = 0
-    
+
     // Metrics
     metricsPage: number = 1
     metricsPageSize: number = 10
     metricsSearch: string = ''
-    
+
     // Loading states
     isLoading: boolean = true
     isSaving: boolean = false
@@ -99,8 +99,10 @@ export default class DashboardStore implements IDashboardSotre {
 
     constructor() {
         makeAutoObservable(this, {
+            dashboards: observable.ref,
             drillDownFilter: observable.ref,
             widgetCategories: observable.ref,
+            selectedDashboard: observable.ref,
             resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
@@ -109,12 +111,13 @@ export default class DashboardStore implements IDashboardSotre {
             getDashboardByIndex: action,
             getDashboardCount: action,
             selectDashboardById: action,
-            selectDefaultDashboard: action, 
+            selectDefaultDashboard: action,
             toJson: action,
             fromJson: action,
             setSiteId: action,
             editWidget: action,
             updateKey: action,
+            save: action,
 
             selectWidgetsByCategory: action,
             toggleAllSelectedWidgets: action,
@@ -213,9 +216,9 @@ export default class DashboardStore implements IDashboardSotre {
     save(dashboard: IDashboard): Promise<any> {
         this.isSaving = true
         const isCreating = !dashboard.dashboardId
-        
+
         dashboard.metrics = this.selectedWidgets.map(w => w.metricId)
-        
+
         return new Promise((resolve, reject) => {
             dashboardService.saveDashboard(dashboard).then(_dashboard => {
                 runInAction(() => {
@@ -318,6 +321,9 @@ export default class DashboardStore implements IDashboardSotre {
         const index = this.dashboards.findIndex(d => d.dashboardId === dashboard.dashboardId)
         if (index >= 0) {
             this.dashboards[index] = dashboard
+            if (this.selectedDashboard?.dashboardId === dashboard.dashboardId) {
+                this.selectDashboardById(dashboard.dashboardId)
+            }
         }
     }
 
@@ -341,17 +347,16 @@ export default class DashboardStore implements IDashboardSotre {
                 } else {
                     this.selectedDashboard = this.dashboards[0]
                 }
-            }
-            if (this.selectedDashboard) {
+
                 resolve(this.selectedDashboard)
             }
-            // reject(new Error("No dashboards found"))
+            reject(new Error("No dashboards found"))
         })
     }
 
-    fetchTemplates(): Promise<any> {
+    fetchTemplates(hardRefresh): Promise<any> {
         return new Promise((resolve, reject) => {
-            if (this.widgetCategories.length > 0) {
+            if (this.widgetCategories.length > 0 && !hardRefresh) {
                 resolve(this.widgetCategories)
             } else {
                 metricService.getTemplates().then(response => {
@@ -381,7 +386,7 @@ export default class DashboardStore implements IDashboardSotre {
     deleteDashboardWidget(dashboardId: string, widgetId: string) {
         this.isDeleting = true
         return dashboardService.deleteWidget(dashboardId, widgetId).then(() => {
-            toast.success('Widget deleted successfully')
+            toast.success('Dashboard updated successfully')
             runInAction(() => {
                 this.selectedDashboard?.removeWidget(widgetId)
             })
@@ -420,7 +425,7 @@ export default class DashboardStore implements IDashboardSotre {
             // this.isSaving = false
         })
     }
-    
+
     setPeriod(period: any) {
         this.period = Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeValue })
     }
@@ -463,7 +468,7 @@ export default class DashboardStore implements IDashboardSotre {
                                     return unique;
                                 }, []) : []
                         }
-                        
+
                         metric.setData(_data)
                         resolve(_data);
                     }

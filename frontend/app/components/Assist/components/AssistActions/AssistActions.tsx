@@ -11,8 +11,8 @@ import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
 
 import { toast } from 'react-toastify';
-import { confirm } from 'UI/Confirmation';
-import stl from './AassistActions.css'
+import { confirm } from 'UI';
+import stl from './AassistActions.module.css'
 
 function onClose(stream) {
   stream.getTracks().forEach(t=>t.stop());
@@ -82,16 +82,16 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
 
   return (
     <div className="flex items-center">
-      {onCall && (
+      {(onCall || remoteActive) && (
         <>
           <div
             className={
               cn(
                 'cursor-pointer p-2 flex items-center',
-                {[stl.disabled]: !onCall}
+                {[stl.disabled]: cannotCall}
               )
             }
-            onClick={ toggleAnnotation }
+            onClick={ () => toggleAnnotation(!annotating) }
             role="button"
           >
             <IconButton label={`Annotate`} icon={ annotating ? "pencil-stop" : "pencil"} primaryText redText={annotating} />
@@ -114,25 +114,21 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
       <div className={ stl.divider } />
       
       <Popup
-        trigger={
-          <div
-            className={
-              cn(
-                'cursor-pointer p-2 flex items-center',
-                {[stl.disabled]: cannotCall}
-              )
-            }
-            onClick={ onCall ? callObject?.end : confirmCall}
-            role="button"
-          >
-            <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
-          </div>
-        }
         content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
-        size="tiny"
-        inverted
-        position="top right"
-      />
+      >
+        <div
+          className={
+            cn(
+              'cursor-pointer p-2 flex items-center',
+              {[stl.disabled]: cannotCall}
+            )
+          }
+          onClick={ onCall ? callObject?.end : confirmCall}
+          role="button"
+        >
+          <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
+        </div>
+      </Popup>
 
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
         { onCall && callObject && <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }

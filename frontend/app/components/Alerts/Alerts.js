@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import AlertsList from './AlertsList'
+import React, { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import AlertsList from './AlertsList';
 import { SlideModal, IconButton } from 'UI';
 import { init, edit, save, remove } from 'Duck/alerts';
 import { fetchList as fetchWebhooks } from 'Duck/webhook';
@@ -7,7 +8,7 @@ import AlertForm from './AlertForm';
 import { connect } from 'react-redux';
 import { setShowAlerts } from 'Duck/dashboard';
 import { EMAIL, SLACK, WEBHOOK } from 'App/constants/schedule';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 const Alerts = props => {
   const { webhooks, setShowAlerts } = props;
@@ -17,14 +18,17 @@ const Alerts = props => {
     props.fetchWebhooks();
   }, [])
 
-  const slackChannels = webhooks.filter(hook => hook.type === SLACK).map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
-  const hooks = webhooks.filter(hook => hook.type === WEBHOOK).map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
+  const slackChannels = webhooks.filter(hook => hook.type === SLACK).map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
+  const hooks = webhooks.filter(hook => hook.type === WEBHOOK).map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
 
   const saveAlert = instance => {
     const wasUpdating = instance.exists();
     props.save(instance).then(() => {
       if (!wasUpdating) {
+        toast.success('New alert saved')
         toggleForm(null, false);
+      } else {
+        toast.success('Alert updated')
       }
     })
   }
@@ -54,10 +58,10 @@ const Alerts = props => {
         title={
           <div className="flex items-center">
             <span className="mr-3">{ 'Alerts' }</span>
-            <IconButton 
+            <IconButton
               circle
               size="small"
-              icon="plus" 
+              icon="plus"
               outline
               id="add-button"
               onClick={ () => toggleForm({}, true) }

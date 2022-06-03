@@ -31,8 +31,9 @@ function WidgetName(props: Props) {
   useEffect(() => {
     setName(props.name)
   }, [props.name])
-  
+
   // const { name } = props;
+
   return (
     <div className="flex items-center">
       { editing ? (
@@ -41,7 +42,6 @@ function WidgetName(props: Props) {
           name="name"
           className="rounded fluid border-0 -mx-2 px-2 h-8"
           value={name}
-          // readOnly={!editing} 
           onChange={write}
           onBlur={onBlur}
           onFocus={() => setEditing(true)}
@@ -49,7 +49,6 @@ function WidgetName(props: Props) {
       ) : (
         <div className="text-2xl h-8 flex items-center border-transparent">{ name }</div>
       )}
-      
       { canEdit && <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div> }
     </div>
   );

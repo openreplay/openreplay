@@ -22,7 +22,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 	private prevNodesCount: number = 0;
 
 
-	add(msg: PerformanceTrack):void {
+	append(msg: PerformanceTrack):void {
 		let fps: number | undefined;
 		let cpu: number | undefined;
 		if (!this.isHidden && this.prevTime != null) {
@@ -62,7 +62,7 @@ export default class PerformanceTrackManager extends ListWalker<PerformanceTrack
 			time: msg.time,
 			nodesCount: this.prevNodesCount,
 		});
-		super.add(msg);
+		super.append(msg);
 	}
 
 	setCurrentNodesCount(count: number) {

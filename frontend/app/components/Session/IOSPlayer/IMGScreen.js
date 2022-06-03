@@ -113,7 +113,7 @@ function IMGScreen(props) {
 						${player.state.orientationLandscape ? console.log('wtdf') || `rotate(-90deg) translateX(-${imgInfo.screenWidth}px)` : ''}
 					`,
 				}} 
-				src={`/img/ios/${imgInfo.img}.png`}
+				src={`/assets/img/ios/${imgInfo.img}.png`}
 			/>
 		</div>
 	);

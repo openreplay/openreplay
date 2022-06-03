@@ -4,7 +4,7 @@ import { CloseButton, Loader } from 'UI';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, Area, Tooltip } from 'recharts';
 import { numberWithCommas } from 'App/utils';
 import cn from 'classnames';
-import stl from './trendChart.css';
+import stl from './trendChart.module.css';
 
 const loadChart = (data, loading, unit, syncId, compare, tooltipLael) => {
   const gradientDef = Styles.gradientDef();

@@ -1,6 +1,6 @@
 {{- if .Values.ingress.enabled }}
 {{- $fullName := include "http.fullname" . -}}
-{{- $svcPort := .Values.service.port -}}
+{{- $svcPort := .Values.service.ports.http -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -10,6 +10,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/upstream-hash-by: $http_x_forwarded_for
+    nginx.ingress.kubernetes.io/enable-cors: "true"
   {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -85,6 +86,33 @@ spec:
                 port:
                   number: 9000
             path: /(.*)
+  tls:
+    - hosts:
+      - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      http:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: monitoring-grafana
+                port:
+                  number: 80
+            path: /grafana/(.*)
   tls:
     - hosts:
       - {{ .Values.global.domainName }}

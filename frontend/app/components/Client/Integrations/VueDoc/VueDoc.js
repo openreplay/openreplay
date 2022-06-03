@@ -1,3 +1,4 @@
+import React from 'react';
 import Highlight from 'react-highlight'
 import ToggleContent from '../../../shared/ToggleContent';
 import DocLink from 'Shared/DocLink/DocLink';

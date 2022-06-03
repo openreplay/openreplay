@@ -9,9 +9,8 @@ import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
 import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
 import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/liveSearch';
-import DropdownPlain from 'Shared/DropdownPlain';
+import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { TimezoneDropdown } from 'UI';
 import { capitalize, sliceListPerPage } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
@@ -20,14 +19,14 @@ const PER_PAGE = 10;
 
 interface Props {
   loading: Boolean,
-  list: List<any>,  
+  list: List<any>,
   fetchLiveList: () => Promise<void>,
   applyFilter: () => void,
   filters: any,
   addAttribute: (obj) => void,
   addFilterByKeyAndValue: (key: FilterKey, value: string) => void,
   updateCurrentPage: (page: number) => void,
-  currentPage: number, 
+  currentPage: number,
   metaList: any,
   updateSort: (sort: any) => void,
   sort: any,
@@ -39,9 +38,9 @@ function LiveSessionList(props: Props) {
   const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
   const [sessions, setSessions] = React.useState(list);
   const sortOptions = metaList.map(i => ({
-    text: capitalize(i), value: i
+    text: capitalize(i), label: i
   })).toJS();
-  
+
   // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
   // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
@@ -69,7 +68,7 @@ function LiveSessionList(props: Props) {
         if (filter.key === FilterKey.USERID) {
           const _userId = session.userId ? session.userId.toLowerCase() : '';
           hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
-        } 
+        }
         if (filter.category === FilterCategory.METADATA) {
           const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
           hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
@@ -80,7 +79,7 @@ function LiveSessionList(props: Props) {
     setSessions(filteredSessions);
   }, [filters, list]);
 
-  useEffect(() => {     
+  useEffect(() => {
     props.fetchLiveList();
     timeout();
     return () => {
@@ -88,7 +87,7 @@ function LiveSessionList(props: Props) {
     }
   }, [])
 
-  const onUserClick = (userId, userAnonymousId) => {
+  const onUserClick = (userId: string, userAnonymousId: string) => {
     if (userId) {
       props.addFilterByKeyAndValue(FilterKey.USERID, userId);
     } else {
@@ -119,19 +118,18 @@ function LiveSessionList(props: Props) {
           <LiveSessionReloadButton />
         </div>
         <div className="flex items-center">
-          <div className="flex items-center">
-            <span className="mr-2 color-gray-medium">Timezone</span>
-            <TimezoneDropdown />
-          </div>
           <div className="flex items-center ml-6 mr-4">
             <span className="mr-2 color-gray-medium">Sort By</span>
-            <DropdownPlain
+            <Select
+              plain
+              right
               options={sortOptions}
+              defaultValue={sort.field}
               onChange={onSortChange}
               value={sort.field}
             />
           </div>
-          <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
+          <SortOrderButton onChange={(state: any) => props.updateSort({ order: state })} sortOrder={sort.order} />
         </div>
       </div>
 
@@ -142,7 +140,7 @@ function LiveSessionList(props: Props) {
             See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> and ensure you're using tracker-assist <span className="font-medium">v3.5.0</span> or higher.
           </span>
         }
-        image={<img src="/img/live-sessions.png"
+        image={<img src="/assets/img/live-sessions.png"
         style={{ width: '70%', marginBottom: '30px' }}/>}
         show={ !loading && sessions && sessions.size === 0}
       >
@@ -183,7 +181,7 @@ export default withPermissions(['ASSIST_LIVE'])(connect(
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
     sort: state.getIn(['liveSearch', 'sort']),
   }),
-  { 
+  {
     fetchLiveList,
     applyFilter,
     addAttribute,

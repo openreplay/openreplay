@@ -1,3 +1,4 @@
+import React from 'react';
 import { JSONTree, Button } from 'UI'
 import cn from 'classnames';
 
@@ -66,10 +67,10 @@ export default class GQLDetails extends React.PureComponent {
 				</div>
 
 				<div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
-					<Button primary plain onClick={prevClick} disabled={first}>
+					<Button variant="outline" onClick={prevClick} disabled={first}>
 						Prev
 					</Button>
-					<Button primary plain onClick={nextClick} disabled={last}>
+					<Button variant="outline" onClick={nextClick} disabled={last}>
 						Next
 					</Button>
 				</div>

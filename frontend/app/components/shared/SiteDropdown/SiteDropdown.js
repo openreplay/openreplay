@@ -1,14 +1,15 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Select } from 'UI';
+import Select from 'Shared/Select';
 
 const SiteDropdown = ({ contextName="", sites, onChange, value }) => {
-	const options = sites.map(site => ({ value: site.id, text: site.host })).toJS();
+	const options = sites.map(site => ({ value: site.id, label: site.host })).toJS();
   return (
   	<Select
 		name={ `${ contextName }_site` }
 	    placeholder="Select Site"
 	    options={ options }
-	    value={ value }
+	    value={ options.find(option => option.value === value) }
 	    onChange={ onChange }
 	  />
 	);

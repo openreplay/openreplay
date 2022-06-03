@@ -1,3 +1,4 @@
+import React from 'react';
 import { AreaChart, Area } from 'recharts';
 import { Styles } from '../common';
 

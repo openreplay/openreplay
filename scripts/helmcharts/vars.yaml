@@ -24,8 +24,13 @@ kafka: &kafka
   # For enterpriseEdition
   # enabled: true
   kafkaHost: "kafka.db.svc.cluster.local"
+  # For now, clickhouse doesn't support zookeeper tls intgration.
+  # So we need http endpoint
+  zookeeperHost: "databases-zookeeper.svc.cluster.local"
+  zookeeperNonTLSPort: 2181
   kafkaPort: "9092"
   kafkaUseSsl: "false"
+
 
 redis: &redis
   # For enterpriseEdition
@@ -55,11 +60,16 @@ ingress-nginx: &ingress-nginx
       default-ssl-certificate: "app/openreplay-ssl"
     config:
       enable-real-ip: true
+      # Enable LB forwarded protocol
+      # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers
+      # https://github.com/nginxinc/kubernetes-ingress/issues/1284#issuecomment-872869354
+      # use-forwarded-headers: true
       # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#max-worker-connections
       max-worker-connections: 0
       # SSL redirection
       ssl-redirect: false
       force-ssl-redirect: false
+      proxy-body-size: 10m
 
 # Application specific variables
 global:

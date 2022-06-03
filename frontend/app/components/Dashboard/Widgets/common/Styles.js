@@ -1,3 +1,4 @@
+import React from 'react';
 import { numberWithCommas } from 'App/utils';
 
 const colors = ['#3EAAAF', '#5FBABF', '#7BCBCF', '#96DCDF', '#ADDCDF'];

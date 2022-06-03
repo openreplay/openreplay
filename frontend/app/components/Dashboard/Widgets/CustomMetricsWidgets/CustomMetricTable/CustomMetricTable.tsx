@@ -27,9 +27,10 @@ interface Props {
     metric?: any,
     data: any;
     onClick?: (filters) => void;
+    isTemplate?: boolean;
 }
 function CustomMetriTable(props: Props) {
-    const { metric = {}, data = { values: [] }, onClick = () => null } = props;
+    const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
     const rows = List(data.values);
 
     const onClickHandler = (event, data) => {
@@ -56,6 +57,7 @@ function CustomMetriTable(props: Props) {
                     rows={ rows }
                     rowClass="group"
                     onRowClick={ onClickHandler }
+                    isTemplate={isTemplate}
                 />
            </NoContent>
         </div>

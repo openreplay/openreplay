@@ -1,6 +1,6 @@
+import type App from "./index.js";
 import { stars, hasOpenreplayAttribute } from "../utils.js";
-import App from "./index.js";
-import { isInstance } from "./context.js";
+import { isElementNode } from "./guards.js";
 
 export interface Options {
   obscureTextEmails: boolean;
@@ -21,7 +21,7 @@ export default class Sanitizer {
   handleNode(id: number, parentID: number, node: Node) {
     if (
         this.masked.has(parentID) ||
-        (isInstance(node, Element) && hasOpenreplayAttribute(node, 'masked'))
+        (isElementNode(node) && hasOpenreplayAttribute(node, 'masked'))
       ) {
         this.masked.add(id);
       }

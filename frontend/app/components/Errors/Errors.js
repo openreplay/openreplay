@@ -1,14 +1,15 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withSiteIdRouter from 'HOCs/withSiteIdRouter';
 import withPermissions from 'HOCs/withPermissions'
 import { UNRESOLVED, RESOLVED, IGNORED, BOOKMARK } from "Types/errorInfo";
 import { fetchBookmarks, editOptions } from "Duck/errors";
-import { applyFilter } from 'Duck/filters';
-import { fetchList as fetchSlackList } from 'Duck/integrations/slack';
+import { applyFilter } from 'Duck/search';
 import { errors as errorsRoute, isRoute } from "App/routes";
-import DateRange from 'Components/BugFinder/DateRange';
 import withPageTitle from 'HOCs/withPageTitle';
 import cn from 'classnames';
+import SelectDateRange from 'Shared/SelectDateRange';
+import Period from 'Types/app/period';
 
 import List from './List/List';
 import ErrorInfo from './Error/ErrorInfo';
@@ -36,10 +37,10 @@ function getStatusLabel(status) {
 @connect(state => ({
 	list: state.getIn([ "errors", "list" ]),
 	status: state.getIn([ "errors", "options", "status" ]),
+	filter: state.getIn([ 'search', 'instance' ]),
 }), {
 	fetchBookmarks,
 	applyFilter,
-	fetchSlackList,
 	editOptions,
 })
 @withPageTitle("Errors - OpenReplay")
@@ -49,10 +50,6 @@ export default class Errors extends React.PureComponent {
 		this.state = {
 			filter: '',
 		}
-	}
-
-	componentDidMount() {
-		this.props.fetchSlackList(); // Delete after implementing cache
 	}
 
 	ensureErrorsPage() {
@@ -70,6 +67,10 @@ export default class Errors extends React.PureComponent {
 		this.props.editOptions({ status: BOOKMARK });
 	}
 
+	onDateChange = (e) => {
+		const dateValues = e.toJSON();
+		this.props.applyFilter(dateValues);
+	};
 
 	render() {
 		const { 
@@ -80,7 +81,11 @@ export default class Errors extends React.PureComponent {
 			status,
 			list,
 			history,
+			filter,
 		} = this.props;
+
+		const { startDate, endDate, rangeValue } = filter;
+  		const period = new Period({ start: startDate, end: endDate, rangeName: rangeValue });
 
 		return (
 			<div className="page-margin container-90" >
@@ -121,16 +126,19 @@ export default class Errors extends React.PureComponent {
 				<div className="side-menu-margined">
 					{ errorId == null ?
 						<>							
-							<div className="mb-5 flex">
+							<div className="mb-5 flex items-baseline">
 								<Header 
 									text={ status === BOOKMARK ? "Bookmarks" : getStatusLabel(status) }
 									count={ list.size }
 								/>
 								<div className="ml-3 flex items-center">
-				          <span className="mr-2 color-gray-medium">Seen in</span>
-				          <DateRange />
-				        </div>
-				      </div>
+				          			<span className="mr-2 color-gray-medium">Seen in</span>
+									<SelectDateRange
+											period={period}
+											onChange={this.onDateChange}
+									/>
+								</div>
+				      		</div>
 							<List 
 								status={ status }
 								list={ list }

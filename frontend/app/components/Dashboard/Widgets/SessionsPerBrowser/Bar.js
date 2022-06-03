@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './Bar.css'
+import stl from './Bar.module.css'
 import { Styles } from '../common'
 import { TextEllipsis } from 'UI';
 

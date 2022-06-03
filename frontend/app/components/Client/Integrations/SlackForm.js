@@ -1,5 +1,4 @@
-import IntegrationForm from './IntegrationForm'; 
-import SlackAddForm from './SlackAddForm';
+import React from 'react';
 import SlackChannelList from './SlackChannelList/SlackChannelList';
 
 const SlackForm = (props) => {

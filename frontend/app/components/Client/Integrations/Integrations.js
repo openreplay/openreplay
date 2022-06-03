@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, IconButton, Button, Icon, SlideModal } from 'UI';
@@ -19,7 +20,7 @@ import CloudwatchForm from './CloudwatchForm';
 import ElasticsearchForm from './ElasticsearchForm';
 import SumoLogicForm from './SumoLogicForm';
 import JiraForm from './JiraForm';
-import styles from './integrations.css';
+import styles from './integrations.module.css';
 import ReduxDoc from './ReduxDoc';
 import VueDoc from './VueDoc';
 import GraphQLDoc from './GraphQLDoc';
@@ -367,7 +368,7 @@ export default class Integrations extends React.PureComponent {
 												title="Github"
 												description="Easily share issues on GitHub directly from any session replay."
 												icon="integrations/github"
-												url={ `https://auth.openreplay.com/oauth/login?provider=github&back_url=${window.ENV.ORIGIN}` }
+												url={ `https://auth.openreplay.com/oauth/login?provider=github&back_url=${window.env.ORIGIN || window.location.origin}` }
 												onClick={ () => this.showIntegrationConfig(GITHUB) }
 												integrated={ issuesIntegrated }
 												deleteHandler={issuesIntegrated ? () => this.deleteHandler('issues') : null}

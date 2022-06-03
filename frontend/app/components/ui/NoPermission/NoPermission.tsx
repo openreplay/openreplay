@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './noPermission.css'
+import stl from './noPermission.module.css'
 import { Icon } from 'UI';
 
 interface Props {

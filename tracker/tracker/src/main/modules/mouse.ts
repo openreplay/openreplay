@@ -1,10 +1,11 @@
+import type App from "../app/index.js";
+import { hasTag, isSVGElement } from "../app/guards.js";
 import { 
   normSpaces,
   hasOpenreplayAttribute,
   getLabelAttribute,
 } from "../utils.js";
-import App from "../app/index.js";
-import { MouseMove, MouseClick } from "../../messages/index.js";
+import { MouseMove, MouseClick } from "../../common/messages.js";
 import { getInputLabel } from "./input.js";
 
 function _getSelector(target: Element): string {
@@ -56,7 +57,7 @@ function _getTarget(target: Element): Element | null {
     }
     element = element.parentElement;
   }
-  if (target instanceof SVGElement) {
+  if (isSVGElement(target)) {
     let owner = target.ownerSVGElement;
     while (owner !== null) {
       target = owner;
@@ -89,7 +90,7 @@ export default function (app: App): void {
     if (dl !== null) {
       return dl;
     }
-    if (target instanceof HTMLInputElement) {
+    if (hasTag(target, "INPUT")) {
       return getInputLabel(target)
     }
     if (isClickable(target)) {
