@@ -1,4 +1,5 @@
-import App from "../app/index.js";
+import type App from "../app/index.js";
+import { hasTag } from "../app/guards.js";
 import { IN_BROWSER } from "../utils.js";
 import { ConsoleLog } from "../../common/messages.js";
 
@@ -139,7 +140,7 @@ export default function (app: App, opts: Partial<Options>): void {
   patchConsole(window.console);
 
   app.nodes.attachNodeCallback(app.safe(node => {
-    if (node instanceof HTMLIFrameElement) {
+    if (hasTag(node, "IFRAME")) { // TODO: newContextCallback
       let context = node.contentWindow
       if (context) {
         patchConsole((context as (Window & typeof globalThis)).console)
