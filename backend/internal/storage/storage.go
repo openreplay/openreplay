@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	config "openreplay/backend/internal/config/storage"
+	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/storage"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -37,7 +39,14 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
-		log.Printf("File error: %v; Will retry %v more time(s); sessID: %s\n", err, retryCount, key)
+		sessID, _ := strconv.ParseUint(key, 10, 64)
+		log.Printf("File error: %v; Will retry %v more time(s); sessID: %s, part: %d, sessStart: %s\n",
+			err,
+			retryCount,
+			key,
+			sessID%16,
+			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+		)
 		time.AfterFunc(s.cfg.RetryTimeout, func() {
 			s.UploadKey(key, retryCount-1)
 		})
@@ -47,7 +56,16 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 
 	nRead, err := file.Read(s.startBytes)
 	if err != nil {
-		log.Printf("File read error: %s; sessID: %s", err, key)
+		sessID, _ := strconv.ParseUint(key, 10, 64)
+		log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
+			err,
+			key,
+			sessID%16,
+			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+		)
+		time.AfterFunc(s.cfg.RetryTimeout, func() {
+			s.UploadKey(key, retryCount-1)
+		})
 		return
 	}
 	startReader := bytes.NewBuffer(s.startBytes[:nRead])

@@ -40,7 +40,7 @@ func main() {
 			case *messages.SessionEnd:
 				srv.UploadKey(strconv.FormatUint(sessionID, 10), 5)
 				// Log timestamp of last processed session
-				counter.Update(time.UnixMilli(meta.Timestamp))
+				counter.Update(sessionID, time.UnixMilli(meta.Timestamp))
 			}
 		},
 		true,
@@ -51,7 +51,6 @@ func main() {
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	cleanTick := time.Tick(time.Duration(cfg.FSCleanHRS) * time.Hour)
 	counterTick := time.Tick(time.Second * 30)
 	for {
 		select {
@@ -59,8 +58,6 @@ func main() {
 			log.Printf("Caught signal %v: terminating\n", sig)
 			consumer.Close()
 			os.Exit(0)
-		case <-cleanTick:
-			go srv.CleanDir(cfg.FSDir)
 		case <-counterTick:
 			go counter.Print()
 		default:

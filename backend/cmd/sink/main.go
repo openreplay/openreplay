@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"log"
 	"openreplay/backend/internal/storage"
-	"openreplay/backend/pkg/flakeid"
 	"time"
 
 	"os"
@@ -45,20 +44,23 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
-			// If message timestamp is empty, use at least ts of session start
-			ts := message.Meta().Timestamp
-			if ts == 0 {
-				ts = int64(flakeid.ExtractTimestamp(sessionID))
-			}
-			// Log ts of last processed message
-			counter.Update(time.UnixMilli(ts))
+			// Process assets
+			message = assetMessageHandler.ParseAssets(sessionID, message)
 
+			// Filter message
 			typeID := message.TypeID()
 			if !IsReplayerType(typeID) {
 				return
 			}
 
-			message = assetMessageHandler.ParseAssets(sessionID, message)
+			// If message timestamp is empty, use at least ts of session start
+			ts := message.Meta().Timestamp
+			if ts == 0 {
+				log.Printf("zero ts; sessID: %d, msg: %+v", sessionID, message)
+			} else {
+				// Log ts of last processed message
+				counter.Update(sessionID, time.UnixMilli(ts))
+			}
 
 			value := message.Encode()
 			var data []byte
