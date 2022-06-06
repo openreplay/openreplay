@@ -38,13 +38,8 @@ class EditUserSchema(BaseModel):
     name: Optional[str] = Field(None)
     email: Optional[EmailStr] = Field(None)
     admin: Optional[bool] = Field(False)
-    appearance: Optional[dict] = Field({})
 
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
-
-
-class EditUserAppearanceSchema(BaseModel):
-    appearance: dict = Field(...)
 
 
 class ForgetPasswordPayloadSchema(_Grecaptcha):

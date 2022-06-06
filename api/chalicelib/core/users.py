@@ -21,10 +21,10 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
         query = cur.mogrify(f"""\
                     WITH u AS (INSERT INTO public.users (email, role, name, data)
                                 VALUES (%(email)s, %(role)s, %(name)s, %(data)s)
-                                RETURNING user_id,email,role,name,appearance
+                                RETURNING user_id,email,role,name
                             ),
-                     au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
-                             VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
+                     au AS (INSERT INTO public.basic_authentication (user_id, invitation_token, invited_at)
+                             VALUES ((SELECT user_id FROM u), %(invitation_token)s, timezone('utc'::text, now()))
                              RETURNING invitation_token
                             )
                     SELECT u.user_id,
@@ -32,7 +32,6 @@ def create_new_member(email, invitation_token, admin, name, owner=False):
                            u.email,
                            u.role,
                            u.name,
-                           TRUE                                                   AS change_password,
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -61,7 +60,6 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
                            email,
                            role,
                            name,
-                           TRUE                                                 AS change_password,
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
@@ -73,8 +71,7 @@ def restore_member(user_id, email, invitation_token, admin, name, owner=False):
         result = cur.fetchone()
         query = cur.mogrify("""\
                     UPDATE public.basic_authentication
-                    SET generated_password = TRUE,
-                        invitation_token = %(invitation_token)s,
+                    SET invitation_token = %(invitation_token)s,
                         invited_at = timezone('utc'::text, now()),
                         change_pwd_expire_at = NULL,
                         change_pwd_token = NULL
@@ -132,11 +129,7 @@ def update(tenant_id, user_id, changes):
             else:
                 sub_query_bauth.append(f"{helper.key_to_snake_case(key)} = %({key})s")
         else:
-            if key == "appearance":
-                sub_query_users.append(f"appearance = %(appearance)s::jsonb")
-                changes["appearance"] = json.dumps(changes[key])
-            else:
-                sub_query_users.append(f"{helper.key_to_snake_case(key)} = %({key})s")
+            sub_query_users.append(f"{helper.key_to_snake_case(key)} = %({key})s")
 
     with pg_client.PostgresClient() as cur:
         if len(sub_query_users) > 0:
@@ -151,11 +144,9 @@ def update(tenant_id, user_id, changes):
                                 users.email,
                                 users.role,
                                 users.name,
-                                basic_authentication.generated_password  AS change_password,
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.appearance;""",
+                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
                             {"user_id": user_id, **changes})
             )
         if len(sub_query_bauth) > 0:
@@ -170,11 +161,9 @@ def update(tenant_id, user_id, changes):
                                 users.email,
                                 users.role,
                                 users.name,
-                                basic_authentication.generated_password  AS change_password,
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
-                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.appearance;""",
+                                (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member;""",
                             {"user_id": user_id, **changes})
             )
 
@@ -244,15 +233,13 @@ def get(user_id, tenant_id):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         email, 
                         role, 
-                        name, 
-                        basic_authentication.generated_password,
+                        name,
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        appearance,
                         api_key
                     FROM public.users LEFT JOIN public.basic_authentication ON users.user_id=basic_authentication.user_id  
                     WHERE
@@ -262,7 +249,7 @@ def get(user_id, tenant_id):
                 {"userId": user_id})
         )
         r = cur.fetchone()
-        return helper.dict_to_camel_case(r, ignore_keys=["appearance"])
+        return helper.dict_to_camel_case(r)
 
 
 def generate_new_api_key(user_id):
@@ -282,7 +269,7 @@ def generate_new_api_key(user_id):
 
 
 def edit(user_id_to_update, tenant_id, changes, editor_id):
-    ALLOW_EDIT = ["name", "email", "admin", "appearance"]
+    ALLOW_EDIT = ["name", "email", "admin"]
     user = get(user_id=user_id_to_update, tenant_id=tenant_id)
     if editor_id != user_id_to_update or "admin" in changes and changes["admin"] != user["admin"]:
         admin = get(tenant_id=tenant_id, user_id=editor_id)
@@ -315,11 +302,6 @@ def edit(user_id_to_update, tenant_id, changes, editor_id):
     return {"data": user}
 
 
-def edit_appearance(user_id, tenant_id, changes):
-    updated_user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
-    return {"data": updated_user}
-
-
 def get_by_email_only(email):
     with pg_client.PostgresClient() as cur:
         cur.execute(
@@ -329,8 +311,7 @@ def get_by_email_only(email):
                         1 AS tenant_id,
                         users.email, 
                         users.role, 
-                        users.name, 
-                        basic_authentication.generated_password,
+                        users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
@@ -353,8 +334,7 @@ def get_by_email_reset(email, reset_token):
                         1 AS tenant_id,
                         users.email, 
                         users.role, 
-                        users.name, 
-                        basic_authentication.generated_password,
+                        users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
@@ -377,8 +357,7 @@ def get_members(tenant_id):
                         users.email, 
                         users.role, 
                         users.name, 
-                        users.created_at, 
-                        basic_authentication.generated_password,
+                        users.created_at,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -581,11 +560,9 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                     1 AS tenant_id,
                     users.role,
                     users.name,
-                    basic_authentication.generated_password AS change_password,
                     (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
-                    (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                    users.appearance
+                    (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
                 FROM public.users INNER JOIN public.basic_authentication USING(user_id)
                 WHERE users.email = %(email)s 
                     AND basic_authentication.password = crypt(%(password)s, basic_authentication.password)
@@ -599,7 +576,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
         if r is not None:
             if for_change_password:
                 return True
-            r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
+            r = helper.dict_to_camel_case(r)
             query = cur.mogrify(
                 f"""UPDATE public.users
                    SET jwt_iat = timezone('utc'::text, now())

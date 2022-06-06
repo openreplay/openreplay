@@ -77,8 +77,8 @@ def create_step1(data: schemas.UserSignupSchema):
                              RETURNING user_id,email,role,name
                  ),
                  au AS (INSERT
-                     INTO public.basic_authentication (user_id, password, generated_password)
-                         VALUES ((SELECT user_id FROM u), crypt(%(password)s, gen_salt('bf', 12)), FALSE)
+                     INTO public.basic_authentication (user_id, password)
+                         VALUES ((SELECT user_id FROM u), crypt(%(password)s, gen_salt('bf', 12)))
                  )
                  INSERT INTO public.projects (name, active)
                  VALUES (%(projectName)s, TRUE)

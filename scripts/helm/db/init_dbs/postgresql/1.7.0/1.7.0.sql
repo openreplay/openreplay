@@ -2,7 +2,7 @@ BEGIN;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.6.1'
+SELECT 'v1.7.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 
@@ -120,5 +120,11 @@ ON CONFLICT (predefined_key) DO UPDATE
         is_public=excluded.is_public,
         metric_type=excluded.metric_type,
         view_type=excluded.view_type;
+
+ALTER TABLE users
+    DROP COLUMN appearance;
+
+ALTER TABLE basic_authentication
+    DROP COLUMN generated_password;
 
 COMMIT;
