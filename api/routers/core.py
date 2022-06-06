@@ -966,6 +966,11 @@ def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
 
 
+@app.get('/notifications/count', tags=['notifications'])
+def get_notifications_count(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": notifications.get_all_count(tenant_id=context.tenant_id, user_id=context.user_id)}
+
+
 @app.get('/notifications/{notificationId}/view', tags=['notifications'])
 def view_notifications(notificationId: int, context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.view_notification(notification_ids=[notificationId], user_id=context.user_id)}
@@ -1073,13 +1078,6 @@ def edit_account(data: schemas.EditUserSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
     return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data.dict(),
                       editor_id=context.user_id)
-
-
-@app.post('/account/appearance', tags=["account"])
-@app.put('/account/appearance', tags=["account"])
-def edit_account_appearance(data: schemas.EditUserAppearanceSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit_appearance(tenant_id=context.tenant_id, user_id=context.user_id, changes=data.dict())
 
 
 @app.post('/account/password', tags=["account"])

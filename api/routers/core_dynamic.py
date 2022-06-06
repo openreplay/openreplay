@@ -67,17 +67,17 @@ def login(data: schemas.UserLoginSchema = Body(...)):
 @app.get('/account', tags=['accounts'])
 def get_account(context: schemas.CurrentContext = Depends(OR_context)):
     r = users.get(tenant_id=context.tenant_id, user_id=context.user_id)
+    t = tenants.get_by_tenant_id(context.tenant_id)
+    if t is not None:
+        t.pop("createdAt")
+        t["tenantName"] = t.pop("name")
     return {
         'data': {
             **r,
-            "limits": {
-                "teamMember": -1,
-                "projects": -1,
-                "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
-            },
+            **t,
             **license.get_status(context.tenant_id),
             "smtp": helper.has_smtp(),
-            "iceServers": assist.get_ice_servers()
+            # "iceServers": assist.get_ice_servers()
         }
     }
 
@@ -199,29 +199,25 @@ def search_sessions_by_metadata(key: str, value: str, projectId: Optional[int] =
                                             m_key=key, project_id=projectId)}
 
 
-@app.get('/plans', tags=["plan"])
-def get_current_plan(context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        "data": license.get_status(context.tenant_id)
-    }
-
-
 @public_app.get('/general_stats', tags=["private"], include_in_schema=False)
 def get_general_stats():
     return {"data": {"sessions:": sessions.count_all()}}
-
-
-@app.get('/client', tags=['projects'])
-def get_client(context: schemas.CurrentContext = Depends(OR_context)):
-    r = tenants.get_by_tenant_id(context.tenant_id)
-    if r is not None:
-        r.pop("createdAt")
-    return {
-        'data': r
-    }
 
 
 @app.get('/projects', tags=['projects'])
 def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
                                           stack_integrations=True)}
+
+
+@app.get('/limits', tags=['accounts'])
+def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
+    return {
+        'data': {
+            "limits": {
+                "teamMember": -1,
+                "projects": -1,
+                "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
+            },
+        }
+    }
