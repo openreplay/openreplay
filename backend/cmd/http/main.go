@@ -6,6 +6,7 @@ import (
 	"openreplay/backend/internal/http/router"
 	"openreplay/backend/internal/http/server"
 	"openreplay/backend/internal/http/services"
+	"openreplay/backend/pkg/monitoring"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +18,8 @@ import (
 )
 
 func main() {
+	metrics := monitoring.New("ender")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	pprof.StartProfilingServer()
 
@@ -35,7 +38,7 @@ func main() {
 	services := services.New(cfg, producer, dbConn)
 
 	// Init server's routes
-	router, err := router.NewRouter(cfg, services)
+	router, err := router.NewRouter(cfg, services, metrics)
 	if err != nil {
 		log.Fatalf("failed while creating engine: %s", err)
 	}

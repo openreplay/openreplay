@@ -75,16 +75,16 @@ Counter is a synchronous instrument that measures additive non-decreasing values
 - disk reads
 */
 
-func (m *Metrics) RegisterCounter(name string) error {
+func (m *Metrics) RegisterCounter(name string) (syncfloat64.Counter, error) {
 	if _, ok := m.counters[name]; ok {
-		return fmt.Errorf("counter %s already exists", name)
+		return nil, fmt.Errorf("counter %s already exists", name)
 	}
 	counter, err := m.meter.SyncFloat64().Counter(name)
 	if err != nil {
-		return fmt.Errorf("failed to initialize counter: %v", err)
+		return nil, fmt.Errorf("failed to initialize counter: %v", err)
 	}
 	m.counters[name] = counter
-	return nil
+	return counter, nil
 }
 
 func (m *Metrics) GetCounter(name string) syncfloat64.Counter {
@@ -116,8 +116,10 @@ func (m *Metrics) GetUpDownCounter(name string) syncfloat64.UpDownCounter {
 }
 
 /*
-
- */
+Histogram is a synchronous instrument that produces a histogram from recorded values, for example:
+- request latency
+- request size
+*/
 
 func (m *Metrics) RegisterHistogram(name string) (syncfloat64.Histogram, error) {
 	if _, ok := m.histograms[name]; ok {

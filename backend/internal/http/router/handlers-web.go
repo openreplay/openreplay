@@ -1,8 +1,11 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"go.opentelemetry.io/otel/attribute"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -16,6 +19,23 @@ import (
 	"openreplay/backend/pkg/token"
 )
 
+func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (io.ReadCloser, error) {
+	body := http.MaxBytesReader(w, r.Body, limit)
+	bodyBytes, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, err
+	}
+	body.Close()
+
+	reqSize := len(bodyBytes)
+	e.requestSize.Record(
+		r.Context(),
+		float64(reqSize),
+		[]attribute.KeyValue{attribute.String("method", r.URL.Path)}...,
+	)
+	return ioutil.NopCloser(bytes.NewBuffer(bodyBytes)), nil
+}
+
 func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 
@@ -24,12 +44,18 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 		return
 	}
-	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
-	defer body.Close()
+
+	reqBody, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
+		return
+	}
+	defer reqBody.Close()
 
 	// Parse request body
 	req := &StartSessionRequest{}
-	if err := json.NewDecoder(body).Decode(req); err != nil {
+	if err := json.NewDecoder(reqBody).Decode(req); err != nil {
 		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -114,10 +140,16 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 		return
 	}
-	body := http.MaxBytesReader(w, r.Body, e.cfg.BeaconSizeLimit)
-	defer body.Close()
 
-	bytes, err := ioutil.ReadAll(body)
+	reqBody, err := e.readBody(w, r, e.cfg.BeaconSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
+		return
+	}
+	defer reqBody.Close()
+
+	bytes, err := ioutil.ReadAll(reqBody)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: Split environments; send error here only on staging
 		return
@@ -139,12 +171,18 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		ResponseWithError(w, http.StatusBadRequest, errors.New("request body is empty"))
 		return
 	}
-	body := http.MaxBytesReader(w, r.Body, e.cfg.JsonSizeLimit)
-	defer body.Close()
+
+	reqBody, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	if err != nil {
+		log.Printf("error while reading request body: %s", err)
+		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
+		return
+	}
+	defer reqBody.Close()
 
 	// Parse request body
 	req := &NotStartedRequest{}
-	if err := json.NewDecoder(body).Decode(req); err != nil {
+	if err := json.NewDecoder(reqBody).Decode(req); err != nil {
 		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -160,7 +198,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	country := e.services.GeoIP.ExtractISOCodeFromHTTPRequest(r)
-	err := e.services.Database.InsertUnstartedSession(postgres.UnstartedSession{
+	err = e.services.Database.InsertUnstartedSession(postgres.UnstartedSession{
 		ProjectKey:         *req.ProjectKey,
 		TrackerVersion:     req.TrackerVersion,
 		DoNotTrack:         req.DoNotTrack,

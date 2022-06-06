@@ -23,21 +23,27 @@ type SessionEnder struct {
 	timeout        int64
 	sessions       map[uint64]*session // map[sessionID]session
 	activeSessions syncfloat64.UpDownCounter
+	totalSessions  syncfloat64.Counter
 }
 
 func New(metrics *monitoring.Metrics, timeout int64) (*SessionEnder, error) {
 	if metrics == nil {
 		return nil, fmt.Errorf("metrics module is empty")
 	}
-	activeSessions, err := metrics.RegisterUpDownCounter("active_sessions")
+	activeSessions, err := metrics.RegisterUpDownCounter("sessions_active")
 	if err != nil {
-		return nil, fmt.Errorf("can't register active_session metric: %s", err)
+		return nil, fmt.Errorf("can't register session.active metric: %s", err)
+	}
+	totalSessions, err := metrics.RegisterCounter("sessions_total")
+	if err != nil {
+		return nil, fmt.Errorf("can't register session.total metric: %s", err)
 	}
 
 	return &SessionEnder{
 		timeout:        timeout,
 		sessions:       make(map[uint64]*session),
 		activeSessions: activeSessions,
+		totalSessions:  totalSessions,
 	}, nil
 }
 
@@ -49,12 +55,15 @@ func (se *SessionEnder) UpdateSession(sessionID, timestamp uint64) {
 		return
 	}
 	sess, ok := se.sessions[sessionID]
+	log.Println(sess, ok)
 	if !ok {
 		se.sessions[sessionID] = &session{
 			lastTimestamp: currTS,
 			isEnded:       false,
 		}
+		log.Printf("added new session: %d", sessionID)
 		se.activeSessions.Add(context.Background(), 1)
+		se.totalSessions.Add(context.Background(), 1)
 		return
 	}
 	if currTS > sess.lastTimestamp {
