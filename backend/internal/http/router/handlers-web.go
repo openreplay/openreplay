@@ -7,7 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"openreplay/backend/internal/uuid"
+	"openreplay/backend/internal/http/uuid"
 	"strconv"
 	"time"
 

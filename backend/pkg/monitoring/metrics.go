@@ -21,12 +21,14 @@ type Metrics struct {
 	meter          metric.Meter
 	counters       map[string]syncfloat64.Counter
 	upDownCounters map[string]syncfloat64.UpDownCounter
+	histograms     map[string]syncfloat64.Histogram
 }
 
 func New(name string) *Metrics {
 	m := &Metrics{
 		counters:       make(map[string]syncfloat64.Counter),
 		upDownCounters: make(map[string]syncfloat64.UpDownCounter),
+		histograms:     make(map[string]syncfloat64.Histogram),
 	}
 	m.initPrometheusDataExporter()
 	m.initMetrics(name)
@@ -111,4 +113,24 @@ func (m *Metrics) RegisterUpDownCounter(name string) (syncfloat64.UpDownCounter,
 
 func (m *Metrics) GetUpDownCounter(name string) syncfloat64.UpDownCounter {
 	return m.upDownCounters[name]
+}
+
+/*
+
+ */
+
+func (m *Metrics) RegisterHistogram(name string) (syncfloat64.Histogram, error) {
+	if _, ok := m.histograms[name]; ok {
+		return nil, fmt.Errorf("histogram %s already exists", name)
+	}
+	hist, err := m.meter.SyncFloat64().Histogram(name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize histogram: %v", err)
+	}
+	m.histograms[name] = hist
+	return hist, nil
+}
+
+func (m *Metrics) GetHistogram(name string) syncfloat64.Histogram {
+	return m.histograms[name]
 }

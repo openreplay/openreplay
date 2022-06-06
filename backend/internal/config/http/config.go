@@ -1,4 +1,4 @@
-package config
+package http
 
 import (
 	"openreplay/backend/pkg/env"

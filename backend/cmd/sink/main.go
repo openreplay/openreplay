@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/binary"
 	"log"
+	"openreplay/backend/internal/sink/assetscache"
+	"openreplay/backend/internal/sink/oswriter"
 	"openreplay/backend/internal/storage"
 	"time"
 
@@ -10,9 +12,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"openreplay/backend/internal/assetscache"
 	"openreplay/backend/internal/config/sink"
-	"openreplay/backend/internal/oswriter"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"

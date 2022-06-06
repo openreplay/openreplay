@@ -1,9 +1,9 @@
 package services
 
 import (
-	"openreplay/backend/internal/config"
-	"openreplay/backend/internal/geoip"
-	"openreplay/backend/internal/uaparser"
+	"openreplay/backend/internal/config/http"
+	"openreplay/backend/internal/http/geoip"
+	"openreplay/backend/internal/http/uaparser"
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/flakeid"
 	"openreplay/backend/pkg/queue/types"
@@ -21,7 +21,7 @@ type ServicesBuilder struct {
 	Storage   *storage.S3
 }
 
-func New(cfg *config.Config, producer types.Producer, pgconn *cache.PGCache) *ServicesBuilder {
+func New(cfg *http.Config, producer types.Producer, pgconn *cache.PGCache) *ServicesBuilder {
 	return &ServicesBuilder{
 		Database:  pgconn,
 		Producer:  producer,

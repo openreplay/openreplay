@@ -1,10 +1,10 @@
-package builder
+package sessions
 
 import (
 	"log"
+	"openreplay/backend/pkg/handlers"
 	"time"
 
-	"openreplay/backend/internal/handlers"
 	. "openreplay/backend/pkg/messages"
 )
 

@@ -97,7 +97,7 @@ export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash) => has
 
 export const tests = () => '/tests';
 
-export const testBuilderNew = () => '/test-builder';
+export const testBuilderNew = () => '/test-sessions';
 
 export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
 

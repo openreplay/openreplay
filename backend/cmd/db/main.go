@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/internal/builder"
 	"openreplay/backend/internal/config/db"
-	"openreplay/backend/internal/datasaver"
-	"openreplay/backend/internal/handlers"
-	"openreplay/backend/internal/handlers/custom"
+	"openreplay/backend/internal/db/datasaver"
+	"openreplay/backend/pkg/handlers"
+	custom2 "openreplay/backend/pkg/handlers/custom"
+	"openreplay/backend/pkg/sessions"
 	"time"
 
 	"os"
@@ -33,14 +33,14 @@ func main() {
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
-			&custom.EventMapper{},
-			custom.NewInputEventBuilder(),
-			custom.NewPageEventBuilder(),
+			&custom2.EventMapper{},
+			custom2.NewInputEventBuilder(),
+			custom2.NewPageEventBuilder(),
 		}
 	}
 
 	// Create handler's aggregator
-	builderMap := builder.NewBuilderMap(handlersFabric)
+	builderMap := sessions.NewBuilderMap(handlersFabric)
 
 	// Init modules
 	saver := datasaver.New(pg)

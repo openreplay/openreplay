@@ -1,7 +1,7 @@
 package ios
 
 import (
-	"openreplay/backend/internal/handlers"
+	"openreplay/backend/pkg/handlers"
 	. "openreplay/backend/pkg/messages"
 )
 
