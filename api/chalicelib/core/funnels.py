@@ -251,6 +251,22 @@ def get_top_insights_on_the_fly(funnel_id, user_id, project_id, data: schemas.Fu
                      "totalDropDueToIssues": total_drop_due_to_issues}}
 
 
+# def get_top_insights_on_the_fly_widget(project_id, data: schemas.FunnelInsightsPayloadSchema):
+def get_top_insights_on_the_fly_widget(project_id, data: schemas.CustomMetricSeriesFilterSchema):
+    data.events = filter_stages(__parse_events(data.events))
+    data.events = __fix_stages(data.events)
+    if len(data.events) == 0:
+        return {"stages": [], "totalDropDueToIssues": 0}
+    insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data.dict(), project_id=project_id)
+    insights = helper.list_to_camel_case(insights)
+    if len(insights) > 0:
+        if total_drop_due_to_issues > insights[0]["sessionsCount"]:
+            total_drop_due_to_issues = insights[0]["sessionsCount"]
+        insights[-1]["dropDueToIssues"] = total_drop_due_to_issues
+    return {"stages": insights,
+            "totalDropDueToIssues": total_drop_due_to_issues}
+
+
 def get_issues(project_id, user_id, funnel_id, range_value=None, start_date=None, end_date=None):
     f = get(funnel_id=funnel_id, project_id=project_id, user_id=user_id, flatten=False)
     if f is None:
