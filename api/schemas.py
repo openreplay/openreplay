@@ -795,6 +795,7 @@ class MetricType(str, Enum):
     timeseries = "timeseries"
     table = "table"
     predefined = "predefined"
+    funnel = "funnel"
 
 
 class TableMetricOfType(str, Enum):

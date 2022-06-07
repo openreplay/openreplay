@@ -2,7 +2,7 @@ import json
 from typing import Union
 
 import schemas
-from chalicelib.core import sessions
+from chalicelib.core import sessions, funnels
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -43,6 +43,11 @@ def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
 
 
 def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+    if data.metric_type == schemas.MetricType.funnel:
+        if len(data.series) == 0:
+            return {}
+        return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
