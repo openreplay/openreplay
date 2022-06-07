@@ -110,6 +110,25 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
     return results
 
 
+def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    if metric is None:
+        return None
+    results = []
+    for s in metric.series:
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
+        results.append({"seriesId": s.series_id, "seriesName": s.name,
+                        **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)})
+
+    return results
+
+
 def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadSchema):
     results = []
     if data.series is None:

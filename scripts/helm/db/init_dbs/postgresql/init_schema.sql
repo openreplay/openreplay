@@ -150,11 +150,11 @@ $$
             CREATE TABLE basic_authentication
             (
                 user_id              integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-                password             text                                 DEFAULT NULL,
-                invitation_token     text                        NULL     DEFAULT NULL,
-                invited_at           timestamp without time zone NULL     DEFAULT NULL,
-                change_pwd_token     text                        NULL     DEFAULT NULL,
-                change_pwd_expire_at timestamp without time zone NULL     DEFAULT NULL,
+                password             text                             DEFAULT NULL,
+                invitation_token     text                        NULL DEFAULT NULL,
+                invited_at           timestamp without time zone NULL DEFAULT NULL,
+                change_pwd_token     text                        NULL DEFAULT NULL,
+                change_pwd_expire_at timestamp without time zone NULL DEFAULT NULL,
                 changed_at           timestamp,
                 UNIQUE (user_id)
             );
@@ -877,7 +877,7 @@ $$
             CREATE INDEX jobs_start_at_idx ON jobs (start_at);
             CREATE INDEX jobs_project_id_idx ON jobs (project_id);
 
-            CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined');
+            CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined', 'funnel');
             CREATE TYPE metric_view_type AS ENUM ('lineChart','progress','table','pieChart','areaChart','barChart','stackedBarChart','stackedBarLineChart','overview','map');
             CREATE TABLE metrics
             (

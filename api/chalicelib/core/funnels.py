@@ -296,6 +296,19 @@ def get_issues_on_the_fly(funnel_id, user_id, project_id, data: schemas.FunnelSe
                                          last_stage=len(data.events)))}
 
 
+# def get_issues_on_the_fly_widget(project_id, data: schemas.FunnelSearchPayloadSchema):
+def get_issues_on_the_fly_widget(project_id, data: schemas.CustomMetricSeriesFilterSchema):
+    data.events = filter_stages(data.events)
+    data.events = __fix_stages(data.events)
+    if len(data.events) < 0:
+        return {"issues": []}
+
+    return {
+        "issues": helper.dict_to_camel_case(
+            significance.get_issues_list(filter_d=data.dict(), project_id=project_id, first_stage=1,
+                                         last_stage=len(data.events)))}
+
+
 def get(funnel_id, project_id, user_id, flatten=True, fix_stages=True):
     with pg_client.PostgresClient() as cur:
         cur.execute(

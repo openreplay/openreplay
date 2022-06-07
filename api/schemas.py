@@ -872,6 +872,14 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
 class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
 
+    @root_validator(pre=True)
+    def transform_series(cls, values):
+        if values.get("series") is not None and len(values["series"]) > 1 and values.get(
+                "metric_type") == MetricType.funnel.value:
+            values["series"] = [values["series"][0]]
+
+        return values
+
 
 class CustomMetricUpdateSeriesSchema(CustomMetricCreateSeriesSchema):
     series_id: Optional[int] = Field(None)

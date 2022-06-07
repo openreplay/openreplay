@@ -201,11 +201,11 @@ $$
             CREATE TABLE IF NOT EXISTS basic_authentication
             (
                 user_id              integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-                password             text                                 DEFAULT NULL,
-                invitation_token     text                        NULL     DEFAULT NULL,
-                invited_at           timestamp without time zone NULL     DEFAULT NULL,
-                change_pwd_token     text                        NULL     DEFAULT NULL,
-                change_pwd_expire_at timestamp without time zone NULL     DEFAULT NULL,
+                password             text                             DEFAULT NULL,
+                invitation_token     text                        NULL DEFAULT NULL,
+                invited_at           timestamp without time zone NULL DEFAULT NULL,
+                change_pwd_token     text                        NULL DEFAULT NULL,
+                change_pwd_expire_at timestamp without time zone NULL DEFAULT NULL,
                 changed_at           timestamp,
                 UNIQUE (user_id)
             );
@@ -726,7 +726,7 @@ $$
             CREATE INDEX IF NOT EXISTS traces_created_at_idx ON traces (created_at);
             CREATE INDEX IF NOT EXISTS traces_action_idx ON traces (action);
 
-            CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined');
+            CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined','funnel');
             CREATE TYPE metric_view_type AS ENUM ('lineChart','progress','table','pieChart','areaChart','barChart','stackedBarChart','stackedBarLineChart','overview','map');
             CREATE TABLE IF NOT EXISTS metrics
             (
