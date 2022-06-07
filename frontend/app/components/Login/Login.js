@@ -97,8 +97,6 @@ export default class Login extends React.Component {
                 <div style={{ width: '350px'}}>
                   <div className="mb-6">
                     <label>Email</label>
-                    {/* <div className={ stl.inputWithIcon }> */}
-                      {/* <i className={ stl.inputIconUser } /> */}
                       <Input
                         autoFocus={true}
                         autoComplete="username"
@@ -106,27 +104,21 @@ export default class Login extends React.Component {
                         placeholder="Email"
                         name="email"
                         onChange={ this.write }
-                        className={ stl.email }
                         required="true"
                         icon="user-alt"
                       />
-                    {/* </div> */}
                   </div>
                   <div className="mb-6">
                     <label className="mb-2">Password</label>
-                    {/* <div className={ stl.inputWithIcon }> */}
-                      {/* <i className={ stl.inputIconPassword } /> */}
                       <Input
                         autoComplete="current-password"
                         type="password"
                         placeholder="Password"
                         name="password"
                         onChange={ this.write }
-                        className={ stl.password }
                         required="true"
                         icon="lock-alt"
                       />
-                    {/* </div> */}
                   </div>
                 </div>
               </Loader>
