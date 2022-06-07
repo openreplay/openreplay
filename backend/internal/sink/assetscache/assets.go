@@ -26,6 +26,7 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 	switch m := msg.(type) {
 	case *messages.SetNodeAttributeURLBased:
 		if m.Name == "src" || m.Name == "href" {
+			log.Printf("accet for session: %d", sessID)
 			return &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,

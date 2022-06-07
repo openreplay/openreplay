@@ -40,12 +40,17 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	if err != nil {
 		log.Printf("can't create session_size metric: %s", err)
 	}
+	archivingTime, err := metrics.RegisterHistogram("archiving_duration")
+	if err != nil {
+		log.Printf("can't create archiving_duration metric: %s", err)
+	}
 	return &Storage{
 		cfg:           cfg,
 		s3:            s3,
 		startBytes:    make([]byte, cfg.FileSplitSize),
 		totalSessions: totalSessions,
 		sessionSize:   sessionSize,
+		archivingTime: archivingTime,
 	}, nil
 }
 
