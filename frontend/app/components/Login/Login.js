@@ -80,7 +80,7 @@ export default class Login extends React.Component {
         </div>
         <div className="md:w-6/12 flex items-center justify-center py-10">
           <div className="">
-            <Form onSubmit={ this.onSubmit }>
+            <Form onSubmit={ this.onSubmit } className="flex items-center justify-center flex-col">
               <div className="mb-8">
                 <h2 className="text-center text-3xl mb-6">Login to OpenReplay</h2>
                 { !authDetails.tenants && <div className="text-center text-xl">Don't have an account? <span className="link"><Link to={ SIGNUP_ROUTE }>Sign up</Link></span></div> }
@@ -132,13 +132,13 @@ export default class Login extends React.Component {
                   )) }
                 </div>
               }
-              <div className={ stl.formFooter }>
+              {/* <div className={ stl.formFooter }> */}
                 <Button type="submit" variant="primary" >{ 'Login' }</Button>
 
                 <div className={ cn(stl.links, 'text-lg') }>
                   <Link to={ FORGOT_PASSWORD }>{'Forgot your password?'}</Link>
                 </div>
-              </div>
+              {/* </div> */}
             </Form>
             { authDetails.sso && (
               <div className={cn(stl.sso, "py-2 flex flex-col items-center")}>

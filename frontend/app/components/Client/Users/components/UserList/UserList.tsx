@@ -66,7 +66,7 @@ function UserList(props: Props) {
                                 editHandler={() => editHandler(user)}
                                 generateInvite={() => userStore.generateInviteCode(user.userId)}
                                 copyInviteCode={() => userStore.copyInviteCode(user.userId)}
-                                // isEnterprise={isEnterprise}
+                                isEnterprise={isEnterprise}
                             />
                         </div>
                     ))}
