@@ -25,6 +25,8 @@ ALTER TABLE dashboards
 
 COMMIT;
 
+ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'predefined';
+
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)
 VALUES ('Captured sessions', 'web vitals', '{

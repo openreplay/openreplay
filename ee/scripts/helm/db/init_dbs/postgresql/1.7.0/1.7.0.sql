@@ -37,6 +37,7 @@ ALTER TABLE dashboards
     ALTER COLUMN user_id DROP NOT NULL;
 
 COMMIT;
+ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'funnel';
 
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)

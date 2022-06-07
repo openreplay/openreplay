@@ -1,7 +1,7 @@
 from fastapi import Body, Depends
 
 import schemas
-from chalicelib.core import dashboards, custom_metrics
+from chalicelib.core import dashboards, custom_metrics, funnels
 from or_dependencies import OR_context
 from routers.base import get_routers
 
@@ -107,10 +107,21 @@ def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsPayloadSchem
 
 @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/try/sessions', tags=["customMetrics"])
-def try_custom_metric_sessions(projectId: int,
-                               data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+def try_custom_metric_sessions(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.try_sessions(project_id=projectId, user_id=context.user_id, data=data)
+    return {"data": data}
+
+
+@app.post('/{projectId}/metrics/try/issues', tags=["dashboard"])
+@app.post('/{projectId}/custom_metrics/try/issues', tags=["customMetrics"])
+def try_custom_metric_funnel_issues(projectId: int, data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                                    context: schemas.CurrentContext = Depends(OR_context)):
+    if len(data.series) == 0:
+        return {"data": []}
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
+    data = funnels.get_issues_on_the_fly_widget(project_id=projectId, data=data.series[0].filter)
     return {"data": data}
 
 
@@ -144,6 +155,17 @@ def get_custom_metric_sessions(projectId: int, metric_id: int,
                                data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
                                context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get_sessions(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+    if data is None:
+        return {"errors": ["custom metric not found"]}
+    return {"data": data}
+
+
+@app.post('/{projectId}/metrics/{metric_id}/issues', tags=["dashboard"])
+@app.post('/{projectId}/custom_metrics/{metric_id}/issues', tags=["customMetrics"])
+def get_custom_metric__funnel_issues(projectId: int, metric_id: int,
+                                     data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                                     context: schemas.CurrentContext = Depends(OR_context)):
+    data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
