@@ -36,9 +36,7 @@ def get_all_count(tenant_id, user_id):
                                         FROM public.user_viewed_notifications
                                         WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications USING (notification_id)
                     WHERE (notifications.tenant_id =%(tenant_id)s 
-                        OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL
-                    ORDER BY created_at DESC
-                    LIMIT 100;""",
+                        OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL;""",
                         {"tenant_id": tenant_id, "user_id": user_id})
         )
         rows = helper.list_to_camel_case(cur.fetchall())

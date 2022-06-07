@@ -34,9 +34,7 @@ def get_all_count(tenant_id, user_id):
                              LEFT JOIN (SELECT notification_id
                                         FROM public.user_viewed_notifications
                                         WHERE user_viewed_notifications.user_id = %(user_id)s) AS user_viewed_notifications USING (notification_id)
-                    WHERE (notifications.user_id IS NULL OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL
-                    ORDER BY created_at DESC
-                    LIMIT 100;""",
+                    WHERE (notifications.user_id IS NULL OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL;""",
                         {"user_id": user_id})
         )
         row = cur.fetchone()
