@@ -17,6 +17,10 @@ import (
 	"openreplay/backend/pkg/queue"
 )
 
+/*
+HTTP
+*/
+
 func main() {
 	metrics := monitoring.New("http")
 

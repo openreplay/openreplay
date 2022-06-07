@@ -21,6 +21,10 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
+/*
+DB
+*/
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
