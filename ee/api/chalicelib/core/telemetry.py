@@ -1,10 +1,11 @@
 from chalicelib.utils import pg_client
+from chalicelib.core import license
 import requests
 
 
-def process_data(data, edition='fos'):
+def process_data(data):
     return {
-        'edition': edition,
+        'edition': license.EDITION,
         'tracking': data["opt_out"],
         'version': data["version_number"],
         'user_id': data["user_id"],
@@ -56,7 +57,7 @@ def compute():
         )
         data = cur.fetchall()
         requests.post('https://api.openreplay.com/os/telemetry',
-                      json={"stats": [process_data(d, edition='ee') for d in data]})
+                      json={"stats": [process_data(d) for d in data]})
 
 
 def new_client(tenant_id):
@@ -67,4 +68,4 @@ def new_client(tenant_id):
                             FROM public.tenants 
                             WHERE tenant_id=%(tenant_id)s;""", {"tenant_id": tenant_id}))
         data = cur.fetchone()
-        requests.post('https://api.openreplay.com/os/signup', json=process_data(data, edition='ee'))
+        requests.post('https://api.openreplay.com/os/signup', json=process_data(data))

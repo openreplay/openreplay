@@ -365,10 +365,6 @@ def has_smtp():
     return config("EMAIL_HOST") is not None and len(config("EMAIL_HOST")) > 0
 
 
-def get_edition():
-    return "ee" if "ee" in config("ENTERPRISE_BUILD", default="").lower() else "foss"
-
-
 def old_search_payload_to_flat(values):
     # in case the old search body was passed
     if values.get("events") is not None:

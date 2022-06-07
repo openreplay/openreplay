@@ -12,7 +12,7 @@ def attribute_to_camel_case(snake_str):
 
 
 def transform_email(email: str) -> str:
-    return email.lower() if isinstance(email, str) else email
+    return email.lower().strip() if isinstance(email, str) else email
 
 
 class _Grecaptcha(BaseModel):
@@ -37,7 +37,7 @@ class UserSignupSchema(UserLoginSchema):
 class EditUserSchema(BaseModel):
     name: Optional[str] = Field(None)
     email: Optional[EmailStr] = Field(None)
-    admin: Optional[bool] = Field(False)
+    admin: Optional[bool] = Field(None)
 
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
@@ -127,12 +127,10 @@ class CreateMemberSchema(BaseModel):
     _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
-class EditMemberSchema(BaseModel):
+class EditMemberSchema(EditUserSchema):
     name: str = Field(...)
     email: EmailStr = Field(...)
     admin: bool = Field(False)
-
-    _transform_email = validator('email', pre=True, allow_reuse=True)(transform_email)
 
 
 class EditPasswordByInvitationSchema(BaseModel):
@@ -796,6 +794,7 @@ class MetricTableViewType(str, Enum):
 class MetricType(str, Enum):
     timeseries = "timeseries"
     table = "table"
+    predefined = "predefined"
 
 
 class TableMetricOfType(str, Enum):

@@ -1,10 +1,11 @@
 from chalicelib.utils import pg_client
 import requests
+from chalicelib.core import license
 
 
-def process_data(data, edition='fos'):
+def process_data(data):
     return {
-        'edition': edition,
+        'edition': license.EDITION,
         'tracking': data["opt_out"],
         'version': data["version_number"],
         'user_id': data["user_id"],

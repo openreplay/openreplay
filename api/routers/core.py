@@ -1076,7 +1076,7 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
 @app.put('/account', tags=["account"])
 def edit_account(data: schemas.EditUserSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data.dict(),
+    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
                       editor_id=context.user_id)
 
 

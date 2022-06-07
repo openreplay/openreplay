@@ -1,6 +1,6 @@
 from typing import Optional, List, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 import schemas
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -21,7 +21,14 @@ class CreateMemberSchema(schemas.CreateMemberSchema):
     roleId: Optional[int] = Field(None)
 
 
-class EditMemberSchema(schemas.EditMemberSchema):
+class EditUserSchema(schemas.EditUserSchema):
+    roleId: Optional[int] = Field(None)
+
+
+class EditMemberSchema(EditUserSchema):
+    name: str = Field(...)
+    email: EmailStr = Field(...)
+    admin: bool = Field(False)
     roleId: int = Field(...)
 
 

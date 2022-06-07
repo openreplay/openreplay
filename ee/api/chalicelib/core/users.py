@@ -4,6 +4,8 @@ import secrets
 from decouple import config
 from fastapi import BackgroundTasks
 
+import schemas
+import schemas_ee
 from chalicelib.core import authorizers, metadata, projects, roles
 from chalicelib.core import tenants, assist
 from chalicelib.utils import dev, SAML2_helper
@@ -303,37 +305,44 @@ def generate_new_api_key(user_id):
     return helper.dict_to_camel_case(r)
 
 
-def edit(user_id_to_update, tenant_id, changes, editor_id):
-    ALLOW_EDIT = ["name", "email", "admin", "roleId"]
+def edit(user_id_to_update, tenant_id, changes: schemas_ee.EditUserSchema, editor_id):
     user = get(user_id=user_id_to_update, tenant_id=tenant_id)
-    if editor_id != user_id_to_update or "admin" in changes and changes["admin"] != user["admin"]:
+    if editor_id != user_id_to_update or changes.admin is not None and changes.admin != user["admin"]:
         admin = get(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
+    _changes = {}
     if editor_id == user_id_to_update:
-        if user["superAdmin"]:
-            changes.pop("admin")
-        elif user["admin"] != changes["admin"]:
-            return {"errors": ["cannot change your own role"]}
+        if changes.admin is not None:
+            if user["superAdmin"]:
+                changes.admin = None
+            elif changes.admin != user["admin"]:
+                return {"errors": ["cannot change your own role"]}
+        if changes.roleId is not None:
+            if user["superAdmin"]:
+                changes.roleId = None
+            elif changes.roleId != user["roleId"]:
+                return {"errors": ["cannot change your own role"]}
 
-    keys = list(changes.keys())
-    for k in keys:
-        if k not in ALLOW_EDIT or changes[k] is None:
-            changes.pop(k)
-    keys = list(changes.keys())
+    if changes.email is not None and changes.email != user["email"]:
+        if email_exists(changes.email):
+            return {"errors": ["email already exists."]}
+        if get_deleted_user_by_email(changes.email) is not None:
+            return {"errors": ["email previously deleted."]}
+        _changes["email"] = changes.email
 
-    if len(keys) > 0:
-        if "email" in keys and changes["email"] != user["email"]:
-            if email_exists(changes["email"]):
-                return {"errors": ["email already exists."]}
-            if get_deleted_user_by_email(changes["email"]) is not None:
-                return {"errors": ["email previously deleted."]}
-        if "admin" in keys:
-            changes["role"] = "admin" if changes.pop("admin") else "member"
-        if len(changes.keys()) > 0:
-            updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=changes)
+    if changes.name is not None and len(changes.name) > 0:
+        _changes["name"] = changes.name
 
-            return {"data": updated_user}
+    if changes.admin is not None:
+        _changes["role"] = "admin" if changes.admin else "member"
+
+    if changes.roleId is not None:
+        _changes["roleId"] = changes.roleId
+
+    if len(_changes.keys()) > 0:
+        updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
+        return {"data": updated_user}
     return {"data": user}
 
 
