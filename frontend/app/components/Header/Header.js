@@ -150,7 +150,6 @@ const Header = (props) => {
 export default withRouter(connect(
   state => ({
     account: state.getIn([ 'user', 'account' ]),
-    appearance: state.getIn([ 'user', 'account', 'appearance' ]),
     siteId: state.getIn([ 'site', 'siteId' ]),
     sites: state.getIn([ 'site', 'list' ]),
     showAlerts: state.getIn([ 'dashboard', 'showAlerts' ]),

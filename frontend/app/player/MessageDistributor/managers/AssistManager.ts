@@ -73,7 +73,7 @@ const MAX_RECONNECTION_COUNT = 4;
 
 
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor, private config) {}
+  constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
     if (getState().peerConnectionStatus === ConnectionStatus.Disconnected && 
@@ -306,7 +306,7 @@ export default class AssistManager {
     const urlObject = new URL(window.env.API_EDP)
     return import('peerjs').then(({ default: Peer }) => {
       if (this.cleaned) {return Promise.reject("Already cleaned")}
-      const peerOpts = {
+      const peerOpts: any = {
         host: urlObject.hostname,
         path: '/assist',
         port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),

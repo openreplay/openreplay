@@ -1,11 +1,9 @@
 import Member from 'Types/member';
-import Appearance from './appearance';
 import Limit from './limit';
 import { DateTime } from 'luxon';
 
 export default Member.extend({
   changePassword: undefined,
-  appearance: Appearance(),
   limits: Limit(),
   banner: undefined,
   email: '',
@@ -18,10 +16,8 @@ export default Member.extend({
   iceServers: undefined,
   hasPassword: false, // to check if it's SSO
 }, {
-  fromJS: ({ current = {}, ...account})=> ({
+  fromJS: ({ ...account})=> ({
     ...account,
-    license: current.license,
-    expirationDate: current.expirationDate > 0 && DateTime.fromMillis(current.expirationDate || 0),
-    appearance: Appearance(account.appearance),
+    expirationDate: account.expirationDate > 0 && DateTime.fromMillis(account.expirationDate || 0),
   })
 });

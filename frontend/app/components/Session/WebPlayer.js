@@ -39,10 +39,10 @@ function PlayerContent({ live, fullscreen, showEvents }) {
 }
 
 function WebPlayer (props) {
-  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config } = props;
+  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt} = props;
 
   useEffect(() => {
-    initPlayer(session, jwt, config);
+    initPlayer(session, jwt);
 
     const jumptTime = props.query.get('jumpto');
     if (jumptTime) {
@@ -70,7 +70,7 @@ function WebPlayer (props) {
 export default connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
   jwt: state.get('jwt'),
-  config: state.getIn([ 'user', 'account', 'iceServers' ]),
+  // config: state.getIn([ 'user', 'account', 'iceServers' ]),
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
 }), {
   toggleFullscreen,

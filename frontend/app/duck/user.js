@@ -12,7 +12,6 @@ const FETCH_ACCOUNT = new RequestTypes('user/FETCH_ACCOUNT');
 const FETCH_TENANTS = new RequestTypes('user/FETCH_TENANTS');
 const UPDATE_ACCOUNT = new RequestTypes('user/UPDATE_ACCOUNT');
 const RESEND_EMAIL_VERIFICATION = new RequestTypes('user/RESEND_EMAIL_VERIFICATION');
-const UPDATE_APPEARANCE = new RequestTypes('user/UPDATE_APPEARANCE');
 const FETCH_CLIENT = new RequestTypes('user/FETCH_CLIENT');
 export const UPDATE_PASSWORD = new RequestTypes('user/UPDATE_PASSWORD');
 const PUT_CLIENT = new RequestTypes('user/PUT_CLIENT');
@@ -53,8 +52,6 @@ const reducer = (state = initialState, action = {}) => {
       ).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
-    case UPDATE_APPEARANCE.REQUEST: //TODO: failure handling
-      return state.mergeIn([ 'account', 'appearance' ], action.appearance)
     case UPDATE_ACCOUNT.SUCCESS:
     case FETCH_ACCOUNT.SUCCESS:
       return state.set('account', Account(action.data)).set('passwordErrors', List());
@@ -87,7 +84,6 @@ export default withRequestState({
   fetchUserInfoRequest: [ FETCH_ACCOUNT, FETCH_CLIENT, FETCH_TENANTS ],
   putClientRequest: PUT_CLIENT,
   updateAccountRequest: UPDATE_ACCOUNT,
-  updateAppearance: UPDATE_APPEARANCE,
 }, reducer);
 
 export const login = params => dispatch => dispatch({
@@ -159,16 +155,6 @@ export function resendEmailVerification(email) {
     types: RESEND_EMAIL_VERIFICATION.toArray(),
     call: client => client.post('/re-validate', { email }),
   }
-}
-
-export function updateAppearance(appearance) {
-  return {
-    types: UPDATE_APPEARANCE.toArray(),
-    call: client => client.post('/account/appearance', { 
-      appearance: Record.isRecord(appearance) ? appearance.toData() : appearance
-    }),
-    appearance,
-  };
 }
 
 export function pushNewSite(newSite) {
