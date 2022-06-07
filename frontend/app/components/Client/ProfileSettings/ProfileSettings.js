@@ -54,7 +54,7 @@ export default class ProfileSettings extends React.PureComponent {
 
         <div className="border-b my-10" />
 
-        { !isEnterprise && (
+        { isEnterprise && (
           <div className="flex items-center">
             <div className={ styles.left }>
               <h4 className="text-lg mb-4">{ 'Tenant Key' }</h4>
