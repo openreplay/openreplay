@@ -12,7 +12,7 @@ import { connect } from 'react-redux';
 @withPageTitle('Account - OpenReplay Preferences')
 @connect(state => ({
   account: state.getIn([ 'user', 'account' ]),
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }))
 export default class ProfileSettings extends React.PureComponent {  
   render() {
@@ -27,7 +27,7 @@ export default class ProfileSettings extends React.PureComponent {
           <div><Settings /></div>
         </div>
 
-        <div className="divider-h" />
+        <div className="border-b my-10" />
 
         { account.hasPassword && (
           <>
@@ -40,7 +40,7 @@ export default class ProfileSettings extends React.PureComponent {
             </div>
           
 
-            <div className="divider-h" />
+            <div className="border-b my-10" />
           </>
         )}
 
@@ -52,19 +52,21 @@ export default class ProfileSettings extends React.PureComponent {
           <div><Api /></div>
         </div>
 
-        <div className="divider-h" />
+        <div className="border-b my-10" />
 
-        <div className="flex items-center">
-          <div className={ styles.left }>
-            <h4 className="text-lg mb-4">{ 'Tenant Key' }</h4>
-            <div className={ styles.info }>{ 'For SSO (SAML) authentication.' }</div>
+        { !isEnterprise && (
+          <div className="flex items-center">
+            <div className={ styles.left }>
+              <h4 className="text-lg mb-4">{ 'Tenant Key' }</h4>
+              <div className={ styles.info }>{ 'For SSO (SAML) authentication.' }</div>
+            </div>
+            <div><TenantKey /></div>
           </div>
-          <div><TenantKey /></div>
-        </div>
+        )}
 
         { !isEnterprise && (
           <>
-            <div className="divider-h" />
+            <div className="border-b my-10" />
             <div className="flex items-center">
               <div className={ styles.left }>
                 <h4 className="text-lg mb-4">{ 'Data Collection' }</h4>
@@ -77,7 +79,7 @@ export default class ProfileSettings extends React.PureComponent {
 
         { account.license && (
           <>
-            <div className="divider-h" />
+            <div className="border-b my-10" />
 
             <div className="flex items-center">
               <div className={ styles.left }>
