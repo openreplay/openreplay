@@ -4,8 +4,6 @@
 }
 
 .header {
-  padding-left: 2px;
-
   & .hAndProgress {
     display:flex;
     justify-content: space-between;

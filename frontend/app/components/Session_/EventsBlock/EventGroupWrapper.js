@@ -49,11 +49,11 @@ class EventGroupWrapper extends React.PureComponent {
     return (
       <div
         className={
-          cn(stl.container, "py-1", {
+          cn(stl.container, "!py-1", {
             [stl.last]: isLastInGroup,
             [stl.first]: event.type === TYPES.LOCATION,
             [stl.dashAfter]: isLastInGroup && !isLastEvent,
-          }, isLastInGroup && 'pb-2', event.type === TYPES.LOCATION && "pt-2 pb-2")
+          }, isLastInGroup && '!pb-2', event.type === TYPES.LOCATION && "!pt-2 !pb-2")
         }
       >
         { isFirst && isLocation && event.referrer &&

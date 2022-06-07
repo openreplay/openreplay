@@ -36,7 +36,7 @@ function Autoplay(props) {
         className={cn(
           "p-1 bg-gray-bg group rounded-full color-gray-darkest font-medium",
           previousId && 'cursor-pointer',
-          !disabled && 'hover:bg-bg-blue'
+          !disabled && nextId&& 'hover:bg-bg-blue'
         )}
       >
         <Link to={ sessionRoute(previousId) } disabled={!previousId}>
@@ -54,7 +54,7 @@ function Autoplay(props) {
         className={cn(
           "p-1 bg-gray-bg group ml-1 rounded-full color-gray-darkest font-medium",
           nextId && 'cursor-pointer',
-          !disabled && 'hover:bg-bg-blue'
+          !disabled && nextId && 'hover:bg-bg-blue',
         )}
       >
         <Link to={ sessionRoute(nextId) } disabled={!nextId} >

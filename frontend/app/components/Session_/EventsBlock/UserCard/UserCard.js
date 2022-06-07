@@ -60,7 +60,7 @@ function UserCard({
           <TextEllipsis
             noHint
             className={ cn("font-medium", { 'color-teal cursor-pointer' : hasUserDetails })}
-            onClick={hasUserDetails && showSimilarSessions}
+            onClick={hasUserDetails ? showSimilarSessions : undefined}
           >
             { userDisplayName }
           </TextEllipsis>
@@ -91,8 +91,8 @@ function UserCard({
                 disabled={false}
                 on="hover"
             >
-              <span 
-                className="color-teal cursor-pointer" 
+              <span
+                className="color-teal cursor-pointer"
               >
                 More
               </span>

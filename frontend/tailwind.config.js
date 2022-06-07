@@ -143,7 +143,6 @@ module.exports = {
       }
 		},
   },
-  content: [],
   variants: {
 		visibility: ['responsive', 'hover', 'focus', 'group-hover']
 	},
