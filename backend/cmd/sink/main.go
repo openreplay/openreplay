@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"log"
 	"openreplay/backend/internal/sink/assetscache"
 	"openreplay/backend/internal/sink/oswriter"
 	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 
 	"os"
@@ -20,6 +22,8 @@ import (
 )
 
 func main() {
+	metrics := monitoring.New("sink")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
@@ -36,6 +40,18 @@ func main() {
 	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
 
 	counter := storage.NewLogCounter()
+	totalMessages, err := metrics.RegisterCounter("messages_total")
+	if err != nil {
+		log.Printf("can't create messages_total metric: %s", err)
+	}
+	savedMessages, err := metrics.RegisterCounter("messages_saved")
+	if err != nil {
+		log.Printf("can't create messages_saved metric: %s", err)
+	}
+	messageSize, err := metrics.RegisterHistogram("messages_size")
+	if err != nil {
+		log.Printf("can't create messages_size metric: %s", err)
+	}
 
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupSink,
@@ -46,6 +62,8 @@ func main() {
 		func(sessionID uint64, message Message, _ *types.Meta) {
 			// Process assets
 			message = assetMessageHandler.ParseAssets(sessionID, message)
+
+			totalMessages.Add(context.Background(), 1)
 
 			// Filter message
 			typeID := message.TypeID()
@@ -74,6 +92,9 @@ func main() {
 			if err := writer.Write(sessionID, data); err != nil {
 				log.Printf("Writer error: %v\n", err)
 			}
+
+			messageSize.Record(context.Background(), float64(len(data)))
+			savedMessages.Add(context.Background(), 1)
 		},
 		false,
 	)

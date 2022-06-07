@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	metrics := monitoring.New("ender")
+	metrics := monitoring.New("http")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	pprof.StartProfilingServer()

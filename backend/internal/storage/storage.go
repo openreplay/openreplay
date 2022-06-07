@@ -2,10 +2,13 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
 	config "openreplay/backend/internal/config/storage"
 	"openreplay/backend/pkg/flakeid"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/storage"
 	"os"
 	"strconv"
@@ -13,26 +16,41 @@ import (
 )
 
 type Storage struct {
-	cfg        *config.Config
-	s3         *storage.S3
-	startBytes []byte
+	cfg           *config.Config
+	s3            *storage.S3
+	startBytes    []byte
+	totalSessions syncfloat64.Counter
+	sessionSize   syncfloat64.Histogram
+	archivingTime syncfloat64.Histogram
 }
 
-func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
+func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Storage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	case s3 == nil:
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
+	// Create metrics
+	totalSessions, err := metrics.RegisterCounter("sessions_total")
+	if err != nil {
+		log.Printf("can't create sessions_total metric: %s", err)
+	}
+	sessionSize, err := metrics.RegisterHistogram("sessions_size")
+	if err != nil {
+		log.Printf("can't create session_size metric: %s", err)
+	}
 	return &Storage{
-		cfg:        cfg,
-		s3:         s3,
-		startBytes: make([]byte, cfg.FileSplitSize),
+		cfg:           cfg,
+		s3:            s3,
+		startBytes:    make([]byte, cfg.FileSplitSize),
+		totalSessions: totalSessions,
+		sessionSize:   sessionSize,
 	}, nil
 }
 
 func (s *Storage) UploadKey(key string, retryCount int) {
+	start := time.Now()
 	if retryCount <= 0 {
 		return
 	}
@@ -77,4 +95,17 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
 	}
+
+	// Save metrics
+	var fileSize float64 = 0
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Printf("can't get file info: %s", err)
+	} else {
+		fileSize = float64(fileInfo.Size())
+	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
+	s.archivingTime.Record(ctx, float64(time.Now().Sub(start).Milliseconds()))
+	s.sessionSize.Record(ctx, fileSize)
+	s.totalSessions.Add(ctx, 1)
 }
