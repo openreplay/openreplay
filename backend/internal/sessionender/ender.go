@@ -55,7 +55,6 @@ func (se *SessionEnder) UpdateSession(sessionID, timestamp uint64) {
 		return
 	}
 	sess, ok := se.sessions[sessionID]
-	log.Println(sess, ok)
 	if !ok {
 		se.sessions[sessionID] = &session{
 			lastTimestamp: currTS,
