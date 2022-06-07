@@ -5,6 +5,7 @@
 .fill-gray-light-shade { fill: $gray-light-shade }
 .fill-gray-lightest { fill: $gray-lightest }
 .fill-gray-light { fill: $gray-light }
+.fill-gray-bg { fill: $gray-bg }
 .fill-gray-medium { fill: $gray-medium }
 .fill-gray-dark { fill: $gray-dark }
 .fill-gray-darkest { fill: $gray-darkest }
@@ -26,8 +27,10 @@
 .fill-blue { fill: $blue }
 .fill-blue2 { fill: $blue2 }
 .fill-active-blue { fill: $active-blue }
+.fill-bg-blue { fill: $bg-blue }
 .fill-active-blue-border { fill: $active-blue-border }
 .fill-pink { fill: $pink }
+.fill-light-blue-bg { fill: $light-blue-bg }
 .fill-white { fill: $white }
 .fill-borderColor { fill: $borderColor }
 
@@ -36,6 +39,7 @@
 .color-gray-light-shade { color: $gray-light-shade }
 .color-gray-lightest { color: $gray-lightest }
 .color-gray-light { color: $gray-light }
+.color-gray-bg { color: $gray-bg }
 .color-gray-medium { color: $gray-medium }
 .color-gray-dark { color: $gray-dark }
 .color-gray-darkest { color: $gray-darkest }
@@ -57,8 +61,10 @@
 .color-blue { color: $blue }
 .color-blue2 { color: $blue2 }
 .color-active-blue { color: $active-blue }
+.color-bg-blue { color: $bg-blue }
 .color-active-blue-border { color: $active-blue-border }
 .color-pink { color: $pink }
+.color-light-blue-bg { color: $light-blue-bg }
 .color-white { color: $white }
 .color-borderColor { color: $borderColor }
 
@@ -67,6 +73,7 @@
 .hover-gray-light-shade:hover { color: $gray-light-shade }
 .hover-gray-lightest:hover { color: $gray-lightest }
 .hover-gray-light:hover { color: $gray-light }
+.hover-gray-bg:hover { color: $gray-bg }
 .hover-gray-medium:hover { color: $gray-medium }
 .hover-gray-dark:hover { color: $gray-dark }
 .hover-gray-darkest:hover { color: $gray-darkest }
@@ -88,8 +95,10 @@
 .hover-blue:hover { color: $blue }
 .hover-blue2:hover { color: $blue2 }
 .hover-active-blue:hover { color: $active-blue }
+.hover-bg-blue:hover { color: $bg-blue }
 .hover-active-blue-border:hover { color: $active-blue-border }
 .hover-pink:hover { color: $pink }
+.hover-light-blue-bg:hover { color: $light-blue-bg }
 .hover-white:hover { color: $white }
 .hover-borderColor:hover { color: $borderColor }
 
@@ -97,6 +106,7 @@
 .border-gray-light-shade { border-color: $gray-light-shade }
 .border-gray-lightest { border-color: $gray-lightest }
 .border-gray-light { border-color: $gray-light }
+.border-gray-bg { border-color: $gray-bg }
 .border-gray-medium { border-color: $gray-medium }
 .border-gray-dark { border-color: $gray-dark }
 .border-gray-darkest { border-color: $gray-darkest }
@@ -118,7 +128,9 @@
 .border-blue { border-color: $blue }
 .border-blue2 { border-color: $blue2 }
 .border-active-blue { border-color: $active-blue }
+.border-bg-blue { border-color: $bg-blue }
 .border-active-blue-border { border-color: $active-blue-border }
 .border-pink { border-color: $pink }
+.border-light-blue-bg { border-color: $light-blue-bg }
 .border-white { border-color: $white }
 .border-borderColor { border-color: $borderColor }

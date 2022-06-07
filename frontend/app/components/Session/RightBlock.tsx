@@ -4,7 +4,7 @@ import PageInsightsPanel from '../Session_/PageInsightsPanel/PageInsightsPanel'
 import { Controls as PlayerControls } from 'Player';
 import { connectPlayer } from 'Player';
 import cn from 'classnames';
-import stl from './rightblock.css';
+import stl from './rightblock.module.css';
 
 const EventsBlockConnected = connectPlayer(state => ({
   currentTimeEventIndex: state.eventListNow.length > 0 ? state.eventListNow.length - 1 : 0,
