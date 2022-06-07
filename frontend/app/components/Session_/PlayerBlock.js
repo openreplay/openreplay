@@ -8,7 +8,7 @@ import {
 import Player from './Player';
 import SubHeader from './Subheader';
 
-import styles from './playerBlock.css';
+import styles from './playerBlock.module.css';
 
 @connect(state => ({
   fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
@@ -19,11 +19,11 @@ import styles from './playerBlock.css';
 }))
 export default class PlayerBlock extends React.PureComponent {
   render() {
-    const { 
-      fullscreen, 
-      bottomBlock, 
-      sessionId, 
-      disabled, 
+    const {
+      fullscreen,
+      bottomBlock,
+      sessionId,
+      disabled,
       activeTab,
       jiraConfig,
      } = this.props;

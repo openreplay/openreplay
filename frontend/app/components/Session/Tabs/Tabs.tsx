@@ -1,6 +1,6 @@
 import React from 'react';
 import cn from 'classnames';
-import stl from './tabs.css';
+import stl from './tabs.module.css';
 
 interface Props {
     tabs: Array<any>;

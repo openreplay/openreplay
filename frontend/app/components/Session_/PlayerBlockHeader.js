@@ -2,19 +2,15 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { sessions as sessionsRoute, assist as assistRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
-import { Button, Icon, BackLink, Link } from 'UI';
+import { Icon, BackLink, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
-import SharePopup from '../shared/SharePopup/SharePopup';
-import { Icon, BackLink, Link } from 'UI';
-import { connectPlayer, showEvents, toggleEvents } from 'Player';
-import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
+import { connectPlayer, toggleEvents } from 'Player';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
 import UserCard from './EventsBlock/UserCard';
 import Tabs from 'Components/Session/Tabs';
 
 import stl from './playerBlockHeader.module.css';
-import Issues from './Issues/Issues';
 import AssistActions from '../Assist/components/AssistActions';
 import AssistTabs from '../Assist/components/AssistTabs';
 
