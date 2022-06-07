@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 import withRequest from 'HOCs/withRequest';
 import { Popup, Dropdown, Icon, Button } from 'UI';
-import { pause } from 'Player';
 import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
@@ -22,7 +21,7 @@ import { Tooltip } from 'react-tippy';
 export default class SharePopup extends React.PureComponent {
   state = {
     comment: '',
-    isOpen: true,
+    isOpen: false,
     channelId: this.props.channels.getIn([ 0, 'webhookId' ]),
   }
 
@@ -31,36 +30,37 @@ export default class SharePopup extends React.PureComponent {
     .then(this.handleSuccess)
 
   handleOpen = () => {
-    this.setState({ isOpen: true });
-    pause();
     setTimeout(function() {
       document.getElementById('message').focus();
     }, 100)
   }
 
   handleClose = () => {
-    this.setState({ isOpen: false, comment: '' });
+    this.setState({ comment: '' });
   }
 
   handleSuccess = () => {
     toast.success('Sent to Slack.');
-    this.handleClose();
   }
 
   changeChannel = ({ value }) => this.setState({ channelId: value })
 
   render() {
-    const { trigger, loading, channels, showCopyLink = false } = this.props;
-    const { comment, isOpen, channelId } = this.state;
+    const { trigger, loading, channels, showCopyLink = false, time } = this.props;
+    const { comment, channelId } = this.state;
 
     const options = channels.map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
     return (
       <Tooltip
-        open={ isOpen }
+        theme='light'
         interactive
-        // onOpen={ this.handleOpen }
-        // onClose={ this.handleClose }
-        content={
+        position='bottom'
+        unmountHTMLWhenHide
+        useContext
+        trigger="click"
+        shown={this.handleOpen}
+        beforeHidden={this.handleClose}
+        html={
           <div className={ styles.wrapper }>
             <div className={ styles.header }>
               <div className={ styles.title }>Share this session link to Slack</div>
@@ -72,7 +72,7 @@ export default class SharePopup extends React.PureComponent {
                 </div>
                 { showCopyLink && (
                   <div className={styles.footer}>
-                    <SessionCopyLink />
+                    <SessionCopyLink time={time} />
                   </div>
                 )}
               </>
@@ -112,19 +112,16 @@ export default class SharePopup extends React.PureComponent {
                   </div>
                 </div>
                 <div className={ styles.footer }>
-                  <SessionCopyLink />
+                  <SessionCopyLink time={time} />
                 </div>
 
               </div>
             }
           </div>
         }
-        // trigger="click"
-        // position="top right"
-        // className={ styles.popup }
-        // hideOnScroll
+
       >
-        {trigger}
+          {trigger}
       </Tooltip>
     );
   }

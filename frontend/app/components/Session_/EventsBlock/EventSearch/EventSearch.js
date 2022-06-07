@@ -32,8 +32,9 @@ function EventSearch(props) {
               name="query"
               value={value}
               onChange={onChange}
+              wrapperClassName="w-full"
               style={{ height: '32px' }}
-              autocomplete="off"
+              autoComplete="off chromebugfix"
             />
           </div>
       </div>
@@ -41,4 +42,4 @@ function EventSearch(props) {
   )
 }
 
-export default connectPlayer(() => null, { toggleEvents })(EventSearch)
+export default connectPlayer(() => ({}), { toggleEvents })(EventSearch)

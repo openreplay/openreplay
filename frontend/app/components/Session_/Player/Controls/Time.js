@@ -4,7 +4,7 @@ import { connectPlayer } from 'Player';
 import styles from './time.module.css';
 
 const Time = ({ time, isCustom, format = 'm:ss', }) => (
-  <div className={ !isCustom && styles.time }>
+  <div className={ !isCustom ? styles.time : undefined }>
     { Duration.fromMillis(time).toFormat(format) }
   </div>
 )

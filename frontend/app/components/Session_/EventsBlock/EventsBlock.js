@@ -210,7 +210,7 @@ export default class EventsBlock extends React.PureComponent {
           onMouseLeave={ this.onMouseLeave }
         >
           {isEmptySearch && (
-            <div className='flex items-center'> 
+            <div className='flex items-center'>
               <Icon name="binoculars" size={18} />
               <span className='ml-2'>No Matching Results</span>
             </div>
@@ -220,7 +220,7 @@ export default class EventsBlock extends React.PureComponent {
               <List
                 ref={this.scroller}
                 className={ styles.eventsList }
-                height={height}
+                height={height + 10}
                 width={248}
                 overscanRowCount={6}
                 itemSize={230}

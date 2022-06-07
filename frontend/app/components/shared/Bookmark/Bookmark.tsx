@@ -14,7 +14,7 @@ interface Props {
   noMargin?: boolean;
 }
 function Bookmark(props : Props ) {
-  const { sessionId, favorite, isEnterprise } = props;
+  const { sessionId, favorite, isEnterprise, noMargin } = props;
   const [isFavorite, setIsFavorite] = useState(favorite);
   const ADDED_MESSAGE = isEnterprise ? 'Session added to vault' : 'Session added to your bookmarks';
   const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your bookmarks';
@@ -43,13 +43,20 @@ function Bookmark(props : Props ) {
       hideOnClick={true}
       distance={20}
     >
-      <Button
-        onClick={ toggleFavorite }
-        data-favourite={ isFavorite }
-      >
-        <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
-        <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
-      </Button>
+      {noMargin ? (
+        <div onClick={ toggleFavorite } className="flex items-center cursor-pointer">
+          <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
+          <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+        </div>
+      ) : (
+        <Button
+          onClick={ toggleFavorite }
+          data-favourite={ isFavorite }
+        >
+          <Icon name={ isFavorite ? ACTIVE_ICON : INACTIVE_ICON } color={isFavorite ? "teal" : undefined} size="16" />
+          <span className="ml-2">{isEnterprise ? 'Vault' : 'Bookmark'}</span>
+        </Button>
+      )}
     </Popup>
   )
 }

@@ -26,6 +26,4 @@ function SessionCopyLink({ content = '', time }: Props) {
   )
 }
 
-export default connectPlayer(state => ({
-  time: state.time,
-}))(SessionCopyLink);
+export default SessionCopyLink

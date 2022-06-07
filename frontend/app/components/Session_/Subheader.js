@@ -48,6 +48,7 @@ function SubHeader(props) {
                         entity="sessions"
                         id={ props.sessionId }
                         showCopyLink={true}
+                        time={props.time}
                         trigger={
                             <div className="flex items-center hover:bg-gray-light-shade rounded-md p-1">
                                 <Icon
@@ -55,7 +56,6 @@ function SubHeader(props) {
                                     disabled={ props.disabled }
                                     name="share-alt"
                                     size="16"
-                                    plain
                                 />
                                 <span>Share</span>
                             </div>
@@ -75,6 +75,6 @@ function SubHeader(props) {
     )
 }
 
-const SubH = connectPlayer(state => ({ currentLocation: state.location }))(SubHeader)
+const SubH = connectPlayer(state => ({ currentLocation: state.location, time: state.time }))(SubHeader)
 
 export default React.memo(SubH)

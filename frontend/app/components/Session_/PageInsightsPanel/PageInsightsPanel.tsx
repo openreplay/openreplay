@@ -12,14 +12,14 @@ import Period from 'Types/app/period';
 const JUMP_OFFSET = 1000;
 interface Props {
   filters: any
-  fetchInsights: (filters) => void
+  fetchInsights: (filters: Record<string, any>) => void
   urls: []
   insights: any
   events: Array<any>
   urlOptions: Array<any>
   loading: boolean
   host: string
-  setActiveTab: (tab) => void
+  setActiveTab: (tab: string) => void
 }
 
 function PageInsightsPanel({
@@ -62,16 +62,10 @@ function PageInsightsPanel({
   };
 
   return (
-    <div className="p-4 bg-white" style={{ width: 270 }}>
+    <div className="p-4 bg-white">
       <div className="pt-2 pb-3 flex items-center" style={{ maxWidth: '241px' }}>
         <div className="-ml-1 text-lg">
-          <DateRange
-            rangeValue={insightsFilters.rangeValue}
-            startDate={insightsFilters.startDate}
-            endDate={insightsFilters.endDate}
-            onDateChange={onDateChange}
-            customHidden
-          />
+          <SelectDateRange period={period} onChange={onDateChange} disableCustom />
         </div>
         <div
           onClick={() => { setActiveTab('');  }}

@@ -1,3 +1,4 @@
+import React from 'react'
 import { connectPlayer, jump } from 'Player';
 import ConsoleContent from './ConsoleContent';
 
