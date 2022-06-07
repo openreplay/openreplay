@@ -8,6 +8,7 @@ import cn from 'classnames'
 import styles from './projectCodeSnippet.module.css'
 import Highlight from 'react-highlight'
 import Select from 'Shared/Select'
+import CodeSnippet from '../../CodeSnippet';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -142,10 +143,14 @@ const ProjectCodeSnippet = props  => {
         <div className={ styles.siteId }>{ 'Project Key: ' } <span>{ site.projectKey }</span></div>
       </div>
       <div className={ styles.snippetsWrapper }>
-        <button className={ styles.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
-        <Highlight className="html">
-          {_snippet}
-        </Highlight>
+        <CodeSnippet
+          host={ site && site.host }
+          projectKey={ site && site.projectKey }
+          ingestPoint={`"https://${window.location.hostname}/ingest"`}
+          defaultInputMode={ gdpr.defaultInputMode }
+          obscureTextNumbers={ gdpr.maskNumbers }
+          obscureTextEmails={ gdpr.maskEmails }
+        />
       </div>
       <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a>. </div>
     </div>

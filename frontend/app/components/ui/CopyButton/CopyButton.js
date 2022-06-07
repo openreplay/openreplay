@@ -1,8 +1,9 @@
 import React from 'react'
 import { useState } from 'react';
 import copy from 'copy-to-clipboard';
+import { Button } from 'UI';
 
-function CopyButton({ content, className, btnText = 'copy' }) {
+function CopyButton({ content, variant="text-primary",  className = '', btnText = 'copy' }) {
   const [copied, setCopied] = useState(false)
 
   const copyHandler = () => {
@@ -12,13 +13,15 @@ function CopyButton({ content, className, btnText = 'copy' }) {
       setCopied(false);
     }, 1000);
   };
+  
   return (
-    <button
+    <Button
+      variant={variant}
       className={ className }
       onClick={ copyHandler }
     >
       { copied ? 'copied' : btnText }
-    </button>
+    </Button>
   )
 }
 
