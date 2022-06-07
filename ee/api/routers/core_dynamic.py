@@ -24,7 +24,7 @@ def get_all_signup():
     return {"data": {"tenants": tenants.tenants_exists(),
                      "sso": SAML2_helper.is_saml2_available(),
                      "ssoProvider": SAML2_helper.get_saml2_provider(),
-                     "edition": helper.get_edition()}}
+                     "edition": license.EDITION}}
 
 
 @public_app.post('/login', tags=["authentication"])
