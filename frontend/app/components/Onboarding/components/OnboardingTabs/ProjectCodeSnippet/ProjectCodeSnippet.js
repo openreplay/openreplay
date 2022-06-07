@@ -166,10 +166,18 @@ const ProjectCodeSnippet = props  => {
         <span>{ ' tag of your page.' }</span>
       </div>
       <div className={ cn(stl.snippetsWrapper, 'ml-10') }>
-        <button className={ stl.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
+        <CodeSnippet
+          host={ site && site.host }
+          projectKey={ site && site.projectKey }
+          ingestPoint={`"https://${window.location.hostname}/ingest"`}
+          defaultInputMode={ inputModeOptionsMap[gdpr.defaultInputMode] }
+          obscureTextNumbers={ gdpr.maskNumbers }
+          obscureTextEmails={ gdpr.maskEmails }
+        />
+        {/* <button className={ stl.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
         <Highlight className="html">
           {_snippet}
-        </Highlight>
+        </Highlight> */}
       </div>
       {/* TODO Extract for SaaS */}
       <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a>.</div>
