@@ -11,25 +11,6 @@
 .form {
   margin-top: 30px;
   width: 350px;
-  & .formGroup {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 25px;
-    & label {
-      font-weight: 500 !important;
-      margin-bottom: 3px;
-    }
-
-    & input {
-      background-color: white;
-      padding: 8px 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      &:read-only { 
-        background-color: $gray-lightest;
-      }
-    }
-  }
 }
 
 .passwordPolicy {

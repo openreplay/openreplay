@@ -6,7 +6,7 @@ import styles from './profileSettings.module.css';
 import { Form, Input, Button } from "UI";
 
 @connect(state => ({
-  tenantKey: state.getIn([ 'user', 'client', 'tenantKey' ]),
+  tenantKey: state.getIn([ 'user', 'account', 'tenantKey' ]),
 }))
 export default class TenantKey extends React.PureComponent {
   state = { copied: false }

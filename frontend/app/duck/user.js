@@ -20,7 +20,7 @@ const PUSH_NEW_SITE = 'user/PUSH_NEW_SITE';
 const SET_ONBOARDING = 'user/SET_ONBOARDING';
 
 const initialState = Map({
-  client: Client(),
+  // client: Client(),
   account: Account(),
   siteId: null,
   passwordRequestError: false,
@@ -41,15 +41,9 @@ const reducer = (state = initialState, action = {}) => {
     case RESET_PASSWORD.SUCCESS:
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
-      return setClient(
-        state.set('account', Account({...action.data.user, smtp: action.data.client.smtp })),
-        action.data.client,
-      );
+      state.set('account', Account({...action.data.user, smtp: action.data.client.smtp }))
     case SIGNUP.SUCCESS:
-      return setClient(
-        state.set('account', Account(action.data.user)),
-        action.data.client,
-      ).set('onboarding', true);
+      state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:
       break;
     case UPDATE_ACCOUNT.SUCCESS:
@@ -63,7 +57,7 @@ const reducer = (state = initialState, action = {}) => {
     case DELETE:
       return initialState;
     case PUT_CLIENT.REQUEST:
-      return state.mergeIn([ 'client' ], action.params);
+      return state.mergeIn([ 'account' ], action.params);
     case FETCH_CLIENT.SUCCESS:
       return setClient(state, action.data);
     case PUSH_NEW_SITE:
@@ -123,10 +117,10 @@ export const fetchUserInfo = () => dispatch => Promise.all([
     types: FETCH_ACCOUNT.toArray(),
     call: client => client.get('/account'),
   }),
-  dispatch({
-    types: FETCH_CLIENT.toArray(),
-    call: client => client.get('/client'),
-  }),
+  // dispatch({
+  //   types: FETCH_CLIENT.toArray(),
+  //   call: client => client.get('/client'),
+  // }),
 ]);
 
 export function logout() {

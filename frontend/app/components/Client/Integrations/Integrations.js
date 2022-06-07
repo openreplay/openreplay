@@ -96,7 +96,7 @@ const integrations = [ 'sentry', 'datadog', 'stackdriver', 'rollbar', 'newrelic'
 		...props,
 		issues: state.getIn([ 'issues', 'list']).first() || {},
 		slackChannelListExists: state.getIn([ 'slack', 'list' ]).size > 0,
-		tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+		tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
 		jwt: state.get('jwt'),
     projectKey: site ? site.projectKey : ''
 	};

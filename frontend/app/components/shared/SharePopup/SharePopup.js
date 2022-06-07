@@ -12,7 +12,7 @@ import { Tooltip } from 'react-tippy';
 
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
-  tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+  tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
 }))
 @withRequest({
   endpoint: ({ id, entity }, integrationId) => 

@@ -98,7 +98,7 @@ function getStorageName(type) {
 }))
 @connect((state, props) => {  
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
-  const isEnterprise = state.getIn([ 'user', 'client', 'edition' ]) === 'ee';
+  const isEnterprise = state.getIn([ 'user', 'account', 'edition' ]) === 'ee';
   return {
     disabled: props.disabled || (isEnterprise && !permissions.includes('DEV_TOOLS')),
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),

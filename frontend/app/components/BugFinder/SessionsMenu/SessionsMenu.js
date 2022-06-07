@@ -76,7 +76,7 @@ export default connect(state => ({
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }), {
   clearEvents, fetchSessionList
 })(SessionsMenu);

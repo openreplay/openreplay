@@ -3,13 +3,11 @@ import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
 import { Button, Input, Form } from 'UI';
 import { updateAccount, updateClient } from 'Duck/user';
-
 import styles from './profileSettings.module.css';
 
 @connect(state => ({
   accountName: state.getIn([ 'user', 'account', 'name' ]),
-  apiKey: state.getIn([ 'user', 'client', 'apiKey' ]),
-  organizationName: state.getIn([ 'user', 'client', 'name' ]),
+  organizationName: state.getIn([ 'user', 'account', 'tenantName' ]),
   loading: state.getIn([ 'user', 'updateAccountRequest', 'loading' ]) ||
     state.getIn([ 'user', 'putClientRequest', 'loading' ]),
 }), {
@@ -26,15 +24,6 @@ export default class Settings extends React.PureComponent {
     this.setState({ changed: true, [ name ]: value });
   }
 
-  copyHandler = () => {
-    const { apiKey } = this.props;
-    this.setState({ copied: true });
-    copy(apiKey);
-    setTimeout(() => {
-      this.setState({ copied: false });
-    }, 1000);
-  };
-
   handleSubmit = (e) => {
     e.preventDefault();
     const { accountName, organizationName } = this.state;
@@ -50,7 +39,7 @@ export default class Settings extends React.PureComponent {
   }
 
   render() {
-    const { loading, apiKey } = this.props;
+    const { loading } = this.props;
     const { accountName, organizationName, changed, copied } = this.state;
 
     return (

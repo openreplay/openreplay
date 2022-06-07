@@ -89,8 +89,8 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     loading: siteId === null || userInfoLoading,
     email: state.getIn([ 'user', 'account', 'email' ]),
     account: state.getIn([ 'user', 'account' ]),
-    organisation: state.getIn([ 'user', 'client', 'name' ]),
-    tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+    organisation: state.getIn([ 'user', 'account', 'name' ]),
+    tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
     tenants: state.getIn(['user', 'tenants']),
     existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
     onboarding: state.getIn([ 'user', 'onboarding' ])

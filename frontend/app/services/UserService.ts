@@ -54,4 +54,10 @@ export default class UserService {
             .then(response => response.json())
             .then(response => response.data || []);
     }
+
+    getLimits() {
+        return this.client.get('/limits')
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
+    }
 }

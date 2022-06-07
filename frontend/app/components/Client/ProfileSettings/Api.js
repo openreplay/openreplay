@@ -5,7 +5,7 @@ import styles from './profileSettings.module.css';
 import { Form, Input, Button } from 'UI';
 
 @connect(state => ({
-  apiKey: state.getIn([ 'user', 'client', 'apiKey' ]),
+  apiKey: state.getIn([ 'user', 'account', 'apiKey' ]),
   loading: state.getIn([ 'user', 'updateAccountRequest', 'loading' ]) ||
     state.getIn([ 'user', 'putClientRequest', 'loading' ]),
 }))

@@ -15,9 +15,13 @@ export default Member.extend({
   permissions: [],
   iceServers: undefined,
   hasPassword: false, // to check if it's SSO
+  apiKey: undefined,
+  tenantKey: undefined,
+  tenantName: undefined,
 }, {
   fromJS: ({ ...account})=> ({
     ...account,
+    id: account.id || account.userId,
     expirationDate: account.expirationDate > 0 && DateTime.fromMillis(account.expirationDate || 0),
   })
 });

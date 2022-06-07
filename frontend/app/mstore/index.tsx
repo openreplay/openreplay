@@ -4,6 +4,7 @@ import MetricStore, { IMetricStore } from './metricStore';
 import UserStore from './userStore';
 import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
+import { makeAutoObservable, observable, action } from "mobx"
 import { dashboardService, metricService, sessionService, userService, auditService } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
@@ -12,9 +13,11 @@ export class RootStore {
     dashboardStore: IDashboardSotre;
     metricStore: IMetricStore;
     settingsStore: SettingsStore;
-    userStore: UserStore; 
+    userStore: UserStore;
     roleStore: RoleStore;
     auditStore: AuditStore;
+
+    limits: any;
 
     constructor() {
         this.dashboardStore = new DashboardStore();
@@ -23,6 +26,10 @@ export class RootStore {
         this.userStore = new UserStore();
         this.roleStore = new RoleStore();
         this.auditStore = new AuditStore();
+        makeAutoObservable(this, {
+          limits: observable,
+          fetchLimits: action,
+        });
     }
 
     initClient() {
@@ -32,11 +39,23 @@ export class RootStore {
       sessionService.initClient(client)
       userService.initClient(client)
     }
+    
+    fetchLimits(): Promise<any> {
+      return new Promise((resolve, reject) => {
+          userService.getLimits()
+              .then((response: any) => {
+                  this.limits = response;
+                  resolve(response);
+              }).catch((error: any) => {
+                  reject(error);
+              });
+      });
+    }
 }
 
 const StoreContext = React.createContext<RootStore>({} as RootStore);
 
-export const StoreProvider = ({ children, store }) => {
+export const StoreProvider = ({ children, store }: any) => {
   return (
     <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
   );
@@ -44,6 +63,6 @@ export const StoreProvider = ({ children, store }) => {
 
 export const useStore = () => React.useContext(StoreContext);
 
-export const withStore = (Component) => (props) => {
+export const withStore = (Component: any) => (props: any) => {
   return <Component {...props} mstore={useStore()} />;
 };

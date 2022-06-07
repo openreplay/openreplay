@@ -72,6 +72,6 @@ function UsersView(props: Props) {
 
 export default connect(state => ({
     account: state.getIn([ 'user', 'account' ]),
-    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
     limits: state.getIn([ 'user', 'account', 'limits', 'teamMember' ]),
 }))(UsersView);

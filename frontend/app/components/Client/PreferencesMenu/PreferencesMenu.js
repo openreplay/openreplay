@@ -112,5 +112,5 @@ function PreferencesMenu({ activeTab, history, isEnterprise }) {
 }
 
 export default connect(state => ({
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }))(withRouter(PreferencesMenu));

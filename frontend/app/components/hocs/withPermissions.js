@@ -5,7 +5,7 @@ import { NoPermission, NoSessionPermission } from 'UI';
 export default (requiredPermissions, className, isReplay = false) => BaseComponent => 
 @connect((state, props) => ({
   permissions: state.getIn([ 'user', 'account', 'permissions' ]) || [],
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }))
 class extends React.PureComponent {
   render() {

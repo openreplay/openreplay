@@ -141,7 +141,7 @@ const con = connect(state => {
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || []
   return {
     hasPermission: permissions.includes('ASSIST_CALL'),
-    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
   }
 }, { toggleChatWindow })
 
