@@ -24,7 +24,7 @@ def get_all_signup():
     return {"data": {"tenants": tenants.tenants_exists(),
                      "sso": None,
                      "ssoProvider": None,
-                     "edition": helper.get_edition()}}
+                     "edition": license.EDITION}}
 
 
 @public_app.post('/login', tags=["authentication"])
@@ -181,7 +181,7 @@ def change_password_by_invitation(data: schemas.EditPasswordByInvitationSchema =
 @app.post('/client/members/{memberId}', tags=["client"])
 def edit_member(memberId: int, data: schemas.EditMemberSchema,
                 context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data.dict(),
+    return users.edit(tenant_id=context.tenant_id, editor_id=context.user_id, changes=data,
                       user_id_to_update=memberId)
 
 

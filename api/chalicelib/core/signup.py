@@ -67,8 +67,8 @@ def create_step1(data: schemas.UserSignupSchema):
     }
     query = f"""\
                 WITH t AS (
-                    INSERT INTO public.tenants (name, version_number, edition)
-                        VALUES (%(organizationName)s, (SELECT openreplay_version()), 'fos')
+                    INSERT INTO public.tenants (name, version_number)
+                        VALUES (%(organizationName)s, (SELECT openreplay_version()))
                     RETURNING api_key
                 ),
                  u AS (

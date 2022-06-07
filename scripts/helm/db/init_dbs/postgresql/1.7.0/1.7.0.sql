@@ -9,6 +9,22 @@ $$ LANGUAGE sql IMMUTABLE;
 ALTER TABLE IF EXISTS dashboards
     ADD COLUMN IF NOT EXISTS description text NOT NULL DEFAULT '';
 
+
+
+ALTER TABLE users
+    DROP COLUMN IF EXISTS appearance;
+
+ALTER TABLE basic_authentication
+    DROP COLUMN IF EXISTS generated_password;
+
+ALTER TABLE tenants
+    DROP COLUMN IF EXISTS edition;
+
+ALTER TABLE dashboards
+    ALTER COLUMN user_id DROP NOT NULL;
+
+COMMIT;
+
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)
 VALUES ('Captured sessions', 'web vitals', '{
@@ -120,11 +136,3 @@ ON CONFLICT (predefined_key) DO UPDATE
         is_public=excluded.is_public,
         metric_type=excluded.metric_type,
         view_type=excluded.view_type;
-
-ALTER TABLE users
-    DROP COLUMN appearance;
-
-ALTER TABLE basic_authentication
-    DROP COLUMN generated_password;
-
-COMMIT;

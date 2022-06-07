@@ -1,7 +1,7 @@
 import schemas
 from chalicelib.utils import pg_client
 from chalicelib.utils import helper
-from chalicelib.core import users
+from chalicelib.core import users, license
 
 
 def get_by_tenant_id(tenant_id):
@@ -13,7 +13,7 @@ def get_by_tenant_id(tenant_id):
                        name,
                        api_key,
                        created_at,
-                        edition,
+                        '{license.EDITION}' AS edition,
                         version_number,
                         opt_out
                     FROM public.tenants
@@ -67,7 +67,7 @@ def update(tenant_id, user_id, data: schemas.UpdateTenantSchema):
     admin = users.get(user_id=user_id, tenant_id=tenant_id)
 
     if not admin["admin"] and not admin["superAdmin"]:
-        return {"error": "unauthorized"}
+        return {"errors": ["unauthorized, needs admin or owner"]}
     if data.name is None and data.opt_out is None:
         return {"errors": ["please provide 'name' of 'optOut' attribute for update"]}
     changes = {}
