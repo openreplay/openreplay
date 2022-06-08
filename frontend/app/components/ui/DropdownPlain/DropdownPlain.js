@@ -1,7 +1,7 @@
 import React from 'react'
 import { Dropdown } from 'semantic-ui-react'
 import { Icon } from 'UI';
-import stl from './dropdownPlain.css'
+import stl from './dropdownPlain.module.css'
 
 const sessionSortOptions = {
   'latest': 'Newest',

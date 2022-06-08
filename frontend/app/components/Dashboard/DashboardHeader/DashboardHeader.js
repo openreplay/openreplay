@@ -4,7 +4,7 @@ import { ALL, DESKTOP, MOBILE } from 'Types/app/platform';
 import { connect } from 'react-redux';
 import { setPeriod, setPlatform } from 'Duck/dashboard';
 import cn from 'classnames';
-import styles from './DashboardHeader.css';
+import styles from './DashboardHeader.module.css';
 import Filters from '../Filters/Filters';
 
 export const PERIOD_OPTIONS = [

@@ -11,7 +11,7 @@ const cols = [
   {
     key: 'resource',
     title: 'Resource',
-    Component: ResourceInfo,    
+    Component: ResourceInfo,
     width: '40%',
   },
   {
@@ -38,9 +38,10 @@ const cols = [
 interface Props {
     data: any
     metric?: any
+    isTemplate?: boolean
 }
 function MissingResources(props: Props) {
-    const { data, metric } = props;
+    const { data, metric, isTemplate } = props;
 
     return (
         <NoContent
@@ -54,6 +55,7 @@ function MissingResources(props: Props) {
               cols={ cols }
               rows={ List(metric.data.chart) }
               rowClass="group"
+              isTemplate={isTemplate}
             />
           </div>
         </NoContent>

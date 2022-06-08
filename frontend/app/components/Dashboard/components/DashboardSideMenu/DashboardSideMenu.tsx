@@ -1,7 +1,7 @@
 //@ts-nocheck
 import { useObserver } from 'mobx-react-lite';
 import React from 'react';
-import { SideMenuitem, SideMenuHeader, Icon, Button } from 'UI';
+import { SideMenuitem, SideMenuHeader, Icon, Popup, Button } from 'UI';
 import { useStore } from 'App/mstore';
 import { withRouter } from 'react-router-dom';
 import { withSiteId, dashboardSelected, metrics } from 'App/routes';
@@ -9,17 +9,19 @@ import { useModal } from 'App/components/Modal';
 import DashbaordListModal from '../DashbaordListModal';
 import DashboardModal from '../DashboardModal';
 import cn from 'classnames';
-import { Tooltip } from 'react-tippy';
 import { connect } from 'react-redux';
+import { compose } from 'redux'
 import { setShowAlerts } from 'Duck/dashboard';
+// import stl from 'Shared/MainSearchBar/mainSearchBar.module.css';
 
 const SHOW_COUNT = 8;
+
 interface Props {
     siteId: string
     history: any
     setShowAlerts: (show: boolean) => void
 }
-function DashboardSideMenu(props: Props) {
+function DashboardSideMenu(props: RouteComponentProps<Props>) {
     const { history, siteId, setShowAlerts } = props;
     const { hideModal, showModal } = useModal();
     const { dashboardStore } = useStore();
@@ -40,20 +42,32 @@ function DashboardSideMenu(props: Props) {
 
     const onAddDashboardClick = (e) => {
         dashboardStore.initDashboard();
-        showModal(<DashboardModal />, {})
+        showModal(<DashboardModal siteId={siteId} />, { right: true })
     }
 
-    const togglePinned = (dashboard) => {
+    const togglePinned = (dashboard, e) => {
+        e.stopPropagation();
         dashboardStore.updatePinned(dashboard.dashboardId);
     }
 
     return useObserver(() => (
         <div>
-            <SideMenuHeader className="mb-4" text="Dashboards" />
-            {dashboardsPicked.sort((a: any, b: any) => a.isPinned === b.isPinned ? 0 : a.isPinned ? -1 : 1 ).map((item: any) => (
+            <SideMenuHeader
+                className="mb-4 flex items-center"
+                text="DASHBOARDS"
+                button={
+                    <Button onClick={onAddDashboardClick} variant="text-primary">
+                        <>
+                            <Icon name="plus" size="16" color="main" />
+                            <span className="ml-1" style={{ textTransform: 'none' }}>Create</span>
+                        </>
+                    </Button>
+                }
+            />
+            {dashboardsPicked.map((item: any) => (
                 <SideMenuitem
                     key={ item.dashboardId }
-                    active={item.dashboardId === dashboardId}
+                    active={item.dashboardId === dashboardId && !isMetric}
                     title={ item.name }
                     iconName={ item.icon }
                     onClick={() => onItemClick(item)}
@@ -63,19 +77,18 @@ function DashboardSideMenu(props: Props) {
                             {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
                             {item.isPinned && <div className="p-1 pointer-events-none"><Icon name="pin-fill" size="16" /></div>}
                             {!item.isPinned && (
-                                <Tooltip
+                                <Popup
                                     delay={500}
-                                    arrow
-                                    title="Set as default dashboard"
+                                    content="Set as default dashboard"
                                     hideOnClick={true}
                                 >
                                     <div
                                         className={cn("p-1 invisible group-hover:visible cursor-pointer")}
-                                        onClick={() => togglePinned(item)}
+                                        onClick={(e) => togglePinned(item, e)}
                                     >
                                         <Icon name="pin-fill" size="16" color="gray-light" />
                                     </div>
-                                </Tooltip>
+                                </Popup>
                             )}
                         </div>
                     )}
@@ -94,15 +107,6 @@ function DashboardSideMenu(props: Props) {
             <div className="border-t w-full my-2" />
             <div className="w-full">
 				<SideMenuitem
-					id="menu-manage-alerts"
-					title="Create Dashboard"
-					iconName="plus"
-					onClick={onAddDashboardClick}
-				/>
-			</div>
-            <div className="border-t w-full my-2" />
-            <div className="w-full">
-				<SideMenuitem
                     active={isMetric}
 					id="menu-manage-alerts"
 					title="Metrics"
@@ -117,10 +121,13 @@ function DashboardSideMenu(props: Props) {
 					title="Alerts"
 					iconName="bell-plus"
 					onClick={() => setShowAlerts(true)}
-				/>				
+				/>
 			</div>
         </div>
     ));
 }
 
-export default connect(null, { setShowAlerts })(withRouter(DashboardSideMenu));
+export default compose(
+    withRouter,
+    connect(null, { setShowAlerts }),
+)(DashboardSideMenu) as React.FunctionComponent<RouteComponentProps<Props>>

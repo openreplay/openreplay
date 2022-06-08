@@ -1,11 +1,12 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Input, Button, Icon } from 'UI';
+import { Form, Input, Button, Icon } from 'UI';
 import { save, edit, update , fetchList, remove } from 'Duck/site';
 import { pushNewSite } from 'Duck/user';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
-import styles from './siteForm.css';
-import { confirm } from 'UI/Confirmation';
+import styles from './siteForm.module.css';
+import { confirm } from 'UI';
 
 @connect(state => ({
 	site: state.getIn([ 'site', 'instance' ]),
@@ -73,27 +74,28 @@ export default class NewSiteForm extends React.PureComponent {
 	render() {
 		const { site, loading } = this.props;
 		return (
-			<form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
+			<Form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
         		<div className={ styles.content }>
-					<div className={ styles.formGroup }>
+					<Form.Field>
 						<label>{ 'Name' }</label>
 						<Input
-						placeholder="Ex. openreplay"
-						name="name"
-						value={ site.name }
-						onChange={ this.edit }
-						className={ styles.input }
+							placeholder="Ex. openreplay"
+							name="name"
+							value={ site.name }
+							onChange={ this.edit }
+							className={ styles.input }
 						/>
-					</div>
+					</Form.Field>
 					<div className="mt-6 flex justify-between">
 						<Button							
-							primary
+							variant="primary"
 							type="submit"							
-							marginRight
+							className="float-left mr-2"
 							loading={ loading }
-							content={site.exists() ? 'Update' : 'Add'}
-						/>
-						<Button type="button" plain onClick={() => this.remove(site)}>
+						>
+							{site.exists() ? 'Update' : 'Add'}
+						</Button>
+						<Button variant="text" type="button" plain onClick={() => this.remove(site)}>
 							<Icon name="trash" size="16" />
 						</Button>
 					</div>
@@ -103,7 +105,7 @@ export default class NewSiteForm extends React.PureComponent {
 						</div>
 					}
 	        	</div>
-      		</form>
+      		</Form>
 	  	);
 	}
 }

@@ -2,50 +2,54 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/internal/builder"
-	"openreplay/backend/internal/config/ender"
-	"openreplay/backend/internal/handlers"
-	"openreplay/backend/internal/handlers/custom"
-	"openreplay/backend/internal/handlers/ios"
-	"openreplay/backend/internal/handlers/web"
+	"openreplay/backend/internal/config/heuristics"
+	"openreplay/backend/pkg/handlers"
+	"openreplay/backend/pkg/handlers/custom"
+	ios2 "openreplay/backend/pkg/handlers/ios"
+	web2 "openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/intervals"
 	logger "openreplay/backend/pkg/log"
 	"openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
+	"openreplay/backend/pkg/sessions"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
+/*
+Heuristics
+*/
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	// Load service configuration
-	cfg := ender.New()
+	cfg := heuristics.New()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
 			// web handlers
-			&web.ClickRageDetector{},
-			&web.CpuIssueDetector{},
-			&web.DeadClickDetector{},
-			&web.MemoryIssueDetector{},
-			&web.NetworkIssueDetector{},
-			&web.PerformanceAggregator{},
+			&web2.ClickRageDetector{},
+			&web2.CpuIssueDetector{},
+			&web2.DeadClickDetector{},
+			&web2.MemoryIssueDetector{},
+			&web2.NetworkIssueDetector{},
+			&web2.PerformanceAggregator{},
 			// iOS handlers
-			&ios.AppNotResponding{},
-			&ios.ClickRageDetector{},
-			&ios.PerformanceAggregator{},
+			&ios2.AppNotResponding{},
+			&ios2.ClickRageDetector{},
+			&ios2.PerformanceAggregator{},
 			// Other handlers (you can add your custom handlers here)
 			&custom.CustomHandler{},
 		}
 	}
 
 	// Create handler's aggregator
-	builderMap := builder.NewBuilderMap(handlersFabric)
+	builderMap := sessions.NewBuilderMap(handlersFabric)
 
 	// Init logger
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
@@ -53,7 +57,7 @@ func main() {
 	// Init producer and consumer for data bus
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
-		cfg.GroupEvents,
+		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,

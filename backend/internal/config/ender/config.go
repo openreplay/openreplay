@@ -5,7 +5,7 @@ import (
 )
 
 type Config struct {
-	GroupEvents     string
+	GroupEnder      string
 	TopicTrigger    string
 	LoggerTimeout   int
 	TopicRawWeb     string
@@ -15,7 +15,7 @@ type Config struct {
 
 func New() *Config {
 	return &Config{
-		GroupEvents:     env.String("GROUP_ENDER"),
+		GroupEnder:      env.String("GROUP_ENDER"),
 		TopicTrigger:    env.String("TOPIC_TRIGGER"),
 		LoggerTimeout:   env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
 		TopicRawWeb:     env.String("TOPIC_RAW_WEB"),

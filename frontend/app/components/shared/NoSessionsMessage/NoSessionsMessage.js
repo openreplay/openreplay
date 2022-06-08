@@ -25,7 +25,7 @@ const NoSessionsMessage= (props) => {
               <div className="ml-2color-gray-darkest mr-auto">
                 It takes a few minutes for first recordings to appear. All set but they are still not showing up? Check our <a href="https://docs.openreplay.com/troubleshooting" className="link">troubleshooting</a> section.
               </div>
-              <Button outline size="smallest" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>Go to project setup</Button>
+              <Button variant="outline" className="bg-white h-8 hover:bg-gray-light" onClick={() => props.history.push(withSiteId(onboardingRoute('installing'), siteId))}>Go to project setup</Button>
             </div>
           </div>
         </div>

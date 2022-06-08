@@ -31,7 +31,7 @@ export default function EventSearch(props) {
               className="flex items-center justify-center cursor-pointer absolute right-0"
               style={{ height: '30px', width: '32px' }}
             >
-              <Icon name={'close'} size="18" color="teal" />
+              <Icon name={'close'} size="16" color="teal" />
             </div>
           </div>
         :

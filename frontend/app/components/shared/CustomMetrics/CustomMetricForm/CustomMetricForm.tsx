@@ -4,7 +4,7 @@ import FilterSeries from '../FilterSeries';
 import { connect } from 'react-redux';
 import { edit as editMetric, save, addSeries, removeSeries, remove } from 'Duck/customMetrics';
 import CustomMetricWidgetPreview from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricWidgetPreview';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { toast } from 'react-toastify';
 import cn from 'classnames';
 import DropdownPlain from '../../DropdownPlain';
@@ -203,14 +203,14 @@ function CustomMetricForm(props: Props) {
 
       <div className="flex items-center fixed border-t w-full bottom-0 px-5 py-2 bg-white">
         <div className="mr-auto">
-          <Button loading={loading} primary disabled={!metric.validate()}>
+          <Button loading={loading} variant="primary" className="float-left mr-2" disabled={!metric.validate()}>
             { `${metric.exists() ? 'Update' : 'Create'}` }
           </Button>
 
-          <Button type="button" className="ml-3" outline hover plain onClick={props.onClose}>Cancel</Button>
+          <Button type="button" onClick={props.onClose}>Cancel</Button>
         </div>
         <div>
-          { metric.exists() && <Button type="button" className="ml-3" outline hover plain onClick={deleteHandler}>Delete</Button> }
+          { metric.exists() && <Button variant="text" type="button" className="ml-3" outline hover plain onClick={deleteHandler}>Delete</Button> }
         </div>
       </div>
     </Form>

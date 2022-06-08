@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import { 
@@ -7,8 +8,6 @@ import {
   selectStorageListNow,
 } from 'Player/store';
 import LiveTag from 'Shared/LiveTag';
-
-import { Popup, Icon } from 'UI';
 import { toggleInspectorMode } from 'Player';
 import {
   fullscreenOn,
@@ -30,7 +29,7 @@ import { ReduxTime } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 
-import styles from './controls.css';
+import styles from './controls.module.css';
 
 
 function getStorageIconName(type) {
@@ -99,7 +98,7 @@ function getStorageName(type) {
 }))
 @connect((state, props) => {  
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || [];
-  const isEnterprise = state.getIn([ 'user', 'client', 'edition' ]) === 'ee';
+  const isEnterprise = state.getIn([ 'user', 'account', 'edition' ]) === 'ee';
   return {
     disabled: props.disabled || (isEnterprise && !permissions.includes('DEV_TOOLS')),
     fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),

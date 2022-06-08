@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from 'App/mstore';
+import cn from 'classnames'
+import { Icon, BackLink, Loader } from 'UI';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
-import { Icon, BackLink, Loader } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-import { withSiteId } from 'App/routes';
 import WidgetName from '../WidgetName';
+
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
 interface Props {
@@ -32,11 +33,12 @@ function WidgetView(props: Props) {
     }, [])
 
     const onBackHandler = () => {
-        if (dashboardId) {
-            props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));    
-        } else {
-            props.history.push(withSiteId(`/metrics`, siteId));
-        }
+        props.history.goBack();
+    }
+
+    const openEdit = () => {
+        if (expanded) return;
+        setExpanded(true)
     }
 
     return useObserver(() => (
@@ -49,7 +51,15 @@ function WidgetView(props: Props) {
                     ]}
                 />
                 <div className="bg-white rounded border">
-                    <div className="px-6 py-4 flex justify-between items-center">
+                    <div
+                        className={cn(
+                            "px-6 py-4 flex justify-between items-center",
+                            {
+                                'cursor-pointer hover:bg-active-blue hover:shadow-border-blue': !expanded,
+                            }
+                        )}
+                        onClick={openEdit}
+                        >
                         <h1 className="mb-0 text-2xl">
                             <WidgetName
                                 name={widget.name}

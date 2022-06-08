@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { connectPlayer, jump } from 'Player';
 import { NoContent, Tabs } from 'UI';

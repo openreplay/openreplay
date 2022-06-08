@@ -12,7 +12,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: "alerts"
-fullnameOverride: "alerts"
+fullnameOverride: "alerts-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,7 +38,21 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 9000
+  ports:
+    http: 9000
+    metrics: 8888
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: monitoring
+  scrapeConfigs:
+    - port: metrics
+      honorLabels: true
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
 
 ingress:
   enabled: false

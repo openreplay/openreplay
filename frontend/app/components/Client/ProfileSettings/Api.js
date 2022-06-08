@@ -1,10 +1,11 @@
-// TODO this can be deleted
+import React from 'react';
 import copy from 'copy-to-clipboard';
 import { connect } from 'react-redux';
-import styles from './profileSettings.css';
+import styles from './profileSettings.module.css';
+import { Form, Input, Button } from 'UI';
 
 @connect(state => ({
-  apiKey: state.getIn([ 'user', 'client', 'apiKey' ]),
+  apiKey: state.getIn([ 'user', 'account', 'apiKey' ]),
   loading: state.getIn([ 'user', 'updateAccountRequest', 'loading' ]) ||
     state.getIn([ 'user', 'putClientRequest', 'loading' ]),
 }))
@@ -25,27 +26,28 @@ export default class Api extends React.PureComponent {
     const { copied } = this.state;
 
     return (
-      <form onSubmit={ this.handleSubmit } className={ styles.form }>
-        <div className={ styles.formGroup }>
+      <Form onSubmit={ this.handleSubmit } className={ styles.form }>
+        <Form.Field>
           <label htmlFor="apiKey">{ 'Organization API Key' }</label>
-          <div className="ui action input">
-            <input
-              name="apiKey"
-              id="apiKey"
-              type="text"
-              readOnly={ true }
-              value={ apiKey }
-            />
-            <div
-              className="ui button copy-button"
-              role="button"
-              onClick={ this.copyHandler }
-            >
-              { copied ? 'copied' : 'copy' }
-            </div>
-          </div>
-        </div>
-      </form>
+          <Input
+            name="apiKey"
+            id="apiKey"
+            type="text"
+            readOnly={ true }
+            value={ apiKey }
+            leadingButton={
+              <Button
+                type="button"
+                variant="text-primary"
+                role="button"
+                onClick={ this.copyHandler }
+              >
+                { copied ? 'copied' : 'copy' }
+              </Button>
+            }
+          />
+        </Form.Field>
+      </Form>
     );
   }
 }

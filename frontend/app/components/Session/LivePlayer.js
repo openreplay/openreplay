@@ -1,3 +1,4 @@
+import React from 'react';
 import { useEffect } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
@@ -13,7 +14,7 @@ import withPermissions from 'HOCs/withPermissions';
 
 import PlayerBlockHeader from '../Session_/PlayerBlockHeader';
 import PlayerBlock from '../Session_/PlayerBlock';
-import styles from '../Session_/session.css';
+import styles from '../Session_/session.module.css';
 
 
 const InitLoader = connectPlayer(state => ({ 
@@ -65,7 +66,7 @@ export default withRequest({
       showAssist: state.getIn([ 'sessions', 'showChatWindow' ]),
       jwt: state.get('jwt'),
       fullscreen: state.getIn([ 'components', 'player', 'fullscreen' ]),
-      isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+      isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
       hasErrors: !!state.getIn([ 'sessions', 'errors' ]),
     }
   },

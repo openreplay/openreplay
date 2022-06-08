@@ -6,13 +6,16 @@ import SessionItem from 'Shared/SessionItem';
 import { observer, useObserver } from 'mobx-react-lite';
 import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
+import useIsMounted from 'App/hooks/useIsMounted'
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+
 interface Props {
     className?: string;
 }
 function WidgetSessions(props: Props) {
     const { className = '' } = props;
     const [data, setData] = useState<any>([]);
-    
+    const isMounted = useIsMounted()
     const [loading, setLoading] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState([
         { text: 'All', value: 'all' },
@@ -34,6 +37,7 @@ function WidgetSessions(props: Props) {
     }, [data]);
 
     const fetchSessions = (metricId, filter) => {
+        if (!isMounted()) return;
         setLoading(true)
         widget.fetchSessions(metricId, filter).then(res => {
             setData(res)
@@ -41,7 +45,7 @@ function WidgetSessions(props: Props) {
             setLoading(false)
         });
     }
-    
+
     const filteredSessions = getListSessionsBySeries(data, activeSeries);
     const { dashboardStore, metricStore } = useStore();
     const filter = useObserver(() => dashboardStore.drillDownFilter);
@@ -85,9 +89,14 @@ function WidgetSessions(props: Props) {
             <div className="mt-3">
                 <Loader loading={loading}>
                     <NoContent
-                        title="No recordings found"
+                        title={
+                            <div className="flex flex-col items-center justify-center">
+                                <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                                <div className="mt-6 text-2xl">No recordings found</div>
+                            </div>
+                        }
                         show={filteredSessions.sessions.length === 0}
-                        animatedIcon="no-results"
+                        // animatedIcon="no-results"
                     >
                         {filteredSessions.sessions.map((session: any) => (
                             <SessionItem key={ session.sessionId } session={ session }  />

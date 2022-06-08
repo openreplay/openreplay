@@ -4,9 +4,9 @@ import { remove as deleteFunnel, fetch, fetchInsights, fetchIssuesFiltered, fetc
 import { editFilter, editFunnelFilter, refresh, addFilter } from 'Duck/funnels';
 import DateRange from 'Shared/DateRange';
 import { connect } from 'react-redux';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import FunnelSaveModal from 'Components/Funnels/FunnelSaveModal';
-import stl from './funnelHeader.css';
+import stl from './funnelHeader.module.css';
 
 const Info = ({ label = '', value = '', className = 'mx-4' }) => {
   return (
@@ -74,26 +74,20 @@ const FunnelHeader = (props) => {
           />
           <Info label="Events" value={eventsCount} />
           <span>-</span>
-          <Button plain onClick={props.toggleFilters}>{ showFilters ? 'HIDE' : 'EDIT FUNNEL' }</Button>
+          <Button variant="text-primary" onClick={props.toggleFilters}>{ showFilters ? 'HIDE' : 'EDIT FUNNEL' }</Button>
           <Info label="Sessions" value={insights.sessionsCount} />          
           <Info label="Conversion" value={`${insights.conversions}%`} />
         </div>
         <div className="flex items-center">   
           <div className="flex items-center invisible group-hover:visible">
             <Popup
-              trigger={<IconButton icon="edit" onClick={() => setShowSaveModal(true)} />}
               content={ `Edit Funnel` }
-              size="tiny"
-              inverted
-              position="top center"
-            />
-            <Popup
-              trigger={<IconButton icon="trash" onClick={(e) => deleteFunnel(e, funnel)} className="ml-2 mr-2" />}
-              content={ `Remove Funnel` }
-              size="tiny"
-              inverted
-              position="top center"
-            />            
+            >
+                <IconButton icon="edit" onClick={() => setShowSaveModal(true)} />
+            </Popup>
+            <Popup content={ `Remove Funnel` } >
+                <IconButton icon="trash" onClick={(e) => deleteFunnel(e, funnel)} className="ml-2 mr-2" />
+            </Popup>
           </div>
           <DateRange
             rangeValue={funnelFilters.rangeValue}

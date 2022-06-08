@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { tokenRE } from 'Types/integrations/bugsnagConfig';
 import { edit } from 'Duck/integrations/actions';

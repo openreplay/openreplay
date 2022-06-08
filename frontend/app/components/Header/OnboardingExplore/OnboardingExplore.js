@@ -1,7 +1,7 @@
-import { connect } from 'react-redux';
 import React from 'react';
+import { connect } from 'react-redux';
 import withToggle from 'Components/hocs/withToggle';
-import stl from './onboardingExplore.css';
+import stl from './onboardingExplore.module.css';
 import FeatureItem from './FeatureItem';
 import { getOnboard } from 'Duck/dashboard';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
@@ -87,17 +87,6 @@ class OnboardingExplore extends React.PureComponent {
     const { siteId, history } = this.props;
     const tab = this.getOnboardingTab(task.task)    
     history.push(withSiteId(onboardingRoute(tab), siteId)); 
-
-    // if (task.URL) {
-    //   if (task.URL.includes(window.ENV.ORIGIN)) {        
-    //     const { history } = props;
-    //     var path = new URL(task.URL).pathname
-    //     history.push(path)        
-    //   } else {
-    //     window.open(task.URL, "_blank")
-    //   }
-    //   this.props.toggleModal();
-    // }
   }
 
   render() {

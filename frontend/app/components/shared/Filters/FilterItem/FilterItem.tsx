@@ -52,7 +52,9 @@ function FilterItem(props: Props) {
   return (
     <div className="flex items-center hover:bg-active-blue -mx-5 px-5 py-2">
       <div className="flex items-start w-full">
-        { !isFilter && <div className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex justify-center rounded-full bg-gray-light-shade mr-2">{filterIndex+1}</div> }
+        { !isFilter && <div className="mt-1 flex-shrink-0 border w-6 h-6 text-xs flex items-center justify-center rounded-full bg-gray-light-shade mr-2">
+          <span>{filterIndex+1}</span>
+        </div> }
         <FilterSelection filter={filter} onFilterClick={replaceFilter} />
         
         {/* Filter with Source */}

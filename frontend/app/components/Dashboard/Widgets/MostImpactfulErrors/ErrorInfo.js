@@ -1,6 +1,7 @@
+import React from 'react';
 import { diffFromNowString } from 'App/date';
 import { TextEllipsis } from 'UI';
-import styles from './errorInfo.css';
+import styles from './errorInfo.module.css';
 
 export default class ErrorInfo extends React.PureComponent {
   findJourneys = () => this.props.findJourneys(this.props.data.error)

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Icon } from 'UI'
-import stl from './LiveTag.css'
+import stl from './LiveTag.module.css'
 
 interface Props {
   onClick: () => void,

@@ -1,7 +1,5 @@
-//@ts-nocheck
 import React from 'react';
-import { Icon } from 'UI';
-import { Tooltip } from 'react-tippy';
+import { Icon, Popup } from 'UI';
 
 interface Props {
     className: string
@@ -12,16 +10,11 @@ interface Props {
 function WidgetIcon(props: Props) {
     const { className, onClick, icon, tooltip } = props;
     return (
-        <Tooltip
-            arrow
-            size="small"
-            title={tooltip}
-            position="top"
-        >
+        <Popup title={tooltip} >
             <div className={className} onClick={onClick}>
                 <Icon name={icon} size="14" />
             </div>
-        </Tooltip>
+        </Popup>
     );
 }
 

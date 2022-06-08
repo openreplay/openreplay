@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
-	"openreplay/backend/internal/builder"
 	"openreplay/backend/internal/config/db"
-	"openreplay/backend/internal/datasaver"
-	"openreplay/backend/internal/handlers"
-	"openreplay/backend/internal/handlers/custom"
+	"openreplay/backend/internal/db/datasaver"
+	"openreplay/backend/pkg/handlers"
+	custom2 "openreplay/backend/pkg/handlers/custom"
+	"openreplay/backend/pkg/sessions"
 	"time"
 
 	"os"
@@ -21,6 +21,10 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
+/*
+DB
+*/
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
@@ -33,14 +37,14 @@ func main() {
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
 	handlersFabric := func() []handlers.MessageProcessor {
 		return []handlers.MessageProcessor{
-			&custom.EventMapper{},
-			custom.NewInputEventBuilder(),
-			custom.NewPageEventBuilder(),
+			&custom2.EventMapper{},
+			custom2.NewInputEventBuilder(),
+			custom2.NewPageEventBuilder(),
 		}
 	}
 
 	// Create handler's aggregator
-	builderMap := builder.NewBuilderMap(handlersFabric)
+	builderMap := sessions.NewBuilderMap(handlersFabric)
 
 	// Init modules
 	saver := datasaver.New(pg)
@@ -59,11 +63,11 @@ func main() {
 			return
 		}
 
-		// Try to get session from db for the following handlers
 		session, err := pg.GetSession(sessionID)
-		if err != nil {
-			// Might happen due to the assets-related message TODO: log only if session is necessary for this kind of message
-			log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
+		if session == nil {
+			if err != nil {
+				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
+			}
 			return
 		}
 

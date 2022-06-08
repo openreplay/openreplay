@@ -1,4 +1,4 @@
-import App from "../app/index.js";
+import type App from "../app/index.js";
 import {
   SetPageLocation,
   SetViewportSize,

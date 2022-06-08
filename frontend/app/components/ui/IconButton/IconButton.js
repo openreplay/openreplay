@@ -1,6 +1,7 @@
+import React from 'react';
 import cn from 'classnames';
-import { CircularLoader, Icon, Tooltip } from 'UI';
-import stl from './iconButton.css';
+import { CircularLoader, Icon, Popup } from 'UI';
+import stl from './iconButton.module.css';
 
 const IconButton = React.forwardRef(({
   icon,
@@ -30,11 +31,11 @@ const IconButton = React.forwardRef(({
   compact = false,
   ...rest
 }, ref) => (
-  <Tooltip
-    tooltip={tooltip}
+  <Popup
+    content={tooltip}
     position={tooltipPosition}
-    trigger={ 
-      <button
+  >
+    <button
         ref={ ref }
         name={ name }
         className={ cn(stl.button, className, {
@@ -71,8 +72,7 @@ const IconButton = React.forwardRef(({
         }
         { label && <span className={ cn(stl.label, icon || loading ? 'ml-2' : '') }>{ label }</span> }
       </button>
-    }
-    />
+  </Popup>
 ));
 
 IconButton.displayName = "IconButton";

@@ -1,13 +1,15 @@
+import React from 'react';
 import { regionLabels as labels } from 'Types/integrations/cloudwatchConfig';
-import { Dropdown } from 'UI';
+import Select from 'Shared/Select';
 
-const options = Object.keys(labels).map(key => ({ text: labels[ key ], value: key }));
+const options = Object.keys(labels).map(key => ({ text: labels[ key ], label: key }));
 
 const RegionDropdown = props => (
-	<Dropdown 
+	<Select 
 		{ ...props }
-		onChange={(e, target) => props.onChange({target})}
+		onChange={({ value }) => props.onChange({value})}
 		selection
+		value={ options.find(option => option.value === props.value) }
 		options={ options }
 	/>
 );

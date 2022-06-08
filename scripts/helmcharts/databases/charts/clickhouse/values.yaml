@@ -5,6 +5,10 @@ image:
 storage:
   size: 200Gi
 
+clickhouse:
+  replicaCount: 1
+  shardsCount: 1
+
 resources:
   requests:
     cpu: 1

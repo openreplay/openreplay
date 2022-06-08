@@ -6,7 +6,7 @@ import { observer } from 'mobx-react-lite';
 import { numberWithCommas, positionOfTheNumber } from 'App/utils';
 import WorldMap from "@svg-maps/world";
 import { SVGMap } from "react-svg-map";
-import stl from './SpeedIndexByLocation.css';
+import stl from './SpeedIndexByLocation.module.css';
 import cn from 'classnames';
 
 interface Props {

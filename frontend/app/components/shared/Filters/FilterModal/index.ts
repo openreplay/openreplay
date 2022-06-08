@@ -1,1 +1,1 @@
-export { default } from './FilterModal';
+export { default, getMatchingEntries } from './FilterModal';

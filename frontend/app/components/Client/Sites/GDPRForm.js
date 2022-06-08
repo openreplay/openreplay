@@ -1,13 +1,15 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Button, Select, Input, Icon } from 'UI';
+import { Form, Button, Input, Icon } from 'UI';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import { validateNumber } from 'App/validate';
-import styles from './siteForm.css';
+import styles from './siteForm.module.css';
+import Select from 'Shared/Select';
 
 const inputModeOptions = [
-  { text: 'Record all inputs', value: 'plain' },
-  { text: 'Ignore all inputs', value: 'obscured' },
-  { text: 'Obscure all inputs', value: 'hidden' },
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 @connect(state => ({
@@ -35,7 +37,7 @@ export default class GDPRForm extends React.PureComponent {
     }
   }
 
-  onChangeSelect = (event, { name, value }) => {
+  onChangeSelect = ({ name, value }) => {
     this.props.editGDPR({ [ name ]: value });
   };
 
@@ -55,13 +57,13 @@ export default class GDPRForm extends React.PureComponent {
     } = this.props;
 
     return (
-      <form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
+      <Form className={ styles.formWrapper } onSubmit={ this.onSubmit }>
         <div className={ styles.content }>
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>{ 'Name' }</label>
             <div>{ site.host }</div>
-          </div>
-          <div className={ styles.formGroup }>
+          </Form.Field>
+          <Form.Field>
             <label>{ 'Session Capture Rate' }</label>
             <Input
               icon="percent"
@@ -71,9 +73,9 @@ export default class GDPRForm extends React.PureComponent {
               onBlur={ this.onSampleRateBlur }
               className={ styles.sampleRate }
             />
-          </div>
+          </Form.Field>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label htmlFor="defaultInputMode">{ 'Data Recording Options' }</label>
             <Select
               name="defaultInputMode"
@@ -81,11 +83,11 @@ export default class GDPRForm extends React.PureComponent {
               onChange={ this.onChangeSelect }
               placeholder="Default Input Mode"
               value={ gdpr.defaultInputMode }
-              className={ styles.dropdown }
+              // className={ styles.dropdown }
             />
-          </div>
+          </Form.Field>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>
               <input
                 name="maskNumbers"
@@ -96,9 +98,9 @@ export default class GDPRForm extends React.PureComponent {
               { 'Do not record any numeric text' }
               <div className={ styles.controlSubtext }>{ 'If enabled, OpenReplay will not record or store any numeric text for all sessions.' }</div>
             </label>
-          </div>
+          </Form.Field>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>
               <input
                 name="maskEmails"
@@ -109,7 +111,7 @@ export default class GDPRForm extends React.PureComponent {
               { 'Do not record email addresses ' }
               <div className={ styles.controlSubtext }>{ 'If enabled, OpenReplay will not record or store any email address for all sessions.' }</div>
             </label>
-          </div>
+          </Form.Field>
 
           <div className={ styles.blockIpWarapper }>
             <div className={ styles.button } onClick={ this.props.toggleBlockedIp }>
@@ -120,16 +122,14 @@ export default class GDPRForm extends React.PureComponent {
 
         <div className={ styles.footer }>
           <Button
-            outline
-            primary
-            //onClick={ this.saveGdpr }
-            marginRight
+            variant="outline"
+            className="float-left mr-2"
             loading={ saving }
             content="Update"
           />
-          <Button plain primary onClick={ onClose } content="Cancel" />
+          <Button onClick={ onClose } content="Cancel" />
         </div>
-      </form>
+      </Form>
     );
   }
 }

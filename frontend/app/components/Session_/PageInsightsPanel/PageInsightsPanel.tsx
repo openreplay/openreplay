@@ -5,6 +5,9 @@ import { connect } from 'react-redux';
 import { fetchInsights } from 'Duck/sessions';
 import SelectorsList from './components/SelectorsList/SelectorsList';
 import { markTargets, Controls as Player } from 'Player';
+import Select from 'Shared/Select';
+import SelectDateRange from 'Shared/SelectDateRange';
+import Period from 'Types/app/period';
 
 const JUMP_OFFSET = 1000;
 interface Props {
@@ -23,9 +26,15 @@ function PageInsightsPanel({
 }: Props) {
   const [insightsFilters, setInsightsFilters] = useState(filters)
   const defaultValue = (urlOptions && urlOptions[0]) ? urlOptions[0].value : ''
+
+  const period = new Period({
+    start: insightsFilters.startDate,
+    end: insightsFilters.endDate,
+    rangeName: insightsFilters.rangeValue
+  });
   
   const onDateChange = (e) => {
-    const { startDate, endDate, rangeValue } = e;
+    const { startDate, endDate, rangeValue } = e.toJSON();
     setInsightsFilters({ ...insightsFilters, startDate, endDate, rangeValue })
   }
 
@@ -44,7 +53,7 @@ function PageInsightsPanel({
     }
   }, [insightsFilters])
 
-  const onPageSelect = (e, { name, value }) => {
+  const onPageSelect = ({ value }: any) => {
     const event = events.find(item => item.url === value)    
     Player.jump(event.time + JUMP_OFFSET)
     setInsightsFilters({ ...insightsFilters, url: host + value })
@@ -54,28 +63,28 @@ function PageInsightsPanel({
   return (
     <div className="px-4 bg-gray-lightest">
       <div className="my-3 flex -ml-2">
-        <DateRange
+        {/* <DateRange
           rangeValue={insightsFilters.rangeValue}
           startDate={insightsFilters.startDate}
           endDate={insightsFilters.endDate}
           onDateChange={onDateChange}
           customHidden
-        />
+        /> */}
+        <SelectDateRange period={period} onChange={onDateChange} disableCustom />
       </div>
       <div className="mb-4 flex items-center">
         <div className="mr-2 flex-shrink-0">In Page</div>
-        <Dropdown
-          search
-          labeled
+        <Select
+          isSearchable={true}
+          right
           placeholder="change"
-          selection
           options={ urlOptions }
           name="url"
           defaultValue={defaultValue}
           onChange={ onPageSelect }
           id="change-dropdown"
-          className="customDropdown"          
-          style={{ minWidth: '80px', width: '100%' }}
+          className="w-full"
+          style={{ width: '100%' }}
         />
       </div>
       <Loader loading={ loading }>
@@ -92,7 +101,7 @@ export default connect(state => {
     host: state.getIn([ 'sessions', 'host' ]),
     insights: state.getIn([ 'sessions', 'insights' ]),
     events: events,
-    urlOptions: events.map(({ url, host }) => ({ text: url, value: url, host })),
+    urlOptions: events.map(({ url, host }: any) => ({ label: url, value: url, host })),
     loading: state.getIn([ 'sessions', 'fetchInsightsRequest', 'loading' ]),
   }
 }, { fetchInsights })(PageInsightsPanel);

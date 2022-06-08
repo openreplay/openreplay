@@ -1,4 +1,4 @@
-import { connect } from 'react-redux';
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { widgetHOC, SessionLine } from '../common';
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon, JSONTree } from 'UI';
 
 export default class JsonViewer extends React.PureComponent {

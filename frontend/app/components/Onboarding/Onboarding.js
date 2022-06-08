@@ -43,7 +43,6 @@ const Onboarding = (props) => {
       </div>
       <div className="py-6 px-4 w-full flex items-center fixed bottom-0 bg-white border-t z-10">
         <div className="ml-auto">
-          <span className="mx-2"/>
           <OnboardingNavButton />
         </div>
       </div>

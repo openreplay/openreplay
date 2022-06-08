@@ -2,37 +2,74 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
 	config "openreplay/backend/internal/config/storage"
+	"openreplay/backend/pkg/flakeid"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/storage"
 	"os"
+	"strconv"
 	"time"
 )
 
 type Storage struct {
-	cfg *config.Config
-	s3  *storage.S3
+	cfg           *config.Config
+	s3            *storage.S3
+	startBytes    []byte
+	totalSessions syncfloat64.Counter
+	sessionSize   syncfloat64.Histogram
+	archivingTime syncfloat64.Histogram
 }
 
-func New(cfg *config.Config, s3 *storage.S3) (*Storage, error) {
+func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Storage, error) {
 	switch {
 	case cfg == nil:
 		return nil, fmt.Errorf("config is empty")
 	case s3 == nil:
 		return nil, fmt.Errorf("s3 storage is empty")
 	}
-	return &Storage{s3: s3}, nil
+	// Create metrics
+	totalSessions, err := metrics.RegisterCounter("sessions_total")
+	if err != nil {
+		log.Printf("can't create sessions_total metric: %s", err)
+	}
+	sessionSize, err := metrics.RegisterHistogram("sessions_size")
+	if err != nil {
+		log.Printf("can't create session_size metric: %s", err)
+	}
+	archivingTime, err := metrics.RegisterHistogram("archiving_duration")
+	if err != nil {
+		log.Printf("can't create archiving_duration metric: %s", err)
+	}
+	return &Storage{
+		cfg:           cfg,
+		s3:            s3,
+		startBytes:    make([]byte, cfg.FileSplitSize),
+		totalSessions: totalSessions,
+		sessionSize:   sessionSize,
+		archivingTime: archivingTime,
+	}, nil
 }
 
 func (s *Storage) UploadKey(key string, retryCount int) {
+	start := time.Now()
 	if retryCount <= 0 {
 		return
 	}
 
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
-		log.Printf("File error: %v; Will retry %v more time(s)\n", err, retryCount)
+		sessID, _ := strconv.ParseUint(key, 10, 64)
+		log.Printf("File error: %v; Will retry %v more time(s); sessID: %s, part: %d, sessStart: %s\n",
+			err,
+			retryCount,
+			key,
+			sessID%16,
+			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+		)
 		time.AfterFunc(s.cfg.RetryTimeout, func() {
 			s.UploadKey(key, retryCount-1)
 		})
@@ -40,19 +77,40 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 	}
 	defer file.Close()
 
-	startBytes := make([]byte, s.cfg.SessionFileSplitSize)
-	nRead, err := file.Read(startBytes)
+	nRead, err := file.Read(s.startBytes)
 	if err != nil {
-		log.Printf("File read error: %f", err)
+		sessID, _ := strconv.ParseUint(key, 10, 64)
+		log.Printf("File read error: %s; sessID: %s, part: %d, sessStart: %s",
+			err,
+			key,
+			sessID%16,
+			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
+		)
+		time.AfterFunc(s.cfg.RetryTimeout, func() {
+			s.UploadKey(key, retryCount-1)
+		})
 		return
 	}
-	startReader := bytes.NewBuffer(startBytes)
+	startReader := bytes.NewBuffer(s.startBytes[:nRead])
 	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
 		log.Fatalf("Storage: start upload failed.  %v\n", err)
 	}
-	if nRead == s.cfg.SessionFileSplitSize {
+	if nRead == s.cfg.FileSplitSize {
 		if err := s.s3.Upload(s.gzipFile(file), key+"e", "application/octet-stream", true); err != nil {
 			log.Fatalf("Storage: end upload failed. %v\n", err)
 		}
 	}
+
+	// Save metrics
+	var fileSize float64 = 0
+	fileInfo, err := file.Stat()
+	if err != nil {
+		log.Printf("can't get file info: %s", err)
+	} else {
+		fileSize = float64(fileInfo.Size())
+	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Millisecond*200)
+	s.archivingTime.Record(ctx, float64(time.Now().Sub(start).Milliseconds()))
+	s.sessionSize.Record(ctx, fileSize)
+	s.totalSessions.Add(ctx, 1)
 }

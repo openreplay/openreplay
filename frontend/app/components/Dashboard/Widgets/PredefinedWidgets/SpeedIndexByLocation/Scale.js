@@ -1,7 +1,7 @@
 import React from 'react'
 import { Styles } from '../../common';
 import cn from 'classnames';
-import stl from './scale.css';
+import stl from './scale.module.css';
 
 function Scale({ colors }) {
   const lastIndex = (Styles.colors.length - 1)

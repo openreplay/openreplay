@@ -2,11 +2,11 @@ import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { SideMenuitem } from 'UI'
-import stl from './preferencesMenu.css';
+import stl from './preferencesMenu.module.css';
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 import { withRouter } from 'react-router-dom';
 
-function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
+function PreferencesMenu({ activeTab, history, isEnterprise }) {
 
   const setTab = (tab) => {
     history.push(clientRoute(tab));
@@ -112,6 +112,5 @@ function PreferencesMenu({ activeTab, appearance, history, isEnterprise }) {
 }
 
 export default connect(state => ({
-  appearance: state.getIn([ 'user', 'account', 'appearance' ]),
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }))(withRouter(PreferencesMenu));

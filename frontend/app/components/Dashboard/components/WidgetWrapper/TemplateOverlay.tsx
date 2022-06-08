@@ -1,19 +1,14 @@
-//@ts-nocheck
 import React from 'react';
-import { Tooltip } from 'react-tippy';
+import cn from 'classnames';
+import stl from './widgetWrapper.module.css';
 
-function TemplateOverlay() {
+interface IProps {
+    isTemplate?: boolean;
+    onClick: () => void;
+}
+function TemplateOverlay(props: IProps) {
     return (
-        <div>
-            <Tooltip
-                title="Click to select"  
-                trigger="mouseenter"
-                hideOnClick={true}
-                delay={300}
-            >
-                <div className="absolute inset-0 cursor-pointer z-10" />
-            </Tooltip>
-        </div>
+        <div onClick={props.onClick} className={cn('absolute cursor-pointer z-10', stl.overlay, { [stl.overlayDashboard]: !props.isTemplate } )} />
     );
 }
 

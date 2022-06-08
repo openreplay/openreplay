@@ -22,12 +22,10 @@ const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDeta
 const FunnelPagePure = lazy(() => import('Components/Funnels/FunnelPage'));
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
-// import ResultsModal from 'Shared/Results/ResultsModal';
 import { fetchList as fetchMetadata } from 'Duck/customField';
 import { fetchList as fetchSiteList } from 'Duck/site';
 import { fetchList as fetchAnnouncements } from 'Duck/announcements';
 import { fetchList as fetchAlerts } from 'Duck/alerts';
-import { dashboardService } from "App/services";
 import { withStore } from 'App/mstore'
 
 import APIClient from './api_client';
@@ -37,7 +35,6 @@ import Signup from './components/Signup/Signup';
 import { fetchTenants } from 'Duck/user';
 import { setSessionPath } from 'Duck/sessions';
 import { ModalProvider } from './components/Modal';
-import ModalRoot from './components/Modal/ModalRoot';
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
@@ -51,7 +48,7 @@ const FunnelPage = withSiteIdUpdater(FunnelPagePure);
 const FunnelsDetails = withSiteIdUpdater(FunnelDetailsPure);
 const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
 const withSiteId = routes.withSiteId;
-const withObTab = routes.withObTab;
+// const withObTab = routes.withObTab;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
@@ -95,8 +92,8 @@ const ONBOARDING_REDIRECT_PATH = routes.onboarding(OB_DEFAULT_TAB);
     loading: siteId === null || userInfoLoading,
     email: state.getIn([ 'user', 'account', 'email' ]),
     account: state.getIn([ 'user', 'account' ]),
-    organisation: state.getIn([ 'user', 'client', 'name' ]),
-    tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+    organisation: state.getIn([ 'user', 'account', 'name' ]),
+    tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
     tenants: state.getIn(['user', 'tenants']),
     existingTenant: state.getIn(['user', 'authDetails', 'tenants']),
     onboarding: state.getIn([ 'user', 'onboarding' ])
@@ -118,8 +115,9 @@ class Router extends React.Component {
     super(props);
     if (props.isLoggedIn) {
       this.fetchInitialData();
+    } else {
+      props.fetchTenants();
     }
-    props.fetchTenants();
   }
 
   fetchInitialData = () => {
@@ -129,11 +127,11 @@ class Router extends React.Component {
           const { mstore } = this.props
           mstore.initClient();
 
-          setTimeout(() => {
-            this.props.fetchMetadata() 
-            this.props.fetchAnnouncements();
-            this.props.fetchAlerts();
-          }, 100);
+          // setTimeout(() => {
+          //   this.props.fetchMetadata() 
+          //   this.props.fetchAnnouncements();
+          //   this.props.fetchAlerts();
+          // }, 100);
         })
       })
     ])
@@ -169,12 +167,11 @@ class Router extends React.Component {
 
     return isLoggedIn ?
       <Loader loading={ loading } className="flex-1" >
-        {!hideHeader && <Header key="header"/>}
         <Notification />
         
         <Suspense fallback={<Loader loading={true} className="flex-1" />}>
           <ModalProvider>
-            <ModalRoot />
+          {!hideHeader && <Header key="header"/>}
           <Switch key="content" >
             <Route path={ CLIENT_PATH } component={ Client } />
             <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />

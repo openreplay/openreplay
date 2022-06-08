@@ -1,17 +1,16 @@
-package clickhouse 
+package clickhouse
 
 import (
 	"errors"
-	
-	"openreplay/backend/pkg/hashid"
-	"openreplay/backend/pkg/url"
+
 	. "openreplay/backend/pkg/db/types"
+	"openreplay/backend/pkg/hashid"
 	. "openreplay/backend/pkg/messages"
+	"openreplay/backend/pkg/url"
 )
 
-
 func (conn *Connector) InsertWebSession(session *Session) error {
-	if (session.Duration == nil) {
+	if session.Duration == nil {
 		return errors.New("Clickhouse: trying to insert session with ")
 	}
 
@@ -66,7 +65,7 @@ func (conn *Connector) InsertWebResourceEvent(session *Session, msg *ResourceEve
 	return conn.resources.exec(
 		session.SessionID,
 		session.ProjectID,
-		session.TrackerVersion, 
+		session.TrackerVersion,
 		nullableString(session.RevID),
 		session.UserUUID,
 		session.UserOS,
@@ -85,8 +84,6 @@ func (conn *Connector) InsertWebResourceEvent(session *Session, msg *ResourceEve
 		nullableUint32(uint32(msg.EncodedBodySize)),
 		nullableUint32(uint32(msg.DecodedBodySize)),
 		msg.Success,
-		method, 
-		nullableUint16(uint16(msg.Status)),
 	)
 }
 
@@ -219,8 +216,8 @@ func (conn *Connector) InsertWebPerformanceTrackAggr(session *Session, msg *Perf
 }
 
 // TODO: make enum message type
-var CONTEXT_MAP = map[uint64]string{0:"unknown",1:"self",2:"same-origin-ancestor",3:"same-origin-descendant",4:"same-origin",5:"cross-origin-ancestor",6:"cross-origin-descendant",7:"cross-origin-unreachable",8:"multiple-contexts"}
-var CONTAINER_TYPE_MAP = map[uint64]string{0:"window",1:"iframe",2:"embed",3:"object"}
+var CONTEXT_MAP = map[uint64]string{0: "unknown", 1: "self", 2: "same-origin-ancestor", 3: "same-origin-descendant", 4: "same-origin", 5: "cross-origin-ancestor", 6: "cross-origin-descendant", 7: "cross-origin-unreachable", 8: "multiple-contexts"}
+var CONTAINER_TYPE_MAP = map[uint64]string{0: "window", 1: "iframe", 2: "embed", 3: "object"}
 
 func (conn *Connector) InsertLongtask(session *Session, msg *LongTask) error {
 	return conn.longtasks.exec(
@@ -237,8 +234,8 @@ func (conn *Connector) InsertLongtask(session *Session, msg *LongTask) error {
 		session.UserDeviceType,
 		session.UserCountry,
 		datetime(msg.Timestamp),
-		CONTEXT_MAP[ msg.Context ],
-		CONTAINER_TYPE_MAP[ msg.ContainerType ],
+		CONTEXT_MAP[msg.Context],
+		CONTAINER_TYPE_MAP[msg.ContainerType],
 		msg.ContainerId,
 		msg.ContainerName,
 		msg.ContainerSrc,

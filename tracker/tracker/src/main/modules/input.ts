@@ -1,19 +1,20 @@
+import type App from "../app/index.js";
 import {
   normSpaces,
   IN_BROWSER,
   getLabelAttribute,
   hasOpenreplayAttribute,
 } from "../utils.js";
-import App from "../app/index.js";
+import { hasTag } from "../app/guards.js";
 import { SetInputTarget, SetInputValue, SetInputChecked } from "../../common/messages.js";
 
 // TODO: take into consideration "contenteditable" attribute
 type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
 function isTextEditable(node: any): node is TextEditableElement {
-  if (node instanceof HTMLTextAreaElement) { 
+  if (hasTag(node, "TEXTAREA")) { 
     return true;
   }
-  if (!(node instanceof HTMLInputElement)) {
+  if (!hasTag(node, "INPUT")) {
     return false;
   }
   const type = node.type;
@@ -28,7 +29,7 @@ function isTextEditable(node: any): node is TextEditableElement {
 }
 
 function isCheckable(node: any): node is HTMLInputElement {
-  if (!(node instanceof HTMLInputElement)) {
+  if (!hasTag(node, "INPUT")) {
     return false;
   }
   const type = node.type;
@@ -42,7 +43,7 @@ const labelElementFor: (
     ? (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (p instanceof HTMLLabelElement) {
+          if (hasTag(p, "LABEL")) {
             return p
           }
         }
@@ -54,7 +55,7 @@ const labelElementFor: (
     : (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (p instanceof HTMLLabelElement) {
+          if (hasTag(p, "LABEL")) {
             return p as HTMLLabelElement;
           }
         }
@@ -183,7 +184,7 @@ export default function (app: App, opts: Partial<Options>): void {
         return;
       }
       // TODO: support multiple select (?): use selectedOptions; Need send target?
-      if (node instanceof HTMLSelectElement) {
+      if (hasTag(node, "SELECT")) {
         sendInputValue(id, node)
         app.attachEventListener(node, "change", () => {
           sendInputValue(id, node)

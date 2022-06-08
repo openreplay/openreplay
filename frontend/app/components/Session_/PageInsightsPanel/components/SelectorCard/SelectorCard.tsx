@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import stl from './SelectorCard.css'
+import stl from './SelectorCard.module.css'
 import cn from 'classnames';
 import type { MarkedTarget } from 'Player/MessageDistributor/StatedScreen/StatedScreen';
 import { activeTarget } from 'Player';

@@ -1,19 +1,20 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router-dom';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
 import { formatTimeOrDate } from 'App/date';
 import { sessions as sessionsRoute, assist as assistRoute, liveSession as liveSessionRoute, withSiteId } from 'App/routes';
-import { Icon, CountryFlag, IconButton, BackLink, Popup, Link } from 'UI';
+import { Button, Icon, CountryFlag, IconButton, BackLink, Popup, Link } from 'UI';
 import { toggleFavorite, setSessionPath } from 'Duck/sessions';
 import cn from 'classnames';
 import { connectPlayer } from 'Player';
 // import HeaderInfo from './HeaderInfo';
 import SharePopup from '../shared/SharePopup/SharePopup';
-import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 import { countries } from 'App/constants';
 import SessionMetaList from 'Shared/SessionItem/SessionMetaList';
+import Bookmark from 'Shared/Bookmark'
 
-import stl from './playerBlockHeader.css';
+import stl from './playerBlockHeader.module.css';
 import Issues from './Issues/Issues';
 import Autoplay from './Autoplay';
 import AssistActions from '../Assist/components/AssistActions';
@@ -37,8 +38,6 @@ const ASSIST_ROUTE = assistRoute();
     sessionPath: state.getIn([ 'sessions', 'sessionPath' ]),
     loading: state.getIn([ 'sessions', 'toggleFavoriteRequest', 'loading' ]),
     disabled: state.getIn([ 'components', 'targetDefiner', 'inspectorMode' ]) || props.loading,
-    jiraConfig: state.getIn([ 'issues', 'list' ]).first(),
-    issuesFetched: state.getIn([ 'issues', 'issuesFetched' ]),
     local: state.getIn(['sessions', 'timezone']),
     funnelRef: state.getIn(['funnels', 'navRef']),
     siteId: state.getIn([ 'site', 'siteId' ]),
@@ -46,15 +45,10 @@ const ASSIST_ROUTE = assistRoute();
     closedLive: !!state.getIn([ 'sessions', 'errors' ]) || (isAssist && !session.live),
   }
 }, {
-  toggleFavorite, fetchListIntegration, setSessionPath
+  toggleFavorite, setSessionPath
 })
 @withRouter
 export default class PlayerBlockHeader extends React.PureComponent {
-  componentDidMount() {
-    if (!this.props.issuesFetched)
-      this.props.fetchListIntegration('issues')
-  }
-
   getDimension = (width, height) => {
     return width && height ? (
       <div className="flex items-center">
@@ -141,9 +135,9 @@ export default class PlayerBlockHeader extends React.PureComponent {
             )}
             
             <Popup
-                trigger={(
-                  <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
-                )}
+                theme="tippy-light"
+                multiple={false}
+                unmountHTMLWhenHide={true}
                 content={(
                   <div className=''>
                     <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={ formatTimeOrDate(startedAt) } />
@@ -152,44 +146,38 @@ export default class PlayerBlockHeader extends React.PureComponent {
                     <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ this.getDimension(width, height) } isLast />
                   </div>
                 )}
-                on="click"
-                position="top center"
-                hideOnScroll
-            />
+                // trigger="click"
+                hideOnClick={true}
+            >
+              <IconButton icon="info-circle" primaryText label="More Info" disabled={disabled} />
+            </Popup>
             <div className={ stl.divider } />
             { isAssist && <AssistActions userId={userId} /> }
             { !isAssist && (
               <>
                 <Autoplay />
                 <div className={ stl.divider } />
-                <IconButton
-                  // className="mr-2"
-                  tooltip="Bookmark"
-                  tooltipPosition="top right"
-                  onClick={ this.toggleFavorite }
-                  loading={ loading }
-                  icon={ favorite ? 'star-solid' : 'star' }                  
-                  plain
-                />
+                <Bookmark sessionId={sessionId} favorite={favorite} />
                 <div className={ stl.divider } />
                 <SharePopup
                   entity="sessions"
                   id={ sessionId }
                   showCopyLink={true}
                   trigger={
-                    <IconButton
+                    <Button
                       // className="mr-2"
-                      tooltip="Share Session"
-                      tooltipPosition="top right"
+                      // tooltip="Share Session"
+                      // tooltipPosition="top right"
                       disabled={ disabled }
                       icon={ 'share-alt' }
-                      plain
+                      variant="text-primary"
                     />
                   }
                 />
               </>
             )}
-            { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> }
+            {/* { !isAssist && jiraConfig && jiraConfig.token && <Issues sessionId={ sessionId } /> } */}
+            { <Issues sessionId={ sessionId } /> }
           </div>
         </div>
       </div>

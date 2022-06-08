@@ -1,10 +1,12 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, Button, Pagination } from 'UI';
+import { Loader, NoContent, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
 import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 // const ALL = 'all';
 const PER_PAGE = 10;
@@ -94,24 +96,16 @@ export default class SessionList extends React.PureComponent {
 
     return (
       <NoContent
-        title={this.getNoContentMessage(activeTab)}
+        title={<div className="flex items-center justify-center flex-col">
+          <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+          {this.getNoContentMessage(activeTab)}
+        </div>}
         // subtext="Please try changing your search parameters."
-        animatedIcon="no-results"
+        // animatedIcon="no-results"
         show={ !loading && list.size === 0}
         subtext={
           <div>
             <div>Please try changing your search parameters.</div>
-            {/* {allList.size > 0 && (
-              <div className="pt-2">
-                However, we found other sessions based on your search parameters. 
-                <div>
-                  <Button
-                    plain
-                    onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
-                  >See All</Button>
-                </div>
-              </div>
-            )} */}
           </div>
         }
       >
@@ -142,18 +136,6 @@ export default class SessionList extends React.PureComponent {
 
   render() {
     const { activeTab, allList, total }  = this.props;
-    // var filteredList;
-
-    // if (activeTab.type !== ALL && activeTab.type !== 'bookmark' && activeTab.type !== 'live') { // Watchdog sessions
-    //   filteredList = allList.filter(session => activeTab.fits(session))
-    // } else {
-    //   filteredList = allList
-    // }
-
-    // if (activeTab.type === 'bookmark') {
-    //   filteredList = filteredList.filter(item => item.favorite)
-    // }
-    // const _total = activeTab.type === 'all' ? total : allList.size
     
     return (
       <div className="">

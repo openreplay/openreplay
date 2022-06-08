@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
-import stl from './filterSelectionButton.css';
+import stl from './filterSelectionButton.module.css';
 
 const FilterSelectionButton = ({ label }) => {
   return (

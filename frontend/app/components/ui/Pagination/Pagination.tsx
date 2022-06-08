@@ -1,9 +1,8 @@
 //@ts-nocheck
 import React from 'react'
-import { Icon } from 'UI'
+import { Icon, Popup } from 'UI'
 import cn from 'classnames'
 import { debounce } from 'App/utils';
-import { Tooltip } from 'react-tippy';
 import { numberWithCommas } from 'App/utils';
 interface Props {
     page: number
@@ -33,11 +32,9 @@ export default function Pagination(props: Props) {
     const isLastPage = currentPage === totalPages;
     return (
         <div className="flex items-center">
-            <Tooltip
-                arrow
+            <Popup
                 sticky
-                title="Previous Page"  
-                trigger="mouseenter"
+                content="Previous Page"  
                 hideOnClick={true}
             >
                 <button
@@ -47,7 +44,7 @@ export default function Pagination(props: Props) {
                 >
                     <Icon name="chevron-left" size="18" color={isFirstPage ? 'gray-medium' : 'teal'} />
                 </button>
-            </Tooltip>
+            </Popup>
             <span className="mr-2 color-gray-medium">Page</span>
             <input
                 type="number"
@@ -59,11 +56,10 @@ export default function Pagination(props: Props) {
             />
             <span className="mx-3 color-gray-medium">of</span>
             <span >{numberWithCommas(totalPages)}</span>
-            <Tooltip
+            <Popup
                 arrow
                 sticky
-                title="Next Page"
-                trigger="mouseenter"
+                content="Next Page"
                 hideOnClick={true}
             >
                 <button
@@ -73,7 +69,7 @@ export default function Pagination(props: Props) {
                 >
                     <Icon name="chevron-right" size="18" color={isLastPage ? 'gray-medium' : 'teal'} />
                 </button>
-            </Tooltip>
+            </Popup>
         </div>
     )
 }

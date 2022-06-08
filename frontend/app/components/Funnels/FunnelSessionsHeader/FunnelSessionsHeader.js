@@ -8,7 +8,7 @@ const sortOptionsMap = {
   'eventsCount-desc': 'Events (High)',  
 };
 const sortOptions = Object.entries(sortOptionsMap)
-  .map(([ value, text ]) => ({ value, text }));
+  .map(([ value, label ]) => ({ value, label }));
 
 function FunnelSessionsHeader({ sessionsCount, inDetails = false }) {
   return (

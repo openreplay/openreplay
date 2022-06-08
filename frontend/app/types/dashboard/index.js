@@ -2,7 +2,7 @@ import { Map, List } from 'immutable';
 import Session from 'Types/session';
 import { camelCased } from 'App/utils';
 
-import { getChartFormatter } from './helper'; 
+import { getChartFormatter } from './helper';
 import ProcessedSessions from './processedSessions';
 import DomBuildingTime from './domBuildingTime';
 import MemoryConsumption from './memoryConsumption';
@@ -84,7 +84,7 @@ export const WIDGET_LIST = [{
       if (sessionK1 !== sessionK2) return sessionK2 - sessionK1;
       return i2.avgDuration - i1.avgDuration;
     }),
-	}, 
+	},
 	// {
 	// 	key: "errorsTrend",
 	// 	name: "Most Impactful Errors",
@@ -130,7 +130,7 @@ export const WIDGET_LIST = [{
 	},
 	{
 		key: "overview",
-		name: "Overview Widgets",
+		name: "Overview Metrics",
 		description: 'List of resources that are slowing down your website, sorted by the number of impacted sessions.',
 		thumb: 'na.png',
 		dataWrapper: (p, period) => {
@@ -571,7 +571,7 @@ WIDGET_LIST.forEach(w => { WIDGET_MAP[ w.key ] = w; });
 const OVERVIEW_WIDGET_MAP = {};
 WIDGET_LIST.filter(w => w.type === 'overview').forEach(w => { OVERVIEW_WIDGET_MAP[ w.key ] = w; });
 
-export { 
+export {
 	WIDGET_MAP,
 	OVERVIEW_WIDGET_MAP,
 	ProcessedSessions,

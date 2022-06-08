@@ -1,13 +1,15 @@
+import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { IconButton, SlideModal, Loader, NoContent, Icon, TextLink } from 'UI';
 import { init, fetchList, save, remove } from 'Duck/customField';
 import SiteDropdown from 'Shared/SiteDropdown';
-import styles from './customFields.css';
+import styles from './customFields.module.css';
 import CustomFieldForm from './CustomFieldForm';
 import ListItem from './ListItem';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 @connect(state => ({
   fields: state.getIn(['customFields', 'list']).sortBy(i => i.index),
@@ -48,7 +50,7 @@ class CustomFields extends React.Component {
     this.setState({ showModal: true });    
   }
 
-  onChangeSelect = (event, { value }) => {
+  onChangeSelect = ({ value }) => {
     const site = this.props.sites.find(s => s.id === value);
     this.setState({ currentSite: site })
     this.props.fetchList(site.id);
@@ -97,10 +99,15 @@ class CustomFields extends React.Component {
         
         <Loader loading={ loading }>
           <NoContent
-            title="No data available."
+            title={
+              <div className="flex flex-col items-center justify-center">
+                <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                <div className="mt-6 text-2xl">No data available.</div>
+              </div>
+            }
             size="small"
             show={ fields.size === 0 }
-            animatedIcon="empty-state"
+            // animatedIcon="empty-state"
           >
             <div className={ styles.list }>
               { fields.filter(i => i.index).map(field => (

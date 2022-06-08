@@ -10,7 +10,7 @@ interface Props {
 function LiveSessionReloadButton(props: Props) {
     const { loading } = props
   return (
-    <ReloadButton loading={loading} onClick={props.fetchLiveList} className="cursor-pointer" />
+    <ReloadButton loading={loading} onClick={() => props.fetchLiveList()} className="cursor-pointer" />
   )
 }
 

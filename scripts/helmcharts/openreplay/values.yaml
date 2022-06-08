@@ -92,27 +92,5 @@ nginx-ingress:
     # Overrides the image tag whose default is the chart appVersion.
     tag: "buster"
 
-alerts:
-  fullnameOverride: alerts-openreplay
-assets:
-  fullnameOverride: assets-openreplay
-chalice:
-  fullnameOverride: chalice-openreplay
-db:
-  fullnameOverride: db-openreplay
-ender:
-  fullnameOverride: ender-openreplay
-http:
-  fullnameOverride: http-openreplay
-integrations:
-  fullnameOverride: integrations-openreplay
-sink:
-  fullnameOverride: sink-openreplay
-storage:
-  fullnameOverride: storage-openreplay
-assist:
-  fullnameOverride: assist-openreplay
-peers:
-  fullnameOverride: peers-openreplay
 ingress-nginx:
   enabled: true

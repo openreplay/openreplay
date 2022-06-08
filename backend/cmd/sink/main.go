@@ -1,24 +1,33 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"log"
+	"openreplay/backend/internal/sink/assetscache"
+	"openreplay/backend/internal/sink/oswriter"
+	"openreplay/backend/internal/storage"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 
 	"os"
 	"os/signal"
 	"syscall"
 
-	"openreplay/backend/internal/assetscache"
 	"openreplay/backend/internal/config/sink"
-	"openreplay/backend/internal/oswriter"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/queue"
 	"openreplay/backend/pkg/queue/types"
 	"openreplay/backend/pkg/url/assets"
 )
 
+/*
+Sink
+*/
+
 func main() {
+	metrics := monitoring.New("sink")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := sink.New()
@@ -34,7 +43,19 @@ func main() {
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
 
-	count := 0
+	counter := storage.NewLogCounter()
+	totalMessages, err := metrics.RegisterCounter("messages_total")
+	if err != nil {
+		log.Printf("can't create messages_total metric: %s", err)
+	}
+	savedMessages, err := metrics.RegisterCounter("messages_saved")
+	if err != nil {
+		log.Printf("can't create messages_saved metric: %s", err)
+	}
+	messageSize, err := metrics.RegisterHistogram("messages_size")
+	if err != nil {
+		log.Printf("can't create messages_size metric: %s", err)
+	}
 
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupSink,
@@ -43,14 +64,25 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
-			count++
+			// Process assets
+			message = assetMessageHandler.ParseAssets(sessionID, message)
 
+			totalMessages.Add(context.Background(), 1)
+
+			// Filter message
 			typeID := message.TypeID()
 			if !IsReplayerType(typeID) {
 				return
 			}
 
-			message = assetMessageHandler.ParseAssets(sessionID, message)
+			// If message timestamp is empty, use at least ts of session start
+			ts := message.Meta().Timestamp
+			if ts == 0 {
+				log.Printf("zero ts; sessID: %d, msg: %+v", sessionID, message)
+			} else {
+				// Log ts of last processed message
+				counter.Update(sessionID, time.UnixMilli(ts))
+			}
 
 			value := message.Encode()
 			var data []byte
@@ -64,32 +96,35 @@ func main() {
 			if err := writer.Write(sessionID, data); err != nil {
 				log.Printf("Writer error: %v\n", err)
 			}
+
+			messageSize.Record(context.Background(), float64(len(data)))
+			savedMessages.Add(context.Background(), 1)
 		},
 		false,
 	)
+	log.Printf("Sink service started\n")
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	tick := time.Tick(30 * time.Second)
-
-	log.Printf("Sink service started\n")
 	for {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
-			consumer.Commit()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 			consumer.Close()
 			os.Exit(0)
 		case <-tick:
 			if err := writer.SyncAll(); err != nil {
 				log.Fatalf("Sync error: %v\n", err)
 			}
-
-			log.Printf("%v messages during 30 sec", count)
-			count = 0
-
-			consumer.Commit()
+			counter.Print()
+			if err := consumer.Commit(); err != nil {
+				log.Printf("can't commit messages: %s", err)
+			}
 		default:
 			err := consumer.ConsumeNext()
 			if err != nil {

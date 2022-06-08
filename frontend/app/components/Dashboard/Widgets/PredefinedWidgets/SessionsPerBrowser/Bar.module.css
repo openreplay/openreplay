@@ -1,0 +1,20 @@
+.bar {
+  height: 5px;
+  width: 100%;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  & > div {
+    padding: 3px !important;
+    height: 20px;
+    color: #FFF;
+  }
+  & div:first-child {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+  }
+  & div:last-child {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+  }
+}

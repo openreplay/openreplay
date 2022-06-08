@@ -17,7 +17,7 @@ import MetricsView from '../MetricsView';
 import WidgetView from '../WidgetView';
 import WidgetSubDetailsView from '../WidgetSubDetailsView';
 
-function DashboardViewSelected({ siteId, dashboardId}) {
+function DashboardViewSelected({ siteId, dashboardId }) {
     return (
         <DashboardView siteId={siteId} dashboardId={dashboardId} />
     )

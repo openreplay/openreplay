@@ -20,7 +20,7 @@ export default class SettingsStore {
                     captureRate: data.rate,
                     captureAll: data.captureAll
                 })
-                toast.success("Capture rate saved successfully");
+                toast.success("Settings updated successfully");
             }).catch(err => {
                 toast.error("Error saving capture rate");
             })

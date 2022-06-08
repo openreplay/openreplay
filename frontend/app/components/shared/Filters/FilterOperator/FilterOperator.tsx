@@ -1,10 +1,58 @@
 import React from 'react';
-import cn from 'classnames';
-import { Dropdown, Icon } from 'UI';
-import stl from './FilterOperator.css';
+import Select from 'Shared/Select';
 
+const dropdownStyles = {
+  control: (provided: any) => {
+    const obj = {
+      ...provided,
+      border: 'solid thin #ddd !important',
+      boxShadow: 'none !important',
+      cursor: 'pointer',
+      height: '26px',
+      minHeight: '26px',
+      backgroundColor: '#f6f6f6',
+      '&:hover': {
+        backgroundColor: '#EEEEEE',
+      },
+    }
+    return obj;
+  },
+  valueContainer: (provided: any) => ({
+    ...provided,
+    paddingRight: '0px',
+    width: 'fit-content',
+    // height: '26px'
+  }),
+  placeholder: (provided: any) => ({
+    ...provided,
+  }),
+  indicatorsContainer: (provided: any) => ({
+    ...provided,
+    padding: '0px',
+    height: '26px',
+  }),
+  option: (provided: any, state: any) => ({
+    ...provided,
+    whiteSpace: 'nowrap',
+  }),
+  menu: (provided: any, state: any) => ({
+      ...provided,
+      top: 20,
+      left: 0,
+      minWidth: 'fit-content',
+  }),
+  container: (provided: any) => ({
+      ...provided,
+      minWidth: "max-content",
+  }),
+  singleValue: (provided: any, state: { isDisabled: any; }) => {
+    const opacity = state.isDisabled ? 0.5 : 1;
+    const transition = 'opacity 300ms';
+
+    return { ...provided, opacity, transition };
+  }
+}
 interface Props {
-  // filter: any; // event/filter
   onChange: (e, { name, value }) => void;
   className?: string;
   options?: any;
@@ -14,15 +62,16 @@ function FilterOperator(props: Props) {
   const { options, value, onChange, className = '' } = props;
 
   return (
-    <Dropdown
-      className={ cn(stl.operatorDropdown, className, 'hover:bg-gray-light-shade') }      
-      options={ options }
-      name="operator"
-      value={ value }
-      onChange={ onChange }
-      placeholder="Select operator"
-      icon={ <Icon className="ml-5" name="chevron-down" size="12" /> }
-    />
+    <div className="mx-2">
+      <Select
+        name="operator"
+        options={options}
+        styles={dropdownStyles}
+        placeholder="Select"
+        defaultValue={ value }
+        onChange={({ value }: any) => onChange(null, { name: 'operator', value })}
+      />
+    </div>
   );
 }
 

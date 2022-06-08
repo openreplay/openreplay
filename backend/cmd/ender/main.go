@@ -4,6 +4,7 @@ import (
 	"log"
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 
 	"os"
@@ -17,7 +18,13 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
+/*
+Ender
+*/
+
 func main() {
+	metrics := monitoring.New("ender")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	// Load service configuration
@@ -25,10 +32,14 @@ func main() {
 
 	// Init all modules
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-	sessions := sessionender.New(intervals.EVENTS_SESSION_END_TIMEOUT)
+	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT)
+	if err != nil {
+		log.Printf("can't init ender service: %s", err)
+		return
+	}
 	producer := queue.NewProducer()
 	consumer := queue.NewMessageConsumer(
-		cfg.GroupEvents,
+		cfg.GroupEnder,
 		[]string{
 			cfg.TopicRawWeb,
 			cfg.TopicRawIOS,
@@ -61,7 +72,7 @@ func main() {
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
 				if err := producer.Produce(cfg.TopicTrigger, sessionID, messages.Encode(msg)); err != nil {
-					log.Printf("can't send message to queue: %s", err)
+					log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
 					return false
 				}
 				return true

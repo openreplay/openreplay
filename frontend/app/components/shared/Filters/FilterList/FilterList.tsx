@@ -37,12 +37,10 @@ function FilterList(props: Props) {
               <div className="flex items-center">
                 <div className="mr-2 color-gray-medium text-sm" style={{ textDecoration: 'underline dotted'}}>
                   <Popup
-                    trigger={<div>Events Order</div>}
                     content={ `Select the operator to be applied between events in your search.` }
-                    size="tiny"
-                    inverted
-                    position="top center"
-                  />
+                  >
+                    <div>Events Order</div>
+                  </Popup>
                 </div>
               
                 <SegmentSelection

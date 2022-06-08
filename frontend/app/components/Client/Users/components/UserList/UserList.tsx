@@ -6,6 +6,7 @@ import { sliceListPerPage, getRE } from 'App/utils';
 import { Pagination, NoContent, Loader } from 'UI';
 import { useModal } from 'App/components/Modal';
 import UserForm from '../UserForm';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props {
     isEnterprise?: boolean;
@@ -41,7 +42,15 @@ function UserList(props: Props) {
 
     return useObserver(() => (
         <Loader loading={loading}>
-            <NoContent show={!loading && length === 0} animatedIcon="empty-state">
+            <NoContent
+                show={!loading && length === 0}
+                title={
+                    <div className="flex flex-col items-center justify-center">
+                        <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                        <div className="mt-6 text-2xl">No data available.</div>
+                    </div>
+                }
+            >
                 <div className="mt-3 rounded bg-white">
                     <div className="grid grid-cols-12 p-3 border-b font-medium">
                         <div className="col-span-5">Name</div>
@@ -57,7 +66,7 @@ function UserList(props: Props) {
                                 editHandler={() => editHandler(user)}
                                 generateInvite={() => userStore.generateInviteCode(user.userId)}
                                 copyInviteCode={() => userStore.copyInviteCode(user.userId)}
-                                // isEnterprise={isEnterprise}
+                                isEnterprise={isEnterprise}
                             />
                         </div>
                     ))}

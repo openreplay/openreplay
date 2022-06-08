@@ -99,7 +99,7 @@ export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash) => has
 
 export const tests = () => '/tests';
 
-export const testBuilderNew = () => '/test-builder';
+export const testBuilderNew = () => '/test-sessions';
 
 export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
 
@@ -113,11 +113,6 @@ export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
 export const metricDetailsSub = (id = ':metricId', subId = ':subId', hash) => hashed(`/metrics/${ id }/details/${subId}`, hash);
-
-export const RESULTS_QUERY_KEY = 'results';
-export const METRICS_QUERY_KEY = 'metrics';
-export const SOURCE_QUERY_KEY = 'source';
-export const WIDGET_QUERY_KEY = 'widget';
 
 const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),

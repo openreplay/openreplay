@@ -3,6 +3,7 @@ import { Toggler, Button } from 'UI';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
+import { toast } from 'react-toastify';
 
 const str = new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)
 
@@ -49,25 +50,29 @@ function DefaultTimezone(props) {
         if (!timezone) setTimezone('local');
     }, []);
 
+    const onSelectChange = ({ value }) => {
+        setTimezone(value);
+        setChanged(true);
+    }
+    const onTimezoneSave = () => {
+        setChanged(false);
+        sessionSettings.updateKey('timezone', timezone);
+        toast.success("Default timezone saved successfully");
+    }
+
     return (
         <>
             <h3 className="text-lg">Default Timezone</h3>
             <div className="my-1">Session Time</div>
-            <div className="mt-2 flex items-center" style={{ width: "220px"}}>
+            <div className="mt-2 flex items-center" style={{ width: "265px"}}>
                 <Select
                     options={timezoneOptions}
                     defaultValue={timezone}
                     className="w-full"
-                    onChange={({ value }) => {
-                        setTimezone(value);
-                        setChanged(true);
-                    }}
+                    onChange={onSelectChange}
                 />
                 <div className="col-span-3 ml-3">
-                    <Button disabled={!changed} outline size="medium" onClick={() => {
-                        setChanged(false);
-                        sessionSettings.updateKey('timezone', timezone);
-                    }}>Update</Button>
+                    <Button disabled={!changed} variant="outline" size="medium" onClick={onTimezoneSave}>Update</Button>
                 </div>
             </div>
             <div className="text-sm mt-3">This change will impact the timestamp on session card and player.</div>

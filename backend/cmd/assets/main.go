@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"log"
+	"openreplay/backend/pkg/monitoring"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,7 +17,13 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
+/*
+Assets
+*/
+
 func main() {
+	metrics := monitoring.New("assets")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
@@ -27,6 +35,11 @@ func main() {
 		cfg.AssetsSizeLimit,
 	)
 
+	totalAssets, err := metrics.RegisterCounter("assets_total")
+	if err != nil {
+		log.Printf("can't create assets_total metric: %s", err)
+	}
+
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupCache,
 		[]string{cfg.TopicCache},
@@ -34,6 +47,7 @@ func main() {
 			switch msg := message.(type) {
 			case *messages.AssetCache:
 				cacher.CacheURL(sessionID, msg.URL)
+				totalAssets.Add(context.Background(), 1)
 			case *messages.ErrorEvent:
 				if msg.Source != "js_exception" {
 					return

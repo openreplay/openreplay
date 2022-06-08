@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import stl from './SessionSearchField.css';
+import stl from './SessionSearchField.module.css';
 import { Input } from 'UI';
 import FilterModal from 'Shared/Filters/FilterModal';
 import { fetchFilterSearch } from 'Duck/search';
@@ -30,21 +30,22 @@ function SessionSearchField(props: Props) {
     <div className="relative">
       <Input
         // inputProps={ { "data-openreplay-label": "Search", "autocomplete": "off" } }
-        className={stl.searchField}
+        // className={stl.searchField}
+        icon="search"
         onFocus={ () => setShowModal(true) }
         onBlur={ () => setTimeout(setShowModal, 200, false) }
         onChange={ onSearchChange }
-        icon="search"
-        iconPosition="left"
+        // icon="search"
+        // iconPosition="left"
         placeholder={ 'Search sessions using any captured event (click, input, page, error...)'}
-        fluid
+        // fluid
         id="search"
         type="search"
         autoComplete="off"
       />
 
       { showModal && (
-        <div className="absolute left-0 top-20 border shadow rounded bg-white z-50">
+        <div className="absolute left-0 border shadow rounded bg-white z-50">
           <FilterModal
             searchQuery={searchQuery}
             isMainSearch={true}

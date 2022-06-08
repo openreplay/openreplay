@@ -1,6 +1,6 @@
 import React from 'react'
 import { Icon, Link } from 'UI'
-import stl from './roleItem.css'
+import stl from './roleItem.module.css'
 import cn from 'classnames'
 import { CLIENT_TABS, client as clientRoute } from 'App/routes';
 

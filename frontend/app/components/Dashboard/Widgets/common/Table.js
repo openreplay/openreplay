@@ -1,6 +1,7 @@
+import React from 'react';
 import cn from 'classnames';
 import { Button } from 'UI';
-import stl from './table.css';
+import stl from './table.module.css';
 
 export default class Table extends React.PureComponent {
   state = { showAll: false };
@@ -19,9 +20,10 @@ export default class Table extends React.PureComponent {
       compare = false,
       maxHeight = 200,
       onRowClick = null,
+      isTemplate,
     } = this.props;
     const { showAll } = this.state;
-    
+
     return (
       <div className="w-full">
         <div className="flex">
@@ -47,15 +49,13 @@ export default class Table extends React.PureComponent {
                 </div>
               )) }
             </div>
-          )) }          
+          )) }
         </div>
-        { rows.size > (small ? 3 : 5) && !showAll &&
+        { !isTemplate && rows.size > (small ? 3 : 5) && !showAll &&
             <div className="w-full flex justify-center">
               <Button
                 onClick={ this.onLoadMoreClick }
-                plain
-                small
-                className="text-center"
+                variant="text-primary"
               >
                 { rows.size + ' More' }
               </Button>

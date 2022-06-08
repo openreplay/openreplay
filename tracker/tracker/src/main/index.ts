@@ -26,7 +26,7 @@ import type { Options as PerformanceOptions } from "./modules/performance.js";
 import type { Options as TimingOptions } from "./modules/timing.js";
 import type { StartOptions } from './app/index.js'
 //TODO: unique options init
-import type { OnStartInfo } from './app/index.js';
+import type { StartPromiseReturn } from './app/index.js';
 
 export type Options = Partial<
   AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & PerformanceOptions & TimingOptions
@@ -151,7 +151,7 @@ export default class API {
     return this.app.active();
   }
 
-  start(startOpts?: Partial<StartOptions>) : Promise<OnStartInfo> {
+  start(startOpts?: Partial<StartOptions>) : Promise<StartPromiseReturn> {
     if (!IN_BROWSER) {
       console.error(`OpenReplay: you are trying to start Tracker on a node.js environment. If you want to use OpenReplay with SSR, please, use componentDidMount or useEffect API for placing the \`tracker.start()\` line. Check documentation on ${DOCS_HOST}${DOCS_SETUP}`)
       return Promise.reject("Trying to start not in browser.");

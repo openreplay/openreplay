@@ -1,6 +1,6 @@
 import React from 'react'
 import Highlight from 'react-highlight'
-import stl from './highlightCode.css'
+import stl from './highlightCode.module.css'
 import cn from 'classnames'
 import { CopyButton } from 'UI'
 

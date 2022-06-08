@@ -9,14 +9,12 @@ interface Props {
     defaultValue?: string;
     plain?: boolean;
     components?: any;
-    styles?: any; 
+    styles?: any;
     onChange: (value: any) => void;
-    name?: string; 
+    name?: string;
     [x:string]: any;
 }
-export default function({ name = '', onChange, styles= {}, alignRight = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
-    const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : null;
-
+export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
     const customStyles = {
         option: (provided, state) => ({
             ...provided,
@@ -33,15 +31,18 @@ export default function({ name = '', onChange, styles= {}, alignRight = false, p
                 backgroundColor: colors['active-blue'],
             }
         }),
-        menu: (provided, state) => ({
+        menu: (provided: any, state: any) => ({
             ...provided,
             top: 31,
+            borderRadius: '3px',
+            right: right ? 0 : undefined,
             border: `1px solid ${colors['gray-light']}`,
             borderRadius: '3px',
             backgroundColor: '#fff',
             boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.1)',
             position: 'absolute',
             minWidth: 'fit-content',
+            zIndex: 99,
             overflow: 'hidden',
             zIndex: 100,
             ...(alignRight && { right: 0 })
@@ -50,11 +51,12 @@ export default function({ name = '', onChange, styles= {}, alignRight = false, p
             ...provided,
             padding: 0,
         }),
-        control: (provided) => {
+        control: (provided: any) => {
             const obj = {
                 ...provided,
                 border: 'solid thin #ddd',
                 cursor: 'pointer',
+                minHeight: '36px',
                 transition: 'all 0.5s',
                 ['&:hover']: {
                     backgroundColor: colors['gray-lightest'],
@@ -62,6 +64,7 @@ export default function({ name = '', onChange, styles= {}, alignRight = false, p
                 }
             }
             if (plain) {
+                obj['backgroundColor'] = 'transparent';
                 obj['border'] = '1px solid transparent'
                 obj['backgroundColor'] = 'transparent'
                 obj['&:hover'] = {
@@ -78,11 +81,15 @@ export default function({ name = '', onChange, styles= {}, alignRight = false, p
             }
             return obj;
         },
-        valueContainer: (provided) => ({
+        indicatorsContainer: (provided: any) => ({
+            ...provided,
+            padding: 0,
+        }),
+        valueContainer: (provided: any) => ({
             ...provided,
             paddingRight: '0px',
         }),
-        singleValue: (provided, state) => {
+        singleValue: (provided: any, state: { isDisabled: any; }) => {
           const opacity = state.isDisabled ? 0.5 : 1;
           const transition = 'opacity 300ms';
       
@@ -94,7 +101,7 @@ export default function({ name = '', onChange, styles= {}, alignRight = false, p
             // minWidth: 'fit-content',
         }),
     }
-    
+
 
     return (
         <Select
@@ -127,7 +134,7 @@ const DropdownIndicator = (
   ) => {
     return (
       <components.DropdownIndicator {...props}>
-        <Icon name="chevron-down" size="18" />
+        <Icon name="chevron-down" size="16" />
       </components.DropdownIndicator>
     );
   };

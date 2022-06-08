@@ -44,24 +44,21 @@ function UsersView(props: Props) {
                     title={<div>Team <span className="color-gray-medium">{userCount}</span></div>}
                     actionButton={(
                         <Popup
-                            trigger={
-                            <div>
-                                <IconButton
-                                    id="add-button"
-                                    disabled={ reachedLimit || !isAdmin }
-                                    circle
-                                    icon="plus"
-                                    outline
-                                    className="ml-3"
-                                    onClick={ () => editHandler(null) }
-                                />
-                            </div>
-                            }
                             content={ `${ !isAdmin ? PERMISSION_WARNING : (reachedLimit ? LIMIT_WARNING : 'Add team member') }` }
                             size="tiny"
                             inverted
                             position="top left"
-                        />
+                        >
+                            <IconButton
+                                id="add-button"
+                                disabled={ reachedLimit || !isAdmin }
+                                circle
+                                icon="plus"
+                                outline
+                                className="ml-3"
+                                onClick={ () => editHandler(null) }
+                            />
+                        </Popup>
                     )}
                 />
                 <div>
@@ -75,6 +72,6 @@ function UsersView(props: Props) {
 
 export default connect(state => ({
     account: state.getIn([ 'user', 'account' ]),
-    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
     limits: state.getIn([ 'user', 'account', 'limits', 'teamMember' ]),
 }))(UsersView);

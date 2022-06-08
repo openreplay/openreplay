@@ -1,16 +1,17 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import { 
-  IconButton, SlideModal, Input, Button, Loader,
+  Form, IconButton, SlideModal, Input, Button, Loader,
   NoContent, Popup, CopyButton, Dropdown } from 'UI';
 import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import { fetchList as fetchRoles } from 'Duck/roles';
-import styles from './manageUsers.css';
+import styles from './manageUsers.module.css';
 import UserItem from './UserItem';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 import { toast } from 'react-toastify';
-import BannerMessage from 'Shared/BannerMessage';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
 const LIMIT_WARNING = 'You have reached users limit.';
@@ -23,7 +24,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   loading: state.getIn([ 'members', 'loading' ]),
   saving: state.getIn([ 'members', 'saveRequest', 'loading' ]),
   roles: state.getIn(['roles', 'list']).filter(r => !r.protected).map(r => ({ text: r.name, value: r.roleId })).toJS(),
-  isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }), {
   init,
   save,
@@ -91,7 +92,7 @@ class ManageUsers extends React.PureComponent {
 
     return (
       <div className={ styles.form }>
-        <form onSubmit={ this.save } >
+        <Form onSubmit={ this.save } >
           <div className={ styles.formGroup }>
             <label>{ 'Full Name' }</label>
             <Input
@@ -104,7 +105,7 @@ class ManageUsers extends React.PureComponent {
             />
           </div>
 
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label>{ 'Email Address' }</label>
             <Input
               disabled={member.exists()}
@@ -113,13 +114,13 @@ class ManageUsers extends React.PureComponent {
               onChange={ this.onChange }
               className={ styles.input }
             />
-          </div>
+          </Form.Field>
           { !account.smtp &&
             <div className={cn("mb-4 p-2", styles.smtpMessage)}>
               SMTP is not configured (see <a className="link" href="https://docs.openreplay.com/configuration/configure-smtp" target="_blank">here</a> how to set it up).  You can still add new users, but you’d have to manually copy then send them the invitation link.
             </div>
           }
-          <div className={ styles.formGroup }>
+          <Form.Field>
             <label className={ styles.checkbox }>
               <input
                 name="admin"
@@ -132,10 +133,10 @@ class ManageUsers extends React.PureComponent {
               <span>{ 'Admin Privileges' }</span>
             </label>
             <div className={ styles.adminInfo }>{ 'Can manage Projects and team members.' }</div>
-          </div>
+          </Form.Field>
           
           { isEnterprise && (
-            <div className={ styles.formGroup }>
+            <Form.Field>
               <label htmlFor="role">{ 'Role' }</label>
               <Dropdown
                 placeholder="Role"
@@ -145,9 +146,9 @@ class ManageUsers extends React.PureComponent {
                 value={ member.roleId }
                 onChange={ this.onChange }
               />
-            </div>
+            </Form.Field>
           )}
-        </form>
+        </Form>
 
         <div className="flex items-center">
           <div className="flex items-center mr-auto">
@@ -155,18 +156,18 @@ class ManageUsers extends React.PureComponent {
               onClick={ this.save }    
               disabled={ !member.validate() }
               loading={ this.props.saving }
-              primary
-              marginRight
+              variant="primary"
+              className="float-left mr-2"
             >
               { member.exists() ? 'Update' : 'Invite' }
             </Button>
-            <Button
-              data-hidden={ !member.exists() }
-              onClick={ this.closeModal }
-              outline
-            >
-              { 'Cancel' }
-            </Button>
+            {member.exists() && (
+              <Button
+                onClick={ this.closeModal }
+              >
+                { 'Cancel' }
+              </Button>
+            )}
           </div>
           { !member.joined && member.invitationLink &&
             <CopyButton
@@ -211,32 +212,33 @@ class ManageUsers extends React.PureComponent {
                 { !hideHeader && <h3 className={ cn(styles.tabTitle, "text-2xl") }>{ (isAdmin ? 'Manage ' : '') + `Users (${members.size})` }</h3> }
                 { hideHeader && <h3 className={ cn(styles.tabTitle, "text-xl") }>{ `Users (${members.size})` }</h3>}
                 <Popup
-                  trigger={
-                    <div>
-                      <IconButton
-                          id="add-button"
-                          disabled={ !canAddUsers }
-                          circle
-                          icon="plus"
-                          outline
-                          onClick={ () => this.init() }
-                      />
-                    </div>
-                  }
                   disabled={ canAddUsers }
                   content={ `${ !canAddUsers ? (!isAdmin ? PERMISSION_WARNING : LIMIT_WARNING) : 'Add team member' }` }
-                  size="tiny"
-                  inverted
-                  position="top left"
-                />
+                >
+                  <div>
+                    <IconButton
+                        id="add-button"
+                        disabled={ !canAddUsers }
+                        circle
+                        icon="plus"
+                        outline
+                        onClick={ () => this.init() }
+                    />
+                  </div>
+                </Popup>
               </div>              
             </div>
 
             <NoContent
-              title="No users are available."              
+              title={
+                <div className="flex flex-col items-center justify-center">
+                  <AnimatedSVG name={ICONS.EMPTY_STATE} size="170" />
+                  <div className="mt-6 text-2xl">No data available.</div>
+                </div>
+              }
               size="small"
               show={ members.size === 0 }
-              animatedIcon="empty-state"
+              // animatedIcon="empty-state"
             >
               <div className={ styles.list }>
                 {

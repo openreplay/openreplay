@@ -3,7 +3,7 @@ import { Button, SlideModal, TagBadge } from 'UI'
 import { connect } from 'react-redux'
 import { init, fetchList, save, remove } from 'Duck/customField';
 import CustomFieldForm from '../../../Client/CustomFields/CustomFieldForm';
-import { confirm } from 'UI/Confirmation';
+import { confirm } from 'UI';
 
 const MetadataList = (props) => {
   const { site, fields } = props;
@@ -34,7 +34,7 @@ const MetadataList = (props) => {
 
   return (
     <div className="py-2 flex">
-      <Button primary outline size="small" onClick={() => openModal(true)}>Add Metadata</Button>
+      <Button variant="outline" onClick={() => openModal(true)}>Add Metadata</Button>
       <div className="flex ml-2">
         { fields.map((f, index) => (
           <TagBadge

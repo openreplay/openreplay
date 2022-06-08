@@ -16,16 +16,17 @@ import {
 import { logout } from 'Duck/user';
 import { Icon, Popup } from 'UI';
 import SiteDropdown from './SiteDropdown';
-import styles from './header.css';
-import Discover from './Discover/Discover';
+import styles from './header.module.css';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore'
 import Announcements from '../Announcements';
 import Notifications from '../Alerts/Notifications';
 import { init as initSite, fetchList as fetchSiteList } from 'Duck/site';
+import Logo from '../../svg/logo-small.svg';
 
 import ErrorGenPanel from 'App/dev/components';
 import ErrorsBadge from 'Shared/ErrorsBadge';
 import Alerts from '../Alerts/Alerts';
+import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
@@ -72,8 +73,14 @@ const Header = (props) => {
     <div className={ cn(styles.header, showTrackingModal ? styles.placeOnTop : '') }>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
         <div className="relative">
-          <div className={ styles.logo } />
-          <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.ENV.VERSION}</div>
+          {/* <img src={ Logo } alt="React Logo" /> */}
+          {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
+          <div className="p-2">
+            <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
+            {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
+            {/* <Logo width={30} /> */}
+          </div>
+          <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>
         </div>
       </NavLink>
       <SiteDropdown />
@@ -127,15 +134,9 @@ const Header = (props) => {
       
         <Notifications />
         <div className={ styles.divider } />
-        <Popup
-          trigger={
-            <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
-          }
-          content={ `Preferences` }
-          size="tiny"
-          inverted
-          position="top center"
-        />
+        <Popup content={ `Preferences` } >
+          <NavLink to={ CLIENT_PATH } className={ styles.headerIcon }><Icon name="cog" size="20" /></NavLink>
+        </Popup>
         
         <div className={ styles.divider } />
         <div className={ styles.userDetails }>
@@ -158,7 +159,6 @@ const Header = (props) => {
 export default withRouter(connect(
   state => ({
     account: state.getIn([ 'user', 'account' ]),
-    appearance: state.getIn([ 'user', 'account', 'appearance' ]),
     siteId: state.getIn([ 'site', 'siteId' ]),
     sites: state.getIn([ 'site', 'list' ]),
     showAlerts: state.getIn([ 'dashboard', 'showAlerts' ]),

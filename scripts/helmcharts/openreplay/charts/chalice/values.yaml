@@ -12,7 +12,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: "chalice"
-fullnameOverride: "chalice"
+fullnameOverride: "chalice-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,7 +38,21 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 8000
+  ports:
+    http: 8000
+    metrics: 8888
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: monitoring
+  scrapeConfigs:
+    - port: metrics
+      honorLabels: true
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
 
 ingress:
   enabled: true
@@ -69,7 +83,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  ch_host: clickhouse.db.svc.cluster.local
+  ch_host: clickhouse-openreplay-clickhouse.db.svc.cluster.local
   ch_port: 9000
   captcha_server: ''
   captcha_key: ''
@@ -97,3 +111,12 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+healthCheck:
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 8000
+    initialDelaySeconds: 100
+    periodSeconds: 15
+    timeoutSeconds: 10

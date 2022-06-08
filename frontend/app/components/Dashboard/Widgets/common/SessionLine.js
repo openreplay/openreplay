@@ -1,7 +1,7 @@
 import cn from 'classnames';
 import { session as sessionRoute } from 'App/routes';
 import { Link, Icon, TextEllipsis } from 'UI';
-import stl from './sessionLine.css';
+import stl from './sessionLine.module.css';
 
 const FeedbackLine = ({
 	icon,

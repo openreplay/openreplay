@@ -1,26 +1,54 @@
-import React, { useState } from 'react'
-import stl from './bookmark.css'
-import { Icon } from 'UI'
+import React, { useEffect, useState } from 'react'
+import { Popup, Button } from 'UI'
 import { toggleFavorite } from 'Duck/sessions'
 import { connect } from 'react-redux'
-// import Session from 'Types/session';
+import { toast } from 'react-toastify';
 
 interface Props {
-  toggleFavorite: (session) => void,
+  toggleFavorite: (sessionId: string) => Promise<void>,
   favorite: Boolean,
-  sessionId: any
+  sessionId: any,
+  isEnterprise: Boolean
 }
-function Bookmark({ toggleFavorite, sessionId, favorite } : Props ) {  
+function Bookmark(props : Props ) {  
+  const { sessionId, favorite, isEnterprise } = props;
+  const [isFavorite, setIsFavorite] = useState(favorite);
+  const ADDED_MESSAGE = isEnterprise ? 'Session added to vault' : 'Session added to your favorites';
+  const REMOVED_MESSAGE = isEnterprise ? 'Session removed from vault' : 'Session removed from your favorites';  
+  const TOOLTIP_TEXT_ADD = isEnterprise ? 'Add to vault' : 'Add to favorites';
+  const TOOLTIP_TEXT_REMOVE = isEnterprise ? 'Remove from vault' : 'Remove from favorites';
 
-  return ( 
-    <div
-      className={ stl.favoriteWrapper }
-      onClick={ () => toggleFavorite(sessionId) }
-      data-favourite={ favorite }
+  const ACTIVE_ICON = isEnterprise ? 'safe-fill' : 'star-solid';
+  const INACTIVE_ICON = isEnterprise ? 'safe' : 'star';
+
+
+  useEffect(() => {
+    setIsFavorite(favorite);
+  }, [favorite]);
+
+  const toggleFavorite = async () => {
+    props.toggleFavorite(sessionId).then(() => {
+      toast.success(isFavorite ? REMOVED_MESSAGE : ADDED_MESSAGE);
+      setIsFavorite(!isFavorite);
+    });
+  }
+
+  return (
+    <Popup 
+      delay={500}
+      content={isFavorite ? TOOLTIP_TEXT_REMOVE : TOOLTIP_TEXT_ADD}
+      hideOnClick={true}
+      distance={20}
     >
-      <Icon name={ favorite ? 'star-solid' : 'star' } size="20" />
-    </div>
+      <Button
+        onClick={ toggleFavorite }
+        variant="text-primary"
+        icon={isFavorite ? ACTIVE_ICON : INACTIVE_ICON}
+      />
+    </Popup>
   )
 }
 
-export default connect(null, { toggleFavorite })(Bookmark)
+export default connect(state => ({
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
+}), { toggleFavorite })(Bookmark)

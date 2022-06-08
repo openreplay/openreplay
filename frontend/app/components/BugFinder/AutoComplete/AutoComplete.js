@@ -5,7 +5,7 @@ import { Input, Icon } from 'UI';
 import { debounce } from 'App/utils';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import EventSearchInput from 'Shared/EventSearchInput';
-import stl from './autoComplete.css';
+import stl from './autoComplete.module.css';
 import FilterItem from '../CustomFilters/FilterItem';
 
 const TYPE_TO_SEARCH_MSG = "Start typing to search...";

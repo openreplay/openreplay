@@ -1,28 +1,37 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux';
-import { editGDPR, saveGDPR } from 'Duck/site';
+import { editGDPR, saveGDPR, init } from 'Duck/site';
 import copy from 'copy-to-clipboard';
-import { Select, Checkbox } from 'UI';
+import { Checkbox } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
-import stl from './projectCodeSnippet.css'
+import stl from './projectCodeSnippet.module.css'
 import CircleNumber from '../../CircleNumber';
 import Highlight from 'react-highlight'
+import Select from 'Shared/Select'
 
 const inputModeOptions = [
-  { text: 'Record all inputs', value: 'plain' },
-  { text: 'Ignore all inputs', value: 'obscured' },
-  { text: 'Obscure all inputs', value: 'hidden' },
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 const inputModeOptionsMap = {}
 inputModeOptions.forEach((o, i) => inputModeOptionsMap[o.value] = i)
 
 const ProjectCodeSnippet = props  => {
-  const site = props.sites.find(s => s.id === props.siteId);
-  const { gdpr } = site;
+  // const site = props.sites.find(s => s.id === props.siteId);
+  const { site } = props;
+  const { gdpr } = props.site;
   const [changed, setChanged] = useState(false)
   const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    const site = props.sites.find(s => s.id === props.siteId);
+    if (site) {
+      props.init(site)
+    }
+  }, [])
 
   const codeSnippet = `<!-- OpenReplay Tracking Code for HOST -->
 <script>
@@ -47,7 +56,7 @@ const ProjectCodeSnippet = props  => {
       r.issue=function(k,p){r.push([6,k,p])};
       r.isActive=function(){return false};
       r.getSessionToken=function(){};
-    })("//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
+    })("//static.openreplay.com/${window.env.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
   </script>`;
 
   const saveGDPR = (value) => {
@@ -55,8 +64,9 @@ const ProjectCodeSnippet = props  => {
     props.saveGDPR(site.id, GDPR({...value}));
   }
 
-  const onChangeSelect = (event, { name, value }) => {
-    const { gdpr } = site;
+  const onChangeSelect = ({ name, value }) => {
+    // console.log(name, value)
+    // const { gdpr } = site;
     const _gdpr = { ...gdpr.toData() };
     props.editGDPR({ [ name ]: value });
     _gdpr[name] = value;
@@ -64,8 +74,9 @@ const ProjectCodeSnippet = props  => {
     saveGDPR(_gdpr)
   };
 
-  const onChangeOption = (event, { name, checked }) => {
-    const { gdpr } = props.site;
+  const onChangeOption = ({ target: { name, checked } }) => {
+    // const { gdpr } = site;
+    console.log(name, checked)
     const _gdpr = { ...gdpr.toData() };
     _gdpr[name] = checked;
     props.editGDPR({ [ name ]: checked });
@@ -97,6 +108,8 @@ const ProjectCodeSnippet = props  => {
   };  
 
   const _snippet = getCodeSnippet(site);
+
+  // console.log('gdpr.defaultInputMode', gdpr.defaultInputMode)
   
   return (
     <div>
@@ -108,9 +121,9 @@ const ProjectCodeSnippet = props  => {
           <Select
             name="defaultInputMode"
             options={ inputModeOptions }
-            onChange={ onChangeSelect }
+            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value }) }
             placeholder="Default Input Mode"
-            value={ gdpr.defaultInputMode }
+            defaultValue={ gdpr.defaultInputMode }
           />
           <div className="mx-4" />
 
@@ -118,7 +131,7 @@ const ProjectCodeSnippet = props  => {
             name="maskNumbers"
             type="checkbox"
             checked={ gdpr.maskNumbers }
-            onClick={ onChangeOption }
+            onChange={ onChangeOption }
             className="mr-2"
             label="Do not record any numeric text"
           />
@@ -129,7 +142,7 @@ const ProjectCodeSnippet = props  => {
             name="maskEmails"
             type="checkbox"
             checked={ gdpr.maskEmails }
-            onClick={ onChangeOption }
+            onChange={ onChangeOption }
             className="mr-2"
             label="Do not record email addresses"
           />
@@ -153,10 +166,18 @@ const ProjectCodeSnippet = props  => {
         <span>{ ' tag of your page.' }</span>
       </div>
       <div className={ cn(stl.snippetsWrapper, 'ml-10') }>
-        <button className={ stl.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
+        <CodeSnippet
+          host={ site && site.host }
+          projectKey={ site && site.projectKey }
+          ingestPoint={`"https://${window.location.hostname}/ingest"`}
+          defaultInputMode={ inputModeOptionsMap[gdpr.defaultInputMode] }
+          obscureTextNumbers={ gdpr.maskNumbers }
+          obscureTextEmails={ gdpr.maskEmails }
+        />
+        {/* <button className={ stl.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
         <Highlight className="html">
           {_snippet}
-        </Highlight>
+        </Highlight> */}
       </div>
       {/* TODO Extract for SaaS */}
       <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a>.</div>
@@ -166,7 +187,8 @@ const ProjectCodeSnippet = props  => {
 
 export default connect(state => ({
   siteId: state.getIn([ 'site', 'siteId' ]),
+  site: state.getIn([ 'site', 'instance' ]),
   sites: state.getIn([ 'site', 'list' ]),
   // gdpr: state.getIn([ 'site', 'instance', 'gdpr' ]),
   saving: state.getIn([ 'site', 'saveGDPR', 'loading' ])
-}), { editGDPR, saveGDPR })(ProjectCodeSnippet)
+}), { editGDPR, saveGDPR, init })(ProjectCodeSnippet)

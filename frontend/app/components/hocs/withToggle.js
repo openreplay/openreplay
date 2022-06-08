@@ -1,3 +1,4 @@
+import React from 'react';
 const withToggle = (stateName = 'open', handlerName = 'switchOpen', initial = false) => BaseComponent =>
   class extends React.Component {
     state = {

@@ -1,8 +1,7 @@
 //@ts-nocheck
 import React from 'react';
-import { Icon } from 'UI';
+import { Icon, Popup } from 'UI';
 import { checkForRecent } from 'App/date';
-import { Tooltip } from 'react-tippy';
 
 
 const AdminPrivilegeLabel = ({ user }) => {
@@ -49,28 +48,27 @@ function UserListItem(props: Props) {
             <div className="col-span-2 justify-self-end invisible group-hover:visible">
                 <div className="grid grid-cols-2 gap-3 items-center justify-end">
                     {!user.isJoined && user.invitationLink ? (
-                        <Tooltip
+                        <Popup
                             delay={500}
-                            arrow
-                            title="Copy Invite Code"
+                            content="Copy Invite Code"
                             hideOnClick={true}
                         >
                             <button className='' onClick={copyInviteCode}>
                                 <Icon name="link-45deg" size="16" color="teal"/>
                             </button>
-                        </Tooltip>
+                        </Popup>
                     ) : <div/>}
                     {!user.isJoined && user.isExpiredInvite && (
-                        <Tooltip
+                        <Popup
                             delay={500}
                             arrow
-                            title="Generate Invite"
+                            content="Generate Invite"
                             hideOnClick={true}
                         >
                             <button className='' onClick={generateInvite}>
                                 <Icon name="link-45deg" size="16" color="red"/>
                             </button>
-                        </Tooltip>
+                        </Popup>
                     )}
                     <button className='' onClick={editHandler}>
                         <Icon name="pencil" color="teal" size="16" />

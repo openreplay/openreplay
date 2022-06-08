@@ -1,7 +1,8 @@
-import type Message from "../../common/messages.js";
+import type App from "../app/index.js";
+import { hasTag } from "../app/guards.js";
 import { isURL } from "../utils.js";
-import App from "../app/index.js";
 import { ResourceTiming, PageLoadTiming, PageRenderTiming } from "../../common/messages.js";
+
 
 // Inspired by https://github.com/WPO-Foundation/RUM-SpeedIndex/blob/master/src/rum-speedindex.js
 
@@ -21,7 +22,7 @@ function getPaintBlocks(resources: ResourcesTimeMap): Array<PaintBlock> {
   for (let i = 0; i < elements.length; i++) {
     const element = elements[i];
     let src = '';
-    if (element instanceof HTMLImageElement) {
+    if (hasTag(element, "IMG")) {
       src = element.currentSrc || element.src;
     }
     if (!src) {
