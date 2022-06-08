@@ -8,6 +8,7 @@ import { makeAutoObservable, observable, action } from "mobx"
 import { dashboardService, metricService, sessionService, userService, auditService } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
+import NotificationStore from './notificationStore';
 
 export class RootStore {
     dashboardStore: IDashboardSotre;
@@ -16,6 +17,7 @@ export class RootStore {
     userStore: UserStore;
     roleStore: RoleStore;
     auditStore: AuditStore;
+    notificationStore: NotificationStore
 
     limits: any;
 
@@ -26,6 +28,7 @@ export class RootStore {
         this.userStore = new UserStore();
         this.roleStore = new RoleStore();
         this.auditStore = new AuditStore();
+        this.notificationStore = new NotificationStore();
         makeAutoObservable(this, {
           limits: observable,
           fetchLimits: action,

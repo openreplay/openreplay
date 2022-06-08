@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button, NoContent } from 'UI';
 import { connect } from 'react-redux';
 import { fetchList, setViewed, clearAll } from 'Duck/notifications';
@@ -6,9 +6,10 @@ import { setLastRead } from 'Duck/announcements';
 import cn from 'classnames';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 import ListItem from './ListItem'
+import { useStore } from 'App/mstore';
+import { useObserver } from 'mobx-react-lite';
 
 interface Props {
-    unReadNotificationsCount: number;
     setLastRead: Function;
     
     clearingAll: boolean;
@@ -20,7 +21,10 @@ interface Props {
     setViewed: Function;
 }
 function AlertTriggersModal(props: Props) {
-    const { list, unReadNotificationsCount, loading, clearingAll, clearing } = props;
+    const { loading, clearingAll, clearing } = props;
+    const { notificationStore } = useStore();
+    const count = useObserver(() => notificationStore.notificationsCount);
+    const list = useObserver(() => notificationStore.notifications);
 
     const onClearAll = () => {
         const { list } = props;
@@ -29,21 +33,24 @@ function AlertTriggersModal(props: Props) {
     }
 
     const onClear = (notification: any) => {
-        console.log('onClear', notification);
         props.setViewed(notification.notificationId)
     }
+
+    useEffect(() => {
+        notificationStore.fetchNotifications();
+    }, [])
 
     return (
         <div className="bg-white box-shadow h-screen overflow-y-auto" style={{ width: '450px'}}>
             <div className="flex items-center justify-between p-5 text-2xl">
                 <div>Alerts</div>
-                { unReadNotificationsCount > 0 && (
+                { count > 0 && (
                     <div className="">
                         <Button
                             loading={clearingAll}
                             variant="text"
                             onClick={props.setLastRead}
-                            disabled={unReadNotificationsCount === 0}
+                            disabled={count === 0}
                         >
                             <span
                             className={ cn("text-sm color-gray-medium", { 'invisible' : clearingAll })}
@@ -63,7 +70,7 @@ function AlertTriggersModal(props: Props) {
                         </div>
                     }
                     subtext="There are no alerts to show."
-                    show={ !loading && unReadNotificationsCount === 0 }
+                    show={ !loading && count === 0 }
                     size="small"
                 >
                     {list.map((item: any, i: any) => (
