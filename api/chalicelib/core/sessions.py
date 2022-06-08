@@ -254,9 +254,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
             cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
-            print(main_query)
+            print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.dict())
+            print(data.json())
             print("--------------------")
             raise err
         if errors_only:
