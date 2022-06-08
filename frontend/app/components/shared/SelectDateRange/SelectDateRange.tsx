@@ -37,7 +37,7 @@ function SelectDateRange(props: Props) {
                 plain
                 value={selectedValue}
                 options={options}
-                onChange={({ value }: any) => onChange(value)}
+                onChange={({ value }: any) => onChange(value.value)}
                 components={{ SingleValue: ({ children, ...props} : any) => {
                     return (
                         <components.SingleValue {...props}>
