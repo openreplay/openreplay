@@ -373,7 +373,7 @@ export default class Controls extends React.Component {
                   active={ inspectorMode }
                   onClick={ () => toggleBottomTools(INSPECTOR) }
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   label="INSPECT"
                   containerClassName="mx-2"
                 />
@@ -384,7 +384,7 @@ export default class Controls extends React.Component {
                 active={ bottomBlock === CONSOLE && !inspectorMode}
                 label="CONSOLE"
                 noIcon
-                labelClassName="text-base font-semibold"
+                labelClassName="!text-base font-semibold"
                 count={ logCount }
                 hasErrors={ logRedCount > 0 }
                 containerClassName="mx-2"
@@ -397,7 +397,7 @@ export default class Controls extends React.Component {
                   label="NETWORK"
                   hasErrors={ resourceRedCount > 0 }
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
               }
@@ -408,7 +408,7 @@ export default class Controls extends React.Component {
                   active={ bottomBlock === PERFORMANCE && !inspectorMode }
                   label="PERFORMANCE"
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
               }
@@ -421,7 +421,7 @@ export default class Controls extends React.Component {
                   count={ fetchCount }
                   label="FETCH"
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
               }
@@ -433,7 +433,7 @@ export default class Controls extends React.Component {
                   count={ graphqlCount }
                   label="GRAPHQL"
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
               }
@@ -445,7 +445,7 @@ export default class Controls extends React.Component {
                   count={ storageCount }
                   label={ getStorageName(storageType) }
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
               }
@@ -456,7 +456,7 @@ export default class Controls extends React.Component {
                   active={ bottomBlock === EXCEPTIONS && !inspectorMode }
                   label="EXCEPTIONS"
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                   count={ exceptionsCount }
                   hasErrors={ exceptionsCount > 0 }
@@ -469,7 +469,7 @@ export default class Controls extends React.Component {
                   active={ bottomBlock === STACKEVENTS && !inspectorMode }
                   label="EVENTS"
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                   count={ stackCount }
                   hasErrors={ stackRedCount > 0 }
@@ -483,7 +483,7 @@ export default class Controls extends React.Component {
                   count={ profilesCount }
                   label="PROFILER"
                   noIcon
-                  labelClassName="text-base font-semibold"
+                  labelClassName="!text-base font-semibold"
                   containerClassName="mx-2"
                 />
               }
