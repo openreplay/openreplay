@@ -46,7 +46,7 @@ func main() {
 		func(sessionID uint64, message messages.Message, e *types.Meta) {
 			switch msg := message.(type) {
 			case *messages.AssetCache:
-				cacher.CacheURL(sessionID, msg.URL) // save assets every time
+				cacher.CacheURL(sessionID, msg.URL)
 				totalAssets.Add(context.Background(), 1)
 			case *messages.ErrorEvent:
 				if msg.Source != "js_exception" {

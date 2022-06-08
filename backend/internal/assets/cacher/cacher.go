@@ -56,9 +56,9 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, conte
 		return
 	}
 	c.timeoutMap.add(cachePath)
-	//if c.s3.Exists(cachePath) {
-	//	return
-	//}
+	if c.s3.Exists(cachePath) {
+		return
+	}
 
 	req, _ := http.NewRequest("GET", requestURL, nil)
 	req.Header.Set("Cookie", "ABv=3;") // Hack for rueducommerce
