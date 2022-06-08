@@ -26,7 +26,7 @@ async function main() {
     from: /\.\.\/\.\.\/common/g,
     to: '../common',
   });
-  
+
 
   await fs.rename('build/cjs/main', 'cjs');
   await fs.rename('build/cjs/common', 'cjs/common');

@@ -8,24 +8,20 @@ import {
 import { hasTag } from "../app/guards.js";
 import { SetInputTarget, SetInputValue, SetInputChecked } from "../../common/messages.js";
 
+const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date']
+
 // TODO: take into consideration "contenteditable" attribute
 type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
 function isTextEditable(node: any): node is TextEditableElement {
-  if (hasTag(node, "TEXTAREA")) { 
+  if (hasTag(node, "TEXTAREA")) {
     return true;
   }
   if (!hasTag(node, "INPUT")) {
     return false;
   }
   const type = node.type;
-  return (
-    type === 'text' ||
-    type === 'password' ||
-    type === 'email' ||
-    type === 'search' ||
-    type === 'number' ||
-    type === 'range'
-  );
+
+  return INPUT_TYPES.includes(type)
 }
 
 function isCheckable(node: any): node is HTMLInputElement {
@@ -72,11 +68,11 @@ export function getInputLabel(node: TextEditableElement): string {
   let label = getLabelAttribute(node);
   if (label === null) {
     const labelElement = labelElementFor(node);
-    label = (labelElement && labelElement.innerText) 
-      || node.placeholder 
-      || node.name 
-      || node.id 
-      || node.className 
+    label = (labelElement && labelElement.innerText)
+      || node.placeholder
+      || node.name
+      || node.id
+      || node.className
       || node.type
   }
   return normSpaces(label).slice(0, 100);
@@ -92,6 +88,7 @@ export interface Options {
   obscureInputNumbers: boolean;
   obscureInputEmails: boolean;
   defaultInputMode: InputMode;
+  obscureDateInputs: boolean;
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -100,6 +97,7 @@ export default function (app: App, opts: Partial<Options>): void {
       obscureInputNumbers: true,
       obscureInputEmails: true,
       defaultInputMode: InputMode.Plain,
+      obscureDateInputs: false,
     },
     opts,
   );
@@ -112,7 +110,11 @@ export default function (app: App, opts: Partial<Options>): void {
   function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
     let value = node.value;
     let inputMode: InputMode = options.defaultInputMode;
-    if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
+    if (node.type === 'date') {
+      if (options.obscureDateInputs) {
+        inputMode = InputMode.Obscured
+      }
+    } else if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
       inputMode = InputMode.Hidden;
     } else if (
       hasOpenreplayAttribute(node, 'obscured') ||
@@ -134,6 +136,7 @@ export default function (app: App, opts: Partial<Options>): void {
         value = '';
         break;
     }
+
     app.send(new SetInputValue(id, value, mask));
   }
 

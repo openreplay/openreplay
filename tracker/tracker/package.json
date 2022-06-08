@@ -41,6 +41,6 @@
     "error-stack-parser": "^2.0.6"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=17.5"
   }
 }
