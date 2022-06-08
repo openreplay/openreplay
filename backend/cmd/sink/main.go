@@ -78,7 +78,7 @@ func main() {
 			// If message timestamp is empty, use at least ts of session start
 			ts := message.Meta().Timestamp
 			if ts == 0 {
-				//log.Printf("zero ts; sessID: %d, msg: %+v", sessionID, message)
+				log.Printf("zero ts; sessID: %d, msg: %+v", sessionID, message)
 			} else {
 				// Log ts of last processed message
 				counter.Update(sessionID, time.UnixMilli(ts))

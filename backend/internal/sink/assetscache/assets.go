@@ -26,30 +26,37 @@ func (e *AssetsCache) ParseAssets(sessID uint64, msg messages.Message) messages.
 	switch m := msg.(type) {
 	case *messages.SetNodeAttributeURLBased:
 		if m.Name == "src" || m.Name == "href" {
-			log.Printf("accet for session: %d", sessID)
-			return &messages.SetNodeAttribute{
+			newMsg := &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,
 				Value: e.handleURL(sessID, m.BaseURL, m.Value),
 			}
+			newMsg.SetMeta(msg.Meta())
+			return newMsg
 		} else if m.Name == "style" {
-			return &messages.SetNodeAttribute{
+			newMsg := &messages.SetNodeAttribute{
 				ID:    m.ID,
 				Name:  m.Name,
 				Value: e.handleCSS(sessID, m.BaseURL, m.Value),
 			}
+			newMsg.SetMeta(msg.Meta())
+			return newMsg
 		}
 	case *messages.SetCSSDataURLBased:
-		return &messages.SetCSSData{
+		newMsg := &messages.SetCSSData{
 			ID:   m.ID,
 			Data: e.handleCSS(sessID, m.BaseURL, m.Data),
 		}
+		newMsg.SetMeta(msg.Meta())
+		return newMsg
 	case *messages.CSSInsertRuleURLBased:
-		return &messages.CSSInsertRule{
+		newMsg := &messages.CSSInsertRule{
 			ID:    m.ID,
 			Index: m.Index,
 			Rule:  e.handleCSS(sessID, m.BaseURL, m.Rule),
 		}
+		newMsg.SetMeta(msg.Meta())
+		return newMsg
 	}
 	return msg
 }
