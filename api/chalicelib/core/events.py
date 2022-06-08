@@ -435,7 +435,15 @@ def __get_autocomplete_table(value, project_id):
         query = cur.mogrify(" UNION ".join(sub_queries) + ";",
                             {"project_id": project_id, "value": helper.string_to_sql_like(value),
                              "svalue": helper.string_to_sql_like("^" + value)})
-        cur.execute(query)
+        try:
+            cur.execute(query)
+        except Exception as err:
+            print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
+            print(query.decode('UTF-8'))
+            print("--------- VALUE -----------")
+            print(value)
+            print("--------------------")
+            raise err
         results = helper.list_to_camel_case(cur.fetchall())
         return results
 

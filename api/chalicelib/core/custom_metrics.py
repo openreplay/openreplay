@@ -42,16 +42,34 @@ def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     return results
 
 
+def __is_funnel_chart(data: schemas.TryCustomMetricsPayloadSchema):
+    return data.metric_type == schemas.MetricType.funnel
+
+
+def __get_funnel_chart(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+    if len(data.series) == 0:
+        return {}
+    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+
+
+def __is_errors_list(data):
+    return data.metric_type == schemas.MetricType.table \
+           and data.metric_of == schemas.TableMetricOfType.issues \
+           and len(data.metric_value) == 1 and data.metric_value[0] == schemas.IssueType.js_exception \
+           and data.metric_format == schemas.MetricFormatType.errors_list
+
+
+def __get_errors_list(project_id, user_id, data):
+    if len(data.series) == 0:
+        return []
+    return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+
+
 def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id=None):
-    if data.metric_type == schemas.MetricType.funnel:
-        if len(data.series) == 0:
-            return {}
-        return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
-    elif data.metric_type == schemas.MetricType.table \
-            and data.metric_of == schemas.TableMetricOfType.issues \
-            and len(data.metric_value) == 1 and data.metric_value[0] == schemas.IssueType.js_exception \
-            and data.metric_format == schemas.MetricFormatType.errors_list:
-        return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+    if __is_funnel_chart(data):
+        return __get_funnel_chart(project_id=project_id, data=data)
+    elif __is_errors_list(data):
+        return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
 
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
@@ -85,15 +103,22 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     if metric is None:
         return None
     metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
-    series_charts = __try_live(project_id=project_id, data=metric)
-    if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
-        return series_charts
-    results = [{}] * len(series_charts[0])
-    for i in range(len(results)):
-        for j, series_chart in enumerate(series_charts):
-            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-                          metric.series[j].name: series_chart[i]["count"]}
-    return results
+
+    return merged_live(project_id=project_id, data=metric, user_id=user_id)
+    # if __is_funnel_chart(metric):
+    #     return __get_funnel_chart(project_id=project_id, data=metric)
+    # elif __is_errors_list(metric):
+    #     return __get_errors_list(project_id=project_id, user_id=user_id, data=metric)
+    #
+    # series_charts = __try_live(project_id=project_id, data=metric)
+    # if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
+    #     return series_charts
+    # results = [{}] * len(series_charts[0])
+    # for i in range(len(results)):
+    #     for j, series_chart in enumerate(series_charts):
+    #         results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+    #                       metric.series[j].name: series_chart[i]["count"]}
+    # return results
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
