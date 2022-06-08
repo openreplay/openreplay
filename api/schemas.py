@@ -479,6 +479,11 @@ class IssueType(str, Enum):
     js_exception = 'js_exception'
 
 
+class MetricFormatType(str, Enum):
+    session_count = 'sessionCount'
+    errors_list = 'errors'
+
+
 class __MixedSearchFilter(BaseModel):
     is_event: bool = Field(...)
 
@@ -761,8 +766,7 @@ class MobileSignPayloadSchema(BaseModel):
     keys: List[str] = Field(...)
 
 
-class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema):
-    # class CustomMetricSeriesFilterSchema(SessionsSearchPayloadSchema):
+class CustomMetricSeriesFilterSchema(FlatSessionsSearchPayloadSchema, SearchErrorsSchema):
     startDate: Optional[int] = Field(None)
     endDate: Optional[int] = Field(None)
     sort: Optional[str] = Field(None)
@@ -836,7 +840,7 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
     metric_type: MetricType = Field(MetricType.timeseries)
     metric_of: Union[TableMetricOfType, TimeseriesMetricOfType] = Field(TableMetricOfType.user_id)
     metric_value: List[IssueType] = Field([])
-    metric_format: Optional[str] = Field(None)
+    metric_format: Optional[MetricFormatType] = Field(None)
 
     # metricFraction: float = Field(None, gt=0, lt=1)
     # This is used to handle wrong values sent by the UI

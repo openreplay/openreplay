@@ -102,7 +102,7 @@ def get_templates(projectId: int, context: schemas.CurrentContext = Depends(OR_c
 @app.put('/{projectId}/custom_metrics/try', tags=["customMetrics"])
 def try_custom_metric(projectId: int, data: schemas.TryCustomMetricsPayloadSchema = Body(...),
                       context: schemas.CurrentContext = Depends(OR_context)):
-    return {"data": custom_metrics.merged_live(project_id=projectId, data=data)}
+    return {"data": custom_metrics.merged_live(project_id=projectId, data=data, user_id=context.user_id)}
 
 
 @app.post('/{projectId}/metrics/try/sessions', tags=["dashboard"])
@@ -162,10 +162,23 @@ def get_custom_metric_sessions(projectId: int, metric_id: int,
 
 @app.post('/{projectId}/metrics/{metric_id}/issues', tags=["dashboard"])
 @app.post('/{projectId}/custom_metrics/{metric_id}/issues', tags=["customMetrics"])
-def get_custom_metric__funnel_issues(projectId: int, metric_id: int,
-                                     data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
-                                     context: schemas.CurrentContext = Depends(OR_context)):
-    data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id, data=data)
+def get_custom_metric_funnel_issues(projectId: int, metric_id: int,
+                                    data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                                    context: schemas.CurrentContext = Depends(OR_context)):
+    data = custom_metrics.get_funnel_issues(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                            data=data)
+    if data is None:
+        return {"errors": ["custom metric not found"]}
+    return {"data": data}
+
+
+@app.post('/{projectId}/metrics/{metric_id}/errors', tags=["dashboard"])
+@app.post('/{projectId}/custom_metrics/{metric_id}/errors', tags=["customMetrics"])
+def get_custom_metric_errors_list(projectId: int, metric_id: int,
+                                  data: schemas.CustomMetricSessionsPayloadSchema = Body(...),
+                                  context: schemas.CurrentContext = Depends(OR_context)):
+    data = custom_metrics.get_errors_list(project_id=projectId, user_id=context.user_id, metric_id=metric_id,
+                                          data=data)
     if data is None:
         return {"errors": ["custom metric not found"]}
     return {"data": data}
