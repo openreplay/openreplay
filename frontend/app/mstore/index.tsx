@@ -6,7 +6,7 @@ import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
 import FunnelStore from './funnelStore';
 import { makeAutoObservable, observable, action } from "mobx"
-import { dashboardService, metricService, sessionService, userService, auditService, funnelService } from 'App/services';
+import { dashboardService, metricService, sessionService, userService, auditService, funnelService, errorService } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
 import NotificationStore from './notificationStore';

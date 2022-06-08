@@ -14,7 +14,8 @@ interface Props {
     name?: string;
     [x:string]: any;
 }
-export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
+export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
+    const defaultSelected = options.find(o => o.value === defaultValue) || options[0];
     const customStyles = {
         option: (provided, state) => ({
             ...provided,
@@ -37,17 +38,17 @@ export default function({ name = '', onChange, right = false, plain = false, opt
             borderRadius: '3px',
             right: right ? 0 : undefined,
             border: `1px solid ${colors['gray-light']}`,
-            borderRadius: '3px',
+            // borderRadius: '3px',
             backgroundColor: '#fff',
             boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.1)',
             position: 'absolute',
             minWidth: 'fit-content',
-            zIndex: 99,
+            // zIndex: 99,
             overflow: 'hidden',
             zIndex: 100,
-            ...(alignRight && { right: 0 })
+            ...(right && { right: 0 })
         }),
-        menuList: (provided, state) => ({
+        menuList: (provided: any, state: any) => ({
             ...provided,
             padding: 0,
         }),
@@ -95,7 +96,7 @@ export default function({ name = '', onChange, right = false, plain = false, opt
       
           return { ...provided, opacity, transition };
         },
-        noOptionsMessage: (provided) => ({
+        noOptionsMessage: (provided: any) => ({
             ...provided,
             whiteSpace: 'nowrap !important',
             // minWidth: 'fit-content',

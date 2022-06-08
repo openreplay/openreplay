@@ -2,7 +2,7 @@ import React from 'react';
 import Widget from 'App/mstore/types/widget';
 import Funnelbar from './FunnelBar';
 import cn from 'classnames';
-import stl from './FunnelWidget.css';
+import stl from './FunnelWidget.module.css';
 import { Icon } from 'UI';
 
 interface Props {

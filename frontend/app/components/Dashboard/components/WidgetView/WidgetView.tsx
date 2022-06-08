@@ -7,6 +7,7 @@ import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
 import { useObserver } from 'mobx-react-lite';
 import WidgetName from '../WidgetName';
+import { withSiteId } from 'App/routes';
 
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
