@@ -72,4 +72,17 @@ export default class UserService {
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || {});
     }
+
+    ignoreNotification(notificationId: string) {
+        return this.client.get(`/notifications/${notificationId}/view`)
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
+    }
+
+    ignoreAllNotifications(params: any) {
+        return this.client.post(`/notifications/view`, params)
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
+    }
+
 }
