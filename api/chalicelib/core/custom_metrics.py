@@ -2,7 +2,7 @@ import json
 from typing import Union
 
 import schemas
-from chalicelib.core import sessions, funnels
+from chalicelib.core import sessions, funnels, errors
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -42,11 +42,16 @@ def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     return results
 
 
-def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id=None):
     if data.metric_type == schemas.MetricType.funnel:
         if len(data.series) == 0:
             return {}
         return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+    elif data.metric_type == schemas.MetricType.table \
+            and data.metric_of == schemas.TableMetricOfType.issues \
+            and len(data.metric_value) == 1 and data.metric_value[0] == schemas.IssueType.js_exception \
+            and data.metric_format == schemas.MetricFormatType.errors_list:
+        return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
@@ -125,6 +130,25 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
         s.filter.page = data.page
         results.append({"seriesId": s.series_id, "seriesName": s.name,
                         **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)})
+
+    return results
+
+
+def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    if metric is None:
+        return None
+    results = []
+    for s in metric.series:
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
+        results.append({"seriesId": s.series_id, "seriesName": s.name,
+                        **errors.search(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
 

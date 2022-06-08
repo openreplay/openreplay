@@ -903,7 +903,7 @@ def edit_client(data: schemas.UpdateTenantSchema = Body(...),
 @app.post('/{projectId}/errors/search', tags=['errors'])
 def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    return errors.search(data, projectId, user_id=context.user_id)
+    return {"data": errors.search(data, projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
