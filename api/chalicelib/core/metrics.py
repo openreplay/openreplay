@@ -1069,7 +1069,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
     pg_sub_query.append("pages.speed_index>0")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT sessions.user_country, AVG(pages.speed_index) AS avg
+        pg_query = f"""SELECT sessions.user_country, AVG(pages.speed_index) AS value
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)} 
                         GROUP BY sessions.user_country
@@ -1087,7 +1087,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
             avg = cur.fetchone()["avg"]
         else:
             avg = 0
-    return {"avg": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),

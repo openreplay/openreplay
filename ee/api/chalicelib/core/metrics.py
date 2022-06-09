@@ -1046,7 +1046,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
     ch_sub_query += meta_condition
 
     with ch_client.ClickHouseClient() as ch:
-        ch_query = f"""SELECT pages.user_country, COALESCE(avgOrNull(pages.speed_index),0) AS avg
+        ch_query = f"""SELECT pages.user_country, COALESCE(avgOrNull(pages.speed_index),0) AS value
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)} 
                         GROUP BY pages.user_country
@@ -1059,7 +1059,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
                     FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                     WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"avg": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
