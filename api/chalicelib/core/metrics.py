@@ -1500,7 +1500,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_chart.append("m_issues.type = 'crash'")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
-                               COUNT(sessions) AS count
+                               COUNT(sessions) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                  LEFT JOIN LATERAL (
                             SELECT sessions.session_id
@@ -1558,7 +1558,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 versions.append({v["version"]: v["count"] / (r["total"] / 100)})
             r["versions"] = versions
 
-    return {"chart": rows, "browsers": browsers}
+    return {"chart": rows, "browsers": browsers,"unit": schemas.TemplatePredefinedUnits.count}
 
 
 def __get_neutral(rows, add_All_if_empty=True):
