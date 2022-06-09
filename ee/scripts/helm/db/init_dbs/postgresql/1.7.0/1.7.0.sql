@@ -36,6 +36,20 @@ ALTER TABLE tenants
 ALTER TABLE dashboards
     ALTER COLUMN user_id DROP NOT NULL;
 
+DO
+$$
+    BEGIN
+        IF EXISTS(SELECT *
+                  FROM information_schema.columns
+                  WHERE table_name = 'tenants'
+                    and column_name = 'user_id')
+        THEN
+            ALTER TABLE tenants
+                RENAME COLUMN user_id TO tenant_key;
+        END IF;
+    END
+$$;
+
 COMMIT;
 ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'funnel';
 
