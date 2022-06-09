@@ -48,7 +48,10 @@ def __is_funnel_chart(data: schemas.TryCustomMetricsPayloadSchema):
 
 def __get_funnel_chart(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     if len(data.series) == 0:
-        return {}
+        return {
+            "stages": [],
+            "totalDropDueToIssues": 0
+        }
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
@@ -61,8 +64,25 @@ def __is_errors_list(data):
 
 def __get_errors_list(project_id, user_id, data):
     if len(data.series) == 0:
-        return []
+        return {
+            "total": 0,
+            "errors": []
+        }
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+
+
+def __is_sessions_list(data):
+    return data.metric_type == schemas.MetricType.table \
+           and data.metric_of == schemas.TableMetricOfType.sessions
+
+
+def __get_sessions_list(project_id, user_id, data):
+    if len(data.series) == 0:
+        return {
+            "total": 0,
+            "sessions": []
+        }
+    return sessions.search2_pg(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
 def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id=None):
@@ -70,6 +90,8 @@ def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id
         return __get_funnel_chart(project_id=project_id, data=data)
     elif __is_errors_list(data):
         return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+    elif __is_sessions_list(data):
+        return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
 
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:

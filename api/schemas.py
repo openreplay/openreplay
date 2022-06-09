@@ -810,6 +810,7 @@ class TableMetricOfType(str, Enum):
     user_id = FilterType.user_id.value
     issues = FilterType.issue.value
     visited_url = EventType.location.value
+    sessions = "SESSIONS"
 
 
 class TimeseriesMetricOfType(str, Enum):
