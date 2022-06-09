@@ -1460,7 +1460,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
         with ch_client.ClickHouseClient() as ch:
             ch_query = f"""SELECT toUnixTimestamp(toStartOfInterval(sessions.datetime, INTERVAL %(step_size)s second)) * 1000 AS timestamp,
-                            COUNT(sessions.session_id)                                        AS count
+                            COUNT(sessions.session_id) AS value
                             FROM sessions {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                             WHERE {" AND ".join(ch_sub_query_chart)} 
                             GROUP BY timestamp
@@ -1514,8 +1514,9 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     result = {"chart": __complete_missing_steps(rows=rows, start_time=startTimestamp,
                                                 end_time=endTimestamp,
                                                 density=density,
-                                                neutral={"count": 0}),
-              "browsers": browsers}
+                                                neutral={"value": 0}),
+              "browsers": browsers,
+              "unit": schemas.TemplatePredefinedUnits.count}
     return result
 
 
