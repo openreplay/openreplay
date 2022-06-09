@@ -117,7 +117,7 @@ $$
             CREATE TABLE tenants
             (
                 tenant_id      integer                     NOT NULL DEFAULT 1,
-                user_id        text                        NOT NULL DEFAULT generate_api_key(20),
+                tenant_key     text                        NOT NULL DEFAULT generate_api_key(20),
                 name           text                        NOT NULL,
                 api_key        text                        NOT NULL DEFAULT generate_api_key(20),
                 created_at     timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
