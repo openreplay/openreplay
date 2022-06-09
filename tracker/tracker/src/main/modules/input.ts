@@ -114,7 +114,7 @@ export default function (app: App, opts: Partial<Options>): void {
     } else if (
       hasOpenreplayAttribute(node, 'obscured') ||
       (inputMode === InputMode.Plain &&
-        ((options.obscureInputNumbers && /\d\d\d\d/.test(value) && node.type !== 'date') ||
+        ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
           (options.obscureInputDates && node.type === 'date') ||
           (options.obscureInputEmails &&
             (node.type === 'email' || !!~value.indexOf('@')))))
