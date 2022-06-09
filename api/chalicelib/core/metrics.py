@@ -1721,7 +1721,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
                             resources.url_host AS domain,
-                            AVG(resources.duration) AS avg
+                            AVG(resources.duration) AS value
                         FROM events.resources INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY resources.url_host
@@ -1740,7 +1740,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
             avg = cur.fetchone()["avg"]
         else:
             avg = 0
-    return {"avg": avg, "partition": rows}
+    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
