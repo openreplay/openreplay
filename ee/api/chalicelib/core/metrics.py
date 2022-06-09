@@ -1661,7 +1661,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
 
     with ch_client.ClickHouseClient() as ch:
         ch_query = f"""SELECT resources.url_host AS domain,
-                              COALESCE(avgOrNull(resources.duration),0) AS avg
+                              COALESCE(avgOrNull(resources.duration),0) AS value
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)}
                         GROUP BY resources.url_host
@@ -1675,7 +1675,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         FROM resources {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)};"""
         avg = ch.execute(query=ch_query, params=params)[0]["avg"] if len(rows) > 0 else 0
-    return {"avg": avg, "partition": rows}
+    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
