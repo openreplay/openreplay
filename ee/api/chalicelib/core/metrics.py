@@ -1050,7 +1050,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
                         FROM pages {"INNER JOIN sessions_metadata USING(session_id)" if len(meta_condition) > 0 else ""}
                         WHERE {" AND ".join(ch_sub_query)} 
                         GROUP BY pages.user_country
-                        ORDER BY avg,pages.user_country;"""
+                        ORDER BY value ,pages.user_country;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}

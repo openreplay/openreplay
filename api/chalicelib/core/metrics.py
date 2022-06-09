@@ -1073,7 +1073,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)} 
                         GROUP BY sessions.user_country
-                        ORDER BY avg,sessions.user_country;"""
+                        ORDER BY value, sessions.user_country;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
