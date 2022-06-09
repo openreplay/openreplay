@@ -19,9 +19,8 @@ function isTextEditable(node: any): node is TextEditableElement {
   if (!hasTag(node, "INPUT")) {
     return false;
   }
-  const type = node.type;
 
-  return INPUT_TYPES.includes(type)
+  return INPUT_TYPES.includes(node.type)
 }
 
 function isCheckable(node: any): node is HTMLInputElement {
@@ -88,7 +87,7 @@ export interface Options {
   obscureInputNumbers: boolean;
   obscureInputEmails: boolean;
   defaultInputMode: InputMode;
-  obscureDateInputs: boolean;
+  obscureInputDates: boolean;
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -97,7 +96,7 @@ export default function (app: App, opts: Partial<Options>): void {
       obscureInputNumbers: true,
       obscureInputEmails: true,
       defaultInputMode: InputMode.Plain,
-      obscureDateInputs: false,
+      obscureInputDates: false,
     },
     opts,
   );
@@ -110,16 +109,13 @@ export default function (app: App, opts: Partial<Options>): void {
   function sendInputValue(id: number, node: TextEditableElement | HTMLSelectElement): void {
     let value = node.value;
     let inputMode: InputMode = options.defaultInputMode;
-    if (node.type === 'date') {
-      if (options.obscureDateInputs) {
-        inputMode = InputMode.Obscured
-      }
-    } else if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
+    if (node.type === 'password' || hasOpenreplayAttribute(node, 'hidden')) {
       inputMode = InputMode.Hidden;
     } else if (
       hasOpenreplayAttribute(node, 'obscured') ||
       (inputMode === InputMode.Plain &&
-        ((options.obscureInputNumbers && /\d\d\d\d/.test(value)) ||
+        ((options.obscureInputNumbers && /\d\d\d\d/.test(value) && node.type !== 'date') ||
+          (options.obscureInputDates && node.type === 'date') ||
           (options.obscureInputEmails &&
             (node.type === 'email' || !!~value.indexOf('@')))))
     ) {
