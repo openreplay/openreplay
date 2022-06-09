@@ -1133,7 +1133,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
                                        "startTimestamp": startTimestamp,
                                        "endTimestamp": endTimestamp, **__get_constraint_values(args)})
     result = {
-        "avg": avg,
+        "value": avg,
         "total": sum(r["count"] for r in rows),
         "chart": [],
         "percentiles": [{
@@ -1142,7 +1142,8 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
                 quantiles[0]["values"][i] if quantiles[0]["values"][i] is not None and not math.isnan(
                     quantiles[0]["values"][i]) else 0)} for i, v in enumerate(quantiles_keys)
         ],
-        "extremeValues": [{"count": 0}]
+        "extremeValues": [{"count": 0}],
+        "unit": schemas.TemplatePredefinedUnits.millisecond
     }
     if len(rows) > 0:
         rows = helper.list_to_camel_case(rows)

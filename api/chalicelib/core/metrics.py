@@ -1171,7 +1171,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
         else:
             quantiles = [0 for i in range(len(quantiles_keys))]
         result = {
-            "avg": avg,
+            "value": avg,
             "total": sum(r["count"] for r in rows),
             "chart": [],
             "percentiles": [{
@@ -1179,7 +1179,8 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
                 "responseTime": int(quantiles[i])
             } for i, v in enumerate(quantiles_keys)
             ],
-            "extremeValues": [{"count": 0}]
+            "extremeValues": [{"count": 0}],
+            "unit": schemas.TemplatePredefinedUnits.millisecond
         }
         rows = helper.list_to_camel_case(rows)
         _99 = result["percentiles"][-1]["responseTime"]
@@ -1558,7 +1559,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 versions.append({v["version"]: v["count"] / (r["total"] / 100)})
             r["versions"] = versions
 
-    return {"chart": rows, "browsers": browsers,"unit": schemas.TemplatePredefinedUnits.count}
+    return {"chart": rows, "browsers": browsers, "unit": schemas.TemplatePredefinedUnits.count}
 
 
 def __get_neutral(rows, add_All_if_empty=True):
