@@ -32,7 +32,7 @@ func main() {
 
 	// Init all modules
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
-	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT)
+	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
 	if err != nil {
 		log.Printf("can't init ender service: %s", err)
 		return
@@ -46,7 +46,7 @@ func main() {
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			statsLogger.Collect(sessionID, meta)
-			sessions.UpdateSession(sessionID, messages.GetTimestamp(msg))
+			sessions.UpdateSession(sessionID, meta.Timestamp)
 		},
 		false,
 	)
