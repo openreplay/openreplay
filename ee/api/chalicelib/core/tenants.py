@@ -16,9 +16,9 @@ def get_by_tenant_key(tenant_key):
                         t.version_number,
                         t.opt_out
                     FROM public.tenants AS t
-                    WHERE t.user_id = %(user_id)s AND t.deleted_at ISNULL
+                    WHERE t.tenant_key = %(tenant_key)s AND t.deleted_at ISNULL
                     LIMIT 1;""",
-                {"user_id": tenant_key})
+                {"tenant_key": tenant_key})
         )
         return helper.dict_to_camel_case(cur.fetchone())
 
@@ -35,7 +35,7 @@ def get_by_tenant_id(tenant_id):
                         '{license.EDITION}' AS edition,
                         t.version_number,
                         t.opt_out,
-                        t.user_id AS tenant_key
+                        t.tenant_key
                     FROM public.tenants AS t
                     WHERE t.tenant_id = %(tenantId)s AND t.deleted_at ISNULL
                     LIMIT 1;""",
