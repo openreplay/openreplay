@@ -65,10 +65,11 @@ func NewConsumer(
 	}
 
 	return &Consumer{
-		c:              c,
-		messageHandler: messageHandler,
-		commitTicker:   commitTicker,
-		pollTimeout:    200,
+		c:                 c,
+		messageHandler:    messageHandler,
+		commitTicker:      commitTicker,
+		pollTimeout:       200,
+		lastReceivedPrtTs: make(map[int32]int64),
 	}
 }
 
