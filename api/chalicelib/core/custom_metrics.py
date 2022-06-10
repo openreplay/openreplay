@@ -228,9 +228,11 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboa
         params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
         query = cur.mogrify(f"""\
             WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
-                                    view_type, metric_type, metric_of, metric_value, metric_format)
+                                    view_type, metric_type, metric_of, metric_value,
+                                    metric_format, default_config)
                          VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, %(metric_format)s)
+                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
+                                    %(metric_format)s, %(default_config)s)
                          RETURNING *)
             INSERT
             INTO metric_series(metric_id, index, name, filter)
