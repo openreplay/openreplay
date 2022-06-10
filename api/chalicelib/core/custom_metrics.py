@@ -225,7 +225,9 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboa
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
         data.series = None
-        params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
+        params = {"user_id": user_id, "project_id": project_id,
+                  "default_config": json.dumps(data.config.dict()),
+                  **data.dict(), **_data}
         query = cur.mogrify(f"""\
             WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
                                     view_type, metric_type, metric_of, metric_value,
