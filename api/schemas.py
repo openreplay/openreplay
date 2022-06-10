@@ -874,8 +874,15 @@ class TryCustomMetricsPayloadSchema(CustomMetricChartPayloadSchema):
         alias_generator = attribute_to_camel_case
 
 
+class CustomMetricsConfigSchema(BaseModel):
+    col: Optional[int] = Field(default=2)
+    row: Optional[int] = Field(default=2)
+    position: Optional[int] = Field(default=0)
+
+
 class CreateCustomMetricsSchema(TryCustomMetricsPayloadSchema):
     series: List[CustomMetricCreateSeriesSchema] = Field(..., min_items=1)
+    config: CustomMetricsConfigSchema = Field(default=CustomMetricsConfigSchema())
 
     @root_validator(pre=True)
     def transform_series(cls, values):
