@@ -66,7 +66,7 @@ def cron():
                             FROM events_common.issues
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = projects.project_id
-                              AND issues.timestamp >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
+                              AND issues.timestamp >= %(1_week_ago)s
                               AND issues.timestamp < %(tomorrow)s
                      ) AS week_0_issues ON (TRUE)
                      LEFT JOIN LATERAL (
@@ -74,16 +74,16 @@ def cron():
                             FROM events_common.issues
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = projects.project_id
-                              AND issues.timestamp <= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
-                              AND issues.timestamp >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '2 week') * 1000)::BIGINT
+                              AND issues.timestamp <= %(1_week_ago)s
+                              AND issues.timestamp >= %(2_week_ago)s
                      ) AS week_1_issues ON (TRUE)
                      LEFT JOIN LATERAL (
                             SELECT COUNT(1) AS count
                             FROM events_common.issues
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = projects.project_id
-                              AND issues.timestamp <= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
-                              AND issues.timestamp >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '5 week') * 1000)::BIGINT
+                              AND issues.timestamp <= %(1_week_ago)s
+                              AND issues.timestamp >= %(5_week_ago)s
                      ) AS month_1_issues ON (TRUE);"""), params)
         projects_data = cur.fetchall()
         emails_to_send = []
