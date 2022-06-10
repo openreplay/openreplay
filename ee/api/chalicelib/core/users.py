@@ -668,7 +668,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
         r = helper.dict_to_camel_case(r)
         jwt_iat = change_jwt_iat(r['userId'])
         return {
-            "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
                                             TimeUTC.datetime_to_timestamp(jwt_iat),
                                             aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
             "email": email,
@@ -700,7 +700,7 @@ def authenticate_sso(email, internal_id, exp=None):
     if r is not None:
         r = helper.dict_to_camel_case(r)
         jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
-        return authorizers.generate_jwt(r['id'], r['tenantId'],
+        return authorizers.generate_jwt(r['userId'], r['tenantId'],
                                         jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
     return None
