@@ -1,17 +1,17 @@
 from typing import Optional
 
 from decouple import config
-from fastapi import Body, Depends, HTTPException, status, BackgroundTasks
+from fastapi import Body, Depends, BackgroundTasks
 from starlette.responses import RedirectResponse
 
 import schemas
 import schemas_ee
 from chalicelib.core import integrations_manager
 from chalicelib.core import sessions
-from chalicelib.core import tenants, users, metadata, projects, license, assist
+from chalicelib.core import tenants, users, metadata, projects, license
 from chalicelib.core import webhook
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import captcha, SAML2_helper
+from chalicelib.utils import SAML2_helper
 from chalicelib.utils import helper
 from or_dependencies import OR_context
 from routers.base import get_routers
@@ -25,46 +25,6 @@ def get_all_signup():
                      "sso": SAML2_helper.is_saml2_available(),
                      "ssoProvider": SAML2_helper.get_saml2_provider(),
                      "edition": license.EDITION}}
-
-
-@public_app.post('/login', tags=["authentication"])
-def login(data: schemas.UserLoginSchema = Body(...)):
-    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid captcha."
-        )
-
-    r = users.authenticate(data.email, data.password, for_plugin=False)
-    if r is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="You’ve entered invalid Email or Password."
-        )
-    if "errors" in r:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=r["errors"][0]
-        )
-
-    tenant_id = r.pop("tenantId")
-
-    r["limits"] = {
-        "teamMember": -1,
-        "projects": -1,
-        "metadata": metadata.get_remaining_metadata_with_count(tenant_id)}
-
-    c = tenants.get_by_tenant_id(tenant_id)
-    c.pop("createdAt")
-    c["smtp"] = helper.has_smtp()
-    r["smtp"] = c["smtp"]
-    return {
-        'jwt': r.pop('jwt'),
-        'data': {
-            "user": r,
-            "client": c
-        }
-    }
 
 
 @app.get('/account', tags=['accounts'])

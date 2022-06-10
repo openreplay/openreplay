@@ -627,7 +627,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
-                    users.user_id AS id,
+                    users.user_id,
                     users.tenant_id,
                     users.role,
                     users.name,
