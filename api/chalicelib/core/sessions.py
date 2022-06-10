@@ -1199,7 +1199,7 @@ def get_session_ids_by_user_ids(project_id, user_ids):
 
 
 def delete_sessions_by_session_ids(session_ids):
-    with pg_client.PostgresClient(long_query=True) as cur:
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         query = cur.mogrify(
             """\
             DELETE FROM public.sessions
@@ -1213,7 +1213,7 @@ def delete_sessions_by_session_ids(session_ids):
 
 
 def delete_sessions_by_user_ids(project_id, user_ids):
-    with pg_client.PostgresClient(long_query=True) as cur:
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         query = cur.mogrify(
             """\
             DELETE FROM public.sessions
@@ -1227,6 +1227,6 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 
 def count_all():
-    with pg_client.PostgresClient(long_query=True) as cur:
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)
