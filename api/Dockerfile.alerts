@@ -3,6 +3,7 @@ LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 ENV APP_NAME alerts
 ENV pg_minconn 2
+ENV pg_maxconn 10
 # Add Tini
 # Startup daemon
 ENV TINI_VERSION v0.19.0
