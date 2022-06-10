@@ -53,11 +53,11 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 		return
 	}
 	if timestamp < b.timestamp {
-		log.Printf("skip message with wrong timestamp, sessID: %d, msgID: %d, type: %d", b.sessionID, messageID, message.TypeID())
-		return
+		log.Printf("skip message with wrong timestamp, sessID: %d, msgID: %d, type: %d, msgTS: %d, lastTS: %d", b.sessionID, messageID, message.TypeID(), timestamp, b.timestamp)
+	} else {
+		b.timestamp = timestamp
 	}
 
-	b.timestamp = timestamp
 	b.lastSystemTime = time.Now()
 	for _, p := range b.processors {
 		if rm := p.Handle(message, messageID, b.timestamp); rm != nil {

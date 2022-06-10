@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"openreplay/backend/internal/config/db"
 	"openreplay/backend/internal/db/datasaver"
@@ -65,7 +66,7 @@ func main() {
 
 		session, err := pg.GetSession(sessionID)
 		if session == nil {
-			if err != nil {
+			if err != nil && !errors.Is(err, cache.NilSessionInCacheError) {
 				log.Printf("Error on session retrieving from cache: %v, SessionID: %v, Message: %v", err, sessionID, msg)
 			}
 			return
