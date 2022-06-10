@@ -27,9 +27,6 @@ function DashboardEditModal(props: Props) {
     }, [])
 
     const write = ({ target: { value, name } }) => dashboard.update({ [ name ]: value })
-    const writeOption = (e, { checked, name }) => {
-        dashboard.update({ [name]: checked });
-    }
 
     return useObserver(() => (
         <Modal open={ show }>
@@ -80,7 +77,7 @@ function DashboardEditModal(props: Props) {
                             className="font-medium mr-3"
                             type="checkbox"
                             checked={ dashboard.isPublic }
-                            onClick={ writeOption }
+                            onClick={ () => dashboard.update({ 'isPublic': !dashboard.isPublic }) }
                         />
                         <div className="flex items-center cursor-pointer" onClick={ () => dashboard.update({ 'isPublic': !dashboard.isPublic }) }>
                             <Icon name="user-friends" size="16" />
