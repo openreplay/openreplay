@@ -4,6 +4,7 @@ LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 RUN apt-get update && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf /var/lib/apt/lists/*
 ENV APP_NAME alerts
 ENV pg_minconn 2
+ENV pg_maxconn 10
 
 # Add Tini
 # Startup daemon
