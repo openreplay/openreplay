@@ -258,6 +258,7 @@ $$
 
 
             CREATE INDEX IF NOT EXISTS projects_project_key_idx ON public.projects (project_key);
+            CREATE INDEX IF NOT EXISTS projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
             DROP TRIGGER IF EXISTS on_insert_or_update ON projects;
             CREATE TRIGGER on_insert_or_update
                 AFTER INSERT OR UPDATE
