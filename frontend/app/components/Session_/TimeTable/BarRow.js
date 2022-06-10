@@ -39,6 +39,7 @@ const BarRow = ({ resource: { time, ttfb = 0, duration, key }, popup=false, time
     <div key={ key } className={ tableStyles.row } >
       <Popup
         basic
+        style={{ width: '100%' }}
         unmountHTMLWhenHide
         content={ 
           <React.Fragment>

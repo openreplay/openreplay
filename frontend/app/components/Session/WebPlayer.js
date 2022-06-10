@@ -35,11 +35,9 @@ function PlayerContent({ live, fullscreen, activeTab }) {
   )
 }
 
-function RightMenu({ showEvents, live, tabs, activeTab, setActiveTab, fullscreen }) {
-  return showEvents && !live && !fullscreen && <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} />
+function RightMenu({ live, tabs, activeTab, setActiveTab, fullscreen }) {
+  return  !live && !fullscreen && <RightBlock tabs={tabs} setActiveTab={setActiveTab} activeTab={activeTab} />
 }
-const ConnectedMenu = connectPlayer(state => ({
-  showEvents: state.showEvents}), { toggleEvents })(RightMenu)
 
 function WebPlayer (props) {
   const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config } = props;
@@ -68,13 +66,14 @@ function WebPlayer (props) {
 
     closeBottomBlock();
   }, [])
+
   return (
     <PlayerProvider>
       <InitLoader className="flex-1">
           <PlayerBlockHeader activeTab={activeTab} setActiveTab={setActiveTab} tabs={TABS} fullscreen={fullscreen}/>
             <div className="flex">
               <div className="w-full"><PlayerContentConnected activeTab={activeTab} fullscreen={fullscreen} live={live} /></div>
-              {activeTab !== '' && <ConnectedMenu activeTab={activeTab} setActiveTab={setActiveTab} fullscreen={fullscreen} tabs={TABS} live={live} />}
+              {activeTab !== '' && <RightMenu activeTab={activeTab} setActiveTab={setActiveTab} fullscreen={fullscreen} tabs={TABS} live={live} />}
             </div>
       </InitLoader>
     </PlayerProvider>
