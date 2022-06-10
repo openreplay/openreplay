@@ -1,7 +1,8 @@
 from typing import Union
 
 from decouple import config
-from fastapi import Depends, Body, BackgroundTasks
+from fastapi import Depends, Body, BackgroundTasks, HTTPException
+from starlette import status
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -13,12 +14,40 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
     custom_metrics, saved_search
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import email_helper
+from chalicelib.utils import email_helper, helper, captcha
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
+
+
+@public_app.post('/login', tags=["authentication"])
+def login(data: schemas.UserLoginSchema = Body(...)):
+    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid captcha."
+        )
+
+    r = users.authenticate(data.email, data.password, for_plugin=False)
+    if r is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You’ve entered invalid Email or Password."
+        )
+    if "errors" in r:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=r["errors"][0]
+        )
+    r["smtp"] = helper.has_smtp()
+    return {
+        'jwt': r.pop('jwt'),
+        'data': {
+            "user": r
+        }
+    }
 
 
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
