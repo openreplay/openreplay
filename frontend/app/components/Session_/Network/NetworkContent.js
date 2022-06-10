@@ -38,7 +38,7 @@ const LOAD_TIME_COLOR = "red";
 
 export function renderType(r) { 
   return (
-    <Popup content={ <div className={ stl.popupNameContent }>{ r.type }</div> } >
+    <Popup style={{width: '100%'}} content={ <div className={ stl.popupNameContent }>{ r.type }</div> } >
       <div className={ stl.popupNameTrigger }>{ r.type }</div>
     </Popup>
   );
@@ -46,7 +46,7 @@ export function renderType(r) {
 
 export function renderName(r) { 
   return (
-    <Popup content={ <div className={ stl.popupNameContent }>{ r.url }</div> } >
+    <Popup style={{width: '100%'}} content={ <div className={ stl.popupNameContent }>{ r.url }</div> } >
       <div className={ stl.popupNameTrigger }>{ r.name }</div> 
     </Popup>
   );
@@ -94,7 +94,7 @@ function renderSize(r) {
   }
 
   return (
-    <Popup content={ content } >
+    <Popup style={{width: '100%'}} content={ content } >
       <div>{ triggerText }</div>
     </Popup>
   );
@@ -118,6 +118,7 @@ export function renderDuration(r) {
 
   return (
     <Popup
+      style={{width: '100%'}}
       content={ tooltipText }
     >
       <div className={ cn(className, stl.duration) } > { text } </div>

@@ -85,12 +85,6 @@
   }
 }
 
-.checkIcon {
-  @mixin icon check, $gray-dark, 24px;
-  margin-right: 2px;
-  display: none;
-}
-
 .liveTag {
   cursor: pointer;
   user-select: none;

@@ -11,7 +11,7 @@ const EventsBlockConnected = connectPlayer(state => ({
   playing: state.playing,
 }))(EventsBlock)
 
-export default function RightBlock(props) {
+function RightBlock(props) {
   const { activeTab } = props;
 
   const renderActiveTab = (tab) => {
@@ -28,3 +28,5 @@ export default function RightBlock(props) {
     </div>
   )
 }
+
+export default React.memo(RightBlock)

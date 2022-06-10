@@ -347,7 +347,7 @@ export default class Controls extends React.Component {
                         onClick={ this.props.toggleSkip }
                         data-disabled={ disabled }
                       >
-                        <span className={ styles.checkIcon } />
+                        {skip && <Icon name="check" size="24" className="mr-1" />}
                         { 'Skip Inactivity' }
                       </button>
                     </div>

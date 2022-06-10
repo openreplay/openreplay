@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
+import { connectPlayer } from 'Player'
 import withRequest from 'HOCs/withRequest';
 import { Popup, Dropdown, Icon, Button } from 'UI';
 import styles from './sharePopup.module.css';
@@ -9,6 +10,9 @@ import SessionCopyLink from './SessionCopyLink';
 import Select from 'Shared/Select';
 import { Tooltip } from 'react-tippy';
 
+@connectPlayer(state => ({
+  time: state.time,
+}))
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
   tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),

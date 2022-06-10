@@ -13,6 +13,8 @@ import CustomDragLayer from './CustomDragLayer';
 import { debounce } from 'App/utils';
 import { Tooltip } from 'react-tippy';
 
+const BOUNDRY = 15
+
 const getPointerIcon = (type) => {
   // exception,
   switch(type) {
@@ -116,7 +118,7 @@ export default class Timeline extends React.PureComponent {
   onDrag = (offset) => {
     const { endTime } = this.props;
 
-    const p = (offset.x - 60) / this.progressRef.current.offsetWidth;
+    const p = (offset.x - BOUNDRY) / this.progressRef.current.offsetWidth;
     const time = Math.max(Math.round(p * endTime), 0);
     deboucneJump(time);
     if (this.props.playing) {
@@ -147,7 +149,7 @@ export default class Timeline extends React.PureComponent {
     return (
       <div
         className="flex items-center absolute w-full"
-        style={{ top: '-5px', zIndex: 100, padding: '0 15px'}}
+        style={{ top: '-5px', zIndex: 100, padding: `0 ${BOUNDRY}px`}}
       >
         <div
           className={ stl.progress }
@@ -155,7 +157,7 @@ export default class Timeline extends React.PureComponent {
           ref={ this.progressRef }
         >
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
-            <CustomDragLayer onDrag={this.onDrag} minX={70} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + 70} />
+            <CustomDragLayer onDrag={this.onDrag} minX={BOUNDRY} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY} />
             <TimeTracker scale={ scale } />
             { skip && skipIntervals.map(interval =>
               (<div
