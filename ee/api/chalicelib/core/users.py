@@ -666,7 +666,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
         if for_change_password:
             return True
         r = helper.dict_to_camel_case(r)
-        jwt_iat = change_jwt_iat(r['id'])
+        jwt_iat = change_jwt_iat(r['userId'])
         return {
             "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
                                             TimeUTC.datetime_to_timestamp(jwt_iat),
@@ -681,7 +681,7 @@ def authenticate_sso(email, internal_id, exp=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
-                    users.user_id AS id,
+                    users.user_id,
                     users.tenant_id,
                     users.role,
                     users.name,
@@ -699,7 +699,7 @@ def authenticate_sso(email, internal_id, exp=None):
 
     if r is not None:
         r = helper.dict_to_camel_case(r)
-        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['id']))
+        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
         return authorizers.generate_jwt(r['id'], r['tenantId'],
                                         jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
