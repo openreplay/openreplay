@@ -29,6 +29,9 @@ def edit_config(user_id, weekly_report):
 
 
 def cron():
+    if not helper.has_smtp():
+        print("!!! No SMTP configuration found, ignoring weekly report")
+        return
     with pg_client.PostgresClient(long_query=True) as cur:
         params = {"3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),
