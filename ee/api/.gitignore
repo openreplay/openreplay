@@ -214,7 +214,6 @@ Pipfile
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
-/chalicelib/core/weekly_report.py
 /chalicelib/saml
 /chalicelib/utils/html/
 /chalicelib/utils/__init__.py
