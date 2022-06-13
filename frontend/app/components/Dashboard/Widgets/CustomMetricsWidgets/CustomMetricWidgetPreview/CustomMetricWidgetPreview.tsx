@@ -1,28 +1,24 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { connect } from 'react-redux';
-import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
+import { Loader, NoContent, SegmentSelection } from 'UI';
 import { Styles } from '../../common';
-// import { ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, LineChart, Line, Legend } from 'recharts';
-import Period, { LAST_24_HOURS, LAST_30_MINUTES, YESTERDAY, LAST_7_DAYS } from 'Types/app/period';
+import Period from 'Types/app/period';
 import stl from './CustomMetricWidgetPreview.module.css';
-import { getChartFormatter } from 'Types/dashboard/helper'; 
 import { remove } from 'Duck/customMetrics';
 import DateRange from 'Shared/DateRange';
 import { edit } from 'Duck/customMetrics';
 import CustomMetriLineChart from '../CustomMetriLineChart';
 import CustomMetricPercentage from '../CustomMetricPercentage';
 import CustomMetricTable from '../CustomMetricTable';
-
-import APIClient from 'App/api_client';
 import CustomMetricPieChart from '../CustomMetricPieChart';
 
-const customParams = rangeName => {
+const customParams = (rangeName: string) => {
   const params = { density: 70 }
 
-  if (rangeName === LAST_24_HOURS) params.density = 70
-  if (rangeName === LAST_30_MINUTES) params.density = 70
-  if (rangeName === YESTERDAY) params.density = 70
-  if (rangeName === LAST_7_DAYS) params.density = 70
+  // if (rangeName === LAST_24_HOURS) params.density = 70
+  // if (rangeName === LAST_30_MINUTES) params.density = 70
+  // if (rangeName === YESTERDAY) params.density = 70
+  // if (rangeName === LAST_7_DAYS) params.density = 70
   
   return params
 }
@@ -30,23 +26,18 @@ const customParams = rangeName => {
 interface Props {
   metric: any;
   data?: any;
-  showSync?: boolean;
-  // compare?: boolean;
   onClickEdit?: (e) => void;
   remove: (id) => void;
   edit: (metric) => void;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync } = props;
+  const { metric } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>({ chart: [{}] })
-  const [seriesMap, setSeriesMap] = useState<any>([]);
   const [period, setPeriod] = useState(Period({ rangeName: metric.rangeName, startDate: metric.startDate, endDate: metric.endDate }));
 
   const colors = Styles.customMetricColors;
   const params = customParams(period.rangeName)
-  const gradientDef = Styles.gradientDef();
-  const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart' }
   const prevMetricRef = useRef<any>();
   const isTimeSeries = metric.metricType === 'timeseries';
   const isTable = metric.metricType === 'table';
@@ -59,29 +50,6 @@ function CustomMetricWidget(props: Props) {
     };
     prevMetricRef.current = metric;
     setLoading(true);
-    
-    // fetch new data for the widget preview
-    // new APIClient()['post']('/custom_metrics/try', { ...metricParams, ...metric.toSaveData() })
-    //   .then(response => response.json())
-    //   .then(({ errors, data }) => {
-    //     if (errors) {
-    //       console.log('err', errors)
-    //     } else {
-    //       const namesMap = data
-    //         .map(i => Object.keys(i))
-    //         .flat()
-    //         .filter(i => i !== 'time' && i !== 'timestamp')
-    //         .reduce((unique: any, item: any) => {
-    //           if (!unique.includes(item)) {
-    //             unique.push(item);
-    //           }
-    //           return unique;
-    //         }, []);
-
-    //       setSeriesMap(namesMap);
-    //       setData(getChartFormatter(period)(data));
-    //     }
-    //   }).finally(() => setLoading(false));
   }, [metric])
 
   const onDateChange = (changedDates) => {
@@ -185,7 +153,6 @@ function CustomMetricWidget(props: Props) {
                           metric={metric}
                           data={data[0]}
                           colors={colors}
-                          params={params}
                         />
                     )}
                   </>

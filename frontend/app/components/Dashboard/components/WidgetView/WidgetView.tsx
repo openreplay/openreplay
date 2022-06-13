@@ -7,7 +7,10 @@ import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
 import { useObserver } from 'mobx-react-lite';
 import WidgetName from '../WidgetName';
+import { withSiteId } from 'App/routes';
 
+import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
+import Breadcrumb from 'Shared/Breadcrumb';
 interface Props {
     history: any;
     match: any
@@ -23,7 +26,7 @@ function WidgetView(props: Props) {
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
             metricStore.fetch(metricId);
-        } else {
+        } else if (metricId === 'create') {
             metricStore.init();
         }
     }, [])
@@ -40,11 +43,16 @@ function WidgetView(props: Props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <div className="relative pb-10">
-                <BackLink onClick={onBackHandler} vertical className="absolute" style={{ left: '-50px', top: '0px' }} />
+                <Breadcrumb
+                    items={[
+                        { label: dashboardId ? 'Dashboard' : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
+                        { label: widget.name, }
+                    ]}
+                />
                 <div className="bg-white rounded border">
                     <div
                         className={cn(
-                            "p-4 flex justify-between items-center",
+                            "px-6 py-4 flex justify-between items-center",
                             {
                                 'cursor-pointer hover:bg-active-blue hover:shadow-border-blue': !expanded,
                             }
@@ -73,7 +81,8 @@ function WidgetView(props: Props) {
                 </div>
 
                 <WidgetPreview  className="mt-8" />
-                <WidgetSessions className="mt-8" />
+                { (widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" /> }
+                { widget.metricType === 'funnel' && <FunnelIssues /> }
             </div>
         </Loader>
     ));

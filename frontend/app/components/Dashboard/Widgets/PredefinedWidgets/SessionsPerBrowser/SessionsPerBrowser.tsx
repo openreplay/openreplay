@@ -13,7 +13,7 @@ function SessionsPerBrowser(props: Props) {
 
     const getVersions = item => {
       return Object.keys(item)
-        .filter(i => i !== 'browser' && i !== 'count')
+        .filter(i => i !== 'browser' && i !== 'count' && i !== 'time' && i !== 'timestamp')
         .map(i => ({ key: 'v' +i, value: item[i]}))
     }
     return (

@@ -9,6 +9,7 @@ import stl from './projectCodeSnippet.module.css'
 import CircleNumber from '../../CircleNumber';
 import Highlight from 'react-highlight'
 import Select from 'Shared/Select'
+import CodeSnippet from 'Shared/CodeSnippet';
 
 const inputModeOptions = [
   { label: 'Record all inputs', value: 'plain' },
@@ -38,7 +39,7 @@ const ProjectCodeSnippet = props  => {
     var initOpts = {
       projectKey: "PROJECT_KEY",
       ingestPoint: "https://${window.location.hostname}/ingest",
-      defaultInputMode: ${inputModeOptionsMap[gdpr.defaultInputMode]},
+      defaultInputMode: ${gdpr.defaultInputMode},
       obscureTextNumbers: ${gdpr.maskNumbers},
       obscureTextEmails: ${gdpr.maskEmails},
     };
@@ -65,18 +66,13 @@ const ProjectCodeSnippet = props  => {
   }
 
   const onChangeSelect = ({ name, value }) => {
-    // console.log(name, value)
-    // const { gdpr } = site;
     const _gdpr = { ...gdpr.toData() };
-    props.editGDPR({ [ name ]: value });
     _gdpr[name] = value;
     props.editGDPR({ [ name ]: value }); 
     saveGDPR(_gdpr)
   };
 
   const onChangeOption = ({ target: { name, checked } }) => {
-    // const { gdpr } = site;
-    console.log(name, checked)
     const _gdpr = { ...gdpr.toData() };
     _gdpr[name] = checked;
     props.editGDPR({ [ name ]: checked });
@@ -121,7 +117,7 @@ const ProjectCodeSnippet = props  => {
           <Select
             name="defaultInputMode"
             options={ inputModeOptions }
-            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value }) }
+            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value }) }
             placeholder="Default Input Mode"
             defaultValue={ gdpr.defaultInputMode }
           />
@@ -170,7 +166,7 @@ const ProjectCodeSnippet = props  => {
           host={ site && site.host }
           projectKey={ site && site.projectKey }
           ingestPoint={`"https://${window.location.hostname}/ingest"`}
-          defaultInputMode={ inputModeOptionsMap[gdpr.defaultInputMode] }
+          defaultInputMode={ gdpr.defaultInputMode }
           obscureTextNumbers={ gdpr.maskNumbers }
           obscureTextEmails={ gdpr.maskEmails }
         />

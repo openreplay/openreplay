@@ -5,6 +5,7 @@ import { withRouter } from 'react-router-dom';
 import {
     metrics,
     metricDetails,
+    metricDetailsSub,
     dashboardSelected,
     dashboardMetricCreate,
     dashboardMetricDetails,
@@ -14,6 +15,7 @@ import {
 import DashboardView from '../DashboardView';
 import MetricsView from '../MetricsView';
 import WidgetView from '../WidgetView';
+import WidgetSubDetailsView from '../WidgetSubDetailsView';
 
 function DashboardViewSelected({ siteId, dashboardId }) {
     return (
@@ -36,6 +38,10 @@ function DashboardRouter(props: Props) {
 
                 <Route exact strict path={withSiteId(metricDetails(), siteId)}>
                     <WidgetView siteId={siteId} {...props} />
+                </Route>
+                
+                <Route exact strict path={withSiteId(metricDetailsSub(), siteId)}>
+                    <WidgetSubDetailsView siteId={siteId} {...props} />
                 </Route>
 
                 <Route exact strict path={withSiteId(dashboard(''), siteId)}>

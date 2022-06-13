@@ -17,8 +17,9 @@ const AssistPure = lazy(() => import('Components/Assist'));
 const BugFinderPure = lazy(() => import('Components/BugFinder/BugFinder'));
 const DashboardPure = lazy(() => import('Components/Dashboard/NewDashboard'));
 const ErrorsPure = lazy(() => import('Components/Errors/Errors'));
-const FunnelDetails = lazy(() => import('Components/Funnels/FunnelDetails'));
+const FunnelDetailsPure = lazy(() => import('Components/Funnels/FunnelDetails'));
 const FunnelIssueDetails = lazy(() => import('Components/Funnels/FunnelIssueDetails'));
+const FunnelPagePure = lazy(() => import('Components/Funnels/FunnelPage'));
 import WidgetViewPure from 'Components/Dashboard/components/WidgetView';
 import Header from 'Components/Header/Header';
 import { fetchList as fetchMetadata } from 'Duck/customField';
@@ -37,20 +38,21 @@ import { ModalProvider } from './components/Modal';
 
 const BugFinder = withSiteIdUpdater(BugFinderPure);
 const Dashboard = withSiteIdUpdater(DashboardPure);
-const WidgetView = withSiteIdUpdater(WidgetViewPure);
 const Session = withSiteIdUpdater(SessionPure);
 const LiveSession = withSiteIdUpdater(LiveSessionPure);
 const Assist = withSiteIdUpdater(AssistPure);
 const Client = withSiteIdUpdater(ClientPure);
 const Onboarding = withSiteIdUpdater(OnboardingPure);
 const Errors = withSiteIdUpdater(ErrorsPure);
-const Funnels = withSiteIdUpdater(FunnelDetails);
+const FunnelPage = withSiteIdUpdater(FunnelPagePure);
+const FunnelsDetails = withSiteIdUpdater(FunnelDetailsPure);
 const FunnelIssue = withSiteIdUpdater(FunnelIssueDetails);
 const withSiteId = routes.withSiteId;
 // const withObTab = routes.withObTab;
 
 const METRICS_PATH = routes.metrics();
 const METRICS_DETAILS = routes.metricDetails();
+const METRICS_DETAILS_SUB = routes.metricDetailsSub();
 
 const DASHBOARD_PATH = routes.dashboard();
 const DASHBOARD_SELECT_PATH = routes.dashboardSelected();
@@ -62,7 +64,8 @@ const SESSIONS_PATH = routes.sessions();
 const ASSIST_PATH = routes.assist();
 const ERRORS_PATH = routes.errors();
 const ERROR_PATH = routes.error();
-const FUNNEL_PATH = routes.funnel();
+const FUNNEL_PATH = routes.funnels();
+const FUNNEL_CREATE_PATH = routes.funnelsCreate();
 const FUNNEL_ISSUE_PATH = routes.funnelIssue();
 const SESSION_PATH = routes.session();
 const LIVE_SESSION_PATH = routes.liveSession();
@@ -199,6 +202,7 @@ class Router extends React.Component {
             {/* DASHBOARD and Metrics */}
             <Route exact strict path={ withSiteId(METRICS_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(METRICS_DETAILS, siteIdList) } component={ Dashboard } />
+            <Route exact strict path={ withSiteId(METRICS_DETAILS_SUB, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
             <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />
@@ -207,7 +211,9 @@ class Router extends React.Component {
             <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
             <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
             <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
-            <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } />
+            <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ FunnelPage } />
+            <Route exact strict path={ withSiteId(FUNNEL_CREATE_PATH, siteIdList) } component={ FunnelsDetails } />
+            {/* <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } /> */}
             <Route exact strict path={ withSiteId(FUNNEL_ISSUE_PATH, siteIdList) } component={ FunnelIssue } />
             <Route exact strict path={ withSiteId(SESSIONS_PATH, siteIdList) } component={ BugFinder } />
             <Route exact strict path={ withSiteId(SESSION_PATH, siteIdList) } component={ Session } />

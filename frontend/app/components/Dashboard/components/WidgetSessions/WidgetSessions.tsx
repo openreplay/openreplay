@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NoContent, Dropdown, Icon, Loader, Pagination } from 'UI';
+import Select from 'Shared/Select';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
 import SessionItem from 'Shared/SessionItem';
@@ -18,20 +19,20 @@ function WidgetSessions(props: Props) {
     const isMounted = useIsMounted()
     const [loading, setLoading] = useState(false);
     const [seriesOptions, setSeriesOptions] = useState([
-        { text: 'All', value: 'all' },
+        { label: 'All', value: 'all' },
     ]);
 
     const [activeSeries, setActiveSeries] = useState('all');
 
-    const writeOption = (e, { name, value }) => setActiveSeries(value);
+    const writeOption = (e, { name, value }) => setActiveSeries(value.value);
     useEffect(() => {
         if (!data) return;
         const seriesOptions = data.map(item => ({
-            text: item.seriesName,
+            label: item.seriesName,
             value: item.seriesId,
         }));
         setSeriesOptions([
-            { text: 'All', value: 'all' },
+            { label: 'All', value: 'all' },
             ...seriesOptions,
         ]);
     }, [data]);
@@ -70,7 +71,7 @@ function WidgetSessions(props: Props) {
                 { widget.metricType !== 'table' && (
                     <div className="flex items-center ml-6">
                         <span className="mr-2 color-gray-medium">Series</span>
-                        <Dropdown
+                        {/* <Dropdown
                             // className={stl.dropdown}
                             className="font-medium flex items-center hover:bg-gray-light rounded px-2 py-1"
                             direction="left"
@@ -81,6 +82,11 @@ function WidgetSessions(props: Props) {
                             id="change-dropdown"
                             // icon={null}
                             icon={ <Icon name="chevron-down" color="gray-dark" size="14" className="ml-2" /> }
+                        /> */}
+                        <Select
+                            options={ seriesOptions }
+                            onChange={ writeOption }
+                            plain
                         />
                     </div>
                 )}

@@ -58,9 +58,6 @@ const ProjectCodeSnippet = props  => {
 
   const onChangeSelect = ({ name, value }) => {
     const { gdpr } = site;
-    // const _gdpr = { ...gdpr.toData() };
-    // props.editGDPR({ [ name ]: value });
-    // _gdpr[name] = value;
     props.editGDPR({ [ name ]: value });
     saveGDPR({ ...gdpr, [ name ]: value });
   };
@@ -107,7 +104,7 @@ const ProjectCodeSnippet = props  => {
           <Select
             name="defaultInputMode"
             options={ inputModeOptions }
-            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value }) }
+            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value }) }
             placeholder="Default Input Mode"
             value={ inputModeOptions.find(o => o.value === gdpr.defaultInputMode) }
           />

@@ -2,9 +2,9 @@ import React from 'react';
 import cn from 'classnames';
 import WidgetWrapper from '../WidgetWrapper';
 import { useStore } from 'App/mstore';
-import { Loader, NoContent, SegmentSelection, Icon } from 'UI';
-import DateRange from 'Shared/DateRange';
+import { SegmentSelection } from 'UI';
 import { useObserver } from 'mobx-react-lite';
+import SelectDateRange from 'Shared/SelectDateRange';
 
 interface Props {
     className?: string;
@@ -17,7 +17,7 @@ function WidgetPreview(props: Props) {
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
 
-    const chagneViewType = (e, { name, value }) => {
+    const chagneViewType = (e, { name, value }: any) => {
         metric.update({ [ name ]: value });
     }
 
@@ -63,13 +63,9 @@ function WidgetPreview(props: Props) {
                     )}
                     <div className="mx-4" />
                         <span className="mr-1 color-gray-medium">Time Range</span>
-                        <DateRange
-                            rangeValue={period.rangeName}
-                            startDate={period.startDate}
-                            endDate={period.endDate}
-                            onDateChange={(period) => dashboardStore.setPeriod(period)}
-                            customRangeRight
-                            direction="left"
+                        <SelectDateRange
+                            period={period}
+                            onChange={(period: any) => dashboardStore.setPeriod(period)}
                         />
                     </div>
             </div>

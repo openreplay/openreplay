@@ -10,6 +10,7 @@ const inputModeOptions = [
   
 const inputModeOptionsMap: any = {}
 inputModeOptions.forEach((o: any, i: any) => inputModeOptionsMap[o.value] = i)
+console.log('inputModeOptionsMap', inputModeOptionsMap)
 
 
 interface Props {
@@ -22,12 +23,13 @@ interface Props {
 }
 function CodeSnippet(props: Props) {
     const { host, projectKey, ingestPoint, defaultInputMode, obscureTextNumbers, obscureTextEmails } = props;
+    console.log('defaultInputMode', defaultInputMode)
     const codeSnippet = `<!-- OpenReplay Tracking Code for ${host} -->
 <script>
   var initOpts = {
     projectKey: "${projectKey}",
     ingestPoint: ${ingestPoint},
-    defaultInputMode: ${inputModeOptions[defaultInputMode]},
+    defaultInputMode: ${inputModeOptionsMap[defaultInputMode]},
     obscureTextNumbers: ${obscureTextNumbers},
     obscureTextEmails: ${obscureTextEmails},
   };

@@ -123,15 +123,6 @@ function DashboardView(props: RouteComponentProps<Props>) {
                         </div>
                         <div className="flex items-center" style={{ flex: 1, justifyContent: 'end' }}>
                             <div className="flex items-center flex-shrink-0 justify-end" style={{ width: '300px'}}>
-                                {/* <span className="mr-2 color-gray-medium">Time Range</span> */}
-                                {/* <DateRange
-                                    rangeValue={period.rangeName}
-                                    startDate={period.start}
-                                    endDate={period.end}
-                                    onDateChange={(period) => dashboardStore.setPeriod(period)}
-                                    customRangeRight
-                                    direction="left"
-                                /> */}
                                 <SelectDateRange
                                     style={{ width: '300px'}}
                                     fluid

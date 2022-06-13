@@ -1,6 +1,10 @@
 import React from 'react';
 import cn from 'classnames';
 
+interface Props {
+    title: string;
+    className?: string;
+}
 function PageTitle({ title, actionButton = null, subTitle = '', className = '', subTitleClass }) {
     return (
         <div>

@@ -90,6 +90,9 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
+        // const _metric = new Widget().fromJson(sampleJsonErrors)
+        // this.instance.update(metric || _metric)
+
         this.instance.update(metric || new Widget())
     }
 
@@ -137,29 +140,32 @@ export default class MetricStore implements IMetricStore {
     save(metric: IWidget, dashboardId?: string): Promise<any> {
         const wasCreating = !metric.exists()
         this.isSaving = true
-        return metricService.saveMetric(metric, dashboardId)
-            .then((metric) => {
-                const _metric = new Widget().fromJson(metric)
-                if (wasCreating) {
-                    toast.success('Metric created successfully')
-                    this.addToList(_metric)
-                    this.instance = _metric
-                } else {
-                    toast.success('Metric updated successfully')
-                    this.updateInList(_metric)
-                }
-                return _metric
-            }).catch(() => {
-                toast.error('Error saving metric')
-            }).finally(() => {
-                this.isSaving = false
-            })
+        return new Promise((resolve, reject) => {
+            metricService.saveMetric(metric, dashboardId)
+                .then((metric: any) => {
+                    const _metric = new Widget().fromJson(metric)
+                    if (wasCreating) {
+                        toast.success('Metric created successfully')
+                        this.addToList(_metric)
+                        this.instance = _metric
+                    } else {
+                        toast.success('Metric updated successfully')
+                        this.updateInList(_metric)
+                    }
+                    resolve(_metric)
+                }).catch(() => {
+                    toast.error('Error saving metric')
+                    reject()
+                }).finally(() => {
+                    this.isSaving = false
+                })
+        })
     }
 
     fetchList() {
         this.isLoading = true
         return metricService.getMetrics()
-            .then(metrics => {
+            .then((metrics: any[]) => {
                 this.metrics = metrics.map(m => new Widget().fromJson(m))
             }).finally(() => {
                 this.isLoading = false
@@ -169,7 +175,7 @@ export default class MetricStore implements IMetricStore {
     fetch(id: string) {
         this.isLoading = true
         return metricService.getMetric(id)
-            .then(metric => {
+            .then((metric: any) => {
                 return this.instance = new Widget().fromJson(metric)
             }).finally(() => {
                 this.isLoading = false
@@ -186,4 +192,43 @@ export default class MetricStore implements IMetricStore {
                 this.isSaving = false
             })
     }
+}
+
+const sampleJsonFunnel = {
+    // metricId: 1,
+    name: "Funnel Sample",
+    metricType: 'funnel',
+    series: [
+        {
+            name: 'Series 1',
+            filter: {
+                eventsOrder: 'then',
+                filters: [
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions', '/errors', '/users'], percent: 100, completed: 60, dropped: 40, },
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions'], percent: 80, completed: 40, dropped: 60, },
+                    { type: 'CLICK', operator: 'on', value: ['DASHBOARDS'], percent: 80, completed: 10, dropped: 90, }
+                ]
+            }
+        }
+    ],
+}
+
+const sampleJsonErrors = {
+    // metricId: 1,
+    name: "Errors Sample",
+    metricType: 'errors',
+    metricFormat: 'sessionCount',
+    series: [
+        {
+            name: 'Series 1',
+            filter: {
+                eventsOrder: 'then',
+                filters: [
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions', '/errors', '/users'], percent: 100, completed: 60, dropped: 40, },
+                    { type: 'LOCATION', operator: 'is', value: ['/sessions'], percent: 80, completed: 40, dropped: 60, },
+                    { type: 'CLICK', operator: 'on', value: ['DASHBOARDS'], percent: 80, completed: 10, dropped: 90, }
+                ]
+            }
+        }
+    ],
 }
