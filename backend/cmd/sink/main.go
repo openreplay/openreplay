@@ -62,6 +62,7 @@ func main() {
 		[]string{
 			cfg.TopicRawIOS,
 			cfg.TopicRawWeb,
+			cfg.TopicTrigger,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
 			// Process assets
@@ -71,6 +72,16 @@ func main() {
 
 			// Filter message
 			typeID := message.TypeID()
+
+			// Send SessionFinished trigger to storage service
+			switch m := message.(type) {
+			case *SessionEnd:
+				msg := &SessionFinished{Timestamp: m.Timestamp}
+				if err := producer.Produce(cfg.TopicTrigger, sessionID, Encode(msg)); err != nil {
+					log.Printf("can't send SessionFinished to trigger topic: %s; sessID: %d", err, sessionID)
+				}
+				return
+			}
 			if !IsReplayerType(typeID) {
 				return
 			}
