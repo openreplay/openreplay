@@ -26,14 +26,14 @@ const getColumns = (metric) => {
 interface Props {
     metric?: any,
     data: any;
-    onClick?: (filters) => void;
+    onClick?: (filters: any) => void;
     isTemplate?: boolean;
 }
-function CustomMetriTable(props: Props) {
+function CustomMetricTable(props: Props) {
     const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
     const rows = List(data.values);
 
-    const onClickHandler = (event, data) => {
+    const onClickHandler = (event: any, data: any) => {
         const filters = Array<any>();
         let filter = { ...filtersMap[metric.metricOf] }
         filter.value = [data.name]
@@ -64,4 +64,4 @@ function CustomMetriTable(props: Props) {
     )
 }
 
-export default CustomMetriTable;
+export default CustomMetricTable;
