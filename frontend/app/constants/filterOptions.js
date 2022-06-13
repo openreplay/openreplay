@@ -63,8 +63,8 @@ export const metricTypes = [
   { text: 'Timeseries', label: 'Timeseries', value: 'timeseries' },
   { text: 'Table', label: 'Table', value: 'table' },
   { label: 'Funnel', value: 'funnel' },
-  { label: 'Errors', value: 'errors' },
-  { label: 'Sessions', value: 'sessions' },
+  // { label: 'Errors', value: 'errors' },
+  // { label: 'Sessions', value: 'sessions' },
 ];
 
 export const tableColumnName = {
@@ -79,6 +79,7 @@ export const tableColumnName = {
 export const metricOf = [
   { text: 'Session Count', label: 'Session Count', value: 'sessionCount', type: 'timeseries' },
   { text: 'Users', label: 'Users', value: FilterKey.USERID, type: 'table' },
+  { text: 'Sessions', label: 'Sessions', value: FilterKey.SESSIONS, type: 'table' },
   { text: 'Issues', label: 'Issues', value: FilterKey.ISSUE, type: 'table' },
   { text: 'Browsers', label: 'Browsers', value: FilterKey.USER_BROWSER, type: 'table' },
   { text: 'Devices', label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },

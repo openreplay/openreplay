@@ -79,7 +79,7 @@ export default class DashboardStore implements IDashboardSotre {
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
     widgets: Widget[] = []
-    period: Period = Period({ rangeName: LAST_7_DAYS })
+    period: Period = Period({ rangeName: LAST_24_HOURS })
     drillDownFilter: Filter = new Filter()
     startTimestamp: number = 0
     endTimestamp: number = 0
@@ -131,7 +131,7 @@ export default class DashboardStore implements IDashboardSotre {
             fetchMetricChartData: action
         })
 
-        const drillDownPeriod = Period({ rangeName: LAST_7_DAYS }).toTimestamps();
+        const drillDownPeriod = Period({ rangeName: LAST_24_HOURS }).toTimestamps();
         this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
         this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
     }

@@ -2,6 +2,7 @@ import React from 'react';
 import Select, { components, DropdownIndicatorProps } from 'react-select';
 import { Icon } from 'UI';
 import colors from 'App/theme/colors';
+const { ValueContainer } = components;
 
 interface Props {
     options: any[];
@@ -84,6 +85,7 @@ export default function({ name = '', onChange, right = false, plain = false, opt
         },
         indicatorsContainer: (provided: any) => ({
             ...provided,
+            maxHeight: '34px',
             padding: 0,
         }),
         valueContainer: (provided: any) => ({
@@ -112,6 +114,7 @@ export default function({ name = '', onChange, right = false, plain = false, opt
             components={{
                 IndicatorSeparator: () => null,
                 DropdownIndicator,
+                ValueContainer: CustomValueContainer,
                 ...components,
             }}
             onChange={(value) => onChange({ name, value: value })}
@@ -139,3 +142,21 @@ const DropdownIndicator = (
       </components.DropdownIndicator>
     );
   };
+
+const CustomValueContainer = ({ children, ...rest }: any) => {
+    const selectedCount = rest.getValue().length
+    const conditional = (selectedCount < 3)
+  
+    let firstChild: any = []
+  
+    if (!conditional) {
+      firstChild = [children[0].shift(), children[1]]
+    }
+  
+    return (
+      <ValueContainer {...rest}>
+        {conditional ? children : firstChild}
+        {!conditional && ` and ${selectedCount - 1} others`}
+      </ValueContainer>
+    )
+  }

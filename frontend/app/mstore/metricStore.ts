@@ -90,7 +90,6 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
-        console.log('metric', metric);
         // const _metric = new Widget().fromJson(sampleJsonErrors)
         // this.instance.update(metric || _metric)
 
@@ -141,23 +140,26 @@ export default class MetricStore implements IMetricStore {
     save(metric: IWidget, dashboardId?: string): Promise<any> {
         const wasCreating = !metric.exists()
         this.isSaving = true
-        return metricService.saveMetric(metric, dashboardId)
-            .then((metric: any) => {
-                const _metric = new Widget().fromJson(metric)
-                if (wasCreating) {
-                    toast.success('Metric created successfully')
-                    this.addToList(_metric)
-                    this.instance = _metric
-                } else {
-                    toast.success('Metric updated successfully')
-                    this.updateInList(_metric)
-                }
-                return _metric
-            }).catch(() => {
-                toast.error('Error saving metric')
-            }).finally(() => {
-                this.isSaving = false
-            })
+        return new Promise((resolve, reject) => {
+            metricService.saveMetric(metric, dashboardId)
+                .then((metric: any) => {
+                    const _metric = new Widget().fromJson(metric)
+                    if (wasCreating) {
+                        toast.success('Metric created successfully')
+                        this.addToList(_metric)
+                        this.instance = _metric
+                    } else {
+                        toast.success('Metric updated successfully')
+                        this.updateInList(_metric)
+                    }
+                    resolve(_metric)
+                }).catch(() => {
+                    toast.error('Error saving metric')
+                    reject()
+                }).finally(() => {
+                    this.isSaving = false
+                })
+        })
     }
 
     fetchList() {

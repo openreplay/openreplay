@@ -36,17 +36,22 @@ function WidgetForm(props: Props) {
 
     // const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = ({ value, name }: any) => {
-        value = value.value
+        value = Array.isArray(value) ? value : value.value
         const obj: any = { [ name ]: value };
 
         if (name === 'metricValue') {
-            obj['metricValue'] = [value];
+            obj['metricValue'] = value;
+
+            // handle issues (remove all when other option is selected)
+            if (Array.isArray(obj['metricValue']) && obj['metricValue'].length > 1) {
+                obj['metricValue'] = obj['metricValue'].filter(i => i.value !== 'all');
+            }
         }
 
         if (name === 'metricOf') {
-            if (value === FilterKey.ISSUE) {
-                obj['metricValue'] = ['all'];
-            }
+            // if (value === FilterKey.ISSUE) {
+            //     obj['metricValue'] = [{ value: 'all', label: 'All' }];
+            // }
         }
 
         if (name === 'metricType') {
@@ -71,7 +76,6 @@ function WidgetForm(props: Props) {
                 } else {
                     history.replace(withSiteId(metricDetails(metric.metricId), siteId));
                 }
-
             }
         });
     }
@@ -131,9 +135,11 @@ function WidgetForm(props: Props) {
                             <span className="mx-3">issue type</span>
                             <Select
                                 name="metricValue"
-                                options={_issueOptions}
-                                defaultValue={metric.metricValue[0]}
+                                options={issueOptions}
+                                value={metric.metricValue}
                                 onChange={ writeOption }
+                                isMulti={true}
+                                placeholder="All Issues"
                             />
                         </>
                     )}

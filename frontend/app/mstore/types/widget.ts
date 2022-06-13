@@ -1,10 +1,10 @@
-import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
+import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import FilterSeries from "./filterSeries";
 import { DateTime } from 'luxon';
-import { IFilter } from "./filter";
 import { metricService } from "App/services";
-import Session, { ISession } from "App/mstore/types/session";
+import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
+import { issueOptions } from 'App/constants/filterOptions';
 
 export interface IWidget {
     metricId: any
@@ -54,7 +54,8 @@ export default class Widget implements IWidget {
     metricId: any = undefined
     widgetId: any = undefined
     name: string = "New Metric"
-    metricType: string = "timeseries"
+    // metricType: string = "timeseries"
+    metricType: string = "table"
     metricOf: string = "sessionCount"
     metricValue: string = ""
     viewType: string = "lineChart"
@@ -132,7 +133,7 @@ export default class Widget implements IWidget {
         runInAction(() => {
             this.metricId = json.metricId
             this.widgetId = json.widgetId
-            this.metricValue = json.metricValue
+            this.metricValue = this.metricValueFromArray(json.metricValue)
             this.metricOf = json.metricOf
             this.metricType = json.metricType
             this.metricFormat = json.metricFormat
@@ -168,7 +169,7 @@ export default class Widget implements IWidget {
             metricId: this.metricId,
             widgetId: this.widgetId,
             metricOf: this.metricOf,
-            metricValue: this.metricValue,
+            metricValue: this.metricValueToArray(this.metricValue),
             metricType: this.metricType,
             metricFormat: this.metricFormat,
             viewType: this.viewType,
@@ -237,5 +238,15 @@ export default class Widget implements IWidget {
                 reject(error)
             })
         })
+    }
+
+    private metricValueFromArray(metricValue: any) {
+        if (!Array.isArray(metricValue)) return metricValue;
+        return issueOptions.filter((i: any) => metricValue.includes(i.value))
+    }
+
+    private metricValueToArray(metricValue: any) {
+        if (!Array.isArray(metricValue)) return metricValue;
+        return metricValue.map((i: any) => i.value)
     }
 }

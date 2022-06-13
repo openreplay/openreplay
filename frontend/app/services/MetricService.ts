@@ -60,7 +60,7 @@ export default class MetricService implements IMetricService {
         const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
         return this.client[method](url, data)
             .then((response: { json: () => any; }) => response.json())
-            .then((response: { data: any; }) => response.data || {});      
+            .then((response: { data: any; }) => response.data || {});
     }
 
     /**
