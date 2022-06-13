@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import DropdownPlain from 'Shared/DropdownPlain';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
@@ -36,8 +35,9 @@ function WidgetForm(props: Props) {
     const canAddSeries = metric.series.length < 3;
 
     // const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
-    const writeOption = ({ value: { value }, name }) => {
-        const obj = { [ name ]: value };
+    const writeOption = ({ value, name }: any) => {
+        value = value.value
+        const obj: any = { [ name ]: value };
 
         if (name === 'metricValue') {
             obj['metricValue'] = [value];
@@ -64,7 +64,7 @@ function WidgetForm(props: Props) {
 
     const onSave = () => {
         const wasCreating = !metric.exists()
-        metricStore.save(metric, dashboardId).then((metric) => {
+        metricStore.save(metric, dashboardId).then((metric: any) => {
             if (wasCreating) {
                 if (parseInt(dashboardId) > 0) {
                     history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
@@ -98,15 +98,9 @@ function WidgetForm(props: Props) {
                     <Select
                         name="metricType"
                         options={metricTypes}
-                        value={metricTypes.find(i => i.value === metric.metricType) || metricTypes[0]}
+                        value={metricTypes.find((i: any) => i.value === metric.metricType) || metricTypes[0]}
                         onChange={ writeOption }
                     />
-                    {/* <DropdownPlain
-                        name="metricType"
-                        options={metricTypes}
-                        value={ metric.metricType }
-                        onChange={ writeOption }
-                    /> */}
 
                     {metric.metricType === 'timeseries' && (
                         <>
@@ -117,12 +111,6 @@ function WidgetForm(props: Props) {
                                 defaultValue={metric.metricOf}
                                 onChange={ writeOption }
                             />
-                            {/* <DropdownPlain
-                                name="metricOf"
-                                options={timeseriesOptions}
-                                value={ metric.metricOf }
-                                onChange={ writeOption }
-                            /> */}
                         </>
                     )}
 
@@ -135,12 +123,6 @@ function WidgetForm(props: Props) {
                                 defaultValue={metric.metricOf}
                                 onChange={ writeOption }
                             />
-                            {/* <DropdownPlain
-                                name="metricOf"
-                                options={tableOptions}
-                                value={ metric.metricOf }
-                                onChange={ writeOption }
-                            /> */}
                         </>
                     )}
 
@@ -153,12 +135,6 @@ function WidgetForm(props: Props) {
                                 defaultValue={metric.metricValue[0]}
                                 onChange={ writeOption }
                             />
-                            {/* <DropdownPlain
-                                name="metricValue"
-                                options={_issueOptions}
-                                value={ metric.metricValue[0] }
-                                onChange={ writeOption }
-                            /> */}
                         </>
                     )}
 
@@ -173,21 +149,13 @@ function WidgetForm(props: Props) {
                             defaultValue={ metric.metricFormat }
                             onChange={ writeOption }
                         />
-                        {/* <DropdownPlain
-                            name="metricFormat"
-                            options={[
-                                { value: 'sessionCount', text: 'Session Count' },
-                            ]}
-                            value={ metric.metricFormat }
-                            onChange={ writeOption }
-                        /> */}
                     </>
                     )}
                 </div>
             </div>
 
             <div className="form-group">
-                <div className="flex items-center font-medium items-center py-2">
+                <div className="flex items-center font-medium py-2">
                     {`${(isTable || isFunnel) ? 'Filter by' : 'Chart Series'}`}
                     {!isTable && !isFunnel && (
                         <Button

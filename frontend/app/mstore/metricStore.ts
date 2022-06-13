@@ -90,10 +90,10 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
-        const _metric = new Widget().fromJson(sampleJsonErrors)
-        this.instance.update(metric || _metric)
+        // const _metric = new Widget().fromJson(sampleJsonErrors)
+        // this.instance.update(metric || _metric)
 
-        // this.instance.update(metric || new Widget())
+        this.instance.update(metric || new Widget())
     }
 
     updateKey(key: string, value: any) {
@@ -141,7 +141,7 @@ export default class MetricStore implements IMetricStore {
         const wasCreating = !metric.exists()
         this.isSaving = true
         return metricService.saveMetric(metric, dashboardId)
-            .then((metric) => {
+            .then((metric: any) => {
                 const _metric = new Widget().fromJson(metric)
                 if (wasCreating) {
                     toast.success('Metric created successfully')
@@ -162,7 +162,7 @@ export default class MetricStore implements IMetricStore {
     fetchList() {
         this.isLoading = true
         return metricService.getMetrics()
-            .then(metrics => {
+            .then((metrics: any[]) => {
                 this.metrics = metrics.map(m => new Widget().fromJson(m))
             }).finally(() => {
                 this.isLoading = false
@@ -172,7 +172,7 @@ export default class MetricStore implements IMetricStore {
     fetch(id: string) {
         this.isLoading = true
         return metricService.getMetric(id)
-            .then(metric => {
+            .then((metric: any) => {
                 return this.instance = new Widget().fromJson(metric)
             }).finally(() => {
                 this.isLoading = false

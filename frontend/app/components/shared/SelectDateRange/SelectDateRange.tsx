@@ -46,6 +46,7 @@ function SelectDateRange(props: Props) {
                     )
                 } }}
                 period={period}
+                right={true}
                 style={{ width: '100%' }}
             />
             {

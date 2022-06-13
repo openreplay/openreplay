@@ -3,14 +3,11 @@ import FunnelStepText from './FunnelStepText';
 import { Icon } from 'UI';
 
 interface Props {
-    completed: number;
-    dropped: number;
     filter: any;
-}``
+}
 function FunnelBar(props: Props) {
     const { filter } = props;
-    const { completed, dropped } = filter;
-    const completedPercentage = calculatePercentage(completed, dropped);
+    const completedPercentage = calculatePercentage(filter.sessionsCount, filter.dropDueToIssues);
 
     return (
         <div className="w-full mb-4">
@@ -39,12 +36,12 @@ function FunnelBar(props: Props) {
             <div className="flex justify-between py-2">
                 <div className="flex items-center">
                     <Icon name="arrow-right-short" size="20" color="green" />
-                    <span className="mx-1 font-medium">{completed}</span>
-                    <span>completed</span>
+                    <span className="mx-1 font-medium">{filter.sessionsCount}</span>
+                    <span>Completed</span>
                 </div>
                 <div className="flex items-center">
                     <Icon name="caret-down-fill" color="red" size={16} />
-                    <span className="font-medium mx-1 color-red">{dropped}</span>
+                    <span className="font-medium mx-1 color-red">{filter.dropDueToIssues}</span>
                     <span>Dropped off</span>
                 </div>
             </div>

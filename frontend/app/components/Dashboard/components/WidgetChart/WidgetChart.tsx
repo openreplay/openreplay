@@ -64,7 +64,7 @@ function WidgetChart(props: Props) {
 
     const depsString = JSON.stringify(_metric.series);
 
-    const fetchMetricChartData = (metric, payload, isWidget) => {
+    const fetchMetricChartData = (metric: any, payload: any, isWidget: any) => {
         if (!isMounted()) return;
         setLoading(true)
         dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {

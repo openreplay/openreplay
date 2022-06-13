@@ -9,7 +9,9 @@ interface Props {
 }
 function FunnelIssuesListItem(props) {
     const { issue, inDetails = false } = props;
-    const onClick = () => {}
+    const onClick = () => {
+        // console.log('onClick', issue);
+    }
     return (
         <div className={cn('flex flex-col bg-white w-full rounded border relative hover:bg-active-blue', { 'cursor-pointer bg-hover' : !inDetails })} onClick={!inDetails ? onClick : () => null}>
             {/* {inDetails && (

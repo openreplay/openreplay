@@ -1,13 +1,10 @@
-import Filter, { IFilter } from "./filter"
+// import Filter, { IFilter } from "./filter"
+import FunnelStage from './funnelStage'
 
 export interface IFunnel {
-    funnelId: string
-    name: string
-    filter: IFilter
-    sessionsCount: number
-    conversionRate: number
-    totalConversations: number
-    lostConversations: number
+    affectedUsers: number;
+    conversionImpact: number
+    lostConversions: number
     isPublic: boolean
     fromJSON: (json: any) => void
     toJSON: () => any
@@ -15,38 +12,37 @@ export interface IFunnel {
 }
 
 export default class Funnel implements IFunnel {
-    funnelId: string =  ''
-    name: string = ''
-    filter: IFilter = new Filter()
-    sessionsCount: number = 0
-    conversionRate: number = 0
-    totalConversations: number = 0
-    lostConversations: number = 0
+    affectedUsers: number = 0
+    conversionImpact: number = 0
+    lostConversions: number = 0
     isPublic: boolean = false
+    stages: FunnelStage[] = []
 
     constructor() {
     }
 
     fromJSON(json: any) {
-        this.funnelId = json.funnelId
-        this.name = json.name
-        this.filter = new Filter().fromJson(json.filter)
-        this.sessionsCount = json.sessionsCount
-        this.conversionRate = json.conversionRate
+        const firstStage = json.stages[0]
+        const lastStage = json.stages[json.stages.length - 1]
+        this.lostConversions = json.totalDropDueToIssues
+        this.conversionImpact = this.lostConversions ? Math.round((this.lostConversions / firstStage.sessionsCount) * 100) : 0;
+        this.stages = json.stages ? json.stages.map((stage: any) => new FunnelStage().fromJSON(stage)) : []
+        this.affectedUsers = firstStage.usersCount ? firstStage.usersCount - lastStage.usersCount : 0;
+
         return this
     }
 
-    toJSON(): any {
-        return {
-            funnelId: this.funnelId,
-            name: this.name,
-            filter: this.filter.toJson(),
-            sessionsCount: this.sessionsCount,
-            conversionRate: this.conversionRate,
-        }
-    }
+    // toJSON(): any {
+    //     return {
+    //         // funnelId: this.funnelId,
+    //         // name: this.name,
+    //         // filter: this.filter.toJson(),
+    //         // sessionsCount: this.sessionsCount,
+    //         // conversionRate: this.conversionRate,
+    //     }
+    // }
 
-    exists(): boolean {
-        return this.funnelId !== ''
-    }
+    // exists(): boolean {
+    //     return this.funnelId !== ''
+    // }
 }

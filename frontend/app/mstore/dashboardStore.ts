@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import Filter, { IFilter } from "./types/filter";
+import Funnel from "./types/funnel";
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -427,7 +428,7 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     setPeriod(period: any) {
-        this.period = Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeValue })
+        this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
     }
 
     fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
@@ -438,6 +439,11 @@ export default class DashboardStore implements IDashboardSotre {
                 .then(data => {
                     if (metric.metricType === 'predefined' && metric.viewType === 'overview') {
                         const _data = { ...data, chart: getChartFormatter(this.period)(data.chart) }
+                        metric.setData(_data)
+                        resolve(_data);
+                    } else if (metric.metricType === 'funnel') {
+                        const _data = { ...data }
+                        _data.funnel = new Funnel().fromJSON(data)
                         metric.setData(_data)
                         resolve(_data);
                     } else {

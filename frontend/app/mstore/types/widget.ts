@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import { IFilter } from "./filter";
 import { metricService } from "App/services";
 import Session, { ISession } from "App/mstore/types/session";
+import Funnelissue from 'App/mstore/types/funnelIssue';
 
 export interface IWidget {
     metricId: any
@@ -173,6 +174,10 @@ export default class Widget implements IWidget {
             viewType: this.viewType,
             name: this.name,
             series: this.series.map((series: any) => series.toJson()),
+            config: {
+                ...this.config,
+                col: this.metricType === 'funnel' ? 4 : this.config.col
+            },
         }
     }
 
@@ -198,13 +203,23 @@ export default class Widget implements IWidget {
 
     fetchSessions(metricId: any, filter: any): Promise<any> {
         return new Promise((resolve, reject) => {
-            metricService.fetchSessions(metricId, filter).then(response => {
-                resolve(response.map(cat => {
+            metricService.fetchSessions(metricId, filter).then((response: any[]) => {
+                resolve(response.map((cat: { sessions: any[]; }) => {
                     return {
                         ...cat,
-                        sessions: cat.sessions.map(s => new Session().fromJson(s))
+                        sessions: cat.sessions.map((s: any) => new Session().fromJson(s))
                     }
                 }))
+            })
+        })
+    }
+
+    fetchIssues(filter: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            metricService.fetchIssues(filter).then((response: any) => {
+                resolve({
+                    issues: response.issues.insignificant ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue)) : [],
+                })
             })
         })
     }

@@ -62,7 +62,7 @@ export default class Filter implements IFilter {
         this.filters[index] = new FilterItem(filter)
     }
 
-    updateKey(key: string, value) {
+    updateKey(key: string, value: any) {
         this[key] = value
     }
 

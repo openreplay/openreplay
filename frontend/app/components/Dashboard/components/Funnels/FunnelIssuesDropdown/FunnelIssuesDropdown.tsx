@@ -37,7 +37,7 @@ function FunnelIssuesDropdown(props) {
     }, [selectedOptions]);
 
     const handleChange = ({ value }: any) => {
-        toggleSelectedValue(value);
+        toggleSelectedValue(value.value);
     }
 
     const toggleSelectedValue = (value: string) => {
@@ -57,24 +57,24 @@ function FunnelIssuesDropdown(props) {
                 options={filteredOptions}
                 onChange={handleChange}
                 styles={{
-                    control: (provided) => ({
+                    control: (provided: any) => ({
                         ...provided,
                         border: 'none',
                         boxShadow: 'none',
                         backgroundColor: 'transparent',
                         minHeight: 'unset',
                     }),
-                    menuList: (provided) => ({
+                    menuList: (provided: any) => ({
                         ...provided,
                         padding: 0,
                         minWidth: '190px',
                     }),
                 }}
                 components={{
-                    ValueContainer: () => null,
-                    DropdownIndicator: () => null,
-                    IndicatorSeparator: () => null,
-                    IndicatorsContainer: () => null,
+                    ValueContainer: (): any => null,
+                    DropdownIndicator: (): any => null,
+                    IndicatorSeparator: (): any => null,
+                    IndicatorsContainer: (): any => null,
                     Control: ({ children, ...props }: any) => (
                         <components.Control {...props}>
                         { children }
@@ -84,8 +84,8 @@ function FunnelIssuesDropdown(props) {
                         </button>
                         </components.Control>
                     ),
-                    Placeholder: () => null,
-                    SingleValue: () => null,
+                    Placeholder: (): any => null,
+                    SingleValue: (): any => null,
                 }}
             />
             <FunnelIssuesSelectedFilters removeSelectedValue={toggleSelectedValue} />

@@ -17,8 +17,8 @@ interface Props {
 function FunnelIssuesSort(props: Props) {
     const { funnelStore } = useStore();
     
-    const onSortChange = (opt) => {
-        const [ sort, order ] = opt.value.split('-');
+    const onSortChange = (opt: any) => {
+        const [ sort, order ] = opt.value.value.split('-');
         funnelStore.updateKey('issuesSort', { sort, order });
     }
 

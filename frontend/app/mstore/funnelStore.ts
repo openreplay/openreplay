@@ -113,7 +113,7 @@ export default class FunnelStore {
     fetchIssues(funnelId?: string): Promise<any> {
         this.isLoadingIssues = true
         return new Promise((resolve, reject) => {
-            funnelService.fetchIssues(funnelId, this.period)
+            funnelService.fetchIssues(funnelId, this.period.toTimestamps())
                 .then(response => {
                     this.issues = response.map(i => new FunnelIssue().fromJSON(i))
                     resolve(this.issues)
