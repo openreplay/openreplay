@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Loader } from 'UI';
@@ -6,23 +6,25 @@ import FunnelIssuesListItem from '../FunnelIssuesListItem';
 import SessionItem from 'App/components/shared/SessionItem/SessionItem';
 
 interface Props {
-    funnelId: string;
     issueId: string;
 }
 function FunnelIssueDetails(props: Props) {
-    const { funnelStore } = useStore();
-    const { funnelId, issueId } = props;
-    const funnel = useObserver(() => funnelStore.instance);
-    const funnelIssue = useObserver(() => funnelStore.issueInstance);
-    const loading = useObserver(() => funnelStore.isLoadingIssues);
+    const { dashboardStore, metricStore } = useStore();
+    const { issueId } = props;
+    const filter = useObserver(() => dashboardStore.drillDownFilter);
+    const widget = useObserver(() => metricStore.instance);
+    const [loading, setLoading] = useState(false);
+    const [funnelIssue, setFunnelIssue] = useState<any>(null);
+    const [sessions, setSessions] = useState<any>([]);
 
     useEffect(() => {
-        if (!funnel || !funnel.exists()) { 
-            // funnelStore.fetchFunnel(props.funnelId);
-            funnelStore.fetchFunnel('143');
-        }
-
-        funnelStore.fetchIssue(funnelId, issueId);
+        setLoading(true);
+        widget.fetchIssue(widget.metricId, issueId, filter).then((resp: any) => {
+            setFunnelIssue(resp.issue);
+            setSessions(resp.sessions);
+        }).finally(() => {
+            setLoading(false);
+        });
     }, []);
 
     return (
@@ -33,7 +35,7 @@ function FunnelIssueDetails(props: Props) {
             />}
 
             <div className="mt-6">
-                {funnelIssue && funnelIssue.sessions.map(session => (
+                {sessions.map((session: any) => (
                     <SessionItem key={session.id} session={session} />
                 ))}
             </div>
