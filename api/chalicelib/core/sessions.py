@@ -95,7 +95,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
                     data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
-                                                                    start_ts=data["start_ts"],
+                                                                    start_ts=data["startTs"],
                                                                     duration=data["duration"])
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
