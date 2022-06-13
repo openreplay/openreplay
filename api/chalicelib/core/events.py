@@ -464,14 +464,13 @@ def search(text, event_type, project_id, source, key):
     return {"data": rows}
 
 
-def get_errors_by_session_id(session_id):
+def get_errors_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
                     SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
                     FROM {event_type.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
-                    WHERE
-                      er.session_id = %(session_id)s
-                    ORDER BY timestamp;""", {"session_id": session_id}))
+                    WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
+                    ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
         errors = cur.fetchall()
         for e in errors:
             e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])
