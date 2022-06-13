@@ -59,9 +59,7 @@ def __get_funnel_chart(project_id, data: schemas.TryCustomMetricsPayloadSchema):
 
 def __is_errors_list(data):
     return data.metric_type == schemas.MetricType.table \
-           and data.metric_of == schemas.TableMetricOfType.issues \
-           and len(data.metric_value) == 1 and data.metric_value[0] == schemas.IssueType.js_exception \
-           and data.metric_format == schemas.MetricFormatType.errors_list
+           and data.metric_of == schemas.TableMetricOfType.errors
 
 
 def __get_errors_list(project_id, user_id, data):

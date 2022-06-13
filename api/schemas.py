@@ -481,7 +481,6 @@ class IssueType(str, Enum):
 
 class MetricFormatType(str, Enum):
     session_count = 'sessionCount'
-    errors_list = 'errors'
 
 
 class __MixedSearchFilter(BaseModel):
@@ -811,6 +810,7 @@ class TableMetricOfType(str, Enum):
     issues = FilterType.issue.value
     visited_url = EventType.location.value
     sessions = "SESSIONS"
+    errors = IssueType.js_exception.value
 
 
 class TimeseriesMetricOfType(str, Enum):
