@@ -28,8 +28,8 @@ def __merge_cells(rows, start, count, replacement):
     return rows
 
 
-def __get_grouped_clickrage(rows, session_id):
-    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage")
+def __get_grouped_clickrage(rows, session_id, project_id):
+    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage", project_id=project_id)
     if len(click_rage_issues) == 0:
         return rows
 
@@ -63,7 +63,7 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
                     )
         rows = cur.fetchall()
         if group_clickrage:
-            rows = __get_grouped_clickrage(rows=rows, session_id=session_id)
+            rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
 
         cur.execute(cur.mogrify("""
             SELECT 
