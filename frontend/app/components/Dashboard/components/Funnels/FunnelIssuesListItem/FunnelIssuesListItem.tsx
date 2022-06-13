@@ -2,6 +2,8 @@ import React from 'react';
 import cn from 'classnames';
 import { Icon, TextEllipsis } from 'UI';
 import FunnelIssueGraph from '../FunnelIssueGraph';
+import { useModal } from 'App/components/Modal';
+import FunnelIssueModal from '../FunnelIssueModal';
 
 interface Props {
     issue: any;
@@ -9,8 +11,9 @@ interface Props {
 }
 function FunnelIssuesListItem(props) {
     const { issue, inDetails = false } = props;
+    const { showModal } = useModal();
     const onClick = () => {
-        // console.log('onClick', issue);
+        showModal(<FunnelIssueModal />, { right: true });
     }
     return (
         <div className={cn('flex flex-col bg-white w-full rounded border relative hover:bg-active-blue', { 'cursor-pointer bg-hover' : !inDetails })} onClick={!inDetails ? onClick : () => null}>

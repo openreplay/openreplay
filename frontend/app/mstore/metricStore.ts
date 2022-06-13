@@ -90,6 +90,7 @@ export default class MetricStore implements IMetricStore {
 
     // State Actions
     init(metric?: IWidget|null) {
+        console.log('metric', metric);
         // const _metric = new Widget().fromJson(sampleJsonErrors)
         // this.instance.update(metric || _metric)
 

@@ -8,6 +8,7 @@ import FunnelIssuesList from '../FunnelIssuesList';
 import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function FunnelIssues() {
     const { metricStore, dashboardStore } = useStore();
@@ -55,8 +56,12 @@ function FunnelIssues() {
             <Loader loading={loading}>
                 <NoContent
                     show={!loading && data.issues.length === 0}
-                    title="No issues found."
-                    animatedIcon="empty-state"
+                    title={
+                        <div className="flex flex-col items-center justify-center">
+                            <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                            <div className="mt-6 text-2xl">No issues found</div>
+                        </div>
+                    }
                 >
                     <FunnelIssuesList issues={data.issues} />
                 </NoContent>

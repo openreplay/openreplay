@@ -217,8 +217,10 @@ export default class Widget implements IWidget {
     fetchIssues(filter: any): Promise<any> {
         return new Promise((resolve, reject) => {
             metricService.fetchIssues(filter).then((response: any) => {
+                const significantIssues = response.issues.significant ? response.issues.significant.map((issue: any) => new Funnelissue().fromJSON(issue)) : []
+                const insignificantIssues = response.issues.insignificant ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue)) : []
                 resolve({
-                    issues: response.issues.insignificant ? response.issues.insignificant.map((issue: any) => new Funnelissue().fromJSON(issue)) : [],
+                    issues: significantIssues.length > 0 ? significantIssues : insignificantIssues,
                 })
             })
         })
