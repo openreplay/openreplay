@@ -583,7 +583,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
                    SET jwt_iat = timezone('utc'::text, now())
                    WHERE user_id = %(user_id)s 
                    RETURNING jwt_iat;""",
-                {"user_id": r["id"]})
+                {"user_id": r["userId"]})
             cur.execute(query)
             return {
                 "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
