@@ -52,6 +52,8 @@ def __get_funnel_chart(project_id, data: schemas.TryCustomMetricsPayloadSchema):
             "stages": [],
             "totalDropDueToIssues": 0
         }
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
     return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
 
 
@@ -68,6 +70,8 @@ def __get_errors_list(project_id, user_id, data):
             "total": 0,
             "errors": []
         }
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
@@ -78,10 +82,13 @@ def __is_sessions_list(data):
 
 def __get_sessions_list(project_id, user_id, data):
     if len(data.series) == 0:
+        print("empty series")
         return {
             "total": 0,
             "sessions": []
         }
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
     return sessions.search2_pg(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
