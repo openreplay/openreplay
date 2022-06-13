@@ -772,7 +772,7 @@ def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.
 
 
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
-def get_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
+def get_funnel_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
                        context: schemas.CurrentContext = Depends(OR_context)):
     issue = issues.get(project_id=projectId, issue_id=issueId)
     if issue is None:
