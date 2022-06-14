@@ -174,16 +174,13 @@ def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetric
     metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
-    results = []
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)})
-
-    return results
+        return {"seriesId": s.series_id, "seriesName": s.name,
+                **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
 
 
 def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
@@ -193,16 +190,13 @@ def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSe
     metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
-    results = []
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        **errors.search(data=s.filter, project_id=project_id, user_id=user_id)})
-
-    return results
+        return {"seriesId": s.series_id, "seriesName": s.name,
+                **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
 
 def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadSchema):
@@ -512,7 +506,6 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
     metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
     if metric is None:
         return None
-    results = []
     for s in metric.series:
         s.filter.startDate = data.startTimestamp
         s.filter.endDate = data.endTimestamp
@@ -525,9 +518,8 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
             if i.get("issueId", "") == issue_id:
                 issue = i
                 break
-        results.append({"seriesId": s.series_id, "seriesName": s.name,
-                        "sessions": sessions.search2_pg(user_id=user_id, project_id=project_id,
-                                                        issue=issue, data=s.filter)
-                        if issue is not None else {"total": 0, "sessions": []},
-                        "issue": issue})
-    return results
+        return {"seriesId": s.series_id, "seriesName": s.name,
+                "sessions": sessions.search2_pg(user_id=user_id, project_id=project_id,
+                                                issue=issue, data=s.filter)
+                if issue is not None else {"total": 0, "sessions": []},
+                "issue": issue}
