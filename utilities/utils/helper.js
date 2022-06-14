@@ -24,7 +24,33 @@ const request_logger = (identity) => {
         next();
     }
 };
-
+const isValidSession = function (sessionInfo, filters) {
+    let foundAll = true;
+    for (const [key, values] of Object.entries(filters)) {
+        let found = false;
+        for (const [skey, svalue] of Object.entries(sessionInfo)) {
+            if (skey.toLowerCase() === key.toLowerCase()) {
+                for (let v of values) {
+                    if (svalue.toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    break;
+                }
+            }
+        }
+        foundAll &&= found;
+        if (!found) {
+            break;
+        }
+    }
+    return foundAll;
+}
+const hasFilters = function (filters) {
+    return filters !== undefined && Object.keys(filters).length > 0;
+}
 module.exports = {
-    extractPeerId, request_logger
+    extractPeerId, request_logger, isValidSession, hasFilters
 };

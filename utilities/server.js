@@ -7,6 +7,8 @@ const HOST = '0.0.0.0';
 const PORT = 9001;
 
 const wsapp = express();
+wsapp.use(express.json());
+wsapp.use(express.urlencoded({extended: true}));
 wsapp.use(request_logger("[wsapp]"));
 
 wsapp.use(`/assist/${process.env.S3_KEY}`, socket.wsRouter);

@@ -1,7 +1,7 @@
 const _io = require('socket.io');
 const express = require('express');
 const uaParser = require('ua-parser-js');
-const {extractPeerId} = require('../utils/helper');
+const {extractPeerId, hasFilters, isValidSession} = require('../utils/helper');
 const {geoip} = require('../utils/geoIP');
 const wsRouter = express.Router();
 const UPDATE_EVENT = "UPDATE_SESSION";
@@ -28,12 +28,26 @@ const createSocketIOServer = function (server, prefix) {
     });
 }
 
-const extractUserIdFromRequest = function (req) {
+const extractFiltersFromRequest = function (req) {
+    let filters = {};
     if (req.query.userId) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
-        return req.query.userId;
+        filters.userID = [req.query.userId];
     }
-    return undefined;
+    filters = {...filters, ...req.body};
+    let _filters = {}
+    for (let k of Object.keys(filters)) {
+        if (filters[k] !== undefined && filters[k] !== null) {
+            _filters[k] = filters[k];
+            if (!Array.isArray(_filters[k])) {
+                _filters[k] = [_filters[k]];
+            }
+            for (let i = 0; i < _filters[k].length; i++) {
+                _filters[k][i] = String(_filters[k][i]);
+            }
+        }
+    }
+    return Object.keys(_filters).length > 0 ? _filters : undefined;
 }
 
 const extractProjectKeyFromRequest = function (req) {
@@ -57,18 +71,18 @@ const respond = function (res, data) {
 
 const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
-    let userId = extractUserIdFromRequest(req);
-
+    let filters = extractFiltersFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey !== undefined) {
             liveSessions[projectKey] = liveSessions[projectKey] || [];
-            if (userId) {
+            if (hasFilters(filters)) {
                 const connected_sockets = await io.in(peerId).fetchSockets();
                 for (let item of connected_sockets) {
-                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo
+                        && isValidSession(item.handshake.query.sessionInfo, filters)) {
                         liveSessions[projectKey].push(sessionId);
                     }
                 }
@@ -80,21 +94,23 @@ const socketsList = async function (req, res) {
     respond(res, liveSessions);
 }
 wsRouter.get(`/sockets-list`, socketsList);
+wsRouter.post(`/sockets-list`, socketsList);
 
 const socketsListByProject = async function (req, res) {
     debug && console.log("[WS]looking for available sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
-    let userId = extractUserIdFromRequest(req);
+    let filters = extractFiltersFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
         let {projectKey, sessionId} = extractPeerId(peerId);
         if (projectKey === _projectKey) {
             liveSessions[projectKey] = liveSessions[projectKey] || [];
-            if (userId) {
+            if (hasFilters(filters)) {
                 const connected_sockets = await io.in(peerId).fetchSockets();
                 for (let item of connected_sockets) {
-                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo
+                        && isValidSession(item.handshake.query.sessionInfo, filters)) {
                         liveSessions[projectKey].push(sessionId);
                     }
                 }
@@ -106,10 +122,11 @@ const socketsListByProject = async function (req, res) {
     respond(res, liveSessions[_projectKey] || []);
 }
 wsRouter.get(`/sockets-list/:projectKey`, socketsListByProject);
+wsRouter.post(`/sockets-list/:projectKey`, socketsListByProject);
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
-    let userId = extractUserIdFromRequest(req);
+    let filters = extractFiltersFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -119,8 +136,8 @@ const socketsLive = async function (req, res) {
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     liveSessions[projectKey] = liveSessions[projectKey] || [];
-                    if (userId) {
-                        if (item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                    if (hasFilters(filters)) {
+                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters)) {
                             liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                         }
                     } else {
@@ -133,11 +150,12 @@ const socketsLive = async function (req, res) {
     respond(res, liveSessions);
 }
 wsRouter.get(`/sockets-live`, socketsLive);
+wsRouter.post(`/sockets-live`, socketsLive);
 
 const socketsLiveByProject = async function (req, res) {
     debug && console.log("[WS]looking for available LIVE sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
-    let userId = extractUserIdFromRequest(req);
+    let filters = extractFiltersFromRequest(req);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -147,8 +165,8 @@ const socketsLiveByProject = async function (req, res) {
             for (let item of connected_sockets) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     liveSessions[projectKey] = liveSessions[projectKey] || [];
-                    if (userId) {
-                        if (item.handshake.query.sessionInfo && item.handshake.query.sessionInfo.userID === userId) {
+                    if (hasFilters(filters)) {
+                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters)) {
                             liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                         }
                     } else {
@@ -161,6 +179,7 @@ const socketsLiveByProject = async function (req, res) {
     respond(res, liveSessions[_projectKey] || []);
 }
 wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
+wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
