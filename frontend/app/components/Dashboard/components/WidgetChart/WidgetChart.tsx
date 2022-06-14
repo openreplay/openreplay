@@ -16,6 +16,7 @@ import useIsMounted from 'App/hooks/useIsMounted'
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
+import CustomMetricTableSessions from '../../Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
 interface Props {
     metric: any;
     isWidget?: boolean;
@@ -86,7 +87,7 @@ function WidgetChart(props: Props) {
     }, [period, depsString]);
 
     const renderChart = () => {
-        const { metricType, viewType } = metric;
+        const { metricType, viewType, metricOf } = metric;
 
         if (metricType === 'sessions') {
             return <SessionWidget metric={metric} />
@@ -129,6 +130,14 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'table') {
+            if (metricOf === 'SESSIONS') {
+                return <CustomMetricTableSessions
+                    metric={metric}
+                    data={data}
+                    // onClick={onChartClick}
+                    isTemplate={isTemplate}
+                    />
+            }
             if (viewType === 'table') {
                 return <CustomMetricTable
                     metric={metric} data={data[0]}

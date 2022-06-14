@@ -109,8 +109,8 @@ export default class MetricService implements IMetricService {
             .then((response: { data: any; }) => response.data || {});
     }
 
-    fetchIssue(funnelId: string, issueId: string, params: any): Promise<any> {
-        return this.client.post(`/funnels/${funnelId}/issues/${issueId}/sessions`, params)
+    fetchIssue(metricId: string, issueId: string, params: any): Promise<any> {
+        return this.client.post(`/custom_metrics/${metricId}/issues/${issueId}/sessions`, params)
             .then((response: { json: () => any; }) => response.json())
             .then((response: { data: any; }) => response.data || {});
     }

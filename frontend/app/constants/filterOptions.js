@@ -80,6 +80,7 @@ export const metricOf = [
   { text: 'Session Count', label: 'Session Count', value: 'sessionCount', type: 'timeseries' },
   { text: 'Users', label: 'Users', value: FilterKey.USERID, type: 'table' },
   { text: 'Sessions', label: 'Sessions', value: FilterKey.SESSIONS, type: 'table' },
+  { text: 'JS Errors', label: 'JS Errors', value: FilterKey.ERRORS, type: 'table' },
   { text: 'Issues', label: 'Issues', value: FilterKey.ISSUE, type: 'table' },
   { text: 'Browsers', label: 'Browsers', value: FilterKey.USER_BROWSER, type: 'table' },
   { text: 'Devices', label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },

@@ -22,7 +22,7 @@ function FunnelBar(props: Props) {
                 overflow: 'hidden',
             }}>
                 <div className="flex items-center" style={{
-                    width: `${completedPercentage}%`,
+                    width: `${filter.completedPercentage}%`,
                     position: 'absolute',
                     top: 0,
                     left: 0,
@@ -30,7 +30,7 @@ function FunnelBar(props: Props) {
                     // height: '10px',
                     backgroundColor: '#00b5ad',
                 }}>
-                    <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">{completedPercentage}%</div>
+                    <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">{filter.completedPercentage}%</div>
                 </div>
             </div>
             <div className="flex justify-between py-2">
@@ -41,8 +41,8 @@ function FunnelBar(props: Props) {
                 </div>
                 <div className="flex items-center">
                     <Icon name="caret-down-fill" color="red" size={16} />
-                    <span className="font-medium mx-1 color-red">{filter.dropDueToIssues}</span>
-                    <span>Dropped off</span>
+                    <span className="font-medium mx-1 color-red">{filter.droppedCount}</span>
+                    <span>Dropped</span>
                 </div>
             </div>
         </div>
@@ -53,8 +53,9 @@ export default FunnelBar;
 
 const calculatePercentage = (completed: number, dropped: number) => {
     const total = completed + dropped;
-    if (total === 0) {
-        return 0;
-    }
-    return Math.round((completed / total) * 100);
+    if (dropped === 0) return 100;
+    if (total === 0) return 0;
+
+    return Math.round((completed / dropped) * 100);
+    
 }

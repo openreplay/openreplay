@@ -9,7 +9,9 @@ export default class FunnelStage {
     type: string = '';
     value: string[] = [];
     label: string = '';
-    isActive: boolean = false;
+    isActive: boolean = true;
+    completedPercentage: number = 0;
+    droppedCount: number = 0;
 
     constructor() {
         makeAutoObservable(this, {
@@ -18,7 +20,7 @@ export default class FunnelStage {
         })
     }
 
-    fromJSON(json: any) {
+    fromJSON(json: any, total: number = 0, previousSessionCount: number = 0) {
         this.dropDueToIssues = json.dropDueToIssues;
         this.dropPct = json.dropPct;
         this.operator = json.operator;
@@ -27,6 +29,8 @@ export default class FunnelStage {
         this.value = json.value;
         this.type = json.type;
         this.label = filterLabelMap[json.type] || json.type;
+        this.completedPercentage = total ? Math.round((this.sessionsCount / total) * 100) : 0;
+        this.droppedCount = previousSessionCount - this.sessionsCount;
         return this;
     }
 

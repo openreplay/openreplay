@@ -54,10 +54,10 @@ function SelectDateRange(props: Props) {
             <OutsideClickDetectingDiv 
                 onClickOutside={() => setIsCustom(false)}
             >
-                <div className="absolute top-0 mx-auto mt-10 z-40" style={{ 
+                <div className="absolute top-0 mt-10 z-40 right-0" style={{ 
                     width: '770px',
-                    margin: 'auto 50vh 0',
-                    transform: 'translateX(-50%)'
+                    // margin: 'auto 50vh 0',
+                    // transform: 'translateX(-50%)'
                 }}>
                     <DateRangePopup
                         onApply={ onApplyDateRange }

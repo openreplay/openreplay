@@ -35,15 +35,15 @@ function FunnelWidget(props: Props) {
                     <span className="text-xl mr-2">Lost conversions</span>
                     <div className="rounded px-2 py-1 bg-red-lightest color-red">
                         <span className="text-xl mr-2 font-medium">{funnel.lostConversions}</span>
-                        <span className="text-sm">(12%)</span>
+                        <span className="text-sm">({funnel.lostConversionsPercentage}%)</span>
                     </div>
                 </div>
                 <div className="mx-3" />
                 <div className="flex items-center">
                     <span className="text-xl mr-2">Total conversions</span>
                     <div className="rounded px-2 py-1 bg-tealx-lightest color-tealx">
-                        <span className="text-xl mr-2 font-medium">20</span>
-                        <span className="text-sm">(12%)</span>
+                        <span className="text-xl mr-2 font-medium">{funnel.totalConversions}</span>
+                        <span className="text-sm">({funnel.totalConversionsPercentage}%)</span>
                     </div>
                 </div>
                 <div className="mx-3" />
