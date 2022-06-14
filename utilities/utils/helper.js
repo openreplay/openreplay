@@ -51,6 +51,21 @@ const isValidSession = function (sessionInfo, filters) {
 const hasFilters = function (filters) {
     return filters !== undefined && Object.keys(filters).length > 0;
 }
+const objectToObjectOfArrays = function (obj) {
+    let _obj = {}
+    for (let k of Object.keys(obj)) {
+        if (obj[k] !== undefined && obj[k] !== null) {
+            _obj[k] = obj[k];
+            if (!Array.isArray(_obj[k])) {
+                _obj[k] = [_obj[k]];
+            }
+            for (let i = 0; i < _obj[k].length; i++) {
+                _obj[k][i] = String(_obj[k][i]);
+            }
+        }
+    }
+    return _obj;
+}
 module.exports = {
-    extractPeerId, request_logger, isValidSession, hasFilters
+    extractPeerId, request_logger, isValidSession, hasFilters, objectToObjectOfArrays
 };
