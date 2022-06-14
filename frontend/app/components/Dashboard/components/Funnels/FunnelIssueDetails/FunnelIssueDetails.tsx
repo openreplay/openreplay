@@ -29,7 +29,7 @@ function FunnelIssueDetails(props: Props) {
 
     return (
         <Loader loading={loading}>
-            { funnelIssue && <FunnelIssuesListItem
+            {funnelIssue && <FunnelIssuesListItem
                 issue={funnelIssue}
                 inDetails={true}
             />}
