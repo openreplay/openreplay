@@ -37,11 +37,11 @@ const extractFiltersFromRequest = async function (req, res) {
         }
 
         let body = await getBodyFromUWSResponse(res);
-        filters = {...filters, ...body};
+        filters = {...filters, ...(body.filter || {})};
     } else {
         return helper.extractFiltersFromRequest(req);
     }
-    filters = helper.objectToObjectOfArrays({...filters, ...req.body});
+    filters = helper.objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
 module.exports = {

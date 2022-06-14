@@ -72,7 +72,7 @@ const extractFiltersFromRequest = function (req) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
         filters.userID = [req.query.userId];
     }
-    filters = objectToObjectOfArrays({...filters, ...req.body});
+    filters = objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
 module.exports = {
