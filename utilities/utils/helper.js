@@ -66,6 +66,15 @@ const objectToObjectOfArrays = function (obj) {
     }
     return _obj;
 }
+const extractFiltersFromRequest = function (req) {
+    let filters = {};
+    if (req.query.userId) {
+        debug && console.log(`[WS]where userId=${req.query.userId}`);
+        filters.userID = [req.query.userId];
+    }
+    filters = objectToObjectOfArrays({...filters, ...req.body});
+    return Object.keys(filters).length > 0 ? filters : undefined;
+}
 module.exports = {
-    extractPeerId, request_logger, isValidSession, hasFilters, objectToObjectOfArrays
+    extractPeerId, request_logger, isValidSession, hasFilters, objectToObjectOfArrays, extractFiltersFromRequest
 };

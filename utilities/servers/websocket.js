@@ -1,7 +1,7 @@
 const _io = require('socket.io');
 const express = require('express');
 const uaParser = require('ua-parser-js');
-const {extractPeerId, hasFilters, isValidSession, objectToObjectOfArrays} = require('../utils/helper');
+const {extractPeerId, hasFilters, isValidSession, extractFiltersFromRequest} = require('../utils/helper');
 const {geoip} = require('../utils/geoIP');
 const wsRouter = express.Router();
 const UPDATE_EVENT = "UPDATE_SESSION";
@@ -26,16 +26,6 @@ const createSocketIOServer = function (server, prefix) {
         },
         path: (prefix ? prefix : '') + '/socket'
     });
-}
-
-const extractFiltersFromRequest = function (req) {
-    let filters = {};
-    if (req.query.userId) {
-        debug && console.log(`[WS]where userId=${req.query.userId}`);
-        filters.userID = [req.query.userId];
-    }
-    filters = objectToObjectOfArrays({...filters, ...req.body});
-    return Object.keys(filters).length > 0 ? filters : undefined;
 }
 
 const extractProjectKeyFromRequest = function (req) {
