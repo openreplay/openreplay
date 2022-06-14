@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"openreplay/backend/pkg/db/types"
@@ -22,7 +21,7 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, tp string, value str
 	if len(value) == 0 {
 		return
 	}
-	if err := conn.batchQueue(sessionID, `
+	sqlRequest := `
 		INSERT INTO autocomplete (
 			value,
 			type,
@@ -31,11 +30,11 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, tp string, value str
 			$1, $2, project_id
 			FROM sessions 
 			WHERE session_id = $3
-		) ON CONFLICT DO NOTHING`,
-		value, tp, sessionID,
-	); err != nil {
-		log.Printf("Insert autocomplete error: %v", err)
-	}
+		) ON CONFLICT DO NOTHING`
+	conn.batchQueue(sessionID, sqlRequest, value, tp, sessionID)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(value)+len(tp)+8)
 }
 
 func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
@@ -80,9 +79,9 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 }
 
 func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
-	// Search acceleration
-	if err := conn.batchQueue(sessionID, `
-		UPDATE sessions
+	// TODO: search acceleration?
+	sqlRequest := `
+	UPDATE sessions
 		SET issue_types=(SELECT 
 			CASE WHEN errors_count > 0 THEN
 			  (COALESCE(ARRAY_AGG(DISTINCT ps.type), '{}') || 'js_exception'::issue_type)::issue_type[]
@@ -92,12 +91,11 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
     FROM events_common.issues
       INNER JOIN issues AS ps USING (issue_id)
                 WHERE session_id = $1)
-		WHERE session_id = $1
-		`,
-		sessionID,
-	); err != nil {
-		log.Printf("Error while updating issue_types: %v. SessionID: %v", err, sessionID)
-	}
+		WHERE session_id = $1`
+	conn.batchQueue(sessionID, sqlRequest, sessionID)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+8)
 
 	var dur uint64
 	if err := conn.queryRow(`
@@ -113,54 +111,65 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {
-	return conn.batchQueue(sessionID, `
+	sqlRequest := `
 		INSERT INTO events_common.requests (
 			session_id, timestamp, seq_index, url, duration, success
 		) VALUES (
 			$1, $2, $3, $4, $5, $6
-		)`,
-		sessionID, timestamp,
-		getSqIdx(index),
-		url, duration, success,
-	)
+		)`
+	conn.batchQueue(sessionID, sqlRequest, sessionID, timestamp, getSqIdx(index), url, duration, success)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(url)+8*4)
+	return nil
 }
 
 func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index uint64, name string, payload string) error {
-	return conn.batchQueue(sessionID, `
+	sqlRequest := `
 		INSERT INTO events_common.customs (
 			session_id, timestamp, seq_index, name, payload
 		) VALUES (
 			$1, $2, $3, $4, $5
-		)`,
-		sessionID, timestamp,
-		getSqIdx(index),
-		name, payload,
-	)
+		)`
+	conn.batchQueue(sessionID, sqlRequest, sessionID, timestamp, getSqIdx(index), name, payload)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(name)+len(payload)+8*3)
+	return nil
 }
 
 func (conn *Conn) InsertUserID(sessionID uint64, userID string) error {
-	return conn.batchQueue(sessionID, `
+	sqlRequest := `
 		UPDATE sessions SET  user_id = $1
-		WHERE session_id = $2`,
-		userID, sessionID,
-	)
+		WHERE session_id = $2`
+	conn.batchQueue(sessionID, sqlRequest, userID, sessionID)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(userID)+8)
+	return nil
 }
 
 func (conn *Conn) InsertUserAnonymousID(sessionID uint64, userAnonymousID string) error {
-	return conn.batchQueue(sessionID, `
+	sqlRequest := `
 		UPDATE sessions SET  user_anonymous_id = $1
-		WHERE session_id = $2`,
-		userAnonymousID, sessionID,
-	)
+		WHERE session_id = $2`
+	conn.batchQueue(sessionID, sqlRequest, userAnonymousID, sessionID)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(userAnonymousID)+8)
+	return nil
 }
 
 func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
-	return conn.batchQueue(sessionID, fmt.Sprintf(`
+	sqlRequest := `
 		UPDATE sessions SET  metadata_%v = $1
-		WHERE session_id = $2`, keyNo),
-		value, sessionID,
-	)
+		WHERE session_id = $2`
+	conn.batchQueue(sessionID, fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
 	// conn.insertAutocompleteValue(sessionID, "METADATA", value)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(value)+8*2)
+	return nil
 }
 
 func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {

@@ -14,6 +14,8 @@ type Config struct {
 	TopicRawIOS                string
 	TopicTrigger               string
 	CommitBatchTimeout         time.Duration
+	BatchQueueLimit            int
+	BatchSizeLimit             int
 }
 
 func New() *Config {
@@ -26,5 +28,7 @@ func New() *Config {
 		TopicRawIOS:                env.String("TOPIC_RAW_IOS"),
 		TopicTrigger:               env.String("TOPIC_TRIGGER"),
 		CommitBatchTimeout:         15 * time.Second,
+		BatchQueueLimit:            env.Int("BATCH_QUEUE_LIMIT"),
+		BatchSizeLimit:             env.Int("BATCH_SIZE_LIMIT"),
 	}
 }
