@@ -1,4 +1,4 @@
-const {objectToObjectOfArrays} = require('./helper');
+const helper = require('./helper');
 const getBodyFromUWSResponse = async function (res) {
     return new Promise(((resolve, reject) => {
         let buffer;
@@ -39,13 +39,9 @@ const extractFiltersFromRequest = async function (req, res) {
         let body = await getBodyFromUWSResponse(res);
         filters = {...filters, ...body};
     } else {
-        if (req.query.userId) {
-            debug && console.log(`[WS]where userId=${req.query.userId}`);
-            filters.userID = [req.query.userId];
-        }
-        filters = {...filters, ...req.body};
+        return helper.extractFiltersFromRequest(req);
     }
-    filters = objectToObjectOfArrays({...filters, ...req.body});
+    filters = helper.objectToObjectOfArrays({...filters, ...req.body});
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
 module.exports = {
