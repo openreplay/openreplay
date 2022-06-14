@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 
 from decouple import config
 from fastapi import Depends, Body, BackgroundTasks, HTTPException
@@ -773,7 +773,7 @@ def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.
 
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
 def get_funnel_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
-                       context: schemas.CurrentContext = Depends(OR_context)):
+                              context: schemas.CurrentContext = Depends(OR_context)):
     issue = issues.get(project_id=projectId, issue_id=issueId)
     if issue is None:
         return {"errors": ["issue not found"]}
@@ -859,7 +859,14 @@ def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
 def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_sessions_ws(projectId, user_id=userId)
+    data = assist.get_live_sessions_ws_user_id(projectId, user_id=userId)
+    return {'data': data}
+
+
+@app.post('/{projectId}/assist/sessions', tags=["assist"])
+def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
+                  context: schemas.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_sessions_ws(projectId, body=data)
     return {'data': data}
 
 

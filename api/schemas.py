@@ -1008,3 +1008,19 @@ class CustomMetricAndTemplate(BaseModel):
 
     class Config:
         alias_generator = attribute_to_camel_case
+
+
+class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
+    filters: List[SessionSearchFilterSchema] = Field([])
+    sort: str = Field(default="startTs")
+    order: SortOrderType = Field(default=SortOrderType.desc)
+    group_by_user: bool = Field(default=False)
+
+    @root_validator(pre=True)
+    def transform_order(cls, values):
+        if values.get("order") is not None:
+            values["order"] = values["order"].upper()
+        return values
+
+    class Config:
+        alias_generator = attribute_to_camel_case
