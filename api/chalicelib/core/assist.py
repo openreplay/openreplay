@@ -1,6 +1,7 @@
 import requests
 from decouple import config
 
+import schemas
 from chalicelib.core import projects
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -19,14 +20,29 @@ SESSION_PROJECTION_COLS = """s.project_id,
                            """
 
 
-def get_live_sessions_ws(project_id, user_id=None):
+def get_live_sessions_ws_user_id(project_id, user_id):
+    data = {
+        "filter": {"userId": user_id}
+    }
+    return __get_live_sessions_ws(project_id=project_id, data=data)
+
+
+def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
+    data = {
+        "filter": {},
+        "pagination": {"limit": body.limit, "page": body.page},
+        "sort": {"key": body.sort, "order": body.order}
+    }
+    for f in body.filters:
+        data["filter"][f.type] = f.value
+    return __get_live_sessions_ws(project_id=project_id, data=data)
+
+
+def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
-    params = {}
-    if user_id and len(user_id) > 0:
-        params["userId"] = user_id
     try:
-        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}", params,
-                                       timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.post(config("assist") % config("S3_KEY") + f"/{project_key}", json=data,
+                                        timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
@@ -53,7 +69,7 @@ def get_live_sessions_ws(project_id, user_id=None):
 
 
 def get_live_session_by_id(project_id, session_id):
-    all_live = get_live_sessions_ws(project_id)
+    all_live = __get_live_sessions_ws(project_id, data={"filter": {"sessionId": session_id}})
     for l in all_live:
         if str(l.get("sessionID")) == str(session_id):
             return l
@@ -64,8 +80,9 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}",
-                                       timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.post(config("assistList") % config("S3_KEY") + f"/{project_key}",
+                                        json={"filter": {"sessionId": session_id}},
+                                        timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
