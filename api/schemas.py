@@ -1018,25 +1018,32 @@ class LiveFilterType(str, Enum):
     user_id = FilterType.user_id.value
     user_anonymous_id = FilterType.user_anonymous_id.value
     rev_id = FilterType.rev_id.value
-    page_title = "pageTitle"
-    #
-    # platform = "PLATFORM"
-    # metadata = "METADATA"
-    # issue = "ISSUE"
-    # events_count = "EVENTS_COUNT"
-    # utm_source = "UTM_SOURCE"
-    # utm_medium = "UTM_MEDIUM"
-    # utm_campaign = "UTM_CAMPAIGN"
+    page_title = "PAGETITLE"
+    session_id = "SESSIONID"
+    metadata = "METADATA"
+    user_UUID = "USERUUID"
+    tracker_version = "TRACKERVERSION"
+    user_browser_version = "USERBROWSERVERSION"
+    user_device_type = "USERDEVICETYPE",
+    timestamp = "TIMESTAMP"
 
 
 class LiveSessionSearchFilterSchema(BaseModel):
     value: Union[List[str], str] = Field(...)
     type: LiveFilterType = Field(...)
+    source: Optional[str] = Field(None)
+
+    @root_validator
+    def validator(cls, values):
+        if values.get("type") is not None and values["type"] == LiveFilterType.metadata.value:
+            assert values.get("source") is not None, "source should not be null for METADATA type"
+            assert len(values.get("source")) > 0, "source should not be empty for METADATA type"
+        return values
 
 
 class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     filters: List[LiveSessionSearchFilterSchema] = Field([])
-    sort: str = Field(default="timestamp")
+    sort: LiveFilterType = Field(default=LiveFilterType.timestamp)
     order: SortOrderType = Field(default=SortOrderType.desc)
 
     @root_validator(pre=True)

@@ -75,7 +75,7 @@ const socketsList = async function (req, res) {
                 const connected_sockets = await io.in(peerId).fetchSockets();
                 for (let item of connected_sockets) {
                     if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo
-                        && isValidSession(item.handshake.query.sessionInfo, filters)) {
+                        && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
                         liveSessions[projectKey].push(sessionId);
                     }
                 }
@@ -104,7 +104,7 @@ const socketsListByProject = async function (req, res) {
                 const connected_sockets = await io.in(peerId).fetchSockets();
                 for (let item of connected_sockets) {
                     if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo
-                        && isValidSession(item.handshake.query.sessionInfo, filters)) {
+                        && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
                         liveSessions[projectKey].push(sessionId);
                     }
                 }
@@ -132,7 +132,7 @@ const socketsLive = async function (req, res) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     liveSessions[projectKey] = liveSessions[projectKey] || [];
                     if (hasFilters(filters)) {
-                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters)) {
+                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
                             liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                         }
                     } else {
@@ -162,7 +162,7 @@ const socketsLiveByProject = async function (req, res) {
                 if (item.handshake.query.identity === IDENTITIES.session) {
                     liveSessions[projectKey] = liveSessions[projectKey] || [];
                     if (hasFilters(filters)) {
-                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters)) {
+                        if (item.handshake.query.sessionInfo && isValidSession(item.handshake.query.sessionInfo, filters.filter)) {
                             liveSessions[projectKey].push(item.handshake.query.sessionInfo);
                         }
                     } else {
