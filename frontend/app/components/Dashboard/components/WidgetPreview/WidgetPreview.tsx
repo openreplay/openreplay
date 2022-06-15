@@ -28,7 +28,7 @@ function WidgetPreview(props: Props) {
                 <div className="flex items-center">
                     {isTimeSeries && (
                         <>
-                            <span className="color-gray-medium mr-2">Visualization</span>
+                            <span className="mr-4 color-gray-medium">Visualization</span>
                             <SegmentSelection
                                 name="viewType"
                                 className="my-3"
@@ -46,7 +46,7 @@ function WidgetPreview(props: Props) {
 
                     {isTable && (
                         <>
-                            <span className="mr-1 color-gray-medium">Visualization</span>
+                            <span className="mr-4 color-gray-medium">Visualization</span>
                             <SegmentSelection
                                 name="viewType"
                                 className="my-3"
