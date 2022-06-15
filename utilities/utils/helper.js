@@ -24,6 +24,20 @@ const request_logger = (identity) => {
         next();
     }
 };
+const extractProjectKeyFromRequest = function (req) {
+    if (req.params.projectKey) {
+        debug && console.log(`[WS]where projectKey=${req.params.projectKey}`);
+        return req.params.projectKey;
+    }
+    return undefined;
+}
+const extractSessionIdFromRequest = function (req) {
+    if (req.params.sessionId) {
+        debug && console.log(`[WS]where sessionId=${req.params.sessionId}`);
+        return req.params.sessionId;
+    }
+    return undefined;
+}
 const isValidSession = function (sessionInfo, filters) {
     let foundAll = true;
     for (const [key, values] of Object.entries(filters)) {
@@ -49,7 +63,7 @@ const isValidSession = function (sessionInfo, filters) {
     return foundAll;
 }
 const hasFilters = function (filters) {
-    return filters !== undefined && Object.keys(filters).length > 0;
+    return filters && filters.filter && Object.keys(filters.filter).length > 0;
 }
 const objectToObjectOfArrays = function (obj) {
     let _obj = {}
@@ -66,15 +80,44 @@ const objectToObjectOfArrays = function (obj) {
     }
     return _obj;
 }
-const extractFiltersFromRequest = function (req) {
-    let filters = {};
+const extractPayloadFromRequest = function (req) {
+    let filters = {
+        "filter": {},
+        "sort": {"key": undefined, "order": false},
+        "pagination": {"limit": undefined, "page": undefined}
+    };
     if (req.query.userId) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
-        filters.userID = [req.query.userId];
+        filters.filter.userID = [req.query.userId];
     }
     filters = objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
-    return Object.keys(filters).length > 0 ? filters : undefined;
+    return filters;
+}
+const sortPaginate = function (list, filters) {
+    list.sort((a, b) => {
+        let aV = (a[filters.sort.key] || a["timestamp"]);
+        let bV = (b[filters.sort.key] || b["timestamp"]);
+        return aV > bV ? 1 : aV < bV ? -1 : 0;
+    })
+
+    if (filters.sort.order) {
+        list.reverse();
+    }
+
+    if (filters.pagination.page && filters.pagination.limit) {
+        return list.slice((filters.pagination.page - 1) * filters.pagination.limit,
+            filters.pagination.page * filters.pagination.limit);
+    }
+    return list;
 }
 module.exports = {
-    extractPeerId, request_logger, isValidSession, hasFilters, objectToObjectOfArrays, extractFiltersFromRequest
+    extractPeerId,
+    request_logger,
+    extractProjectKeyFromRequest,
+    extractSessionIdFromRequest,
+    isValidSession,
+    hasFilters,
+    objectToObjectOfArrays,
+    extractPayloadFromRequest,
+    sortPaginate
 };

@@ -80,9 +80,8 @@ def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.post(config("assistList") % config("S3_KEY") + f"/{project_key}",
-                                        json={"filter": {"sessionId": session_id}},
-                                        timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/{session_id}",
+                                       timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
