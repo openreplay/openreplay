@@ -20,7 +20,7 @@ interface Props {
   params?: any;
   headerText?: string;
   placeholder?: string;
-  onSelect: (e, item) => void;
+  onSelect: (e: any, item: any) => void;
   value: any;
   icon?: string;
 }
@@ -44,17 +44,17 @@ function FilterAutoComplete(props: Props) {
   const [options, setOptions] = useState<any>([]);
   const [query, setQuery] = useState(value);
 
-  const requestValues = (q) => {
+  const requestValues = (q: any) => {
     setLoading(true);
 
     return new APIClient()[method?.toLocaleLowerCase()](endpoint, { ...params, q })
-      .then(response => {
+      .then((response: any) => {
         if (response.ok) {
           return response.json();
         }
         throw new Error(response.statusText);
       })
-      .then(({ data }) => {
+      .then(({ data }: any) => {
         setOptions(data);
       })
       .finally(() => setLoading(false));
@@ -62,7 +62,7 @@ function FilterAutoComplete(props: Props) {
 
   const debouncedRequestValues = React.useCallback(debounce(requestValues, 1000), [params]);
 
-  const onInputChange = ({ target: { value } }) => {
+  const onInputChange = ({ target: { value } }: any) => {
     setQuery(value);
     if (!showModal) {
       setShowModal(true);
@@ -85,7 +85,7 @@ function FilterAutoComplete(props: Props) {
     }
   }
 
-  const onItemClick = (e, item) => {
+  const onItemClick = (e: any, item: any) => {
     e.stopPropagation();
     e.preventDefault();
 
@@ -132,7 +132,7 @@ function FilterAutoComplete(props: Props) {
             ) : (
               <div>
                 {
-                  options.map((item, i) => (
+                  options.map((item: any, i: any) => (
                     <div
                       key={item.value + '_'  + i}
                       className={ cn(stl.filterItem) }

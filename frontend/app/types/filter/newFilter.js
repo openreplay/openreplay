@@ -53,14 +53,18 @@ export const filters = [
   { key: FilterKey.FETCH_FAILED, type: FilterType.MULTIPLE, category: FilterCategory.PERFORMANCE, label: 'Failed Request', operator: 'isAny', operatorOptions: filterOptions.stringOperatorsPerformance, icon: 'filters/fetch-failed', isEvent: true },
   { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/click', options: filterOptions.issueOptions },
 ];
-  
+
 export const filtersMap = filters.reduce((acc, filter) => {
     acc[filter.key] = filter;
     return acc;
 }, {});
-  
+
 export const liveFiltersMap = filters.reduce((acc, filter) => {
-  if (filter.category !== FilterCategory.INTERACTIONS && filter.category !== FilterCategory.JAVASCRIPT) {
+  if (
+    filter.category !== FilterCategory.INTERACTIONS &&
+    filter.category !== FilterCategory.JAVASCRIPT &&
+    filter.category !== FilterCategory.PERFORMANCE
+  ) {
     acc[filter.key] = filter;
   }
   return acc

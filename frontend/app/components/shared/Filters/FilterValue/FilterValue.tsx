@@ -5,10 +5,13 @@ import { FilterKey, FilterCategory, FilterType } from 'Types/filter/filterType';
 import FilterValueDropdown from '../FilterValueDropdown';
 import FilterDuration from '../FilterDuration';
 import { debounce } from 'App/utils';
+import { assist as assistRoute, isRoute } from "App/routes";
+
+const ASSIST_ROUTE = assistRoute();
 
 interface Props {
   filter: any;
-  onUpdate: (filter) => void;
+  onUpdate: (filter: any) => void;
 }
 function FilterValue(props: Props) {
   const { filter } = props;
@@ -21,13 +24,13 @@ function FilterValue(props: Props) {
     props.onUpdate({ ...filter, value: newValue });
   }
 
-  const onRemoveValue = (valueIndex) => {
-    const newValue = filter.value.filter((_, index) => index !== valueIndex);
+  const onRemoveValue = (valueIndex: any) => {
+    const newValue = filter.value.filter((_: any, index: any) => index !== valueIndex);
     props.onUpdate({ ...filter, value: newValue });
   }
 
-  const onChange = (e, item, valueIndex) => {
-    const newValues = filter.value.map((_, _index) => {
+  const onChange = (e: any, item: any, valueIndex: any) => {
+    const newValues = filter.value.map((_: any, _index: any) => {
       if (_index === valueIndex) {
         return item.value;
       }
@@ -38,11 +41,11 @@ function FilterValue(props: Props) {
 
   const debounceOnSelect = React.useCallback(debounce(onChange, 500), [onChange]);
 
-  const onDurationChange = (newValues) => {
+  const onDurationChange = (newValues: any) => {
     setDurationValues({ ...durationValues, ...newValues });
   } 
 
-  const handleBlur = (e) => {
+  const handleBlur = (e: any) => {
     if (filter.type === FilterType.DURATION) {
       const { maxDuration, minDuration, key } = filter;
       if (maxDuration || minDuration) return;
@@ -53,16 +56,22 @@ function FilterValue(props: Props) {
     }
   }
 
-  const getParms = (key) => {
+  const getParms = (key: any) => {
+    let params = {};
     switch (filter.category) {
       case FilterCategory.METADATA:
-        return { type: FilterKey.METADATA, key: key };
+        params = { type: FilterKey.METADATA, key: key };
       default:
-        return { type: filter.key };
+        params = { type: filter.key };
     }
+
+    if (isRoute(ASSIST_ROUTE, window.location.pathname)) {
+      params = { ...params, live: true };
+    }
+    return params;
   }
 
-  const renderValueFiled = (value, valueIndex) => {
+  const renderValueFiled = (value: any, valueIndex: any) => {
     const showOrButton = valueIndex === lastIndex && filter.type !== FilterType.NUMBER;
     switch(filter.type) {
       case FilterType.STRING:
@@ -85,7 +94,7 @@ function FilterValue(props: Props) {
             filter={filter}
             options={filter.options}
             onChange={({ value }) => onChange(null, { value }, valueIndex)}
-          />
+        />
         )
       case FilterType.ISSUE:
       case FilterType.MULTIPLE_DROPDOWN:
@@ -174,7 +183,7 @@ function FilterValue(props: Props) {
       { filter.type === FilterType.DURATION ? (
           renderValueFiled(filter.value, 0)
       ) : (
-        filter.value && filter.value.map((value, valueIndex) => (
+        filter.value && filter.value.map((value: any, valueIndex: any) => (
           <div key={valueIndex}>
             {renderValueFiled(value, valueIndex)}
           </div>
