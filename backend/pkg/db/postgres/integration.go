@@ -14,8 +14,8 @@ type Integration struct {
 	Options     json.RawMessage `json:"options"`
 }
 
-func (pg *Conn) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
-	rows, err := pg.query(`
+func (conn *Conn) IterateIntegrationsOrdered(iter func(integration *Integration, err error)) error {
+	rows, err := conn.query(`
 		SELECT project_id, provider, options, request_data
 		FROM integrations
 	`)
@@ -39,8 +39,8 @@ func (pg *Conn) IterateIntegrationsOrdered(iter func(integration *Integration, e
 	return nil
 }
 
-func (pg *Conn) UpdateIntegrationRequestData(i *Integration) error {
-	return pg.exec(`
+func (conn *Conn) UpdateIntegrationRequestData(i *Integration) error {
+	return conn.exec(`
 		UPDATE integrations 
 		SET request_data = $1 
 		WHERE project_id=$2 AND provider=$3`,

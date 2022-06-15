@@ -122,6 +122,7 @@ func main() {
 			consumer.Close()
 			os.Exit(0)
 		case <-commitTick:
+			// Send collected batches to db
 			pg.CommitBatches()
 			if err := saver.CommitStats(); err != nil {
 				log.Printf("Error on stats commit: %v", err)
@@ -131,6 +132,7 @@ func main() {
 				log.Printf("Error on consumer commit: %v", err)
 			}
 		default:
+			// Handle new message from queue
 			err := consumer.ConsumeNext()
 			if err != nil {
 				log.Fatalf("Error on consumption: %v", err) // TODO: is always fatal?

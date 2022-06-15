@@ -220,7 +220,8 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 	if err != nil {
 		return err
 	}
-	return conn.batchQueue(sessionID, `
+
+	sqlRequest := `
 		INSERT INTO events_common.requests (
 			session_id, timestamp, seq_index, 
 			url, host, path, query,
@@ -231,13 +232,18 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 			$4, $5, $6, $7,
 			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
 			$12, $13
-		) ON CONFLICT DO NOTHING`,
+		) ON CONFLICT DO NOTHING`
+	conn.batchQueue(sessionID, sqlRequest,
 		sessionID, e.Timestamp, getSqIdx(e.MessageID),
 		e.URL, host, path, query,
 		request, response, e.Status, url.EnsureMethod(e.Method),
 		e.Duration, e.Status < 400,
 	)
 
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.URL)+len(host)+len(path)+len(query)+
+		len(*request)+len(*response)+len(url.EnsureMethod(e.Method))+8*5+1)
+	return nil
 }
 
 func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *GraphQLEvent) error {
@@ -247,7 +253,8 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *G
 		response = &e.Response
 	}
 	conn.insertAutocompleteValue(sessionID, "GRAPHQL", e.OperationName)
-	return conn.batchQueue(sessionID, `
+
+	sqlRequest := `
 		INSERT INTO events.graphql (
 			session_id, timestamp, message_id, 
 			name,
@@ -256,9 +263,12 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *G
 			$1, $2, $3, 
 			$4,
 			$5, $6
-		) ON CONFLICT DO NOTHING`,
-		sessionID, e.Timestamp, e.MessageID,
-		e.OperationName,
-		request, response,
+		) ON CONFLICT DO NOTHING`
+	conn.batchQueue(sessionID, sqlRequest, sessionID, e.Timestamp, e.MessageID,
+		e.OperationName, request, response,
 	)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.OperationName)+len(*request)+len(*response)+8*3)
+	return nil
 }
