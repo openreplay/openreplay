@@ -43,15 +43,22 @@ const isValidSession = function (sessionInfo, filters) {
     for (const [key, values] of Object.entries(filters)) {
         let found = false;
         for (const [skey, svalue] of Object.entries(sessionInfo)) {
-            if (skey.toLowerCase() === key.toLowerCase()) {
-                for (let v of values) {
-                    if (svalue.toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+            if (svalue !== undefined && svalue !== null) {
+                if (svalue.constructor === Object) {
+                    if (isValidSession(svalue, {key: values})) {
                         found = true;
                         break;
                     }
-                }
-                if (found) {
-                    break;
+                } else if (skey.toLowerCase() === key.toLowerCase()) {
+                    for (let v of values) {
+                        if (svalue.toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        break;
+                    }
                 }
             }
         }
@@ -82,10 +89,19 @@ const objectToObjectOfArrays = function (obj) {
 }
 const extractPayloadFromRequest = function (req) {
     let filters = {
+        "query": {},
         "filter": {},
         "sort": {"key": undefined, "order": false},
         "pagination": {"limit": undefined, "page": undefined}
     };
+    if (req.query.q) {
+        debug && console.log(`[WS]where q=${req.query.q}`);
+        filters.query.value = [req.query.q];
+    }
+    if (req.query.key) {
+        debug && console.log(`[WS]where key=${req.query.key}`);
+        filters.query.key = [req.query.key];
+    }
     if (req.query.userId) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
         filters.filter.userID = [req.query.userId];
