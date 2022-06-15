@@ -84,6 +84,7 @@ if (process.env.uws !== "true") {
     uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
     uapp.post(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey`, uWrapper(socket.handlers.socketsLiveByProject));
     uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey/:sessionId`, uWrapper(socket.handlers.socketsLiveByProject));
+    uapp.get(`${PREFIX}/${process.env.S3_KEY}/sockets-live/:projectKey/autocomplete`, uWrapper(socket.handlers.autocomplete));
 
 
     socket.start(uapp);

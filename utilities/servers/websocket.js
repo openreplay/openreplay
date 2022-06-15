@@ -161,6 +161,29 @@ const socketsLiveByProject = async function (req, res) {
 wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 
+const autocomplete = async function (req, res) {
+    debug && console.log("[WS]looking for available LIVE sessions");
+    let _projectKey = extractProjectKeyFromRequest(req);
+    let filters = extractPayloadFromRequest(req);
+    let results = [];
+    if (filters.query && Object.keys(filters.query).length > 0) {
+        let rooms = await getAvailableRooms();
+        for (let peerId of rooms) {
+            let {projectKey} = extractPeerId(peerId);
+            if (projectKey === _projectKey) {
+                let connected_sockets = await io.in(peerId).fetchSockets();
+                for (let item of connected_sockets) {
+                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
+                        results = [...results, ...getValidAttributes(item.handshake.query.sessionInfo, filters.query)];
+                    }
+                }
+            }
+        }
+    }
+    respond(res, results);
+}
+wsRouter.get(`/sockets-live/:projectKey/autocomplete`, autocomplete);
+
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();
     for (let item of connected_sockets) {

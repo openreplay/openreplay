@@ -5,7 +5,7 @@ const {extractPeerId, hasFilters, isValidSession, sortPaginate} = require('../ut
 const {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractFiltersFromRequest
+    extractPayloadFromRequest
 } = require('../utils/helper-ee');
 const {geoip} = require('../utils/geoIP');
 const {createAdapter} = require("@socket.io/redis-adapter");
@@ -81,7 +81,7 @@ const respond = function (res, data) {
 
 const socketsList = async function (req, res) {
     debug && console.log("[WS]looking for all available sessions");
-    let filters = await extractFiltersFromRequest(req, res);
+    let filters = await extractPayloadFromRequest(req, res);
 
     let liveSessions = {};
     let rooms = await getAvailableRooms();
@@ -111,7 +111,7 @@ const socketsListByProject = async function (req, res) {
     debug && console.log("[WS]looking for available sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractFiltersFromRequest(req, res);
+    let filters = await extractPayloadFromRequest(req, res);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -139,7 +139,7 @@ wsRouter.get(`/sockets-list/:projectKey/:sessionId`, socketsListByProject);
 
 const socketsLive = async function (req, res) {
     debug && console.log("[WS]looking for all available LIVE sessions");
-    let filters = await extractFiltersFromRequest(req, res);
+    let filters = await extractPayloadFromRequest(req, res);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -170,7 +170,7 @@ const socketsLiveByProject = async function (req, res) {
     debug && console.log("[WS]looking for available LIVE sessions");
     let _projectKey = extractProjectKeyFromRequest(req);
     let _sessionId = extractSessionIdFromRequest(req);
-    let filters = await extractFiltersFromRequest(req, res);
+    let filters = await extractPayloadFromRequest(req, res);
     let liveSessions = {};
     let rooms = await getAvailableRooms();
     for (let peerId of rooms) {
@@ -197,6 +197,29 @@ const socketsLiveByProject = async function (req, res) {
 wsRouter.get(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.post(`/sockets-live/:projectKey`, socketsLiveByProject);
 wsRouter.get(`/sockets-live/:projectKey/:sessionId`, socketsLiveByProject);
+
+const autocomplete = async function (req, res) {
+    debug && console.log("[WS]looking for available LIVE sessions");
+    let _projectKey = extractProjectKeyFromRequest(req);
+    let filters = extractPayloadFromRequest(req);
+    let results = [];
+    if (filters.query && Object.keys(filters.query).length > 0) {
+        let rooms = await getAvailableRooms();
+        for (let peerId of rooms) {
+            let {projectKey} = extractPeerId(peerId);
+            if (projectKey === _projectKey) {
+                let connected_sockets = await io.in(peerId).fetchSockets();
+                for (let item of connected_sockets) {
+                    if (item.handshake.query.identity === IDENTITIES.session && item.handshake.query.sessionInfo) {
+                        results = [...results, ...getValidAttributes(item.handshake.query.sessionInfo, filters.query)];
+                    }
+                }
+            }
+        }
+    }
+    respond(res, results);
+}
+wsRouter.get(`/sockets-live/:projectKey/autocomplete`, autocomplete);
 
 const findSessionSocketId = async (io, peerId) => {
     const connected_sockets = await io.in(peerId).fetchSockets();

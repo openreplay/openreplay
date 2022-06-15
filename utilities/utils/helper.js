@@ -69,6 +69,23 @@ const isValidSession = function (sessionInfo, filters) {
     }
     return foundAll;
 }
+const getValidAttributes = function (sessionInfo, query) {
+    let matches = [];
+    let deduplicate = [];
+    for (const [skey, svalue] of Object.entries(sessionInfo)) {
+        if (svalue !== undefined && svalue !== null) {
+            if (svalue.constructor === Object) {
+                matches = [...matches, ...getValidAttributes(svalue, query)]
+            } else if ((query.key === undefined || skey.toLowerCase() === query.key.toLowerCase())
+                && svalue.toLowerCase().indexOf(query.value.toLowerCase()) >= 0
+                && deduplicate.indexOf(skey + '_' + svalue) < 0) {
+                matches.push({"type": skey, "value": svalue});
+                deduplicate.push(skey + '_' + svalue);
+            }
+        }
+    }
+    return matches;
+}
 const hasFilters = function (filters) {
     return filters && filters.filter && Object.keys(filters.filter).length > 0;
 }
@@ -129,6 +146,7 @@ const sortPaginate = function (list, filters) {
 module.exports = {
     extractPeerId,
     request_logger,
+    getValidAttributes,
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
     isValidSession,
