@@ -1,12 +1,10 @@
 package router
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"go.opentelemetry.io/otel/attribute"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -19,13 +17,15 @@ import (
 	"openreplay/backend/pkg/token"
 )
 
-func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (io.ReadCloser, error) {
+func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, error) {
 	body := http.MaxBytesReader(w, r.Body, limit)
-	bodyBytes, err := ioutil.ReadAll(body)
+	bodyBytes, err := io.ReadAll(body)
+	if closeErr := body.Close(); closeErr != nil {
+		log.Printf("error while closing request body: %s", closeErr)
+	}
 	if err != nil {
 		return nil, err
 	}
-	body.Close()
 
 	reqSize := len(bodyBytes)
 	e.requestSize.Record(
@@ -33,7 +33,7 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 		float64(reqSize),
 		[]attribute.KeyValue{attribute.String("method", r.URL.Path)}...,
 	)
-	return ioutil.NopCloser(bytes.NewBuffer(bodyBytes)), nil
+	return bodyBytes, nil
 }
 
 func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) {
@@ -45,17 +45,16 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	reqBody, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
 		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
 		return
 	}
-	defer reqBody.Close()
 
 	// Parse request body
 	req := &StartSessionRequest{}
-	if err := json.NewDecoder(reqBody).Decode(req); err != nil {
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -141,23 +140,16 @@ func (e *Router) pushMessagesHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	reqBody, err := e.readBody(w, r, e.cfg.BeaconSizeLimit)
+	bodyBytes, err := e.readBody(w, r, e.cfg.BeaconSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
 		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
 		return
 	}
-	defer reqBody.Close()
-
-	bytes, err := ioutil.ReadAll(reqBody)
-	if err != nil {
-		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: Split environments; send error here only on staging
-		return
-	}
 
 	// Send processed messages to queue as array of bytes
 	// TODO: check bytes for nonsense crap
-	err = e.services.Producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bytes)
+	err = e.services.Producer.Produce(e.cfg.TopicRawWeb, sessionData.ID, bodyBytes)
 	if err != nil {
 		log.Printf("can't send processed messages to queue: %s", err)
 	}
@@ -172,17 +164,17 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqBody, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
+	bodyBytes, err := e.readBody(w, r, e.cfg.JsonSizeLimit)
 	if err != nil {
 		log.Printf("error while reading request body: %s", err)
 		ResponseWithError(w, http.StatusRequestEntityTooLarge, err)
 		return
 	}
-	defer reqBody.Close()
 
 	// Parse request body
 	req := &NotStartedRequest{}
-	if err := json.NewDecoder(reqBody).Decode(req); err != nil {
+
+	if err := json.Unmarshal(bodyBytes, req); err != nil {
 		ResponseWithError(w, http.StatusBadRequest, err)
 		return
 	}

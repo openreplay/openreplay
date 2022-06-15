@@ -59,6 +59,7 @@ func main() {
 			log.Fatalf("Server error: %v\n", err)
 		}
 	}()
+
 	log.Printf("Server successfully started on port %v\n", cfg.HTTPPort)
 
 	// Wait stop signal to shut down server gracefully
