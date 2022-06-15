@@ -7,11 +7,11 @@ import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
-import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
+import { FilterKey } from 'App/types/filter/filterType';
 import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/liveSearch';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { capitalize, sliceListPerPage } from 'App/utils';
+import { capitalize } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
