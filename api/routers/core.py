@@ -136,10 +136,12 @@ def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
                               schemas.PerformanceEventType, schemas.FetchFilterType,
                               schemas.GraphqlFilterType] = None,
-                  key: str = None,
-                  source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
+                  key: str = None, source: str = None, live: bool = False,
+                  context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
+    if live:
+        return assist.autocomplete(project_id=projectId, q=q, key=key)
     if type in [schemas.FetchFilterType._url]:
         type = schemas.EventType.request
     elif type in [schemas.GraphqlFilterType._name]:
