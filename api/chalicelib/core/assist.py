@@ -102,6 +102,34 @@ def is_live(project_id, session_id, project_key=None):
     return str(session_id) in connected_peers
 
 
+def autocomplete(project_id, q: str, key: str = None):
+    project_key = projects.get_project_key(project_id)
+    params = {"q": q}
+    if key:
+        params["key"] = key
+    try:
+        results = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/autocomplete",
+                               params=params, timeout=config("assistTimeout", cast=int, default=5))
+        if results.status_code != 200:
+            print("!! issue with the peer-server")
+            print(results.text)
+            return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
+        results = results.json().get("data", [])
+    except requests.exceptions.Timeout:
+        print("Timeout getting Assist response")
+        return {"errors": ["Assist request timeout"]}
+    except Exception as e:
+        print("issue getting Assist response")
+        print(str(e))
+        print("expected JSON, received:")
+        try:
+            print(results.text)
+        except:
+            print("couldn't get response")
+        return {"errors": ["Something went wrong wile calling assist"]}
+    return results
+
+
 def get_ice_servers():
     return config("iceServers") if config("iceServers", default=None) is not None \
                                    and len(config("iceServers")) > 0 else None
