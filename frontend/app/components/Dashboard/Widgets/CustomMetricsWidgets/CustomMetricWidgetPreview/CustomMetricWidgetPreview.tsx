@@ -68,7 +68,7 @@ function CustomMetricWidget(props: Props) {
         <div className="flex items-center">
           {isTimeSeries && (
             <>
-              <span className="color-gray-medium mr-2">Visualization</span>
+              <span className="color-gray-medium mr-4">Visualization</span>
               <SegmentSelection
                 name="viewType"
                 className="my-3"

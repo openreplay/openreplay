@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useStore } from 'App/mstore';
 import cn from 'classnames'
-import { Icon, BackLink, Loader } from 'UI';
+import { Icon, Loader } from 'UI';
 import WidgetForm from '../WidgetForm';
 import WidgetPreview from '../WidgetPreview';
 import WidgetSessions from '../WidgetSessions';
 import { useObserver } from 'mobx-react-lite';
 import WidgetName from '../WidgetName';
 import { withSiteId } from 'App/routes';
-
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
 interface Props {
@@ -81,8 +80,12 @@ function WidgetView(props: Props) {
                 </div>
 
                 <WidgetPreview  className="mt-8" />
-                { (widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" /> }
-                { widget.metricType === 'funnel' && <FunnelIssues /> }
+                { widget.metricOf !== 'SESSIONS' && widget.metricOf !== 'ERRORS' && (
+                    <>
+                        { (widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" /> }
+                        { widget.metricType === 'funnel' && <FunnelIssues /> }
+                    </>
+                )}
             </div>
         </Loader>
     ));
