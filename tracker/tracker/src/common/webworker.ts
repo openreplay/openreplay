@@ -26,6 +26,7 @@ export enum WorkerActivityLogStatus {
   Off,
   Console,
   Error,
+  ErrorWithData,
 }
 
 
