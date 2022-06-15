@@ -125,7 +125,7 @@ const extractPayloadFromRequest = function (req) {
     }
     filters = objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
     debug && console.log("payload/filters:")
-    debug && console.log(filters)
+    debug && console.log(JSON.stringify(filters))
     return filters;
 }
 const sortPaginate = function (list, filters) {
