@@ -124,6 +124,8 @@ const extractPayloadFromRequest = function (req) {
         filters.filter.userID = [req.query.userId];
     }
     filters = objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
+    debug && console.log("payload/filters:")
+    debug && console.log(filters)
     return filters;
 }
 const sortPaginate = function (list, filters) {
