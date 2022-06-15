@@ -1,4 +1,5 @@
 const helper = require('./helper');
+let debug = process.env.debug === "1" || false;
 const getBodyFromUWSResponse = async function (res) {
     return new Promise(((resolve, reject) => {
         let buffer;
@@ -51,21 +52,42 @@ const extractSessionIdFromRequest = function (req) {
     return undefined;
 }
 const extractPayloadFromRequest = async function (req, res) {
-    let filters = {};
+    let filters = {
+        "query": {},
+        "filter": {}
+    };
     if (process.env.uws === "true") {
+        if (req.getQuery("q")) {
+            debug && console.log(`[WS]where q=${req.getQuery("q")}`);
+            filters.query.value = [req.getQuery("q")];
+        }
+        if (req.getQuery("key")) {
+            debug && console.log(`[WS]where key=${req.getQuery("key")}`);
+            filters.query.key = [req.getQuery("key")];
+        }
         if (req.getQuery("userId")) {
             debug && console.log(`[WS]where userId=${req.getQuery("userId")}`);
             filters.userID = [req.getQuery("userId")];
         }
 
         let body = await getBodyFromUWSResponse(res);
-        filters = {...filters, ...(body.filter || {})};
+        filters = {
+            ...filters,
+            "sort": {
+                "key": body.sort && body.sort.key ? body.sort.key : undefined,
+                "order": body.sort && body.sort.order === "DESC"
+            },
+            "pagination": {
+                "limit": body.pagination && body.pagination.limit ? body.pagination.limit : undefined,
+                "page": body.pagination && body.pagination.page ? body.pagination.page : undefined
+            }
+        }
+        filters.filter = {...filters.filter, ...(body.filter || {})};
     } else {
-        return helper.extractFiltersFromRequest(req);
+        return helper.extractPayloadFromRequest(req);
     }
-    filters = helper.objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
-    debug && console.log("payload/filters:")
-    debug && console.log(JSON.stringify(filters))
+    filters.filter = helper.objectToObjectOfArrays(filters.filter);
+    debug && console.log("payload/filters:" + JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
 module.exports = {

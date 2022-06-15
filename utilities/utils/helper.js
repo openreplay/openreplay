@@ -44,8 +44,8 @@ const isValidSession = function (sessionInfo, filters) {
         let found = false;
         for (const [skey, svalue] of Object.entries(sessionInfo)) {
             if (svalue !== undefined && svalue !== null) {
-                if (svalue.constructor === Object) {
-                    if (isValidSession(svalue, {key: values})) {
+                if (typeof (svalue) === "object") {
+                    if (isValidSession(svalue, {[key]: values})) {
                         found = true;
                         break;
                     }
@@ -74,7 +74,7 @@ const getValidAttributes = function (sessionInfo, query) {
     let deduplicate = [];
     for (const [skey, svalue] of Object.entries(sessionInfo)) {
         if (svalue !== undefined && svalue !== null) {
-            if (svalue.constructor === Object) {
+            if (typeof (svalue) === "object") {
                 matches = [...matches, ...getValidAttributes(svalue, query)]
             } else if ((query.key === undefined || skey.toLowerCase() === query.key.toLowerCase())
                 && svalue.toLowerCase().indexOf(query.value.toLowerCase()) >= 0
@@ -110,8 +110,14 @@ const extractPayloadFromRequest = function (req) {
     let filters = {
         "query": {},
         "filter": {},
-        "sort": {"key": undefined, "order": false},
-        "pagination": {"limit": undefined, "page": undefined}
+        "sort": {
+            "key": req.body.sort && req.body.sort.key ? req.body.sort.key : undefined,
+            "order": req.body.sort && req.body.sort.order === "DESC"
+        },
+        "pagination": {
+            "limit": req.body.pagination && req.body.pagination.limit ? req.body.pagination.limit : undefined,
+            "page": req.body.pagination && req.body.pagination.page ? req.body.pagination.page : undefined
+        }
     };
     if (req.query.q) {
         debug && console.log(`[WS]where q=${req.query.q}`);
@@ -125,17 +131,23 @@ const extractPayloadFromRequest = function (req) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
         filters.filter.userID = [req.query.userId];
     }
-    filters.filters = objectToObjectOfArrays(filters.filter);
-    filters = {...filters, ...(req.body.filter || {})};
-    debug && console.log("payload/filters:")
-    debug && console.log(JSON.stringify(filters))
+    filters.filter = objectToObjectOfArrays(filters.filter);
+    filters.filter = {...filters.filter, ...(req.body.filter || {})};
+    debug && console.log("payload/filters:" + JSON.stringify(filters))
     return filters;
 }
 const sortPaginate = function (list, filters) {
+    let skey = "timestamp";
+    if (list.length > 0 && filters.sort.key) {
+        for (let key of Object.keys(list[0])) {
+            if (key.toLowerCase() == filters.sort.key.toLowerCase()) {
+                skey = key;
+                break;
+            }
+        }
+    }
     list.sort((a, b) => {
-        let aV = (a[filters.sort.key] || a["timestamp"]);
-        let bV = (b[filters.sort.key] || b["timestamp"]);
-        return aV > bV ? 1 : aV < bV ? -1 : 0;
+        return a[skey] > b[skey] ? 1 : a[skey] < b[skey] ? -1 : 0;
     })
 
     if (filters.sort.order) {
