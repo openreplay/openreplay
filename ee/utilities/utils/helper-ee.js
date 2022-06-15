@@ -17,11 +17,11 @@ const getBodyFromUWSResponse = async function (res) {
                 } catch (e) {
                     console.error(e);
                     /* res.close calls onAborted */
-                    try {
-                        res.close();
-                    } catch (e2) {
-                        console.error(e2);
-                    }
+                    // try {
+                    //     res.close();
+                    // } catch (e2) {
+                    //     console.error(e2);
+                    // }
                     json = {};
                 }
                 resolve(json);
@@ -59,30 +59,31 @@ const extractPayloadFromRequest = async function (req, res) {
     if (process.env.uws === "true") {
         if (req.getQuery("q")) {
             debug && console.log(`[WS]where q=${req.getQuery("q")}`);
-            filters.query.value = [req.getQuery("q")];
+            filters.query.value = req.getQuery("q");
         }
         if (req.getQuery("key")) {
             debug && console.log(`[WS]where key=${req.getQuery("key")}`);
-            filters.query.key = [req.getQuery("key")];
+            filters.query.key = req.getQuery("key");
         }
         if (req.getQuery("userId")) {
             debug && console.log(`[WS]where userId=${req.getQuery("userId")}`);
-            filters.userID = [req.getQuery("userId")];
+            filters.filter.userID = [req.getQuery("userId")];
         }
-
-        let body = await getBodyFromUWSResponse(res);
-        filters = {
-            ...filters,
-            "sort": {
-                "key": body.sort && body.sort.key ? body.sort.key : undefined,
-                "order": body.sort && body.sort.order === "DESC"
-            },
-            "pagination": {
-                "limit": body.pagination && body.pagination.limit ? body.pagination.limit : undefined,
-                "page": body.pagination && body.pagination.page ? body.pagination.page : undefined
+        if (!filters.query.value) {
+            let body = await getBodyFromUWSResponse(res);
+            filters = {
+                ...filters,
+                "sort": {
+                    "key": body.sort && body.sort.key ? body.sort.key : undefined,
+                    "order": body.sort && body.sort.order === "DESC"
+                },
+                "pagination": {
+                    "limit": body.pagination && body.pagination.limit ? body.pagination.limit : undefined,
+                    "page": body.pagination && body.pagination.page ? body.pagination.page : undefined
+                }
             }
+            filters.filter = {...filters.filter, ...(body.filter || {})};
         }
-        filters.filter = {...filters.filter, ...(body.filter || {})};
     } else {
         return helper.extractPayloadFromRequest(req);
     }

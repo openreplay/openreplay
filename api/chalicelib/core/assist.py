@@ -130,7 +130,7 @@ def autocomplete(project_id, q: str, key: str = None):
         except:
             print("couldn't get response")
         return {"errors": ["Something went wrong wile calling assist"]}
-    return results
+    return {"data": results}
 
 
 def get_ice_servers():
