@@ -65,7 +65,7 @@ const extractPayloadFromRequest = async function (req, res) {
     }
     filters = helper.objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
     debug && console.log("payload/filters:")
-    debug && console.log(filters)
+    debug && console.log(JSON.stringify(filters))
     return Object.keys(filters).length > 0 ? filters : undefined;
 }
 module.exports = {
