@@ -12,7 +12,8 @@ func (conn *Conn) InsertWebStatsLongtask(sessionID uint64, l *LongTask) error {
 
 func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrackAggr) error {
 	timestamp := (p.TimestampEnd + p.TimestampStart) / 2
-	return conn.batchQueue(sessionID, `
+
+	sqlRequest := `
 		INSERT INTO events.performance (
 			session_id, timestamp, message_id,
 			min_fps, avg_fps, max_fps,
@@ -25,13 +26,18 @@ func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrac
 			$7, $8, $9,
 			$10, $11, $12,
 			$13, $14, $15
-		)`,
+		)`
+	conn.batchQueue(sessionID, sqlRequest,
 		sessionID, timestamp, timestamp, // ??? TODO: primary key by timestamp+session_id
 		p.MinFPS, p.AvgFPS, p.MaxFPS,
 		p.MinCPU, p.AvgCPU, p.MinCPU,
 		p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
 		p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
 	)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+8*15)
+	return nil
 }
 
 func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent) error {
@@ -39,7 +45,8 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 	if err != nil {
 		return err
 	}
-	return conn.batchQueue(sessionID, `
+
+	sqlRequest := `
 		INSERT INTO events.resources (
 			session_id, timestamp, message_id, 
 			type,
@@ -54,12 +61,19 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 			$8, $9, 
 			NULLIF($10, '')::events.resource_method,
 			NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0), NULLIF($15, 0)
-		)`,
+		)`
+	urlQuery := url.DiscardURLQuery(e.URL)
+	urlMethod := url.EnsureMethod(e.Method)
+	conn.batchQueue(sessionID, sqlRequest,
 		sessionID, e.Timestamp, e.MessageID,
 		e.Type,
-		e.URL, host, url.DiscardURLQuery(e.URL),
+		e.URL, host, urlQuery,
 		e.Success, e.Status,
-		url.EnsureMethod(e.Method),
+		urlMethod,
 		e.Duration, e.TTFB, e.HeaderSize, e.EncodedBodySize, e.DecodedBodySize,
 	)
+
+	// Record approximate message size
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.Type)+len(e.URL)+len(host)+len(urlQuery)+len(urlMethod)+8*9+1)
+	return nil
 }
