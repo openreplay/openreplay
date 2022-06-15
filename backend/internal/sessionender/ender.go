@@ -15,6 +15,7 @@ type EndedSessionHandler func(sessionID uint64, timestamp int64) bool
 // session holds information about user's session live status
 type session struct {
 	lastTimestamp int64
+	lastUpdate    int64
 	isEnded       bool
 }
 
@@ -22,11 +23,12 @@ type session struct {
 type SessionEnder struct {
 	timeout        int64
 	sessions       map[uint64]*session // map[sessionID]session
+	timeCtrl       *timeController
 	activeSessions syncfloat64.UpDownCounter
 	totalSessions  syncfloat64.Counter
 }
 
-func New(metrics *monitoring.Metrics, timeout int64) (*SessionEnder, error) {
+func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, error) {
 	if metrics == nil {
 		return nil, fmt.Errorf("metrics module is empty")
 	}
@@ -42,22 +44,26 @@ func New(metrics *monitoring.Metrics, timeout int64) (*SessionEnder, error) {
 	return &SessionEnder{
 		timeout:        timeout,
 		sessions:       make(map[uint64]*session),
+		timeCtrl:       NewTimeController(parts),
 		activeSessions: activeSessions,
 		totalSessions:  totalSessions,
 	}, nil
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
-func (se *SessionEnder) UpdateSession(sessionID, timestamp uint64) {
-	currTS := int64(timestamp)
+func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp int64) {
+	localTS := time.Now().UnixMilli()
+	currTS := timestamp
 	if currTS == 0 {
 		log.Printf("got empty timestamp for sessionID: %d", sessionID)
 		return
 	}
+	se.timeCtrl.UpdateTime(sessionID, currTS)
 	sess, ok := se.sessions[sessionID]
 	if !ok {
 		se.sessions[sessionID] = &session{
-			lastTimestamp: currTS,
+			lastTimestamp: currTS,  // timestamp from message broker
+			lastUpdate:    localTS, // local timestamp
 			isEnded:       false,
 		}
 		log.Printf("added new session: %d", sessionID)
@@ -67,16 +73,18 @@ func (se *SessionEnder) UpdateSession(sessionID, timestamp uint64) {
 	}
 	if currTS > sess.lastTimestamp {
 		sess.lastTimestamp = currTS
+		sess.lastUpdate = localTS
 		sess.isEnded = false
 	}
 }
 
 // HandleEndedSessions runs handler for each ended session and delete information about session in successful case
 func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
-	deadLine := time.Now().UnixMilli() - se.timeout
+	currTime := time.Now().UnixMilli()
 	allSessions, removedSessions := len(se.sessions), 0
 	for sessID, sess := range se.sessions {
-		if sess.isEnded || sess.lastTimestamp < deadLine {
+		if sess.isEnded || (se.timeCtrl.LastTimestamp(sessID)-sess.lastTimestamp > se.timeout) ||
+			(currTime-sess.lastUpdate > se.timeout) {
 			sess.isEnded = true
 			if handler(sessID, sess.lastTimestamp) {
 				delete(se.sessions, sessID)
