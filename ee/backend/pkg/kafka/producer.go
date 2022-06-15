@@ -20,7 +20,7 @@ func NewProducer() *Producer {
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
 		"enable.idempotence":     true, // TODO: get rid of
 		"bootstrap.servers":      env.String("KAFKA_SERVERS"),
-		"go.delivery.reports":    false,
+		"go.delivery.reports":    true,
 		"security.protocol":      protocol,
 		"go.batch.producer":      true,
 		"queue.buffering.max.ms": 100,
