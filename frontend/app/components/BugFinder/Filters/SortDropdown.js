@@ -10,6 +10,7 @@ import stl from './sortDropdown.module.css';
 export default class SortDropdown extends React.PureComponent {
   state = { value: null }
   sort = ({ value }) => {
+    value = value.value
     this.setState({ value: value })
     const [ sort, order ] = value.split('-');
     const sign = order === 'desc' ? -1 : 1;
@@ -25,7 +26,6 @@ export default class SortDropdown extends React.PureComponent {
       <Select
         name="sortSessions"
         plain
-        // className={ stl.dropdown }        
         right
         options={ options }
         onChange={ this.sort }

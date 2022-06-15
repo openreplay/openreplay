@@ -43,7 +43,8 @@ function FilterSelection(props: Props) {
       </OutsideClickDetectingDiv>
       {showModal && (
         <div className="absolute left-0 border shadow rounded bg-white z-50">
-          { isRoute(ASSIST_ROUTE, window.location.pathname) ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> }
+          {/* { isRoute(ASSIST_ROUTE, window.location.pathname) ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> } */}
+          <FilterModal onFilterClick={onFilterClick} />
         </div>
       )}
     </div>

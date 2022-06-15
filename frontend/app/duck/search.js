@@ -171,7 +171,6 @@ export const reduceThenFetchResource = actionCreator => (...args) => (dispatch, 
     }
   }
 
-
   return isRoute(ERRORS_ROUTE, window.location.pathname)
     ? dispatch(fetchErrorsList(filter))
     : dispatch(fetchSessionList(filter));

@@ -30,7 +30,6 @@ export { default as JSONTree } from './JSONTree';
 export { default as Tooltip } from './Tooltip';
 export { default as CountryFlag } from './CountryFlag';
 export { default as RandomElement } from './RandomElement';
-export { default as SavedSearchList } from './SavedSearchList';
 export { default as SplitButton } from './SplitButton';
 export { default as confirm } from './Confirmation';
 export { default as SideMenuitem } from './SideMenuitem';

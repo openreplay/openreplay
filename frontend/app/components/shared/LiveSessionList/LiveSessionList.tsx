@@ -174,8 +174,8 @@ function LiveSessionList(props: Props) {
 
 export default withPermissions(['ASSIST_LIVE'])(connect(
   (state) => ({
-    list: state.getIn(['sessions', 'liveSessions']),
-    loading: state.getIn([ 'sessions', 'loading' ]),
+    list: state.getIn(['liveSearch', 'list']),
+    loading: state.getIn([ 'liveSearch', 'fetchList', 'loading' ]),
     filters: state.getIn([ 'liveSearch', 'instance', 'filters' ]),
     currentPage: state.getIn(["liveSearch", "currentPage"]),
     metaList: state.getIn(['customFields', 'list']).map(i => i.key),
