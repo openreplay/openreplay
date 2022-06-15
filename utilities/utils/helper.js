@@ -51,7 +51,7 @@ const isValidSession = function (sessionInfo, filters) {
                     }
                 } else if (skey.toLowerCase() === key.toLowerCase()) {
                     for (let v of values) {
-                        if (svalue.toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+                        if (String(svalue).toLowerCase().indexOf(v.toLowerCase()) >= 0) {
                             found = true;
                             break;
                         }
@@ -77,7 +77,7 @@ const getValidAttributes = function (sessionInfo, query) {
             if (typeof (svalue) === "object") {
                 matches = [...matches, ...getValidAttributes(svalue, query)]
             } else if ((query.key === undefined || skey.toLowerCase() === query.key.toLowerCase())
-                && svalue.toLowerCase().indexOf(query.value.toLowerCase()) >= 0
+                && String(svalue).toLowerCase().indexOf(query.value.toLowerCase()) >= 0
                 && deduplicate.indexOf(skey + '_' + svalue) < 0) {
                 matches.push({"type": skey, "value": svalue});
                 deduplicate.push(skey + '_' + svalue);
@@ -121,11 +121,11 @@ const extractPayloadFromRequest = function (req) {
     };
     if (req.query.q) {
         debug && console.log(`[WS]where q=${req.query.q}`);
-        filters.query.value = [req.query.q];
+        filters.query.value = req.query.q;
     }
     if (req.query.key) {
         debug && console.log(`[WS]where key=${req.query.key}`);
-        filters.query.key = [req.query.key];
+        filters.query.key = req.query.key;
     }
     if (req.query.userId) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
@@ -160,6 +160,17 @@ const sortPaginate = function (list, filters) {
     }
     return list;
 }
+const uniqueAutocomplete = function (list) {
+    let _list = [];
+    let deduplicate = [];
+    for (let e of list) {
+        if (deduplicate.indexOf(e.type + "_" + e.value) < 0) {
+            _list.push(e);
+            deduplicate.push(e.type + "_" + e.value)
+        }
+    }
+    return _list;
+}
 module.exports = {
     extractPeerId,
     request_logger,
@@ -170,5 +181,6 @@ module.exports = {
     hasFilters,
     objectToObjectOfArrays,
     extractPayloadFromRequest,
-    sortPaginate
+    sortPaginate,
+    uniqueAutocomplete
 };
