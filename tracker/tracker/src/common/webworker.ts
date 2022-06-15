@@ -17,11 +17,6 @@ type Auth = {
   beaconSizeLimit?:  number
 }
 
-type Log = {
-  type:             "log"
-  log:              WorkerActivityLogStatus
-}
-
 export enum WorkerActivityLogStatus {
   Off,
   Console,
