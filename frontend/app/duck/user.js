@@ -41,7 +41,7 @@ const reducer = (state = initialState, action = {}) => {
     case RESET_PASSWORD.SUCCESS:
     case UPDATE_PASSWORD.SUCCESS:
     case LOGIN.SUCCESS:
-      state.set('account', Account({...action.data.user, smtp: action.data.client.smtp }))
+      state.set('account', Account({...action.data.user }))
     case SIGNUP.SUCCESS:
       state.set('account', Account(action.data.user)).set('onboarding', true);
     case REQUEST_RESET_PASSWORD.SUCCESS:

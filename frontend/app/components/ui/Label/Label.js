@@ -7,7 +7,7 @@ export default ({
 }) => (
   <div
     { ...props }
-    className={ cn(className, styles.label, 'border') }
+    className={ cn('border rounded bg-gray-lightest px-2 w-fit', className) }
   >
     { children }
   </div>

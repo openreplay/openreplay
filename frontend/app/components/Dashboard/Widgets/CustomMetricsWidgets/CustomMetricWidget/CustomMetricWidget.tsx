@@ -29,7 +29,6 @@ interface Props {
   metric: any;
   // loading?: boolean;
   data?: any;
-  showSync?: boolean;
   compare?: boolean;
   period?: any;
   onClickEdit: (e) => void;
@@ -37,49 +36,25 @@ interface Props {
   setShowAlerts: (showAlerts) => void;
   setAlertMetricId: (id) => void;
   onAlertClick: (e) => void;
-  init: (metric) => void;
+  init: (metric: any) => void;
   edit: (setDefault?) => void;
   setActiveWidget: (widget) => void;
   updateActiveState: (metricId, state) => void;
   isTemplate?: boolean;
 }
 function CustomMetricWidget(props: Props) {
-  const { metric, showSync, compare, period, isTemplate } = props;
+  const { metric, period, isTemplate } = props;
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>([]);
-  const [seriesMap, setSeriesMap] = useState<any>([]);
+  // const [seriesMap, setSeriesMap] = useState<any>([]);
 
   const colors = Styles.customMetricColors;
   const params = customParams(period.rangeName)
-  const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
+  // const metricParams = { ...params, metricId: metric.metricId, viewType: 'lineChart', startDate: period.start, endDate: period.end }
   const isLineChart = metric.viewType === 'lineChart';
   const isProgress = metric.viewType === 'progress';
   const isTable = metric.viewType === 'table';
   const isPieChart = metric.viewType === 'pieChart';
-
-  // useEffect(() => {
-  //   new APIClient()['post'](`/custom_metrics/${metricParams.metricId}/chart`, { ...metricParams, q: metric.name })
-  //     .then(response => response.json())
-  //     .then(({ errors, data }) => {
-  //       if (errors) {
-  //         console.log('err', errors)
-  //       } else {
-  //         const namesMap = data
-  //           .map(i => Object.keys(i))
-  //           .flat()
-  //           .filter(i => i !== 'time' && i !== 'timestamp')
-  //           .reduce((unique: any, item: any) => {
-  //             if (!unique.includes(item)) {
-  //               unique.push(item);
-  //             }
-  //             return unique;
-  //           }, []);
-
-  //         setSeriesMap(namesMap);
-  //         setData(getChartFormatter(period)(data));
-  //       }
-  //     }).finally(() => setLoading(false));
-  // }, [period])
 
   const clickHandlerTable = (filters) => {
     const activeWidget = {
@@ -147,7 +122,6 @@ function CustomMetricWidget(props: Props) {
                   <CustomMetricPieChart
                     metric={metric}
                     data={ data[0] }
-                    params={ params }
                     colors={ colors }
                     onClick={ clickHandlerTable }
                   />

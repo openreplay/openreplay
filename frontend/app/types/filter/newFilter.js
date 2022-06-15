@@ -55,6 +55,11 @@ export const filtersMap = {
   [FilterKey.ISSUE]: { key: FilterKey.ISSUE, type: FilterType.ISSUE, category: FilterCategory.JAVASCRIPT, label: 'Issue', operator: 'is', operatorOptions: filterOptions.getOperatorsByKeys(['is', 'isAny', 'isNot']), icon: 'filters/click', options: filterOptions.issueOptions },
 }
 
+export const filterLabelMap = Object.keys(filtersMap).reduce((acc, key) => {
+  acc[key] = filtersMap[key].label
+  return acc
+}, {})
+
 export const liveFiltersMap = {
   [FilterKey.USERID]: { key: FilterKey.USERID, type: FilterType.STRING, category: FilterCategory.USER, label: 'User Id', operator: 'contains', operatorOptions: containsFilters, icon: 'filters/userid', isLive: true },
 }

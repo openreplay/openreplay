@@ -29,11 +29,11 @@ function FilterItem(props: Props) {
   };
 
   const onOperatorChange = (e, { name, value }) => {
-    props.onUpdate({ ...filter, operator: value })
+    props.onUpdate({ ...filter, operator: value.value })
   }
   
   const onSourceOperatorChange = (e, { name, value }) => {
-    props.onUpdate({ ...filter, sourceOperator: value })
+    props.onUpdate({ ...filter, sourceOperator: value.value })
   }
 
   const onUpdateSubFilter = (subFilter, subFilterIndex) => {

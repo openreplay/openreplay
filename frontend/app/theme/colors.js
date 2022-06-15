@@ -17,6 +17,8 @@ module.exports = {
   "tealx-light": "#E2F0EE",
   "tealx-light-border": "#C6DCDA",
 
+  "tealx-lightest": 'rgba(62, 170, 175, 0.1)',
+
   orange: "#E28940",
   yellow: "#FFFBE5",
   yellow2: "#F5A623",
@@ -26,6 +28,7 @@ module.exports = {
   "green-dark": "#2C9848",
   red: "#cc0000",
   red2: "#F5A623",
+  "red-lightest": 'rgba(204, 0, 0, 0.1)',
   blue: "#366CD9",
   blue2: "#0076FF",
   "active-blue": "#F6F7FF",

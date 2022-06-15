@@ -13,6 +13,10 @@ import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
 
+import FunnelWidget from 'App/components/Funnels/FunnelWidget';
+import ErrorsWidget from '../Errors/ErrorsWidget';
+import SessionWidget from '../Sessions/SessionWidget';
+import CustomMetricTableSessions from '../../Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
 interface Props {
     metric: any;
     isWidget?: boolean;
@@ -35,6 +39,7 @@ function WidgetChart(props: Props) {
 
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
+    const isFunnel = metric.metricType === 'funnel';
 
     const onChartClick = (event: any) => {
         if (event) {
@@ -60,7 +65,7 @@ function WidgetChart(props: Props) {
 
     const depsString = JSON.stringify(_metric.series);
 
-    const fetchMetricChartData = (metric, payload, isWidget) => {
+    const fetchMetricChartData = (metric: any, payload: any, isWidget: any) => {
         if (!isMounted()) return;
         setLoading(true)
         dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
@@ -82,7 +87,19 @@ function WidgetChart(props: Props) {
     }, [period, depsString]);
 
     const renderChart = () => {
-        const { metricType, viewType } = metric;
+        const { metricType, viewType, metricOf } = metric;
+
+        if (metricType === 'sessions') {
+            return <SessionWidget metric={metric} />
+        }
+
+        if (metricType === 'errors') {
+            return <ErrorsWidget metric={metric} />
+        }
+
+        if (metricType === 'funnel') {
+            return <FunnelWidget metric={metric} />
+        }
 
         if (metricType === 'predefined') {
             if (isOverviewWidget) {
@@ -113,6 +130,14 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'table') {
+            if (metricOf === 'SESSIONS') {
+                return <CustomMetricTableSessions
+                    metric={metric}
+                    data={data}
+                    // onClick={onChartClick}
+                    isTemplate={isTemplate}
+                    />
+            }
             if (viewType === 'table') {
                 return <CustomMetricTable
                     metric={metric} data={data[0]}
@@ -135,7 +160,7 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
+        <Loader loading={!isFunnel && loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));

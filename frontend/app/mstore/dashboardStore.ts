@@ -3,9 +3,11 @@ import Dashboard, { IDashboard } from "./types/dashboard"
 import Widget, { IWidget } from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
-import Period, { LAST_24_HOURS, LAST_7_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import Filter, { IFilter } from "./types/filter";
+import Funnel from "./types/funnel";
+import Session from "./types/session";
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -78,7 +80,7 @@ export default class DashboardStore implements IDashboardSotre {
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
     widgets: Widget[] = []
-    period: Period = Period({ rangeName: LAST_7_DAYS })
+    period: Period = Period({ rangeName: LAST_30_DAYS })
     drillDownFilter: Filter = new Filter()
     startTimestamp: number = 0
     endTimestamp: number = 0
@@ -130,7 +132,7 @@ export default class DashboardStore implements IDashboardSotre {
             fetchMetricChartData: action
         })
 
-        const drillDownPeriod = Period({ rangeName: LAST_7_DAYS }).toTimestamps();
+        const drillDownPeriod = Period({ rangeName: LAST_24_HOURS }).toTimestamps();
         this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
         this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
     }
@@ -427,52 +429,62 @@ export default class DashboardStore implements IDashboardSotre {
     }
 
     setPeriod(period: any) {
-        this.period = Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeValue })
+        this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
     }
 
     fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
         const period = this.period.toTimestamps()
         return new Promise((resolve, reject) => {
-            // this.isLoading = true
-            return metricService.getMetricChartData(metric, { ...period, ...data, key: metric.predefinedKey }, isWidget)
-                .then(data => {
+            return metricService.getMetricChartData(metric, { ...period, ...data, key: metric.predefinedKey, page: 1, limit: 10 }, isWidget)
+                .then((data: any) => {
                     if (metric.metricType === 'predefined' && metric.viewType === 'overview') {
                         const _data = { ...data, chart: getChartFormatter(this.period)(data.chart) }
+                        metric.setData(_data)
+                        resolve(_data);
+                    } else if (metric.metricType === 'funnel') {
+                        const _data = { ...data }
+                        _data.funnel = new Funnel().fromJSON(data)
                         metric.setData(_data)
                         resolve(_data);
                     } else {
                         const _data = {
                             ...data,
                         }
-                        if (data.hasOwnProperty('chart')) {
-                            _data['chart'] = getChartFormatter(this.period)(data.chart)
-                            _data['namesMap'] = data.chart
-                                .map(i => Object.keys(i))
-                                .flat()
-                                .filter(i => i !== 'time' && i !== 'timestamp')
-                                .reduce((unique: any, item: any) => {
-                                    if (!unique.includes(item)) {
-                                        unique.push(item);
-                                    }
-                                    return unique;
-                                }, [])
+
+                        // TODO refactor to widget class
+                        if (metric.metricOf === 'SESSIONS') {
+                            _data['sessions'] = data.sessions.map((s: any) => new Session().fromJson(s))
                         } else {
-                            _data['chart'] =  getChartFormatter(this.period)(Array.isArray(data) ? data : []);
-                            _data['namesMap'] = Array.isArray(data) ? data.map(i => Object.keys(i))
-                                .flat()
-                                .filter(i => i !== 'time' && i !== 'timestamp')
-                                .reduce((unique: any, item: any) => {
-                                    if (!unique.includes(item)) {
-                                        unique.push(item);
-                                    }
-                                    return unique;
-                                }, []) : []
+                            if (data.hasOwnProperty('chart')) {
+                                _data['chart'] = getChartFormatter(this.period)(data.chart)
+                                _data['namesMap'] = data.chart
+                                    .map(i => Object.keys(i))
+                                    .flat()
+                                    .filter(i => i !== 'time' && i !== 'timestamp')
+                                    .reduce((unique: any, item: any) => {
+                                        if (!unique.includes(item)) {
+                                            unique.push(item);
+                                        }
+                                        return unique;
+                                    }, [])
+                            } else {
+                                _data['chart'] =  getChartFormatter(this.period)(Array.isArray(data) ? data : []);
+                                _data['namesMap'] = Array.isArray(data) ? data.map(i => Object.keys(i))
+                                    .flat()
+                                    .filter(i => i !== 'time' && i !== 'timestamp')
+                                    .reduce((unique: any, item: any) => {
+                                        if (!unique.includes(item)) {
+                                            unique.push(item);
+                                        }
+                                        return unique;
+                                    }, []) : []
+                            }
                         }
 
                         metric.setData(_data)
                         resolve(_data);
                     }
-                }).catch((err) => {
+                }).catch((err: any) => {
                     reject(err)
                 })
         })

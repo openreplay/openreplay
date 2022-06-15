@@ -255,6 +255,7 @@ p {
 
 .link {
   color: $blue !important;
+  cursor: pointer;
   &:hover {
     text-decoration: underline !important;
   }

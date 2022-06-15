@@ -7,8 +7,9 @@ export const CUSTOM_RANGE = 'CUSTOM_RANGE';
 
 const DATE_RANGE_LABELS = {
   // LAST_30_MINUTES: '30 Minutes',
-  TODAY: 'Today',
-  YESTERDAY: 'Yesterday',
+  // TODAY: 'Today',
+  LAST_24_HOURS: 'Last 24 Hours',
+  // YESTERDAY: 'Yesterday',
   LAST_7_DAYS: 'Past 7 Days',
   LAST_30_DAYS: 'Past 30 Days',
   //THIS_MONTH: 'This Month',
@@ -57,6 +58,11 @@ export function getDateRangeFromValue(value) {
       return moment.range(
         moment().subtract(1, 'days').startOf('day'),
         moment().subtract(1, 'days').endOf('day'),
+      );
+    case DATE_RANGE_VALUES.LAST_24_HOURS:
+      return moment.range(
+        moment().subtract(24, 'hours'),
+        moment(),
       );
     case DATE_RANGE_VALUES.LAST_7_DAYS:
       return moment.range(

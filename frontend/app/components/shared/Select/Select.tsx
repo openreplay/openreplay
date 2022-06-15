@@ -2,6 +2,7 @@ import React from 'react';
 import Select, { components, DropdownIndicatorProps } from 'react-select';
 import { Icon } from 'UI';
 import colors from 'App/theme/colors';
+const { ValueContainer } = components;
 
 interface Props {
     options: any[];
@@ -9,21 +10,48 @@ interface Props {
     defaultValue?: string;
     plain?: boolean;
     components?: any;
+    styles?: any;
+    onChange: (value: any) => void;
+    name?: string;
     [x:string]: any;
 }
-export default function({ right = false, plain = false, options, isSearchable = false, components = {}, defaultValue = '', ...rest }: Props) {
+export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
+    const defaultSelected = options.find(o => o.value === defaultValue) || options[0];
     const customStyles = {
-        option: (provided: any, state: any) => ({
-          ...provided,
-          whiteSpace: 'nowrap',
+        option: (provided, state) => ({
+            ...provided,
+            whiteSpace: 'nowrap',
+            transition: 'all 0.3s',
+            backgroundColor: state.isFocused ? colors['active-blue'] : 'transparent',
+            color: state.isFocused ? colors.teal : 'black',
+            '&:hover': {
+                transition: 'all 0.2s',
+                backgroundColor: colors['active-blue'],
+            },
+            '&:focus': {
+                transition: 'all 0.2s',
+                backgroundColor: colors['active-blue'],
+            }
         }),
         menu: (provided: any, state: any) => ({
             ...provided,
             top: 31,
             borderRadius: '3px',
             right: right ? 0 : undefined,
+            border: `1px solid ${colors['gray-light']}`,
+            // borderRadius: '3px',
+            backgroundColor: '#fff',
+            boxShadow: '1px 1px 1px rgba(0, 0, 0, 0.1)',
+            position: 'absolute',
             minWidth: 'fit-content',
-            zIndex: 99,
+            // zIndex: 99,
+            overflow: 'hidden',
+            zIndex: 100,
+            ...(right && { right: 0 })
+        }),
+        menuList: (provided: any, state: any) => ({
+            ...provided,
+            padding: 0,
         }),
         control: (provided: any) => {
             const obj = {
@@ -31,13 +59,20 @@ export default function({ right = false, plain = false, options, isSearchable = 
                 border: 'solid thin #ddd',
                 cursor: 'pointer',
                 minHeight: '36px',
+                transition: 'all 0.5s',
+                ['&:hover']: {
+                    backgroundColor: colors['gray-lightest'],
+                    transition: 'all 0.2s ease-in-out'
+                }
             }
             if (plain) {
                 obj['backgroundColor'] = 'transparent';
                 obj['border'] = '1px solid transparent'
+                obj['backgroundColor'] = 'transparent'
                 obj['&:hover'] = {
                     borderColor: 'transparent',
-                    backgroundColor: colors['gray-light']
+                    backgroundColor: colors['gray-light'],
+                    transition: 'all 0.2s ease-in-out'
                 }
                 obj['&:focus'] = {
                     borderColor: 'transparent'
@@ -50,6 +85,7 @@ export default function({ right = false, plain = false, options, isSearchable = 
         },
         indicatorsContainer: (provided: any) => ({
             ...provided,
+            maxHeight: '34px',
             padding: 0,
         }),
         valueContainer: (provided: any) => ({
@@ -61,9 +97,15 @@ export default function({ right = false, plain = false, options, isSearchable = 
           const transition = 'opacity 300ms';
       
           return { ...provided, opacity, transition };
-        }
+        },
+        noOptionsMessage: (provided: any) => ({
+            ...provided,
+            whiteSpace: 'nowrap !important',
+            // minWidth: 'fit-content',
+        }),
     }
-    const defaultSelected = defaultValue ? options.find(x => x.value === defaultValue) : null;
+
+
     return (
         <Select
             options={options}
@@ -72,9 +114,11 @@ export default function({ right = false, plain = false, options, isSearchable = 
             components={{
                 IndicatorSeparator: () => null,
                 DropdownIndicator,
+                ValueContainer: CustomValueContainer,
                 ...components,
             }}
-            styles={customStyles}
+            onChange={(value) => onChange({ name, value: value })}
+            styles={{ ...customStyles, ...styles }}
             theme={(theme) => ({
                 ...theme,
                 colors: {
@@ -83,6 +127,7 @@ export default function({ right = false, plain = false, options, isSearchable = 
                 }
             })}
             blurInputOnSelect={true}
+            // menuPosition="fixed"
             {...rest}
         />
     );
@@ -97,3 +142,21 @@ const DropdownIndicator = (
       </components.DropdownIndicator>
     );
   };
+
+const CustomValueContainer = ({ children, ...rest }: any) => {
+    const selectedCount = rest.getValue().length
+    const conditional = (selectedCount < 3)
+  
+    let firstChild: any = []
+  
+    if (!conditional) {
+      firstChild = [children[0].shift(), children[1]]
+    }
+  
+    return (
+      <ValueContainer {...rest}>
+        {conditional ? children : firstChild}
+        {!conditional && ` and ${selectedCount - 1} others`}
+      </ValueContainer>
+    )
+  }

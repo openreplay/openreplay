@@ -13,6 +13,7 @@ export interface IMetricService {
     getTemplates(): Promise<any>;
     getMetricChartData(metric: IWidget, data: any, isWidget: boolean): Promise<any>;
     fetchSessions(metricId: string, filter: any): Promise<any>
+    fetchIssues(filter: string): Promise<any>;
 }
 
 export default class MetricService implements IMetricService {
@@ -32,8 +33,8 @@ export default class MetricService implements IMetricService {
      */
     getMetrics(): Promise<any> {
         return this.client.get('/metrics')
-            .then(response => response.json())
-            .then(response => response.data || []);
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || []);
     }
 
     /**
@@ -43,8 +44,8 @@ export default class MetricService implements IMetricService {
      */
     getMetric(metricId: string): Promise<any> {
         return this.client.get('/metrics/' + metricId)
-            .then(response => response.json())
-            .then(response => response.data || {});
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
     }
 
     /**
@@ -58,8 +59,8 @@ export default class MetricService implements IMetricService {
         const method = isCreating ? 'post' : 'put';
         const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
         return this.client[method](url, data)
-            .then(response => response.json())
-            .then(response => response.data || {});      
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
     }
 
     /**
@@ -69,8 +70,8 @@ export default class MetricService implements IMetricService {
      */
     deleteMetric(metricId: string): Promise<any> {
         return this.client.delete('/metrics/' + metricId)
-            .then(response => response.json())
-            .then(response => response.data);
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data);
     }
 
 
@@ -80,15 +81,15 @@ export default class MetricService implements IMetricService {
      */
     getTemplates(): Promise<any> {
         return this.client.get('/metrics/templates')
-            .then(response => response.json())
-            .then(response => response.data || []);
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || []);
     }
 
     getMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
         const path = isWidget ? `/metrics/${metric.metricId}/chart` : `/metrics/try`;
         return this.client.post(path, data)
-            .then(response => response.json())
-            .then(response => response.data || {});
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
     }
 
     /**
@@ -98,7 +99,19 @@ export default class MetricService implements IMetricService {
      */
      fetchSessions(metricId: string, filter: any): Promise<any> {
         return this.client.post(metricId ? `/metrics/${metricId}/sessions` : '/metrics/try/sessions', filter)
-            .then(response => response.json())
-            .then(response => response.data || []);
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || []);
+    }
+
+    fetchIssues(filter: string): Promise<any> {
+        return this.client.post(`/metrics/try/issues`, filter)
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
+    }
+
+    fetchIssue(metricId: string, issueId: string, params: any): Promise<any> {
+        return this.client.post(`/custom_metrics/${metricId}/issues/${issueId}/sessions`, params)
+            .then((response: { json: () => any; }) => response.json())
+            .then((response: { data: any; }) => response.data || {});
     }
 }
