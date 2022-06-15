@@ -1,6 +1,7 @@
 export interface Options {
   connAttemptCount?: number
   connAttemptGap?:   number
+  workerLog?:         WorkerActivityLogStatus
 }
 
 type Start = {
@@ -16,4 +17,16 @@ type Auth = {
   beaconSizeLimit?:  number
 }
 
-export type WorkerMessageData = null | "stop" | Start | Auth | Array<{ _id: number }>
+type Log = {
+  type:             "log"
+  log:              WorkerActivityLogStatus
+}
+
+export enum WorkerActivityLogStatus {
+  Off,
+  Console,
+  Error,
+}
+
+
+export type WorkerMessageData = null | "stop" | Start | Auth | Array<{ _id: number }> | Log

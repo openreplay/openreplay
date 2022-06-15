@@ -14,7 +14,7 @@ import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
 import type { Options as WebworkerOptions, WorkerMessageData } from "../../common/webworker.js";
-
+import { WorkerActivityLogStatus } from "../../common/webworker.js";
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -120,6 +120,7 @@ export default class App {
         __debug_report_edp: null,
         localStorage: window.localStorage,
         sessionStorage: window.sessionStorage,
+        workerLog: WorkerActivityLogStatus.Off,
       },
       options,
     );
@@ -351,6 +352,7 @@ export default class App {
       timestamp: startInfo.timestamp,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
+      workerLog: this.options.workerLog,
     }
     this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
 
