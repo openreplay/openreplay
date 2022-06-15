@@ -51,6 +51,7 @@ function FilterModal(props: Props) {
   } = props;
   const hasSearchQuery = searchQuery && searchQuery.length > 0;
   const showSearchList = isMainSearch && searchQuery.length > 0;
+  console.log('filters', props.filters)
 
   const onFilterSearchClick = (filter) => {
     const _filter = filtersMap[filter.type];
@@ -123,7 +124,7 @@ function FilterModal(props: Props) {
 }
 
 export default connect(state => ({
-  filters: state.getIn([ 'search', 'filterList' ]),
+  // filters: state.getIn([ 'search', 'filterListLive' ]),
   filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
   metaOptions: state.getIn([ 'customFields', 'list' ]),
   fetchingFilterSearchList: state.getIn([ 'search', 'fetchFilterSearch', 'loading' ]),

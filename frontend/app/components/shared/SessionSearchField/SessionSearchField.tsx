@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { Input } from 'UI';
 import FilterModal from 'Shared/Filters/FilterModal';
-// import { fetchFilterSearch } from 'Duck/search';
 import { debounce } from 'App/utils';
-import { edit as editFilter, addFilterByKeyAndValue } from 'Duck/search';
+import { assist as assistRoute, isRoute } from "App/routes";
+const ASSIST_ROUTE = assistRoute();
 
 interface Props {
   fetchFilterSearch: (query: any) => void;
-  // editFilter: typeof editFilter;
   addFilterByKeyAndValue: (key: string, value: string) => void;
+  filterList: any;
+  filterListLive: any;
 }
 function SessionSearchField(props: Props) {
   const debounceFetchFilterSearch = React.useCallback(debounce(props.fetchFilterSearch, 1000), []);
@@ -44,6 +45,7 @@ function SessionSearchField(props: Props) {
             searchQuery={searchQuery}
             isMainSearch={true}
             onFilterClick={onAddFilter}
+            filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
           />
         </div>
       )}
@@ -51,4 +53,7 @@ function SessionSearchField(props: Props) {
   );
 }
 
-export default connect(null, {  })(SessionSearchField);
+export default connect((state: any) => ({
+  filterList: state.getIn([ 'search', 'filterList' ]),
+  filterListLive: state.getIn([ 'search', 'filterListLive' ]),
+}), {  })(SessionSearchField);

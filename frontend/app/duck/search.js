@@ -47,7 +47,7 @@ const updateInstance = (state, instance) => state.getIn([ "savedSearch", savedSe
 
 const initialState = Map({
   filterList: generateFilterOptions(filtersMap),
-  filterListLive: generateLiveFilterOptions(liveFiltersMap),
+  filterListLive: generateFilterOptions(liveFiltersMap),
 	list: List(),
   alertMetricId: null,
 	instance: new Filter({ filters: [] }),
@@ -63,7 +63,7 @@ function reducer(state = initialState, action = {}) {
 	switch (action.type) {
     case REFRESH_FILTER_OPTIONS:
       return state.set('filterList', generateFilterOptions(filtersMap))
-                  .set('filterListLive', generateLiveFilterOptions(liveFiltersMap));
+                  .set('filterListLive', generateFilterOptions(liveFiltersMap));
     case EDIT:
       return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
     case APPLY:
