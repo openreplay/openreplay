@@ -91,14 +91,16 @@ const hasFilters = function (filters) {
 }
 const objectToObjectOfArrays = function (obj) {
     let _obj = {}
-    for (let k of Object.keys(obj)) {
-        if (obj[k] !== undefined && obj[k] !== null) {
-            _obj[k] = obj[k];
-            if (!Array.isArray(_obj[k])) {
-                _obj[k] = [_obj[k]];
-            }
-            for (let i = 0; i < _obj[k].length; i++) {
-                _obj[k][i] = String(_obj[k][i]);
+    if (obj) {
+        for (let k of Object.keys(obj)) {
+            if (obj[k] !== undefined && obj[k] !== null) {
+                _obj[k] = obj[k];
+                if (!Array.isArray(_obj[k])) {
+                    _obj[k] = [_obj[k]];
+                }
+                for (let i = 0; i < _obj[k].length; i++) {
+                    _obj[k][i] = String(_obj[k][i]);
+                }
             }
         }
     }
@@ -123,7 +125,8 @@ const extractPayloadFromRequest = function (req) {
         debug && console.log(`[WS]where userId=${req.query.userId}`);
         filters.filter.userID = [req.query.userId];
     }
-    filters = objectToObjectOfArrays({...filters, ...(req.body.filter || {})});
+    filters.filters = objectToObjectOfArrays(filters.filter);
+    filters = {...filters, ...(req.body.filter || {})};
     debug && console.log("payload/filters:")
     debug && console.log(JSON.stringify(filters))
     return filters;
