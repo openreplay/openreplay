@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import FilterModal from '../FilterModal';
-import LiveFilterModal from '../LiveFilterModal';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import { Icon } from 'UI';
 import { connect } from 'react-redux';
@@ -10,6 +9,8 @@ const ASSIST_ROUTE = assistRoute();
 
 interface Props {
   filter?: any; // event/filter
+  filterList: any;
+  filterListLive: any;
   onFilterClick: (filter) => void;
   children?: any;
   isLive?: boolean;
@@ -43,13 +44,15 @@ function FilterSelection(props: Props) {
       </OutsideClickDetectingDiv>
       {showModal && (
         <div className="absolute left-0 border shadow rounded bg-white z-50">
-          { isRoute(ASSIST_ROUTE, window.location.pathname) ? <LiveFilterModal onFilterClick={onFilterClick}  /> : <FilterModal onFilterClick={onFilterClick} /> }
+          <FilterModal onFilterClick={onFilterClick} filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList } />
         </div>
       )}
     </div>
   );
 }
 
-export default connect(state => ({
+export default connect((state: any) => ({
+  filters: state.getIn([ 'search', 'filterList' ]),
+  liveFilters: state.getIn([ 'search', 'filterListLive' ]),
   isLive: state.getIn([ 'sessions', 'activeTab' ]).type === 'live',
 }), { })(FilterSelection);

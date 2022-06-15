@@ -12,7 +12,7 @@ const CountryFlag = React.memo(({ country, className, style = {}, label = false 
 	return (
 		<div className="flex items-center" style={style}>
 			{knownCountry
-				?  <div className={ cn(`flag flag-${ countryFlag }`, className, stl.default) } />
+				?  <div className={ cn(`mr-1 flag flag-${ countryFlag }`, className, stl.default) } />
 				: (
 					<div className="flex items-center w-full">
 						<Icon name="flag-na" size="22" className="" />

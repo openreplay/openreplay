@@ -14,15 +14,15 @@ const COUNTRY = 'country';
 const LOCATION = 'location';
 
 const platformOptions = [
-  { 'key': PLATFORM, text: 'Desktop', value: 1},
-  { 'key': PLATFORM, text: 'Tablet', value: 2 },
-  { 'key': PLATFORM, text: 'Tablet Landscape', value: 3 },
-  { 'key': PLATFORM, text: 'Mobile', value: 4 },
-  { 'key': PLATFORM, text: 'Mobile Landscape', value: 5 }
+  { 'key': PLATFORM, label: 'Desktop', value: 1},
+  { 'key': PLATFORM, label: 'Tablet', value: 2 },
+  { 'key': PLATFORM, label: 'Tablet Landscape', value: 3 },
+  { 'key': PLATFORM, label: 'Mobile', value: 4 },
+  { 'key': PLATFORM, label: 'Mobile Landscape', value: 5 }
 ];
 
-const countryOptions = Object.keys(countries).map(c => ({key: COUNTRY, text: countries[c], value: c}));
-const locationOptions = Object.keys(regionLabels).map(k => ({ key: LOCATION, text: regionLabels[k], value: k}));
+const countryOptions = Object.keys(countries).map(c => ({key: COUNTRY, label: countries[c], value: c}));
+const locationOptions = Object.keys(regionLabels).map(k => ({ key: LOCATION, label: regionLabels[k], value: k}));
 
 const _filterKeys = [
   { key: 'userId', name: 'User ID', icon: 'user-alt', placeholder: 'Search for User ID' },

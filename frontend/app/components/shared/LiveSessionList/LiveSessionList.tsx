@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
 import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
-import { NoContent, Loader, LoadMoreButton, Pagination } from 'UI';
-import { List, Map } from 'immutable';
+import { NoContent, Loader, Pagination } from 'UI';
+import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
 import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter, addAttribute } from 'Duck/filters';
-import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
+import { FilterKey } from 'App/types/filter/filterType';
 import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/liveSearch';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { capitalize, sliceListPerPage } from 'App/utils';
+import { capitalize } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
 
 const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
@@ -23,7 +23,7 @@ interface Props {
   fetchLiveList: () => Promise<void>,
   applyFilter: () => void,
   filters: any,
-  addAttribute: (obj) => void,
+  addAttribute: (obj: any) => void,
   addFilterByKeyAndValue: (key: FilterKey, value: string) => void,
   updateCurrentPage: (page: number) => void,
   currentPage: number,
@@ -34,15 +34,12 @@ interface Props {
 
 function LiveSessionList(props: Props) {
   const { loading, filters, list, currentPage, metaList = [], sort } = props;
-  var timeoutId;
-  const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
+  var timeoutId: any;
+  const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
   const [sessions, setSessions] = React.useState(list);
-  const sortOptions = metaList.map(i => ({
+  const sortOptions = metaList.map((i: any) => ({
     text: capitalize(i), label: i
   })).toJS();
-
-  // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
-  // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
 
   // useEffect(() => {
   //   if (filters.size === 0) {
@@ -53,31 +50,31 @@ function LiveSessionList(props: Props) {
   useEffect(() => {
     if (metaList.size === 0 || !!sort.field) return;
 
-    if ( sortOptions[0]) {
+    if (sortOptions[0]) {
       props.updateSort({ field: sortOptions[0].value });
     }
   }, [metaList]);
 
-  useEffect(() => {
-    const filteredSessions = filters.size > 0 ? props.list.filter(session => {
-      let hasValidFilter = true;
-      filters.forEach(filter => {
-        if (!hasValidFilter) return;
+  // useEffect(() => {
+  //   const filteredSessions = filters.size > 0 ? props.list.filter(session => {
+  //     let hasValidFilter = true;
+  //     filters.forEach(filter => {
+  //       if (!hasValidFilter) return;
 
-        const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
-        if (filter.key === FilterKey.USERID) {
-          const _userId = session.userId ? session.userId.toLowerCase() : '';
-          hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
-        }
-        if (filter.category === FilterCategory.METADATA) {
-          const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
-          hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
-        }
-      })
-      return hasValidFilter;
-    }) : props.list;
-    setSessions(filteredSessions);
-  }, [filters, list]);
+  //       const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
+  //       if (filter.key === FilterKey.USERID) {
+  //         const _userId = session.userId ? session.userId.toLowerCase() : '';
+  //         hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
+  //       }
+  //       if (filter.category === FilterCategory.METADATA) {
+  //         const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
+  //         hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
+  //       }
+  //     })
+  //     return hasValidFilter;
+  //   }) : props.list;
+  //   setSessions(filteredSessions);
+  // }, [filters, list]);
 
   useEffect(() => {
     props.fetchLiveList();
@@ -95,7 +92,8 @@ function LiveSessionList(props: Props) {
     }
   }
 
-  const onSortChange = (e, { value }) => {
+  const onSortChange = ({ value }: any) => {
+    value = value.value
     props.updateSort({ field: value });
   }
 
@@ -145,9 +143,7 @@ function LiveSessionList(props: Props) {
         show={ !loading && sessions && sessions.size === 0}
       >
         <Loader loading={ loading }>
-          {sessions && sliceListPerPage(sessions.sortBy(i => i.metadata[sort.field]).update(list => {
-            return sort.order === 'desc' ? list.reverse() : list;
-          }), currentPage - 1).map(session => (
+          {sessions.map(session => (
             <SessionItem
               key={ session.sessionId }
               session={ session }
@@ -162,7 +158,7 @@ function LiveSessionList(props: Props) {
           <Pagination
             page={currentPage}
             totalPages={Math.ceil(sessions.size / PER_PAGE)}
-            onPageChange={(page) => props.updateCurrentPage(page)}
+            onPageChange={(page: any) => props.updateCurrentPage(page)}
             limit={PER_PAGE}
           />
         </div>
@@ -173,12 +169,12 @@ function LiveSessionList(props: Props) {
 }
 
 export default withPermissions(['ASSIST_LIVE'])(connect(
-  (state) => ({
-    list: state.getIn(['sessions', 'liveSessions']),
-    loading: state.getIn([ 'sessions', 'loading' ]),
+  (state: any) => ({
+    list: state.getIn(['liveSearch', 'list']),
+    loading: state.getIn([ 'liveSearch', 'fetchList', 'loading' ]),
     filters: state.getIn([ 'liveSearch', 'instance', 'filters' ]),
     currentPage: state.getIn(["liveSearch", "currentPage"]),
-    metaList: state.getIn(['customFields', 'list']).map(i => i.key),
+    metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
     sort: state.getIn(['liveSearch', 'sort']),
   }),
   {

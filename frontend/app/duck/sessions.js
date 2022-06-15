@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import Session from 'Types/session';
 import ErrorStack from 'Types/session/errorStack';
-import Watchdog, { getSessionWatchdogTypes } from 'Types/watchdog';
+import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
 import { getRE } from 'App/utils';
@@ -83,55 +83,11 @@ const reducer = (state = initialState, action = {}) => {
       const { sessions, total } = action.data;
       const list = List(sessions).map(Session);
 
-      const { params } = action;
-      const eventProperties = {
-        eventCount: 0,
-        eventTypes: [],
-        dateFilter: params.rangeValue,
-        filterKeys: Object.keys(params)
-          .filter(key => ![ 'custom', 'startDate', 'endDate', 'strict', 'key', 'events', 'rangeValue' ].includes(key)),
-        returnedCount: list.size,
-        totalSearchCount: total,
-      };
-      if (Array.isArray(params.events)) {
-        eventProperties.eventCount = params.events.length;
-        params.events.forEach(({ type }) => {
-          if (!eventProperties.eventTypes.includes(type)) {
-            eventProperties.eventTypes.push(type);
-          }
-        })
-      }
-
-      const keyMap = {}
-      list.forEach(s => {
-        s.issueTypes.forEach(k => {
-          if(keyMap[k])
-            keyMap[k] += 1
-          else
-            keyMap[k] = 1;
-        })
-      })
-
-      const wdTypeCount = {} 
-      try{
-        list.forEach(s => {
-          getSessionWatchdogTypes(s).forEach(wdtp => {
-            wdTypeCount[wdtp] = wdTypeCount[wdtp] ? wdTypeCount[wdtp] + 1 : 1;
-          })
-        })
-      } catch(e) {
-
-      }
-
-      const sessionIds = list.map(({ sessionId }) => sessionId ).toJS();
-
       return state
         .set('list', list)
-        .set('sessionIds', sessionIds)
+        .set('sessionIds', list.map(({ sessionId }) => sessionId ).toJS())
         .set('favoriteList', list.filter(({ favorite }) => favorite))
-        .set('total', total)
-        .set('keyMap', keyMap)
-        .set('wdTypeCount', wdTypeCount);
+        .set('total', total);
     case SET_AUTOPLAY_VALUES: {
       const sessionIds = state.get('sessionIds')
       const currentSessionId = state.get('current').sessionId

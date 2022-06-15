@@ -51,7 +51,7 @@ class CustomFields extends React.Component {
   }
 
   onChangeSelect = ({ value }) => {
-    const site = this.props.sites.find(s => s.id === value);
+    const site = this.props.sites.find(s => s.id === value.value);
     this.setState({ currentSite: site })
     this.props.fetchList(site.id);
   }

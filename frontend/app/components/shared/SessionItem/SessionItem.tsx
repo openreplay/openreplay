@@ -118,7 +118,7 @@ function SessionItem(props: RouteComponentProps<Props>) {
                 </div>
               </div>
             </div>
-            <div style={{ width: "20%", height: "38px" }} className="px-2 flex flex-col justify-between">
+            <div style={{ width: "20%" }} className="px-2 flex flex-col justify-between">
               <div>{formatTimeOrDate(startedAt, timezone) }</div>
               <div className="flex items-center color-gray-medium">
                 {!isAssist && (
@@ -133,8 +133,8 @@ function SessionItem(props: RouteComponentProps<Props>) {
                 <div>{ live ? <Counter startTime={startedAt} /> : formattedDuration }</div>
               </div>
             </div>
-            <div style={{ width: "30%", height: "38px" }} className="px-2 flex flex-col justify-between">
-              <CountryFlag country={ userCountry } className="mr-2" label />
+            <div style={{ width: "30%" }} className="px-2 flex flex-col justify-between">
+              <div style={{ height: '21px'}}><CountryFlag country={ userCountry } style={{ paddingTop: '4px' }} label /></div>
               <div className="color-gray-medium flex items-center">
                 <span className="capitalize" style={{ maxWidth: '70px'}}>
                   <TextEllipsis text={ capitalize(userBrowser) } popupProps={{ inverted: true, size: "tiny" }} />

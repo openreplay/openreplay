@@ -7,7 +7,7 @@ import {
   assist,
   client,
   errors,
-  funnels,
+  // funnels,
   dashboard,
   withSiteId,
   CLIENT_DEFAULT_TAB,
@@ -21,18 +21,17 @@ import OnboardingExplore from './OnboardingExplore/OnboardingExplore'
 import Announcements from '../Announcements';
 import Notifications from '../Alerts/Notifications';
 import { init as initSite, fetchList as fetchSiteList } from 'Duck/site';
-import Logo from '../../svg/logo-small.svg';
 
 import ErrorGenPanel from 'App/dev/components';
-import ErrorsBadge from 'Shared/ErrorsBadge';
 import Alerts from '../Alerts/Alerts';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
+import { fetchList as fetchMetadata } from 'Duck/customField';
 
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
 const ERRORS_PATH = errors();
-const FUNNELS_PATH = funnels();
+// const FUNNELS_PATH = funnels();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
 const AUTOREFRESH_INTERVAL = 30 * 1000;
 
@@ -52,33 +51,15 @@ const Header = (props) => {
   useEffect(() => {
     activeSite = sites.find(s => s.id == siteId);
     props.initSite(activeSite);
+    props.fetchMetadata();
   }, [sites])
-  
-  const showTrackingModal = (
-    isRoute(SESSIONS_PATH, location.pathname) ||     
-    isRoute(ERRORS_PATH, location.pathname)
-  ) && activeSite && !activeSite.recorded;
-
-  useEffect(() => {
-    if(showTrackingModal) {
-      interval = setInterval(() => {
-        fetchSiteList()
-      }, AUTOREFRESH_INTERVAL);
-    } else if (interval){
-      clearInterval(interval);
-    }
-  }, [showTrackingModal])
 
   return (
-    <div className={ cn(styles.header, showTrackingModal ? styles.placeOnTop : '') }>
+    <div className={ cn(styles.header) }>
       <NavLink to={ withSiteId(SESSIONS_PATH, siteId) }>
         <div className="relative">
-          {/* <img src={ Logo } alt="React Logo" /> */}
-          {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
           <div className="p-2">
             <AnimatedSVG name={ICONS.LOGO_SMALL} size="30" />
-            {/* <object style={{ width: '30px' }} type="image/svg+xml" data={ Logo } /> */}
-            {/* <Logo width={30} /> */}
           </div>
           <div className="absolute bottom-0" style={{ fontSize: '7px', right: '5px' }}>v{window.env.VERSION}</div>
         </div>
@@ -100,7 +81,7 @@ const Header = (props) => {
       >
         { 'Assist' }
       </NavLink>
-      <NavLink
+      {/* <NavLink
         to={ withSiteId(ERRORS_PATH, siteId) }
         className={ styles.nav }
         activeClassName={ styles.active }
@@ -113,7 +94,7 @@ const Header = (props) => {
         activeClassName={ styles.active }
       >
         { 'Funnels' }
-      </NavLink>
+      </NavLink> */}
       <NavLink
         to={ withSiteId(DASHBOARD_PATH, siteId) }
         className={ styles.nav }
@@ -164,5 +145,5 @@ export default withRouter(connect(
     showAlerts: state.getIn([ 'dashboard', 'showAlerts' ]),
     boardingCompletion: state.getIn([ 'dashboard', 'boardingCompletion' ])
   }),
-  { onLogoutClick: logout, initSite, fetchSiteList },
+  { onLogoutClick: logout, initSite, fetchSiteList, fetchMetadata },
 )(Header));
