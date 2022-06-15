@@ -1010,11 +1010,34 @@ class CustomMetricAndTemplate(BaseModel):
         alias_generator = attribute_to_camel_case
 
 
+class LiveFilterType(str, Enum):
+    user_os = FilterType.user_os.value
+    user_browser = FilterType.user_browser.value
+    user_device = FilterType.user_device.value
+    user_country = FilterType.user_country.value
+    user_id = FilterType.user_id.value
+    user_anonymous_id = FilterType.user_anonymous_id.value
+    rev_id = FilterType.rev_id.value
+    page_title = "pageTitle"
+    #
+    # platform = "PLATFORM"
+    # metadata = "METADATA"
+    # issue = "ISSUE"
+    # events_count = "EVENTS_COUNT"
+    # utm_source = "UTM_SOURCE"
+    # utm_medium = "UTM_MEDIUM"
+    # utm_campaign = "UTM_CAMPAIGN"
+
+
+class LiveSessionSearchFilterSchema(BaseModel):
+    value: Union[List[str], str] = Field(...)
+    type: LiveFilterType = Field(...)
+
+
 class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
-    filters: List[SessionSearchFilterSchema] = Field([])
-    sort: str = Field(default="startTs")
+    filters: List[LiveSessionSearchFilterSchema] = Field([])
+    sort: str = Field(default="timestamp")
     order: SortOrderType = Field(default=SortOrderType.desc)
-    group_by_user: bool = Field(default=False)
 
     @root_validator(pre=True)
     def transform_order(cls, values):
