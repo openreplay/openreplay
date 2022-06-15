@@ -50,7 +50,7 @@ const extractSessionIdFromRequest = function (req) {
     }
     return undefined;
 }
-const extractFiltersFromRequest = async function (req, res) {
+const extractPayloadFromRequest = async function (req, res) {
     let filters = {};
     if (process.env.uws === "true") {
         if (req.getQuery("userId")) {
@@ -69,5 +69,5 @@ const extractFiltersFromRequest = async function (req, res) {
 module.exports = {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
-    extractFiltersFromRequest
+    extractPayloadFromRequest
 };
