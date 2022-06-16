@@ -42,22 +42,24 @@ const isValidSession = function (sessionInfo, filters) {
     let foundAll = true;
     for (const [key, values] of Object.entries(filters)) {
         let found = false;
-        for (const [skey, svalue] of Object.entries(sessionInfo)) {
-            if (svalue !== undefined && svalue !== null) {
-                if (typeof (svalue) === "object") {
-                    if (isValidSession(svalue, {[key]: values})) {
-                        found = true;
-                        break;
-                    }
-                } else if (skey.toLowerCase() === key.toLowerCase()) {
-                    for (let v of values) {
-                        if (String(svalue).toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+        if (values !== undefined && values !== null) {
+            for (const [skey, svalue] of Object.entries(sessionInfo)) {
+                if (svalue !== undefined && svalue !== null) {
+                    if (typeof (svalue) === "object") {
+                        if (isValidSession(svalue, {[key]: values})) {
                             found = true;
                             break;
                         }
-                    }
-                    if (found) {
-                        break;
+                    } else if (skey.toLowerCase() === key.toLowerCase()) {
+                        for (let v of values) {
+                            if (String(svalue).toLowerCase().indexOf(v.toLowerCase()) >= 0) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) {
+                            break;
+                        }
                     }
                 }
             }
