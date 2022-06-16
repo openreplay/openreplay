@@ -70,6 +70,8 @@ def __get_errors_list(project_id, user_id, data):
         }
     data.series[0].filter.startDate = data.startTimestamp
     data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.page = data.page
+    data.series[0].filter.limit = data.limit
     return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
@@ -87,6 +89,8 @@ def __get_sessions_list(project_id, user_id, data):
         }
     data.series[0].filter.startDate = data.startTimestamp
     data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.page = data.page
+    data.series[0].filter.limit = data.limit
     return sessions.search2_pg(data=data.series[0].filter, project_id=project_id, user_id=user_id)
 
 
