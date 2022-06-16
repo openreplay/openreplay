@@ -42,13 +42,13 @@ function LiveSessionList(props: Props) {
     label: capitalize(i), value: i
   })).toJS();
 
-  useEffect(() => {
-    if (metaListLoading || metaList.size === 0 || !!filter.sort) return;
+  // useEffect(() => {
+  //   if (metaListLoading || metaList.size === 0 || !!filter.sort) return;
 
-    if (sortOptions[0]) {
-      props.applyFilter({ sort: sortOptions[0].value });
-    }
-  }, [metaListLoading]);
+  //   if (sortOptions[0]) {
+  //     props.applyFilter({ sort: sortOptions[0].value });
+  //   }
+  // }, [metaListLoading]);
 
   // useEffect(() => {
   //   const filteredSessions = filters.size > 0 ? props.list.filter(session => {
