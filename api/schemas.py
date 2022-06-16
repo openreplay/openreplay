@@ -826,7 +826,7 @@ class CustomMetricSessionsPayloadSchema(FlatSessionsSearch, _PaginatedSchema):
         alias_generator = attribute_to_camel_case
 
 
-class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema):
+class CustomMetricChartPayloadSchema(CustomMetricSessionsPayloadSchema, _PaginatedSchema):
     density: int = Field(7)
 
     class Config:
