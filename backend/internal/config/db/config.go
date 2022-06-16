@@ -11,8 +11,7 @@ type Config struct {
 	LoggerTimeout              int
 	GroupDB                    string
 	TopicRawWeb                string
-	TopicRawIOS                string
-	TopicTrigger               string
+	TopicAnalytics             string
 	CommitBatchTimeout         time.Duration
 	BatchQueueLimit            int
 	BatchSizeLimit             int
@@ -25,8 +24,7 @@ func New() *Config {
 		LoggerTimeout:              env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
 		GroupDB:                    env.String("GROUP_DB"),
 		TopicRawWeb:                env.String("TOPIC_RAW_WEB"),
-		TopicRawIOS:                env.String("TOPIC_RAW_IOS"),
-		TopicTrigger:               env.String("TOPIC_TRIGGER"),
+		TopicAnalytics:             env.String("TOPIC_ANALYTICS"),
 		CommitBatchTimeout:         15 * time.Second,
 		BatchQueueLimit:            env.Int("BATCH_QUEUE_LIMIT"),
 		BatchSizeLimit:             env.Int("BATCH_SIZE_LIMIT"),

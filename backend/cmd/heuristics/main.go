@@ -60,8 +60,6 @@ func main() {
 		cfg.GroupHeuristics,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
-			cfg.TopicTrigger, // to receive SessionEnd events
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			statsLogger.Collect(sessionID, meta)
@@ -86,7 +84,7 @@ func main() {
 			os.Exit(0)
 		case <-tick:
 			builderMap.IterateReadyMessages(func(sessionID uint64, readyMsg messages.Message) {
-				producer.Produce(cfg.TopicTrigger, sessionID, messages.Encode(readyMsg))
+				producer.Produce(cfg.TopicAnalytics, sessionID, messages.Encode(readyMsg))
 			})
 			producer.Flush(cfg.ProducerTimeout)
 			consumer.Commit()

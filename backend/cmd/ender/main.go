@@ -42,7 +42,6 @@ func main() {
 		cfg.GroupEnder,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			statsLogger.Collect(sessionID, meta)
@@ -71,7 +70,7 @@ func main() {
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
-				if err := producer.Produce(cfg.TopicTrigger, sessionID, messages.Encode(msg)); err != nil {
+				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
 					log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
 					return false
 				}

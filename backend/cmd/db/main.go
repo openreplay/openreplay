@@ -102,8 +102,7 @@ func main() {
 		cfg.GroupDB,
 		[]string{
 			cfg.TopicRawWeb,
-			cfg.TopicRawIOS,
-			cfg.TopicTrigger, // to receive SessionEnd events
+			cfg.TopicAnalytics,
 		},
 		handler,
 		false,

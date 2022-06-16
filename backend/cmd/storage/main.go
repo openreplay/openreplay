@@ -44,7 +44,7 @@ func main() {
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			switch msg.(type) {
-			case *messages.SessionFinished:
+			case *messages.SessionEnd:
 				srv.UploadKey(strconv.FormatUint(sessionID, 10), 5)
 				// Log timestamp of last processed session
 				counter.Update(sessionID, time.UnixMilli(meta.Timestamp))

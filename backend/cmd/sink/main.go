@@ -60,9 +60,7 @@ func main() {
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupSink,
 		[]string{
-			cfg.TopicRawIOS,
 			cfg.TopicRawWeb,
-			cfg.TopicTrigger,
 		},
 		func(sessionID uint64, message Message, _ *types.Meta) {
 			// Process assets
@@ -73,12 +71,11 @@ func main() {
 			// Filter message
 			typeID := message.TypeID()
 
-			// Send SessionFinished trigger to storage service
-			switch m := message.(type) {
+			// Send SessionEnd trigger to storage service
+			switch message.(type) {
 			case *SessionEnd:
-				msg := &SessionFinished{Timestamp: m.Timestamp}
-				if err := producer.Produce(cfg.TopicTrigger, sessionID, Encode(msg)); err != nil {
-					log.Printf("can't send SessionFinished to trigger topic: %s; sessID: %d", err, sessionID)
+				if err := producer.Produce(cfg.TopicTrigger, sessionID, Encode(message)); err != nil {
+					log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
 				}
 				return
 			}

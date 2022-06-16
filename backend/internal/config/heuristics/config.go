@@ -6,7 +6,7 @@ import (
 
 type Config struct {
 	GroupHeuristics string
-	TopicTrigger    string
+	TopicAnalytics  string
 	LoggerTimeout   int
 	TopicRawWeb     string
 	TopicRawIOS     string
@@ -16,7 +16,7 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		GroupHeuristics: env.String("GROUP_HEURISTICS"),
-		TopicTrigger:    env.String("TOPIC_TRIGGER"),
+		TopicAnalytics:  env.String("TOPIC_ANALYTICS"),
 		LoggerTimeout:   env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
 		TopicRawWeb:     env.String("TOPIC_RAW_WEB"),
 		TopicRawIOS:     env.String("TOPIC_RAW_IOS"),
