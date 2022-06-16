@@ -102,3 +102,11 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+pvc:
+  # This can be either persistentVolumeClaim or hostPath.
+  # In case of pvc, you'll have to provide the pvc name.
+  # For example
+  # name: openreplay-efs
+  name: hostPath
+  hostMountPath: /openreplay/storage/nfs
