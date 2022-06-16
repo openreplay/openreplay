@@ -158,7 +158,7 @@ DO
 $$
     BEGIN
         IF (NOT EXISTS(SELECT 1 FROM metrics WHERE metric_type = 'funnel') AND
-            EXISTS(SELECT 1 FROM app.public.funnels WHERE deleted_at ISNULL))
+            EXISTS(SELECT 1 FROM funnels WHERE deleted_at ISNULL))
         THEN
             ALTER TABLE IF EXISTS metrics
                 ADD COLUMN IF NOT EXISTS _funnel_filter jsonb NULL;
