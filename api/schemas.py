@@ -1043,7 +1043,7 @@ class LiveSessionSearchFilterSchema(BaseModel):
 
 class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     filters: List[LiveSessionSearchFilterSchema] = Field([])
-    sort: LiveFilterType = Field(default=LiveFilterType.timestamp)
+    sort: Union[LiveFilterType, str] = Field(default=LiveFilterType.timestamp)
     order: SortOrderType = Field(default=SortOrderType.desc)
 
     @root_validator(pre=True)
