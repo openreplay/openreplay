@@ -1,0 +1,40 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: efs-cleaner
+spec:
+  schedule: "{{ .Values.cron }}"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: efs-cleaner
+            image: alpine
+            command:
+            - /bin/sh
+            - -c
+            args:
+            - |
+              # Delete all the files older than 7 days
+              find efs -type f -mtime +7 -delete
+            volumeMounts:
+            - mountPath: /mnt/efs
+              name: datadir
+          restartPolicy: Never
+          {{- if eq .Values.pvc.name "hostPath" }}
+          volumes:
+          - name: datadir
+            hostPath:
+              # Ensure the file directory is created.
+              path: {{ .Values.pvc.hostMountPath }}
+              type: DirectoryOrCreate
+          {{- else }}
+          volumes:
+          - name: datadir
+            persistentVolumeClaim:
+              claimName: {{ .Values.pvc.name }}
+          {{- end }}
+

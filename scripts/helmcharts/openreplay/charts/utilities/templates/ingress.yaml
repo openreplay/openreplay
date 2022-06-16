@@ -1,0 +1,121 @@
+{{- if .Values.ingress.enabled }}
+{{- $fullName := include "utilities.fullname" . -}}
+{{- $svcPort := .Values.service.ports.utilities -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "utilities.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/upstream-hash-by: $utilities_x_forwarded_for
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+  {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  tls:
+    - hosts:
+        - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      utilities:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+            path: /ingest/(.*)
+{{- end }}
+
+## TODO:
+## Frontend service from minio will be migrated to nginx atomic container.
+## This ingress is just a workaround.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio
+  namespace: db
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      utilities:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /(minio|mobs|sessions-assets|frontend|static|sourcemaps|ios-images)/
+  tls:
+    - hosts:
+      - {{ .Values.global.domainName }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-frontend
+  namespace: db
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /frontend/$1
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      index /index.html;
+      rewrite ^((?!.(js|css|png|svg|jpg|woff|woff2)).)*$ /frontend/index.html break;
+      proxy_intercept_errors on; # see utilities://nginx.org/en/docs/utilities/ngx_utilities_proxy_module.html#proxy_intercept_errors
+      error_page 404 =200 /index.html;
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      utilities:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9000
+            path: /(.*)
+  tls:
+    - hosts:
+      - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: "{{ tpl .Values.ingress.className . }}" 
+  rules:
+    - host: {{ .Values.global.domainName }} 
+      utilities:
+        paths:
+          - pathType: Prefix
+            backend:
+              service:
+                name: monitoring-grafana
+                port:
+                  number: 80
+            path: /grafana/(.*)
+  tls:
+    - hosts:
+      - {{ .Values.global.domainName }}
+      {{- if .Values.ingress.tls.secretName}}
+      secretName: {{ .Values.ingress.tls.secretName }}
+      {{- end}}
