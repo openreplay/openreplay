@@ -4,6 +4,8 @@ import (
 	"log"
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
+	"openreplay/backend/pkg/db/cache"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/monitoring"
 	"time"
 
@@ -29,6 +31,9 @@ func main() {
 
 	// Load service configuration
 	cfg := ender.New()
+
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres), cfg.ProjectExpirationTimeoutMs)
+	defer pg.Close()
 
 	// Init all modules
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
@@ -70,8 +75,12 @@ func main() {
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
+				if err := pg.InsertSessionEnd(sessionID, msg.Timestamp); err != nil {
+					log.Printf("can't save sessionEnd to database, sessID: %d", sessionID)
+					return false
+				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
-					log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
+					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
 					return false
 				}
 				return true

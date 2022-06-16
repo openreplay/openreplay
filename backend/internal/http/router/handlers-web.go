@@ -98,7 +98,7 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		expTime := startTime.Add(time.Duration(p.MaxSessionDuration) * time.Millisecond)
 		tokenData = &token.TokenData{ID: sessionID, ExpTime: expTime.UnixMilli()}
 
-		e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(&SessionStart{
+		sessionStart := &SessionStart{
 			Timestamp:            req.Timestamp,
 			ProjectID:            uint64(p.ProjectID),
 			TrackerVersion:       req.TrackerVersion,
@@ -115,7 +115,13 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 			UserDeviceMemorySize: req.DeviceMemory,
 			UserDeviceHeapSize:   req.JsHeapSizeLimit,
 			UserID:               req.UserID,
-		}))
+		}
+
+		// Save sessionStart to db
+		e.services.Database.InsertWebSessionStart(sessionID, sessionStart)
+
+		// Send sessionStart message to kafka
+		e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(sessionStart))
 	}
 
 	ResponseWithJSON(w, &StartSessionResponse{

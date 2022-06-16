@@ -38,7 +38,7 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, tp string, value str
 }
 
 func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
-	if err := conn.exec(`
+	return conn.exec(`
 		INSERT INTO sessions (
 			session_id, project_id, start_ts,
 			user_uuid, user_device, user_device_type, user_country,
@@ -66,9 +66,10 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 		s.Platform,
 		s.UserAgent, s.UserBrowser, s.UserBrowserVersion, s.UserDeviceMemorySize, s.UserDeviceHeapSize,
 		s.UserID,
-	); err != nil {
-		return err
-	}
+	)
+}
+
+func (conn *Conn) HandleSessionStart(sessionID uint64, s *types.Session) error {
 	conn.insertAutocompleteValue(sessionID, getAutocompleteType("USEROS", s.Platform), s.UserOS)
 	conn.insertAutocompleteValue(sessionID, getAutocompleteType("USERDEVICE", s.Platform), s.UserDevice)
 	conn.insertAutocompleteValue(sessionID, getAutocompleteType("USERCOUNTRY", s.Platform), s.UserCountry)
@@ -79,6 +80,20 @@ func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
 }
 
 func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, error) {
+	var dur uint64
+	if err := conn.queryRow(`
+		UPDATE sessions SET duration=$2 - start_ts
+		WHERE session_id=$1
+		RETURNING duration
+	`,
+		sessionID, timestamp,
+	).Scan(&dur); err != nil {
+		return 0, err
+	}
+	return dur, nil
+}
+
+func (conn *Conn) HandleSessionEnd(sessionID uint64, timestamp uint64) error {
 	// TODO: search acceleration?
 	sqlRequest := `
 	UPDATE sessions
@@ -96,18 +111,7 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 
 	// Record approximate message size
 	conn.updateBatchSize(sessionID, len(sqlRequest)+8)
-
-	var dur uint64
-	if err := conn.queryRow(`
-		UPDATE sessions SET duration=$2 - start_ts
-		WHERE session_id=$1
-		RETURNING duration
-	`,
-		sessionID, timestamp,
-	).Scan(&dur); err != nil {
-		return 0, err
-	}
-	return dur, nil
+	return nil
 }
 
 func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64, url string, duration uint64, success bool) error {

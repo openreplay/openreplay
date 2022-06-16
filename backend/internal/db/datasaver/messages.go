@@ -15,9 +15,9 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 
 	// Web
 	case *SessionStart:
-		return mi.pg.InsertWebSessionStart(sessionID, m)
+		return mi.pg.HandleWebSessionStart(sessionID, m)
 	case *SessionEnd:
-		return mi.pg.InsertWebSessionEnd(sessionID, m)
+		return mi.pg.HandleWebSessionEnd(sessionID, m)
 	case *UserID:
 		return mi.pg.InsertWebUserID(sessionID, m)
 	case *UserAnonymousID:
