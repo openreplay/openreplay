@@ -1053,7 +1053,7 @@ class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
         if values.get("filters") is not None:
             i = 0
             while i < len(values["filters"]):
-                if values["filters"][i]["values"] is None or len(values["filters"][i]["values"]) == 0:
+                if values["filters"][i]["value"] is None or len(values["filters"][i]["value"]) == 0:
                     del values["filters"][i]
                 else:
                     i += 1
