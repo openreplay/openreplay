@@ -74,9 +74,9 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
           case WorkerActivityLogStatus.Console:
             return console.error(msg, 'STATUS:', workerStatus, data)
           case WorkerActivityLogStatus.Error:
-            throw new Error(`${msg} ----- STATUS: ${workerStatus}`);
+            throw new Error(msg + '----- STATUS:' + workerStatus);
           case WorkerActivityLogStatus.ErrorWithData:
-            throw new Error(`${msg} ----- STATUS: ${workerStatus} --- ${JSON.stringify(data)}`)
+            throw new Error(msg + '----- STATUS:' + workerStatus + JSON.stringify(data))
           default:
             return;
           }
