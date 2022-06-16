@@ -5,6 +5,7 @@ import Period, { LAST_7_DAYS } from 'Types/app/period';
 import { components } from 'react-select';
 import DateRangePopup from 'Shared/DateRangeDropdown/DateRangePopup';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
+import cn from 'classnames';
 
 interface Props {
     period: any,

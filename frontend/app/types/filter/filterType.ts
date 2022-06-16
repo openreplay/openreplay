@@ -93,5 +93,5 @@ export enum FilterKey {
   GRAPHQL_RESPONSE_BODY = "GRAPHQL_RESPONSE_BODY",
 
   SESSIONS = 'SESSIONS',
-  ERRORS = 'ERRORS'
+  ERRORS = 'js_exception'
 }

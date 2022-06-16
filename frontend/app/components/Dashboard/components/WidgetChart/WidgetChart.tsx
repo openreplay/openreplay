@@ -84,7 +84,7 @@ function WidgetChart(props: Props) {
         prevMetricRef.current = metric;
         const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget);
-    }, [period, depsString]);
+    }, [period, depsString, _metric.page]);
 
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;
@@ -131,19 +131,24 @@ function WidgetChart(props: Props) {
 
         if (metricType === 'table') {
             if (metricOf === 'SESSIONS') {
-                return <CustomMetricTableSessions
-                    metric={metric}
-                    data={data}
-                    // onClick={onChartClick}
-                    isTemplate={isTemplate}
+                return (
+                    <CustomMetricTableSessions
+                        metric={_metric}
+                        data={data}
+                        // onClick={onChartClick}
+                        isTemplate={isTemplate}
+                        isEdit={!isWidget && !isTemplate}
                     />
+                )
             }
             if (viewType === 'table') {
-                return <CustomMetricTable
-                    metric={metric} data={data[0]}
-                    onClick={onChartClick}
-                    isTemplate={isTemplate}
-                />;
+                return (
+                    <CustomMetricTable
+                        metric={metric} data={data[0]}
+                        onClick={onChartClick}
+                        isTemplate={isTemplate}
+                    />
+                )
             } else if (viewType === 'pieChart') {
                 return (
                     <CustomMetricPieChart

@@ -1,6 +1,7 @@
 import Widget, { IWidget } from "App/mstore/types/widget";
 import APIClient from 'App/api_client';
 import { IFilter } from "App/mstore/types/filter";
+import { fetchErrorCheck } from "App/utils";
 
 export interface IMetricService {
     initClient(client?: APIClient): void;
@@ -59,8 +60,8 @@ export default class MetricService implements IMetricService {
         const method = isCreating ? 'post' : 'put';
         const url = isCreating ? '/metrics' : '/metrics/' + data[Widget.ID_KEY];
         return this.client[method](url, data)
-            .then((response: { json: () => any; }) => response.json())
-            .then((response: { data: any; }) => response.data || {});
+            .then(fetchErrorCheck)
+            .then((response: { data: any; }) => response.data || {})
     }
 
     /**
