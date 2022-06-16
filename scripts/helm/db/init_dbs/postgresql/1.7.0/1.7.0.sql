@@ -152,3 +152,28 @@ ON CONFLICT (predefined_key) DO UPDATE
         is_public=excluded.is_public,
         metric_type=excluded.metric_type,
         view_type=excluded.view_type;
+
+BEGIN;
+DO
+$$
+    BEGIN
+        IF (NOT EXISTS(SELECT 1 FROM metrics WHERE metric_type = 'funnel') AND
+            EXISTS(SELECT 1 FROM app.public.funnels WHERE deleted_at ISNULL))
+        THEN
+            ALTER TABLE IF EXISTS metrics
+                ADD COLUMN IF NOT EXISTS _funnel_filter jsonb NULL;
+            WITH f_t_m AS (INSERT INTO metrics (project_id, user_id, name, metric_type, is_public, _funnel_filter)
+                SELECT project_id, user_id, name, 'funnel', is_public, filter
+                FROM funnels
+                WHERE deleted_at ISNULL
+                RETURNING metric_id,_funnel_filter)
+            INSERT
+            INTO metric_series(metric_id, name, filter, index)
+            SELECT metric_id, 'Series 1', _funnel_filter, 0
+            FROM f_t_m;
+            ALTER TABLE IF EXISTS metrics
+                DROP COLUMN IF EXISTS _funnel_filter;
+        END IF;
+    END
+$$;
+COMMIT;
