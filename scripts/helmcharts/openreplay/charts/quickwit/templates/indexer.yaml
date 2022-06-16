@@ -37,7 +37,7 @@ spec:
           {{- .Values.healthCheck | toYaml | nindent 10}}
           {{- end}}
           args:
-            - service run searcher
+            - service run indexer --config /opt/quickwit/indexConfig.yaml
           env:
             - name: AWS_DEFAULT_REGION
               value: "{{ .Values.global.s3.region }}"
@@ -57,6 +57,14 @@ spec:
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+          - name: indexConfig
+            mountPath: /opt/quickwit/indexConfig.yaml
+            subPath: indexConfig.yaml
+      volumes:
+      - name: indexConfig
+        configMap:
+          name: {{ include "quickwit.fullname" . }}-indexconfig
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -14,6 +14,23 @@ imagePullSecrets: []
 nameOverride: "quickwit"
 fullnameOverride: "quickwit-openreplay"
 
+
+indexConfig: |-
+  # Version of the index config file format
+  version: 0
+
+  # Sources
+  sources:
+    - source_id: openreplay-kafka-source
+      source_type: kafka
+      params:
+        topic: quickwit-indexer
+        client_params:
+          bootstrap.servers: '{{ .Values.global.kafka.kafkaHost }}:{{ .Values.global.kafka.kafkaPort }}'
+          {{- if eq .Values.global.kafka.kafkaUseSsl "true" }}
+          security.protocol: SSL
+          {{- end}}
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
@@ -35,10 +52,6 @@ securityContext: {}
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
-
-#service:
-#  type: ClusterIP
-#  port: 9000
 
 service:
   type: ClusterIP

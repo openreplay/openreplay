@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quickwit.fullname" . }}-indexconfig
+  labels:
+    {{- include "quickwit.labels" . | nindent 4 }}
+data:
+  indexConfig.yaml: |-
+    {{ tpl .Values.indexConfig . | nindent 4 }}

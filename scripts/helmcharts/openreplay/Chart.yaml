@@ -31,5 +31,5 @@ dependencies:
     condition: ingress-nginx.enabled
   - name: quickwit
     version: "0.2.1"
-    repository: "https://kubernetes.github.io/ingress-nginx"
+    repository: "file://charts/quickwit"
     condition: quickwit.enabled
