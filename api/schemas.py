@@ -1018,6 +1018,7 @@ class LiveFilterType(str, Enum):
     user_id = FilterType.user_id.value
     user_anonymous_id = FilterType.user_anonymous_id.value
     rev_id = FilterType.rev_id.value
+    platform = FilterType.platform.value
     page_title = "PAGETITLE"
     session_id = "SESSIONID"
     metadata = "METADATA"
@@ -1025,7 +1026,6 @@ class LiveFilterType(str, Enum):
     tracker_version = "TRACKERVERSION"
     user_browser_version = "USERBROWSERVERSION"
     user_device_type = "USERDEVICETYPE",
-    timestamp = "TIMESTAMP"
 
 
 class LiveSessionSearchFilterSchema(BaseModel):
@@ -1043,13 +1043,26 @@ class LiveSessionSearchFilterSchema(BaseModel):
 
 class LiveSessionsSearchPayloadSchema(_PaginatedSchema):
     filters: List[LiveSessionSearchFilterSchema] = Field([])
-    sort: Union[LiveFilterType, str] = Field(default=LiveFilterType.timestamp)
+    sort: Union[LiveFilterType, str] = Field(default="TIMESTAMP")
     order: SortOrderType = Field(default=SortOrderType.desc)
 
     @root_validator(pre=True)
-    def transform_order(cls, values):
+    def transform(cls, values):
         if values.get("order") is not None:
             values["order"] = values["order"].upper()
+        if values.get("filters") is not None:
+            i = 0
+            while i < len(values["filters"]):
+                if values["filters"][i]["values"] is None or len(values["filters"][i]["values"]) == 0:
+                    del values["filters"][i]
+                else:
+                    i += 1
+            for i in values["filters"]:
+                if i.get("type") == LiveFilterType.platform.value:
+                    i["type"] = LiveFilterType.user_device_type.value
+        if values.get("sort") is not None:
+            if values["sort"].lower() == "startts":
+                values["sort"] = "TIMESTAMP"
         return values
 
     class Config:

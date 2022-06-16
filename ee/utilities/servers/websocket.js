@@ -118,7 +118,10 @@ const socketsListByProject = async function (req, res) {
             }
         }
     }
-    respond(res, sortPaginate(liveSessions[_projectKey] || [], filters));
+    liveSessions[_projectKey] = liveSessions[_projectKey] || [];
+    respond(res, _sessionId === undefined ? sortPaginate(liveSessions[_projectKey], filters)
+        : liveSessions[_projectKey].length > 0 ? liveSessions[_projectKey][0]
+            : null);
 }
 
 const socketsLive = async function (req, res) {
@@ -172,7 +175,10 @@ const socketsLiveByProject = async function (req, res) {
             }
         }
     }
-    respond(res, sortPaginate(liveSessions[_projectKey] || [], filters));
+    liveSessions[_projectKey] = liveSessions[_projectKey] || [];
+    respond(res, _sessionId === undefined ? sortPaginate(liveSessions[_projectKey], filters)
+        : liveSessions[_projectKey].length > 0 ? liveSessions[_projectKey][0]
+            : null);
 }
 
 const autocomplete = async function (req, res) {
