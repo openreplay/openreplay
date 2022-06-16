@@ -25,4 +25,4 @@ export enum WorkerActivityLogStatus {
 }
 
 
-export type WorkerMessageData = null | "stop" | Start | Auth | Array<{ _id: number }> | Log
+export type WorkerMessageData = null | "stop" | Start | Auth | Array<{ _id: number }>
