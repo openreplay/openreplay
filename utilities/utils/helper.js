@@ -136,29 +136,40 @@ const extractPayloadFromRequest = function (req) {
     debug && console.log("payload/filters:" + JSON.stringify(filters))
     return filters;
 }
-const sortPaginate = function (list, filters) {
-    let skey = "timestamp";
-    if (list.length > 0 && filters.sort.key) {
-        for (let key of Object.keys(list[0])) {
-            if (key.toLowerCase() == filters.sort.key.toLowerCase()) {
-                skey = key;
-                break;
+const getValue = function (obj, key) {
+    if (obj !== undefined && obj !== null) {
+        let val;
+        for (let k of Object.keys(obj)) {
+            if (typeof (obj[k]) === "object") {
+                val = getValue(obj[k], key);
+            } else if (k.toLowerCase() === key.toLowerCase()) {
+                val = obj[k];
+            }
+
+            if (val !== undefined) {
+                return val;
             }
         }
     }
+    return undefined;
+}
+const sortPaginate = function (list, filters) {
+    const total = list.length;
     list.sort((a, b) => {
-        return a[skey] > b[skey] ? 1 : a[skey] < b[skey] ? -1 : 0;
-    })
+        const vA = getValue(a, filters.sort.key || "timestamp");
+        const vB = getValue(b, filters.sort.key || "timestamp");
+        return vA > vB ? 1 : vA < vB ? -1 : 0;
+    });
 
     if (filters.sort.order) {
         list.reverse();
     }
 
     if (filters.pagination.page && filters.pagination.limit) {
-        return list.slice((filters.pagination.page - 1) * filters.pagination.limit,
+        list = list.slice((filters.pagination.page - 1) * filters.pagination.limit,
             filters.pagination.page * filters.pagination.limit);
     }
-    return list;
+    return {"total": total, "sessions": list};
 }
 const uniqueAutocomplete = function (list) {
     let _list = [];

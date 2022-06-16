@@ -63,11 +63,12 @@ def __get_live_sessions_ws(project_id, data):
         except:
             print("couldn't get response")
         live_peers = []
-
-    for s in live_peers:
+    _live_peers = live_peers
+    if "sessions" in live_peers:
+        _live_peers = live_peers["sessions"]
+    for s in _live_peers:
         s["live"] = True
         s["projectId"] = project_id
-    live_peers = sorted(live_peers, key=lambda l: l.get("timestamp", 0), reverse=True)
     return live_peers
 
 
