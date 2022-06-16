@@ -69,15 +69,16 @@ function WidgetForm(props: Props) {
 
     const onSave = () => {
         const wasCreating = !metric.exists()
-        metricStore.save(metric, dashboardId).then((metric: any) => {
-            if (wasCreating) {
-                if (parseInt(dashboardId) > 0) {
-                    history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
-                } else {
-                    history.replace(withSiteId(metricDetails(metric.metricId), siteId));
+        metricStore.save(metric, dashboardId)
+            .then((metric: any) => {
+                if (wasCreating) {
+                    if (parseInt(dashboardId) > 0) {
+                        history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                    } else {
+                        history.replace(withSiteId(metricDetails(metric.metricId), siteId));
+                    }
                 }
-            }
-        });
+            });
     }
 
     const onDelete = async () => {

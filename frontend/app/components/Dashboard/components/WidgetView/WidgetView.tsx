@@ -10,6 +10,7 @@ import WidgetName from '../WidgetName';
 import { withSiteId } from 'App/routes';
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
+import { FilterKey } from 'Types/filter/filterType';
 interface Props {
     history: any;
     match: any
@@ -80,7 +81,7 @@ function WidgetView(props: Props) {
                 </div>
 
                 <WidgetPreview  className="mt-8" />
-                { widget.metricOf !== 'SESSIONS' && widget.metricOf !== 'ERRORS' && (
+                { widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                     <>
                         { (widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" /> }
                         { widget.metricType === 'funnel' && <FunnelIssues /> }

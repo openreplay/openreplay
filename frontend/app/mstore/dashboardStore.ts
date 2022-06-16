@@ -434,8 +434,15 @@ export default class DashboardStore implements IDashboardSotre {
 
     fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
         const period = this.period.toTimestamps()
+        const params = { ...period, ...data, key: metric.predefinedKey }
+        
+        if (metric.page && metric.limit) {
+            params['page'] = metric.page
+            params['limit'] = metric.limit
+        }
+
         return new Promise((resolve, reject) => {
-            return metricService.getMetricChartData(metric, { ...period, ...data, key: metric.predefinedKey, page: 1, limit: 10 }, isWidget)
+            return metricService.getMetricChartData(metric, params, isWidget)
                 .then((data: any) => {
                     if (metric.metricType === 'predefined' && metric.viewType === 'overview') {
                         const _data = { ...data, chart: getChartFormatter(this.period)(data.chart) }

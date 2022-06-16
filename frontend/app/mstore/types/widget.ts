@@ -33,10 +33,13 @@ export interface IWidget {
     dashboardId: any
     colSpan: number
     predefinedKey: string
+    
+    page: number
+    limit: number
 
     params: any
 
-    udpateKey(key: string, value: any): void
+    updateKey(key: string, value: any): void
     removeSeries(index: number): void
     addSeries(): void
     fromJson(json: any): void
@@ -68,6 +71,8 @@ export default class Widget implements IWidget {
     dashboards: any[] = []
     dashboardIds: any[] = []
     config: any = {}
+    page: number = 1
+    limit: number = 5
     params: any = { density: 70 }
 
     sessionsLoading: boolean = false
@@ -100,6 +105,7 @@ export default class Widget implements IWidget {
             dashboardId: observable,
             colSpan: observable,
             series: observable,
+            page: observable,
             
             addSeries: action,
             removeSeries: action,
@@ -107,14 +113,14 @@ export default class Widget implements IWidget {
             toJson: action,
             validate: action,
             update: action,
-            udpateKey: action,
+            updateKey: action,
         })
 
         const filterSeries = new FilterSeries()
         this.series.push(filterSeries)
     }
 
-    udpateKey(key: string, value: any) {
+    updateKey(key: string, value: any) {
         this[key] = value
     }
 

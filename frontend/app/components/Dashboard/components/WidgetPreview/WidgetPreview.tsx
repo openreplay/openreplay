@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { SegmentSelection } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import SelectDateRange from 'Shared/SelectDateRange';
+import { FilterKey } from 'Types/filter/filterType';
 
 interface Props {
     className?: string;
@@ -16,6 +17,7 @@ function WidgetPreview(props: Props) {
     const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
+    const disableVisualization = useObserver(() => metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS);
 
     const chagneViewType = (e, { name, value }: any) => {
         metric.update({ [ name ]: value });
@@ -55,9 +57,11 @@ function WidgetPreview(props: Props) {
                                 onSelect={ chagneViewType }
                                 value={{ value: metric.viewType }}
                                 list={[
-                                { value: 'table', name: 'Table', icon: 'table' },
-                                { value: 'pieChart', name: 'Chart', icon: 'pie-chart-fill' },
+                                    { value: 'table', name: 'Table', icon: 'table' },
+                                    { value: 'pieChart', name: 'Chart', icon: 'pie-chart-fill' },
                                 ]}
+                                disabled={disableVisualization}
+                                disabledMessage="Chart view is not supported"
                             />
                         </>
                     )}

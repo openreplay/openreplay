@@ -5,6 +5,7 @@
   border: solid thin $gray-light;
   border-radius: 3px;
   overflow: hidden;
+  user-select: none;
 
   & .item {
     color: $gray-medium;
@@ -79,4 +80,10 @@
 .icons .item {
   padding: 4px !important;
   font-size: 12px;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }

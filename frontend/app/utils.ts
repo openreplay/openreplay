@@ -309,3 +309,10 @@ export const exportCSVFile = (headers, items, fileTitle) => {
       }
   }
 }
+
+export const fetchErrorCheck = (response: any) =>  {
+  if (!response.ok) {
+      throw Error(response.statusText);
+  }
+  return response.json();
+}
