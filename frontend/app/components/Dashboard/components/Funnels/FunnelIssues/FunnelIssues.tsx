@@ -7,7 +7,7 @@ import FunnelIssuesSort from '../FunnelIssuesSort';
 import FunnelIssuesList from '../FunnelIssuesList';
 import { DateTime } from 'luxon';
 import { debounce } from 'App/utils';
-import useIsMounted from 'App/hooks/useIsMounted'
+import useIsMounted from 'App/hooks/useIsMounted';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 function FunnelIssues() {

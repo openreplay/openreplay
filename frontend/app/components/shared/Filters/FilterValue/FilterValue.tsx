@@ -57,17 +57,16 @@ function FilterValue(props: Props) {
   }
 
   const getParms = (key: any) => {
-    let params = {};
+    let params: any = { type: filter.key };
     switch (filter.category) {
       case FilterCategory.METADATA:
         params = { type: FilterKey.METADATA, key: key };
-      default:
-        params = { type: filter.key };
     }
 
     if (isRoute(ASSIST_ROUTE, window.location.pathname)) {
       params = { ...params, live: true };
     }
+
     return params;
   }
 

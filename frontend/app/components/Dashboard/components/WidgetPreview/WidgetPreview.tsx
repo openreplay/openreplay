@@ -66,6 +66,7 @@ function WidgetPreview(props: Props) {
                         <SelectDateRange
                             period={period}
                             onChange={(period: any) => dashboardStore.setPeriod(period)}
+                            right={true}
                         />
                     </div>
             </div>

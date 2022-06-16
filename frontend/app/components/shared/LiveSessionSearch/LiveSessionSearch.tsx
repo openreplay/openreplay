@@ -1,11 +1,9 @@
 import React from 'react';
 import FilterList from 'Shared/Filters/FilterList';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/liveSearch';
-import SaveFunnelButton from '../SaveFunnelButton';
 
 interface Props {
   appliedFilter: any;

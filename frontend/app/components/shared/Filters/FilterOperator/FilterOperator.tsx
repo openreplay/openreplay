@@ -57,9 +57,10 @@ interface Props {
   className?: string;
   options?: any;
   value?: string;
+  isDisabled?: boolean;
 }
 function FilterOperator(props: Props) {
-  const { options, value, onChange, className = '' } = props;
+  const { options, value, onChange, isDisabled = false, className = '' } = props;
 
   return (
     <div className="mx-2">
@@ -68,6 +69,7 @@ function FilterOperator(props: Props) {
         options={options}
         styles={dropdownStyles}
         placeholder="Select"
+        isDisabled={isDisabled}
         defaultValue={ value }
         onChange={({ value }: any) => onChange(null, { name: 'operator', value })}
       />

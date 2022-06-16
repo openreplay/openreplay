@@ -17,7 +17,7 @@ const DropdownChips = ({
   }
 
   const onSelect = ({ value }) => {
-    const newSlected = selected.concat(value);
+    const newSlected = selected.concat(value.value);
     onChange(newSlected)
   };
 

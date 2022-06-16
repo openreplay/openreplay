@@ -51,9 +51,8 @@ function FilterModal(props: Props) {
   } = props;
   const hasSearchQuery = searchQuery && searchQuery.length > 0;
   const showSearchList = isMainSearch && searchQuery.length > 0;
-  console.log('filters', props.filters)
 
-  const onFilterSearchClick = (filter) => {
+  const onFilterSearchClick = (filter: any) => {
     const _filter = filtersMap[filter.type];
     _filter.value = [filter.value];
     onFilterClick(_filter);

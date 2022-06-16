@@ -44,7 +44,10 @@ function FilterSelection(props: Props) {
       </OutsideClickDetectingDiv>
       {showModal && (
         <div className="absolute left-0 border shadow rounded bg-white z-50">
-          <FilterModal onFilterClick={onFilterClick} filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList } />
+          <FilterModal
+            onFilterClick={onFilterClick}
+            filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
+          />
         </div>
       )}
     </div>
@@ -52,7 +55,7 @@ function FilterSelection(props: Props) {
 }
 
 export default connect((state: any) => ({
-  filters: state.getIn([ 'search', 'filterList' ]),
-  liveFilters: state.getIn([ 'search', 'filterListLive' ]),
+  filterList: state.getIn([ 'search', 'filterList' ]),
+  filterListLive: state.getIn([ 'search', 'filterListLive' ]),
   isLive: state.getIn([ 'sessions', 'activeTab' ]).type === 'live',
 }), { })(FilterSelection);

@@ -16,9 +16,9 @@ interface Props {
     [x:string]: any;
 }
 export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
-    const defaultSelected = options.find(o => o.value === defaultValue) || options[0];
+    const defaultSelected = defaultValue ? (options.find(o => o.value === defaultValue) || options[0]): null;
     const customStyles = {
-        option: (provided, state) => ({
+        option: (provided: any, state: any) => ({
             ...provided,
             whiteSpace: 'nowrap',
             transition: 'all 0.3s',

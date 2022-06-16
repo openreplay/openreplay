@@ -6,7 +6,7 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }]
 
-export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' };
+// export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' };
 export const filters = [
   { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
   { key: FilterKey.INPUT, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Input', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/input', isEvent: true },
@@ -29,7 +29,7 @@ export const filters = [
     ]},
   { key: FilterKey.STATEACTION, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'StateAction', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/state-action', isEvent: true },
   { key: FilterKey.ERROR, type: FilterType.MULTIPLE, category: FilterCategory.JAVASCRIPT, label: 'Error', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/error', isEvent: true },
-    { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
+  // { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata', isEvent: true },
   
     // FILTERS
   { key: FilterKey.USER_OS, type: FilterType.MULTIPLE, category: FilterCategory.GEAR, label: 'User OS', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/os' },
@@ -63,9 +63,16 @@ export const liveFiltersMap = filters.reduce((acc, filter) => {
   if (
     filter.category !== FilterCategory.INTERACTIONS &&
     filter.category !== FilterCategory.JAVASCRIPT &&
-    filter.category !== FilterCategory.PERFORMANCE
+    filter.category !== FilterCategory.PERFORMANCE &&
+    filter.key !== FilterKey.DURATION &&
+    filter.key !== FilterKey.REFERRER
   ) {
     acc[filter.key] = filter;
+    acc[filter.key].operator = 'contains';
+    acc[filter.key].operatorDisabled = true;
+    if (filter.key === FilterKey.PLATFORM) {
+      acc[filter.key].operator = 'is';
+    }
   }
   return acc
 }, {});
@@ -98,12 +105,19 @@ export const addElementToFiltersMap = (
 export const addElementToLiveFiltersMap = (
   category = FilterCategory.METADATA,
   key,
-  type = FilterType.STRING,
+  type = FilterType.MULTIPLE,
   operator = 'contains',
   operatorOptions = containsFilters,
   icon = 'filters/metadata'
 ) => {
-  liveFiltersMap[key] = { key, type, category, label: capitalize(key), operator: operator, operatorOptions, icon, isLive: true }
+  liveFiltersMap[key] = {
+      key, type, category, label: capitalize(key),
+      operator: operator,
+      operatorOptions,
+      icon,
+      operatorDisabled: true,
+      isLive: true
+  }
 }
 
 export default Record({
@@ -132,11 +146,13 @@ export default Record({
 
   operator: '',
   operatorOptions: [],  
+  operatorDisabled: false,
   isEvent: false,
   index: 0,
   options: [],
 
   filters: [],
+
 }, {
   keyKey: "_key",
   fromJS: ({ value, type, subFilter = false, ...filter }) => {
@@ -189,6 +205,7 @@ export const generateLiveFilterOptions = (map) => {
   Object.keys(map).filter(i => map[i].isLive).forEach(key => {
     const filter = map[key];
     filter.operator = 'contains';
+    filter.operatorDisabled = true;
     if (filterSection.hasOwnProperty(filter.category)) {
       filterSection[filter.category].push(filter);
     } else {

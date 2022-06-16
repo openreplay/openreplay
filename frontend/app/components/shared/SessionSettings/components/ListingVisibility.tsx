@@ -50,7 +50,7 @@ function ListingVisibility(props) {
                         type="number"
                         name="count"
                         placeholder="E.g 10"
-                        style={{ height: '38px', width: '100%'}}
+                        // style={{ height: '38px', width: '100%'}}
                         onChange={(e, { value }) => {
                             changeSettings({ count: value })
                         }}

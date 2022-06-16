@@ -120,7 +120,7 @@ export const checkFilterValue = (value) => {
   return Array.isArray(value) ? (value.length === 0 ? [""] : value) : [value];
 }
 
-export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent, filters }) => ({
+export const filterMap = ({category, value, key, operator, sourceOperator, source, custom, isEvent, filters, sort, order }) => ({
   value: checkValues(key, value),
   custom,
   type: category === FilterCategory.METADATA ? FilterKey.METADATA : key,

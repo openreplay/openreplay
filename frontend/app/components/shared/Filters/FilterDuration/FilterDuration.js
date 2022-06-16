@@ -8,7 +8,7 @@ const toMs = value => value !== '' ? value * 1000 * 60 : null
 
 export default class FilterDuration extends React.PureComponent {
   state = { focused: false }
-  onChange = (e, { name, value }) => {
+  onChange = ({ target: { name, value }}) => {
     const { onChange } = this.props;
     if (typeof onChange === 'function') {
       onChange({

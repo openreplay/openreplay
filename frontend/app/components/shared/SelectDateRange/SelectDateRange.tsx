@@ -10,11 +10,12 @@ interface Props {
     period: any,
     onChange: (data: any) => void;
     disableCustom?: boolean;
+    right?: boolean;
     [x: string]: any;
 }
 function SelectDateRange(props: Props) {
     const [isCustom, setIsCustom] = React.useState(false);
-    const { period, disableCustom = false, ...rest } = props;
+    const { right = false, period, disableCustom = false, ...rest } = props;
     let selectedValue = DATE_RANGE_OPTIONS.find((obj: any) => obj.value === period.rangeName)
     const options = DATE_RANGE_OPTIONS.filter((obj: any) => disableCustom ? obj.value !== CUSTOM_RANGE : true);
 
@@ -54,7 +55,7 @@ function SelectDateRange(props: Props) {
             <OutsideClickDetectingDiv 
                 onClickOutside={() => setIsCustom(false)}
             >
-                <div className="absolute top-0 mt-10 z-40 right-0" style={{ 
+                <div className={ cn("absolute top-0 mt-10 z-40", { 'right-0' : right })} style={{ 
                     width: '770px',
                     // margin: 'auto 50vh 0',
                     // transform: 'translateX(-50%)'

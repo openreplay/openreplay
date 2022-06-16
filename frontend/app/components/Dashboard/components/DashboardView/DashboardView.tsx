@@ -129,6 +129,7 @@ function DashboardView(props: RouteComponentProps<Props>) {
                                     plain
                                     period={period}
                                     onChange={(period: any) => dashboardStore.setPeriod(period)}
+                                    right={true}
                                 />
                             </div>
                             <div className="mx-4" />

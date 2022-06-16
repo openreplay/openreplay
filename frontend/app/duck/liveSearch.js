@@ -3,7 +3,6 @@ import { fetchListType, fetchType, editType } from './funcTools/crud';
 import { createRequestReducer } from './funcTools/request';
 import { mergeReducers, success } from './funcTools/tools';
 import Filter from 'Types/filter';
-// import { fetchList as fetchSessionList } from './sessions';
 import { liveFiltersMap, filtersMap } from 'Types/filter/newFilter';
 import { filterMap, checkFilterValue, hasFilterApplied } from './search';
 import Session from 'Types/session';
@@ -17,29 +16,24 @@ const EDIT = editType(name);
 const CLEAR_SEARCH = `${name}/CLEAR_SEARCH`;
 const APPLY = `${name}/APPLY`;
 const UPDATE_CURRENT_PAGE = `${name}/UPDATE_CURRENT_PAGE`;
-const UPDATE_SORT = `${name}/UPDATE_SORT`;
 const FETCH_SESSION_LIST = fetchListType(`${name}/FETCH_SESSION_LIST`);
 
 const initialState = Map({
 	list: List(),
-	instance: new Filter({ filters: [] }),
+	instance: new Filter({ filters: [], sort: '' }),
   filterSearchList: {},
   currentPage: 1,
-  sort: {
-    order: 'asc',
-    field: ''
-  }
 });
 
 function reducer(state = initialState, action = {}) {
 	switch (action.type) {
+    case APPLY:
+      return state.mergeIn(['instance'], action.filter).set('currentPage', 1);
     case EDIT:
-      return state.mergeIn(['instance'], action.instance);
+      return state.mergeIn(['instance'], action.instance).set('currentPage', 1);
     case UPDATE_CURRENT_PAGE:
       return state.set('currentPage', action.page);
-    case UPDATE_SORT:
-      return state.mergeIn(['sort'], action.sort);
-    case FETCH_SESSION_LIST:
+    case success(FETCH_SESSION_LIST):
       const { sessions, total } = action.data;
       const list = List(sessions).map(Session);
       return state
@@ -72,7 +66,6 @@ const reduceThenFetchResource = actionCreator => (...args) => (dispatch, getStat
   dispatch(actionCreator(...args));
   const filter = getState().getIn([ 'liveSearch', 'instance']).toData();
   filter.filters = filter.filters.map(filterMap);
-
   filter.limit = 10;
   filter.page = getState().getIn([ 'liveSearch', 'currentPage']);
 
@@ -91,10 +84,9 @@ export const edit = reduceThenFetchResource((instance) => ({
   instance,
 }));
 
-export const applyFilter = reduceThenFetchResource((filter, fromUrl=false) => ({
+export const applyFilter = reduceThenFetchResource((filter) => ({
   type: APPLY,
   filter,
-  fromUrl,
 }));
 
 export const fetchSessions = (filter) => (dispatch, getState) => {
@@ -125,7 +117,7 @@ export const addFilter = (filter) => (dispatch, getState) => {
 }
 
 export const addFilterByKeyAndValue = (key, value, operator = undefined) => (dispatch, getState) => {
-  let defaultFilter = filtersMap[key];
+  let defaultFilter = liveFiltersMap[key];
   defaultFilter.value = value;
   if (operator) {
     defaultFilter.operator = operator;
@@ -133,19 +125,10 @@ export const addFilterByKeyAndValue = (key, value, operator = undefined) => (dis
   dispatch(addFilter(defaultFilter));
 }
 
-export function updateCurrentPage(page) {
-  return {
-    type: UPDATE_CURRENT_PAGE,
-    page,
-  };
-}
-
-export function updateSort(sort) {
-  return {
-    type: UPDATE_SORT,
-    sort,
-  };
-}
+export const updateCurrentPage = reduceThenFetchResource((page, fromUrl=false) => ({
+  type: UPDATE_CURRENT_PAGE,
+  page,
+}));
 
 export function fetchFilterSearch(params) {
   params.live = true

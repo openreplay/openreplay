@@ -62,7 +62,7 @@ const dropdownStyles = {
       ...provided, opacity, transition,
       display: 'flex',
       alignItems: 'center',
-      height: '26px',
+      height: '20px',
     };
   }
 }
@@ -70,7 +70,7 @@ interface Props {
   filter: any; // event/filter
   // options: any[];
   value: string;
-  onChange: (e, { name, value }) => void;
+  onChange: (value: any) => void;
   className?: string;
   options: any[];
   search?: boolean;
@@ -94,7 +94,7 @@ function FilterValueDropdown(props: Props) {
           options={ options }
           name="issue_type"
           defaultValue={ value }
-          onChange={ onChange }
+          onChange={ (value: any) => onChange(value.value) }
           placeholder="Select"
           styles={dropdownStyles}
         />

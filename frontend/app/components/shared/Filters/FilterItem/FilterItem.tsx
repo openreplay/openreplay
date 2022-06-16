@@ -65,6 +65,7 @@ function FilterItem(props: Props) {
               onChange={onSourceOperatorChange}
               className="mx-2 flex-shrink-0"
               value={filter.sourceOperator}
+              isDisabled={filter.operatorDisabled}
             />
             <FilterSource filter={filter} onUpdate={props.onUpdate} />
           </>
@@ -78,6 +79,7 @@ function FilterItem(props: Props) {
               onChange={onOperatorChange}
               className="mx-2 flex-shrink-0"
               value={filter.operator}
+              isDisabled={filter.operatorDisabled}
             />
             { canShowValues && (<FilterValue filter={filter} onUpdate={props.onUpdate} />) }
           </>
