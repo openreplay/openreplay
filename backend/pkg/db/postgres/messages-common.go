@@ -115,7 +115,7 @@ func (conn *Conn) InsertRequest(sessionID uint64, timestamp uint64, index uint64
 		INSERT INTO events_common.requests (
 			session_id, timestamp, seq_index, url, duration, success
 		) VALUES (
-			$1, $2, $3, $4, $5, $6
+			$1, $2, $3, left($4, 2700), $5, $6
 		)`
 	conn.batchQueue(sessionID, sqlRequest, sessionID, timestamp, getSqIdx(index), url, duration, success)
 
@@ -129,7 +129,7 @@ func (conn *Conn) InsertCustomEvent(sessionID uint64, timestamp uint64, index ui
 		INSERT INTO events_common.customs (
 			session_id, timestamp, seq_index, name, payload
 		) VALUES (
-			$1, $2, $3, $4, $5
+			$1, $2, $3, left($4, 2700), $5
 		)`
 	conn.batchQueue(sessionID, sqlRequest, sessionID, timestamp, getSqIdx(index), name, payload)
 
@@ -222,7 +222,7 @@ func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messag
 			INSERT INTO events_common.customs
 				(session_id, seq_index, timestamp, name, payload, level)
 			VALUES
-				($1, $2, $3, $4, $5, 'error')
+				($1, $2, $3, left($4, 2700), $5, 'error')
 			`,
 			sessionID, getSqIdx(e.MessageID), e.Timestamp, e.ContextString, e.Payload,
 		); err != nil {
