@@ -12,11 +12,13 @@ import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMe
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
+import { FilterKey } from 'Types/filter/filterType';
 
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
-import CustomMetricTableSessions from '../../Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
+import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
+import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 interface Props {
     metric: any;
     isWidget?: boolean;
@@ -130,12 +132,19 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'table') {
-            if (metricOf === 'SESSIONS') {
+            if (metricOf === FilterKey.SESSIONS) {
                 return (
                     <CustomMetricTableSessions
-                        metric={_metric}
-                        data={data}
-                        // onClick={onChartClick}
+                        metric={metric}
+                        isTemplate={isTemplate}
+                        isEdit={!isWidget && !isTemplate}
+                    />
+                )
+            }
+            if (metricOf === FilterKey.ERRORS) {
+                return (
+                    <CustomMetricTableErrors
+                        metric={metric}
                         isTemplate={isTemplate}
                         isEdit={!isWidget && !isTemplate}
                     />
@@ -165,7 +174,7 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={!isFunnel && loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
+        <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));

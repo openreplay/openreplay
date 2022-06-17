@@ -8,6 +8,8 @@ import { getChartFormatter } from 'Types/dashboard/helper';
 import Filter, { IFilter } from "./types/filter";
 import Funnel from "./types/funnel";
 import Session from "./types/session";
+import Error from "./types/error";
+import { FilterKey } from 'Types/filter/filterType';
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -132,7 +134,7 @@ export default class DashboardStore implements IDashboardSotre {
             fetchMetricChartData: action
         })
 
-        const drillDownPeriod = Period({ rangeName: LAST_24_HOURS }).toTimestamps();
+        const drillDownPeriod = Period({ rangeName: LAST_30_DAYS }).toTimestamps();
         this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
         this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
     }
@@ -459,8 +461,10 @@ export default class DashboardStore implements IDashboardSotre {
                         }
 
                         // TODO refactor to widget class
-                        if (metric.metricOf === 'SESSIONS') {
+                        if (metric.metricOf === FilterKey.SESSIONS) {
                             _data['sessions'] = data.sessions.map((s: any) => new Session().fromJson(s))
+                        } else if (metric.metricOf === FilterKey.ERRORS) {
+                            _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s))
                         } else {
                             if (data.hasOwnProperty('chart')) {
                                 _data['chart'] = getChartFormatter(this.period)(data.chart)

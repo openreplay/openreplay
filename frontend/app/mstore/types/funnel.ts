@@ -31,9 +31,9 @@ export default class Funnel implements IFunnel {
             const firstStage = json.stages[0]
             const lastStage = json.stages[json.stages.length - 1]
             this.lostConversions = firstStage.sessionsCount - lastStage.sessionsCount
-            this.lostConversionsPercentage = this.lostConversions / firstStage.sessionsCount * 100
+            this.lostConversionsPercentage = Math.round(this.lostConversions / firstStage.sessionsCount * 100)
             this.totalConversions = lastStage.sessionsCount
-            this.totalConversionsPercentage = this.totalConversions / firstStage.sessionsCount * 100
+            this.totalConversionsPercentage = Math.round(this.totalConversions / firstStage.sessionsCount * 100)
             this.conversionImpact = this.lostConversions ? Math.round((this.lostConversions / firstStage.sessionsCount) * 100) : 0;
             this.stages = json.stages ? json.stages.map((stage: any, index: number) => new FunnelStage().fromJSON(stage, firstStage.sessionsCount, index > 0 ? json.stages[index - 1].sessionsCount : stage.sessionsCount)) : []
             this.affectedUsers = firstStage.usersCount ? firstStage.usersCount - lastStage.usersCount : 0;

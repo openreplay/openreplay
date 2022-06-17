@@ -2,7 +2,6 @@
 export default class Error {
     sessionId: string = ''
     messageId: string = ''
-    timestamp: string = ''
     errorId: string = ''
     projectId: string = ''
     source: string = ''
@@ -11,6 +10,12 @@ export default class Error {
     time: string = ''
     function: string = '?'
     stack0InfoString: string = ''
+    
+    chart: any = []
+    sessions: number = 0
+    users: number = 0
+    lastOccurrence: string = ''
+    timestamp: string = ''
 
     constructor() {
     }
@@ -26,7 +31,10 @@ export default class Error {
         this.message = json.message
         this.time = json.time
         this.function = json.function
+        this.chart = json.chart
         this.stack0InfoString = getStck0InfoString(json.stack || [])
+        this.sessions = json.sessions
+        this.users = json.users
         return this
     }
 }

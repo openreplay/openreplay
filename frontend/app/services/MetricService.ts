@@ -89,7 +89,7 @@ export default class MetricService implements IMetricService {
     getMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
         const path = isWidget ? `/metrics/${metric.metricId}/chart` : `/metrics/try`;
         return this.client.post(path, data)
-            .then((response: { json: () => any; }) => response.json())
+            .then(fetchErrorCheck)
             .then((response: { data: any; }) => response.data || {});
     }
 

@@ -7,7 +7,7 @@ interface Props {
 }
 function FunnelBar(props: Props) {
     const { filter } = props;
-    const completedPercentage = calculatePercentage(filter.sessionsCount, filter.dropDueToIssues);
+    // const completedPercentage = calculatePercentage(filter.sessionsCount, filter.dropDueToIssues);
 
     return (
         <div className="w-full mb-4">

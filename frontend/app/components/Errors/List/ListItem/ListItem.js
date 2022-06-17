@@ -12,10 +12,9 @@ import Label from 'Components/Errors/ui/Label';
 import stl from './listItem.module.css';
 import { Styles } from '../../../Dashboard/Widgets/common';
 
-
 const CustomTooltip = ({ active, payload, label }) => {
   if (active) {
-		const p = payload[0].payload;
+	const p = payload[0].payload;
     return (
       <div className="rounded border bg-white p-2">
         <p className="label text-sm color-gray-medium">{`${moment(p.timestamp).format('l')}`}</p>
