@@ -60,6 +60,7 @@ ingress-nginx: &ingress-nginx
       default-ssl-certificate: "app/openreplay-ssl"
     config:
       use-gzip: true
+      load-balace: ewma
       enable-real-ip: true
       # Enable LB forwarded protocol
       # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers
