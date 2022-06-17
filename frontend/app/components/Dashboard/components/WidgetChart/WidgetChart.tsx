@@ -86,7 +86,7 @@ function WidgetChart(props: Props) {
         prevMetricRef.current = metric;
         const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget);
-    }, [period, depsString, _metric.page]);
+    }, [period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
 
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;

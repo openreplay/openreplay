@@ -1,4 +1,3 @@
-
 export default class Error {
     sessionId: string = ''
     messageId: string = ''
@@ -14,6 +13,7 @@ export default class Error {
     chart: any = []
     sessions: number = 0
     users: number = 0
+    firstOccurrence: string = ''
     lastOccurrence: string = ''
     timestamp: string = ''
 
@@ -23,7 +23,6 @@ export default class Error {
     fromJSON(json: any) {
         this.sessionId = json.sessionId
         this.messageId = json.messageId
-        this.timestamp = json.timestamp
         this.errorId = json.errorId
         this.projectId = json.projectId
         this.source = json.source
@@ -31,15 +30,20 @@ export default class Error {
         this.message = json.message
         this.time = json.time
         this.function = json.function
-        this.chart = json.chart
         this.stack0InfoString = getStck0InfoString(json.stack || [])
+
+        this.chart = json.chart
         this.sessions = json.sessions
         this.users = json.users
+        this.firstOccurrence = json.firstOccurrence
+        this.lastOccurrence = json.lastOccurrence
+        this.timestamp = json.timestamp
+
         return this
     }
 }
 
-function getStck0InfoString(stack) {
+function getStck0InfoString(stack: any) {
     const stack0 = stack[0];
     if (!stack0) return "";
     let s = stack0.function || "";
