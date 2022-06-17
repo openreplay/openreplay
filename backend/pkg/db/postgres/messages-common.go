@@ -155,12 +155,11 @@ func (conn *Conn) InsertUserAnonymousID(sessionID uint64, userAnonymousID string
 }
 
 func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) error {
-	return conn.batchQueue(sessionID, fmt.Sprintf(`
+	return conn.exec(fmt.Sprintf(`
 		UPDATE sessions SET  metadata_%v = $1
 		WHERE session_id = $2`, keyNo),
 		value, sessionID,
 	)
-	// conn.insertAutocompleteValue(sessionID, "METADATA", value)
 }
 
 func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {
