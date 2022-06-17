@@ -54,11 +54,11 @@ function WidgetView(props: Props) {
                         className={cn(
                             "px-6 py-4 flex justify-between items-center",
                             {
-                                'cursor-pointer hover:bg-active-blue hover:shadow-border-blue': !expanded,
+                                'cursor-pointer hover:bg-active-blue hover:shadow-border-blue rounded': !expanded,
                             }
                         )}
                         onClick={openEdit}
-                        >
+                    >
                         <h1 className="mb-0 text-2xl">
                             <WidgetName
                                 name={widget.name}

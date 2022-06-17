@@ -5,6 +5,7 @@ import { metricService } from "App/services";
 import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';
+import { FilterKey } from 'Types/filter/filterType';
 
 export interface IWidget {
     metricId: any
@@ -58,7 +59,7 @@ export default class Widget implements IWidget {
     widgetId: any = undefined
     name: string = "New Metric"
     // metricType: string = "timeseries"
-    metricType: string = "table"
+    metricType: string = "timeseries"
     metricOf: string = "sessionCount"
     metricValue: string = ""
     viewType: string = "lineChart"
@@ -79,6 +80,8 @@ export default class Widget implements IWidget {
 
     position: number = 0
     data: any = {
+        sessions: [],
+        total: 0,
         chart: [],
         namesMap: {},
         avg: 0,
@@ -93,7 +96,7 @@ export default class Widget implements IWidget {
     constructor() {
         makeAutoObservable(this, {
             sessionsLoading: observable,
-            data: observable.ref,
+            data: observable,
             metricId: observable,
             widgetId: observable,
             name: observable,
@@ -183,7 +186,7 @@ export default class Widget implements IWidget {
             series: this.series.map((series: any) => series.toJson()),
             config: {
                 ...this.config,
-                col: this.metricType === 'funnel' ? 4 : this.config.col
+                col: this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS ? 4 : this.config.col
             },
         }
     }
@@ -204,7 +207,7 @@ export default class Widget implements IWidget {
 
     setData(data: any) {
         runInAction(() => {
-            Object.assign(this.data, data)
+            this.data = data;
         })
     }
 
@@ -236,8 +239,6 @@ export default class Widget implements IWidget {
     fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
         return new Promise((resolve, reject) => {
             metricService.fetchIssue(funnelId, issueId, params).then((response: any) => {
-                response = response[0]
-                console.log('response', response)
                 resolve({
                     issue: new Funnelissue().fromJSON(response.issue),
                     sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s)),

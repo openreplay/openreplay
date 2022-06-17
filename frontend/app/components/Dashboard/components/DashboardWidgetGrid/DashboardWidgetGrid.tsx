@@ -10,7 +10,7 @@ interface Props {
     onEditHandler: () => void;
     id?: string;
 }
-function DashboardWidgetGrid(props) {
+function DashboardWidgetGrid(props: Props) {
     const { dashboardId, siteId } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
@@ -31,12 +31,12 @@ function DashboardWidgetGrid(props) {
                 }
             >
                 <div className="grid gap-4 grid-cols-4 items-start pb-10" id={props.id}>
-                    {list && list.map((item, index) => (
+                    {list && list.map((item: any, index: any) => (
                         <WidgetWrapper
                             index={index}
                             widget={item}
                             key={item.widgetId}
-                            moveListItem={(dragIndex, hoverIndex) => dashboard.swapWidgetPosition(dragIndex, hoverIndex)}
+                            moveListItem={(dragIndex: any, hoverIndex: any) => dashboard.swapWidgetPosition(dragIndex, hoverIndex)}
                             dashboardId={dashboardId}
                             siteId={siteId}
                             isWidget={true}
