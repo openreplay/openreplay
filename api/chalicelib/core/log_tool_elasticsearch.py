@@ -59,11 +59,11 @@ def add_edit(tenant_id, project_id, data):
 
 
 def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
-    schema = "http" if host.startswith("http") else "https"
+    scheme = "http" if host.startswith("http") else "https"
     host = host.replace("http://", "").replace("https://", "")
     try:
         args = {
-            "hosts": [{"host": host, "port": port, "schema": schema}],
+            "hosts": [{"host": host, "port": port, "scheme": scheme}],
             "verify_certs": False,
             # "ca_certs": False,
             # "connection_class": RequestsHttpConnection,
