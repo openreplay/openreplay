@@ -477,6 +477,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     pg_sub_query = __get_basic_constraints_pg(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
                      "pe.project_id=%(project_id)s"]
+    # To ignore Script error
+    pg_sub_query.append("pe.message!='Script error.'")
     pg_sub_query_chart = __get_basic_constraints_pg(platform, time_constraint=False, chart=True, project_key=None)
     # pg_sub_query_chart.append("source ='js_exception'")
     pg_sub_query_chart.append("errors.error_id =details.error_id")
@@ -649,6 +651,8 @@ def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flo
             platform = f.value[0]
     ch_sub_query = __get_basic_constraints(platform)
     ch_sub_query.append("source ='js_exception'")
+    # To ignore Script error
+    ch_sub_query.append("message!='Script error.'")
     statuses = []
     error_ids = None
     # Clickhouse keeps data for the past month only, so no need to search beyond that
