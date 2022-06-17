@@ -6,13 +6,14 @@ WORKDIR /root
 
 COPY go.mod .
 COPY go.sum .
-RUN go mod download
+RUN go mod tidy && go mod download
 
 
 FROM prepare AS build
 COPY cmd cmd
 COPY pkg pkg
 COPY internal internal
+RUN go mod tidy
 
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
