@@ -24,7 +24,6 @@ T_VALUES = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571, 6: 2.447, 7: 2.36
             21: 2.080, 22: 2.074, 23: 2.069, 25: 2.064, 26: 2.060, 27: 2.056, 28: 2.052, 29: 2.045, 30: 2.042}
 
 
-
 def get_stages_and_events(filter_d, project_id) -> List[RealDictRow]:
     """
     Add minimal timestamp
@@ -293,7 +292,6 @@ def pearson_corr(x: list, y: list):
         return r, confidence, False
 
 
-
 def get_transitions_and_issues_of_each_type(rows: List[RealDictRow], all_issues_with_context, first_stage, last_stage):
     """
     Returns two lists with binary values 0/1:
@@ -363,7 +361,6 @@ def get_transitions_and_issues_of_each_type(rows: List[RealDictRow], all_issues_
     return transitions, errors, all_errors, n_sess_affected
 
 
-
 def get_affected_users_for_all_issues(rows, first_stage, last_stage):
     """
 
@@ -415,7 +412,6 @@ def get_affected_users_for_all_issues(rows, first_stage, last_stage):
     return all_issues_with_context, n_issues_dict, n_affected_users_dict, n_affected_sessions_dict, contexts
 
 
-
 def count_sessions(rows, n_stages):
     session_counts = {i: set() for i in range(1, n_stages + 1)}
     for ind, row in enumerate(rows):
@@ -465,7 +461,6 @@ def get_stages(stages, rows):
              }
         )
     return stages_list
-
 
 
 def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False):
@@ -544,7 +539,6 @@ def get_issues(stages, rows, first_stage=None, last_stage=None, drop_only=False)
     return n_critical_issues, issues_dict, total_drop_due_to_issues
 
 
-
 def get_top_insights(filter_d, project_id):
     output = []
     stages = filter_d.get("events", [])
@@ -582,9 +576,8 @@ def get_top_insights(filter_d, project_id):
     return stages_list, total_drop_due_to_issues
 
 
-
 def get_issues_list(filter_d, project_id, first_stage=None, last_stage=None):
-    output = dict({'critical_issues_count': 0})
+    output = dict({"total_drop_due_to_issues": 0, "critical_issues_count": 0, "significant": [], "insignificant": []})
     stages = filter_d.get("events", [])
     # The result of the multi-stage query
     rows = get_stages_and_events(filter_d=filter_d, project_id=project_id)
