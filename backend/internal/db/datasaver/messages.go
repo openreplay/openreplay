@@ -1,6 +1,7 @@
 package datasaver
 
 import (
+	"fmt"
 	. "openreplay/backend/pkg/messages"
 )
 
@@ -8,7 +9,10 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 	switch m := msg.(type) {
 	// Common
 	case *Metadata:
-		return mi.pg.InsertMetadata(sessionID, m)
+		if err := mi.pg.InsertMetadata(sessionID, m); err != nil {
+			return fmt.Errorf("insert metadata err: %s", err)
+		}
+		return nil
 	case *IssueEvent:
 		return mi.pg.InsertIssueEvent(sessionID, m)
 	//TODO: message adapter (transformer) (at the level of pkg/message) for types: *IOSMetadata, *IOSIssueEvent and others

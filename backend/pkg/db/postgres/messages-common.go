@@ -164,12 +164,7 @@ func (conn *Conn) InsertMetadata(sessionID uint64, keyNo uint, value string) err
 	sqlRequest := `
 		UPDATE sessions SET  metadata_%v = $1
 		WHERE session_id = $2`
-	conn.batchQueue(sessionID, fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
-	// conn.insertAutocompleteValue(sessionID, "METADATA", value)
-
-	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(value)+8*2)
-	return nil
+	return conn.exec(fmt.Sprintf(sqlRequest, keyNo), value, sessionID)
 }
 
 func (conn *Conn) InsertIssueEvent(sessionID uint64, projectID uint32, e *messages.IssueEvent) error {
