@@ -28,8 +28,8 @@ def __merge_cells(rows, start, count, replacement):
     return rows
 
 
-def __get_grouped_clickrage(rows, session_id):
-    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage")
+def __get_grouped_clickrage(rows, session_id, project_id):
+    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage", project_id=project_id)
     if len(click_rage_issues) == 0:
         return rows
 
@@ -63,7 +63,7 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
                     )
         rows = cur.fetchall()
         if group_clickrage:
-            rows = __get_grouped_clickrage(rows=rows, session_id=session_id)
+            rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
 
         cur.execute(cur.mogrify("""
             SELECT 
@@ -435,7 +435,15 @@ def __get_autocomplete_table(value, project_id):
         query = cur.mogrify(" UNION ".join(sub_queries) + ";",
                             {"project_id": project_id, "value": helper.string_to_sql_like(value),
                              "svalue": helper.string_to_sql_like("^" + value)})
-        cur.execute(query)
+        try:
+            cur.execute(query)
+        except Exception as err:
+            print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
+            print(query.decode('UTF-8'))
+            print("--------- VALUE -----------")
+            print(value)
+            print("--------------------")
+            raise err
         results = helper.list_to_camel_case(cur.fetchall())
         return results
 
@@ -464,14 +472,13 @@ def search(text, event_type, project_id, source, key):
     return {"data": rows}
 
 
-def get_errors_by_session_id(session_id):
+def get_errors_by_session_id(session_id, project_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(cur.mogrify(f"""\
                     SELECT er.*,ur.*, er.timestamp - s.start_ts AS time
                     FROM {event_type.ERROR.table} AS er INNER JOIN public.errors AS ur USING (error_id) INNER JOIN public.sessions AS s USING (session_id)
-                    WHERE
-                      er.session_id = %(session_id)s
-                    ORDER BY timestamp;""", {"session_id": session_id}))
+                    WHERE er.session_id = %(session_id)s AND s.project_id=%(project_id)s
+                    ORDER BY timestamp;""", {"session_id": session_id, "project_id": project_id}))
         errors = cur.fetchall()
         for e in errors:
             e["stacktrace_parsed_at"] = TimeUTC.datetime_to_timestamp(e["stacktrace_parsed_at"])

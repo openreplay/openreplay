@@ -85,7 +85,7 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                 else:
                     data['events'] = events.get_by_sessionId2_pg(project_id=project_id, session_id=session_id,
                                                                  group_clickrage=True)
-                    all_errors = events.get_errors_by_session_id(session_id=session_id)
+                    all_errors = events.get_errors_by_session_id(session_id=session_id, project_id=project_id)
                     data['stackEvents'] = [e for e in all_errors if e['source'] != "js_exception"]
                     # to keep only the first stack
                     data['errors'] = [errors.format_first_stack_frame(e) for e in all_errors if
@@ -94,10 +94,12 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                     data['userEvents'] = events.get_customs_by_sessionId2_pg(project_id=project_id,
                                                                              session_id=session_id)
                     data['mobsUrl'] = sessions_mobs.get_web(sessionId=session_id)
-                    data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id)
+                    data['resources'] = resources.get_by_session_id(session_id=session_id, project_id=project_id,
+                                                                    start_ts=data["startTs"],
+                                                                    duration=data["duration"])
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['issues'] = issues.get_by_session_id(session_id=session_id)
+                data['issues'] = issues.get_by_session_id(session_id=session_id,project_id=project_id)
                 data['live'] = live and assist.is_live(project_id=project_id,
                                                        session_id=session_id,
                                                        project_key=data["projectKey"])
@@ -201,12 +203,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             else:
                 data.order = data.order.upper()
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
-                g_sort = f"{'MIN' if data.order == 'DESC' else 'MAX'}({sort})"
+                g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
             else:
                 sort = 'start_ts'
 
@@ -230,7 +232,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
                                      full_args)
         else:
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -254,9 +256,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
             cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
-            print(main_query)
+            print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.dict())
+            print(data.json())
             print("--------------------")
             raise err
         if errors_only:
@@ -1199,7 +1201,7 @@ def get_session_ids_by_user_ids(project_id, user_ids):
 
 
 def delete_sessions_by_session_ids(session_ids):
-    with pg_client.PostgresClient(long_query=True) as cur:
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         query = cur.mogrify(
             """\
             DELETE FROM public.sessions
@@ -1213,7 +1215,7 @@ def delete_sessions_by_session_ids(session_ids):
 
 
 def delete_sessions_by_user_ids(project_id, user_ids):
-    with pg_client.PostgresClient(long_query=True) as cur:
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         query = cur.mogrify(
             """\
             DELETE FROM public.sessions
@@ -1227,6 +1229,6 @@ def delete_sessions_by_user_ids(project_id, user_ids):
 
 
 def count_all():
-    with pg_client.PostgresClient(long_query=True) as cur:
+    with pg_client.PostgresClient(unlimited_query=True) as cur:
         row = cur.execute(query="SELECT COUNT(session_id) AS count FROM public.sessions")
     return row.get("count", 0)

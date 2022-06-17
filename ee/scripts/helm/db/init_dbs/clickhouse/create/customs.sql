@@ -17,6 +17,6 @@ CREATE TABLE IF NOT EXISTS customs
     payload              Nullable(String),
     level                Enum8('info'=0, 'error'=1) DEFAULT 'info'
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;

@@ -1,4 +1,5 @@
-from elasticsearch import Elasticsearch, RequestsHttpConnection
+# from elasticsearch import Elasticsearch, RequestsHttpConnection
+from elasticsearch import Elasticsearch
 from chalicelib.core import log_tools
 import base64
 import logging
@@ -65,7 +66,7 @@ def __get_es_client(host, port, api_key_id, api_key, use_ssl=False, timeout=15):
             "use_ssl": use_ssl,
             "verify_certs": False,
             "ca_certs": False,
-            "connection_class": RequestsHttpConnection,
+            # "connection_class": RequestsHttpConnection,
             "timeout": timeout
         }
         if api_key_id is not None and len(api_key_id) > 0:

@@ -52,7 +52,9 @@ def make_pool():
         except (Exception, psycopg2.DatabaseError) as error:
             print("Error while closing all connexions to PostgreSQL", error)
     try:
-        postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20), 100, **PG_CONFIG)
+        postgreSQL_pool = ORThreadedConnectionPool(config("pg_minconn", cast=int, default=20),
+                                                   config("pg_maxconn", cast=int, default=80),
+                                                   **PG_CONFIG)
         if (postgreSQL_pool):
             print("Connection pool created successfully")
     except (Exception, psycopg2.DatabaseError) as error:
@@ -74,12 +76,17 @@ class PostgresClient:
     cursor = None
     long_query = False
 
-    def __init__(self, long_query=False):
+    def __init__(self, long_query=False, unlimited_query=False):
         self.long_query = long_query
-        if long_query:
+        if unlimited_query:
+            long_config = dict(_PG_CONFIG)
+            long_config["application_name"] += "-UNLIMITED"
+            self.connection = psycopg2.connect(**long_config)
+        elif long_query:
             long_config = dict(_PG_CONFIG)
             long_config["application_name"] += "-LONG"
-            self.connection = psycopg2.connect(**_PG_CONFIG)
+            long_config["options"] = f"-c statement_timeout={config('pg_long_timeout', cast=int, default=5*60) * 1000}"
+            self.connection = psycopg2.connect(**long_config)
         else:
             self.connection = postgreSQL_pool.getconn()
 

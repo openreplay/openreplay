@@ -1,13 +1,15 @@
 from chalicelib.utils import pg_client
 import requests
+from chalicelib.core import license
 
 
-def process_data(data, edition='fos'):
+def process_data(data):
     return {
-        'edition': edition,
+        'edition': license.EDITION,
         'tracking': data["opt_out"],
         'version': data["version_number"],
-        'user_id': data["user_id"],
+        'user_id': data["tenant_key"],
+        'tenant_key': data["tenant_key"],
         'owner_email': None if data["opt_out"] else data["email"],
         'organization_name': None if data["opt_out"] else data["name"],
         'users_count': data["t_users"],
@@ -27,7 +29,7 @@ def compute():
                     t_projects=COALESCE((SELECT COUNT(*) FROM public.projects WHERE deleted_at ISNULL), 0),
                     t_sessions=COALESCE((SELECT COUNT(*) FROM public.sessions), 0),
                     t_users=COALESCE((SELECT COUNT(*) FROM public.users WHERE deleted_at ISNULL), 0)
-                RETURNING name,t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
+                RETURNING name,t_integrations,t_projects,t_sessions,t_users,tenant_key,opt_out,
                     (SELECT openreplay_version()) AS version_number,(SELECT email FROM public.users WHERE role = 'owner' LIMIT 1);"""
         )
         data = cur.fetchone()
@@ -39,6 +41,7 @@ def new_client():
         cur.execute(
             f"""SELECT *, 
                 (SELECT email FROM public.users WHERE role='owner' LIMIT 1) AS email 
-                FROM public.tenants;""")
+                FROM public.tenants
+                LIMIT 1;""")
         data = cur.fetchone()
         requests.post('https://api.openreplay.com/os/signup', json=process_data(data))

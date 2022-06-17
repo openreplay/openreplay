@@ -29,8 +29,12 @@ def edit_config(user_id, weekly_report):
 
 
 def cron():
+    if not helper.has_smtp():
+        print("!!! No SMTP configuration found, ignoring weekly report")
+        return
     with pg_client.PostgresClient(long_query=True) as cur:
-        params = {"3_days_ago": TimeUTC.midnight(delta_days=-3),
+        params = {"tomorrow": TimeUTC.midnight(delta_days=1),
+                  "3_days_ago": TimeUTC.midnight(delta_days=-3),
                   "1_week_ago": TimeUTC.midnight(delta_days=-7),
                   "2_week_ago": TimeUTC.midnight(delta_days=-14),
                   "5_week_ago": TimeUTC.midnight(delta_days=-35)}
@@ -43,18 +47,18 @@ def cron():
                COALESCE(week_0_issues.count, 0)                                         AS this_week_issues_count,
                COALESCE(week_1_issues.count, 0)                                         AS past_week_issues_count,
                COALESCE(month_1_issues.count, 0)                                        AS past_month_issues_count
-            FROM public.projects
+            FROM (SELECT project_id, name FROM public.projects WHERE projects.deleted_at ISNULL) AS projects
                     INNER JOIN LATERAL (
                              SELECT sessions.project_id
                              FROM public.sessions
                              WHERE sessions.project_id = projects.project_id
                                AND start_ts >= %(3_days_ago)s
+                               AND start_ts < %(tomorrow)s
                              LIMIT 1) AS recently_active USING (project_id)
                      INNER JOIN LATERAL (
                             SELECT COALESCE(ARRAY_AGG(email), '{}') AS emails
                             FROM public.users
-                            WHERE users.tenant_id = projects.tenant_id
-                              AND users.deleted_at ISNULL
+                            WHERE users.deleted_at ISNULL
                               AND users.weekly_report
                      ) AS users ON (TRUE)
                      LEFT JOIN LATERAL (
@@ -62,25 +66,25 @@ def cron():
                             FROM events_common.issues
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = projects.project_id
-                              AND issues.timestamp >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
+                              AND issues.timestamp >= %(1_week_ago)s
+                              AND issues.timestamp < %(tomorrow)s
                      ) AS week_0_issues ON (TRUE)
                      LEFT JOIN LATERAL (
                             SELECT COUNT(1) AS count
                             FROM events_common.issues
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = projects.project_id
-                              AND issues.timestamp <= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
-                              AND issues.timestamp >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '2 week') * 1000)::BIGINT
+                              AND issues.timestamp <= %(1_week_ago)s
+                              AND issues.timestamp >= %(2_week_ago)s
                      ) AS week_1_issues ON (TRUE)
                      LEFT JOIN LATERAL (
                             SELECT COUNT(1) AS count
                             FROM events_common.issues
                                      INNER JOIN public.sessions USING (session_id)
                             WHERE sessions.project_id = projects.project_id
-                              AND issues.timestamp <= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '1 week') * 1000)::BIGINT
-                              AND issues.timestamp >= (EXTRACT(EPOCH FROM DATE_TRUNC('day', now()) - INTERVAL '5 week') * 1000)::BIGINT
-                     ) AS month_1_issues ON (TRUE)
-            WHERE projects.deleted_at ISNULL;"""), params)
+                              AND issues.timestamp <= %(1_week_ago)s
+                              AND issues.timestamp >= %(5_week_ago)s
+                     ) AS month_1_issues ON (TRUE);"""), params)
         projects_data = cur.fetchall()
         emails_to_send = []
         for p in projects_data:

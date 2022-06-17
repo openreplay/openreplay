@@ -425,10 +425,9 @@ def __get_sort_key(key):
 
 
 def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
-    empty_response = {"data": {
-        'total': 0,
-        'errors': []
-    }}
+    empty_response = {'total': 0,
+                      'errors': []
+                      }
 
     platform = None
     for f in data.filters:
@@ -463,7 +462,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         sort = __get_sort_key('datetime')
         if data.sort is not None:
             sort = __get_sort_key(data.sort)
-        order = "DESC"
+        order = schemas.SortOrderType.desc
         if data.order is not None:
             order = data.order
         extra_join = ""
@@ -544,7 +543,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         rows = cur.fetchall()
         total = 0 if len(rows) == 0 else rows[0]["full_count"]
         if flows:
-            return {"data": {"count": total}}
+            return {"count": total}
 
         if total == 0:
             rows = []
@@ -592,10 +591,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                 and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
     offset -= len(rows)
     return {
-        "data": {
-            'total': total - offset,
-            'errors': helper.list_to_camel_case(rows)
-        }
+        'total': total - offset,
+        'errors': helper.list_to_camel_case(rows)
     }
 
 

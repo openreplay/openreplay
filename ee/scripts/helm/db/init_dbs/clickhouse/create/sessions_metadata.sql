@@ -26,6 +26,6 @@ CREATE TABLE IF NOT EXISTS sessions_metadata
     metadata_9           Nullable(String),
     metadata_10          Nullable(String)
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
-      ORDER BY (session_id)
+      PARTITION BY toStartOfWeek(datetime)
+      ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;

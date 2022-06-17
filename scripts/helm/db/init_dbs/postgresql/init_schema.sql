@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS events;
 CREATE OR REPLACE FUNCTION openreplay_version()
     RETURNS text AS
 $$
-SELECT 'v1.6.0'
+SELECT 'v1.7.0'
 $$ LANGUAGE sql IMMUTABLE;
 
 -- --- accounts.sql ---
@@ -117,11 +117,10 @@ $$
             CREATE TABLE tenants
             (
                 tenant_id      integer                     NOT NULL DEFAULT 1,
-                user_id        text                        NOT NULL DEFAULT generate_api_key(20),
+                tenant_key     text                        NOT NULL DEFAULT generate_api_key(20),
                 name           text                        NOT NULL,
                 api_key        text                        NOT NULL DEFAULT generate_api_key(20),
                 created_at     timestamp without time zone NOT NULL DEFAULT (now() at time zone 'utc'),
-                edition        varchar(3)                  NOT NULL,
                 version_number text                        NOT NULL,
                 license        text                        NULL,
                 opt_out        bool                        NOT NULL DEFAULT FALSE,
@@ -142,67 +141,6 @@ $$
                 name          text                        NOT NULL,
                 created_at    timestamp without time zone NOT NULL default (now() at time zone 'utc'),
                 deleted_at    timestamp without time zone NULL     DEFAULT NULL,
-                appearance    jsonb                       NOT NULL default '{
-                  "role": "dev",
-                  "dashboard": {
-                    "cpu": true,
-                    "fps": false,
-                    "avgCpu": true,
-                    "avgFps": true,
-                    "errors": true,
-                    "crashes": true,
-                    "overview": true,
-                    "sessions": true,
-                    "topMetrics": true,
-                    "callsErrors": true,
-                    "pageMetrics": true,
-                    "performance": true,
-                    "timeToRender": false,
-                    "userActivity": false,
-                    "avgFirstPaint": false,
-                    "countSessions": true,
-                    "errorsPerType": true,
-                    "slowestImages": true,
-                    "speedLocation": true,
-                    "slowestDomains": true,
-                    "avgPageLoadTime": true,
-                    "avgTillFirstBit": false,
-                    "avgTimeToRender": true,
-                    "avgVisitedPages": false,
-                    "avgImageLoadTime": true,
-                    "busiestTimeOfDay": true,
-                    "errorsPerDomains": true,
-                    "missingResources": true,
-                    "resourcesByParty": true,
-                    "sessionsFeedback": false,
-                    "slowestResources": true,
-                    "avgUsedJsHeapSize": true,
-                    "domainsErrors_4xx": true,
-                    "domainsErrors_5xx": true,
-                    "memoryConsumption": true,
-                    "pagesDomBuildtime": false,
-                    "pagesResponseTime": true,
-                    "avgRequestLoadTime": true,
-                    "avgSessionDuration": false,
-                    "sessionsPerBrowser": false,
-                    "applicationActivity": true,
-                    "sessionsFrustration": false,
-                    "avgPagesDomBuildtime": true,
-                    "avgPagesResponseTime": false,
-                    "avgTimeToInteractive": true,
-                    "resourcesCountByType": true,
-                    "resourcesLoadingTime": true,
-                    "avgDomContentLoadStart": true,
-                    "avgFirstContentfulPixel": false,
-                    "resourceTypeVsResponseEnd": true,
-                    "impactedSessionsByJsErrors": true,
-                    "impactedSessionsBySlowPages": true,
-                    "resourcesVsVisuallyComplete": true,
-                    "pagesResponseTimeDistribution": true
-                  },
-                  "sessionsLive": false,
-                  "sessionsDevtools": true
-                }'::jsonb,
                 api_key       text UNIQUE                          default generate_api_key(20) not null,
                 jwt_iat       timestamp without time zone NULL     DEFAULT NULL,
                 data          jsonb                       NOT NULL DEFAULT '{}'::jsonb,
@@ -212,12 +150,11 @@ $$
             CREATE TABLE basic_authentication
             (
                 user_id              integer                     NOT NULL REFERENCES users (user_id) ON DELETE CASCADE,
-                password             text                                 DEFAULT NULL,
-                generated_password   boolean                     NOT NULL DEFAULT false,
-                invitation_token     text                        NULL     DEFAULT NULL,
-                invited_at           timestamp without time zone NULL     DEFAULT NULL,
-                change_pwd_token     text                        NULL     DEFAULT NULL,
-                change_pwd_expire_at timestamp without time zone NULL     DEFAULT NULL,
+                password             text                             DEFAULT NULL,
+                invitation_token     text                        NULL DEFAULT NULL,
+                invited_at           timestamp without time zone NULL DEFAULT NULL,
+                change_pwd_token     text                        NULL DEFAULT NULL,
+                change_pwd_expire_at timestamp without time zone NULL DEFAULT NULL,
                 changed_at           timestamp,
                 UNIQUE (user_id)
             );
@@ -264,6 +201,8 @@ $$
             );
 
             CREATE INDEX projects_project_key_idx ON public.projects (project_key);
+            CREATE INDEX projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
+
             CREATE TRIGGER on_insert_or_update
                 AFTER INSERT OR UPDATE
                 ON projects
@@ -940,7 +879,7 @@ $$
             CREATE INDEX jobs_start_at_idx ON jobs (start_at);
             CREATE INDEX jobs_project_id_idx ON jobs (project_id);
 
-            CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined');
+            CREATE TYPE metric_type AS ENUM ('timeseries','table', 'predefined', 'funnel');
             CREATE TYPE metric_view_type AS ENUM ('lineChart','progress','table','pieChart','areaChart','barChart','stackedBarChart','stackedBarLineChart','overview','map');
             CREATE TABLE metrics
             (
@@ -990,8 +929,9 @@ $$
             (
                 dashboard_id integer generated BY DEFAULT AS IDENTITY PRIMARY KEY,
                 project_id   integer   NOT NULL REFERENCES projects (project_id) ON DELETE CASCADE,
-                user_id      integer   NOT NULL REFERENCES users (user_id) ON DELETE SET NULL,
+                user_id      integer   REFERENCES users (user_id) ON DELETE SET NULL,
                 name         text      NOT NULL,
+                description  text      NOT NULL DEFAULT '',
                 is_public    boolean   NOT NULL DEFAULT TRUE,
                 is_pinned    boolean   NOT NULL DEFAULT FALSE,
                 created_at   timestamp NOT NULL DEFAULT timezone('utc'::text, now()),
@@ -1059,102 +999,102 @@ LANGUAGE plpgsql;
 
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)
-VALUES ('Captured sessions', 'overview', '{
+VALUES ('Captured sessions', 'web vitals', '{
   "col": 1,
   "row": 1,
   "position": 0
 }', true, true, true, 'count_sessions', 'predefined', 'overview'),
-       ('Request Load Time', 'overview', '{
+       ('Request Load Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_request_load_time', 'predefined', 'overview'),
-       ('Page Load Time', 'overview', '{
+       ('Page Load Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_page_load_time', 'predefined', 'overview'),
-       ('Image Load Time', 'overview', '{
+       ('Image Load Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_image_load_time', 'predefined', 'overview'),
-       ('DOM Content Load Start', 'overview', '{
+       ('DOM Content Load Start', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_dom_content_load_start', 'predefined', 'overview'),
-       ('First Meaningful paint', 'overview', '{
+       ('First Meaningful paint', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_first_contentful_pixel', 'predefined', 'overview'),
-       ('No. of Visited Pages', 'overview', '{
+       ('No. of Visited Pages', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_visited_pages', 'predefined', 'overview'),
-       ('Session Duration', 'overview', '{
+       ('Session Duration', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_session_duration', 'predefined', 'overview'),
-       ('DOM Build Time', 'overview', '{
+       ('DOM Build Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_pages_dom_buildtime', 'predefined', 'overview'),
-       ('Pages Response Time', 'overview', '{
+       ('Pages Response Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_pages_response_time', 'predefined', 'overview'),
-       ('Response Time', 'overview', '{
+       ('Response Time', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_response_time', 'predefined', 'overview'),
-       ('First Paint', 'overview', '{
+       ('First Paint', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_first_paint', 'predefined', 'overview'),
-       ('DOM Content Loaded', 'overview', '{
+       ('DOM Content Loaded', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_dom_content_loaded', 'predefined', 'overview'),
-       ('Time Till First byte', 'overview', '{
+       ('Time Till First byte', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_till_first_byte', 'predefined', 'overview'),
-       ('Time To Interactive', 'overview', '{
+       ('Time To Interactive', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_time_to_interactive', 'predefined', 'overview'),
-       ('Captured requests', 'overview', '{
+       ('Captured requests', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'count_requests', 'predefined', 'overview'),
-       ('Time To Render', 'overview', '{
+       ('Time To Render', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_time_to_render', 'predefined', 'overview'),
-       ('Memory Consumption', 'overview', '{
+       ('Memory Consumption', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_used_js_heap_size', 'predefined', 'overview'),
-       ('CPU Load', 'overview', '{
+       ('CPU Load', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0
        }', true, true, true, 'avg_cpu', 'predefined', 'overview'),
-       ('Frame rate', 'overview', '{
+       ('Frame rate', 'web vitals', '{
          "col": 1,
          "row": 1,
          "position": 0

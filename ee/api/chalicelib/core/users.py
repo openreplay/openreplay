@@ -4,6 +4,8 @@ import secrets
 from decouple import config
 from fastapi import BackgroundTasks
 
+import schemas
+import schemas_ee
 from chalicelib.core import authorizers, metadata, projects, roles
 from chalicelib.core import tenants, assist
 from chalicelib.utils import dev, SAML2_helper
@@ -25,10 +27,10 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                                             (SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1))))
-                            RETURNING tenant_id,user_id,email,role,name,appearance, role_id
+                            RETURNING tenant_id,user_id,email,role,name, role_id
                     ),
-                    au AS (INSERT INTO public.basic_authentication (user_id, generated_password, invitation_token, invited_at)
-                             VALUES ((SELECT user_id FROM u), TRUE, %(invitation_token)s, timezone('utc'::text, now()))
+                    au AS (INSERT INTO public.basic_authentication (user_id, invitation_token, invited_at)
+                             VALUES ((SELECT user_id FROM u), %(invitation_token)s, timezone('utc'::text, now()))
                              RETURNING invitation_token
                             )
                     SELECT u.user_id                                              AS id,
@@ -36,7 +38,6 @@ def create_new_member(tenant_id, email, invitation_token, admin, name, owner=Fal
                            u.email,
                            u.role,
                            u.name,
-                           TRUE                                                   AS change_password,
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -74,7 +75,6 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
                            email,
                            role,
                            name,
-                           TRUE                                                 AS change_password,
                            (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -88,8 +88,7 @@ def restore_member(tenant_id, user_id, email, invitation_token, admin, name, own
         result = cur.fetchone()
         query = cur.mogrify("""\
                     UPDATE public.basic_authentication
-                    SET generated_password = TRUE,
-                        invitation_token = %(invitation_token)s,
+                    SET invitation_token = %(invitation_token)s,
                         invited_at = timezone('utc'::text, now()),
                         change_pwd_expire_at = NULL,
                         change_pwd_token = NULL
@@ -147,10 +146,7 @@ def update(tenant_id, user_id, changes):
             else:
                 sub_query_bauth.append(f"{helper.key_to_snake_case(key)} = %({key})s")
         else:
-            if key == "appearance":
-                sub_query_users.append(f"appearance = %(appearance)s::jsonb")
-                changes["appearance"] = json.dumps(changes[key])
-            elif helper.key_to_snake_case(key) == "role_id":
+            if helper.key_to_snake_case(key) == "role_id":
                 sub_query_users.append("""role_id=(SELECT COALESCE((SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND role_id = %(role_id)s),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name = 'Member' LIMIT 1),
                                                 (SELECT role_id FROM roles WHERE tenant_id = %(tenant_id)s AND name != 'Owner' LIMIT 1)))""")
@@ -171,11 +167,9 @@ def update(tenant_id, user_id, changes):
                                 users.email,
                                 users.role,
                                 users.name,
-                                basic_authentication.generated_password  AS change_password,
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.appearance,
                                 users.role_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
@@ -192,11 +186,9 @@ def update(tenant_id, user_id, changes):
                                 users.email,
                                 users.role,
                                 users.name,
-                                basic_authentication.generated_password  AS change_password,
                                 (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END) AS super_admin,
                                 (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END) AS admin,
                                 (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                                users.appearance,
                                 users.role_id;""",
                             {"tenant_id": tenant_id, "user_id": user_id, **changes})
             )
@@ -272,12 +264,10 @@ def get(user_id, tenant_id):
                         users.user_id AS id,
                         email, 
                         role, 
-                        users.name, 
-                        basic_authentication.generated_password,
+                        users.name,
                         (CASE WHEN role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                        appearance,
                         api_key,
                         origin,
                         role_id,
@@ -296,7 +286,7 @@ def get(user_id, tenant_id):
                 {"userId": user_id, "tenant_id": tenant_id})
         )
         r = cur.fetchone()
-        return helper.dict_to_camel_case(r, ignore_keys=["appearance"])
+        return helper.dict_to_camel_case(r)
 
 
 def generate_new_api_key(user_id):
@@ -315,43 +305,45 @@ def generate_new_api_key(user_id):
     return helper.dict_to_camel_case(r)
 
 
-def edit(user_id_to_update, tenant_id, changes, editor_id):
-    ALLOW_EDIT = ["name", "email", "admin", "appearance", "roleId"]
+def edit(user_id_to_update, tenant_id, changes: schemas_ee.EditUserSchema, editor_id):
     user = get(user_id=user_id_to_update, tenant_id=tenant_id)
-    if editor_id != user_id_to_update or "admin" in changes and changes["admin"] != user["admin"]:
+    if editor_id != user_id_to_update or changes.admin is not None and changes.admin != user["admin"]:
         admin = get(tenant_id=tenant_id, user_id=editor_id)
         if not admin["superAdmin"] and not admin["admin"]:
             return {"errors": ["unauthorized"]}
+    _changes = {}
     if editor_id == user_id_to_update:
-        if user["superAdmin"]:
-            changes.pop("admin")
-        elif user["admin"] != changes["admin"]:
-            return {"errors": ["cannot change your own role"]}
+        if changes.admin is not None:
+            if user["superAdmin"]:
+                changes.admin = None
+            elif changes.admin != user["admin"]:
+                return {"errors": ["cannot change your own role"]}
+        if changes.roleId is not None:
+            if user["superAdmin"]:
+                changes.roleId = None
+            elif changes.roleId != user["roleId"]:
+                return {"errors": ["cannot change your own role"]}
 
-    keys = list(changes.keys())
-    for k in keys:
-        if k not in ALLOW_EDIT or changes[k] is None:
-            changes.pop(k)
-    keys = list(changes.keys())
+    if changes.email is not None and changes.email != user["email"]:
+        if email_exists(changes.email):
+            return {"errors": ["email already exists."]}
+        if get_deleted_user_by_email(changes.email) is not None:
+            return {"errors": ["email previously deleted."]}
+        _changes["email"] = changes.email
 
-    if len(keys) > 0:
-        if "email" in keys and changes["email"] != user["email"]:
-            if email_exists(changes["email"]):
-                return {"errors": ["email already exists."]}
-            if get_deleted_user_by_email(changes["email"]) is not None:
-                return {"errors": ["email previously deleted."]}
-        if "admin" in keys:
-            changes["role"] = "admin" if changes.pop("admin") else "member"
-        if len(changes.keys()) > 0:
-            updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=changes)
+    if changes.name is not None and len(changes.name) > 0:
+        _changes["name"] = changes.name
 
-            return {"data": updated_user}
+    if changes.admin is not None:
+        _changes["role"] = "admin" if changes.admin else "member"
+
+    if changes.roleId is not None:
+        _changes["roleId"] = changes.roleId
+
+    if len(_changes.keys()) > 0:
+        updated_user = update(tenant_id=tenant_id, user_id=user_id_to_update, changes=_changes)
+        return {"data": updated_user}
     return {"data": user}
-
-
-def edit_appearance(user_id, tenant_id, changes):
-    updated_user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
-    return {"data": updated_user}
 
 
 def get_by_email_only(email):
@@ -363,8 +355,7 @@ def get_by_email_only(email):
                         users.tenant_id,
                         users.email, 
                         users.role, 
-                        users.name, 
-                        basic_authentication.generated_password,
+                        users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -389,8 +380,7 @@ def get_by_email_reset(email, reset_token):
                         users.tenant_id,
                         users.email, 
                         users.role, 
-                        users.name, 
-                        basic_authentication.generated_password,
+                        users.name,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member
@@ -414,7 +404,7 @@ def get_members(tenant_id):
                         users.email, 
                         users.role, 
                         users.name, 
-                        basic_authentication.generated_password,
+                        users.created_at,
                         (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                         (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                         (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
@@ -435,6 +425,7 @@ def get_members(tenant_id):
         if len(r):
             r = helper.list_to_camel_case(r)
             for u in r:
+                u["createdAt"] = TimeUTC.datetime_to_timestamp(u["createdAt"])
                 if u["invitationToken"]:
                     u["invitationLink"] = __get_invitation_link(u.pop("invitationToken"))
                 else:
@@ -611,13 +602,13 @@ def auth_exists(user_id, tenant_id, jwt_iat, jwt_aud):
                 {"userId": user_id, "tenant_id": tenant_id})
         )
         r = cur.fetchone()
-        return r is not None \
-               and r.get("jwt_iat") is not None \
-               and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
-                    or (jwt_aud.startswith("plugin") \
-                        and (r["changed_at"] is None \
-                             or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
-                    )
+    return r is not None \
+           and r.get("jwt_iat") is not None \
+           and (abs(jwt_iat - TimeUTC.datetime_to_timestamp(r["jwt_iat"]) // 1000) <= 1 \
+                or (jwt_aud.startswith("plugin") \
+                    and (r["changed_at"] is None \
+                         or jwt_iat >= (TimeUTC.datetime_to_timestamp(r["changed_at"]) // 1000)))
+                )
 
 
 def change_jwt_iat(user_id):
@@ -636,15 +627,13 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
-                    users.user_id AS id,
+                    users.user_id,
                     users.tenant_id,
                     users.role,
                     users.name,
-                    basic_authentication.generated_password AS change_password,
                     (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                    users.appearance,
                     users.origin,
                     users.role_id,
                     roles.name AS role_name,
@@ -676,10 +665,10 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
     if r is not None:
         if for_change_password:
             return True
-        r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
-        jwt_iat = change_jwt_iat(r['id'])
+        r = helper.dict_to_camel_case(r)
+        jwt_iat = change_jwt_iat(r['userId'])
         return {
-            "jwt": authorizers.generate_jwt(r['id'], r['tenantId'],
+            "jwt": authorizers.generate_jwt(r['userId'], r['tenantId'],
                                             TimeUTC.datetime_to_timestamp(jwt_iat),
                                             aud=f"plugin:{helper.get_stage_name()}" if for_plugin else f"front:{helper.get_stage_name()}"),
             "email": email,
@@ -692,15 +681,13 @@ def authenticate_sso(email, internal_id, exp=None):
     with pg_client.PostgresClient() as cur:
         query = cur.mogrify(
             f"""SELECT 
-                    users.user_id AS id,
+                    users.user_id,
                     users.tenant_id,
                     users.role,
                     users.name,
-                    False AS change_password,
                     (CASE WHEN users.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                     (CASE WHEN users.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                     (CASE WHEN users.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                    users.appearance,
                     origin,
                     role_id
                 FROM public.users AS users
@@ -711,9 +698,9 @@ def authenticate_sso(email, internal_id, exp=None):
         r = cur.fetchone()
 
     if r is not None:
-        r = helper.dict_to_camel_case(r, ignore_keys=["appearance"])
-        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['id']))
-        return authorizers.generate_jwt(r['id'], r['tenantId'],
+        r = helper.dict_to_camel_case(r)
+        jwt_iat = TimeUTC.datetime_to_timestamp(change_jwt_iat(r['userId']))
+        return authorizers.generate_jwt(r['userId'], r['tenantId'],
                                         jwt_iat, aud=f"front:{helper.get_stage_name()}",
                                         exp=(exp + jwt_iat // 1000) if exp is not None else None)
     return None
@@ -738,11 +725,9 @@ def create_sso_user(tenant_id, email, admin, name, origin, role_id, internal_id=
                            u.email,
                            u.role,
                            u.name,
-                           TRUE                                                   AS change_password,
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           u.appearance,
                            origin
                     FROM u;""",
                             {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,
@@ -772,7 +757,6 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                          created_at= default,
                          api_key= default,
                          jwt_iat= NULL,
-                         appearance= default,
                          weekly_report= default
                         WHERE user_id = %(user_id)s
                         RETURNING *
@@ -780,7 +764,6 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                     au AS (
                         UPDATE public.basic_authentication
                         SET password= default,
-                            generated_password= default,
                             invitation_token= default,
                             invited_at= default,
                             change_pwd_token= default,
@@ -793,11 +776,9 @@ def restore_sso_user(user_id, tenant_id, email, admin, name, origin, role_id, in
                            u.email,
                            u.role,
                            u.name,
-                           TRUE                                                   AS change_password,
                            (CASE WHEN u.role = 'owner' THEN TRUE ELSE FALSE END)  AS super_admin,
                            (CASE WHEN u.role = 'admin' THEN TRUE ELSE FALSE END)  AS admin,
                            (CASE WHEN u.role = 'member' THEN TRUE ELSE FALSE END) AS member,
-                           u.appearance,
                            origin
                     FROM u;""",
                             {"tenant_id": tenant_id, "email": email, "internal_id": internal_id,

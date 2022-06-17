@@ -33,7 +33,9 @@ class ORRoute(APIRoute):
             if isinstance(response, JSONResponse):
                 response: JSONResponse = response
                 body = json.loads(response.body.decode('utf8'))
-                if response.status_code == 200 and body is not None and body.get("errors") is not None:
+                if response.status_code == 200 \
+                        and body is not None and isinstance(body, dict) \
+                        and body.get("errors") is not None:
                     if "not found" in body["errors"][0]:
                         response.status_code = status.HTTP_404_NOT_FOUND
                     else:

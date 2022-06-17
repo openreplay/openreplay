@@ -207,7 +207,6 @@ Pipfile
 /chalicelib/core/mobile.py
 /chalicelib/core/sessions.py
 /chalicelib/core/sessions_assignments.py
-/chalicelib/core/sessions_favorite_viewed.py
 /chalicelib/core/sessions_metas.py
 /chalicelib/core/sessions_mobs.py
 /chalicelib/core/significance.py
@@ -215,7 +214,6 @@ Pipfile
 /chalicelib/core/socket_ios.py
 /chalicelib/core/sourcemaps.py
 /chalicelib/core/sourcemaps_parser.py
-/chalicelib/core/weekly_report.py
 /chalicelib/saml
 /chalicelib/utils/html/
 /chalicelib/utils/__init__.py

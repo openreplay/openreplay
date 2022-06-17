@@ -1,7 +1,8 @@
-from typing import Union
+from typing import Union, Optional
 
 from decouple import config
-from fastapi import Depends, Body, BackgroundTasks
+from fastapi import Depends, Body, BackgroundTasks, HTTPException
+from starlette import status
 
 import schemas
 from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assignments, projects, \
@@ -13,12 +14,40 @@ from chalicelib.core import log_tool_rollbar, sourcemaps, events, sessions_assig
     assist, heatmaps, mobile, signup, tenants, errors_favorite_viewed, boarding, notifications, webhook, users, \
     custom_metrics, saved_search
 from chalicelib.core.collaboration_slack import Slack
-from chalicelib.utils import email_helper
+from chalicelib.utils import email_helper, helper, captcha
 from chalicelib.utils.TimeUTC import TimeUTC
 from or_dependencies import OR_context
 from routers.base import get_routers
 
 public_app, app, app_apikey = get_routers()
+
+
+@public_app.post('/login', tags=["authentication"])
+def login(data: schemas.UserLoginSchema = Body(...)):
+    if helper.allow_captcha() and not captcha.is_valid(data.g_recaptcha_response):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid captcha."
+        )
+
+    r = users.authenticate(data.email, data.password, for_plugin=False)
+    if r is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="You’ve entered invalid Email or Password."
+        )
+    if "errors" in r:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=r["errors"][0]
+        )
+    r["smtp"] = helper.has_smtp()
+    return {
+        'jwt': r.pop('jwt'),
+        'data': {
+            "user": r
+        }
+    }
 
 
 @app.get('/{projectId}/sessions/{sessionId}', tags=["sessions"])
@@ -107,10 +136,12 @@ def events_search(projectId: int, q: str,
                   type: Union[schemas.FilterType, schemas.EventType,
                               schemas.PerformanceEventType, schemas.FetchFilterType,
                               schemas.GraphqlFilterType] = None,
-                  key: str = None,
-                  source: str = None, context: schemas.CurrentContext = Depends(OR_context)):
+                  key: str = None, source: str = None, live: bool = False,
+                  context: schemas.CurrentContext = Depends(OR_context)):
     if len(q) == 0:
         return {"data": []}
+    if live:
+        return assist.autocomplete(project_id=projectId, q=q, key=key)
     if type in [schemas.FetchFilterType._url]:
         type = schemas.EventType.request
     elif type in [schemas.GraphqlFilterType._name]:
@@ -743,8 +774,8 @@ def get_funnel_sessions_on_the_fly(projectId: int, funnelId: int, data: schemas.
 
 
 @app.get('/{projectId}/funnels/issues/{issueId}/sessions', tags=["funnels"])
-def get_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
-                       context: schemas.CurrentContext = Depends(OR_context)):
+def get_funnel_issue_sessions(projectId: int, issueId: str, startDate: int = None, endDate: int = None,
+                              context: schemas.CurrentContext = Depends(OR_context)):
     issue = issues.get(project_id=projectId, issue_id=issueId)
     if issue is None:
         return {"errors": ["issue not found"]}
@@ -830,7 +861,14 @@ def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
 def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
-    data = assist.get_live_sessions_ws(projectId, user_id=userId)
+    data = assist.get_live_sessions_ws_user_id(projectId, user_id=userId)
+    return {'data': data}
+
+
+@app.post('/{projectId}/assist/sessions', tags=["assist"])
+def sessions_live(projectId: int, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
+                  context: schemas.CurrentContext = Depends(OR_context)):
+    data = assist.get_live_sessions_ws(projectId, body=data)
     return {'data': data}
 
 
@@ -903,7 +941,7 @@ def edit_client(data: schemas.UpdateTenantSchema = Body(...),
 @app.post('/{projectId}/errors/search', tags=['errors'])
 def errors_search(projectId: int, data: schemas.SearchErrorsSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    return errors.search(data, projectId, user_id=context.user_id)
+    return {"data": errors.search(data, projectId, user_id=context.user_id)}
 
 
 @app.get('/{projectId}/errors/stats', tags=['errors'])
@@ -964,6 +1002,11 @@ def add_remove_favorite_error(projectId: int, errorId: str, action: str, startDa
 @app.get('/notifications', tags=['notifications'])
 def get_notifications(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": notifications.get_all(tenant_id=context.tenant_id, user_id=context.user_id)}
+
+
+@app.get('/notifications/count', tags=['notifications'])
+def get_notifications_count(context: schemas.CurrentContext = Depends(OR_context)):
+    return {"data": notifications.get_all_count(tenant_id=context.tenant_id, user_id=context.user_id)}
 
 
 @app.get('/notifications/{notificationId}/view', tags=['notifications'])
@@ -1071,15 +1114,8 @@ def generate_new_user_token(context: schemas.CurrentContext = Depends(OR_context
 @app.put('/account', tags=["account"])
 def edit_account(data: schemas.EditUserSchema = Body(...),
                  context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data.dict(),
+    return users.edit(tenant_id=context.tenant_id, user_id_to_update=context.user_id, changes=data,
                       editor_id=context.user_id)
-
-
-@app.post('/account/appearance', tags=["account"])
-@app.put('/account/appearance', tags=["account"])
-def edit_account_appearance(data: schemas.EditUserAppearanceSchema = Body(...),
-                            context: schemas.CurrentContext = Depends(OR_context)):
-    return users.edit_appearance(tenant_id=context.tenant_id, user_id=context.user_id, changes=data.dict())
 
 
 @app.post('/account/password', tags=["account"])

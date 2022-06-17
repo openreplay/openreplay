@@ -18,6 +18,6 @@ CREATE TABLE IF NOT EXISTS errors
     message              String,
     error_id             String
 ) ENGINE = MergeTree
-      PARTITION BY toDate(datetime)
+      PARTITION BY toStartOfWeek(datetime)
       ORDER BY (project_id, datetime)
       TTL datetime + INTERVAL 1 MONTH;

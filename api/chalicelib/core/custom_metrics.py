@@ -2,7 +2,7 @@ import json
 from typing import Union
 
 import schemas
-from chalicelib.core import sessions
+from chalicelib.core import sessions, funnels, errors
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -42,7 +42,66 @@ def __try_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
     return results
 
 
-def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+def __is_funnel_chart(data: schemas.TryCustomMetricsPayloadSchema):
+    return data.metric_type == schemas.MetricType.funnel
+
+
+def __get_funnel_chart(project_id, data: schemas.TryCustomMetricsPayloadSchema):
+    if len(data.series) == 0:
+        return {
+            "stages": [],
+            "totalDropDueToIssues": 0
+        }
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
+    return funnels.get_top_insights_on_the_fly_widget(project_id=project_id, data=data.series[0].filter)
+
+
+def __is_errors_list(data):
+    return data.metric_type == schemas.MetricType.table \
+           and data.metric_of == schemas.TableMetricOfType.errors
+
+
+def __get_errors_list(project_id, user_id, data):
+    if len(data.series) == 0:
+        return {
+            "total": 0,
+            "errors": []
+        }
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.page = data.page
+    data.series[0].filter.limit = data.limit
+    return errors.search(data.series[0].filter, project_id=project_id, user_id=user_id)
+
+
+def __is_sessions_list(data):
+    return data.metric_type == schemas.MetricType.table \
+           and data.metric_of == schemas.TableMetricOfType.sessions
+
+
+def __get_sessions_list(project_id, user_id, data):
+    if len(data.series) == 0:
+        print("empty series")
+        return {
+            "total": 0,
+            "sessions": []
+        }
+    data.series[0].filter.startDate = data.startTimestamp
+    data.series[0].filter.endDate = data.endTimestamp
+    data.series[0].filter.page = data.page
+    data.series[0].filter.limit = data.limit
+    return sessions.search2_pg(data=data.series[0].filter, project_id=project_id, user_id=user_id)
+
+
+def merged_live(project_id, data: schemas.TryCustomMetricsPayloadSchema, user_id=None):
+    if __is_funnel_chart(data):
+        return __get_funnel_chart(project_id=project_id, data=data)
+    elif __is_errors_list(data):
+        return __get_errors_list(project_id=project_id, user_id=user_id, data=data)
+    elif __is_sessions_list(data):
+        return __get_sessions_list(project_id=project_id, user_id=user_id, data=data)
+
     series_charts = __try_live(project_id=project_id, data=data)
     if data.view_type == schemas.MetricTimeseriesViewType.progress or data.metric_type == schemas.MetricType.table:
         return series_charts
@@ -75,15 +134,22 @@ def make_chart(project_id, user_id, metric_id, data: schemas.CustomMetricChartPa
     if metric is None:
         return None
     metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
-    series_charts = __try_live(project_id=project_id, data=metric)
-    if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
-        return series_charts
-    results = [{}] * len(series_charts[0])
-    for i in range(len(results)):
-        for j, series_chart in enumerate(series_charts):
-            results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
-                          metric.series[j].name: series_chart[i]["count"]}
-    return results
+
+    return merged_live(project_id=project_id, data=metric, user_id=user_id)
+    # if __is_funnel_chart(metric):
+    #     return __get_funnel_chart(project_id=project_id, data=metric)
+    # elif __is_errors_list(metric):
+    #     return __get_errors_list(project_id=project_id, user_id=user_id, data=metric)
+    #
+    # series_charts = __try_live(project_id=project_id, data=metric)
+    # if metric.view_type == schemas.MetricTimeseriesViewType.progress or metric.metric_type == schemas.MetricType.table:
+    #     return series_charts
+    # results = [{}] * len(series_charts[0])
+    # for i in range(len(results)):
+    #     for j, series_chart in enumerate(series_charts):
+    #         results[i] = {**results[i], "timestamp": series_chart[i]["timestamp"],
+    #                       metric.series[j].name: series_chart[i]["count"]}
+    # return results
 
 
 def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
@@ -103,6 +169,38 @@ def get_sessions(project_id, user_id, metric_id, data: schemas.CustomMetricSessi
                         **sessions.search2_pg(data=s.filter, project_id=project_id, user_id=user_id)})
 
     return results
+
+
+def get_funnel_issues(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    if metric is None:
+        return None
+    for s in metric.series:
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
+        return {"seriesId": s.series_id, "seriesName": s.name,
+                **funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter)}
+
+
+def get_errors_list(project_id, user_id, metric_id, data: schemas.CustomMetricSessionsPayloadSchema):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    if metric is None:
+        return None
+    for s in metric.series:
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
+        return {"seriesId": s.series_id, "seriesName": s.name,
+                **errors.search(data=s.filter, project_id=project_id, user_id=user_id)}
 
 
 def try_sessions(project_id, user_id, data: schemas.CustomMetricSessionsPayloadSchema):
@@ -130,12 +228,16 @@ def create(project_id, user_id, data: schemas.CreateCustomMetricsSchema, dashboa
             _data[f"filter_{i}"] = s.filter.json()
         series_len = len(data.series)
         data.series = None
-        params = {"user_id": user_id, "project_id": project_id, **data.dict(), **_data}
+        params = {"user_id": user_id, "project_id": project_id,
+                  "default_config": json.dumps(data.config.dict()),
+                  **data.dict(), **_data}
         query = cur.mogrify(f"""\
             WITH m AS (INSERT INTO metrics (project_id, user_id, name, is_public,
-                                    view_type, metric_type, metric_of, metric_value, metric_format)
+                                    view_type, metric_type, metric_of, metric_value,
+                                    metric_format, default_config)
                          VALUES (%(project_id)s, %(user_id)s, %(name)s, %(is_public)s, 
-                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, %(metric_format)s)
+                                    %(view_type)s, %(metric_type)s, %(metric_of)s, %(metric_value)s, 
+                                    %(metric_format)s, %(default_config)s)
                          RETURNING *)
             INSERT
             INTO metric_series(metric_id, index, name, filter)
@@ -396,3 +498,32 @@ def change_state(project_id, metric_id, user_id, status):
                         {"metric_id": metric_id, "status": status, "user_id": user_id})
         )
     return get(metric_id=metric_id, project_id=project_id, user_id=user_id)
+
+
+def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
+                                 data: schemas.CustomMetricSessionsPayloadSchema
+                                 # , range_value=None, start_date=None, end_date=None
+                                 ):
+    metric = get(metric_id=metric_id, project_id=project_id, user_id=user_id, flatten=False)
+    if metric is None:
+        return None
+    metric: schemas.CreateCustomMetricsSchema = __merge_metric_with_data(metric=metric, data=data)
+    if metric is None:
+        return None
+    for s in metric.series:
+        s.filter.startDate = data.startTimestamp
+        s.filter.endDate = data.endTimestamp
+        s.filter.limit = data.limit
+        s.filter.page = data.page
+        issues = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})
+        issues = issues.get("significant", []) + issues.get("insignificant", [])
+        issue = None
+        for i in issues:
+            if i.get("issueId", "") == issue_id:
+                issue = i
+                break
+        return {"seriesId": s.series_id, "seriesName": s.name,
+                "sessions": sessions.search2_pg(user_id=user_id, project_id=project_id,
+                                                issue=issue, data=s.filter)
+                if issue is not None else {"total": 0, "sessions": []},
+                "issue": issue}
