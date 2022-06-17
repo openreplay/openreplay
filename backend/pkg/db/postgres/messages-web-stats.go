@@ -57,7 +57,7 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 		) VALUES (
 			$1, $2, $3, 
 			$4, 
-			$5, $6, $7, 
+			left($5, 2700), $6, $7, 
 			$8, $9, 
 			NULLIF($10, '')::events.resource_method,
 			NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0), NULLIF($15, 0)

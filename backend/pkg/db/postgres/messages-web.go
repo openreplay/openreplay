@@ -229,7 +229,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 			duration, success
 		) VALUES (
 			$1, $2, $3, 
-			$4, $5, $6, $7,
+			left($4, 2700), $5, $6, $7,
 			$8, $9, $10::smallint, NULLIF($11, '')::http_method,
 			$12, $13
 		) ON CONFLICT DO NOTHING`
@@ -261,7 +261,7 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *G
 			request_body, response_body
 		) VALUES (
 			$1, $2, $3, 
-			$4,
+			left($4, 2700),
 			$5, $6
 		) ON CONFLICT DO NOTHING`
 	conn.batchQueue(sessionID, sqlRequest, sessionID, e.Timestamp, e.MessageID,
