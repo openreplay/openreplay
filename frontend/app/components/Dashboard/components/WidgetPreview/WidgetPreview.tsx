@@ -6,6 +6,7 @@ import { SegmentSelection } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { FilterKey } from 'Types/filter/filterType';
+import WidgetDateRange from '../WidgetDateRange/WidgetDateRange';
 // import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 
 interface Props {
@@ -17,22 +18,47 @@ function WidgetPreview(props: Props) {
     const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
-    // const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
+    const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const disableVisualization = useObserver(() => metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS);
-    const period = useObserver(() => dashboardStore.drillDownPeriod);
+    // const period = useObserver(() => dashboardStore.drillDownPeriod);
 
     const chagneViewType = (e, { name, value }: any) => {
         metric.update({ [ name ]: value });
     }
 
-    const onChangePeriod = (period: any) => {
-        dashboardStore.setDrillDownPeriod(period);
+    // const onChangePeriod = (period: any) => {
+    //     dashboardStore.setDrillDownPeriod(period);
+    //     const periodTimestamps = period.toTimestamps();
+    //     drillDownFilter.merge({
+    //         startTimestamp: periodTimestamps.startTimestamp,
+    //         endTimestamp: periodTimestamps.endTimestamp,
+    //     })
+    // }
+
+    const getWidgetTitle = () => {
+        if (isTimeSeries) {
+            return 'Time Series';
+        } else if (isTable) {
+            if (metric.metricOf === FilterKey.SESSIONS) {
+                return 'Table of Sessions';
+                // return <div>Sessions <span className="color-gray-medium">{metric.data.total}</span></div>;
+            } else if (metric.metricOf === FilterKey.ERRORS) {
+                return 'Table of Errors';
+                // return <div>Errors <span className="color-gray-medium">{metric.data.total}</span></div>;
+            } else {
+                return 'Table';
+            }
+        } else if (metric.metricType === 'funnel') {
+            return 'Funnel';
+        }
     }
 
     return useObserver(() => (
         <div className={cn(className)}>
-            <div className="flex items-center justify-between">
-                <h2 className="text-2xl">Trend</h2>
+            <div className="flex items-center justify-between mb-2">
+                <h2 className="text-2xl">
+                    {getWidgetTitle()}
+                </h2>
                 <div className="flex items-center">
                     {isTimeSeries && (
                         <>
@@ -72,14 +98,8 @@ function WidgetPreview(props: Props) {
                         </>
                     )}
                     <div className="mx-4" />
-                        <span className="mr-1 color-gray-medium">Time Range</span>
-                        <SelectDateRange
-                            period={period}
-                            // onChange={(period: any) => metric.setPeriod(period)}
-                            onChange={onChangePeriod}
-                            right={true}
-                        />
-                    </div>
+                    <WidgetDateRange />
+                </div>
             </div>
             <div className="bg-white rounded p-4">
                 <WidgetWrapper widget={metric} isPreview={true} isWidget={false} />

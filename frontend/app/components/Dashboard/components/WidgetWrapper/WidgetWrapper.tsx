@@ -65,7 +65,6 @@ function WidgetWrapper(props: Props) {
 
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
-
     const addOverlay = isTemplate || (!isPredefined && isWidget)
 
     return useObserver(() => (

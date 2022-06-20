@@ -36,6 +36,7 @@ function DistributionBar({ className, title, partitions }) {
 								{`${ Math.round(p.prc) }%`}
 							</div>
 						}
+						className="w-full"
 					>
 						<div 
 							className="h-full bg-tealx" 

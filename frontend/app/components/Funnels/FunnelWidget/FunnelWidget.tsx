@@ -5,6 +5,7 @@ import cn from 'classnames';
 import stl from './FunnelWidget.module.css';
 import { Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
+import { NoContent } from 'UI';
 
 interface Props {
     metric: Widget;
@@ -13,14 +14,13 @@ interface Props {
 function FunnelWidget(props: Props) {
     const { metric, isWidget = false } = props;
     const funnel = metric.data.funnel || { stages: [] };
-    // pic firt and last from array
     const totalSteps = funnel.stages.length;
     const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
     const hasMoreSteps = funnel.stages.length > 2;
     const lastStage = funnel.stages[funnel.stages.length - 1];
 
     return useObserver(() => (
-        <>
+        <NoContent show={!stages || stages.length === 0}>
             <div className="w-full">
                 { !isWidget && (
                     stages.map((filter: any, index: any) => (
@@ -69,7 +69,7 @@ function FunnelWidget(props: Props) {
                     </div>
                 </div>
             </div>
-        </>
+        </NoContent>
     ));
 }
 

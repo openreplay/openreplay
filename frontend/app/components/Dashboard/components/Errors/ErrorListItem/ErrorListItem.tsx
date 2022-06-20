@@ -9,17 +9,27 @@ import ErrorLabel from '../ErrorLabel';
 import { BarChart, Bar, YAxis, Tooltip, XAxis } from 'recharts';
 import { Styles } from '../../../Widgets/common';
 import { diffFromNowString } from 'App/date';
+import { useModal } from '../../../../Modal';
+import ErrorDetailsModal from '../ErrorDetailsModal';
 
 interface Props {
     error: any;
     className?: string;
+	onClick: () => void;
 }
 function ErrorListItem(props: Props) {
     const { error, className = '' } = props;
+	// const { showModal } = useModal();
+
+	// const onClick = () => {
+	// 	alert('test')
+	// 	showModal(<ErrorDetailsModal />, { right: true });
+	// }
     return (
         <div
 			className={ cn("border p-3 grid grid-cols-12 gap-4 cursor-pointer py-4 hover:bg-active-blue mb-3", className) }
 			id="error-item"
+			onClick={props.onClick}
 		>
 			<div className={ cn("col-span-6 leading-tight") } >
 				<div>

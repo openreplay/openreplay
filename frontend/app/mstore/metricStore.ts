@@ -1,7 +1,8 @@
 import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
 import Widget, { IWidget } from "./types/widget";
-import { metricService } from "App/services";
+import { metricService, errorService } from "App/services";
 import { toast } from 'react-toastify';
+import Error from "./types/error";
 
 export interface IMetricStore {
     paginatedList: any;
@@ -29,6 +30,7 @@ export interface IMetricStore {
     updateInList(metric: IWidget): void
     findById(metricId: string): void
     removeById(metricId: string): void
+    fetchError(errorId: string): Promise<any>
 
     // API
     save(metric: IWidget, dashboardId?: string): Promise<any>
@@ -75,6 +77,8 @@ export default class MetricStore implements IMetricStore {
             fetchList: action,
             fetch: action,
             delete: action,
+
+            fetchError: action,
 
             paginatedList: computed,
         })
@@ -186,6 +190,17 @@ export default class MetricStore implements IMetricStore {
             }).finally(() => {
                 this.isSaving = false
             })
+    }
+
+    fetchError(errorId: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            errorService.one(errorId).then((error: any) => {
+                resolve(new Error().fromJSON(error))
+            }).catch((error: any) => {
+                toast.error('Failed to fetch error details.')
+                reject(error)
+            })
+        })
     }
 }
 

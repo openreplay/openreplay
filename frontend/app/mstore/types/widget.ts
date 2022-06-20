@@ -1,7 +1,7 @@
 import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import FilterSeries from "./filterSeries";
 import { DateTime } from 'luxon';
-import { metricService } from "App/services";
+import { metricService, errorService } from "App/services";
 import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';

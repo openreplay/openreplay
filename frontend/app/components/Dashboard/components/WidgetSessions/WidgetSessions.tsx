@@ -23,13 +23,13 @@ function WidgetSessions(props: Props) {
     const { dashboardStore, metricStore } = useStore();
     const filter = useObserver(() => dashboardStore.drillDownFilter);
     const widget: any = useObserver(() => metricStore.instance);
-    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
+    // const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
     const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
     const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
-    const [timestamps, setTimestamps] = useState<any>({
-        startTimestamp: 0,
-        endTimestamp: 0,
-    });
+    // const [timestamps, setTimestamps] = useState<any>({
+    //     startTimestamp: 0,
+    //     endTimestamp: 0,
+    // });
     const [seriesOptions, setSeriesOptions] = useState([
         { label: 'All', value: 'all' },
     ]);
@@ -63,11 +63,11 @@ function WidgetSessions(props: Props) {
         debounceRequest(widget.metricId, { ...filter, series: widget.toJsonDrilldown(), page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
     }, [filter.startTimestamp, filter.endTimestamp, filter.filters, depsString, metricStore.sessionsPage]);
 
-    useEffect(() => {
-        const timestamps = drillDownPeriod.toTimestamps();
-        console.log('timestamps', timestamps);
-        debounceRequest(widget.metricId, { startTime: timestamps.startTimestamp, endTime: timestamps.endTimestamp, series: widget.toJsonDrilldown(), page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
-    }, [drillDownPeriod]);
+    // useEffect(() => {
+    //     const timestamps = drillDownPeriod.toTimestamps();
+    //     // console.log('timestamps', timestamps);
+    //     debounceRequest(widget.metricId, { startTime: timestamps.startTimestamp, endTime: timestamps.endTimestamp, series: widget.toJsonDrilldown(), page: metricStore.sessionsPage, limit: metricStore.sessionsPageSize });
+    // }, [drillDownPeriod]);
 
     return useObserver(() => (
         <div className={cn(className)}>

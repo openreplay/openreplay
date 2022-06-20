@@ -29,6 +29,7 @@ function WidgetChart(props: Props) {
     const { dashboardStore, metricStore } = useStore();
     const _metric: any = useObserver(() => metricStore.instance);
     const period = useObserver(() => dashboardStore.period);
+    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
     const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
@@ -44,14 +45,14 @@ function WidgetChart(props: Props) {
 
     const onChartClick = (event: any) => {
         if (event) {
-            if (isTableWidget || isPieChart) {
+            if (isTableWidget || isPieChart) { // get the filter of clicked row
                 const periodTimestamps = period.toTimestamps()
                 drillDownFilter.merge({
                     filters: event,
                     startTimestamp: periodTimestamps.startTimestamp,
                     endTimestamp: periodTimestamps.endTimestamp,
                 });
-            } else {
+            } else { // get the filter of clicked chart point
                 const payload = event.activePayload[0].payload;
                 const timestamp = payload.timestamp;
                 const periodTimestamps = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
@@ -82,9 +83,10 @@ function WidgetChart(props: Props) {
           return
         };
         prevMetricRef.current = metric;
-        const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
+        const timestmaps = drillDownPeriod.toTimestamps();
+        const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget);
-    }, [period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
+    }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
 
 
     const renderChart = () => {

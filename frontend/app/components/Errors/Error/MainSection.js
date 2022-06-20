@@ -145,7 +145,7 @@ export default class MainSection extends React.PureComponent {
 						loading={ toggleFavoriteLoading }
 						onClick={ this.bookmark }
 					/>
-					<SharePopup
+					{/* <SharePopup
 						entity="errors"
 						id={ error.errorId }
 						trigger={
@@ -156,7 +156,7 @@ export default class MainSection extends React.PureComponent {
 							icon="share-alt"
 							/>
 						}
-					/>
+					/> */}
 				</div>
 				<Divider />
 				<div className="m-4">
