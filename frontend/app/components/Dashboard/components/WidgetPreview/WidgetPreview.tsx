@@ -6,6 +6,7 @@ import { SegmentSelection } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import SelectDateRange from 'Shared/SelectDateRange';
 import { FilterKey } from 'Types/filter/filterType';
+// import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 
 interface Props {
     className?: string;
@@ -13,14 +14,19 @@ interface Props {
 function WidgetPreview(props: Props) {
     const { className = '' } = props;
     const { metricStore, dashboardStore } = useStore();
-    const period = useObserver(() => dashboardStore.period);
     const metric: any = useObserver(() => metricStore.instance);
     const isTimeSeries = metric.metricType === 'timeseries';
     const isTable = metric.metricType === 'table';
+    // const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const disableVisualization = useObserver(() => metric.metricOf === FilterKey.SESSIONS || metric.metricOf === FilterKey.ERRORS);
+    const period = useObserver(() => dashboardStore.drillDownPeriod);
 
     const chagneViewType = (e, { name, value }: any) => {
         metric.update({ [ name ]: value });
+    }
+
+    const onChangePeriod = (period: any) => {
+        dashboardStore.setDrillDownPeriod(period);
     }
 
     return useObserver(() => (
@@ -39,8 +45,8 @@ function WidgetPreview(props: Props) {
                                 onSelect={ chagneViewType }
                                 value={{ value: metric.viewType }}
                                 list={ [
-                                { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
-                                { value: 'progress', name: 'Progress', icon: 'hash' },
+                                    { value: 'lineChart', name: 'Chart', icon: 'graph-up-arrow' },
+                                    { value: 'progress', name: 'Progress', icon: 'hash' },
                                 ]}
                             />
                         </>
@@ -69,7 +75,8 @@ function WidgetPreview(props: Props) {
                         <span className="mr-1 color-gray-medium">Time Range</span>
                         <SelectDateRange
                             period={period}
-                            onChange={(period: any) => dashboardStore.setPeriod(period)}
+                            // onChange={(period: any) => metric.setPeriod(period)}
+                            onChange={onChangePeriod}
                             right={true}
                         />
                     </div>

@@ -18,14 +18,14 @@ interface Props {
 }
 function WidgetView(props: Props) {
     const { match: { params: { siteId, dashboardId, metricId } } } = props;
-    const { metricStore } = useStore();
+    const { metricStore, dashboardStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
-            metricStore.fetch(metricId);
+            metricStore.fetch(metricId, dashboardStore.period);
         } else if (metricId === 'create') {
             metricStore.init();
         }

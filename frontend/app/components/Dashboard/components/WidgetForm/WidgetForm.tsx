@@ -145,7 +145,7 @@ function WidgetForm(props: Props) {
                         </>
                     )}
 
-                    {metric.metricType === 'table' && (
+                    {metric.metricType === 'table' && !(metric.metricOf === FilterKey.ERRORS || metric.metricOf === FilterKey.SESSIONS) && (
                     <>
                         <span className="mx-3">showing</span>
                         <Select

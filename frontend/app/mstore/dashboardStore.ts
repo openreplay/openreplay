@@ -20,6 +20,7 @@ export interface IDashboardSotre {
     endTimestamp: number
     period: Period
     drillDownFilter: IFilter
+    drillDownPeriod: Period
 
     siteId: any
     currentWidget: Widget
@@ -84,6 +85,7 @@ export default class DashboardStore implements IDashboardSotre {
     widgets: Widget[] = []
     period: Period = Period({ rangeName: LAST_30_DAYS })
     drillDownFilter: Filter = new Filter()
+    drillDownPeriod: Period = Period({ rangeName: LAST_30_DAYS });
     startTimestamp: number = 0
     endTimestamp: number = 0
 
@@ -107,6 +109,7 @@ export default class DashboardStore implements IDashboardSotre {
             drillDownFilter: observable.ref,
             widgetCategories: observable.ref,
             selectedDashboard: observable.ref,
+            drillDownPeriod: observable,
             resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
@@ -130,13 +133,15 @@ export default class DashboardStore implements IDashboardSotre {
             fetchTemplates: action,
             updatePinned: action,
             setPeriod: action,
+            setDrillDownPeriod: action,
 
             fetchMetricChartData: action
         })
 
-        const drillDownPeriod = Period({ rangeName: LAST_30_DAYS }).toTimestamps();
-        this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
-        this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
+        this.drillDownPeriod = Period({ rangeName: LAST_24_HOURS });
+        const timeStamps = this.drillDownPeriod.toTimestamps();
+        this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp)
+        this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp)
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {
@@ -432,6 +437,10 @@ export default class DashboardStore implements IDashboardSotre {
 
     setPeriod(period: any) {
         this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
+    }
+
+    setDrillDownPeriod(period: any) {
+        this.drillDownPeriod = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
     }
 
     fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {

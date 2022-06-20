@@ -1,9 +1,10 @@
-import React, { Component, ReactNode, FunctionComponent, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Select from 'Shared/Select'
 import { components } from 'react-select';
 import { Icon } from 'UI';
 import FunnelIssuesSelectedFilters from '../FunnelIssuesSelectedFilters';
 import { useStore } from 'App/mstore';
+import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 
 const options = [
       { value: "click_rage", label: "Click Rage" },
@@ -20,7 +21,7 @@ const options = [
       { value: "js_error", label: "Error" }
 ]
 
-function FunnelIssuesDropdown(props) {
+function FunnelIssuesDropdown() {
     const { funnelStore } = useStore();
     const [isOpen, setIsOpen] = React.useState(false);
     const [selectedValues, setSelectedValues] = React.useState<any>([]);
@@ -48,12 +49,20 @@ function FunnelIssuesDropdown(props) {
         }
     }
 
+    const onClickOutside = () => {
+        if (isOpen) {
+            setTimeout(() => {
+                setIsOpen(false);
+            }, 0);
+        }
+    }
+
     return (
         <div className="flex items-start">
             <Select
                 menuIsOpen={isOpen}
-                onMenuOpen={() => setIsOpen(true)}
-                onMenuClose={() => setIsOpen(false)}
+                // onMenuOpen={() => setIsOpen(true)}
+                // onMenuClose={() => setIsOpen(false)}
                 options={filteredOptions}
                 onChange={handleChange}
                 styles={{
@@ -77,11 +86,19 @@ function FunnelIssuesDropdown(props) {
                     IndicatorsContainer: (): any => null,
                     Control: ({ children, ...props }: any) => (
                         <components.Control {...props}>
-                        { children }
-                        <button className="px-2 py-1 bg-white rounded-2xl border border-teal border-dashed color-teal flex items-center hover:bg-active-blue" onClick={() => setIsOpen(!isOpen)}>
-                            <Icon name="funnel" size={16} color="teal" />
-                            <span className="ml-2">Issues</span>
-                        </button>
+                            <OutsideClickDetectingDiv
+                                // className={ cn("relative flex items-center", { "flex-1" : fullWidth }) }
+                                onClickOutside={onClickOutside}
+                            >
+                            { children }
+                            <button
+                                className="px-2 py-1 bg-white rounded-2xl border border-teal border-dashed color-teal flex items-center hover:bg-active-blue"
+                                onClick={() => setIsOpen(!isOpen)}
+                            >
+                                <Icon name="funnel" size={16} color="teal" />
+                                <span className="ml-2">Issues</span>
+                            </button>
+                            </OutsideClickDetectingDiv>
                         </components.Control>
                     ),
                     Placeholder: (): any => null,

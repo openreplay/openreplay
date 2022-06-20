@@ -8,27 +8,41 @@ import { useObserver } from 'mobx-react-lite';
 
 interface Props {
     metric: Widget;
+    isWidget?: boolean
 }
 function FunnelWidget(props: Props) {
-    const { metric } = props;
+    const { metric, isWidget = false } = props;
     const funnel = metric.data.funnel || { stages: [] };
+    // pic firt and last from array
+    const totalSteps = funnel.stages.length;
+    const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
+    const hasMoreSteps = funnel.stages.length > 2;
+    const lastStage = funnel.stages[funnel.stages.length - 1];
 
     return useObserver(() => (
         <>
             <div className="w-full">
-                {funnel.stages.map((filter: any, index: any) => (
-                    <div key={index} className={cn("flex items-start mb-4", stl.step, { [stl['step-disabled']] : !filter.isActive })}>
-                        <div className="z-10 w-6 h-6 border mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
-                            {index + 1}
-                        </div>
-                        <Funnelbar key={index} filter={filter} />
-                        <div className="self-end flex items-center justify-center ml-4" style={{ marginBottom: '49px'}}>
-                            <button onClick={() => filter.updateKey('isActive', !filter.isActive)}>
-                                <Icon name="eye-slash-fill" color={filter.isActive ? "gray-light" : "gray-darkest"} size="22" />
-                            </button>
-                        </div>
-                    </div>
-                ))}
+                { !isWidget && (
+                    stages.map((filter: any, index: any) => (
+                        <Stage key={index} index={index + 1} isWidget={isWidget} stage={filter} />
+                    ))
+                )}
+
+                { isWidget && (
+                    <>
+                        <Stage index={1} isWidget={isWidget} stage={stages[0]} />
+
+                        { hasMoreSteps && (
+                            <>
+                                <EmptyStage total={totalSteps} />
+                            </>
+                        )}
+
+                        {funnel.stages.length > 1 && (
+                            <Stage index={totalSteps} isWidget={isWidget} stage={lastStage} />
+                        )}
+                    </>
+                )}
             </div>
             <div className="flex items-center pb-4">
                 <div className="flex items-center">
@@ -57,6 +71,47 @@ function FunnelWidget(props: Props) {
             </div>
         </>
     ));
+}
+
+function EmptyStage({ total }: any) {
+    return useObserver( () => (
+        <div className={cn("flex items-center mb-4 pb-3", stl.step)}>
+            <IndexNumber index={0} />
+            <div className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal" style={{ width: '100px'}}>+{total} steps</div>
+            <div className="border-b w-full border-dotted"></div>
+        </div>
+    ))
+}
+
+function Stage({ stage, index, isWidget }: any) {
+    return useObserver( () => (
+        <div className={cn("flex items-start", stl.step, { [stl['step-disabled']] : !stage.isActive })}>
+            <IndexNumber index={index } />
+            <Funnelbar filter={stage} />
+            {!isWidget && (
+                <BarActions bar={stage} />
+            )}
+        </div>
+    ))
+}
+
+function IndexNumber({ index }: any) {
+    return (
+        <div className="z-10 w-6 h-6 border mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
+            {index}
+        </div>
+    );
+}
+
+
+function BarActions({ bar }: any) {
+    return useObserver(() => (
+        <div className="self-end flex items-center justify-center ml-4" style={{ marginBottom: '49px'}}>
+            <button onClick={() => bar.updateKey('isActive', !bar.isActive)}>
+                <Icon name="eye-slash-fill" color={bar.isActive ? "gray-light" : "gray-darkest"} size="22" />
+            </button>
+        </div>
+    ))
 }
 
 export default FunnelWidget;

@@ -6,6 +6,7 @@ import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
+import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 
 export interface IWidget {
     metricId: any
@@ -40,6 +41,8 @@ export interface IWidget {
 
     params: any
 
+    period: any
+
     updateKey(key: string, value: any): void
     removeSeries(index: number): void
     addSeries(): void
@@ -52,6 +55,7 @@ export interface IWidget {
     toWidget(): any
     setData(data: any): void
     fetchSessions(metricId: any, filter: any): Promise<any>
+    setPeriod(period: Period): void
 }
 export default class Widget implements IWidget {
     public static get ID_KEY():string { return "metricId" }
@@ -75,6 +79,8 @@ export default class Widget implements IWidget {
     page: number = 1
     limit: number = 5
     params: any = { density: 70 }
+    
+    period: any = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
 
     sessionsLoading: boolean = false
 
@@ -117,6 +123,7 @@ export default class Widget implements IWidget {
             validate: action,
             update: action,
             updateKey: action,
+            setPeriod: action,
         })
 
         const filterSeries = new FilterSeries()
@@ -137,7 +144,7 @@ export default class Widget implements IWidget {
         this.series.push(series)
     }
 
-    fromJson(json: any) {
+    fromJson(json: any, period?: any) {
         json.config = json.config || {}
         runInAction(() => {
             this.metricId = json.metricId
@@ -155,8 +162,16 @@ export default class Widget implements IWidget {
             this.config = json.config
             this.position = json.config.position
             this.predefinedKey = json.predefinedKey
+
+            if (period) {
+                this.period = period
+            }
         })
         return this
+    }
+
+    setPeriod(period: any) {
+        this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
     }
 
     toWidget(): any {
@@ -186,7 +201,7 @@ export default class Widget implements IWidget {
             series: this.series.map((series: any) => series.toJson()),
             config: {
                 ...this.config,
-                col: this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS ? 4 : this.config.col
+                col: this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS ? 4 : this.config.col
             },
         }
     }

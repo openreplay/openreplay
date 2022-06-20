@@ -78,14 +78,6 @@ export default class MetricStore implements IMetricStore {
 
             paginatedList: computed,
         })
-
-        // reaction(
-        //     () => this.metricsSearch,
-        //     (metricsSearch) => { // TODO filter the list for View
-        //         this.page = 1
-        //         this.paginatedList
-        //     }
-        // )
     }
 
     // State Actions
@@ -172,11 +164,14 @@ export default class MetricStore implements IMetricStore {
             })
     }
 
-    fetch(id: string) {
+    fetch(id: string, period?: any) {
         this.isLoading = true
         return metricService.getMetric(id)
             .then((metric: any) => {
-                return this.instance = new Widget().fromJson(metric)
+                // if (period) {
+                //     metric.period = period
+                // }
+                return this.instance = new Widget().fromJson(metric, period)
             }).finally(() => {
                 this.isLoading = false
             })

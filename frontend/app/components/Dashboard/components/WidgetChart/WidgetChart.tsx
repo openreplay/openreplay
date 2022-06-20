@@ -41,7 +41,6 @@ function WidgetChart(props: Props) {
 
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
-    const isFunnel = metric.metricType === 'funnel';
 
     const onChartClick = (event: any) => {
         if (event) {
@@ -66,7 +65,6 @@ function WidgetChart(props: Props) {
     }
 
     const depsString = JSON.stringify(_metric.series);
-
     const fetchMetricChartData = (metric: any, payload: any, isWidget: any) => {
         if (!isMounted()) return;
         setLoading(true)
@@ -88,6 +86,7 @@ function WidgetChart(props: Props) {
         debounceRequest(metric, payload, isWidget);
     }, [period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
 
+
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;
 
@@ -100,7 +99,7 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'funnel') {
-            return <FunnelWidget metric={metric} />
+            return <FunnelWidget metric={metric} isWidget={isWidget} />
         }
 
         if (metricType === 'predefined') {
