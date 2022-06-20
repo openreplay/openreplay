@@ -138,7 +138,7 @@ export default class DashboardStore implements IDashboardSotre {
             fetchMetricChartData: action
         })
 
-        this.drillDownPeriod = Period({ rangeName: LAST_24_HOURS });
+        this.drillDownPeriod = Period({ rangeName: LAST_30_DAYS });
         const timeStamps = this.drillDownPeriod.toTimestamps();
         this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp)
         this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp)

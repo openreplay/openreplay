@@ -1,6 +1,6 @@
 import React from 'react';
 import FunnelStepText from './FunnelStepText';
-import { Icon } from 'UI';
+import { Icon, Popup } from 'UI';
 
 interface Props {
     filter: any;
@@ -32,6 +32,28 @@ function FunnelBar(props: Props) {
                 }}>
                     <div className="color-white absolute right-0 flex items-center font-medium mr-2 leading-3">{filter.completedPercentage}%</div>
                 </div>
+                {filter.dropDueToIssues > 0 && (
+                    <div className="flex items-center justify-end" style={{
+                        width: `${filter.dropDueToIssuesPercentage}%`,
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: `${filter.completedPercentage}%`,
+                        // height: '10px',
+                        backgroundColor: '#ff5a5f',
+                        opacity: 0.5,
+                    }}>
+                        <Popup
+                            content="Drop due to issues"
+                            // offset={100}
+                            sticky={true}
+                        >
+                            <div className="color-white w-full flex items-center font-medium mr-2 leading-3">{filter.dropDueToIssuesPercentage}%</div>
+                        </Popup>
+                    </div>
+                    
+                )}
             </div>
             <div className="flex justify-between py-2">
                 <div className="flex items-center">

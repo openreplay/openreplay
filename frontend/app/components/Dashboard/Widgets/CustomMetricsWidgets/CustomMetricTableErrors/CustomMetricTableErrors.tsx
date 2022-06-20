@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Pagination } from 'UI';
+import { Pagination, NoContent } from 'UI';
 import ErrorListItem from '../../../components/Errors/ErrorListItem';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
@@ -30,7 +30,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
     }, [errorId])
 
     return (
-        <div>
+        <NoContent show={metric.data.errors && metric.data.errors === 0}>
             {metric.data.errors && metric.data.errors.map((error: any, index: any) => (
                 <ErrorListItem error={error} onClick={() => onErrorClick(error)} />
             ))}
@@ -50,7 +50,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
             {!isEdit && (
                 <ViewMore total={metric.data.total} limit={metric.limit} />
             )}
-        </div>
+        </NoContent>
     );
 }
 

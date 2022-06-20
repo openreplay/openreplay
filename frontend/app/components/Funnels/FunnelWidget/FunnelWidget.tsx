@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Widget from 'App/mstore/types/widget';
 import Funnelbar from './FunnelBar';
 import cn from 'classnames';
@@ -84,7 +84,7 @@ function EmptyStage({ total }: any) {
 }
 
 function Stage({ stage, index, isWidget }: any) {
-    return useObserver( () => (
+    return useObserver(() => stage && (
         <div className={cn("flex items-start", stl.step, { [stl['step-disabled']] : !stage.isActive })}>
             <IndexNumber index={index } />
             <Funnelbar filter={stage} />
