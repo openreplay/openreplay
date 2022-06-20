@@ -19,7 +19,7 @@ spec:
             args:
             - |
               # Delete all the files older than 7 days
-              find efs -type f -mtime +7 -delete
+              find /mnt/efs -type f -mtime +7 -delete
             volumeMounts:
             - mountPath: /mnt/efs
               name: datadir
