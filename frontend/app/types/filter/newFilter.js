@@ -6,7 +6,6 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }]
 
-// export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' };
 export const filters = [
   { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
   { key: FilterKey.INPUT, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Input', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/input', isEvent: true },

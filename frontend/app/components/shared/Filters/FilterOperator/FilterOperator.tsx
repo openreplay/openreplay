@@ -61,7 +61,7 @@ const dropdownStyles = {
   }
 }
 interface Props {
-  onChange: (e, { name, value }) => void;
+  onChange: (e: any, { name, value }: any) => void;
   className?: string;
   options?: any;
   value?: string;
@@ -78,7 +78,7 @@ function FilterOperator(props: Props) {
         styles={dropdownStyles}
         placeholder="Select"
         isDisabled={isDisabled}
-        defaultValue={ value }
+        value={value ? options.find((i: any) => i.value === value) : null}
         onChange={({ value }: any) => onChange(null, { name: 'operator', value })}
       />
     </div>
