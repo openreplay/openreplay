@@ -29,6 +29,7 @@ function WidgetWrapper(props: Props) {
     const { dashboardStore } = useStore();
     const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
     const widget: any = useObserver(() => props.widget);
+    const isTimeSeries = widget.metricType === 'timeseries';
     const isPredefined = widget.metricType === 'predefined';
     const dashboard = useObserver(() => dashboardStore.selectedDashboard);
 
@@ -113,7 +114,7 @@ function WidgetWrapper(props: Props) {
                         <div className="capitalize w-full font-medium">{widget.name}</div>
                         {isWidget && (
                             <div className="flex items-center" id="no-print">
-                                {!isPredefined && (
+                                {!isPredefined && isTimeSeries && (
                                     <>
                                         <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
                                         <div className='mx-2'/>
