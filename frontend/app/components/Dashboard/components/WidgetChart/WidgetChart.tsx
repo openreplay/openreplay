@@ -101,7 +101,7 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'funnel') {
-            return <FunnelWidget metric={metric} isWidget={isWidget} />
+            return <FunnelWidget metric={metric} isWidget={isWidget || isTemplate} />
         }
 
         if (metricType === 'predefined') {

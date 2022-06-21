@@ -21,7 +21,9 @@ const dropdownStyles = {
     ...provided,
     paddingRight: '0px',
     width: 'fit-content',
-    // height: '26px'
+    '& input': {
+      marginTop: '-3px',
+    },
   }),
   placeholder: (provided: any) => ({
     ...provided,
@@ -40,6 +42,7 @@ const dropdownStyles = {
       top: 20,
       left: 0,
       minWidth: 'fit-content',
+      overflow: 'hidden',
   }),
   container: (provided: any) => ({
       ...provided,
@@ -49,7 +52,12 @@ const dropdownStyles = {
     const opacity = state.isDisabled ? 0.5 : 1;
     const transition = 'opacity 300ms';
 
-    return { ...provided, opacity, transition };
+    return {
+      ...provided,
+      opacity,
+      transition,
+      marginTop: '-3px',
+    };
   }
 }
 interface Props {

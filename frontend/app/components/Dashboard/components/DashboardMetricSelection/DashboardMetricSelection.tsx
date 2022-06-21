@@ -11,7 +11,7 @@ function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }
     });
     return (
         <div
-            className={cn("rounded p-4 border cursor-pointer", { 'bg-active-blue border-blue':isSelected, 'bg-white': !isSelected })}
+            className={cn("rounded p-4 border cursor-pointer hover:bg-active-blue", { 'bg-active-blue border-blue':isSelected, 'bg-white': !isSelected })}
             onClick={() => onClick(category)}
         >
             <div className="font-medium text-lg mb-2 capitalize">{category.name}</div>
