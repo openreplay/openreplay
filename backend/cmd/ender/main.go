@@ -32,7 +32,7 @@ func main() {
 	// Load service configuration
 	cfg := ender.New()
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// Init all modules
@@ -49,6 +49,10 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
+			if msg.TypeID() == 3 {
+				// Skip message end
+				return
+			}
 			statsLogger.Collect(sessionID, meta)
 			sessions.UpdateSession(sessionID, meta.Timestamp)
 		},

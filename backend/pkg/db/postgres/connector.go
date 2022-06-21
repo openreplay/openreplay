@@ -22,16 +22,18 @@ type Conn struct {
 	batchSizeLimit  int
 }
 
-func NewConn(url string) *Conn {
+func NewConn(url string, queueLimit, sizeLimit int) *Conn {
 	c, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		log.Println(err)
 		log.Fatalln("pgxpool.Connect Error")
 	}
 	return &Conn{
-		c:          c,
-		batches:    make(map[uint64]*pgx.Batch),
-		batchSizes: make(map[uint64]int),
+		c:               c,
+		batches:         make(map[uint64]*pgx.Batch),
+		batchSizes:      make(map[uint64]int),
+		batchQueueLimit: queueLimit,
+		batchSizeLimit:  sizeLimit,
 	}
 }
 

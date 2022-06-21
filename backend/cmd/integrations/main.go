@@ -26,7 +26,7 @@ func main() {
 
 	cfg := config.New()
 
-	pg := postgres.NewConn(cfg.PostgresURI)
+	pg := postgres.NewConn(cfg.PostgresURI, 0, 0)
 	defer pg.Close()
 
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
