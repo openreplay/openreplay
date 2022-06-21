@@ -202,6 +202,7 @@ export default class MessageDistributor extends StatedScreen {
 
   move(t: number, index?: number): void {
     const stateToUpdate: Partial<State> = {};
+    let changed = false;
     /* == REFACTOR_ME ==  */
     const lastLoadedLocationMsg = this.loadedLocationManager.moveGetLast(t, index);
     if (!!lastLoadedLocationMsg) {
@@ -211,44 +212,51 @@ export default class MessageDistributor extends StatedScreen {
     const llEvent = this.locationEventManager.moveGetLast(t, index);
     if (!!llEvent) {
       if (llEvent.domContentLoadedTime != null) {
+        changed = true;
         stateToUpdate.domContentLoadedTime = {
           time: llEvent.domContentLoadedTime + this.navigationStartOffset, //TODO: predefined list of load event for the network tab (merge events & SetPageLocation: add navigationStart to db)
           value: llEvent.domContentLoadedTime,
         }
       }
       if (llEvent.loadTime != null) {
+        changed = true;
         stateToUpdate.loadTime = {
           time: llEvent.loadTime + this.navigationStartOffset,
           value: llEvent.loadTime,
         }
       }
       if (llEvent.domBuildingTime != null) {
+        changed = true;
         stateToUpdate.domBuildingTime = llEvent.domBuildingTime;
       }
     }
     /* === */
     const lastLocationMsg = this.locationManager.moveGetLast(t, index);
     if (!!lastLocationMsg) {
+      changed = true;
       stateToUpdate.location = lastLocationMsg.url;
     }
     const lastConnectionInfoMsg = this.connectionInfoManger.moveGetLast(t, index);
     if (!!lastConnectionInfoMsg) {
+      changed = true;
       stateToUpdate.connType = lastConnectionInfoMsg.type;
       stateToUpdate.connBandwidth = lastConnectionInfoMsg.downlink;
     }
     const lastPerformanceTrackMessage = this.performanceTrackManager.moveGetLast(t, index);
     if (!!lastPerformanceTrackMessage) {
+      changed = true;
       stateToUpdate.performanceChartTime = lastPerformanceTrackMessage.time;
     }
 
     LIST_NAMES.forEach(key => {
       const lastMsg = this.lists[key].moveGetLast(t, key === 'exceptions' ? undefined : index);
       if (lastMsg != null) {
+        changed = true;
         stateToUpdate[`${key}ListNow`] = this.lists[key].listNow;
       }
     });
 
-    update(stateToUpdate);
+    changed && update(stateToUpdate);
 
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"
