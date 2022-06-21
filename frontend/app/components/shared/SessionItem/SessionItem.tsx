@@ -118,7 +118,7 @@ function SessionItem(props: RouteComponentProps<Props>) {
                 </div>
               </div>
             </div>
-            <div style={{ width: "20%" }} className="px-2 flex flex-col justify-between">
+            <div style={{ width: "30%" }} className="px-2 flex flex-col justify-between">
               <div>{formatTimeOrDate(startedAt, timezone) }</div>
               <div className="flex items-center color-gray-medium">
                 {!isAssist && (

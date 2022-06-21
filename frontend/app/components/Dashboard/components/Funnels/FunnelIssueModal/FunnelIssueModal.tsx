@@ -9,7 +9,7 @@ interface Props {
 }
 function FunnelIssueModal(props: Props) {
     const { issueId } = props;
-    const { hideModal } = useModal();
+    // const { hideModal } = useModal();
     return (
         <div style={{ width: '85vw', maxWidth: '1200px' }}>
             <div

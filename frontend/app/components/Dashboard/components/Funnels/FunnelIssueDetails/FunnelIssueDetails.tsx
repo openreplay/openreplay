@@ -19,7 +19,8 @@ function FunnelIssueDetails(props: Props) {
 
     useEffect(() => {
         setLoading(true);
-        widget.fetchIssue(widget.metricId, issueId, filter).then((resp: any) => {
+        const _filters = { ...filter, series: widget.toJsonDrilldown() };
+        widget.fetchIssue(widget.metricId, issueId, _filters).then((resp: any) => {
             setFunnelIssue(resp.issue);
             setSessions(resp.sessions);
         }).finally(() => {

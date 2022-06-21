@@ -145,7 +145,7 @@ class Router extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    this.props.setSessionPath(prevProps.location.pathname)
+    this.props.setSessionPath(prevProps.location)
     if (prevProps.email !== this.props.email && !this.props.email) {
       this.props.fetchTenants();
     }

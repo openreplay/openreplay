@@ -11,11 +11,12 @@ interface Props {
     isTemplate?: boolean;
     isEdit?: boolean;
     history: any,
+    location: any,
 }
 function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
     const { metric, isEdit = false } = props;
     const errorId = new URLSearchParams(props.location.search).get("errorId");
-    const { showModal } = useModal();
+    const { showModal, hideModal } = useModal();
 
     const onErrorClick = (error: any) => {
         props.history.replace({search: (new URLSearchParams({errorId : error.errorId})).toString()});
@@ -25,8 +26,14 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
         if (!errorId) return;
 
         showModal(<ErrorDetailsModal errorId={errorId} />, { right: true, onClose: () => {
-            props.history.replace({search: ""});
+            if (props.history.location.pathname.includes("/metric/")) {
+                props.history.replace({search: ""});
+            }
         }});
+
+        return () => {
+            hideModal();
+        }
     }, [errorId])
 
     return (

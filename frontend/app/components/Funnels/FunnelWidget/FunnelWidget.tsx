@@ -6,6 +6,7 @@ import stl from './FunnelWidget.module.css';
 import { Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
 import { NoContent } from 'UI';
+import { useModal } from 'App/components/Modal';
 
 interface Props {
     metric: Widget;
@@ -19,6 +20,14 @@ function FunnelWidget(props: Props) {
     const hasMoreSteps = funnel.stages.length > 2;
     const lastStage = funnel.stages[funnel.stages.length - 1];
     const remainingSteps = totalSteps - 2;
+    const { hideModal } = useModal();
+
+    useEffect(() => {
+        return () => {
+            if (isWidget) return;
+            hideModal();
+        }
+    }, []);
 
     return useObserver(() => (
         <NoContent show={!stages || stages.length === 0}>

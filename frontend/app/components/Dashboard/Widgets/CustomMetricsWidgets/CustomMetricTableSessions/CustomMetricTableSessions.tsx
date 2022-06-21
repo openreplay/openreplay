@@ -1,7 +1,8 @@
 import { useObserver } from 'mobx-react-lite';
-import React from 'react';
+import React, { useEffect } from 'react';
 import SessionItem from 'Shared/SessionItem';
 import { Pagination, NoContent } from 'UI';
+import { useModal } from 'App/components/Modal';
 
 interface Props {
     metric: any;

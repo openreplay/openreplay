@@ -60,7 +60,7 @@ const initialState = Map({
   host: '',
   funnelPage: Map(),
   timelinePointer: null,
-  sessionPath: '',
+  sessionPath: {},
   lastPlayedSessionId: null,
 });
 
