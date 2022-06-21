@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"log"
 	. "openreplay/backend/pkg/messages"
+	"time"
 	//	. "openreplay/backend/pkg/db/types"
 )
 
@@ -45,6 +47,12 @@ func (c *PGCache) InsertMetadata(sessionID uint64, metadata *Metadata) error {
 		return nil
 	}
 	if err := c.Conn.InsertMetadata(sessionID, keyNo, metadata.Value); err != nil {
+		// Try to insert metadata after one minute
+		time.AfterFunc(time.Minute, func() {
+			if err := c.Conn.InsertMetadata(sessionID, keyNo, metadata.Value); err != nil {
+				log.Printf("metadata retry err: %s", err)
+			}
+		})
 		return err
 	}
 	session.SetMetadata(keyNo, metadata.Value)
