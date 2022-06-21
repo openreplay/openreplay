@@ -11,12 +11,12 @@ interface Props {
   filter?: any; // event/filter
   filterList: any;
   filterListLive: any;
-  onFilterClick: (filter) => void;
+  onFilterClick: (filter: any) => void;
   children?: any;
   isLive?: boolean;
 }
 function FilterSelection(props: Props) {
-  const { filter, onFilterClick, children, isLive = true } = props;
+  const { filter, onFilterClick, children } = props;
   const [showModal, setShowModal] = useState(false);
 
   return (

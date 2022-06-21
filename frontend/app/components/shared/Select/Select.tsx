@@ -98,6 +98,12 @@ export default function({ name = '', onChange, right = false, plain = false, opt
       
           return { ...provided, opacity, transition };
         },
+        input: (provided: any) => ({
+            ...provided,
+            '& input:focus': {
+              border: 'none !important',
+            }
+        }),
         noOptionsMessage: (provided: any) => ({
             ...provided,
             whiteSpace: 'nowrap !important',

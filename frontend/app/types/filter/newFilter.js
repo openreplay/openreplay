@@ -59,7 +59,8 @@ export const filtersMap = filters.reduce((acc, filter) => {
     return acc;
 }, {});
 
-export const liveFiltersMap = filters.reduce((acc, filter) => {
+export const liveFiltersMap = {}
+filters.forEach(filter => {
   if (
     filter.category !== FilterCategory.INTERACTIONS &&
     filter.category !== FilterCategory.JAVASCRIPT &&
@@ -67,15 +68,15 @@ export const liveFiltersMap = filters.reduce((acc, filter) => {
     filter.key !== FilterKey.DURATION &&
     filter.key !== FilterKey.REFERRER
   ) {
-    acc[filter.key] = filter;
-    acc[filter.key].operator = 'contains';
-    acc[filter.key].operatorDisabled = true;
+    liveFiltersMap[filter.key] = {...filter};
+    liveFiltersMap[filter.key].operator = 'contains';
+    liveFiltersMap[filter.key].operatorDisabled = true;
     if (filter.key === FilterKey.PLATFORM) {
-      acc[filter.key].operator = 'is';
+      liveFiltersMap[filter.key].operator = 'is';
     }
   }
-  return acc
-}, {});
+})
+
 
 export const filterLabelMap = filters.reduce((acc, filter) => {
   acc[filter.key] = filter.label
