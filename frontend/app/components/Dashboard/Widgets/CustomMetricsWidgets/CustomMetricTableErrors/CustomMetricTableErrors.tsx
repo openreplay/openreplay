@@ -26,7 +26,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
         if (!errorId) return;
 
         showModal(<ErrorDetailsModal errorId={errorId} />, { right: true, onClose: () => {
-            if (props.history.location.pathname.includes("/metric/")) {
+            if (props.history.location.pathname.includes("/metric")) {
                 props.history.replace({search: ""});
             }
         }});

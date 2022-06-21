@@ -29,6 +29,7 @@ export class ModalProvider extends Component {
   };
 
   hideModal = () => {
+    document.removeEventListener('keydown', this.handleKeyDown);
     const { props } = this.state;
     if (props.onClose) {
       props.onClose();
@@ -37,7 +38,6 @@ export class ModalProvider extends Component {
       component: null,
       props: {}
     });
-    document.removeEventListener('keydown', this.handleKeyDown);
   }
 
   state = {
@@ -50,7 +50,7 @@ export class ModalProvider extends Component {
   render() {
     return (
       <ModalContext.Provider value={this.state}>
-        <Modal />
+        <Modal {...this.state} />
         {this.props.children}
       </ModalContext.Provider>
     );
