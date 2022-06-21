@@ -18,6 +18,7 @@ function FunnelWidget(props: Props) {
     const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
     const hasMoreSteps = funnel.stages.length > 2;
     const lastStage = funnel.stages[funnel.stages.length - 1];
+    const remainingSteps = totalSteps - 2;
 
     return useObserver(() => (
         <NoContent show={!stages || stages.length === 0}>
@@ -34,7 +35,7 @@ function FunnelWidget(props: Props) {
 
                         { hasMoreSteps && (
                             <>
-                                <EmptyStage total={totalSteps} />
+                                <EmptyStage total={remainingSteps} />
                             </>
                         )}
 
@@ -77,14 +78,16 @@ function EmptyStage({ total }: any) {
     return useObserver( () => (
         <div className={cn("flex items-center mb-4 pb-3", stl.step)}>
             <IndexNumber index={0} />
-            <div className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal" style={{ width: '100px'}}>+{total} steps</div>
+            <div className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal" style={{ width: '100px'}}>
+                {`+${total} ${total > 1 ? 'steps' : 'step'}`}
+            </div>
             <div className="border-b w-full border-dotted"></div>
         </div>
     ))
 }
 
 function Stage({ stage, index, isWidget }: any) {
-    return useObserver(() => stage && (
+    return useObserver(() => stage ? (
         <div className={cn("flex items-start", stl.step, { [stl['step-disabled']] : !stage.isActive })}>
             <IndexNumber index={index } />
             <Funnelbar filter={stage} />
@@ -92,7 +95,7 @@ function Stage({ stage, index, isWidget }: any) {
                 <BarActions bar={stage} />
             )}
         </div>
-    ))
+    ) : <></>)
 }
 
 function IndexNumber({ index }: any) {

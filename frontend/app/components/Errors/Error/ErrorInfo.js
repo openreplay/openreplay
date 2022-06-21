@@ -77,7 +77,7 @@ export default class ErrorInfo extends React.PureComponent {
 				// animatedIcon="no-results"
 				show={ !loading && errorIdInStore == null }
 			>
-				<div className="w-9/12 mb-4 flex justify-between">
+				{/* <div className="w-9/12 mb-4 flex justify-between">
 					<BackLink	to={ errorsRoute() } label="Back" />
 					<div className="flex items-center">
 						<Popup
@@ -110,7 +110,7 @@ export default class ErrorInfo extends React.PureComponent {
 							/>
 						</Popup>
 					</div>
-				</div>
+				</div> */}
 				<div className="flex" >
 						<Loader loading={ loading } className="w-9/12">
 							<MainSection className="w-9/12" />
