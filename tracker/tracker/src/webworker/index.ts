@@ -132,10 +132,10 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
 
   if (data.type === "auth") {
     if (!sender) {
-      throw new Error("WebWorker: sender not initialised. Recieved auth.")
+      throw new Error("WebWorker: sender not initialised. Received auth.")
     }
     if (!writer) {
-      throw new Error("WebWorker: writer not initialised. Recieved auth.")
+      throw new Error("WebWorker: writer not initialised. Received auth.")
     }
     sender.authorise(data.token)
     data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
