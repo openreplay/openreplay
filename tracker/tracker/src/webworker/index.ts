@@ -1,5 +1,5 @@
 import type Message from "../common/messages.js";
-import { WorkerMessageData, WorkerActivityLogStatus } from "../common/webworker.js";
+import { WorkerMessageData } from "../common/webworker.js";
 
 import { 
   classes,
@@ -21,7 +21,6 @@ const AUTO_SEND_INTERVAL = 10 * 1000
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
 let workerStatus: WorkerStatus = WorkerStatus.NotActive;
-let workerLogStatus: WorkerActivityLogStatus = WorkerActivityLogStatus.Off;
 
 function send(): void {
   if (!writer) {
@@ -67,22 +66,6 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
   }
 
   if (Array.isArray(data)) {
-    if (workerStatus !== WorkerStatus.Active) {
-      if (workerLogStatus !== WorkerActivityLogStatus.Off) {
-        const msg = 'WebWorker: trying to send data without writer'
-        switch (workerLogStatus) {
-          case WorkerActivityLogStatus.Console:
-            return console.error(msg, 'STATUS:', workerStatus, data)
-          case WorkerActivityLogStatus.Error:
-            throw new Error(msg + '----- STATUS:' + workerStatus);
-          case WorkerActivityLogStatus.ErrorWithData:
-            throw new Error(msg + '----- STATUS:' + workerStatus + JSON.stringify(data))
-          default:
-            return;
-          }
-      }
-      return;
-    }
     if (!writer) {
       throw new Error("WebWorker: writer not initialised. Service Should be Started.")
     }
@@ -104,7 +87,6 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
   }
 
   if (data.type === 'start') {
-    workerLogStatus = data.workerLog || WorkerActivityLogStatus.Off
     workerStatus = WorkerStatus.Starting
     sender = new QueueSender(
       data.ingestPoint,

@@ -120,7 +120,6 @@ export default class App {
         __debug_report_edp: null,
         localStorage: window.localStorage,
         sessionStorage: window.sessionStorage,
-        workerLog: WorkerActivityLogStatus.Off,
       },
       options,
     );
@@ -352,7 +351,6 @@ export default class App {
       timestamp: startInfo.timestamp,
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
-      workerLog: this.options.workerLog,
     }
     this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
 
