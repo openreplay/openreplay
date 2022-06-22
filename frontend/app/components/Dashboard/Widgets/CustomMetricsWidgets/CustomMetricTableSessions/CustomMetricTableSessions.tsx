@@ -16,7 +16,10 @@ function CustomMetricTableSessions(props: Props) {
     return useObserver(() => (
         <NoContent show={!metric || !metric.data || !metric.data.sessions || metric.data.sessions.length === 0} size="small">
             {metric.data.sessions && metric.data.sessions.map((session: any, index: any) => (
-                <SessionItem session={session} key={session.sessionId} />
+                <>
+                    <SessionItem session={session} key={session.sessionId} />
+                    <div className="border-b" />
+                </>
             ))}
             
             {isEdit && (

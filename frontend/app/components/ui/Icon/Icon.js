@@ -11,7 +11,7 @@ const Icon = ({
   color = 'gray-medium',
   className = '',
   style={},
-  marginRight,
+  marginRight = 0,
   inline = false,
   ...props
 }) => {
