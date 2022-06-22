@@ -400,7 +400,6 @@ export default class App {
         ...startOpts
       });
 
-      this.activityState = ActivityState.Active
       const startWorkerMsg: WorkerMessageData = {
         type: "auth",
         token,
@@ -408,6 +407,9 @@ export default class App {
       }
       this.worker.postMessage(startWorkerMsg)
 
+
+      this.activityState = ActivityState.Active
+      
       const onStartInfo = { sessionToken: token, userUUID, sessionID };
 
       this.startCallbacks.forEach((cb) => cb(onStartInfo));
