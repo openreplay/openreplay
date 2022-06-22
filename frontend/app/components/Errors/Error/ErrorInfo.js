@@ -79,13 +79,13 @@ export default class ErrorInfo extends React.PureComponent {
 			>
 				{/* <div className="w-9/12 mb-4 flex justify-between">
 					<BackLink	to={ errorsRoute() } label="Back" />
+					<div />
 					<div className="flex items-center">
 						<Popup
 							pinned
 							content="Prev Error"
 						>
 							<IconButton
-								// className="mr-3"
 								outline
 								compact
 								size="small"

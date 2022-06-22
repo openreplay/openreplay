@@ -40,7 +40,6 @@ function reducer(state = initialState, action = {}) {
         .set('list', list)
         .set('total', total);
     case success(FETCH_FILTER_SEARCH):
-      console.log('FETCH_FILTER_SEARCH', action);
       const groupedList = action.data.reduce((acc, item) => {
         const { projectId, type, value } = item;
         const key = type;

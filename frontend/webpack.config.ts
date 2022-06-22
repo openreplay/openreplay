@@ -57,6 +57,11 @@ const config: Configuration = {
             {
                 loader: "css-loader",
                 options: {
+                    modules: {
+                      mode: "local",
+                      auto: true,
+                      localIdentName: "[name]__[local]--[hash:base64:5]",
+                    },
                     url: {
                         filter: (url: string) => {
                           // Semantic-UI-CSS has an extra semi colon in one of the URL due to which CSS loader along

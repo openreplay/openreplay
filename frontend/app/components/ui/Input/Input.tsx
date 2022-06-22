@@ -19,7 +19,7 @@ function Input(props: Props) {
             { type === 'textarea' ? (
                 <textarea rows={rows} style={{ resize: 'none' }} maxLength={500} className={ cn("p-2 border border-gray-light bg-white w-full rounded", className, { 'pl-10' : icon }) } {...rest} />
             ) : (
-                <input style={{ height: '36px'}} className={ cn("p-2 border border-gray-light bg-white w-full rounded", className, { 'pl-10' : icon }) } {...rest} />
+                <input type={type} style={{ height: '36px'}} className={ cn("p-2 border border-gray-light bg-white w-full rounded", className, { 'pl-10' : icon }) } {...rest} />
             )}
             
             { leadingButton && <div className="absolute top-0 bottom-0 right-0">{ leadingButton }</div> }

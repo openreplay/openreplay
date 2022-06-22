@@ -9,6 +9,7 @@ export default class Error {
     time: string = ''
     function: string = '?'
     stack0InfoString: string = ''
+    status: string = ''
     
     chart: any = []
     sessions: number = 0
@@ -31,6 +32,7 @@ export default class Error {
         this.time = json.time
         this.function = json.function
         this.stack0InfoString = getStck0InfoString(json.stack || [])
+        this.status = json.status
 
         this.chart = json.chart
         this.sessions = json.sessions

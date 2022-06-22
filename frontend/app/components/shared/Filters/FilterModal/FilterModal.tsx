@@ -122,9 +122,13 @@ function FilterModal(props: Props) {
   );
 }
 
-export default connect(state => ({
-  // filters: state.getIn([ 'search', 'filterListLive' ]),
-  filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
-  metaOptions: state.getIn([ 'customFields', 'list' ]),
-  fetchingFilterSearchList: state.getIn([ 'search', 'fetchFilterSearch', 'loading' ]),
-}))(FilterModal);
+export default connect((state: any, props: any) => {
+  return ({
+    filters: props.isLive ? state.getIn([ 'search', 'filterListLive' ]) : state.getIn([ 'search', 'filterList' ]),
+    filterSearchList: props.isLive ? state.getIn([ 'liveSearch', 'filterSearchList' ]) : state.getIn([ 'search', 'filterSearchList' ]),
+    // filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
+    // liveFilterSearchList: state.getIn([ 'liveSearch', 'filterSearchList' ]),
+    metaOptions: state.getIn([ 'customFields', 'list' ]),
+    fetchingFilterSearchList: state.getIn([ 'search', 'fetchFilterSearch', 'loading' ]),
+  })
+})(FilterModal);

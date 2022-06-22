@@ -45,8 +45,9 @@ function FilterSelection(props: Props) {
       {showModal && (
         <div className="absolute left-0 border shadow rounded bg-white z-50">
           <FilterModal
+            isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
             onFilterClick={onFilterClick}
-            filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
+            // filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
           />
         </div>
       )}
