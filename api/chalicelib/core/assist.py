@@ -81,10 +81,13 @@ def get_live_session_by_id(project_id, session_id):
             print("!! issue with the peer-server")
             print(connected_peers.text)
             return False
-        connected_peers = connected_peers.json().get("data", [])
+        connected_peers = connected_peers.json().get("data")
+        if connected_peers is None:
+            return None
+        connected_peers["live"] = True
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
-        return False
+        return None
     except Exception as e:
         print("issue getting Assist response")
         print(str(e))
@@ -93,7 +96,7 @@ def get_live_session_by_id(project_id, session_id):
             print(connected_peers.text)
         except:
             print("couldn't get response")
-        return False
+        return None
     return connected_peers
 
 
