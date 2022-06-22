@@ -147,7 +147,7 @@ export default class MessageDistributor extends StatedScreen {
 
         // @ts-ignore Hack for upet (TODO: fix ordering in one mutation in tracker(removes first))
         const headChildrenIds = msgs.filter(m => m.parentID === 1).map(m => m.id);
-        this.pagesManager.sort((m1, m2) => {
+        this.pagesManager.sortPages((m1, m2) => {
           if (m1.time === m2.time) {
             if (m1.tp === "remove_node" && m2.tp !== "remove_node") {
               if (headChildrenIds.includes(m1.id)) {

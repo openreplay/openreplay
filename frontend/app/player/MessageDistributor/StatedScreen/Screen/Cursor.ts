@@ -33,6 +33,10 @@ export default class Cursor {
     }, 600)
   }
 
+  // TODO (to keep on a different playig speed):
+  // transition
+  // setTransitionSpeed()
+
   getPosition(): Point {
     return { x: this.position.x, y: this.position.y };
   }
