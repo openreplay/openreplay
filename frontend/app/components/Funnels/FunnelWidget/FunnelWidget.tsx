@@ -3,9 +3,8 @@ import Widget from 'App/mstore/types/widget';
 import Funnelbar from './FunnelBar';
 import cn from 'classnames';
 import stl from './FunnelWidget.module.css';
-import { Icon } from 'UI';
 import { useObserver } from 'mobx-react-lite';
-import { NoContent } from 'UI';
+import { NoContent, Icon } from 'UI';
 import { useModal } from 'App/components/Modal';
 
 interface Props {
@@ -109,8 +108,8 @@ function Stage({ stage, index, isWidget }: any) {
 
 function IndexNumber({ index }: any) {
     return (
-        <div className="z-10 w-6 h-6 border mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
-            {index}
+        <div className="z-10 w-6 h-6 border shrink-0 mr-4 text-sm rounded-full bg-gray-lightest flex items-center justify-center leading-3">
+            {index === 0 ? <Icon size="14" color="gray-dark" name="list" /> : index}
         </div>
     );
 }

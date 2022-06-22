@@ -20,6 +20,7 @@ const config: Configuration = {
   // mode: isDevelopment ? "development" : "production",
   output: {
     publicPath: "/",
+    filename: 'app-[contenthash:7].js',
     path: path.resolve(__dirname, 'public'),
   },
   entry: "./app/initialize.js",
