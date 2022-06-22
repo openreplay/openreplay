@@ -81,7 +81,7 @@ const getValidAttributes = function (sessionInfo, query) {
             } else if ((query.key === undefined || skey.toLowerCase() === query.key.toLowerCase())
                 && String(svalue).toLowerCase().indexOf(query.value.toLowerCase()) >= 0
                 && deduplicate.indexOf(skey + '_' + svalue) < 0) {
-                matches.push({"type": skey, "value": svalue});
+                matches.push({"type": skey.toUpperCase(), "value": svalue});
                 deduplicate.push(skey + '_' + svalue);
             }
         }
