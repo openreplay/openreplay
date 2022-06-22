@@ -13,9 +13,10 @@ interface Props {
     styles?: any;
     onChange: (value: any) => void;
     name?: string;
+    placeholder?: string;
     [x:string]: any;
 }
-export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
+export default function({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
     const defaultSelected = defaultValue ? (options.find(o => o.value === defaultValue) || options[0]): null;
     const customStyles = {
         option: (provided: any, state: any) => ({
@@ -133,7 +134,7 @@ export default function({ name = '', onChange, right = false, plain = false, opt
                 }
             })}
             blurInputOnSelect={true}
-            // menuPosition="fixed"
+            placeholder={placeholder}
             {...rest}
         />
     );

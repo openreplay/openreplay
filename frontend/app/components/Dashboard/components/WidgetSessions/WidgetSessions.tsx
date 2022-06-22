@@ -24,8 +24,8 @@ function WidgetSessions(props: Props) {
     const filter = useObserver(() => dashboardStore.drillDownFilter);
     const widget: any = useObserver(() => metricStore.instance);
     // const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
-    const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm a');
-    const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm a');
+    const startTime = DateTime.fromMillis(filter.startTimestamp).toFormat('LLL dd, yyyy HH:mm');
+    const endTime = DateTime.fromMillis(filter.endTimestamp).toFormat('LLL dd, yyyy HH:mm');
     // const [timestamps, setTimestamps] = useState<any>({
     //     startTimestamp: 0,
     //     endTimestamp: 0,
@@ -79,9 +79,10 @@ function WidgetSessions(props: Props) {
 
                 { widget.metricType !== 'table' && (
                     <div className="flex items-center ml-6">
-                        <span className="mr-2 color-gray-medium">Series</span>
+                        <span className="mr-2 color-gray-medium">Filter by Series</span>
                         <Select
                             options={ seriesOptions }
+                            defaultValue={ 'all' }
                             onChange={ writeOption }
                             plain
                         />
