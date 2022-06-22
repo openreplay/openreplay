@@ -199,7 +199,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                     }
                   >
-                    <Icon className=" p-px bg-white" name={iss.icon} size="16" />
+                    <Icon className=" rounded-full bg-white" name={iss.icon} size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -224,7 +224,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className=" p-px bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className="bg-white" name={getPointerIcon('click_rage')} size="16" />
                 </Tooltip>
               </div>
             ))}
@@ -246,7 +246,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className=" p-px bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className=" rounded-full bg-white" name={getPointerIcon('click_rage')} size="16" />
                 </Tooltip>
               </div>
             }
@@ -269,7 +269,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                   }
                   >
-                    <Icon className=" p-px bg-white" name={getPointerIcon('exception')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('exception')} size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -297,7 +297,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                   }
                   >
-                    <Icon className=" p-px bg-white" name={getPointerIcon('resource')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('resource')} size="16" />
                   </Tooltip>
                 </div>
               ))
