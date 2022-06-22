@@ -86,6 +86,8 @@ ${icons.map(icon => {
     const { data } = optimize(svg, plugins(canOptimize));
     return `    case '${icon.slice(0, -4)}': return ${data.replace(/xlink\:href/g, 'xlinkHref')
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
+    .replace(/clip-path/g, 'clipPath')
+    .replace(/clip-rule/g, 'clipRule')
     .replace(/xml:space="preserve"/g, '')};`
 }).join('\n')}
 default:
