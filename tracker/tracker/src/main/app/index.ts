@@ -412,6 +412,10 @@ export default class App {
       this.startCallbacks.forEach((cb) => cb(onStartInfo));
       this.observer.observe();
       this.ticker.start();
+      if (startOpts.metadata) {
+        Object.entries(startOpts.metadata)
+          .forEach(([ key, value ]) => this.send(new Metadata(key, value)))
+      }
 
       this.notify.log("OpenReplay tracking started.");
       // TODO: get rid of onStart
