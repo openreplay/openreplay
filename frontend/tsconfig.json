@@ -22,7 +22,9 @@
       "UI/*": ["./app/components/ui/*"],
       "UI": ["./app/components/ui"],
       "Player/*": ["./app/player/*"],
-      "HOCs/*": ["./app/components/hocs/*"]
+      "Player": ["./app/player"],
+      "HOCs/*": ["./app/components/hocs/*"],
+      "Types/*": ["./app/types/*"],
     }
   },
   "include": ["app"]
