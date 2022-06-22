@@ -25,7 +25,7 @@ const InitLoader = connectPlayer(state => ({
 function LivePlayer ({ session, toggleFullscreen, closeBottomBlock, fullscreen, jwt, loadingCredentials, assistCredendials, request, isEnterprise, hasErrors }) {
   useEffect(() => {
     if (!loadingCredentials) {
-      initPlayer(session, jwt, assistCredendials, true);
+      initPlayer(session, assistCredendials, true);
     }
     return () => cleanPlayer()
   }, [ session.sessionId, loadingCredentials, assistCredendials ]);

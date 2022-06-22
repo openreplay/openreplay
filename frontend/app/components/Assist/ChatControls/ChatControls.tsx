@@ -29,14 +29,14 @@ function ChatControls({ stream, endCall, videoEnabled, setVideoEnabled } : Props
     <div className={cn(stl.controls, "flex items-center w-full justify-start bottom-0 px-2")}>
       <div className="flex items-center">
         <div className={cn(stl.btnWrapper, { [stl.disabled]: audioEnabled})}>
-          <Button varient="text" onClick={toggleAudio} hover>
+          <Button variant="text" onClick={toggleAudio} hover>
             <Icon name={audioEnabled ? 'mic' : 'mic-mute'} size="16" />
             <span className={cn("ml-1 color-gray-medium text-sm", { 'color-red' : audioEnabled })}>{audioEnabled ? 'Mute' : 'Unmute'}</span>
           </Button>
         </div>
 
         <div className={cn(stl.btnWrapper, { [stl.disabled]: videoEnabled})}>
-          <Button varient="text" onClick={toggleVideo} hover>
+          <Button variant="text" onClick={toggleVideo} hover>
             <Icon name={ videoEnabled ? 'camera-video' : 'camera-video-off' } size="16" />
             <span className={cn("ml-1 color-gray-medium text-sm", { 'color-red' : videoEnabled })}>{videoEnabled ? 'Stop Video' : 'Start Video'}</span>
           </Button>
