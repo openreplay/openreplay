@@ -21,7 +21,6 @@ export default class BatchWriter {
 
   private prepare(): void {
     if (!this.writer.isEmpty()) {
-      //console.log("")
       return
     }
     new BatchMeta(this.pageNo, this.nextIndex, this.timestamp).encode(this.writer)
