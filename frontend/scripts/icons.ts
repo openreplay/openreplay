@@ -13,7 +13,7 @@ const basePlugins = {
         {
             name: 'removeAttrs',
             params: {
-                attrs: ['fill-rule', 'clip-rule', 'fill'],
+                attrs: ['fill-rule', 'clip-rule', 'fill', 'class'],
             },
         },
         'removeTitle',
@@ -41,7 +41,7 @@ const plugins = (removeFill = true) => {
             {
                 name: 'removeAttrs',
                 params: {
-                    attrs: ['xml', 'style', 'data-name', 'dataName', 'svg:width', 'svg:height', 'fill-rule', removeFill ? 'svg:fill' : ''],
+                    attrs: ['xml', 'class' ,'style', 'data-name', 'dataName', 'svg:width', 'svg:height', 'fill-rule', removeFill ? 'svg:fill' : ''],
                 }
             },
             {
