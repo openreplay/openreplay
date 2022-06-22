@@ -1,19 +1,19 @@
 import { options } from 'App/dev/console';
 
 function log(...args) {
-	if (!window.env.PRODUCTION || options.logStuff) {
+	if (!window.env.PRODUCTION || options.verbose) {
 		console.log(...args);
 	}
 }
 
 function warn(...args) {
-	if (!window.env.PRODUCTION || options.logStuff) {
+	if (!window.env.PRODUCTION || options.verbose) {
 		console.warn(...args);
 	}
 }
 
 function error(...args) {
-	if (!window.env.PRODUCTION || options.logStuff) {
+	if (!window.env.PRODUCTION || options.verbose) {
 		console.error(...args);
 	}
 }
