@@ -14,7 +14,6 @@ import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
 import type { Options as WebworkerOptions, WorkerMessageData } from "../../common/webworker.js";
-import { WorkerActivityLogStatus } from "../../common/webworker.js";
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
