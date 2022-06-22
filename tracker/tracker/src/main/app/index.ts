@@ -15,7 +15,6 @@ import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
 import type { Options as WebworkerOptions, WorkerMessageData } from "../../common/webworker.js";
 
-
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
   userID?: string,
@@ -398,7 +397,6 @@ export default class App {
         ...startOpts
       });
 
-      this.activityState = ActivityState.Active
       const startWorkerMsg: WorkerMessageData = {
         type: "auth",
         token,
@@ -406,6 +404,9 @@ export default class App {
       }
       this.worker.postMessage(startWorkerMsg)
 
+
+      this.activityState = ActivityState.Active
+      
       const onStartInfo = { sessionToken: token, userUUID, sessionID };
 
       this.startCallbacks.forEach((cb) => cb(onStartInfo));
@@ -448,15 +449,15 @@ export default class App {
   stop(): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
-        if (this.worker) {
-          this.worker.postMessage("stop")
-        }
         this.sanitizer.clear()
         this.observer.disconnect()
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
         this.notify.log("OpenReplay tracking stopped.")
+        if (this.worker) {
+          this.worker.postMessage("stop")
+        }
       } finally {
         this.activityState = ActivityState.NotActive
       }

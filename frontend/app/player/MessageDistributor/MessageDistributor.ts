@@ -248,7 +248,7 @@ export default class MessageDistributor extends StatedScreen {
       }
     });
 
-    update(stateToUpdate);
+    Object.keys(stateToUpdate).length > 0 && update(stateToUpdate);
 
     /* Sequence of the managers is important here */
     // Preparing the size of "screen"

@@ -1,5 +1,5 @@
 import type Message from "../common/messages.js";
-import type { WorkerMessageData } from "../common/webworker.js";
+import { WorkerMessageData } from "../common/webworker.js";
 
 import { 
   classes,
@@ -9,12 +9,18 @@ import {
 import QueueSender from "./QueueSender.js";
 import BatchWriter from "./BatchWriter.js";
 
-
+enum WorkerStatus {
+  NotActive,
+  Starting,
+  Stopping,
+  Active
+}
 
 const AUTO_SEND_INTERVAL = 10 * 1000
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
+let workerStatus: WorkerStatus = WorkerStatus.NotActive;
 
 function send(): void {
   if (!writer) {
@@ -25,6 +31,7 @@ function send(): void {
 
 
 function reset() {
+  workerStatus = WorkerStatus.Stopping
   if (sendIntervalID !== null) {
     clearInterval(sendIntervalID);
     sendIntervalID = null;
@@ -33,6 +40,7 @@ function reset() {
     writer.clean()
     writer = null
   }
+  workerStatus = WorkerStatus.NotActive
 }
 
 function resetCleanQueue() {
@@ -51,7 +59,6 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
     send() // TODO: sendAll?
     return
   }
-
   if (data === "stop") {
     send()
     reset()
@@ -60,7 +67,7 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
 
   if (Array.isArray(data)) {
     if (!writer) {
-      throw new Error("WebWorker: writer not initialised.")
+      throw new Error("WebWorker: writer not initialised. Service Should be Started.")
     }
     const w = writer
     // Message[]
@@ -80,6 +87,7 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
   }
 
   if (data.type === 'start') {
+    workerStatus = WorkerStatus.Starting
     sender = new QueueSender(
       data.ingestPoint,
       () => { // onUnauthorised
@@ -101,15 +109,15 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
     if (sendIntervalID === null) {
       sendIntervalID = setInterval(send, AUTO_SEND_INTERVAL)
     }
-    return
+    return workerStatus = WorkerStatus.Active
   }
 
   if (data.type === "auth") {
     if (!sender) {
-      throw new Error("WebWorker: sender not initialised. Recieved auth.")
+      throw new Error("WebWorker: sender not initialised. Received auth.")
     }
     if (!writer) {
-      throw new Error("WebWorker: writer not initialised. Recieved auth.")
+      throw new Error("WebWorker: writer not initialised. Received auth.")
     }
     sender.authorise(data.token)
     data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
