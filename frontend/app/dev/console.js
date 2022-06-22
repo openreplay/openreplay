@@ -1,7 +1,7 @@
 const KEY = "__OPENREPLAY_DEV_TOOLS__"
 
 export const options = {
-	verbose(verbose=true) {
+	logStuff(verbose=true) {
 		this.verbose = verbose
 		localStorage.setItem(KEY, JSON.stringify(this))
 	},
