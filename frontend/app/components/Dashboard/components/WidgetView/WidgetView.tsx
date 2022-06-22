@@ -22,6 +22,11 @@ function WidgetView(props: Props) {
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
+    
+    const dashboards = useObserver(() => dashboardStore.dashboards);
+    const dashboard = useObserver(() => dashboards.find((d: any) => d.dashboardId == dashboardId));
+    const dashboardName = dashboard ? dashboard.name : null;
+
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
@@ -45,7 +50,7 @@ function WidgetView(props: Props) {
             <div className="relative pb-10">
                 <Breadcrumb
                     items={[
-                        { label: dashboardId ? 'Dashboard' : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
+                        { label: dashboardName ? dashboardName : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
                         { label: widget.name, }
                     ]}
                 />

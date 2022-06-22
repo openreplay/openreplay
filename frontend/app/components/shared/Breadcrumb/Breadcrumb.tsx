@@ -5,11 +5,11 @@ import { Link } from 'react-router-dom';
 interface Props {
     items: any
 }
-function Breadcrumb(props) {
+function Breadcrumb(props: Props) {
     const { items } = props;
     return (
         <div className="mb-3 flex items-center text-lg">
-            {items.map((item, index) => {
+            {items.map((item: any, index: any) => {
                 if (index === items.length - 1) {
                     return (
                         <span key={index} className="color-gray-medium">{item.label}</span>
