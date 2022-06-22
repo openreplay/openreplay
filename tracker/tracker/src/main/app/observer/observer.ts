@@ -239,8 +239,6 @@ export default abstract class Observer {
         return false;
       }
       this.app.sanitizer.handleNode(id, parentID, node);
-    }
-    if (parentID) {
       if (this.app.sanitizer.isMaskedContainer(parentID)) {
         return false;
       }
@@ -270,11 +268,9 @@ export default abstract class Observer {
           if (this.app.sanitizer.isMaskedContainer(id)) {
             const width = el.clientWidth;
             const height = el.clientHeight;
-            console.log(width, height);
             el = node.cloneNode() as Element;
             (el as HTMLElement | SVGElement).style.width = width + 'px';
             (el as HTMLElement | SVGElement).style.height = height + 'px';
-            console.log(el)
           }
 
           this.app.send(new

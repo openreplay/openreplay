@@ -23,12 +23,15 @@ export default class Sanitizer {
     if (
         this.masked.has(parentID) ||
         (isElementNode(node) &&
-          (hasOpenreplayAttribute(node, 'masked')))
+          hasOpenreplayAttribute(node, 'masked'))
       ) {
         this.masked.add(id);
       }
-      if (this.maskedContainers.has(parentID) ||
-        (isElementNode(node) && hasOpenreplayAttribute(node, 'htmlmasked'))) {
+      if (
+          this.maskedContainers.has(parentID) ||
+          (isElementNode(node) && 
+            hasOpenreplayAttribute(node, 'htmlmasked'))
+        ) {
         this.maskedContainers.add(id);
       }
   }
