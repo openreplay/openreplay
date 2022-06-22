@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { tokenRE } from 'Types/integrations/bugsnagConfig';
 import { edit } from 'Duck/integrations/actions';
-import { Dropdown } from 'UI';
+import Select from 'Shared/Select';
 import { withRequest } from 'HOCs';
 
 @connect(state => ({
@@ -50,7 +50,7 @@ export default class ProjectListDropdown extends React.PureComponent {
 			this.fetchProjectList();
 		}
 	}
-	onChange = (e, target) => {
+	onChange = (target) => {
 		if (typeof this.props.onChange === 'function') {
 			this.props.onChange({ target });
 		}
@@ -65,11 +65,11 @@ export default class ProjectListDropdown extends React.PureComponent {
 		} = this.props;
 		const options = projects.map(({ name, id }) => ({ text: name, value: id }));
 		return (
-			<Dropdown
-				selection
+			<Select
+				// selection
 				options={ options }
 				name={ name }
-				value={ value }
+				value={ options.find(o => o.value === value) }
 				placeholder={ placeholder }
 				onChange={ this.onChange }
 				loading={ loading }

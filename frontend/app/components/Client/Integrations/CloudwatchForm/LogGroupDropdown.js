@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { ACCESS_KEY_ID_LENGTH, SECRET_ACCESS_KEY_LENGTH } from 'Types/integrations/cloudwatchConfig';
 import { edit } from 'Duck/integrations/actions';
-import { Dropdown } from 'UI';
+import Select from 'Shared/Select';
 import { withRequest } from 'HOCs';
 
 @connect(state => ({
@@ -48,7 +48,7 @@ export default class LogGroupDropdown extends React.PureComponent {
 			this.fetchLogGroups();
 		}
 	}
-	onChange = (e, target) => {
+	onChange = (target) => {
 		if (typeof this.props.onChange === 'function') {
 			this.props.onChange({ target });
 		}
@@ -63,11 +63,11 @@ export default class LogGroupDropdown extends React.PureComponent {
 		} = this.props;
 		const options = values.map(g => ({ text: g, value: g }));
 		return (
-			<Dropdown
-				selection
+			<Select
+				// selection
 				options={ options }
 				name={ name }
-				value={ value }
+				value={ options.find(o => o.value === value) }
 				placeholder={ placeholder }
 				onChange={ this.onChange }
 				loading={ loading }

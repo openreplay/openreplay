@@ -4,7 +4,8 @@ import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
 import { 
   Form, IconButton, SlideModal, Input, Button, Loader,
-  NoContent, Popup, CopyButton, Dropdown } from 'UI';
+  NoContent, Popup, CopyButton } from 'UI';
+import Select from 'Shared/Select';
 import { init, save, edit, remove as deleteMember, fetchList, generateInviteLink } from 'Duck/member';
 import { fetchList as fetchRoles } from 'Duck/roles';
 import styles from './manageUsers.module.css';
@@ -39,7 +40,7 @@ class ManageUsers extends React.PureComponent {
   state = { showModal: false, remaining: this.props.account.limits.teamMember.remaining, invited: false }
 
   // writeOption = (e, { name, value }) => this.props.edit({ [ name ]: value });
-  onChange = (e, { name, value }) => this.props.edit({ [ name ]: value });
+  onChange = ({ name, value }) => this.props.edit({ [ name ]: value.value });
   onChangeCheckbox = ({ target: { checked, name } }) => this.props.edit({ [ name ]: checked });
   setFocus = () => this.focusElement && this.focusElement.focus();
   closeModal = () => this.setState({ showModal: false });
@@ -138,12 +139,12 @@ class ManageUsers extends React.PureComponent {
           { isEnterprise && (
             <Form.Field>
               <label htmlFor="role">{ 'Role' }</label>
-              <Dropdown
+              <Select
                 placeholder="Role"
                 selection
                 options={ roles }
                 name="roleId"
-                value={ member.roleId }
+                value={ roles.find(r => r.value === member.roleId) }
                 onChange={ this.onChange }
               />
             </Form.Field>

@@ -5,7 +5,6 @@ import IssueHeader from './IssueHeader';
 import IssueComment from './IssueComment';
 import IssueCommentForm from './IssueCommentForm';
 import IssueDetails from './IssueDetails';
-import SessionIssuesPanel from './SessionIssuesPanel';
 import IssueForm from './IssueForm';
 import IssueListItem from './IssueListItem';
 import IssueDescription from './IssueDescription';
@@ -296,15 +295,6 @@ storiesOf('Issues', module)
   .add('IssueForm', () => (
     <div className="p-4">
       <IssueForm issueTypes={ List(issueTypes) } />
-    </div>
-  ))
-  .add('SessionIssuesPanel', () => (
-    <div className="bg-white">
-      <SessionIssuesPanel
-        issues={ issues }
-        onIssueClick={ onIssueClick }
-        issueTypeIcons={ issueTypeIcons }
-      />
     </div>
   ))
 

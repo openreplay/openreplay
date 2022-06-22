@@ -37,9 +37,14 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
     }, [errorId])
 
     return (
-        <NoContent show={metric.data.errors && metric.data.errors === 0}>
+        <NoContent
+            title="No data found"
+            subtext=""
+            show={metric.data.errors && metric.data.errors === 0}
+            size="small"
+        >
             {metric.data.errors && metric.data.errors.map((error: any, index: any) => (
-                <ErrorListItem error={error} onClick={() => onErrorClick(error)} />
+                <ErrorListItem key={index} error={error} onClick={() => onErrorClick(error)} />
             ))}
 
             {isEdit && (
