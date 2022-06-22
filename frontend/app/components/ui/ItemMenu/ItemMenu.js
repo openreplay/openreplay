@@ -61,9 +61,9 @@ export default class ItemMenu extends React.PureComponent {
             <div
               key={ text }
               onClick={ !disabled ? this.onClick(onClick) : () => {} }
+              className={disabled ? 'cursor-not-allowed' : ''}
               role="menuitem"
               tabIndex="-1"
-              className=""
             >
               <Popup
                   delay={500}
