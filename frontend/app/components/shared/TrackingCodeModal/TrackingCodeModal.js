@@ -44,7 +44,7 @@ class TrackingCodeModal extends React.PureComponent {
             <Icon name="close" size="14" />
           </div>
         </Modal.Header>
-        <Modal.Content className={ styles.content }>
+        <Modal.Content className={ cn(styles.content, 'overflow-y-auto') }>
           <Tabs
             className="px-5"
             tabs={ TABS }

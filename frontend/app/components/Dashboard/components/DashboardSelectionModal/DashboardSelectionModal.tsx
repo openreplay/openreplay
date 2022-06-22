@@ -46,7 +46,7 @@ function DashboardSelectionModal(props: Props) {
                     <Select
                         options={dashboardOptions}
                         defaultValue={dashboardOptions[0].value}
-                        onChange={({ value }: any) => setSelectedId(value)}
+                        onChange={({ value }: any) => setSelectedId(value.value)}
                     />
                 </Form.Field>
             </Modal.Content>

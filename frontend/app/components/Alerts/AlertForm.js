@@ -50,7 +50,7 @@ const integrationsRoute = client(CLIENT_TABS.INTEGRATIONS);
 const AlertForm = props => {
   const { instance, slackChannels, webhooks, loading, onDelete, deleting, triggerOptions, metricId, style={ width: '580px', height: '100vh' } } = props;
   const write = ({ target: { value, name } }) => props.edit({ [ name ]: value })
-  const writeOption = (e, { name, value }) => props.edit({ [ name ]: value });
+  const writeOption = (e, { name, value }) => props.edit({ [ name ]: value.value });
   const onChangeCheck = ({ target: { checked, name }}) => props.edit({ [ name ]: checked })
   // const onChangeOption = ({ checked, name }) => props.edit({ [ name ]: checked })
   // const onChangeCheck = (e) => { console.log(e) }
@@ -66,7 +66,7 @@ const AlertForm = props => {
 
   const writeQuery = ({ target: { value, name } }) => {
     const { query } = instance;
-    props.edit({ query: { ...query, [name] : value } });
+    props.edit({ query: { ...query, [name] : value.value } });
   }
 
   const metric = (instance && instance.query.left) ? triggerOptions.find(i => i.value === instance.query.left) : null;
@@ -144,7 +144,7 @@ const AlertForm = props => {
                   name="left"
                   value={ triggerOptions.find(i => i.value === instance.query.left) }
                   // onChange={ writeQueryOption }
-                  onChange={ ({ value }) => writeQueryOption(null, { name: 'left', value }) }
+                  onChange={ ({ value }) => writeQueryOption(null, { name: 'left', value: value.value }) }
                 />
               </div>
 
@@ -157,7 +157,7 @@ const AlertForm = props => {
                     name="operator"
                     defaultValue={ instance.query.operator }
                     // onChange={ writeQueryOption }
-                    onChange={ ({ value }) => writeQueryOption(null, { name: 'operator', value }) }
+                    onChange={ ({ value }) => writeQueryOption(null, { name: 'operator', value: value.value }) }
                   />
                   { unit && (
                       <Input
