@@ -99,14 +99,16 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                                                                     duration=data["duration"])
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['issues'] = issues.get_by_session_id(session_id=session_id,project_id=project_id)
+                data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
                 data['live'] = live and assist.is_live(project_id=project_id,
                                                        session_id=session_id,
                                                        project_key=data["projectKey"])
             data["inDB"] = True
             return data
-        else:
+        elif live:
             return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+        else:
+            return None
 
 
 def __get_sql_operator(op: schemas.SearchEventOperator):
