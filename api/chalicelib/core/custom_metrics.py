@@ -2,7 +2,7 @@ import json
 from typing import Union
 
 import schemas
-from chalicelib.core import sessions, funnels, errors
+from chalicelib.core import sessions, funnels, errors, issues
 from chalicelib.utils import helper, pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
 
@@ -515,13 +515,22 @@ def get_funnel_sessions_by_issue(user_id, project_id, metric_id, issue_id,
         s.filter.endDate = data.endTimestamp
         s.filter.limit = data.limit
         s.filter.page = data.page
-        issues = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})
-        issues = issues.get("significant", []) + issues.get("insignificant", [])
+        issues_list = funnels.get_issues_on_the_fly_widget(project_id=project_id, data=s.filter).get("issues", {})
+        issues_list = issues_list.get("significant", []) + issues_list.get("insignificant", [])
         issue = None
-        for i in issues:
+        for i in issues_list:
             if i.get("issueId", "") == issue_id:
                 issue = i
                 break
+        if issue is None:
+            issue = issues.get(project_id=project_id, issue_id=issue_id)
+            if issue is not None:
+                issue = {**issue,
+                         "affectedSessions": 0,
+                         "affectedUsers": 0,
+                         "conversionImpact": 0,
+                         "lostConversions": 0,
+                         "unaffectedSessions": 0}
         return {"seriesId": s.series_id, "seriesName": s.name,
                 "sessions": sessions.search2_pg(user_id=user_id, project_id=project_id,
                                                 issue=issue, data=s.filter)

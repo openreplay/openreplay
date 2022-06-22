@@ -260,8 +260,12 @@ def get_top_insights_on_the_fly_widget(project_id, data: schemas.CustomMetricSer
     insights, total_drop_due_to_issues = significance.get_top_insights(filter_d=data.dict(), project_id=project_id)
     insights = helper.list_to_camel_case(insights)
     if len(insights) > 0:
+        # TODO: check if this correct
         if total_drop_due_to_issues > insights[0]["sessionsCount"]:
-            total_drop_due_to_issues = insights[0]["sessionsCount"]
+            if len(insights) == 0:
+                total_drop_due_to_issues = 0
+            else:
+                total_drop_due_to_issues = insights[0]["sessionsCount"] - insights[-1]["sessionsCount"]
         insights[-1]["dropDueToIssues"] = total_drop_due_to_issues
     return {"stages": insights,
             "totalDropDueToIssues": total_drop_due_to_issues}

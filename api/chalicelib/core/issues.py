@@ -41,6 +41,8 @@ def get(project_id, issue_id):
         )
         cur.execute(query=query)
         data = cur.fetchone()
+        if data is not None:
+            data["title"] = helper.get_issue_title(data["type"])
     return helper.dict_to_camel_case(data)
 
 
