@@ -70,7 +70,7 @@ export const metricTypes = [
 export const tableColumnName = {
     [FilterKey.USERID]: 'Users',
     [FilterKey.ISSUE]: 'Issues',
-    [FilterKey.USER_BROWSER]: 'Browsers',
+    [FilterKey.USER_BROWSER]: 'Browser',
     [FilterKey.USER_DEVICE]: 'Devices',
     [FilterKey.USER_COUNTRY]: 'Countries',
     [FilterKey.LOCATION]: 'URLs',
@@ -82,7 +82,7 @@ export const metricOf = [
   { label: 'Sessions', value: FilterKey.SESSIONS, type: 'table' },
   { label: 'JS Errors', value: FilterKey.ERRORS, type: 'table' },
   { label: 'Issues', value: FilterKey.ISSUE, type: 'table' },
-  { label: 'Browsers', value: FilterKey.USER_BROWSER, type: 'table' },
+  { label: 'Browser', value: FilterKey.USER_BROWSER, type: 'table' },
   { label: 'Devices', value: FilterKey.USER_DEVICE, type: 'table' },
   { label: 'Countries', value: FilterKey.USER_COUNTRY, type: 'table' },
   { label: 'URLs', value: FilterKey.LOCATION, type: 'table' },

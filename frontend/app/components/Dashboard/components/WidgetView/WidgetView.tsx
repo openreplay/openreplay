@@ -11,6 +11,7 @@ import { withSiteId } from 'App/routes';
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { FilterKey } from 'Types/filter/filterType';
+
 interface Props {
     history: any;
     match: any
