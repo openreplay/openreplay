@@ -44,7 +44,7 @@ function DashboardRouter(props: Props) {
                     <WidgetSubDetailsView siteId={siteId} {...props} />
                 </Route>
 
-                <Route exact strict path={withSiteId(dashboard(''), siteId)}>
+                <Route exact strict path={withSiteId(dashboard(), siteId)}>
                     <DashboardView siteId={siteId} dashboardId={dashboardId} />
                 </Route>
 

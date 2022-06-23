@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
-
+import { Tooltip } from 'react-tippy';
 
 interface Props {
   name: string;
-  onUpdate: (name) => void;
+  onUpdate: (name: any) => void;
   seriesIndex?: number;
   canEdit?: boolean
 }
@@ -49,7 +49,16 @@ function WidgetName(props: Props) {
           onFocus={() => setEditing(true)}
         />
       ) : (
-        <div onDoubleClick={() => setEditing(true)} className={cn("text-2xl h-8 flex items-center border-transparent", canEdit && 'cursor-pointer')}>{ name }</div>
+        // @ts-ignore
+        <Tooltip delay={100} arrow title="Double click to rename" disabled={!canEdit}>
+          <div 
+            onDoubleClick={() => setEditing(true)} 
+            className={cn("text-2xl h-8 flex items-center border-transparent", canEdit && 'cursor-pointer select-none hover:border-dotted hover:border-b border-gray-medium')}
+          >
+            { name }
+          </div>
+        </Tooltip>
+        
       )}
       { canEdit && <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div> }
     </div>
