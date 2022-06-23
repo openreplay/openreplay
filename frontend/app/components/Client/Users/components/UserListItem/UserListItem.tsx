@@ -47,29 +47,32 @@ function UserListItem(props: Props) {
 
             <div className="col-span-2 justify-self-end invisible group-hover:visible">
                 <div className="grid grid-cols-2 gap-3 items-center justify-end">
-                    {!user.isJoined && user.invitationLink ? (
-                        <Popup
-                            delay={500}
-                            content="Copy Invite Code"
-                            hideOnClick={true}
-                        >
-                            <button className='' onClick={copyInviteCode}>
-                                <Icon name="link-45deg" size="16" color="teal"/>
-                            </button>
-                        </Popup>
-                    ) : <div/>}
-                    {!user.isJoined && user.isExpiredInvite && (
-                        <Popup
-                            delay={500}
-                            arrow
-                            content="Generate Invite"
-                            hideOnClick={true}
-                        >
-                            <button className='' onClick={generateInvite}>
-                                <Icon name="link-45deg" size="16" color="red"/>
-                            </button>
-                        </Popup>
-                    )}
+                    <div>
+                        {!user.isJoined && user.invitationLink && !user.isExpiredInvite && (
+                            <Popup
+                                delay={500}
+                                content="Copy Invite Code"
+                                hideOnClick={true}
+                            >
+                                <button className='' onClick={copyInviteCode}>
+                                    <Icon name="link-45deg" size="16" color="teal"/>
+                                </button>
+                            </Popup>
+                        )}
+
+                        {!user.isJoined && user.isExpiredInvite && (
+                            <Popup
+                                delay={500}
+                                arrow
+                                content="Generate Invite"
+                                hideOnClick={true}
+                            >
+                                <button className='' onClick={generateInvite}>
+                                    <Icon name="link-45deg" size="16" color="red"/>
+                                </button>
+                            </Popup>
+                        )}
+                    </div>
                     <button className='' onClick={editHandler}>
                         <Icon name="pencil" color="teal" size="16" />
                     </button>
