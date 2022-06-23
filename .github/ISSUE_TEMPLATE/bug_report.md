@@ -22,7 +22,7 @@ What you expected to happen.
 If possible, that would be make our life easier.
 
 **OpenReplay Environment**
- - Frontend stack [e.g. React/Axios/MobX, Next]
+ - Frontend stack: [e.g. React/Axios/MobX, Next]
  - OpenReplay version: [e.g. 1.6.0]
  - Tracker version: [e.g. 3.5.10]
  - Plugins used: [e.g. Fetch, Redux]
