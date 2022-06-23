@@ -47,7 +47,9 @@ const styles = {
 @withRouter
 class OnboardingExplore extends React.PureComponent {
   UNSAFE_componentWillMount() {
-    this.props.getOnboard();
+    if (this.props.boarding.size === 0) {
+      this.props.getOnboard();
+    }
   }
 
   componentDidMount() {    

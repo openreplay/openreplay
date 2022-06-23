@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react';
 import UserList from './components/UserList';
-import { PageTitle, Popup, IconButton } from 'UI';
+import { PageTitle } from 'UI';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import UserSearch from './components/UserSearch';
 import { useModal } from 'App/components/Modal';
 import UserForm from './components/UserForm';
 import { connect } from 'react-redux';
+import AddUserButton from './components/AddUserButton';
 
-const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
-const LIMIT_WARNING = 'You have reached users limit.';
 interface Props {
     account: any;
     isEnterprise: boolean;
@@ -43,22 +42,7 @@ function UsersView(props: Props) {
                 <PageTitle
                     title={<div>Team <span className="color-gray-medium">{userCount}</span></div>}
                     actionButton={(
-                        <Popup
-                            content={ `${ !isAdmin ? PERMISSION_WARNING : (reachedLimit ? LIMIT_WARNING : 'Add team member') }` }
-                            size="tiny"
-                            inverted
-                            position="top left"
-                        >
-                            <IconButton
-                                id="add-button"
-                                disabled={ reachedLimit || !isAdmin }
-                                circle
-                                icon="plus"
-                                outline
-                                className="ml-3"
-                                onClick={ () => editHandler(null) }
-                            />
-                        </Popup>
+                        <AddUserButton isAdmin={isAdmin} onClick={() => editHandler(null)} />
                     )}
                 />
                 <div>

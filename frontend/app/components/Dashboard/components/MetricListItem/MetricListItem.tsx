@@ -14,9 +14,9 @@ function DashboardLink({ dashboards}: any) {
             <Link to={`/dashboard/${dashboard.dashboardId}`}>
                 <div className="flex items-center mb-1 py-1">
                     <div className="mr-2">
-                        <Icon name="circle-fill" size="4" color="gray-medium" />
+                        <Icon name="circle-fill" size={4} color="gray-medium" />
                     </div>
-                    <span className="link leading-4">{dashboard.name}</span>
+                    <span className="link leading-4 capitalize-first">{dashboard.name}</span>
                 </div>
             </Link>
             </React.Fragment>

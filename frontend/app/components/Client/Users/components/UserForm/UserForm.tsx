@@ -27,6 +27,7 @@ function UserForm(props: Props) {
     const onSave = () => {
         userStore.saveUser(user).then(() => {
             hideModal();
+            userStore.fetchLimits();
         });
     }
 
@@ -42,6 +43,7 @@ function UserForm(props: Props) {
           })) {
             userStore.deleteUser(user.userId).then(() => {
                 hideModal();
+                userStore.fetchLimits();
             });
         }
     }

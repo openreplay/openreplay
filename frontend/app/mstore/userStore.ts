@@ -14,7 +14,8 @@ export default class UserStore {
 
     loading: boolean = false;
     saving: boolean = false;
-    limits: any = null;
+    limits: any = {};
+    initialDataFetched: boolean = false;
 
     constructor() {
         makeAutoObservable(this, {
@@ -29,8 +30,8 @@ export default class UserStore {
         return new Promise((resolve, reject) => {
             userService.getLimits()
                 .then((response: any) => {
-                    this.limits = response.limits;
-                    resolve(response.limits);
+                    this.limits = response;
+                    resolve(response);
                 }).catch((error: any) => {
                     reject(error);
                 });
