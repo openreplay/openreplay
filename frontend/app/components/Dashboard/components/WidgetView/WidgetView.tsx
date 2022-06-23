@@ -65,17 +65,16 @@ function WidgetView(props: Props) {
                         )}
                         onClick={openEdit}
                     >
-                        <h1 className="mb-0 text-2xl">
+                        <h1 className="mb-0 text-2xl mr-4 min-w-fit">
                             <WidgetName
                                 name={widget.name}
                                 onUpdate={(name) => metricStore.merge({ name })}
                                 canEdit={expanded}
                             />
                         </h1>
-                        <div className="text-gray-600">
+                        <div className="text-gray-600 w-full cursor-pointer" onClick={() => setExpanded(!expanded)}>
                             <div
-                                onClick={() => setExpanded(!expanded)}
-                                className="flex items-center cursor-pointer select-none"
+                                className="flex items-center select-none w-fit ml-auto"
                             >
                                 <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
                                 <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
