@@ -36,7 +36,7 @@ export default function (app: App): void {
       sendPlaceholder(id, this)
     } else {
       app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
-      app.send(new SetNodeAttribute(id, 'srcset', srcset, app.getBaseHref()));
+      srcset && app.send(new SetNodeAttribute(id, 'srcset', srcset));
     }
   });
 
