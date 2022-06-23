@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import withPageTitle from 'HOCs/withPageTitle';
-import { Loader, SlideModal, IconButton, Icon, Button, Popup, TextLink } from 'UI';
+import { Loader, SlideModal, Icon, Button, Popup, TextLink } from 'UI';
 import { init, remove, fetchGDPR } from 'Duck/site';
 import { RED, YELLOW, GREEN, STATUS_COLOR_MAP } from 'Types/site';
 import stl from './sites.module.css';
@@ -10,17 +10,15 @@ import NewSiteForm from './NewSiteForm';
 import GDPRForm from './GDPRForm';
 import TrackingCodeModal from 'Shared/TrackingCodeModal';
 import BlockedIps from './BlockedIps';
-import { confirm } from 'UI';
+import { confirm, PageTitle } from 'UI';
 import SiteSearch from './SiteSearch';
+import AddProjectButton from './AddProjectButton';
 
 const STATUS_MESSAGE_MAP = {
   [ RED ]: ' There seems to be an issue (please verify your installation)',
   [ YELLOW ]: 'We\'re collecting data from time to time (perhaps low traffic)',
   [ GREEN ]: 'All good!',
 };
-
-const PERMISSION_WARNING = 'You don’t have the permissions to perform this action.';
-const LIMIT_WARNING = 'You have reached site limit.';
 
 const BLOCKED_IPS = 'BLOCKED_IPS';
 const NONE = 'NONE';
@@ -143,21 +141,14 @@ class Sites extends React.PureComponent {
         />
         <div className={ stl.wrapper }>
           <div className={ stl.tabHeader }>
-            <h3 className={ cn(stl.tabTitle, "text-2xl") }>{ 'Projects' }</h3>
-            <Popup
-              disabled={ canAddSites }
-              content={ `${ !isAdmin ? PERMISSION_WARNING : LIMIT_WARNING }` }
-            >
-              <div>
-                  <IconButton
-                      disabled={ !canAddSites }
-                      circle
-                      icon="plus"
-                      outline
-                      onClick={ this.showNewSiteForm }
-                  />
-                </div>
-            </Popup>
+            {/* <h3 className={ cn(stl.tabTitle, "text-2xl") }>{ 'Projects' }</h3> */}
+            <PageTitle
+                title={<div className="mr-4">Projects</div>}
+                actionButton={(
+                  <AddProjectButton isAdmin={isAdmin} onClick={this.showNewSiteForm} />
+                )}
+            />
+            
 
            <div className="flex ml-auto items-center">
               <TextLink
