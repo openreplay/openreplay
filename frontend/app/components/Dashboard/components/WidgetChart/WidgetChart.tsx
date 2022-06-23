@@ -165,7 +165,7 @@ function WidgetChart(props: Props) {
                         metric={metric}
                         data={data[0]}
                         colors={colors}
-                        params={params}
+                        // params={params}
                         onClick={onChartClick}
                     />
                 )

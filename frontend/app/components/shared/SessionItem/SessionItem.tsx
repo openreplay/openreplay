@@ -105,7 +105,7 @@ function SessionItem(props: RouteComponentProps<Props>) {
   });
 
   return (
-    <div className={ cn(stl.sessionItem, "flex flex-col p-2") } id="session-item" >
+    <div className={ cn(stl.sessionItem, "flex flex-col p-2") } id="session-item" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start">
           <div className={ cn('flex items-center w-full')}>
             <div className="flex items-center pr-2" style={{ width: "30%"}}>

@@ -10,6 +10,7 @@ import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
 import AlertButton from './AlertButton';
 import stl from './widgetWrapper.module.css';
+import { FilterKey } from 'App/types/filter/filterType';
 
 interface Props {
     className?: string;
@@ -66,7 +67,7 @@ function WidgetWrapper(props: Props) {
 
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
-    const addOverlay = isTemplate || (!isPredefined && isWidget)
+    const addOverlay = isTemplate || (!isPredefined && isWidget && widget.metricOf !== FilterKey.ERRORS && widget.metricOf !== FilterKey.SESSIONS)
 
     return useObserver(() => (
             <div

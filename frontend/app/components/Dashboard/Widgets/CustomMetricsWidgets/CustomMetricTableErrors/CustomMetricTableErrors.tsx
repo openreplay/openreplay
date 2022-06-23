@@ -18,7 +18,8 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
     const errorId = new URLSearchParams(props.location.search).get("errorId");
     const { showModal, hideModal } = useModal();
 
-    const onErrorClick = (error: any) => {
+    const onErrorClick = (e: any, error: any) => {
+        e.stopPropagation();
         props.history.replace({search: (new URLSearchParams({errorId : error.errorId})).toString()});
     }
 
@@ -26,7 +27,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
         if (!errorId) return;
 
         showModal(<ErrorDetailsModal errorId={errorId} />, { right: true, onClose: () => {
-            if (props.history.location.pathname.includes("/metric")) {
+            if (props.history.location.pathname.includes("/dashboard")) {
                 props.history.replace({search: ""});
             }
         }});
@@ -44,7 +45,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
             size="small"
         >
             {metric.data.errors && metric.data.errors.map((error: any, index: any) => (
-                <ErrorListItem key={index} error={error} onClick={() => onErrorClick(error)} />
+                <ErrorListItem key={index} error={error} onClick={(e) => onErrorClick(e, error)} />
             ))}
 
             {isEdit && (
