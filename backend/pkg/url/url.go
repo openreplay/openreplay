@@ -10,6 +10,7 @@ func DiscardURLQuery(url string) string {
 }
 
 func GetURLParts(rawURL string) (string, string, string, error) {
+	rawURL = strings.Replace(rawURL, "\t", "", -1) // Other chars?
 	u, err := _url.Parse(rawURL)
 	if err != nil {
 		return "", "", "", err
