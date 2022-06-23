@@ -46,9 +46,11 @@ function FunnelIssueDetails(props: Props) {
                 inDetails={true}
             />}
 
-            <div className="mt-6">
+            <div className="mt-6 bg-white p-3 rounded border">
                 {sessions.map((session: any) => (
-                    <SessionItem key={session.id} session={session} />
+                    <div key={session.id} className="border-b last:border-none">
+                        <SessionItem session={session} />
+                    </div>
                 ))}
             </div>
         </Loader>

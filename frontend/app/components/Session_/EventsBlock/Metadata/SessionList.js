@@ -38,10 +38,9 @@ class SessionList extends React.PureComponent {
                 </div>
                 <div className="bg-white p-3 rounded border">
                   { site.sessions.map(session => (
-                    <>
+                    <div className="border-b last:border-none">
                       <SessionItem key={ session.sessionId } session={ session } />
-                      <div className="border-b" />
-                    </>
+                    </div>
                   )) }
                 </div>
               </div>
