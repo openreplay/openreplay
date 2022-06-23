@@ -11,6 +11,7 @@ import { withSiteId } from 'App/routes';
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
 import { FilterKey } from 'Types/filter/filterType';
+import { Prompt } from 'react-router'
 
 interface Props {
     history: any;
@@ -23,11 +24,12 @@ function WidgetView(props: Props) {
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
+    const hasChanged = useObserver(() => widget.hasChanged)
+    console.log('hasChanged', hasChanged)
     
     const dashboards = useObserver(() => dashboardStore.dashboards);
     const dashboard = useObserver(() => dashboards.find((d: any) => d.dashboardId == dashboardId));
     const dashboardName = dashboard ? dashboard.name : null;
-
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
@@ -48,6 +50,15 @@ function WidgetView(props: Props) {
 
     return useObserver(() => (
         <Loader loading={loading}>
+            <Prompt
+                when={hasChanged}
+                message={(location: any) => {
+                    if (location.pathname.includes('/metrics/') || location.pathname.includes('/metric/')) {
+                        return true;
+                    }
+                    return 'You have unsaved changes. Are you sure you want to leave?';
+                }}
+            />
             <div className="relative pb-10">
                 <Breadcrumb
                     items={[

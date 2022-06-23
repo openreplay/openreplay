@@ -36,22 +36,24 @@ function FilterSeries(props: Props) {
   const [expanded, setExpanded] = useState(true)
   const { series, seriesIndex } = props;
 
-  useEffect(observeChanges, [series.filter]);
-
   const onAddFilter = (filter: any) => {
     series.filter.addFilter(filter)
+    observeChanges()
   }
 
   const onUpdateFilter = (filterIndex: any, filter: any) => {
     series.filter.updateFilter(filterIndex, filter)
+    observeChanges()
   }
 
   const onChangeEventsOrder = (e, { name, value }: any) => {
     series.filter.updateKey(name, value)
+    observeChanges()
   }
 
   const onRemoveFilter = (filterIndex: any) => {
     series.filter.removeFilter(filterIndex)
+    observeChanges()
   }
 
   return (
@@ -80,7 +82,6 @@ function FilterSeries(props: Props) {
                 onUpdateFilter={onUpdateFilter}
                 onRemoveFilter={onRemoveFilter}
                 onChangeEventsOrder={onChangeEventsOrder}
-                observeChanges={observeChanges}
               />
             ): (
               <div className="color-gray-medium">{emptyMessage}</div>

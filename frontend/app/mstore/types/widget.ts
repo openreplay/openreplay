@@ -40,13 +40,13 @@ export interface IWidget {
     limit: number
     params: any
     period: any
-    hasChanges: boolean
+    hasChanged: boolean
 
     updateKey(key: string, value: any): void
     removeSeries(index: number): void
     addSeries(): void
     fromJson(json: any): void
-    toJsonDrilldown(json: any): void
+    toJsonDrilldown(): void
     toJson(): any
     validate(): void
     update(data: any): void
@@ -54,7 +54,7 @@ export interface IWidget {
     toWidget(): any
     setData(data: any): void
     fetchSessions(metricId: any, filter: any): Promise<any>
-    setPeriod(period: Period): void
+    setPeriod(period: any): void
 }
 export default class Widget implements IWidget {
     public static get ID_KEY():string { return "metricId" }
@@ -80,7 +80,7 @@ export default class Widget implements IWidget {
     params: any = { density: 70 }
     
     period: any = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
-    hasChanges: boolean = false
+    hasChanged: boolean = false
 
     sessionsLoading: boolean = false
 

@@ -35,8 +35,8 @@ export interface IMetricStore {
     // API
     save(metric: IWidget, dashboardId?: string): Promise<any>
     fetchList(): void
-    fetch(metricId: string)
-    delete(metric: IWidget)
+    fetch(metricId: string, period?: any): Promise<any>
+    delete(metric: IWidget): Promise<any>
 }
 
 export default class MetricStore implements IMetricStore {
@@ -98,6 +98,7 @@ export default class MetricStore implements IMetricStore {
 
     merge(object: any) {
         Object.assign(this.instance, object)
+        this.instance.updateKey('hasChanged', true)
     }
 
     reset(id: string) {
@@ -153,6 +154,7 @@ export default class MetricStore implements IMetricStore {
                     toast.error('Error saving metric')
                     reject()
                 }).finally(() => {
+                    this.instance.updateKey('hasChanged', false)
                     this.isSaving = false
                 })
         })
@@ -172,9 +174,6 @@ export default class MetricStore implements IMetricStore {
         this.isLoading = true
         return metricService.getMetric(id)
             .then((metric: any) => {
-                // if (period) {
-                //     metric.period = period
-                // }
                 return this.instance = new Widget().fromJson(metric, period)
             }).finally(() => {
                 this.isLoading = false

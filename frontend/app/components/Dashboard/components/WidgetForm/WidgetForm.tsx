@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
@@ -31,7 +31,6 @@ function WidgetForm(props: Props) {
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
 
-    // const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = ({ value, name }: any) => {
         value = Array.isArray(value) ? value : value.value
         const obj: any = { [ name ]: value };
@@ -170,6 +169,7 @@ function WidgetForm(props: Props) {
                 {metric.series.length > 0 && metric.series.slice(0, (isTable || isFunnel) ? 1 : metric.series.length).map((series: any, index: number) => (
                     <div className="mb-2">
                         <FilterSeries
+                            observeChanges={() => metric.updateKey('hasChanged', true)}
                             hideHeader={ isTable }
                             seriesIndex={index}
                             series={series}
