@@ -5,7 +5,6 @@ import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/search';
-import SaveFunnelButton from '../SaveFunnelButton';
 
 interface Props {
   appliedFilter: any;
@@ -82,7 +81,6 @@ function SessionSearch(props: Props) {
           </FilterSelection>
         </div>
         <div className="ml-auto flex items-center">
-          <SaveFunnelButton />
           <SaveFilterButton />
         </div>
       </div>

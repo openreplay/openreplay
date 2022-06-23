@@ -94,9 +94,8 @@ export default class BugFinder extends React.PureComponent {
     if (props.sessions.size === 0) {
       props.fetchSessions();
     }
-    props.resetFunnel();
-    props.resetFunnelFilters();
-    props.fetchFunnelsList(LAST_7_DAYS)
+    // props.resetFunnel();
+    // props.resetFunnelFilters();
 
     const queryFilter = this.props.query.all(allowedQueryKeys);
     if (queryFilter.hasOwnProperty('userId')) {
