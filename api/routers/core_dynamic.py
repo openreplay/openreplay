@@ -175,10 +175,8 @@ def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
 def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
     return {
         'data': {
-            "limits": {
-                "teamMember": -1,
-                "projects": -1,
-                "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
-            },
+            "teamMember": -1,
+            "projects": -1,
+            "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
         }
     }
