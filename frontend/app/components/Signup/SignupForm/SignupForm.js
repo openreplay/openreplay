@@ -160,7 +160,7 @@ export default class SignupForm extends React.Component {
           </div>
         }
         <div className={ stl.formFooter }>
-          <Button variant="primary" loading={loading}>
+          <Button type="submit" variant="primary" loading={loading}>
             Create account
           </Button>
         </div>
