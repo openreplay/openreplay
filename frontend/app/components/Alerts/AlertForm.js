@@ -96,7 +96,7 @@ const AlertForm = props => {
                 primary
                 name="detectionMethod"
                 className="my-3"
-                onSelect={ writeOption }
+                onSelect={ (e, { name, value }) => props.edit({ [ name ]: value }) }
                 value={{ value: instance.detectionMethod }}
                 list={ [
                   { name: 'Threshold', value: 'threshold' },
