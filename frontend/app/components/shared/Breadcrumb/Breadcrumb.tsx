@@ -12,14 +12,13 @@ function Breadcrumb(props: Props) {
             {items.map((item: any, index: any) => {
                 if (index === items.length - 1) {
                     return (
-                        <span key={index} className="color-gray-medium">{item.label}</span>
+                        <span key={index} className="color-gray-medium capitalize-first">{item.label}</span>
                     );
                 }
                 return (
                     <div key={index} className="color-gray-darkest hover:color-teal flex items-center">
-                        <Link to={item.to} className="">{item.label}</Link>
+                        <Link to={item.to} className="capitalize-first">{item.label}</Link>
                         <span className="mx-2">/</span>
-                        {/* <Icon name="chevron-right" /> */}
                     </div>
                 );
             })}
