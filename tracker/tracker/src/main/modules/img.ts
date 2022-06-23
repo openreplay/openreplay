@@ -23,7 +23,7 @@ export default function (app: App): void {
     if (id === undefined) {
       return;
     }
-    const { src, complete, naturalWidth, naturalHeight } = this;
+    const { src, complete, naturalWidth, naturalHeight, srcset } = this;
     if (!complete) {
       return;
     }
@@ -35,6 +35,7 @@ export default function (app: App): void {
       sendPlaceholder(id, this)
     } else {
       app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+      app.send(new SetNodeAttributeURLBased(id, 'srcset', srcset, app.getBaseHref()));
     }
   });
 
