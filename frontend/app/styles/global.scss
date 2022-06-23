@@ -3,3 +3,7 @@
     margin-bottom: 5px;
     color: '#888';
 }
+
+.capitalize-first::first-letter {
+    text-transform: uppercase;
+}

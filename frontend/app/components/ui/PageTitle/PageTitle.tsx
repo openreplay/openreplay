@@ -9,7 +9,7 @@ function PageTitle({ title, actionButton = null, subTitle = '', className = '', 
     return (
         <div>
             <div className='flex items-center'>
-                <h1 className={cn("text-2xl", className)}>
+                <h1 className={cn("text-2xl capitalize-first", className)}>
                     {title}
                 </h1>
                 { actionButton && actionButton}

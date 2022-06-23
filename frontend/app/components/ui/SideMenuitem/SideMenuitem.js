@@ -43,7 +43,7 @@ function SideMenuitem({
                   <Icon name={ iconName } size={ iconSize } color={active ? 'teal' : iconColor} className="absolute" />
                 </div>
               )}
-              <span className={stl.title}>{ title }</span>
+              <span className={cn(stl.title, 'capitalize-first')}>{ title }</span>
            </div>
             { leading && leading }
           </div>

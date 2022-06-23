@@ -111,7 +111,7 @@ function WidgetWrapper(props: Props) {
                     <div
                         className={cn("p-3 pb-4 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
                     >
-                        <div className="capitalize w-full font-medium">{widget.name}</div>
+                        <div className="capitalize-first w-full font-medium">{widget.name}</div>
                         {isWidget && (
                             <div className="flex items-center" id="no-print">
                                 {!isPredefined && isTimeSeries && (
