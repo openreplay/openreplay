@@ -3,7 +3,19 @@ import cn from 'classnames';
 import SVG from 'UI/SVG';
 import styles from './icon.module.css';
 
-const Icon = ({
+interface IProps {
+  name: string
+  size?: number | string
+  height?: number
+  width?: number
+  color?: string
+  className?: string
+  style?: object
+  marginRight?: number
+  inline?: boolean
+}
+
+const Icon: React.FunctionComponent<IProps> = ({
   name,
   size = 12,
   height = size,
@@ -21,6 +33,7 @@ const Icon = ({
     ...style,
   };
   if (marginRight){
+    // @ts-ignore
     _style.marginRight = `${ marginRight }px`;
   }
 
