@@ -88,10 +88,6 @@ function WidgetForm(props: Props) {
         }
     }
 
-    const onObserveChanges = () => {
-        // metricStore.fetchMetricChartData(metric);
-    }
-
     return useObserver(() => (
         <div className="p-6">
             <div className="form-group">
@@ -177,14 +173,12 @@ function WidgetForm(props: Props) {
                             hideHeader={ isTable }
                             seriesIndex={index}
                             series={series}
-                            // onRemoveSeries={() => removeSeries(index)}
                             onRemoveSeries={() => metric.removeSeries(index)}
                             canDelete={metric.series.length > 1}
                             emptyMessage={isTable ?
                                 'Filter data using any event or attribute. Use Add Step button below to do so.' :
                                 'Add user event or filter to define the series by clicking Add Step.'
                             }
-                            // observeChanges={onObserveChanges}
                         />
                     </div>
                 ))}

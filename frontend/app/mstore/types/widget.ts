@@ -38,10 +38,9 @@ export interface IWidget {
     
     page: number
     limit: number
-
     params: any
-
     period: any
+    hasChanges: boolean
 
     updateKey(key: string, value: any): void
     removeSeries(index: number): void
@@ -81,6 +80,7 @@ export default class Widget implements IWidget {
     params: any = { density: 70 }
     
     period: any = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
+    hasChanges: boolean = false
 
     sessionsLoading: boolean = false
 
