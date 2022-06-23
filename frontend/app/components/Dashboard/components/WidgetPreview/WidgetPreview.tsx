@@ -40,11 +40,11 @@ function WidgetPreview(props: Props) {
             return 'Time Series';
         } else if (isTable) {
             if (metric.metricOf === FilterKey.SESSIONS) {
-                return 'Table of Sessions';
-                // return <div>Sessions <span className="color-gray-medium">{metric.data.total}</span></div>;
+                // return 'Table of Sessions';
+                return <div>Sessions <span className="color-gray-medium">{metric.data.total}</span></div>;
             } else if (metric.metricOf === FilterKey.ERRORS) {
-                return 'Table of Errors';
-                // return <div>Errors <span className="color-gray-medium">{metric.data.total}</span></div>;
+                // return 'Table of Errors';
+                return <div>Errors <span className="color-gray-medium">{metric.data.total}</span></div>;
             } else {
                 return 'Table';
             }

@@ -28,9 +28,6 @@ function WidgetForm(props: Props) {
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
     const isFunnel = metric.metricType === 'funnel';
-    const isErrors = metric.metricType === 'errors';
-    const isSessions = metric.metricType === 'sessions';
-    const _issueOptions = [{ label: 'All', value: 'all' }].concat(issueOptions);
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
 
