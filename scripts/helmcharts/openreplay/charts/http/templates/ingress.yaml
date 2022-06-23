@@ -35,6 +35,7 @@ spec:
             path: /ingest/(.*)
 {{- end }}
 
+{{- if .Values.global.minio.enabled }}
 ## TODO:
 ## Frontend service from minio will be migrated to nginx atomic container.
 ## This ingress is just a workaround.
@@ -60,3 +61,4 @@ spec:
   tls:
     - hosts:
       - {{ .Values.global.domainName }}
+{{- end }}
