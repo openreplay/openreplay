@@ -2,6 +2,7 @@ import React from 'react';
 
 interface Props {
     children: React.ReactNode;
+    onSubmit?: any
     [x: string]: any
 }
 
@@ -23,7 +24,12 @@ function FormField (props: FormFieldProps) {
 function Form(props: Props) {
     const { children, ...rest } = props;
     return (
-        <form {...rest}>
+        <form {...rest} onSubmit={(e) => {
+            e.preventDefault();
+            if (props.onSubmit) {
+                props.onSubmit(e);
+            }
+        }}>
             {children}
         </form>
     );

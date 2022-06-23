@@ -43,7 +43,7 @@ const Header = (props) => {
   const { 
     sites, location, account, 
     onLogoutClick, siteId,
-    boardingCompletion = 100, fetchSiteList, showAlerts = false
+    boardingCompletion = 100, fetchSiteList, showAlerts = false,
   } = props;
   
   const name = account.get('name').split(" ")[0];
@@ -53,15 +53,17 @@ const Header = (props) => {
   let activeSite = null;
 
   useEffect(() => {
-    if (initialDataFetched) return;
+    if (!account.id || initialDataFetched) return;
     
-    Promise.all([
-      userStore.fetchLimits(),
-      notificationStore.fetchNotificationsCount(),
-    ]).then(() => {
-      userStore.updateKey('initialDataFetched', true);
-    });
-  }, []);
+    setTimeout(() => {
+      Promise.all([
+        userStore.fetchLimits(),
+        notificationStore.fetchNotificationsCount(),
+      ]).then(() => {
+        userStore.updateKey('initialDataFetched', true);
+      });
+    }, 0);
+  }, [account]);
 
   useEffect(() => {
     activeSite = sites.find(s => s.id == siteId);

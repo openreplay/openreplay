@@ -66,7 +66,7 @@ const AlertForm = props => {
 
   const writeQuery = ({ target: { value, name } }) => {
     const { query } = instance;
-    props.edit({ query: { ...query, [name] : value.value } });
+    props.edit({ query: { ...query, [name] : value } });
   }
 
   const metric = (instance && instance.query.left) ? triggerOptions.find(i => i.value === instance.query.left) : null;
