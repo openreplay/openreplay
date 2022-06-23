@@ -36,12 +36,19 @@ function DashboardMetricSelection(props: IProps) {
     const [activeCategory, setActiveCategory] = React.useState<any>();
     const [selectAllCheck, setSelectAllCheck] = React.useState(false);
     const selectedWidgetIds = useObserver(() => dashboardStore.selectedWidgets.map((widget: any) => widget.metricId));
+    const scrollContainer = React.useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         dashboardStore?.fetchTemplates(true).then((categories) => {
             setActiveCategory(categories[0]);
         });
     }, []);
+
+    useEffect(() => {
+        if (scrollContainer.current) {
+            scrollContainer.current.scrollTop = 0;
+        }
+    }, [activeCategory, scrollContainer.current]);
 
     const handleWidgetCategoryClick = (category: any) => {
         setActiveCategory(category);
@@ -100,6 +107,7 @@ function DashboardMetricSelection(props: IProps) {
                     <div
                         className="grid grid-cols-4 gap-4 -mx-4 px-4 pb-40 items-start py-1"
                         style={{ maxHeight: "calc(100vh - 170px)", overflowY: 'auto' }}
+                        ref={scrollContainer}
                     >
                         {activeCategory && activeCategory.widgets.map((widget: any) => (
                             <WidgetWrapper

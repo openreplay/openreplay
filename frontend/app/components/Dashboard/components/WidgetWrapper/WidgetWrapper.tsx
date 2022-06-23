@@ -5,7 +5,7 @@ import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
 import AlertButton from './AlertButton';
@@ -26,7 +26,7 @@ interface Props {
     onClick?: () => void;
     isWidget?: boolean;
 }
-function WidgetWrapper(props: Props) {
+function WidgetWrapper(props: Props & RouteComponentProps) {
     const { dashboardStore } = useStore();
     const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
     const widget: any = useObserver(() => props.widget);
