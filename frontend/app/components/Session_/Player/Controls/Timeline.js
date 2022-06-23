@@ -155,6 +155,7 @@ export default class Timeline extends React.PureComponent {
           className={ stl.progress }
           onClick={ disabled ? null : this.seekProgress }
           ref={ this.progressRef }
+          role="button"
         >
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
             <CustomDragLayer onDrag={this.onDrag} minX={BOUNDRY} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY} />
