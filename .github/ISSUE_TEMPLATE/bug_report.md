@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report an issue and help improve OpenReplay.
+about: Report an issue and help improve OpenReplay
 title: ''
 labels: bug
 assignees: estradino
