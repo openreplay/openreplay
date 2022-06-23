@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from 'UI';
+import cn from 'classnames';
+
 
 interface Props {
   name: string;
@@ -47,7 +49,7 @@ function WidgetName(props: Props) {
           onFocus={() => setEditing(true)}
         />
       ) : (
-        <div className="text-2xl h-8 flex items-center border-transparent">{ name }</div>
+        <div onDoubleClick={() => setEditing(true)} className={cn("text-2xl h-8 flex items-center border-transparent", canEdit && 'cursor-pointer')}>{ name }</div>
       )}
       { canEdit && <div className="ml-3 cursor-pointer" onClick={() => setEditing(true)}><Icon name="pencil" size="14" /></div> }
     </div>

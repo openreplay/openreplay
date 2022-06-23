@@ -15,7 +15,7 @@ export const RESOURCE_OPTIONS = [
   { text: 'JS', value: 'SCRIPT', },
 ];
 
-const cols = [
+const cols: Array<Object> = [
   {
     key: 'type',
     title: 'Type',
@@ -43,15 +43,16 @@ const cols = [
     title: 'Trend',
     Component: Chart,
     width: '15%',
-  },
-  {
-    key: 'copy-path',
-    title: '',
-    Component: CopyPath,
-    cellClass: 'invisible group-hover:visible text-right',
-    width: '15%',
   }
 ];
+
+const copyPathCol = {
+  key: 'copy-path',
+  title: '',
+  Component: CopyPath,
+  cellClass: 'invisible group-hover:visible text-right',
+  width: '15%',
+}
 
 interface Props {
     data: any
@@ -61,6 +62,10 @@ interface Props {
 function SlowestResources(props: Props) {
     const { data, metric, isTemplate } = props;
 
+    if (!isTemplate) {
+      cols.push(copyPathCol);
+    }
+    
     return (
         <NoContent
           title="No resources missing."
