@@ -1,8 +1,8 @@
 .sessionItem {
   background-color: #fff;
   user-select: none;
-  border-radius: 3px;
-  border: solid thin #EEEEEE;
+  /* border-radius: 3px; */
+  /* border: solid thin #EEEEEE; */
   transition: all 0.4s;
 
   & .favorite {
@@ -14,7 +14,7 @@
 
   &:hover {
     background-color: $active-blue;
-    border: solid thin $active-blue-border;
+    /* border: solid thin $active-blue-border; */
     transition: all 0.2s;
 
     & .playLink {

@@ -90,7 +90,7 @@ function WidgetSessions(props: Props) {
                 )}
             </div>
 
-            <div className="mt-3">
+            <div className="mt-3 bg-white p-3 rounded border">
                 <Loader loading={loading}>
                     <NoContent
                         title={
@@ -102,7 +102,10 @@ function WidgetSessions(props: Props) {
                         show={filteredSessions.sessions.length === 0}
                     >
                         {filteredSessions.sessions.map((session: any) => (
-                            <SessionItem key={ session.sessionId } session={ session }  />
+                            <>
+                                <SessionItem key={ session.sessionId } session={ session }  />
+                                <div className="border-b" />
+                            </>
                         ))}
 
                         <div className="w-full flex items-center justify-center py-6">
