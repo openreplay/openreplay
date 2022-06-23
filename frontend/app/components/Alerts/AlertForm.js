@@ -160,26 +160,29 @@ const AlertForm = props => {
                     onChange={ ({ value }) => writeQueryOption(null, { name: 'operator', value: value.value }) }
                   />
                   { unit && (
-                      <Input
-                        className="px-4"
-                        style={{ marginRight: '31px'}}
-                        // label={{ basic: true, content: unit }}
-                        // labelPosition='right'
-                        name="right"
-                        value={ instance.query.right }
-                        onChange={ writeQuery }
-                        placeholder="E.g. 3"
-                      />
+                      <>
+                        <Input
+                          className="px-4"
+                          style={{ marginRight: '31px'}}
+                          // label={{ basic: true, content: unit }}
+                          // labelPosition='right'
+                          name="right"
+                          value={ instance.query.right }
+                          onChange={ writeQuery }
+                          placeholder="E.g. 3"
+                        />
+                        <span className="ml-2">{'test'}</span>
+                      </>
                   )}
                   { !unit && (
-                      <Input
-                        wrapperClassName="ml-2"
-                        // className="pl-4"
-                        name="right"
-                        value={ instance.query.right }
-                        onChange={ writeQuery }
-                        placeholder="Specify Value"
-                      />
+                        <Input
+                          wrapperClassName="ml-2"
+                          // className="pl-4"
+                          name="right"
+                          value={ instance.query.right }
+                          onChange={ writeQuery }
+                          placeholder="Specify Value"
+                        />
                   )}
                 </div>
               </div>
