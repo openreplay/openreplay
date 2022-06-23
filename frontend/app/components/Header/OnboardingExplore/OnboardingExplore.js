@@ -46,7 +46,7 @@ const styles = {
 @withToggle('display', 'toggleModal')
 @withRouter
 class OnboardingExplore extends React.PureComponent {
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this.props.getOnboard();
   }
 
