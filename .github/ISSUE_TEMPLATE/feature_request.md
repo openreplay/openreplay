@@ -7,4 +7,4 @@ assignees: estradino
 
 ---
 
-Briefly describe the feature you would like to see shipped with the upcoming versions of OpenReplay, the use-case (very important to us) and the alternatives solutions you've considered.
+Briefly describe the feature you would like to see shipped with the upcoming versions of OpenReplay, the use-case (very important to us) and the alternative solutions you've considered so far.
