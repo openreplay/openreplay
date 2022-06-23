@@ -4,6 +4,7 @@ import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../.
 import { hasTag } from "../app/guards.js";
 
 
+
 const PLACEHOLDER_SRC = "https://static.openreplay.com/tracker/placeholder.jpeg";
 
 export default function (app: App): void {
@@ -35,20 +36,26 @@ export default function (app: App): void {
       sendPlaceholder(id, this)
     } else {
       app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
-      app.send(new SetNodeAttributeURLBased(id, 'srcset', srcset, app.getBaseHref()));
+      app.send(new SetNodeAttribute(id, 'srcset', srcset, app.getBaseHref()));
     }
   });
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.type === "attributes" && mutation.attributeName === "src") {
+      if (mutation.type === "attributes" && mutation.attributeName === "src" || mutation.attributeName === "srcset") {
         const target = (mutation.target as HTMLImageElement);
         const id = app.nodes.getID(target);
         if (id === undefined) {
           return;
         }
-        const src = target.src;
-        app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+        if (mutation.attributeName === "src") {
+          const src = target.src;
+          app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+        }
+        if (mutation.attributeName === "srcset") {
+          const srcset = target.srcset;
+          app.send(new SetNodeAttribute(id, 'srcset', srcset));
+        }
       }
     }
   });
