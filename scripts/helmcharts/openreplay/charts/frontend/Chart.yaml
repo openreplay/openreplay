@@ -1,5 +1,5 @@
 apiVersion: v2
-name: databases
+name: frontend
 description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -14,37 +14,11 @@ type: application
 
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
-# Versions are expected to follow Semantic Versioning (https://semver.org/)
+# Versions are expected to follow Semantic Versioning (frontends://semver.org/)
 version: 0.1.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "1.16.0"
-
-dependencies:
-  - name: minio
-    repository: file://charts/minio
-    version: 3.7.4
-    condition: minio.enabled
-  - name: kafka
-    repository: file://charts/kafka
-    version: 11.8.6
-    condition: kafka.enabled
-  - name: clickhouse
-    repository: file://charts/clickhouse
-    version: 1.16.0
-    condition: clickhouse.enabled
-  - name: postgresql
-    repository: file://charts/postgresql
-    version: 9.8.2
-    condition: postgresql.enabled
-  - name: redis
-    repository: file://charts/redis
-    version: 12.10.1
-    condition: redis.enabled
-  - name: minio
-    repository: file://charts/minio
-    version: 3.7.14
-    condition: minio.enabled
+AppVersion: "v1.6.0"

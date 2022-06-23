@@ -5,9 +5,10 @@
 # ee: build for enterprise edition.
 # Default will be OSS build.
 
-# Usage: bash build.sh <ee>
+# Example
+# Usage: IMAGE_TAG=latest DOCKER_REPO=myDockerHubID bash build.sh
 
-git_sha1=$(git rev-parse HEAD)
+git_sha1=${IMAGE_TAG:-$(git rev-parse HEAD)}
 ee="false"
 check_prereq() {
     which docker || {
@@ -20,7 +21,10 @@ check_prereq() {
 function build(){
     cp .env.sample .env
     # Run docker as the same user, else we'll run in to permission issues.
-    docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "yarn && yarn build"
+    docker build -t ${DOCKER_REPO:-'local'}/frontend:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image .
+    [[ $PUSH_IMAGE -eq 1 ]] && {
+        docker push ${DOCKER_REPO:-'local'}/frontend:${git_sha1}
+    }
     echo "frotend build completed"
 }
 
