@@ -70,9 +70,9 @@ import React from 'react';
 
 interface Props {
     name: string;
-    size?: number;
-    width?: number;
-    height?: number;
+    size?: number | string;
+    width?: number | string;
+    height?: number | string;
     fill?: string;
 }
 
