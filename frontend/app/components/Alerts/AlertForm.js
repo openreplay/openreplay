@@ -161,15 +161,15 @@ const AlertForm = props => {
                   />
                   { unit && (
                       <Input
-                      className="px-4"
-                      style={{ marginRight: '31px'}}
-                      label={{ basic: true, content: unit }}
-                      labelPosition='right'
-                      name="right"
-                      value={ instance.query.right }
-                      onChange={ writeQuery }
-                      placeholder="E.g. 3"
-                    />
+                        className="px-4"
+                        style={{ marginRight: '31px'}}
+                        // label={{ basic: true, content: unit }}
+                        // labelPosition='right'
+                        name="right"
+                        value={ instance.query.right }
+                        onChange={ writeQuery }
+                        placeholder="E.g. 3"
+                      />
                   )}
                   { !unit && (
                       <Input
@@ -309,7 +309,7 @@ const AlertForm = props => {
             {instance.exists() ? 'Update' : 'Create'}
           </Button>
           <div className="mx-1" />
-          <Button basic onClick={props.onClose}>Cancel</Button>
+          <Button onClick={props.onClose}>Cancel</Button>
         </div>
         <div>
           {instance.exists() && (

@@ -5,7 +5,6 @@ import UserStore from './userStore';
 import RoleStore from './roleStore';
 import APIClient from 'App/api_client';
 import FunnelStore from './funnelStore';
-import { makeAutoObservable, observable, action } from "mobx"
 import { dashboardService, metricService, sessionService, userService, auditService, funnelService, errorService } from 'App/services';
 import SettingsStore from './settingsStore';
 import AuditStore from './auditStore';
@@ -23,8 +22,6 @@ export class RootStore {
     errorStore: ErrorStore;
     notificationStore: NotificationStore
 
-    limits: any;
-
     constructor() {
         this.dashboardStore = new DashboardStore();
         this.metricStore = new MetricStore();
@@ -35,10 +32,6 @@ export class RootStore {
         this.auditStore = new AuditStore();
         this.errorStore = new ErrorStore();
         this.notificationStore = new NotificationStore();
-        makeAutoObservable(this, {
-          limits: observable,
-          fetchLimits: action,
-        });
     }
 
     initClient() {
@@ -50,18 +43,6 @@ export class RootStore {
       userService.initClient(client)
       auditService.initClient(client)
       errorService.initClient(client)
-    }
-
-    fetchLimits(): Promise<any> {
-      return new Promise((resolve, reject) => {
-          userService.getLimits()
-              .then((response: any) => {
-                  this.limits = response;
-                  resolve(response);
-              }).catch((error: any) => {
-                  reject(error);
-              });
-      });
     }
 }
 

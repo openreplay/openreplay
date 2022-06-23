@@ -26,6 +26,7 @@ import ErrorGenPanel from 'App/dev/components';
 import Alerts from '../Alerts/Alerts';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 import { fetchList as fetchMetadata } from 'Duck/customField';
+import { useStore } from 'App/mstore';
 
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
@@ -46,7 +47,12 @@ const Header = (props) => {
   
   const name = account.get('name').split(" ")[0];
   const [hideDiscover, setHideDiscover] = useState(false)
+  const { userStore } = useStore();
   let activeSite = null;
+
+  useEffect(() => {
+    userStore.fetchLimits();
+  }, []);
 
   useEffect(() => {
     activeSite = sites.find(s => s.id == siteId);

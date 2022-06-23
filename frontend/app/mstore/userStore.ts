@@ -14,6 +14,7 @@ export default class UserStore {
 
     loading: boolean = false;
     saving: boolean = false;
+    limits: any = null;
 
     constructor() {
         makeAutoObservable(this, {
@@ -22,6 +23,18 @@ export default class UserStore {
             updateKey: action,
             initUser: action,
         })
+    }
+
+    fetchLimits(): Promise<any> {
+        return new Promise((resolve, reject) => {
+            userService.getLimits()
+                .then((response: any) => {
+                    this.limits = response.limits;
+                    resolve(response.limits);
+                }).catch((error: any) => {
+                    reject(error);
+                });
+        });
     }
 
     initUser(user?: any ): Promise<void> {
