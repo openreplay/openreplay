@@ -42,7 +42,7 @@ export default function (app: App): void {
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.type === "attributes" && mutation.attributeName === "src" || mutation.attributeName === "srcset") {
+      if (mutation.type === "attributes") {
         const target = (mutation.target as HTMLImageElement);
         const id = app.nodes.getID(target);
         if (id === undefined) {
@@ -67,6 +67,6 @@ export default function (app: App): void {
     app.nodes.attachElementListener('error', node, sendImgSrc);
     app.nodes.attachElementListener('load', node, sendImgSrc);
     sendImgSrc.call(node);
-    observer.observe(node, { attributes: true });
+    observer.observe(node, { attributes: true, attributeFilter: [ "src", "srcset" ] });
   });
 }
