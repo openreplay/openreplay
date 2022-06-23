@@ -44,7 +44,7 @@ function MetricListItem(props: Props) {
                     <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
                         <Icon name={getIcon(metric.metricType)} size="14" color="tealx"  />
                     </div>
-                    <Link to={`/metrics/${metric.metricId}`} className="link">
+                    <Link to={`/metrics/${metric.metricId}`} className="link capitalize-first">
                         {metric.name}
                     </Link>
                 </div>
