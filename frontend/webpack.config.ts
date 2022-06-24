@@ -48,10 +48,12 @@ const config: Configuration = {
       },
       {
         test: /\.s[ac]ss$/i,
+        exclude: /node_modules/,
         use: [stylesHandler, 'css-loader', 'postcss-loader', 'sass-loader'],
       },
       {
         test: /\.css$/i,
+        exclude: /node_modules/,
         use: [
             stylesHandler,
             {
@@ -90,6 +92,7 @@ const config: Configuration = {
       // },
       {
         test: /\.(svg)$/i,
+        exclude: /node_modules/,
         use: [
           {
             loader: 'file-loader',
