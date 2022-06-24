@@ -6,6 +6,10 @@ on:
       - dev
     paths:
       - frontend/**
+# Disable previous workflows for this action.
+concurrency: 
+  group: ${{ github.workflow }} #-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
