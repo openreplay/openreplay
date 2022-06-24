@@ -14,14 +14,14 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Cache node modules
-      uses: actions/cache@v1
-      with:
-        path: node_modules
-        key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.OS }}-build-
-          ${{ runner.OS }}-
+    - name: Docker login
+      run: |
+        docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
+
+    # Caching docker images
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      # Ignore the failure of a step and avoid terminating the job.
+      continue-on-error: true
 
     - uses: azure/k8s-set-context@v1
       with:
