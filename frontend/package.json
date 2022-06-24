@@ -64,8 +64,7 @@
     "semantic-ui-react": "^2.1.2",
     "socket.io-client": "^4.4.1",
     "source-map": "^0.7.3",
-    "syncod": "^0.0.1",
-    "tailwindcss": "^3.1.4"
+    "syncod": "^0.0.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.5",
@@ -122,7 +121,7 @@
     "style-loader": "^3.3.1",
     "svg-inline-loader": "^0.8.2",
     "svgo": "^2.8.0",
-    "tailwindcss": "^3.0.23",
+    "tailwindcss": "^3.1.4",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.4",
     "webpack": "^5.72.1",
