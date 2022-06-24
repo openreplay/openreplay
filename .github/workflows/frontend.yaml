@@ -18,6 +18,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Cache node modules
+      uses: actions/cache@v1
+      with:
+        path: node_modules
+        key: ${{ runner.OS }}-build-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.OS }}-build-
+          ${{ runner.OS }}-
+
     - name: Docker login
       run: |
         docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
@@ -43,7 +52,8 @@ jobs:
         ENVIRONMENT: staging
       run: |
         cd frontend
-        PUSH_IMAGE=1 bash build.sh
+        docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "npm install && npm run build:oss"
+        docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
     - name: Creating old image input
       run: |
         #
