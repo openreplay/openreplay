@@ -1,7 +1,8 @@
 from node:14-stretch-slim AS builder
 workdir /work
 COPY . .
-RUN yarn && yarn build
+RUN yarn 
+RUN yarn build
 
 FROM nginx:alpine
 LABEL maintainer=Rajesh<rajesh@openreplay.com>
