@@ -31,11 +31,6 @@ jobs:
       run: |
         docker login ${{ secrets.EE_REGISTRY_URL }} -u ${{ secrets.EE_DOCKER_USERNAME }} -p "${{ secrets.EE_REGISTRY_TOKEN }}" 
 
-    # Caching docker images
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      # Ignore the failure of a step and avoid terminating the job.
-      continue-on-error: true
-
     - uses: azure/k8s-set-context@v1
       with:
         method: kubeconfig
