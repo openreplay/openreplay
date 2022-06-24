@@ -11,6 +11,14 @@ const Confirmation = ({
   cancelButton = "Cancel",
   confirmButton = "Proceed",
 }) => {
+  React.useEffect(() => {
+    const handleEsc = (e) => (e.key === 'Escape' || e.key === 'Esc') && proceed(false);
+    document.addEventListener('keydown', handleEsc, false);
+
+    return () => {
+      document.removeEventListener('keydown', handleEsc, false);
+    }
+  }, [])
   return (
     <Modal
       open={show}

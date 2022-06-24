@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, KeyboardEventHandler } from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
 import { Tooltip } from 'react-tippy';
@@ -34,7 +34,21 @@ function WidgetName(props: Props) {
     setName(props.name)
   }, [props.name])
 
-  // const { name } = props;
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        onBlur()
+      }
+      if (e.key === 'Escape' || e.key === 'Esc') {
+        setEditing(false)
+      }
+    }
+    document.addEventListener('keypress', handler, false)
+
+    return () => {
+      document.removeEventListener('keypress', handler, false)
+    }
+  }, [])
 
   return (
     <div className="flex items-center">

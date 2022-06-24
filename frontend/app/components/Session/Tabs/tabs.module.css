@@ -15,7 +15,6 @@
     cursor: pointer;
     transition: all 0.2s;
     color: $gray-darkest;
-    border-bottom: solid thin transparent;
     font-weight: 500;
     white-space: nowrap;
 
