@@ -18,7 +18,7 @@ check_prereq() {
     [[ exit -eq 1 ]] && exit 1
 }
 
-https://github.com/docker/cli/issues/1134#issuecomment-613516912
+# https://github.com/docker/cli/issues/1134#issuecomment-613516912
 export DOCKER_BUILDKIT=1
 function build(){
     cp .env.sample .env
