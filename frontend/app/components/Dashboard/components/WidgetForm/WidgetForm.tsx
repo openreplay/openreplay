@@ -30,6 +30,7 @@ function WidgetForm(props: Props) {
     const isFunnel = metric.metricType === 'funnel';
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
+    const cannotSaveFunnel = isFunnel && !metric.series[0] && metric.series[0].filter.filters.length <= 1;
 
     const writeOption = ({ value, name }: any) => {
         value = Array.isArray(value) ? value : value.value
@@ -188,7 +189,7 @@ function WidgetForm(props: Props) {
                 <Button
                     variant="primary"
                     onClick={onSave}
-                    disabled={isSaving}
+                    disabled={isSaving || cannotSaveFunnel}
                 >
                     {metric.exists() ? 'Update' : 'Create'}
                 </Button>

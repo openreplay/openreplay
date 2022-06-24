@@ -15,7 +15,7 @@ import ErrorDetailsModal from '../ErrorDetailsModal';
 interface Props {
     error: any;
     className?: string;
-	onClick: () => void;
+	onClick: (e: any) => void;
 }
 function ErrorListItem(props: Props) {
     const { error, className = '' } = props;

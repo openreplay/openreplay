@@ -3,7 +3,7 @@ import Dashboard, { IDashboard } from "./types/dashboard"
 import Widget, { IWidget } from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
-import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS, LAST_7_DAYS, LAST_30_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import Filter, { IFilter } from "./types/filter";
 import Funnel from "./types/funnel";
@@ -83,9 +83,9 @@ export default class DashboardStore implements IDashboardSotre {
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
     widgets: Widget[] = []
-    period: Period = Period({ rangeName: LAST_30_DAYS })
+    period: Period = Period({ rangeName: LAST_24_HOURS })
     drillDownFilter: Filter = new Filter()
-    drillDownPeriod: Period = Period({ rangeName: LAST_30_DAYS });
+    drillDownPeriod: Period = Period({ rangeName: LAST_7_DAYS });
     startTimestamp: number = 0
     endTimestamp: number = 0
 
@@ -138,7 +138,7 @@ export default class DashboardStore implements IDashboardSotre {
             fetchMetricChartData: action
         })
 
-        this.drillDownPeriod = Period({ rangeName: LAST_30_DAYS });
+        this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
         const timeStamps = this.drillDownPeriod.toTimestamps();
         this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp)
         this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp)
