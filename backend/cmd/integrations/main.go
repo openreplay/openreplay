@@ -84,8 +84,7 @@ func main() {
 				}
 				sessionID = sessData.ID
 			}
-			// TODO: send to ready-events topic. Otherwise it have to go through the events worker.
-			producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(event.IntegrationEvent))
+			producer.Produce(cfg.TopicAnalytics, sessionID, messages.Encode(event.IntegrationEvent))
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:

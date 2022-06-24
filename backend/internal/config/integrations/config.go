@@ -10,8 +10,8 @@ type Config struct {
 
 func New() *Config {
 	return &Config{
-		TopicRawWeb: env.String("TOPIC_RAW_WEB"),
-		PostgresURI: env.String("POSTGRES_STRING"),
-		TokenSecret: env.String("TOKEN_SECRET"),
+		TopicAnalytics: env.String("TOPIC_ANALYTICS"),
+		PostgresURI:    env.String("POSTGRES_STRING"),
+		TokenSecret:    env.String("TOKEN_SECRET"),
 	}
 }

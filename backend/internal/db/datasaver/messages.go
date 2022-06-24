@@ -42,6 +42,15 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 		return mi.pg.InsertWebFetchEvent(sessionID, m)
 	case *GraphQLEvent:
 		return mi.pg.InsertWebGraphQLEvent(sessionID, m)
+	case *IntegrationEvent:
+		return mi.pg.InsertWebErrorEvent(sessionID, &ErrorEvent{
+			MessageID: m.Meta().Index,
+			Timestamp: m.Timestamp,
+			Source:    m.Source,
+			Name:      m.Name,
+			Message:   m.Message,
+			Payload:   m.Payload,
+		})
 
 		// IOS
 	case *IOSSessionStart:
@@ -66,15 +75,6 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 	case *IOSCrash:
 		return mi.pg.InsertIOSCrash(sessionID, m)
 
-	case *IntegrationEvent:
-		return mi.pg.InsertWebErrorEvent(sessionID, &ErrorEvent{
-			MessageID: m.Meta().Index, // TODO: is it possible to catch panic here???
-			Timestamp: m.Timestamp,
-			Source:    m.Source,
-			Name:      m.Name,
-			Message:   m.Message,
-			Payload:   m.Payload,
-		})
 	}
 	return nil // "Not implemented"
 }
