@@ -3,11 +3,13 @@ import Dashboard, { IDashboard } from "./types/dashboard"
 import Widget, { IWidget } from "./types/widget";
 import { dashboardService, metricService } from "App/services";
 import { toast } from 'react-toastify';
-import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
+import Period, { LAST_24_HOURS, LAST_7_DAYS, LAST_30_DAYS } from 'Types/app/period';
 import { getChartFormatter } from 'Types/dashboard/helper';
 import Filter, { IFilter } from "./types/filter";
 import Funnel from "./types/funnel";
 import Session from "./types/session";
+import Error from "./types/error";
+import { FilterKey } from 'Types/filter/filterType';
 
 export interface IDashboardSotre {
     dashboards: IDashboard[]
@@ -18,6 +20,7 @@ export interface IDashboardSotre {
     endTimestamp: number
     period: Period
     drillDownFilter: IFilter
+    drillDownPeriod: Period
 
     siteId: any
     currentWidget: Widget
@@ -80,8 +83,9 @@ export default class DashboardStore implements IDashboardSotre {
     currentWidget: Widget = new Widget()
     widgetCategories: any[] = []
     widgets: Widget[] = []
-    period: Period = Period({ rangeName: LAST_30_DAYS })
+    period: Period = Period({ rangeName: LAST_24_HOURS })
     drillDownFilter: Filter = new Filter()
+    drillDownPeriod: Period = Period({ rangeName: LAST_7_DAYS });
     startTimestamp: number = 0
     endTimestamp: number = 0
 
@@ -105,6 +109,7 @@ export default class DashboardStore implements IDashboardSotre {
             drillDownFilter: observable.ref,
             widgetCategories: observable.ref,
             selectedDashboard: observable.ref,
+            drillDownPeriod: observable,
             resetCurrentWidget: action,
             addDashboard: action,
             removeDashboard: action,
@@ -128,13 +133,15 @@ export default class DashboardStore implements IDashboardSotre {
             fetchTemplates: action,
             updatePinned: action,
             setPeriod: action,
+            setDrillDownPeriod: action,
 
             fetchMetricChartData: action
         })
 
-        const drillDownPeriod = Period({ rangeName: LAST_24_HOURS }).toTimestamps();
-        this.drillDownFilter.updateKey('startTimestamp', drillDownPeriod.startTimestamp)
-        this.drillDownFilter.updateKey('endTimestamp', drillDownPeriod.endTimestamp)
+        this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
+        const timeStamps = this.drillDownPeriod.toTimestamps();
+        this.drillDownFilter.updateKey('startTimestamp', timeStamps.startTimestamp)
+        this.drillDownFilter.updateKey('endTimestamp', timeStamps.endTimestamp)
     }
 
     toggleAllSelectedWidgets(isSelected: boolean) {
@@ -432,10 +439,21 @@ export default class DashboardStore implements IDashboardSotre {
         this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
     }
 
+    setDrillDownPeriod(period: any) {
+        this.drillDownPeriod = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
+    }
+
     fetchMetricChartData(metric: IWidget, data: any, isWidget: boolean = false): Promise<any> {
         const period = this.period.toTimestamps()
+        const params = { ...period, ...data, key: metric.predefinedKey }
+        
+        if (metric.page && metric.limit) {
+            params['page'] = metric.page
+            params['limit'] = metric.limit
+        }
+
         return new Promise((resolve, reject) => {
-            return metricService.getMetricChartData(metric, { ...period, ...data, key: metric.predefinedKey, page: 1, limit: 10 }, isWidget)
+            return metricService.getMetricChartData(metric, params, isWidget)
                 .then((data: any) => {
                     if (metric.metricType === 'predefined' && metric.viewType === 'overview') {
                         const _data = { ...data, chart: getChartFormatter(this.period)(data.chart) }
@@ -452,8 +470,10 @@ export default class DashboardStore implements IDashboardSotre {
                         }
 
                         // TODO refactor to widget class
-                        if (metric.metricOf === 'SESSIONS') {
+                        if (metric.metricOf === FilterKey.SESSIONS) {
                             _data['sessions'] = data.sessions.map((s: any) => new Session().fromJson(s))
+                        } else if (metric.metricOf === FilterKey.ERRORS) {
+                            _data['errors'] = data.errors.map((s: any) => new Error().fromJSON(s))
                         } else {
                             if (data.hasOwnProperty('chart')) {
                                 _data['chart'] = getChartFormatter(this.period)(data.chart)

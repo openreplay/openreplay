@@ -7,6 +7,30 @@ import (
 )
 
 func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error {
+	return c.Conn.InsertSessionStart(sessionID, &Session{
+		SessionID:      sessionID,
+		Platform:       "web",
+		Timestamp:      s.Timestamp,
+		ProjectID:      uint32(s.ProjectID),
+		TrackerVersion: s.TrackerVersion,
+		RevID:          s.RevID,
+		UserUUID:       s.UserUUID,
+		UserOS:         s.UserOS,
+		UserOSVersion:  s.UserOSVersion,
+		UserDevice:     s.UserDevice,
+		UserCountry:    s.UserCountry,
+		// web properties (TODO: unite different platform types)
+		UserAgent:            s.UserAgent,
+		UserBrowser:          s.UserBrowser,
+		UserBrowserVersion:   s.UserBrowserVersion,
+		UserDeviceType:       s.UserDeviceType,
+		UserDeviceMemorySize: s.UserDeviceMemorySize,
+		UserDeviceHeapSize:   s.UserDeviceHeapSize,
+		UserID:               &s.UserID,
+	})
+}
+
+func (c *PGCache) HandleWebSessionStart(sessionID uint64, s *SessionStart) error {
 	if c.sessions[sessionID] != nil {
 		return errors.New("This session already in cache!")
 	}
@@ -31,7 +55,7 @@ func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error
 		UserDeviceHeapSize:   s.UserDeviceHeapSize,
 		UserID:               &s.UserID,
 	}
-	if err := c.Conn.InsertSessionStart(sessionID, c.sessions[sessionID]); err != nil {
+	if err := c.Conn.HandleSessionStart(sessionID, c.sessions[sessionID]); err != nil {
 		c.sessions[sessionID] = nil
 		return err
 	}
@@ -39,7 +63,11 @@ func (c *PGCache) InsertWebSessionStart(sessionID uint64, s *SessionStart) error
 }
 
 func (c *PGCache) InsertWebSessionEnd(sessionID uint64, e *SessionEnd) error {
-	return c.insertSessionEnd(sessionID, e.Timestamp)
+	return c.InsertSessionEnd(sessionID, e.Timestamp)
+}
+
+func (c *PGCache) HandleWebSessionEnd(sessionID uint64, e *SessionEnd) error {
+	return c.HandleSessionEnd(sessionID)
 }
 
 func (c *PGCache) InsertWebErrorEvent(sessionID uint64, e *ErrorEvent) error {

@@ -36,7 +36,13 @@ class SessionList extends React.PureComponent {
                   <Icon name="window" size="14" color="gray-medium" marginRight="10" />
                   <span>{ site.name }</span>
                 </div>
-                { site.sessions.map(session => <SessionItem key={ session.sessionId } session={ session } />) }
+                <div className="bg-white p-3 rounded border">
+                  { site.sessions.map(session => (
+                    <div className="border-b last:border-none">
+                      <SessionItem key={ session.sessionId } session={ session } />
+                    </div>
+                  )) }
+                </div>
               </div>
             )) }
           </div>

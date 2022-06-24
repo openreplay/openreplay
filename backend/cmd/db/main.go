@@ -32,7 +32,7 @@ func main() {
 	cfg := db.New()
 
 	// Init database
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.

@@ -4,11 +4,11 @@ import ErrorStack from 'Types/session/errorStack';
 import Watchdog from 'Types/watchdog';
 import { clean as cleanParams } from 'App/api_client';
 import withRequestState, { RequestTypes } from './requestStateCreator';
-import { getRE } from 'App/utils';
+import { getRE, setSessionFilter, getSessionFilter, compareJsonObjects } from 'App/utils';
 import { LAST_7_DAYS } from 'Types/app/period';
 import { getDateRangeFromValue } from 'App/dateRange';
-const name = 'sessions';
 
+const name = 'sessions';
 const INIT = 'sessions/INIT';
 const FETCH_LIST = new RequestTypes('sessions/FETCH_LIST');
 const FETCH = new RequestTypes('sessions/FETCH');
@@ -27,7 +27,6 @@ const SET_FUNNEL_PAGE_FLAG = 'sessions/SET_FUNNEL_PAGE_FLAG';
 const SET_TIMELINE_POINTER = 'sessions/SET_TIMELINE_POINTER';
 const SET_SESSION_PATH = 'sessions/SET_SESSION_PATH';
 const LAST_PLAYED_SESSION_ID = `${name}/LAST_PLAYED_SESSION_ID`;
-
 const SET_ACTIVE_TAB = 'sessions/SET_ACTIVE_TAB';
 
 const range = getDateRangeFromValue(LAST_7_DAYS);
@@ -60,7 +59,7 @@ const initialState = Map({
   host: '',
   funnelPage: Map(),
   timelinePointer: null,
-  sessionPath: '',
+  sessionPath: {},
   lastPlayedSessionId: null,
 });
 
@@ -237,7 +236,13 @@ function init(session) {
   }
 }
 
-export const fetchList = (params = {}, clear = false, live = false) => (dispatch, getState) => {
+export const fetchList = (params = {}, clear = false, force = false) => (dispatch, getState) => {
+  if (!force) {
+    const oldFilters = getSessionFilter();
+    if (compareJsonObjects(oldFilters, params)) return;
+  }
+  
+  setSessionFilter(params)
   return dispatch({
     types: FETCH_LIST.toArray(),
     call: client => client.post('/sessions/search2', params),

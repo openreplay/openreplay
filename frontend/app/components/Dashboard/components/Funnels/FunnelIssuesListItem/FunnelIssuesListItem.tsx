@@ -8,13 +8,14 @@ import FunnelIssueModal from '../FunnelIssueModal';
 interface Props {
     issue: any;
     inDetails?: boolean;
+    onClick?: () => void;
 }
-function FunnelIssuesListItem(props) {
-    const { issue, inDetails = false } = props;
-    const { showModal } = useModal();
-    const onClick = () => {
-        showModal(<FunnelIssueModal issueId={issue.issueId} />, { right: true });
-    }
+function FunnelIssuesListItem(props: Props) {
+    const { issue, inDetails = false, onClick } = props;
+    // const { showModal } = useModal();
+    // const onClick = () => {
+    //     showModal(<FunnelIssueModal issueId={issue.issueId} />, { right: true });
+    // }
     return (
         <div className={cn('flex flex-col bg-white w-full rounded border relative hover:bg-active-blue', { 'cursor-pointer bg-hover' : !inDetails })} onClick={!inDetails ? onClick : () => null}>
             {/* {inDetails && (

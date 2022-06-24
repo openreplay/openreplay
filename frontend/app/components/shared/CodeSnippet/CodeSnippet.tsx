@@ -10,8 +10,6 @@ const inputModeOptions = [
   
 const inputModeOptionsMap: any = {}
 inputModeOptions.forEach((o: any, i: any) => inputModeOptionsMap[o.value] = i)
-console.log('inputModeOptionsMap', inputModeOptionsMap)
-
 
 interface Props {
     host: string;

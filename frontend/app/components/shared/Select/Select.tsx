@@ -13,9 +13,10 @@ interface Props {
     styles?: any;
     onChange: (value: any) => void;
     name?: string;
+    placeholder?: string;
     [x:string]: any;
 }
-export default function({ name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
+export default function({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
     const defaultSelected = defaultValue ? (options.find(o => o.value === defaultValue) || options[0]): null;
     const customStyles = {
         option: (provided: any, state: any) => ({
@@ -24,6 +25,7 @@ export default function({ name = '', onChange, right = false, plain = false, opt
             transition: 'all 0.3s',
             backgroundColor: state.isFocused ? colors['active-blue'] : 'transparent',
             color: state.isFocused ? colors.teal : 'black',
+            fontSize: '14px',
             '&:hover': {
                 transition: 'all 0.2s',
                 backgroundColor: colors['active-blue'],
@@ -98,6 +100,12 @@ export default function({ name = '', onChange, right = false, plain = false, opt
       
           return { ...provided, opacity, transition };
         },
+        input: (provided: any) => ({
+            ...provided,
+            '& input:focus': {
+              border: 'none !important',
+            }
+        }),
         noOptionsMessage: (provided: any) => ({
             ...provided,
             whiteSpace: 'nowrap !important',
@@ -127,7 +135,7 @@ export default function({ name = '', onChange, right = false, plain = false, opt
                 }
             })}
             blurInputOnSelect={true}
-            // menuPosition="fixed"
+            placeholder={placeholder}
             {...rest}
         />
     );

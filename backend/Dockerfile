@@ -6,13 +6,14 @@ WORKDIR /root
 
 COPY go.mod .
 COPY go.sum .
-RUN go mod download
+RUN go mod tidy && go mod download
 
 
 FROM prepare AS build
 COPY cmd cmd
 COPY pkg pkg
 COPY internal internal
+RUN go mod tidy
 
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
@@ -27,7 +28,7 @@ ENV TZ=UTC \
     MAXMINDDB_FILE=/root/geoip.mmdb \
     UAPARSER_FILE=/root/regexes.yaml \
     HTTP_PORT=80 \
-    BEACON_SIZE_LIMIT=7000000 \
+    BEACON_SIZE_LIMIT=1000000 \
     KAFKA_USE_SSL=true \
     KAFKA_MAX_POLL_INTERVAL_MS=400000 \
     REDIS_STREAMS_MAX_LEN=10000 \
@@ -50,8 +51,8 @@ ENV TZ=UTC \
     FS_CLEAN_HRS=72 \
     FILE_SPLIT_SIZE=300000 \
     LOG_QUEUE_STATS_INTERVAL_SEC=60 \
-    BATCH_QUEUE_LIMIT=20 \
-    BATCH_SIZE_LIMIT=10000000 \
+    DB_BATCH_QUEUE_LIMIT=20 \
+    DB_BATCH_SIZE_LIMIT=10000000 \
     PARTITIONS_NUMBER=1
 
 

@@ -12,11 +12,13 @@ import CustomMetricOverviewChart from 'App/components/Dashboard/Widgets/CustomMe
 import { getStartAndEndTimestampsByDensity } from 'Types/dashboard/helper';
 import { debounce } from 'App/utils';
 import useIsMounted from 'App/hooks/useIsMounted'
+import { FilterKey } from 'Types/filter/filterType';
 
 import FunnelWidget from 'App/components/Funnels/FunnelWidget';
 import ErrorsWidget from '../Errors/ErrorsWidget';
 import SessionWidget from '../Sessions/SessionWidget';
-import CustomMetricTableSessions from '../../Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
+import CustomMetricTableSessions from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableSessions';
+import CustomMetricTableErrors from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTableErrors';
 interface Props {
     metric: any;
     isWidget?: boolean;
@@ -27,6 +29,7 @@ function WidgetChart(props: Props) {
     const { dashboardStore, metricStore } = useStore();
     const _metric: any = useObserver(() => metricStore.instance);
     const period = useObserver(() => dashboardStore.period);
+    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
     const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
@@ -39,18 +42,17 @@ function WidgetChart(props: Props) {
 
     const isTableWidget = metric.metricType === 'table' && metric.viewType === 'table';
     const isPieChart = metric.metricType === 'table' && metric.viewType === 'pieChart';
-    const isFunnel = metric.metricType === 'funnel';
 
     const onChartClick = (event: any) => {
         if (event) {
-            if (isTableWidget || isPieChart) {
+            if (isTableWidget || isPieChart) { // get the filter of clicked row
                 const periodTimestamps = period.toTimestamps()
                 drillDownFilter.merge({
                     filters: event,
                     startTimestamp: periodTimestamps.startTimestamp,
                     endTimestamp: periodTimestamps.endTimestamp,
                 });
-            } else {
+            } else { // get the filter of clicked chart point
                 const payload = event.activePayload[0].payload;
                 const timestamp = payload.timestamp;
                 const periodTimestamps = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
@@ -64,7 +66,6 @@ function WidgetChart(props: Props) {
     }
 
     const depsString = JSON.stringify(_metric.series);
-
     const fetchMetricChartData = (metric: any, payload: any, isWidget: any) => {
         if (!isMounted()) return;
         setLoading(true)
@@ -82,9 +83,11 @@ function WidgetChart(props: Props) {
           return
         };
         prevMetricRef.current = metric;
-        const payload = isWidget ? { ...params } : { ...metricParams, ...metric.toJson() };
+        const timestmaps = drillDownPeriod.toTimestamps();
+        const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
         debounceRequest(metric, payload, isWidget);
-    }, [period, depsString]);
+    }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
+
 
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;
@@ -98,7 +101,7 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'funnel') {
-            return <FunnelWidget metric={metric} />
+            return <FunnelWidget metric={metric} isWidget={isWidget || isTemplate} />
         }
 
         if (metricType === 'predefined') {
@@ -130,27 +133,39 @@ function WidgetChart(props: Props) {
         }
 
         if (metricType === 'table') {
-            if (metricOf === 'SESSIONS') {
-                return <CustomMetricTableSessions
-                    metric={metric}
-                    data={data}
-                    // onClick={onChartClick}
-                    isTemplate={isTemplate}
+            if (metricOf === FilterKey.SESSIONS) {
+                return (
+                    <CustomMetricTableSessions
+                        metric={metric}
+                        isTemplate={isTemplate}
+                        isEdit={!isWidget && !isTemplate}
                     />
+                )
+            }
+            if (metricOf === FilterKey.ERRORS) {
+                return (
+                    <CustomMetricTableErrors
+                        metric={metric}
+                        isTemplate={isTemplate}
+                        isEdit={!isWidget && !isTemplate}
+                    />
+                )
             }
             if (viewType === 'table') {
-                return <CustomMetricTable
-                    metric={metric} data={data[0]}
-                    onClick={onChartClick}
-                    isTemplate={isTemplate}
-                />;
+                return (
+                    <CustomMetricTable
+                        metric={metric} data={data[0]}
+                        onClick={onChartClick}
+                        isTemplate={isTemplate}
+                    />
+                )
             } else if (viewType === 'pieChart') {
                 return (
                     <CustomMetricPieChart
                         metric={metric}
                         data={data[0]}
                         colors={colors}
-                        params={params}
+                        // params={params}
                         onClick={onChartClick}
                     />
                 )
@@ -160,7 +175,7 @@ function WidgetChart(props: Props) {
         return <div>Unknown</div>;
     }
     return useObserver(() => (
-        <Loader loading={!isFunnel && loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
+        <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
     ));

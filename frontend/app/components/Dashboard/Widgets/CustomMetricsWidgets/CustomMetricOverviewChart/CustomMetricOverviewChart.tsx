@@ -1,14 +1,11 @@
 import React from 'react'
 import { Styles } from '../../common';
-import { AreaChart, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Area, Tooltip } from 'recharts';
-import { LineChart, Line, Legend } from 'recharts';
-import cn from 'classnames';
+import { AreaChart, ResponsiveContainer, XAxis, YAxis, Area, Tooltip } from 'recharts';
 import CountBadge from '../../common/CountBadge';
 import { numberWithCommas } from 'App/utils';
 
 interface Props {
     data: any;
-    // onClick?: (event, index) => void;
 }
 function CustomMetricOverviewChart(props: Props) {
     const { data } = props;
@@ -33,7 +30,7 @@ function CustomMetricOverviewChart(props: Props) {
                 <AreaChart
                     data={ data.chart }
                     margin={ {
-                        top: 50, right: 0, left: 0, bottom: 1,
+                        top: 50, right: 0, left: 0, bottom: 0,
                     } }
                 >
                     {gradientDef}
@@ -60,7 +57,7 @@ function CustomMetricOverviewChart(props: Props) {
 export default CustomMetricOverviewChart
 
 
-const countView = (avg, unit) => {  
+const countView = (avg: any, unit: any) => {  
     if (unit === 'mb') {
       if (!avg) return 0;
       const count = Math.trunc(avg / 1024 / 1024);
@@ -72,4 +69,4 @@ const countView = (avg, unit) => {
       return numberWithCommas(count > 1000 ? count +'k' : count);
     }
     return avg ? numberWithCommas(avg): 0;
-  }
+}

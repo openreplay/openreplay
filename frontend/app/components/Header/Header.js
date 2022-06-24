@@ -26,6 +26,8 @@ import ErrorGenPanel from 'App/dev/components';
 import Alerts from '../Alerts/Alerts';
 import AnimatedSVG, { ICONS } from '../shared/AnimatedSVG/AnimatedSVG';
 import { fetchList as fetchMetadata } from 'Duck/customField';
+import { useStore } from 'App/mstore';
+import { useObserver } from 'mobx-react-lite';
 
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
@@ -41,18 +43,33 @@ const Header = (props) => {
   const { 
     sites, location, account, 
     onLogoutClick, siteId,
-    boardingCompletion = 100, fetchSiteList, showAlerts = false
+    boardingCompletion = 100, fetchSiteList, showAlerts = false,
   } = props;
   
   const name = account.get('name').split(" ")[0];
   const [hideDiscover, setHideDiscover] = useState(false)
+  const { userStore, notificationStore } = useStore();
+  const initialDataFetched = useObserver(() => userStore.initialDataFetched);
   let activeSite = null;
+
+  useEffect(() => {
+    if (!account.id || initialDataFetched) return;
+    
+    setTimeout(() => {
+      Promise.all([
+        userStore.fetchLimits(),
+        notificationStore.fetchNotificationsCount(),
+      ]).then(() => {
+        userStore.updateKey('initialDataFetched', true);
+      });
+    }, 0);
+  }, [account]);
 
   useEffect(() => {
     activeSite = sites.find(s => s.id == siteId);
     props.initSite(activeSite);
     props.fetchMetadata();
-  }, [sites])
+  }, [siteId])
 
   return (
     <div className={ cn(styles.header) }>

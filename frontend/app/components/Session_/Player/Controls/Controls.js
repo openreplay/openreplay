@@ -164,7 +164,6 @@ export default class Controls extends React.Component {
   }
 
   onKeyDown = (e) => {
-    console.log(e.key, e.target)
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
       return;
     }

@@ -52,7 +52,7 @@ export default class Table extends React.PureComponent {
           )) }
         </div>
         { !isTemplate && rows.size > (small ? 3 : 5) && !showAll &&
-            <div className="w-full flex justify-center">
+            <div className="w-full flex justify-center mt-3">
               <Button
                 onClick={ this.onLoadMoreClick }
                 variant="text-primary"

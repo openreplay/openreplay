@@ -1,15 +1,12 @@
 import React from 'react';
-import { useModal } from 'App/components/Modal';
 import stl from './ModalOverlay.module.css'
 import cn from 'classnames';
 
-function ModalOverlay({ children, left = false, right = false }) {
-    let modal = useModal();
- 
+function ModalOverlay({ hideModal, children, left = false, right = false }: any) {
     return (
         <div className="fixed w-full h-screen" style={{ zIndex: 999 }}>
             <div
-                onClick={() => modal.hideModal()}
+                onClick={hideModal}
                 className={stl.overlay}
                 style={{ background: "rgba(0,0,0,0.5)" }}
             />

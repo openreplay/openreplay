@@ -96,6 +96,14 @@ export default Record({
 	  	end: range.end.unix() * 1000,
 	  }
 	},
+	// fromFilter: filter => {
+	// 	const range = getRange(filter.rangeName);
+	// 	return {
+	// 		start: range.start.unix() * 1000,
+	// 		end: range.end.unix() * 1000,
+	// 		rangeName: filter.rangeName,
+	// 	}
+	// },
 	methods: {
 		toJSON() {
 			return {

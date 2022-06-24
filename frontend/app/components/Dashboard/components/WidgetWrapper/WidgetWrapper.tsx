@@ -5,11 +5,12 @@ import { useDrag, useDrop } from 'react-dnd';
 import WidgetChart from '../WidgetChart';
 import { useObserver } from 'mobx-react-lite';
 import { useStore } from 'App/mstore';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { withSiteId, dashboardMetricDetails } from 'App/routes';
 import TemplateOverlay from './TemplateOverlay';
 import AlertButton from './AlertButton';
 import stl from './widgetWrapper.module.css';
+import { FilterKey } from 'App/types/filter/filterType';
 
 interface Props {
     className?: string;
@@ -25,10 +26,11 @@ interface Props {
     onClick?: () => void;
     isWidget?: boolean;
 }
-function WidgetWrapper(props: Props) {
+function WidgetWrapper(props: Props & RouteComponentProps) {
     const { dashboardStore } = useStore();
     const { isWidget = false, active = false, index = 0, moveListItem = null, isPreview = false, isTemplate = false, dashboardId, siteId } = props;
     const widget: any = useObserver(() => props.widget);
+    const isTimeSeries = widget.metricType === 'timeseries';
     const isPredefined = widget.metricType === 'predefined';
     const dashboard = useObserver(() => dashboardStore.selectedDashboard);
 
@@ -65,8 +67,7 @@ function WidgetWrapper(props: Props) {
 
     const ref: any = useRef(null)
     const dragDropRef: any = dragRef(dropRef(ref))
-
-    const addOverlay = isTemplate || (!isPredefined && isWidget)
+    const addOverlay = isTemplate || (!isPredefined && isWidget && widget.metricOf !== FilterKey.ERRORS && widget.metricOf !== FilterKey.SESSIONS)
 
     return useObserver(() => (
             <div
@@ -111,10 +112,10 @@ function WidgetWrapper(props: Props) {
                     <div
                         className={cn("p-3 pb-4 flex items-center justify-between", { "cursor-move" : !isTemplate && isWidget })}
                     >
-                        <div className="capitalize w-full font-medium">{widget.name}</div>
+                        <div className="capitalize-first w-full font-medium">{widget.name}</div>
                         {isWidget && (
                             <div className="flex items-center" id="no-print">
-                                {!isPredefined && (
+                                {!isPredefined && isTimeSeries && (
                                     <>
                                         <AlertButton seriesId={widget.series[0] && widget.series[0].seriesId} />
                                         <div className='mx-2'/>

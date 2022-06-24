@@ -16,14 +16,11 @@ interface Props {
   fetchList: any;
 }
 function Notifications(props: Props) {
-  // const { notifications } = props;
   const { showModal } = useModal();
-  // const unReadNotificationsCount = notifications.filter(({viewed}: any) => !viewed).size
   const { notificationStore } = useStore();
   const count = useObserver(() => notificationStore.notificationsCount);
 
   useEffect(() => {
-    notificationStore.fetchNotificationsCount();
     const interval = setInterval(() => {
       notificationStore.fetchNotificationsCount()
     }, AUTOREFRESH_INTERVAL);

@@ -10,6 +10,7 @@ export IMAGE_TAG=`grep fromVersion vars.yaml | awk '{print $NF}'|xargs`
 
 
 apps=(
+    frontend
     api
     assets
     db
@@ -40,6 +41,12 @@ restart(){
     exit 1
 } || {
     case "$1" in
+          frontend)
+            echo $IMAGE_TAG
+            cd ../../frontend
+            source build.sh $@
+            restart frontend
+            ;;
         api)
             echo $IMAGE_TAG
             cd ../../api

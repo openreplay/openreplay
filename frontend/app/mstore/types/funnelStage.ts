@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, action } from "mobx"
 import { filterLabelMap } from 'Types/filter/newFilter';
 export default class FunnelStage {
     dropDueToIssues: number = 0;
+    dropDueToIssuesPercentage: number = 0;
     dropPct: number = 0;
     operator: string = "";
     sessionsCount: number = 0;
@@ -30,6 +31,7 @@ export default class FunnelStage {
         this.type = json.type;
         this.label = filterLabelMap[json.type] || json.type;
         this.completedPercentage = total ? Math.round((this.sessionsCount / total) * 100) : 0;
+        this.dropDueToIssuesPercentage = total ? Math.round((this.dropDueToIssues / total) * 100) : 0;
         this.droppedCount = previousSessionCount - this.sessionsCount;
         return this;
     }

@@ -40,7 +40,7 @@ type client struct {
 type SessionErrorEvent struct {
 	SessionID uint64
 	Token     string
-	*messages.RawErrorEvent
+	*messages.IntegrationEvent
 }
 
 type ClientMap map[string]*client

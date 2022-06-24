@@ -1,7 +1,6 @@
 //@ts-nocheck
 import React, { useState, FC, useEffect } from 'react'
 import VideoContainer from '../components/VideoContainer'
-import { Icon, Popup, Button } from 'UI'
 import cn from 'classnames'
 import Counter from 'App/components/shared/SessionItem/Counter'
 import stl from './chatWindow.module.css'

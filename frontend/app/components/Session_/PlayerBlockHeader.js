@@ -55,10 +55,10 @@ export default class PlayerBlockHeader extends React.PureComponent {
 
   backHandler = () => {
     const { history, siteId, sessionPath, isAssist } = this.props;
-    if (sessionPath === history.location.pathname || sessionPath.includes("/session/") || isAssist) {
+    if (sessionPath.pathname === history.location.pathname || sessionPath.pathname.includes("/session/") || isAssist) {
       history.push(withSiteId(isAssist ? ASSIST_ROUTE: SESSIONS_ROUTE, siteId));
     } else {
-      history.push(sessionPath ? sessionPath : withSiteId(SESSIONS_ROUTE, siteId));
+      history.push(sessionPath ? sessionPath.pathname + sessionPath.search : withSiteId(SESSIONS_ROUTE, siteId));
     }
   }
 

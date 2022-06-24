@@ -43,6 +43,7 @@ const dropdownStyles = {
       top: 20,
       left: 0,
       minWidth: 'fit-content',
+      overflow: 'hidden',
   }),
   container: (provided: any) => ({
       ...provided,
@@ -50,9 +51,10 @@ const dropdownStyles = {
   }),
   input: (provided: any) => ({
     ...provided,
-    // padding: '0px',
-    // margin: '0px',
     height: '22px',
+    '& input:focus': {
+      border: 'none !important',
+    }
   }),
   singleValue: (provided: any, state: { isDisabled: any; }) => {
     const opacity = state.isDisabled ? 0.5 : 1;
@@ -67,14 +69,14 @@ const dropdownStyles = {
   }
 }
 interface Props {
-  filter: any; // event/filter
+  // filter: any; // event/filter
   // options: any[];
   value: string;
   onChange: (value: any) => void;
   className?: string;
   options: any[];
   search?: boolean;
-  multiple?: boolean;
+  // multiple?: boolean;
   showCloseButton?: boolean;
   showOrButton?: boolean;
   onRemoveValue?: () => void;
@@ -82,7 +84,7 @@ interface Props {
   isMultilple?: boolean;
 }
 function FilterValueDropdown(props: Props) {
-  const { filter, multiple = false, isMultilple = true, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
+  const { isMultilple = true, search = false, options, onChange, value, className = '', showCloseButton = true, showOrButton = true } = props;
   // const options = []
 
   return (

@@ -1,7 +1,4 @@
 import React from 'react';
-import { withRouter } from 'react-router-dom';
-import { useStore } from 'App/mstore';
-import { useModal } from 'App/components/Modal';
 import FunnelIssueDetails from '../FunnelIssueDetails';
 
 interface Props {
@@ -9,7 +6,6 @@ interface Props {
 }
 function FunnelIssueModal(props: Props) {
     const { issueId } = props;
-    const { hideModal } = useModal();
     return (
         <div style={{ width: '85vw', maxWidth: '1200px' }}>
             <div

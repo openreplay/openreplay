@@ -5,11 +5,10 @@ import { List } from 'immutable';
 import { useObserver } from 'mobx-react-lite';
 
 interface Props {
-  // filters: any[]; // event/filter
   filter?: any; // event/filter
-  onUpdateFilter: (filterIndex, filter) => void;
-  onRemoveFilter: (filterIndex) => void;
-  onChangeEventsOrder: (e, { name, value }) => void;
+  onUpdateFilter: (filterIndex: any, filter: any) => void;
+  onRemoveFilter: (filterIndex: any) => void;
+  onChangeEventsOrder: (e: any, { name, value }: any) => void;
   hideEventsOrder?: boolean;
   observeChanges?: () => void;
   saveRequestPayloads?: boolean;
@@ -23,7 +22,7 @@ function FilterList(props: Props) {
 
   useEffect(observeChanges, [filters]);
 
-  const onRemoveFilter = (filterIndex) => {
+  const onRemoveFilter = (filterIndex: any) => {
     props.onRemoveFilter(filterIndex);
   }
 

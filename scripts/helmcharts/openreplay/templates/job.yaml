@@ -145,6 +145,8 @@ spec:
       - name: kafka
         image: bitnami/kafka:2.6.0-debian-10-r30
         env:
+          - name: RETENTION_TIME
+            value: "{{ .Values.global.kafka.retentionTime }}"
           - name: KAFKA_HOST
             value: "{{ .Values.global.kafka.kafkaHost }}"
           - name: KAFKA_PORT

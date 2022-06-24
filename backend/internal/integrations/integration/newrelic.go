@@ -89,7 +89,7 @@ func (nr *newrelic) Request(c *client) error {
 			c.setLastMessageTimestamp(e.Timestamp)
 			c.evChan <- &SessionErrorEvent{
 				Token: e.OpenReplaySessionToken,
-				RawErrorEvent: &messages.RawErrorEvent{
+				IntegrationEvent: &messages.IntegrationEvent{
 					Source:    "newrelic",
 					Timestamp: e.Timestamp,
 					Name:      e.ErrorClass,

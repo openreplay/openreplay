@@ -4,6 +4,8 @@ import (
 	"log"
 	"openreplay/backend/internal/config/ender"
 	"openreplay/backend/internal/sessionender"
+	"openreplay/backend/pkg/db/cache"
+	"openreplay/backend/pkg/db/postgres"
 	"openreplay/backend/pkg/monitoring"
 	"time"
 
@@ -30,6 +32,9 @@ func main() {
 	// Load service configuration
 	cfg := ender.New()
 
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0), cfg.ProjectExpirationTimeoutMs)
+	defer pg.Close()
+
 	// Init all modules
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 	sessions, err := sessionender.New(metrics, intervals.EVENTS_SESSION_END_TIMEOUT, cfg.PartitionsNumber)
@@ -44,8 +49,17 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
+			switch msg.(type) {
+			case *messages.SessionStart, *messages.SessionEnd:
+				// Skip several message types
+				return
+			}
+			// Test debug
+			if msg.Meta().Timestamp == 0 {
+				log.Printf("ZERO TS, sessID: %d, msgType: %d", sessionID, msg.TypeID())
+			}
 			statsLogger.Collect(sessionID, meta)
-			sessions.UpdateSession(sessionID, meta.Timestamp)
+			sessions.UpdateSession(sessionID, meta.Timestamp, msg.Meta().Timestamp)
 		},
 		false,
 	)
@@ -70,8 +84,12 @@ func main() {
 			// Find ended sessions and send notification to other services
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
+				if err := pg.InsertSessionEnd(sessionID, msg.Timestamp); err != nil {
+					log.Printf("can't save sessionEnd to database, sessID: %d", sessionID)
+					return false
+				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
-					log.Printf("can't send SessionEnd to trigger topic: %s; sessID: %d", err, sessionID)
+					log.Printf("can't send sessionEnd to topic: %s; sessID: %d", err, sessionID)
 					return false
 				}
 				return true

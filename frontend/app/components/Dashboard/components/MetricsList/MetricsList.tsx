@@ -39,8 +39,8 @@ function MetricsList(props: Props) {
         >
             <div className="mt-3 border rounded bg-white">
                 <div className="grid grid-cols-12 p-3 font-medium">
-                    <div className="col-span-3">Title</div>
-                    <div>Type</div>
+                    <div className="col-span-3">Metric</div>
+                    {/* <div>Type</div> */}
                     <div className="col-span-2">Dashboards</div>
                     <div className="col-span-3">Owner</div>
                     <div>Visibility</div>

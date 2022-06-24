@@ -1,10 +1,11 @@
 import React from 'react'
-import { Form, Input, Icon, Button, Link, Dropdown, CircularLoader } from 'UI'
+import { Form, Input, Icon, Button, Link, CircularLoader } from 'UI'
 import { login } from 'App/routes'
 import ReCAPTCHA from 'react-google-recaptcha'
 import stl from './signup.module.css'
 import { signup } from 'Duck/user';
 import { connect } from 'react-redux'
+import Select from 'Shared/Select'
 
 const LOGIN_ROUTE = login()
 const recaptchaRef = React.createRef()
@@ -48,7 +49,7 @@ export default class SignupForm extends React.Component {
   }
 
   write = ({ target: { value, name } }) => this.setState({ [ name ]: value })
-  writeOption = (e, { name, value }) => this.setState({ [ name ]: value });
+  writeOption = ({ name, value }) => this.setState({ [ name ]: value.value });
 
   onSubmit = (e) => {
     e.preventDefault();
@@ -82,7 +83,7 @@ export default class SignupForm extends React.Component {
             { tenants.length > 0 && (
               <Form.Field>
                 <label>Existing Accounts</label>
-                <Dropdown
+                <Select
                   className="w-full"
                   placeholder="Select account"
                   selection
@@ -159,7 +160,7 @@ export default class SignupForm extends React.Component {
           </div>
         }
         <div className={ stl.formFooter }>
-          <Button variant="primary" loading={loading}>
+          <Button type="submit" variant="primary" loading={loading}>
             Create account
           </Button>
         </div>

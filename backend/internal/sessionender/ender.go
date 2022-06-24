@@ -16,6 +16,7 @@ type EndedSessionHandler func(sessionID uint64, timestamp int64) bool
 type session struct {
 	lastTimestamp int64
 	lastUpdate    int64
+	lastUserTime  int64
 	isEnded       bool
 }
 
@@ -51,7 +52,7 @@ func New(metrics *monitoring.Metrics, timeout int64, parts int) (*SessionEnder, 
 }
 
 // UpdateSession save timestamp for new sessions and update for existing sessions
-func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp int64) {
+func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp, msgTimestamp int64) {
 	localTS := time.Now().UnixMilli()
 	currTS := timestamp
 	if currTS == 0 {
@@ -62,11 +63,12 @@ func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp int64) {
 	sess, ok := se.sessions[sessionID]
 	if !ok {
 		se.sessions[sessionID] = &session{
-			lastTimestamp: currTS,  // timestamp from message broker
-			lastUpdate:    localTS, // local timestamp
+			lastTimestamp: currTS,       // timestamp from message broker
+			lastUpdate:    localTS,      // local timestamp
+			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
 		}
-		log.Printf("added new session: %d", sessionID)
+		//log.Printf("added new session: %d", sessionID)
 		se.activeSessions.Add(context.Background(), 1)
 		se.totalSessions.Add(context.Background(), 1)
 		return
@@ -74,6 +76,7 @@ func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp int64) {
 	if currTS > sess.lastTimestamp {
 		sess.lastTimestamp = currTS
 		sess.lastUpdate = localTS
+		sess.lastUserTime = msgTimestamp
 		sess.isEnded = false
 	}
 }
@@ -86,10 +89,12 @@ func (se *SessionEnder) HandleEndedSessions(handler EndedSessionHandler) {
 		if sess.isEnded || (se.timeCtrl.LastTimestamp(sessID)-sess.lastTimestamp > se.timeout) ||
 			(currTime-sess.lastUpdate > se.timeout) {
 			sess.isEnded = true
-			if handler(sessID, sess.lastTimestamp) {
+			if handler(sessID, sess.lastUserTime) {
 				delete(se.sessions, sessID)
 				se.activeSessions.Add(context.Background(), -1)
 				removedSessions++
+			} else {
+				log.Printf("sessID: %d, userTime: %d", sessID, sess.lastUserTime)
 			}
 		}
 	}

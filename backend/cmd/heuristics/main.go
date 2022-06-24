@@ -4,8 +4,6 @@ import (
 	"log"
 	"openreplay/backend/internal/config/heuristics"
 	"openreplay/backend/pkg/handlers"
-	"openreplay/backend/pkg/handlers/custom"
-	ios2 "openreplay/backend/pkg/handlers/ios"
 	web2 "openreplay/backend/pkg/handlers/web"
 	"openreplay/backend/pkg/intervals"
 	logger "openreplay/backend/pkg/log"
@@ -39,12 +37,12 @@ func main() {
 			&web2.MemoryIssueDetector{},
 			&web2.NetworkIssueDetector{},
 			&web2.PerformanceAggregator{},
-			// iOS handlers
-			&ios2.AppNotResponding{},
-			&ios2.ClickRageDetector{},
-			&ios2.PerformanceAggregator{},
+			// iOS's handlers
+			//&ios2.AppNotResponding{},
+			//&ios2.ClickRageDetector{},
+			//&ios2.PerformanceAggregator{},
 			// Other handlers (you can add your custom handlers here)
-			&custom.CustomHandler{},
+			//&custom.CustomHandler{},
 		}
 	}
 

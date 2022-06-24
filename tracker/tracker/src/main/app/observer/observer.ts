@@ -1,5 +1,5 @@
-import { 
-  RemoveNodeAttribute, 
+import {
+  RemoveNodeAttribute,
   SetNodeAttribute,
   SetNodeAttributeURLBased,
   SetCSSDataURLBased,
@@ -10,20 +10,17 @@ import {
   RemoveNode,
 } from "../../../common/messages.js";
 import App from "../index.js";
-import { isInstance, inDocument } from "../context.js";
-
-
-function isSVGElement(node: Element): node is SVGElement {
-  return node.namespaceURI === 'http://www.w3.org/2000/svg';
-}
+import { 
+  isRootNode,
+  isTextNode,
+  isElementNode,
+  isSVGElement,
+  hasTag,
+} from "../guards.js";
 
 function isIgnored(node: Node): boolean {
-  if (isInstance(node, Text)) {
-    return false;
-  }
-  if (!isInstance(node, Element)) {
-    return true;
-  }
+  if (isTextNode(node)) { return false }
+  if (!isElementNode(node)) { return true }
   const tag = node.tagName.toUpperCase();
   if (tag === 'LINK') {
     const rel = node.getAttribute('rel');
@@ -39,16 +36,17 @@ function isIgnored(node: Node): boolean {
   );
 }
 
-function isRootNode(node: Node): boolean {
-  return isInstance(node, Document) || isInstance(node, ShadowRoot);
+function isObservable(node: Node): boolean {
+  if (isRootNode(node)) { return true }
+  return !isIgnored(node)
 }
 
-function isObservable(node: Node): boolean {
-  if (isRootNode(node)) {
-    return true;
-  }
-  return !isIgnored(node);
-}
+
+/*
+  TODO:
+    - fix unbinding logic + send all removals first (ensure sequence is correct)
+    - use document as a 0-node in the upper context
+*/
 
 export default abstract class Observer {
   private readonly observer: MutationObserver;
@@ -61,11 +59,11 @@ export default abstract class Observer {
   constructor(protected readonly app: App, protected readonly isTopContext = false) {
     this.observer = new MutationObserver(
       this.app.safe((mutations) => {
-        for (const mutation of mutations) {
+        for (const mutation of mutations) {  // mutations order is sequential
           const target = mutation.target;
           const type = mutation.type;
 
-          if (!isObservable(target) || !inDocument(target)) {
+          if (!isObservable(target)) {
             continue;
           }
           if (type === 'childList') {
@@ -147,7 +145,7 @@ export default abstract class Observer {
     }
     if (
       name === 'value' &&
-      isInstance(node, HTMLInputElement) &&
+      hasTag(node, "INPUT") &&
       node.type !== 'button' &&
       node.type !== 'reset' &&
       node.type !== 'submit'
@@ -158,7 +156,7 @@ export default abstract class Observer {
       this.app.send(new RemoveNodeAttribute(id, name));
       return;
     }
-    if (name === 'style' || name === 'href' && isInstance(node, HTMLLinkElement)) {
+    if (name === 'style' || name === 'href' && hasTag(node, "LINK")) {
       this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       return;
     }
@@ -169,7 +167,7 @@ export default abstract class Observer {
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
-    if (isInstance(parentElement, HTMLStyleElement) || isInstance(parentElement, SVGStyleElement)) {
+    if (hasTag(parentElement, "STYLE") || hasTag(parentElement, "style")) {
       this.app.send(new SetCSSDataURLBased(id, data, this.app.getBaseHref()));
       return;
     }
@@ -214,16 +212,18 @@ export default abstract class Observer {
     }
   }
 
+  // A top-consumption function on the infinite lists test. (~1% of performance resources)
   private _commitNode(id: number, node: Node): boolean {
     if (isRootNode(node)) {
       return true;
     }
     const parent = node.parentNode;
     let parentID: number | undefined;
+
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
-    // TODO: Clean the logic (though now it workd fine) 
-    if (!isInstance(node, HTMLHtmlElement) || !this.isTopContext) {
+    // TODO: Clean the logic (though now it workd fine)
+    if (!hasTag(node, "HTML") || !this.isTopContext) {
       if (parent === null) {
         this.unbindNode(node);
         return false;
@@ -238,7 +238,11 @@ export default abstract class Observer {
         return false;
       }
       this.app.sanitizer.handleNode(id, parentID, node);
+      if (this.app.sanitizer.isMaskedContainer(parentID)) {
+        return false;
+      }
     }
+    // From here parentID === undefined if node is top context HTML node
     let sibling = node.previousSibling;
     while (sibling !== null) {
       const siblingID = this.app.nodes.getID(sibling);
@@ -250,7 +254,7 @@ export default abstract class Observer {
       sibling = sibling.previousSibling;
     }
     if (sibling === null) {
-      this.indexes[id] = 0; //
+      this.indexes[id] = 0;
     }
     const isNew = this.recents[id];
     const index = this.indexes[id];
@@ -258,23 +262,32 @@ export default abstract class Observer {
       throw 'commitNode: missing node index';
     }
     if (isNew === true) {
-      if (isInstance(node, Element)) {
+      if (isElementNode(node)) {
+        let el: Element = node
         if (parentID !== undefined) {
-          this.app.send(new 
+          if (this.app.sanitizer.isMaskedContainer(id)) {
+            const width = el.clientWidth;
+            const height = el.clientHeight;
+            el = node.cloneNode() as Element;
+            (el as HTMLElement | SVGElement).style.width = width + 'px';
+            (el as HTMLElement | SVGElement).style.height = height + 'px';
+          }
+
+          this.app.send(new
             CreateElementNode(
               id,
               parentID,
               index,
-              node.tagName,
+              el.tagName,
               isSVGElement(node),
             ),
           );
         }
-        for (let i = 0; i < node.attributes.length; i++) {
-          const attr = node.attributes[i];
-          this.sendNodeAttribute(id, node, attr.nodeName, attr.value);
+        for (let i = 0; i < el.attributes.length; i++) {
+          const attr = el.attributes[i];
+          this.sendNodeAttribute(id, el, attr.nodeName, attr.value);
         }
-      } else if (isInstance(node, Text)) {
+      } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(new CreateTextNode(id, parentID as number, index));
         this.sendNodeData(id, parent as Element, node.data);
@@ -286,7 +299,7 @@ export default abstract class Observer {
     }
     const attr = this.attributesList[id];
     if (attr !== undefined) {
-      if (!isInstance(node, Element)) {
+      if (!isElementNode(node)) {
         throw 'commitNode: node is not an element';
       }
       for (const name of attr) {
@@ -294,7 +307,7 @@ export default abstract class Observer {
       }
     }
     if (this.textSet.has(id)) {
-      if (!isInstance(node, Text)) {
+      if (!isTextNode(node)) {
         throw 'commitNode: node is not a text';
       }
       // for text node id != 0, hence parent is Element

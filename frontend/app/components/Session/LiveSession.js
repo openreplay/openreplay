@@ -47,7 +47,7 @@ function LiveSession({
 export default withPermissions(['ASSIST_LIVE'], '', true)(connect((state, props) => {
 	const { match: { params: { sessionId } } } = props;
   	const isAssist = state.getIn(['sessions', 'activeTab']).type === 'live';
-  	const hasSessiosPath = state.getIn([ 'sessions', 'sessionPath' ]).includes('/sessions');
+  	const hasSessiosPath = state.getIn([ 'sessions', 'sessionPath' ]).pathname.includes('/sessions');
 	return {
 		sessionId,
 		loading: state.getIn([ 'sessions', 'loading' ]),

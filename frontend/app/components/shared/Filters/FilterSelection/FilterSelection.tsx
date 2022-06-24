@@ -11,12 +11,12 @@ interface Props {
   filter?: any; // event/filter
   filterList: any;
   filterListLive: any;
-  onFilterClick: (filter) => void;
+  onFilterClick: (filter: any) => void;
   children?: any;
   isLive?: boolean;
 }
 function FilterSelection(props: Props) {
-  const { filter, onFilterClick, children, isLive = true } = props;
+  const { filter, onFilterClick, children } = props;
   const [showModal, setShowModal] = useState(false);
 
   return (
@@ -45,8 +45,9 @@ function FilterSelection(props: Props) {
       {showModal && (
         <div className="absolute left-0 border shadow rounded bg-white z-50">
           <FilterModal
+            isLive={isRoute(ASSIST_ROUTE, window.location.pathname)}
             onFilterClick={onFilterClick}
-            filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
+            // filters={isRoute(ASSIST_ROUTE, window.location.pathname) ? props.filterListLive : props.filterList }
           />
         </div>
       )}

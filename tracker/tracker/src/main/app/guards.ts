@@ -24,9 +24,10 @@ type TagTypeMap = {
   SELECT: HTMLSelectElement
   LABEL: HTMLLabelElement
   IFRAME: HTMLIFrameElement
-  STYLE: HTMLStyleElement | SVGStyleElement
+  STYLE: HTMLStyleElement
+  style: SVGStyleElement
   LINK: HTMLLinkElement
 }
 export function hasTag<T extends keyof TagTypeMap>(el: Node, tagName: T): el is TagTypeMap[typeof tagName] {
-  return el.nodeName.toUpperCase() === tagName
+  return el.nodeName === tagName
 }

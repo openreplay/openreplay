@@ -5,7 +5,6 @@ import SaveFilterButton from 'Shared/SaveFilterButton';
 import { connect } from 'react-redux';
 import { Button } from 'UI';
 import { edit, addFilter } from 'Duck/search';
-import SaveFunnelButton from '../SaveFunnelButton';
 
 interface Props {
   appliedFilter: any;
@@ -15,15 +14,15 @@ interface Props {
 }
 function SessionSearch(props: Props) {
   const { appliedFilter, saveRequestPayloads = false } = props;
-  const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
-  const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
+  const hasEvents = appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
+  const hasFilters = appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
 
-  const onAddFilter = (filter) => {
+  const onAddFilter = (filter: any) => {
     props.addFilter(filter);
   }
 
-  const onUpdateFilter = (filterIndex, filter) => {
-    const newFilters = appliedFilter.filters.map((_filter, i) => {
+  const onUpdateFilter = (filterIndex: any, filter: any) => {
+    const newFilters = appliedFilter.filters.map((_filter: any, i: any) => {
       if (i === filterIndex) {
         return filter;
       } else {
@@ -37,8 +36,8 @@ function SessionSearch(props: Props) {
     });
   }
 
-  const onRemoveFilter = (filterIndex) => {
-    const newFilters = appliedFilter.filters.filter((_filter, i) => {
+  const onRemoveFilter = (filterIndex: any) => {
+    const newFilters = appliedFilter.filters.filter((_filter: any, i: any) => {
       return i !== filterIndex;
     });
 
@@ -47,7 +46,7 @@ function SessionSearch(props: Props) {
     });
   }
 
-  const onChangeEventsOrder = (e, { name, value }) => {
+  const onChangeEventsOrder = (e: any, { value }: any) => {
     props.edit({
       eventsOrder: value,
     });
@@ -82,7 +81,6 @@ function SessionSearch(props: Props) {
           </FilterSelection>
         </div>
         <div className="ml-auto flex items-center">
-          <SaveFunnelButton />
           <SaveFilterButton />
         </div>
       </div>
@@ -90,7 +88,7 @@ function SessionSearch(props: Props) {
   ) : <></>;
 }
 
-export default connect(state => ({
+export default connect((state: any) => ({
   saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'search', 'instance' ]),
 }), { edit, addFilter })(SessionSearch);

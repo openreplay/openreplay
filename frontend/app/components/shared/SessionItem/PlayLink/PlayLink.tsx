@@ -36,7 +36,7 @@ export default function PlayLink(props: Props) {
             onMouseEnter={() => toggleHover(true)}
             onMouseLeave={() => toggleHover(false)}
         >
-            <Icon name={iconName} size="42" color={isAssist ? "tealx" : "teal"} />
+            <Icon name={iconName} size={38} color={isAssist ? "tealx" : "teal"} />
         </Link>
     )
 }

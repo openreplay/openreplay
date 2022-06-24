@@ -2,9 +2,10 @@ const NO_NTH_FILE = "nnf"
 
 export default function load(
   urls: string[],
-  onData: (Uint8Array) => void, 
+  onData: (ba: Uint8Array) => void, 
 ): Promise<void> {
-  const firstFileURL = urls.shift()
+  const firstFileURL = urls[0]
+  urls = urls.slice(1)
   if (!firstFileURL) {
     return Promise.reject("No urls provided")
   }

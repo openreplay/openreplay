@@ -6,19 +6,14 @@ import {
   fetchFavoriteList as fetchFavoriteSessionList
 } from 'Duck/sessions';
 import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
-import { fetchList as fetchFunnelsList } from 'Duck/funnels';
 import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
 import stl from './bugFinder.module.css';
 import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchSources } from 'Duck/customField';
-import { setFunnelPage } from 'Duck/sessions';
 import { setActiveTab } from 'Duck/search';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
-import { LAST_7_DAYS } from 'Types/app/period';
-import { resetFunnel } from 'Duck/funnels';
-import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
@@ -65,10 +60,6 @@ const allowedQueryKeys = [
   fetchSources,
   clearEvents,
   setActiveTab,
-  fetchFunnelsList,
-  resetFunnel,
-  resetFunnelFilters,
-  setFunnelPage,
   clearSearch,
   fetchSessions,
 })
@@ -94,18 +85,11 @@ export default class BugFinder extends React.PureComponent {
     if (props.sessions.size === 0) {
       props.fetchSessions();
     }
-    props.resetFunnel();
-    props.resetFunnelFilters();
-    props.fetchFunnelsList(LAST_7_DAYS)
 
     const queryFilter = this.props.query.all(allowedQueryKeys);
     if (queryFilter.hasOwnProperty('userId')) {
       props.addAttribute({ label: 'User Id', key: KEYS.USERID, type: KEYS.USERID, operator: 'is', value: queryFilter.userId })
     }
-  }
-
-  componentDidMount() {
-    this.props.setFunnelPage(false);
   }
 
   toggleRehydratePanel = () => {

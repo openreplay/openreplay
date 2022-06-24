@@ -27,7 +27,7 @@ fs.writeFileSync('app/constants.js',
   "/* eslint-disable */" +
   toExport('countries', countries) +
   toExport('os', os) +
-  toExport('browsers', browsers)
+  toExport('browser', browsers)
 );
 
 function toStyles(prefix, data) {

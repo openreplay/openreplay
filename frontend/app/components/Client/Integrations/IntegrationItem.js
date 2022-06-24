@@ -18,7 +18,7 @@ const IntegrationItem = ({
           <Icon name="check" size="14" color="white" />
         </div>
       )}
-      <Icon name={ icon } size="40" />
+      <img className="h-12 w-12" src={'/assets/' + icon + '.svg'} alt="integration" />
       <h4 className="my-2">{ title }</h4>
     </div>
   )

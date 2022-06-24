@@ -2,7 +2,7 @@
 OpenReplay prototype UI
 
 On new icon addition: 
-`npm run generate:icons`
+`yarn gen:icons`
 
 ## Documentation
 

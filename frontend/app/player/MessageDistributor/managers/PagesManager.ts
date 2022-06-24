@@ -31,7 +31,7 @@ export default class PagesManager extends ListWalker<DOMManager> {
 		this.last.append(m)
 	}
 
-	sort(comparator) {
+	sortPages(comparator: (a: Message, b: Message) => number) {
 		this.forEach(page => page.sort(comparator))
 	}
 

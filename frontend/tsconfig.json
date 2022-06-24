@@ -15,6 +15,17 @@
     "noEmit": true,
     "jsx": "react",
     // "baseUrl": ".",
+    "paths": {
+      "Shared/*": ["./app/components/shared/*"],
+      "App/*": ["./app/*"],
+      "Components/*": ["./app/components/*"],
+      "UI/*": ["./app/components/ui/*"],
+      "UI": ["./app/components/ui"],
+      "Player/*": ["./app/player/*"],
+      "Player": ["./app/player"],
+      "HOCs/*": ["./app/components/hocs/*"],
+      "Types/*": ["./app/types/*"],
+    }
   },
   "include": ["app"]
 }

@@ -16,13 +16,17 @@ import withReport from 'App/components/hocs/withReport';
 import DashboardOptions from '../DashboardOptions';
 import SelectDateRange from 'Shared/SelectDateRange';
 import DashboardIcon from '../../../../svg/dashboard-icn.svg';
+import { Tooltip } from 'react-tippy';
 
-interface Props {
-    siteId: number;
+interface IProps {
+    siteId: string;
     dashboardId: any
     renderReport?: any
 }
-function DashboardView(props: RouteComponentProps<Props>) {
+
+type Props = IProps & RouteComponentProps;
+
+function DashboardView(props: Props) {
     const { siteId, dashboardId } = props;
     const { dashboardStore } = useStore();
     const [focusTitle, setFocusedInput] = React.useState(true);
@@ -67,7 +71,7 @@ function DashboardView(props: RouteComponentProps<Props>) {
         showModal(<DashboardModal siteId={siteId} onMetricAdd={pushQuery} dashboardId={dashboardId} />, { right: true })
     }
 
-    const onEdit = (isTitle) => {
+    const onEdit = (isTitle: boolean) => {
         dashboardStore.initDashboard(dashboard)
         setFocusedInput(isTitle);
         setShowEditModal(true)
@@ -113,8 +117,10 @@ function DashboardView(props: RouteComponentProps<Props>) {
                     <div className="flex items-center mb-4 justify-between">
                         <div className="flex items-center" style={{ flex: 3 }}>
                             <PageTitle
-                                title={dashboard?.name}
-                                className="mr-3"
+                                // @ts-ignore
+                                title={<Tooltip delay={100} arrow title="Double click to rename">{dashboard?.name}</Tooltip>}
+                                onDoubleClick={() => onEdit(true)}
+                                className="mr-3 select-none hover:border-dotted hover:border-b border-gray-medium cursor-pointer"
                                 actionButton={
                                     <Button variant="primary" onClick={onAddWidgets}>Add Metric</Button>
                                 }

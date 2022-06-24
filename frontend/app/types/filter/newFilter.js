@@ -6,7 +6,6 @@ import { capitalize } from 'App/utils';
 const countryOptions = Object.keys(countries).map(i => ({ label: countries[i], value: i }));
 const containsFilters = [{ key: 'contains', label: 'contains', text: 'contains', value: 'contains' }]
 
-// export const metaFilter = { key: FilterKey.METADATA, type: FilterType.MULTIPLE, category: FilterCategory.METADATA, label: 'Metadata', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/metadata' };
 export const filters = [
   { key: FilterKey.CLICK, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Click', operator: 'on', operatorOptions: filterOptions.targetOperators, icon: 'filters/click', isEvent: true },
   { key: FilterKey.INPUT, type: FilterType.MULTIPLE, category: FilterCategory.INTERACTIONS, label: 'Input', operator: 'is', operatorOptions: filterOptions.stringOperators, icon: 'filters/input', isEvent: true },
@@ -59,7 +58,8 @@ export const filtersMap = filters.reduce((acc, filter) => {
     return acc;
 }, {});
 
-export const liveFiltersMap = filters.reduce((acc, filter) => {
+export const liveFiltersMap = {}
+filters.forEach(filter => {
   if (
     filter.category !== FilterCategory.INTERACTIONS &&
     filter.category !== FilterCategory.JAVASCRIPT &&
@@ -67,15 +67,15 @@ export const liveFiltersMap = filters.reduce((acc, filter) => {
     filter.key !== FilterKey.DURATION &&
     filter.key !== FilterKey.REFERRER
   ) {
-    acc[filter.key] = filter;
-    acc[filter.key].operator = 'contains';
-    acc[filter.key].operatorDisabled = true;
+    liveFiltersMap[filter.key] = {...filter};
+    liveFiltersMap[filter.key].operator = 'contains';
+    liveFiltersMap[filter.key].operatorDisabled = true;
     if (filter.key === FilterKey.PLATFORM) {
-      acc[filter.key].operator = 'is';
+      liveFiltersMap[filter.key].operator = 'is';
     }
   }
-  return acc
-}, {});
+})
+
 
 export const filterLabelMap = filters.reduce((acc, filter) => {
   acc[filter.key] = filter.label

@@ -61,6 +61,7 @@ function DashboardEditModal(props: Props) {
                     <label>{'Description:'}</label>
                     <Input
                         className=""
+                        type="textarea"
                         name="description"
                         value={ dashboard.description }
                         onChange={write}

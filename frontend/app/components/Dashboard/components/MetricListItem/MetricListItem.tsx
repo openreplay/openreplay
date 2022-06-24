@@ -1,19 +1,22 @@
 import React from 'react';
 import { Icon, NoContent, Label, Link, Pagination } from 'UI';
 import { checkForRecent, formatDateTimeDefault, convertTimestampToUtcTimestamp } from 'App/date';
+import { getIcon } from 'react-toastify/dist/components';
 
 interface Props {
     metric: any;
 }
 
-function DashboardLink({ dashboards}) {
+function DashboardLink({ dashboards}: any) {
     return (
-        dashboards.map(dashboard => (
+        dashboards.map((dashboard: any) => (
             <React.Fragment key={dashboard.dashboardId}>
-            <Link to={`/dashboard/${dashboard.dashboardId}`} className="">
-                <div className="flex items-center mb-1">
-                    <div className="mr-2 text-4xl no-underline" style={{ textDecoration: 'none'}}>·</div>
-                    <span className="link leading-4">{dashboard.name}</span>
+            <Link to={`/dashboard/${dashboard.dashboardId}`}>
+                <div className="flex items-center mb-1 py-1">
+                    <div className="mr-2">
+                        <Icon name="circle-fill" size={4} color="gray-medium" />
+                    </div>
+                    <span className="link leading-4 capitalize-first">{dashboard.name}</span>
                 </div>
             </Link>
             </React.Fragment>
@@ -23,14 +26,30 @@ function DashboardLink({ dashboards}) {
 
 function MetricListItem(props: Props) {
     const { metric } = props;
+
+    const getIcon = (metricType: string) => {
+        switch (metricType) {
+            case 'funnel':
+                return 'filter';
+            case 'table':
+                return 'list-alt';
+            case 'timeseries':
+                return 'bar-chart-line';
+        }
+    }
     return (
         <div className="grid grid-cols-12 p-3 border-t select-none">
-            <div className="col-span-3">
-                <Link to={`/metrics/${metric.metricId}`} className="link">
-                    {metric.name}
-                </Link>
+            <div className="col-span-3 flex items-start">
+                <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
+                        <Icon name={getIcon(metric.metricType)} size="14" color="tealx"  />
+                    </div>
+                    <Link to={`/metrics/${metric.metricId}`} className="link capitalize-first">
+                        {metric.name}
+                    </Link>
+                </div>
             </div>
-            <div><Label className="capitalize">{metric.metricType}</Label></div>
+            {/* <div><Label className="capitalize">{metric.metricType}</Label></div> */}
             <div className="col-span-2">
                 <DashboardLink dashboards={metric.dashboards} />
             </div>

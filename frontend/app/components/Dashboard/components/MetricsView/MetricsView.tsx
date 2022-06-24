@@ -18,7 +18,7 @@ function MetricsView(props: Props) {
         metricStore.fetchList();
     }, []);
     return useObserver(() => (
-        <div style={{ maxWidth: 1300 }}>
+        <div style={{ maxWidth: '1300px', margin: 'auto'}}>
             <div className="flex items-center mb-4 justify-between">
                 <div className="flex items-baseline mr-3">
                     <PageTitle title="Metrics" className="" />

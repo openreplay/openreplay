@@ -13,7 +13,7 @@ const basePlugins = {
         {
             name: 'removeAttrs',
             params: {
-                attrs: ['fill-rule', 'clip-rule', 'fill'],
+                attrs: ['fill-rule', 'clip-rule', 'fill', 'class'],
             },
         },
         'removeTitle',
@@ -41,7 +41,7 @@ const plugins = (removeFill = true) => {
             {
                 name: 'removeAttrs',
                 params: {
-                    attrs: ['xml', 'style', 'data-name', 'dataName', 'svg:width', 'svg:height', 'fill-rule', removeFill ? 'svg:fill' : ''],
+                    attrs: ['xml', 'class' ,'style', 'data-name', 'dataName', 'svg:width', 'svg:height', 'fill-rule', removeFill ? 'svg:fill' : ''],
                 }
             },
             {
@@ -70,9 +70,9 @@ import React from 'react';
 
 interface Props {
     name: string;
-    size?: number;
-    width?: number;
-    height?: number;
+    size?: number | string;
+    width?: number | string;
+    height?: number | string;
     fill?: string;
 }
 
@@ -86,6 +86,8 @@ ${icons.map(icon => {
     const { data } = optimize(svg, plugins(canOptimize));
     return `    case '${icon.slice(0, -4)}': return ${data.replace(/xlink\:href/g, 'xlinkHref')
     .replace(/xmlns\:xlink/g, 'xmlnsXlink')
+    .replace(/clip-path/g, 'clipPath')
+    .replace(/clip-rule/g, 'clipRule')
     .replace(/xml:space="preserve"/g, '')};`
 }).join('\n')}
 default:

@@ -1,7 +1,8 @@
 import { makeAutoObservable, runInAction, observable, action, reaction, computed } from "mobx"
 import Widget, { IWidget } from "./types/widget";
-import { metricService } from "App/services";
+import { metricService, errorService } from "App/services";
 import { toast } from 'react-toastify';
+import Error from "./types/error";
 
 export interface IMetricStore {
     paginatedList: any;
@@ -29,12 +30,13 @@ export interface IMetricStore {
     updateInList(metric: IWidget): void
     findById(metricId: string): void
     removeById(metricId: string): void
+    fetchError(errorId: string): Promise<any>
 
     // API
     save(metric: IWidget, dashboardId?: string): Promise<any>
     fetchList(): void
-    fetch(metricId: string)
-    delete(metric: IWidget)
+    fetch(metricId: string, period?: any): Promise<any>
+    delete(metric: IWidget): Promise<any>
 }
 
 export default class MetricStore implements IMetricStore {
@@ -76,16 +78,10 @@ export default class MetricStore implements IMetricStore {
             fetch: action,
             delete: action,
 
+            fetchError: action,
+
             paginatedList: computed,
         })
-
-        // reaction(
-        //     () => this.metricsSearch,
-        //     (metricsSearch) => { // TODO filter the list for View
-        //         this.page = 1
-        //         this.paginatedList
-        //     }
-        // )
     }
 
     // State Actions
@@ -102,6 +98,7 @@ export default class MetricStore implements IMetricStore {
 
     merge(object: any) {
         Object.assign(this.instance, object)
+        this.instance.updateKey('hasChanged', true)
     }
 
     reset(id: string) {
@@ -157,6 +154,7 @@ export default class MetricStore implements IMetricStore {
                     toast.error('Error saving metric')
                     reject()
                 }).finally(() => {
+                    this.instance.updateKey('hasChanged', false)
                     this.isSaving = false
                 })
         })
@@ -172,11 +170,11 @@ export default class MetricStore implements IMetricStore {
             })
     }
 
-    fetch(id: string) {
+    fetch(id: string, period?: any) {
         this.isLoading = true
         return metricService.getMetric(id)
             .then((metric: any) => {
-                return this.instance = new Widget().fromJson(metric)
+                return this.instance = new Widget().fromJson(metric, period)
             }).finally(() => {
                 this.isLoading = false
             })
@@ -191,6 +189,17 @@ export default class MetricStore implements IMetricStore {
             }).finally(() => {
                 this.isSaving = false
             })
+    }
+
+    fetchError(errorId: any): Promise<any> {
+        return new Promise((resolve, reject) => {
+            errorService.one(errorId).then((error: any) => {
+                resolve(new Error().fromJSON(error))
+            }).catch((error: any) => {
+                toast.error('Failed to fetch error details.')
+                reject(error)
+            })
+        })
     }
 }
 

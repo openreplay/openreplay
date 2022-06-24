@@ -97,7 +97,7 @@ func (b *bugsnag) Request(c *client) error {
 			c.evChan <- &SessionErrorEvent{
 				SessionID: sessionID,
 				Token:     token,
-				RawErrorEvent: &messages.RawErrorEvent{
+				IntegrationEvent: &messages.IntegrationEvent{
 					Source:    "bugsnag",
 					Timestamp: timestamp,
 					Name:      e.Exceptions[0].Message,

@@ -155,6 +155,7 @@ export default class Timeline extends React.PureComponent {
           className={ stl.progress }
           onClick={ disabled ? null : this.seekProgress }
           ref={ this.progressRef }
+          role="button"
         >
             <DraggableCircle left={this.props.time * scale} onDrop={this.onDragEnd} />
             <CustomDragLayer onDrag={this.onDrag} minX={BOUNDRY} maxX={this.progressRef.current && this.progressRef.current.offsetWidth + BOUNDRY} />
@@ -199,7 +200,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                     }
                   >
-                    <Icon className=" p-px bg-white" name={iss.icon} size="16" />
+                    <Icon className=" rounded-full bg-white" name={iss.icon} size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -224,7 +225,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className=" p-px bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className="bg-white" name={getPointerIcon('click_rage')} size="16" />
                 </Tooltip>
               </div>
             ))}
@@ -246,7 +247,7 @@ export default class Timeline extends React.PureComponent {
                     </div>
                   }
                 >
-                  <Icon className=" p-px bg-white" name={getPointerIcon('click_rage')} size="16" />
+                  <Icon className=" rounded-full bg-white" name={getPointerIcon('click_rage')} size="16" />
                 </Tooltip>
               </div>
             }
@@ -269,7 +270,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                   }
                   >
-                    <Icon className=" p-px bg-white" name={getPointerIcon('exception')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('exception')} size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -297,7 +298,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                   }
                   >
-                    <Icon className=" p-px bg-white" name={getPointerIcon('resource')} size="16" />
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('resource')} size="16" />
                   </Tooltip>
                 </div>
               ))

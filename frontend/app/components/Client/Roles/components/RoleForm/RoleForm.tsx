@@ -127,7 +127,7 @@ const RoleForm = (props: Props) => {
             isSearchable
             name="permissions"
             options={ permissions }
-            onChange={ ({ value }: any) => writeOption({ name: 'permissions', value }) }
+            onChange={ ({ value }: any) => writeOption({ name: 'permissions', value: value.value }) }
             value={null}
           />
           { role.permissions.size > 0 && (

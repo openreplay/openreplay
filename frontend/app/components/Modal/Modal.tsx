@@ -1,15 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { useModal } from '.';
 import ModalOverlay from './ModalOverlay';
 
-export default function Modal() {
-  const { component, props} = useModal();
-
+export default function Modal({ component, props, hideModal }: any) {
   return component ? ReactDOM.createPortal(
-    <ModalOverlay left={!props.right} right={props.right}>
+    <ModalOverlay
+      hideModal={hideModal}
+      left={!props.right}
+      right={props.right}
+    >
       {component}
     </ModalOverlay>,
     document.querySelector("#modal-root"),
-  ) : null;
+  ) : <></>;
 }

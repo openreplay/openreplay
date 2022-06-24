@@ -4,6 +4,7 @@ import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../.
 import { hasTag } from "../app/guards.js";
 
 
+
 const PLACEHOLDER_SRC = "https://static.openreplay.com/tracker/placeholder.jpeg";
 
 export default function (app: App): void {
@@ -23,7 +24,7 @@ export default function (app: App): void {
     if (id === undefined) {
       return;
     }
-    const { src, complete, naturalWidth, naturalHeight } = this;
+    const { src, complete, naturalWidth, naturalHeight, srcset } = this;
     if (!complete) {
       return;
     }
@@ -35,19 +36,26 @@ export default function (app: App): void {
       sendPlaceholder(id, this)
     } else {
       app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+      srcset && app.send(new SetNodeAttribute(id, 'srcset', srcset));
     }
   });
 
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
-      if (mutation.type === "attributes" && mutation.attributeName === "src") {
+      if (mutation.type === "attributes") {
         const target = (mutation.target as HTMLImageElement);
         const id = app.nodes.getID(target);
         if (id === undefined) {
           return;
         }
-        const src = target.src;
-        app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+        if (mutation.attributeName === "src") {
+          const src = target.src;
+          app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
+        }
+        if (mutation.attributeName === "srcset") {
+          const srcset = target.srcset;
+          app.send(new SetNodeAttribute(id, 'srcset', srcset));
+        }
       }
     }
   });
@@ -59,6 +67,6 @@ export default function (app: App): void {
     app.nodes.attachElementListener('error', node, sendImgSrc);
     app.nodes.attachElementListener('load', node, sendImgSrc);
     sendImgSrc.call(node);
-    observer.observe(node, { attributes: true });
+    observer.observe(node, { attributes: true, attributeFilter: [ "src", "srcset" ] });
   });
 }

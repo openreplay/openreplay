@@ -14,6 +14,7 @@ postgresql: &postgres
   #     cpu: 250m
   #   limits:
   #     memory: 3000Mi
+  # asdf
   #     cpu: 2
 
 clickhouse:
@@ -30,6 +31,14 @@ kafka: &kafka
   zookeeperNonTLSPort: 2181
   kafkaPort: "9092"
   kafkaUseSsl: "false"
+  maxMessageBytes: _3000000
+  # deleteTopicEnable: true
+  extraEnvVars:
+    - name: KAFKA_CFG_REPLICA_FETCH_MAX_BYTES
+      value: "3000000"
+    # This value already exist in the kafka values.yaml file, so overriding in top
+    # - name: KAFKA_CFG_MESSAGE_MAX_BYTES
+    #   value: "3000000"
 
 
 redis: &redis
@@ -38,7 +47,10 @@ redis: &redis
   redisHost: "redis-master.db.svc.cluster.local"
   redisPort: "6379"
 
-minio:
+minio: &minio
+  # If you have extrenal s3 storage, like AWS, or GCP
+  # Disable it.
+  enabled: true
   global:
     minio:
       # For generating passwords
@@ -60,6 +72,7 @@ ingress-nginx: &ingress-nginx
       default-ssl-certificate: "app/openreplay-ssl"
     config:
       use-gzip: true
+      load-balance: ewma
       enable-real-ip: true
       # Enable LB forwarded protocol
       # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers
@@ -78,6 +91,7 @@ global:
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
+  minio: *minio
   s3:
     region: "us-east-1"
     endpoint: "http://minio.db.svc.cluster.local:9000"

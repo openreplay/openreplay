@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"log"
 	. "openreplay/backend/pkg/messages"
 	"openreplay/backend/pkg/url"
 )
@@ -27,16 +28,25 @@ func (conn *Conn) InsertWebStatsPerformance(sessionID uint64, p *PerformanceTrac
 			$10, $11, $12,
 			$13, $14, $15
 		)`
-	conn.batchQueue(sessionID, sqlRequest,
+	//conn.batchQueue(sessionID, sqlRequest,
+	//	sessionID, timestamp, timestamp, // ??? TODO: primary key by timestamp+session_id
+	//	p.MinFPS, p.AvgFPS, p.MaxFPS,
+	//	p.MinCPU, p.AvgCPU, p.MinCPU,
+	//	p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
+	//	p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
+	//)
+	if err := conn.exec(sqlRequest,
 		sessionID, timestamp, timestamp, // ??? TODO: primary key by timestamp+session_id
 		p.MinFPS, p.AvgFPS, p.MaxFPS,
 		p.MinCPU, p.AvgCPU, p.MinCPU,
 		p.MinTotalJSHeapSize, p.AvgTotalJSHeapSize, p.MaxTotalJSHeapSize,
 		p.MinUsedJSHeapSize, p.AvgUsedJSHeapSize, p.MaxUsedJSHeapSize,
-	)
+	); err != nil {
+		log.Printf("can't insert perf: %s", err)
+	}
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+8*15)
+	//conn.updateBatchSize(sessionID, len(sqlRequest)+8*15)
 	return nil
 }
 
@@ -57,7 +67,7 @@ func (conn *Conn) InsertWebStatsResourceEvent(sessionID uint64, e *ResourceEvent
 		) VALUES (
 			$1, $2, $3, 
 			$4, 
-			$5, $6, $7, 
+			left($5, 2700), $6, $7, 
 			$8, $9, 
 			NULLIF($10, '')::events.resource_method,
 			NULLIF($11, 0), NULLIF($12, 0), NULLIF($13, 0), NULLIF($14, 0), NULLIF($15, 0)

@@ -10,6 +10,9 @@ import WidgetName from '../WidgetName';
 import { withSiteId } from 'App/routes';
 import FunnelIssues from '../Funnels/FunnelIssues/FunnelIssues';
 import Breadcrumb from 'Shared/Breadcrumb';
+import { FilterKey } from 'Types/filter/filterType';
+import { Prompt } from 'react-router'
+
 interface Props {
     history: any;
     match: any
@@ -17,14 +20,19 @@ interface Props {
 }
 function WidgetView(props: Props) {
     const { match: { params: { siteId, dashboardId, metricId } } } = props;
-    const { metricStore } = useStore();
+    const { metricStore, dashboardStore } = useStore();
     const widget = useObserver(() => metricStore.instance);
     const loading = useObserver(() => metricStore.isLoading);
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
+    const hasChanged = useObserver(() => widget.hasChanged)
+    
+    const dashboards = useObserver(() => dashboardStore.dashboards);
+    const dashboard = useObserver(() => dashboards.find((d: any) => d.dashboardId == dashboardId));
+    const dashboardName = dashboard ? dashboard.name : null;
 
     React.useEffect(() => {
         if (metricId && metricId !== 'create') {
-            metricStore.fetch(metricId);
+            metricStore.fetch(metricId, dashboardStore.period);
         } else if (metricId === 'create') {
             metricStore.init();
         }
@@ -41,10 +49,19 @@ function WidgetView(props: Props) {
 
     return useObserver(() => (
         <Loader loading={loading}>
+            <Prompt
+                when={hasChanged}
+                message={(location: any) => {
+                    if (location.pathname.includes('/metrics/') || location.pathname.includes('/metric/')) {
+                        return true;
+                    }
+                    return 'You have unsaved changes. Are you sure you want to leave?';
+                }}
+            />
             <div className="relative pb-10">
                 <Breadcrumb
                     items={[
-                        { label: dashboardId ? 'Dashboard' : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
+                        { label: dashboardName ? dashboardName : 'Metrics', to: dashboardId ? withSiteId('/dashboard/' + dashboardId, siteId) : withSiteId('/metrics', siteId) },
                         { label: widget.name, }
                     ]}
                 />
@@ -53,22 +70,21 @@ function WidgetView(props: Props) {
                         className={cn(
                             "px-6 py-4 flex justify-between items-center",
                             {
-                                'cursor-pointer hover:bg-active-blue hover:shadow-border-blue': !expanded,
+                                'cursor-pointer hover:bg-active-blue hover:shadow-border-blue rounded': !expanded,
                             }
                         )}
                         onClick={openEdit}
-                        >
-                        <h1 className="mb-0 text-2xl">
+                    >
+                        <h1 className="mb-0 text-2xl mr-4 min-w-fit">
                             <WidgetName
                                 name={widget.name}
                                 onUpdate={(name) => metricStore.merge({ name })}
                                 canEdit={expanded}
                             />
                         </h1>
-                        <div className="text-gray-600">
+                        <div className="text-gray-600 w-full cursor-pointer" onClick={() => setExpanded(!expanded)}>
                             <div
-                                onClick={() => setExpanded(!expanded)}
-                                className="flex items-center cursor-pointer select-none"
+                                className="flex items-center select-none w-fit ml-auto"
                             >
                                 <span className="mr-2 color-teal">{expanded ? 'Close' : 'Edit'}</span>
                                 <Icon name={expanded ? 'chevron-up' : 'chevron-down'} size="16" color="teal" />
@@ -80,7 +96,7 @@ function WidgetView(props: Props) {
                 </div>
 
                 <WidgetPreview  className="mt-8" />
-                { widget.metricOf !== 'SESSIONS' && widget.metricOf !== 'ERRORS' && (
+                { widget.metricOf !== FilterKey.SESSIONS && widget.metricOf !== FilterKey.ERRORS && (
                     <>
                         { (widget.metricType === 'table' || widget.metricType === 'timeseries') && <WidgetSessions className="mt-8" /> }
                         { widget.metricType === 'funnel' && <FunnelIssues /> }

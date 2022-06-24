@@ -48,7 +48,7 @@ interface ModalContentProps {
 function ModalContent (props: ModalContentProps) {
     const { children, className } = props;
     return (
-        <div className={cn("p-5 overflow-y-auto", className)} style={{ maxHeight: 'calc(100vh - 100px)'}}>
+        <div className={cn("p-5", className)} style={{ maxHeight: 'calc(100vh - 100px)' }}>
             {children}
         </div>
     );

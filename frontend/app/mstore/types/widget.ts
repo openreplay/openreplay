@@ -1,10 +1,12 @@
 import { makeAutoObservable, runInAction, observable, action } from "mobx"
 import FilterSeries from "./filterSeries";
 import { DateTime } from 'luxon';
-import { metricService } from "App/services";
+import { metricService, errorService } from "App/services";
 import Session from "App/mstore/types/session";
 import Funnelissue from 'App/mstore/types/funnelIssue';
 import { issueOptions } from 'App/constants/filterOptions';
+import { FilterKey } from 'Types/filter/filterType';
+import Period, { LAST_24_HOURS, LAST_30_DAYS } from 'Types/app/period';
 
 export interface IWidget {
     metricId: any
@@ -33,14 +35,18 @@ export interface IWidget {
     dashboardId: any
     colSpan: number
     predefinedKey: string
-
+    
+    page: number
+    limit: number
     params: any
+    period: any
+    hasChanged: boolean
 
-    udpateKey(key: string, value: any): void
+    updateKey(key: string, value: any): void
     removeSeries(index: number): void
     addSeries(): void
     fromJson(json: any): void
-    toJsonDrilldown(json: any): void
+    toJsonDrilldown(): void
     toJson(): any
     validate(): void
     update(data: any): void
@@ -48,6 +54,7 @@ export interface IWidget {
     toWidget(): any
     setData(data: any): void
     fetchSessions(metricId: any, filter: any): Promise<any>
+    setPeriod(period: any): void
 }
 export default class Widget implements IWidget {
     public static get ID_KEY():string { return "metricId" }
@@ -55,7 +62,7 @@ export default class Widget implements IWidget {
     widgetId: any = undefined
     name: string = "New Metric"
     // metricType: string = "timeseries"
-    metricType: string = "table"
+    metricType: string = "timeseries"
     metricOf: string = "sessionCount"
     metricValue: string = ""
     viewType: string = "lineChart"
@@ -68,12 +75,19 @@ export default class Widget implements IWidget {
     dashboards: any[] = []
     dashboardIds: any[] = []
     config: any = {}
+    page: number = 1
+    limit: number = 5
     params: any = { density: 70 }
+    
+    period: any = Period({ rangeName: LAST_24_HOURS }) // temp value in detail view
+    hasChanged: boolean = false
 
     sessionsLoading: boolean = false
 
     position: number = 0
     data: any = {
+        sessions: [],
+        total: 0,
         chart: [],
         namesMap: {},
         avg: 0,
@@ -88,7 +102,7 @@ export default class Widget implements IWidget {
     constructor() {
         makeAutoObservable(this, {
             sessionsLoading: observable,
-            data: observable.ref,
+            data: observable,
             metricId: observable,
             widgetId: observable,
             name: observable,
@@ -100,6 +114,7 @@ export default class Widget implements IWidget {
             dashboardId: observable,
             colSpan: observable,
             series: observable,
+            page: observable,
             
             addSeries: action,
             removeSeries: action,
@@ -107,14 +122,15 @@ export default class Widget implements IWidget {
             toJson: action,
             validate: action,
             update: action,
-            udpateKey: action,
+            updateKey: action,
+            setPeriod: action,
         })
 
         const filterSeries = new FilterSeries()
         this.series.push(filterSeries)
     }
 
-    udpateKey(key: string, value: any) {
+    updateKey(key: string, value: any) {
         this[key] = value
     }
 
@@ -128,7 +144,7 @@ export default class Widget implements IWidget {
         this.series.push(series)
     }
 
-    fromJson(json: any) {
+    fromJson(json: any, period?: any) {
         json.config = json.config || {}
         runInAction(() => {
             this.metricId = json.metricId
@@ -146,8 +162,16 @@ export default class Widget implements IWidget {
             this.config = json.config
             this.position = json.config.position
             this.predefinedKey = json.predefinedKey
+
+            if (period) {
+                this.period = period
+            }
         })
         return this
+    }
+
+    setPeriod(period: any) {
+        this.period = new Period({ start: period.startDate, end: period.endDate, rangeName: period.rangeName })
     }
 
     toWidget(): any {
@@ -177,7 +201,7 @@ export default class Widget implements IWidget {
             series: this.series.map((series: any) => series.toJson()),
             config: {
                 ...this.config,
-                col: this.metricType === 'funnel' ? 4 : this.config.col
+                col: this.metricType === 'funnel' || this.metricOf === FilterKey.ERRORS || this.metricOf === FilterKey.SESSIONS ? 4 : this.config.col
             },
         }
     }
@@ -198,7 +222,7 @@ export default class Widget implements IWidget {
 
     setData(data: any) {
         runInAction(() => {
-            Object.assign(this.data, data)
+            this.data = data;
         })
     }
 
@@ -230,8 +254,6 @@ export default class Widget implements IWidget {
     fetchIssue(funnelId: any, issueId: any, params: any): Promise<any> {
         return new Promise((resolve, reject) => {
             metricService.fetchIssue(funnelId, issueId, params).then((response: any) => {
-                response = response[0]
-                console.log('response', response)
                 resolve({
                     issue: new Funnelissue().fromJSON(response.issue),
                     sessions: response.sessions.sessions.map((s: any) => new Session().fromJson(s)),

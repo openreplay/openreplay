@@ -19,7 +19,19 @@ function FunnelIssueDetails(props: Props) {
 
     useEffect(() => {
         setLoading(true);
-        widget.fetchIssue(widget.metricId, issueId, filter).then((resp: any) => {
+        const _filters = { ...filter, series: widget.data.stages ? widget.toJsonDrilldown().map((item: any) => {
+            return {
+                ...item,
+                filter: {
+                    ...item.filter,
+                    filters: item.filter.filters.filter((filter: any, index: any) => {
+                        const stage = widget.data.funnel.stages[index];
+                        return stage &&stage.isActive
+                    })
+                }
+            }
+        }) : [], };
+        widget.fetchIssue(widget.metricId, issueId, _filters).then((resp: any) => {
             setFunnelIssue(resp.issue);
             setSessions(resp.sessions);
         }).finally(() => {
@@ -34,9 +46,11 @@ function FunnelIssueDetails(props: Props) {
                 inDetails={true}
             />}
 
-            <div className="mt-6">
+            <div className="mt-6 bg-white p-3 rounded border">
                 {sessions.map((session: any) => (
-                    <SessionItem key={session.id} session={session} />
+                    <div key={session.id} className="border-b last:border-none">
+                        <SessionItem session={session} />
+                    </div>
                 ))}
             </div>
         </Loader>

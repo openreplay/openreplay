@@ -21,7 +21,9 @@ const dropdownStyles = {
     ...provided,
     paddingRight: '0px',
     width: 'fit-content',
-    // height: '26px'
+    '& input': {
+      marginTop: '-3px',
+    },
   }),
   placeholder: (provided: any) => ({
     ...provided,
@@ -40,6 +42,7 @@ const dropdownStyles = {
       top: 20,
       left: 0,
       minWidth: 'fit-content',
+      overflow: 'hidden',
   }),
   container: (provided: any) => ({
       ...provided,
@@ -49,11 +52,16 @@ const dropdownStyles = {
     const opacity = state.isDisabled ? 0.5 : 1;
     const transition = 'opacity 300ms';
 
-    return { ...provided, opacity, transition };
+    return {
+      ...provided,
+      opacity,
+      transition,
+      marginTop: '-3px',
+    };
   }
 }
 interface Props {
-  onChange: (e, { name, value }) => void;
+  onChange: (e: any, { name, value }: any) => void;
   className?: string;
   options?: any;
   value?: string;
@@ -70,7 +78,7 @@ function FilterOperator(props: Props) {
         styles={dropdownStyles}
         placeholder="Select"
         isDisabled={isDisabled}
-        defaultValue={ value }
+        value={value ? options.find((i: any) => i.value === value) : null}
         onChange={({ value }: any) => onChange(null, { name: 'operator', value })}
       />
     </div>

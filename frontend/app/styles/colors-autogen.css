@@ -15,6 +15,7 @@
 .fill-tealx { fill: $tealx }
 .fill-tealx-light { fill: $tealx-light }
 .fill-tealx-light-border { fill: $tealx-light-border }
+.fill-tealx-lightest { fill: $tealx-lightest }
 .fill-orange { fill: $orange }
 .fill-yellow { fill: $yellow }
 .fill-yellow2 { fill: $yellow2 }
@@ -24,6 +25,7 @@
 .fill-green-dark { fill: $green-dark }
 .fill-red { fill: $red }
 .fill-red2 { fill: $red2 }
+.fill-red-lightest { fill: $red-lightest }
 .fill-blue { fill: $blue }
 .fill-blue2 { fill: $blue2 }
 .fill-active-blue { fill: $active-blue }
@@ -49,6 +51,7 @@
 .color-tealx { color: $tealx }
 .color-tealx-light { color: $tealx-light }
 .color-tealx-light-border { color: $tealx-light-border }
+.color-tealx-lightest { color: $tealx-lightest }
 .color-orange { color: $orange }
 .color-yellow { color: $yellow }
 .color-yellow2 { color: $yellow2 }
@@ -58,6 +61,7 @@
 .color-green-dark { color: $green-dark }
 .color-red { color: $red }
 .color-red2 { color: $red2 }
+.color-red-lightest { color: $red-lightest }
 .color-blue { color: $blue }
 .color-blue2 { color: $blue2 }
 .color-active-blue { color: $active-blue }
@@ -83,6 +87,7 @@
 .hover-tealx:hover { color: $tealx }
 .hover-tealx-light:hover { color: $tealx-light }
 .hover-tealx-light-border:hover { color: $tealx-light-border }
+.hover-tealx-lightest:hover { color: $tealx-lightest }
 .hover-orange:hover { color: $orange }
 .hover-yellow:hover { color: $yellow }
 .hover-yellow2:hover { color: $yellow2 }
@@ -92,6 +97,7 @@
 .hover-green-dark:hover { color: $green-dark }
 .hover-red:hover { color: $red }
 .hover-red2:hover { color: $red2 }
+.hover-red-lightest:hover { color: $red-lightest }
 .hover-blue:hover { color: $blue }
 .hover-blue2:hover { color: $blue2 }
 .hover-active-blue:hover { color: $active-blue }
@@ -116,6 +122,7 @@
 .border-tealx { border-color: $tealx }
 .border-tealx-light { border-color: $tealx-light }
 .border-tealx-light-border { border-color: $tealx-light-border }
+.border-tealx-lightest { border-color: $tealx-lightest }
 .border-orange { border-color: $orange }
 .border-yellow { border-color: $yellow }
 .border-yellow2 { border-color: $yellow2 }
@@ -125,6 +132,7 @@
 .border-green-dark { border-color: $green-dark }
 .border-red { border-color: $red }
 .border-red2 { border-color: $red2 }
+.border-red-lightest { border-color: $red-lightest }
 .border-blue { border-color: $blue }
 .border-blue2 { border-color: $blue2 }
 .border-active-blue { border-color: $active-blue }

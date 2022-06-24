@@ -26,7 +26,7 @@ func New() *Config {
 		TopicRawWeb:                env.String("TOPIC_RAW_WEB"),
 		TopicAnalytics:             env.String("TOPIC_ANALYTICS"),
 		CommitBatchTimeout:         15 * time.Second,
-		BatchQueueLimit:            env.Int("BATCH_QUEUE_LIMIT"),
-		BatchSizeLimit:             env.Int("BATCH_SIZE_LIMIT"),
+		BatchQueueLimit:            env.Int("DB_BATCH_QUEUE_LIMIT"),
+		BatchSizeLimit:             env.Int("DB_BATCH_SIZE_LIMIT"),
 	}
 }

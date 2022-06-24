@@ -88,7 +88,7 @@ function FilterValue(props: Props) {
       case FilterType.DROPDOWN:
         return (
           <FilterValueDropdown
-            search={true}
+            // search={true}
             value={value}
             filter={filter}
             options={filter.options}
@@ -100,9 +100,9 @@ function FilterValue(props: Props) {
         return (
           <FilterValueDropdown
             search={true}
-            multiple={true}
+            // multiple={true}
             value={value}
-            filter={filter}
+            // filter={filter}
             options={filter.options}
             onChange={({ value }) => onChange(null, { value }, valueIndex)}
             onAddValue={onAddValue}

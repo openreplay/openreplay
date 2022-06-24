@@ -103,7 +103,7 @@ export default class MainSection extends React.PureComponent {
 						
 				</div>
 
-				<Divider />
+				{/* <Divider />
 				<div className="flex m-4">
 					{ error.status === UNRESOLVED 
 						? <IconButton
@@ -157,7 +157,7 @@ export default class MainSection extends React.PureComponent {
 							/>
 						}
 					/>
-				</div>
+				</div> */}
 				<Divider />
 				<div className="m-4">
 					<h3 className="text-xl inline-block mr-2">Last session with this error</h3>

@@ -7,6 +7,7 @@ on:
     - dev
     paths:
       - ee/backend/**
+      - backend/**
 
 name: Build and deploy workers EE
 
@@ -118,7 +119,7 @@ jobs:
         ## Update images
         for image in $(cat /tmp/images_to_build.txt);
         do
-            sed -i "/${image}/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+            sed -i "/${image}/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
         done
 
         cat /tmp/image_override.yaml

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { confirm } from 'UI';
+import { confirm, Popup } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
@@ -28,13 +28,11 @@ function WidgetForm(props: Props) {
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
     const isFunnel = metric.metricType === 'funnel';
-    const isErrors = metric.metricType === 'errors';
-    const isSessions = metric.metricType === 'sessions';
-    const _issueOptions = [{ label: 'All', value: 'all' }].concat(issueOptions);
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
+    const eventsLength = useObserver(() => metric.series[0].filter.filters.filter((i: any) => i.isEvent).length)
+    const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
-    // const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
     const writeOption = ({ value, name }: any) => {
         value = Array.isArray(value) ? value : value.value
         const obj: any = { [ name ]: value };
@@ -69,15 +67,16 @@ function WidgetForm(props: Props) {
 
     const onSave = () => {
         const wasCreating = !metric.exists()
-        metricStore.save(metric, dashboardId).then((metric: any) => {
-            if (wasCreating) {
-                if (parseInt(dashboardId) > 0) {
-                    history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
-                } else {
-                    history.replace(withSiteId(metricDetails(metric.metricId), siteId));
+        metricStore.save(metric, dashboardId)
+            .then((metric: any) => {
+                if (wasCreating) {
+                    if (parseInt(dashboardId) > 0) {
+                        history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                    } else {
+                        history.replace(withSiteId(metricDetails(metric.metricId), siteId));
+                    }
                 }
-            }
-        });
+            });
     }
 
     const onDelete = async () => {
@@ -88,10 +87,6 @@ function WidgetForm(props: Props) {
         })) {
             metricStore.delete(metric).then(props.onDelete);
         }
-    }
-
-    const onObserveChanges = () => {
-        // metricStore.fetchMetricChartData(metric);
     }
 
     return useObserver(() => (
@@ -144,7 +139,7 @@ function WidgetForm(props: Props) {
                         </>
                     )}
 
-                    {metric.metricType === 'table' && (
+                    {metric.metricType === 'table' && !(metric.metricOf === FilterKey.ERRORS || metric.metricOf === FilterKey.SESSIONS) && (
                     <>
                         <span className="mx-3">showing</span>
                         <Select
@@ -176,30 +171,34 @@ function WidgetForm(props: Props) {
                 {metric.series.length > 0 && metric.series.slice(0, (isTable || isFunnel) ? 1 : metric.series.length).map((series: any, index: number) => (
                     <div className="mb-2">
                         <FilterSeries
+                            observeChanges={() => metric.updateKey('hasChanged', true)}
                             hideHeader={ isTable }
                             seriesIndex={index}
                             series={series}
-                            // onRemoveSeries={() => removeSeries(index)}
                             onRemoveSeries={() => metric.removeSeries(index)}
                             canDelete={metric.series.length > 1}
                             emptyMessage={isTable ?
                                 'Filter data using any event or attribute. Use Add Step button below to do so.' :
                                 'Add user event or filter to define the series by clicking Add Step.'
                             }
-                            // observeChanges={onObserveChanges}
                         />
                     </div>
                 ))}
             </div>
 
             <div className="form-groups flex items-center justify-between">
-                <Button
-                    variant="primary"
-                    onClick={onSave}
-                    disabled={isSaving}
+                <Popup
+                    content="Cannot save funnel metric without at least 2 events"
+                    disabled={!cannotSaveFunnel}
                 >
-                    {metric.exists() ? 'Update' : 'Create'}
-                </Button>
+                    <Button
+                        variant="primary"
+                        onClick={onSave}
+                        disabled={isSaving || cannotSaveFunnel}
+                    >
+                        {metric.exists() ? 'Update' : 'Create'}
+                    </Button>
+                </Popup>
                 <div className="flex items-center">
                     {metric.exists() && (
                         <>

@@ -36,10 +36,6 @@ mc mb minio/frontend || true
 mc policy set download minio/frontend || true
 mc policy set download minio/sessions-assets || true
 mc policy set download minio/static || true
-
-curl -L https://github.com/openreplay/openreplay/releases/download/v${CHART_APP_VERSION}/frontend.tar.gz -O
-tar -xf frontend.tar.gz
-mc cp --recursive frontend/ minio/frontend/
 }
 
 # /bin/bash kafka.sh migrate $migration_versions

@@ -1,48 +1,54 @@
-import React from 'react';
+import { useObserver } from 'mobx-react-lite';
+import React, { useEffect } from 'react';
 import SessionItem from 'Shared/SessionItem';
-import { Pagination } from 'UI';
+import { Pagination, NoContent } from 'UI';
+import { useModal } from 'App/components/Modal';
 
-const PER_PAGE = 10;
 interface Props {
-    data: any
-    metric?: any
+    metric: any;
     isTemplate?: boolean;
     isEdit?: boolean;
 }
 
 function CustomMetricTableSessions(props: Props) {
-    const { data = { sessions: [], total: 0 }, isEdit = false, metric = {}, isTemplate } = props;
-    const currentPage = 1;
+    const { isEdit = false, metric } = props;
     
-    return (
-        <div>
-            {data.sessions && data.sessions.map((session: any, index: any) => (
-                <SessionItem session={session} />
-            ))}
-            
-            {isEdit && (
-                <div className="my-6 flex items-center justify-center">
-                    <Pagination
-                        page={currentPage}
-                        totalPages={Math.ceil(data.total / PER_PAGE)}
-                        onPageChange={(page: any) => this.props.updateCurrentPage(page)}
-                        limit={PER_PAGE}
-                        debounceRequest={500}
-                    />
-                </div>
-            )}
+    return useObserver(() => (
+        <NoContent
+            show={!metric || !metric.data || !metric.data.sessions || metric.data.sessions.length === 0}
+            size="small"
+        >
+            <div className="pb-4">
+                {metric.data.sessions && metric.data.sessions.map((session: any, index: any) => (
+                    <div className="border-b last:border-none">
+                        <SessionItem session={session} key={session.sessionId} />
+                    </div>
+                ))}
+                
+                {isEdit && (
+                    <div className="mt-6 flex items-center justify-center">
+                        <Pagination
+                            page={metric.page}
+                            totalPages={Math.ceil(metric.data.total / metric.limit)}
+                            onPageChange={(page: any) => metric.updateKey('page', page)}
+                            limit={metric.data.total}
+                            debounceRequest={500}
+                        />
+                    </div>
+                )}
 
-            {!isEdit && (
-                <ViewMore total={data.total} />
-            )}
-        </div>
-    );
+                {!isEdit && (
+                    <ViewMore total={metric.data.total} limit={metric.limit} />
+                )}
+            </div>
+        </NoContent>
+    ));
 }
 
 export default CustomMetricTableSessions;
 
-const ViewMore = ({ total }: any) => total > PER_PAGE && (
-    <div className="my-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
+const ViewMore = ({ total, limit }: any) => total > limit && (
+    <div className="mt-4 flex items-center justify-center cursor-pointer w-fit mx-auto">
         <div className="text-center">
             <div className="color-teal text-lg">
                 All <span className="font-medium">{total}</span> sessions

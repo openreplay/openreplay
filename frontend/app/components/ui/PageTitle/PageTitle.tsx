@@ -2,14 +2,19 @@ import React from 'react';
 import cn from 'classnames';
 
 interface Props {
-    title: string;
+    title: React.ReactNode;
     className?: string;
+    actionButton?: React.ReactNode;
+    subTitle?: string;
+    subTitleClass?: string;
+    onDoubleClick?: () => void;
+    onClick?: () => void;
 }
-function PageTitle({ title, actionButton = null, subTitle = '', className = '', subTitleClass }) {
+function PageTitle({ title, actionButton = null, subTitle = '', className = '', subTitleClass, onDoubleClick, onClick }: Props) {
     return (
         <div>
             <div className='flex items-center'>
-                <h1 className={cn("text-2xl", className)}>
+                <h1 className={cn("text-2xl capitalize-first", className)} onDoubleClick={onDoubleClick} onClick={onClick}>
                     {title}
                 </h1>
                 { actionButton && actionButton}
