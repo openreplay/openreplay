@@ -30,7 +30,7 @@ def get_all_count(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT COUNT(notifications.*)
+                    SELECT COALESCE(COUNT(notifications.*),0) AS count
                     FROM public.notifications
                              LEFT JOIN (SELECT notification_id
                                         FROM public.user_viewed_notifications
@@ -39,10 +39,8 @@ def get_all_count(tenant_id, user_id):
                         OR notifications.user_id =%(user_id)s) AND user_viewed_notifications.notification_id IS NULL;""",
                         {"tenant_id": tenant_id, "user_id": user_id})
         )
-        rows = helper.list_to_camel_case(cur.fetchall())
-    for r in rows:
-        r["createdAt"] = TimeUTC.datetime_to_timestamp(r["createdAt"])
-    return rows
+        row = cur.fetchone()
+    return row.get("count", 0) if row is not None else 0
 
 
 def view_notification(user_id, notification_ids=[], tenant_id=None, startTimestamp=None, endTimestamp=None):
