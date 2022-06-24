@@ -181,7 +181,7 @@ func (es *elasticsearch) Request(c *client) error {
 				//SessionID: sessionID,
 				SessionID: sessionID,
 				Token:     token,
-				RawErrorEvent: &messages.RawErrorEvent{
+				IntegrationEvent: &messages.IntegrationEvent{
 					Source:    "elasticsearch",
 					Timestamp: timestamp,
 					Name:      fmt.Sprintf("%v", docID),

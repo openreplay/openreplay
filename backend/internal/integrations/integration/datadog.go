@@ -115,7 +115,7 @@ func (d *datadog) Request(c *client) error {
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
 				Token: token,
-				RawErrorEvent: &messages.RawErrorEvent{
+				IntegrationEvent: &messages.IntegrationEvent{
 					Source:    "datadog",
 					Timestamp: timestamp,
 					Name:      ddLog.Content.Attributes.Error.Message,

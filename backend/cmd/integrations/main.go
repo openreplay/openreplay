@@ -74,7 +74,7 @@ func main() {
 			log.Printf("Requesting all...\n")
 			manager.RequestAll()
 		case event := <-manager.Events:
-			log.Printf("New integration event: %+v\n", *event.RawErrorEvent)
+			log.Printf("New integration event: %+v\n", *event.IntegrationEvent)
 			sessionID := event.SessionID
 			if sessionID == 0 {
 				sessData, err := tokenizer.Parse(event.Token)
@@ -85,7 +85,7 @@ func main() {
 				sessionID = sessData.ID
 			}
 			// TODO: send to ready-events topic. Otherwise it have to go through the events worker.
-			producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(event.RawErrorEvent))
+			producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(event.IntegrationEvent))
 		case err := <-manager.Errors:
 			log.Printf("Integration error: %v\n", err)
 		case i := <-manager.RequestDataUpdates:

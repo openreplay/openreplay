@@ -571,7 +571,7 @@ func (msg *JSException) TypeID() int {
 	return 25
 }
 
-type RawErrorEvent struct {
+type IntegrationEvent struct {
 	message
 	Timestamp uint64
 	Source    string
@@ -580,7 +580,7 @@ type RawErrorEvent struct {
 	Payload   string
 }
 
-func (msg *RawErrorEvent) Encode() []byte {
+func (msg *IntegrationEvent) Encode() []byte {
 	buf := make([]byte, 51+len(msg.Source)+len(msg.Name)+len(msg.Message)+len(msg.Payload))
 	buf[0] = 26
 	p := 1
@@ -592,7 +592,7 @@ func (msg *RawErrorEvent) Encode() []byte {
 	return buf[:p]
 }
 
-func (msg *RawErrorEvent) TypeID() int {
+func (msg *IntegrationEvent) TypeID() int {
 	return 26
 }
 
@@ -1396,7 +1396,7 @@ type IssueEvent struct {
 	Type          string
 	ContextString string
 	Context       string
-	Payload       string // TODO: check, maybe it's better to use empty interface here
+	Payload       string
 }
 
 func (msg *IssueEvent) Encode() []byte {

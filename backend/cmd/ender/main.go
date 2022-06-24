@@ -50,7 +50,7 @@ func main() {
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
 			switch msg.(type) {
-			case *messages.SessionStart, *messages.SessionEnd, *messages.RawErrorEvent:
+			case *messages.SessionStart, *messages.SessionEnd:
 				// Skip several message types
 				return
 			}

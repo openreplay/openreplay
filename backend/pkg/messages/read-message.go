@@ -369,7 +369,7 @@ func ReadMessage(reader io.Reader) (Message, error) {
 		return msg, nil
 
 	case 26:
-		msg := &RawErrorEvent{}
+		msg := &IntegrationEvent{}
 		if msg.Timestamp, err = ReadUint(reader); err != nil {
 			return nil, err
 		}

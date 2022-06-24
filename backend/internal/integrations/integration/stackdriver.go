@@ -89,7 +89,7 @@ func (sd *stackdriver) Request(c *client) error {
 		c.evChan <- &SessionErrorEvent{
 			//SessionID: sessionID,
 			Token: token,
-			RawErrorEvent: &messages.RawErrorEvent{
+			IntegrationEvent: &messages.IntegrationEvent{
 				Source:    "stackdriver",
 				Timestamp: timestamp,
 				Name:      e.InsertID, // not sure about that

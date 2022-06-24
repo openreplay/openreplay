@@ -115,7 +115,7 @@ PageLoop:
 			c.evChan <- &SessionErrorEvent{
 				SessionID: sessionID,
 				Token:     token,
-				RawErrorEvent: &messages.RawErrorEvent{
+				IntegrationEvent: &messages.IntegrationEvent{
 					Source:    "sentry",
 					Timestamp: timestamp,
 					Name:      e.Title,

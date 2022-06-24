@@ -193,7 +193,7 @@ func (sl *sumologic) Request(c *client) error {
 					c.evChan <- &SessionErrorEvent{
 						//SessionID: sessionID,
 						Token: token,
-						RawErrorEvent: &messages.RawErrorEvent{
+						IntegrationEvent: &messages.IntegrationEvent{
 							Source:    "sumologic",
 							Timestamp: e.Timestamp,
 							Name:      name,

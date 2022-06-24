@@ -156,7 +156,7 @@ func (rb *rollbar) Request(c *client) error {
 				c.setLastMessageTimestamp(timestamp)
 				c.evChan <- &SessionErrorEvent{
 					Token: e["body.message.openReplaySessionToken"],
-					RawErrorEvent: &messages.RawErrorEvent{
+					IntegrationEvent: &messages.IntegrationEvent{
 						Source:    "rollbar",
 						Timestamp: timestamp,
 						Name:      e["item.title"],

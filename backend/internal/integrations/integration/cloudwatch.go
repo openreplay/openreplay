@@ -68,7 +68,7 @@ func (cw *cloudwatch) Request(c *client) error {
 			c.evChan <- &SessionErrorEvent{
 				//SessionID: sessionID,
 				Token: token,
-				RawErrorEvent: &messages.RawErrorEvent{
+				IntegrationEvent: &messages.IntegrationEvent{
 					Source:    "cloudwatch",
 					Timestamp: timestamp, // e.IngestionTime ??
 					Name:      name,

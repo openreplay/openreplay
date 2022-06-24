@@ -66,7 +66,7 @@ func (mi *Saver) InsertMessage(sessionID uint64, msg Message) error {
 	case *IOSCrash:
 		return mi.pg.InsertIOSCrash(sessionID, m)
 
-	case *RawErrorEvent:
+	case *IntegrationEvent:
 		return mi.pg.InsertWebErrorEvent(sessionID, &ErrorEvent{
 			MessageID: m.Meta().Index, // TODO: is it possible to catch panic here???
 			Timestamp: m.Timestamp,
