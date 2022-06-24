@@ -124,7 +124,6 @@ const config: Configuration = {
       ],
     }),
     new MiniCssExtractPlugin(),
-    new HotModuleReplacementPlugin(),
   ],
   devtool: isDevelopment ? "inline-source-map" : false,
   performance: {
