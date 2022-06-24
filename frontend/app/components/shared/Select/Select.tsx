@@ -25,6 +25,7 @@ export default function({ placeholder='Select', name = '', onChange, right = fal
             transition: 'all 0.3s',
             backgroundColor: state.isFocused ? colors['active-blue'] : 'transparent',
             color: state.isFocused ? colors.teal : 'black',
+            fontSize: '14px',
             '&:hover': {
                 transition: 'all 0.2s',
                 backgroundColor: colors['active-blue'],

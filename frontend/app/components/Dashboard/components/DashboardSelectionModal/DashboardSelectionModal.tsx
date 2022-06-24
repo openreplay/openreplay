@@ -26,6 +26,20 @@ function DashboardSelectionModal(props: Props) {
         }
     }
 
+    React.useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                closeHandler();
+            }
+        }
+
+        document.addEventListener('keydown', handleEsc, false);
+
+        return () => {
+            document.removeEventListener('keydown', handleEsc, false);
+        }
+    }, [])
+
     return useObserver(() => (
         <Modal size="small" open={ show }>
             <Modal.Header className="flex items-center justify-between">
