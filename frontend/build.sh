@@ -21,7 +21,6 @@ check_prereq() {
 # https://github.com/docker/cli/issues/1134#issuecomment-613516912
 export DOCKER_BUILDKIT=1
 function build(){
-    cp .env.sample .env
     # Run docker as the same user, else we'll run in to permission issues.
     docker build -t ${DOCKER_REPO:-'local'}/frontend:${git_sha1} --platform linux/amd64 --build-arg SERVICE_NAME=$image .
     [[ $PUSH_IMAGE -eq 1 ]] && {
