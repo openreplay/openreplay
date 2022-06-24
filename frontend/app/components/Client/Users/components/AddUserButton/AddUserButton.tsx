@@ -9,6 +9,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
 function AddUserButton({ isAdmin = false, onClick }: any ) {
     const { userStore } = useStore();
     const limtis = useObserver(() => userStore.limits);
+    console.log('limtis', limtis)
     const cannAddUser = useObserver(() => isAdmin && (limtis.teamMember === -1 || limtis.teamMember > 0));
     return (
         <Popup

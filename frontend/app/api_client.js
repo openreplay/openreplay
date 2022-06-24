@@ -25,7 +25,6 @@ const siteIdRequiredPaths = [
   '/custom_metrics',
   '/dashboards',
   '/metrics',
-  '/trails',
   // '/custom_metrics/sessions',
 ];
 
