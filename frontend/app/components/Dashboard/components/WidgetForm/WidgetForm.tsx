@@ -5,7 +5,7 @@ import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { confirm } from 'UI';
+import { confirm, Popup } from 'UI';
 import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
@@ -30,7 +30,8 @@ function WidgetForm(props: Props) {
     const isFunnel = metric.metricType === 'funnel';
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
-    const cannotSaveFunnel = isFunnel && !metric.series[0] && metric.series[0].filter.filters.length <= 1;
+    const eventsLength = useObserver(() => metric.series[0].filter.filters.filter((i: any) => i.isEvent).length)
+    const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
     const writeOption = ({ value, name }: any) => {
         value = Array.isArray(value) ? value : value.value
@@ -186,13 +187,18 @@ function WidgetForm(props: Props) {
             </div>
 
             <div className="form-groups flex items-center justify-between">
-                <Button
-                    variant="primary"
-                    onClick={onSave}
-                    disabled={isSaving || cannotSaveFunnel}
+                <Popup
+                    content="Cannot save funnel metric without at least 2 events"
+                    disabled={!cannotSaveFunnel}
                 >
-                    {metric.exists() ? 'Update' : 'Create'}
-                </Button>
+                    <Button
+                        variant="primary"
+                        onClick={onSave}
+                        disabled={isSaving || cannotSaveFunnel}
+                    >
+                        {metric.exists() ? 'Update' : 'Create'}
+                    </Button>
+                </Popup>
                 <div className="flex items-center">
                     {metric.exists() && (
                         <>

@@ -25,7 +25,6 @@ function WidgetView(props: Props) {
     const loading = useObserver(() => metricStore.isLoading);
     const [expanded, setExpanded] = useState(!metricId || metricId === 'create');
     const hasChanged = useObserver(() => widget.hasChanged)
-    console.log('hasChanged', hasChanged)
     
     const dashboards = useObserver(() => dashboardStore.dashboards);
     const dashboard = useObserver(() => dashboards.find((d: any) => d.dashboardId == dashboardId));
