@@ -72,7 +72,7 @@ jobs:
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
 
         # Update changed image tag
-        sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/frontend/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
