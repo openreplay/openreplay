@@ -29,7 +29,7 @@ def get_all_count(tenant_id, user_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify("""\
-                    SELECT COUNT(notifications.*) AS count
+                    SELECT COALESCE(COUNT(notifications.*),0) AS count
                     FROM public.notifications
                              LEFT JOIN (SELECT notification_id
                                         FROM public.user_viewed_notifications

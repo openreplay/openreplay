@@ -40,7 +40,7 @@ def get_all_count(tenant_id, user_id):
                         {"tenant_id": tenant_id, "user_id": user_id})
         )
         row = cur.fetchone()
-    return row.get("count", 0) if row is not None else 0
+    return row
 
 
 def view_notification(user_id, notification_ids=[], tenant_id=None, startTimestamp=None, endTimestamp=None):
