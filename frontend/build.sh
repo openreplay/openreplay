@@ -13,9 +13,8 @@ ee="false"
 check_prereq() {
     which docker || {
         echo "Docker not installed, please install docker."
-        exit=1
+        exit 100
     }
-    [[ exit -eq 1 ]] && exit 1
 }
 
 # https://github.com/docker/cli/issues/1134#issuecomment-613516912
