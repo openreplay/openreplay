@@ -1,6 +1,7 @@
 import JSBI from 'jsbi';
 import chroma from "chroma-js";
 import * as htmlToImage from 'html-to-image';
+import { SESSION_FILTER  } from 'App/constants/storageKeys'
 
 export function debounce(callback, wait, context = this) {
   let timeout = null;
@@ -315,4 +316,16 @@ export const fetchErrorCheck = (response: any) =>  {
       throw Error(response.statusText);
   }
   return response.json();
+}
+
+export const getSessionFilter = () => {
+  return JSON.parse(localStorage.getItem(SESSION_FILTER))
+}
+
+export const setSessionFilter = (filter: any) => {
+  localStorage.setItem(SESSION_FILTER, JSON.stringify(filter))
+}
+
+export const compareJsonObjects = (obj1: any, obj2: any) => {
+  return JSON.stringify(obj1) === JSON.stringify(obj2);
 }
