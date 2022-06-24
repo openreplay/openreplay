@@ -39,7 +39,7 @@ jobs:
 #    - name: Install
 #      run: npm install
 
-    - name: Building and Pusing frontend image
+    - name: Building and Pushing frontend image
       id: build-image
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
