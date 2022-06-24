@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, KeyboardEventHandler } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from 'UI';
 import cn from 'classnames';
 import { Tooltip } from 'react-tippy';
