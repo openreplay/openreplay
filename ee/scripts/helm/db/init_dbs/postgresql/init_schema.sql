@@ -1052,7 +1052,7 @@ $$
                 header_size       bigint                 NULL,
                 encoded_body_size integer                NULL,
                 decoded_body_size integer                NULL,
-                PRIMARY KEY (session_id, message_id)
+                PRIMARY KEY (session_id, message_id, timestamp)
             );
             CREATE INDEX IF NOT EXISTS resources_session_id_idx ON events.resources (session_id);
             CREATE INDEX IF NOT EXISTS resources_status_idx ON events.resources (status);

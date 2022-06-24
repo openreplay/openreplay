@@ -37,6 +37,13 @@ $$
     END
 $$;
 
+ALTER TABLE IF EXISTS events.resources
+    DROP CONSTRAINT IF EXISTS resources_pkey;
+
+ALTER TABLE IF EXISTS events.resources
+    ADD CONSTRAINT resources_pk
+        PRIMARY KEY (session_id, message_id, timestamp);
+
 COMMIT;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
 ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'predefined';
