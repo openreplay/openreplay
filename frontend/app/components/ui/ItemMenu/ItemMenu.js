@@ -32,7 +32,7 @@ export default class ItemMenu extends React.PureComponent {
   render() {
     const { items, label = "", bold } = this.props;
     const { displayed } = this.state;
-    const parentStyles = label ? 'rounded px-2 py-1 hover:bg-gray-light' : '';
+    const parentStyles = label ? 'rounded px-2 py-2 hover:bg-gray-light' : '';
 
     return (
       <div className={ styles.wrapper }>

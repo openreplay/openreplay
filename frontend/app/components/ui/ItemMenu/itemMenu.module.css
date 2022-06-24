@@ -41,8 +41,8 @@
   white-space: nowrap;
   z-index: 20;
   position: absolute;
-  right: 31px;
-  top: 27px;
+  right: 0px;
+  top: 37px;
   min-width: 150px;
   background-color: $white;
   border-radius: 3px;
@@ -53,6 +53,7 @@
   & .menuItem {
     cursor: pointer;
     padding: 10px;
+    color: black;
     display: flex;
     align-items: center;
     border-bottom: 1px solid $gray-light;
@@ -64,7 +65,7 @@
     }
 
     &:hover {
-      background-color: $gray-lightest;
+      background-color: $active-blue;
     }
 
     &:last-child {
