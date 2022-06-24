@@ -47,7 +47,7 @@ jobs:
         ENVIRONMENT: staging
       run: |
         cd frontend
-        docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "npm install && npm run build:oss"
+        docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "yarn && yarn build"
         docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
     - name: Creating old image input
       run: |
