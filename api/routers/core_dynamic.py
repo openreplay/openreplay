@@ -169,14 +169,3 @@ def get_general_stats():
 def get_projects(context: schemas.CurrentContext = Depends(OR_context)):
     return {"data": projects.get_projects(tenant_id=context.tenant_id, recording_state=True, gdpr=True, recorded=True,
                                           stack_integrations=True)}
-
-
-@app.get('/limits', tags=['accounts'])
-def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
-    return {
-        'data': {
-            "teamMember": -1,
-            "projects": -1,
-            "metadata": metadata.get_remaining_metadata_with_count(context.tenant_id)
-        }
-    }

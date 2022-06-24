@@ -1156,6 +1156,16 @@ def delete_saved_search(projectId: int, search_id: int, context: schemas.Current
     return {"data": saved_search.delete(project_id=projectId, user_id=context.user_id, search_id=search_id)}
 
 
+@app.get('/limits', tags=['accounts'])
+def get_limits(context: schemas.CurrentContext = Depends(OR_context)):
+    return {
+        'data': {
+            "teamMember": -1,
+            "projects": -1,
+        }
+    }
+
+
 @public_app.get('/', tags=["health"])
 @public_app.post('/', tags=["health"])
 @public_app.put('/', tags=["health"])
