@@ -9,3 +9,10 @@ LABEL maintainer=Rajesh<rajesh@openreplay.com>
 
 COPY --from=builder /work/public /var/www/openreplay
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+FROM nginx:alpine as cicd
+LABEL maintainer=Rajesh<rajesh@openreplay.com>
+
+COPY public /var/www/openreplay
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
