@@ -1,6 +1,7 @@
 from node:14-stretch-slim AS builder
 workdir /work
 COPY . .
+RUN cp .env.example .env
 RUN yarn 
 RUN yarn build
 
