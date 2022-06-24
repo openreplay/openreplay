@@ -132,7 +132,7 @@ def reset_member(tenant_id, editor_id, user_id_to_update):
 
 
 def update(tenant_id, user_id, changes):
-    AUTH_KEYS = ["password", "generatedPassword", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
+    AUTH_KEYS = ["password", "invitationToken", "invitedAt", "changePwdExpireAt", "changePwdToken"]
     if len(changes.keys()) == 0:
         return None
 
@@ -475,7 +475,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
     auth = authenticate(email, old_password, for_change_password=True)
     if auth is None:
         return {"errors": ["wrong password"]}
-    changes = {"password": new_password, "generatedPassword": False}
+    changes = {"password": new_password}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
     r = authenticate(user['email'], new_password)
 
@@ -501,7 +501,7 @@ def change_password(tenant_id, user_id, email, old_password, new_password):
 
 
 def set_password_invitation(tenant_id, user_id, new_password):
-    changes = {"password": new_password, "generatedPassword": False,
+    changes = {"password": new_password,
                "invitationToken": None, "invitedAt": None,
                "changePwdExpireAt": None, "changePwdToken": None}
     user = update(tenant_id=tenant_id, user_id=user_id, changes=changes)
