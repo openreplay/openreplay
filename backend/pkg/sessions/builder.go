@@ -49,11 +49,16 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	}
 	timestamp := GetTimestamp(message)
 	if timestamp == 0 {
-		log.Printf("skip message with empty timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, messageID, message.TypeID())
+		switch message.(type) {
+		case *SessionEnd, *IssueEvent, *PerformanceTrackAggr:
+			break
+		default:
+			log.Printf("skip message with empty timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, messageID, message.TypeID())
+		}
 		return
 	}
 	if timestamp < b.timestamp {
-		log.Printf("skip message with wrong timestamp, sessID: %d, msgID: %d, type: %d, msgTS: %d, lastTS: %d", b.sessionID, messageID, message.TypeID(), timestamp, b.timestamp)
+		//log.Printf("skip message with wrong timestamp, sessID: %d, msgID: %d, type: %d, msgTS: %d, lastTS: %d", b.sessionID, messageID, message.TypeID(), timestamp, b.timestamp)
 	} else {
 		b.timestamp = timestamp
 	}

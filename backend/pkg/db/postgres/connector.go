@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -14,10 +15,16 @@ func getTimeoutContext() context.Context {
 	return ctx
 }
 
+type batchItem struct {
+	query     string
+	arguments []interface{}
+}
+
 type Conn struct {
 	c               *pgxpool.Pool // TODO: conditional usage of Pool/Conn (use interface?)
 	batches         map[uint64]*pgx.Batch
 	batchSizes      map[uint64]int
+	rawBatches      map[uint64][]*batchItem
 	batchQueueLimit int
 	batchSizeLimit  int
 }
@@ -32,6 +39,7 @@ func NewConn(url string, queueLimit, sizeLimit int) *Conn {
 		c:               c,
 		batches:         make(map[uint64]*pgx.Batch),
 		batchSizes:      make(map[uint64]int),
+		rawBatches:      make(map[uint64][]*batchItem),
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
 	}
@@ -46,9 +54,17 @@ func (conn *Conn) batchQueue(sessionID uint64, sql string, args ...interface{}) 
 	batch, ok := conn.batches[sessionID]
 	if !ok {
 		conn.batches[sessionID] = &pgx.Batch{}
+		conn.rawBatches[sessionID] = make([]*batchItem, 0)
 		batch = conn.batches[sessionID]
 	}
 	batch.Queue(sql, args...)
+	// Temp raw batch store
+	raw := conn.rawBatches[sessionID]
+	raw = append(raw, &batchItem{
+		query:     sql,
+		arguments: args,
+	})
+	conn.rawBatches[sessionID] = raw
 }
 
 func (conn *Conn) CommitBatches() {
@@ -58,12 +74,16 @@ func (conn *Conn) CommitBatches() {
 		for i := 0; i < l; i++ {
 			if ct, err := br.Exec(); err != nil {
 				log.Printf("Error in PG batch (command tag %s, session: %d): %v \n", ct.String(), sessID, err)
+				failedSql := conn.rawBatches[sessID][i]
+				query := strings.ReplaceAll(failedSql.query, "\n", " ")
+				log.Println("failed sql req:", query, failedSql.arguments)
 			}
 		}
 		br.Close() // returns err
 	}
 	conn.batches = make(map[uint64]*pgx.Batch)
 	conn.batchSizes = make(map[uint64]int)
+	conn.rawBatches = make(map[uint64][]*batchItem)
 }
 
 func (conn *Conn) updateBatchSize(sessionID uint64, reqSize int) {
@@ -85,6 +105,9 @@ func (conn *Conn) commitBatch(sessionID uint64) {
 	for i := 0; i < l; i++ {
 		if ct, err := br.Exec(); err != nil {
 			log.Printf("Error in PG batch (command tag %s, session: %d): %v \n", ct.String(), sessionID, err)
+			failedSql := conn.rawBatches[sessionID][i]
+			query := strings.ReplaceAll(failedSql.query, "\n", " ")
+			log.Println("failed sql req:", query, failedSql.arguments)
 		}
 	}
 	br.Close()
@@ -92,6 +115,7 @@ func (conn *Conn) commitBatch(sessionID uint64) {
 	// Clean batch info
 	delete(conn.batches, sessionID)
 	delete(conn.batchSizes, sessionID)
+	delete(conn.rawBatches, sessionID)
 }
 
 func (conn *Conn) query(sql string, args ...interface{}) (pgx.Rows, error) {

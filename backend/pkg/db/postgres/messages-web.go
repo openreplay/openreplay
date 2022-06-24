@@ -242,7 +242,7 @@ func (conn *Conn) InsertWebFetchEvent(sessionID uint64, savePayload bool, e *Fet
 
 	// Record approximate message size
 	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.URL)+len(host)+len(path)+len(query)+
-		len(*request)+len(*response)+len(url.EnsureMethod(e.Method))+8*5+1)
+		len(e.Request)+len(e.Response)+len(url.EnsureMethod(e.Method))+8*5+1)
 	return nil
 }
 
@@ -269,6 +269,6 @@ func (conn *Conn) InsertWebGraphQLEvent(sessionID uint64, savePayload bool, e *G
 	)
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.OperationName)+len(*request)+len(*response)+8*3)
+	conn.updateBatchSize(sessionID, len(sqlRequest)+len(e.OperationName)+len(e.Variables)+len(e.Response)+8*3)
 	return nil
 }

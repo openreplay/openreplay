@@ -49,12 +49,17 @@ func main() {
 			cfg.TopicRawWeb,
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			if msg.TypeID() == 3 {
-				// Skip message end
+			switch msg.(type) {
+			case *messages.SessionStart, *messages.SessionEnd, *messages.RawErrorEvent:
+				// Skip several message types
 				return
 			}
+			// Test debug
+			if msg.Meta().Timestamp == 0 {
+				log.Printf("ZERO TS, sessID: %d, msgType: %d", sessionID, msg.TypeID())
+			}
 			statsLogger.Collect(sessionID, meta)
-			sessions.UpdateSession(sessionID, meta.Timestamp)
+			sessions.UpdateSession(sessionID, meta.Timestamp, msg.Meta().Timestamp)
 		},
 		false,
 	)

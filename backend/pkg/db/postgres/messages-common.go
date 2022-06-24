@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"openreplay/backend/pkg/db/types"
@@ -31,10 +32,13 @@ func (conn *Conn) insertAutocompleteValue(sessionID uint64, tp string, value str
 			FROM sessions 
 			WHERE session_id = $3
 		) ON CONFLICT DO NOTHING`
-	conn.batchQueue(sessionID, sqlRequest, value, tp, sessionID)
+	if err := conn.exec(sqlRequest, value, tp, sessionID); err != nil {
+		log.Printf("can't insert autocomplete: %s", err)
+	}
+	//conn.batchQueue(sessionID, sqlRequest, value, tp, sessionID)
 
 	// Record approximate message size
-	conn.updateBatchSize(sessionID, len(sqlRequest)+len(value)+len(tp)+8)
+	//conn.updateBatchSize(sessionID, len(sqlRequest)+len(value)+len(tp)+8)
 }
 
 func (conn *Conn) InsertSessionStart(sessionID uint64, s *types.Session) error {
@@ -93,7 +97,7 @@ func (conn *Conn) InsertSessionEnd(sessionID uint64, timestamp uint64) (uint64, 
 	return dur, nil
 }
 
-func (conn *Conn) HandleSessionEnd(sessionID uint64, timestamp uint64) error {
+func (conn *Conn) HandleSessionEnd(sessionID uint64) error {
 	// TODO: search acceleration?
 	sqlRequest := `
 	UPDATE sessions
