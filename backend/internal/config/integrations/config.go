@@ -3,9 +3,9 @@ package integrations
 import "openreplay/backend/pkg/env"
 
 type Config struct {
-	TopicRawWeb string
-	PostgresURI string
-	TokenSecret string
+	TopicAnalytics string
+	PostgresURI    string
+	TokenSecret    string
 }
 
 func New() *Config {
