@@ -36,8 +36,6 @@ jobs:
         method: kubeconfig
         kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
-#    - name: Install
-#      run: npm install
 
     - name: Building and Pushing frontend image
       id: build-image
@@ -100,11 +98,11 @@ jobs:
 
 ### Enterprise code deployment 
 
-    - uses: azure/k8s-set-context@v1
+    - uses: actions-hub/kubectl@master
+      env:
+        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
       with:
-        method: kubeconfig
-        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
-      id: setcontext
+        args: get pods
 
     - name: Creating old image input
       env:
