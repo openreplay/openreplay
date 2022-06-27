@@ -26,7 +26,7 @@ RUN cd /work_tmp && npm install
 
 WORKDIR /work
 COPY . .
-RUN mv .env.default .env && mv /work_tmp/node_modules sourcemap-reader/.
+RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/.
 
 ENTRYPOINT ["/tini", "--"]
 CMD ./entrypoint.sh
