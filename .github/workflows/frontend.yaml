@@ -129,7 +129,7 @@ jobs:
         EOF
         done
 
-    - name: Deploy to kubernetes
+    - name: Deploy to kubernetes ee
       run: |
         cd scripts/helmcharts/
 
