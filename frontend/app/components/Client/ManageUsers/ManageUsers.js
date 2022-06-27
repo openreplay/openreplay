@@ -24,7 +24,7 @@ const LIMIT_WARNING = 'You have reached users limit.';
   errors: state.getIn([ 'members', 'saveRequest', 'errors' ]),
   loading: state.getIn([ 'members', 'loading' ]),
   saving: state.getIn([ 'members', 'saveRequest', 'loading' ]),
-  roles: state.getIn(['roles', 'list']).filter(r => !r.protected).map(r => ({ text: r.name, value: r.roleId })).toJS(),
+  roles: state.getIn(['roles', 'list']).filter(r => !r.protected).map(r => ({ label: r.name, value: r.roleId })).toJS(),
   isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
 }), {
   init,

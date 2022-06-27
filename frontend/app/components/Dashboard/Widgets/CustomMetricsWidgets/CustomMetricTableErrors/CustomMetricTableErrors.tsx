@@ -1,15 +1,13 @@
 import React, { useEffect } from 'react';
 import { Pagination, NoContent } from 'UI';
-import ErrorListItem from '../../../components/Errors/ErrorListItem';
+import ErrorListItem from 'App/components/Dashboard/components/Errors/ErrorListItem';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
 import { useModal } from 'App/components/Modal';
-import ErrorDetailsModal from '../../../components/Errors/ErrorDetailsModal';
+import ErrorDetailsModal from 'App/components/Dashboard/components/Errors/ErrorDetailsModal';
 
-const PER_PAGE = 5;
 interface Props {
-    metric: any;
-    isTemplate?: boolean;
-    isEdit?: boolean;
+    metric: any,
+    isEdit: any,
     history: any,
     location: any,
 }
@@ -39,6 +37,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
 
     return (
         <NoContent
+            title="No data available over the "
             show={!metric.data.errors || metric.data.errors.length === 0}
             size="small"
         >

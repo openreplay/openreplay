@@ -74,7 +74,6 @@ function FunnelWidget(props: Props) {
                     <span className="text-xl mr-2">Affected users</span>
                     <div className="rounded px-2 py-1 bg-gray-lightest">
                         <span className="text-xl font-medium">{funnel.affectedUsers}</span>
-                        {/* <span className="text-sm">(12%)</span> */}
                     </div>
                 </div>
             </div>
