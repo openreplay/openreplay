@@ -44,6 +44,7 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
         ENVIRONMENT: staging
       run: |
+        set -x
         cd frontend
         mv .env.sample .env
         docker run --rm -v /etc/passwd:/etc/passwd -u `id -u`:`id -g` -v $(pwd):/home/${USER} -w /home/${USER} --name node_build node:14-stretch-slim /bin/bash -c "yarn && yarn build"
@@ -55,6 +56,7 @@ jobs:
 
     - name: Creating old image input
       run: |
+        set -x
         #
         # Create yaml with existing image tags
         #
@@ -100,7 +102,7 @@ jobs:
 
     - uses: actions-hub/kubectl@master
       env:
-        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+        KUBE_CONFIG: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.${{ secrets.KUBE_CONFIG }}
       with:
         args: get pods
 
