@@ -42,9 +42,11 @@ function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, proj
         )}
       </div>
       <div className="flex items-start flex-wrap" style={{ width: '50%'}}>
-        {role.permissions.map((permission: any) => (
-          <PermisionLabel label={permissions[permission]} key={permission.id} />
-        ))}
+        <div className="flex items-center flex-wrap">
+          {role.permissions.map((permission: any) => (
+            <PermisionLabel label={permissions[permission]} key={permission.id} />
+          ))}
+        </div>
 
         <div className={ cn(stl.actions, 'absolute right-0 top-0 bottom-0 mr-8') }>
           {isAdmin && !!editHandler && 

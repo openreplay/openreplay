@@ -6,12 +6,9 @@ import {
   sessions,
   assist,
   client,
-  errors,
-  // funnels,
   dashboard,
   withSiteId,
   CLIENT_DEFAULT_TAB,
-  isRoute,
 } from 'App/routes';
 import { logout } from 'Duck/user';
 import { Icon, Popup } from 'UI';
@@ -20,7 +17,7 @@ import styles from './header.module.css';
 import OnboardingExplore from './OnboardingExplore/OnboardingExplore'
 import Announcements from '../Announcements';
 import Notifications from '../Alerts/Notifications';
-import { init as initSite, fetchList as fetchSiteList } from 'Duck/site';
+import { init as initSite } from 'Duck/site';
 
 import ErrorGenPanel from 'App/dev/components';
 import Alerts from '../Alerts/Alerts';
@@ -32,18 +29,13 @@ import { useObserver } from 'mobx-react-lite';
 const DASHBOARD_PATH = dashboard();
 const SESSIONS_PATH = sessions();
 const ASSIST_PATH = assist();
-const ERRORS_PATH = errors();
-// const FUNNELS_PATH = funnels();
 const CLIENT_PATH = client(CLIENT_DEFAULT_TAB);
-const AUTOREFRESH_INTERVAL = 30 * 1000;
-
-let interval = null;
 
 const Header = (props) => {
   const { 
     sites, location, account, 
     onLogoutClick, siteId,
-    boardingCompletion = 100, fetchSiteList, showAlerts = false,
+    boardingCompletion = 100, showAlerts = false,
   } = props;
   
   const name = account.get('name').split(" ")[0];
@@ -98,20 +90,6 @@ const Header = (props) => {
       >
         { 'Assist' }
       </NavLink>
-      {/* <NavLink
-        to={ withSiteId(ERRORS_PATH, siteId) }
-        className={ styles.nav }
-        activeClassName={ styles.active }
-      >
-        { 'Errors' }
-      </NavLink>
-      <NavLink
-        to={ withSiteId(FUNNELS_PATH, siteId) }
-        className={ styles.nav }
-        activeClassName={ styles.active }
-      >
-        { 'Funnels' }
-      </NavLink> */}
       <NavLink
         to={ withSiteId(DASHBOARD_PATH, siteId) }
         className={ styles.nav }
@@ -162,5 +140,5 @@ export default withRouter(connect(
     showAlerts: state.getIn([ 'dashboard', 'showAlerts' ]),
     boardingCompletion: state.getIn([ 'dashboard', 'boardingCompletion' ])
   }),
-  { onLogoutClick: logout, initSite, fetchSiteList, fetchMetadata },
+  { onLogoutClick: logout, initSite, fetchMetadata },
 )(Header));
