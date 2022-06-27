@@ -103,7 +103,7 @@ jobs:
     - uses: azure/k8s-set-context@v1
       with:
         method: kubeconfig
-        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontextee
 
     - name: Creating old image input
