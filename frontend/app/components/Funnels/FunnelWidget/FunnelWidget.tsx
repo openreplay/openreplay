@@ -89,7 +89,7 @@ function EmptyStage({ total }: any) {
             <div className="w-fit px-2 border border-teal py-1 text-center justify-center bg-teal-lightest flex items-center rounded-full color-teal" style={{ width: '100px'}}>
                 {`+${total} ${total > 1 ? 'steps' : 'step'}`}
             </div>
-            <div className="border-b w-full border-dotted"></div>
+            <div className="border-b w-full border-dashed"></div>
         </div>
     ))
 }

@@ -20,8 +20,8 @@ function CustomMetricTableSessions(props: Props) {
         >
             <div className="pb-4">
                 {metric.data.sessions && metric.data.sessions.map((session: any, index: any) => (
-                    <div className="border-b last:border-none">
-                        <SessionItem session={session} key={session.sessionId} />
+                    <div className="border-b last:border-none" key={session.sessionId}>
+                        <SessionItem session={session} />
                     </div>
                 ))}
                 

@@ -44,7 +44,9 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
         >
             <div className="pb-4">
                 {metric.data.errors && metric.data.errors.map((error: any, index: any) => (
-                    <ErrorListItem key={index} error={error} onClick={(e) => onErrorClick(e, error)} />
+                    <div key={index} className="broder-b last:border-none">
+                        <ErrorListItem error={error} onClick={(e) => onErrorClick(e, error)} />
+                    </div>
                 ))}
 
                 {isEdit && (
