@@ -5,9 +5,7 @@ import (
 	"time"
 
 	"openreplay/backend/pkg/db/clickhouse"
-	. "openreplay/backend/pkg/db/types"
 	"openreplay/backend/pkg/env"
-	. "openreplay/backend/pkg/messages"
 )
 
 var ch *clickhouse.Connector
@@ -43,23 +41,6 @@ func (si *Saver) InsertStats(session *Session, msg Message) error {
 		return ch.InsertWebErrorEvent(session, m)
 	case *LongTask:
 		return ch.InsertLongtask(session, m)
-
-	// IOS
-	case *IOSSessionEnd:
-		return ch.InsertIOSSession(session)
-	case *IOSPerformanceAggregated:
-		return ch.InsertIOSPerformanceAggregated(session, m)
-	case *IOSClickEvent:
-		return ch.InsertIOSClickEvent(session, m)
-	case *IOSInputEvent:
-		return ch.InsertIOSInputEvent(session, m)
-	// Unique for Web
-	case *IOSScreenEnter:
-		//ch.InsertIOSView(session, m)
-	case *IOSCrash:
-		return ch.InsertIOSCrash(session, m)
-	case *IOSNetworkCall:
-		return ch.InsertIOSNetworkCall(session, m)
 	}
 	return nil
 }
