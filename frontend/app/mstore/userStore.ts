@@ -113,6 +113,7 @@ export default class UserStore {
                     resolve(response);
                 }).catch(error => {
                     this.saving = false;
+                    toast.error('Error saving user');
                     reject(error);
                 }).finally(() => {
                     this.saving = false;
@@ -130,6 +131,7 @@ export default class UserStore {
                     resolve(response);
                 }).catch(error => {
                     this.saving = false;
+                    toast.error('Error deleting user');
                     reject(error);
                 }).finally(() => {
                     this.saving = false;

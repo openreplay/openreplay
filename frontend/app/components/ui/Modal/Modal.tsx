@@ -5,6 +5,7 @@ interface Props {
     children: React.ReactNode;
     open?: boolean;
     size ?: 'tiny' | 'small' | 'large' | 'fullscreen';
+    onClose?: () => void;
 }
 function Modal(props: Props) {
     const { children, open = false, size = 'small' } = props;
@@ -28,10 +29,17 @@ function Modal(props: Props) {
         style.width = '100%';
     }
 
+    const handleClose = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.target === e.currentTarget) {
+            props.onClose && props.onClose();
+        }
+    }
+
     return open ? (
         <div
             className="fixed inset-0 flex items-center justify-center box-shadow animate-fade-in"
             style={{ zIndex: '999', backgroundColor: 'rgba(0, 0, 0, 0.2)'}}
+            onClick={handleClose}
         >
             <div className="absolute z-10 bg-white rounded border" style={style}>
                 {children}

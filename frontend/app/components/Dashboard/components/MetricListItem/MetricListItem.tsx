@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, NoContent, Label, Link, Pagination } from 'UI';
+import { Icon, NoContent, Label, Link, Pagination, Popup } from 'UI';
 import { checkForRecent, formatDateTimeDefault, convertTimestampToUtcTimestamp } from 'App/date';
 import { getIcon } from 'react-toastify/dist/components';
 
@@ -24,11 +24,22 @@ function DashboardLink({ dashboards}: any) {
     );
 }
 
-function MetricListItem(props: Props) {
-    const { metric } = props;
+function MetricTypeIcon({ type }: any) {
+    const PopupWrapper = (props: any) => {
+        return (
+            <Popup
+                content={<div className="capitalize">{type}</div>}
+                position="top center"
+                on="hover"
+                hideOnScroll={true}
+            >
+                {props.children}
+            </Popup>
+        );
+    }
 
-    const getIcon = (metricType: string) => {
-        switch (metricType) {
+    const getIcon = () => {
+        switch (type) {
             case 'funnel':
                 return 'filter';
             case 'table':
@@ -37,13 +48,28 @@ function MetricListItem(props: Props) {
                 return 'bar-chart-line';
         }
     }
+
+    return (
+        <PopupWrapper>
+            <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
+                <Icon name={getIcon()} size="14" color="tealx" />
+            </div>
+        </PopupWrapper>
+    )
+}
+
+function MetricListItem(props: Props) {
+    const { metric } = props;
+
+    
     return (
         <div className="grid grid-cols-12 p-3 border-t select-none">
             <div className="col-span-3 flex items-start">
                 <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
+                    {/* <div className="w-8 h-8 rounded-full bg-tealx-lightest flex items-center justify-center mr-2">
                         <Icon name={getIcon(metric.metricType)} size="14" color="tealx"  />
-                    </div>
+                    </div> */}
+                    <MetricTypeIcon type={metric.metricType} />
                     <Link to={`/metrics/${metric.metricId}`} className="link capitalize-first">
                         {metric.name}
                     </Link>

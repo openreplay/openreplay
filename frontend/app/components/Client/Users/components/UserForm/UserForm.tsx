@@ -107,7 +107,7 @@ function UserForm(props: Props) {
                             options={ roles }
                             name="roleId"
                             defaultValue={ user.roleId }
-                            onChange={({ value }) => user.updateKey('roleId', value)}
+                            onChange={({ value }) => user.updateKey('roleId', value.value)}
                             className="block"
                             isDisabled={user.isSuperAdmin}
                         />

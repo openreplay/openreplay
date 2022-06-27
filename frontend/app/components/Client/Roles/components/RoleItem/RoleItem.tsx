@@ -42,20 +42,21 @@ function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, proj
         )}
       </div>
       <div className="flex items-start flex-wrap" style={{ width: '50%'}}>
-        {role.permissions.map((permission: any) => (
-          <PermisionLabel label={permissions[permission]} key={permission.id} />
-        ))}
-      </div>
+        <div className="flex items-center flex-wrap">
+          {role.permissions.map((permission: any) => (
+            <PermisionLabel label={permissions[permission]} key={permission.id} />
+          ))}
+        </div>
 
-      { isAdmin && (
         <div className={ cn(stl.actions, 'absolute right-0 top-0 bottom-0 mr-8') }>
-          { !!editHandler && 
+          {isAdmin && !!editHandler && 
             <div className={ cn(stl.button, {[stl.disabled] : role.protected }) } onClick={ () => editHandler(role) }>
               <Icon name="edit" size="16" color="teal"/>
             </div>
           }
         </div>
-      )}
+      </div>
+      
     </div>
   );
 }

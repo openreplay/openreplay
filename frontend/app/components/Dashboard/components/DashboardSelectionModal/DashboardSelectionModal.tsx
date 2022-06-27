@@ -41,7 +41,7 @@ function DashboardSelectionModal(props: Props) {
     }, [])
 
     return useObserver(() => (
-        <Modal size="small" open={ show }>
+        <Modal size="small" open={ show } onClose={closeHandler}>
             <Modal.Header className="flex items-center justify-between">
                 <div>{ 'Add to selected dashboard' }</div>
                 <Icon 

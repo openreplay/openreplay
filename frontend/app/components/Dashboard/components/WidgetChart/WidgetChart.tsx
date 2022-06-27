@@ -146,7 +146,7 @@ function WidgetChart(props: Props) {
                 return (
                     <CustomMetricTableErrors
                         metric={metric}
-                        isTemplate={isTemplate}
+                        // isTemplate={isTemplate}
                         isEdit={!isWidget && !isTemplate}
                     />
                 )

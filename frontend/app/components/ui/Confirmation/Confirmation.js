@@ -22,6 +22,7 @@ const Confirmation = ({
   return (
     <Modal
       open={show}
+      onClose={() => proceed(false)}
     >
       <Modal.Header>{header}</Modal.Header>
       <Modal.Content>

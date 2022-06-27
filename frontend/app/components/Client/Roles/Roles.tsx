@@ -109,10 +109,11 @@ function Roles(props: Props) {
             icon
           >
             <div className={''}>
-              <div className={cn(stl.wrapper, 'flex items-start py-3 border-b px-3 pr-20')}>
-                <div className="flex" style={{ width: '20%'}}>Title</div>
-                <div className="flex" style={{ width: '30%'}}>Project Access</div>
-                <div className="flex" style={{ width: '50%'}}>Feature Access</div>
+              <div className={cn('flex items-start py-3 border-b px-3 pr-20')}>
+                <div className="" style={{ width: '20%'}}>Title</div>
+                <div className="" style={{ width: '30%'}}>Project Access</div>
+                <div className="" style={{ width: '50%'}}>Feature Access</div>
+                <div></div>
               </div>
               {roles.map(role => (
                 <RoleItem

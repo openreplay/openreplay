@@ -57,7 +57,7 @@ function SaveSearchModal(props: Props) {
 
 
   return (
-    <Modal size="small" open={ show }>
+    <Modal size="small" open={ show } onClose={closeHandler}>
       <Modal.Header className={ stl.modalHeader }>
         <div>{ 'Save Search' }</div>
         <Icon

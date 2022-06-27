@@ -124,7 +124,7 @@ export default class AssistManager {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
       // @ts-ignore
-      const urlObject = new URL(window.env.API_EDP) // does it handle ssl automatically?
+      const urlObject = new URL(window.env.API_EDP || window.location.origin + '/api') // does it handle ssl automatically?
 
       // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {

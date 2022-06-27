@@ -82,11 +82,11 @@ jobs:
         sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
 
         # Update changed image tag
-        sed -i "/chalice/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        sed -i "/chalice/{n;n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
 
         cat /tmp/image_override.yaml
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         # We're not passing -ee flag, because helm will add that.

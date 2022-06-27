@@ -63,8 +63,9 @@ function PageInsightsPanel({
 
   return (
     <div className="p-4 bg-white">
-      <div className="pt-2 pb-3 flex items-center" style={{ maxWidth: '241px' }}>
-        <div className="-ml-1 text-lg">
+      <div className="pb-3 flex items-center" style={{ maxWidth: '241px', paddingTop: '5px' }}>
+        <div className="flex items-center">
+          <span className="mr-1 text-xl">Clicks</span>
           <SelectDateRange period={period} onChange={onDateChange} disableCustom />
         </div>
         <div

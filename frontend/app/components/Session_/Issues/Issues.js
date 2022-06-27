@@ -1,12 +1,10 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Popup, Button } from 'UI';
+import { Popup, Button, Icon } from 'UI';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
 import IssuesModal from './IssuesModal';
 import { fetchProjects, fetchMeta } from 'Duck/assignments';
-import withToggle from 'HOCs/withToggle';
 import stl from './issues.module.css';
-import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 
 @connect(state => ({
   issues: state.getIn(['assignments', 'list']),
@@ -21,15 +19,9 @@ import { fetchList as fetchListIntegration } from 'Duck/integrations/actions';
 
   jiraConfig: state.getIn([ 'issues', 'list' ]).first(),
   issuesFetched: state.getIn([ 'issues', 'issuesFetched' ]),
-}), { fetchMeta, fetchProjects, fetchListIntegration })
-@withToggle('isModalDisplayed', 'toggleModal')
+}), { fetchMeta, fetchProjects })
 class Issues extends React.Component {
   state = {showModal: false };
-
-  componentDidMount() {
-    if (!this.props.issuesFetched)
-      this.props.fetchListIntegration('issues')
-  }
 
   constructor(props) {
     super(props);
@@ -46,12 +38,7 @@ class Issues extends React.Component {
     this.setState({ showModal: true });
   }
 
-  handleClose = () => {
-    this.setState({ showModal: false });
-  }
-
   handleOpen = () => {
-    alert('test')
     this.setState({ showModal: true });
     if (!this.props.projectsFetched) { // cache projects fetch
       this.props.fetchProjects().then(function() {
@@ -67,52 +54,33 @@ class Issues extends React.Component {
     const {
       sessionId, isModalDisplayed, projectsLoading, metaLoading, fetchIssuesLoading, issuesIntegration
     } = this.props;
-    const { showModal } = this.state;
     const provider = issuesIntegration.provider
 
     return (
-      <div className="relative">
-        <div className={ stl.buttonWrapper}>
-          <Popup
-            open={ isModalDisplayed }
-            onOpen={ this.handleOpen }
-            onClose={ this.handleClose }
-            trigger={
-                <div className="flex items-center" onClick={this.props.toggleModal} disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}>
-                  <Icon name={ `integrations/${ provider === 'jira' ? 'jira' : 'github'}` } size="16" />
-                  <span className="ml-2">Create Issue</span>
-                </div>
-            }
-            on="click"
-            position="top right"
-            content={
-              <OutsideClickDetectingDiv onClickOutside={this.closeModal}>
-                <IssuesModal
-                  provider={provider}
-                  sessionId={ sessionId }
-                  closeHandler={ this.closeModal }
-                />
-              </OutsideClickDetectingDiv>
-            }
-            // trigger="click"
-            theme="tippy-light"
-          >
-            {
-              <Button
-                variant="outline"
-                onClick={ () => this.setState({ showModal: true }) }
-                className={ stl.button }
-                disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}
-                icon={`integrations/${ provider === 'jira' ? 'jira' : 'github'}`}
-              >
-                <div className="h-full flex items-center">
-                  Report Issue
-                </div>
-              </Button>
-            }
-          </Popup>
+        <div className="relative">
+          <div className={ stl.buttonWrapper} onClick={this.handleOpen}>
+            <Popup
+              open={this.state.showModal}
+              position="top right"
+              interactive
+              content={
+                <OutsideClickDetectingDiv onClickOutside={this.closeModal}>
+                  <IssuesModal
+                    provider={provider}
+                    sessionId={ sessionId }
+                    closeHandler={ this.closeModal }
+                  />
+                </OutsideClickDetectingDiv>
+              }
+              theme="tippy-light"
+            >
+              <div className="flex items-center" onClick={this.handleOpen} disabled={!isModalDisplayed && (metaLoading || fetchIssuesLoading || projectsLoading)}>
+                    <Icon name={ `integrations/${ provider === 'jira' ? 'jira' : 'github'}` } size="16" />
+                    <span className="ml-2">Create Issue</span>
+                  </div>
+            </Popup>
+          </div>
         </div>
-      </div>
     );
   }
 };

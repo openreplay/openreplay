@@ -40,7 +40,8 @@ func ReadBatchReader(reader io.Reader, messageHandler func(Message)) error {
 			// No skipping here for making it easy to encode back the same sequence of message
 			// continue readLoop
 		case *SessionStart:
-			// Save session start timestamp for collecting "empty" sessions
+			timestamp = int64(m.Timestamp)
+		case *SessionEnd:
 			timestamp = int64(m.Timestamp)
 		}
 		msg.Meta().Index = index

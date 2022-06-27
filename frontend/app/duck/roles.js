@@ -2,7 +2,7 @@ import { List, Map } from 'immutable';
 import Role from 'Types/role';
 import crudDuckGenerator from './tools/crudDuck';
 import { reduceDucks } from 'Duck/tools';
-import { array, request, success, failure, createListUpdater, mergeReducers } from './funcTools/tools';
+import { createListUpdater } from './funcTools/tools';
 
 const crudDuck = crudDuckGenerator('client/role', Role, { idKey: 'roleId' });
 export const { fetchList, init, edit, remove, } = crudDuck.actions;
@@ -14,14 +14,14 @@ const initialState = Map({
   permissions: List([
     { text: 'Session Replay', value: 'SESSION_REPLAY' },
     { text: 'Developer Tools', value: 'DEV_TOOLS' },
-    { text: 'Errors', value: 'ERRORS' },
-    { text: 'Metrics', value: 'METRICS' },
+    // { text: 'Errors', value: 'ERRORS' },
+    { text: 'Dashboard', value: 'METRICS' },
     { text: 'Assist (Live)', value: 'ASSIST_LIVE' },
     { text: 'Assist (Call)', value: 'ASSIST_CALL' },
   ])
 });
 
-const name = "role";
+// const name = "role";
 const idKey = "roleId";
 
 const updateItemInList = createListUpdater(idKey);

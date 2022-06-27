@@ -7,6 +7,7 @@ import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
 import cn from 'classnames';
 import { withSiteId } from 'App/routes';
+import withPermissions from 'HOCs/withPermissions'
 
 function NewDashboard(props: RouteComponentProps<{}>) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
@@ -27,7 +28,6 @@ function NewDashboard(props: RouteComponentProps<{}>) {
                 props.history.push(withSiteId('/dashboard', siteId));
             })
         }
-
     }, [siteId]);
 
     return useObserver(() => (
@@ -49,4 +49,4 @@ function NewDashboard(props: RouteComponentProps<{}>) {
     ));
 }
 
-export default withRouter(NewDashboard);
+export default withRouter(withPermissions(['METRICS'])(NewDashboard));

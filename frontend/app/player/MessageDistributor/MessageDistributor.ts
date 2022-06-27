@@ -115,7 +115,7 @@ export default class MessageDistributor extends StatedScreen {
 
       eventList.forEach(e => {
         if (e.type === EVENT_TYPES.LOCATION) { //TODO type system
-          this.locationEventManager.append(e);
+          this.locationEventManager.append(e); 
         }
       });
       this.session.errors.forEach(e => {

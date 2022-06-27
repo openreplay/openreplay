@@ -107,7 +107,7 @@ const RoleForm = (props: Props) => {
                 isSearchable
                 name="projects"
                 options={ projectOptions }
-                onChange={ ({ value }: any) => writeOption({ name: 'projects', value }) }
+                onChange={ ({ value }: any) => writeOption({ name: 'projects', value: value.value }) }
                 value={null}
               />
               { role.projects.size > 0 && (
@@ -181,10 +181,10 @@ export default connect((state: any) => {
       key: p.get('id'),
       value: p.get('id'),
       label: p.get('name'),
-      isDisabled: role.projects.includes(p.get('id')),
-    })).toJS(),
-    permissions: state.getIn(['roles', 'permissions'])
-      .map(({ text, value }: any) => ({ label: text, value, isDisabled: role.permissions.includes(value) })).toJS(),
+      // isDisabled: role.projects.includes(p.get('id')),
+    })).filter(({ value }: any) => !role.projects.includes(value)).toJS(),
+    permissions: state.getIn(['roles', 'permissions']).filter(({ value }: any) => !role.permissions.includes(value))
+      .map(({ text, value }: any) => ({ label: text, value })).toJS(),
     saving: state.getIn([ 'roles', 'saveRequest', 'loading' ]),
     projectsMap: projects.reduce((acc: any, p: any) => {
       acc[ p.get('id') ] = p.get('name')

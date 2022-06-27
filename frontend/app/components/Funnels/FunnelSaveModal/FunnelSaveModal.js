@@ -46,7 +46,7 @@ export default class FunnelSaveModal extends React.PureComponent {
     } = this.props;
     
     return (
-      <Modal size="small" open={ show }>
+      <Modal size="small" open={ show } onClose={this.props.closeHandler}>
         <Modal.Header className={ styles.modalHeader }>
           <div>{ 'Save Funnel' }</div>
           <Icon 
