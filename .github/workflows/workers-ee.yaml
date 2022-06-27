@@ -35,10 +35,10 @@ jobs:
         kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontext
 
-    # Caching docker images
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      # Ignore the failure of a step and avoid terminating the job.
-      continue-on-error: true
+    # # Caching docker images
+    # - uses: satackey/action-docker-layer-caching@v0.0.11
+    #   # Ignore the failure of a step and avoid terminating the job.
+    #   continue-on-error: true
 
     - name: Build, tag
       id: build-image
