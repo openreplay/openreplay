@@ -120,7 +120,7 @@ export default Record(
                     endTimestamp: this.end,
                 };
             },
-            rangeFormatted(format = "MMM Do YY, hh:mm A") {
+            rangeFormatted(format = "MMM Do YY, HH:mm") {
                 return (
                     this.range.start.format(format) +
                     " - " +
