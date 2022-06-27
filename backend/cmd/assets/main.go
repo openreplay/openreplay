@@ -17,10 +17,6 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-/*
-Assets
-*/
-
 func main() {
 	metrics := monitoring.New("assets")
 

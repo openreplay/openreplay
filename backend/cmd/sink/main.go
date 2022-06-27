@@ -21,10 +21,6 @@ import (
 	"openreplay/backend/pkg/url/assets"
 )
 
-/*
-Sink
-*/
-
 func main() {
 	metrics := monitoring.New("sink")
 

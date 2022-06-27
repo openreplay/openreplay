@@ -1,13 +1,23 @@
 package messages
 
 import (
+	"bytes"
 	"github.com/pkg/errors"
 	"io"
+	"log"
 )
 
-func ReadBatchReader(reader io.Reader, messageHandler func(Message)) error {
+func ReadBatchReader(reader_ io.Reader, messageHandler func(Message)) error {
 	var index uint64
 	var timestamp int64
+	batch, err := io.ReadAll(reader_)
+	if err != nil {
+		log.Printf("can't read batch: %s", err)
+		return err
+	}
+	log.Printf("batch size: %d", len(batch))
+	reader := bytes.NewReader(batch)
+	
 	for {
 		msg, err := ReadMessage(reader)
 		if err == io.EOF {
