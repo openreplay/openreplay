@@ -124,46 +124,45 @@ function LiveSessionList(props: Props) {
           <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
         </div>
       </div>
-      
-      <NoContent
-          title={"No live sessions."}
-          subtext={
-            <span>
-              See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> and ensure you're using tracker-assist <span className="font-medium">v3.5.0</span> or higher.
-            </span>
-          }
-          image={<img src="/assets/img/live-sessions.png"
-          style={{ width: '70%', marginBottom: '30px' }}/>}
-          show={ !loading && list.size === 0}
-        >
-          <div className="bg-white p-3 rounded border">
-          <Loader loading={ loading }>
-            {list.map(session => (
-              <>
-                <SessionItem
-                  key={ session.sessionId }
-                  session={ session }
-                  live
-                  hasUserFilter={hasUserFilter}
-                  onUserClick={onUserClick}
-                  metaList={metaList}
-                />
-                <div className="border-b" />
-              </>
-            ))}
+      <Loader loading={ loading }>
+        <NoContent
+            title={"No live sessions."}
+            subtext={
+              <span>
+                See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> and ensure you're using tracker-assist <span className="font-medium">v3.5.0</span> or higher.
+              </span>
+            }
+            image={<img src="/assets/img/live-sessions.png"
+            style={{ width: '70%', marginBottom: '30px' }}/>}
+            show={ !loading && list.size === 0}
+          >
+            <div className="bg-white p-3 rounded border">
+            
+              {list.map(session => (
+                <>
+                  <SessionItem
+                    key={ session.sessionId }
+                    session={ session }
+                    live
+                    hasUserFilter={hasUserFilter}
+                    onUserClick={onUserClick}
+                    metaList={metaList}
+                  />
+                  <div className="border-b" />
+                </>
+              ))}
 
-          <div className="w-full flex items-center justify-center py-6">
-            <Pagination
-              page={currentPage}
-              totalPages={Math.ceil(total / PER_PAGE)}
-              onPageChange={(page: any) => props.updateCurrentPage(page)}
-              limit={PER_PAGE}
-            />
-          </div>
-          
-          </Loader>
-          </div>
-        </NoContent>
+            <div className="w-full flex items-center justify-center py-6">
+              <Pagination
+                page={currentPage}
+                totalPages={Math.ceil(total / PER_PAGE)}
+                onPageChange={(page: any) => props.updateCurrentPage(page)}
+                limit={PER_PAGE}
+              />
+            </div>
+            </div>
+          </NoContent>
+        </Loader>
     </div>
   )
 }
