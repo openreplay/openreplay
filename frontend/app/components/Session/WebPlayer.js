@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import { Loader } from 'UI';
 import { toggleFullscreen, closeBottomBlock } from 'Duck/components/player';
+import { fetchList } from 'Duck/integrations';
 import {
   PlayerProvider,
   connectPlayer,
@@ -40,7 +41,7 @@ function RightMenu({ live, tabs, activeTab, setActiveTab, fullscreen }) {
 }
 
 function WebPlayer (props) {
-  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, config } = props;
+  const { session, toggleFullscreen, closeBottomBlock, live, fullscreen, jwt, fetchList } = props;
 
   const TABS = {
     EVENTS: 'Events',
@@ -50,6 +51,7 @@ function WebPlayer (props) {
   const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {
+    fetchList('issues')
     initPlayer(session, jwt);
 
     const jumptTime = props.query.get('jumpto');
@@ -89,4 +91,5 @@ export default connect(state => ({
 }), {
   toggleFullscreen,
   closeBottomBlock,
+  fetchList,
 })(withLocationHandlers()(WebPlayer));

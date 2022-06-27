@@ -43,10 +43,10 @@ function WidgetName(props: Props) {
         setEditing(false)
       }
     }
-    document.addEventListener('keypress', handler, false)
+    document.addEventListener('keydown', handler, false)
 
     return () => {
-      document.removeEventListener('keypress', handler, false)
+      document.removeEventListener('keydown', handler, false)
     }
   }, [])
 

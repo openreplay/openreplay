@@ -25,6 +25,7 @@
       "Player": ["./app/player"],
       "HOCs/*": ["./app/components/hocs/*"],
       "Types/*": ["./app/types/*"],
+      "Duck/*": ["./app/duck/*"],
     }
   },
   "include": ["app"]
