@@ -102,10 +102,10 @@ function WidgetSessions(props: Props) {
                         show={filteredSessions.sessions.length === 0}
                     >
                         {filteredSessions.sessions.map((session: any) => (
-                            <>
-                                <SessionItem key={ session.sessionId } session={ session }  />
+                            <React.Fragment key={ session.sessionId }>
+                                <SessionItem session={ session }  />
                                 <div className="border-b" />
-                            </>
+                            </React.Fragment>
                         ))}
 
                         <div className="w-full flex items-center justify-center py-6">
