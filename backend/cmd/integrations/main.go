@@ -18,6 +18,7 @@ import (
 	"openreplay/backend/pkg/token"
 )
 
+//
 func main() {
 	metrics := monitoring.New("integrations")
 
