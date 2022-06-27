@@ -132,6 +132,9 @@ jobs:
         EOF
         done
 
+    - name: Resetting vars file
+      run: |
+        git checkout -- scripts/helmcharts/vars.yaml
     - name: Deploy to kubernetes ee
       run: |
         cd scripts/helmcharts/
