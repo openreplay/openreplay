@@ -16,9 +16,10 @@ function SlackChannelList(props) {
     <div className="mt-6">
       <NoContent
         title={
-          <div>
-            <div className="text-base text-left p-5">Integrate Slack with OpenReplay and share insights with the rest of the team, directly from the recording page.</div>
-            <DocLink className="mt-4" label="Integrate Slack" url="https://docs.openreplay.com/integrations/slack" />
+          <div className="p-5 mb-4">
+            <div className="text-base text-left">Integrate Slack with OpenReplay and share insights with the rest of the team, directly from the recording page.</div>
+            {/* <DocLink className="mt-4" label="Integrate Slack" url="https://docs.openreplay.com/integrations/slack" /> */}
+            <DocLink className="mt-4 text-base" label="Integrate Slack" url="https://docs.openreplay.com/integrations/slack" />
           </div>
         }
         size="small"

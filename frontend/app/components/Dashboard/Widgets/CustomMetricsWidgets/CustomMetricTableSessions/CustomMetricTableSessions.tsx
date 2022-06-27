@@ -1,8 +1,7 @@
 import { useObserver } from 'mobx-react-lite';
-import React, { useEffect } from 'react';
+import React from 'react';
 import SessionItem from 'Shared/SessionItem';
 import { Pagination, NoContent } from 'UI';
-import { useModal } from 'App/components/Modal';
 
 interface Props {
     metric: any;
@@ -17,6 +16,7 @@ function CustomMetricTableSessions(props: Props) {
         <NoContent
             show={!metric || !metric.data || !metric.data.sessions || metric.data.sessions.length === 0}
             size="small"
+            title="No sessions found over the selected time period"
         >
             <div className="pb-4">
                 {metric.data.sessions && metric.data.sessions.map((session: any, index: any) => (
