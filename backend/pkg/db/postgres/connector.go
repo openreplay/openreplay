@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"log"
+	"openreplay/backend/pkg/monitoring"
 	"strings"
 	"time"
 
@@ -29,7 +30,10 @@ type Conn struct {
 	batchSizeLimit  int
 }
 
-func NewConn(url string, queueLimit, sizeLimit int) *Conn {
+func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *Conn {
+	if metrics == nil {
+		log.Fatalf("metrics is nil")
+	}
 	c, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		log.Println(err)

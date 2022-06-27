@@ -24,6 +24,7 @@ func NewProducer() *Producer {
 		"security.protocol":      protocol,
 		"go.batch.producer":      true,
 		"queue.buffering.max.ms": 100,
+		"max.request.size":       3000000,
 	})
 	if err != nil {
 		log.Fatalln(err)

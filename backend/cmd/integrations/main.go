@@ -4,6 +4,7 @@ import (
 	"log"
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/internal/integrations/clientManager"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 
 	"os"
@@ -18,11 +19,13 @@ import (
 )
 
 func main() {
+	metrics := monitoring.New("integrations")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
 
-	pg := postgres.NewConn(cfg.PostgresURI, 0, 0)
+	pg := postgres.NewConn(cfg.PostgresURI, 0, 0, metrics)
 	defer pg.Close()
 
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)

@@ -7,6 +7,7 @@ import (
 	"openreplay/backend/internal/db/datasaver"
 	"openreplay/backend/pkg/handlers"
 	custom2 "openreplay/backend/pkg/handlers/custom"
+	"openreplay/backend/pkg/monitoring"
 	"openreplay/backend/pkg/sessions"
 	"time"
 
@@ -23,12 +24,14 @@ import (
 )
 
 func main() {
+	metrics := monitoring.New("db")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := db.New()
 
 	// Init database
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, cfg.BatchQueueLimit, cfg.BatchSizeLimit), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, cfg.BatchQueueLimit, cfg.BatchSizeLimit, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// HandlersFabric returns the list of message handlers we want to be applied to each incoming message.
