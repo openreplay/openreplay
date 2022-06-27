@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io-client';
-import io from 'socket.io-client';
+import { connect } from 'socket.io-client';
 import Peer from 'peerjs';
 import type { Properties } from 'csstype';
 import { App } from '@openreplay/tracker';
@@ -131,7 +131,7 @@ export default class Assist {
     const peerID = `${app.getProjectKey()}-${app.getSessionID()}`
 
     // SocketIO
-    const socket = this.socket = io(app.getHost(), {
+    const socket = this.socket = connect(app.getHost(), {
       path: '/ws-assist/socket',
       query: {
         "peerId": peerID,
