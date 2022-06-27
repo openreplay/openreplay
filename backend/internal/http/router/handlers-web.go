@@ -118,10 +118,14 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// Save sessionStart to db
-		e.services.Database.InsertWebSessionStart(sessionID, sessionStart)
+		if err := e.services.Database.InsertWebSessionStart(sessionID, sessionStart); err != nil {
+			log.Printf("can't insert session start: %s", err)
+		}
 
 		// Send sessionStart message to kafka
-		e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(sessionStart))
+		if err := e.services.Producer.Produce(e.cfg.TopicRawWeb, tokenData.ID, Encode(sessionStart)); err != nil {
+			log.Printf("can't send session start: %s", err)
+		}
 	}
 
 	ResponseWithJSON(w, &StartSessionResponse{

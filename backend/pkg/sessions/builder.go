@@ -50,7 +50,7 @@ func (b *builder) handleMessage(message Message, messageID uint64) {
 	timestamp := GetTimestamp(message)
 	if timestamp == 0 {
 		switch message.(type) {
-		case *SessionEnd, *IssueEvent, *PerformanceTrackAggr:
+		case *IssueEvent, *PerformanceTrackAggr:
 			break
 		default:
 			log.Printf("skip message with empty timestamp, sessID: %d, msgID: %d, msgType: %d", b.sessionID, messageID, message.TypeID())
