@@ -169,9 +169,9 @@ class Router extends React.Component {
       <Loader loading={ loading } className="flex-1" >
         <Notification />
         
+        {!hideHeader && <Header key="header"/>}
         <Suspense fallback={<Loader loading={true} className="flex-1" />}>
           <ModalProvider>
-          {!hideHeader && <Header key="header"/>}
           <Switch key="content" >
             <Route path={ CLIENT_PATH } component={ Client } />
             <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />
