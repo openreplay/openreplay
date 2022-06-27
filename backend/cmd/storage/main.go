@@ -17,7 +17,6 @@ import (
 	s3storage "openreplay/backend/pkg/storage"
 )
 
-//
 func main() {
 	metrics := monitoring.New("storage")
 

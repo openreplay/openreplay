@@ -22,7 +22,6 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-//
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 

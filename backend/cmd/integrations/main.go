@@ -17,7 +17,6 @@ import (
 	"openreplay/backend/pkg/token"
 )
 
-//
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 

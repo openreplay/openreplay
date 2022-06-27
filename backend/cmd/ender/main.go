@@ -20,7 +20,6 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-//
 func main() {
 	metrics := monitoring.New("ender")
 

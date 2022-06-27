@@ -17,7 +17,6 @@ import (
 	"time"
 )
 
-//
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
