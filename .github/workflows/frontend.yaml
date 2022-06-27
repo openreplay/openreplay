@@ -100,11 +100,11 @@ jobs:
 
 ### Enterprise code deployment 
 
-    - uses: actions-hub/kubectl@master
-      env:
-        KUBE_CONFIG: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.${{ secrets.KUBE_CONFIG }}
+    - uses: azure/k8s-set-context@v1
       with:
-        args: get pods
+        method: kubeconfig
+        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontextee
 
     - name: Creating old image input
       env:
