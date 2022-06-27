@@ -45,31 +45,34 @@ function isObservable(node: Node): boolean {
 /*
   TODO:
     - fix unbinding logic + send all removals first (ensure sequence is correct)
-    - use document as a 0-node in the upper context
+    - use document as a 0-node in the upper context (should be updated in player at first)
 */
+
+enum RecentsType {
+  New,
+  Removed,
+  Changed,
+}
 
 export default abstract class Observer {
   private readonly observer: MutationObserver;
   private readonly commited: Array<boolean | undefined> = [];
+  private readonly recents: Map<number, RecentsType> = new Map()
   private readonly indexes: Array<number> = [];
-  private readonly attributesList: Array<Set<string> | undefined> = [];
-  private readonly textSet: Set<number> = new Set()
-  private readonly newSet: Set<number> = new Set()
-  private readonly affectedSet: Set<number> = new Set()
+  private readonly attributesMap: Map<number, Set<string>> = new Map();
+  private readonly textSet: Set<number> = new Set();
   constructor(protected readonly app: App, protected readonly isTopContext = false) {
     this.observer = new MutationObserver(
       this.app.safe((mutations) => {
-        for (const mutation of mutations) { // mutations order is sequential
+        for (const mutation of mutations) {  // mutations order is sequential
           const target = mutation.target;
           const type = mutation.type;
+
           if (!isObservable(target)) {
             continue;
           }
           if (type === 'childList') {
             for (let i = 0; i < mutation.removedNodes.length; i++) {
-              // TODO:  handle node removal separately from binding. 
-              // Node removals should go first in the commit. 
-              // To check: MoveNode and other possible unbinding behaviours 
               this.bindTree(mutation.removedNodes[i]);
             }
             for (let i = 0; i < mutation.addedNodes.length; i++) {
@@ -81,22 +84,23 @@ export default abstract class Observer {
           if (id === undefined) {
             continue;
           }
+          if (!this.recents.has(id)) {
+            this.recents.set(id, RecentsType.Changed) // TODO only when altered
+          }
           if (type === 'attributes') {
             const name = mutation.attributeName;
             if (name === null) {
               continue;
             }
-            let attr = this.attributesList[id];
+            let attr = this.attributesMap.get(id)
             if (attr === undefined) {
-              this.attributesList[id] = attr = new Set();
+              this.attributesMap.set(id, attr = new Set())
             }
             attr.add(name);
-            this.affectedSet.add(id)
             continue;
           }
           if (type === 'characterData') {
             this.textSet.add(id);
-            this.affectedSet.add(id)
             continue;
           }
         }
@@ -106,11 +110,10 @@ export default abstract class Observer {
   }
   private clear(): void {
     this.commited.length = 0;
+    this.recents.clear()
     this.indexes.length = 1;
-    this.attributesList.length = 0;
-    this.textSet.clear()
-    this.newSet.clear()
-    this.affectedSet.clear()
+    this.attributesMap.clear();
+    this.textSet.clear();
   }
 
   private sendNodeAttribute(
@@ -178,11 +181,12 @@ export default abstract class Observer {
   }
 
   private bindNode(node: Node): void {
-    const [ id, isNew ] = this.app.nodes.registerNode(node);
-    if (isNew) {
-      this.newSet.add(id)
+    const [ id,  isNew ]= this.app.nodes.registerNode(node);
+    if (isNew){
+      this.recents.set(id, RecentsType.New)
+    } else if (!this.recents.has(id)) {
+      this.recents.set(id, RecentsType.Removed)
     }
-    this.affectedSet.add(id)
   }
 
   private bindTree(node: Node): void {
@@ -209,8 +213,7 @@ export default abstract class Observer {
 
   private unbindNode(node: Node): void {
     const id = this.app.nodes.unregisterNode(node);
-//    if (id !== undefined && this.recents[id] === false) { // In the old version it === flase when bindNode() was called on node but it was not new
-    if (id !== undefined && !this.newSet.has(id) && this.affectedSet.has(id)) { // Unbinding logic should be simplified. Node removals should go first.
+    if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       this.app.send(new RemoveNode(id));
     }
   }
@@ -259,12 +262,13 @@ export default abstract class Observer {
     if (sibling === null) {
       this.indexes[id] = 0;
     }
-    const isNew = this.newSet.has(id)
-    const index = this.indexes[id];
+    const recentsType = this.recents.get(id)
+    const isNew = recentsType === RecentsType.New
+    const index = this.indexes[id]
     if (index === undefined) {
       throw 'commitNode: missing node index';
     }
-    if (isNew === true) {
+    if (isNew) {
       if (isElementNode(node)) {
         let el: Element = node
         if (parentID !== undefined) {
@@ -297,10 +301,10 @@ export default abstract class Observer {
       }
       return true;
     }
-    if (isNew === false && parentID !== undefined) {
+    if (recentsType === RecentsType.Removed && parentID !== undefined) {
       this.app.send(new MoveNode(id, parentID, index));
     }
-    const attr = this.attributesList[id];
+    const attr = this.attributesMap.get(id);
     if (attr !== undefined) {
       if (!isElementNode(node)) {
         throw 'commitNode: node is not an element';
@@ -331,9 +335,9 @@ export default abstract class Observer {
   }
   private commitNodes(): void {
     let node;
-    this.affectedSet.forEach(id => {
+    this.recents.forEach((type, id) => {
       this.commitNode(id);
-      if (this.newSet.has(id) && (node = this.app.nodes.getNode(id))) {
+      if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
         this.app.nodes.callNodeCallbacks(node);
       }
     })
