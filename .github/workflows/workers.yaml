@@ -119,7 +119,7 @@ jobs:
         done
 
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true --no-hooks
 
     # - name: Debug Job
     #   if: ${{ failure() }}
