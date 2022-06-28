@@ -1,0 +1,149 @@
+name: Database migration Deployment 
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+    paths:
+      - ee/scripts/helm/db/init_dbs/**
+      - scripts/helm/db/init_dbs/**
+
+# Disable previous workflows for this action.
+concurrency: 
+  group: ${{ github.workflow }} #-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  db-migration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        # We need to diff with old commit 
+        # to see which workers got changed.
+        fetch-depth: 2
+
+    - name: Checking whether migration is needed for OSS
+      id: check-migration
+      run: |-
+        [[ `git --no-pager diff --name-only HEAD HEAD~1 | grep -E "scripts/helm/db/init_dbs" | grep -vE ^ee/` ]] || echo "::set-output name=skip_migration_oss::true"
+
+    - uses: azure/k8s-set-context@v1
+      if: ${{ steps.check-migration.outputs.skip_migration_oss != 'true' }}
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.OSS_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontext
+
+    - name: Creating old image input
+      if: ${{ steps.check-migration.outputs.skip_migration_oss != 'true' }}
+      run: |
+        set -x
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            tag: ${image_array[1]}
+        EOF
+        done
+
+    - name: Deploy to kubernetes foss
+      if: ${{ steps.check-migration.outputs.skip_migration_oss != 'true' }}
+      run: |
+        cd scripts/helmcharts/
+
+        ## Update secerts
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
+
+        cat /tmp/image_override.yaml
+        # Deploy command
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --atomic --set forceMigration=true --set dbMigrationUpstreamBranch=${IMAGE_TAG}
+      env:
+        DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging
+
+
+### Enterprise code deployment 
+
+    - name: cleaning old assets
+      run: |
+        rm -rf /tmp/image_*
+    - uses: azure/k8s-set-context@v1
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
+      id: setcontextee
+
+    - name: Creating old image input
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        #
+        # Create yaml with existing image tags
+        #
+        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
+        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
+
+        echo > /tmp/image_override.yaml
+
+        for line in `cat /tmp/image_tag.txt`;
+        do
+            image_array=($(echo "$line" | tr ':' '\n'))
+            cat <<EOF >> /tmp/image_override.yaml
+        ${image_array[0]}:
+          image:
+            # We've to strip off the -ee, as helm will append it.
+            tag: `echo ${image_array[1]} | cut -d '-' -f 1`
+        EOF
+        done
+
+    - name: Resetting vars file
+      run: |
+        git checkout -- scripts/helmcharts/vars.yaml
+    - name: Deploy to kubernetes ee
+      run: |
+        cd scripts/helmcharts/
+
+        ## Update secerts
+        sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.EE_PG_PASSWORD }}\"/g" vars.yaml
+        sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.EE_MINIO_ACCESS_KEY }}\"/g" vars.yaml
+        sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.EE_MINIO_SECRET_KEY }}\"/g" vars.yaml
+        sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.EE_JWT_SECRET }}\"/g" vars.yaml
+        sed -i "s/domainName: \"\"/domainName: \"${{ secrets.EE_DOMAIN_NAME }}\"/g" vars.yaml
+        sed -i "s/enterpriseEditionLicense: \"\"/enterpriseEditionLicense: \"${{ secrets.EE_LICENSE_KEY }}\"/g" vars.yaml
+
+        cat /tmp/image_override.yaml
+        # Deploy command
+        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --atomic --set forceMigration=true --set dbMigrationUpstreamBranch=${IMAGE_TAG}
+      env:
+        DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
+        # We're not passing -ee flag, because helm will add that.
+        IMAGE_TAG: ${{ github.sha }}
+        ENVIRONMENT: staging
+
+    # - name: Debug Job
+    #   if: ${{ failure() }}
+    #   uses: mxschmitt/action-tmate@v3
+    #   env:
+    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     AWS_REGION: eu-central-1
+    #     AWS_S3_BUCKET_NAME: ${{ secrets.AWS_S3_BUCKET_NAME }}
+

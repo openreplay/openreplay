@@ -36,8 +36,10 @@ spec:
           - -c
         args:
           - |
-            mkdir -p /opt/openreplay/openreplay && cd "$_"
+            set -x
+            mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
             git clone https://github.com/openreplay/openreplay .
+            ls /opt/openreplay/openreplay
             git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }}
 
             # Checking variable is empty. Shell independant method.
