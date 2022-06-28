@@ -860,7 +860,7 @@ def all_issue_types(context: schemas.CurrentContext = Depends(OR_context)):
 
 
 @app.get('/{projectId}/assist/sessions', tags=["assist"])
-def sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
+def get_sessions_live(projectId: int, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
     data = assist.get_live_sessions_ws_user_id(projectId, user_id=userId)
     return {'data': data}
 
