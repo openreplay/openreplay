@@ -59,6 +59,7 @@ func main() {
 			}
 		},
 		true,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Cacher service started\n")

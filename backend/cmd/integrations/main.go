@@ -46,7 +46,7 @@ func main() {
 		}
 	})
 
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	defer producer.Close(15000)
 
 	listener, err := postgres.NewIntegrationsListener(cfg.PostgresURI)

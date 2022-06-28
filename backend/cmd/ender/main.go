@@ -39,7 +39,7 @@ func main() {
 		log.Printf("can't init ender service: %s", err)
 		return
 	}
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupEnder,
 		[]string{
@@ -59,6 +59,7 @@ func main() {
 			sessions.UpdateSession(sessionID, meta.Timestamp, msg.Meta().Timestamp)
 		},
 		false,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Ender service started\n")

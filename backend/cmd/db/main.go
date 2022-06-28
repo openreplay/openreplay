@@ -105,6 +105,7 @@ func main() {
 		},
 		handler,
 		false,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Db service started\n")

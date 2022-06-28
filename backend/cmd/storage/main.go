@@ -47,6 +47,7 @@ func main() {
 			}
 		},
 		true,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Storage service started\n")

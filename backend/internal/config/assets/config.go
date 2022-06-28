@@ -1,23 +1,22 @@
 package assets
 
-import "openreplay/backend/pkg/env"
+import (
+	"openreplay/backend/internal/config/common"
+	"openreplay/backend/internal/config/configurator"
+)
 
 type Config struct {
-	GroupCache      string
-	TopicCache      string
-	AWSRegion       string
-	S3BucketAssets  string
-	AssetsOrigin    string
-	AssetsSizeLimit int
+	common.Config
+	GroupCache      string `env:"GROUP_CACHE,required"`
+	TopicCache      string `env:"TOPIC_CACHE,required"`
+	AWSRegion       string `env:"AWS_REGION,required"`
+	S3BucketAssets  string `env:"S3_BUCKET_ASSETS,required"`
+	AssetsOrigin    string `env:"ASSETS_ORIGIN,required"`
+	AssetsSizeLimit int    `env:"ASSETS_SIZE_LIMIT,required"`
 }
 
 func New() *Config {
-	return &Config{
-		GroupCache:      env.String("GROUP_CACHE"),
-		TopicCache:      env.String("TOPIC_CACHE"),
-		AWSRegion:       env.String("AWS_REGION"),
-		S3BucketAssets:  env.String("S3_BUCKET_ASSETS"),
-		AssetsOrigin:    env.String("ASSETS_ORIGIN"),
-		AssetsSizeLimit: env.Int("ASSETS_SIZE_LIMIT"),
-	}
+	cfg := &Config{}
+	configurator.Process(cfg)
+	return cfg
 }
