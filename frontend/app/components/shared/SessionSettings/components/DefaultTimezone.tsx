@@ -67,7 +67,7 @@ function DefaultTimezone(props) {
             <div className="mt-2 flex items-center" style={{ width: "265px"}}>
                 <Select
                     options={timezoneOptions}
-                    defaultValue={timezone}
+                    defaultValue={timezone.value}
                     className="w-full"
                     onChange={onSelectChange}
                 />
