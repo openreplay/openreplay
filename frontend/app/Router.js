@@ -166,76 +166,77 @@ class Router extends React.Component {
     const hideHeader = location.pathname && location.pathname.includes('/session/') || location.pathname.includes('/assist/');
 
     return isLoggedIn ?
+      <ModalProvider>
       <Loader loading={ loading } className="flex-1" >
         <Notification />
-        
-        {!hideHeader && <Header key="header"/>}
-        <Suspense fallback={<Loader loading={true} className="flex-1" />}>
-          <ModalProvider>
-          <Switch key="content" >
-            <Route path={ CLIENT_PATH } component={ Client } />
-            <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />
-            <Route
-              path="/integrations/"
-              render={
-              ({ location }) => {
-                const client = new APIClient(jwt);
-                switch (location.pathname) {
-                  case '/integrations/slack':
-                    client.post('integrations/slack/add', { 
-                      code: location.search.split('=')[ 1 ],
-                      state: tenantId,
-                    });
-                    break;
-                }
-                return <Redirect to={ CLIENT_PATH } />;
-              }
-            }
-            />
-            { onboarding && 
-              <Redirect to={ withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
-            }
-            {/* { siteIdList.length === 0 && 
-              <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
-            } */}
+          {!hideHeader && <Header key="header"/>}
+          <Suspense fallback={<Loader loading={true} className="flex-1" />}>
             
-            {/* DASHBOARD and Metrics */}
-            <Route exact strict path={ withSiteId(METRICS_PATH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(METRICS_DETAILS, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(METRICS_DETAILS_SUB, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />
-            <Route exact strict path={ withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList) } component={ Dashboard } />
+            <Switch key="content" >
+              <Route path={ CLIENT_PATH } component={ Client } />
+              <Route path={ withSiteId(ONBOARDING_PATH, siteIdList)} component={ Onboarding } />
+              <Route
+                path="/integrations/"
+                render={
+                ({ location }) => {
+                  const client = new APIClient(jwt);
+                  switch (location.pathname) {
+                    case '/integrations/slack':
+                      client.post('integrations/slack/add', { 
+                        code: location.search.split('=')[ 1 ],
+                        state: tenantId,
+                      });
+                      break;
+                  }
+                  return <Redirect to={ CLIENT_PATH } />;
+                }
+              }
+              />
+              { onboarding && 
+                <Redirect to={ withSiteId(ONBOARDING_REDIRECT_PATH, siteId)} />
+              }
+              {/* { siteIdList.length === 0 && 
+                <Redirect to={ routes.client(routes.CLIENT_TABS.SITES) } />
+              } */}
+              
+              {/* DASHBOARD and Metrics */}
+              <Route exact strict path={ withSiteId(METRICS_PATH, siteIdList) } component={ Dashboard } />
+              <Route exact strict path={ withSiteId(METRICS_DETAILS, siteIdList) } component={ Dashboard } />
+              <Route exact strict path={ withSiteId(METRICS_DETAILS_SUB, siteIdList) } component={ Dashboard } />
+              <Route exact strict path={ withSiteId(DASHBOARD_PATH, siteIdList) } component={ Dashboard } />
+              <Route exact strict path={ withSiteId(DASHBOARD_SELECT_PATH, siteIdList) } component={ Dashboard } />
+              <Route exact strict path={ withSiteId(DASHBOARD_METRIC_CREATE_PATH, siteIdList) } component={ Dashboard } />
+              <Route exact strict path={ withSiteId(DASHBOARD_METRIC_DETAILS_PATH, siteIdList) } component={ Dashboard } />
 
-            <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
-            <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
-            <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
-            <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ FunnelPage } />
-            <Route exact strict path={ withSiteId(FUNNEL_CREATE_PATH, siteIdList) } component={ FunnelsDetails } />
-            {/* <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } /> */}
-            <Route exact strict path={ withSiteId(FUNNEL_ISSUE_PATH, siteIdList) } component={ FunnelIssue } />
-            <Route exact strict path={ withSiteId(SESSIONS_PATH, siteIdList) } component={ BugFinder } />
-            <Route exact strict path={ withSiteId(SESSION_PATH, siteIdList) } component={ Session } />
-            <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } component={ LiveSession } />
-            <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } render={ (props) => <Session { ...props } live /> } />
-            { routes.redirects.map(([ fr, to ]) => (
-              <Redirect key={ fr } exact strict from={ fr } to={ to } />
-            )) }
-            <Redirect to={ withSiteId(SESSIONS_PATH, siteId) } />
+              <Route exact strict path={ withSiteId(ASSIST_PATH, siteIdList) } component={ Assist } />
+              <Route exact strict path={ withSiteId(ERRORS_PATH, siteIdList) } component={ Errors } />
+              <Route exact strict path={ withSiteId(ERROR_PATH, siteIdList) } component={ Errors } />
+              <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ FunnelPage } />
+              <Route exact strict path={ withSiteId(FUNNEL_CREATE_PATH, siteIdList) } component={ FunnelsDetails } />
+              {/* <Route exact strict path={ withSiteId(FUNNEL_PATH, siteIdList) } component={ Funnels } /> */}
+              <Route exact strict path={ withSiteId(FUNNEL_ISSUE_PATH, siteIdList) } component={ FunnelIssue } />
+              <Route exact strict path={ withSiteId(SESSIONS_PATH, siteIdList) } component={ BugFinder } />
+              <Route exact strict path={ withSiteId(SESSION_PATH, siteIdList) } component={ Session } />
+              <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } component={ LiveSession } />
+              <Route exact strict path={ withSiteId(LIVE_SESSION_PATH, siteIdList) } render={ (props) => <Session { ...props } live /> } />
+              { routes.redirects.map(([ fr, to ]) => (
+                <Redirect key={ fr } exact strict from={ fr } to={ to } />
+              )) }
+              <Redirect to={ withSiteId(SESSIONS_PATH, siteId) } />
+            </Switch>
+          </Suspense>
+        </Loader>
+        </ModalProvider>
+        :
+        <Suspense fallback={<Loader loading={true} className="flex-1" />}>
+          <Switch>
+            <Route exact strict path={ FORGOT_PASSWORD } component={ ForgotPassword } />
+            <Route exact strict path={ LOGIN_PATH } component={ changePassword ? UpdatePassword : Login } />
+            { !existingTenant && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
+            <Redirect to={ LOGIN_PATH } />
           </Switch>
-          </ModalProvider>
         </Suspense>
-      </Loader>
-       :
-       <Suspense fallback={<Loader loading={true} className="flex-1" />}>
-        <Switch>
-          <Route exact strict path={ FORGOT_PASSWORD } component={ ForgotPassword } />
-          <Route exact strict path={ LOGIN_PATH } component={ changePassword ? UpdatePassword : Login } />
-          { !existingTenant && <Route exact strict path={ SIGNUP_PATH } component={ Signup } /> }
-          <Redirect to={ LOGIN_PATH } />
-        </Switch>
-      </Suspense>;
+      ;
   }
 }
 
