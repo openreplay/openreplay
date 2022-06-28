@@ -37,7 +37,7 @@ export default function withReport<P extends Props>(
             });
             toast.promise(promise, {
                 pending: 'Generating report...',
-                success: 'Report generated successfully',
+                success: 'Report successfully generated',
             })
         }
     
