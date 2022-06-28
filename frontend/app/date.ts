@@ -128,3 +128,9 @@ export const convertTimestampToUtcTimestamp = (timestamp: number): number => {
 export const nowFormatted = (format?: string): string => {
   return DateTime.local().toFormat(format || 'LLL dd, yyyy, hh:mm a');
 }
+
+export const countDaysFrom = (timestamp: number): number => {
+  const date = DateTime.fromMillis(timestamp);
+  const d = new Date();
+  return Math.round(Math.abs(d.getTime() - date.toJSDate().getTime()) / (1000 * 3600 * 24));
+}
