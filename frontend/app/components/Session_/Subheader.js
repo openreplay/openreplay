@@ -62,7 +62,7 @@ function SubHeader(props) {
                     />
                 </div>
                 <div className="mx-4 hover:bg-gray-light-shade rounded-md p-1">
-                    <Bookmark noMargin />
+                    <Bookmark noMargin sessionId={props.sessionId} />
                 </div>
                 <div>
                     <Autoplay />
