@@ -36,7 +36,10 @@ spec:
           - -c
         args:
           - |
-            git clone https://github.com/openreplay/openreplay /opt/openreplay/openreplay -b {{ .Chart.AppVersion }}
+            mkdir -p /opt/openreplay/openreplay && cd "$_"
+            git clone https://github.com/openreplay/openreplay .
+            git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }}
+
             # Checking variable is empty. Shell independant method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
               exit_count=0
@@ -61,7 +64,6 @@ spec:
               fi
 
               echo "Copying enterprise code"
-              cd /opt/openreplay/openreplay 
               cp -rf ee/scripts/* scripts/
             fi
         volumeMounts:
