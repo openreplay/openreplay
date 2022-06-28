@@ -35,6 +35,7 @@ function AuditView(props) {
                         <SelectDateRange
                             period={auditStore.period}
                             onChange={onChange}
+                            right={true}
                         />
                     </div>
                     <div className="mx-2">
