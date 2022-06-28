@@ -137,7 +137,7 @@ class Router extends React.Component {
         const destinationPath = localStorage.getItem(GLOBAL_DESTINATION_PATH);
         if (!isLoggedIn && !location.pathname.includes('login')) {
             localStorage.setItem(GLOBAL_DESTINATION_PATH, location.pathname);
-        } else if (isLoggedIn && !location.pathname.includes(destinationPath)) {
+        } else if (isLoggedIn && destinationPath && !location.pathname.includes(destinationPath)) {
             this.props.history.push(destinationPath || '/');
             localStorage.removeItem(GLOBAL_DESTINATION_PATH);
         }
