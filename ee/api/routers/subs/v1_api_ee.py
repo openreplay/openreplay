@@ -20,12 +20,16 @@ def get_assist_credentials():
 
 @app_apikey.get('/v1/{projectKey}/assist/sessions', tags=["api"])
 def get_sessions_live(projectKey: str, userId: str = None, context: schemas.CurrentContext = Depends(OR_context)):
-    return core.get_sessions_live(projectId=projects.get_internal_project_id(projectKey),
-                                  userId=userId, context=context)
+    projectId = projects.get_internal_project_id(projectKey)
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
+    return core.get_sessions_live(projectId=projectId, userId=userId, context=context)
 
 
 @app_apikey.post('/v1/{projectKey}/assist/sessions', tags=["api"])
-def sessions_live(projectKey: int, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
+def sessions_live(projectKey: str, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    return core.sessions_live(projectId=projects.get_internal_project_id(projectKey),
-                              data=data, context=context)
+    projectId = projects.get_internal_project_id(projectKey)
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
+    return core.sessions_live(projectId=projectId, data=data, context=context)

@@ -49,11 +49,11 @@ def __get_live_sessions_ws(project_id, data):
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
-            return []
+            return {"total": 0, "sessions": []}
         live_peers = connected_peers.json().get("data", [])
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
-        live_peers = []
+        live_peers = {"total": 0, "sessions": []}
     except Exception as e:
         print("issue getting Live-Assist response")
         print(str(e))
@@ -62,7 +62,7 @@ def __get_live_sessions_ws(project_id, data):
             print(connected_peers.text)
         except:
             print("couldn't get response")
-        live_peers = []
+        live_peers = {"total": 0, "sessions": []}
     _live_peers = live_peers
     if "sessions" in live_peers:
         _live_peers = live_peers["sessions"]
