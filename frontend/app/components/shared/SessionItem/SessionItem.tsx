@@ -115,7 +115,7 @@ function SessionItem(props: RouteComponentProps<Props>) {
                   className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, [stl.userName]: !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
                   onClick={() => (!disableUser && !hasUserFilter) && onUserClick(userId, userAnonymousId)}
                 >
-                  <TextEllipsis text={userDisplayName} maxWidth="200" popupProps={{ inverted: true, size: 'tiny' }} />
+                  <TextEllipsis text={userDisplayName} maxWidth="200px" popupProps={{ inverted: true, size: 'tiny' }} />
                 </div>
               </div>
             </div>

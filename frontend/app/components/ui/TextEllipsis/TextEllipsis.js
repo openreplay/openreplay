@@ -41,7 +41,7 @@ const Trigger = forwardRef(({ textOrChildren, maxWidth, style, className, ...res
 const TextEllipsis = ({ 
 	text,
 	hintText = text,
-	children, 
+	children = null, 
 	maxWidth="auto",
 	style = {}, 
 	className="", 
