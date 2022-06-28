@@ -25,7 +25,7 @@ def get_sessions_live(projectKey: str, userId: str = None, context: schemas.Curr
 
 
 @app_apikey.post('/v1/{projectKey}/assist/sessions', tags=["api"])
-def sessions_live(projectKey: int, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
+def sessions_live(projectKey: str, data: schemas.LiveSessionsSearchPayloadSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
     return core.sessions_live(projectId=projects.get_internal_project_id(projectKey),
                               data=data, context=context)
