@@ -22,7 +22,6 @@
 
 .row {
   display: flex;
-  border-bottom: 1px solid #EFEFEF;
   align-items: center;
   min-height: 54px;
   font-size: 13px;
@@ -36,4 +35,8 @@
   &:hover {
     background-color: $gray-lightest;
   }
+}
+
+.bottomBorder {
+  border-bottom: 1px solid #EFEFEF;
 }

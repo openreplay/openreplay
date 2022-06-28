@@ -24,6 +24,7 @@ export default class Table extends React.PureComponent {
     } = this.props;
     const { showAll } = this.state;
 
+    const isShowMoreButtonVisible = !isTemplate && rows.size > (small ? 3 : 5) && !showAll
     return (
       <div className="w-full">
         <div className="flex">
@@ -37,7 +38,7 @@ export default class Table extends React.PureComponent {
         <div className={ cn(stl.content, "thin-scrollbar") } style={{ maxHeight: maxHeight + 'px'}}>
           { rows.take(showAll ? rows.size : (small ? 3 : 5)).map(row => (
             <div
-              className={ cn(rowClass, stl.row, { [stl.small]: small, 'cursor-pointer' : !!onRowClick}) }
+              className={ cn(rowClass, stl.row, { [stl.bottomBorder]: isShowMoreButtonVisible }, { [stl.small]: small, 'cursor-pointer' : !!onRowClick}) }
               key={ row.key }
               onClick={onRowClick ? (e) => onRowClick(e, row) : () => null}
             >
@@ -51,8 +52,8 @@ export default class Table extends React.PureComponent {
             </div>
           )) }
         </div>
-        { !isTemplate && rows.size > (small ? 3 : 5) && !showAll &&
-            <div className="w-full flex justify-center mt-3">
+        {isShowMoreButtonVisible &&
+            <div className="w-full flex justify-center mt-2">
               <Button
                 onClick={ this.onLoadMoreClick }
                 variant="text-primary"

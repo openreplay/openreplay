@@ -49,7 +49,7 @@ function CustomMetricTable(props: Props) {
         onClick(filters);
     }
     return (
-        <div className="" style={{ height: '240px'}}>
+        <div className="" style={{ maxHeight: '240px'}}>
            <NoContent show={data.values && data.values.length === 0} size="small">
                 <Table
                     small
