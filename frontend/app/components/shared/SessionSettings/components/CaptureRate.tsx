@@ -20,7 +20,7 @@ function CaptureRate(props) {
 
     const toggleRate = () => {
             if (captureAll === false) {
-                settingsStore.saveCaptureRate({ captureAll: true })
+                settingsStore.saveCaptureRate({ captureAll: true, rate: "100" })
             }
             setCaptureAll(!captureAll)
             setChanged(true)
@@ -45,8 +45,9 @@ function CaptureRate(props) {
                             type="number"
                             value={captureRate}
                             style={{ height: '38px', width: '100px'}}
-                            onChange={(e, { value }) => {
-                                setCaptureRate(value)
+                            // htmn input event
+                            onChange={(e) => {
+                                setCaptureRate(e.target.value)
                                 setChanged(true);
                             }}
                             disabled={captureAll}
