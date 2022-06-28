@@ -1,7 +1,7 @@
 .actions {
   /* margin-left: auto; */
   /* opacity: 0; */
-  transition: all 0.4s;
+  /* transition: all 0.4s; */
   display: flex;
   align-items: center;
   & .button {

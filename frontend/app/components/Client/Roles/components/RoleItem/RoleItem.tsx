@@ -27,7 +27,7 @@ interface Props {
 }
 function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, projects }: Props) {
   return (
-    <div className={cn('flex items-start relative py-4 hover border-b px-3 pr-20')}>
+    <div className={cn('flex items-start relative py-4 hover border-b px-3 pr-20 group')}>
       <div className="flex" style={{ width: '20%'}}>
         <Icon name="user-alt" size="16" marginRight="10" />
         { role.name }
@@ -48,7 +48,7 @@ function RoleItem({ role, deleteHandler, editHandler, isAdmin, permissions, proj
           ))}
         </div>
 
-        <div className={ cn(stl.actions, 'absolute right-0 top-0 bottom-0 mr-8') }>
+        <div className={ cn(stl.actions, 'absolute right-0 top-0 bottom-0 mr-8 invisible group-hover:visible') }>
           {isAdmin && !!editHandler && 
             <div className={ cn(stl.button, {[stl.disabled] : role.protected }) } onClick={ () => editHandler(role) }>
               <Icon name="edit" size="16" color="teal"/>
