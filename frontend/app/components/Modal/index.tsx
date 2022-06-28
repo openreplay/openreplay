@@ -26,10 +26,12 @@ export class ModalProvider extends Component {
       props
     });
     document.addEventListener('keydown', this.handleKeyDown);
+    document.querySelector("body").style.overflow = 'hidden';
   };
 
   hideModal = () => {
     document.removeEventListener('keydown', this.handleKeyDown);
+    document.querySelector("body").style.overflow = 'visible';
     const { props } = this.state;
     if (props.onClose) {
       props.onClose();
