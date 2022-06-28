@@ -9,6 +9,7 @@ import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
 import Select from 'Shared/Select';
 import { Tooltip } from 'react-tippy';
+import cn from 'classnames';
 
 @connectPlayer(state => ({
   time: state.time,
@@ -61,13 +62,14 @@ export default class SharePopup extends React.PureComponent {
         position='bottom'
         unmountHTMLWhenHide
         useContext
+        arrow
         trigger="click"
         shown={this.handleOpen}
         beforeHidden={this.handleClose}
         html={
           <div className={ styles.wrapper }>
             <div className={ styles.header }>
-              <div className={ styles.title }>Share this session link to Slack</div>
+              <div className={ cn(styles.title, 'text-lg') }>Share this session link to Slack</div>
             </div>
             { options.length === 0 ?
               <>

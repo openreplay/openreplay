@@ -9,6 +9,7 @@
 .wrapper {
   background-color: white;
   width: 350px;
+  padding: 10px 8px;
 }
 
 .header {
@@ -19,7 +20,6 @@
 
 .title {
   margin-right: auto;
-  font-weight: bold;
 }
 
 .closeButton {
