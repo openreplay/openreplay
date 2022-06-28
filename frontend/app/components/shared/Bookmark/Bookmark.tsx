@@ -24,7 +24,6 @@ function Bookmark(props : Props ) {
   const ACTIVE_ICON = isEnterprise ? 'safe-fill' : 'star-solid';
   const INACTIVE_ICON = isEnterprise ? 'safe' : 'star';
 
-
   useEffect(() => {
     setIsFavorite(favorite);
   }, [favorite]);
@@ -63,4 +62,5 @@ function Bookmark(props : Props ) {
 
 export default connect(state => ({
   isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
+  favorite: state.getIn([ 'sessions', 'current', 'favorite']),
 }), { toggleFavorite })(Bookmark)
