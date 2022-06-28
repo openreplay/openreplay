@@ -26,6 +26,7 @@
       "HOCs/*": ["./app/components/hocs/*"],
       "Types/*": ["./app/types/*"],
       "Duck/*": ["./app/duck/*"],
+      "MOBX/*": ["./app/mstore/*"],
     }
   },
   "include": ["app"]

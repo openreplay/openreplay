@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { List } from 'immutable'
 import { countries } from 'App/constants';
+import { useStore } from 'App/mstore';
 import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
-import { formatTimeOrDate, formatDateTimeDefault } from 'App/date';
+import { formatTimeOrDate } from 'App/date';
 import { Avatar, TextEllipsis, SlideModal, Popup, CountryFlag, Icon } from 'UI'
 import cn from 'classnames'
 import { withRequest } from 'HOCs'
@@ -20,6 +21,9 @@ function UserCard({
   similarSessions,
   loading,
  }) {
+  const { settingsStore } = useStore();
+  const { timezone } = settingsStore.sessionSettings;
+
   const [showUserSessions, setShowUserSessions] = useState(false)
   const {
     userBrowser,
@@ -66,7 +70,7 @@ function UserCard({
           </TextEllipsis>
 
           <div className="text-sm color-gray-medium flex items-center">
-            <span style={{ whiteSpace: 'nowrap' }}>{formatDateTimeDefault(startedAt)}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt, timezone)}</span>
             <span className="mx-1 font-bold text-xl">&#183;</span>
             <span>{countries[userCountry]}</span>
             <span className="mx-1 font-bold text-xl">&#183;</span>

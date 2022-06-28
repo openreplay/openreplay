@@ -42,9 +42,9 @@ interface Props {
     userDeviceType: string;
     userUuid: string;
     userNumericHash: number;
-    live: boolean
+    live: boolean;
     metadata: Record<string, any>;
-    userSessionsCount: number
+    userSessionsCount: number;
     issueTypes: [];
     active: boolean;
   },
@@ -57,7 +57,7 @@ interface Props {
   live?: boolean;
 }
 
-function SessionItem(props: RouteComponentProps<Props>) {
+function SessionItem(props: RouteComponentProps & Props) {
   const { settingsStore } = useStore();
   const { timezone } = settingsStore.sessionSettings;
 
