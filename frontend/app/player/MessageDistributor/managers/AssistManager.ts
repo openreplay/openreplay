@@ -232,6 +232,8 @@ export default class AssistManager {
 
   private onMouseClick = (e: MouseEvent): void => {
     if (!this.socket) { return; }
+    if (getState().annotating) return // ignore clicks while annotating
+    
     const data = this.md.getInternalViewportCoordinates(e)
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
