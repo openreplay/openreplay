@@ -17,7 +17,7 @@ function DefaultPlaying(props) {
     return useObserver(() => (
         <>
             <h3 className="text-lg">Default Playing Option</h3>
-            <div className="my-1">Always start playing the session from the first issue.</div>
+            <div className="my-1">Always start playing the session from the first issue</div>
             <div className="mt-2">
                 <Toggler
                     checked={sessionSettings.skipToIssue}

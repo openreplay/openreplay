@@ -129,7 +129,7 @@ function LiveSessionList(props: Props) {
             title={"No live sessions."}
             subtext={
               <span>
-                See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> and ensure you're using tracker-assist <span className="font-medium">v3.5.0</span> or higher.
+                See how to setup the <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'Assist'}</a> plugin, if you haven’t done that already.
               </span>
             }
             image={<img src="/assets/img/live-sessions.png"

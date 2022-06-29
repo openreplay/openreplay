@@ -29,7 +29,7 @@ function CaptureRate(props) {
     return useObserver(() => (
         <Loader loading={loading}>
             <h3 className="text-lg">Recordings</h3>
-            <div className="my-1">What percentage of user sessions do you want to Capture?</div>
+            <div className="my-1">The percentage of session you want to capture</div>
             <div className="mt-2 mb-4 mr-1 flex items-center">
                 <Toggler
                     checked={captureAll}

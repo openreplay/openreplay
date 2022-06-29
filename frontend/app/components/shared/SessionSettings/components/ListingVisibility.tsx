@@ -33,7 +33,7 @@ function ListingVisibility(props) {
     return (
         <>
             <h3 className="text-lg">Listing Visibility</h3>
-            <div className="my-1">Do not show sessions with duration.</div>
+            <div className="my-1">Do not show sessions with duration:</div>
             <div className="grid grid-cols-12 gap-2 mt-2">
                 <div className="col-span-4">
                     <Select
