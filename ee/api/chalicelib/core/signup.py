@@ -70,8 +70,8 @@ def create_step1(data: schemas.UserSignupSchema):
             ),
                  r AS (
                      INSERT INTO public.roles(tenant_id, name, description, permissions, protected)
-                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], TRUE),
-                               ((SELECT tenant_id FROM t), 'Member', 'Member', '{"SESSION_REPLAY", "DEV_TOOLS", "ERRORS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], FALSE)
+                        VALUES ((SELECT tenant_id FROM t), 'Owner', 'Owner', '{"SESSION_REPLAY", "DEV_TOOLS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], TRUE),
+                               ((SELECT tenant_id FROM t), 'Member', 'Member', '{"SESSION_REPLAY", "DEV_TOOLS", "METRICS", "ASSIST_LIVE", "ASSIST_CALL"}'::text[], FALSE)
                         RETURNING *
                  ),
                  u AS (

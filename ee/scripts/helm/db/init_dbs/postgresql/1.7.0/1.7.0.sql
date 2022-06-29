@@ -6,6 +6,8 @@ $$
 SELECT 'v1.7.0-ee'
 $$ LANGUAGE sql IMMUTABLE;
 
+UPDATE roles
+SET permissions=array_remove(permissions, 'ERRORS');
 
 ALTER TABLE IF EXISTS dashboards
     ADD COLUMN IF NOT
