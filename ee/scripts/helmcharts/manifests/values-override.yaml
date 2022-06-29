@@ -1,0 +1,56 @@
+clickhouse:
+  # For enterpriseEdition
+  enabled: false
+
+kafka: &kafka
+  # For enterpriseEdition
+  enabled: true
+  kafkaHost: "kafka.db.svc.cluster.local"
+  kafkaPort: "9092"
+  kafkaUseSsl: "false"
+  config: |-
+    replica.fetch.max.bytes=3000000
+    message.max.bytes=3000000
+    zookeeper.connect=databases-zookeeper
+redis: &redis
+  # For enterpriseEdition
+  enabled: false
+
+postgresql: &postgres
+  # For generating passwords
+  # `openssl rand -hex 20`
+  enabled: false
+  postgresqlPassword: "changeMePassword"
+  postgresqlHost: "postgresql.db.svc.cluster.local"
+  postgresqlPort: "5432"
+  postgresqlUser: "postgres"
+  postgresqlDatabase: "postgres"
+
+ingress-nginx: &ingress-nginx
+  service:
+    externalTrafficPolicy: "Local"
+  extraArgs:
+    default-ssl-certificate: "app/openreplay-ssl"
+  config:
+    use-gzip: true
+    load-balance: ewma
+    enable-real-ip: true
+    # Enable LB forwarded protocol
+    # Ref: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#use-forwarded-headers
+    # https://github.com/nginxinc/kubernetes-ingress/issues/1284#issuecomment-872869354
+    # use-forwarded-headers: true
+global:
+  s3:
+    region: "us-east-1"
+    endpoint: "http://minio.db.svc.cluster.local:9000"
+    assetsBucket: "sessions-assets"
+    recordingsBucket: "mobs"
+    sourcemapsBucket: "sourcemaps"
+    # if you're using one node installation, where
+    # you're using local s3, make sure these variables
+    # are same as minio.global.minio.accesskey and  secretKey
+    accessKey: "changeMeMinioAccessKey"
+    secretKey: "changeMeMinioPassword"
+
+  enterpriseEditionLicense: ""
+  domainName: ""

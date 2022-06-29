@@ -1,0 +1,133 @@
+config:
+  # existingSecret:
+  auth_enabled: false
+  ingester:
+    chunk_idle_period: 3m
+    chunk_block_size: 262144
+    chunk_retain_period: 1m
+    max_transfer_retries: 0
+    wal:
+      dir: /data/loki/wal
+    lifecycler:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+
+      ## Different ring configs can be used. E.g. Consul
+      # ring:
+      #   store: consul
+      #   replication_factor: 1
+      #   consul:
+      #     host: "consul:8500"
+      #     prefix: ""
+      #     http_client_timeout: "20s"
+      #     consistent_reads: true
+  limits_config:
+    enforce_metric_name: false
+    reject_old_samples: true
+    reject_old_samples_max_age: 168h
+  schema_config:
+    configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+  server:
+    http_listen_port: 3100
+  storage_config:
+    boltdb_shipper:
+      active_index_directory: /data/loki/boltdb-shipper-active
+      cache_location: /data/loki/boltdb-shipper-cache
+      cache_ttl: 24h         # Can be increased for faster performance over longer query periods, uses more disk space
+      shared_store: filesystem
+    filesystem:
+      directory: /data/loki/chunks
+  chunk_store_config:
+    max_look_back_period: 0s
+  table_manager:
+    retention_deletes_enabled: false
+    retention_period: 0s
+  compactor:
+    working_directory: /data/loki/boltdb-shipper-compactor
+    shared_store: filesystem
+    retention_enabled: true
+# Needed for Alerting: https://grafana.com/docs/loki/latest/rules/
+# This is just a simple example, for more details: https://grafana.com/docs/loki/latest/configuration/#ruler_config
+  ruler:
+    storage:
+      type: local
+      local:
+        directory: /rules
+    rule_path: /tmp/scratch
+    alertmanager_url: http://openreplay-alertmanager.monitoring.svc.cluster.local:9093
+    ring:
+      kvstore:
+        store: inmemory
+    enable_api: true
+
+persistence:
+  enabled: true
+  accessModes:
+  - ReadWriteOnce
+  size: 100Gi
+
+serviceMonitor:
+  enabled: true
+  interval: ""
+  additionalLabels:
+    release: monitoring
+  annotations: {}
+  # scrapeTimeout: 10s
+  # path: /metrics
+  prometheusRule:
+    enabled: true
+    additionalLabels:
+      release: monitoring
+    rules: 
+     - alert: LokiProcessTooManyRestarts
+       expr: changes(process_start_time_seconds{job=~"loki"}[15m]) > 2
+       for: 0m
+       labels:
+         severity: warning
+       annotations:
+         summary: Loki process too many restarts (instance {{ $labels.instance }})
+         description: "A loki process had too many restarts (target {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+     - alert: LokiRequestErrors
+       expr: 100 * sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[1m])) by (namespace, job, route) / sum(rate(loki_request_duration_seconds_count[1m])) by (namespace, job, route) > 10
+       for: 15m
+       labels:
+         severity: critical
+       annotations:
+         summary: Loki request errors (instance {{ $labels.instance }})
+         description: "The {{ $labels.job }} and {{ $labels.route }} are experiencing errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+     - alert: LokiRequestPanic
+       expr: sum(increase(loki_panic_total[10m])) by (namespace, job) > 0
+       for: 5m
+       labels:
+         severity: critical
+       annotations:
+         summary: Loki request panic (instance {{ $labels.instance }})
+         description: "The {{ $labels.job }} is experiencing {{ printf \"%.2f\" $value }}% increase of panics\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+     - alert: LokiRequestLatency
+       expr: (histogram_quantile(0.99, sum(rate(loki_request_duration_seconds_bucket{route!~"(?i).*tail.*"}[5m])) by (le)))  > 1
+       for: 5m
+       labels:
+         severity: critical
+       annotations:
+         summary: Loki request latency (instance {{ $labels.instance }})
+         description: "The {{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}s 99th percentile latency\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+# Specify Loki Alerting rules based on this documentation: https://grafana.com/docs/loki/latest/rules/
+# When specified, you also need to add a ruler config section above. An example is shown in the alerting docs.
+alerting_groups: 
+  - name: dbZombie
+    rules:
+    - alert: dbZombie
+      expr: absent_over_time({namespace="app", app="db"} |~ "Queue Statistics"[5m]) == 1
+      for: 10m
+      labels:
+        severity: warning
