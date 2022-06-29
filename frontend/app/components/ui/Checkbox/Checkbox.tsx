@@ -14,7 +14,7 @@ export default (props: Props) => {
         type="checkbox" 
         { ...rest }
       />
-      {label && <span className="ml-2 select-none">{label}</span>}
+      {label && <span className="ml-2 select-none mb-0">{label}</span>}
     </label>
   )
 };

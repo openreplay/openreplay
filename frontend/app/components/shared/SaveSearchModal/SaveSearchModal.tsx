@@ -53,7 +53,7 @@ function SaveSearchModal(props: Props) {
     }
   }
 
-  const onChangeOption = (e, { checked, name }) => props.edit({ [ name ]: checked })
+  const onChangeOption = ({ target: { checked, name }}: any) => props.edit({ [ name ]: checked })
 
 
   return (
@@ -94,7 +94,7 @@ function SaveSearchModal(props: Props) {
                 onClick={ onChangeOption }
               />
               <div
-                className="flex items-center cursor-pointer"
+                className="flex items-center cursor-pointer select-none"
                 onClick={ () => props.edit({ 'isPublic' : !savedSearch.isPublic }) }
               >
                 <Icon name="user-friends" size="16" />
