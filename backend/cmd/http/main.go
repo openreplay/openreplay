@@ -17,14 +17,12 @@ import (
 	"openreplay/backend/pkg/queue"
 )
 
-//
 func main() {
 	metrics := monitoring.New("http")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	pprof.StartProfilingServer()
 
-	// Load configuration
 	cfg := http.New()
 
 	// Connect to queue

@@ -13,10 +13,10 @@ type Config struct {
 	HTTPPort          string        `env:"HTTP_PORT,required"`
 	HTTPTimeout       time.Duration `env:"HTTP_TIMEOUT,default=60s"`
 	TopicRawWeb       string        `env:"TOPIC_RAW_WEB,required"`
-	TopicRawIOS       string        `env:"TOPIC_RAW_IOSv"`
+	TopicRawIOS       string        `env:"TOPIC_RAW_IOS,required"`
 	BeaconSizeLimit   int64         `env:"BEACON_SIZE_LIMIT,required"`
-	JsonSizeLimit     int64         `env:"JSON_SIZE_LIMIT,default=1e3"`
-	FileSizeLimit     int64         `env:"FILE_SIZE_LIMIT,default=1e7"`
+	JsonSizeLimit     int64         `env:"JSON_SIZE_LIMIT,default=1000"`
+	FileSizeLimit     int64         `env:"FILE_SIZE_LIMIT,default=10000000"`
 	AWSRegion         string        `env:"AWS_REGION,required"`
 	S3BucketIOSImages string        `env:"S3_BUCKET_IOS_IMAGES,required"`
 	Postgres          string        `env:"POSTGRES_STRING,required"`
