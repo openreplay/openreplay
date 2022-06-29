@@ -25,7 +25,7 @@ export default (props: Props) => {
     ...rest
   } = props;
 
-  const classes = ['relative flex items-center h-10 px-3 rounded tracking-wide'];
+  const classes = ['relative flex items-center h-10 px-3 rounded tracking-wide whitespace-nowrap'];
   if (variant === 'default') {
     classes.push('bg-white hover:bg-gray-lightest border border-gray-light')
   }
