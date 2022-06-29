@@ -28,7 +28,6 @@ func (e *Router) readBody(w http.ResponseWriter, r *http.Request, limit int64) (
 	}
 
 	reqSize := len(bodyBytes)
-	log.Printf("request body size: %d", reqSize)
 	e.requestSize.Record(
 		r.Context(),
 		float64(reqSize),
