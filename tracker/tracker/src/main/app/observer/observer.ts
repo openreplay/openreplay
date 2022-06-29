@@ -333,12 +333,12 @@ export default abstract class Observer {
     }
     return (this.commited[id] = this._commitNode(id, node));
   }
-  private commitNodes(): void {
+  private commitNodes(isStart: boolean = false): void {
     let node;
     this.recents.forEach((type, id) => {
       this.commitNode(id);
       if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
-        this.app.nodes.callNodeCallbacks(node);
+        this.app.nodes.callNodeCallbacks(node, isStart)
       }
     })
     this.clear();
@@ -356,7 +356,7 @@ export default abstract class Observer {
     });
     this.bindTree(nodeToBind);
     beforeCommit(this.app.nodes.getID(node))
-    this.commitNodes();
+    this.commitNodes(true)
   }
 
   disconnect(): void {

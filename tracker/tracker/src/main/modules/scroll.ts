@@ -35,8 +35,8 @@ export default function (app: App): void {
     nodeScroll.clear();
   });
 
-  app.nodes.attachNodeCallback(node => {
-    if (isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
+  app.nodes.attachNodeCallback((node, isStart) => {
+    if (isStart && isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
       nodeScroll.set(node, [node.scrollLeft, node.scrollTop]);
     }
   })
