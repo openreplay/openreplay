@@ -57,8 +57,8 @@ export default class Nodes {
     }
     return id;
   }
-  callNodeCallbacks(node: Node, start: boolean): void {
-    this.nodeCallbacks.forEach((cb) => cb(node, start));
+  callNodeCallbacks(node: Node, isStart: boolean): void {
+    this.nodeCallbacks.forEach((cb) => cb(node, isStart));
   }
   getID(node: Node): number | undefined {
     return (node as any)[this.node_id];
