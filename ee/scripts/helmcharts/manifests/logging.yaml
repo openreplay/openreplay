@@ -14,15 +14,6 @@ config:
           store: inmemory
         replication_factor: 1
 
-      ## Different ring configs can be used. E.g. Consul
-      # ring:
-      #   store: consul
-      #   replication_factor: 1
-      #   consul:
-      #     host: "consul:8500"
-      #     prefix: ""
-      #     http_client_timeout: "20s"
-      #     consistent_reads: true
   limits_config:
     enforce_metric_name: false
     reject_old_samples: true
