@@ -30,6 +30,7 @@ func NewConsumer(
 	topics []string,
 	messageHandler types.MessageHandler,
 	autoCommit bool,
+	messageSizeLimit int,
 ) *Consumer {
 	protocol := "plaintext"
 	if env.Bool("KAFKA_USE_SSL") {
@@ -43,6 +44,7 @@ func NewConsumer(
 		"security.protocol":               protocol,
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
+		"max.partition.fetch.bytes":       messageSizeLimit,
 	})
 	if err != nil {
 		log.Fatalln(err)

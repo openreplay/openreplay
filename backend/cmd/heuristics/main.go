@@ -17,10 +17,6 @@ import (
 	"time"
 )
 
-/*
-Heuristics
-*/
-
 func main() {
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
@@ -53,7 +49,7 @@ func main() {
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	// Init producer and consumer for data bus
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupHeuristics,
 		[]string{
@@ -64,6 +60,7 @@ func main() {
 			builderMap.HandleMessage(sessionID, msg, msg.Meta().Index)
 		},
 		false,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Heuristics service started\n")

@@ -1,27 +1,23 @@
 package ender
 
 import (
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/config/common"
+	"openreplay/backend/internal/config/configurator"
 )
 
 type Config struct {
-	Postgres                   string
-	ProjectExpirationTimeoutMs int64
-	GroupEnder                 string
-	LoggerTimeout              int
-	TopicRawWeb                string
-	ProducerTimeout            int
-	PartitionsNumber           int
+	common.Config
+	Postgres                   string `env:"POSTGRES_STRING,required"`
+	ProjectExpirationTimeoutMs int64  `env:"PROJECT_EXPIRATION_TIMEOUT_MS,default=1200000"`
+	GroupEnder                 string `env:"GROUP_ENDER,required"`
+	LoggerTimeout              int    `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
+	TopicRawWeb                string `env:"TOPIC_RAW_WEB,required"`
+	ProducerTimeout            int    `env:"PRODUCER_TIMEOUT,default=2000"`
+	PartitionsNumber           int    `env:"PARTITIONS_NUMBER,required"`
 }
 
 func New() *Config {
-	return &Config{
-		Postgres:                   env.String("POSTGRES_STRING"),
-		ProjectExpirationTimeoutMs: 1000 * 60 * 20,
-		GroupEnder:                 env.String("GROUP_ENDER"),
-		LoggerTimeout:              env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
-		TopicRawWeb:                env.String("TOPIC_RAW_WEB"),
-		ProducerTimeout:            2000,
-		PartitionsNumber:           env.Int("PARTITIONS_NUMBER"),
-	}
+	cfg := &Config{}
+	configurator.Process(cfg)
+	return cfg
 }

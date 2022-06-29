@@ -21,10 +21,6 @@ import (
 	"openreplay/backend/pkg/url/assets"
 )
 
-/*
-Sink
-*/
-
 func main() {
 	metrics := monitoring.New("sink")
 
@@ -38,7 +34,7 @@ func main() {
 
 	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
 
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	defer producer.Close(cfg.ProducerCloseTimeout)
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	assetMessageHandler := assetscache.New(cfg, rewriter, producer)
@@ -109,6 +105,7 @@ func main() {
 			savedMessages.Add(context.Background(), 1)
 		},
 		false,
+		cfg.MessageSizeLimit,
 	)
 	log.Printf("Sink service started\n")
 

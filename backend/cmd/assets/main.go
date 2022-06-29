@@ -17,10 +17,6 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-/*
-Assets
-*/
-
 func main() {
 	metrics := monitoring.New("assets")
 
@@ -63,6 +59,7 @@ func main() {
 			}
 		},
 		true,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Cacher service started\n")

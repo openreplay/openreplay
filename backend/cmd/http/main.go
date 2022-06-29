@@ -17,25 +17,20 @@ import (
 	"openreplay/backend/pkg/queue"
 )
 
-/*
-HTTP
-*/
-
 func main() {
 	metrics := monitoring.New("http")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 	pprof.StartProfilingServer()
 
-	// Load configuration
 	cfg := http.New()
 
 	// Connect to queue
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	defer producer.Close(15000)
 
 	// Connect to database
-	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0), 1000*60*20)
+	dbConn := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), 1000*60*20)
 	defer dbConn.Close()
 
 	// Build all services

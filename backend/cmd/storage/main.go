@@ -17,10 +17,6 @@ import (
 	s3storage "openreplay/backend/pkg/storage"
 )
 
-/*
-Storage
-*/
-
 func main() {
 	metrics := monitoring.New("storage")
 
@@ -51,6 +47,7 @@ func main() {
 			}
 		},
 		true,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Storage service started\n")

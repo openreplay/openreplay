@@ -6,12 +6,12 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-func NewConsumer(group string, topics []string, handler types.MessageHandler, autoCommit bool) types.Consumer {
+func NewConsumer(group string, topics []string, handler types.MessageHandler, autoCommit bool, messageSizeLimit int) types.Consumer {
 	license.CheckLicense()
-	return kafka.NewConsumer(group, topics, handler, autoCommit)
+	return kafka.NewConsumer(group, topics, handler, autoCommit, messageSizeLimit)
 }
 
-func NewProducer() types.Producer {
+func NewProducer(messageSizeLimit int) types.Producer {
 	license.CheckLicense()
-	return kafka.NewProducer()
+	return kafka.NewProducer(messageSizeLimit)
 }

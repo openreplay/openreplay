@@ -1,33 +1,26 @@
 package sink
 
 import (
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/config/common"
+	"openreplay/backend/internal/config/configurator"
 )
 
 type Config struct {
-	FsDir                string
-	FsUlimit             uint16
-	GroupSink            string
-	TopicRawWeb          string
-	TopicRawIOS          string
-	TopicCache           string
-	TopicTrigger         string
-	CacheAssets          bool
-	AssetsOrigin         string
-	ProducerCloseTimeout int
+	common.Config
+	FsDir                string `env:"FS_DIR,required"`
+	FsUlimit             uint16 `env:"FS_ULIMIT,required"`
+	GroupSink            string `env:"GROUP_SINK,required"`
+	TopicRawWeb          string `env:"TOPIC_RAW_WEB,required"`
+	TopicRawIOS          string `env:"TOPIC_RAW_IOS,required"`
+	TopicCache           string `env:"TOPIC_CACHE,required"`
+	TopicTrigger         string `env:"TOPIC_TRIGGER,required"`
+	CacheAssets          bool   `env:"CACHE_ASSETS,required"`
+	AssetsOrigin         string `env:"ASSETS_ORIGIN,required"`
+	ProducerCloseTimeout int    `env:"PRODUCER_CLOSE_TIMEOUT,default=15000"`
 }
 
 func New() *Config {
-	return &Config{
-		FsDir:                env.String("FS_DIR"),
-		FsUlimit:             env.Uint16("FS_ULIMIT"),
-		GroupSink:            env.String("GROUP_SINK"),
-		TopicRawWeb:          env.String("TOPIC_RAW_WEB"),
-		TopicRawIOS:          env.String("TOPIC_RAW_IOS"),
-		TopicCache:           env.String("TOPIC_CACHE"),
-		TopicTrigger:         env.String("TOPIC_TRIGGER"),
-		CacheAssets:          env.Bool("CACHE_ASSETS"),
-		AssetsOrigin:         env.String("ASSETS_ORIGIN"),
-		ProducerCloseTimeout: 15000,
-	}
+	cfg := &Config{}
+	configurator.Process(cfg)
+	return cfg
 }

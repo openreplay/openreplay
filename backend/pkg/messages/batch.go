@@ -8,6 +8,7 @@ import (
 func ReadBatchReader(reader io.Reader, messageHandler func(Message)) error {
 	var index uint64
 	var timestamp int64
+
 	for {
 		msg, err := ReadMessage(reader)
 		if err == io.EOF {

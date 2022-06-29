@@ -1,32 +1,26 @@
 package db
 
 import (
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/config/common"
+	"openreplay/backend/internal/config/configurator"
 	"time"
 )
 
 type Config struct {
-	Postgres                   string
-	ProjectExpirationTimeoutMs int64
-	LoggerTimeout              int
-	GroupDB                    string
-	TopicRawWeb                string
-	TopicAnalytics             string
-	CommitBatchTimeout         time.Duration
-	BatchQueueLimit            int
-	BatchSizeLimit             int
+	common.Config
+	Postgres                   string        `env:"POSTGRES_STRING,required"`
+	ProjectExpirationTimeoutMs int64         `env:"PROJECT_EXPIRATION_TIMEOUT_MS,default=1200000"`
+	LoggerTimeout              int           `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
+	GroupDB                    string        `env:"GROUP_DB,required"`
+	TopicRawWeb                string        `env:"TOPIC_RAW_WEB,required"`
+	TopicAnalytics             string        `env:"TOPIC_ANALYTICS,required"`
+	CommitBatchTimeout         time.Duration `env:"COMMIT_BATCH_TIMEOUT,default=15s"`
+	BatchQueueLimit            int           `env:"DB_BATCH_QUEUE_LIMIT,required"`
+	BatchSizeLimit             int           `env:"DB_BATCH_SIZE_LIMIT,required"`
 }
 
 func New() *Config {
-	return &Config{
-		Postgres:                   env.String("POSTGRES_STRING"),
-		ProjectExpirationTimeoutMs: 1000 * 60 * 20,
-		LoggerTimeout:              env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
-		GroupDB:                    env.String("GROUP_DB"),
-		TopicRawWeb:                env.String("TOPIC_RAW_WEB"),
-		TopicAnalytics:             env.String("TOPIC_ANALYTICS"),
-		CommitBatchTimeout:         15 * time.Second,
-		BatchQueueLimit:            env.Int("DB_BATCH_QUEUE_LIMIT"),
-		BatchSizeLimit:             env.Int("DB_BATCH_SIZE_LIMIT"),
-	}
+	cfg := &Config{}
+	configurator.Process(cfg)
+	return cfg
 }

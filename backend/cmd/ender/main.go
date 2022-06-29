@@ -20,10 +20,7 @@ import (
 	"openreplay/backend/pkg/queue/types"
 )
 
-/*
-Ender
-*/
-
+//
 func main() {
 	metrics := monitoring.New("ender")
 
@@ -32,7 +29,7 @@ func main() {
 	// Load service configuration
 	cfg := ender.New()
 
-	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0), cfg.ProjectExpirationTimeoutMs)
+	pg := cache.NewPGCache(postgres.NewConn(cfg.Postgres, 0, 0, metrics), cfg.ProjectExpirationTimeoutMs)
 	defer pg.Close()
 
 	// Init all modules
@@ -42,7 +39,7 @@ func main() {
 		log.Printf("can't init ender service: %s", err)
 		return
 	}
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupEnder,
 		[]string{
@@ -62,6 +59,7 @@ func main() {
 			sessions.UpdateSession(sessionID, meta.Timestamp, msg.Meta().Timestamp)
 		},
 		false,
+		cfg.MessageSizeLimit,
 	)
 
 	log.Printf("Ender service started\n")

@@ -12,7 +12,7 @@ type Producer struct {
 	producer *kafka.Producer
 }
 
-func NewProducer() *Producer {
+func NewProducer(messageSizeLimit int) *Producer {
 	protocol := "plaintext"
 	if env.Bool("KAFKA_USE_SSL") {
 		protocol = "ssl"
@@ -24,6 +24,7 @@ func NewProducer() *Producer {
 		"security.protocol":      protocol,
 		"go.batch.producer":      true,
 		"queue.buffering.max.ms": 100,
+		"message.max.bytes":      messageSizeLimit,
 	})
 	if err != nil {
 		log.Fatalln(err)

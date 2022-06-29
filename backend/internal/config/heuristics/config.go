@@ -1,25 +1,22 @@
 package heuristics
 
 import (
-	"openreplay/backend/pkg/env"
+	"openreplay/backend/internal/config/common"
+	"openreplay/backend/internal/config/configurator"
 )
 
 type Config struct {
-	GroupHeuristics string
-	TopicAnalytics  string
-	LoggerTimeout   int
-	TopicRawWeb     string
-	TopicRawIOS     string
-	ProducerTimeout int
+	common.Config
+	GroupHeuristics string `env:"GROUP_HEURISTICS,required"`
+	TopicAnalytics  string `env:"TOPIC_ANALYTICS,required"`
+	LoggerTimeout   int    `env:"LOG_QUEUE_STATS_INTERVAL_SEC,required"`
+	TopicRawWeb     string `env:"TOPIC_RAW_WEB,required"`
+	TopicRawIOS     string `env:"TOPIC_RAW_IOS,required"`
+	ProducerTimeout int    `env:"PRODUCER_TIMEOUT,default=2000"`
 }
 
 func New() *Config {
-	return &Config{
-		GroupHeuristics: env.String("GROUP_HEURISTICS"),
-		TopicAnalytics:  env.String("TOPIC_ANALYTICS"),
-		LoggerTimeout:   env.Int("LOG_QUEUE_STATS_INTERVAL_SEC"),
-		TopicRawWeb:     env.String("TOPIC_RAW_WEB"),
-		TopicRawIOS:     env.String("TOPIC_RAW_IOS"),
-		ProducerTimeout: 2000,
-	}
+	cfg := &Config{}
+	configurator.Process(cfg)
+	return cfg
 }

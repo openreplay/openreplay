@@ -4,6 +4,7 @@ import (
 	"log"
 	config "openreplay/backend/internal/config/integrations"
 	"openreplay/backend/internal/integrations/clientManager"
+	"openreplay/backend/pkg/monitoring"
 	"time"
 
 	"os"
@@ -17,16 +18,15 @@ import (
 	"openreplay/backend/pkg/token"
 )
 
-/*
-Integrations
-*/
-
+//
 func main() {
+	metrics := monitoring.New("integrations")
+
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
 
 	cfg := config.New()
 
-	pg := postgres.NewConn(cfg.PostgresURI, 0, 0)
+	pg := postgres.NewConn(cfg.PostgresURI, 0, 0, metrics)
 	defer pg.Close()
 
 	tokenizer := token.NewTokenizer(cfg.TokenSecret)
@@ -46,7 +46,7 @@ func main() {
 		}
 	})
 
-	producer := queue.NewProducer()
+	producer := queue.NewProducer(cfg.MessageSizeLimit)
 	defer producer.Close(15000)
 
 	listener, err := postgres.NewIntegrationsListener(cfg.PostgresURI)

@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric/instrument/syncfloat64"
 	"log"
+	"openreplay/backend/pkg/monitoring"
 	"strings"
 	"time"
 
@@ -27,15 +30,21 @@ type Conn struct {
 	rawBatches      map[uint64][]*batchItem
 	batchQueueLimit int
 	batchSizeLimit  int
+	batchSizeBytes  syncfloat64.Histogram
+	batchSizeLines  syncfloat64.Histogram
+	sqlRequestTime  syncfloat64.Histogram
 }
 
-func NewConn(url string, queueLimit, sizeLimit int) *Conn {
+func NewConn(url string, queueLimit, sizeLimit int, metrics *monitoring.Metrics) *Conn {
+	if metrics == nil {
+		log.Fatalf("metrics is nil")
+	}
 	c, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		log.Println(err)
 		log.Fatalln("pgxpool.Connect Error")
 	}
-	return &Conn{
+	conn := &Conn{
 		c:               c,
 		batches:         make(map[uint64]*pgx.Batch),
 		batchSizes:      make(map[uint64]int),
@@ -43,11 +52,29 @@ func NewConn(url string, queueLimit, sizeLimit int) *Conn {
 		batchQueueLimit: queueLimit,
 		batchSizeLimit:  sizeLimit,
 	}
+	conn.initMetrics(metrics)
+	return conn
 }
 
 func (conn *Conn) Close() error {
 	conn.c.Close()
 	return nil
+}
+
+func (conn *Conn) initMetrics(metrics *monitoring.Metrics) {
+	var err error
+	conn.batchSizeBytes, err = metrics.RegisterHistogram("batch_size_bytes")
+	if err != nil {
+		log.Printf("can't create batchSizeBytes metric: %s", err)
+	}
+	conn.batchSizeLines, err = metrics.RegisterHistogram("batch_size_lines")
+	if err != nil {
+		log.Printf("can't create batchSizeLines metric: %s", err)
+	}
+	conn.sqlRequestTime, err = metrics.RegisterHistogram("sql_request_time")
+	if err != nil {
+		log.Printf("can't create sqlRequestTime metric: %s", err)
+	}
 }
 
 func (conn *Conn) batchQueue(sessionID uint64, sql string, args ...interface{}) {
@@ -69,6 +96,10 @@ func (conn *Conn) batchQueue(sessionID uint64, sql string, args ...interface{}) 
 
 func (conn *Conn) CommitBatches() {
 	for sessID, b := range conn.batches {
+		// Record batch size in bytes and number of lines
+		conn.batchSizeBytes.Record(context.Background(), float64(conn.batchSizes[sessID]))
+		conn.batchSizeLines.Record(context.Background(), float64(b.Len()))
+		// Send batch to db and execute
 		br := conn.c.SendBatch(getTimeoutContext(), b)
 		l := b.Len()
 		for i := 0; i < l; i++ {
@@ -100,6 +131,10 @@ func (conn *Conn) commitBatch(sessionID uint64) {
 		log.Printf("can't find batch for session: %d", sessionID)
 		return
 	}
+	// Record batch size in bytes and number of lines
+	conn.batchSizeBytes.Record(context.Background(), float64(conn.batchSizes[sessionID]))
+	conn.batchSizeLines.Record(context.Background(), float64(b.Len()))
+	// Send batch to db and execute
 	br := conn.c.SendBatch(getTimeoutContext(), b)
 	l := b.Len()
 	for i := 0; i < l; i++ {
@@ -119,36 +154,63 @@ func (conn *Conn) commitBatch(sessionID uint64) {
 }
 
 func (conn *Conn) query(sql string, args ...interface{}) (pgx.Rows, error) {
-	return conn.c.Query(getTimeoutContext(), sql, args...)
+	start := time.Now()
+	res, err := conn.c.Query(getTimeoutContext(), sql, args...)
+	conn.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", methodName(sql)))
+	return res, err
 }
 
 func (conn *Conn) queryRow(sql string, args ...interface{}) pgx.Row {
-	return conn.c.QueryRow(getTimeoutContext(), sql, args...)
+	start := time.Now()
+	res := conn.c.QueryRow(getTimeoutContext(), sql, args...)
+	conn.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", methodName(sql)))
+	return res
 }
 
 func (conn *Conn) exec(sql string, args ...interface{}) error {
+	start := time.Now()
 	_, err := conn.c.Exec(getTimeoutContext(), sql, args...)
+	conn.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", methodName(sql)))
 	return err
 }
 
 type _Tx struct {
 	pgx.Tx
+	sqlRequestTime syncfloat64.Histogram
 }
 
 func (conn *Conn) begin() (_Tx, error) {
+	start := time.Now()
 	tx, err := conn.c.Begin(context.Background())
-	return _Tx{tx}, err
+	conn.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", "begin"))
+	return _Tx{tx, conn.sqlRequestTime}, err
 }
 
 func (tx _Tx) exec(sql string, args ...interface{}) error {
+	start := time.Now()
 	_, err := tx.Exec(context.Background(), sql, args...)
+	tx.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", methodName(sql)))
 	return err
 }
 
 func (tx _Tx) rollback() error {
-	return tx.Rollback(context.Background())
+	start := time.Now()
+	err := tx.Rollback(context.Background())
+	tx.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", "rollback"))
+	return err
 }
 
 func (tx _Tx) commit() error {
-	return tx.Commit(context.Background())
+	start := time.Now()
+	err := tx.Commit(context.Background())
+	tx.sqlRequestTime.Record(context.Background(), float64(time.Now().Sub(start).Milliseconds()), attribute.String("method", "commit"))
+	return err
+}
+
+func methodName(sql string) string {
+	method := "unknown"
+	if parts := strings.Split(sql, ""); len(parts) > 0 {
+		method = parts[0]
+	}
+	return strings.ToLower(method)
 }
