@@ -1,15 +1,14 @@
-import React, { MouseEvent, useState } from 'react'
+import React, { MouseEvent, useState } from 'react';
 import cn from 'classnames';
 import { Icon, Input } from 'UI';
 import { List } from 'immutable';
 import { confirm, Popup } from 'UI';
-import { applySavedSearch, remove, editSavedSearch } from 'Duck/search'
+import { applySavedSearch, remove, editSavedSearch } from 'Duck/search';
 import { connect } from 'react-redux';
 import { useModal } from 'App/components/Modal';
-import { SavedSearch } from 'Types/ts/search'
-import SaveSearchModal from 'Shared/SaveSearchModal'
-import stl from './savedSearchModal.module.css'
-
+import { SavedSearch } from 'Types/ts/search';
+import SaveSearchModal from 'Shared/SaveSearchModal';
+import stl from './savedSearchModal.module.css';
 
 interface ITooltipIcon {
     title: string;
@@ -18,15 +17,12 @@ interface ITooltipIcon {
 }
 function TooltipIcon(props: ITooltipIcon) {
     return (
-        <div onClick={(e) => props.onClick(e)} >
-            <Popup
-                content={props.title}
-                hideOnClick={true}
-            >
+        <div onClick={(e) => props.onClick(e)}>
+            <Popup content={props.title} hideOnClick={true}>
                 <Icon size="16" name={props.name} color="main" />
             </Popup>
         </div>
-    )
+    );
 }
 
 interface Props {
@@ -37,51 +33,55 @@ interface Props {
 }
 function SavedSearchModal(props: Props) {
     const { hideModal } = useModal();
-    const [showModal, setshowModal] = useState(false)
-    const [filterQuery, setFilterQuery] = useState('')
+    const [showModal, setshowModal] = useState(false);
+    const [filterQuery, setFilterQuery] = useState('');
 
     const onClick = (item: SavedSearch, e) => {
         e.stopPropagation();
         props.applySavedSearch(item);
         hideModal();
-    }
+    };
     const onDelete = async (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         const confirmation = await confirm({
             header: 'Confirm',
             confirmButton: 'Yes, delete',
-            confirmation: 'Are you sure you want to permanently delete this search?'
-        })
+            confirmation: 'Are you sure you want to permanently delete this search?',
+        });
         if (confirmation) {
-            props.remove(item.searchId)
+            props.remove(item.searchId);
         }
-    }
+    };
     const onEdit = (item: SavedSearch, e: MouseEvent<HTMLDivElement>) => {
         e.stopPropagation();
         props.editSavedSearch(item);
         setTimeout(() => setshowModal(true), 0);
-    }
+    };
 
-    const shownItems = props.list.filter(item => item.name.includes(filterQuery))
+    const shownItems = props.list.filter((item) => item.name.includes(filterQuery));
 
     return (
         <div className="bg-white box-shadow h-screen" style={{ width: '450px' }}>
             <div className="p-6">
-                <h1 className="text-2xl">Saved Search  <span className="color-gray-medium">{props.list.size}</span></h1>
+                <h1 className="text-2xl">
+                    Saved Search <span className="color-gray-medium">{props.list.size}</span>
+                </h1>
             </div>
             {props.list.size > 1 && (
                 <div className="mb-6 w-full px-4">
                     <Input
-                        // className="w-full"
-                        // iconPosition="left"
                         icon="search"
-                        onChange={({ target: { value }}: any) => setFilterQuery(value)}
+                        onChange={({ target: { value } }: any) => setFilterQuery(value)}
                         placeholder="Filter by name"
                     />
                 </div>
             )}
-            {shownItems.map(item => (
-                <div key={item.key} className={cn("p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue", item.isPublic && 'pb-10')} onClick={(e) => onClick(item, e)}>
+            {shownItems.map((item) => (
+                <div
+                    key={item.key}
+                    className={cn('p-4 cursor-pointer border-b flex items-center group hover:bg-active-blue', item.isPublic && 'pb-10')}
+                    onClick={(e) => onClick(item, e)}
+                >
                     <Icon name="search" color="gray-medium" size="16" />
                     <div className="ml-4">
                         <div className="text-lg">{item.name} </div>
@@ -102,9 +102,9 @@ function SavedSearchModal(props: Props) {
                     </div>
                 </div>
             ))}
-             { showModal && ( <SaveSearchModal show closeHandler={() => setshowModal(false)} /> )}
+            {showModal && <SaveSearchModal show closeHandler={() => setshowModal(false)} rename={true} />}
         </div>
-    )
+    );
 }
 
-export default connect(state => ({ list: state.getIn([ 'search', 'list' ]) }), { applySavedSearch, remove, editSavedSearch })(SavedSearchModal)
+export default connect((state: any) => ({ list: state.getIn(['search', 'list']) }), { applySavedSearch, remove, editSavedSearch })(SavedSearchModal);
