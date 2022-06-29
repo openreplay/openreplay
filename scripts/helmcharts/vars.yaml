@@ -63,6 +63,15 @@ ingress-nginx: &ingress-nginx
     ingressClassResource:
       # -- Name of the ingressClass
       name: openreplay
+    # Onlf if Metrics enabled
+    # metrics:
+    #   enabled: true
+    #   serviceMonitor:
+    #     enabled: true
+    #     additionalLabels:
+    #       release: monitoring
+    #     namespaceSelector:
+    #       any: true
   # -- For backwards compatibility with ingress.class annotation, use ingressClass.
   # Algorithm is as follows, first ingressClassName is considered, if not present, controller looks for ingress.class annotation
     ingressClass: openreplay
