@@ -108,7 +108,7 @@ export default class StatedScreen extends Screen {
     const window = this.window
     const markedTargets: MarkedTarget[] | null = getState().markedTargets
     const target = markedTargets && markedTargets[index]
-    if (target && window && this.actualScroll) {
+    if (target && window) {
       const { fixedTop, rect } = getOffset(target.el, window)
       const scrollToY = fixedTop - window.innerHeight / 1.5
       if (rect.top < 0 || rect.top > window.innerHeight) {
