@@ -133,7 +133,7 @@ export default class Login extends React.Component {
                 </div>
               }
               {/* <div className={ stl.formFooter }> */}
-                <Button type="submit" variant="primary" >{ 'Login' }</Button>
+                <Button className="mt-2" type="submit" variant="primary" >{ 'Login' }</Button>
 
                 <div className={ cn(stl.links, 'text-lg') }>
                   <Link to={ FORGOT_PASSWORD }>{'Forgot your password?'}</Link>
