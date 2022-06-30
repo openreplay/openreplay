@@ -27,6 +27,10 @@ kube-prometheus-stack:
         editable: true
         type: loki
         url: http://loki.observability:3100
+      - name: k8s-db-openreplay-clickhouse
+        editable: true
+        type: vertamedia-clickhouse-datasource
+        url: http://clickhouse-openreplay-clickhouse.db:8123
     plugins:
       - grafana-piechart-panel
       - vertamedia-clickhouse-datasource
@@ -50,6 +54,7 @@ kube-prometheus-stack:
       storageSpec:
         volumeClaimTemplate:
           spec:
+            storageClassName: local-path
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:

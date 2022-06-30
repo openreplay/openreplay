@@ -1,0 +1,1188 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Helps to visualize most frequent, slowest, failed queries.\r\nShows queries rate per second, table with last queries",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "gnetId": 2515,
+  "graphTooltip": 1,
+  "id": 16,
+  "iteration": 1656598972006,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "$db"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 22,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$db"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Top charts",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$db"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 20,
+        "x": 0,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 15,
+      "legend": {
+        "alignAsTable": true,
+        "avg": true,
+        "current": false,
+        "max": true,
+        "min": false,
+        "rightSide": true,
+        "show": true,
+        "sort": "avg",
+        "sortDesc": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "9.0.1",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "time_series",
+          "formattedQuery": "SELECT * FROM ($rateColumns(\n    substring(query,  1,  45) AS query,\n    count() c)\nFROM $table\nWHERE\n    cityHash64(query) global in (\n    SELECT cityHash64(substring(query,  1,  45)) AS h\n    FROM $table\n    WHERE\n        $timeFilter\n        AND type in ($type)\n        AND initial_user in ($user)\n        AND('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\n    GROUP BY h\n    ORDER BY count() desc\n    LIMIT $top)\n    AND type in ($type)\n    AND initial_user in ($user)\n    AND('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))) SETTINGS skip_unavailable_shards=1",
+          "intervalFactor": 2,
+          "query": "SELECT\r\n    t,\r\n    arrayMap(a -> (a.1, a.2 / runningDifference(t / 1000)), groupArr)\r\nFROM (\r\n    SELECT t, groupArray((query, c)) AS groupArr\r\n    FROM (\r\n        SELECT\r\n            (intDiv(toUInt32(event_time), 2) * 2) * 1000 AS t,\r\n            substring(query, 1, 45) AS query,\r\n            count() c\r\n        FROM $table\r\n        WHERE $timeFilter\r\n        AND cityHash64(query) GLOBAL IN (\r\n            SELECT cityHash64(substring(query, 1, 45)) AS h\r\n            FROM $table\r\n            WHERE $timeFilter\r\n                AND type IN ($type)\r\n                AND initial_user IN ($user)\r\n                AND ('$query_type' = 'all' OR (positionCaseInsensitive(query, '$query_type') = 1))\r\n            GROUP BY h\r\n            ORDER BY count() DESC\r\n            LIMIT $top\r\n            SETTINGS skip_unavailable_shards=1\r\n        )\r\n            AND type IN ($type)\r\n            AND initial_user IN ($user)\r\n            AND ('$query_type' = 'all' OR (positionCaseInsensitive(query, '$query_type') = 1))\r\n        GROUP BY t, query\r\n        ORDER BY t\r\n    )\r\n    GROUP BY t\r\n    ORDER BY t\r\n) SETTINGS skip_unavailable_shards=1",
+          "rawQuery": "SELECT     t,     arrayMap(a -> (a.1, a.2 / runningDifference(t / 1000)), groupArr) FROM (     SELECT t, groupArray((query, c)) AS groupArr     FROM (         SELECT             (intDiv(toUInt32(event_time), 2) * 2) * 1000 AS t,             substring(query, 1, 45) AS query,             count() c         FROM cluster('all-sharded',system.query_log)         WHERE event_date >= toDate(1586192379) AND event_time >= toDateTime(1586192379)         AND cityHash64(query) GLOBAL IN (             SELECT cityHash64(substring(query, 1, 45)) AS h             FROM cluster('all-sharded',system.query_log)             WHERE event_date >= toDate(1586192379) AND event_time >= toDateTime(1586192379)                 AND type IN (1,2,3,4)                 AND initial_user IN ('default')                 AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))             GROUP BY h             ORDER BY count() DESC             LIMIT 5             SETTINGS skip_unavailable_shards=1         )             AND type IN (1,2,3,4)             AND initial_user IN ('default')             AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))         GROUP BY t, query         ORDER BY t     )     GROUP BY t     ORDER BY t ) SETTINGS skip_unavailable_shards=1",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Top $top request's rate by type: $type; user: $user; query type: $query_type",
+      "tooltip": {
+        "shared": true,
+        "sort": 2,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": "",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "datasource": {
+        "uid": "$db"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "id": 17,
+      "links": [],
+      "options": {
+        "content": "1 - successful start of query execution\n\n2 - successful end of query execution\n\n3 - exception before start of query execution\n\n4 - exception while query execution",
+        "mode": "markdown"
+      },
+      "pluginVersion": "9.0.1",
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$db"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Types",
+      "transparent": true,
+      "type": "text"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "$db"
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "height": "400px",
+      "id": 18,
+      "links": [],
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "t",
+          "type": "hidden"
+        },
+        {
+          "alias": "duration",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "pattern": "duration",
+          "thresholds": [],
+          "type": "number",
+          "unit": "ms"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "count",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "table",
+          "formattedQuery": "<font color=\"darkorange\">SELECT</font><br />    <font color=\"navajowhite\">rand</font>() <font color=\"darkorange\">as</font> t,<br />    <font color=\"navajowhite\">substring</font>(query,  <font color=\"cornflowerblue\">1</font>,  <font color=\"cornflowerblue\">70</font>) <font color=\"darkorange\">AS</font> query,<br />    <font color=\"navajowhite\">avg</font>(query_duration_ms) duration,<br />    <font color=\"navajowhite\">count</font>() <font color=\"navajowhite\">count</font><br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">WHERE</font><br />    <font color=\"darkcyan\">$timeFilter</font><br />    <font color=\"yellow\">AND</font> <font color=\"darkorange\">type</font> <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$type</font>)<br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br />    <font color=\"yellow\">and</font>(<font color=\"lightgreen\">'$query_type'</font> <font color=\"yellow\">=</font> <font color=\"lightgreen\">'all'</font> <font color=\"yellow\">or</font>(positionCaseInsensitive(query,  <font color=\"lightgreen\">'$query_type'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font>))<br /><font color=\"darkorange\">GROUP BY</font> query<br /><font color=\"darkorange\">ORDER BY</font> duration <font color=\"darkorange\">desc</font><br /><font color=\"darkorange\">LIMIT</font> <font color=\"darkcyan\">$top</font>",
+          "intervalFactor": 2,
+          "query": "SELECT\n    rand() as t,\n    substring(query,  1,  70) AS query,\n    avg(query_duration_ms) duration,\n    count() count\nFROM $table\nWHERE\n    $timeFilter\n    AND type in ($type)\n    and initial_user in ($user)\n    and('$query_type' = 'all' or(positionCaseInsensitive(query,  '$query_type') = 1))\nGROUP BY query\nORDER BY duration desc\nLIMIT $top",
+          "rawQuery": "SELECT     t,     arrayMap(a -> (a.1, a.2 / runningDifference(t / 1000)), groupArr) FROM (     SELECT t, groupArray((query, c)) AS groupArr     FROM (         SELECT             (intDiv(toUInt32(event_time), 2) * 2) * 1000 AS t,             substring(query, 1, 45) AS query,             count() c         FROM cluster('all-sharded',system.query_log)         WHERE event_date >= toDate(1586234275) AND event_time >= toDateTime(1586234275)         AND cityHash64(query) GLOBAL IN (             SELECT cityHash64(substring(query, 1, 45)) AS h             FROM cluster('all-sharded',system.query_log)             WHERE event_date >= toDate(1586234275) AND event_time >= toDateTime(1586234275)                 AND type IN (1,2,3,4)                 AND initial_user IN ('default')                 AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))             GROUP BY h             ORDER BY count() DESC             LIMIT 5             SETTINGS skip_unavailable_shards=1         )             AND type IN (1,2,3,4)             AND initial_user IN ('default')             AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))         GROUP BY t, query         ORDER BY t     )     GROUP BY t     ORDER BY t ) SETTINGS skip_unavailable_shards=1",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "title": "Top slow queries by type: $type; user: $user; query type: $query_type",
+      "transform": "table",
+      "type": "table-old"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "$db"
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "height": "400px",
+      "id": 19,
+      "links": [],
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "t",
+          "type": "hidden"
+        },
+        {
+          "alias": "usage",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "pattern": "usage",
+          "thresholds": [],
+          "type": "number",
+          "unit": "bytes"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "count",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "table",
+          "formattedQuery": "<font color=\"darkorange\">SELECT</font><br />    <font color=\"navajowhite\">rand</font>() <font color=\"darkorange\">as</font> t,<br />    <font color=\"navajowhite\">substring</font>(query,  <font color=\"cornflowerblue\">1</font>,  <font color=\"cornflowerblue\">70</font>) <font color=\"darkorange\">AS</font> query,<br />    <font color=\"navajowhite\">avg</font>(memory_usage) usage,<br />    <font color=\"navajowhite\">count</font>() <font color=\"navajowhite\">count</font><br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">WHERE</font><br />    <font color=\"darkcyan\">$timeFilter</font><br />    <font color=\"yellow\">AND</font> <font color=\"darkorange\">type</font> <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$type</font>)<br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br />    <font color=\"yellow\">and</font>(<font color=\"lightgreen\">'$query_type'</font> <font color=\"yellow\">=</font> <font color=\"lightgreen\">'all'</font> <font color=\"yellow\">or</font>(positionCaseInsensitive(query,  <font color=\"lightgreen\">'$query_type'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font>))<br /><font color=\"darkorange\">GROUP BY</font> query<br /><font color=\"darkorange\">ORDER BY</font> usage <font color=\"darkorange\">desc</font><br /><font color=\"darkorange\">LIMIT</font> <font color=\"darkcyan\">$top</font>",
+          "intervalFactor": 2,
+          "query": "SELECT\n    rand() as t,\n    substring(query,  1,  70) AS query,\n    avg(memory_usage) usage,\n    count() count\nFROM $table\nWHERE\n    $timeFilter\n    AND type IN ($type)\n    AND initial_user IN ($user)\n    AND ('$query_type' = 'all' OR (positionCaseInsensitive(query,  '$query_type') = 1))\nGROUP BY query\nORDER BY usage DESC\nLIMIT $top",
+          "rawQuery": "SELECT     t,     arrayMap(a -> (a.1, a.2 / runningDifference(t / 1000)), groupArr) FROM (     SELECT t, groupArray((query, c)) AS groupArr     FROM (         SELECT             (intDiv(toUInt32(event_time), 2) * 2) * 1000 AS t,             substring(query, 1, 45) AS query,             count() c         FROM cluster('all-sharded',system.query_log)         WHERE event_date >= toDate(1586234300) AND event_time >= toDateTime(1586234300)         AND cityHash64(query) GLOBAL IN (             SELECT cityHash64(substring(query, 1, 45)) AS h             FROM cluster('all-sharded',system.query_log)             WHERE event_date >= toDate(1586234300) AND event_time >= toDateTime(1586234300)                 AND type IN (1,2,3,4)                 AND initial_user IN ('default')                 AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))             GROUP BY h             ORDER BY count() DESC             LIMIT 5             SETTINGS skip_unavailable_shards=1         )             AND type IN (1,2,3,4)             AND initial_user IN ('default')             AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))         GROUP BY t, query         ORDER BY t     )     GROUP BY t     ORDER BY t ) SETTINGS skip_unavailable_shards=1",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "title": "Top memory consumers by type: $type; user: $user; query type: $query_type",
+      "transform": "table",
+      "type": "table-old"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "$db"
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 10,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "height": "400px",
+      "id": 20,
+      "links": [],
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 3,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "t",
+          "type": "hidden"
+        },
+        {
+          "alias": "type",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "type",
+          "thresholds": [],
+          "type": "number",
+          "unit": "none"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "count",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "table",
+          "formattedQuery": "<font color=\"darkorange\">SELECT</font><br />    <font color=\"navajowhite\">rand</font>() <font color=\"darkorange\">as</font> t,<br />    <font color=\"navajowhite\">substring</font>(query,  <font color=\"cornflowerblue\">1</font>,  <font color=\"cornflowerblue\">70</font>) <font color=\"darkorange\">AS</font> query,<br />    <font color=\"darkorange\">type</font>,<br />    <font color=\"navajowhite\">count</font>() <font color=\"navajowhite\">count</font><br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">WHERE</font><br />    <font color=\"darkcyan\">$timeFilter</font><br />    <font color=\"yellow\">AND</font> <font color=\"darkorange\">type</font> <font color=\"darkorange\">in</font> (<font color=\"cornflowerblue\">3</font>,<font color=\"cornflowerblue\">4</font>)<br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br />    <font color=\"yellow\">and</font>(<font color=\"lightgreen\">'$query_type'</font> <font color=\"yellow\">=</font> <font color=\"lightgreen\">'all'</font> <font color=\"yellow\">or</font>(positionCaseInsensitive(query,  <font color=\"lightgreen\">'$query_type'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font>))<br /><font color=\"darkorange\">GROUP BY</font><br />    query,<br />    <font color=\"darkorange\">type</font><br /><font color=\"darkorange\">ORDER BY</font> <font color=\"navajowhite\">count</font> <font color=\"darkorange\">desc</font><br /><font color=\"darkorange\">LIMIT</font> <font color=\"darkcyan\">$top</font>",
+          "intervalFactor": 2,
+          "query": "SELECT\n    rand() as t,\n    substring(query,  1,  70) AS query,\n    type,\n    count() count\nFROM $table\nWHERE\n    $timeFilter\n    AND type IN (3,4)\n    AND initial_user IN ($user)\n    AND ('$query_type' = 'all' OR (positionCaseInsensitive(query,  '$query_type') = 1))\nGROUP BY\n    query,\n    type\nORDER BY count desc\nLIMIT $top",
+          "rawQuery": "SELECT     t,     arrayMap(a -> (a.1, a.2 / runningDifference(t / 1000)), groupArr) FROM (     SELECT t, groupArray((query, c)) AS groupArr     FROM (         SELECT             (intDiv(toUInt32(event_time), 2) * 2) * 1000 AS t,             substring(query, 1, 45) AS query,             count() c         FROM cluster('all-sharded',system.query_log)         WHERE event_date >= toDate(1586234335) AND event_time >= toDateTime(1586234335)         AND cityHash64(query) GLOBAL IN (             SELECT cityHash64(substring(query, 1, 45)) AS h             FROM cluster('all-sharded',system.query_log)             WHERE event_date >= toDate(1586234335) AND event_time >= toDateTime(1586234335)                 AND type IN (1,2,3,4)                 AND initial_user IN ('default')                 AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))             GROUP BY h             ORDER BY count() DESC             LIMIT 5             SETTINGS skip_unavailable_shards=1         )             AND type IN (1,2,3,4)             AND initial_user IN ('default')             AND ('all' = 'all' OR (positionCaseInsensitive(query, 'all') = 1))         GROUP BY t, query         ORDER BY t     )     GROUP BY t     ORDER BY t ) SETTINGS skip_unavailable_shards=1",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "title": "Top failed queries by user: $user; query type: $query_type",
+      "transform": "table",
+      "type": "table-old"
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "$db"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 23,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$db"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Request charts",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$db"
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "hiddenSeries": false,
+      "id": 14,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "time_series",
+          "formattedQuery": "<font color=\"darkcyan\">$rate</font>(<font color=\"navajowhite\">count</font>() c)<br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">where</font>  <font color=\"darkorange\">type</font> <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$type</font>)<br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br />    <font color=\"yellow\">and</font>(<font color=\"lightgreen\">'$query_type'</font> <font color=\"yellow\">=</font> <font color=\"lightgreen\">'all'</font> <font color=\"yellow\">or</font>(positionCaseInsensitive(query,  <font color=\"lightgreen\">'$query_type'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font>))",
+          "interval": "",
+          "intervalFactor": 2,
+          "query": "$rate(count() c)\nFROM $table\nWHERE  type IN($type)\n    AND initial_user IN ($user)\n    AND ('$query_type' = 'all' OR (positionCaseInsensitive(query,  '$query_type') = 1))",
+          "rawQuery": "SELECT t, c/runningDifference(t/1000) cRate FROM ( SELECT (intDiv(toUInt32(event_time), 120) * 120) * 1000 AS t, count() c FROM cluster('all-sharded',system.query_log) WHERE event_date >= toDate(1586192459) AND event_time >= toDateTime(1586192459) AND  type IN (1,2,3,4)     AND initial_user IN ('default')     AND ('all' = 'all' OR (positionCaseInsensitive(query,  'all') = 1)) GROUP BY t ORDER BY t)",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Reqs/s by type: $type; user: $user; query type: $query_type",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "uid": "$db"
+      },
+      "fill": 1,
+      "fillGradient": 1,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 19
+      },
+      "hiddenSeries": false,
+      "id": 16,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null as zero",
+      "options": {
+        "dataLinks": []
+      },
+      "percentage": false,
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [
+        {
+          "alias": "/insert.+/",
+          "yaxis": 2
+        },
+        {
+          "alias": "select_quantile_50",
+          "color": "#FADE2A"
+        },
+        {
+          "alias": "select_quantile_90",
+          "color": "#73BF69"
+        },
+        {
+          "alias": "insert_quantile_50",
+          "color": "#FA6400"
+        },
+        {
+          "alias": "insert_quantile_90",
+          "color": "#C4162A"
+        }
+      ],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": true,
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "time_series",
+          "formattedQuery": "<font color=\"darkorange\">SELECT</font><br />    <font color=\"darkcyan\">$timeSeries</font> <font color=\"darkorange\">as</font> t,<br />    <font color=\"navajowhite\">avg</font>(query_duration_ms)  select_duration<br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">WHERE</font><br />    <font color=\"darkcyan\">$timeFilter</font><br />    <font color=\"yellow\">AND</font> <font color=\"darkorange\">type</font> <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">2</font><br />    <font color=\"yellow\">and</font> positionCaseInsensitive(query,  <font color=\"lightgreen\">'select'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font><br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br /><font color=\"darkorange\">GROUP BY</font> t<br /><font color=\"darkorange\">ORDER BY</font> t",
+          "intervalFactor": 2,
+          "query": "SELECT\n    $timeSeries as t,\n    quantile(0.5)(query_duration_ms)  select_quantile_50,\n    quantile(0.9)(query_duration_ms)  select_quantile_90\nFROM $table\nWHERE\n    $timeFilter\n    AND type = 2\n    AND positionCaseInsensitive(query,  'select') = 1\n    AND initial_user IN ($user)\nGROUP BY t\nORDER BY t",
+          "rawQuery": "SELECT     (intDiv(toUInt32(event_time), 10) * 10) * 1000 as t,     quantile(0.5)(query_duration_ms)  select_quantile_50,     quantile(0.9)(query_duration_ms)  select_quantile_90 FROM cluster('all-sharded',system.query_log) WHERE     event_date >= toDate(1595573984) AND event_time >= toDateTime(1595573984)     AND type = 2     AND positionCaseInsensitive(query,  'select') = 1     AND initial_user IN ('default') GROUP BY t ORDER BY t",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        },
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "expr": "",
+          "format": "time_series",
+          "formattedQuery": "<font color=\"darkorange\">SELECT</font><br />    <font color=\"darkcyan\">$timeSeries</font> <font color=\"darkorange\">as</font> t,<br />    <font color=\"navajowhite\">avg</font>(query_duration_ms) insert_duration<br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">WHERE</font><br />    <font color=\"darkcyan\">$timeFilter</font><br />    <font color=\"yellow\">AND</font> <font color=\"darkorange\">type</font> <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">2</font><br /><font color=\"yellow\">and</font> positionCaseInsensitive(query,  <font color=\"lightgreen\">'insert into'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font><br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br /><font color=\"darkorange\">GROUP BY</font> t<br /><font color=\"darkorange\">ORDER BY</font> t",
+          "intervalFactor": 2,
+          "query": "SELECT\n    $timeSeries as t,\n    quantile(0.5)(query_duration_ms) insert_quantile_50,\n    quantile(0.9)(query_duration_ms) insert_quantile_90\nFROM $table\nWHERE\n    $timeFilter\n    AND type = 2\nand positionCaseInsensitive(query,  'insert into') = 1\n    and initial_user in ($user)\nGROUP BY t\nORDER BY t",
+          "rawQuery": "SELECT     (intDiv(toUInt32(event_time), 10) * 10) * 1000 as t,     quantile(0.5)(query_duration_ms) insert_quantile_50,     quantile(0.9)(query_duration_ms) insert_quantile_90 FROM cluster('all-sharded',system.query_log) WHERE     event_date >= toDate(1595573984) AND event_time >= toDateTime(1595573984)     AND type = 2 and positionCaseInsensitive(query,  'insert into') = 1     and initial_user in ('default') GROUP BY t ORDER BY t",
+          "refId": "B",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Query duration by type: $type; user: $user",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "ms",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "ms",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": {
+        "uid": "$db"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 24,
+      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$db"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Query log table",
+      "type": "row"
+    },
+    {
+      "columns": [],
+      "datasource": {
+        "uid": "$db"
+      },
+      "fontSize": "100%",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 27
+      },
+      "id": 21,
+      "links": [],
+      "scroll": true,
+      "showHeader": true,
+      "sort": {
+        "col": 2,
+        "desc": true
+      },
+      "styles": [
+        {
+          "alias": "Time",
+          "align": "auto",
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "Time",
+          "type": "date"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "pattern": "duration",
+          "thresholds": [],
+          "type": "number",
+          "unit": "ms"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "dateFormat": "YYYY-MM-DD HH:mm:ss",
+          "decimals": 2,
+          "pattern": "memory",
+          "thresholds": [],
+          "type": "number",
+          "unit": "bytes"
+        },
+        {
+          "alias": "",
+          "align": "auto",
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "decimals": 2,
+          "pattern": "/.*/",
+          "thresholds": [],
+          "type": "number",
+          "unit": "short"
+        }
+      ],
+      "targets": [
+        {
+          "database": "",
+          "datasource": {
+            "uid": "$db"
+          },
+          "dateColDataType": "event_date",
+          "dateLoading": false,
+          "dateTimeColDataType": "event_time",
+          "dateTimeType": "DATETIME",
+          "datetimeLoading": false,
+          "format": "time_series",
+          "formattedQuery": "<font color=\"darkorange\">SELECT</font><br />    event_time,<br />    user,<br />    query_duration_ms duration,<br />    memory_usage memory,<br />    if(exception<font color=\"yellow\">!=</font><font color=\"lightgreen\">''</font>, <font color=\"lightgreen\">'fail'</font>, <font color=\"lightgreen\">'success'</font>) result,<br />    <font color=\"navajowhite\">concat</font>(<font color=\"navajowhite\">substring</font>(query,<font color=\"cornflowerblue\">1</font>,<font color=\"cornflowerblue\">120</font>), <font color=\"lightgreen\">'...'</font>) query<br /><font color=\"darkorange\">FROM</font> <font color=\"darkcyan\">$table</font><br /><font color=\"darkorange\">WHERE</font> <font color=\"darkcyan\">$timeFilter</font><br />    <font color=\"yellow\">AND</font> <font color=\"darkorange\">type</font> <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$type</font>)<br />    <font color=\"yellow\">and</font> initial_user <font color=\"darkorange\">in</font> (<font color=\"darkcyan\">$user</font>)<br />    <font color=\"yellow\">and</font>(<font color=\"lightgreen\">'$query_type'</font> <font color=\"yellow\">=</font> <font color=\"lightgreen\">'all'</font> <font color=\"yellow\">or</font>(positionCaseInsensitive(query,  <font color=\"lightgreen\">'$query_type'</font>) <font color=\"yellow\">=</font> <font color=\"cornflowerblue\">1</font>))<br /><font color=\"darkorange\">ORDER BY</font> event_time <font color=\"darkorange\">DESC</font><br /><font color=\"darkorange\">LIMIT</font> <font color=\"cornflowerblue\">1000</font>",
+          "intervalFactor": 1,
+          "query": "SELECT\n    event_time,\n    hostName() host,\n    user,\n    query_duration_ms duration,\n    memory_usage memory,\n    if(exception!='', 'fail', 'success') result,\n    concat(substring(query,1,120), '...') query\nFROM $table\nWHERE $timeFilter\n    AND type in ($type)\n    and initial_user in ($user)\n    and('$query_type' = 'all' OR (positionCaseInsensitive(query,  '$query_type') = 1))\nORDER BY event_time DESC\nLIMIT 1000",
+          "rawQuery": "SELECT     (intDiv(toUInt32(event_time), 10) * 10) * 1000 as t,     avg(query_duration_ms)  select_duration FROM cluster('all-sharded',system.query_log) WHERE     event_date >= toDate(1586232299) AND event_time >= toDateTime(1586232299)     AND type = 2     and positionCaseInsensitive(query,  'select') = 1     and initial_user in ('default') GROUP BY t ORDER BY t",
+          "refId": "A",
+          "resultFormat": "time_series",
+          "round": "0s",
+          "table": "cluster('all-sharded',system.query_log)",
+          "tableLoading": false
+        }
+      ],
+      "title": "Query log by type: $type; user: $user; query type: $query_type",
+      "transform": "timeseries_to_columns",
+      "type": "table-old"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [
+    "Altinity",
+    "clickhouse",
+    "queries",
+    "performance"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "k8s-db-openreplay-clickhouse",
+          "value": "k8s-db-openreplay-clickhouse"
+        },
+        "hide": 2,
+        "includeAll": false,
+        "label": "K8S ClickHouse installation",
+        "multi": false,
+        "name": "db",
+        "options": [],
+        "query": "vertamedia-clickhouse-datasource",
+        "refresh": 1,
+        "regex": "k8s-$exported_namespace-$chi",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "db",
+          "value": "db"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values({__name__ =~ \"chi_clickhouse_metric_Uptime|chi_clickhouse_metric_fetch_errors\"}, exported_namespace)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "K8S Namespace",
+        "multi": false,
+        "name": "exported_namespace",
+        "options": [],
+        "query": {
+          "query": "label_values({__name__ =~ \"chi_clickhouse_metric_Uptime|chi_clickhouse_metric_fetch_errors\"}, exported_namespace)",
+          "refId": "Prometheus-exported_namespace-Variable-Query"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "openreplay-clickhouse",
+          "value": "openreplay-clickhouse"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values({__name__ =~ \"chi_clickhouse_metric_Uptime|chi_clickhouse_metric_fetch_errors\", exported_namespace=\"$exported_namespace\"}, chi)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "K8S Clickhouse Installation",
+        "multi": false,
+        "name": "chi",
+        "options": [],
+        "query": {
+          "query": "label_values({__name__ =~ \"chi_clickhouse_metric_Uptime|chi_clickhouse_metric_fetch_errors\",exported_namespace=\"$exported_namespace\"}, chi)",
+          "refId": "Prometheus-chi-Variable-Query"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "auto": true,
+        "auto_count": 100,
+        "auto_min": "1m",
+        "current": {
+          "selected": false,
+          "text": "5m",
+          "value": "5m"
+        },
+        "hide": 2,
+        "name": "interval",
+        "options": [
+          {
+            "selected": false,
+            "text": "auto",
+            "value": "$__auto_interval_interval"
+          },
+          {
+            "selected": true,
+            "text": "5m",
+            "value": "5m"
+          }
+        ],
+        "query": "5m",
+        "refresh": 2,
+        "skipUrlSync": false,
+        "type": "interval"
+      },
+      {
+        "allValue": "1,2,3,4",
+        "current": {
+          "selected": true,
+          "tags": [],
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "hide": 0,
+        "includeAll": true,
+        "label": "type",
+        "multi": true,
+        "name": "type",
+        "options": [
+          {
+            "selected": true,
+            "text": "All",
+            "value": "$__all"
+          },
+          {
+            "selected": false,
+            "text": "1",
+            "value": "1"
+          },
+          {
+            "selected": false,
+            "text": "2",
+            "value": "2"
+          },
+          {
+            "selected": false,
+            "text": "3",
+            "value": "3"
+          },
+          {
+            "selected": false,
+            "text": "4",
+            "value": "4"
+          }
+        ],
+        "query": "1,2,3,4",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "current": {
+          "selected": true,
+          "tags": [],
+          "text": "5",
+          "value": "5"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "top elements",
+        "multi": false,
+        "name": "top",
+        "options": [
+          {
+            "selected": true,
+            "text": "5",
+            "value": "5"
+          },
+          {
+            "selected": false,
+            "text": "10",
+            "value": "10"
+          },
+          {
+            "selected": false,
+            "text": "15",
+            "value": "15"
+          },
+          {
+            "selected": false,
+            "text": "20",
+            "value": "20"
+          },
+          {
+            "selected": false,
+            "text": "25",
+            "value": "25"
+          },
+          {
+            "selected": false,
+            "text": "30",
+            "value": "30"
+          }
+        ],
+        "query": "5,10,15,20,25,30",
+        "skipUrlSync": false,
+        "type": "custom"
+      },
+      {
+        "allValue": "",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "uid": "$db"
+        },
+        "definition": "SELECT DISTINCT initial_user FROM cluster('all-sharded',system.query_log) WHERE event_date >= today()-3 AND event_time > toDateTime(today()-3) SETTINGS skip_unavailable_shards=1",
+        "hide": 0,
+        "includeAll": true,
+        "label": "initial user",
+        "multi": true,
+        "name": "user",
+        "options": [],
+        "query": "SELECT DISTINCT initial_user FROM cluster('all-sharded',system.query_log) WHERE event_date >= today()-3 AND event_time > toDateTime(today()-3) SETTINGS skip_unavailable_shards=1",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": "",
+        "current": {
+          "selected": true,
+          "text": "all",
+          "value": "all"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "query type",
+        "multi": false,
+        "name": "query_type",
+        "options": [
+          {
+            "selected": true,
+            "text": "all",
+            "value": "all"
+          },
+          {
+            "selected": false,
+            "text": "select",
+            "value": "select"
+          },
+          {
+            "selected": false,
+            "text": "insert",
+            "value": "insert"
+          }
+        ],
+        "query": "all,select,insert",
+        "skipUrlSync": false,
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "timezone": "browser",
+  "title": "ClickHouse in Kubernetes Queries",
+  "uid": "clickhouse-queries-dashboard",
+  "version": 1,
+  "weekStart": ""
+}
