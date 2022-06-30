@@ -1,0 +1,1 @@
+Obeservibity stack installation complete. Please refer domain.com/grafana
