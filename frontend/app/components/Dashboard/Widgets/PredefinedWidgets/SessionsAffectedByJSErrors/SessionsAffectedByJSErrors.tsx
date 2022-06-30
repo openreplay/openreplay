@@ -32,7 +32,7 @@ function SessionsAffectedByJSErrors(props: Props) {
               />
               <YAxis
                 {...Styles.yaxis}
-                label={{ ...Styles.axisLabelLeft, value: "Number of Errors" }}
+                label={{ ...Styles.axisLabelLeft, value: "Number of Sessions" }}
                 allowDecimals={false}
               />
               <Legend />
