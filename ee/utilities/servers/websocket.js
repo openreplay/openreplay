@@ -1,7 +1,7 @@
 const _io = require('socket.io');
 const express = require('express');
-const uaParser = require('ua-parser-js');
 const {
+    extractSessionInfo,
     extractPeerId,
     hasFilters,
     isValidSession,
@@ -14,7 +14,6 @@ const {
     extractSessionIdFromRequest,
     extractPayloadFromRequest,
 } = require('../utils/helper-ee');
-const {geoip} = require('../utils/geoIP');
 const wsRouter = express.Router();
 const UPDATE_EVENT = "UPDATE_SESSION";
 const IDENTITIES = {agent: 'agent', session: 'session'};
@@ -243,33 +242,6 @@ async function get_all_agents_ids(io, socket) {
         }
     }
     return agents;
-}
-
-
-function extractSessionInfo(socket) {
-    if (socket.handshake.query.sessionInfo !== undefined) {
-        debug && console.log("received headers");
-        debug && console.log(socket.handshake.headers);
-        socket.handshake.query.sessionInfo = JSON.parse(socket.handshake.query.sessionInfo);
-
-        let ua = uaParser(socket.handshake.headers['user-agent']);
-        socket.handshake.query.sessionInfo.userOs = ua.os.name || null;
-        socket.handshake.query.sessionInfo.userBrowser = ua.browser.name || null;
-        socket.handshake.query.sessionInfo.userBrowserVersion = ua.browser.version || null;
-        socket.handshake.query.sessionInfo.userDevice = ua.device.model || null;
-        socket.handshake.query.sessionInfo.userDeviceType = ua.device.type || 'desktop';
-        socket.handshake.query.sessionInfo.userCountry = null;
-        if (geoip() !== null) {
-            debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
-            try {
-                let country = geoip().country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
-                socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
-            } catch (e) {
-                debug && console.log("geoip-country failed");
-                debug && console.log(e);
-            }
-        }
-    }
 }
 
 wsRouter.get(`/sockets-list`, socketsList);
