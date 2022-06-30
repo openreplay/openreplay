@@ -6,14 +6,13 @@ WORKDIR /root
 
 COPY go.mod .
 COPY go.sum .
-RUN go mod tidy && go mod download
+RUN go mod download
 
 
 FROM prepare AS build
 COPY cmd cmd
 COPY pkg pkg
 COPY internal internal
-RUN go mod tidy
 
 ARG SERVICE_NAME
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o service -tags musl openreplay/backend/cmd/$SERVICE_NAME
@@ -48,6 +47,7 @@ ENV TZ=UTC \
     AWS_REGION_ASSETS=eu-central-1 \
     CACHE_ASSETS=true \
     ASSETS_SIZE_LIMIT=6291456 \
+    ASSETS_HEADERS="{ \"Cookie\": \"ABv=3;\" }" \
     FS_CLEAN_HRS=72 \
     FILE_SPLIT_SIZE=300000 \
     LOG_QUEUE_STATS_INTERVAL_SEC=60 \

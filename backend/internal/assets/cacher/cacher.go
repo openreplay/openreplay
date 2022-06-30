@@ -32,6 +32,7 @@ type cacher struct {
 	Errors           chan error
 	sizeLimit        int
 	downloadedAssets syncfloat64.Counter
+	requestHeaders   map[string]string
 }
 
 func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
@@ -57,6 +58,7 @@ func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
 		Errors:           make(chan error),
 		sizeLimit:        cfg.AssetsSizeLimit,
 		downloadedAssets: downloadedAssets,
+		requestHeaders:   cfg.AssetsRequestHeaders,
 	}
 }
 
@@ -76,15 +78,17 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 	}
 
 	req, _ := http.NewRequest("GET", requestURL, nil)
-	req.Header.Set("Cookie", "ABv=3;") // Hack for rueducommerce
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0")
+	for k, v := range c.requestHeaders {
+		req.Header.Set(k, v)
+	}
 	res, err := c.httpClient.Do(req)
 	if err != nil {
 		c.Errors <- errors.Wrap(err, urlContext)
 		return
 	}
 	defer res.Body.Close()
-	if res.StatusCode != 200 {
+	if res.StatusCode >= 400 {
 		// TODO: retry
 		c.Errors <- errors.Wrap(fmt.Errorf("Status code is %v, ", res.StatusCode), urlContext)
 		return

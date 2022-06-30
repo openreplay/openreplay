@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	cloud.google.com/go/logging v1.4.2
+	github.com/ClickHouse/clickhouse-go v1.5.4
 	github.com/aws/aws-sdk-go v1.35.23
 	github.com/btcsuite/btcutil v1.0.2
-	github.com/caarlos0/env/v6 v6.9.3
 	github.com/elastic/go-elasticsearch/v7 v7.13.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/google/uuid v1.1.2
@@ -26,6 +26,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v0.30.0
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2
 	google.golang.org/api v0.81.0
+	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.8.2
 )
 
 require (
@@ -35,6 +36,8 @@ require (
 	cloud.google.com/go/storage v1.14.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cloudflare/golz4 v0.0.0-20150217214814-ef862a3cdc58 // indirect
+	github.com/confluentinc/confluent-kafka-go v1.9.0 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect

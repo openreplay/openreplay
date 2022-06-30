@@ -2,6 +2,7 @@ package configurator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -78,6 +79,7 @@ func parseFile(a interface{}, path string) {
 				boolValue, err := strconv.ParseBool(value)
 				if err != nil {
 					log.Printf("can't parse bool value: %s", err)
+					continue
 				}
 				val.Field(i).SetBool(boolValue)
 			case "time.Duration":
@@ -87,6 +89,13 @@ func parseFile(a interface{}, path string) {
 					continue
 				}
 				val.Field(i).SetInt(int64(d))
+			case "map[string]string":
+				var stringMap map[string]string
+				if err := json.Unmarshal([]byte(value), &stringMap); err != nil {
+					log.Printf("can't parse map[string]string value: %s", err)
+					continue
+				}
+				val.Field(i).Set(reflect.ValueOf(stringMap))
 			default:
 				log.Println("unknown config type: ", val.Type().Field(i).Type.String())
 			}
@@ -95,10 +104,8 @@ func parseFile(a interface{}, path string) {
 }
 
 func Process(cfg common.Configer) {
-	ctx := context.Background()
-	if err := envconfig.Process(ctx, cfg); err != nil {
-		log.Println("env process err: ", err)
-		//log.Fatal(err)
+	if err := envconfig.Process(context.Background(), cfg); err != nil {
+		log.Fatalf("error while processing env vars: %s", err)
 	}
 	parseFile(cfg, cfg.GetConfigPath())
 }
