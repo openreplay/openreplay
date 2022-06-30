@@ -91,7 +91,7 @@ jobs:
 
         cat /tmp/image_override.yaml
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --atomic --set skipMigration=true --no-hooks
+        helm template  openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --atomic --set skipMigration=true --no-hooks | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.sha }}
@@ -152,7 +152,7 @@ jobs:
 
         cat /tmp/image_override.yaml
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true --no-hooks
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true --no-hooks | kubectl apply -f -
       env:
         DOCKER_REPO: ${{ secrets.EE_REGISTRY_URL }}
         # We're not passing -ee flag, because helm will add that.
