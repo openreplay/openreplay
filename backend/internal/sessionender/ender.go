@@ -68,15 +68,18 @@ func (se *SessionEnder) UpdateSession(sessionID uint64, timestamp, msgTimestamp 
 			lastUserTime:  msgTimestamp, // last timestamp from user's machine
 			isEnded:       false,
 		}
-		//log.Printf("added new session: %d", sessionID)
 		se.activeSessions.Add(context.Background(), 1)
 		se.totalSessions.Add(context.Background(), 1)
 		return
 	}
+	// Keep the highest user's timestamp for correct session duration value
+	if msgTimestamp > sess.lastUserTime {
+		sess.lastUserTime = msgTimestamp
+	}
+	// Keep information about the latest message for generating sessionEnd trigger
 	if currTS > sess.lastTimestamp {
 		sess.lastTimestamp = currTS
 		sess.lastUpdate = localTS
-		sess.lastUserTime = msgTimestamp
 		sess.isEnded = false
 	}
 }

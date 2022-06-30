@@ -83,7 +83,7 @@ func main() {
 			sessions.HandleEndedSessions(func(sessionID uint64, timestamp int64) bool {
 				msg := &messages.SessionEnd{Timestamp: uint64(timestamp)}
 				if err := pg.InsertSessionEnd(sessionID, msg.Timestamp); err != nil {
-					log.Printf("can't save sessionEnd to database, sessID: %d", sessionID)
+					log.Printf("can't save sessionEnd to database, sessID: %d, err: %s", sessionID, err)
 					return false
 				}
 				if err := producer.Produce(cfg.TopicRawWeb, sessionID, messages.Encode(msg)); err != nil {
