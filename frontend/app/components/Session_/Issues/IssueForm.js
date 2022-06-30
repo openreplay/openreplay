@@ -14,7 +14,7 @@ const SelectedValue = ({ icon, text }) => {
     </div>
   )
 }
-
+ 
 class IssueForm extends React.PureComponent {  
   componentDidMount() {
     const { projects, issueTypes } = this.props;
@@ -37,7 +37,7 @@ class IssueForm extends React.PureComponent {
     const { sessionId, addActivity } = this.props;
     const { instance } = this.props;
 
-    addActivity(sessionId, instance).then(() => {
+    addActivity(sessionId, instance.toJS()).then(() => {
       const { errors } = this.props;
       if (!errors || errors.length === 0) {
         this.props.init({projectId: instance.projectId});
@@ -47,20 +47,23 @@ class IssueForm extends React.PureComponent {
     });
   }
 
-  write = ({ target: { name, value } }) => this.props.edit({ [ name ]: value });
-  writeOption = (e, { name, value }) => this.props.edit({ [ name ]: value });
+  write = (e) => {
+    const { target: { name, value } } = e;
+    this.props.edit({ [ name ]: value })
+  };
+  writeOption = ({ name, value }) => this.props.edit({ [ name ]: value });
 
   render() {
     const { creating, projects, users, issueTypes, instance, closeHandler, metaLoading } = this.props;
-    const projectOptions = projects.map(({name, id}) => ({text: name, value: id })).toArray();
-    const userOptions = users.map(({name, id}) => ({text: name, value: id })).toArray();
+    const projectOptions = projects.map(({name, id}) => ({label: name, value: id })).toArray();
+    const userOptions = users.map(({name, id}) => ({label: name, value: id })).toArray();
     
     const issueTypeOptions = issueTypes.map(({name, id, iconUrl, color }) => {
-      return {text: name, value: id, iconUrl, color }
-    }).toArray();
+      return { label: name, value: id, iconUrl, color }
+    });
 
-    const selectedIssueType = issueTypes.filter(issue => issue.id == instance.issueType).first();
-
+    const selectedIssueType = issueTypes.filter(issue => issue.id == instance.issueType)[0];
+    
     return (
       <Form onSubmit={ this.onSubmit }>
         <Form.Field className="mb-15-imp">
@@ -134,11 +137,16 @@ class IssueForm extends React.PureComponent {
           variant="primary"
           disabled={ !instance.validate() }
           className="float-left mr-2"
-        >{'Create'}</Button>
+          type="submit"
+        >
+          {'Create'}
+        </Button>
         <Button
           type="button"
           onClick={ closeHandler }
-        >{'Cancel'}</Button>
+        >
+          {'Cancel'}
+        </Button>
       </Form>
     );
   }
