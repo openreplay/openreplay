@@ -9,3 +9,9 @@ app/components/ui/SVG.js
 .env
 *css.d.ts
 *.cache
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
