@@ -1,15 +1,23 @@
+##################################################
 ## Update the following values
-domainName: &domainName openreplay.mycorp.org
-credentials: 
-  grafana: &grafana
-    adminPassword: "grafanaAdminPassword"
-  alertManager: &alertmanager
-    slack_api_url: "https://hooks.slack.com/services/xxxx/xxxx/xxxxx"
+##
+## For example,
+# domainName: &domainName openreplay.supercompany.com
+##################################################
 
+domainName: &domainName "changeme.mycorp.org"
+grafanaAdminPassword: &adminpass "changeNeGrafanaAdminPassword"
+slackWebhookUrl: &slackwebhook "https://hooks.slack.com/services/xxxx/xxxx/xxxxx"       # Slack webhook token for sending alerts
+slackChannel: &slackchannel "changeMeAlertsChannel"                                     # Name of the channel, to alerts to be delivered to.
+
+
+########################################################
 ## Custom configuration for Monitoring and logging stack
+########################################################
+
 fullnameOverride: "openreplay"
 grafana:
-  <<: *grafana
+  adminPassword: *adminpass
   env:
     GF_SERVER_ROOT_URL: http://grafana.local.com/grafana
   additionalDataSources:
@@ -43,7 +51,7 @@ alertmanager:
   config:
     global:
       resolve_timeout: 5m
-      <<: *alertmanager
+      slack_api_url: *slackwebhook
     route:
       # group_by: ['job']
       group_by: ['alertname','container']
@@ -58,7 +66,7 @@ alertmanager:
     receivers:
     - name: slack
       slack_configs:
-        - channel: '${CHANGE_ME_SLACK_CHANNEL}'
+        - channel: *slackchannel
           color: '{{ template "slack.color" . }}'
           title: '{{ template "slack.title" . }}'
           text: '{{ template "slack.text" . }}'
