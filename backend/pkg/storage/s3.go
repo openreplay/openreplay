@@ -3,6 +3,7 @@ package storage
 import (
 	"io"
 	"net/url"
+	"os"
 	"sort"
 	"strconv"
 
@@ -103,7 +104,7 @@ func (s3 *S3) GetFrequentlyUsedKeys(projectID uint64) ([]string, error) {
 func loadFileTag() string {
 	// Load file tag from env
 	key := "retention"
-	value := env.String("RETENTION")
+	value := os.Getenv("RETENTION")
 	if value == "" {
 		value = "default"
 	}
