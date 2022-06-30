@@ -98,10 +98,11 @@ export default class AssistManager {
     return `${this.session.projectKey}-${this.session.sessionId}`
   }
 
+  private socketCloseTimeout: ReturnType<typeof setTimeout> | undefined
   private onVisChange = () => {
-    let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+    this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout)
     if (document.hidden) {
-      inactiveTimeout = setTimeout(() => {
+      this.socketCloseTimeout = setTimeout(() => {
         const state = getState()
         if (document.hidden && 
           (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
@@ -109,7 +110,6 @@ export default class AssistManager {
         }
       }, 30000)
     } else {
-      inactiveTimeout && clearTimeout(inactiveTimeout)
       this.socket?.open()
     }
   }
@@ -120,6 +120,7 @@ export default class AssistManager {
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
     let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
@@ -171,17 +172,21 @@ export default class AssistManager {
       })
       socket.on('SESSION_RECONNECTED', () => {
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
+        inactiveTimeout && clearTimeout(inactiveTimeout)
+        this.setStatus(ConnectionStatus.Connected)
       })
 
       socket.on('UPDATE_SESSION', ({ active }) => {
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        // if (typeof active === "boolean") {
-        //   if (active) {
-        //     
-        //   } else {
-        //     this.setStatus(ConnectionStatus.Inactive)
-        //   }
-        // }
+        !inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
+        if (typeof active === "boolean") {
+          if (active) {
+            inactiveTimeout && clearTimeout(inactiveTimeout)
+            this.setStatus(ConnectionStatus.Connected)
+          } else {
+            inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+          }
+        }
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
