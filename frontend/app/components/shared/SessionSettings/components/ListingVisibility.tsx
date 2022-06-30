@@ -20,7 +20,7 @@ function ListingVisibility() {
     const sessionSettings = settingsStore.sessionSettings
     const [durationSettings, setDurationSettings] = React.useState(sessionSettings.durationFilter);
 
-    const changeSettings = (changes) => {
+    const changeSettings = (changes: any) => {
         setDurationSettings({ ...durationSettings, ...changes });
         setChanged(true);
     }
@@ -40,7 +40,7 @@ function ListingVisibility() {
                         options={numberOptions}
                         defaultValue={numberOptions[0].value}
                         onChange={({ value }) => {
-                            changeSettings({ operator: value })
+                            changeSettings({ operator: value.value })
                         }}
                     />
                 </div>
@@ -50,8 +50,7 @@ function ListingVisibility() {
                         type="number"
                         name="count"
                         placeholder="E.g 10"
-                        // style={{ height: '38px', width: '100%'}}
-                        onChange={({ target: { value } }) => {
+                        onChange={({ target: { value } }: any) => {
                             changeSettings({ count: value })
                         }}
                     />
@@ -61,7 +60,7 @@ function ListingVisibility() {
                         defaultValue={periodOptions[1].value}
                         options={periodOptions}
                         onChange={({ value }) => {
-                            changeSettings({ countType: value })
+                            changeSettings({ countType: value.value })
                         }}
                     />
                 </div>
