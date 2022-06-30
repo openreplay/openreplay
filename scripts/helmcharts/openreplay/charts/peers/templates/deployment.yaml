@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "peers.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "peers.labels" . | nindent 4 }}
 spec:

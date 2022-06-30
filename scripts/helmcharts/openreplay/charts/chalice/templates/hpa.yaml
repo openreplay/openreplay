@@ -3,6 +3,7 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "chalice.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "chalice.labels" . | nindent 4 }}
 spec:
