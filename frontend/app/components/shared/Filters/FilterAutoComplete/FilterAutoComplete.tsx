@@ -1,155 +1,178 @@
 import React, { useState, useEffect } from 'react';
-import { Icon, Loader } from 'UI';
+import { Icon } from 'UI';
 import APIClient from 'App/api_client';
 import { debounce } from 'App/utils';
 import stl from './FilterAutoComplete.module.css';
-import cn from 'classnames';
+import { components, DropdownIndicatorProps } from 'react-select';
+import AsyncCreatableSelect from 'react-select/async-creatable';
 
-const hiddenStyle = {
-  whiteSpace: 'pre-wrap',
-  opacity: 0, position: 'fixed', left: '-3000px'
+const dropdownStyles = {
+    control: (provided: any) => {
+        const obj = {
+            ...provided,
+            border: 'solid thin transparent !important',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            height: '26px',
+            minHeight: '26px',
+            borderRadius: '3px',
+            boxShadow: 'none !important',
+        };
+        return obj;
+    },
+    valueContainer: (provided: any) => ({
+        ...provided,
+        // paddingRight: '0px',
+        width: 'fit-content',
+        alignItems: 'center',
+        height: '26px',
+        padding: '0 3px',
+    }),
+    // placeholder: (provided: any) => ({
+    //   ...provided,
+    // }),
+    indicatorsContainer: (provided: any) => ({
+        ...provided,
+        padding: '0px',
+        height: '26px',
+    }),
+    option: (provided: any, state: any) => ({
+        ...provided,
+        whiteSpace: 'nowrap',
+    }),
+    menu: (provided: any, state: any) => ({
+        ...provided,
+        top: 20,
+        left: 0,
+        minWidth: 'fit-content',
+        overflow: 'hidden',
+    }),
+    container: (provided: any) => ({
+        ...provided,
+        width: '100%',
+    }),
+    input: (provided: any) => ({
+        ...provided,
+        height: '22px',
+        '& input:focus': {
+            border: 'none !important',
+        },
+    }),
+    singleValue: (provided: any, state: { isDisabled: any }) => {
+        const opacity = state.isDisabled ? 0.5 : 1;
+        const transition = 'opacity 300ms';
+
+        return {
+            ...provided,
+            opacity,
+            transition,
+            display: 'flex',
+            alignItems: 'center',
+            height: '20px',
+        };
+    },
 };
 
 interface Props {
-  showOrButton?: boolean;
-  showCloseButton?: boolean;
-  onRemoveValue?: () => void;
-  onAddValue?: () => void;
-  endpoint?: string;
-  method?: string;
-  params?: any;
-  headerText?: string;
-  placeholder?: string;
-  onSelect: (e: any, item: any) => void;
-  value: any;
-  icon?: string;
+    showOrButton?: boolean;
+    showCloseButton?: boolean;
+    onRemoveValue?: () => void;
+    onAddValue?: () => void;
+    endpoint?: string;
+    method?: string;
+    params?: any;
+    headerText?: string;
+    placeholder?: string;
+    onSelect: (e: any, item: any) => void;
+    value: any;
+    icon?: string;
 }
 
 function FilterAutoComplete(props: Props) {
-  const {
-      showCloseButton = false,
-      placeholder = 'Type to search',
-      method = 'GET',
-      showOrButton = false,
-      onRemoveValue = () => null,
-      onAddValue = () => null,
-      endpoint = '',
-      params = {},
-      headerText = '',
-      value = '',
-      icon = null,
-  } = props;
-  const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(false)
-  const [options, setOptions] = useState<any>([]);
-  const [query, setQuery] = useState(value);
+    const {
+        showCloseButton = false,
+        placeholder = 'Type to search',
+        method = 'GET',
+        showOrButton = false,
+        onRemoveValue = () => null,
+        onAddValue = () => null,
+        endpoint = '',
+        params = {},
+        value = '',
+    } = props;
+    const [options, setOptions] = useState<any>(value ? [{ label: value, value }] : []);
+    const [query, setQuery] = useState(value);
 
-  const requestValues = (q: any) => {
-    setLoading(true);
+    useEffect(() => {
+        setQuery(value);
+    }, [value, options])
 
-    return new APIClient()[method?.toLocaleLowerCase()](endpoint, { ...params, q })
-      .then((response: any) => {
-        if (response.ok) {
-          return response.json();
-        }
-        throw new Error(response.statusText);
-      })
-      .then(({ data }: any) => {
-        setOptions(data);
-      })
-      .finally(() => setLoading(false));
-  }
-
-  const debouncedRequestValues = React.useCallback(debounce(requestValues, 1000), [params]);
-
-  const onInputChange = ({ target: { value } }: any) => {
-    setQuery(value);
-    if (!showModal) {
-      setShowModal(true);
-    }
-
-    if (value === '' || value === ' ') {
-      return
-    }
-    debouncedRequestValues(value);
-  }
-
-  useEffect(() => {
-    setQuery(value);
-  }, [value])
-
-  const onBlur = (e) => {
-    setTimeout(() => { setShowModal(false) }, 200)
-    if (query !== value) {
-      props.onSelect(e, { value: query })
-    }
-  }
-
-  const onItemClick = (e: any, item: any) => {
-    e.stopPropagation();
-    e.preventDefault();
-
-    if (query !== item.value) {
-      setQuery(item.value);
-    }
-
-    props.onSelect(e, item);
-  }
-
-  return (
-    <div className="relative flex items-center">
-      <div className={stl.wrapper}>
-        <input
-          name="query"
-          onChange={ onInputChange }
-          onBlur={ onBlur }
-          value={ query }
-          autoFocus={ true }
-          type="text"
-          placeholder={ placeholder }
-          autoComplete="do-not-autofill-bad-chrome"
-          // onPaste={(e) => {
-          //   const text = e.clipboardData.getData('Text');
-          //   // this.hiddenInput.value = text;
-          //   // pasted = true; // to use only the hidden input
-          // } }
-        />
-        <div
-          className={stl.right}
-        >
-          { showCloseButton && <div onClick={onRemoveValue}><Icon name="close" size="12" /></div> }
-          { showOrButton && <div onClick={onAddValue} className="color-teal"><span className="px-1">or</span></div> }
-        </div>
-      </div>
-
-      { !showOrButton && <div className="ml-3">or</div> }
-
-      { showModal && (
-        <div className={ stl.menu }>
-          <Loader loading={loading} size="small">
-            { options.length === 0 ? (
-              <div className="p-4 w-full">No results found!</div>
-            ) : (
-              <div>
-                {
-                  options.map((item: any, i: any) => (
-                    <div
-                      key={item.value + '_'  + i}
-                      className={ cn(stl.filterItem) }
-                      id="filter-item" onClick={ (e) => onItemClick(e, item) }
-                    >
-                      { icon && <Icon name={ icon } size="16" marginRight="8" /> }
-                      <span className={ stl.label }>{ item.value }</span>
-                    </div>
-                  ))
+    const loadOptions = (inputValue: string, callback: (options: []) => void) => {
+        new APIClient()
+            [method?.toLocaleLowerCase()](endpoint, { ...params, q: inputValue })
+            .then((response: any) => {
+                if (response.ok) {
+                    return response.json();
                 }
-              </div>
-            )}
-          </Loader>
+                throw new Error(response.statusText);
+            })
+            .then(({ data }: any) => {
+                const _options = data.map((i: any) => ({ value: i.value, label: i.value })) || [];
+                setOptions(_options);
+                callback(_options);
+            })
+    };
+
+    const debouncedLoadOptions = React.useCallback(debounce(loadOptions, 1000), [params]);
+
+    const handleInputChange = (newValue: string) => {
+        const inputValue = newValue.replace(/\W/g, '');
+        setQuery(inputValue);
+        return inputValue;
+    };
+
+    return (
+        <div className="relative flex items-center">
+            <div className={stl.wrapper}>
+                <AsyncCreatableSelect
+                    cacheOptions
+                    defaultOptions={options}
+                    loadOptions={debouncedLoadOptions}
+                    onInputChange={handleInputChange}
+                    onChange={(obj: any) => props.onSelect(null, obj)}
+                    styles={dropdownStyles}
+                    placeholder={placeholder}
+                    value={value ? options.find((i: any) => i.value === query) : null}
+                    components={{
+                        IndicatorSeparator: () => null,
+                        DropdownIndicator,
+                    }}
+                />
+                <div className={stl.right}>
+                    {showCloseButton && (
+                        <div onClick={props.onRemoveValue}>
+                            <Icon name="close" size="12" />
+                        </div>
+                    )}
+                    {showOrButton && (
+                        <div onClick={props.onAddValue} className="color-teal">
+                            <span className="px-1">or</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {!showOrButton && <div className="ml-3">or</div>}
         </div>
-      )}
-    </div>
-  );
+    );
 }
 
 export default FilterAutoComplete;
+
+const DropdownIndicator = (props: DropdownIndicatorProps<true>) => {
+    return (
+        <components.DropdownIndicator {...props}>
+            <Icon name="chevron-down" size="16" />
+        </components.DropdownIndicator>
+    );
+};

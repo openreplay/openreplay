@@ -59,7 +59,7 @@ function FilterList(props: Props) {
           </div>
           {filters.map((filter: any, filterIndex: any) => filter.isEvent ? (
             <FilterItem
-              key={filterIndex}
+              key={`${filter.key}-${filterIndex}`}
               filterIndex={rowIndex++}
               filter={filter}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}
