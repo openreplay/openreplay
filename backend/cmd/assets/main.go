@@ -29,6 +29,7 @@ func main() {
 		cfg.S3BucketAssets,
 		cfg.AssetsOrigin,
 		cfg.AssetsSizeLimit,
+		metrics,
 	)
 
 	totalAssets, err := metrics.RegisterCounter("assets_total")
