@@ -100,6 +100,7 @@ export default class Timeline extends React.PureComponent {
   }
 
   componentDidMount() {
+    const { issues } = this.props;
     const skipToIssue = Controls.updateSkipToIssue();
     const firstIssue = issues.get(0);
     deboucneJump = debounce(this.props.jump, 500);
