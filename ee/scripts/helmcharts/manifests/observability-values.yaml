@@ -16,285 +16,284 @@ slackChannel: &slackchannel "changeMeAlertsChannel"                             
 ## Custom configuration for Monitoring and logging stack
 ########################################################
 
-observability:
-  kube-prometheus-stack:
-    fullnameOverride: "openreplay"
-    grafana:
-      adminPassword: *adminpass
-      env:
-        GF_SERVER_ROOT_URL: http://grafana.local.com/grafana
-      additionalDataSources:
-        - name: loki
-          editable: true
-          type: loki
-          url: http://loki.observability:3100
-      plugins:
-        - grafana-piechart-panel
-        - vertamedia-clickhouse-datasource
-        - digrich-bubblechart-panel
-        - grafana-clock-panel
-      ingress:
-        enabled: true
-        ingressClassName: openreplay
-        hosts:
+kube-prometheus-stack:
+  fullnameOverride: "openreplay"
+  grafana:
+    adminPassword: *adminpass
+    env:
+      GF_SERVER_ROOT_URL: http://grafana.local.com/grafana
+    additionalDataSources:
+      - name: loki
+        editable: true
+        type: loki
+        url: http://loki.observability:3100
+    plugins:
+      - grafana-piechart-panel
+      - vertamedia-clickhouse-datasource
+      - digrich-bubblechart-panel
+      - grafana-clock-panel
+    ingress:
+      enabled: true
+      ingressClassName: openreplay
+      hosts:
+        - *domainName
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /$1
+      path: /grafana/(.*)
+      tls:
+        - hosts:
           - *domainName
-        annotations:
-          nginx.ingress.kubernetes.io/rewrite-target: /$1
-        path: /grafana/(.*)
-        tls:
-          - hosts:
-            - *domainName
-            secretName: openreplay-ssl
+          secretName: openreplay-ssl
 
-    prometheus:
-      prometheusSpec:
-        storageSpec:
-          volumeClaimTemplate:
-            spec:
-              accessModes: ["ReadWriteOnce"]
-              resources:
-                requests:
-                  storage: 200Gi
-    alertmanager:
-      config:
-        global:
-          resolve_timeout: 5m
-          slack_api_url: *slackwebhook
-        route:
-          # group_by: ['job']
-          group_by: ['alertname','container']
-          group_wait: 30s
-          group_interval: 5m
-          repeat_interval: 12h
-          receiver: 'slack'
-          routes:
-          - match:
-              alertname: Watchdog
-            receiver: 'slack'
-        receivers:
-        - name: slack
-          slack_configs:
-            - channel: *slackchannel
-              color: '{{ template "slack.color" . }}'
-              title: '{{ template "slack.title" . }}'
-              text: '{{ template "slack.text" . }}'
-              send_resolved: true
-              actions:
-                - type: button
-                  text: 'Runbook :green_book:'
-                  url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
-             #  - type: button
-             #    text: 'Query :mag:'
-             #    url: '{{ (index .Alerts 0).GeneratorURL }}'
-             #  - type: button
-             #    text: 'Dashboard :chart_with_upwards_trend:'
-             #    url: '{{ (index .Alerts 0).Annotations.dashboard_url }}'
-             #  - type: button
-             #    text: 'Silence :no_bell:'
-             #    url: '{{ template "__alert_silence_link" . }}'
-        templates:
-        - /etc/alertmanager/config/*.tmpl
-
-      templateFiles:
-         template_1.tmpl: |-
-           {{/* Alertmanager Silence link */}}
-           {{ define "__alert_silence_link" -}}
-               {{ .ExternalURL }}/#/silences/new?filter=%7B
-               {{- range .CommonLabels.SortedPairs -}}
-                   {{- if ne .Name "alertname" -}}
-                       {{- .Name }}%3D"{{- .Value -}}"%2C%20
-                   {{- end -}}
-               {{- end -}}
-               alertname%3D"{{- .CommonLabels.alertname -}}"%7D
-           {{- end }}
-           
-           {{/* Severity of the alert */}}
-           {{ define "__alert_severity" -}}
-               {{- if eq .CommonLabels.severity "critical" -}}
-               *Severity:* `Critical`
-               {{- else if eq .CommonLabels.severity "warning" -}}
-               *Severity:* `Warning`
-               {{- else if eq .CommonLabels.severity "info" -}}
-               *Severity:* `Info`
-               {{- else -}}
-               *Severity:* :question: {{ .CommonLabels.severity }}
-               {{- end }}
-           {{- end }}
-           
-           {{/* Title of the Slack alert */}}
-           {{ define "slack.title" -}}
-             [{{ .Status | toUpper -}}
-             {{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{- end -}}
-             ] {{ .CommonLabels.alertname }}
-           {{- end }}
-           
-           
-           {{/* Color of Slack attachment (appears as line next to alert )*/}}
-           {{ define "slack.color" -}}
-               {{ if eq .Status "firing" -}}
-                   {{ if eq .CommonLabels.severity "warning" -}}
-                       warning
-                   {{- else if eq .CommonLabels.severity "critical" -}}
-                       danger
-                   {{- else -}}
-                       #439FE0
-                   {{- end -}}
-               {{ else -}}
-               good
-               {{- end }}
-           {{- end }}
-           
-           {{/* The text to display in the alert */}}
-           {{ define "slack.text" -}}
-           
-               {{ template "__alert_severity" . }}
-               {{- if (index .Alerts 0).Annotations.summary }}
-               {{- "\n" -}}
-               *Summary:* {{ (index .Alerts 0).Annotations.summary }}
-               {{- end }}
-           
-               {{ range .Alerts }}
-           
-                   {{- if .Annotations.description }}
-                   {{- "\n" -}}
-                   {{ .Annotations.description }}
-                   {{- "\n" -}}
-                   {{- end }}
-                   {{- if .Annotations.message }}
-                   {{- "\n" -}}
-                   {{ .Annotations.message }}
-                   {{- "\n" -}}
-                   {{- end }}
-           
-               {{- end }}
-           
-           {{- end }}
-  loki:
+  prometheus:
+    prometheusSpec:
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 200Gi
+  alertmanager:
     config:
-      # existingSecret:
-      auth_enabled: false
-      ingester:
-        chunk_idle_period: 3m
-        chunk_block_size: 262144
-        chunk_retain_period: 1m
-        max_transfer_retries: 0
-        wal:
-          dir: /data/loki/wal
-        lifecycler:
-          ring:
-            kvstore:
-              store: inmemory
-            replication_factor: 1
+      global:
+        resolve_timeout: 5m
+        slack_api_url: *slackwebhook
+      route:
+        # group_by: ['job']
+        group_by: ['alertname','container']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 12h
+        receiver: 'slack'
+        routes:
+        - match:
+            alertname: Watchdog
+          receiver: 'slack'
+      receivers:
+      - name: slack
+        slack_configs:
+          - channel: *slackchannel
+            color: '{{ template "slack.color" . }}'
+            title: '{{ template "slack.title" . }}'
+            text: '{{ template "slack.text" . }}'
+            send_resolved: true
+            actions:
+              - type: button
+                text: 'Runbook :green_book:'
+                url: '{{ (index .Alerts 0).Annotations.runbook_url }}'
+           #  - type: button
+           #    text: 'Query :mag:'
+           #    url: '{{ (index .Alerts 0).GeneratorURL }}'
+           #  - type: button
+           #    text: 'Dashboard :chart_with_upwards_trend:'
+           #    url: '{{ (index .Alerts 0).Annotations.dashboard_url }}'
+           #  - type: button
+           #    text: 'Silence :no_bell:'
+           #    url: '{{ template "__alert_silence_link" . }}'
+      templates:
+      - /etc/alertmanager/config/*.tmpl
 
-      limits_config:
-        enforce_metric_name: false
-        reject_old_samples: true
-        reject_old_samples_max_age: 168h
-      schema_config:
-        configs:
-        - from: 2020-10-24
-          store: boltdb-shipper
-          object_store: filesystem
-          schema: v11
-          index:
-            prefix: index_
-            period: 24h
-      server:
-        http_listen_port: 3100
-      storage_config:
-        boltdb_shipper:
-          active_index_directory: /data/loki/boltdb-shipper-active
-          cache_location: /data/loki/boltdb-shipper-cache
-          cache_ttl: 24h         # Can be increased for faster performance over longer query periods, uses more disk space
-          shared_store: filesystem
-        filesystem:
-          directory: /data/loki/chunks
-      chunk_store_config:
-        max_look_back_period: 0s
-      table_manager:
-        retention_deletes_enabled: false
-        retention_period: 0s
-      compactor:
-        working_directory: /data/loki/boltdb-shipper-compactor
-        shared_store: filesystem
-        retention_enabled: true
-    # Needed for Alerting: https://grafana.com/docs/loki/latest/rules/
-    # This is just a simple example, for more details: https://grafana.com/docs/loki/latest/configuration/#ruler_config
-      ruler:
-        storage:
-          type: local
-          local:
-            directory: /rules
-        rule_path: /tmp/scratch
-        alertmanager_url: http://openreplay-alertmanager.observability.svc.cluster.local:9093
+    templateFiles:
+       template_1.tmpl: |-
+         {{/* Alertmanager Silence link */}}
+         {{ define "__alert_silence_link" -}}
+             {{ .ExternalURL }}/#/silences/new?filter=%7B
+             {{- range .CommonLabels.SortedPairs -}}
+                 {{- if ne .Name "alertname" -}}
+                     {{- .Name }}%3D"{{- .Value -}}"%2C%20
+                 {{- end -}}
+             {{- end -}}
+             alertname%3D"{{- .CommonLabels.alertname -}}"%7D
+         {{- end }}
+         
+         {{/* Severity of the alert */}}
+         {{ define "__alert_severity" -}}
+             {{- if eq .CommonLabels.severity "critical" -}}
+             *Severity:* `Critical`
+             {{- else if eq .CommonLabels.severity "warning" -}}
+             *Severity:* `Warning`
+             {{- else if eq .CommonLabels.severity "info" -}}
+             *Severity:* `Info`
+             {{- else -}}
+             *Severity:* :question: {{ .CommonLabels.severity }}
+             {{- end }}
+         {{- end }}
+         
+         {{/* Title of the Slack alert */}}
+         {{ define "slack.title" -}}
+           [{{ .Status | toUpper -}}
+           {{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{- end -}}
+           ] {{ .CommonLabels.alertname }}
+         {{- end }}
+         
+         
+         {{/* Color of Slack attachment (appears as line next to alert )*/}}
+         {{ define "slack.color" -}}
+             {{ if eq .Status "firing" -}}
+                 {{ if eq .CommonLabels.severity "warning" -}}
+                     warning
+                 {{- else if eq .CommonLabels.severity "critical" -}}
+                     danger
+                 {{- else -}}
+                     #439FE0
+                 {{- end -}}
+             {{ else -}}
+             good
+             {{- end }}
+         {{- end }}
+         
+         {{/* The text to display in the alert */}}
+         {{ define "slack.text" -}}
+         
+             {{ template "__alert_severity" . }}
+             {{- if (index .Alerts 0).Annotations.summary }}
+             {{- "\n" -}}
+             *Summary:* {{ (index .Alerts 0).Annotations.summary }}
+             {{- end }}
+         
+             {{ range .Alerts }}
+         
+                 {{- if .Annotations.description }}
+                 {{- "\n" -}}
+                 {{ .Annotations.description }}
+                 {{- "\n" -}}
+                 {{- end }}
+                 {{- if .Annotations.message }}
+                 {{- "\n" -}}
+                 {{ .Annotations.message }}
+                 {{- "\n" -}}
+                 {{- end }}
+         
+             {{- end }}
+         
+         {{- end }}
+loki:
+  config:
+    # existingSecret:
+    auth_enabled: false
+    ingester:
+      chunk_idle_period: 3m
+      chunk_block_size: 262144
+      chunk_retain_period: 1m
+      max_transfer_retries: 0
+      wal:
+        dir: /data/loki/wal
+      lifecycler:
         ring:
           kvstore:
             store: inmemory
-        enable_api: true
+          replication_factor: 1
 
-    persistence:
-      enabled: true
-      accessModes:
-      - ReadWriteOnce
-      size: 100Gi
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+    schema_config:
+      configs:
+      - from: 2020-10-24
+        store: boltdb-shipper
+        object_store: filesystem
+        schema: v11
+        index:
+          prefix: index_
+          period: 24h
+    server:
+      http_listen_port: 3100
+    storage_config:
+      boltdb_shipper:
+        active_index_directory: /data/loki/boltdb-shipper-active
+        cache_location: /data/loki/boltdb-shipper-cache
+        cache_ttl: 24h         # Can be increased for faster performance over longer query periods, uses more disk space
+        shared_store: filesystem
+      filesystem:
+        directory: /data/loki/chunks
+    chunk_store_config:
+      max_look_back_period: 0s
+    table_manager:
+      retention_deletes_enabled: false
+      retention_period: 0s
+    compactor:
+      working_directory: /data/loki/boltdb-shipper-compactor
+      shared_store: filesystem
+      retention_enabled: true
+  # Needed for Alerting: https://grafana.com/docs/loki/latest/rules/
+  # This is just a simple example, for more details: https://grafana.com/docs/loki/latest/configuration/#ruler_config
+    ruler:
+      storage:
+        type: local
+        local:
+          directory: /rules
+      rule_path: /tmp/scratch
+      alertmanager_url: http://openreplay-alertmanager.observability.svc.cluster.local:9093
+      ring:
+        kvstore:
+          store: inmemory
+      enable_api: true
 
-    serviceMonitor:
+  persistence:
+    enabled: true
+    accessModes:
+    - ReadWriteOnce
+    size: 100Gi
+
+  serviceMonitor:
+    enabled: true
+    interval: ""
+    additionalLabels:
+      release: monitoring
+    annotations: {}
+    # scrapeTimeout: 10s
+    # path: /metrics
+    prometheusRule:
       enabled: true
-      interval: ""
       additionalLabels:
         release: monitoring
-      annotations: {}
-      # scrapeTimeout: 10s
-      # path: /metrics
-      prometheusRule:
-        enabled: true
-        additionalLabels:
-          release: monitoring
-        rules: 
-         - alert: LokiProcessTooManyRestarts
-           expr: changes(process_start_time_seconds{job=~"loki"}[15m]) > 2
-           for: 0m
-           labels:
-             severity: warning
-           annotations:
-             summary: Loki process too many restarts (instance {{ $labels.instance }})
-             description: "A loki process had too many restarts (target {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-         - alert: LokiRequestErrors
-           expr: 100 * sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[1m])) by (namespace, job, route) / sum(rate(loki_request_duration_seconds_count[1m])) by (namespace, job, route) > 10
-           for: 15m
-           labels:
-             severity: critical
-           annotations:
-             summary: Loki request errors (instance {{ $labels.instance }})
-             description: "The {{ $labels.job }} and {{ $labels.route }} are experiencing errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-         - alert: LokiRequestPanic
-           expr: sum(increase(loki_panic_total[10m])) by (namespace, job) > 0
-           for: 5m
-           labels:
-             severity: critical
-           annotations:
-             summary: Loki request panic (instance {{ $labels.instance }})
-             description: "The {{ $labels.job }} is experiencing {{ printf \"%.2f\" $value }}% increase of panics\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-         - alert: LokiRequestLatency
-           expr: (histogram_quantile(0.99, sum(rate(loki_request_duration_seconds_bucket{route!~"(?i).*tail.*"}[5m])) by (le)))  > 1
-           for: 5m
-           labels:
-             severity: critical
-           annotations:
-             summary: Loki request latency (instance {{ $labels.instance }})
-             description: "The {{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}s 99th percentile latency\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+      rules: 
+       - alert: LokiProcessTooManyRestarts
+         expr: changes(process_start_time_seconds{job=~"loki"}[15m]) > 2
+         for: 0m
+         labels:
+           severity: warning
+         annotations:
+           summary: Loki process too many restarts (instance {{ $labels.instance }})
+           description: "A loki process had too many restarts (target {{ $labels.instance }})\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+       - alert: LokiRequestErrors
+         expr: 100 * sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[1m])) by (namespace, job, route) / sum(rate(loki_request_duration_seconds_count[1m])) by (namespace, job, route) > 10
+         for: 15m
+         labels:
+           severity: critical
+         annotations:
+           summary: Loki request errors (instance {{ $labels.instance }})
+           description: "The {{ $labels.job }} and {{ $labels.route }} are experiencing errors\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+       - alert: LokiRequestPanic
+         expr: sum(increase(loki_panic_total[10m])) by (namespace, job) > 0
+         for: 5m
+         labels:
+           severity: critical
+         annotations:
+           summary: Loki request panic (instance {{ $labels.instance }})
+           description: "The {{ $labels.job }} is experiencing {{ printf \"%.2f\" $value }}% increase of panics\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+       - alert: LokiRequestLatency
+         expr: (histogram_quantile(0.99, sum(rate(loki_request_duration_seconds_bucket{route!~"(?i).*tail.*"}[5m])) by (le)))  > 1
+         for: 5m
+         labels:
+           severity: critical
+         annotations:
+           summary: Loki request latency (instance {{ $labels.instance }})
+           description: "The {{ $labels.job }} {{ $labels.route }} is experiencing {{ printf \"%.2f\" $value }}s 99th percentile latency\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
 
-    # Specify Loki Alerting rules based on this documentation: https://grafana.com/docs/loki/latest/rules/
-    # When specified, you also need to add a ruler config section above. An example is shown in the alerting docs.
-    alerting_groups: 
-      - name: dbZombie
-        rules:
-        - alert: dbZombie
-          expr: absent_over_time({namespace="app", app="db"} |~ "Queue Statistics"[5m]) == 1
-          for: 10m
-          labels:
-            severity: warning
-  promtail:
-    config:
-      clients:
-        - url: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push 
+  # Specify Loki Alerting rules based on this documentation: https://grafana.com/docs/loki/latest/rules/
+  # When specified, you also need to add a ruler config section above. An example is shown in the alerting docs.
+  alerting_groups: 
+    - name: dbZombie
+      rules:
+      - alert: dbZombie
+        expr: absent_over_time({namespace="app", app="db"} |~ "Queue Statistics"[5m]) == 1
+        for: 10m
+        labels:
+          severity: warning
+promtail:
+  config:
+    clients:
+      - url: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push 
