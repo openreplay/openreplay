@@ -1726,7 +1726,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                         FROM events.resources INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY resources.url_host
-                        ORDER BY avg DESC
+                        ORDER BY value DESC
                         LIMIT 5;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
