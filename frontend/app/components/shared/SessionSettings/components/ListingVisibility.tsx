@@ -4,8 +4,6 @@ import { Button, Input } from 'UI';
 import { useStore } from 'App/mstore';
 import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
-import { connect } from 'react-redux';
-import { fetchSessions } from 'Duck/search';
 
 const numberOptions = [
     { label: 'Less than', value: '<' },
