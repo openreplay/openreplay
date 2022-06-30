@@ -24,13 +24,7 @@ func main() {
 
 	cfg := config.New()
 
-	cacher := cacher.NewCacher(
-		cfg.AWSRegion,
-		cfg.S3BucketAssets,
-		cfg.AssetsOrigin,
-		cfg.AssetsSizeLimit,
-		metrics,
-	)
+	cacher := cacher.NewCacher(cfg, metrics)
 
 	totalAssets, err := metrics.RegisterCounter("assets_total")
 	if err != nil {

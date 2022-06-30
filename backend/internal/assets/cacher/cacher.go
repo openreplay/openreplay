@@ -17,6 +17,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	config "openreplay/backend/internal/config/assets"
 	"openreplay/backend/pkg/storage"
 	"openreplay/backend/pkg/url/assets"
 )
@@ -33,8 +34,8 @@ type cacher struct {
 	downloadedAssets syncfloat64.Counter
 }
 
-func NewCacher(region string, bucket string, origin string, sizeLimit int, metrics *monitoring.Metrics) *cacher {
-	rewriter := assets.NewRewriter(origin)
+func NewCacher(cfg *config.Config, metrics *monitoring.Metrics) *cacher {
+	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	if metrics == nil {
 		log.Fatalf("metrics are empty")
 	}
@@ -44,16 +45,17 @@ func NewCacher(region string, bucket string, origin string, sizeLimit int, metri
 	}
 	return &cacher{
 		timeoutMap: newTimeoutMap(),
-		s3:         storage.NewS3(region, bucket),
+		s3:         storage.NewS3(cfg.AWSRegion, cfg.S3BucketAssets),
 		httpClient: &http.Client{
 			Timeout: time.Duration(6) * time.Second,
 			Transport: &http.Transport{
+				Proxy:           http.ProxyFromEnvironment,
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 		},
 		rewriter:         rewriter,
 		Errors:           make(chan error),
-		sizeLimit:        sizeLimit,
+		sizeLimit:        cfg.AssetsSizeLimit,
 		downloadedAssets: downloadedAssets,
 	}
 }
