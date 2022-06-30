@@ -1,15 +1,20 @@
----
+# Ref: https://github.com/helm/helm/issues/4157#issuecomment-490748085
+{{- $processedDict := dict -}}
+{{- range $path, $bytes := .Files.Glob "dashboards/**" }}
+{{- $name := base (dir $path) }}
+{{- if not (hasKey $processedDict $name) -}}
+{{ $_ := set $processedDict $name "true" }}
 apiVersion: v1
-data:
-  {{- (.Files.Glob "dashboards/nginx*").AsConfig | nindent 2 }}
 kind: ConfigMap
 metadata:
-  annotations:
-    meta.helm.sh/release-name: observability
-    meta.helm.sh/release-namespace: observability
+  name: dashboard-{{ $name }}
+  namespace: observability
   labels:
     app: kube-prometheus-stack-grafana
     grafana_dashboard: "1"
     release: observability
-  name: nginx-metrics
-  namespace: observability
+data:
+{{ ($.Files.Glob (printf "dashboards/%s/*" $name)).AsConfig | indent 2 }}
+---
+{{- end }}
+{{- end }}
