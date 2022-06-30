@@ -84,7 +84,10 @@ jobs:
 
         cat /tmp/image_override.yaml
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true --no-hooks
+        mv openreplay/charts/{ingress-nginx,chalice} /tmp
+        rm -rf  openreplay/charts/*
+        mv /tmp/{ingress-nginx,chalice} openreplay/charts/
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true --no-hooks | kubectl apply -n app -f -
       env:
         DOCKER_REPO: ${{ secrets.OSS_REGISTRY_URL }}
         IMAGE_TAG: ${{ github.sha }}
