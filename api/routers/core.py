@@ -141,7 +141,7 @@ def events_search(projectId: int, q: str,
     if len(q) == 0:
         return {"data": []}
     if live:
-        return assist.autocomplete(project_id=projectId, q=q, key=type.value)
+        return assist.autocomplete(project_id=projectId, q=q, key=type.value if type is not None else None)
     if isinstance(type, str):
         return {"errors": ["Unsupported type"]}
     if type in [schemas.FetchFilterType._url]:
