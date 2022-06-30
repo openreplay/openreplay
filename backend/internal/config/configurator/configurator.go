@@ -2,6 +2,7 @@ package configurator
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -87,6 +88,12 @@ func parseFile(a interface{}, path string) {
 					continue
 				}
 				val.Field(i).SetInt(int64(d))
+			case "map[string]string":
+				var stringMap map[string]string
+				if json.Unmarshal([]byte(value), &stringMap); err != nil {
+					log.Printf("can't parse map[string]string value: %s", err)
+				}
+				val.Field(i).Set(reflect.ValueOf(stringMap))
 			default:
 				log.Println("unknown config type: ", val.Type().Field(i).Type.String())
 			}

@@ -1,6 +1,7 @@
 package env
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strconv"
@@ -55,4 +56,17 @@ func Bool(key string) bool {
 		return true
 	}
 	return false
+}
+
+func StringMapOptional(key string) map[string]string {
+	v := StringOptional(key)
+	if v == "" {
+		return nil
+	}
+	var stringMap map[string]string
+
+	if err := json.Unmarshal([]byte(v), &stringMap); err != nil {
+		log.Fatalln(key + ": wrong json format. Expected string map")
+	}
+	return stringMap
 }
