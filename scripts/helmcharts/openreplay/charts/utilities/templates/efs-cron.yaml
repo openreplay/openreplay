@@ -2,6 +2,7 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: efs-cleaner
+  namespace: {{ .Release.Namespace }}
 spec:
   schedule: "{{ .Values.cron }}"
   failedJobsHistoryLimit: 1
