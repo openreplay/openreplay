@@ -1,11 +1,15 @@
+---
 apiVersion: v1
 data:
-  {{- (.Files.Glob "dashboards/*").AsConfig | nindent 2 }}
+  {{- (.Files.Glob "dashboards/nginx*").AsConfig | nindent 2 }}
 kind: ConfigMap
 metadata:
+  annotations:
+    meta.helm.sh/release-name: observability
+    meta.helm.sh/release-namespace: observability
   labels:
     app: kube-prometheus-stack-grafana
     grafana_dashboard: "1"
-    release: monitoring
-  name: nginx-igress
+    release: observability
+  name: nginx-metrics
   namespace: observability
