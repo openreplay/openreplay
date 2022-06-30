@@ -5,8 +5,25 @@ import { debounce } from 'App/utils';
 import stl from './FilterAutoComplete.module.css';
 import { components, DropdownIndicatorProps } from 'react-select';
 import AsyncCreatableSelect from 'react-select/async-creatable';
+import colors from 'App/theme/colors';
 
 const dropdownStyles = {
+    option: (provided: any, state: any) => ({
+        ...provided,
+        whiteSpace: 'nowrap',
+        transition: 'all 0.3s',
+        backgroundColor: state.isFocused ? colors['active-blue'] : 'transparent',
+        color: state.isFocused ? colors.teal : 'black',
+        fontSize: '14px',
+        '&:hover': {
+            transition: 'all 0.2s',
+            backgroundColor: colors['active-blue'],
+        },
+        '&:focus': {
+            transition: 'all 0.2s',
+            backgroundColor: colors['active-blue'],
+        }
+    }),
     control: (provided: any) => {
         const obj = {
             ...provided,
@@ -35,10 +52,6 @@ const dropdownStyles = {
         ...provided,
         padding: '0px',
         height: '26px',
-    }),
-    option: (provided: any, state: any) => ({
-        ...provided,
-        whiteSpace: 'nowrap',
     }),
     menu: (provided: any, state: any) => ({
         ...provided,

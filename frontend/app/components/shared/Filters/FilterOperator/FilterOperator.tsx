@@ -33,10 +33,10 @@ const dropdownStyles = {
     padding: '0px',
     height: '26px',
   }),
-  option: (provided: any, state: any) => ({
-    ...provided,
-    whiteSpace: 'nowrap',
-  }),
+  // option: (provided: any, state: any) => ({
+  //   ...provided,
+  //   whiteSpace: 'nowrap',
+  // }),
   menu: (provided: any, state: any) => ({
       ...provided,
       top: 20,
