@@ -5,10 +5,12 @@ ENV APP_NAME chalice
 RUN apt-get update && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf /var/lib/apt/lists/*
 # Add Tini
 # Startup daemon
-ENV TINI_VERSION v0.19.0
+ENV TINI_VERSION v0.19.0 \
+    SOURCE_MAP_VERSION 0.7.4
 ARG envarg
 ENV ENTERPRISE_BUILD ${envarg}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+ADD https://unpkg.com/source-map@${SOURCE_MAP_VERSION}/lib/mappings.wasm /mappings.wasm
 RUN chmod +x /tini
 
 # Installing Nodejs
