@@ -25,6 +25,11 @@ grafana:
       editable: true
       type: loki
       url: http://loki.logging:3100
+  plugins:
+    - grafana-piechart-panel
+    - vertamedia-clickhouse-datasource
+    - digrich-bubblechart-panel
+    - grafana-clock-panel
   ingress:
     enabled: true
     ingressClassName: openreplay
