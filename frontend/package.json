@@ -109,6 +109,7 @@
     "mini-css-extract-plugin": "^2.6.0",
     "minio": "^7.0.18",
     "moment-locales-webpack-plugin": "^1.2.0",
+    "node-gyp": "^9.0.0",
     "postcss": "^8.4.14",
     "postcss-import": "^14.1.0",
     "postcss-loader": "^7.0.0",
