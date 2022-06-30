@@ -1,7 +1,7 @@
 import { options } from 'App/dev/console';
 
 function log(...args) {
-	if (!window.env.PRODUCTION || options.verbose) {
+	if (options.verbose) {
 		console.log(...args);
 	}
 }

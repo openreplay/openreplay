@@ -7,7 +7,7 @@ export default ({
   className = '',
   checked,
   label = '',
-  plain,
+  plain = false,
 }) => (
   <div className={ className }>
     <label className={styles.label}>

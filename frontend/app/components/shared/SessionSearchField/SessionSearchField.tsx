@@ -39,6 +39,7 @@ function SessionSearchField(props: Props) {
         id="search"
         type="search"
         autoComplete="off"
+        className="hover:border-gray-medium"
       />
 
       { showModal && (

@@ -17,7 +17,8 @@ export default class SettingsStore {
 
     saveCaptureRate(data: any) {
         return sessionService.saveCaptureRate(data)
-            .then((data: any) => {
+            .then(data => data.json())
+            .then(({ data }) => {
                 this.sessionSettings.merge({
                     captureRate: data.rate,
                     captureAll: data.captureAll

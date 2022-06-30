@@ -1,10 +1,9 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { connectPlayer } from 'Player';
-import { Popup, TimelinePointer, Icon } from 'UI';
+import { connectPlayer, Controls } from 'Player';
+import { TimelinePointer, Icon } from 'UI';
 import TimeTracker from './TimeTracker';
-import { ReduxTime } from './Time';
 import stl from './timeline.module.css';
 import { TYPES } from 'Types/session/event';
 import { setTimelinePointer } from 'Duck/sessions';
@@ -64,7 +63,8 @@ let deboucneJump = () => null;
   skipIntervals: state.skipIntervals,
   events: state.eventList,
   skip: state.skip,
-  skipToIssue: state.skipToIssue,
+  // not updating properly rn
+  // skipToIssue: state.skipToIssue,
   disabled: state.cssLoading || state.messagesLoading || state.markedTargets,
   endTime: state.endTime,
   live: state.live,
@@ -100,7 +100,7 @@ export default class Timeline extends React.PureComponent {
   }
 
   componentDidMount() {
-    const { issues, skipToIssue } = this.props;
+    const skipToIssue = Controls.updateSkipToIssue();
     const firstIssue = issues.get(0);
     deboucneJump = debounce(this.props.jump, 500);
 
@@ -109,7 +109,7 @@ export default class Timeline extends React.PureComponent {
     }
   }
 
-  onDragEnd = (item, monitor) => {
+  onDragEnd = () => {
     if (this.wasPlaying) {
       this.props.togglePlay();
     }

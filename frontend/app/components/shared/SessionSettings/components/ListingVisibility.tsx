@@ -2,8 +2,10 @@ import React from 'react';
 import Select from 'Shared/Select';
 import { Button, Input } from 'UI';
 import { useStore } from 'App/mstore';
-import { useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
+import { connect } from 'react-redux';
+import { fetchSessions } from 'Duck/search';
 
 const numberOptions = [
     { label: 'Less than', value: '<' },
@@ -14,10 +16,10 @@ const periodOptions = [
     { label: 'Secs', value: 'sec' },
 ]
 
-function ListingVisibility(props) {
+function ListingVisibility() {
     const [changed, setChanged] = React.useState(false);
     const { settingsStore } = useStore();
-    const sessionSettings = useObserver(() => settingsStore.sessionSettings)
+    const sessionSettings = settingsStore.sessionSettings
     const [durationSettings, setDurationSettings] = React.useState(sessionSettings.durationFilter);
 
     const changeSettings = (changes) => {
@@ -73,4 +75,4 @@ function ListingVisibility(props) {
     );
 }
 
-export default ListingVisibility;
+export default observer(ListingVisibility);
