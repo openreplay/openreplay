@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { observer } from 'mobx-react-lite';
 import { Loader, NoContent, Pagination } from 'UI';
 import { applyFilter, addAttribute, addEvent } from 'Duck/filters';
 import { fetchSessions, addFilterByKeyAndValue, updateCurrentPage, setScrollPosition } from 'Duck/search';
@@ -7,6 +8,7 @@ import SessionItem from 'Shared/SessionItem';
 import SessionListHeader from './SessionListHeader';
 import { FilterKey } from 'Types/filter/filterType';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import SettingsStore from 'App/mstore/settingsStore';
 
 // const ALL = 'all';
 const PER_PAGE = 10;
@@ -77,14 +79,13 @@ export default class SessionList extends React.PureComponent {
   componentDidMount() {
     const { scrollY } = this.props;
     window.scrollTo(0, scrollY);
+    console.log(SettingsStore)
   }
 
   renderActiveTabContent(list) {
     const {
       loading,
       filters,
-      // onMenuItemClick,
-      // allList,
       activeTab,
       metaList,
       currentPage,

@@ -206,6 +206,12 @@ export default class Player extends MessageDistributor {
     localStorage.setItem(SKIP_TO_ISSUE_STORAGE_KEY, `${skipToIssue}`);
     update({ skipToIssue });
   }
+
+  updateSkipToIssue() {
+    const skipToIssue = localStorage.getItem(SKIP_TO_ISSUE_STORAGE_KEY) === 'true';
+    update({ skipToIssue });
+    return skipToIssue;
+  }
   
   toggleAutoplay() {
     const autoplay = !getState().autoplay;

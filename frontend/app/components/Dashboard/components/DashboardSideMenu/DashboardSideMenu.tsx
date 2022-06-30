@@ -74,7 +74,11 @@ function DashboardSideMenu(props: RouteComponentProps<Props>) {
                     className="group"
                     leading = {(
                         <div className="ml-2 flex items-center cursor-default">
-                            {item.isPublic && <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>}
+                            {item.isPublic && (
+                                <Popup delay={500} content="Visible to the team" hideOnClick>
+                                    <div className="p-1"><Icon name="user-friends" color="gray-light" size="16" /></div>
+                                </Popup>
+                            )}
                             {item.isPinned && <div className="p-1 pointer-events-none"><Icon name="pin-fill" size="16" /></div>}
                             {!item.isPinned && (
                                 <Popup
