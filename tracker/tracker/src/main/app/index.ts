@@ -163,7 +163,7 @@ export default class App {
       }
       // TODO: keep better tactics, discard others (look https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon)
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
-      this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
+      this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false);
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { 
       this._debug("worker_start", e);

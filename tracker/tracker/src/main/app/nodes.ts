@@ -1,4 +1,4 @@
-type NodeCallback = (node: Node) => void;
+type NodeCallback = (node: Node, isStart: boolean) => void;
 type ElementListener = [string, EventListener];
 
 export default class Nodes {
@@ -57,8 +57,8 @@ export default class Nodes {
     }
     return id;
   }
-  callNodeCallbacks(node: Node): void {
-    this.nodeCallbacks.forEach((cb) => cb(node));
+  callNodeCallbacks(node: Node, isStart: boolean): void {
+    this.nodeCallbacks.forEach((cb) => cb(node, isStart));
   }
   getID(node: Node): number | undefined {
     return (node as any)[this.node_id];

@@ -45,16 +45,21 @@ function isObservable(node: Node): boolean {
 /*
   TODO:
     - fix unbinding logic + send all removals first (ensure sequence is correct)
-    - use document as a 0-node in the upper context
+    - use document as a 0-node in the upper context (should be updated in player at first)
 */
+
+enum RecentsType {
+  New,
+  Removed,
+  Changed,
+}
 
 export default abstract class Observer {
   private readonly observer: MutationObserver;
   private readonly commited: Array<boolean | undefined> = [];
-  private readonly recents: Array<boolean | undefined> = [];
-  private readonly myNodes: Array<boolean | undefined> = [];
+  private readonly recents: Map<number, RecentsType> = new Map()
   private readonly indexes: Array<number> = [];
-  private readonly attributesList: Array<Set<string> | undefined> = [];
+  private readonly attributesMap: Map<number, Set<string>> = new Map();
   private readonly textSet: Set<number> = new Set();
   constructor(protected readonly app: App, protected readonly isTopContext = false) {
     this.observer = new MutationObserver(
@@ -79,17 +84,17 @@ export default abstract class Observer {
           if (id === undefined) {
             continue;
           }
-          if (id >= this.recents.length) { // TODO: something more convinient
-            this.recents[id] = undefined;
+          if (!this.recents.has(id)) {
+            this.recents.set(id, RecentsType.Changed) // TODO only when altered
           }
           if (type === 'attributes') {
             const name = mutation.attributeName;
             if (name === null) {
               continue;
             }
-            let attr = this.attributesList[id];
+            let attr = this.attributesMap.get(id)
             if (attr === undefined) {
-              this.attributesList[id] = attr = new Set();
+              this.attributesMap.set(id, attr = new Set())
             }
             attr.add(name);
             continue;
@@ -105,9 +110,9 @@ export default abstract class Observer {
   }
   private clear(): void {
     this.commited.length = 0;
-    this.recents.length = 0;
+    this.recents.clear()
     this.indexes.length = 1;
-    this.attributesList.length = 0;
+    this.attributesMap.clear();
     this.textSet.clear();
   }
 
@@ -176,11 +181,12 @@ export default abstract class Observer {
   }
 
   private bindNode(node: Node): void {
-    const r = this.app.nodes.registerNode(node);
-    const id = r[0];
-    this.recents[id] = r[1] || this.recents[id] || false;
-
-    this.myNodes[id] = true;
+    const [ id,  isNew ]= this.app.nodes.registerNode(node);
+    if (isNew){
+      this.recents.set(id, RecentsType.New)
+    } else if (!this.recents.has(id)) {
+      this.recents.set(id, RecentsType.Removed)
+    }
   }
 
   private bindTree(node: Node): void {
@@ -207,7 +213,7 @@ export default abstract class Observer {
 
   private unbindNode(node: Node): void {
     const id = this.app.nodes.unregisterNode(node);
-    if (id !== undefined && this.recents[id] === false) {
+    if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       this.app.send(new RemoveNode(id));
     }
   }
@@ -256,12 +262,13 @@ export default abstract class Observer {
     if (sibling === null) {
       this.indexes[id] = 0;
     }
-    const isNew = this.recents[id];
-    const index = this.indexes[id];
+    const recentsType = this.recents.get(id)
+    const isNew = recentsType === RecentsType.New
+    const index = this.indexes[id]
     if (index === undefined) {
       throw 'commitNode: missing node index';
     }
-    if (isNew === true) {
+    if (isNew) {
       if (isElementNode(node)) {
         let el: Element = node
         if (parentID !== undefined) {
@@ -294,10 +301,10 @@ export default abstract class Observer {
       }
       return true;
     }
-    if (isNew === false && parentID !== undefined) {
+    if (recentsType === RecentsType.Removed && parentID !== undefined) {
       this.app.send(new MoveNode(id, parentID, index));
     }
-    const attr = this.attributesList[id];
+    const attr = this.attributesMap.get(id);
     if (attr !== undefined) {
       if (!isElementNode(node)) {
         throw 'commitNode: node is not an element';
@@ -326,19 +333,14 @@ export default abstract class Observer {
     }
     return (this.commited[id] = this._commitNode(id, node));
   }
-  private commitNodes(): void {
+  private commitNodes(isStart: boolean = false): void {
     let node;
-    for (let id = 0; id < this.recents.length; id++) {
-      // TODO: make things/logic nice here.
-      // commit required in any case if recents[id] true or false (in case of unbinding) or undefined (in case of attr change).
-      // Possible solution: separate new node commit (recents) and new attribute/move node commit
-      // Otherwise commitNode is called on each node, which might be a lot
-      if (!this.myNodes[id]) { continue }
+    this.recents.forEach((type, id) => {
       this.commitNode(id);
-      if (this.recents[id] === true && (node = this.app.nodes.getNode(id))) {
-        this.app.nodes.callNodeCallbacks(node);
+      if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
+        this.app.nodes.callNodeCallbacks(node, isStart)
       }
-    }
+    })
     this.clear();
   }
 
@@ -354,12 +356,11 @@ export default abstract class Observer {
     });
     this.bindTree(nodeToBind);
     beforeCommit(this.app.nodes.getID(node))
-    this.commitNodes();
+    this.commitNodes(true)
   }
 
   disconnect(): void {
     this.observer.disconnect();
     this.clear();
-    this.myNodes.length = 0;
   }
 }
