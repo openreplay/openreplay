@@ -169,6 +169,7 @@ kube-prometheus-stack:
          
          {{- end }}
 loki:
+  fullnameOverride: "loki"
   config:
     # existingSecret:
     auth_enabled: false
@@ -294,6 +295,7 @@ loki:
         labels:
           severity: warning
 promtail:
+  fullnameOverride: "promtail"
   config:
     clients:
       - url: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push 
