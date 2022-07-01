@@ -20,7 +20,7 @@ function make_submodule() {
     cp -R ../chalicelib/utils/{__init__,TimeUTC,pg_client,helper,event_filter_definition,dev,email_helper,email_handler,smtp,s3,args_transformer,ch_client,SAML2_helper,metrics_helper}.py ../crons/chalicelib/utils/
     # -- end of generated part
 
-    cp -R ./{Dockerfile.crons,requirements.txt,.env.default,entrypoint_crons.sh} ./crons/
+    cp -R ./{Dockerfile.crons,requirements.txt,env.default,entrypoint_crons.sh} ./crons/
     cp -R ./chalicelib/utils/html ./crons/chalicelib/utils/html
 }
 
