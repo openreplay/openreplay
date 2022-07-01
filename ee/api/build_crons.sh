@@ -15,9 +15,9 @@ function make_submodule() {
     mkdir -p ./crons/chalicelib/
     cp -R ./chalicelib/__init__.py ./crons/chalicelib/
     mkdir -p ./crons/chalicelib/core/
-    cp -R ../chalicelib/core/{__init__,telemetry,license,unlock,weekly_report,jobs,sessions,events,issues,sessions_metas,metadata,projects,users,authorizers,tenants,roles,assist,events_ios,sessions_mobs,errors,metrics,sourcemaps,sourcemaps_parser,resources,performance_event}.py ../crons/chalicelib/core/
+    cp -R ./chalicelib/core/{__init__,telemetry,license,unlock,weekly_report,jobs,sessions,events,issues,sessions_metas,metadata,projects,users,authorizers,tenants,roles,assist,events_ios,sessions_mobs,errors,metrics,sourcemaps,sourcemaps_parser,resources,performance_event}.py ./crons/chalicelib/core/
     mkdir -p ./crons/chalicelib/utils/
-    cp -R ../chalicelib/utils/{__init__,TimeUTC,pg_client,helper,event_filter_definition,dev,email_helper,email_handler,smtp,s3,args_transformer,ch_client,SAML2_helper,metrics_helper}.py ../crons/chalicelib/utils/
+    cp -R ./chalicelib/utils/{__init__,TimeUTC,pg_client,helper,event_filter_definition,dev,email_helper,email_handler,smtp,s3,args_transformer,ch_client,SAML2_helper,metrics_helper}.py ./crons/chalicelib/utils/
     # -- end of generated part
 
     cp -R ./{Dockerfile.crons,requirements.txt,env.default,entrypoint_crons.sh} ./crons/
