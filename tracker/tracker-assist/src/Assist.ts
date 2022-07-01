@@ -137,7 +137,8 @@ export default class Assist {
         "peerId": peerID,
         "identity": "session",
         "sessionInfo": JSON.stringify({ 
-          pageTitle: document.title, 
+          pageTitle: document.title,
+          active: true,
           ...this.app.getSessionInfo() 
         }),
       },

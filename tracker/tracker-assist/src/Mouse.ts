@@ -82,25 +82,18 @@ export default class Mouse {
       mouseY-this.pScrEl.scrollTop,
     )
     while (el) {
-      // const esl = el.scrollLeft
-      // el.scrollLeft += dX
-      // const est = el.scrollTop
-      // el.scrollTop += dY
-      // if (esl !== el.scrollLeft || est !== el.scrollTop) { // doesn't work if the scroll-behavior is "smooth"
-      //   this.lastScrEl = el
-      //   return
-      // } else {
-      //   el = el.parentElement
-      // }   
-      
       // el.scrollTopMax > 0 // available in firefox
       if (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) { 
         const styles = getComputedStyle(el)
-        if (styles.overflow.indexOf("scroll") >= 0 || styles.overflow.indexOf("auto") >= 0) {
+        if (styles.overflow.indexOf("scroll") >= 0 || styles.overflow.indexOf("auto") >= 0) { // returns true for body in habr.com but it's not scrollable
+          const esl = el.scrollLeft
+          const est = el.scrollTop
           el.scrollLeft += dX
           el.scrollTop += dY
-          this.lastScrEl = el
-          return
+          if (esl !== el.scrollLeft || est !== el.scrollTop) { // doesn't work if the scroll-behavior is "smooth"
+            this.lastScrEl = el
+            return
+          }
         }
       }
       el = el.parentElement
