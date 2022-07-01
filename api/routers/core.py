@@ -580,7 +580,7 @@ def add_metadata(projectId: int, data: schemas.MetadataBasicSchema = Body(...),
 @app.put('/{projectId}/metadata/{index}', tags=["metadata"])
 def edit_metadata(projectId: int, index: int, data: schemas.MetadataBasicSchema = Body(...),
                   context: schemas.CurrentContext = Depends(OR_context)):
-    return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=int(index),
+    return metadata.edit(tenant_id=context.tenant_id, project_id=projectId, index=index,
                          new_name=data.key)
 
 
