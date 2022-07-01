@@ -83,7 +83,7 @@ def __edit(project_id, col_index, colname, new_name):
         return {"errors": ["custom field not found"]}
 
     with pg_client.PostgresClient() as cur:
-        if old_metas[col_index]["key"].lower() != new_name:
+        if old_metas[col_index]["key"] != new_name:
             cur.execute(cur.mogrify(f"""UPDATE public.projects 
                                         SET {colname} = %(value)s 
                                         WHERE project_id = %(project_id)s AND deleted_at ISNULL
