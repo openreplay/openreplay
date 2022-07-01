@@ -23,7 +23,7 @@ function SessionListHeader({ activeTab, count, applyFilter, filter }) {
         applyFilter(dateValues);
     };
     return (
-        <div className="flex mb-6 justify-between items-end">
+        <div className="flex mb-2 justify-between items-end">
             <div className="flex items-baseline">
                 <h3 className="text-2xl capitalize">
                     <span>{activeTab.name}</span>
