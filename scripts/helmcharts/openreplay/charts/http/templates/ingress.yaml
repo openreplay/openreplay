@@ -36,7 +36,7 @@ spec:
             path: /ingest/(.*)
 {{- end }}
 
-{{- if .Values.global.minio.enabled }}
+{{- if eq .Values.global.s3.endpoint "http://minio.db.svc.cluster.local:9000" }}
 ## TODO:
 ## Frontend service from minio will be migrated to nginx atomic container.
 ## This ingress is just a workaround.

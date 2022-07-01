@@ -47,7 +47,7 @@ redis: &redis
   redisHost: "redis-master.db.svc.cluster.local"
   redisPort: "6379"
 
-minio: &minio
+minio:
   # If you have extrenal s3 storage, like AWS, or GCP
   # Disable it.
   enabled: true
@@ -91,7 +91,6 @@ global:
   postgresql: *postgres
   kafka: *kafka
   redis: *redis
-  minio: *minio
   openReplayContainerRegistry: "rg.fr-par.scw.cloud/foss"
   s3:
     region: "us-east-1"
