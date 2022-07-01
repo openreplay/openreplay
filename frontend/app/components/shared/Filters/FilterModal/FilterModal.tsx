@@ -129,6 +129,8 @@ export default connect((state: any, props: any) => {
     // filterSearchList: state.getIn([ 'search', 'filterSearchList' ]),
     // liveFilterSearchList: state.getIn([ 'liveSearch', 'filterSearchList' ]),
     metaOptions: state.getIn([ 'customFields', 'list' ]),
-    fetchingFilterSearchList: state.getIn([ 'search', 'fetchFilterSearch', 'loading' ]),
+    fetchingFilterSearchList: props.isLive
+            ? state.getIn(['liveSearch', 'fetchFilterSearch', 'loading'])
+            : state.getIn(['search', 'fetchFilterSearch', 'loading']),
   })
 })(FilterModal);
