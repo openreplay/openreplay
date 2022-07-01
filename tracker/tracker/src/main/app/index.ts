@@ -1,5 +1,5 @@
 import type Message from "../../common/messages.js";
-import { Timestamp, Metadata } from "../../common/messages.js";
+import { Timestamp, Metadata, UserID } from "../../common/messages.js";
 import { timestamp, deprecationWarn } from "../utils.js";
 import Nodes from "./nodes.js";
 import Observer from "./observer/top_observer.js";
@@ -131,7 +131,15 @@ export default class App {
     this.ticker.attach(() => this.commit());
     this.debug = new Logger(this.options.__debug__);
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent);
-    this.session = new Session(this);
+    this.session = new Session();
+    this.session.attachUpdateCallback(({ userID, metadata }) => {
+      if (userID != null) { // TODO: nullable userID
+        this.send(new UserID(userID))
+      }
+      if (metadata != null) {
+        Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)))
+      }
+    })
     this.localStorage = this.options.localStorage;
     this.sessionStorage = this.options.sessionStorage;
 
@@ -151,6 +159,7 @@ export default class App {
       this.worker.onmessage = ({ data }: MessageEvent) => {
         if (data === "failed") {
           this.stop();
+          this._debug("worker_failed", {})  // add context (from worker)
         } else if (data === "restart") {
           this.stop();
           this.start({ forceNew: true });
@@ -161,9 +170,10 @@ export default class App {
           this.worker.postMessage(null);
         }
       }
-      // TODO: keep better tactics, discard others (look https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon)
+      // keep better tactics, discard others?
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
       this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false);
+      // TODO: stop session after inactivity timeout (make configurable)
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { 
       this._debug("worker_start", e);
@@ -263,7 +273,7 @@ export default class App {
       userUUID: this.localStorage.getItem(this.options.local_uuid_key),
       projectKey: this.projectKey,
       revID: this.revID,
-      timestamp: timestamp(),
+      timestamp: timestamp(), // shouldn't it be set once?
       trackerVersion: this.version,
       isSnippet: this.options.__is_snippet,
     }
@@ -351,7 +361,14 @@ export default class App {
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
     }
-    this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
+    this.worker.postMessage(startWorkerMsg)
+
+    this.session.update({ // TODO: transparent "session" module logic AND explicit internal api for plugins.
+      // "updating" with old metadata in order to trigger session's UpdateCallbacks. 
+      // (for the case of internal .start() calls, like on "restart" webworker signal or assistent connection in tracker-assist )
+      metadata: startOpts.metadata || this.session.getInfo().metadata,
+      userID: startOpts.userID,
+    })
 
     const sReset = this.sessionStorage.getItem(this.options.session_reset_key);
     this.sessionStorage.removeItem(this.options.session_reset_key);
@@ -363,7 +380,7 @@ export default class App {
       },
       body: JSON.stringify({
         ...startInfo,
-        userID: startOpts.userID || this.session.getInfo().userID,
+        userID: this.session.getInfo().userID,
         token: this.sessionStorage.getItem(this.options.session_token_key),
         deviceMemory,
         jsHeapSizeLimit,
@@ -375,7 +392,7 @@ export default class App {
         return r.json()
       } else {
         return r.text().then(text => text === CANCELED 
-          ? Promise.reject(CANCELED) // TODO: return {error: CANCELED} instead
+          ? Promise.reject(CANCELED)
           : Promise.reject(`Server error: ${r.status}. ${text}`)
         );
       }
@@ -392,11 +409,7 @@ export default class App {
       }
       this.sessionStorage.setItem(this.options.session_token_key, token);
       this.localStorage.setItem(this.options.local_uuid_key, userUUID);
-      this.session.update({
-        sessionID, // any. TODO check
-        ...startOpts
-      });
-
+      this.session.update({ sessionID }) // TODO: no no-explicit 'any'
       const startWorkerMsg: WorkerMessageData = {
         type: "auth",
         token,
@@ -404,21 +417,16 @@ export default class App {
       }
       this.worker.postMessage(startWorkerMsg)
 
-
       this.activityState = ActivityState.Active
       
       const onStartInfo = { sessionToken: token, userUUID, sessionID };
 
-      this.startCallbacks.forEach((cb) => cb(onStartInfo));
+      this.startCallbacks.forEach((cb) => cb(onStartInfo)); // TODO: start as early as possible (before receiving the token)
       this.observer.observe();
       this.ticker.start();
-      if (startOpts.metadata) {
-        Object.entries(startOpts.metadata)
-          .forEach(([ key, value ]) => this.send(new Metadata(key, value)))
-      }
 
       this.notify.log("OpenReplay tracking started.");
-      // TODO: get rid of onStart
+      // get rid of onStart ?
       if (typeof this.options.onStart === 'function') {
         this.options.onStart(onStartInfo)
       }
@@ -450,7 +458,7 @@ export default class App {
       })
     }
   }
-  stop(): void {
+  stop(calledFromAPI = false): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
         this.sanitizer.clear()
@@ -458,6 +466,9 @@ export default class App {
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
+        if (calledFromAPI) {
+          this.session.reset()
+        }
         this.notify.log("OpenReplay tracking stopped.")
         if (this.worker) {
           this.worker.postMessage("stop")

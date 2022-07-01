@@ -166,7 +166,7 @@ export default class API {
     if (this.app === null) {
       return;
     }
-    this.app.stop();
+    this.app.stop(true);
   }
 
   getSessionToken(): string | null | undefined {
