@@ -1,10 +1,9 @@
 package kafka
 
 import (
-	"log"
-
-	"openreplay/backend/pkg/env"
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
+	"log"
+	"openreplay/backend/pkg/env"
 )
 
 type Producer struct {
@@ -23,6 +22,7 @@ func NewProducer() *Producer {
 		"security.protocol":      protocol,
 		"go.batch.producer":      true,
 		"queue.buffering.max.ms": 100,
+		"message.max.bytes":      env.Int("QUEUE_MESSAGE_SIZE_LIMIT"),
 	})
 	if err != nil {
 		log.Fatalln(err)

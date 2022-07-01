@@ -43,6 +43,7 @@ func NewConsumer(
 		"security.protocol":               protocol,
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
+		"max.partition.fetch.bytes":       env.Int("QUEUE_MESSAGE_SIZE_LIMIT"),
 	})
 	if err != nil {
 		log.Fatalln(err)
