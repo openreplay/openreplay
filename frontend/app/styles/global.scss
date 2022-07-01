@@ -7,3 +7,8 @@
 .capitalize-first::first-letter {
     text-transform: uppercase;
 }
+
+input.no-focus:focus {
+    outline: none !important;
+    border: solid thin transparent !important;
+}
