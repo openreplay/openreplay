@@ -313,7 +313,7 @@ export default class Controls extends React.Component {
                         delay={0}
                         position="top"
                       >
-                        {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border color-main h-full')}
+                        {this.controlIcon("skip-forward-fill", 18, this.backTenSeconds, true, 'hover:bg-active-blue-border color-main h-full flex items-center')}
                       </Tooltip>
                     <div className='p-1 border-l border-r bg-active-blue-border border-active-blue-border'>10s</div>
                     <Tooltip
@@ -321,7 +321,7 @@ export default class Controls extends React.Component {
                         delay={0}
                         position="top"
                       >
-                        {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border color-main h-full')}
+                        {this.controlIcon("skip-forward-fill", 18, this.forthTenSeconds, false, 'hover:bg-active-blue-border color-main h-full flex items-center')}
                     </Tooltip>
                   </div>
 
