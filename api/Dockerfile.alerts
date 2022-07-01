@@ -17,7 +17,7 @@ RUN pip install -r /work_tmp/requirements.txt
 
 WORKDIR /work
 COPY . .
-RUN mv .env.default .env && mv app_alerts.py app.py && mv entrypoint_alerts.sh entrypoint.sh
+RUN mv env.default .env && mv app_alerts.py app.py && mv entrypoint_alerts.sh entrypoint.sh
 
 ENTRYPOINT ["/tini", "--"]
 CMD ./entrypoint.sh
