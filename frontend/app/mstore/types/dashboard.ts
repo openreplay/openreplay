@@ -23,7 +23,7 @@ export interface IDashboard {
     removeWidget(widgetId: string): void
     updateWidget(widget: IWidget): void
     getWidget(widgetId: string): void
-    getWidgetIndex(widgetId: string)
+    getWidgetIndex(widgetId: string): IWidget
     getWidgetByIndex(index: number): void
     getWidgetCount(): void
     getWidgetIndexByWidgetId(widgetId: string): void
@@ -46,30 +46,7 @@ export default class Dashboard implements IDashboard {
     config: any = {}
 
     constructor() {
-        makeAutoObservable(this, {
-            name: observable,
-            description: observable,
-            isPublic: observable,
-            widgets: observable,
-            isValid: observable,
-            metrics: observable,
-
-            toJson: action,
-            fromJson: action,
-            addWidget: action,
-            removeWidget: action,
-            updateWidget: action,
-            getWidget: action,
-            getWidgetIndex: action,
-            getWidgetByIndex: action,
-            getWidgetCount: action,
-            getWidgetIndexByWidgetId: action,
-            validate: action,
-            sortWidgets: action,
-            swapWidgetPosition: action,
-            update: action,
-            toggleMetrics: action
-        })
+        makeAutoObservable(this)
 
         this.validate();
     }

@@ -4,7 +4,7 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer, useObserver } from 'mobx-react-lite';
+import { observer } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
@@ -27,10 +27,10 @@ interface Props {
 function WidgetChart(props: Props) {
     const { isWidget = false, metric, isTemplate } = props;
     const { dashboardStore, metricStore } = useStore();
-    const _metric: any = useObserver(() => metricStore.instance);
-    const period = useObserver(() => dashboardStore.period);
-    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
-    const drillDownFilter = useObserver(() => dashboardStore.drillDownFilter);
+    const _metric: any = metricStore.instance;
+    const period = dashboardStore.period;
+    const drillDownPeriod = dashboardStore.drillDownPeriod;
+    const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
     const isOverviewWidget = metric.metricType === 'predefined' && metric.viewType === 'overview';
@@ -92,16 +92,17 @@ function WidgetChart(props: Props) {
     const renderChart = () => {
         const { metricType, viewType, metricOf } = metric;
 
+        const metricWithData = { ...metric, data };
         if (metricType === 'sessions') {
-            return <SessionWidget metric={metric} />
+            return <SessionWidget metric={metricWithData} />
         }
 
         if (metricType === 'errors') {
-            return <ErrorsWidget metric={metric} />
+            return <ErrorsWidget metric={metricWithData} />
         }
 
         if (metricType === 'funnel') {
-            return <FunnelWidget metric={metric} isWidget={isWidget || isTemplate} />
+            return <FunnelWidget metric={metricWithData} isWidget={isWidget || isTemplate} />
         }
 
         if (metricType === 'predefined') {
@@ -136,7 +137,7 @@ function WidgetChart(props: Props) {
             if (metricOf === FilterKey.SESSIONS) {
                 return (
                     <CustomMetricTableSessions
-                        metric={metric}
+                        metric={metricWithData}
                         isTemplate={isTemplate}
                         isEdit={!isWidget && !isTemplate}
                     />
@@ -145,7 +146,7 @@ function WidgetChart(props: Props) {
             if (metricOf === FilterKey.ERRORS) {
                 return (
                     <CustomMetricTableErrors
-                        metric={metric}
+                        metric={metricWithData}
                         // isTemplate={isTemplate}
                         isEdit={!isWidget && !isTemplate}
                     />
@@ -174,11 +175,11 @@ function WidgetChart(props: Props) {
 
         return <div>Unknown</div>;
     }
-    return useObserver(() => (
+    return (
         <Loader loading={loading} style={{ height: `${isOverviewWidget ? 100 : 240}px` }}>
             {renderChart()}
         </Loader>
-    ));
+    );
 }
 
 export default observer(WidgetChart);

@@ -100,31 +100,7 @@ export default class Widget implements IWidget {
     predefinedKey: string = ''
     
     constructor() {
-        makeAutoObservable(this, {
-            sessionsLoading: observable,
-            data: observable,
-            metricId: observable,
-            widgetId: observable,
-            name: observable,
-            metricType: observable,
-            metricOf: observable,
-            position: observable,
-            isLoading: observable,
-            isValid: observable,
-            dashboardId: observable,
-            colSpan: observable,
-            series: observable,
-            page: observable,
-            
-            addSeries: action,
-            removeSeries: action,
-            fromJson: action,
-            toJson: action,
-            validate: action,
-            update: action,
-            updateKey: action,
-            setPeriod: action,
-        })
+        makeAutoObservable(this)
 
         const filterSeries = new FilterSeries()
         this.series.push(filterSeries)
@@ -221,9 +197,7 @@ export default class Widget implements IWidget {
     }
 
     setData(data: any) {
-        runInAction(() => {
-            this.data = data;
-        })
+        this.data = data;
     }
 
     fetchSessions(metricId: any, filter: any): Promise<any> {

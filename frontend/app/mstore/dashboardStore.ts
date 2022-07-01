@@ -114,39 +114,7 @@ export default class DashboardStore implements IDashboardSotre {
     showAlertModal: boolean = false;
 
     constructor() {
-        makeAutoObservable(this, {
-            dashboards: observable.ref,
-            drillDownFilter: observable.ref,
-            widgetCategories: observable.ref,
-            selectedDashboard: observable.ref,
-            drillDownPeriod: observable,
-            resetCurrentWidget: action,
-            addDashboard: action,
-            removeDashboard: action,
-            updateDashboard: action,
-            getDashboard: action,
-            getDashboardByIndex: action,
-            getDashboardCount: action,
-            selectDashboardById: action,
-            selectDefaultDashboard: action,
-            toJson: action,
-            fromJson: action,
-            setSiteId: action,
-            editWidget: action,
-            updateKey: action,
-            save: action,
-
-            selectWidgetsByCategory: action,
-            toggleAllSelectedWidgets: action,
-            removeSelectedWidgetByCategory: action,
-            toggleWidgetSelection: action,
-            fetchTemplates: action,
-            updatePinned: action,
-            setPeriod: action,
-            setDrillDownPeriod: action,
-
-            fetchMetricChartData: action,
-        });
+        makeAutoObservable(this);
 
         this.drillDownPeriod = Period({ rangeName: LAST_7_DAYS });
         const timeStamps = this.drillDownPeriod.toTimestamps();
@@ -248,7 +216,6 @@ export default class DashboardStore implements IDashboardSotre {
         return dashboardService
             .getDashboard(dashboardId)
             .then((response) => {
-                // const widgets =  new Dashboard().fromJson(response).widgets
                 this.selectedDashboard?.update({
                     widgets: new Dashboard().fromJson(response).widgets,
                 });
@@ -600,7 +567,6 @@ export default class DashboardStore implements IDashboardSotre {
                                     : [];
                             }
                         }
-
                         metric.setData(_data);
                         resolve(_data);
                     }
