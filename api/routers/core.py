@@ -142,8 +142,6 @@ def events_search(projectId: int, q: str,
         return {"data": []}
     if live:
         return assist.autocomplete(project_id=projectId, q=q, key=type.value if type is not None else None)
-    if isinstance(type, str):
-        return {"errors": ["Unsupported type"]}
     if type in [schemas.FetchFilterType._url]:
         type = schemas.EventType.request
     elif type in [schemas.GraphqlFilterType._name]:
