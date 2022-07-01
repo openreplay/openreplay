@@ -16,12 +16,10 @@ RUN chmod +x /tini
 WORKDIR /work_tmp
 COPY requirements.txt /work_tmp/requirements.txt
 RUN pip install -r /work_tmp/requirements.txt
-COPY sourcemap-reader/*.json /work_tmp/
-RUN cd /work_tmp && npm install
 
 WORKDIR /work
 COPY . .
-RUN mv env.default .env && mv /work_tmp/node_modules sourcemap-reader/.
+RUN mv env.default .env && mv entrypoint_alerts.sh entrypoint.sh
 
 ENTRYPOINT ["/tini", "--"]
 CMD ./entrypoint.sh
