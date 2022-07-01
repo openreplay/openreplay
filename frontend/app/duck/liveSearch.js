@@ -59,6 +59,7 @@ export default mergeReducers(
 	createRequestReducer({
 		fetch: FETCH,
     fetchList: FETCH_SESSION_LIST,
+    fetchFilterSearch: FETCH_FILTER_SEARCH
 	}),
 );
 
