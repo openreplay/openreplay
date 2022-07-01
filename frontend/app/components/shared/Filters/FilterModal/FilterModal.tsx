@@ -42,14 +42,12 @@ interface Props {
 function FilterModal(props: Props) {
   const {
     filters,
-    metaOptions,
     onFilterClick = () => null,
     filterSearchList,
     isMainSearch = false,
     fetchingFilterSearchList,
     searchQuery = '',
   } = props;
-  const hasSearchQuery = searchQuery && searchQuery.length > 0;
   const showSearchList = isMainSearch && searchQuery.length > 0;
 
   const onFilterSearchClick = (filter: any) => {
@@ -61,7 +59,7 @@ function FilterModal(props: Props) {
   const { matchingCategories, matchingFilters } = getMatchingEntries(searchQuery, filters);
 
   const isResultEmpty = (!filterSearchList || Object.keys(filterSearchList).length === 0)
-    && matchingCategories.length === 0 && matchingFilters.length === 0
+    && matchingCategories.length === 0 && Object.keys(matchingFilters).length === 0
 
   return (
     <div className={stl.wrapper} style={{ width: '480px', maxHeight: '380px', overflowY: 'auto'}}>
