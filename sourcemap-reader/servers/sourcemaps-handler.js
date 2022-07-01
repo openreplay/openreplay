@@ -4,11 +4,11 @@ const sourceMap = require('source-map');
 const AWS = require('aws-sdk');
 const URL = require('url');
 const wasm = fs.readFileSync('/mappings.wasm');
+sourceMap.SourceMapConsumer.initialize({
+    "lib/mappings.wasm": wasm
+});
 
 module.exports.sourcemapReader = async event => {
-    sourceMap.SourceMapConsumer.initialize({
-        "lib/mappings.wasm": wasm
-    });
     let s3;
     if (event.S3_HOST) {
         s3 = new AWS.S3({
