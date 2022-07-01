@@ -4,8 +4,8 @@ LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 ENV APP_NAME chalice
 # Add Tini
 # Startup daemon
-ENV TINI_VERSION v0.19.0 \
-    SOURCE_MAP_VERSION 0.7.4
+ENV TINI_VERSION=v0.19.0 \
+    SOURCE_MAP_VERSION=0.7.4
 ARG envarg
 ENV ENTERPRISE_BUILD ${envarg}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
