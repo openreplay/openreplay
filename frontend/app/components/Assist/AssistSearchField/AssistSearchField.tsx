@@ -6,19 +6,24 @@ import { connect } from 'react-redux';
 import { edit as editFilter, addFilterByKeyAndValue, clearSearch, fetchFilterSearch } from 'Duck/liveSearch';
 // import { clearSearch } from 'Duck/search';
 
-function AssistSearchField(props: any) {
+interface Props {
+    appliedFilter: any;
+    fetchFilterSearch: any;
+    addFilterByKeyAndValue: any;
+    clearSearch: any;
+}
+function AssistSearchField(props: Props) {
+    const hasEvents = props.appliedFilter.filters.filter((i: any) => i.isEvent).size > 0;
+    const hasFilters = props.appliedFilter.filters.filter((i: any) => !i.isEvent).size > 0;
     return (
         <div className="flex items-center">
-            <div style={{ width: "60%", marginRight: "10px"}}>
-                <SessionSearchField
-                    fetchFilterSearch={props.fetchFilterSearch}
-                    addFilterByKeyAndValue={props.addFilterByKeyAndValue}
-                />
+            <div style={{ width: '60%', marginRight: '10px' }}>
+                <SessionSearchField fetchFilterSearch={props.fetchFilterSearch} addFilterByKeyAndValue={props.addFilterByKeyAndValue} />
             </div>
             <Button
                 variant="text-primary"
                 className="ml-auto font-medium"
-                // disabled={!hasFilters}
+                disabled={!hasFilters && !hasEvents}
                 onClick={() => props.clearSearch()}
             >
                 Clear Search
@@ -27,6 +32,14 @@ function AssistSearchField(props: any) {
     );
 }
 
-export default connect(null, {
-    fetchFilterSearch, editFilter, addFilterByKeyAndValue, clearSearch
-})(AssistSearchField);
+export default connect(
+    (state: any) => ({
+        appliedFilter: state.getIn(['liveSearch', 'instance']),
+    }),
+    {
+        fetchFilterSearch,
+        editFilter,
+        addFilterByKeyAndValue,
+        clearSearch,
+    }
+)(AssistSearchField);
