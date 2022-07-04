@@ -1,17 +1,15 @@
 import React, { useEffect } from 'react';
 import { convertElementToImage } from 'App/utils';
-import { jsPDF } from "jspdf";
+import { jsPDF } from 'jspdf';
 import { useStore } from 'App/mstore';
 import { observer, useObserver } from 'mobx-react-lite';
 import { connect } from 'react-redux';
 import { fileNameFormat } from 'App/utils';
 import { toast } from 'react-toastify';
 interface Props {
-    site: any
+    site: any;
 }
-export default function withReport<P extends Props>(
-    WrappedComponent: React.ComponentType<P>,
-) {
+export default function withReport<P extends Props>(WrappedComponent: React.ComponentType<P>) {
     const ComponentWithReport = (props: P) => {
         const [rendering, setRendering] = React.useState(false);
         const { site } = props;
@@ -19,17 +17,17 @@ export default function withReport<P extends Props>(
         const dashboard: any = useObserver(() => dashboardStore.selectedDashboard);
         const widgets: any = useObserver(() => dashboard?.widgets);
         const period = useObserver(() => dashboardStore.period);
-        
-        const addFooters = (doc) => {
+
+        const addFooters = (doc: any) => {
             const pageCount = doc.internal.getNumberOfPages();
-            for(var i = 1; i <= pageCount; i++) {
+            for (var i = 1; i <= pageCount; i++) {
                 doc.setPage(i);
                 doc.setFontSize(8);
-                doc.setTextColor(136,136,136);
-                doc.text('Page ' + String(i) + ' of ' + String(pageCount), 200,290,null,null,"right");
+                doc.setTextColor(136, 136, 136);
+                doc.text('Page ' + String(i) + ' of ' + String(pageCount), 200, 290, null, null, 'right');
                 doc.addImage('/assets/img/logo-open-replay-grey.png', 'png', 10, 288, 20, 0);
             }
-        }
+        };
 
         const renderPromise = async (): Promise<any> => {
             const promise = new Promise((resolve, reject) => {
@@ -38,14 +36,14 @@ export default function withReport<P extends Props>(
             toast.promise(promise, {
                 pending: 'Generating report...',
                 success: 'Report successfully generated',
-            })
-        }
-    
-        const renderReport = async (cb) => {
+            });
+        };
+
+        const renderReport = async (cb: any) => {
             document.body.scrollIntoView();
             const doc = new jsPDF('p', 'mm', 'a4');
             const now = new Date().toISOString();
-            
+
             doc.addMetadata('Author', 'OpenReplay');
             doc.addMetadata('Title', 'OpenReplay Report');
             doc.addMetadata('Subject', 'OpenReplay Report');
@@ -53,18 +51,17 @@ export default function withReport<P extends Props>(
             doc.addMetadata('Creator', 'OpenReplay');
             doc.addMetadata('Producer', 'OpenReplay');
             doc.addMetadata('CreationDate', now);
-    
-    
+
             const parentElement = document.getElementById('report') as HTMLElement;
             const pageHeight = 1200;
             const pagesCount = parentElement.offsetHeight / pageHeight;
             const pages: Array<any> = [];
-            for(let i = 0; i < pagesCount; i++) {
+            for (let i = 0; i < pagesCount; i++) {
                 const page = document.createElement('div');
                 page.classList.add('page');
                 page.style.height = `${pageHeight}px`;
                 page.style.whiteSpace = 'no-wrap !important';
-                
+
                 const childrens = Array.from(parentElement.children).filter((child) => {
                     const rect = child.getBoundingClientRect();
                     const parentRect = parentElement.getBoundingClientRect();
@@ -75,9 +72,9 @@ export default function withReport<P extends Props>(
                     pages.push(childrens);
                 }
             }
-    
-            const rportLayer = document.getElementById("report-layer");
-    
+
+            const rportLayer = document.getElementById('report-layer');
+
             pages.forEach(async (page, index) => {
                 const pageDiv = document.createElement('div');
                 pageDiv.classList.add('grid', 'gap-4', 'grid-cols-4', 'items-start', 'pb-10', 'auto-rows-min', 'printable-report');
@@ -90,19 +87,19 @@ export default function withReport<P extends Props>(
                 if (index > 0) {
                     pageDiv.style.paddingTop = '100px';
                 }
-    
+
                 if (index === 0) {
                     const header = document.getElementById('report-header')?.cloneNode(true) as HTMLElement;
                     header.classList.add('col-span-4');
                     header.style.display = 'block';
                     pageDiv.appendChild(header);
                 }
-                page.forEach((child) => {
+                page.forEach((child: any) => {
                     pageDiv.appendChild(child.cloneNode(true));
-                })
+                });
                 rportLayer?.appendChild(pageDiv);
-            })
-    
+            });
+
             setTimeout(async () => {
                 for (let i = 0; i < pages.length; i++) {
                     const pageDiv = document.getElementById(`page-${i}`) as HTMLElement;
@@ -117,25 +114,25 @@ export default function withReport<P extends Props>(
                         doc.addPage();
                     }
                 }
-            }, 100)
-        }
-        
+            }, 100);
+        };
+
         return (
             <>
                 <div className="mb-2" id="report-header" style={{ display: 'none' }}>
                     <div className="flex items-end justify-between" style={{ margin: '-50px', padding: '25px 50px', backgroundColor: 'white' }}>
                         <div className="flex items-center">
-                            <img src="/img/logo.svg" style={{ height: '30px' }} />
+                            <img src="/assets/logo.svg" style={{ height: '30px' }} />
                             <div className="text-lg color-gray-medium ml-2 mt-1">REPORT</div>
                         </div>
                         <div style={{ whiteSpace: 'nowrap' }}>
-                        <span className="font-semibold">Project:</span> {site && site.name}
+                            <span className="font-semibold">Project:</span> {site && site.name}
                         </div>
                     </div>
                     <div className="flex items-end mt-20 justify-between">
                         <div className="text-2xl font-semibold">{dashboard && dashboard.name}</div>
                         <div className="font-semibold">
-                            {period && (period.range.start.format('MMM Do YY') + ' - ' + period.range.end.format('MMM Do YY'))}
+                            {period && period.range.start.format('MMM Do YY') + ' - ' + period.range.end.format('MMM Do YY')}
                         </div>
                     </div>
                     {dashboard && dashboard.description && <div className="color-gray-medum whitespace-pre-wrap my-2">{dashboard.description}</div>}
@@ -143,7 +140,7 @@ export default function withReport<P extends Props>(
 
                 <div
                     id="report-layer"
-                    style={{ 
+                    style={{
                         position: 'fixed',
                         top: '0',
                         left: '0',
@@ -153,10 +150,10 @@ export default function withReport<P extends Props>(
                 ></div>
                 <WrappedComponent {...props} renderReport={renderPromise} rendering={rendering} />
             </>
-        )
-    }
+        );
+    };
 
-    return connect(state => ({
+    return connect((state: any) => ({
         site: state.getIn(['site', 'instance']),
     }))(ComponentWithReport);
 }
