@@ -197,6 +197,11 @@ function FilterAutoComplete(props: Props) {
                     onFocus={onFocus}
                     onBlur={onBlur}
                     placeholder={placeholder}
+                    onKeyDown={(e: any) => {
+                        if (e.key === 'Enter') {
+                            inputRef?.blur();
+                        }
+                    }}
                 />
                 {loading && (
                     <div className="absolute top-0 right-0" style={{ marginTop: '5px', marginRight: !showCloseButton || (showCloseButton && !showOrButton) ? '34px' : '62px'}}>
