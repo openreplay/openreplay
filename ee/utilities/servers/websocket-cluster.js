@@ -1,7 +1,6 @@
 const _io = require('socket.io');
 const express = require('express');
 const {
-    extractSessionInfo,
     extractPeerId,
     hasFilters,
     isValidSession,
@@ -9,6 +8,9 @@ const {
     getValidAttributes,
     uniqueAutocomplete
 } = require('../utils/helper');
+const {
+    extractSessionInfo
+} = require('../utils/assistHelper');
 const {
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
