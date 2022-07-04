@@ -77,7 +77,7 @@
 .errors {
   border-radius: 5px;
   /* width: 400px; */
-  margin: auto;
+  margin: 10px auto;
   /* border: 1px solid $red; */
   padding: 15px;
   background-color: rgba(204, 0, 0, 0.1);
