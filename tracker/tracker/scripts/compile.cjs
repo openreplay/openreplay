@@ -1,8 +1,6 @@
-const { promises } = require('fs')
+const { promises: fs } = require('fs')
 const replaceInFiles = require('replace-in-files')
 const packageConfig = require('../package.json')
-
-const fs = promises
 
 async function main() {
   const webworker = await fs.readFile('build/webworker.js', 'utf8');
