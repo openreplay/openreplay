@@ -1,3 +1,3 @@
 #!/bin/bash
 bash env_vars.sh
-python app_crons.py $ACTION
+uvicorn app:app --host 0.0.0.0 --reload --proxy-headers
