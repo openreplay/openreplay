@@ -6,9 +6,8 @@ else
   override=$ENV_CONFIG_OVERRIDE_PATH
   if [ -f "$override" ]; then
     cp $override .env.override
-    override=.env.override
-    source $override
   else
+    touch .env.override
     echo "$override does not exist."
   fi
 
