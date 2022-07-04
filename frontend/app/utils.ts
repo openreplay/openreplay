@@ -314,9 +314,9 @@ export const exportCSVFile = (headers, items, fileTitle) => {
     }
 };
 
-export const fetchErrorCheck = (response: any) => {
+export const fetchErrorCheck = async (response: any) => {
     if (!response.ok) {
-        throw Error(response.statusText);
+        return Promise.reject(response);
     }
     return response.json();
 };

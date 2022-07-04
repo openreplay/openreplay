@@ -45,7 +45,7 @@ export default class MetricService implements IMetricService {
      */
     getMetric(metricId: string): Promise<any> {
         return this.client.get('/metrics/' + metricId)
-            .then((response: { json: () => any; }) => response.json())
+            .then(fetchErrorCheck)
             .then((response: { data: any; }) => response.data || {});
     }
 

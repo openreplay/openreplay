@@ -172,7 +172,8 @@ export default class MetricStore implements IMetricStore {
         return metricService.getMetric(id)
             .then((metric: any) => {
                 return this.instance = new Widget().fromJson(metric, period)
-            }).finally(() => {
+            })
+            .finally(() => {
                 this.isLoading = false
             })
     }
@@ -198,23 +199,4 @@ export default class MetricStore implements IMetricStore {
             })
         })
     }
-}
-
-const sampleJsonFunnel = {
-    // metricId: 1,
-    name: "Funnel Sample",
-    metricType: 'funnel',
-    series: [
-        {
-            name: 'Series 1',
-            filter: {
-                eventsOrder: 'then',
-                filters: [
-                    { type: 'LOCATION', operator: 'is', value: ['/sessions', '/errors', '/users'], percent: 100, completed: 60, dropped: 40, },
-                    { type: 'LOCATION', operator: 'is', value: ['/sessions'], percent: 80, completed: 40, dropped: 60, },
-                    { type: 'CLICK', operator: 'on', value: ['DASHBOARDS'], percent: 80, completed: 10, dropped: 90, }
-                ]
-            }
-        }
-    ],
 }

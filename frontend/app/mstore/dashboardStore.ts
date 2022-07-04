@@ -74,12 +74,14 @@ export interface IDashboardSotre {
     fetchTemplates(hardRefresh: boolean): Promise<any>;
     deleteDashboardWidget(dashboardId: string, widgetId: string): Promise<any>;
     addWidgetToDashboard(dashboard: IDashboard, metricIds: any): Promise<any>;
+    setDrillDownPeriod(period: any): void;
 
     updatePinned(dashboardId: string): Promise<any>;
     fetchMetricChartData(
         metric: IWidget,
         data: any,
-        isWidget: boolean
+        isWidget: boolean,
+        period: Period
     ): Promise<any>;
     setPeriod(period: any): void;
 }
@@ -484,10 +486,12 @@ export default class DashboardStore implements IDashboardSotre {
     fetchMetricChartData(
         metric: IWidget,
         data: any,
-        isWidget: boolean = false
+        isWidget: boolean = false,
+        period: Period
     ): Promise<any> {
-        const period = this.period.toTimestamps();
+        period = period.toTimestamps();
         const params = { ...period, ...data, key: metric.predefinedKey };
+        
 
         if (metric.page && metric.limit) {
             params["page"] = metric.page;
@@ -504,7 +508,7 @@ export default class DashboardStore implements IDashboardSotre {
                     ) {
                         const _data = {
                             ...data,
-                            chart: getChartFormatter(this.period)(data.chart),
+                            chart: getChartFormatter(period)(data.chart),
                         };
                         metric.setData(_data);
                         resolve(_data);
@@ -529,7 +533,7 @@ export default class DashboardStore implements IDashboardSotre {
                             );
                         } else {
                             if (data.hasOwnProperty("chart")) {
-                                _data["chart"] = getChartFormatter(this.period)(
+                                _data["chart"] = getChartFormatter(period)(
                                     data.chart
                                 );
                                 _data["namesMap"] = data.chart
@@ -545,7 +549,7 @@ export default class DashboardStore implements IDashboardSotre {
                                         return unique;
                                     }, []);
                             } else {
-                                _data["chart"] = getChartFormatter(this.period)(
+                                _data["chart"] = getChartFormatter(period)(
                                     Array.isArray(data) ? data : []
                                 );
                                 _data["namesMap"] = Array.isArray(data)

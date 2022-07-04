@@ -4,7 +4,7 @@ import CustomMetricPercentage from 'App/components/Dashboard/Widgets/CustomMetri
 import CustomMetricTable from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricTable';
 import CustomMetricPieChart from 'App/components/Dashboard/Widgets/CustomMetricsWidgets/CustomMetricPieChart';
 import { Styles } from 'App/components/Dashboard/Widgets/common';
-import { observer } from 'mobx-react-lite';
+import { observer, useObserver } from 'mobx-react-lite';
 import { Loader } from 'UI';
 import { useStore } from 'App/mstore';
 import WidgetPredefinedChart from '../WidgetPredefinedChart';
@@ -28,8 +28,8 @@ function WidgetChart(props: Props) {
     const { isWidget = false, metric, isTemplate } = props;
     const { dashboardStore, metricStore } = useStore();
     const _metric: any = metricStore.instance;
-    const period = dashboardStore.period;
-    const drillDownPeriod = dashboardStore.drillDownPeriod;
+    const period = useObserver(() => dashboardStore.period);
+    const drillDownPeriod = useObserver(() => dashboardStore.drillDownPeriod);
     const drillDownFilter = dashboardStore.drillDownFilter;
     const colors = Styles.customMetricColors;
     const [loading, setLoading] = useState(true)
@@ -66,10 +66,10 @@ function WidgetChart(props: Props) {
     }
 
     const depsString = JSON.stringify(_metric.series);
-    const fetchMetricChartData = (metric: any, payload: any, isWidget: any) => {
+    const fetchMetricChartData = (metric: any, payload: any, isWidget: any, period: any) => {
         if (!isMounted()) return;
         setLoading(true)
-        dashboardStore.fetchMetricChartData(metric, payload, isWidget).then((res: any) => {
+        dashboardStore.fetchMetricChartData(metric, payload, isWidget, period).then((res: any) => {
             if (isMounted()) setData(res);
         }).finally(() => {
             setLoading(false);
@@ -85,7 +85,7 @@ function WidgetChart(props: Props) {
         prevMetricRef.current = metric;
         const timestmaps = drillDownPeriod.toTimestamps();
         const payload = isWidget ? { ...params } : { ...metricParams, ...timestmaps, ...metric.toJson() };
-        debounceRequest(metric, payload, isWidget);
+        debounceRequest(metric, payload, isWidget, !isWidget ? drillDownPeriod : period);
     }, [drillDownPeriod, period, depsString, _metric.page, metric.metricType, metric.metricOf, metric.viewType]);
 
 

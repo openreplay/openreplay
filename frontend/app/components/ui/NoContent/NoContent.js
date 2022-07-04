@@ -3,9 +3,8 @@ import { Icon } from 'UI';
 import styles from './noContent.module.css';
 
 export default ({
-  title = "No data available.",
+  title = <div>No data available.</div>,
   subtext,
-  animatedIcon = false,
   icon,
   iconSize = 100,
   size,
@@ -17,8 +16,7 @@ export default ({
 }) => (!show ? children :
 <div className={ `${ styles.wrapper } ${ size && styles[ size ] }` } style={style}>
   {
-    // icon && <div className={ empty ? styles.emptyIcon : styles.icon } />
-    animatedIcon ? <div className={ styles[animatedIcon] } /> : (icon && <Icon name={icon} size={iconSize} />)
+    icon && <Icon name={icon} size={iconSize} />
   }
   { title && <div className={ styles.title }>{ title }</div> }
   {
