@@ -45,9 +45,11 @@ export default class MFileReader extends RawMessageReader {
     }
 
     while (this.needSkipMessage()) {
-      if (!this.readRawMessage()) {
+      const skippedMessage = this.readRawMessage()
+      if (!skippedMessage) {
         return null
       }
+      logger.log("Skipping message: ", skippedMessage)
     }
 
     this.pLastMessageID = this.p
