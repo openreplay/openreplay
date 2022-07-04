@@ -3,14 +3,18 @@ import { timestamp, isURL } from "../utils.js";
 import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../../common/messages.js";
 import { hasTag } from "../app/guards.js";
 
-function resolveImageUrl(url: string, location: Location) {
-  const cleanUrl = url.trim()
-  if  (cleanUrl.startsWith('/')) {
-    return location.origin + cleanUrl
-  } else if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:'))  {
-    return cleanUrl
+function resolveURL(url: string, location: Location = document.location) {
+  url = url.trim()
+  if  (url.startsWith('/')) {
+    return location.origin + url
+  } else if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('data:') // any other possible value here?
+   ){
+    return url
   } else {
-   return location.origin + location.pathname + cleanUrl
+   return location.origin + location.pathname + url
   }
 }
 
@@ -37,18 +41,18 @@ export default function (app: App): void {
     if (!complete) {
       return;
     }
+    const resolvedSrc = resolveURL(src || '') // Src type is null sometimes. - is it true?
     if (naturalWidth === 0 && naturalHeight === 0) {
-      if (src != null && isURL(src)) { // TODO: How about relative urls ? Src type is null sometimes.
-        app.send(new ResourceTiming(timestamp(), 0, 0, 0, 0, 0, src, 'img'));
+      if (isURL(resolvedSrc)) {
+        app.send(new ResourceTiming(timestamp(), 0, 0, 0, 0, 0, resolvedSrc, 'img'));
       }
-    } else if (src.length >= 1e5 || app.sanitizer.isMasked(id)) {
+    } else if (resolvedSrc.length >= 1e5 || app.sanitizer.isMasked(id)) {
       sendPlaceholder(id, this)
     } else {
-      const imgSrc = resolveImageUrl(src, document.location)
-      app.send(new SetNodeAttribute(id, 'src', imgSrc));
+      app.send(new SetNodeAttribute(id, 'src', resolvedSrc))
       if (srcset) {
-        const fixedSet = srcset.split(',').map(str => resolveImageUrl(str, document.location)).join(',')
-        app.send(new SetNodeAttribute(id, 'srcset', fixedSet));
+        const resolvedSrcset = srcset.split(',').map(str => resolveURL(str)).join(',')
+        app.send(new SetNodeAttribute(id, 'srcset', resolvedSrcset))
       }
     }
   });
