@@ -142,7 +142,7 @@ def get_custom_metrics(projectId: int, context: schemas.CurrentContext = Depends
 
 @app.get('/{projectId}/metrics/{metric_id}', tags=["dashboard"])
 @app.get('/{projectId}/custom_metrics/{metric_id}', tags=["customMetrics"])
-def get_custom_metric(projectId: int, metric_id: int, context: schemas.CurrentContext = Depends(OR_context)):
+def get_custom_metric(projectId: int, metric_id: str, context: schemas.CurrentContext = Depends(OR_context)):
     data = custom_metrics.get(project_id=projectId, user_id=context.user_id, metric_id=metric_id)
     if data is None:
         return {"errors": ["custom metric not found"]}
