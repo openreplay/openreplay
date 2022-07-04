@@ -8,12 +8,13 @@ import { useStore } from "App/mstore";
 import { overPastString } from "App/dateRange";
 interface Props {
     metric: any;
+    data: any;
     isEdit: any;
     history: any;
     location: any;
 }
-function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
-    const { metric, isEdit = false } = props;
+function CustomMetricTableErrors(props: RouteComponentProps & Props) {
+    const { metric, isEdit = false, data } = props;
     const errorId = new URLSearchParams(props.location.search).get("errorId");
     const { showModal, hideModal } = useModal();
     const { dashboardStore } = useStore();
@@ -46,12 +47,12 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
     return (
         <NoContent
             title={`No errors found ${overPastString(period)}`}
-            show={!metric.data.errors || metric.data.errors.length === 0}
+            show={!data.errors || data.errors.length === 0}
             size="small"
         >
             <div className="pb-4">
-                {metric.data.errors &&
-                    metric.data.errors.map((error: any, index: any) => (
+                {data.errors &&
+                    data.errors.map((error: any, index: any) => (
                         <div key={index} className="border-b last:border-none">
                             <ErrorListItem
                                 error={error}
@@ -65,7 +66,7 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
                         <Pagination
                             page={metric.page}
                             totalPages={Math.ceil(
-                                metric.data.total / metric.limit
+                                data.total / metric.limit
                             )}
                             onPageChange={(page: any) =>
                                 metric.updateKey("page", page)
@@ -77,16 +78,14 @@ function CustomMetricTableErrors(props: RouteComponentProps<Props>) {
                 )}
 
                 {!isEdit && (
-                    <ViewMore total={metric.data.total} limit={metric.limit} />
+                    <ViewMore total={data.total} limit={metric.limit} />
                 )}
             </div>
         </NoContent>
     );
 }
 
-export default withRouter(CustomMetricTableErrors) as React.FunctionComponent<
-    RouteComponentProps<Props>
->;
+export default withRouter<Props & RouteComponentProps, React.FunctionComponent>(CustomMetricTableErrors);
 
 const ViewMore = ({ total, limit }: any) =>
     total > limit && (
