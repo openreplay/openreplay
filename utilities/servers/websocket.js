@@ -1,7 +1,6 @@
 const _io = require('socket.io');
 const express = require('express');
 const {
-    extractSessionInfo,
     extractPeerId,
     extractProjectKeyFromRequest,
     extractSessionIdFromRequest,
@@ -12,6 +11,9 @@ const {
     getValidAttributes,
     uniqueAutocomplete
 } = require('../utils/helper');
+const {
+    extractSessionInfo
+} = require('../utils/assistHelper');
 const wsRouter = express.Router();
 const UPDATE_EVENT = "UPDATE_SESSION";
 const IDENTITIES = {agent: 'agent', session: 'session'};
