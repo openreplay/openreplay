@@ -7,12 +7,7 @@ else
   if [ -f "$override" ]; then
     cp $override .env.override
     override=.env.override
-
-    # to remove all defined os-env-vars
-    cat $override | while read line
-    do
-       export $line
-    done
+    source $override
   else
     echo "$override does not exist."
   fi
