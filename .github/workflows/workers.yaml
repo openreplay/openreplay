@@ -75,28 +75,6 @@ jobs:
           echo "::set-output name=image::$DOCKER_REPO/$image:$IMAGE_TAG"
         done
 
-    - name: Creating old image input
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        #
-        # Create yaml with existing image tags
-        #
-        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
-        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
-
-        echo > /tmp/image_override.yaml
-
-        for line in `cat /tmp/image_tag.txt`;
-        do
-            image_array=($(echo "$line" | tr ':' '\n'))
-            cat <<EOF >> /tmp/image_override.yaml
-        ${image_array[0]}:
-          image:
-            tag: ${image_array[1]}
-        EOF
-        done
-
     - name: Deploying to kuberntes
       env:
         IMAGE_TAG: ${{ github.sha }}
@@ -112,14 +90,31 @@ jobs:
         sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
         sed -i "s/jwt_secret: \"SetARandomStringHere\"/jwt_secret: \"${{ secrets.OSS_JWT_SECRET }}\"/g" vars.yaml
         sed -i "s/domainName: \"\"/domainName: \"${{ secrets.OSS_DOMAIN_NAME }}\"/g" vars.yaml
+
+        echo > /tmp/image_override.yaml
+        mkdir /tmp/helmcharts
+        mv openreplay/charts/ingress-nginx /tmp/helmcharts/
         ## Update images
         for image in $(cat /tmp/images_to_build.txt);
         do
-            sed -i "/${image}/{n;n;s/.*/    tag: ${IMAGE_TAG}/}" /tmp/image_override.yaml
+        mv openreplay/charts/$image /tmp/helmcharts/
+        cat <<EOF>>/tmp/image_override.yaml
+        ${image}:
+          image:
+            # We've to strip off the -ee, as helm will append it.
+            tag: ${IMAGE_TAG}
+        EOF
         done
+        ls /tmp/helmcharts
+        rm -rf openreplay/charts/*
+        ls openreplay/charts
+        mv /tmp/helmcharts/* openreplay/charts/
+        ls openreplay/charts
+
+        cat /tmp/image_override.yaml
 
         # Deploy command
-        helm upgrade --install openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set skipMigration=true --no-hooks
+        helm template openreplay -n app openreplay -f vars.yaml -f /tmp/image_override.yaml --set ingress-nginx.enabled=false --set skipMigration=true | kubectl apply -f -
 
     # - name: Debug Job
     #   if: ${{ failure() }}
