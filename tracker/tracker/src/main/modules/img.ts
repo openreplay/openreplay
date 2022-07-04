@@ -3,7 +3,16 @@ import { timestamp, isURL } from "../utils.js";
 import { ResourceTiming, SetNodeAttributeURLBased, SetNodeAttribute } from "../../common/messages.js";
 import { hasTag } from "../app/guards.js";
 
-
+function resolveImageUrl(url: string, location: Location) {
+  const cleanUrl = url.trim()
+  if  (cleanUrl.startsWith('/')) {
+    return location.origin + cleanUrl
+  } else if (cleanUrl.startsWith('http') || cleanUrl.startsWith('data:'))  {
+    return cleanUrl
+  } else {
+   return location.origin + location.pathname + cleanUrl
+  }
+}
 
 const PLACEHOLDER_SRC = "https://static.openreplay.com/tracker/placeholder.jpeg";
 
@@ -35,8 +44,12 @@ export default function (app: App): void {
     } else if (src.length >= 1e5 || app.sanitizer.isMasked(id)) {
       sendPlaceholder(id, this)
     } else {
-      app.send(new SetNodeAttributeURLBased(id, 'src', src, app.getBaseHref()));
-      srcset && app.send(new SetNodeAttribute(id, 'srcset', srcset));
+      const imgSrc = resolveImageUrl(src, document.location)
+      app.send(new SetNodeAttribute(id, 'src', imgSrc));
+      if (srcset) {
+        const fixedSet = srcset.split(',').map(str => resolveImageUrl(str, document.location)).join(',')
+        app.send(new SetNodeAttribute(id, 'srcset', fixedSet));
+      }
     }
   });
 
