@@ -184,7 +184,7 @@ export default abstract class Observer {
     const [ id,  isNew ]= this.app.nodes.registerNode(node);
     if (isNew){
       this.recents.set(id, RecentsType.New)
-    } else if (!this.recents.has(id)) {
+    } else if (this.recents.get(id) !== RecentsType.New) { // can we do just `else` here?
       this.recents.set(id, RecentsType.Removed)
     }
   }
@@ -231,6 +231,8 @@ export default abstract class Observer {
     // TODO: Clean the logic (though now it workd fine)
     if (!hasTag(node, "HTML") || !this.isTopContext) {
       if (parent === null) {
+        // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
+        // That shouldn't affect the visual rendering ( should it? )
         this.unbindNode(node);
         return false;
       }
