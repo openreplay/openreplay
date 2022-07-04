@@ -25,22 +25,22 @@
   "devDependencies": {
     "@babel/core": "^7.10.2",
     "@rollup/plugin-babel": "^5.0.3",
-    "@rollup/plugin-node-resolve": "^8.0.1",
-    "@typescript-eslint/eslint-plugin": "^2.34.0",
-    "@typescript-eslint/parser": "^2.34.0",
-    "eslint": "^6.8.0",
-    "eslint-plugin-prettier": "^3.1.4",
+    "@rollup/plugin-node-resolve": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.8.0",
+    "eslint-plugin-prettier": "^4.1.4",
     "prettier": "^2.0.0",
     "replace-in-files": "^2.0.3",
     "rollup": "^2.17.0",
     "rollup-plugin-terser": "^6.1.0",
     "semver": "^6.3.0",
-    "typescript": "^4.6.0-dev.20211126"
+    "typescript": "^4.7.0"
   },
   "dependencies": {
     "error-stack-parser": "^2.0.6"
   },
   "engines": {
-    "node": ">=17.5"
+    "node": ">=14.15"
   }
 }
