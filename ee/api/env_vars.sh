@@ -6,7 +6,7 @@ else
   override=$ENV_CONFIG_OVERRIDE_PATH
   if [ -f "$override" ]; then
     cp $override .env.override
-    $override=.env.override
+    override=.env.override
     # to remove endOfLine form sed result
     echo "" >> $override
     sed 's/=.*//;/^$/d' $override > .replacements
