@@ -9,11 +9,12 @@ import { useModal } from 'App/components/Modal';
 
 interface Props {
     metric: Widget;
-    isWidget?: boolean
+    isWidget?: boolean;
+    data: any;
 }
 function FunnelWidget(props: Props) {
-    const { metric, isWidget = false } = props;
-    const funnel = metric.data.funnel || { stages: [] };
+    const { metric, isWidget = false, data } = props;
+    const funnel = data.funnel || { stages: [] };
     const totalSteps = funnel.stages.length;
     const stages = isWidget ? [...funnel.stages.slice(0, 1), funnel.stages[funnel.stages.length - 1]] : funnel.stages;
     const hasMoreSteps = funnel.stages.length > 2;

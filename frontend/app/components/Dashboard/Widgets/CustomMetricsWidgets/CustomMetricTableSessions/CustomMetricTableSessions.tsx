@@ -9,10 +9,11 @@ interface Props {
     metric: any;
     isTemplate?: boolean;
     isEdit?: boolean;
+    data: any;
 }
 
 function CustomMetricTableSessions(props: Props) {
-    const { isEdit = false, metric } = props;
+    const { isEdit = false, metric, data } = props;
     const { dashboardStore } = useStore();
     const period = dashboardStore.period;
 
@@ -20,16 +21,16 @@ function CustomMetricTableSessions(props: Props) {
         <NoContent
             show={
                 !metric ||
-                !metric.data ||
-                !metric.data.sessions ||
-                metric.data.sessions.length === 0
+                !data ||
+                !data.sessions ||
+                data.sessions.length === 0
             }
             size="small"
             title={`No sessions found ${overPastString(period)}`}
         >
             <div className="pb-4">
-                {metric.data.sessions &&
-                    metric.data.sessions.map((session: any, index: any) => (
+                {data.sessions &&
+                    data.sessions.map((session: any, index: any) => (
                         <div
                             className="border-b last:border-none"
                             key={session.sessionId}
@@ -43,19 +44,19 @@ function CustomMetricTableSessions(props: Props) {
                         <Pagination
                             page={metric.page}
                             totalPages={Math.ceil(
-                                metric.data.total / metric.limit
+                                data.total / metric.limit
                             )}
                             onPageChange={(page: any) =>
                                 metric.updateKey("page", page)
                             }
-                            limit={metric.data.total}
+                            limit={data.total}
                             debounceRequest={500}
                         />
                     </div>
                 )}
 
                 {!isEdit && (
-                    <ViewMore total={metric.data.total} limit={metric.limit} />
+                    <ViewMore total={data.total} limit={metric.limit} />
                 )}
             </div>
         </NoContent>

@@ -94,15 +94,15 @@ function WidgetChart(props: Props) {
 
         const metricWithData = { ...metric, data };
         if (metricType === 'sessions') {
-            return <SessionWidget metric={metricWithData} />
+            return <SessionWidget metric={metric} data={data} />
         }
 
         if (metricType === 'errors') {
-            return <ErrorsWidget metric={metricWithData} />
+            return <ErrorsWidget metric={metric} data={data} />
         }
 
         if (metricType === 'funnel') {
-            return <FunnelWidget metric={metricWithData} isWidget={isWidget || isTemplate} />
+            return <FunnelWidget metric={metric} data={data} isWidget={isWidget || isTemplate} />
         }
 
         if (metricType === 'predefined') {
@@ -137,7 +137,8 @@ function WidgetChart(props: Props) {
             if (metricOf === FilterKey.SESSIONS) {
                 return (
                     <CustomMetricTableSessions
-                        metric={metricWithData}
+                        metric={metric}
+                        data={data}
                         isTemplate={isTemplate}
                         isEdit={!isWidget && !isTemplate}
                     />
@@ -146,7 +147,8 @@ function WidgetChart(props: Props) {
             if (metricOf === FilterKey.ERRORS) {
                 return (
                     <CustomMetricTableErrors
-                        metric={metricWithData}
+                        metric={metric}
+                        data={data}
                         // isTemplate={isTemplate}
                         isEdit={!isWidget && !isTemplate}
                     />
