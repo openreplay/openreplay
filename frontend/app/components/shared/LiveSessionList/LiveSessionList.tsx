@@ -7,6 +7,7 @@ import withPermissions from 'HOCs/withPermissions'
 import { KEYS } from 'Types/filter/customFilter';
 import { applyFilter } from 'Duck/liveSearch';
 import { FilterKey } from 'App/types/filter/filterType';
+import { fetchList as fetchMetadata } from 'Duck/customField';
 import { addFilterByKeyAndValue, updateCurrentPage } from 'Duck/liveSearch';
 import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
@@ -31,10 +32,11 @@ interface Props {
   metaList: any,
   sort: any,
   total: number,
+  fetchMetadata: () => void,
 }
 
 function LiveSessionList(props: Props) {
-  const { loading, metaListLoading, filter, list, currentPage, total, metaList = [], sort } = props;
+  const { loading, metaListLoading, filter, list, currentPage, total, metaList = [], sort, fetchMetadata } = props;
   var timeoutId: any;
   const { filters } = filter;
   const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
@@ -72,6 +74,7 @@ function LiveSessionList(props: Props) {
   // }, [filters, list]);
 
   useEffect(() => {
+    fetchMetadata();
     props.applyFilter({ ...filter});
     timeout();
     return () => {
@@ -182,5 +185,6 @@ export default withPermissions(['ASSIST_LIVE'])(connect(
     applyFilter,
     addFilterByKeyAndValue,
     updateCurrentPage,
+    fetchMetadata,
   }
 )(LiveSessionList));
