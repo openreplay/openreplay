@@ -66,7 +66,7 @@ const isValidSession = function (sessionInfo, filters) {
                 }
             }
         }
-        foundAll &&= found;
+        foundAll = foundAll && found;
         if (!found) {
             break;
         }
