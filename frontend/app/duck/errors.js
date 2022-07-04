@@ -42,6 +42,7 @@ const initialState = Map({
 	stats: Map(),
 	sourcemapUploaded: true,
   	currentPage: 1,
+	limit: PER_PAGE,
 	options: Map({
 		sort: DEFAULT_SORT,
 		order: DEFAULT_ORDER,
@@ -57,7 +58,7 @@ function reducer(state = initialState, action = {}) {
 	let updError;
 	switch (action.type) {
 		case EDIT_OPTIONS:
-			return state.mergeIn(["options"], action.instance);
+			return state.mergeIn(["options"], action.instance).set('currentPage', 1);
 		case success(FETCH):
 			if (state.get("list").find(e => e.get("errorId") === action.id)) {
 				return updateItemInList(state, { errorId: action.data.errorId, viewed: true })
@@ -73,15 +74,15 @@ function reducer(state = initialState, action = {}) {
 				.set("totalCount", data ? data.total : 0)
 				.set("list", List(data && data.errors).map(ErrorInfo)
 					.filter(e => e.parentErrorId == null)
-					.map(e => e.update("chart", chartWrapper)));
+					.map(e => e.update("chart", chartWrapper)))
 		case success(RESOLVE):
-			updError = { errorId: action.id, status: RESOLVED };
+			updError = { errorId: action.id, status: RESOLVED, disabled: true };
 			return updateItemInList(updateInstance(state, updError), updError);
 		case success(UNRESOLVE):
-			updError = { errorId: action.id, status: UNRESOLVED };
+			updError = { errorId: action.id, status: UNRESOLVED, disabled: true };
 			return updateItemInList(updateInstance(state, updError), updError);
 		case success(IGNORE):
-			updError = { errorId: action.id, status: IGNORED };
+			updError = { errorId: action.id, status: IGNORED, disabled: true };
 			return updateItemInList(updateInstance(state, updError), updError);
 		case success(TOGGLE_FAVORITE):
 			return state.mergeIn([ "instance" ], { favorite: !state.getIn([ "instance", "favorite" ]) })
@@ -163,28 +164,43 @@ export function fetchBookmarks() {
 	}
 }
 
-export function resolve(id) {
-	return {
+export const resolve = (id) => (dispatch, getState) => {
+	const list = getState().getIn(['errors', 'list']);
+	const index = list.findIndex(e => e.get('errorId') === id);
+	const error = list.get(index);
+	if (error.get('status') === RESOLVED) return;
+
+	return dispatch({
 		types: array(RESOLVE),
 		id,
 		call: client => client.get(`/errors/${ id }/solve`),
-	}
+	})
 }
 
-export function unresolve(id) {
-	return {
+export const unresolve = (id) => (dispatch, getState) => {
+	const list = getState().getIn(['errors', 'list']);
+	const index = list.findIndex(e => e.get('errorId') === id);
+	const error = list.get(index);
+	if (error.get('status') === UNRESOLVED) return;
+
+	return dispatch({
 		types: array(UNRESOLVE),
 		id,
 		call: client => client.get(`/errors/${ id }/unsolve`),
-	}
+	})
 }
 
-export function ignore(id) {
-	return {
+export const ignore = (id) => (dispatch, getState) => {
+	const list = getState().getIn(['errors', 'list']);
+	const index = list.findIndex(e => e.get('errorId') === id);
+	const error = list.get(index);
+	if (error.get('status') === IGNORED) return;
+
+	return dispatch({
 		types: array(IGNORE),
 		id,
 		call: client => client.get(`/errors/${ id }/ignore`),
-	}
+	})
 }
 
 export function merge(ids) {

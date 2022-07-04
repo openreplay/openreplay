@@ -88,7 +88,7 @@ function WidgetWrapper(props: Props & RouteComponentProps) {
                 onClick={props.onClick ? props.onClick : () => {}}
                 id={`widget-${widget.widgetId}`}
             >
-                {!isTemplate && isWidget && isPredefined && 
+                {!isTemplate && isWidget && isPredefined &&
                     <div
                         className={cn(
                             stl.drillDownMessage,

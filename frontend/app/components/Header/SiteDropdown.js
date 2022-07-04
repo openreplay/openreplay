@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { setSiteId } from 'Duck/site';
 import { withRouter } from 'react-router-dom';
-import { hasSiteId, siteChangeAvaliable } from 'App/routes';
+import { hasSiteId, siteChangeAvaliable, isRoute } from 'App/routes';
 import { STATUS_COLOR_MAP, GREEN } from 'Types/site';
 import { Icon, SlideModal } from 'UI';
 import { pushNewSite } from 'Duck/user'
@@ -42,10 +42,10 @@ export default class SiteDropdown extends React.PureComponent {
   }
 
   switchSite = (siteId) => {
-    const { mstore } = this.props
+    const { mstore, location } = this.props
 
     this.props.setSiteId(siteId);
-    this.props.clearSearch();
+    this.props.clearSearch(location.pathname.includes('/sessions'));
     this.props.fetchIntegrationVariables();
 
     mstore.initClient();
@@ -59,7 +59,7 @@ export default class SiteDropdown extends React.PureComponent {
     const disabled = !siteChangeAvaliable(pathname);
     const showCurrent = hasSiteId(pathname) || siteChangeAvaliable(pathname);
     // const canAddSites = isAdmin && account.limits.projects && account.limits.projects.remaining !== 0;
-  
+
     return (
       <div className={ styles.wrapper }>
         {

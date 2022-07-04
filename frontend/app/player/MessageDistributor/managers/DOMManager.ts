@@ -209,9 +209,9 @@ export default class DOMManager extends ListWalker<Message> {
       case "set_input_value":
         node = this.nl[ msg.id ]
         if (!node) { logger.error("Node not found", msg); return }
-        if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement)) { 
-          logger.error("Trying to set value of non-Input element", msg) 
-          return 
+        if (!(node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement)) {
+          logger.error("Trying to set value of non-Input element", msg)
+          return
         }
         const val = msg.mask > 0 ? '*'.repeat(msg.mask) : msg.value
         doc = this.screen.document
@@ -281,7 +281,7 @@ export default class DOMManager extends ListWalker<Message> {
             logger.warn("No iframe doc", msg, node, node.contentDocument);
             return;
           }
-          this.nl[ msg.id ] = doc
+          this.nl[ msg.id ] = doc.documentElement
           return;
         } else if (node instanceof Element) { // shadow DOM
           try {

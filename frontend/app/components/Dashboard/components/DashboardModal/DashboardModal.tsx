@@ -6,7 +6,7 @@ import { Button } from 'UI';
 import { withRouter } from 'react-router-dom';
 import { useStore } from 'App/mstore';
 import { useModal } from 'App/components/Modal';
-import { dashboardMetricCreate, withSiteId } from 'App/routes';
+import { dashboardMetricCreate, withSiteId, dashboardSelected } from 'App/routes';
 
 interface Props {
     history: any
@@ -19,13 +19,14 @@ function DashboardModal(props) {
     const { dashboardStore } = useStore();
     const selectedWidgetsCount = useObserver(() => dashboardStore.selectedWidgets.length);
     const { hideModal } = useModal();
+    const loadingTemplates = useObserver(() => dashboardStore.loadingTemplates);
     const dashboard = useObserver(() => dashboardStore.dashboardInstance);
     const loading = useObserver(() => dashboardStore.isSaving);
 
     const onSave = () => {
         dashboardStore.save(dashboard).then(async (syncedDashboard) => {
             if (dashboard.exists()) {
-               await dashboardStore.fetch(dashboard.dashboardId)
+                await dashboardStore.fetch(dashboard.dashboardId)
             }
             dashboardStore.selectDashboardById(syncedDashboard.dashboardId);
             history.push(withSiteId(`/dashboard/${syncedDashboard.dashboardId}`, siteId))
@@ -45,7 +46,7 @@ function DashboardModal(props) {
         <div style={{ width: '85vw' }}>
             <div
                 className="border-r shadow p-4 h-screen"
-                style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '100%' }}
+                style={{ backgroundColor: '#FAFAFA', zIndex: 999, width: '85%', maxWidth: '1300px' }}
             >
                 <div className="mb-6 flex items-end justify-between">
                     <div>

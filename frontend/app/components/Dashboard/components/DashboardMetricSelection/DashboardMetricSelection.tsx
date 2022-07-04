@@ -4,6 +4,7 @@ import { useObserver } from 'mobx-react-lite';
 import { Icon } from 'UI';
 import cn from 'classnames';
 import { useStore } from 'App/mstore';
+import { Loader } from 'UI';
 
 function WidgetCategoryItem({ category, isSelected, onClick, selectedWidgetIds }) {
     const selectedCategoryWidgetsCount = useObserver(() => {
@@ -32,7 +33,8 @@ interface IProps {
 
 function DashboardMetricSelection(props: IProps) {
     const { dashboardStore } = useStore();
-    const widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
+    let widgetCategories: any[] = useObserver(() => dashboardStore.widgetCategories);
+    const loadingTemplates = useObserver(() => dashboardStore.loadingTemplates);
     const [activeCategory, setActiveCategory] = React.useState<any>();
     const [selectAllCheck, setSelectAllCheck] = React.useState(false);
     const selectedWidgetIds = useObserver(() => dashboardStore.selectedWidgets.map((widget: any) => widget.metricId));
@@ -65,7 +67,7 @@ function DashboardMetricSelection(props: IProps) {
     }
 
     return useObserver(() => (
-        <div>
+        <Loader loading={loadingTemplates}>
             <div className="grid grid-cols-12 gap-4 my-3 items-end">
                 <div className="col-span-3">
                     <div className="uppercase color-gray-medium text-lg">Type</div>
@@ -137,7 +139,7 @@ function DashboardMetricSelection(props: IProps) {
                     </div>
                 </div>
             </div>
-        </div>
+        </Loader>
     ));
 }
 

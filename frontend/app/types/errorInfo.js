@@ -37,6 +37,7 @@ const ErrorInfo = Record({
   chart30: [],
   tags: [],
   lastHydratedSession: Session(),
+  disabled: false,
 }, {
   fromJS: ({ stack, lastHydratedSession, ...other }) => ({
     ...other,

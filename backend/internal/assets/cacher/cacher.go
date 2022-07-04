@@ -111,7 +111,7 @@ func (c *cacher) cacheURL(requestURL string, sessionID uint64, depth byte, urlCo
 
 	strData := string(data)
 	if isCSS {
-		strData = c.rewriter.RewriteCSS(sessionID, requestURL, strData) // TODO: one method for reqrite and return list
+		strData = c.rewriter.RewriteCSS(sessionID, requestURL, strData) // TODO: one method for rewrite and return list
 	}
 
 	// TODO: implement in streams

@@ -30,7 +30,11 @@ export default class FilterItem {
             merge: action
         })
 
-        
+        if (Array.isArray(data.filters)) {
+            data.filters = data.filters.map(function (i) {
+                return new FilterItem(i);
+            });
+        }
 
         this.merge(data)
     }

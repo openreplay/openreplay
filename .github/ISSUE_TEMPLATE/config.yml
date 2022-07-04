@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation Request
+    url: https://github.com/openreplay/documentation/issues
+    about: Report a mistake or suggest anything we might be missing in the docs
+  - name: Discussions
+    url: https://github.com/openreplay/openreplay/discussions
+    about: Ask and answer various questions on GitHub Discussions
+  - name: Join our Slack Community
+    url: https://slack.openreplay.com
+    about: Take the discussion further by joining our community on Slack

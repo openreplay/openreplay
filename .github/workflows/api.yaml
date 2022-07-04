@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - dev
-      - api-v1.5.5
     paths:
       - api/**
 

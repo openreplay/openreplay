@@ -31,7 +31,7 @@
   </a>
 </p>
 
-OpenReplay is a session replay stack that lets you see what users do on your web app, helping you troubleshoot issues faster. It's the only open-source alternative to products such as FullStory and LogRocket.
+OpenReplay is a session replay suite you can host yourself, that lets you see what users do on your web app, helping you troubleshoot issues faster. It's the only open-source alternative to products such as FullStory and LogRocket.
 
 - **Session replay.** OpenReplay replays what users do, but not only. It also shows you what went under the hood, how your website or app behaves by capturing network activity, console logs, JS errors, store actions/state, page speed metrics, cpu/memory usage and much more.
 - **Low footprint**. With a ~18KB (.gz) tracker that asynchronously sends minimal data for a very limited impact on performance.
@@ -59,6 +59,7 @@ OpenReplay can be deployed anywhere. Follow our step-by-step guides for deployin
 - [Azure](https://docs.openreplay.com/deployment/deploy-azure)
 - [Digital Ocean](https://docs.openreplay.com/deployment/deploy-digitalocean)
 - [Scaleway](https://docs.openreplay.com/deployment/deploy-scaleway)
+- [OVHcloud](https://docs.openreplay.com/deployment/deploy-ovhcloud)
 - [Kubernetes](https://docs.openreplay.com/deployment/deploy-kubernetes)
 
 ## OpenReplay Cloud
@@ -69,7 +70,7 @@ For those who want to simply use OpenReplay as a service, [sign up](https://app.
 
 Please refer to the [official OpenReplay documentation](https://docs.openreplay.com/). That should help you troubleshoot common issues. For additional help, you can reach out to us on one of these channels:
 
-- [Discord](https://discord.openreplay.com) (Connect with our engineers and community)
+- [Slack](https://slack.openreplay.com) (Connect with our engineers and community)
 - [GitHub](https://github.com/openreplay/openreplay/issues) (Bug and issue reports)
 - [Twitter](https://twitter.com/OpenReplayHQ) (Product updates, Great content)
 - [Website chat](https://openreplay.com) (Talk to us)
@@ -80,7 +81,7 @@ We're always on the lookout for contributions to OpenReplay, and we're glad you'
 
 See our [Contributing Guide](CONTRIBUTING.md) for more details.
 
-Also, feel free to join our [Discord](https://discord.openreplay.com) to ask questions, discuss ideas or connect with our  contributors.
+Also, feel free to join our [Slack](https://slack.openreplay.com) to ask questions, discuss ideas or connect with our  contributors.
 
 ## Roadmap
 
@@ -89,3 +90,9 @@ Check out our [roadmap](https://www.notion.so/openreplay/Roadmap-889d2c3d968b478
 ## License
 
 This repo is under the Elastic License 2.0 (ELv2), with the exception of the `ee` directory.
+
+## Contributors
+
+<a href="https://github.com/openreplay/openreplay/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=openreplay/openreplay" />
+</a>

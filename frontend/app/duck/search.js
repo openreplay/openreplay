@@ -180,6 +180,11 @@ export const edit = reduceThenFetchResource((instance) => ({
     instance,
 }));
 
+export const editDefault = (instance) => ({
+  type: EDIT,
+  instance,
+});
+
 export const setActiveTab = reduceThenFetchResource((tab) => ({
     type: SET_ACTIVE_TAB,
     tab,

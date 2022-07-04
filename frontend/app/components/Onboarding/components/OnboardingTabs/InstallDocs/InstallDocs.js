@@ -30,7 +30,7 @@ function MyApp() {
   //...
 }`
 
-function InstallDocs({ siteId, sites }) {  
+function InstallDocs({ siteId, sites }) {
   const site = sites.find(s => s.id === siteId);
   const _usageCode = usageCode.replace('PROJECT_KEY', site.projectKey)
   const _usageCodeSST = usageCodeSST.replace('PROJECT_KEY', site.projectKey)

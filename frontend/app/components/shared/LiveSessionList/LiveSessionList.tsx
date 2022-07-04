@@ -137,7 +137,7 @@ function LiveSessionList(props: Props) {
             show={ !loading && list.size === 0}
           >
             <div className="bg-white p-3 rounded border">
-            
+
               {list.map(session => (
                 <>
                   <SessionItem

@@ -108,9 +108,9 @@ export default class DashboardStore implements IDashboardSotre {
     isLoading: boolean = true;
     isSaving: boolean = false;
     isDeleting: boolean = false;
+    loadingTemplates: boolean = false
     fetchingDashboard: boolean = false;
     sessionsLoading: boolean = false;
-
     showAlertModal: boolean = false;
 
     constructor() {
@@ -379,6 +379,7 @@ export default class DashboardStore implements IDashboardSotre {
     };
 
     fetchTemplates(hardRefresh): Promise<any> {
+        this.loadingTemplates = true
         return new Promise((resolve, reject) => {
             if (this.widgetCategories.length > 0 && !hardRefresh) {
                 resolve(this.widgetCategories);
@@ -389,11 +390,7 @@ export default class DashboardStore implements IDashboardSotre {
                         const categories: any[] = [];
                         response.forEach((category: any) => {
                             const widgets: any[] = [];
-                            // TODO speed_location is not supported yet
                             category.widgets
-                                .filter(
-                                    (w: any) => w.predefinedKey !== "speed_locations"
-                                )
                                 .forEach((widget: any) => {
                                     const w = new Widget().fromJson(widget);
                                     widgets.push(w);
@@ -409,6 +406,8 @@ export default class DashboardStore implements IDashboardSotre {
                     })
                     .catch((error) => {
                         reject(error);
+                    }).finally(() => {
+                        this.loadingTemplates = false
                     });
             }
         });
