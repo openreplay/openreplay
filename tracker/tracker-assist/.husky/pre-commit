@@ -3,4 +3,4 @@
 
 cd tracker/tracker-assist
 pwd
-npx lint-staged
+npm run lint-front
