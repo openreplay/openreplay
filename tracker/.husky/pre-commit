@@ -1,18 +1,26 @@
 #!/usr/bin/env sh
-#. "$(dirname -- "$0")/_/husky.sh"
-
-git diff --cached --name-only | grep 'tracker$'
+. "$(dirname -- "$0")/_/husky.sh"
 
 if git diff --cached --name-only | grep --quiet '^tracker/tracker/'
 then
-  pwd
   echo "tracker"
+  pwd
+  cd tracker/tracker
+
+  npm run lint-front
+
+  cd ../../
 fi
 
 if git diff --cached --name-only | grep --quiet '^tracker/tracker-assist/'
 then
-  pwd
   echo "tracker-assist"
+  cd tracker/tracker-assist
+
+  npm run lint-front
+
+  cd ../../
 fi
 
-echo "end"
+echo "finished linting"
+exit 0
