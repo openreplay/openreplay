@@ -182,7 +182,7 @@ class Sites extends React.PureComponent {
                                 <div className="col-span-4 justify-self-end flex items-center">
                                     <div className="mr-4">
                                         <Button size="small" variant="primary" onClick={() => this.showTrackingCode(_site)}>
-                                            {'Installation'}
+                                            {'Installation Steps'}
                                         </Button>
                                     </div>
                                     <div className="invisible group-hover:visible">
