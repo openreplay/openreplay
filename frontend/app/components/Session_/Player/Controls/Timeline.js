@@ -150,7 +150,7 @@ export default class Timeline extends React.PureComponent {
     return (
       <div
         className="flex items-center absolute w-full"
-        style={{ top: '-5px', zIndex: 100, padding: `0 ${BOUNDRY}px`}}
+        style={{ top: '-4px', zIndex: 100, padding: `0 ${BOUNDRY}px`}}
       >
         <div
           className={ stl.progress }
