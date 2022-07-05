@@ -15,6 +15,8 @@ interface Props {
 function MemoryConsumption(props: Props) {
     const { data, metric } = props;
     const gradientDef = Styles.gradientDef();
+    // covert the data to mb
+    const avgValue = Math.round(data.value / 1024 / 1024);
 
     return (
         <NoContent
@@ -23,7 +25,7 @@ function MemoryConsumption(props: Props) {
         >
           <>
             <div className="flex items-center justify-end mb-3">
-              <AvgLabel text="Avg" unit="mb" className="ml-3" count={data.avgUsedJsHeapSize} />
+              <AvgLabel text="Avg" unit="mb" className="ml-3" count={avgValue} />
             </div>
             <ResponsiveContainer height={ 207 } width="100%">
               <AreaChart
