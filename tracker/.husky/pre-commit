@@ -1,16 +1,18 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+#. "$(dirname -- "$0")/_/husky.sh"
 
-if git diff --cached --name-only | grep --quiet 'tracker$'
+git diff --cached --name-only | grep 'tracker$'
+
+if git diff --cached --name-only | grep --quiet '^tracker/tracker/'
 then
   pwd
   echo "tracker"
 fi
 
-if git diff --cached --name-only | grep --quiet 'tracker-assist$'
+if git diff --cached --name-only | grep --quiet '^tracker/tracker-assist/'
 then
   pwd
-  echo "tracker"
+  echo "tracker-assist"
 fi
 
 echo "end"

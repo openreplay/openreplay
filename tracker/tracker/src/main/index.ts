@@ -18,7 +18,7 @@ import Viewport from './modules/viewport.js'
 import CSSRules from './modules/cssrules.js'
 import { IN_BROWSER, deprecationWarn, DOCS_HOST, } from './utils.js'
 
-import type { Options as AppOptions, } from './app/index.js'
+import type { Options as AppOptions, } from './app/index.js';;
 import type { Options as ConsoleOptions, } from './modules/console.js'
 import type { Options as ExceptionOptions, } from './modules/exception.js'
 import type { Options as InputOptions, } from './modules/input.js'
