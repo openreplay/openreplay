@@ -24,12 +24,12 @@ func (e *Router) pushMessages(w http.ResponseWriter, r *http.Request, sessionID 
 			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: stage-dependent response
 			return
 		}
-		log.Println("Gzip reader init", reader)
+		//log.Println("Gzip reader init", reader)
 		defer reader.Close()
 	default:
 		reader = body
 	}
-	log.Println("Reader after switch:", reader)
+	//log.Println("Reader after switch:", reader)
 	buf, err := ioutil.ReadAll(reader)
 	if err != nil {
 		ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging

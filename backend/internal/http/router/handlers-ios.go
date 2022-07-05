@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"openreplay/backend/internal/http/ios"
+	"openreplay/backend/internal/http/util"
 	"openreplay/backend/internal/http/uuid"
 	"strconv"
 	"time"
@@ -159,7 +160,7 @@ func (e *Router) imagesUploadHandlerIOS(w http.ResponseWriter, r *http.Request) 
 				continue // TODO: send server error or accumulate successful files
 			}
 			key := prefix + fileHeader.Filename
-			log.Printf("Uploading image... %v", key)
+			log.Printf("Uploading image... %v", util.SafeString(key))
 			go func() { //TODO: mime type from header
 				if err := e.services.Storage.Upload(file, key, "image/jpeg", false); err != nil {
 					log.Printf("Upload ios screen error. %v", err)

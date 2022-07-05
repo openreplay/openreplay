@@ -10,6 +10,7 @@ import (
 	"net/http"
 	http3 "openreplay/backend/internal/config/http"
 	http2 "openreplay/backend/internal/http/services"
+	"openreplay/backend/internal/http/util"
 	"openreplay/backend/pkg/monitoring"
 	"time"
 )
@@ -98,7 +99,8 @@ func (e *Router) corsMiddleware(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		log.Printf("Request: %v  -  %v  ", r.Method, r.URL.Path)
+
+		log.Printf("Request: %v  -  %v  ", r.Method, util.SafeString(r.URL.Path))
 
 		requestStart := time.Now()
 
