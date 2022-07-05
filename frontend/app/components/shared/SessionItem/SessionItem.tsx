@@ -109,7 +109,7 @@ function SessionItem(props: RouteComponentProps & Props) {
         <div className="flex items-start">
           <div className={ cn('flex items-center w-full')}>
             <div className="flex items-center pr-2" style={{ width: "30%"}}>
-              <div><Avatar seed={ userNumericHash } isAssist={isAssist} /></div>
+              <div><Avatar isActive={active} seed={ userNumericHash } isAssist={isAssist} /></div>
               <div className="flex flex-col overflow-hidden color-gray-medium ml-3 justify-between items-center">
                 <div
                   className={cn('text-lg', {'color-teal cursor-pointer': !disableUser && hasUserId, [stl.userName]: !disableUser && hasUserId, 'color-gray-medium' : disableUser || !hasUserId})}
