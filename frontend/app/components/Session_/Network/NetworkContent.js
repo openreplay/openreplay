@@ -56,6 +56,7 @@ const renderXHRText = () => (
   <span className="flex items-center">
     {XHR}
     <QuestionMarkHint
+      onHover={true}
       content={ 
         <>
           Use our <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/plugins/fetch">Fetch plugin</a>

@@ -81,15 +81,17 @@ export default class Exceptions extends React.PureComponent {
               name="filter"
               onChange={ this.onFilterChange }
             />
+            <div className="mr-8">
             <QuestionMarkHint
+              onHover={true}
               content={ 
                 <>
-                  <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/plugins/sourcemaps">Upload Source Maps </a>
+                  <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/installation/upload-sourcemaps">Upload Source Maps </a>
                   and see source code context obtained from stack traces in their original form.
                 </>
               }
-              className="mr-8"
             />
+            </div>
           </BottomBlock.Header>
           <BottomBlock.Content>
             <NoContent

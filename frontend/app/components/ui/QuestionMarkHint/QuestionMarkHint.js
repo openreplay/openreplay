@@ -7,6 +7,7 @@ export default function QuestionMarkHint({ onHover = false, content, className, 
 		<Popup
       trigger={ onHover ? 'mouseenter' : 'click'}
       content={ content }
+      interactive
       { ...props }
     >
       <Icon name="question-circle"  size="18" className={ cn("cursor-pointer", className) }/>
