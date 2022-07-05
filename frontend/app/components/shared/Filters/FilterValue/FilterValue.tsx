@@ -106,7 +106,7 @@ function FilterValue(props: Props) {
                         value={value}
                         // filter={filter}
                         options={filter.options}
-                        onChange={({ value }) => onChange(null, { value }, valueIndex)}
+                        onChange={({ value }) => onChange(null, value, valueIndex)}
                         onAddValue={onAddValue}
                         onRemoveValue={() => onRemoveValue(valueIndex)}
                         showCloseButton={showCloseButton}
