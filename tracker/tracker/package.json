@@ -47,6 +47,11 @@
   "engines": {
     "node": ">=14.0"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "sh lint.sh"
+    }
+  },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": [
       "eslint --fix --quiet"

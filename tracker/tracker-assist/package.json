@@ -46,6 +46,11 @@
     "replace-in-files-cli": "^1.0.1",
     "typescript": "^4.6.0-dev.20211126"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "sh lint.sh"
+    }
+  },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": [
       "eslint --fix --quiet"
