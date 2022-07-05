@@ -61,7 +61,8 @@ jobs:
         #
         set -x
         touch /tmp/images_to_build.txt
-        build_param=${${{ github.event.inputs.build_service }}:-'false'}
+        tmp_param=${{ github.event.inputs.build_service }}
+        build_param=${tmp_param:-'false'}
         case ${build_param} in
           false)
             {
