@@ -9,7 +9,7 @@ on:
         default: 'false'
   push:
     branches:
-    - dev
+    - backend_ci_test
     paths:
       - ee/backend/**
       - backend/**
