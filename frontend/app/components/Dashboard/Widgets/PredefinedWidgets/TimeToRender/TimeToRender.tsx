@@ -45,7 +45,7 @@ function TimeToRender(props: Props) {
                 onSelect={onSelect}
                 placeholder="Search for Page"
               /> */}
-              <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.avg)} unit="ms" />
+              <AvgLabel className="ml-auto" text="Avg" count={Math.round(data.value)} unit="ms" />
             </div>
             <ResponsiveContainer height={ 200 } width="100%">
               <AreaChart
