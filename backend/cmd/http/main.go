@@ -13,7 +13,6 @@ import (
 
 	"openreplay/backend/pkg/db/cache"
 	"openreplay/backend/pkg/db/postgres"
-	"openreplay/backend/pkg/pprof"
 	"openreplay/backend/pkg/queue"
 )
 
@@ -21,7 +20,6 @@ func main() {
 	metrics := monitoring.New("http")
 
 	log.SetFlags(log.LstdFlags | log.LUTC | log.Llongfile)
-	pprof.StartProfilingServer()
 
 	cfg := http.New()
 
