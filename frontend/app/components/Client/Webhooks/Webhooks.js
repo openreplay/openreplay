@@ -8,6 +8,8 @@ import WebhookForm from './WebhookForm';
 import ListItem from './ListItem';
 import styles from './webhooks.module.css';
 import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
+import { confirm } from 'UI';
+import { toast } from 'react-toastify';
 
 @connect(state => ({
   webhooks: state.getIn(['webhooks', 'list']),
@@ -31,10 +33,16 @@ class Webhooks extends React.PureComponent {
     this.setState({ showModal: true });    
   }
 
-  removeWebhook = id => {
-    const sure = window.confirm("Are you sure you want to remove this webhook?");
-    if (!sure) return;
-    this.props.remove(id);
+  removeWebhook = async (id) => {
+    if (await confirm({
+      header: 'Confirm',
+      confirmButton: 'Yes, delete',
+      confirmation: `Are you sure you want to remove this webhook?`
+    })) {
+      this.props.remove(id).then(() => {
+        toast.success('Webhook removed successfully');
+      });
+    }
   }
 
   render() {
