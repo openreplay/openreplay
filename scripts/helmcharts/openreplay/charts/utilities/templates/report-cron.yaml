@@ -1,3 +1,4 @@
+{{- if .Values.global.enterpriseEditionLicense }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -14,7 +15,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: report-cron
-            image: "{{ tpl .Values.report.image.repository . }}:{{ .Values.report.image.tag }}"
+            image: "{{ tpl .Values.report.image.repository . }}:{{ .Values.image.tag | default .Chart.AppVersion }}-ee"
             env:
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
@@ -74,3 +75,4 @@ spec:
               - name: {{ $key }}
                 value: '{{ $val }}'
               {{- end}}
+{{- end}}
