@@ -73,7 +73,7 @@ jobs:
           all)
             ls backend/cmd > /tmp/images_to_build.txt
             ;;
-          default)
+          *)
             echo ${{github.event.inputs.build_service }} > /tmp/images_to_build.txt
             ;;
         esac
