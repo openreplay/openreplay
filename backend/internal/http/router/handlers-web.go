@@ -68,9 +68,10 @@ func (e *Router) startSessionHandlerWeb(w http.ResponseWriter, r *http.Request) 
 	p, err := e.services.Database.GetProjectByKey(*req.ProjectKey)
 	if err != nil {
 		if postgres.IsNoRowsErr(err) {
-			ResponseWithError(w, http.StatusNotFound, errors.New("Project doesn't exist or capture limit has been reached"))
+			ResponseWithError(w, http.StatusNotFound, errors.New("project doesn't exist or capture limit has been reached"))
 		} else {
-			ResponseWithError(w, http.StatusInternalServerError, err) // TODO: send error here only on staging
+			log.Printf("can't get project by key: %s", err)
+			ResponseWithError(w, http.StatusInternalServerError, errors.New("can't get project by key"))
 		}
 		return
 	}
@@ -191,7 +192,7 @@ func (e *Router) notStartedHandlerWeb(w http.ResponseWriter, r *http.Request) {
 
 	// Handler's logic
 	if req.ProjectKey == nil {
-		ResponseWithError(w, http.StatusForbidden, errors.New("ProjectKey value required"))
+		ResponseWithError(w, http.StatusForbidden, errors.New("projectKey value required"))
 		return
 	}
 	ua := e.services.UaParser.ParseFromHTTPRequest(r) // TODO?: insert anyway
