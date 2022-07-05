@@ -1,8 +1,9 @@
+/* eslint-disable */
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ['./tsconfig-base.json', './src/main/tsconfig-csj.json'],
+    project: ['./tsconfig-base.json', './src/main/tsconfig-cjs.json'],
     tsconfigRootDir: __dirname,
   },
   plugins: ['@typescript-eslint', 'prettier'],
@@ -46,4 +47,3 @@ module.exports = {
     'comma-dangle': ["error", "always"]
   },
 }; 
-   

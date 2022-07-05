@@ -71,6 +71,7 @@ self.onmessage = ({ data, }: MessageEvent<WorkerMessageData>): any => {
     const w = writer
     // Message[]
     data.forEach((data) => {
+      // @ts-ignore
       const message: Message = new (classes.get(data._id))()
       Object.assign(message, data)
       if (message instanceof SetPageVisibility) {
