@@ -7,6 +7,7 @@
 # echo "Linted root:"
 # pwd
 
+git diff @{push} --cached --name-only | grep
 if git diff @{push} --cached --name-only | grep --quiet 'tracker$'
 then
   pwd
