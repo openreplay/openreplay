@@ -1,7 +1,7 @@
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: telemetry-cron
+  name: sessionsCleaner-cron
   namespace: {{ .Release.Namespace }}
 spec:
   schedule: "{{ .Values.cron }}"
@@ -13,8 +13,8 @@ spec:
         spec:
           restartPolicy: Never
           containers:
-          - name: telemetry-cron
-            image: "{{ tpl .Values.telemetry.image.repository . }}:{{ .Values.telemetry.image.tag }}"
+          - name: sessionsCleaner-cron
+            image: "{{ tpl .Values.sessionsCleaner.image.repository . }}:{{ .Values.sessionsCleaner.image.tag }}"
             env:
               - name: LICENSE_KEY
                 value: '{{ .Values.global.enterpriseEditionLicense }}'
@@ -70,7 +70,7 @@ spec:
                 value: '{{ .Values.global.email.emailSslCert }}'
               - name: EMAIL_FROM
                 value: '{{ .Values.global.email.emailFrom }}'
-              {{- range $key, $val := .Values.telemetry.env }}
+              {{- range $key, $val := .Values.sessionsCleaner.env }}
               - name: {{ $key }}
                 value: '{{ $val }}'
               {{- end}}
