@@ -22,5 +22,4 @@ then
   cd ../../
 fi
 
-echo "finished linting"
 exit 0
