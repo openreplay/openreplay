@@ -10,7 +10,7 @@ interface Props {
 }
 function SlowestDomains(props: Props) {
     const { data, metric } = props;
-    const firstAvg = metric.data.chart[0] && metric.data.chart[0].errorsCount;
+    const firstAvg = metric.data.chart[0] && metric.data.chart[0].value;
     return (
         <NoContent
           size="small"
@@ -22,8 +22,8 @@ function SlowestDomains(props: Props) {
               <Bar
                 key={i}
                 className="mb-2"
-                avg={numberWithCommas(Math.round(item.errorsCount))}
-                width={Math.round((item.errorsCount * 100) / firstAvg) - 10}
+                avg={numberWithCommas(Math.round(item.value))}
+                width={Math.round((item.value * 100) / firstAvg) - 10}
                 domain={item.domain}
                 color={Styles.colors[i]}
               />
