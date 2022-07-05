@@ -31,11 +31,11 @@ kafka: &kafka
   zookeeperNonTLSPort: 2181
   kafkaPort: "9092"
   kafkaUseSsl: "false"
-  maxMessageBytes: _3000000
+  maxMessageBytes: _3145728
   # deleteTopicEnable: true
   extraEnvVars:
     - name: KAFKA_CFG_REPLICA_FETCH_MAX_BYTES
-      value: "3000000"
+      value: "3145728"
     # This value already exist in the kafka values.yaml file, so overriding in top
     # - name: KAFKA_CFG_MESSAGE_MAX_BYTES
     #   value: "3000000"
