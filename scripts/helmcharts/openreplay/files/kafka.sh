@@ -11,6 +11,7 @@ topics=(
   "trigger"
   "cache"
   "analytics"
+  "storage-failover"
 )
 
 touch /tmp/config.txt
