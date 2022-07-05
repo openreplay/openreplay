@@ -59,8 +59,9 @@ jobs:
         #
         # Getting the images to build
         #
+        build_param=${${{ github.event.inputs.build_service }}:-'false'}
         set -x
-        case ${{ github.event.inputs.build_service }} in
+        case ${build_param} in
           false)
             {
               git diff --name-only HEAD HEAD~1 | grep -E "backend/cmd|backend/services" | grep -vE ^ee/ | cut -d '/' -f3
