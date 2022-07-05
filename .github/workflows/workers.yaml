@@ -2,6 +2,11 @@
 
 on:
   workflow_dispatch:
+    inputs:
+      build_service:
+        description: 'Name of a single service to build(in small letters). "ALL" to build everything'
+        required: false
+        default: 'false'
   push:
     branches:
     - dev
@@ -55,13 +60,23 @@ jobs:
         # Getting the images to build
         #
         set -x
-        {
-          git diff --name-only HEAD HEAD~1 | grep -E "backend/cmd|backend/services" | grep -vE ^ee/ | cut -d '/' -f3
-        
-          git diff --name-only HEAD HEAD~1 | grep -E "backend/pkg|backend/internal" | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
-            grep -rl "pkg/$pkg_name" backend/services backend/cmd | cut -d '/' -f3 
-          done
-        } | uniq > /tmp/images_to_build.txt
+        case ${{ github.event.inputs.build_service }} in
+          false)
+            {
+              git diff --name-only HEAD HEAD~1 | grep -E "backend/cmd|backend/services" | grep -vE ^ee/ | cut -d '/' -f3
+            
+              git diff --name-only HEAD HEAD~1 | grep -E "backend/pkg|backend/internal" | grep -vE ^ee/ | cut -d '/' -f3 | uniq | while read -r pkg_name ; do
+                grep -rl "pkg/$pkg_name" backend/services backend/cmd | cut -d '/' -f3 
+              done
+            } | uniq > /tmp/images_to_build.txt
+          ;;
+          all)
+            ls backend/cmd > /tmp/images_to_build.txt
+            ;;
+          default)
+            echo ${{github.event.inputs.build_service }} > /tmp/images_to_build.txt
+            ;;
+        esac
 
         [[ $(cat /tmp/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
         #
