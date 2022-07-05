@@ -28,6 +28,8 @@ import type { StartOptions, } from './app/index.js'
 //TODO: unique options init
 import type { StartPromiseReturn, } from './app/index.js'
 
+const a = () => {}
+
 export type Options = Partial<
   AppOptions & ConsoleOptions & ExceptionOptions & InputOptions & PerformanceOptions & TimingOptions
 > & {
