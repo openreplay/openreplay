@@ -125,7 +125,7 @@ export default class AssistManager {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
       // @ts-ignore
-      const urlObject = new URL(window.env.API_EDP || window.location.origin + '/api') // does it handle ssl automatically?
+      const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
       // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {
@@ -310,7 +310,7 @@ export default class AssistManager {
     if (this._peer && !this._peer.disconnected) { return Promise.resolve(this._peer) }
 
     // @ts-ignore
-    const urlObject = new URL(window.env.API_EDP)
+    const urlObject = new URL(window.env.API_EDP || window.location.origin)
     return import('peerjs').then(({ default: Peer }) => {
       if (this.cleaned) {return Promise.reject("Already cleaned")}
       const peerOpts: any = {
