@@ -8,9 +8,10 @@
 # pwd
 
 
-if git diff @{push} --cached --name-only | grep --quiet 'tracker$'
+if git diff --cached --name-only | grep --quiet 'tracker-assist$'
 then
   pwd
 else
+  echo "skipping other dir"
   exit 0
 fi
