@@ -22,7 +22,7 @@
     "replace-pkg-version": "replace-in-files lib/* cjs/* --string='PACKAGE_VERSION' --replacement=$npm_package_version",
     "replace-req-version": "replace-in-files lib/* cjs/* --string='REQUIRED_TRACKER_VERSION' --replacement='3.5.14'",
     "prepublishOnly": "npm run build",
-    "prepare": "cd ../../ && husky install tracker/tracker-assist/.husky/",
+    "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged"
   },
   "dependencies": {

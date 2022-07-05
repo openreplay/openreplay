@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+if git diff --cached --name-only | grep --quiet 'tracker$'
+then
+  pwd
+  echo "tracker"
+fi
+
+if git diff --cached --name-only | grep --quiet 'tracker-assist$'
+then
+  pwd
+  echo "tracker"
+fi
+
+echo "end"

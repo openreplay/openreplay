@@ -20,7 +20,7 @@
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
     "build": "npm run clean && npm run tscRun && npm run rollup && npm run compile",
-    "prepare": "cd ../../ && husky install tracker/tracker/.husky/",
+    "prepare": "cd ../../ && husky install tracker/.husky/",
     "lint-front": "lint-staged"
   },
   "devDependencies": {
