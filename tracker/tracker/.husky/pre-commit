@@ -3,4 +3,6 @@
 
 cd tracker/tracker
 pwd
-npx lint-staged
+npm run lint-front
+echo "Linted root:"
+pwd

@@ -4,3 +4,5 @@
 cd tracker/tracker-assist
 pwd
 npm run lint-front
+echo "Linted root:"
+pwd

@@ -20,7 +20,8 @@
     "rollup": "rollup --config rollup.config.js",
     "compile": "node --experimental-modules --experimental-json-modules scripts/compile.cjs",
     "build": "npm run clean && npm run tscRun && npm run rollup && npm run compile",
-    "prepare": "cd ../../ && husky install tracker/tracker/.husky/"
+    "prepare": "cd ../../ && husky install tracker/tracker/.husky/",
+    "lint-front": "lint-staged"
   },
   "devDependencies": {
     "@babel/core": "^7.10.2",
@@ -48,7 +49,10 @@
   },
   "lint-staged": {
     "*.{js,mjs,cjs,jsx,ts,tsx}": [
-      "eslint --fix"
+      "eslint --fix --quiet"
+    ],
+    "*.{json,md,html,js,jsx,ts,tsx}": [
+      "prettier --write"
     ]
   }
 }
