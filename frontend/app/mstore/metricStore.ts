@@ -185,6 +185,7 @@ export default class MetricStore implements IMetricStore {
                 this.removeById(metric[Widget.ID_KEY])
                 toast.success('Metric deleted successfully')
             }).finally(() => {
+                this.instance.updateKey('hasChanged', false)
                 this.isSaving = false
             })
     }
