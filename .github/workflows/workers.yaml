@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       build_service:
-        description: 'Name of a single service to build(in small letters). "ALL" to build everything'
+        description: 'Name of a single service to build(in small letters). "all" to build everything'
         required: false
         default: 'false'
   push:
