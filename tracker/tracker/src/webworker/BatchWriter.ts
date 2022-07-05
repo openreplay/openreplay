@@ -16,7 +16,7 @@ export default class BatchWriter {
     private timestamp: number,
     private onBatch: (batch: Uint8Array) => void
   ) {
-    this.prepare()
+    this.prepare();
   }
 
   private prepare(): void {

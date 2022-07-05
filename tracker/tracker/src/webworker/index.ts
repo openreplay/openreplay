@@ -20,7 +20,7 @@ const AUTO_SEND_INTERVAL = 10 * 1000
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
-let workerStatus: WorkerStatus = WorkerStatus.NotActive;
+let workerStatus: WorkerStatus = WorkerStatus.NotActive;;
 
 function send(): void {
   if (!writer) {

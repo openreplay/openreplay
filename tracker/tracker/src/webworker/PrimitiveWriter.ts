@@ -7,7 +7,7 @@ const textEncoder: { encode(str: string): Uint8Array } =
         encode(str): Uint8Array {
           const Len = str.length,
             resArr = new Uint8Array(Len * 3);
-          let resPos = -1;
+          let resPos = -1
           for (var point = 0, nextcode = 0, i = 0; i !== Len; ) {
             (point = str.charCodeAt(i)), (i += 1);
             if (point >= 0xd800 && point <= 0xdbff) {

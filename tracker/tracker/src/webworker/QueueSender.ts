@@ -23,7 +23,7 @@ const KEEPALIVE_SIZE_LIMIT = 64 << 10 // 64 kB
 
 export default class QueueSender {
   private attemptsCount = 0
-  private busy = false
+  private busy = false;
   private readonly queue: Array<Uint8Array> = []
   private readonly ingestURL
   private token: string | null = null
@@ -102,6 +102,3 @@ export default class QueueSender {
   }
 
 }
-
-
-

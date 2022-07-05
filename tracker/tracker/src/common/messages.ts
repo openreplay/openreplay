@@ -6,7 +6,7 @@ function bindNew<C extends { new(...args: A): T }, A extends any[], T>(
   Class: C & { new(...args: A): T }
 ): C & ((...args: A) => T) {
   function _Class(...args: A) {
-    return new Class(...args);
+    return new Class(...args)
   }
   _Class.prototype = Class.prototype;
   return <C & ((...args: A) => T)>_Class;
@@ -899,5 +899,3 @@ class _CreateIFrameDocument implements Message {
 }
 export const CreateIFrameDocument = bindNew(_CreateIFrameDocument);
 classes.set(70, CreateIFrameDocument);
-
-

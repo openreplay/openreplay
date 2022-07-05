@@ -14,7 +14,7 @@
   "type": "module",
   "main": "./lib/index.js",
   "scripts": {
-    "lint": "eslint src --ext .ts,.js --fix && tsc --noEmit",
+    "lint": "eslint src --ext .ts,.js && tsc --noEmit",
     "clean": "rm -Rf build && rm -Rf lib && rm -Rf cjs",
     "tsc": "tsc -b src/main && tsc -b src/webworker && tsc --project src/main/tsconfig-cjs.json",
     "rollup": "rollup --config rollup.config.js",
@@ -29,8 +29,10 @@
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.8.0",
-    "eslint-plugin-prettier": "^4.1.4",
-    "prettier": "^2.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
     "replace-in-files": "^2.0.3",
     "rollup": "^2.17.0",
     "rollup-plugin-terser": "^6.1.0",
@@ -42,5 +44,10 @@
   },
   "engines": {
     "node": ">=14.0"
+  },
+  "lint-staged": {
+    "*.{js,mjs,cjs,jsx,ts,tsx,vue}": [
+      "yarn run eslint --ext"
+    ]
   }
 }

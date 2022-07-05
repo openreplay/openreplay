@@ -56,5 +56,3 @@ export function hasOpenreplayAttribute(e: Element, name: string): boolean {
 	}
 	return false;
 }
-
-
