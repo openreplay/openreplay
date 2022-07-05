@@ -2,5 +2,5 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 cd tracker/tracker
-echo pwd
+pwd
 npx lint-staged
