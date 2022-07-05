@@ -49,8 +49,8 @@ export default class StylesManager extends ListWalker<CSSRuleMessage> {
         this.skipCSSLinks.push(value); // watch out
         resolve(null);
       }
-      timeoutId = setTimeout(addSkipAndResolve, 4000000);
-      console.log(node.getAttribute("href"))
+      timeoutId = setTimeout(addSkipAndResolve, 4000);
+
       node.onload = () => {
         const doc = this.screen.document;
         doc && rewriteNodeStyleSheet(doc, node);
