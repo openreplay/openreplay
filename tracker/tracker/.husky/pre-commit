@@ -1,8 +1,16 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-cd tracker/tracker
-pwd
-npm run lint-front
-echo "Linted root:"
-pwd
+# cd tracker/tracker
+# pwd
+# npm run lint-front
+# echo "Linted root:"
+# pwd
+
+if git diff @{push} --cached --name-only | grep --quiet 'tracker$'
+then
+  pwd
+else
+  echo "skipping other dir"
+  exit 0
+fi
