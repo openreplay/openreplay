@@ -165,10 +165,12 @@ const SITE_CHANGE_AVALIABLE_ROUTES = [
   funnels(),
   assist(),
   dashboard(),
+  dashboardSelected(),
   metrics(),
   errors(),
   onboarding('')
 ];
+
 export const siteChangeAvaliable = path => SITE_CHANGE_AVALIABLE_ROUTES.some(r => isRoute(r, path));
 
 export const redirects = Object.entries({

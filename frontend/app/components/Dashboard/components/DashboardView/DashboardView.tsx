@@ -58,7 +58,7 @@ function DashboardView(props: Props) {
     };
 
     useEffect(() => {
-        if (!dashboardId) dashboardStore.selectDefaultDashboard();
+        if (!dashboardId || (!dashboard && dashboardStore.dashboards.length > 0)) dashboardStore.selectDefaultDashboard();
 
         if (queryParams.has("modal")) {
             onAddWidgets();
