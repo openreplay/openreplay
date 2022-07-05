@@ -1,4 +1,4 @@
-import { UserID, UserAnonymousID, Metadata } from "../../common/messages.js";
+import { UserID, UserAnonymousID, Metadata, } from '../../common/messages.js'
 
 
 interface SessionInfo {
@@ -13,7 +13,7 @@ export default class Session {
   private metadata: Record<string, string> = {}
   private userID: string | null = null
   private sessionID: string | null = null
-  private callbacks: OnUpdateCallback[] = []
+  private readonly callbacks: OnUpdateCallback[] = []
 
 
   attachUpdateCallback(cb: OnUpdateCallback) {
@@ -34,7 +34,7 @@ export default class Session {
       this.userID = newInfo.userID
     }
     if (newInfo.metadata !== undefined) {
-      Object.entries(newInfo.metadata).forEach(([k,v]) => this.metadata[k] = v)
+      Object.entries(newInfo.metadata).forEach(([k,v,]) => this.metadata[k] = v)
     }
     if (newInfo.sessionID !== undefined) {
       this.sessionID = newInfo.sessionID 
@@ -44,11 +44,11 @@ export default class Session {
 
   setMetadata(key: string, value: string) {
     this.metadata[key] = value
-    this.handleUpdate({ metadata: { [key]: value } })
+    this.handleUpdate({ metadata: { [key]: value, }, })
   }
   setUserID(userID: string) {
     this.userID = userID
-    this.handleUpdate({ userID })
+    this.handleUpdate({ userID, })
   }
 
   getInfo(): SessionInfo {

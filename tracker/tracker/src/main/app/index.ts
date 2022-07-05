@@ -1,19 +1,19 @@
-import type Message from "../../common/messages.js";
-import { Timestamp, Metadata, UserID } from "../../common/messages.js";
-import { timestamp, deprecationWarn } from "../utils.js";
-import Nodes from "./nodes.js";
-import Observer from "./observer/top_observer.js";
-import Sanitizer from "./sanitizer.js";
-import Ticker from "./ticker.js";
-import Logger, { LogLevel } from "./logger.js";
-import Session from "./session.js";
+import type Message from '../../common/messages.js'
+import { Timestamp, Metadata, UserID, } from '../../common/messages.js'
+import { timestamp, deprecationWarn, } from '../utils.js'
+import Nodes from './nodes.js'
+import Observer from './observer/top_observer.js'
+import Sanitizer from './sanitizer.js'
+import Ticker from './ticker.js'
+import Logger, { LogLevel, } from './logger.js'
+import Session from './session.js'
 
-import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
+import { deviceMemory, jsHeapSizeLimit, } from '../modules/performance.js'
 
-import type { Options as ObserverOptions } from "./observer/top_observer.js";
-import type { Options as SanitizerOptions } from "./sanitizer.js";
-import type { Options as LoggerOptions } from "./logger.js"
-import type { Options as WebworkerOptions, WorkerMessageData } from "../../common/webworker.js";
+import type { Options as ObserverOptions, } from './observer/top_observer.js'
+import type { Options as SanitizerOptions, } from './sanitizer.js'
+import type { Options as LoggerOptions, } from './logger.js'
+import type { Options as WebworkerOptions, WorkerMessageData, } from '../../common/webworker.js'
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -27,15 +27,15 @@ interface OnStartInfo {
   sessionToken: string, 
   userUUID: string,
 }
-const CANCELED = "canceled" as const
-const START_ERROR = ":(" as const
+const CANCELED = 'canceled' as const
+const START_ERROR = ':(' as const
 type SuccessfulStart = OnStartInfo & { success: true }
 type UnsuccessfulStart = {
   reason: typeof CANCELED | string
   success: false
 }
-const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason,  success: false})
-const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body,  success: true})
+const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason,  success: false,})
+const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body,  success: true,})
 export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
 
 type StartCallback = (i: OnStartInfo) => void
@@ -71,7 +71,7 @@ export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
 
 // TODO: use backendHost only
-export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
+export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest'
 
 export default class App {
   readonly nodes: Nodes;
@@ -86,12 +86,12 @@ export default class App {
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
   private readonly startCallbacks: Array<StartCallback> = [];
-  private readonly stopCallbacks: Array<Function> = [];
+  private readonly stopCallbacks: Array<() => any> = [];
   private readonly commitCallbacks: Array<CommitCallback> = [];
   private readonly options: AppOptions;
   private readonly revID: string;
   private activityState: ActivityState = ActivityState.NotActive;
-  private version = 'TRACKER_VERSION'; // TODO: version compatability check inside each plugin.
+  private readonly version = 'TRACKER_VERSION'; // TODO: version compatability check inside each plugin.
   private readonly worker?: Worker;
   constructor(
     projectKey: string,
@@ -103,7 +103,7 @@ export default class App {
     //   deprecationWarn("'onStart' option", "tracker.start().then(/* handle session info */)")
     // } ?? maybe onStart is good
 
-    this.projectKey = projectKey;
+    this.projectKey = projectKey
     this.options = Object.assign(
       {
         revID: '',
@@ -121,62 +121,62 @@ export default class App {
         sessionStorage: window.sessionStorage,
       },
       options,
-    );
+    )
 
-    this.revID = this.options.revID;
-    this.sanitizer = new Sanitizer(this, options);
-    this.nodes = new Nodes(this.options.node_id);
-    this.observer = new Observer(this, options);
-    this.ticker = new Ticker(this);
-    this.ticker.attach(() => this.commit());
-    this.debug = new Logger(this.options.__debug__);
-    this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent);
-    this.session = new Session();
-    this.session.attachUpdateCallback(({ userID, metadata }) => {
+    this.revID = this.options.revID
+    this.sanitizer = new Sanitizer(this, options)
+    this.nodes = new Nodes(this.options.node_id)
+    this.observer = new Observer(this, options)
+    this.ticker = new Ticker(this)
+    this.ticker.attach(() => this.commit())
+    this.debug = new Logger(this.options.__debug__)
+    this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent)
+    this.session = new Session()
+    this.session.attachUpdateCallback(({ userID, metadata, }) => {
       if (userID != null) { // TODO: nullable userID
         this.send(new UserID(userID))
       }
       if (metadata != null) {
-        Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)))
+        Object.entries(metadata).forEach(([key, value,]) => this.send(new Metadata(key, value)))
       }
     })
-    this.localStorage = this.options.localStorage;
-    this.sessionStorage = this.options.sessionStorage;
+    this.localStorage = this.options.localStorage
+    this.sessionStorage = this.options.sessionStorage
 
     if (sessionToken != null) {
-      this.sessionStorage.setItem(this.options.session_token_key, sessionToken);
+      this.sessionStorage.setItem(this.options.session_token_key, sessionToken)
     }
 
     try {
       this.worker = new Worker(
         URL.createObjectURL(
-          new Blob([`WEBWORKER_BODY`], { type: 'text/javascript' }),
+          new Blob(['WEBWORKER_BODY',], { type: 'text/javascript', }),
         ),
-      );
+      )
       this.worker.onerror = e => {
-        this._debug("webworker_error", e)
+        this._debug('webworker_error', e)
       }
-      this.worker.onmessage = ({ data }: MessageEvent) => {
-        if (data === "failed") {
-          this.stop();
-          this._debug("worker_failed", {})  // add context (from worker)
-        } else if (data === "restart") {
-          this.stop();
-          this.start({ forceNew: true });
+      this.worker.onmessage = ({ data, }: MessageEvent) => {
+        if (data === 'failed') {
+          this.stop()
+          this._debug('worker_failed', {})  // add context (from worker)
+        } else if (data === 'restart') {
+          this.stop()
+          this.start({ forceNew: true, })
         }
       }
       const alertWorker = () => {
         if (this.worker) {
-          this.worker.postMessage(null);
+          this.worker.postMessage(null)
         }
       }
       // keep better tactics, discard others?
-      this.attachEventListener(window, 'beforeunload', alertWorker, false);
-      this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false);
+      this.attachEventListener(window, 'beforeunload', alertWorker, false)
+      this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false)
       // TODO: stop session after inactivity timeout (make configurable)
-      this.attachEventListener(document, 'visibilitychange', alertWorker, false);
+      this.attachEventListener(document, 'visibilitychange', alertWorker, false)
     } catch (e) { 
-      this._debug("worker_start", e);
+      this._debug('worker_start', e)
     }
   }
 
@@ -184,43 +184,43 @@ export default class App {
     if(this.options.__debug_report_edp !== null) {
       fetch(this.options.__debug_report_edp, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', },
         body: JSON.stringify({
           context,
-          error: `${e}`
-        })
-      });
+          error: `${e}`,
+        }),
+      })
     }
-    this.debug.error("OpenReplay error: ", context, e)
+    this.debug.error('OpenReplay error: ', context, e)
   }
 
   send(message: Message, urgent = false): void {
     if (this.activityState === ActivityState.NotActive) { return }
-    this.messages.push(message);
+    this.messages.push(message)
     // TODO: commit on start if there were `urgent` sends; 
     // Clearify where urgent can be used for;
     // Clearify workflow for each type of message in case it was sent before start 
     //      (like Fetch before start; maybe add an option "preCapture: boolean" or sth alike)
     if (this.activityState === ActivityState.Active && urgent) {
-      this.commit();
+      this.commit()
     }
   }
   private commit(): void {
     if (this.worker && this.messages.length) {
-      this.messages.unshift(new Timestamp(timestamp()));
-      this.worker.postMessage(this.messages);
-      this.commitCallbacks.forEach(cb => cb(this.messages));
-      this.messages.length = 0;
+      this.messages.unshift(new Timestamp(timestamp()))
+      this.worker.postMessage(this.messages)
+      this.commitCallbacks.forEach(cb => cb(this.messages))
+      this.messages.length = 0
     }
   }
 
   safe<T extends (...args: any[]) => void>(fn: T): T {
-    const app = this;
+    const app = this
     return function (this: any, ...args: any) {
       try {
-        fn.apply(this, args);
+        fn.apply(this, args)
       } catch (e) {
-        app._debug("safe_fn_call", e)
+        app._debug('safe_fn_call', e)
         // time: timestamp(),
         // name: e.name,
         // message: e.message,
@@ -233,10 +233,10 @@ export default class App {
     this.commitCallbacks.push(cb)
   }
   attachStartCallback(cb: StartCallback): void {
-    this.startCallbacks.push(cb);
+    this.startCallbacks.push(cb)
   }
-  attachStopCallback(cb: Function): void {
-    this.stopCallbacks.push(cb);
+  attachStopCallback(cb: () => any): void {
+    this.stopCallbacks.push(cb)
   }
   attachEventListener(
     target: EventTarget,
@@ -246,14 +246,14 @@ export default class App {
     useCapture = true,
   ): void {
     if (useSafe) {
-      listener = this.safe(listener);
+      listener = this.safe(listener)
     }
     this.attachStartCallback(() =>
       target.addEventListener(type, listener, useCapture),
-    );
+    )
     this.attachStopCallback(() =>
       target.removeEventListener(type, listener, useCapture),
-    );
+    )
   }
 
   // TODO: full correct semantic
@@ -281,17 +281,17 @@ export default class App {
   getSessionInfo() {
     return {
       ...this.session.getInfo(),
-      ...this.getStartInfo()
+      ...this.getStartInfo(),
     }
   }
   getSessionToken(): string | undefined {
-    const token = this.sessionStorage.getItem(this.options.session_token_key);
+    const token = this.sessionStorage.getItem(this.options.session_token_key)
     if (token !== null) {
-      return token;
+      return token
     }
   }
   getSessionID(): string | undefined {
-    return this.session.getInfo().sessionID || undefined;
+    return this.session.getInfo().sessionID || undefined
   }
   getHost(): string {
     return new URL(this.options.ingestPoint).hostname
@@ -310,13 +310,13 @@ export default class App {
     }
     // IE only
     return document.head
-      ?.getElementsByTagName("base")[0]
-      ?.getAttribute("href") || location.origin + location.pathname
+      ?.getElementsByTagName('base')[0]
+      ?.getAttribute('href') || location.origin + location.pathname
   }
   resolveResourceURL(resourceURL: string): string {
     const base = new URL(this.getBaseHref())
-    base.pathname += "/" + new URL(resourceURL).pathname
-    base.pathname.replace(/\/+/g, "/")
+    base.pathname += '/' + new URL(resourceURL).pathname
+    base.pathname.replace(/\/+/g, '/')
     return base.toString()
   }
 
@@ -330,31 +330,31 @@ export default class App {
 
   resetNextPageSession(flag: boolean) {
     if (flag) {
-      this.sessionStorage.setItem(this.options.session_reset_key, 't');
+      this.sessionStorage.setItem(this.options.session_reset_key, 't')
     } else {
-      this.sessionStorage.removeItem(this.options.session_reset_key);
+      this.sessionStorage.removeItem(this.options.session_reset_key)
     }
   }
   private _start(startOpts: StartOptions): Promise<StartPromiseReturn> {
     if (!this.worker) {
-      return Promise.resolve(UnsuccessfulStart("No worker found: perhaps, CSP is not set."))
+      return Promise.resolve(UnsuccessfulStart('No worker found: perhaps, CSP is not set.'))
     }
     if (this.activityState !== ActivityState.NotActive) { 
-      return Promise.resolve(UnsuccessfulStart("OpenReplay: trying to call `start()` on the instance that has been started already.")) 
+      return Promise.resolve(UnsuccessfulStart('OpenReplay: trying to call `start()` on the instance that has been started already.')) 
     }
-    this.activityState = ActivityState.Starting;
+    this.activityState = ActivityState.Starting
 
-    let pageNo: number = 0;
-    const pageNoStr = this.sessionStorage.getItem(this.options.session_pageno_key);
+    let pageNo = 0
+    const pageNoStr = this.sessionStorage.getItem(this.options.session_pageno_key)
     if (pageNoStr != null) {
-      pageNo = parseInt(pageNoStr);
-      pageNo++;
+      pageNo = parseInt(pageNoStr)
+      pageNo++
     }
-    this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
+    this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString())
 
     const startInfo = this.getStartInfo()
     const startWorkerMsg: WorkerMessageData = {
-      type: "start",
+      type: 'start',
       pageNo,
       ingestPoint: this.options.ingestPoint,
       timestamp: startInfo.timestamp,
@@ -370,8 +370,8 @@ export default class App {
       userID: startOpts.userID,
     })
 
-    const sReset = this.sessionStorage.getItem(this.options.session_reset_key);
-    this.sessionStorage.removeItem(this.options.session_reset_key);
+    const sReset = this.sessionStorage.getItem(this.options.session_reset_key)
+    this.sessionStorage.removeItem(this.options.session_reset_key)
 
     return window.fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
@@ -394,38 +394,38 @@ export default class App {
         return r.text().then(text => text === CANCELED 
           ? Promise.reject(CANCELED)
           : Promise.reject(`Server error: ${r.status}. ${text}`)
-        );
+        )
       }
     })
     .then(r => {
       if (!this.worker) {
-        return Promise.reject("no worker found after start request (this might not happen)");
+        return Promise.reject('no worker found after start request (this might not happen)')
       }
-      const { token, userUUID, sessionID, beaconSizeLimit } = r;
+      const { token, userUUID, sessionID, beaconSizeLimit, } = r
       if (typeof token !== 'string' ||
           typeof userUUID !== 'string' ||
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
-        return Promise.reject(`Incorrect server response: ${ JSON.stringify(r) }`);
+        return Promise.reject(`Incorrect server response: ${ JSON.stringify(r) }`)
       }
-      this.sessionStorage.setItem(this.options.session_token_key, token);
-      this.localStorage.setItem(this.options.local_uuid_key, userUUID);
-      this.session.update({ sessionID }) // TODO: no no-explicit 'any'
+      this.sessionStorage.setItem(this.options.session_token_key, token)
+      this.localStorage.setItem(this.options.local_uuid_key, userUUID)
+      this.session.update({ sessionID, }) // TODO: no no-explicit 'any'
       const startWorkerMsg: WorkerMessageData = {
-        type: "auth",
+        type: 'auth',
         token,
-        beaconSizeLimit
+        beaconSizeLimit,
       }
       this.worker.postMessage(startWorkerMsg)
 
       this.activityState = ActivityState.Active
       
-      const onStartInfo = { sessionToken: token, userUUID, sessionID };
+      const onStartInfo = { sessionToken: token, userUUID, sessionID, }
 
-      this.startCallbacks.forEach((cb) => cb(onStartInfo)); // TODO: start as early as possible (before receiving the token)
-      this.observer.observe();
-      this.ticker.start();
+      this.startCallbacks.forEach((cb) => cb(onStartInfo)) // TODO: start as early as possible (before receiving the token)
+      this.observer.observe()
+      this.ticker.start()
 
-      this.notify.log("OpenReplay tracking started.");
+      this.notify.log('OpenReplay tracking started.')
       // get rid of onStart ?
       if (typeof this.options.onStart === 'function') {
         this.options.onStart(onStartInfo)
@@ -437,24 +437,24 @@ export default class App {
       this.stop()
       if (reason === CANCELED) { return UnsuccessfulStart(CANCELED) }
 
-      this.notify.log("OpenReplay was unable to start. ", reason)
-      this._debug("session_start", reason)
+      this.notify.log('OpenReplay was unable to start. ', reason)
+      this._debug('session_start', reason)
       return UnsuccessfulStart(START_ERROR)
     })
   }
 
   start(options: StartOptions = {}): Promise<StartPromiseReturn> {
     if (!document.hidden) {
-      return this._start(options);
+      return this._start(options)
     } else {
       return new Promise((resolve) => {
         const onVisibilityChange = () => {
           if (!document.hidden) {
-            document.removeEventListener("visibilitychange", onVisibilityChange);
+            document.removeEventListener('visibilitychange', onVisibilityChange)
             resolve(this._start(options))
           }
         }
-        document.addEventListener("visibilitychange", onVisibilityChange);
+        document.addEventListener('visibilitychange', onVisibilityChange)
       })
     }
   }
@@ -469,9 +469,9 @@ export default class App {
         if (calledFromAPI) {
           this.session.reset()
         }
-        this.notify.log("OpenReplay tracking stopped.")
+        this.notify.log('OpenReplay tracking stopped.')
         if (this.worker) {
-          this.worker.postMessage("stop")
+          this.worker.postMessage('stop')
         }
       } finally {
         this.activityState = ActivityState.NotActive

@@ -1,13 +1,12 @@
-import type Message from "../common/messages.js";
-import { WorkerMessageData } from "../common/webworker.js";
+import type Message from '../common/messages.js'
+import { WorkerMessageData, } from '../common/webworker.js'
 
 import { 
   classes,
   SetPageVisibility,
-  MouseMove,
-} from "../common/messages.js";
-import QueueSender from "./QueueSender.js";
-import BatchWriter from "./BatchWriter.js";
+} from '../common/messages.js'
+import QueueSender from './QueueSender.js'
+import BatchWriter from './BatchWriter.js'
 
 enum WorkerStatus {
   NotActive,
@@ -20,7 +19,7 @@ const AUTO_SEND_INTERVAL = 10 * 1000
 
 let sender: QueueSender | null = null
 let writer: BatchWriter | null = null
-let workerStatus: WorkerStatus = WorkerStatus.NotActive;;
+let workerStatus: WorkerStatus = WorkerStatus.NotActive
 
 function send(): void {
   if (!writer) {
@@ -30,11 +29,11 @@ function send(): void {
 }
 
 
-function reset() {
+function reset(): void {
   workerStatus = WorkerStatus.Stopping
   if (sendIntervalID !== null) {
-    clearInterval(sendIntervalID);
-    sendIntervalID = null;
+    clearInterval(sendIntervalID)
+    sendIntervalID = null
   }
   if (writer) {
     writer.clean()
@@ -43,7 +42,7 @@ function reset() {
   workerStatus = WorkerStatus.NotActive
 }
 
-function resetCleanQueue() {
+function resetCleanQueue(): void {
   if (sender) {
     sender.clean()
     sender = null
@@ -54,12 +53,12 @@ function resetCleanQueue() {
 let sendIntervalID: ReturnType<typeof setInterval> | null = null
 let restartTimeoutID: ReturnType<typeof setTimeout>
 
-self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
+self.onmessage = ({ data, }: MessageEvent<WorkerMessageData>): any => {
   if (data == null) {
     send() // TODO: sendAll?
     return
   }
-  if (data === "stop") {
+  if (data === 'stop') {
     send()
     reset()
     return
@@ -67,16 +66,17 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
 
   if (Array.isArray(data)) {
     if (!writer) {
-      throw new Error("WebWorker: writer not initialised. Service Should be Started.")
+      throw new Error('WebWorker: writer not initialised. Service Should be Started.')
     }
     const w = writer
     // Message[]
     data.forEach((data) => {
-      const message: Message = new (<any>classes.get(data._id))();
+      const message: Message = new (classes.get(data._id))()
       Object.assign(message, data)
       if (message instanceof SetPageVisibility) {
+        // @ts-ignore
         if ( (<any>message).hidden) {
-          restartTimeoutID = setTimeout(() => self.postMessage("restart"), 30*60*1000)
+          restartTimeoutID = setTimeout(() => self.postMessage('restart'), 30*60*1000)
         } else {
           clearTimeout(restartTimeoutID)
         }
@@ -91,11 +91,11 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
     sender = new QueueSender(
       data.ingestPoint,
       () => { // onUnauthorised
-        self.postMessage("restart")
+        self.postMessage('restart')
       },
       () => { // onFailure
         resetCleanQueue()
-        self.postMessage("failed")
+        self.postMessage('failed')
       },
       data.connAttemptCount,
       data.connAttemptGap,
@@ -112,15 +112,15 @@ self.onmessage = ({ data }: MessageEvent<WorkerMessageData>) => {
     return workerStatus = WorkerStatus.Active
   }
 
-  if (data.type === "auth") {
+  if (data.type === 'auth') {
     if (!sender) {
-      throw new Error("WebWorker: sender not initialised. Received auth.")
+      throw new Error('WebWorker: sender not initialised. Received auth.')
     }
     if (!writer) {
-      throw new Error("WebWorker: writer not initialised. Received auth.")
+      throw new Error('WebWorker: writer not initialised. Received auth.')
     }
     sender.authorise(data.token)
     data.beaconSizeLimit && writer.setBeaconSizeLimit(data.beaconSizeLimit)
     return
   }
-};
+}

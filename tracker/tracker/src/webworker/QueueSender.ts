@@ -1,4 +1,4 @@
-const INGEST_PATH = "/v1/web/i"
+const INGEST_PATH = '/v1/web/i'
 
 const KEEPALIVE_SIZE_LIMIT = 64 << 10 // 64 kB
 
@@ -29,19 +29,19 @@ export default class QueueSender {
   private token: string | null = null
   constructor(
     ingestBaseURL: string, 
-    private readonly onUnauthorised: Function,
-    private readonly onFailure: Function,
+    private readonly onUnauthorised: () => any,
+    private readonly onFailure: () => any,
     private readonly MAX_ATTEMPTS_COUNT = 10,
     private readonly ATTEMPT_TIMEOUT = 1000,
   ) {
     this.ingestURL = ingestBaseURL + INGEST_PATH
   }
 
-  authorise(token: string) {
+  authorise(token: string): void {
     this.token = token
   }
 
-  push(batch: Uint8Array) {
+  push(batch: Uint8Array): void {
     if (this.busy || !this.token) {
       this.queue.push(batch)
     } else {
@@ -49,7 +49,7 @@ export default class QueueSender {
     }
   }
 
-  private retry(batch: Uint8Array) {
+  private retry(batch: Uint8Array): void {
     if (this.attemptsCount >= this.MAX_ATTEMPTS_COUNT) {
       this.onFailure()
       return
@@ -66,7 +66,7 @@ export default class QueueSender {
       body: batch,
       method: 'POST',
       headers: {
-        "Authorization": "Bearer " + this.token,
+        'Authorization': 'Bearer ' + this.token,
         //"Content-Type": "",
       },
       keepalive: batch.length < KEEPALIVE_SIZE_LIMIT,
@@ -91,7 +91,7 @@ export default class QueueSender {
       }
     })
     .catch(e => {
-      console.warn("OpenReplay:", e)
+      console.warn('OpenReplay:', e)
       this.retry(batch)
     })
 

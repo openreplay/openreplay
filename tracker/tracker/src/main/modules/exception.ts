@@ -1,7 +1,7 @@
-import type App from "../app/index.js";
-import type Message from "../../common/messages.js";
-import { JSException } from "../../common/messages.js";
-import ErrorStackParser from 'error-stack-parser';
+import type App from '../app/index.js'
+import type Message from '../../common/messages.js'
+import { JSException, } from '../../common/messages.js'
+import ErrorStackParser from 'error-stack-parser'
 
 export interface Options {
   captureExceptions: boolean;
@@ -20,18 +20,18 @@ function getDefaultStack(e: ErrorEvent): Array<StackFrame> {
     columnNumber: e.colno,
     lineNumber: e.lineno,
     fileName: e.filename,
-    functionName: "",
-    source: "",
-  }];
+    functionName: '',
+    source: '',
+  },]
 }
 
 export function getExceptionMessage(error: Error, fallbackStack: Array<StackFrame>): Message {
-  let stack = fallbackStack;
+  let stack = fallbackStack
   try {
-    stack = ErrorStackParser.parse(error);
+    stack = ErrorStackParser.parse(error)
   } catch (e) {
   }
-  return new JSException(error.name, error.message, JSON.stringify(stack));
+  return new JSException(error.name, error.message, JSON.stringify(stack))
 }
 
 export function getExceptionMessageFromEvent(e: ErrorEvent | PromiseRejectionEvent): Message | null {
@@ -39,27 +39,27 @@ export function getExceptionMessageFromEvent(e: ErrorEvent | PromiseRejectionEve
     if (e.error instanceof Error) {
       return getExceptionMessage(e.error, getDefaultStack(e))
     } else {
-      let [name, message] = e.message.split(':');
+      let [name, message,] = e.message.split(':')
       if (!message) {
-        name = 'Error';
+        name = 'Error'
         message = e.message
       }
-      return new JSException(name, message, JSON.stringify(getDefaultStack(e)));
+      return new JSException(name, message, JSON.stringify(getDefaultStack(e)))
     }
   } else if ('PromiseRejectionEvent' in window && e instanceof PromiseRejectionEvent) {
     if (e.reason instanceof Error) {
       return getExceptionMessage(e.reason, [])
     } else {
-      let message: string;
+      let message: string
       try {
         message = JSON.stringify(e.reason)
       } catch(_) {
         message = String(e.reason)
       }
-      return new JSException('Unhandled Promise Rejection', message, '[]');
+      return new JSException('Unhandled Promise Rejection', message, '[]')
     }
   }
-  return null;
+  return null
 }
 
 
@@ -69,12 +69,12 @@ export default function (app: App, opts: Partial<Options>): void {
       captureExceptions: true,
     },
     opts,
-  );
+  )
   if (options.captureExceptions) {
     const handler = (e: ErrorEvent | PromiseRejectionEvent): void => {
-      const msg = getExceptionMessageFromEvent(e);
+      const msg = getExceptionMessageFromEvent(e)
       if (msg != null) {
-        app.send(msg);
+        app.send(msg)
       }
     }
 
@@ -82,11 +82,11 @@ export default function (app: App, opts: Partial<Options>): void {
       window,
       'unhandledrejection',
       (e: PromiseRejectionEvent): void => handler(e),
-    );
+    )
     app.attachEventListener(
       window,
       'error',
       (e: ErrorEvent): void => handler(e),
-    );
+    )
   }
 }

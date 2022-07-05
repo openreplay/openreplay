@@ -1,9 +1,9 @@
-import type Message from "../common/messages.js";
-import PrimitiveWriter from "./PrimitiveWriter.js";
+import type Message from '../common/messages.js'
+import PrimitiveWriter from './PrimitiveWriter.js'
 import { 
   BatchMeta,
   Timestamp,
-} from "../common/messages.js";
+} from '../common/messages.js'
 
 export default class BatchWriter {
   private nextIndex = 0
@@ -14,9 +14,9 @@ export default class BatchWriter {
   constructor(
     private readonly pageNo: number, 
     private timestamp: number,
-    private onBatch: (batch: Uint8Array) => void
+    private readonly onBatch: (batch: Uint8Array) => void
   ) {
-    this.prepare();
+    this.prepare()
   }
 
   private prepare(): void {
@@ -48,7 +48,7 @@ export default class BatchWriter {
     while (!this.write(message)) {
       this.finaliseBatch()
       if (this.beaconSize === this.beaconSizeLimit) {
-        console.warn("OpenReplay: beacon size overflow. Skipping large message.");
+        console.warn('OpenReplay: beacon size overflow. Skipping large message.')
         this.writer.reset()
         this.prepare()
         this.isEmpty = true
