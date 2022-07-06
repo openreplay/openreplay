@@ -56,6 +56,8 @@ serviceMonitor:
 ingress:
   enabled: true
   className: "{{ .Values.global.ingress.controller.ingressClassResource.name }}"
+  cspSnippet: |-
+    # Custom CSP snippet here.
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "120"
