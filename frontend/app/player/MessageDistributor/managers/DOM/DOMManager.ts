@@ -159,10 +159,13 @@ export default class DOMManager extends ListWalker<Message> {
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (name === "href" && vn.node.tagName === "LINK") {
-          // @ts-ignore TODO: global ENV type // Hack for queries in rewrited urls (don't we do that in backend?)
+          // @ts-ignore TODO: global ENV type   // It'd done on backend (remove after testing in saas)
           // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
           //   value = value.replace("?", "%3F");
           // }
+          if (!value.startsWith("http")) { return }
+          // blob:... value happened here. https://foss.openreplay.com/3/session/7013553567419137
+          // that resulted in that link being unable to load and having 4sec timeout in the below function.
           this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
         }
         if (vn.node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
