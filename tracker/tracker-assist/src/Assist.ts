@@ -14,9 +14,6 @@ import type { Options as ConfirmOptions } from './ConfirmWindow/defaults.js';
 
 // TODO: fully specified  strict check (everywhere)
 
-//@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
-let PeerHack = Peer.default || Peer;
-
 type StartEndCallback = () => ((()=>{}) | void)
 
 export interface Options {
@@ -245,7 +242,7 @@ export default class Assist {
     if (this.options.config) {
       peerOptions['config'] = this.options.config
     }
-    const peer = this.peer = new PeerHack(peerID, peerOptions);
+    const peer = this.peer = new Peer(peerID, peerOptions);
     // app.debug.log('Peer created: ', peer)
     peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
     peer.on('disconnect', () => peer.reconnect())
