@@ -33,7 +33,7 @@ function CustomMetricTableErrors(props: RouteComponentProps & Props) {
         showModal(<ErrorDetailsModal errorId={errorId} />, {
             right: true,
             onClose: () => {
-                if (props.history.location.pathname.includes("/dashboard")) {
+                if (props.history.location.pathname.includes("/dashboard") || props.history.location.pathname.includes("/metric/")) {
                     props.history.replace({ search: "" });
                 }
             },
