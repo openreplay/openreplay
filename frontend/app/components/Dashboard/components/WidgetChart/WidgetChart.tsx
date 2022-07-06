@@ -55,7 +55,7 @@ function WidgetChart(props: Props) {
             } else { // get the filter of clicked chart point
                 const payload = event.activePayload[0].payload;
                 const timestamp = payload.timestamp;
-                const periodTimestamps = getStartAndEndTimestampsByDensity(timestamp, period.start, period.end, params.density);
+                const periodTimestamps = getStartAndEndTimestampsByDensity(timestamp, drillDownPeriod.start, drillDownPeriod.end, params.density);
 
                 drillDownFilter.merge({
                     startTimestamp: periodTimestamps.startTimestamp,
