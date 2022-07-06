@@ -28,6 +28,13 @@ export default class NewSiteForm extends React.PureComponent {
 		existsError: false,
 	}
 
+	componentDidMount() {
+		const { location: { pathname }, match: { params: { siteId } } } = this.props;
+		if (pathname.includes('onboarding')) {
+			this.props.setSiteId(siteId);
+		}
+	}
+
 	onSubmit = e => {
 		e.preventDefault();
 		const { site, siteList, location: { pathname } } = this.props;
