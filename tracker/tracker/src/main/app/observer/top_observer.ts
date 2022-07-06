@@ -1,35 +1,35 @@
-import Observer from "./observer.js";
+import Observer from './observer.js'
 import { 
   isElementNode,
   hasTag,
-} from "../guards.js";
+} from '../guards.js'
 
-import IFrameObserver from "./iframe_observer.js";
-import ShadowRootObserver from "./shadow_root_observer.js";
+import IFrameObserver from './iframe_observer.js'
+import ShadowRootObserver from './shadow_root_observer.js'
 
-import { CreateDocument } from "../../../common/messages.js";
-import App from "../index.js";
-import { IN_BROWSER, hasOpenreplayAttribute } from '../../utils.js'
+import { CreateDocument, } from '../../../common/messages.js'
+import App from '../index.js'
+import { IN_BROWSER, hasOpenreplayAttribute, } from '../../utils.js'
 
 export interface Options {
   captureIFrames: boolean
 }
 
-const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : ()=>new ShadowRoot();
+const attachShadowNativeFn = IN_BROWSER ? Element.prototype.attachShadow : () => new ShadowRoot()
 
 export default class TopObserver extends Observer { 
   private readonly options: Options;
   constructor(app: App, options: Partial<Options>) {
-    super(app, true);
+    super(app, true)
     this.options = Object.assign({
-      captureIFrames: true
-    }, options);
+      captureIFrames: true,
+    }, options)
 
     // IFrames
     this.app.nodes.attachNodeCallback(node => {
-      if (hasTag(node, "IFRAME") && 
-         ((this.options.captureIFrames && !hasOpenreplayAttribute(node, "obscured")) 
-           || hasOpenreplayAttribute(node, "capture"))
+      if (hasTag(node, 'IFRAME') && 
+         ((this.options.captureIFrames && !hasOpenreplayAttribute(node, 'obscured')) 
+           || hasOpenreplayAttribute(node, 'capture'))
       ) {
         this.handleIframe(node)
       }
@@ -58,7 +58,7 @@ export default class TopObserver extends Observer {
       this.iframeObservers.push(observer)
       observer.observe(iframe)
     })
-    iframe.addEventListener("load", handle) // why app.attachEventListener not working?
+    iframe.addEventListener('load', handle) // why app.attachEventListener not working?
     handle()
   }
 
@@ -71,8 +71,10 @@ export default class TopObserver extends Observer {
 
   observe(): void {
     // Protection from several subsequent calls?
-    const observer = this;
+    
+    const observer = this
     Element.prototype.attachShadow = function() {
+      // eslint-disable-next-line
       const shadow = attachShadowNativeFn.apply(this, arguments)
       observer.handleShadowRoot(shadow)
       return shadow
@@ -86,7 +88,7 @@ export default class TopObserver extends Observer {
     // Alternatively - observe(#document) then bindNode(documentElement)
     this.observeRoot(window.document, () => {
       this.app.send(new CreateDocument())
-    }, window.document.documentElement);
+    }, window.document.documentElement)
   }
 
   disconnect() {

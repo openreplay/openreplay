@@ -3,24 +3,24 @@ type XY = [number, number]
 
 export default class Mouse {
   private mouse: HTMLDivElement
-  private position: [number,number] = [0,0]
+  private position: [number,number] = [0,0,]
   constructor() {
-    this.mouse = document.createElement('div');
+    this.mouse = document.createElement('div')
     Object.assign(this.mouse.style, {
-      width: "20px",
-      height: "20px",
-      opacity: ".4",
-      borderRadius: "50%",
-      position: "absolute",
-      zIndex: "999998",
-      background: "radial-gradient(red, transparent)",
-    });
+      width: '20px',
+      height: '20px',
+      opacity: '.4',
+      borderRadius: '50%',
+      position: 'absolute',
+      zIndex: '999998',
+      background: 'radial-gradient(red, transparent)',
+    })
   }
 
   mount() {
     document.body.appendChild(this.mouse)
-    window.addEventListener("scroll", this.handleWScroll)
-    window.addEventListener("resize", this.resetLastScrEl)
+    window.addEventListener('scroll', this.handleWScroll)
+    window.addEventListener('resize', this.resetLastScrEl)
   }
 
   move(pos: XY) {
@@ -28,16 +28,16 @@ export default class Mouse {
       this.resetLastScrEl()
     }
 
-    this.position = pos;
+    this.position = pos
     Object.assign(this.mouse.style, {
       left: `${pos[0] || 0}px`,
-      top: `${pos[1] || 0}px`
+      top: `${pos[1] || 0}px`,
     })
 
   }
 
   getPosition(): XY {
-    return this.position;
+    return this.position
   }
 
   click(pos: XY) {
@@ -51,18 +51,18 @@ export default class Mouse {
   }
 
   private readonly pScrEl = document.scrollingElement || document.documentElement // Is it always correct
-  private lastScrEl: Element | "window" | null = null
+  private lastScrEl: Element | 'window' | null = null
   private resetLastScrEl = () => { this.lastScrEl = null }
   private handleWScroll = e => {
     if (e.target !== this.lastScrEl &&
-      this.lastScrEl !== "window") {
+      this.lastScrEl !== 'window') {
       this.resetLastScrEl()
     }
   }
   scroll(delta: XY) {
     // what would be the browser-like logic?
-    const [mouseX, mouseY] = this.position
-    const [dX, dY] = delta
+    const [mouseX, mouseY,] = this.position
+    const [dX, dY,] = delta
 
     let el = this.lastScrEl
 
@@ -72,7 +72,7 @@ export default class Mouse {
       el.scrollTop += dY
       return  // TODO: if not scrolled
     }
-    if (el === "window") {
+    if (el === 'window') {
       window.scroll(this.pScrEl.scrollLeft + dX, this.pScrEl.scrollTop + dY)
       return
     }
@@ -85,7 +85,7 @@ export default class Mouse {
       // el.scrollTopMax > 0 // available in firefox
       if (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) { 
         const styles = getComputedStyle(el)
-        if (styles.overflow.indexOf("scroll") >= 0 || styles.overflow.indexOf("auto") >= 0) { // returns true for body in habr.com but it's not scrollable
+        if (styles.overflow.indexOf('scroll') >= 0 || styles.overflow.indexOf('auto') >= 0) { // returns true for body in habr.com but it's not scrollable
           const esl = el.scrollLeft
           const est = el.scrollTop
           el.scrollLeft += dX
@@ -101,14 +101,14 @@ export default class Mouse {
 
     // If not scrolled
     window.scroll(this.pScrEl.scrollLeft + dX, this.pScrEl.scrollTop + dY)
-    this.lastScrEl = "window"
+    this.lastScrEl = 'window'
   }
 
   remove() {
     if (this.mouse.parentElement) {
-      document.body.removeChild(this.mouse);
+      document.body.removeChild(this.mouse)
     }
-    window.removeEventListener("scroll", this.handleWScroll)
-    window.removeEventListener("resize", this.resetLastScrEl)
+    window.removeEventListener('scroll', this.handleWScroll)
+    window.removeEventListener('resize', this.resetLastScrEl)
   }
 }

@@ -5,7 +5,7 @@ export const LogLevel = {
   Warnings: 3,
   Errors: 2,
   Silent: 0,
-} as const;
+} as const
 type LogLevel = typeof LogLevel[keyof typeof LogLevel]
 
 
@@ -32,8 +32,8 @@ export default class Logger {
   private readonly options: _Options;
   constructor(options: Options = LogLevel.Silent) {
     this.options = options === true 
-      ? { level: LogLevel.Verbose } 
-      : typeof options === "number" ? { level: options } : options;
+      ? { level: LogLevel.Verbose, } 
+      : typeof options === 'number' ? { level: options, } : options
   }
   log(...args: any) {
     if (IsCustomLevel(this.options.level) 

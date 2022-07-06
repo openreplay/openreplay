@@ -4,16 +4,16 @@ export interface Options {
 }
 
 type Start = {
-  type:             "start",
+  type:             'start',
   ingestPoint:      string
   pageNo:           number
   timestamp:        number
 } & Options
 
 type Auth = {
-  type:             "auth"
+  type:             'auth'
   token:            string
   beaconSizeLimit?:  number
 }
 
-export type WorkerMessageData = null | "stop" | Start | Auth | Array<{ _id: number }>
+export type WorkerMessageData = null | 'stop' | Start | Auth | Array<{ _id: number }>

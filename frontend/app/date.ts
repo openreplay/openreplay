@@ -13,7 +13,7 @@ export const durationFormatted = (duration: Duration):string => {
     duration = duration.toFormat('h\'h\'m\'m');
   } else if (duration.as('months') < 1) { // show in days and hours
     duration = duration.toFormat('d\'d\'h\'h');
-  } else { //
+  } else {
     duration = duration.toFormat('m\'m\'s\'s\'');
   }
 

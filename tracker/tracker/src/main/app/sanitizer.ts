@@ -1,6 +1,6 @@
-import type App from "./index.js";
-import { stars, hasOpenreplayAttribute } from "../utils.js";
-import { isElementNode } from "./guards.js";
+import type App from './index.js'
+import { stars, hasOpenreplayAttribute, } from '../utils.js'
+import { isElementNode, } from './guards.js'
 
 export interface Options {
   obscureTextEmails: boolean;
@@ -16,7 +16,7 @@ export default class Sanitizer {
     this.options = Object.assign({
       obscureTextEmails: true,
       obscureTextNumbers: false,
-    }, options);
+    }, options)
   }
 
   handleNode(id: number, parentID: number, node: Node) {
@@ -25,14 +25,14 @@ export default class Sanitizer {
         (isElementNode(node) &&
           hasOpenreplayAttribute(node, 'masked'))
       ) {
-        this.masked.add(id);
+        this.masked.add(id)
       }
       if (
           this.maskedContainers.has(parentID) ||
           (isElementNode(node) && 
             hasOpenreplayAttribute(node, 'htmlmasked'))
         ) {
-        this.maskedContainers.add(id);
+        this.maskedContainers.add(id)
       }
   }
 
@@ -42,26 +42,26 @@ export default class Sanitizer {
       return data.trim().replace(
         /[^\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]/g,
         '█',
-      );
+      )
     }
     if (this.options.obscureTextNumbers) {
-      data = data.replace(/\d/g, '0');
+      data = data.replace(/\d/g, '0')
     }
     if (this.options.obscureTextEmails) {
       data = data.replace(
         /([^\s]+)@([^\s]+)\.([^\s]+)/g,
         (...f: Array<string>) =>
           stars(f[1]) + '@' + stars(f[2]) + '.' + stars(f[3]),
-      );
+      )
     }
     return data
   }
 
   isMasked(id: number): boolean {
-    return this.masked.has(id);
+    return this.masked.has(id)
   }
   isMaskedContainer(id: number) {
-    return this.maskedContainers.has(id);
+    return this.maskedContainers.has(id)
   }
 
   getInnerTextSecure(el: HTMLElement): string {
@@ -72,8 +72,8 @@ export default class Sanitizer {
   }
 
   clear(): void {
-    this.masked.clear();
-    this.maskedContainers.clear();
+    this.masked.clear()
+    this.maskedContainers.clear()
   }
 
 }

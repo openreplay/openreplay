@@ -9,7 +9,7 @@ export default function attachDND(
   dropArea: Element,
 ) {
 
-  dragArea.addEventListener('pointerdown', userPressed, { passive: true })
+  dragArea.addEventListener('pointerdown', userPressed, { passive: true, })
 
   let bbox, 
     startX, startY, 
@@ -20,9 +20,9 @@ export default function attachDND(
     startX = event.clientX
     startY = event.clientY
     bbox = movingEl.getBoundingClientRect()
-    dropArea.addEventListener('pointermove', userMoved, { passive: true })
-    dropArea.addEventListener('pointerup', userReleased, { passive: true })
-    dropArea.addEventListener('pointercancel', userReleased, { passive: true })
+    dropArea.addEventListener('pointermove', userMoved, { passive: true, })
+    dropArea.addEventListener('pointerup', userReleased, { passive: true, })
+    dropArea.addEventListener('pointercancel', userReleased, { passive: true, })
   };
 
   /* 
@@ -46,8 +46,8 @@ export default function attachDND(
   }
 
   function userMovedRaf() {
-    movingEl.style.transform = "translate3d("+deltaX+"px,"+deltaY+"px, 0px)";
-    raf = null;
+    movingEl.style.transform = 'translate3d('+deltaX+'px,'+deltaY+'px, 0px)'
+    raf = null
   }
 
   function userReleased() {
@@ -58,9 +58,9 @@ export default function attachDND(
       cancelAnimationFrame(raf)
       raf = null
     }
-    movingEl.style.left = bbox.left + deltaX + "px"
-    movingEl.style.top = bbox.top + deltaY + "px"
-    movingEl.style.transform = "translate3d(0px,0px,0px)"
+    movingEl.style.left = bbox.left + deltaX + 'px'
+    movingEl.style.top = bbox.top + deltaY + 'px'
+    movingEl.style.transform = 'translate3d(0px,0px,0px)'
     deltaX = deltaY = 0
   }
 }
