@@ -15,45 +15,45 @@ const IGNORED_ATTRS = [ "autocomplete", "name" ];
 const ATTR_NAME_REGEXP = /([^\t\n\f \/>"'=]+)/; // regexp costs ~
 
 export default class DOMManager extends ListWalker<Message> {
-  private isMobile: boolean;
-  private screen: StatedScreen;
   private vTexts: Map<number, VText> = new Map() // map vs object here?
   private vElements: Map<number, VElement> = new Map()
   private vRoots: Map<number, VFragment | VDocument> = new Map()
   
 
   private upperBodyId: number = -1;
-  private nodeScrollManagers: Array<ListWalker<SetNodeScroll>> = []
+  private nodeScrollManagers: Map<number, ListWalker<SetNodeScroll>> = new Map()
   private stylesManager: StylesManager
 
 
-  constructor(screen: StatedScreen, isMobile: boolean, public readonly time: number) {
-    super();
-    this.isMobile = isMobile;
-    this.screen = screen;
-    this.stylesManager = new StylesManager(screen);
+  constructor(
+    private readonly screen: StatedScreen,
+    private readonly isMobile: boolean,
+    public readonly time: number
+  ) {
+    super()
+    this.stylesManager = new StylesManager(screen)
   }
 
   append(m: Message): void {
-    switch (m.tp) {
-    case "set_node_scroll":
-      if (!this.nodeScrollManagers[ m.id ]) {
-        this.nodeScrollManagers[ m.id ] = new ListWalker();
+    if (m.tp === "set_node_scroll") {
+      let scrollManager = this.nodeScrollManagers.get(m.id)
+      if (!scrollManager) {
+        scrollManager = new ListWalker()
+        this.nodeScrollManagers.set(m.id, scrollManager)
       }
-      this.nodeScrollManagers[ m.id ].append(m);
-      return;
-    default:
-      if (m.tp === "create_element_node") {
-        if(m.tag === "BODY" && this.upperBodyId === -1) {
-          this.upperBodyId = m.id
-        }
-      } else if (m.tp === "set_node_attribute" && 
-        (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))) {
-        logger.log("Ignorring message: ", m)
-        return; // Ignoring
-      }
-      super.append(m);
+      scrollManager.append(m)
+      return
     }
+    if (m.tp === "create_element_node") {
+      if(m.tag === "BODY" && this.upperBodyId === -1) {
+        this.upperBodyId = m.id
+      }
+    } else if (m.tp === "set_node_attribute" && 
+      (IGNORED_ATTRS.includes(m.name) || !ATTR_NAME_REGEXP.test(m.name))) {
+      logger.log("Ignorring message: ", m)
+      return; // Ignoring
+    }
+    super.append(m)
   }
 
   private removeBodyScroll(id: number, vn: VElement): void {
@@ -160,9 +160,9 @@ export default class DOMManager extends ListWalker<Message> {
         if (!vn) { logger.error("Node not found", msg); return }
         if (name === "href" && vn.node.tagName === "LINK") {
           // @ts-ignore TODO: global ENV type // Hack for queries in rewrited urls (don't we do that in backend?)
-          if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
-            value = value.replace("?", "%3F");
-          }
+          // if (value.startsWith(window.env.ASSETS_HOST || window.location.origin + '/assets')) {
+          //   value = value.replace("?", "%3F");
+          // }
           this.stylesManager.setStyleHandlers(vn.node as HTMLLinkElement, value);
         }
         if (vn.node.namespaceURI === 'http://www.w3.org/2000/svg' && value.startsWith("url(")) {
@@ -236,7 +236,7 @@ export default class DOMManager extends ListWalker<Message> {
         vn = this.vElements.get(msg.id)
         if (!vn) { logger.error("Node not found", msg); return }
         if (!(vn instanceof VStyleElement)) {
-          logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, node.sheet);
+          logger.warn("Non-style node in CSS rules message (or sheet is null)", msg, vn);
           return
         }
         vn.onStyleSheet(sheet => {

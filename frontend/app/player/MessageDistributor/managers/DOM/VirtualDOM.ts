@@ -65,18 +65,18 @@ export class VFragment extends VParent {
 
 export class VElement extends VParent {
 	parentNode: VParent | null = null
-	private newAttributes: Record<string, string | false> = {}
+	private newAttributes: Map<string, string | false> = new Map()
 	//private props: Record<string, string | number | boolean>
 	constructor(public readonly node: Element) { super() }
 	setAttribute(name: string, value: string) {
-		this.newAttributes[name] = value
+		this.newAttributes.set(name, value)
 	}
 	removeAttribute(name: string) {
-		this.newAttributes[name] = false
+		this.newAttributes.set(name, false)
 	}
 
 	applyChanges() {
-		Object.entries(this.newAttributes).forEach(([key, value]) => {
+		this.newAttributes.forEach((value, key) => {
 			if (value === false) {
 				this.node.removeAttribute(key)
 			} else {
@@ -87,7 +87,7 @@ export class VElement extends VParent {
 				}
 			}
 		})
-		this.newAttributes = {}
+		this.newAttributes.clear()
 		super.applyChanges()
 	}
 }

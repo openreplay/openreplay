@@ -41,20 +41,20 @@ export default class StylesManager extends ListWalker<CSSRuleMessage> {
 
   setStyleHandlers(node: HTMLLinkElement, value: string): void {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
-    const promise = new Promise((resolve) => {
-      if (this.skipCSSLinks.includes(value)) resolve(null);
+    const promise = new Promise<void>((resolve) => {
+      if (this.skipCSSLinks.includes(value)) resolve();
       this.linkLoadingCount++;
       this.screen.setCSSLoading(true);
       const addSkipAndResolve = () => {
         this.skipCSSLinks.push(value); // watch out
-        resolve(null);
+        resolve()
       }
       timeoutId = setTimeout(addSkipAndResolve, 4000);
 
       node.onload = () => {
         const doc = this.screen.document;
         doc && rewriteNodeStyleSheet(doc, node);
-        resolve(null);
+        resolve();
       }
       node.onerror = addSkipAndResolve;
     }).then(() => {
