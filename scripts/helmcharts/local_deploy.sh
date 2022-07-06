@@ -5,7 +5,7 @@ set -e
 
 # Usage: IMAGE_TAG=latest DOCKER_REPO=rg.fr-par.scw.cloud/foss bash build_deploy.sh
 
-export DOCKER_REPO="rg.fr-par.scw.cloud/foss"
+export DOCKER_REPO="public.ecr.aws/p1t3u8a3"
 export IMAGE_TAG=`grep fromVersion vars.yaml | awk '{print $NF}'|xargs`
 
 
