@@ -3,8 +3,5 @@
   "compilerOptions": {
     "lib": ["es6", "webworker"]
   },
-  "types": [],
-  "references": [
-    { "path": "../common" }
-  ]
+  "references": [{ "path": "../common" }]
 }
