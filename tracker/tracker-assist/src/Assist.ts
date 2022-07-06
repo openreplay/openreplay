@@ -244,8 +244,9 @@ export default class Assist {
     }
     const peer = this.peer = new Peer(peerID, peerOptions);
     // app.debug.log('Peer created: ', peer)
+    // @ts-ignore
     peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
-    peer.on('disconnect', () => peer.reconnect())
+    peer.on('disconnected', () => peer.reconnect())
     peer.on('call', (call) => {
       app.debug.log("Call: ", call)    
       if (this.callingState !== CallingState.False) {
