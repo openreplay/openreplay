@@ -1,8 +1,7 @@
 .positionTracker {
   width: 15px;
   height: 15px;
-  outline: solid 1px $teal-dark;
-  outline-style: inset;
+  box-shadow: 0 0 0 1px #2331A8;
   margin-left: -7px;
   border-radius: 50%;
   background-color: $main;
