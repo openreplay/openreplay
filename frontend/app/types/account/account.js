@@ -19,6 +19,7 @@ export default Member.extend({
   tenantKey: undefined,
   tenantName: undefined,
   edition: undefined,
+  optOut: false,
 }, {
   fromJS: ({ ...account})=> ({
     ...account,
