@@ -78,6 +78,11 @@ function DashboardView(props: Props) {
         );
     };
 
+    const onAddDashboardClick = () => {
+        dashboardStore.initDashboard();
+        showModal(<DashboardModal siteId={siteId} />, { right: true })
+    }
+
     const onEdit = (isTitle: boolean) => {
         dashboardStore.initDashboard(dashboard);
         setFocusedInput(isTitle);
@@ -134,7 +139,7 @@ function DashboardView(props: Props) {
                     <Button
                         variant="primary"
                         size="small"
-                        onClick={onAddWidgets}
+                        onClick={onAddDashboardClick}
                     >
                         + Create Dashboard
                     </Button>
