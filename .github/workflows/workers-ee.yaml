@@ -81,7 +81,7 @@ jobs:
             ;;
         esac
 
-        [[ $(cat /tmp/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 0)
+        [[ $(cat /tmp/images_to_build.txt) != "" ]] || (echo "Nothing to build here"; exit 1)
         #
         # Pushing image to registry
         #
