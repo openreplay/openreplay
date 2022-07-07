@@ -9,13 +9,12 @@
       "pluginName": "Prometheus"
     }
   ],
-  "__elements": [],
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "8.5.3"
+      "version": "8.2.0"
     },
     {
       "type": "panel",
@@ -34,10 +33,7 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": {
-          "type": "datasource",
-          "uid": "grafana"
-        },
+        "datasource": "-- Grafana --",
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -62,21 +58,145 @@
   "liveNow": false,
   "panels": [
     {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 31,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "hiddenSeries": false,
+          "id": 29,
+          "legend": {
+            "alignAsTable": true,
+            "avg": false,
+            "current": true,
+            "max": false,
+            "min": false,
+            "rightSide": true,
+            "show": true,
+            "sort": "current",
+            "sortDesc": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "8.2.0",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "kafka_consumer_group_ConsumerLagMetrics_Value{name=\"EstimatedMaxTimeLag\",topic!~\"__.+\"}",
+              "interval": "",
+              "legendFormat": "Topic={{topic}}:{{partition}} Grp: {{groupId}} ",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Estimated time to clear the lag",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "s",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "title": "Experimental",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 27,
+      "title": "Consumer Lag",
+      "type": "row"
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 9,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 2
       },
       "hiddenSeries": false,
       "id": 23,
@@ -100,7 +220,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -113,12 +233,13 @@
           "expr": "kafka_consumer_group_ConsumerLagMetrics_Value{name=\"OffsetLag\", topic=~\".+\"}",
           "interval": "",
           "legendFormat": "Topic={{topic}}:{{partition}} Grp: {{groupId}} ",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Consumer Lag with group",
       "tooltip": {
         "shared": true,
@@ -127,7 +248,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -135,31 +258,39 @@
         {
           "$$hashKey": "object:351",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:352",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
       "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 9
+        "y": 11
       },
       "id": 25,
       "panels": [],
@@ -171,10 +302,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "description": "whether we're ingesting data to partition",
       "fill": 1,
       "fillGradient": 0,
@@ -182,7 +310,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 12
       },
       "hiddenSeries": false,
       "id": 22,
@@ -206,7 +334,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -220,12 +348,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{topic}}:{{partition}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Production Rate / 5m",
       "tooltip": {
         "shared": true,
@@ -234,7 +363,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -242,18 +373,25 @@
         {
           "$$hashKey": "object:660",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:661",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -261,17 +399,14 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 12
       },
       "hiddenSeries": false,
       "id": 20,
@@ -295,7 +430,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -308,12 +443,13 @@
           "expr": "sum by (topic, partition) (increase(kafka_log_Log_Value{name=\"LogEndOffset\", topic!~\"__.*\"}[5m]))\n-\nsum by (topic, partition) (kafka_consumer_group_ConsumerLagMetrics_Value{name=\"OffsetLag\", topic=~\".+\"})",
           "interval": "",
           "legendFormat": "{{ topic }}:{{ partition }}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Consumtion Rate / 5m",
       "tooltip": {
         "shared": true,
@@ -322,7 +458,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -330,31 +468,39 @@
         {
           "$$hashKey": "object:351",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:352",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
       "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 19
       },
       "id": 6,
       "panels": [],
@@ -366,10 +512,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -382,7 +525,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 18
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 2,
@@ -402,7 +545,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -415,12 +558,13 @@
           "expr": "sum by (topic) (rate(kafka_server_BrokerTopicMetrics_Count{name=\"MessagesInPerSec\", topic=~\".+\"}[5m]))",
           "interval": "",
           "legendFormat": "{{topic}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Messages In Per 5m",
       "tooltip": {
         "shared": true,
@@ -429,7 +573,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -437,18 +583,25 @@
         {
           "$$hashKey": "object:49",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:50",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -456,10 +609,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -472,7 +622,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 18
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 3,
@@ -492,7 +642,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -505,12 +655,13 @@
           "expr": "sum by (topic) (rate(kafka_server_BrokerTopicMetrics_Count{name=\"BytesInPerSec\", topic=~\".+\"}[5m]))",
           "interval": "",
           "legendFormat": "{{topic}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Bytes In Per 5m from Clients",
       "tooltip": {
         "shared": true,
@@ -519,7 +670,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -527,18 +680,25 @@
         {
           "$$hashKey": "object:49",
           "format": "decbytes",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:50",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -546,10 +706,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -562,7 +719,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 18
+        "y": 20
       },
       "hiddenSeries": false,
       "id": 4,
@@ -582,7 +739,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -595,12 +752,13 @@
           "expr": "sum by (topic) (rate(kafka_server_BrokerTopicMetrics_Count{name=\"BytesOutPerSec\", topic=~\".+\"}[5m]))",
           "interval": "",
           "legendFormat": "{{topic}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Bytes Out Per 5m",
       "tooltip": {
         "shared": true,
@@ -609,7 +767,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -617,31 +777,39 @@
         {
           "$$hashKey": "object:49",
           "format": "decbytes",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:50",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
       "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 29
       },
       "id": 8,
       "panels": [],
@@ -653,10 +821,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -669,7 +834,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 28
+        "y": 30
       },
       "hiddenSeries": false,
       "id": 10,
@@ -689,7 +854,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -703,12 +868,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Under Replicated Partitions",
       "tooltip": {
         "shared": true,
@@ -717,7 +883,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -725,18 +893,25 @@
         {
           "$$hashKey": "object:386",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -744,10 +919,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -760,7 +932,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 28
+        "y": 30
       },
       "hiddenSeries": false,
       "id": 17,
@@ -780,7 +952,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -794,12 +966,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Under ISR Partitions",
       "tooltip": {
         "shared": true,
@@ -808,7 +981,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -816,18 +991,25 @@
         {
           "$$hashKey": "object:386",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -835,10 +1017,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -851,7 +1030,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 28
+        "y": 30
       },
       "hiddenSeries": false,
       "id": 16,
@@ -871,7 +1050,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -885,12 +1064,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Partition Counts",
       "tooltip": {
         "shared": true,
@@ -899,7 +1079,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -907,18 +1089,25 @@
         {
           "$$hashKey": "object:386",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -926,10 +1115,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -942,7 +1128,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 36
+        "y": 38
       },
       "hiddenSeries": false,
       "id": 11,
@@ -962,7 +1148,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -976,12 +1162,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Request Rate",
       "tooltip": {
         "shared": true,
@@ -990,7 +1177,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -998,18 +1187,25 @@
         {
           "$$hashKey": "object:386",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -1017,10 +1213,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -1033,7 +1226,7 @@
         "h": 8,
         "w": 16,
         "x": 8,
-        "y": 36
+        "y": 38
       },
       "hiddenSeries": false,
       "id": 18,
@@ -1059,7 +1252,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1072,12 +1265,13 @@
           "expr": "(rate(kafka_network_RequestMetrics_Count{name=\"ErrorsPerSec\"}[5m]))",
           "interval": "",
           "legendFormat": "Err:{{ error }} Req:{{ request }} Node:{{ instance }}",
-          "refId": "B",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "B"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Error Rate",
       "tooltip": {
         "shared": true,
@@ -1086,7 +1280,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -1094,31 +1290,39 @@
         {
           "$$hashKey": "object:386",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
       "collapsed": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+      "datasource": "${DS_PROMETHEUS}",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
       },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 46
       },
       "id": 14,
       "panels": [],
@@ -1130,10 +1334,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -1146,7 +1347,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 45
+        "y": 47
       },
       "hiddenSeries": false,
       "id": 12,
@@ -1166,7 +1367,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1180,12 +1381,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{instance}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "Available Bytes",
       "tooltip": {
         "shared": true,
@@ -1194,7 +1396,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -1202,18 +1406,25 @@
         {
           "$$hashKey": "object:386",
           "format": "decbytes",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     },
     {
@@ -1221,10 +1432,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "datasource": "${DS_PROMETHEUS}",
       "fieldConfig": {
         "defaults": {
           "links": []
@@ -1237,7 +1445,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 45
+        "y": 47
       },
       "hiddenSeries": false,
       "id": 15,
@@ -1257,7 +1465,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.3",
+      "pluginVersion": "8.2.0",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1271,12 +1479,13 @@
           "hide": false,
           "interval": "",
           "legendFormat": "{{mode}} - {{instance}}",
-          "refId": "A",
-          "datasource": "${DS_PROMETHEUS}"
+          "refId": "A"
         }
       ],
       "thresholds": [],
+      "timeFrom": null,
       "timeRegions": [],
+      "timeShift": null,
       "title": "CPU Time Per Sec over the last 5 mins",
       "tooltip": {
         "shared": true,
@@ -1285,7 +1494,9 @@
       },
       "type": "graph",
       "xaxis": {
+        "buckets": null,
         "mode": "time",
+        "name": null,
         "show": true,
         "values": []
       },
@@ -1293,23 +1504,30 @@
         {
           "$$hashKey": "object:386",
           "format": "s",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         },
         {
           "$$hashKey": "object:387",
           "format": "short",
+          "label": null,
           "logBase": 1,
+          "max": null,
+          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false
+        "align": false,
+        "alignLevel": null
       }
     }
   ],
   "refresh": "5m",
-  "schemaVersion": 36,
+  "schemaVersion": 31,
   "style": "dark",
   "tags": [
     "msk",
@@ -1338,6 +1556,5 @@
   "timezone": "",
   "title": "MSK Overview",
   "uid": "27BWK5nGk",
-  "version": 2,
-  "weekStart": ""
+  "version": 3
 }
