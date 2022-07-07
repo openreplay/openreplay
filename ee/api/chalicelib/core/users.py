@@ -261,7 +261,7 @@ def get(user_id, tenant_id):
         cur.execute(
             cur.mogrify(
                 f"""SELECT 
-                        users.user_id AS id,
+                        users.user_id,
                         email, 
                         role, 
                         users.name,
