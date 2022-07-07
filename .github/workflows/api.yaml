@@ -72,6 +72,7 @@ jobs:
         cd scripts/helmcharts/
 
         ## Update secerts
+        sed -i "s/openReplayContainerRegistry.*/openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"/g" vars.yaml
         sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
         sed -i "s/accessKey: \"changeMeMinioAccessKey\"/accessKey: \"${{ secrets.OSS_MINIO_ACCESS_KEY }}\"/g" vars.yaml
         sed -i "s/secretKey: \"changeMeMinioPassword\"/secretKey: \"${{ secrets.OSS_MINIO_SECRET_KEY }}\"/g" vars.yaml
