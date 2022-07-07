@@ -42,7 +42,7 @@ spec:
             mkdir -p /opt/openreplay/openreplay && cd /opt/openreplay/openreplay
             git clone https://github.com/openreplay/openreplay .
             ls /opt/openreplay/openreplay
-            git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }}
+            git checkout {{ default .Chart.AppVersion .Values.dbMigrationUpstreamBranch }} || exit 10
 
             # Checking variable is empty. Shell independant method.
             if [ "x$ENTERPRISE_EDITION_LICENSE" != "x" ]; then
