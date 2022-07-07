@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 export interface IDashboard {
     dashboardId: any
     name: string
+    description: string
     isPublic: boolean
     widgets: IWidget[]
     metrics: any[]
@@ -22,7 +23,7 @@ export interface IDashboard {
     removeWidget(widgetId: string): void
     updateWidget(widget: IWidget): void
     getWidget(widgetId: string): void
-    getWidgetIndex(widgetId: string)
+    getWidgetIndex(widgetId: string): IWidget
     getWidgetByIndex(index: number): void
     getWidgetCount(): void
     getWidgetIndexByWidgetId(widgetId: string): void
@@ -35,6 +36,7 @@ export default class Dashboard implements IDashboard {
     public static get ID_KEY():string { return "dashboardId" }
     dashboardId: any = undefined
     name: string = "New Dashboard"
+    description: string = ""
     isPublic: boolean = true
     widgets: IWidget[] = []
     metrics: any[] = []
@@ -42,31 +44,9 @@ export default class Dashboard implements IDashboard {
     isPinned: boolean = false
     currentWidget: IWidget = new Widget()
     config: any = {}
-    
-    constructor() {
-        makeAutoObservable(this, {
-            name: observable,
-            isPublic: observable,
-            widgets: observable,
-            isValid: observable,
-            metrics: observable,
 
-            toJson: action,
-            fromJson: action,
-            addWidget: action,
-            removeWidget: action,
-            updateWidget: action,
-            getWidget: action,
-            getWidgetIndex: action,
-            getWidgetByIndex: action,
-            getWidgetCount: action,
-            getWidgetIndexByWidgetId: action,
-            validate: action,
-            sortWidgets: action,
-            swapWidgetPosition: action,
-            update: action,
-            toggleMetrics: action
-        })
+    constructor() {
+        makeAutoObservable(this)
 
         this.validate();
     }
@@ -85,7 +65,8 @@ export default class Dashboard implements IDashboard {
             isPublic: this.isPublic,
             // widgets: this.widgets.map(w => w.toJson())
             // widgets: this.widgets
-            metrics: this.metrics
+            metrics: this.metrics,
+            description: this.description,
         }
     }
 
@@ -93,6 +74,7 @@ export default class Dashboard implements IDashboard {
         runInAction(() => {
             this.dashboardId = json.dashboardId
             this.name = json.name
+            this.description = json.description
             this.isPublic = json.isPublic
             this.isPinned = json.isPinned
             this.widgets = json.widgets ? json.widgets.map(w => new Widget().fromJson(w)).sort((a, b) => a.position - b.position) : []
@@ -153,7 +135,7 @@ export default class Dashboard implements IDashboard {
                 dashboardService.saveWidget(this.dashboardId, widgetA),
                 dashboardService.saveWidget(this.dashboardId, widgetB)
             ]).then(() => {
-                toast.success("Widget position updated")
+                toast.success("Dashboard updated successfully")
                 resolve()
             }).catch(() => {
                 toast.error("Error updating widget position")

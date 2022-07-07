@@ -1,7 +1,7 @@
 import React from 'react'
 import { connect } from 'react-redux'
 import cn from 'classnames'
-import stl from './widgetHolder.css'
+import stl from './widgetHolder.module.css'
 import LazyLoad from 'react-lazyload';
 
 const WidgetHolder = props => {

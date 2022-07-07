@@ -1,6 +1,7 @@
+import React from 'react';
 import cn from 'classnames';
 import { Button } from 'UI';
-import stl from './table.css';
+import stl from './table.module.css';
 
 export default class Table extends React.PureComponent {
   state = { showAll: false };
@@ -19,9 +20,11 @@ export default class Table extends React.PureComponent {
       compare = false,
       maxHeight = 200,
       onRowClick = null,
+      isTemplate,
     } = this.props;
     const { showAll } = this.state;
-    
+
+    const isShowMoreButtonVisible = !isTemplate && rows.size > (small ? 3 : 5) && !showAll
     return (
       <div className="w-full">
         <div className="flex">
@@ -35,7 +38,7 @@ export default class Table extends React.PureComponent {
         <div className={ cn(stl.content, "thin-scrollbar") } style={{ maxHeight: maxHeight + 'px'}}>
           { rows.take(showAll ? rows.size : (small ? 3 : 5)).map(row => (
             <div
-              className={ cn(rowClass, stl.row, { [stl.small]: small, 'cursor-pointer' : !!onRowClick}) }
+              className={ cn(rowClass, stl.row, { [stl.bottomBorder]: isShowMoreButtonVisible }, { [stl.small]: small, 'cursor-pointer' : !!onRowClick}) }
               key={ row.key }
               onClick={onRowClick ? (e) => onRowClick(e, row) : () => null}
             >
@@ -47,15 +50,13 @@ export default class Table extends React.PureComponent {
                 </div>
               )) }
             </div>
-          )) }          
+          )) }
         </div>
-        { rows.size > (small ? 3 : 5) && !showAll &&
-            <div className="w-full flex justify-center">
+        {isShowMoreButtonVisible &&
+            <div className="w-full flex justify-center mt-2">
               <Button
                 onClick={ this.onLoadMoreClick }
-                plain
-                small
-                className="text-center"
+                variant="text-primary"
               >
                 { rows.size + ' More' }
               </Button>

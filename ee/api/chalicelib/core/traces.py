@@ -9,7 +9,9 @@ from pydantic import BaseModel, Field
 from starlette.background import BackgroundTask
 
 import app as main_app
-from chalicelib.utils import pg_client
+import schemas
+import schemas_ee
+from chalicelib.utils import pg_client, helper
 from chalicelib.utils.TimeUTC import TimeUTC
 from schemas import CurrentContext
 
@@ -149,6 +151,53 @@ async def process_traces_queue():
         traces.append(obj)
     if len(traces) > 0:
         await write_traces_batch(traces)
+
+
+def get_all(tenant_id, data: schemas_ee.TrailSearchPayloadSchema):
+    with pg_client.PostgresClient() as cur:
+        conditions = ["traces.tenant_id=%(tenant_id)s",
+                      "traces.created_at>=%(startDate)s",
+                      "traces.created_at<=%(endDate)s"]
+        params = {"tenant_id": tenant_id,
+                  "startDate": data.startDate,
+                  "endDate": data.endDate,
+                  "p_start": (data.page - 1) * data.limit,
+                  "p_end": data.page * data.limit,
+                  **data.dict()}
+        if data.user_id is not None:
+            conditions.append("user_id=%(user_id)s")
+        if data.action is not None:
+            conditions.append("action=%(action)s")
+        if data.query is not None and len(data.query) > 0:
+            conditions.append("users.name ILIKE %(query)s")
+            conditions.append("users.tenant_id = %(tenant_id)s")
+            params["query"] = helper.values_for_operator(value=data.query,
+                                                         op=schemas.SearchEventOperator._contains)
+        cur.execute(
+            cur.mogrify(
+                f"""SELECT COUNT(*) AS count,
+                           COALESCE(JSONB_AGG(full_traces ORDER BY rn) 
+                                    FILTER (WHERE rn > %(p_start)s AND rn <= %(p_end)s), '[]'::JSONB) AS sessions
+                    FROM (SELECT traces.*,users.email,users.name AS username, 
+                                ROW_NUMBER() OVER (ORDER BY traces.created_at {data.order}) AS rn 
+                            FROM traces LEFT JOIN users USING (user_id)
+                            WHERE {" AND ".join(conditions)}
+                            ORDER BY traces.created_at {data.order}) AS full_traces;""", params)
+        )
+        rows = cur.fetchone()
+    return helper.dict_to_camel_case(rows)
+
+
+def get_available_actions(tenant_id):
+    with pg_client.PostgresClient() as cur:
+        cur.execute(cur.mogrify(
+            f"""SELECT DISTINCT action
+                FROM traces 
+                WHERE tenant_id=%(tenant_id)s
+                ORDER BY 1""",
+            {"tenant_id": tenant_id}))
+        rows = cur.fetchall()
+    return [r["action"] for r in rows]
 
 
 cron_jobs = [

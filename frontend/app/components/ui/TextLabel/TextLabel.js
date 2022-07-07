@@ -1,7 +1,7 @@
-import { Popup } from 'semantic-ui-react';
+import React from 'react';
 import cn from 'classnames';
-import { Icon } from 'UI';
-import styles from './textLabel.css';
+import { Icon, Popup } from 'UI';
+import styles from './textLabel.module.css';
 
 export default function TextLabel({
   icon,
@@ -18,13 +18,12 @@ export default function TextLabel({
       <Icon name={ icon } size="16" color={ iconColor } />
       { popupLabel ?
         <Popup
-          trigger={
-            <div style={ { maxWidth: `${ maxWidth }px` } } className={textTransform}>{ label }</div>
-          }
           content={ popupLabel }
           size="mini"
           inverted
-        />
+        >
+          <div style={ { maxWidth: `${ maxWidth }px` } } className={textTransform}>{ label }</div>
+        </Popup>
         :
         <div
           style={ { maxWidth: `${ maxWidth }px`, lineHeight: '16px' } }

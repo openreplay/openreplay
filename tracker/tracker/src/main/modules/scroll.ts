@@ -1,5 +1,6 @@
-import App from "../app/index.js";
-import { SetViewportScroll, SetNodeScroll } from "../../messages/index.js";
+import type App from "../app/index.js";
+import { SetViewportScroll, SetNodeScroll } from "../../common/messages.js";
+import { isElementNode } from "../app/guards.js";
 
 export default function (app: App): void {
   let documentScroll = false;
@@ -34,8 +35,8 @@ export default function (app: App): void {
     nodeScroll.clear();
   });
 
-  app.nodes.attachNodeCallback(node => {
-    if (node instanceof Element && node.scrollLeft + node.scrollTop > 0) {
+  app.nodes.attachNodeCallback((node, isStart) => {
+    if (isStart && isElementNode(node) && node.scrollLeft + node.scrollTop > 0) {
       nodeScroll.set(node, [node.scrollLeft, node.scrollTop]);
     }
   })

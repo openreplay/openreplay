@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { Map } from 'immutable';
 import cn from 'classnames';
@@ -8,7 +9,7 @@ import { LAST_24_HOURS, LAST_30_MINUTES, LAST_7_DAYS, LAST_30_DAYS } from 'Types
 import { fetchPerformanseSearch } from 'Duck/dashboard';
 import { widgetHOC } from '../common';
 
-import styles from './performance.css';
+import styles from './performance.module.css';
 
 const BASE_KEY = 'resource';
 
@@ -113,16 +114,15 @@ export default class Performance extends React.PureComponent {
       const resourceIndex = Number.parseInt(value.substr(BASE_KEY.length));
       return (
         <Popup
-          trigger={
-            <TextEllipsis
+          wide
+          content={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
+        >
+          <TextEllipsis
               maxWidth="200px"
               style={ { verticalAlign: 'middle' } }
               text={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
             />
-          }
-          wide
-          content={ this.state.resources.getIn([ resourceIndex, 'value' ]) }
-        />
+        </Popup>
       );
     }
   }

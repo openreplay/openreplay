@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
-import stl from './tabItem.css';
+import stl from './tabItem.module.css';
 
 const TabItem = ({ icon, label, count, iconColor = 'teal', active = false, leading, ...rest }) => {
     return (

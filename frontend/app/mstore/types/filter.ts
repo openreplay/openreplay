@@ -62,7 +62,7 @@ export default class Filter implements IFilter {
         this.filters[index] = new FilterItem(filter)
     }
 
-    updateKey(key: string, value) {
+    updateKey(key: string, value: any) {
         this[key] = value
     }
 
@@ -70,7 +70,7 @@ export default class Filter implements IFilter {
         this.filters.splice(index, 1)
     }
 
-    fromJson(json) {
+    fromJson(json: any) {
         this.name = json.name
         this.filters = json.filters.map(i => new FilterItem().fromJson(i))
         this.eventsOrder = json.eventsOrder

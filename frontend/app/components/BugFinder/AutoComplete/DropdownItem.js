@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './dropdownItem.css';
+import stl from './dropdownItem.module.css';
 
 const DropdownItem = ({ value, onSelect }) => {
   return (

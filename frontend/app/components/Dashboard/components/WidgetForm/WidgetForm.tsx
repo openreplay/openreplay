@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import DropdownPlain from 'Shared/DropdownPlain';
+import React, { useEffect, useState } from 'react';
 import { metricTypes, metricOf, issueOptions } from 'App/constants/filterOptions';
 import { FilterKey } from 'Types/filter/filterType';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
 import { Button, Icon } from 'UI'
 import FilterSeries from '../FilterSeries';
-import { confirm } from 'UI/Confirmation';
+import { confirm, Popup } from 'UI';
+import Select from 'Shared/Select'
 import { withSiteId, dashboardMetricDetails, metricDetails } from 'App/routes'
 import DashboardSelectionModal from '../DashboardSelectionModal/DashboardSelectionModal';
 
@@ -22,29 +22,36 @@ function WidgetForm(props: Props) {
     const { metricStore, dashboardStore } = useStore();
     const dashboards = dashboardStore.dashboards;
     const isSaving = useObserver(() => metricStore.isSaving);
-    const metric: any = useObserver(() => metricStore.instance);
+    const metric: any = useObserver(() => metricStore.instance)
 
     const timeseriesOptions = metricOf.filter(i => i.type === 'timeseries');
     const tableOptions = metricOf.filter(i => i.type === 'table');
     const isTable = metric.metricType === 'table';
-    const _issueOptions = [{ text: 'All', value: 'all' }].concat(issueOptions);
+    const isFunnel = metric.metricType === 'funnel';
     const canAddToDashboard = metric.exists() && dashboards.length > 0;
     const canAddSeries = metric.series.length < 3;
+    const eventsLength = useObserver(() => metric.series[0].filter.filters.filter((i: any) => i.isEvent).length)
+    const cannotSaveFunnel = isFunnel && (!metric.series[0] || eventsLength <= 1);
 
-    const write = ({ target: { value, name } }) => metricStore.merge({ [ name ]: value });
-    const writeOption = (e, { value, name }) => {
-        const obj = { [ name ]: value };
-  
+    const writeOption = ({ value, name }: any) => {
+        value = Array.isArray(value) ? value : value.value
+        const obj: any = { [ name ]: value };
+
         if (name === 'metricValue') {
-            obj['metricValue'] = [value];
-        }
-    
-        if (name === 'metricOf') {
-            if (value === FilterKey.ISSUE) {
-                obj['metricValue'] = ['all'];
+            obj['metricValue'] = value;
+
+            // handle issues (remove all when other option is selected)
+            if (Array.isArray(obj['metricValue']) && obj['metricValue'].length > 1) {
+                obj['metricValue'] = obj['metricValue'].filter(i => i.value !== 'all');
             }
         }
-    
+
+        if (name === 'metricOf') {
+            // if (value === FilterKey.ISSUE) {
+            //     obj['metricValue'] = [{ value: 'all', label: 'All' }];
+            // }
+        }
+
         if (name === 'metricType') {
             if (value === 'timeseries') {
                 obj['metricOf'] = timeseriesOptions[0].value;
@@ -60,16 +67,16 @@ function WidgetForm(props: Props) {
 
     const onSave = () => {
         const wasCreating = !metric.exists()
-        metricStore.save(metric, dashboardId).then((metric) => {
-            if (wasCreating) {
-                if (parseInt(dashboardId) > 0) {
-                    history.push(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
-                } else {
-                    history.push(withSiteId(metricDetails(metric.metricId), siteId));
+        metricStore.save(metric, dashboardId)
+            .then((metric: any) => {
+                if (wasCreating) {
+                    if (parseInt(dashboardId) > 0) {
+                        history.replace(withSiteId(dashboardMetricDetails(parseInt(dashboardId), metric.metricId), siteId));
+                    } else {
+                        history.replace(withSiteId(metricDetails(metric.metricId), siteId));
+                    }
                 }
-                
-            }
-        });
+            });
     }
 
     const onDelete = async () => {
@@ -82,29 +89,25 @@ function WidgetForm(props: Props) {
         }
     }
 
-    const onObserveChanges = () => {
-        // metricStore.fetchMetricChartData(metric);
-    }
-    
     return useObserver(() => (
-        <div className="p-4">
+        <div className="p-6">
             <div className="form-group">
                 <label className="font-medium">Metric Type</label>
                 <div className="flex items-center">
-                    <DropdownPlain
+                    <Select
                         name="metricType"
                         options={metricTypes}
-                        value={ metric.metricType }
+                        value={metricTypes.find((i: any) => i.value === metric.metricType) || metricTypes[0]}
                         onChange={ writeOption }
                     />
 
                     {metric.metricType === 'timeseries' && (
                         <>
                             <span className="mx-3">of</span>
-                            <DropdownPlain
+                            <Select
                                 name="metricOf"
                                 options={timeseriesOptions}
-                                value={ metric.metricOf }
+                                defaultValue={metric.metricOf}
                                 onChange={ writeOption }
                             />
                         </>
@@ -113,10 +116,10 @@ function WidgetForm(props: Props) {
                     {metric.metricType === 'table' && (
                         <>
                             <span className="mx-3">of</span>
-                            <DropdownPlain
+                            <Select
                                 name="metricOf"
                                 options={tableOptions}
-                                value={ metric.metricOf }
+                                defaultValue={metric.metricOf}
                                 onChange={ writeOption }
                             />
                         </>
@@ -125,24 +128,26 @@ function WidgetForm(props: Props) {
                     {metric.metricOf === FilterKey.ISSUE && (
                         <>
                             <span className="mx-3">issue type</span>
-                            <DropdownPlain
+                            <Select
                                 name="metricValue"
-                                options={_issueOptions}
-                                value={ metric.metricValue[0] }
+                                options={issueOptions}
+                                value={metric.metricValue}
                                 onChange={ writeOption }
+                                isMulti={true}
+                                placeholder="All Issues"
                             />
                         </>
                     )}
 
-                    {metric.metricType === 'table' && (
+                    {metric.metricType === 'table' && !(metric.metricOf === FilterKey.ERRORS || metric.metricOf === FilterKey.SESSIONS) && (
                     <>
                         <span className="mx-3">showing</span>
-                        <DropdownPlain
+                        <Select
                             name="metricFormat"
                             options={[
-                                { value: 'sessionCount', text: 'Session Count' },
+                                { value: 'sessionCount', label: 'Session Count' },
                             ]}
-                            value={ metric.metricFormat }
+                            defaultValue={ metric.metricFormat }
                             onChange={ writeOption }
                         />
                     </>
@@ -151,56 +156,59 @@ function WidgetForm(props: Props) {
             </div>
 
             <div className="form-group">
-                <div className="font-medium items-center py-2">
-                    {`${isTable ? 'Filter by' : 'Chart Series'}`}
-                    {!isTable && (
+                <div className="flex items-center font-medium py-2">
+                    {`${(isTable || isFunnel) ? 'Filter by' : 'Chart Series'}`}
+                    {!isTable && !isFunnel && (
                         <Button
                             className="ml-2"
-                            primary plain size="small"
+                            variant="text-primary"
                             onClick={() => metric.addSeries()}
                             disabled={!canAddSeries}
                         >Add Series</Button>
                     )}
                 </div>
 
-                {metric.series.length > 0 && metric.series.slice(0, isTable ? 1 : metric.series.length).map((series: any, index: number) => (
+                {metric.series.length > 0 && metric.series.slice(0, (isTable || isFunnel) ? 1 : metric.series.length).map((series: any, index: number) => (
                     <div className="mb-2">
                         <FilterSeries
+                            observeChanges={() => metric.updateKey('hasChanged', true)}
                             hideHeader={ isTable }
                             seriesIndex={index}
                             series={series}
-                            // onRemoveSeries={() => removeSeries(index)}
                             onRemoveSeries={() => metric.removeSeries(index)}
                             canDelete={metric.series.length > 1}
                             emptyMessage={isTable ?
                                 'Filter data using any event or attribute. Use Add Step button below to do so.' :
                                 'Add user event or filter to define the series by clicking Add Step.'
                             }
-                            // observeChanges={onObserveChanges}
                         />
                     </div>
                 ))}
             </div>
 
             <div className="form-groups flex items-center justify-between">
-                <Button
-                    primary
-                    size="small"
-                    onClick={onSave}
-                    disabled={isSaving}
+                <Popup
+                    content="Cannot save funnel metric without at least 2 events"
+                    disabled={!cannotSaveFunnel}
                 >
-                    {metric.exists() ? 'Update' : 'Create'}
-                </Button>
+                    <Button
+                        variant="primary"
+                        onClick={onSave}
+                        disabled={isSaving || cannotSaveFunnel}
+                    >
+                        {metric.exists() ? 'Update' : 'Create'}
+                    </Button>
+                </Popup>
                 <div className="flex items-center">
                     {metric.exists() && (
                         <>
-                            <Button plain size="small" onClick={onDelete} className="flex items-center">
+                            <Button variant="text-primary" onClick={onDelete}>
                                 <Icon name="trash" size="14" className="mr-2" color="teal"/>
                                 Delete
                             </Button>
                             <Button
-                                plain size="small"
-                                className="flex items-center ml-2"
+                                variant="text-primary"
+                                className="ml-2"
                                 onClick={() => setShowDashboardSelectionModal(true)}
                                 disabled={!canAddToDashboard}
                             >

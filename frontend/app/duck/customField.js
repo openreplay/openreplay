@@ -70,6 +70,7 @@ export const fetchList = (siteId) => (dispatch, getState) => {
     dispatch(refreshFilterOptions());
   });
 }
+
 export const fetchSources = () => {
   return {
     types: array(FETCH_SOURCES),

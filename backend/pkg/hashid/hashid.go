@@ -16,7 +16,6 @@ func IssueID(projectID uint32, e *messages.IssueEvent) string {
 	return strconv.FormatUint(uint64(projectID), 16) + hex.EncodeToString(hash.Sum(nil))
 }
 
-
 func IOSCrashID(projectID uint32, crash *messages.IOSCrash) string {
 	hash := fnv.New128a()
 	hash.Write([]byte(crash.Name))

@@ -38,8 +38,8 @@ Use the following instructions if you’re running Windows 10 or Windows 8:
     <ip address from vagrant output> openreplay.local
     Select File > Save to save your changes.
 
-**Open the below URL to create a developer/local account**
-http://openreplay.local/signup
+**Open browser**
+http://openreplay.local
 ```
 
 ### To start developing

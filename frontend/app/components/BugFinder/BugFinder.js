@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
@@ -5,19 +6,14 @@ import {
   fetchFavoriteList as fetchFavoriteSessionList
 } from 'Duck/sessions';
 import { applyFilter, clearEvents, addAttribute } from 'Duck/filters';
-import { fetchList as fetchFunnelsList } from 'Duck/funnels';
+import { KEYS } from 'Types/filter/customFilter';
 import SessionList from './SessionList';
-import stl from './bugFinder.css';
+import stl from './bugFinder.module.css';
 import withLocationHandlers from "HOCs/withLocationHandlers";
 import { fetch as fetchFilterVariables } from 'Duck/sources';
 import { fetchSources } from 'Duck/customField';
-import { RehydrateSlidePanel } from './WatchDogs/components';
-import { setFunnelPage } from 'Duck/sessions';
 import { setActiveTab } from 'Duck/search';
 import SessionsMenu from './SessionsMenu/SessionsMenu';
-import { LAST_7_DAYS } from 'Types/app/period';
-import { resetFunnel } from 'Duck/funnels';
-import { resetFunnelFilters } from 'Duck/funnelFilters'
 import NoSessionsMessage from 'Shared/NoSessionsMessage';
 import SessionSearch from 'Shared/SessionSearch';
 import MainSearchBar from 'Shared/MainSearchBar';
@@ -65,10 +61,6 @@ const allowedQueryKeys = [
   fetchSources,
   clearEvents,
   setActiveTab,
-  fetchFunnelsList,
-  resetFunnel,
-  resetFunnelFilters,
-  setFunnelPage,
   clearSearch,
   fetchSessions,
   addFilterByKeyAndValue,
@@ -78,9 +70,23 @@ export default class BugFinder extends React.PureComponent {
   state = {showRehydratePanel: false}
   constructor(props) {
     super(props);
-    props.resetFunnel();
-    props.resetFunnelFilters();
-    props.fetchFunnelsList(LAST_7_DAYS)
+
+    // TODO should cache the response
+    // props.fetchSources().then(() => {
+    //   defaultFilters[6] = {
+    //     category: 'Collaboration',
+    //     type: 'CUSTOM',
+    //     keys: this.props.sources.filter(({type}) => type === 'collaborationTool').map(({ label, key }) => ({ type: 'CUSTOM', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
+    //   };
+    //   defaultFilters[7] = {
+    //     category: 'Logging Tools',
+    //     type: 'ERROR',
+    //     keys: this.props.sources.filter(({type}) => type === 'logTool').map(({ label, key }) => ({ type: 'ERROR', source: key, label: label, key, icon: 'integrations/' + key, isFilter: false })).toJS()
+    //   };
+    // });
+    if (props.sessions.size === 0) {
+      props.fetchSessions();
+    }
 
     const queryFilter = this.props.query.all(allowedQueryKeys);
     if (queryFilter.hasOwnProperty('userId')) {
@@ -89,11 +95,7 @@ export default class BugFinder extends React.PureComponent {
       if (props.sessions.size === 0) {
         props.fetchSessions();
       }
-    }    
-  }
-
-  componentDidMount() {
-    this.props.setFunnelPage(false);
+    }
   }
 
   toggleRehydratePanel = () => {
@@ -125,10 +127,6 @@ export default class BugFinder extends React.PureComponent {
             <SessionList onMenuItemClick={this.setActiveTab} />
           </div>
         </div>
-        <RehydrateSlidePanel
-          isModalDisplayed={ showRehydratePanel }
-          onClose={ () => this.setState({ showRehydratePanel: false })}
-        />
       </div>
     );
   }

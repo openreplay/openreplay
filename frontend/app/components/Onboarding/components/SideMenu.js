@@ -1,5 +1,5 @@
 import React from 'react'
-import stl from './sideMenu.css'
+import stl from './sideMenu.module.css'
 import cn from 'classnames'
 import { SideMenuitem, Icon } from 'UI'
 import OnboardingMenu from './OnboardingMenu/OnboardingMenu'

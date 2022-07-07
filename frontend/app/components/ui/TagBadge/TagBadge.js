@@ -1,5 +1,7 @@
+import React from 'react';
 import cn from 'classnames';
-import styles from './tagBadge.css';
+import styles from './tagBadge.module.css';
+import { Icon } from 'UI';
 
 export default class TagBadge extends React.PureComponent {
 
@@ -23,7 +25,8 @@ export default class TagBadge extends React.PureComponent {
         <span>{ text }</span>
         { onRemove &&
           <button type="button" onClick={ onRemove }>
-            <i className={ styles.closeIcon } />
+            <Icon name="close" size="12" />
+            {/* <i className={ styles.closeIcon } /> */}
           </button>
         }
       </div>

@@ -22,5 +22,5 @@ function IntegrateSlackButton({ history, tenantId }) {
 }
 
 export default withRouter(connect(state => ({
-  tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+  tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
 }))(IntegrateSlackButton))

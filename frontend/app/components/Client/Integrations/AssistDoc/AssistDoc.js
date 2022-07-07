@@ -1,5 +1,5 @@
+import React from 'react';
 import Highlight from 'react-highlight'
-import ToggleContent from 'Shared/ToggleContent'
 import DocLink from 'Shared/DocLink/DocLink';
 import AssistScript from './AssistScript'
 import AssistNpm from './AssistNpm'

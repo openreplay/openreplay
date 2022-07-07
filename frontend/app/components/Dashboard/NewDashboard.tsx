@@ -1,13 +1,15 @@
 import React, { useEffect } from 'react';
 import { useObserver } from "mobx-react-lite";
 import { useStore } from 'App/mstore';
-import { withRouter } from 'react-router-dom';
+import { withRouter, RouteComponentProps } from 'react-router-dom';
 import DashboardSideMenu from './components/DashboardSideMenu';
 import { Loader } from 'UI';
 import DashboardRouter from './components/DashboardRouter';
 import cn from 'classnames';
+import { withSiteId } from 'App/routes';
+import withPermissions from 'HOCs/withPermissions'
 
-function NewDashboard(props) {
+function NewDashboard(props: RouteComponentProps<{}>) {
     const { history, match: { params: { siteId, dashboardId, metricId } } } = props;
     const { dashboardStore } = useStore();
     const loading = useObserver(() => dashboardStore.isLoading);
@@ -19,15 +21,27 @@ function NewDashboard(props) {
                 dashboardStore.selectDashboardById(dashboardId);
             }
         });
+        if (!dashboardId && location.pathname.includes('dashboard')) {
+            dashboardStore.selectDefaultDashboard().then(({ dashboardId }) => {
+                props.history.push(withSiteId(`/dashboard/${dashboardId}`, siteId));
+            }, () => {
+                props.history.push(withSiteId('/dashboard', siteId));
+            })
+        }
     }, [siteId]);
-    
+
     return useObserver(() => (
         <Loader loading={loading}>
              <div className="page-margin container-90">
                 <div className={cn("side-menu", { 'hidden' : isMetricDetails })}>
                     <DashboardSideMenu siteId={siteId} />
                 </div>
-                <div className={cn({ "side-menu-margined" : !isMetricDetails, "container-70" : isMetricDetails })}>
+                <div
+                    className={cn({
+                        "side-menu-margined" : !isMetricDetails,
+                        "container-70" : isMetricDetails
+                    })}
+                >
                     <DashboardRouter siteId={siteId} />
                 </div>
             </div>
@@ -35,4 +49,4 @@ function NewDashboard(props) {
     ));
 }
 
-export default withRouter(NewDashboard);
+export default withRouter(withPermissions(['METRICS'])(NewDashboard));

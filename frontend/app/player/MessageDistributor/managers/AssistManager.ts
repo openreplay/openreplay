@@ -73,7 +73,7 @@ const MAX_RECONNECTION_COUNT = 4;
 
 
 export default class AssistManager {
-  constructor(private session, private md: MessageDistributor, private config) {}
+  constructor(private session: any, private md: MessageDistributor, private config: any) {}
 
   private setStatus(status: ConnectionStatus) {
     if (getState().peerConnectionStatus === ConnectionStatus.Disconnected && 
@@ -98,10 +98,11 @@ export default class AssistManager {
     return `${this.session.projectKey}-${this.session.sessionId}`
   }
 
+  private socketCloseTimeout: ReturnType<typeof setTimeout> | undefined
   private onVisChange = () => {
-    let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
+    this.socketCloseTimeout && clearTimeout(this.socketCloseTimeout)
     if (document.hidden) {
-      inactiveTimeout = setTimeout(() => {
+      this.socketCloseTimeout = setTimeout(() => {
         const state = getState()
         if (document.hidden && 
           (state.calling === CallingState.NoCall && state.remoteControl === RemoteControlStatus.Enabled)) {
@@ -109,7 +110,6 @@ export default class AssistManager {
         }
       }, 30000)
     } else {
-      inactiveTimeout && clearTimeout(inactiveTimeout)
       this.socket?.open()
     }
   }
@@ -120,11 +120,12 @@ export default class AssistManager {
     const reader = new MStreamReader(jmr)
     let waitingForMessages = true
     let showDisconnectTimeout: ReturnType<typeof setTimeout> | undefined
+    let inactiveTimeout: ReturnType<typeof setTimeout> | undefined
     import('socket.io-client').then(({ default: io }) => {
       if (this.cleaned) { return }
       if (this.socket) { this.socket.close() } // TODO: single socket connection
       // @ts-ignore
-      const urlObject = new URL(window.ENV.API_EDP) // does it handle ssl automatically?
+      const urlObject = new URL(window.env.API_EDP || window.location.origin) // does it handle ssl automatically?
 
       // @ts-ignore WTF, socket.io ???
       const socket: Socket = this.socket = io(urlObject.origin, {
@@ -171,17 +172,21 @@ export default class AssistManager {
       })
       socket.on('SESSION_RECONNECTED', () => {
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
+        inactiveTimeout && clearTimeout(inactiveTimeout)
+        this.setStatus(ConnectionStatus.Connected)
       })
 
       socket.on('UPDATE_SESSION', ({ active }) => {
         showDisconnectTimeout && clearTimeout(showDisconnectTimeout)
-        // if (typeof active === "boolean") {
-        //   if (active) {
-        //     
-        //   } else {
-        //     this.setStatus(ConnectionStatus.Inactive)
-        //   }
-        // }
+        !inactiveTimeout && this.setStatus(ConnectionStatus.Connected)
+        if (typeof active === "boolean") {
+          if (active) {
+            inactiveTimeout && clearTimeout(inactiveTimeout)
+            this.setStatus(ConnectionStatus.Connected)
+          } else {
+            inactiveTimeout = setTimeout(() => this.setStatus(ConnectionStatus.Inactive), 5000)
+          }
+        }
       })
       socket.on('SESSION_DISCONNECTED', e => {
         waitingForMessages = true
@@ -232,6 +237,8 @@ export default class AssistManager {
 
   private onMouseClick = (e: MouseEvent): void => {
     if (!this.socket) { return; }
+    if (getState().annotating) { return; } // ignore clicks while annotating
+    
     const data = this.md.getInternalViewportCoordinates(e)
     // const el = this.md.getElementFromPoint(e); // requires requestiong node_id from domManager
     const el = this.md.getElementFromInternalPoint(data)
@@ -303,10 +310,10 @@ export default class AssistManager {
     if (this._peer && !this._peer.disconnected) { return Promise.resolve(this._peer) }
 
     // @ts-ignore
-    const urlObject = new URL(window.ENV.API_EDP)
+    const urlObject = new URL(window.env.API_EDP || window.location.origin)
     return import('peerjs').then(({ default: Peer }) => {
       if (this.cleaned) {return Promise.reject("Already cleaned")}
-      const peerOpts = {
+      const peerOpts: any = {
         host: urlObject.hostname,
         path: '/assist',
         port: urlObject.port === "" ? (location.protocol === 'https:' ? 443 : 80 ): parseInt(urlObject.port),

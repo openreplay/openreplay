@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import React from 'react';
+import { useEffect, useState } from 'react';
 import { connect } from 'react-redux';
 import usePageTitle from 'App/hooks/usePageTitle';
 import { fetch as fetchSession } from 'Duck/sessions';
@@ -20,18 +21,14 @@ function Session({
   	fetchSlackList,
  }) {
  	usePageTitle("OpenReplay Session Player");
- 	useEffect(() => {
- 		fetchSlackList()
- 	}, []);
+ 	const [ initializing, setInitializing ] = useState(true)
 	useEffect(() => {
 		if (sessionId != null) {
 			fetchSession(sessionId)
 		} else {
 			console.error("No sessionID in route.")
 		}
-		return () => {
-			if (!session.exists()) return;
-		}
+		setInitializing(false)
 	},[ sessionId ]);
 
 	return (
@@ -45,7 +42,7 @@ function Session({
 				</span>
 			}
 		>
-			<Loader className="flex-1" loading={ loading || sessionId !== session.sessionId }> 
+			<Loader className="flex-1" loading={ loading || initializing }> 
 				{ session.isIOS 
 					? <IOSPlayer session={session} />
 					: <WebPlayer />

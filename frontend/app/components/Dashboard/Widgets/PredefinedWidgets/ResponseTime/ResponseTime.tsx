@@ -45,9 +45,9 @@ function ResponseTime(props: Props) {
                 onSelect={onSelect}
                 placeholder="Search for Page"
               /> */}
-              <AvgLabel className="ml-auto" text="Avg" count={Math.round(metric.data.avg)} unit="ms" />
+              <AvgLabel className="ml-auto" text="Avg" count={Math.round(metric.data.value)} unit="ms" />
             </div>
-            <ResponsiveContainer height={ 200 } width="100%">
+            <ResponsiveContainer height={ 207 } width="100%">
               <AreaChart
                   data={ data.chart }
                   margin={ Styles.chartMargins }

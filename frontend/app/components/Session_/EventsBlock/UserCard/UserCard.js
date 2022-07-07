@@ -1,42 +1,115 @@
 import React, { useState } from 'react'
+import { connect } from 'react-redux'
 import { List } from 'immutable'
-import { Avatar, TextEllipsis, SlideModal } from 'UI'
+import { countries } from 'App/constants';
+import { useStore } from 'App/mstore';
+import { browserIcon, osIcon, deviceTypeIcon } from 'App/iconNames';
+import { formatTimeOrDate } from 'App/date';
+import { Avatar, TextEllipsis, SlideModal, Popup, CountryFlag, Icon } from 'UI'
 import cn from 'classnames'
-import Metadata from '../Metadata'
 import { withRequest } from 'HOCs'
-import SessionList from '../Metadata/SessionList'
+import SessionInfoItem from '../../SessionInfoItem'
+import SessionList from '../Metadata/SessionList';
+import { Tooltip } from 'react-tippy'
 
-function UserCard({ className, userNumericHash, userDisplayName, similarSessions, userId, userAnonymousId, request, loading, revId }) {
+function UserCard({
+  className,
+  request,
+  session,
+  width,
+  height,
+  similarSessions,
+  loading,
+ }) {
+  const { settingsStore } = useStore();
+  const { timezone } = settingsStore.sessionSettings;
+
   const [showUserSessions, setShowUserSessions] = useState(false)
-  const hasUserDetails = !!userId || !!userAnonymousId;
+  const {
+    userBrowser,
+    userDevice,
+    userCountry,
+    userBrowserVersion,
+    userOs,
+    userOsVersion,
+    startedAt,
+    userId,
+    userAnonymousId,
+    userNumericHash,
+    userDisplayName,
+    userDeviceType,
+    revId,
+  } = session;
 
+  const hasUserDetails = !!userId || !!userAnonymousId;
   const showSimilarSessions = () => {
     setShowUserSessions(true);
     request({ key: !userId ? 'USERANONYMOUSID' : 'USERID', value: userId || userAnonymousId });
   }
 
+  const getDimension = (width, height) => {
+    return width && height ? (
+      <div className="flex items-center">
+        { width || 'x' } <Icon name="close" size="12" className="mx-1" /> { height || 'x' }
+      </div>
+    ) : <span className="">Resolution N/A</span>;
+  }
+
+  const avatarbgSize = '38px'
   return (
-    <div className={cn("bg-white rounded border", className)}>
-      <div className={ cn("flex items-center p-3")}>
-        <Avatar iconSize="36" width="50px" height="50px" seed={ userNumericHash } />
+    <div className={cn("bg-white flex items-center w-full", className)}>
+      <div className="flex items-center">
+        <Avatar iconSize="23" width={avatarbgSize} height={avatarbgSize} seed={ userNumericHash } />
         <div className="ml-3 overflow-hidden leading-tight">
           <TextEllipsis
             noHint
-            className={ cn("text-xl", { 'color-teal cursor-pointer' : hasUserDetails })}
-            onClick={hasUserDetails && showSimilarSessions}
+            className={ cn("font-medium", { 'color-teal cursor-pointer' : hasUserDetails })}
+            onClick={hasUserDetails ? showSimilarSessions : undefined}
           >
             { userDisplayName }
           </TextEllipsis>
+
+          <div className="text-sm color-gray-medium flex items-center">
+            <span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt, timezone)}</span>
+            <span className="mx-1 font-bold text-xl">&#183;</span>
+            <span>{countries[userCountry]}</span>
+            <span className="mx-1 font-bold text-xl">&#183;</span>
+            <span className='capitalize'>{userBrowser}, {userOs}, {userDevice}</span>
+            <span className="mx-1 font-bold text-xl">&#183;</span>
+            <Tooltip
+                theme='light'
+                delay={0}
+                hideOnClick="persistent"
+                arrow
+                interactive
+                html={(
+                  <div className='text-left'>
+                    <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={<span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt)}</span> } />
+                    <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={ `v${ userBrowserVersion }` } />
+                    <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={ userOsVersion } />
+                    <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ getDimension(width, height) } isLast />
+                  </div>
+                )}
+                position="bottom center"
+                hoverable
+                disabled={false}
+                on="hover"
+            >
+              <span
+                className="color-teal cursor-pointer"
+              >
+                More
+              </span>
+            </Tooltip>
+          </div>
         </div>
       </div>
       {revId && (
-        <div className="border-t py-2 px-3">
+        <div className="border-l py-2 px-3">
           <span className="font-medium">Rev ID:</span> {revId}
         </div>
       )}
-      <div className="border-t">
-        <Metadata />
-      </div>
+
       <SlideModal
         title={ <div>User Sessions</div> }
         isDisplayed={ showUserSessions }
@@ -47,9 +120,11 @@ function UserCard({ className, userNumericHash, userDisplayName, similarSessions
   )
 }
 
+const component = React.memo(connect(state => ({ session: state.getIn([ 'sessions', 'current' ]) }))(UserCard))
+
 export default withRequest({
 	initialData: List(),
 	endpoint: '/metadata/session_search',
 	dataWrapper: data => Object.values(data),
 	dataName: 'similarSessions',
-})(UserCard)
+})(component)

@@ -1,194 +1,202 @@
 import React, { useEffect } from 'react';
-import { fetchLiveList } from 'Duck/sessions';
 import { connect } from 'react-redux';
-import { NoContent, Loader, LoadMoreButton, Pagination } from 'UI';
-import { List, Map } from 'immutable';
+import { NoContent, Loader, Pagination, Popup } from 'UI';
+import { List } from 'immutable';
 import SessionItem from 'Shared/SessionItem';
-import withPermissions from 'HOCs/withPermissions'
+import withPermissions from 'HOCs/withPermissions';
 import { KEYS } from 'Types/filter/customFilter';
-import { applyFilter, addAttribute } from 'Duck/filters';
-import { FilterCategory, FilterKey } from 'App/types/filter/filterType';
-import { addFilterByKeyAndValue, updateCurrentPage, updateSort } from 'Duck/liveSearch';
-import DropdownPlain from 'Shared/DropdownPlain';
+import { applyFilter } from 'Duck/liveSearch';
+import { FilterKey } from 'App/types/filter/filterType';
+import { addFilterByKeyAndValue, updateCurrentPage } from 'Duck/liveSearch';
+import Select from 'Shared/Select';
 import SortOrderButton from 'Shared/SortOrderButton';
-import { TimezoneDropdown } from 'UI';
-import { capitalize, sliceListPerPage } from 'App/utils';
+import { capitalize } from 'App/utils';
 import LiveSessionReloadButton from 'Shared/LiveSessionReloadButton';
+import cn from 'classnames';
 
-const AUTOREFRESH_INTERVAL = .5 * 60 * 1000
+const AUTOREFRESH_INTERVAL = 0.5 * 60 * 1000;
 const PER_PAGE = 10;
 
 interface Props {
-  loading: Boolean,
-  list: List<any>,  
-  fetchLiveList: () => Promise<void>,
-  applyFilter: () => void,
-  filters: any,
-  addAttribute: (obj) => void,
-  addFilterByKeyAndValue: (key: FilterKey, value: string) => void,
-  updateCurrentPage: (page: number) => void,
-  currentPage: number, 
-  metaList: any,
-  updateSort: (sort: any) => void,
-  sort: any,
+    loading: boolean;
+    metaListLoading: boolean;
+    list: List<any>;
+    // fetchLiveList: () => Promise<void>,
+    applyFilter: (filter: any) => void;
+    filter: any;
+    // addAttribute: (obj: any) => void,
+    addFilterByKeyAndValue: (key: FilterKey, value: string) => void;
+    updateCurrentPage: (page: number) => void;
+    currentPage: number;
+    totla: number;
+    metaList: any;
+    sort: any;
+    total: number;
 }
 
 function LiveSessionList(props: Props) {
-  const { loading, filters, list, currentPage, metaList = [], sort } = props;
-  var timeoutId;
-  const hasUserFilter = filters.map(i => i.key).includes(KEYS.USERID);
-  const [sessions, setSessions] = React.useState(list);
-  const sortOptions = metaList.map(i => ({
-    text: capitalize(i), value: i
-  })).toJS();
-  
-  // const displayedCount = Math.min(currentPage * PER_PAGE, sessions.size);
-  // const addPage = () => props.updateCurrentPage(props.currentPage + 1)
+    const { loading, metaListLoading, filter, list, currentPage, total, metaList = [], sort } = props;
+    var timeoutId: any;
+    const { filters } = filter;
+    const hasUserFilter = filters.map((i: any) => i.key).includes(KEYS.USERID);
+    const sortOptions = metaList
+        .map((i: any) => ({
+            label: capitalize(i),
+            value: i,
+        }))
+        .toJS();
 
-  // useEffect(() => {
-  //   if (filters.size === 0) {
-  //     props.addFilterByKeyAndValue(FilterKey.USERID, '');
-  //   }
-  // }, []);
+    // useEffect(() => {
+    //   if (metaListLoading || metaList.size === 0 || !!filter.sort) return;
 
-  useEffect(() => {
-    if (metaList.size === 0 || !!sort.field) return;
+    //   if (sortOptions[0]) {
+    //     props.applyFilter({ sort: sortOptions[0].value });
+    //   }
+    // }, [metaListLoading]);
 
-    if ( sortOptions[0]) {
-      props.updateSort({ field: sortOptions[0].value });
-    }
-  }, [metaList]);
+    // useEffect(() => {
+    //   const filteredSessions = filters.size > 0 ? props.list.filter(session => {
+    //     let hasValidFilter = true;
+    //     filters.forEach(filter => {
+    //       if (!hasValidFilter) return;
 
-  useEffect(() => {
-    const filteredSessions = filters.size > 0 ? props.list.filter(session => {
-      let hasValidFilter = true;
-      filters.forEach(filter => {
-        if (!hasValidFilter) return;
+    //       const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
+    //       if (filter.key === FilterKey.USERID) {
+    //         const _userId = session.userId ? session.userId.toLowerCase() : '';
+    //         hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
+    //       }
+    //       if (filter.category === FilterCategory.METADATA) {
+    //         const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
+    //         hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
+    //       }
+    //     })
+    //     return hasValidFilter;
+    //   }) : props.list;
+    //   setSessions(filteredSessions);
+    // }, [filters, list]);
 
-        const _values = filter.value.filter(i => i !== '' && i !== null && i !== undefined).map(i => i.toLowerCase());
-        if (filter.key === FilterKey.USERID) {
-          const _userId = session.userId ? session.userId.toLowerCase() : '';
-          hasValidFilter = _values.length > 0 ? (_values.includes(_userId) && hasValidFilter) || _values.some(i => _userId.includes(i)) : hasValidFilter;
-        } 
-        if (filter.category === FilterCategory.METADATA) {
-          const _source = session.metadata[filter.key] ? session.metadata[filter.key].toLowerCase() : '';
-          hasValidFilter = _values.length > 0 ? (_values.includes(_source) && hasValidFilter) || _values.some(i => _source.includes(i)) : hasValidFilter;
+    useEffect(() => {
+        props.applyFilter({ ...filter });
+        timeout();
+        return () => {
+            clearTimeout(timeoutId);
+        };
+    }, []);
+
+    const onUserClick = (userId: string, userAnonymousId: string) => {
+        if (userId) {
+            props.addFilterByKeyAndValue(FilterKey.USERID, userId);
+        } else {
+            props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
         }
-      })
-      return hasValidFilter;
-    }) : props.list;
-    setSessions(filteredSessions);
-  }, [filters, list]);
+    };
 
-  useEffect(() => {     
-    props.fetchLiveList();
-    timeout();
-    return () => {
-      clearTimeout(timeoutId)
-    }
-  }, [])
+    const onSortChange = ({ value }: any) => {
+        props.applyFilter({ sort: value.value });
+    };
 
-  const onUserClick = (userId, userAnonymousId) => {
-    if (userId) {
-      props.addFilterByKeyAndValue(FilterKey.USERID, userId);
-    } else {
-      props.addFilterByKeyAndValue(FilterKey.USERANONYMOUSID, userAnonymousId);
-    }
-  }
+    const timeout = () => {
+        timeoutId = setTimeout(() => {
+            props.applyFilter({ ...filter });
+            timeout();
+        }, AUTOREFRESH_INTERVAL);
+    };
 
-  const onSortChange = (e, { value }) => {
-    props.updateSort({ field: value });
-  }
+    return (
+        <div>
+            <div className="flex mb-6 justify-between items-end">
+                <div className="flex items-baseline">
+                    <h3 className="text-2xl capitalize">
+                        <span>Live Sessions</span>
+                        <span className="ml-2 font-normal color-gray-medium">{total}</span>
+                    </h3>
 
-  const timeout = () => {
-    timeoutId = setTimeout(() => {
-      props.fetchLiveList();
-      timeout();
-    }, AUTOREFRESH_INTERVAL);
-  }
+                    <LiveSessionReloadButton onClick={() => props.applyFilter({ ...filter })} />
+                </div>
+                <div className="flex items-center">
+                    <div className="flex items-center ml-6 mr-4">
+                        <span className="mr-2 color-gray-medium">Sort By</span>
+                        <Popup
+                          content="No metadata available to sort"
+                          disabled={sortOptions.length > 0}
+                        >
+                          <div className={ cn("flex items-center", { 'disabled': sortOptions.length === 0})} >
+                            <Select
+                                plain
+                                right
+                                options={sortOptions}
+                                // defaultValue={sort.field}
+                                onChange={onSortChange}
+                                value={sortOptions.find((i: any) => i.value === filter.sort) || sortOptions[0]}
+                            />
+                            <div className="mx-2" />
+                            <SortOrderButton onChange={(state: any) => props.applyFilter({ order: state })} sortOrder={filter.order} />
+                          </div>
+                        </Popup>
+                    </div>
+                </div>
+            </div>
+            <Loader loading={loading}>
+                <NoContent
+                    title={'No live sessions.'}
+                    subtext={
+                        <span>
+                            See how to setup the{' '}
+                            <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">
+                                {'Assist'}
+                            </a>{' '}
+                            plugin, if you haven’t done that already.
+                        </span>
+                    }
+                    image={<img src="/assets/img/live-sessions.png" style={{ width: '70%', marginBottom: '30px' }} />}
+                    show={!loading && list.size === 0}
+                >
+                    <div className="bg-white p-3 rounded border">
+                        {list.map((session) => (
+                            <>
+                                <SessionItem
+                                    key={session.sessionId}
+                                    session={session}
+                                    live
+                                    hasUserFilter={hasUserFilter}
+                                    onUserClick={onUserClick}
+                                    metaList={metaList}
+                                />
+                                <div className="border-b" />
+                            </>
+                        ))}
 
-  return (
-    <div>
-      <div className="flex mb-6 justify-between items-end">
-        <div className="flex items-baseline">
-          <h3 className="text-2xl capitalize">
-            <span>Live Sessions</span>
-            <span className="ml-2 font-normal color-gray-medium">{sessions.size}</span>
-          </h3>
-
-          <LiveSessionReloadButton />
+                        <div className="w-full flex items-center justify-center py-6">
+                            <Pagination
+                                page={currentPage}
+                                totalPages={Math.ceil(total / PER_PAGE)}
+                                onPageChange={(page: any) => props.updateCurrentPage(page)}
+                                limit={PER_PAGE}
+                            />
+                        </div>
+                    </div>
+                </NoContent>
+            </Loader>
         </div>
-        <div className="flex items-center">
-          <div className="flex items-center">
-            <span className="mr-2 color-gray-medium">Timezone</span>
-            <TimezoneDropdown />
-          </div>
-          <div className="flex items-center ml-6 mr-4">
-            <span className="mr-2 color-gray-medium">Sort By</span>
-            <DropdownPlain
-              options={sortOptions}
-              onChange={onSortChange}
-              value={sort.field}
-            />
-          </div>
-          <SortOrderButton onChange={(state) => props.updateSort({ order: state })} sortOrder={sort.order} />
-        </div>
-      </div>
-
-      <NoContent
-        title={"No live sessions."}
-        subtext={
-          <span>
-            See how to <a target="_blank" className="link" href="https://docs.openreplay.com/plugins/assist">{'enable Assist'}</a> and ensure you're using tracker-assist <span className="font-medium">v3.5.11</span> or higher.
-          </span>
-        }
-        image={<img src="/img/live-sessions.png"
-        style={{ width: '70%', marginBottom: '30px' }}/>}
-        show={ !loading && sessions && sessions.size === 0}
-      >
-        <Loader loading={ loading }>
-          {sessions && sliceListPerPage(sessions.sortBy(i => i.metadata[sort.field]).update(list => {
-            return sort.order === 'desc' ? list.reverse() : list;
-          }), currentPage - 1).map(session => (
-            <SessionItem
-              key={ session.sessionId }
-              session={ session }
-              live
-              hasUserFilter={hasUserFilter}
-              onUserClick={onUserClick}
-              metaList={metaList}
-            />
-          ))}
-
-        <div className="w-full flex items-center justify-center py-6">
-          <Pagination
-            page={currentPage}
-            totalPages={Math.ceil(sessions.size / PER_PAGE)}
-            onPageChange={(page) => props.updateCurrentPage(page)}
-            limit={PER_PAGE}
-          />
-        </div>
-        </Loader>
-      </NoContent>
-    </div>
-  )
+    );
 }
 
-export default withPermissions(['ASSIST_LIVE'])(connect(
-  (state) => ({
-    list: state.getIn(['sessions', 'liveSessions']),
-    loading: state.getIn([ 'sessions', 'loading' ]),
-    filters: state.getIn([ 'liveSearch', 'instance', 'filters' ]),
-    currentPage: state.getIn(["liveSearch", "currentPage"]),
-    metaList: state.getIn(['customFields', 'list']).map(i => i.key),
-    sort: state.getIn(['liveSearch', 'sort']),
-  }),
-  { 
-    fetchLiveList,
-    applyFilter,
-    addAttribute,
-    addFilterByKeyAndValue,
-    updateCurrentPage,
-    updateSort,
-  }
-)(LiveSessionList));
+export default withPermissions(['ASSIST_LIVE'])(
+    connect(
+        (state: any) => ({
+            list: state.getIn(['liveSearch', 'list']),
+            loading: state.getIn(['liveSearch', 'fetchList', 'loading']),
+            metaListLoading: state.getIn(['customFields', 'fetchRequest', 'loading']),
+            filter: state.getIn(['liveSearch', 'instance']),
+            total: state.getIn(['liveSearch', 'total']),
+            currentPage: state.getIn(['liveSearch', 'currentPage']),
+            metaList: state.getIn(['customFields', 'list']).map((i: any) => i.key),
+            sort: state.getIn(['liveSearch', 'sort']),
+        }),
+        {
+            applyFilter,
+            addFilterByKeyAndValue,
+            updateCurrentPage,
+        }
+    )(LiveSessionList)
+);

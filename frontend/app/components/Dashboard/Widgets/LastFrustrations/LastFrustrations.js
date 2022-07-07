@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent, BrowserIcon, OsIcon } from 'UI';
 import { countries } from 'App/constants';
 import { diffFromNowString } from 'App/date';

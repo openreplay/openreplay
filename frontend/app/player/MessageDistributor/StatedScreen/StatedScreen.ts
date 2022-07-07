@@ -1,6 +1,16 @@
 import Screen, { INITIAL_STATE as SUPER_INITIAL_STATE, State as SuperState }  from './Screen/Screen';
 import { update, getState } from '../../store';
 
+import type { Point } from './Screen/types';
+
+function getOffset(el: Element, innerWindow: Window) {
+  const rect = el.getBoundingClientRect();
+  return {
+    fixedLeft: rect.left + innerWindow.scrollX,
+    fixedTop: rect.top + innerWindow.scrollY,
+    rect,
+  };
+}
 
 //export interface targetPosition
 
@@ -27,7 +37,7 @@ export interface State extends SuperState {
   disconnected: boolean,
   userPageLoading: boolean, 
   markedTargets: MarkedTarget[] | null,
-  activeTargetIndex: number
+  activeTargetIndex: number,
 }
 
 export const INITIAL_STATE: State = {
@@ -94,31 +104,60 @@ export default class StatedScreen extends Screen {
     }
   }
 
-  setActiveTarget(index) {    
+  setActiveTarget(index: number) {
+    const window = this.window
+    const markedTargets: MarkedTarget[] | null = getState().markedTargets
+    const target = markedTargets && markedTargets[index]
+    if (target && window) {
+      const { fixedTop, rect } = getOffset(target.el, window)
+      const scrollToY = fixedTop - window.innerHeight / 1.5
+      if (rect.top < 0 || rect.top > window.innerHeight) {
+        // behavior hack TODO: fix it somehow when they will decide to remove it from browser api
+        // @ts-ignore
+        window.scrollTo({ top: scrollToY, behavior: 'instant' })
+        setTimeout(() => {
+          if (!markedTargets) { return }
+          update({
+            markedTargets: markedTargets.map(t => t === target ? {
+                ...target,
+                boundingRect:  this.calculateRelativeBoundingRect(target.el),
+              } : t)
+          })
+        }, 0)
+      }
+     
+    }
     update({ activeTargetIndex: index });
   }
 
+  private actualScroll: Point | null = null
   setMarkedTargets(selections: { selector: string, count: number }[] | null) {
     if (selections) {
-      const targets: MarkedTarget[] = [];      
+      const totalCount = selections.reduce((a, b) => {
+        return a + b.count
+      }, 0);
+      const markedTargets: MarkedTarget[] = [];
       let index = 0;
-      selections.forEach((s) => {        
+      selections.forEach((s) => {
         const el = this.getElementBySelector(s.selector);
         if (!el) return;
-        targets.push({
+        markedTargets.push({
           ...s,
           el,
           index: index++,
           percent: 0,
           boundingRect:  this.calculateRelativeBoundingRect(el),
+          count: Math.round((s.count * 100) / totalCount)
         })
       });
 
-      const totalCount = targets.reduce((a, b) => {
-        return a + b.count
-      }, 0);      
-      update({ markedTargets: targets.map(i => ({...i, percent: Math.round((i.count * 100) / totalCount) })) });
+      this.actualScroll = this.getCurrentScroll() 
+      update({ markedTargets });
     } else {
+      if (this.actualScroll) {
+        this.window?.scrollTo(this.actualScroll.x, this.actualScroll.y)
+        this.actualScroll = null
+      }
       update({ markedTargets: null });
     }
   }

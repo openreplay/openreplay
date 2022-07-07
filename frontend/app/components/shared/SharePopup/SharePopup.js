@@ -1,18 +1,25 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
+import { connectPlayer } from 'Player'
 import withRequest from 'HOCs/withRequest';
-import { Popup, Dropdown, Icon, IconButton } from 'UI';
-import { pause } from 'Player';
-import styles from './sharePopup.css';
+import { Popup, Dropdown, Icon, Button } from 'UI';
+import styles from './sharePopup.module.css';
 import IntegrateSlackButton from '../IntegrateSlackButton/IntegrateSlackButton';
 import SessionCopyLink from './SessionCopyLink';
+import Select from 'Shared/Select';
+import { Tooltip } from 'react-tippy';
+import cn from 'classnames';
 
+@connectPlayer(state => ({
+  time: state.time,
+}))
 @connect(state => ({
   channels: state.getIn([ 'slack', 'list' ]),
-  tenantId: state.getIn([ 'user', 'client', 'tenantId' ]),
+  tenantId: state.getIn([ 'user', 'account', 'tenantId' ]),
 }))
 @withRequest({
-  endpoint: ({ id, entity }, integrationId) => 
+  endpoint: ({ id, entity }, integrationId) =>
     `/integrations/slack/notify/${ integrationId }/${entity}/${ id }`,
   method: "POST",
 })
@@ -28,39 +35,41 @@ export default class SharePopup extends React.PureComponent {
     .then(this.handleSuccess)
 
   handleOpen = () => {
-    this.setState({ isOpen: true });
-    pause();
     setTimeout(function() {
       document.getElementById('message').focus();
     }, 100)
   }
 
-  handleClose = () => { 
-    this.setState({ isOpen: false, comment: '' });
+  handleClose = () => {
+    this.setState({ comment: '' });
   }
 
   handleSuccess = () => {
-    toast.success('Your comment is shared.');
-    this.handleClose();
+    toast.success('Sent to Slack.');
   }
 
-  changeChannel = (e, { value }) => this.setState({ channelId: value })
+  changeChannel = ({ value }) => this.setState({ channelId: value })
 
   render() {
-    const { trigger, loading, channels, showCopyLink = false } = this.props;
-    const { comment, isOpen, channelId } = this.state;
+    const { trigger, loading, channels, showCopyLink = false, time } = this.props;
+    const { comment, channelId } = this.state;
 
-    const options = channels.map(({ webhookId, name }) => ({ value: webhookId, text: name })).toJS();
+    const options = channels.map(({ webhookId, name }) => ({ value: webhookId, label: name })).toJS();
     return (
-      <Popup
-        open={ isOpen }
-        onOpen={ this.handleOpen }
-        onClose={ this.handleClose }
-        trigger={ trigger }
-        content={ 
+      <Tooltip
+        theme='light'
+        interactive
+        position='bottom'
+        unmountHTMLWhenHide
+        useContext
+        arrow
+        trigger="click"
+        shown={this.handleOpen}
+        beforeHidden={this.handleClose}
+        html={
           <div className={ styles.wrapper }>
             <div className={ styles.header }>
-              <div className={ styles.title }>{ 'Comment' }</div>
+              <div className={ cn(styles.title, 'text-lg') }>Share this session link to Slack</div>
             </div>
             { options.length === 0 ?
               <>
@@ -69,7 +78,7 @@ export default class SharePopup extends React.PureComponent {
                 </div>
                 { showCopyLink && (
                   <div className={styles.footer}>
-                    <SessionCopyLink /> 
+                    <SessionCopyLink time={time} />
                   </div>
                 )}
               </>
@@ -84,42 +93,42 @@ export default class SharePopup extends React.PureComponent {
                     resize="none"
                     onChange={ this.editMessage }
                     value={ comment }
-                    placeholder="Type here..."
+                    placeholder="Add Message (Optional)"
                     className="p-4"
                   />
 
                   <div className="flex items-center justify-between">
-                    <Dropdown
-                      selection
-                      options={ options } 
-                      value={ channelId } 
+                    <Select
+                      options={ options }
+                      defaultValue={ channelId }
                       onChange={ this.changeChannel }
                       className="mr-4"
                     />
                     <div>
-                      <button
-                        className={ styles.shareButton }
+                      <Button
                         onClick={ this.share }
+                        primary
                       >
-                        <Icon name="integrations/slack" size="18" marginRight="10" />
-                        { loading ? 'Sharing...' : 'Share' }
-                      </button>
+                        <div className='flex items-center'>
+                          <Icon name="integrations/slack-bw" size="18" marginRight="10" />
+                          { loading ? 'Sending...' : 'Send' }
+                        </div>
+                      </Button>
                     </div>
                   </div>
                 </div>
                 <div className={ styles.footer }>
-                  <SessionCopyLink /> 
+                  <SessionCopyLink time={time} />
                 </div>
-               
+
               </div>
             }
           </div>
         }
-        on="click"
-        position="top right"
-        className={ styles.popup }
-        hideOnScroll
-      />
+
+      >
+          {trigger}
+      </Tooltip>
     );
   }
 }

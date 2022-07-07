@@ -1,0 +1,41 @@
+@keyframes fade {
+  0%   { opacity: 1}
+  50% { opacity: 0}
+  100%   { opacity: 1}
+}
+
+.controls {
+  border-top: solid thin $gray-light;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.buttons {
+  margin-top: 7px;
+  padding: 0 30px;
+}
+
+
+.speedButton {
+  font-size: 14px;
+  padding: 0 10px;
+  height: 30px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+
+.skipIntervalButton {
+  transition: all 0.2s;
+  font-size: 14px;
+  padding: 0 10px;
+  height: 30px;
+  border-radius: 3px;
+}
+
+.divider {
+  height: 30px;
+  width: 1px;
+  margin: 0 5px;
+  background-color: $gray-light-shade;
+}

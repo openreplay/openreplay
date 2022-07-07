@@ -1,9 +1,11 @@
-import DateRangePicker from 'react-daterange-picker';
+import React from 'react';
+import DateRangePicker from 'react-daterange-picker'; // TODO replace with other date range pickers
+// import { DateRangePicker } from 'react-date-range';
 import TimePicker from 'rc-time-picker';
 import { Button } from 'UI';
 import { getDateRangeFromValue, getDateRangeLabel, dateRangeValues, CUSTOM_RANGE, moment, DATE_RANGE_VALUES } from 'App/dateRange';
 
-import styles from './dateRangePopup.css';
+import styles from './dateRangePopup.module.css';
 
 export default class DateRangePopup extends React.PureComponent {
   state = {
@@ -59,6 +61,12 @@ export default class DateRangePopup extends React.PureComponent {
     rangeForDisplay.start.startOf('day');
     rangeForDisplay.end.startOf('day');
 
+    const selectionRange = {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: 'selection',
+    }
+
     return (
       <div className={ styles.wrapper }>
         <div className={ styles.body }>
@@ -73,11 +81,17 @@ export default class DateRangePopup extends React.PureComponent {
               ))
             }
           </div>
+          {/* <DateRangePicker
+            ranges={[selectionRange]}
+            onChange={(e) => console.log(e)}
+            showMonthAndYearPickers={false}
+            scroll={{ enabled: true }}
+          /> */}
           <DateRangePicker
             name="dateRangePicker"
             onSelect={ this.selectCustomRange }
             numberOfCalendars={ 2 }
-            singleDateRange
+            // singleDateRange
             selectionType="range"
             maximumDate={ new Date() }
             singleDateRange={true}
@@ -105,9 +119,9 @@ export default class DateRangePopup extends React.PureComponent {
               className="w-24"
             />
           </div>
-          <div>
-            <Button plain onClick={ onCancel } marginRight>{ 'Cancel' }</Button>
-            <Button primary onClick={ this.onApply } disabled={ !range }>{ 'Apply' }</Button>
+          <div className="flex items-center">
+            <Button onClick={ onCancel }>{ 'Cancel' }</Button>
+            <Button variant="primary" className="ml-2" onClick={ this.onApply } disabled={ !range }>{ 'Apply' }</Button>
           </div>
         </div>
       </div>

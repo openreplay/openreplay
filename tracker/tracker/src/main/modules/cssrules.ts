@@ -1,5 +1,7 @@
-import App from "../app/index.js";
-import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from "../../messages/index.js";
+import type App from "../app/index.js";
+import { CSSInsertRuleURLBased, CSSDeleteRule, TechnicalInfo } from "../../common/messages.js";
+import { hasTag } from "../app/guards.js";
+
 
 export default function(app: App | null) {
   if (app === null) {
@@ -41,10 +43,7 @@ export default function(app: App | null) {
   };
 
   app.nodes.attachNodeCallback((node: Node): void => {
-    if (!(node instanceof HTMLStyleElement)) {
-      return;
-    }
-    if (!(node.sheet instanceof CSSStyleSheet)) {
+    if (!hasTag(node, "STYLE") || !node.sheet) {
       return;
     }
     if (node.textContent !== null && node.textContent.trim().length > 0) {

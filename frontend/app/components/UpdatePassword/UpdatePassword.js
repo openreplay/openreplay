@@ -1,8 +1,9 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import withPageTitle from 'HOCs/withPageTitle';
 import { Loader, Button, Message } from 'UI';
 import { updatePassword } from 'Duck/user';
-import styles from './updatePassword.css';
+import styles from './updatePassword.module.css';
 
 const ERROR_DOESNT_MATCH = "Passwords doesn't match";
 const MIN_LENGTH = 8;
@@ -101,7 +102,7 @@ export default class UpdatePassword extends React.Component {
             </div>
           }
           <div className={ styles.formFooter }>
-            <Button type="submit" primary >{ 'Update' }</Button>
+            <Button type="submit" variant="primary" >{ 'Update' }</Button>
           </div>
         </form>
       </div>

@@ -1,22 +1,21 @@
 import React from 'react'
 import { connect } from 'react-redux';
 import cn from 'classnames';
-import { SideMenuitem, SavedSearchList, Progress, Popup } from 'UI'
-import stl from './sessionMenu.css';
-import {  fetchWatchdogStatus } from 'Duck/watchdogs';
+import { SideMenuitem, Popup } from 'UI'
+import stl from './sessionMenu.module.css';
 import { clearEvents } from 'Duck/filters';
 import { issues_types } from 'Types/session/issue'
 import { fetchList as fetchSessionList } from 'Duck/sessions';
+import { useModal } from 'App/components/Modal';
+import SessionSettings from 'Shared/SessionSettings/SessionSettings'
 
 function SessionsMenu(props) {
-  const { activeTab, keyMap, wdTypeCount, toggleRehydratePanel } = props;
+  const { activeTab, isEnterprise } = props;
+  const { showModal } = useModal();
 
   const onMenuItemClick = (filter) => {
     props.onMenuItemClick(filter)
   }
-
-  
-  const capturingAll = props.captureRate && props.captureRate.get('captureAll');
 
   return (
     <div className={stl.wrapper}>
@@ -24,26 +23,16 @@ function SessionsMenu(props) {
         <div className={ stl.label }>
           <span>Sessions</span>
         </div>
-        {capturingAll && <span className={ cn(stl.manageButton, 'mr-2') } onClick={ toggleRehydratePanel }>Manage</span>}        
-        { !capturingAll && (
+        <span className={ cn(stl.manageButton, 'mr-2') } onClick={() => showModal(<SessionSettings />, { right: true })}>
           <Popup
-            trigger={
-              <div
-                style={{ width: '120px' }}
-                className="ml-6 cursor-pointer"
-                onClick={ toggleRehydratePanel }
-              >
-                <Progress success percent={ props.captureRate.get('rate') } indicating size="tiny" />            
-              </div>
-            }
-            content={ `Capturing ${props.captureRate.get('rate')}% of all sessions. Click to manage capture rate. ` }
-            size="tiny"
-            inverted
-            position="top right"
-          />          
-        )}        
+            hideOnClick={true}
+            content={<span>Configure the percentage of sessions <br /> to be captured, timezone and more.</span>}
+          >
+            Settings
+          </Popup>
+        </span>
       </div>
-      
+
       <div>
         <SideMenuitem
           active={activeTab.type === 'all'}
@@ -52,40 +41,33 @@ function SessionsMenu(props) {
           onClick={() => onMenuItemClick({ name: 'All', type: 'all' })}
         />
       </div>
-      
-      { issues_types.filter(item => item.visible).map(item => (        
+
+      { issues_types.filter(item => item.visible).map(item => (
         <SideMenuitem
           key={item.key}
-          // disabled={!keyMap[item.type] && !wdTypeCount[item.type]}
           active={activeTab.type === item.type}
           title={item.name} iconName={item.icon}
           onClick={() => onMenuItemClick(item)}
         />
       ))}
 
-      <div className={stl.divider} />
-      <div className="my-3">
-        <SideMenuitem
-          title="Bookmarks"
-          iconName="star"
-          active={activeTab.type === 'bookmark'}
-          onClick={() => onMenuItemClick({ name: 'Bookmarks', type: 'bookmark' })}
-        />
-      </div>      
-      
-      <div className={cn(stl.divider, 'mb-4')} />
-      <SavedSearchList />
+      <div className={cn(stl.divider, 'my-4')} />
+      <SideMenuitem
+        title={ isEnterprise ? "Vault" : "Bookmarks" }
+        iconName={ isEnterprise ? "safe" : "star" }
+        active={activeTab.type === 'bookmark'}
+        onClick={() => onMenuItemClick({ name: isEnterprise ? 'Vault' : 'Bookmarks', type: 'bookmark', description: isEnterprise ? 'Sessions saved to vault never get\'s deleted from records.' : '' })}
+      />
     </div>
   )
 }
 
 export default connect(state => ({
   activeTab: state.getIn([ 'search', 'activeTab' ]),
-  keyMap: state.getIn([ 'sessions', 'keyMap' ]),
-  wdTypeCount: state.getIn([ 'sessions', 'wdTypeCount' ]),
   captureRate: state.getIn(['watchdogs', 'captureRate']),
   filters: state.getIn([ 'filters', 'appliedFilter' ]),
   sessionsLoading: state.getIn([ 'sessions', 'fetchLiveListRequest', 'loading' ]),
-}), { 
-  fetchWatchdogStatus, clearEvents, fetchSessionList
+  isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
+}), {
+  clearEvents, fetchSessionList
 })(SessionsMenu);

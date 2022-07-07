@@ -967,7 +967,7 @@ def get_pages_dom_build_time(project_id, startTimestamp=TimeUTC.now(delta_days=-
 
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return row
 
 
@@ -1069,11 +1069,11 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
     pg_sub_query.append("pages.speed_index>0")
 
     with pg_client.PostgresClient() as cur:
-        pg_query = f"""SELECT sessions.user_country, AVG(pages.speed_index) AS avg
+        pg_query = f"""SELECT sessions.user_country, AVG(pages.speed_index) AS value
                         FROM events.pages INNER JOIN public.sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)} 
                         GROUP BY sessions.user_country
-                        ORDER BY avg,sessions.user_country;"""
+                        ORDER BY value, sessions.user_country;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
                   "endTimestamp": endTimestamp, **__get_constraint_values(args)}
@@ -1087,7 +1087,7 @@ def get_speed_index_location(project_id, startTimestamp=TimeUTC.now(delta_days=-
             avg = cur.fetchone()["avg"]
         else:
             avg = 0
-    return {"avg": avg, "chart": helper.list_to_camel_case(rows)}
+    return {"value": avg, "chart": helper.list_to_camel_case(rows), "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1126,7 +1126,9 @@ def get_pages_response_time(project_id, startTimestamp=TimeUTC.now(delta_days=-1
                         WHERE {" AND ".join(pg_sub_query)};"""
         cur.execute(cur.mogrify(pg_query, params))
         avg = cur.fetchone()["avg"]
-    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
+    result = {"value": avg, "chart": rows}
+    helper.__time_value(result)
+    return result
 
 
 def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -1169,7 +1171,7 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
         else:
             quantiles = [0 for i in range(len(quantiles_keys))]
         result = {
-            "avg": avg,
+            "value": avg,
             "total": sum(r["count"] for r in rows),
             "chart": [],
             "percentiles": [{
@@ -1177,7 +1179,8 @@ def get_pages_response_time_distribution(project_id, startTimestamp=TimeUTC.now(
                 "responseTime": int(quantiles[i])
             } for i, v in enumerate(quantiles_keys)
             ],
-            "extremeValues": [{"count": 0}]
+            "extremeValues": [{"count": 0}],
+            "unit": schemas.TemplatePredefinedUnits.millisecond
         }
         rows = helper.list_to_camel_case(rows)
         _99 = result["percentiles"][-1]["responseTime"]
@@ -1348,7 +1351,7 @@ def get_time_to_render(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                   "endTimestamp": endTimestamp, "value": url, **__get_constraint_values(args)}
         cur.execute(cur.mogrify(pg_query, params))
         row = cur.fetchone()
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return row
 
 
@@ -1498,7 +1501,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     pg_sub_query_chart.append("m_issues.type = 'crash'")
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT generated_timestamp AS timestamp,
-                               COUNT(sessions) AS count
+                               COUNT(sessions) AS value
                         FROM generate_series(%(startTimestamp)s, %(endTimestamp)s, %(step_size)s) AS generated_timestamp
                                  LEFT JOIN LATERAL (
                             SELECT sessions.session_id
@@ -1556,7 +1559,7 @@ def get_crashes(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
                 versions.append({v["version"]: v["count"] / (r["total"] / 100)})
             r["versions"] = versions
 
-    return {"chart": rows, "browsers": browsers}
+    return {"chart": rows, "browsers": browsers, "unit": schemas.TemplatePredefinedUnits.count}
 
 
 def __get_neutral(rows, add_All_if_empty=True):
@@ -1719,11 +1722,11 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
     with pg_client.PostgresClient() as cur:
         pg_query = f"""SELECT
                             resources.url_host AS domain,
-                            AVG(resources.duration) AS avg
+                            AVG(resources.duration) AS value
                         FROM events.resources INNER JOIN sessions USING (session_id)
                         WHERE {" AND ".join(pg_sub_query)}
                         GROUP BY resources.url_host
-                        ORDER BY avg DESC
+                        ORDER BY value DESC
                         LIMIT 5;"""
         params = {"project_id": project_id,
                   "startTimestamp": startTimestamp,
@@ -1738,7 +1741,7 @@ def get_slowest_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
             avg = cur.fetchone()["avg"]
         else:
             avg = 0
-    return {"avg": avg, "partition": rows}
+    return {"value": avg, "chart": rows, "unit": schemas.TemplatePredefinedUnits.millisecond}
 
 
 def get_errors_per_domains(project_id, startTimestamp=TimeUTC.now(delta_days=-1),
@@ -2241,7 +2244,7 @@ def get_application_activity_avg_image_load_time(project_id, startTimestamp=Time
         row = __get_application_activity_avg_image_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2300,7 +2303,7 @@ def __get_application_activity_avg_page_load_time(cur, project_id, startTimestam
 
     cur.execute(cur.mogrify(pg_query, params))
     row = cur.fetchone()
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return row
 
 
@@ -2316,7 +2319,7 @@ def get_application_activity_avg_page_load_time(project_id, startTimestamp=TimeU
         row = __get_application_activity_avg_page_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2369,7 +2372,7 @@ def __get_application_activity_avg_request_load_time(cur, project_id, startTimes
                                        "endTimestamp": endTimestamp, **__get_constraint_values(args)}))
 
     row = cur.fetchone()
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return row
 
 
@@ -2385,7 +2388,7 @@ def get_application_activity_avg_request_load_time(project_id, startTimestamp=Ti
         row = __get_application_activity_avg_request_load_time(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2442,7 +2445,7 @@ def get_page_metrics_avg_dom_content_load_start(project_id, startTimestamp=TimeU
         row = __get_page_metrics_avg_dom_content_load_start(cur, project_id, startTimestamp, endTimestamp, **args)
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2512,7 +2515,7 @@ def get_page_metrics_avg_first_contentful_pixel(project_id, startTimestamp=TimeU
         if len(rows) > 0:
             previous = helper.dict_to_camel_case(rows[0])
             results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2645,7 +2648,7 @@ def get_user_activity_avg_session_duration(project_id, startTimestamp=TimeUTC.no
 
         previous = helper.dict_to_camel_case(row)
         results["progress"] = helper.__progress(old_val=previous["value"], new_val=results["value"])
-    results["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(results)
     return results
 
 
@@ -2731,7 +2734,7 @@ def get_top_metrics_avg_response_time(project_id, startTimestamp=TimeUTC.now(del
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         row["chart"] = helper.list_to_camel_case(rows)
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return helper.dict_to_camel_case(row)
 
 
@@ -2772,7 +2775,7 @@ def get_top_metrics_avg_first_paint(project_id, startTimestamp=TimeUTC.now(delta
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         row["chart"] = helper.list_to_camel_case(rows)
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return helper.dict_to_camel_case(row)
 
 
@@ -2816,7 +2819,7 @@ def get_top_metrics_avg_dom_content_loaded(project_id, startTimestamp=TimeUTC.no
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         row["chart"] = helper.list_to_camel_case(rows)
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return helper.dict_to_camel_case(row)
 
 
@@ -2857,7 +2860,7 @@ def get_top_metrics_avg_till_first_bit(project_id, startTimestamp=TimeUTC.now(de
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         row["chart"] = helper.list_to_camel_case(rows)
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return helper.dict_to_camel_case(row)
 
 
@@ -2899,7 +2902,7 @@ def get_top_metrics_avg_time_to_interactive(project_id, startTimestamp=TimeUTC.n
         cur.execute(cur.mogrify(pg_query, params))
         rows = cur.fetchall()
         row["chart"] = helper.list_to_camel_case(rows)
-    row["unit"] = schemas.TemplatePredefinedUnits.millisecond
+    helper.__time_value(row)
     return helper.dict_to_camel_case(row)
 
 

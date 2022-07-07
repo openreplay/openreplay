@@ -1,0 +1,6 @@
+.btnLink {
+  cursor: pointer;
+  color: $green;
+  text-decoration: underline;
+  white-space: nowrap;
+}

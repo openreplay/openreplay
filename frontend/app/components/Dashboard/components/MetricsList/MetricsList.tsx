@@ -5,6 +5,7 @@ import { useStore } from 'App/mstore';
 import { getRE } from 'App/utils';
 import MetricListItem from '../MetricListItem';
 import { sliceListPerPage } from 'App/utils';
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 interface Props { }
 function MetricsList(props: Props) {
@@ -27,11 +28,19 @@ function MetricsList(props: Props) {
     }, [])
 
     return useObserver(() => (
-        <NoContent show={lenth === 0} animatedIcon="no-results">
+        <NoContent
+            show={lenth === 0}
+            title={
+                <div className="flex flex-col items-center justify-center">
+                    <AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+                    <div className="mt-6 text-2xl">No data available.</div>
+                </div>
+            }   
+        >
             <div className="mt-3 border rounded bg-white">
                 <div className="grid grid-cols-12 p-3 font-medium">
-                    <div className="col-span-3">Title</div>
-                    <div>Type</div>
+                    <div className="col-span-3">Metric</div>
+                    {/* <div>Type</div> */}
                     <div className="col-span-2">Dashboards</div>
                     <div className="col-span-3">Owner</div>
                     <div>Visibility</div>
@@ -39,7 +48,9 @@ function MetricsList(props: Props) {
                 </div>
 
                 {sliceListPerPage(list, metricStore.page - 1, metricStore.pageSize).map((metric: any) => (
-                    <MetricListItem metric={metric} />
+                    <React.Fragment key={metric.metricId}>
+                        <MetricListItem metric={metric} />
+                    </React.Fragment>
                 ))}
             </div>
 

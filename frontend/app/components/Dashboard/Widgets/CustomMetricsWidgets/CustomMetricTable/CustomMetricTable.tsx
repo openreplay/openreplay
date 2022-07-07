@@ -26,13 +26,14 @@ const getColumns = (metric) => {
 interface Props {
     metric?: any,
     data: any;
-    onClick?: (filters) => void;
+    onClick?: (filters: any) => void;
+    isTemplate?: boolean;
 }
-function CustomMetriTable(props: Props) {
-    const { metric = {}, data = { values: [] }, onClick = () => null } = props;
+function CustomMetricTable(props: Props) {
+    const { metric = {}, data = { values: [] }, onClick = () => null, isTemplate } = props;
     const rows = List(data.values);
 
-    const onClickHandler = (event, data) => {
+    const onClickHandler = (event: any, data: any) => {
         const filters = Array<any>();
         let filter = { ...filtersMap[metric.metricOf] }
         filter.value = [data.name]
@@ -48,7 +49,7 @@ function CustomMetriTable(props: Props) {
         onClick(filters);
     }
     return (
-        <div className="" style={{ height: '240px'}}>
+        <div className="" style={{ maxHeight: '240px'}}>
            <NoContent show={data.values && data.values.length === 0} size="small">
                 <Table
                     small
@@ -56,10 +57,11 @@ function CustomMetriTable(props: Props) {
                     rows={ rows }
                     rowClass="group"
                     onRowClick={ onClickHandler }
+                    isTemplate={isTemplate}
                 />
            </NoContent>
         </div>
     )
 }
 
-export default CustomMetriTable;
+export default CustomMetricTable;

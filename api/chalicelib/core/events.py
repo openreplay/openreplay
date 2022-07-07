@@ -28,8 +28,8 @@ def __merge_cells(rows, start, count, replacement):
     return rows
 
 
-def __get_grouped_clickrage(rows, session_id):
-    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage")
+def __get_grouped_clickrage(rows, session_id, project_id):
+    click_rage_issues = issues.get_by_session_id(session_id=session_id, issue_type="click_rage", project_id=project_id)
     if len(click_rage_issues) == 0:
         return rows
 
@@ -63,7 +63,7 @@ def get_by_sessionId2_pg(session_id, project_id, group_clickrage=False):
                     )
         rows = cur.fetchall()
         if group_clickrage:
-            rows = __get_grouped_clickrage(rows=rows, session_id=session_id)
+            rows = __get_grouped_clickrage(rows=rows, session_id=session_id, project_id=project_id)
 
         cur.execute(cur.mogrify("""
             SELECT 
@@ -435,7 +435,15 @@ def __get_autocomplete_table(value, project_id):
         query = cur.mogrify(" UNION ".join(sub_queries) + ";",
                             {"project_id": project_id, "value": helper.string_to_sql_like(value),
                              "svalue": helper.string_to_sql_like("^" + value)})
-        cur.execute(query)
+        try:
+            cur.execute(query)
+        except Exception as err:
+            print("--------- AUTOCOMPLETE SEARCH QUERY EXCEPTION -----------")
+            print(query.decode('UTF-8'))
+            print("--------- VALUE -----------")
+            print(value)
+            print("--------------------")
+            raise err
         results = helper.list_to_camel_case(cur.fetchall())
         return results
 

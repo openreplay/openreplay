@@ -1,0 +1,31 @@
+.playerBody {
+  background: $white;
+  /* border-radius: 3px; */
+  /* padding: 10px 10px 5px 10px; */
+  /* box-shadow: 0px 2px 10px 0 $gray-light; */
+  height: 100%;
+  /* border: solid thin $gray-light; */
+  border-right: solid thin $gray-light;
+}
+
+.screenWrapper {
+  width: 100%;
+  position: relative;
+  height: 100%;
+  /* border: solid thin $gray-light; */
+  /* border-radius: 3px; */
+  overflow: hidden;
+  background: repeating-conic-gradient($gray-lightest 0% 25%, transparent 0% 50%) 
+              50% / 10px 10px;
+}
+
+.disconnected {
+  font-size: 40px;
+  font-weight: 200;
+  color: $gray-medium;
+}
+
+.playerView {
+  position: relative;
+  flex: 1;
+}

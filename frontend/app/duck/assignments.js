@@ -41,13 +41,14 @@ const reducer = (state = initialState, action = {}) => {
     case EDIT:
       return state.mergeIn([ 'instance' ], action.instance);
     case FETCH_PROJECTS.SUCCESS:
+      console.log('data', action.data)
       return state.set('projects', List(action.data)).set('projectsFetched', true);
     case FETCH_ASSIGNMENTS.SUCCESS:
       return state.set('list', List(action.data).map(Assignment));
     case FETCH_ASSIGNMENT.SUCCESS:
       return state.set('activeIssue', Assignment({ ...action.data, users}));
     case FETCH_META.SUCCESS:
-      issueTypes = List(action.data.issueTypes).map(IssuesType);
+      issueTypes = action.data.issueTypes
       var issueTypeIcons = {}      
       issueTypes.forEach(iss => {
         issueTypeIcons[iss.id] = iss.iconUrl
@@ -108,9 +109,10 @@ export function fetchAssigment(sessionId, id) {
 }
 
 export function addActivity(sessionId, params) {
+  const data = { ...params, assignee: params.assignee.value, issueType: params.issueType.value }
   return {
     types: ADD_ACTIVITY.toArray(),
-    call: client => client.post(`/sessions2/${ sessionId }/assign/projects/${params.projectId}`, params.toCreate()),
+    call: client => client.post(`/sessions2/${ sessionId }/assign/projects/${params.projectId.value}`, data),
   }
 }
 

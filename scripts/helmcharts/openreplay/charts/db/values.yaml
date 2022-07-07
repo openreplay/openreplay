@@ -5,14 +5,14 @@
 replicaCount: 1
 
 image:
-  repository: rg.fr-par.scw.cloud/foss/db
+  repository: "{{ .Values.global.openReplayContainerRegistry }}/db"
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
 imagePullSecrets: []
 nameOverride: "db"
-fullnameOverride: "db"
+fullnameOverride: "db-openreplay"
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -38,7 +38,21 @@ securityContext: {}
 
 service:
   type: ClusterIP
-  port: 9000
+  ports:
+    http: 9000 
+    metrics: 8888
+
+serviceMonitor:
+  enabled: true
+  additionalLabels:
+    release: monitoring
+  scrapeConfigs:
+    - port: metrics
+      honorLabels: true
+      interval: 15s
+      path: /metrics
+      scheme: http
+      scrapeTimeout: 10s
 
 ingress:
   enabled: false
@@ -76,7 +90,7 @@ autoscaling:
   # targetMemoryUtilizationPercentage: 80
 
 env:
-  CLICKHOUSE_STRING: tcp://clickhouse.db.svc.cluster.local:9000/default
+  CLICKHOUSE_STRING: tcp://clickhouse-openreplay-clickhouse.db.svc.cluster.local:9000/default
 
 
 nodeSelector: {}

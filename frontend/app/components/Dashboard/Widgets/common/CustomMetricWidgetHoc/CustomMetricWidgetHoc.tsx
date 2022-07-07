@@ -1,5 +1,5 @@
 import React from 'react';
-import stl from './CustomMetricWidgetHoc.css';
+import stl from './CustomMetricWidgetHoc.module.css';
 import { Icon } from 'UI';
 
 interface Props {

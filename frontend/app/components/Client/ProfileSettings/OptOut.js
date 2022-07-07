@@ -24,5 +24,5 @@ function OptOut(props) {
 }
 
 export default connect(state => ({
-  optOut: state.getIn([ 'user', 'client', 'optOut' ]),
+  optOut: state.getIn([ 'user', 'account', 'optOut' ]),
 }), { updateClient })(OptOut);

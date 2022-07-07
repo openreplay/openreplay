@@ -1,0 +1,34 @@
+.tabs {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    &.bordered {
+      border-bottom: solid thin $gray-light;
+    }
+  }
+
+  .tab {
+    padding: 14px 15px;
+    text-align: center;
+    text-transform: uppercase;
+    flex: 1;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: $gray-darkest;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &:hover {
+      color: $teal;
+    }
+
+    &.active {
+      color: $teal;
+      border-bottom: solid thin $teal;
+    }
+  }
+
+  .disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }

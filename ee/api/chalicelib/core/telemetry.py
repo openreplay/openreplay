@@ -1,13 +1,15 @@
 from chalicelib.utils import pg_client
+from chalicelib.core import license
 import requests
 
 
-def process_data(data, edition='fos'):
+def process_data(data):
     return {
-        'edition': edition,
+        'edition': license.EDITION,
         'tracking': data["opt_out"],
         'version': data["version_number"],
-        'user_id': data["user_id"],
+        'user_id': data["tenant_key"],
+        'tenant_key': data["tenant_key"],
         'owner_email': None if data["opt_out"] else data["email"],
         'organization_name': None if data["opt_out"] else data["name"],
         'users_count': data["t_users"],
@@ -50,21 +52,22 @@ def compute():
                          FROM public.tenants
                      ) AS all_tenants
                 WHERE tenants.tenant_id = all_tenants.tenant_id
-                RETURNING name,t_integrations,t_projects,t_sessions,t_users,user_id,opt_out,
+                RETURNING name,t_integrations,t_projects,t_sessions,t_users,tenant_key,opt_out,
                     (SELECT openreplay_version()) AS version_number,
                     (SELECT email FROM public.users WHERE role = 'owner' AND users.tenant_id=tenants.tenant_id LIMIT 1);"""
         )
         data = cur.fetchall()
         requests.post('https://api.openreplay.com/os/telemetry',
-                      json={"stats": [process_data(d, edition='ee') for d in data]})
+                      json={"stats": [process_data(d) for d in data]})
 
 
 def new_client(tenant_id):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""SELECT *,
-                            (SELECT email FROM public.users WHERE tenant_id=%(tenant_id)s) AS email
+                            (SELECT email FROM public.users WHERE tenant_id=%(tenant_id)s AND role='owner' LIMIT 1) AS email
                             FROM public.tenants 
-                            WHERE tenant_id=%(tenant_id)s;""", {"tenant_id": tenant_id}))
+                            WHERE tenant_id=%(tenant_id)s
+                            LIMIT 1;""", {"tenant_id": tenant_id}))
         data = cur.fetchone()
-        requests.post('https://api.openreplay.com/os/signup', json=process_data(data, edition='ee'))
+        requests.post('https://api.openreplay.com/os/signup', json=process_data(data))

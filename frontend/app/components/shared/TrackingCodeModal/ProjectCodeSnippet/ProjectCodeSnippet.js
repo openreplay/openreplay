@@ -2,16 +2,18 @@ import React, { useState } from 'react'
 import { connect } from 'react-redux';
 import { editGDPR, saveGDPR } from 'Duck/site';
 import copy from 'copy-to-clipboard';
-import { Select, Checkbox } from 'UI';
+import { Checkbox } from 'UI';
 import GDPR from 'Types/site/gdpr';
 import cn from 'classnames'
-import styles from './projectCodeSnippet.css'
+import styles from './projectCodeSnippet.module.css'
 import Highlight from 'react-highlight'
+import Select from 'Shared/Select'
+import CodeSnippet from '../../CodeSnippet';
 
 const inputModeOptions = [
-  { text: 'Record all inputs', value: 'plain' },
-  { text: 'Ignore all inputs', value: 'obscured' },
-  { text: 'Obscure all inputs', value: 'hidden' },
+  { label: 'Record all inputs', value: 'plain' },
+  { label: 'Ignore all inputs', value: 'obscured' },
+  { label: 'Obscure all inputs', value: 'hidden' },
 ];
 
 const inputModeOptionsMap = {}
@@ -46,7 +48,7 @@ const ProjectCodeSnippet = props  => {
     r.issue=function(k,p){r.push([6,k,p])};
     r.isActive=function(){return false};
     r.getSessionToken=function(){};
-  })("//static.openreplay.com/${window.ENV.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
+  })("//static.openreplay.com/${window.env.TRACKER_VERSION}/openreplay.js",1,0,initOpts,startOpts);
 </script>`;
 
   const saveGDPR = (value) => {
@@ -54,16 +56,13 @@ const ProjectCodeSnippet = props  => {
     props.saveGDPR(site.id, GDPR({...value}));
   }
 
-  const onChangeSelect = (event, { name, value }) => {
+  const onChangeSelect = ({ name, value }) => {
     const { gdpr } = site;
-    // const _gdpr = { ...gdpr.toData() };
-    // props.editGDPR({ [ name ]: value });
-    // _gdpr[name] = value;
     props.editGDPR({ [ name ]: value });
     saveGDPR({ ...gdpr, [ name ]: value });
   };
 
-  const onChangeOption = (event, { name, checked }) => {
+  const onChangeOption = ({ target: { name, checked }}) => {
     const { gdpr } = props.site;
     const _gdpr = { ...gdpr.toData() };
     _gdpr[name] = checked;
@@ -105,16 +104,16 @@ const ProjectCodeSnippet = props  => {
           <Select
             name="defaultInputMode"
             options={ inputModeOptions }
-            onChange={ onChangeSelect }
+            onChange={ ({ value }) => onChangeSelect({ name: 'defaultInputMode', value: value.value }) }
             placeholder="Default Input Mode"
-            value={ gdpr.defaultInputMode }
+            value={ inputModeOptions.find(o => o.value === gdpr.defaultInputMode) }
           />
 
           <Checkbox
             name="maskNumbers"
             type="checkbox"
             checked={ gdpr.maskNumbers }
-            onClick={ onChangeOption }
+            onChange={ onChangeOption }
             className="mr-2"
             label="Do not record any numeric text"
           />
@@ -123,7 +122,7 @@ const ProjectCodeSnippet = props  => {
             name="maskEmails"
             type="checkbox"
             checked={ gdpr.maskEmails }
-            onClick={ onChangeOption }
+            onChange={ onChangeOption }
             className="mr-2"
             label="Do not record email addresses"
           />
@@ -141,10 +140,14 @@ const ProjectCodeSnippet = props  => {
         <div className={ styles.siteId }>{ 'Project Key: ' } <span>{ site.projectKey }</span></div>
       </div>
       <div className={ styles.snippetsWrapper }>
-        <button className={ styles.codeCopy } onClick={ () => copyHandler(_snippet) }>{ copied ? 'copied' : 'copy' }</button>
-        <Highlight className="html">
-          {_snippet}
-        </Highlight>
+        <CodeSnippet
+          host={ site && site.host }
+          projectKey={ site && site.projectKey }
+          ingestPoint={`"https://${window.location.hostname}/ingest"`}
+          defaultInputMode={ gdpr.defaultInputMode }
+          obscureTextNumbers={ gdpr.maskNumbers }
+          obscureTextEmails={ gdpr.maskEmails }
+        />
       </div>
       <div className="my-4">You can also setup OpenReplay using <a className="link" href="https://docs.openreplay.com/integrations/google-tag-manager" target="_blank">Google Tag Manager (GTM)</a>. </div>
     </div>

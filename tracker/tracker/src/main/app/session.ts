@@ -1,12 +1,5 @@
-import App, { StartOptions } from "./index.js";
-import { UserID, UserAnonymousID, Metadata } from "../../messages/index.js";
+import { UserID, UserAnonymousID, Metadata } from "../../common/messages.js";
 
-
-enum ActivityState {
-  NotActive,
-  Starting,
-  Active,
-}
 
 interface SessionInfo {
   sessionID: string | null,
@@ -20,57 +13,42 @@ export default class Session {
   private metadata: Record<string, string> = {}
   private userID: string | null = null
   private sessionID: string | null = null
-  private activityState: ActivityState = ActivityState.NotActive
   private callbacks: OnUpdateCallback[] = []
-
-  constructor(private app: App) {}
 
 
   attachUpdateCallback(cb: OnUpdateCallback) {
     this.callbacks.push(cb)
   }
-  private handleUpdate() {
-    const sessInfo: Partial<SessionInfo> = this.getInfo()
-    if (sessInfo.userID == null) {
-      delete sessInfo.userID
+  private handleUpdate(newInfo: Partial<SessionInfo>) {
+    if (newInfo.userID == null) {
+      delete newInfo.userID
     }
-    if (sessInfo.sessionID == null) {
-      delete sessInfo.sessionID
+    if (newInfo.sessionID == null) {
+      delete newInfo.sessionID
     }
-    this.callbacks.forEach(cb => cb(sessInfo))
+    this.callbacks.forEach(cb => cb(newInfo))
   }
 
-  update({ userID, metadata, sessionID }: Partial<SessionInfo>) {
-    if (userID != null) { // TODO clear nullable/undefinable types
-      this._setUserID(userID)
+  update(newInfo: Partial<SessionInfo>) {
+    if (newInfo.userID !== undefined) { // TODO clear nullable/undefinable types
+      this.userID = newInfo.userID
     }
-    if (metadata !== undefined) {
-      Object.entries(metadata).forEach(kv => this._setMetadata(...kv))
+    if (newInfo.metadata !== undefined) {
+      Object.entries(newInfo.metadata).forEach(([k,v]) => this.metadata[k] = v)
     }
-    if (sessionID !== undefined) {
-      this.sessionID = sessionID 
+    if (newInfo.sessionID !== undefined) {
+      this.sessionID = newInfo.sessionID 
     }
-    this.handleUpdate()
+    this.handleUpdate(newInfo)
   }
-
-  private _setMetadata(key: string, value: string) {
-    this.app.send(new Metadata(key, value))
-    this.metadata[key] = value
-  }
-  private _setUserID(userID: string) {
-    this.app.send(new UserID(userID))
-    this.userID = userID
-  }
-
-
 
   setMetadata(key: string, value: string) {
-    this._setMetadata(key, value)
-    this.handleUpdate()
+    this.metadata[key] = value
+    this.handleUpdate({ metadata: { [key]: value } })
   }
   setUserID(userID: string) {
-    this._setUserID(userID)
-    this.handleUpdate()
+    this.userID = userID
+    this.handleUpdate({ userID })
   }
 
   getInfo(): SessionInfo {
@@ -79,5 +57,11 @@ export default class Session {
       metadata: this.metadata,
       userID: this.userID,
     }
+  }
+
+  reset(): void {
+    this.metadata = {}
+    this.userID = null
+    this.sessionID = null
   }
 }

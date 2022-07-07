@@ -1,7 +1,8 @@
+import React from 'react';
 import cn from 'classnames';
 import { Icon } from 'UI';
 
-import cls from './Log.css';
+import cls from './Log.module.css';
 
 
 function getIconProps(level) {

@@ -1,10 +1,13 @@
 import Observer from "./observer.js";
-import { isInstance }  from "../context.js";
-import type { Window } from "../context.js";
+import { 
+  isElementNode,
+  hasTag,
+} from "../guards.js";
+
 import IFrameObserver from "./iframe_observer.js";
 import ShadowRootObserver from "./shadow_root_observer.js";
 
-import { CreateDocument } from "../../../messages/index.js";
+import { CreateDocument } from "../../../common/messages.js";
 import App from "../index.js";
 import { IN_BROWSER, hasOpenreplayAttribute } from '../../utils.js'
 
@@ -24,7 +27,7 @@ export default class TopObserver extends Observer {
 
     // IFrames
     this.app.nodes.attachNodeCallback(node => {
-      if (isInstance(node, HTMLIFrameElement) && 
+      if (hasTag(node, "IFRAME") && 
          ((this.options.captureIFrames && !hasOpenreplayAttribute(node, "obscured")) 
            || hasOpenreplayAttribute(node, "capture"))
       ) {
@@ -34,7 +37,7 @@ export default class TopObserver extends Observer {
 
     // ShadowDOM
     this.app.nodes.attachNodeCallback(node => {
-      if (isInstance(node, Element) && node.shadowRoot !== null) {
+      if (isElementNode(node) && node.shadowRoot !== null) {
         this.handleShadowRoot(node.shadowRoot)
       }
     })

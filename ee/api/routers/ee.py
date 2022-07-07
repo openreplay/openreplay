@@ -1,6 +1,7 @@
-from chalicelib.core import roles
+from chalicelib.core import roles, traces
 from chalicelib.core import unlock
 from chalicelib.utils import assist_helper
+from chalicelib.utils.TimeUTC import TimeUTC
 
 unlock.check()
 
@@ -58,3 +59,16 @@ def delete_role(roleId: int, context: schemas.CurrentContext = Depends(OR_contex
 @app.get('/assist/credentials', tags=["assist"])
 def get_assist_credentials():
     return {"data": assist_helper.get_full_config()}
+
+
+@app.post('/trails', tags=["traces", "trails"])
+def get_trails(data: schemas_ee.TrailSearchPayloadSchema = Body(...),
+               context: schemas.CurrentContext = Depends(OR_context)):
+    return {
+        'data': traces.get_all(tenant_id=context.tenant_id, data=data)
+    }
+
+
+@app.post('/trails/actions', tags=["traces", "trails"])
+def get_available_trail_actions(context: schemas.CurrentContext = Depends(OR_context)):
+    return {'data': traces.get_available_actions(tenant_id=context.tenant_id)}

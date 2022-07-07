@@ -1,6 +1,6 @@
 import React from 'react'
 import { Icon } from 'UI';
-import stl from './escapeButton.css'
+import stl from './escapeButton.module.css'
 
 function EscapeButton({ onClose = null}) {
   return (

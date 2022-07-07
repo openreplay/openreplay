@@ -1,4 +1,4 @@
-import { connect } from 'react-redux';
+import React from 'react';
 import { ResponsiveContainer, AreaChart, XAxis, YAxis, CartesianGrid, Area } from 'recharts';
 import { Loader } from 'UI';
 import { CountBadge, domain, widgetHOC, Styles } from './common';

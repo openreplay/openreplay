@@ -1,19 +1,18 @@
 import React from 'react';
 import FilterList from 'Shared/Filters/FilterList';
-import { connect } from 'react-redux';
-import { edit, addFilter, addFilterByKeyAndValue } from 'Duck/liveSearch';
 import FilterSelection from 'Shared/Filters/FilterSelection';
-import { IconButton } from 'UI';
+import { connect } from 'react-redux';
+import { Button } from 'UI';
+import { edit, addFilter } from 'Duck/liveSearch';
 
 interface Props {
-  list: any,
   appliedFilter: any;
   edit: typeof edit;
   addFilter: typeof addFilter;
-  addFilterByKeyAndValue: typeof addFilterByKeyAndValue;
+  saveRequestPayloads: boolean;
 }
 function LiveSessionSearch(props: Props) {
-  const { appliedFilter } = props;
+  const { appliedFilter, saveRequestPayloads = false } = props;
   const hasEvents = appliedFilter.filters.filter(i => i.isEvent).size > 0;
   const hasFilters = appliedFilter.filters.filter(i => !i.isEvent).size > 0;
 
@@ -41,10 +40,9 @@ function LiveSessionSearch(props: Props) {
       return i !== filterIndex;
     });
 
-    props.edit({ filters: newFilters, });
-    // if (newFilters.size === 0) {
-    //   props.addFilterByKeyAndValue(FilterKey.USERID, '');
-    // }
+    props.edit({
+      filters: newFilters,
+    });
   }
 
   const onChangeEventsOrder = (e, { name, value }) => {
@@ -53,18 +51,17 @@ function LiveSessionSearch(props: Props) {
     });
   }
 
-  return props.list.size > 0 ? (
+  return (hasEvents || hasFilters) ? (
     <div className="border bg-white rounded mt-4">
-      { hasEvents || hasFilters && (
-        <div className="p-5">
-          <FilterList
-            filter={appliedFilter}
-            onUpdateFilter={onUpdateFilter}
-            onRemoveFilter={onRemoveFilter}
-            onChangeEventsOrder={onChangeEventsOrder}
-          />
-        </div>
-      )}
+      <div className="p-5">
+        <FilterList
+          filter={appliedFilter}
+          onUpdateFilter={onUpdateFilter}
+          onRemoveFilter={onRemoveFilter}
+          onChangeEventsOrder={onChangeEventsOrder}
+          saveRequestPayloads={saveRequestPayloads}
+        />
+      </div>
 
       <div className="border-t px-5 py-1 flex items-center -mx-2">
         <div>
@@ -72,8 +69,19 @@ function LiveSessionSearch(props: Props) {
             filter={undefined}
             onFilterClick={onAddFilter}
           >
-            <IconButton primaryText label="ADD FILTER" icon="plus" />
+            {/* <IconButton primaryText label="ADD STEP" icon="plus" /> */}
+            <Button
+              variant="text-primary"
+              className="mr-2"
+              // onClick={() => setshowModal(true)}
+              icon="plus">
+                ADD STEP
+            </Button>
           </FilterSelection>
+        </div>
+        <div className="ml-auto flex items-center">
+          {/* <SaveFunnelButton /> */}
+          {/* <SaveFilterButton /> */}
         </div>
       </div>
     </div>
@@ -81,6 +89,6 @@ function LiveSessionSearch(props: Props) {
 }
 
 export default connect(state => ({
+  saveRequestPayloads: state.getIn(['site', 'active', 'saveRequestPayloads']),
   appliedFilter: state.getIn([ 'liveSearch', 'instance' ]),
-  list: state.getIn(['sessions', 'liveSessions']),
-}), { edit, addFilter, addFilterByKeyAndValue })(LiveSessionSearch);
+}), { edit, addFilter })(LiveSessionSearch);

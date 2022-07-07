@@ -5,11 +5,10 @@ import { List } from 'immutable';
 import { useObserver } from 'mobx-react-lite';
 
 interface Props {
-  // filters: any[]; // event/filter
   filter?: any; // event/filter
-  onUpdateFilter: (filterIndex, filter) => void;
-  onRemoveFilter: (filterIndex) => void;
-  onChangeEventsOrder: (e, { name, value }) => void;
+  onUpdateFilter: (filterIndex: any, filter: any) => void;
+  onRemoveFilter: (filterIndex: any) => void;
+  onChangeEventsOrder: (e: any, { name, value }: any) => void;
   hideEventsOrder?: boolean;
   observeChanges?: () => void;
   saveRequestPayloads?: boolean;
@@ -23,7 +22,7 @@ function FilterList(props: Props) {
 
   useEffect(observeChanges, [filters]);
 
-  const onRemoveFilter = (filterIndex) => {
+  const onRemoveFilter = (filterIndex: any) => {
     props.onRemoveFilter(filterIndex);
   }
 
@@ -37,12 +36,10 @@ function FilterList(props: Props) {
               <div className="flex items-center">
                 <div className="mr-2 color-gray-medium text-sm" style={{ textDecoration: 'underline dotted'}}>
                   <Popup
-                    trigger={<div>Events Order</div>}
                     content={ `Select the operator to be applied between events in your search.` }
-                    size="tiny"
-                    inverted
-                    position="top center"
-                  />
+                  >
+                    <div>Events Order</div>
+                  </Popup>
                 </div>
               
                 <SegmentSelection
@@ -62,7 +59,7 @@ function FilterList(props: Props) {
           </div>
           {filters.map((filter: any, filterIndex: any) => filter.isEvent ? (
             <FilterItem
-              key={filterIndex}
+              key={`${filter.key}-${filterIndex}`}
               filterIndex={rowIndex++}
               filter={filter}
               onUpdate={(filter) => props.onUpdateFilter(filterIndex, filter)}

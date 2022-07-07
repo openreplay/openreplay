@@ -4,7 +4,7 @@ import { Popup, SlideModal } from 'UI';
 
 import { NETWORK } from 'Player/ios/state';
 
-import cls from './Network.css';
+import cls from './Network.module.css';
 
 import TimeTable from 'Components/Session_/TimeTable';
 import FetchDetails from 'Components/Session_/Fetch/FetchDetails';
@@ -23,11 +23,12 @@ const COLUMNS = [
 	  width: 130,
 	  render: (r) => 
 	  	<Popup
-	      trigger={ <div className={ cls.popupNameTrigger }>{ r.url }</div> }
 	      content={ <div className={ cls.popupNameContent }>{ r.url }</div> }
 	      size="mini"
 	      position="right center"
-	    />,
+	    >
+			<div className={ cls.popupNameTrigger }>{ r.url }</div>
+		</Popup>
 	},
 	{
 	  label: "Size",

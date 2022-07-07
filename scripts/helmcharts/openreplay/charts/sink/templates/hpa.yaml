@@ -3,6 +3,7 @@ apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ include "sink.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "sink.labels" . | nindent 4 }}
 spec:

@@ -99,14 +99,16 @@ def get_by_id2_pg(project_id, session_id, user_id, full_data=False, include_fav_
                                                                     duration=data["duration"])
 
                 data['metadata'] = __group_metadata(project_metadata=data.pop("projectMetadata"), session=data)
-                data['issues'] = issues.get_by_session_id(session_id=session_id)
+                data['issues'] = issues.get_by_session_id(session_id=session_id, project_id=project_id)
                 data['live'] = live and assist.is_live(project_id=project_id,
                                                        session_id=session_id,
                                                        project_key=data["projectKey"])
             data["inDB"] = True
             return data
-        else:
+        elif live:
             return assist.get_live_session_by_id(project_id=project_id, session_id=session_id)
+        else:
+            return None
 
 
 def __get_sql_operator(op: schemas.SearchEventOperator):
@@ -203,12 +205,12 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
         elif data.group_by_user:
             g_sort = "count(full_sessions)"
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             else:
                 data.order = data.order.upper()
             if data.sort is not None and data.sort != 'sessionsCount':
                 sort = helper.key_to_snake_case(data.sort)
-                g_sort = f"{'MIN' if data.order == 'DESC' else 'MAX'}({sort})"
+                g_sort = f"{'MIN' if data.order == schemas.SortOrderType.desc else 'MAX'}({sort})"
             else:
                 sort = 'start_ts'
 
@@ -232,7 +234,7 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
                                      full_args)
         else:
             if data.order is None:
-                data.order = "DESC"
+                data.order = schemas.SortOrderType.desc
             sort = 'session_id'
             if data.sort is not None and data.sort != "session_id":
                 # sort += " " + data.order + "," + helper.key_to_snake_case(data.sort)
@@ -256,9 +258,9 @@ def search2_pg(data: schemas.SessionsSearchPayloadSchema, project_id, user_id, e
             cur.execute(main_query)
         except Exception as err:
             print("--------- SESSIONS SEARCH QUERY EXCEPTION -----------")
-            print(main_query)
+            print(main_query.decode('UTF-8'))
             print("--------- PAYLOAD -----------")
-            print(data.dict())
+            print(data.json())
             print("--------------------")
             raise err
         if errors_only:

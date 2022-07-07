@@ -1,5 +1,6 @@
+import React from 'react';
 import { connect } from 'react-redux';
-import { Select, Form, Button, Checkbox } from 'UI';
+import { Input, Form, Button, Checkbox } from 'UI';
 import SiteDropdown from 'Shared/SiteDropdown';
 import { save, init, edit, remove, fetchList } from 'Duck/integrations/actions';
 
@@ -32,7 +33,7 @@ export default class IntegrationForm extends React.PureComponent {
       this.props.edit(this.props.name, { [ key ]: value })
   };
 
-  onChangeSelect = (event, { value }) => {
+  onChangeSelect = ({ value }) => {
     const { sites, list, name } = this.props;
     const site = sites.find(s => s.id === value);
     this.setState({ currentSiteId: site.id })
@@ -106,7 +107,7 @@ export default class IntegrationForm extends React.PureComponent {
               :
                 <Form.Field key={ key }>
                   <label>{ label }</label>
-                  <Component
+                  <Input
                     name={ key }
                     value={ config[ key ] }
                     onChange={ this.write }
@@ -122,20 +123,20 @@ export default class IntegrationForm extends React.PureComponent {
             onClick={ this.save }
             disabled={ !config.validate() }
             loading={ saving || loading }
-            primary
-            marginRight
+            variant="primary"
+            className="float-left mr-2"
           >
             { config.exists() ? 'Update' : 'Add' }
           </Button>
 
-          <Button
-            data-hidden={ !config.exists() }
-            loading={ removing }
-            onClick={ this.remove }
-            outline
-          >
-            { 'Delete' }
-          </Button>
+          {config.exists() && (
+            <Button
+              loading={ removing }
+              onClick={ this.remove }
+            >
+              { 'Delete' }
+            </Button>
+          )}
         </Form>
       </div>
     );

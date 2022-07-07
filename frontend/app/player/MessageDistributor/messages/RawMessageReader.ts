@@ -751,7 +751,7 @@ export default class RawMessageReader extends PrimitiveReader {
     }
     
     default:
-      throw new Error(`Unrecognizable message type: ${ tp }`)
+      throw new Error(`Unrecognizable message type: ${ tp }; Pointer at the position ${this.p} of ${this.buf.length}`)
       return null;
     }
   }

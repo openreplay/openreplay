@@ -83,7 +83,7 @@ def __rearrange_chart_details(start_at, end_at, density, chart):
     for i in range(len(chart)):
         chart[i] = {"timestamp": chart[i][0], "count": chart[i][1]}
     chart = metrics.__complete_missing_steps(rows=chart, start_time=start_at, end_time=end_at, density=density,
-                                               neutral={"count": 0})
+                                             neutral={"count": 0})
     return chart
 
 
@@ -466,10 +466,9 @@ def __get_basic_constraints_pg(platform=None, time_constraint=True, startTime_ar
 
 
 def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
-    empty_response = {"data": {
-        'total': 0,
-        'errors': []
-    }}
+    empty_response = {'total': 0,
+                      'errors': []
+                      }
 
     platform = None
     for f in data.filters:
@@ -478,6 +477,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
     pg_sub_query = __get_basic_constraints_pg(platform, project_key="sessions.project_id")
     pg_sub_query += ["sessions.start_ts>=%(startDate)s", "sessions.start_ts<%(endDate)s", "source ='js_exception'",
                      "pe.project_id=%(project_id)s"]
+    # To ignore Script error
+    pg_sub_query.append("pe.message!='Script error.'")
     pg_sub_query_chart = __get_basic_constraints_pg(platform, time_constraint=False, chart=True, project_key=None)
     # pg_sub_query_chart.append("source ='js_exception'")
     pg_sub_query_chart.append("errors.error_id =details.error_id")
@@ -585,7 +586,7 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
         rows = cur.fetchall()
         total = 0 if len(rows) == 0 else rows[0]["full_count"]
         if flows:
-            return {"data": {"count": total}}
+            return {"count": total}
 
         if total == 0:
             rows = []
@@ -633,10 +634,8 @@ def search(data: schemas.SearchErrorsSchema, project_id, user_id, flows=False):
                 and (r["message"].lower() != "script error." or len(r["stack"][0]["absPath"]) > 0))]
     offset -= len(rows)
     return {
-        "data": {
-            'total': total - offset,
-            'errors': helper.list_to_camel_case(rows)
-        }
+        'total': total - offset,
+        'errors': helper.list_to_camel_case(rows)
     }
 
 
@@ -652,6 +651,8 @@ def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flo
             platform = f.value[0]
     ch_sub_query = __get_basic_constraints(platform)
     ch_sub_query.append("source ='js_exception'")
+    # To ignore Script error
+    ch_sub_query.append("message!='Script error.'")
     statuses = []
     error_ids = None
     # Clickhouse keeps data for the past month only, so no need to search beyond that
@@ -790,8 +791,8 @@ def search_deprecated(data: schemas.SearchErrorsSchema, project_id, user_id, flo
         for i in range(len(r["chart"])):
             r["chart"][i] = {"timestamp": r["chart"][i][0], "count": r["chart"][i][1]}
         r["chart"] = metrics.__complete_missing_steps(rows=r["chart"], start_time=data.startDate,
-                                                        end_time=data.endDate,
-                                                        density=data.density, neutral={"count": 0})
+                                                      end_time=data.endDate,
+                                                      density=data.density, neutral={"count": 0})
     offset = len(rows)
     rows = [r for r in rows if r["stack"] is None
             or (len(r["stack"]) == 0 or len(r["stack"]) > 1

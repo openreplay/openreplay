@@ -1,7 +1,8 @@
+import React from 'react';
 import cn from 'classnames';
 import { Popup, TextEllipsis } from 'UI';
 import { Styles } from '../../Dashboard/Widgets/common';
-import cls from './distributionBar.css';
+import cls from './distributionBar.module.css';
 import { colorScale } from 'App/utils';
 
 function DistributionBar({ className, title, partitions }) {
@@ -29,25 +30,23 @@ function DistributionBar({ className, title, partitions }) {
 				{ partitions.map((p, index) => 
 					<Popup
 						key={p.label}
-						inverted
-						size="mini"
-						trigger={ 
-							<div 
-								className="h-full bg-tealx" 
-								style={{
-									marginLeft: '1px',
-									width: `${ p.prc }%`,									
-									backgroundColor: colors(index)
-								}} 
-							/>
-						}
 						content={
 							<div className="text-center">
 								<span className="capitalize">{ p.label }</span><br/>
 								{`${ Math.round(p.prc) }%`}
 							</div>
 						}
-					/>
+						className="w-full"
+					>
+						<div 
+							className="h-full bg-tealx" 
+							style={{
+								marginLeft: '1px',
+								width: `${ p.prc }%`,									
+								backgroundColor: colors(index)
+							}} 
+						/>
+					</Popup>
 				)}
 			</div>
 		</div>

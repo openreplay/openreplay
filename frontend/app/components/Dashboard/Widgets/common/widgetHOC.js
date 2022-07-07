@@ -1,11 +1,12 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
 import { CloseButton } from 'UI';
 import { fetchWidget } from 'Duck/dashboard';
-import { updateAppearance } from 'Duck/user';
+// import { updateAppearance } from 'Duck/user';
 import { WIDGET_MAP } from 'Types/dashboard';
 import Title from './Title';
-import stl from './widgetHOC.css';
+import stl from './widgetHOC.module.css';
 
 export default (
 	widgetKey,
@@ -25,7 +26,7 @@ export default (
 			filters: state.getIn([ 'dashboard', compare ? 'filtersCompare' : 'filters' ]),
 			period: state.getIn([ 'dashboard', compare ? 'periodCompare' : 'period' ]), //TODO: filters
 			platform: state.getIn([ 'dashboard', 'platform' ]),
-			appearance: state.getIn([ 'user', 'account', 'appearance' ]),
+			// appearance: state.getIn([ 'user', 'account', 'appearance' ]),
 
 			dataCompare: state.getIn([ 'dashboard', '_' + widgetKey ]), // only for overview
 			loadingCompare: state.getIn([ 'dashboard', 'fetchWidget', '_' + widgetKey, 'loading' ]),
@@ -34,7 +35,7 @@ export default (
 		}
 	}, { 
 		fetchWidget,
-		updateAppearance,	
+		// updateAppearance,	
 	})
 	class WidgetWrapper extends React.PureComponent {
 		constructor(props) {
@@ -73,8 +74,8 @@ export default (
 		}
 
 		handleRemove = () => {
-			const { appearance } = this.props;
-			this.props.updateAppearance(appearance.setIn([ 'dashboard', widgetKey ], false));
+			// const { appearance } = this.props;
+			// this.props.updateAppearance(appearance.setIn([ 'dashboard', widgetKey ], false));
 		}
 
 		render() {

@@ -1,9 +1,10 @@
+import React from 'react';
 import cn from 'classnames';
 import { connectPlayer, jump, pause } from 'Player';
-import { QuestionMarkHint, Popup, Tabs, Input } from 'UI';
+import { Popup } from 'UI';
 import { getRE } from 'App/utils';
 import { TYPES } from 'Types/session/resource';
-import stl from './network.css';
+import stl from './network.module.css';
 import NetworkContent from './NetworkContent';
 import { connect } from 'react-redux';
 import { setTimelinePointer } from 'Duck/sessions';
@@ -28,12 +29,9 @@ const TAB_TO_TYPE_MAP = {
 export function renderName(r) { 
   return (
     <div className="flex w-full relative items-center">
-      <Popup
-        trigger={ <div className={ stl.popupNameTrigger }>{ r.name }</div> }
-        content={ <div className={ stl.popupNameContent }>{ r.url }</div> }
-        size="mini"
-        position="right center"
-      />
+      <Popup content={ <div className={ stl.popupNameContent }>{ r.url }</div> } >
+        <div className={ stl.popupNameTrigger }>{ r.name }</div>
+      </Popup>
       <div
         className="absolute right-0 text-xs uppercase p-2 color-gray-500 hover:color-black"
         onClick={ (e) => {
@@ -62,13 +60,9 @@ export function renderDuration(r) {
   }
 
   return (
-    <Popup
-      content={ tooltipText }
-      inverted
-      trigger={ 
-        <div className={ cn(className, stl.duration) } > { text } </div>
-      }
-    />
+    <Popup content={ tooltipText } >
+      <div className={ cn(className, stl.duration) } > { text } </div>
+    </Popup>
   );
 }
 

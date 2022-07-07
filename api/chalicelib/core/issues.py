@@ -41,19 +41,23 @@ def get(project_id, issue_id):
         )
         cur.execute(query=query)
         data = cur.fetchone()
+        if data is not None:
+            data["title"] = helper.get_issue_title(data["type"])
     return helper.dict_to_camel_case(data)
 
 
-def get_by_session_id(session_id, issue_type=None):
+def get_by_session_id(session_id, project_id, issue_type=None):
     with pg_client.PostgresClient() as cur:
         cur.execute(
             cur.mogrify(f"""\
                     SELECT *
                     FROM events_common.issues
                              INNER JOIN public.issues USING (issue_id)
-                    WHERE session_id = %(session_id)s {"AND type = %(type)s" if issue_type is not None else ""}
+                    WHERE session_id = %(session_id)s 
+                        AND project_id= %(project_id)s
+                        {"AND type = %(type)s" if issue_type is not None else ""}
                     ORDER BY timestamp;""",
-                        {"session_id": session_id, "type": issue_type})
+                        {"session_id": session_id, "project_id": project_id, "type": issue_type})
         )
         return helper.list_to_camel_case(cur.fetchall())
 

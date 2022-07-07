@@ -61,10 +61,11 @@ export const CLIENT_TABS = {
   PROFILE: 'account',
   MANAGE_USERS: 'team',
   MANAGE_ROLES: 'roles',
-  SITES: 'projects',  
+  SITES: 'projects',
   CUSTOM_FIELDS: 'metadata',
   WEBHOOKS: 'webhooks',
   NOTIFICATIONS: 'notifications',
+  AUDIT: 'audit',
 };
 export const CLIENT_DEFAULT_TAB = CLIENT_TABS.PROFILE;
 const routerClientTabString = `:activeTab(${ Object.values(CLIENT_TABS).join('|') })`;
@@ -91,12 +92,14 @@ export const liveSession = (sessionId = ':sessionId', hash) => hashed(`/assist/$
 export const errors = params => queried('/errors', params);
 export const error = (id = ':errorId', hash) => hashed(`/errors/${ id }`, hash);
 
+export const funnels = params => queried('/funnels', params)
+export const funnelsCreate = () => `/funnels/create`;
 export const funnel = (id = ':funnelId', hash) => hashed(`/funnels/${ id }`, hash);
 export const funnelIssue = (id = ':funnelId', issueId = ':issueId', hash) => hashed(`/funnels/${ id }/${ issueId}`, hash);
 
 export const tests = () => '/tests';
 
-export const testBuilderNew = () => '/test-builder';
+export const testBuilderNew = () => '/test-sessions';
 
 export const testBuilder = (testId = ':testId') => `/test-builder/${ testId }`;
 
@@ -109,12 +112,7 @@ export const dashboardMetricCreate = (dashboardId = ':dashboardId',  hash) => ha
 export const metrics = () => `/metrics`;
 export const metricCreate = () => `/metrics/create`;
 export const metricDetails = (id = ':metricId', hash) => hashed(`/metrics/${ id }`, hash);
-
-
-export const RESULTS_QUERY_KEY = 'results';
-export const METRICS_QUERY_KEY = 'metrics';
-export const SOURCE_QUERY_KEY = 'source';
-export const WIDGET_QUERY_KEY = 'widget';
+export const metricDetailsSub = (id = ':metricId', subId = ':subId', hash) => hashed(`/metrics/${ id }/details/${subId}`, hash);
 
 const REQUIRED_SITE_ID_ROUTES = [
     liveSession(''),
@@ -124,6 +122,7 @@ const REQUIRED_SITE_ID_ROUTES = [
     
     metrics(),
     metricDetails(''),
+    metricDetailsSub(''),
 
     dashboard(''),
     dashboardSelected(''),
@@ -134,6 +133,8 @@ const REQUIRED_SITE_ID_ROUTES = [
     error(''),
     errors(),
     onboarding(''),
+    funnels(''),
+    funnelsCreate(''),
     funnel(''),
     funnelIssue(''),
   ];
@@ -161,12 +162,15 @@ export function isRoute(route, path){
 
 const SITE_CHANGE_AVALIABLE_ROUTES = [
   sessions(),
+  funnels(),
   assist(),
   dashboard(),
+  dashboardSelected(),
   metrics(),
   errors(),
   onboarding('')
 ];
+
 export const siteChangeAvaliable = path => SITE_CHANGE_AVALIABLE_ROUTES.some(r => isRoute(r, path));
 
 export const redirects = Object.entries({

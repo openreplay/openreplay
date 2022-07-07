@@ -1,6 +1,7 @@
 import requests
 from decouple import config
 
+import schemas
 from chalicelib.core import projects
 
 SESSION_PROJECTION_COLS = """s.project_id,
@@ -19,22 +20,40 @@ SESSION_PROJECTION_COLS = """s.project_id,
                            """
 
 
-def get_live_sessions_ws(project_id, user_id=None):
+def get_live_sessions_ws_user_id(project_id, user_id):
+    data = {
+        "filter": {"userId": user_id} if user_id else {}
+    }
+    return __get_live_sessions_ws(project_id=project_id, data=data)
+
+
+def get_live_sessions_ws(project_id, body: schemas.LiveSessionsSearchPayloadSchema):
+    data = {
+        "filter": {},
+        "pagination": {"limit": body.limit, "page": body.page},
+        "sort": {"key": body.sort, "order": body.order}
+    }
+    for f in body.filters:
+        if f.type == schemas.LiveFilterType.metadata:
+            data["filter"][f.source] = f.value
+        else:
+            data["filter"][f.type.value] = f.value
+    return __get_live_sessions_ws(project_id=project_id, data=data)
+
+
+def __get_live_sessions_ws(project_id, data):
     project_key = projects.get_project_key(project_id)
-    params = {}
-    if user_id and len(user_id) > 0:
-        params["userId"] = user_id
     try:
-        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}", params,
-                                       timeout=config("assistTimeout", cast=int, default=5))
+        connected_peers = requests.post(config("assist") % config("S3_KEY") + f"/{project_key}", json=data,
+                                        timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
-            return []
+            return {"total": 0, "sessions": []}
         live_peers = connected_peers.json().get("data", [])
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
-        live_peers = []
+        live_peers = {"total": 0, "sessions": []}
     except Exception as e:
         print("issue getting Live-Assist response")
         print(str(e))
@@ -43,34 +62,55 @@ def get_live_sessions_ws(project_id, user_id=None):
             print(connected_peers.text)
         except:
             print("couldn't get response")
-        live_peers = []
-
-    for s in live_peers:
+        live_peers = {"total": 0, "sessions": []}
+    _live_peers = live_peers
+    if "sessions" in live_peers:
+        _live_peers = live_peers["sessions"]
+    for s in _live_peers:
         s["live"] = True
         s["projectId"] = project_id
-    live_peers = sorted(live_peers, key=lambda l: l.get("timestamp", 0), reverse=True)
     return live_peers
 
 
 def get_live_session_by_id(project_id, session_id):
-    all_live = get_live_sessions_ws(project_id)
-    for l in all_live:
-        if str(l.get("sessionID")) == str(session_id):
-            return l
-    return None
+    project_key = projects.get_project_key(project_id)
+    try:
+        connected_peers = requests.get(config("assist") % config("S3_KEY") + f"/{project_key}/{session_id}",
+                                       timeout=config("assistTimeout", cast=int, default=5))
+        if connected_peers.status_code != 200:
+            print("!! issue with the peer-server")
+            print(connected_peers.text)
+            return False
+        connected_peers = connected_peers.json().get("data")
+        if connected_peers is None:
+            return None
+        connected_peers["live"] = True
+    except requests.exceptions.Timeout:
+        print("Timeout getting Assist response")
+        return None
+    except Exception as e:
+        print("issue getting Assist response")
+        print(str(e))
+        print("expected JSON, received:")
+        try:
+            print(connected_peers.text)
+        except:
+            print("couldn't get response")
+        return None
+    return connected_peers
 
 
 def is_live(project_id, session_id, project_key=None):
     if project_key is None:
         project_key = projects.get_project_key(project_id)
     try:
-        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}",
+        connected_peers = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/{session_id}",
                                        timeout=config("assistTimeout", cast=int, default=5))
         if connected_peers.status_code != 200:
             print("!! issue with the peer-server")
             print(connected_peers.text)
             return False
-        connected_peers = connected_peers.json().get("data", [])
+        connected_peers = connected_peers.json().get("data")
     except requests.exceptions.Timeout:
         print("Timeout getting Assist response")
         return False
@@ -83,7 +123,35 @@ def is_live(project_id, session_id, project_key=None):
         except:
             print("couldn't get response")
         return False
-    return str(session_id) in connected_peers
+    return str(session_id) == connected_peers
+
+
+def autocomplete(project_id, q: str, key: str = None):
+    project_key = projects.get_project_key(project_id)
+    params = {"q": q}
+    if key:
+        params["key"] = key
+    try:
+        results = requests.get(config("assistList") % config("S3_KEY") + f"/{project_key}/autocomplete",
+                               params=params, timeout=config("assistTimeout", cast=int, default=5))
+        if results.status_code != 200:
+            print("!! issue with the peer-server")
+            print(results.text)
+            return {"errors": [f"Something went wrong wile calling assist:{results.text}"]}
+        results = results.json().get("data", [])
+    except requests.exceptions.Timeout:
+        print("Timeout getting Assist response")
+        return {"errors": ["Assist request timeout"]}
+    except Exception as e:
+        print("issue getting Assist response")
+        print(str(e))
+        print("expected JSON, received:")
+        try:
+            print(results.text)
+        except:
+            print("couldn't get response")
+        return {"errors": ["Something went wrong wile calling assist"]}
+    return {"data": results}
 
 
 def get_ice_servers():

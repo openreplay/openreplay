@@ -1,3 +1,4 @@
+import React from 'react';
 import { findDOMNode } from 'react-dom';
 
 let overlayedCount = 0;

@@ -14,13 +14,13 @@ export default function ImageViewer(
   return (
     <div className="absolute bg-gray-light inset-0 z-50">     
       <div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
-        <Button primary plain onClick={onPrevClick} disabled={currentIndex === 0}>
+        <Button variant="outline" onClick={onPrevClick} disabled={currentIndex === 0}>
           Prev
         </Button>
-        <Button primary plain onClick={onClose}>
+        <Button variant="outline" onClick={onClose}>
           CLOSE
         </Button>
-        <Button primary plain onClick={onNextClick} disabled={currentIndex === source.length - 1}>
+        <Button variant="outline" onClick={onNextClick} disabled={currentIndex === source.length - 1}>
           Next
         </Button>
       </div>

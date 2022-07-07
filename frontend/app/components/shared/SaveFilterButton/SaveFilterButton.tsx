@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
 import { save } from 'Duck/filters';
-import { IconButton } from 'UI';
+import { Button } from 'UI';
 import SaveSearchModal from 'Shared/SaveSearchModal'
 
 interface Props {
@@ -14,11 +14,13 @@ function SaveFilterButton(props: Props) {
   const [showModal, setshowModal] = useState(false)
   return (
     <div>
-      { savedSearch.exists() ? (
-        <IconButton className="mr-2" onClick={() => setshowModal(true)} primaryText label="UPDATE SEARCH" icon="zoom-in" />
-      ) : (
-        <IconButton className="mr-2" onClick={() => setshowModal(true)} primaryText label="SAVE SEARCH" icon="zoom-in" />
-      )}
+        <Button
+          variant="text-primary"
+          className="mr-2"
+          onClick={() => setshowModal(true)}
+          icon="zoom-in">
+            {savedSearch.exists() ? 'UPDATE SEARCH' : 'SAVE SEARCH'}
+        </Button>
       { showModal && ( <SaveSearchModal show={showModal} closeHandler={() => setshowModal(false)} /> )}
     </div>
   );

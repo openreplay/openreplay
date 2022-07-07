@@ -36,26 +36,23 @@ const OnboardingNavButton = (props) => {
   }
   
   return (
-    <>
+    <div className="flex items-center">
       <Button
-        primary
         size="small"
-        plain
+        variant="outline"
         onClick={onDone}
+        className="float-left mr-2"
       >
         {activeIndex === 0 ? 'Done. See Recorded Sessions' : 'Skip Optional Steps and See Recorded Sessions'}
       </Button>
-      <span className="mx-2"/>
-      {
-        <Button
-          primary
-          size="small"
-          onClick={setTab}
-        >
-          {BTN_MSGS[activeIndex]}
-        </Button>
-      }
-    </>
+      
+      <Button
+        variant="primary"
+        onClick={setTab}
+      >
+        {BTN_MSGS[activeIndex]}
+      </Button>
+    </div>
   )
 }
 

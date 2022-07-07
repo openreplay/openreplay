@@ -1,34 +1,30 @@
+import type App from "../app/index.js";
 import {
   normSpaces,
   IN_BROWSER,
   getLabelAttribute,
   hasOpenreplayAttribute,
 } from "../utils.js";
-import App from "../app/index.js";
-import { SetInputTarget, SetInputValue, SetInputChecked } from "../../messages/index.js";
+import { hasTag } from "../app/guards.js";
+import { SetInputTarget, SetInputValue, SetInputChecked } from "../../common/messages.js";
+
+const INPUT_TYPES = ['text', 'password', 'email', 'search', 'number', 'range', 'date']
 
 // TODO: take into consideration "contenteditable" attribute
 type TextEditableElement = HTMLInputElement | HTMLTextAreaElement
 function isTextEditable(node: any): node is TextEditableElement {
-  if (node instanceof HTMLTextAreaElement) { 
+  if (hasTag(node, "TEXTAREA")) {
     return true;
   }
-  if (!(node instanceof HTMLInputElement)) {
+  if (!hasTag(node, "INPUT")) {
     return false;
   }
-  const type = node.type;
-  return (
-    type === 'text' ||
-    type === 'password' ||
-    type === 'email' ||
-    type === 'search' ||
-    type === 'number' ||
-    type === 'range'
-  );
+
+  return INPUT_TYPES.includes(node.type)
 }
 
 function isCheckable(node: any): node is HTMLInputElement {
-  if (!(node instanceof HTMLInputElement)) {
+  if (!hasTag(node, "INPUT")) {
     return false;
   }
   const type = node.type;
@@ -42,7 +38,7 @@ const labelElementFor: (
     ? (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (p instanceof HTMLLabelElement) {
+          if (hasTag(p, "LABEL")) {
             return p
           }
         }
@@ -54,7 +50,7 @@ const labelElementFor: (
     : (node) => {
         let p: Node | null = node;
         while ((p = p.parentNode) !== null) {
-          if (p instanceof HTMLLabelElement) {
+          if (hasTag(p, "LABEL")) {
             return p as HTMLLabelElement;
           }
         }
@@ -71,11 +67,11 @@ export function getInputLabel(node: TextEditableElement): string {
   let label = getLabelAttribute(node);
   if (label === null) {
     const labelElement = labelElementFor(node);
-    label = (labelElement && labelElement.innerText) 
-      || node.placeholder 
-      || node.name 
-      || node.id 
-      || node.className 
+    label = (labelElement && labelElement.innerText)
+      || node.placeholder
+      || node.name
+      || node.id
+      || node.className
       || node.type
   }
   return normSpaces(label).slice(0, 100);
@@ -91,6 +87,7 @@ export interface Options {
   obscureInputNumbers: boolean;
   obscureInputEmails: boolean;
   defaultInputMode: InputMode;
+  obscureInputDates: boolean;
 }
 
 export default function (app: App, opts: Partial<Options>): void {
@@ -99,6 +96,7 @@ export default function (app: App, opts: Partial<Options>): void {
       obscureInputNumbers: true,
       obscureInputEmails: true,
       defaultInputMode: InputMode.Plain,
+      obscureInputDates: false,
     },
     opts,
   );
@@ -116,7 +114,8 @@ export default function (app: App, opts: Partial<Options>): void {
     } else if (
       hasOpenreplayAttribute(node, 'obscured') ||
       (inputMode === InputMode.Plain &&
-        ((options.obscureInputNumbers && /\d\d\d\d/.test(value)) ||
+        ((options.obscureInputNumbers && node.type !== 'date' && /\d\d\d\d/.test(value)) ||
+          (options.obscureInputDates && node.type === 'date') ||
           (options.obscureInputEmails &&
             (node.type === 'email' || !!~value.indexOf('@')))))
     ) {
@@ -133,6 +132,7 @@ export default function (app: App, opts: Partial<Options>): void {
         value = '';
         break;
     }
+
     app.send(new SetInputValue(id, value, mask));
   }
 
@@ -183,7 +183,7 @@ export default function (app: App, opts: Partial<Options>): void {
         return;
       }
       // TODO: support multiple select (?): use selectedOptions; Need send target?
-      if (node instanceof HTMLSelectElement) {
+      if (hasTag(node, "SELECT")) {
         sendInputValue(id, node)
         app.attachEventListener(node, "change", () => {
           sendInputValue(id, node)

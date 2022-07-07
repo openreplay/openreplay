@@ -12,7 +12,8 @@ public_app, app, app_apikey = get_routers()
 @app_apikey.get('/v1/{projectKey}/users/{userId}/sessions', tags=["api"])
 def get_user_sessions(projectKey: str, userId: str, start_date: int = None, end_date: int = None):
     projectId = projects.get_internal_project_id(projectKey)
-
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
     return {
         'data': sessions.get_user_sessions(
             project_id=projectId,
@@ -26,6 +27,8 @@ def get_user_sessions(projectKey: str, userId: str, start_date: int = None, end_
 @app_apikey.get('/v1/{projectKey}/sessions/{sessionId}/events', tags=["api"])
 def get_session_events(projectKey: str, sessionId: int):
     projectId = projects.get_internal_project_id(projectKey)
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
     return {
         'data': events.get_by_sessionId2_pg(
             project_id=projectId,
@@ -37,6 +40,8 @@ def get_session_events(projectKey: str, sessionId: int):
 @app_apikey.get('/v1/{projectKey}/users/{userId}', tags=["api"])
 def get_user_details(projectKey: str, userId: str):
     projectId = projects.get_internal_project_id(projectKey)
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
     return {
         'data': sessions.get_session_user(
             project_id=projectId,
@@ -48,6 +53,8 @@ def get_user_details(projectKey: str, userId: str):
 @app_apikey.delete('/v1/{projectKey}/users/{userId}', tags=["api"])
 def schedule_to_delete_user_data(projectKey: str, userId: str):
     projectId = projects.get_internal_project_id(projectKey)
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
     data = {"action": "delete_user_data",
             "reference_id": userId,
             "description": f"Delete user sessions of userId = {userId}",
@@ -61,6 +68,8 @@ def schedule_to_delete_user_data(projectKey: str, userId: str):
 @app_apikey.get('/v1/{projectKey}/jobs', tags=["api"])
 def get_jobs(projectKey: str):
     projectId = projects.get_internal_project_id(projectKey)
+    if projectId is None:
+        return {"errors": ["invalid projectKey"]}
     return {
         'data': jobs.get_all(project_id=projectId)
     }

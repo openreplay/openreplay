@@ -3,8 +3,8 @@ export enum FilterCategory {
   GEAR = "Gear",
   RECORDING_ATTRIBUTES = "Recording Attributes",
   JAVASCRIPT = "Javascript",
-  USER = "User",
-  METADATA = "Metadata",
+  USER = "User Identification",
+  METADATA = "Session & User Metadata",
   PERFORMANCE = "Performance",
 };
 
@@ -91,4 +91,7 @@ export enum FilterKey {
   GRAPHQL_METHOD = "GRAPHQL_METHOD",
   GRAPHQL_REQUEST_BODY = "GRAPHQL_REQUEST_BODY",
   GRAPHQL_RESPONSE_BODY = "GRAPHQL_RESPONSE_BODY",
+
+  SESSIONS = 'SESSIONS',
+  ERRORS = 'js_exception'
 }

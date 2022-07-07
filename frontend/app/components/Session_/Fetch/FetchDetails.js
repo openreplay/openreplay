@@ -1,8 +1,9 @@
+import React from 'react';
 import { JSONTree, NoContent, Button, Tabs } from 'UI'
 import cn from 'classnames';
-import copy from 'copy-to-clipboard';
-import stl from './fetchDetails.css';
+import stl from './fetchDetails.module.css';
 import Headers from './components/Headers'
+import AnimatedSVG, { ICONS } from 'Shared/AnimatedSVG/AnimatedSVG';
 
 const HEADERS = 'HEADERS';
 const REQUEST = 'REQUEST';
@@ -41,10 +42,15 @@ export default class FetchDetails extends React.PureComponent {
 			case REQUEST:
 				return (
           <NoContent
-            title="Body is Empty."
+            title={
+				<div className="flex flex-col items-center justify-center">
+					<AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+					<div className="mt-6 text-2xl">Body is Empty.</div>
+				</div>
+			}
             size="small"
             show={ !payload }
-            animatedIcon="no-results"
+            // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
@@ -60,10 +66,15 @@ export default class FetchDetails extends React.PureComponent {
 			case RESPONSE:
 				return (
           <NoContent
-            title="Body is Empty."
+            title={
+				<div className="flex flex-col items-center justify-center">
+					<AnimatedSVG name={ICONS.NO_RESULTS} size="170" />
+					<div className="mt-6 text-2xl">Body is Empty.</div>
+				</div>
+			}
             size="small"
             show={ !response }
-            animatedIcon="no-results"
+            // animatedIcon="no-results"
           >
             <div>
               <div className="mt-6">
@@ -147,10 +158,10 @@ export default class FetchDetails extends React.PureComponent {
 					</div>
 
 					<div className="flex justify-between absolute bottom-0 left-0 right-0 p-3 border-t bg-white">
-						<Button primary plain onClick={prevClick} disabled={first}>
+						<Button variant="outline" onClick={prevClick} disabled={first}>
 							Prev
 						</Button>
-						<Button primary plain onClick={nextClick} disabled={last}>
+						<Button variant="outline" onClick={nextClick} disabled={last}>
 							Next
 						</Button>
 					</div>

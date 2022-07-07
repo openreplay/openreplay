@@ -12,7 +12,7 @@ function wrap(callback: Callback, n: number): Callback {
 }
 
 export default class Ticker {
-  private timer: number | null = null;
+  private timer: ReturnType<typeof setInterval> | null = null;
   private readonly callbacks: Array<Callback | undefined>;
   constructor(private readonly app: App) {
     this.callbacks = [];
@@ -30,7 +30,7 @@ export default class Ticker {
 
   start(): void {
     if (this.timer === null) {
-      this.timer = <any>setInterval(
+      this.timer = setInterval(
         () =>
           this.callbacks.forEach((cb) => {
             if (cb) cb();

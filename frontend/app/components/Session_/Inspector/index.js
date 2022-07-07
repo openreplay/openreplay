@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { toggleInspectorMode, markElement } from 'Player';
 import ElementView from './ElementView';
 import BottomBlock from '../BottomBlock';
-import stl from './inspector.css'
+import stl from './inspector.module.css'
 
 // TODO: refactor: use Layout from the Sessions and put everything there under the WebPlayer folder
 

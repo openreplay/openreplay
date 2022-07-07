@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io-client';
-import io from 'socket.io-client';
+import { connect } from 'socket.io-client';
 import Peer from 'peerjs';
 import type { Properties } from 'csstype';
 import { App } from '@openreplay/tracker';
@@ -8,12 +8,11 @@ import RequestLocalStream from './LocalStream.js';
 import RemoteControl from './RemoteControl.js';
 import CallWindow from './CallWindow.js';
 import AnnotationCanvas from './AnnotationCanvas.js';
-import ConfirmWindow, { callConfirmDefault, controlConfirmDefault } from './ConfirmWindow.js';
-import type { Options as ConfirmOptions } from './ConfirmWindow.js';
+import ConfirmWindow from './ConfirmWindow/ConfirmWindow.js';
+import { callConfirmDefault } from './ConfirmWindow/defaults.js';
+import type { Options as ConfirmOptions } from './ConfirmWindow/defaults.js';
 
-
-//@ts-ignore  peerjs hack for webpack5 (?!) TODO: ES/node modules;
-Peer = Peer.default || Peer;
+// TODO: fully specified  strict check (everywhere)
 
 type StartEndCallback = () => ((()=>{}) | void)
 
@@ -129,13 +128,14 @@ export default class Assist {
     const peerID = `${app.getProjectKey()}-${app.getSessionID()}`
 
     // SocketIO
-    const socket = this.socket = io(app.getHost(), {
+    const socket = this.socket = connect(app.getHost(), {
       path: '/ws-assist/socket',
       query: {
         "peerId": peerID,
         "identity": "session",
         "sessionInfo": JSON.stringify({ 
-          pageTitle: document.title, 
+          pageTitle: document.title,
+          active: true,
           ...this.app.getSessionInfo() 
         }),
       },
@@ -144,17 +144,24 @@ export default class Assist {
     socket.onAny((...args) => app.debug.log("Socket:", ...args))
 
 
+
     const remoteControl = new RemoteControl(
       this.options,
       id => {
         this.agents[id].onControlReleased = this.options.onRemoteControlStart()
         this.emit("control_granted", id)
+        annot = new AnnotationCanvas()
+        annot.mount()
       },
       id => {
         const cb = this.agents[id].onControlReleased
         delete this.agents[id].onControlReleased
         typeof cb === "function" && cb()
         this.emit("control_rejected", id)
+        if (annot != null) {
+          annot.remove()
+          annot = null
+        }
       },
     )
 
@@ -164,6 +171,12 @@ export default class Assist {
     socket.on("scroll", remoteControl.scroll)
     socket.on("click", remoteControl.click)
     socket.on("move", remoteControl.move)
+    socket.on("focus", (clientID, nodeID) => {
+      const el = app.nodes.getNode(nodeID)
+      if (el instanceof HTMLElement) {
+        remoteControl.focus(clientID, el)
+      }
+    })
     socket.on("input", remoteControl.input)
 
     let annot: AnnotationCanvas | null = null
@@ -230,9 +243,10 @@ export default class Assist {
       peerOptions['config'] = this.options.config
     }
     const peer = this.peer = new Peer(peerID, peerOptions);
-    app.debug.log('Peer created: ', peer)
+    // app.debug.log('Peer created: ', peer)
+    // @ts-ignore
     peer.on('error', e => app.debug.warn("Peer error: ", e.type, e))
-    peer.on('disconnect', () => peer.reconnect())
+    peer.on('disconnected', () => peer.reconnect())
     peer.on('call', (call) => {
       app.debug.log("Call: ", call)    
       if (this.callingState !== CallingState.False) {

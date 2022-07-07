@@ -1,4 +1,4 @@
-import { connect } from 'react-redux';
+import React from 'react';
 import DateRangeDropdown from 'Shared/DateRangeDropdown';
 
 function DateRange (props) {

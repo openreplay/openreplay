@@ -1,6 +1,6 @@
+import type Message from "../../common/messages.js";
+import { Timestamp, Metadata, UserID } from "../../common/messages.js";
 import { timestamp, deprecationWarn } from "../utils.js";
-import { Timestamp, Metadata } from "../../messages/index.js";
-import Message from "../../messages/message.js";
 import Nodes from "./nodes.js";
 import Observer from "./observer/top_observer.js";
 import Sanitizer from "./sanitizer.js";
@@ -13,8 +13,7 @@ import { deviceMemory, jsHeapSizeLimit } from "../modules/performance.js";
 import type { Options as ObserverOptions } from "./observer/top_observer.js";
 import type { Options as SanitizerOptions } from "./sanitizer.js";
 import type { Options as LoggerOptions } from "./logger.js"
-import type { Options as WebworkerOptions, WorkerMessageData } from "../../webworker/types.js";
-
+import type { Options as WebworkerOptions, WorkerMessageData } from "../../common/webworker.js";
 
 // TODO: Unify and clearly describe options logic
 export interface StartOptions {
@@ -23,11 +22,21 @@ export interface StartOptions {
   forceNew?: boolean,
 }
 
-export interface OnStartInfo {
+interface OnStartInfo {
   sessionID: string, 
   sessionToken: string, 
   userUUID: string,
 }
+const CANCELED = "canceled" as const
+const START_ERROR = ":(" as const
+type SuccessfulStart = OnStartInfo & { success: true }
+type UnsuccessfulStart = {
+  reason: typeof CANCELED | string
+  success: false
+}
+const UnsuccessfulStart = (reason: string): UnsuccessfulStart => ({ reason,  success: false})
+const SuccessfulStart = (body: OnStartInfo): SuccessfulStart => ({ ...body,  success: true})
+export type StartPromiseReturn = SuccessfulStart | UnsuccessfulStart
 
 type StartCallback = (i: OnStartInfo) => void
 type CommitCallback = (messages: Array<Message>) => void
@@ -51,6 +60,8 @@ type AppOptions = {
   __is_snippet: boolean;
   __debug_report_edp: string | null;
   __debug__?: LoggerOptions;
+  localStorage: Storage;
+  sessionStorage: Storage;
 
   // @deprecated
   onStart?: StartCallback;
@@ -58,7 +69,6 @@ type AppOptions = {
 
 export type Options = AppOptions & ObserverOptions & SanitizerOptions
 
-export const CANCELED = "canceled"
 
 // TODO: use backendHost only
 export const DEFAULT_INGEST_POINT = 'https://api.openreplay.com/ingest';
@@ -71,6 +81,8 @@ export default class App {
   readonly debug: Logger;
   readonly notify: Logger;
   readonly session: Session;
+  readonly localStorage: Storage;
+  readonly sessionStorage: Storage;
   private readonly messages: Array<Message> = [];
   private readonly observer: Observer;
   private readonly startCallbacks: Array<StartCallback> = [];
@@ -105,12 +117,12 @@ export default class App {
         verbose: false,
         __is_snippet: false,
         __debug_report_edp: null,
+        localStorage: window.localStorage,
+        sessionStorage: window.sessionStorage,
       },
       options,
     );
-    if (sessionToken != null) {
-      sessionStorage.setItem(this.options.session_token_key, sessionToken);
-    }
+
     this.revID = this.options.revID;
     this.sanitizer = new Sanitizer(this, options);
     this.nodes = new Nodes(this.options.node_id);
@@ -119,7 +131,22 @@ export default class App {
     this.ticker.attach(() => this.commit());
     this.debug = new Logger(this.options.__debug__);
     this.notify = new Logger(this.options.verbose ? LogLevel.Warnings : LogLevel.Silent);
-    this.session = new Session(this);
+    this.session = new Session();
+    this.session.attachUpdateCallback(({ userID, metadata }) => {
+      if (userID != null) { // TODO: nullable userID
+        this.send(new UserID(userID))
+      }
+      if (metadata != null) {
+        Object.entries(metadata).forEach(([key, value]) => this.send(new Metadata(key, value)))
+      }
+    })
+    this.localStorage = this.options.localStorage;
+    this.sessionStorage = this.options.sessionStorage;
+
+    if (sessionToken != null) {
+      this.sessionStorage.setItem(this.options.session_token_key, sessionToken);
+    }
+
     try {
       this.worker = new Worker(
         URL.createObjectURL(
@@ -132,6 +159,7 @@ export default class App {
       this.worker.onmessage = ({ data }: MessageEvent) => {
         if (data === "failed") {
           this.stop();
+          this._debug("worker_failed", {})  // add context (from worker)
         } else if (data === "restart") {
           this.stop();
           this.start({ forceNew: true });
@@ -142,9 +170,10 @@ export default class App {
           this.worker.postMessage(null);
         }
       }
-      // TODO: keep better tactics, discard others (look https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon)
+      // keep better tactics, discard others?
       this.attachEventListener(window, 'beforeunload', alertWorker, false);
-      this.attachEventListener(document, 'mouseleave', alertWorker, false, false);
+      this.attachEventListener(document.body, 'mouseleave', alertWorker, false, false);
+      // TODO: stop session after inactivity timeout (make configurable)
       this.attachEventListener(document, 'visibilitychange', alertWorker, false);
     } catch (e) { 
       this._debug("worker_start", e);
@@ -229,8 +258,8 @@ export default class App {
 
   // TODO: full correct semantic
   checkRequiredVersion(version: string): boolean {
-    const reqVer = version.split('.')
-    const ver = this.version.split('.')
+    const reqVer = version.split(/[.-]/)
+    const ver = this.version.split(/[.-]/)
     for (let i = 0; i < 3; i++) {
       if (Number(ver[i]) < Number(reqVer[i]) || isNaN(Number(ver[i])) || isNaN(Number(reqVer[i]))) {
         return false
@@ -241,10 +270,10 @@ export default class App {
 
   private getStartInfo() {
     return {
-      userUUID: localStorage.getItem(this.options.local_uuid_key),
+      userUUID: this.localStorage.getItem(this.options.local_uuid_key),
       projectKey: this.projectKey,
       revID: this.revID,
-      timestamp: timestamp(),
+      timestamp: timestamp(), // shouldn't it be set once?
       trackerVersion: this.version,
       isSnippet: this.options.__is_snippet,
     }
@@ -256,7 +285,7 @@ export default class App {
     }
   }
   getSessionToken(): string | undefined {
-    const token = sessionStorage.getItem(this.options.session_token_key);
+    const token = this.sessionStorage.getItem(this.options.session_token_key);
     if (token !== null) {
       return token;
     }
@@ -301,27 +330,27 @@ export default class App {
 
   resetNextPageSession(flag: boolean) {
     if (flag) {
-      sessionStorage.setItem(this.options.session_reset_key, 't');
+      this.sessionStorage.setItem(this.options.session_reset_key, 't');
     } else {
-      sessionStorage.removeItem(this.options.session_reset_key);
+      this.sessionStorage.removeItem(this.options.session_reset_key);
     }
   }
-  private _start(startOpts: StartOptions): Promise<OnStartInfo> {
+  private _start(startOpts: StartOptions): Promise<StartPromiseReturn> {
     if (!this.worker) {
-      return Promise.reject("No worker found: perhaps, CSP is not set.");
+      return Promise.resolve(UnsuccessfulStart("No worker found: perhaps, CSP is not set."))
     }
     if (this.activityState !== ActivityState.NotActive) { 
-      return Promise.reject("OpenReplay: trying to call `start()` on the instance that has been started already.") 
+      return Promise.resolve(UnsuccessfulStart("OpenReplay: trying to call `start()` on the instance that has been started already.")) 
     }
     this.activityState = ActivityState.Starting;
 
     let pageNo: number = 0;
-    const pageNoStr = sessionStorage.getItem(this.options.session_pageno_key);
+    const pageNoStr = this.sessionStorage.getItem(this.options.session_pageno_key);
     if (pageNoStr != null) {
       pageNo = parseInt(pageNoStr);
       pageNo++;
     }
-    sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
+    this.sessionStorage.setItem(this.options.session_pageno_key, pageNo.toString());
 
     const startInfo = this.getStartInfo()
     const startWorkerMsg: WorkerMessageData = {
@@ -332,10 +361,17 @@ export default class App {
       connAttemptCount: this.options.connAttemptCount,
       connAttemptGap: this.options.connAttemptGap,
     }
-    this.worker.postMessage(startWorkerMsg) // brings delay of 10th ms?
+    this.worker.postMessage(startWorkerMsg)
 
-    const sReset = sessionStorage.getItem(this.options.session_reset_key);
-    sessionStorage.removeItem(this.options.session_reset_key);
+    this.session.update({ // TODO: transparent "session" module logic AND explicit internal api for plugins.
+      // "updating" with old metadata in order to trigger session's UpdateCallbacks. 
+      // (for the case of internal .start() calls, like on "restart" webworker signal or assistent connection in tracker-assist )
+      metadata: startOpts.metadata || this.session.getInfo().metadata,
+      userID: startOpts.userID,
+    })
+
+    const sReset = this.sessionStorage.getItem(this.options.session_reset_key);
+    this.sessionStorage.removeItem(this.options.session_reset_key);
 
     return window.fetch(this.options.ingestPoint + '/v1/web/start', {
       method: 'POST',
@@ -344,8 +380,8 @@ export default class App {
       },
       body: JSON.stringify({
         ...startInfo,
-        userID: startOpts.userID || this.session.getInfo().userID,
-        token: sessionStorage.getItem(this.options.session_token_key),
+        userID: this.session.getInfo().userID,
+        token: this.sessionStorage.getItem(this.options.session_token_key),
         deviceMemory,
         jsHeapSizeLimit,
         reset: startOpts.forceNew || sReset !== null,
@@ -356,7 +392,7 @@ export default class App {
         return r.json()
       } else {
         return r.text().then(text => text === CANCELED 
-          ? Promise.reject(CANCELED) // TODO: return {error: CANCELED} instead
+          ? Promise.reject(CANCELED)
           : Promise.reject(`Server error: ${r.status}. ${text}`)
         );
       }
@@ -371,14 +407,9 @@ export default class App {
           (typeof beaconSizeLimit !== 'number' && typeof beaconSizeLimit !== 'undefined')) {
         return Promise.reject(`Incorrect server response: ${ JSON.stringify(r) }`);
       }
-      sessionStorage.setItem(this.options.session_token_key, token);
-      localStorage.setItem(this.options.local_uuid_key, userUUID);
-      this.session.update({
-        sessionID, // any. TODO check
-        ...startOpts
-      });
-
-      this.activityState = ActivityState.Active
+      this.sessionStorage.setItem(this.options.session_token_key, token);
+      this.localStorage.setItem(this.options.local_uuid_key, userUUID);
+      this.session.update({ sessionID }) // TODO: no no-explicit 'any'
       const startWorkerMsg: WorkerMessageData = {
         type: "auth",
         token,
@@ -386,33 +417,33 @@ export default class App {
       }
       this.worker.postMessage(startWorkerMsg)
 
+      this.activityState = ActivityState.Active
+      
       const onStartInfo = { sessionToken: token, userUUID, sessionID };
 
-      this.startCallbacks.forEach((cb) => cb(onStartInfo));
+      this.startCallbacks.forEach((cb) => cb(onStartInfo)); // TODO: start as early as possible (before receiving the token)
       this.observer.observe();
       this.ticker.start();
 
       this.notify.log("OpenReplay tracking started.");
-      // TODO: get rid of onStart
+      // get rid of onStart ?
       if (typeof this.options.onStart === 'function') {
-        this.options.onStart(onStartInfo);
+        this.options.onStart(onStartInfo)
       }
-      return onStartInfo;
+      return SuccessfulStart(onStartInfo)
     })
     .catch(reason => {        
-      sessionStorage.removeItem(this.options.session_token_key)
+      this.sessionStorage.removeItem(this.options.session_token_key)
       this.stop()
-      //if (reason === CANCELED) { return Promise.resolve(CANCELED) } // TODO: what to return ????? Throwing is baad
+      if (reason === CANCELED) { return UnsuccessfulStart(CANCELED) }
 
-      if (reason !== CANCELED) {
-        this.notify.log("OpenReplay was unable to start. ", reason)
-        this._debug("session_start", reason)
-      }
-      return Promise.reject(reason)
+      this.notify.log("OpenReplay was unable to start. ", reason)
+      this._debug("session_start", reason)
+      return UnsuccessfulStart(START_ERROR)
     })
   }
 
-  start(options: StartOptions = {}): Promise<OnStartInfo> {
+  start(options: StartOptions = {}): Promise<StartPromiseReturn> {
     if (!document.hidden) {
       return this._start(options);
     } else {
@@ -420,25 +451,28 @@ export default class App {
         const onVisibilityChange = () => {
           if (!document.hidden) {
             document.removeEventListener("visibilitychange", onVisibilityChange);
-            resolve(this._start(options));
+            resolve(this._start(options))
           }
         }
         document.addEventListener("visibilitychange", onVisibilityChange);
-      });
+      })
     }
   }
-  stop(): void {
+  stop(calledFromAPI = false): void {
     if (this.activityState !== ActivityState.NotActive) {
       try {
-        if (this.worker) {
-          this.worker.postMessage("stop")
-        }
         this.sanitizer.clear()
         this.observer.disconnect()
         this.nodes.clear()
         this.ticker.stop()
         this.stopCallbacks.forEach((cb) => cb())
+        if (calledFromAPI) {
+          this.session.reset()
+        }
         this.notify.log("OpenReplay tracking stopped.")
+        if (this.worker) {
+          this.worker.postMessage("stop")
+        }
       } finally {
         this.activityState = ActivityState.NotActive
       }

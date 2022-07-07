@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { connectPlayer, jump } from 'Player';
 import { NoContent, Tabs } from 'UI';
@@ -38,13 +39,16 @@ export default class StackEvents extends React.PureComponent {
     return (
       <BottomBlock>
         <BottomBlock.Header>
-          <Tabs 
-            className="uppercase"
-            tabs={ tabs }
-            active={ activeTab } 
-            onClick={ setActiveTab }
-            border={ false }
-        />
+          <div className="flex items-center">
+            <span className="font-semibold color-gray-medium mr-4">Events</span>
+            <Tabs 
+              className="uppercase"
+              tabs={ tabs }
+              active={ activeTab } 
+              onClick={ setActiveTab }
+              border={ false }
+            />
+          </div>
         </BottomBlock.Header>
         <BottomBlock.Content>
           <NoContent

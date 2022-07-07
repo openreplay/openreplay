@@ -1,4 +1,4 @@
-import styles from './screen.css';
+import styles from './screen.module.css';
 import { getState } from '../../../store';
 
 import type { Point } from './types';

@@ -27,7 +27,7 @@ export default Record({
   idKey: 'id',
   methods: {
     validate() {
-      return this.host.length > 0;
+      return this.name.length > 0;
     },
 
     toData() {

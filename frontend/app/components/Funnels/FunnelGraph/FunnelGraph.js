@@ -163,14 +163,10 @@ function FunnelGraph(props) {
           onClick={resetActiveSatges}
         >
           <Popup
-            trigger={
-              <Icon name="sync-alt" size="15" color="teal" />
-            }
             content={ `Reset Selection` }
-            size="tiny"
-            inverted
-            position="top center"
-          />
+          >
+            <Icon name="sync-alt" size="15" color="teal" />
+          </Popup>
         </div>
       )}      
       <BarChart width={800} height={190} data={data} 

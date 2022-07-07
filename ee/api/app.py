@@ -16,7 +16,7 @@ from routers.crons import core_crons
 from routers.crons import core_dynamic_crons
 from routers.subs import dashboard, insights, metrics, v1_api_ee
 
-app = FastAPI()
+app = FastAPI(root_path="/api")
 
 
 @app.middleware('http')

@@ -1,0 +1,26 @@
+FROM python:3.9.12-slim
+LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
+LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+ENV APP_NAME crons
+ENV pg_minconn 2
+ENV pg_maxconn 10
+RUN apt-get update && apt-get install -y pkg-config libxmlsec1-dev gcc && rm -rf /var/lib/apt/lists/*
+# Add Tini
+# Startup daemon
+ENV TINI_VERSION=v0.19.0 \
+    ACTION=""
+ARG envarg
+ENV ENTERPRISE_BUILD ${envarg}
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+WORKDIR /work_tmp
+COPY requirements.txt /work_tmp/requirements.txt
+RUN pip install -r /work_tmp/requirements.txt
+
+WORKDIR /work
+COPY . .
+RUN mv env.default .env && mv entrypoint_crons.sh entrypoint.sh
+
+ENTRYPOINT ["/tini", "--"]
+CMD ./entrypoint.sh

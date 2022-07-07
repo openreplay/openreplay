@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import cn from 'classnames';
 import { Icon, Popup } from 'UI';
 import OutsideClickDetectingDiv from 'Shared/OutsideClickDetectingDiv';
-import cls from './popMenu.css';
+import cls from './popMenu.module.css';
 
 export default React.memo(function PopMenu({ items }) {
   const [ open, setOpen ] = useState(false);

@@ -1,3 +1,4 @@
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { useEffect, useCallback } from 'react';
 import { connect } from 'react-redux';
@@ -8,7 +9,7 @@ import { Popup, Icon } from 'UI';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
 
-import cls from './Controls.css';
+import cls from './Controls.module.css';
 
 
 

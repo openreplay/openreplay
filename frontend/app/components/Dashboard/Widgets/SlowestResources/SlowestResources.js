@@ -1,10 +1,11 @@
+import React from 'react';
 import { Loader, NoContent, DropdownPlain } from 'UI';
 import { Table, widgetHOC } from '../common';
 import Chart from './Chart';
 import ImageInfo from './ImageInfo';
 import { getRE } from 'App/utils';
 import cn from 'classnames';
-import stl from './SlowestResources.css';
+import stl from './SlowestResources.module.css';
 import ResourceType from './ResourceType';
 import CopyPath from './CopyPath';
 import { numberWithCommas } from 'App/utils';
@@ -65,13 +66,13 @@ export default class SlowestResources extends React.PureComponent {
   };
 
   writeOption = (e, { name, value }) => {
-    this.setState({ [ name ]: value })    
+    this.setState({ [ name ]: value })
     this.props.fetchWidget(WIDGET_KEY, this.props.period, this.props.platform, { [ name ]: value === 'all' ? null : value  })
   }
 
   render() {
-    const { data, loading, compare } = this.props;    
-    
+    const { data, loading, compare, isTemplate } = this.props;
+
     return (
       <div>
         <div className={ cn(stl.topActions, 'py-3 flex text-right')}>
@@ -86,8 +87,8 @@ export default class SlowestResources extends React.PureComponent {
           <NoContent
             size="small"
             show={ data.size === 0 }
-          >     
-            <Table cols={ cols } rows={ data } rowClass="group" compare={compare} />
+          >
+            <Table cols={ cols } rows={ data } isTemplate={isTemplate} rowClass="group" compare={compare} />
           </NoContent>
         </Loader>
       </div>

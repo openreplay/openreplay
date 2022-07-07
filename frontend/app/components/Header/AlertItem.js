@@ -1,6 +1,6 @@
 import React from 'react';
 import { Icon } from 'UI';
-import styles from './alertItem.css';
+import styles from './alertItem.module.css';
 
 const AlertItem = ({ alert, onDelete, onEdit }) => (
   <div className={ styles.alertItem }>

@@ -1,7 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import cn from 'classnames';
 import Screen from './ScreenWithLoaders';
-//import cls from './HTMLScreen.css';
+//import cls from './HTMLScreen.module.css';
 
 
 const DEVICE_MAP = {

@@ -1,5 +1,5 @@
-import { 
-  RemoveNodeAttribute, 
+import {
+  RemoveNodeAttribute,
   SetNodeAttribute,
   SetNodeAttributeURLBased,
   SetCSSDataURLBased,
@@ -8,22 +8,19 @@ import {
   CreateElementNode,
   MoveNode,
   RemoveNode,
-} from "../../../messages/index.js";
+} from "../../../common/messages.js";
 import App from "../index.js";
-import { isInstance, inDocument } from "../context.js";
-
-
-function isSVGElement(node: Element): node is SVGElement {
-  return node.namespaceURI === 'http://www.w3.org/2000/svg';
-}
+import { 
+  isRootNode,
+  isTextNode,
+  isElementNode,
+  isSVGElement,
+  hasTag,
+} from "../guards.js";
 
 function isIgnored(node: Node): boolean {
-  if (isInstance(node, Text)) {
-    return false;
-  }
-  if (!isInstance(node, Element)) {
-    return true;
-  }
+  if (isTextNode(node)) { return false }
+  if (!isElementNode(node)) { return true }
   const tag = node.tagName.toUpperCase();
   if (tag === 'LINK') {
     const rel = node.getAttribute('rel');
@@ -39,33 +36,39 @@ function isIgnored(node: Node): boolean {
   );
 }
 
-function isRootNode(node: Node): boolean {
-  return isInstance(node, Document) || isInstance(node, ShadowRoot);
+function isObservable(node: Node): boolean {
+  if (isRootNode(node)) { return true }
+  return !isIgnored(node)
 }
 
-function isObservable(node: Node): boolean {
-  if (isRootNode(node)) {
-    return true;
-  }
-  return !isIgnored(node);
+
+/*
+  TODO:
+    - fix unbinding logic + send all removals first (ensure sequence is correct)
+    - use document as a 0-node in the upper context (should be updated in player at first)
+*/
+
+enum RecentsType {
+  New,
+  Removed,
+  Changed,
 }
 
 export default abstract class Observer {
   private readonly observer: MutationObserver;
   private readonly commited: Array<boolean | undefined> = [];
-  private readonly recents: Array<boolean | undefined> = [];
-  private readonly myNodes: Array<boolean | undefined> = [];
+  private readonly recents: Map<number, RecentsType> = new Map()
   private readonly indexes: Array<number> = [];
-  private readonly attributesList: Array<Set<string> | undefined> = [];
+  private readonly attributesMap: Map<number, Set<string>> = new Map();
   private readonly textSet: Set<number> = new Set();
   constructor(protected readonly app: App, protected readonly isTopContext = false) {
     this.observer = new MutationObserver(
       this.app.safe((mutations) => {
-        for (const mutation of mutations) {
+        for (const mutation of mutations) {  // mutations order is sequential
           const target = mutation.target;
           const type = mutation.type;
 
-          if (!isObservable(target) || !inDocument(target)) {
+          if (!isObservable(target)) {
             continue;
           }
           if (type === 'childList') {
@@ -81,17 +84,17 @@ export default abstract class Observer {
           if (id === undefined) {
             continue;
           }
-          if (id >= this.recents.length) { // TODO: something more convinient
-            this.recents[id] = undefined;
+          if (!this.recents.has(id)) {
+            this.recents.set(id, RecentsType.Changed) // TODO only when altered
           }
           if (type === 'attributes') {
             const name = mutation.attributeName;
             if (name === null) {
               continue;
             }
-            let attr = this.attributesList[id];
+            let attr = this.attributesMap.get(id)
             if (attr === undefined) {
-              this.attributesList[id] = attr = new Set();
+              this.attributesMap.set(id, attr = new Set())
             }
             attr.add(name);
             continue;
@@ -107,9 +110,9 @@ export default abstract class Observer {
   }
   private clear(): void {
     this.commited.length = 0;
-    this.recents.length = 0;
+    this.recents.clear()
     this.indexes.length = 1;
-    this.attributesList.length = 0;
+    this.attributesMap.clear();
     this.textSet.clear();
   }
 
@@ -147,7 +150,7 @@ export default abstract class Observer {
     }
     if (
       name === 'value' &&
-      isInstance(node, HTMLInputElement) &&
+      hasTag(node, "INPUT") &&
       node.type !== 'button' &&
       node.type !== 'reset' &&
       node.type !== 'submit'
@@ -158,7 +161,7 @@ export default abstract class Observer {
       this.app.send(new RemoveNodeAttribute(id, name));
       return;
     }
-    if (name === 'style' || name === 'href' && isInstance(node, HTMLLinkElement)) {
+    if (name === 'style' || name === 'href' && hasTag(node, "LINK")) {
       this.app.send(new SetNodeAttributeURLBased(id, name, value, this.app.getBaseHref()));
       return;
     }
@@ -169,7 +172,7 @@ export default abstract class Observer {
   }
 
   private sendNodeData(id: number, parentElement: Element, data: string): void {
-    if (isInstance(parentElement, HTMLStyleElement) || isInstance(parentElement, SVGStyleElement)) {
+    if (hasTag(parentElement, "STYLE") || hasTag(parentElement, "style")) {
       this.app.send(new SetCSSDataURLBased(id, data, this.app.getBaseHref()));
       return;
     }
@@ -178,11 +181,12 @@ export default abstract class Observer {
   }
 
   private bindNode(node: Node): void {
-    const r = this.app.nodes.registerNode(node);
-    const id = r[0];
-    this.recents[id] = r[1] || this.recents[id] || false;
-
-    this.myNodes[id] = true;
+    const [ id,  isNew ]= this.app.nodes.registerNode(node);
+    if (isNew){
+      this.recents.set(id, RecentsType.New)
+    } else if (this.recents.get(id) !== RecentsType.New) { // can we do just `else` here?
+      this.recents.set(id, RecentsType.Removed)
+    }
   }
 
   private bindTree(node: Node): void {
@@ -209,22 +213,26 @@ export default abstract class Observer {
 
   private unbindNode(node: Node): void {
     const id = this.app.nodes.unregisterNode(node);
-    if (id !== undefined && this.recents[id] === false) {
+    if (id !== undefined && this.recents.get(id) === RecentsType.Removed) {
       this.app.send(new RemoveNode(id));
     }
   }
 
+  // A top-consumption function on the infinite lists test. (~1% of performance resources)
   private _commitNode(id: number, node: Node): boolean {
     if (isRootNode(node)) {
       return true;
     }
     const parent = node.parentNode;
     let parentID: number | undefined;
+
     // Disable parent check for the upper context HTMLHtmlElement, because it is root there... (before)
     // TODO: get rid of "special" cases (there is an issue with CreateDocument altered behaviour though)
-    // TODO: Clean the logic (though now it workd fine) 
-    if (!isInstance(node, HTMLHtmlElement) || !this.isTopContext) {
+    // TODO: Clean the logic (though now it workd fine)
+    if (!hasTag(node, "HTML") || !this.isTopContext) {
       if (parent === null) {
+        // Sometimes one observation contains attribute mutations for the removimg node, which gets ignored here.
+        // That shouldn't affect the visual rendering ( should it? )
         this.unbindNode(node);
         return false;
       }
@@ -238,7 +246,11 @@ export default abstract class Observer {
         return false;
       }
       this.app.sanitizer.handleNode(id, parentID, node);
+      if (this.app.sanitizer.isMaskedContainer(parentID)) {
+        return false;
+      }
     }
+    // From here parentID === undefined if node is top context HTML node
     let sibling = node.previousSibling;
     while (sibling !== null) {
       const siblingID = this.app.nodes.getID(sibling);
@@ -250,43 +262,53 @@ export default abstract class Observer {
       sibling = sibling.previousSibling;
     }
     if (sibling === null) {
-      this.indexes[id] = 0; //
+      this.indexes[id] = 0;
     }
-    const isNew = this.recents[id];
-    const index = this.indexes[id];
+    const recentsType = this.recents.get(id)
+    const isNew = recentsType === RecentsType.New
+    const index = this.indexes[id]
     if (index === undefined) {
       throw 'commitNode: missing node index';
     }
-    if (isNew === true) {
-      if (isInstance(node, Element)) {
+    if (isNew) {
+      if (isElementNode(node)) {
+        let el: Element = node
         if (parentID !== undefined) {
-          this.app.send(new 
+          if (this.app.sanitizer.isMaskedContainer(id)) {
+            const width = el.clientWidth;
+            const height = el.clientHeight;
+            el = node.cloneNode() as Element;
+            (el as HTMLElement | SVGElement).style.width = width + 'px';
+            (el as HTMLElement | SVGElement).style.height = height + 'px';
+          }
+
+          this.app.send(new
             CreateElementNode(
               id,
               parentID,
               index,
-              node.tagName,
+              el.tagName,
               isSVGElement(node),
             ),
           );
         }
-        for (let i = 0; i < node.attributes.length; i++) {
-          const attr = node.attributes[i];
-          this.sendNodeAttribute(id, node, attr.nodeName, attr.value);
+        for (let i = 0; i < el.attributes.length; i++) {
+          const attr = el.attributes[i];
+          this.sendNodeAttribute(id, el, attr.nodeName, attr.value);
         }
-      } else if (isInstance(node, Text)) {
+      } else if (isTextNode(node)) {
         // for text node id != 0, hence parentID !== undefined and parent is Element
         this.app.send(new CreateTextNode(id, parentID as number, index));
         this.sendNodeData(id, parent as Element, node.data);
       }
       return true;
     }
-    if (isNew === false && parentID !== undefined) {
+    if (recentsType === RecentsType.Removed && parentID !== undefined) {
       this.app.send(new MoveNode(id, parentID, index));
     }
-    const attr = this.attributesList[id];
+    const attr = this.attributesMap.get(id);
     if (attr !== undefined) {
-      if (!isInstance(node, Element)) {
+      if (!isElementNode(node)) {
         throw 'commitNode: node is not an element';
       }
       for (const name of attr) {
@@ -294,7 +316,7 @@ export default abstract class Observer {
       }
     }
     if (this.textSet.has(id)) {
-      if (!isInstance(node, Text)) {
+      if (!isTextNode(node)) {
         throw 'commitNode: node is not a text';
       }
       // for text node id != 0, hence parent is Element
@@ -313,19 +335,14 @@ export default abstract class Observer {
     }
     return (this.commited[id] = this._commitNode(id, node));
   }
-  private commitNodes(): void {
+  private commitNodes(isStart: boolean = false): void {
     let node;
-    for (let id = 0; id < this.recents.length; id++) {
-      // TODO: make things/logic nice here.
-      // commit required in any case if recents[id] true or false (in case of unbinding) or undefined (in case of attr change).
-      // Possible solution: separate new node commit (recents) and new attribute/move node commit
-      // Otherwise commitNode is called on each node, which might be a lot
-      if (!this.myNodes[id]) { continue }
+    this.recents.forEach((type, id) => {
       this.commitNode(id);
-      if (this.recents[id] === true && (node = this.app.nodes.getNode(id))) {
-        this.app.nodes.callNodeCallbacks(node);
+      if (type === RecentsType.New && (node = this.app.nodes.getNode(id))) {
+        this.app.nodes.callNodeCallbacks(node, isStart)
       }
-    }
+    })
     this.clear();
   }
 
@@ -341,12 +358,11 @@ export default abstract class Observer {
     });
     this.bindTree(nodeToBind);
     beforeCommit(this.app.nodes.getID(node))
-    this.commitNodes();
+    this.commitNodes(true)
   }
 
   disconnect(): void {
     this.observer.disconnect();
     this.clear();
-    this.myNodes.length = 0;
   }
 }

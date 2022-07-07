@@ -1,5 +1,6 @@
+import React from 'react';
 import cn from 'classnames';
-import styles from './linkStyledInput.css';
+import styles from './linkStyledInput.module.css';
 
 export default class LinkStyledInput extends React.PureComponent {
   state = {

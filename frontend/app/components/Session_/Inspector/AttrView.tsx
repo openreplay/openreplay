@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import InlineInput from './InlineInput';
-import stl from './inspector.css';
+import stl from './inspector.module.css';
 import cn from 'classnames';
 
 interface Props {

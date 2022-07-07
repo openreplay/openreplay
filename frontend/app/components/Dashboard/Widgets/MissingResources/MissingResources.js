@@ -1,3 +1,4 @@
+import React from 'react';
 import { Loader, NoContent } from 'UI';
 import { Table, widgetHOC } from '../common';
 import Chart from './Chart';
@@ -8,7 +9,7 @@ const cols = [
   {
     key: 'resource',
     title: 'Resource',
-    Component: ResourceInfo,    
+    Component: ResourceInfo,
     width: '40%',
   },
   {
@@ -49,6 +50,7 @@ export default class MissingResources extends React.PureComponent {
             rows={ resources }
             rowClass="group"
             compare={compare}
+            isTemplate={this.props.isTemplate}
           />
         </NoContent>
       </Loader>

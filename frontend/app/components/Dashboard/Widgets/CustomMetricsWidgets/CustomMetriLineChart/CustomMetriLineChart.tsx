@@ -31,9 +31,10 @@ function CustomMetriLineChart(props: Props) {
                 <YAxis 
                     {...Styles.yaxis}
                     allowDecimals={false}
+                    tickFormatter={val => Styles.tickFormatter(val)}
                     label={{  
-                    ...Styles.axisLabelLeft,
-                    value: "Number of Sessions"
+                        ...Styles.axisLabelLeft,
+                        value: "Number of Sessions"
                     }}
                 />
                 <Legend />

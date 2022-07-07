@@ -1,3 +1,4 @@
+import React from 'react';
 import cn from 'classnames';
 import { getRE } from 'App/utils';
 import { Icon, NoContent, Tabs, Input } from 'UI';
@@ -5,7 +6,7 @@ import { jump } from 'Player';
 import { LEVEL } from 'Types/session/log'; 
 import Autoscroll from '../Autoscroll';
 import BottomBlock from '../BottomBlock';
-import stl from './console.css';
+import stl from './console.module.css';
 
 
 const ALL = 'ALL';
@@ -21,7 +22,7 @@ const LEVEL_TAB = {
   [ LEVEL.EXCEPTION ]: ERRORS,
 };
 
-const TABS = [ ALL, INFO, WARNINGS, ERRORS ].map(tab => ({ text: tab, key: tab }));
+const TABS = [ ALL, ERRORS, WARNINGS, INFO,  ].map(tab => ({ text: tab, key: tab }));
 
 // eslint-disable-next-line complexity
 const getIconProps = (level) => {
@@ -76,15 +77,18 @@ export default class ConsoleContent extends React.PureComponent {
       <>
         <BottomBlock style={{ height: 300 + additionalHeight + 'px' }}>
           <BottomBlock.Header showClose={!isResult}>
-            <Tabs 
-              tabs={ TABS }
-              active={ activeTab }
-              onClick={ this.onTabClick }
-              border={ false }              
-            />
+            <div className="flex items-center">
+              <span className="font-semibold color-gray-medium mr-4">Console</span>
+              <Tabs 
+                tabs={ TABS }
+                active={ activeTab }
+                onClick={ this.onTabClick }
+                border={ false }              
+              />
+            </div>
             <Input
               className="input-small"
-              placeholder="Filter"
+              placeholder="Filter by keyword"
               icon="search"
               iconPosition="left"
               name="filter"

@@ -1,14 +1,14 @@
-import { Label } from 'semantic-ui-react';
-import styles from './label.css';
+import React from 'react';
+import styles from './label.module.css';
 import cn from 'classnames';
 
 export default ({
   children, className, ...props
 }) => (
-  <Label
+  <div
     { ...props }
-    className={ cn(className, styles.label, 'border') }
+    className={ cn('border rounded bg-gray-lightest px-2 w-fit', className) }
   >
     { children }
-  </Label>
+  </div>
 );

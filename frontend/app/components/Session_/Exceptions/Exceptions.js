@@ -1,3 +1,4 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import { getRE } from 'App/utils';
 import { NoContent, Loader, Input, ErrorItem, SlideModal, ErrorDetails, ErrorHeader,Link, QuestionMarkHint } from 'UI';
@@ -23,7 +24,7 @@ export default class Exceptions extends React.PureComponent {
     currentError: null
   }
 
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
 
   setCurrentError = (err) => {
     const { session } = this.props;
@@ -73,22 +74,24 @@ export default class Exceptions extends React.PureComponent {
         <BottomBlock>
           <BottomBlock.Header>
             <Input
-              className="input-small"
+              // className="input-small"
               placeholder="Filter by name or message"
               icon="search"
               iconPosition="left"
               name="filter"
               onChange={ this.onFilterChange }
             />
+            <div className="mr-8">
             <QuestionMarkHint
+              onHover={true}
               content={ 
                 <>
-                  <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/plugins/sourcemaps">Upload Source Maps </a>
+                  <a className="color-teal underline" target="_blank" href="https://docs.openreplay.com/installation/upload-sourcemaps">Upload Source Maps </a>
                   and see source code context obtained from stack traces in their original form.
                 </>
               }
-              className="mr-8"
             />
+            </div>
           </BottomBlock.Header>
           <BottomBlock.Content>
             <NoContent

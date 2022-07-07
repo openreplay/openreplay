@@ -93,6 +93,5 @@ func (r *Rewriter) RewriteURL(sessionID uint64, baseURL string, relativeURL stri
 		Host:   r.assetsURL.Host,
 		Scheme: r.assetsURL.Scheme,
 	}
-
 	return u.String()
 }

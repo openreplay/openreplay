@@ -1,6 +1,6 @@
 import React from 'react';
 import { ToastContainer, Flip } from 'react-toastify';
-import styles from './notification.css'
+import styles from './notification.module.css'
 
 export default ({ transition = Flip, position = 'bottom-right', autoClose = 3000, ...props }) => (
   <ToastContainer
@@ -12,6 +12,7 @@ export default ({ transition = Flip, position = 'bottom-right', autoClose = 3000
     autoClose={ autoClose }
     className={ styles.container }
     toastClassName={ styles.toast }
+    closeButton={false}
     { ...props }
   />
 );

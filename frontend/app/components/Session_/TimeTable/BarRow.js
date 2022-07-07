@@ -1,7 +1,8 @@
+import React from 'react';
 import { Popup } from 'UI';
 import { percentOf } from 'App/utils'; 
-import styles from './barRow.css'
-import tableStyles from './timeTable.css';
+import styles from './barRow.module.css'
+import tableStyles from './timeTable.module.css';
 
 const formatTime = time => time < 1000 ? `${ time.toFixed(2) }ms` : `${ time / 1000 }s`;
 
@@ -38,7 +39,8 @@ const BarRow = ({ resource: { time, ttfb = 0, duration, key }, popup=false, time
     <div key={ key } className={ tableStyles.row } >
       <Popup
         basic
-        trigger={ trigger }
+        style={{ width: '100%' }}
+        unmountHTMLWhenHide
         content={ 
           <React.Fragment>
             { ttfb != null &&
@@ -71,9 +73,9 @@ const BarRow = ({ resource: { time, ttfb = 0, duration, key }, popup=false, time
             </div>
           </React.Fragment> 
         }
-        size="mini"
-        position="top center"
-      /> 
+      >
+        {trigger}
+      </Popup> 
     </div>
   );  
 }

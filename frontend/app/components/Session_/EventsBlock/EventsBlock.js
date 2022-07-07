@@ -1,30 +1,30 @@
+import React from 'react';
 import { connect } from 'react-redux';
 import cn from 'classnames';
+import { Icon } from 'UI';
 import { List, AutoSizer, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 import { TYPES } from 'Types/session/event';
 import { setSelected } from 'Duck/events';
 import { setEventFilter } from 'Duck/sessions';
 import { show as showTargetDefiner } from 'Duck/components/targetDefiner';
-import AutomateButton from './AutomateButton';
-import UserCard from './UserCard';
 import EventGroupWrapper from './EventGroupWrapper';
-import styles from './eventsBlock.css';
+import styles from './eventsBlock.module.css';
 import EventSearch from './EventSearch/EventSearch';
 
-@connect(state => ({  
+@connect(state => ({
   session: state.getIn([ 'sessions', 'current' ]),
   filteredEvents: state.getIn([ 'sessions', 'filteredEvents' ]),
   eventsIndex: state.getIn([ 'sessions', 'eventsIndex' ]),
   selectedEvents: state.getIn([ 'events', 'selected' ]),
   targetDefinerDisplayed: state.getIn([ 'components', 'targetDefiner', 'isDisplayed' ]),
-  testsAvaliable: false,  
+  testsAvaliable: false,
 }), {
   showTargetDefiner,
   setSelected,
   setEventFilter
 })
 export default class EventsBlock extends React.PureComponent {
-  state = { 
+  state = {
     editingEvent: null,
     mouseOver: false,
     query: ''
@@ -36,14 +36,14 @@ export default class EventsBlock extends React.PureComponent {
     defaultHeight: 300
   });
 
-  write = ({ target: { value, name } }) => { 
+  write = ({ target: { value, name } }) => {
     const { filter } = this.state;
     this.setState({ query: value })
-    this.props.setEventFilter({ query: value, filter })    
-    
-    setTimeout(() => {      
+    this.props.setEventFilter({ query: value, filter })
+
+    setTimeout(() => {
       if (!this.scroller.current) return;
-      
+
       this.scroller.current.scrollToRow(0);
     }, 100)
   }
@@ -55,11 +55,11 @@ export default class EventsBlock extends React.PureComponent {
 
     this.scroller.current.forceUpdateGrid();
 
-    setTimeout(() => {      
+    setTimeout(() => {
       if (!this.scroller.current) return;
-      
+
       this.scroller.current.scrollToRow(0);
-    }, 100)    
+    }, 100)
   }
 
   onSetEventFilter = (e, { name, value }) => {
@@ -84,7 +84,7 @@ export default class EventsBlock extends React.PureComponent {
       if (!this.state.mouseOver) {
         this.scroller.current.scrollToRow(this.props.currentTimeEventIndex);
       }
-    }        
+    }
   }
 
   onCheckboxClick(e, event) {
@@ -124,7 +124,7 @@ export default class EventsBlock extends React.PureComponent {
   onMouseLeave = () => this.setState({ mouseOver: false })
 
   renderGroup = ({ index, key, style, parent }) => {
-    const { 
+    const {
       session: { events },
       selectedEvents,
       currentTimeEventIndex,
@@ -141,17 +141,19 @@ export default class EventsBlock extends React.PureComponent {
     const isSelected = selectedEvents.includes(event);
     const isCurrent = index === currentTimeEventIndex;
     const isEditing = this.state.editingEvent === event;
+
+    const heightBug = index === 0 && event.type === TYPES.LOCATION && event.referrer ? { top: 2 } : {}
     return (
-      <CellMeasurer 
+      <CellMeasurer
         key={key}
         cache={this.cache}
-        parent={parent}        
+        parent={parent}
         rowIndex={index}
       >
         {({measure, registerChild}) => (
-          <div style={style} ref={registerChild}>
+          <div style={{ ...style, ...heightBug }} ref={registerChild}>
             <EventGroupWrapper
-              query={query}              
+              query={query}
               presentInSearch={eventsIndex.includes(index)}
               isFirst={index==0}
               mesureHeight={measure}
@@ -173,57 +175,52 @@ export default class EventsBlock extends React.PureComponent {
 
   render() {
     const { query } = this.state;
-    const {      
+    const {
       testsAvaliable,
       session: {
         events,
-        userNumericHash,
-        userDisplayName,        
-        userId,
-        revId,
-        userAnonymousId
       },
-      filteredEvents
+      filteredEvents,
+      setActiveTab,
     } = this.props;
 
     const _events = filteredEvents || events;
 
+    const isEmptySearch = query && (_events.size === 0 || !_events)
     return (
       <>
-        <div className={ cn(styles.header, 'p-3') }>
-          <UserCard
-            className=""
-            userNumericHash={userNumericHash}
-            userDisplayName={userDisplayName}
-            userId={userId}
-            revId={revId}
-            userAnonymousId={userAnonymousId}
-          />
-
-          <div className={ cn(styles.hAndProgress, 'mt-3') }>            
+        <div className={ cn(styles.header, 'p-4') }>
+          <div className={ cn(styles.hAndProgress, 'mt-3') }>
             <EventSearch
               onChange={this.write}
               clearSearch={this.clearSearch}
+              setActiveTab={setActiveTab}
               value={query}
               header={
-                <div className="text-lg">{ `User Events (${ events.size })` }</div>
+                <div className="text-xl">User Events <span className="color-gray-medium">{ events.size }</span></div>
               }
             />
-          </div>          
+          </div>
         </div>
-        <div 
-          className={ cn("flex-1 px-3 pb-3", styles.eventsList) } 
-          id="eventList" 
+        <div
+          className={ cn("flex-1 px-4 pb-4", styles.eventsList) }
+          id="eventList"
           data-openreplay-masked
           onMouseOver={ this.onMouseOver }
           onMouseLeave={ this.onMouseLeave }
         >
+          {isEmptySearch && (
+            <div className='flex items-center'>
+              <Icon name="binoculars" size={18} />
+              <span className='ml-2'>No Matching Results</span>
+            </div>
+          )}
           <AutoSizer disableWidth>
             {({ height }) => (
-              <List                
+              <List
                 ref={this.scroller}
                 className={ styles.eventsList }
-                height={height}
+                height={height + 10}
                 width={248}
                 overscanRowCount={6}
                 itemSize={230}
@@ -231,12 +228,11 @@ export default class EventsBlock extends React.PureComponent {
                 deferredMeasurementCache={this.cache}
                 rowHeight={this.cache.rowHeight}
                 rowRenderer={this.renderGroup}
-                scrollToAlignment="start"                
+                scrollToAlignment="start"
               />
             )}
           </AutoSizer>
         </div>
-        { testsAvaliable && <AutomateButton /> }
       </>
     );
   }

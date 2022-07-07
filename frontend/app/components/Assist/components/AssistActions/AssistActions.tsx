@@ -11,8 +11,8 @@ import RequestLocalStream from 'Player/MessageDistributor/managers/LocalStream';
 import type { LocalStream } from 'Player/MessageDistributor/managers/LocalStream';
 
 import { toast } from 'react-toastify';
-import { confirm } from 'UI/Confirmation';
-import stl from './AassistActions.css'
+import { confirm } from 'UI';
+import stl from './AassistActions.module.css'
 
 function onClose(stream) {
   stream.getTracks().forEach(t=>t.stop());
@@ -88,7 +88,7 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
             className={
               cn(
                 'cursor-pointer p-2 flex items-center',
-                // {[stl.disabled]: cannotCall}
+                {[stl.disabled]: cannotCall}
               )
             }
             onClick={ () => toggleAnnotation(!annotating) }
@@ -114,25 +114,21 @@ function AssistActions({ toggleChatWindow, userId, calling, annotating, peerConn
       <div className={ stl.divider } />
       
       <Popup
-        trigger={
-          <div
-            className={
-              cn(
-                'cursor-pointer p-2 flex items-center',
-                {[stl.disabled]: cannotCall}
-              )
-            }
-            onClick={ onCall ? callObject?.end : confirmCall}
-            role="button"
-          >
-            <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
-          </div>
-        }
         content={ cannotCall ? "You don’t have the permissions to perform this action." : `Call ${userId ? userId : 'User'}` }
-        size="tiny"
-        inverted
-        position="top right"
-      />
+      >
+        <div
+          className={
+            cn(
+              'cursor-pointer p-2 flex items-center',
+              {[stl.disabled]: cannotCall}
+            )
+          }
+          onClick={ onCall ? callObject?.end : confirmCall}
+          role="button"
+        >
+          <IconButton size="small" primary={!onCall} red={onCall} label={onCall ? 'End' : 'Call'} icon="headset" />
+        </div>
+      </Popup>
 
       <div className="fixed ml-3 left-0 top-0" style={{ zIndex: 999 }}>
         { onCall && callObject && <ChatWindow endCall={callObject.end} userId={userId} incomeStream={incomeStream} localStream={localStream} /> }
@@ -145,7 +141,7 @@ const con = connect(state => {
   const permissions = state.getIn([ 'user', 'account', 'permissions' ]) || []
   return {
     hasPermission: permissions.includes('ASSIST_CALL'),
-    isEnterprise: state.getIn([ 'user', 'client', 'edition' ]) === 'ee',
+    isEnterprise: state.getIn([ 'user', 'account', 'edition' ]) === 'ee',
   }
 }, { toggleChatWindow })
 

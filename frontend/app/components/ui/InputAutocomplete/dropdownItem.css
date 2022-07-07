@@ -1,5 +1,5 @@
 .wrapper {
   & .values {
-    color: red;
+    color: #CC0000;
   }
 }
