@@ -90,8 +90,16 @@ spec:
               containerPort: {{ $val }}
               protocol: TCP
             {{- end }}
+          {{- with .Values.persistence.mounts  }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.persistence.volumes  }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
