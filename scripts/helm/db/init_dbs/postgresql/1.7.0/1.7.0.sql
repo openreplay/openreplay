@@ -46,7 +46,7 @@ ALTER TABLE IF EXISTS events.resources
 
 COMMIT;
 CREATE INDEX CONCURRENTLY IF NOT EXISTS projects_project_id_deleted_at_n_idx ON public.projects (project_id) WHERE deleted_at IS NULL;
-ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'predefined';
+ALTER TYPE metric_type ADD VALUE IF NOT EXISTS 'funnel';
 
 INSERT INTO metrics (name, category, default_config, is_predefined, is_template, is_public, predefined_key, metric_type,
                      view_type)
