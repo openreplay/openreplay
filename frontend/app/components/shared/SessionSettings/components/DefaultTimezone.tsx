@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Toggler, Button } from 'UI';
+import { Button } from 'UI';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
 import { useObserver } from 'mobx-react-lite';
@@ -34,13 +34,13 @@ const generateGMTZones = (): TimezonesDropdown => {
         timezones.push({ label: tz, value: isUTC ? 'UTC' : dropdownValue })
     }
 
-    timezones.splice(17, 0, { label: 'GMT +05:30', value: 'GMT +05:30' })
+    timezones.splice(17, 0, { label: 'GMT +05:30', value: 'UTC+05:30' })
     return timezones
 }
 
 const timezoneOptions: TimezonesDropdown = [...generateGMTZones()]
 
-function DefaultTimezone(props) {
+function DefaultTimezone() {
     const [changed, setChanged] = React.useState(false);
     const { settingsStore } = useStore();
     const [timezone, setTimezone] = React.useState(settingsStore.sessionSettings.timezone);
