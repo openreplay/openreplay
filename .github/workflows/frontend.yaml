@@ -54,27 +54,6 @@ jobs:
         docker push $DOCKER_REPO/frontend:${IMAGE_TAG}
         docker push $DOCKER_REPO/frontend:${IMAGE_TAG}-ee
 
-    - name: Creating old image input
-      run: |
-        set -x
-        #
-        # Create yaml with existing image tags
-        #
-        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
-        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
-
-        echo > /tmp/image_override.yaml
-
-        for line in `cat /tmp/image_tag.txt`;
-        do
-            image_array=($(echo "$line" | tr ':' '\n'))
-            cat <<EOF >> /tmp/image_override.yaml
-        ${image_array[0]}:
-          image:
-            tag: ${image_array[1]}
-        EOF
-        done
-
     - name: Deploy to kubernetes foss
       run: |
         cd scripts/helmcharts/
@@ -104,9 +83,6 @@ jobs:
 
 ### Enterprise code deployment 
 
-    - name: cleaning old assets
-      run: |
-        rm -rf /tmp/image_*
     - uses: azure/k8s-set-context@v1
       with:
         method: kubeconfig
