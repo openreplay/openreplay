@@ -160,27 +160,43 @@ ON CONFLICT (predefined_key) DO UPDATE
         metric_type=excluded.metric_type,
         view_type=excluded.view_type;
 
--- BEGIN;
--- DO
--- $$
---     BEGIN
---         IF (NOT EXISTS(SELECT 1 FROM metrics WHERE metric_type = 'funnel') AND
---             EXISTS(SELECT 1 FROM funnels WHERE deleted_at ISNULL))
---         THEN
---             ALTER TABLE IF EXISTS metrics
---                 ADD COLUMN IF NOT EXISTS _funnel_filter jsonb NULL;
---             WITH f_t_m AS (INSERT INTO metrics (project_id, user_id, name, metric_type, is_public, _funnel_filter)
---                 SELECT project_id, user_id, name, 'funnel', is_public, filter
---                 FROM funnels
---                 WHERE deleted_at ISNULL
---                 RETURNING metric_id,_funnel_filter)
---             INSERT
---             INTO metric_series(metric_id, name, filter, index)
---             SELECT metric_id, 'Series 1', _funnel_filter, 0
---             FROM f_t_m;
---             ALTER TABLE IF EXISTS metrics
---                 DROP COLUMN IF EXISTS _funnel_filter;
---         END IF;
---     END
--- $$;
--- COMMIT;
+BEGIN;
+DO
+$$
+    BEGIN
+        IF (NOT EXISTS(SELECT 1 FROM metrics WHERE metric_type = 'funnel') AND
+            EXISTS(SELECT 1 FROM funnels WHERE deleted_at ISNULL))
+        THEN
+            ALTER TABLE IF EXISTS metrics
+                ADD COLUMN IF NOT EXISTS _funnel_filter jsonb NULL;
+            WITH f_t_m AS (INSERT INTO metrics (project_id, user_id, name, metric_type, is_public, _funnel_filter)
+                SELECT project_id,
+                       user_id,
+                       name,
+                       'funnel',
+                       is_public,
+                       jsonb_set(filter, '{events}', COALESCE(jsonb_agg(jsonb_set(elm, '{value}',
+                                                                                  CASE
+                                                                                      WHEN jsonb_typeof(value -> 'value') = 'array'
+                                                                                          THEN (value -> 'value')
+                                                                                      ELSE to_jsonb(string_to_array(value ->> 'value', '')) END))
+                                                              FILTER (WHERE value -> 'value' IS NOT NULL),
+                                                              '[]')) AS filter
+                FROM funnels
+                         LEFT JOIN jsonb_array_elements(filter -> 'events') AS elm ON true
+                WHERE deleted_at ISNULL
+                GROUP BY project_id,
+                         user_id,
+                         name,
+                         is_public, filter
+                RETURNING metric_id,_funnel_filter)
+            INSERT
+            INTO metric_series(metric_id, name, filter, index)
+            SELECT metric_id, 'Series 1', _funnel_filter, 0
+            FROM f_t_m;
+            ALTER TABLE IF EXISTS metrics
+                DROP COLUMN IF EXISTS _funnel_filter;
+        END IF;
+    END
+$$;
+COMMIT;
