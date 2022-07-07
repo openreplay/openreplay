@@ -4,19 +4,25 @@ import { Icon } from 'UI';
 import colors from 'App/theme/colors';
 const { ValueContainer } = components;
 
-interface Props {
-    options: any[];
+type ValueObject = {
+    value: string,
+    label: string
+}
+
+interface Props<Value extends ValueObject> {
+    options: Value[];
     isSearchable?: boolean;
     defaultValue?: string;
     plain?: boolean;
     components?: any;
     styles?: any;
-    onChange: (value: any) => void;
+    onChange: (newValue: { name: string, value: Value }) => void;
     name?: string;
     placeholder?: string;
     [x:string]: any;
 }
-export default function({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props) {
+
+export default function<Value extends ValueObject>({ placeholder='Select', name = '', onChange, right = false, plain = false, options, isSearchable = false, components = {}, styles = {}, defaultValue = '', ...rest }: Props<Value>) {
     const defaultSelected = defaultValue ? (options.find(o => o.value === defaultValue) || options[0]): null;
     const customStyles = {
         option: (provided: any, state: any) => ({

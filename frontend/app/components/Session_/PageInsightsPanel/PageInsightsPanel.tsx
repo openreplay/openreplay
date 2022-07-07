@@ -54,7 +54,7 @@ function PageInsightsPanel({
     }
   }, [insightsFilters])
 
-  const onPageSelect = (e, { name, value }) => {
+  const onPageSelect = ({ value }: { value: Array<any> }) => {
     const event = events.find(item => item.url === value)
     Player.jump(event.time + JUMP_OFFSET)
     setInsightsFilters({ ...insightsFilters, url: host + value })
