@@ -8,7 +8,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     // "module": "es6",
-    // "target": "es5",
+    "target": "es6",
     "allowJs": true,
     "isolatedModules": true,
     "moduleResolution": "node",
