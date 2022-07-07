@@ -35,6 +35,11 @@ func (p *Producer) Produce(topic string, key uint64, value []byte) error {
 	return nil
 }
 
+func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value []byte) error {
+	// not implemented
+	return nil
+}
+
 func (p *Producer) Close(_ int) {
 	// noop
 }

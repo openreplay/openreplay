@@ -1,8 +1,10 @@
 package messages
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"strings"
 )
 
 func ReadBatchReader(reader io.Reader, messageHandler func(Message)) error {
@@ -14,7 +16,15 @@ func ReadBatchReader(reader io.Reader, messageHandler func(Message)) error {
 		if err == io.EOF {
 			return nil
 		} else if err != nil {
-			return errors.Wrapf(err, "Batch Message decoding error on message with index %v", index)
+			if strings.HasPrefix(err.Error(), "Unknown message code:") {
+				code := strings.TrimPrefix(err.Error(), "Unknown message code: ")
+				msg, err = DecodeExtraMessage(code, reader)
+				if err != nil {
+					return fmt.Errorf("can't decode msg: %s", err)
+				}
+			} else {
+				return errors.Wrapf(err, "Batch Message decoding error on message with index %v", index)
+			}
 		}
 		msg = transformDeprecated(msg)
 

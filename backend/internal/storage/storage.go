@@ -54,26 +54,19 @@ func New(cfg *config.Config, s3 *storage.S3, metrics *monitoring.Metrics) (*Stor
 	}, nil
 }
 
-func (s *Storage) UploadKey(key string, retryCount int) {
+func (s *Storage) UploadKey(key string, retryCount int) error {
 	start := time.Now()
 	if retryCount <= 0 {
-		return
+		return nil
 	}
 
 	file, err := os.Open(s.cfg.FSDir + "/" + key)
 	if err != nil {
 		sessID, _ := strconv.ParseUint(key, 10, 64)
-		log.Printf("File error: %v; Will retry %v more time(s); sessID: %s, part: %d, sessStart: %s\n",
-			err,
-			retryCount,
-			key,
-			sessID%16,
+		return fmt.Errorf("File open error: %v; sessID: %s, part: %d, sessStart: %s\n",
+			err, key, sessID%16,
 			time.UnixMilli(int64(flakeid.ExtractTimestamp(sessID))),
 		)
-		time.AfterFunc(s.cfg.RetryTimeout, func() {
-			s.UploadKey(key, retryCount-1)
-		})
-		return
 	}
 	defer file.Close()
 
@@ -89,7 +82,7 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 		time.AfterFunc(s.cfg.RetryTimeout, func() {
 			s.UploadKey(key, retryCount-1)
 		})
-		return
+		return nil
 	}
 	startReader := bytes.NewBuffer(s.startBytes[:nRead])
 	if err := s.s3.Upload(s.gzipFile(startReader), key, "application/octet-stream", true); err != nil {
@@ -113,4 +106,5 @@ func (s *Storage) UploadKey(key string, retryCount int) {
 	s.archivingTime.Record(ctx, float64(time.Now().Sub(start).Milliseconds()))
 	s.sessionSize.Record(ctx, fileSize)
 	s.totalSessions.Add(ctx, 1)
+	return nil
 }

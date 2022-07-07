@@ -59,6 +59,15 @@ func (p *Producer) Produce(topic string, key uint64, value []byte) error {
 	return nil
 }
 
+func (p *Producer) ProduceToPartition(topic string, partition, key uint64, value []byte) error {
+	p.producer.ProduceChannel() <- &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: int32(partition)},
+		Key:            encodeKey(key),
+		Value:          value,
+	}
+	return nil
+}
+
 func (p *Producer) Close(timeoutMs int) {
 	p.producer.Flush(timeoutMs)
 	p.producer.Close()
