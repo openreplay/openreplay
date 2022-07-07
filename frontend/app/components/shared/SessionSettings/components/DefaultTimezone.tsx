@@ -2,16 +2,11 @@ import React, { useEffect } from 'react';
 import { Button } from 'UI';
 import Select from 'Shared/Select';
 import { useStore } from 'App/mstore';
+import { Timezone } from 'App/mstore/types/sessionSettings';
 import { useObserver } from 'mobx-react-lite';
 import { toast } from 'react-toastify';
 
-const str = new Date().toString().match(/([A-Z]+[\+-][0-9]+)/)
-
-interface TimezonesDropdownValue {
-    label: string;
-    value: string;
-}
-type TimezonesDropdown = TimezonesDropdownValue[]
+type TimezonesDropdown = Timezone[]
 
 const generateGMTZones = (): TimezonesDropdown => {
     const timezones: TimezonesDropdown = []
@@ -22,7 +17,7 @@ const generateGMTZones = (): TimezonesDropdown => {
 
     const combinedArray = [...negativeNumbers, ...positiveNumbers];
 
-    for (let i = 0; i < 23; i++) {
+    for (let i = 0; i < combinedArray.length; i++) {
         let symbol = i < 11 ? '-' : '+';
         let isUTC = i === 11
         let prefix = isUTC ? 'UTC / GMT' : 'GMT';
@@ -47,10 +42,10 @@ function DefaultTimezone() {
     const sessionSettings = useObserver(() => settingsStore.sessionSettings);
 
     useEffect(() => {
-        if (!timezone) setTimezone('local');
+        if (!timezone) setTimezone({ label: 'Local Timezone', value: 'system' });
     }, []);
 
-    const onSelectChange = ({ value }) => {
+    const onSelectChange = ({ value }: { value: Timezone }) => {
         setTimezone(value);
         setChanged(true);
     }
@@ -64,7 +59,7 @@ function DefaultTimezone() {
         <>
             <h3 className="text-lg">Default Timezone</h3>
             <div className="my-1">Session Time</div>
-            <div className="mt-2 flex items-center" style={{ width: "265px"}}>
+            <div className="mt-2 flex items-center" style={{ width: "265px" }}>
                 <Select
                     options={timezoneOptions}
                     defaultValue={timezone.value}
