@@ -3,6 +3,7 @@ package kafka
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"openreplay/backend/pkg/env"
@@ -13,19 +14,23 @@ type Producer struct {
 }
 
 func NewProducer(messageSizeLimit int) *Producer {
-	protocol := "plaintext"
-	if env.Bool("KAFKA_USE_SSL") {
-		protocol = "ssl"
-	}
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"enable.idempotence":     true, // TODO: get rid of
+	kafkaConfig := &kafka.ConfigMap{
+		"enable.idempotence":     true,
 		"bootstrap.servers":      env.String("KAFKA_SERVERS"),
 		"go.delivery.reports":    true,
-		"security.protocol":      protocol,
+		"security.protocol":      "plaintext",
 		"go.batch.producer":      true,
 		"queue.buffering.max.ms": 100,
 		"message.max.bytes":      messageSizeLimit,
-	})
+	}
+	// Apply ssl configuration
+	if env.Bool("KAFKA_USE_SSL") {
+		kafkaConfig["security.protocol"] = "ssl"
+		kafkaConfig["ssl.ca.location"] = os.Getenv("KAFKA_SSL_CA")
+		kafkaConfig["ssl.key.location"] = os.Getenv("KAFKA_SSL_KEY")
+		kafkaConfig["ssl.certificate.location"] = os.Getenv("KAFKA_SSL_CERT")
+	}
+	producer, err := kafka.NewProducer(kafkaConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}

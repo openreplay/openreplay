@@ -32,20 +32,24 @@ func NewConsumer(
 	autoCommit bool,
 	messageSizeLimit int,
 ) *Consumer {
-	protocol := "plaintext"
-	if env.Bool("KAFKA_USE_SSL") {
-		protocol = "ssl"
-	}
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
+	kafkaConfig := &kafka.ConfigMap{
 		"bootstrap.servers":               env.String("KAFKA_SERVERS"),
 		"group.id":                        group,
 		"auto.offset.reset":               "earliest",
 		"enable.auto.commit":              "false",
-		"security.protocol":               protocol,
+		"security.protocol":               "plaintext",
 		"go.application.rebalance.enable": true,
 		"max.poll.interval.ms":            env.Int("KAFKA_MAX_POLL_INTERVAL_MS"),
 		"max.partition.fetch.bytes":       messageSizeLimit,
-	})
+	}
+	// Apply ssl configuration
+	if env.Bool("KAFKA_USE_SSL") {
+		kafkaConfig["security.protocol"] = "ssl"
+		kafkaConfig["ssl.ca.location"] = os.Getenv("KAFKA_SSL_CA")
+		kafkaConfig["ssl.key.location"] = os.Getenv("KAFKA_SSL_KEY")
+		kafkaConfig["ssl.certificate.location"] = os.Getenv("KAFKA_SSL_CERT")
+	}
+	c, err := kafka.NewConsumer(kafkaConfig)
 	if err != nil {
 		log.Fatalln(err)
 	}
