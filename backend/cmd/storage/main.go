@@ -67,6 +67,7 @@ func main() {
 		select {
 		case sig := <-sigchan:
 			log.Printf("Caught signal %v: terminating\n", sig)
+			sessionFinder.Stop()
 			consumer.Close()
 			os.Exit(0)
 		case <-counterTick:
