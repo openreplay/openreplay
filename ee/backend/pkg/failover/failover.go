@@ -126,7 +126,7 @@ func (s *sessionFinderImpl) nextPartition(partition uint64) uint64 {
 // Create sessionSearch message and send it to queue
 func (s *sessionFinderImpl) sendSearchMessage(sessionID, timestamp, partition uint64) {
 	msg := &messages.SessionSearch{Timestamp: timestamp, Partition: partition}
-	if err := s.producer.ProduceToPartition(s.topicName, partition, sessionID, Encode(msg)); err != nil {
+	if err := s.producer.ProduceToPartition(s.topicName, partition, sessionID, messages.Encode(msg)); err != nil {
 		log.Printf("can't send SessionSearch to failover topic: %s; sessID: %d", err, sessionID)
 	}
 }
