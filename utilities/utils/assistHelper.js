@@ -43,7 +43,9 @@ const extractSessionInfo = function (socket) {
         if (geoip() !== null) {
             debug && console.log(`looking for location of ${socket.handshake.headers['x-forwarded-for'] || socket.handshake.address}`);
             try {
-                let country = geoip().country(socket.handshake.headers['x-forwarded-for'] || socket.handshake.address);
+                let ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+                ip = ip.split(",")[0];
+                let country = geoip().country(ip);
                 socket.handshake.query.sessionInfo.userCountry = country.country.isoCode;
             } catch (e) {
                 debug && console.log("geoip-country failed");
