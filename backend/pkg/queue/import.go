@@ -9,6 +9,6 @@ func NewConsumer(group string, topics []string, handler types.MessageHandler, _ 
 	return redisstream.NewConsumer(group, topics, handler)
 }
 
-func NewProducer(_ int) types.Producer {
+func NewProducer(_ int, _ bool) types.Producer {
 	return redisstream.NewProducer()
 }

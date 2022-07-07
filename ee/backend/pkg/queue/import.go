@@ -11,7 +11,7 @@ func NewConsumer(group string, topics []string, handler types.MessageHandler, au
 	return kafka.NewConsumer(group, topics, handler, autoCommit, messageSizeLimit)
 }
 
-func NewProducer(messageSizeLimit int) types.Producer {
+func NewProducer(messageSizeLimit int, useBatch bool) types.Producer {
 	license.CheckLicense()
-	return kafka.NewProducer(messageSizeLimit)
+	return kafka.NewProducer(messageSizeLimit, useBatch)
 }

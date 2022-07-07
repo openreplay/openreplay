@@ -13,13 +13,13 @@ type Producer struct {
 	producer *kafka.Producer
 }
 
-func NewProducer(messageSizeLimit int) *Producer {
+func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 	kafkaConfig := &kafka.ConfigMap{
 		"enable.idempotence":     true,
 		"bootstrap.servers":      env.String("KAFKA_SERVERS"),
 		"go.delivery.reports":    true,
 		"security.protocol":      "plaintext",
-		"go.batch.producer":      true,
+		"go.batch.producer":      useBatch,
 		"queue.buffering.max.ms": 100,
 		"message.max.bytes":      messageSizeLimit,
 	}
@@ -67,5 +67,3 @@ func (p *Producer) Close(timeoutMs int) {
 func (p *Producer) Flush(timeoutMs int) {
 	p.producer.Flush(timeoutMs)
 }
-
-// MBTODO: GetFatalError check

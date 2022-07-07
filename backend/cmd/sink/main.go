@@ -34,7 +34,7 @@ func main() {
 
 	writer := oswriter.NewWriter(cfg.FsUlimit, cfg.FsDir)
 
-	producer := queue.NewProducer(cfg.MessageSizeLimit)
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(cfg.ProducerCloseTimeout)
 	rewriter := assets.NewRewriter(cfg.AssetsOrigin)
 	assetMessageHandler := assetscache.New(cfg, rewriter, producer)

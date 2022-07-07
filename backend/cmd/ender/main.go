@@ -39,7 +39,7 @@ func main() {
 		log.Printf("can't init ender service: %s", err)
 		return
 	}
-	producer := queue.NewProducer(cfg.MessageSizeLimit)
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupEnder,
 		[]string{

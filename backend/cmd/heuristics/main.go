@@ -49,7 +49,7 @@ func main() {
 	statsLogger := logger.NewQueueStats(cfg.LoggerTimeout)
 
 	// Init producer and consumer for data bus
-	producer := queue.NewProducer(cfg.MessageSizeLimit)
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupHeuristics,
 		[]string{

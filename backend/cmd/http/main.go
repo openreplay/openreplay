@@ -24,7 +24,7 @@ func main() {
 	cfg := http.New()
 
 	// Connect to queue
-	producer := queue.NewProducer(cfg.MessageSizeLimit)
+	producer := queue.NewProducer(cfg.MessageSizeLimit, true)
 	defer producer.Close(15000)
 
 	// Connect to database

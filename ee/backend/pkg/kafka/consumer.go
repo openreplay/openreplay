@@ -3,8 +3,6 @@ package kafka
 import (
 	"log"
 	"os"
-	// "os/signal"
-	// "syscall"
 	"time"
 
 	"github.com/pkg/errors"
@@ -179,15 +177,6 @@ func (consumer *Consumer) ConsumeNext() error {
 			Timestamp: ts,
 		})
 		consumer.lastReceivedPrtTs[e.TopicPartition.Partition] = ts
-	// case kafka.AssignedPartitions:
-	// 	logPartitions("Kafka Consumer: Partitions Assigned", e.Partitions)
-	// 	consumer.partitions = e.Partitions
-	// 	consumer.c.Assign(e.Partitions)
-	// 	log.Printf("Actually partitions assigned!")
-	// case kafka.RevokedPartitions:
-	// 	log.Println("Kafka Cosumer: Partitions Revoked")
-	// 	consumer.partitions = nil
-	// 	consumer.c.Unassign()
 	case kafka.Error:
 		if e.Code() == kafka.ErrAllBrokersDown || e.Code() == kafka.ErrMaxPollExceeded {
 			os.Exit(1)
@@ -205,94 +194,3 @@ func (consumer *Consumer) Close() {
 		log.Printf("Kafka consumer close error: %v", err)
 	}
 }
-
-// func (consumer *Consumer) consume(
-// 	message func(m *kafka.Message) error,
-// 	commit func(c *kafka.Consumer) error,
-// ) error {
-// 	if err := consumer.c.Subscribe(consumer.topic, nil); err != nil {
-// 		return err
-// 	}
-// 	defer consumer.close()
-// 	sigchan := make(chan os.Signal, 1)
-// 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
-// 	ticker := time.NewTicker(consumer.commitInterval)
-// 	defer ticker.Stop()
-// 	for {
-// 		select {
-// 		case <-sigchan:
-// 			return commit(consumer.c)
-// 		case <-ticker.C:
-// 			if err := commit(consumer.c); err != nil {
-// 				return err
-// 			}
-// 		default:
-// 			ev := consumer.c.Poll(consumer.pollTimeout)
-// 			if ev == nil {
-// 				continue
-// 			}
-// 			switch e := ev.(type) {
-// 			case *kafka.Message:
-// 				if e.TopicPartition.Error != nil {
-// 					log.Println(e.TopicPartition.Error)
-// 					continue
-// 				}
-// 				if err := message(e); err != nil {
-// 					return err
-// 				}
-// 			case kafka.AssignedPartitions:
-// 				if err := consumer.c.Assign(e.Partitions); err != nil {
-// 					return err
-// 				}
-// 			case kafka.RevokedPartitions:
-// 				if err := commit(consumer.c); err != nil {
-// 					return err
-// 				}
-// 				if err := consumer.c.Unassign(); err != nil {
-// 					return err
-// 				}
-// 			case kafka.Error:
-// 				log.Println(e)
-// 				if e.Code() == kafka.ErrAllBrokersDown {
-// 					return e
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
-// func (consumer *Consumer) Consume(
-// 	message func(key uint64, value []byte) error,
-// ) error {
-// 	return consumer.consume(
-// 		func(m *kafka.Message) error {
-// 			return message(decodeKey(m.Key), m.Value)
-// 		},
-// 		func(c *kafka.Consumer) error {
-// 			if _, err := c.Commit(); err != nil {
-// 				log.Println(err)
-// 			}
-// 			return nil
-// 		},
-// 	)
-// }
-
-// func (consumer *Consumer) ConsumeWithCommitHook(
-// 	message func(key uint64, value []byte) error,
-// 	commit func() error,
-// ) error {
-// 	return consumer.consume(
-// 		func(m *kafka.Message) error {
-// 			return message(decodeKey(m.Key), m.Value)
-// 		},
-// 		func(c *kafka.Consumer) error {
-// 			if err := commit(); err != nil {
-// 				return err
-// 			}
-// 			if _, err := c.Commit(); err != nil {
-// 				log.Println(err)
-// 			}
-// 			return nil
-// 		},
-// 	)
-// }
