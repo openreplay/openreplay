@@ -25,10 +25,10 @@ func NewProducer(messageSizeLimit int, useBatch bool) *Producer {
 	}
 	// Apply ssl configuration
 	if env.Bool("KAFKA_USE_SSL") {
-		kafkaConfig["security.protocol"] = "ssl"
-		kafkaConfig["ssl.ca.location"] = os.Getenv("KAFKA_SSL_CA")
-		kafkaConfig["ssl.key.location"] = os.Getenv("KAFKA_SSL_KEY")
-		kafkaConfig["ssl.certificate.location"] = os.Getenv("KAFKA_SSL_CERT")
+		kafkaConfig.SetKey("security.protocol", "ssl")
+		kafkaConfig.SetKey("ssl.ca.location", os.Getenv("KAFKA_SSL_CA"))
+		kafkaConfig.SetKey("ssl.key.location", os.Getenv("KAFKA_SSL_KEY"))
+		kafkaConfig.SetKey("ssl.certificate.location", os.Getenv("KAFKA_SSL_CERT"))
 	}
 	producer, err := kafka.NewProducer(kafkaConfig)
 	if err != nil {
