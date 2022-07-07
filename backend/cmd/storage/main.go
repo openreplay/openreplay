@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"openreplay/backend/pkg/failover"
 	"openreplay/backend/pkg/monitoring"
 	"os"
 	"os/signal"
@@ -32,6 +33,10 @@ func main() {
 	}
 
 	counter := storage.NewLogCounter()
+	sessionFinder, err := failover.NewSessionFinder(cfg, srv)
+	if err != nil {
+		log.Fatalf("can't init sessionFinder module: %s", err)
+	}
 
 	consumer := queue.NewMessageConsumer(
 		cfg.GroupStorage,
@@ -39,9 +44,11 @@ func main() {
 			cfg.TopicTrigger,
 		},
 		func(sessionID uint64, msg messages.Message, meta *types.Meta) {
-			switch msg.(type) {
+			switch m := msg.(type) {
 			case *messages.SessionEnd:
-				srv.UploadKey(strconv.FormatUint(sessionID, 10), 5)
+				if err := srv.UploadKey(strconv.FormatUint(sessionID, 10), 5); err != nil {
+					sessionFinder.Find(sessionID, m.Timestamp)
+				}
 				// Log timestamp of last processed session
 				counter.Update(sessionID, time.UnixMilli(meta.Timestamp))
 			}
