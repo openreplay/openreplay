@@ -58,6 +58,13 @@ jobs:
       run: |
         cd scripts/helmcharts/
 
+        set -x
+        cat <<EOF>>/tmp/image_override.yaml
+        frontend:
+          image:
+            tag: ${IMAGE_TAG}
+        EOF
+
         ## Update secerts
         sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
         sed -i "s/postgresqlPassword: \"changeMePassword\"/postgresqlPassword: \"${{ secrets.OSS_PG_PASSWORD }}\"/g" vars.yaml
@@ -89,35 +96,18 @@ jobs:
         kubeconfig: ${{ secrets.EE_KUBECONFIG }} # Use content of kubeconfig in secret.
       id: setcontextee
 
-    - name: Creating old image input
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-      run: |
-        #
-        # Create yaml with existing image tags
-        #
-        kubectl get pods -n app -o jsonpath="{.items[*].spec.containers[*].image}" |\
-        tr -s '[[:space:]]' '\n' | sort | uniq -c | grep '/foss/' | cut -d '/' -f3 > /tmp/image_tag.txt
-
-        echo > /tmp/image_override.yaml
-
-        for line in `cat /tmp/image_tag.txt`;
-        do
-            image_array=($(echo "$line" | tr ':' '\n'))
-            cat <<EOF >> /tmp/image_override.yaml
-        ${image_array[0]}:
-          image:
-            # We've to strip off the -ee, as helm will append it.
-            tag: `echo ${image_array[1]} | cut -d '-' -f 1`
-        EOF
-        done
-
     - name: Resetting vars file
       run: |
         git checkout -- scripts/helmcharts/vars.yaml
     - name: Deploy to kubernetes ee
       run: |
         cd scripts/helmcharts/
+        cat <<EOF>/tmp/image_override.yaml
+        frontend:
+          image:
+            # We've to strip off the -ee, as helm will append it.
+            tag: ${IMAGE_TAG}
+        EOF
 
         ## Update secerts
         sed -i "s#openReplayContainerRegistry.*#openReplayContainerRegistry: \"${{ secrets.OSS_REGISTRY_URL }}\"#g" vars.yaml
