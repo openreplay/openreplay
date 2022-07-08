@@ -85,6 +85,9 @@ spec:
           volumeMounts:
           - name: datadir
             mountPath: /mnt/efs
+          {{- with .Values.persistence.mounts  }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
       {{- if eq .Values.pvc.name "hostPath" }}
       volumes:
       - name: datadir
@@ -92,11 +95,17 @@ spec:
           # Ensure the file directory is created.
           path: {{ .Values.pvc.hostMountPath }}
           type: DirectoryOrCreate
+      {{- with .Values.persistence.volumes  }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
       {{- else }}
       volumes:
       - name: datadir
         persistentVolumeClaim:
           claimName: {{ .Values.pvc.name }}
+      {{- with .Values.persistence.volumes  }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
