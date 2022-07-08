@@ -87,7 +87,8 @@ function UserCard({
                     <SessionInfoItem comp={<CountryFlag country={ userCountry } />} label={countries[userCountry]} value={<span style={{ whiteSpace: 'nowrap' }}>{formatTimeOrDate(startedAt)}</span> } />
                     <SessionInfoItem icon={browserIcon(userBrowser)} label={userBrowser} value={ `v${ userBrowserVersion }` } />
                     <SessionInfoItem icon={osIcon(userOs)} label={userOs} value={ userOsVersion } />
-                    <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ getDimension(width, height) } isLast />
+                    <SessionInfoItem icon={deviceTypeIcon(userDeviceType)} label={userDeviceType} value={ getDimension(width, height) } isLast={!revId} />
+                    {revId && <SessionInfoItem icon="info" label="Rev ID:" value={revId} isLast />}
                   </div>
                 )}
                 position="bottom center"
@@ -104,11 +105,6 @@ function UserCard({
           </div>
         </div>
       </div>
-      {revId && (
-        <div className="border-l py-2 px-3">
-          <span className="font-medium">Rev ID:</span> {revId}
-        </div>
-      )}
 
       <SlideModal
         title={ <div>User Sessions</div> }

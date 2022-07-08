@@ -310,19 +310,22 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '-5px' } }
+                  style={ { left: `${ e.time * scale }%`, top: '0px' } }
                   onClick={ this.createEventClickHandler(e) }
                 >
-                  <TimelinePointer
-                    icon={getPointerIcon('fetch')}
-                    content={
+                  <Tooltip
+                    delay={0}
+                    position="top"
+                    html={
                       <div className={ stl.popup }>
-                        <b>{ "Failed Fetch" }</b>
+                        <b>Failed Fetch</b>
                         <br/>
                         { e.name }
                       </div>
                     }
-                  />
+                  >
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('fetch')} size="16" />
+                  </Tooltip>
                 </div>
               ))
             }
@@ -332,19 +335,22 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '-5px' } }
+                  style={ { left: `${ e.time * scale }%`, top: '0px' } }
                   onClick={ this.createEventClickHandler(e) }
                 >
-                  <TimelinePointer
-                    icon={getPointerIcon('stack')}
-                    content={
+                  <Tooltip
+                    delay={0}
+                    position="top"
+                    html={
                       <div className={ stl.popup }>
-                        <b> { "Stack Event" }</b>
+                        <b>Stack Event</b>
                         <br/>
                         { e.name }
                       </div>
                     }
-                  />
+                  >
+                    <Icon className=" rounded-full bg-white" name={getPointerIcon('stack')} size="16" />
+                  </Tooltip>
                 </div>
               ))
             }
