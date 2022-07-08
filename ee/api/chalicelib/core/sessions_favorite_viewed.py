@@ -46,11 +46,31 @@ def add_viewed_session(project_id, user_id, session_id):
 
 def favorite_session(project_id, user_id, session_id):
     if favorite_session_exists(user_id=user_id, session_id=session_id):
-        s3_extra.tag_file(session_id=str(session_id), tag_value=config('RETENTION_D_VALUE', default='default'))
-        s3_extra.tag_file(session_id=str(session_id) + "e", tag_value=config('RETENTION_D_VALUE', default='default'))
+        key = str(session_id)
+        try:
+            s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_D_VALUE', default='default'))
+        except Exception as e:
+            print(f"!!!Error while tagging: {key} to default")
+            print(str(e))
+        key = str(session_id) + "e"
+        try:
+            s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_D_VALUE', default='default'))
+        except Exception as e:
+            print(f"!!!Error while tagging: {key} to default")
+            print(str(e))
         return remove_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
-    s3_extra.tag_file(session_id=str(session_id), tag_value=config('RETENTION_L_VALUE', default='vault'))
-    s3_extra.tag_file(session_id=str(session_id) + "e", tag_value=config('RETENTION_L_VALUE', default='vault'))
+    key = str(session_id)
+    try:
+        s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_L_VALUE', default='vault'))
+    except Exception as e:
+        print(f"!!!Error while tagging: {key} to vault")
+        print(str(e))
+    key = str(session_id) + "e"
+    try:
+        s3_extra.tag_file(session_id=key, tag_value=config('RETENTION_L_VALUE', default='vault'))
+    except Exception as e:
+        print(f"!!!Error while tagging: {key} to vault")
+        print(str(e))
     return add_favorite_session(project_id=project_id, user_id=user_id, session_id=session_id)
 
 
