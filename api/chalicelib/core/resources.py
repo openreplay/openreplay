@@ -25,7 +25,6 @@ def get_by_session_id(session_id, project_id, start_ts, duration):
                     AND resources.timestamp<=%(res_end_ts)s;"""
         params = {"session_id": session_id, "project_id": project_id, "start_ts": start_ts, "duration": duration,
                   "res_start_ts": start_ts - delta, "res_end_ts": start_ts + duration + delta, }
-        print(cur.mogrify(ch_query, params))
         cur.execute(cur.mogrify(ch_query, params))
         rows = cur.fetchall()
         return helper.list_to_camel_case(rows)
