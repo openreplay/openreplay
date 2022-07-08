@@ -203,7 +203,7 @@ export default class Timeline extends React.PureComponent {
                     position="top"
                     html={
                       <div className={ stl.popup }>
-                        <b>{ iss.name }, {`${iss.time}, ${scale}, ${iss.time * scale}`}</b>
+                        <b>{ iss.name }</b>
                       </div>
                     }
                   >
