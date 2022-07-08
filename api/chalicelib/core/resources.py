@@ -16,7 +16,7 @@ def get_by_session_id(session_id, project_id, start_ts, duration):
                       encoded_body_size,
                       decoded_body_size,
                       success,
-                      COALESCE(status, CASE WHEN success THEN 200 END) AS status
+                      COALESCE(CASE WHEN status=0 THEN NULL ELSE status END, CASE WHEN success THEN 200 END) AS status
                 FROM events.resources INNER JOIN sessions USING (session_id)
                 WHERE session_id = %(session_id)s 
                     AND project_id= %(project_id)s
