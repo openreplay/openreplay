@@ -101,7 +101,7 @@ export default class Performance extends React.PureComponent {
 
   compare = () => this.setState({ comparing: true })
 
-  legendPopup = (component, trigger) => <Popup size="mini" trigger={ trigger } content={ component } />
+  legendPopup = (component, trigger) => <Popup size="mini" content={ component }>{trigger}</Popup>
 
   legendFormatter = (value, entry, index) => {
     const { opacity } = this.state;

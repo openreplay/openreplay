@@ -14,6 +14,12 @@ import { Tooltip } from 'react-tippy';
 
 const BOUNDRY = 15
 
+function getTimelinePosition(value, scale) {
+  const pos = value * scale;
+
+  return pos > 100 ? 100 : pos;
+}
+
 const getPointerIcon = (type) => {
   // exception,
   switch(type) {
@@ -166,7 +172,7 @@ export default class Timeline extends React.PureComponent {
                 key={ interval.start }
                 className={ stl.skipInterval }
                 style={ {
-                  left: `${ interval.start * scale }%`,
+                  left: `${getTimelinePosition(interval.start, scale)}%`,
                   width: `${ (interval.end - interval.start) * scale }%`,
                 } }
               />))
@@ -176,7 +182,7 @@ export default class Timeline extends React.PureComponent {
               <div
                 key={ e.key }
                 className={ stl.event }
-                style={ { left: `${ e.time * scale }%` } }
+                style={ { left: `${ getTimelinePosition(e.time,scale)}%` } }
               />
               ))
             }
@@ -184,7 +190,7 @@ export default class Timeline extends React.PureComponent {
               issues.map(iss => (
                 <div
                   style={ {
-                    left: `${ iss.time * scale }%`,
+                    left: `${ getTimelinePosition(iss.time, scale) }%`,
                     top: '0px',
                     zIndex: 11, width: 16, height: 16
                   } }
@@ -201,7 +207,7 @@ export default class Timeline extends React.PureComponent {
                       </div>
                     }
                   >
-                    <Icon className=" rounded-full bg-white" name={iss.icon} size="16" />
+                    <Icon className="rounded-full bg-white" name={iss.icon} size="16" />
                   </Tooltip>
                 </div>
               ))
@@ -209,7 +215,7 @@ export default class Timeline extends React.PureComponent {
             { events.filter(e => e.type === TYPES.CLICKRAGE).map(e => (
               <div
                 style={ {
-                  left: `${ e.time * scale }%`,
+                  left: `${ getTimelinePosition(e.time, scale) }%`,
                   top: '0px',
                   zIndex: 11, width: 16, height: 16
                 } }
@@ -233,7 +239,7 @@ export default class Timeline extends React.PureComponent {
             {typeof clickRageTime === 'number' &&
               <div
                 style={{
-                  left: `${ clickRageTime * scale }%`,
+                  left: `${ getTimelinePosition(clickRageTime, scale) }%`,
                   top: '-0px',
                   zIndex: 11, width: 16, height: 16
                 }}
@@ -257,7 +263,7 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '0px', zIndex: 10, width: 16, height: 16 } }
+                  style={ { left: `${ getTimelinePosition(e.time, scale) }%`, top: '0px', zIndex: 10, width: 16, height: 16 } }
                   onClick={ this.createEventClickHandler(e) }
                 >
                   <Tooltip
@@ -285,7 +291,7 @@ export default class Timeline extends React.PureComponent {
                     [ stl.error ]: r.isRed(),
                     [ stl.warning ]: r.isYellow(),
                   }) }
-                  style={ { left: `${ r.time * scale }%`, top: '0px', zIndex: 10, width: 16, height: 16 } }
+                  style={ { left: `${ getTimelinePosition(r.time, scale) }%`, top: '0px', zIndex: 10, width: 16, height: 16 } }
                   onClick={ this.createEventClickHandler(r) }
                 >
                   <Tooltip
@@ -310,7 +316,7 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '0px' } }
+                  style={ { left: `${ getTimelinePosition(e.time, scale) }%`, top: '0px' } }
                   onClick={ this.createEventClickHandler(e) }
                 >
                   <Tooltip
@@ -335,7 +341,7 @@ export default class Timeline extends React.PureComponent {
                 <div
                   key={ e.key }
                   className={ cn(stl.markup, stl.error) }
-                  style={ { left: `${ e.time * scale }%`, top: '0px' } }
+                  style={ { left: `${ getTimelinePosition(e.time, scale) }%`, top: '0px' } }
                   onClick={ this.createEventClickHandler(e) }
                 >
                   <Tooltip
