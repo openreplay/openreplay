@@ -15,13 +15,14 @@ function WidgetName(props: Props) {
   const [name, setName] = useState(props.name)
   const ref = useRef<any>(null)
 
-  const write = ({ target: { value, name } }) => {
+  const write = ({ target: { value } }) => {
     setName(value)
   }
 
-  const onBlur = () => {
+  const onBlur = (nameInput?: string) => {
     setEditing(false)
-    props.onUpdate(name.trim() === '' ? 'New Widget' : name)
+    const toUpdate = nameInput || name
+    props.onUpdate(toUpdate.trim() === '' ? 'New Widget' : toUpdate)
   }
 
   useEffect(() => {
@@ -37,7 +38,7 @@ function WidgetName(props: Props) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
-        onBlur()
+        onBlur(name)
       }
       if (e.key === 'Escape' || e.key === 'Esc') {
         setEditing(false)
@@ -48,7 +49,7 @@ function WidgetName(props: Props) {
     return () => {
       document.removeEventListener('keydown', handler, false)
     }
-  }, [])
+  }, [name])
 
   return (
     <div className="flex items-center">
@@ -59,7 +60,7 @@ function WidgetName(props: Props) {
           className="rounded fluid border-0 -mx-2 px-2 h-8"
           value={name}
           onChange={write}
-          onBlur={onBlur}
+          onBlur={() => onBlur()}
           onFocus={() => setEditing(true)}
         />
       ) : (
