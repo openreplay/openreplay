@@ -29,7 +29,7 @@ export default class GraphQL extends React.PureComponent {
   state = {
     filter: "",
   }
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value } }) => this.setState({ filter: value })
 
   jump = ({ time }) => {
     jump(time);
