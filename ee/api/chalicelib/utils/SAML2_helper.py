@@ -97,12 +97,14 @@ async def prepare_request(request: Request):
     # add / to /acs
     if not path.endswith("/"):
         path = path + '/'
+    if not path.startswith("/api"):
+        path = "/api" + path
 
     return {
         'https': 'on' if proto == 'https' else 'off',
         'http_host': request.headers['host'],
         'server_port': url_data.port,
-        'script_name': "/api" + path,
+        'script_name': path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
