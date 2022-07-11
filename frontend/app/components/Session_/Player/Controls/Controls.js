@@ -29,10 +29,9 @@ import {
 import { ReduxTime } from './Time';
 import Timeline from './Timeline';
 import ControlButton from './ControlButton';
-
 import styles from './controls.module.css';
 import { Tooltip } from 'react-tippy';
-
+import AssistTabs from './AssistTabs'
 
 function getStorageIconName(type) {
   switch(type) {
@@ -122,7 +121,6 @@ export default class Controls extends React.Component {
 
   componentWillUnmount() {
     document.removeEventListener('keydown', this.onKeyDown);
-    //this.props.toggleInspectorMode(false);
   }
 
   shouldComponentUpdate(nextProps) {
@@ -361,9 +359,15 @@ export default class Controls extends React.Component {
                   <ReduxTime name="time" />
                 </div>
               )}
+              
             </div>
+            
+            {live && (
+                <AssistTabs />
+            )}
 
             <div className="flex items-center h-full">
+              
               { !live && <div className={cn(styles.divider, 'h-full')} /> }
               {/* ! TEMP DISABLED !
               {!live && (

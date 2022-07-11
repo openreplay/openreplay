@@ -228,5 +228,5 @@ function DashboardView(props: Props) {
 }
 
 export default withPageTitle("Dashboards - OpenReplay")(
-    withReport(withRouter(withModal(observer(DashboardView))))
+    withReport(withRouter(observer(DashboardView)))
 );
