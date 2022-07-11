@@ -5,12 +5,12 @@ import { Popup } from 'UI';
 import styles from './textEllipsis.module.css';
 
 /** calculates text width in pixels 
-+ * by creating a hidden element with t
-+ * ext and counting its width
-+ * @param text String - text string
-+ * @param fontProp String - font properties
-+ * @returns width number
-+ */
+ * by creating a hidden element with
+ * text and counting its width
+ * @param text String - text string
+ * @param fontProp String - font properties
+ * @returns width number
+ */
 function findTextWidth(text, fontProp) {
 	const tag = document.createElement('div')
 
@@ -51,21 +51,27 @@ const TextEllipsis = ({
 	...props 
 }) => {
 	const [showPopup, setShowPopup] = useState(false)
+	const [computed, setComputed] = useState(false)
 	const textRef = useRef(null);
 
 	const textOrChildren = text || children;
 	
-	const popupId = (Math.random() + 1).toString(36).substring(7);
+	const popupId = (Math.random() + 1).toString(36).substring(2);
 
 	useEffect(() => {
-		const element = textRef.current;
+		if (computed) return;
+		if (textRef.current) {
+			const element = textRef.current;
 
-		const fontSize = window.getComputedStyle(element, null).getPropertyValue('font-size');
+			const fontSize = window.getComputedStyle(element, null).getPropertyValue('font-size');
+			
+			const textWidth = findTextWidth(element.innerText, fontSize)
+			if (textWidth > element.clientWidth) setShowPopup(true)
+			else setShowPopup(false)
+			setComputed(true)
+		}
 		
-		const textWidth = findTextWidth(element.innerText, fontSize)
-		if (textWidth > element.clientWidth) setShowPopup(true)
-		else setShowPopup(false)
-	}, [textRef.current])
+	}, [textRef.current, computed])
 
 	if (noHint || !showPopup) return (
 		<Trigger 
