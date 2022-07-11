@@ -28,7 +28,7 @@ export default class Fetch extends React.PureComponent {
     hasPreviousError: false,
 	}
   
-  onFilterChange = (e, { value }) => {
+  onFilterChange = ({ target: { value } }) => {
     const { list } = this.props;
     const filterRE = getRE(value, 'i');
     const filtered = list
