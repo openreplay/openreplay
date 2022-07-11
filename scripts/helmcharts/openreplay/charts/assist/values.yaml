@@ -43,7 +43,7 @@ securityContext: {}
 serviceMonitor:
   enabled: false
   additionalLabels:
-    release: monitoring
+    release: observability
   scrapeConfigs:
     - port: metrics
       honorLabels: true

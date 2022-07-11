@@ -45,7 +45,7 @@ service:
 serviceMonitor:
   enabled: true
   additionalLabels:
-    release: monitoring
+    release: observability
   scrapeConfigs:
     - port: metrics
       honorLabels: true
