@@ -60,7 +60,7 @@ export default class ConsoleContent extends React.PureComponent {
     activeTab: ALL,
   }
   onTabClick = activeTab => this.setState({ activeTab })
-  onFilterChange = (e, { value }) => this.setState({ filter: value })
+  onFilterChange = ({ target: { value }}) => this.setState({ filter: value })
 
   render() {
     const { logs, isResult, additionalHeight, time } = this.props;
