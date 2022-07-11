@@ -43,7 +43,10 @@ spec:
               image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
               resources:
                 {{ toYaml .Values.resources | nindent 16 }}
-
+          nodeSelector:
+            {{- toYaml .Values.nodeSelector | nindent 12}}
+          tolerations:
+            {{- toYaml .Values.tolerations | nindent 12}}
     # Ref: https://github.com/Altinity/clickhouse-operator/blob/master/docs/custom_resource_explained.md#spectemplatesservicetemplates
     serviceTemplates:
       - name: chi-service-template
