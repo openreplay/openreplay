@@ -9,5 +9,5 @@ COPY package.json .
 COPY package-lock.json .
 RUN npm install
 COPY . .
-ENTRYPOINT ["/tini", "--"]
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD npm start
