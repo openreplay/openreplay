@@ -1,4 +1,5 @@
 export default class PrimitiveReader {
+  /** pointer for curent position in the buffer */
   protected p: number = 0
   constructor(protected buf: Uint8Array = new Uint8Array(0)) {}
 
