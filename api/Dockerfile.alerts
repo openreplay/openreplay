@@ -1,4 +1,4 @@
-FROM python:3.9.12-slim
+FROM python:3.10-slim
 LABEL Maintainer="Rajesh Rajendran<rjshrjndrn@gmail.com>"
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
 ENV APP_NAME alerts
@@ -13,7 +13,7 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
 COPY requirements.txt /work_tmp/requirements.txt
-RUN pip install -r /work_tmp/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /work_tmp/requirements.txt
 
 WORKDIR /work
 COPY . .
