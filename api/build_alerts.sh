@@ -25,10 +25,9 @@ function build_api(){
         tag="ee-"
     }
     cp -R ../api ../_alerts
-    cd ../_alerts
-    docker build -f ./Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
+    docker build -f ../_alerts/Dockerfile.alerts --build-arg envarg=$envarg -t ${DOCKER_REPO:-'local'}/alerts:${git_sha1} .
     cd ..
-    rm -rf _alerts
+    rm -rf ../_alerts
     [[ $PUSH_IMAGE -eq 1 ]] && {
         docker push ${DOCKER_REPO:-'local'}/alerts:${git_sha1}
         docker tag ${DOCKER_REPO:-'local'}/alerts:${git_sha1} ${DOCKER_REPO:-'local'}/alerts:${tag}latest
