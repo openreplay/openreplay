@@ -1,12 +1,9 @@
 FROM node:18-alpine
 LABEL Maintainer="KRAIEM Taha Yassine<tahayk2@gmail.com>"
+RUN apk add --no-cache tini
 ARG envarg
-ENV TINI_VERSION=v0.19.0 \
-    ENTERPRISE_BUILD=${envarg}
-# Add Tini
-# Startup daemon
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+ENV ENTERPRISE_BUILD=${envarg}
+
 WORKDIR /work
 COPY package.json .
 COPY package-lock.json .
