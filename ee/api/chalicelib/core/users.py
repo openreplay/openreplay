@@ -4,11 +4,9 @@ import secrets
 from decouple import config
 from fastapi import BackgroundTasks
 
-import schemas
 import schemas_ee
 from chalicelib.core import authorizers, metadata, projects, roles
 from chalicelib.core import tenants, assist
-from chalicelib.utils import dev, SAML2_helper
 from chalicelib.utils import helper, email_helper
 from chalicelib.utils import pg_client
 from chalicelib.utils.TimeUTC import TimeUTC
@@ -649,7 +647,7 @@ def authenticate(email, password, for_change_password=False, for_plugin=False):
 
         cur.execute(query)
         r = cur.fetchone()
-        if r is None and SAML2_helper.is_saml2_available():
+        if r is None and helper.is_saml2_available():
             query = cur.mogrify(
                 f"""SELECT 1
                     FROM public.users

@@ -1,4 +1,5 @@
 from http import cookies
+from os import environ
 from urllib.parse import urlparse
 
 from decouple import config
@@ -125,3 +126,6 @@ def get_saml2_provider():
 
 def get_landing_URL(jwt):
     return config("SITE_URL") + config("sso_landing", default="/login?jwt=%s") % jwt
+
+
+environ["hastSAML2"] = str(is_saml2_available())
