@@ -1,0 +1,8 @@
+app_crons.py
+app_alerts.py
+requirements-crons.txt
+requirements-alerts.txt
+build_crons.sh
+build_alerts.sh
+entrypoint_crons.sh
+entrypoint_alerts.sh
