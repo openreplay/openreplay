@@ -33,9 +33,10 @@ export default function Pagination(props: Props) {
     return (
         <div className="flex items-center">
             <Popup
-                sticky
                 content="Previous Page"  
-                hideOnClick={true}
+                // hideOnClick={true}
+                animation="none"
+                delay={1500}
             >
                 <button
                     className={cn("py-2 px-3", { "opacity-50 cursor-default": isFirstPage })}
@@ -51,16 +52,16 @@ export default function Pagination(props: Props) {
                 className={cn("py-1 px-2 bg-white border border-gray-light rounded w-16", { "opacity-50 cursor-default": totalPages === 1 })}
                 value={currentPage}
                 min={1}
-                max={totalPages}
+                max={totalPages ? totalPages : 1}
                 onChange={(e) => changePage(parseInt(e.target.value))}
             />
             <span className="mx-3 color-gray-medium">of</span>
             <span >{numberWithCommas(totalPages)}</span>
             <Popup
-                arrow
-                sticky
                 content="Next Page"
-                hideOnClick={true}
+                // hideOnClick={true}
+                animation="none"
+                delay={1500}
             >
                 <button
                     className={cn("py-2 px-3", { "opacity-50 cursor-default": isLastPage })}
